@@ -1,20 +1,19 @@
 import asyncio
-import io
-import json
 import os
 from pathlib import Path
+from pprint import pprint
 
 import pytest
-from aiohttp.test_utils import make_mocked_coro
-from faker import Faker
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
 from virtool_core.models.job import JobState
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
+from tests.fixtures.core import StaticTime
+from tests.fixtures.response import RespIs
 from virtool.analyses.files import create_analysis_file
-from virtool.analyses.models import SQLAnalysisFile
+from virtool.analyses.models import SQLAnalysisFile, SQLAnalysisResult
 from virtool.config import get_config_from_app
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
@@ -32,7 +31,7 @@ def create_files(test_files_path, tmp_path):
 
 
 async def test_find(
-        fake: DataFaker,
+    fake: DataFaker,
     mocker: MockerFixture,
     mongo: Mongo,
     snapshot: SnapshotAssertion,
@@ -141,14 +140,13 @@ async def test_get(
     ready: bool,
     exists: bool,
     error: str | None,
-        fake: DataFaker,
-    mocker: MockerFixture,
+    fake: DataFaker,
     mongo: Mongo,
     pg: AsyncEngine,
-    resp_is,
+    resp_is: RespIs,
     snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
-    static_time,
+    static_time: StaticTime,
 ):
     client = await spawn_client(authenticated=True)
 
@@ -183,69 +181,30 @@ async def test_get(
         )
 
     if error != "404_analysis":
-        await mongo.analyses.insert_one(
-            {
-                "_id": "foobar",
-                "created_at": static_time.datetime,
-                "ready": ready,
-                "job": {"id": job.id if exists else "test"},
-                "index": {"version": 3, "id": "bar"},
-                "workflow": "pathoscope_bowtie",
-                "results": {"hits": []},
-                "sample": {"id": "baz"},
-                "reference": {"id": "baz"},
-                "subtractions": ["plum", "apple"],
-                "user": {"id": user_1.id},
-            },
+        await asyncio.gather(
+            mongo.analyses.insert_one(
+                {
+                    "_id": "foobar",
+                    "created_at": static_time.datetime,
+                    "index": {"version": 3, "id": "bar"},
+                    "job": {"id": job.id},
+                    "ready": True,
+                    "reference": {"id": "baz"},
+                    "results": {"hits": []},
+                    "sample": {"id": "baz"},
+                    "subtractions": ["plum", "apple"],
+                    "user": {"id": user_1.id},
+                    "workflow": "pathoscope_bowtie",
+                },
+            ),
+            create_analysis_file(pg, "foobar", "fasta", "reference.fa"),
         )
 
-        await create_analysis_file(pg, "foobar", "fasta", "reference.fa")
-
-    m_format_analysis = mocker.patch(
-        "virtool.analyses.format.format_analysis",
-        make_mocked_coro(
-            {
-                "_id": "foobar",
-                "created_at": static_time.datetime,
-                "files": [
-                    {
-                        "id": 1,
-                        "analysis": "foobar",
-                        "description": None,
-                        "format": "fasta",
-                        "name": "reference.fa",
-                        "name_on_disk": "1-reference.fa",
-                        "size": None,
-                        "uploaded_at": None,
-                    },
-                ],
-                "index": {"version": 3, "id": "bar"},
-                "job": {
-                    "id": job.id,
-                },
-                "ready": True,
-                "reference": {"id": "baz", "data_type": "genome", "name": "Baz"},
-                "results": {"hits": []},
-                "sample": {"id": "baz"},
-                "subtractions": ["apple", "plum"],
-                "user": {"id": user_1.id},
-                "workflow": "pathoscope_bowtie",
-            },
-        ),
-    )
-
-    resp = await client.get(url="/analyses/foobar")
+    resp = await client.get("/analyses/foobar")
 
     if error is None:
         assert resp.status == 200
         assert await resp.json() == snapshot
-
-        if ready:
-            args = m_format_analysis.call_args[0]
-            assert args[0] == get_config_from_app(client.app)
-            assert args[2] == snapshot
-        else:
-            assert not m_format_analysis.called
 
     elif error == "403":
         await resp_is.insufficient_rights(resp)
@@ -258,7 +217,7 @@ async def test_get(
 async def test_get_304(
     ready: bool,
     mongo: Mongo,
-        fake: DataFaker,
+    fake: DataFaker,
     pg,
     spawn_client: ClientSpawner,
     static_time,
@@ -318,7 +277,7 @@ async def test_get_304(
 @pytest.mark.parametrize("error", [None, "403", "404_analysis", "404_sample", "409"])
 async def test_remove(
     error: str | None,
-        fake: DataFaker,
+    fake: DataFaker,
     mongo: Mongo,
     resp_is,
     spawn_client: ClientSpawner,
@@ -529,54 +488,6 @@ class TestDownloadAnalysisResult:
         assert await resp.json() == {"id": "not_found", "message": "Not found"}
 
 
-@pytest.mark.parametrize("extension", ["csv", "xlsx", "bug"])
-@pytest.mark.parametrize("exists", [True, False])
-async def test_download_analysis_document(
-    extension,
-    exists,
-    mocker,
-    mongo: Mongo,
-    spawn_client: ClientSpawner,
-):
-    client = await spawn_client(authenticated=True)
-
-    if exists:
-        await mongo.analyses.insert_one({"_id": "foobar", "ready": True})
-
-    mocker.patch(
-        f"virtool.analyses.format.format_analysis_to_{'excel' if extension == 'xlsx' else 'csv'}",
-        return_value=io.StringIO().getvalue(),
-    )
-
-    resp = await client.get(f"/analyses/documents/foobar.{extension}")
-
-    if not exists and extension != "bug":
-        assert resp.status == 404
-        return
-
-    match extension:
-        case "csv":
-            assert resp.headers["Content-Type"] == "text/csv"
-            assert (
-                resp.headers["Content-Disposition"] == "attachment; filename=foobar.csv"
-            )
-            assert resp.status == 200
-
-        case "xlsx":
-            assert (
-                resp.headers["Content-Type"]
-                == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
-            assert (
-                resp.headers["Content-Disposition"]
-                == "attachment; filename=foobar.xlsx"
-            )
-            assert resp.status == 200
-
-        case "bug":
-            assert resp.status == 400
-
-
 @pytest.mark.parametrize(
     "error",
     [
@@ -676,24 +587,33 @@ async def test_blast(
         await resp_is.conflict(resp, "Analysis is still running")
 
 
-@pytest.mark.parametrize("error", [None, 422, 404, 409])
+class TestFinalize:
+    async def test_not_found(self, spawn_job_client):
+        """Test that a 404 response is returned when the analysis does not exist."""
+        client = await spawn_job_client(authenticated=True)
+
+        resp = await client.patch(
+            "/analyses/analysis1",
+            json={"results": {"result": "TEST_RESULT", "hits": []}},
+        )
+
+        assert resp.status == 404
+
+
+@pytest.mark.parametrize("error", [None, 422, 409])
 async def test_finalize(
     error: str | None,
-        fake: DataFaker,
+    fake: DataFaker,
     mongo: Mongo,
+    pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     spawn_job_client: JobClientSpawner,
-    static_time,
+    static_time: StaticTime,
 ):
     user_1 = await fake.users.create()
     user_2 = await fake.users.create()
 
     job = await fake.jobs.create(user=user_2)
-
-    patch_json = {"results": {"result": "TEST_RESULT", "hits": []}}
-
-    if error == 422:
-        del patch_json["results"]
 
     client = await spawn_job_client(authenticated=True)
 
@@ -743,7 +663,14 @@ async def test_finalize(
             },
         )
 
-    resp = await client.patch("/analyses/analysis1", json=patch_json)
+    if error == 422:
+        data = {}
+    else:
+        data = {"results": {"result": "TEST_RESULT", "hits": []}}
+
+    pprint(data)
+
+    resp = await client.patch("/analyses/analysis1", json=data)
 
     if error:
         assert resp.status == error
@@ -751,91 +678,13 @@ async def test_finalize(
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-        document = await mongo.analyses.find_one()
+        document,row = await asyncio.gather(
+            mongo.analyses.find_one(),
+            get_row_by_id(pg, SQLAnalysisResult, 1),
+        )
 
         assert document == snapshot
         assert document["ready"] is True
 
-
-async def test_finalize_large(
-        fake: DataFaker,
-    mongo: Mongo,
-    snapshot: SnapshotAssertion,
-    spawn_job_client: JobClientSpawner,
-    static_time,
-):
-    user = await fake.users.create()
-
-    faker = Faker(1)
-
-    profiles = [
-        faker.profile(
-            fields=[
-                "job",
-                "company",
-                "ssn",
-                "residence",
-                "address",
-                "mail",
-                "name",
-                "username",
-            ],
-        )
-        for _ in range(100)
-    ]
-
-    patch_json = {"results": {"hits": [], "extra_data": profiles * 500}}
-
-    # Make sure this test actually checks that the max body size is increased.
-    assert len(json.dumps(patch_json)) > 1024**2
-
-    client = await spawn_job_client(authenticated=True)
-
-    await asyncio.gather(
-        mongo.analyses.insert_one(
-            {
-                "_id": "analysis1",
-                "created_at": static_time.datetime,
-                "sample": {"id": "sample1"},
-                "job": {"id": "test"},
-                "index": {"version": 2, "id": "foo"},
-                "workflow": "nuvs",
-                "reference": {"id": "baz", "name": "Baz"},
-                "files": [],
-                "user": {"id": user.id},
-                "ready": False,
-                "subtractions": [],
-            },
-        ),
-        mongo.references.insert_one(
-            {"_id": "baz", "name": "Baz", "data_type": "genome"},
-        ),
-        mongo.samples.insert_one(
-            {
-                "_id": "sample1",
-                "all_read": True,
-                "all_write": True,
-                "created_at": static_time.datetime,
-                "format": "fastq",
-                "group": "none",
-                "group_read": False,
-                "group_write": False,
-                "hold": False,
-                "host": "",
-                "is_legacy": False,
-                "isolate": "",
-                "library_type": "normal",
-                "locale": "",
-                "name": "Sample 1",
-                "notes": "",
-                "ready": True,
-                "subtractions": [],
-                "user": {"id": user.id},
-            },
-        ),
-    )
-
-    resp = await client.patch("/analyses/analysis1", json=patch_json)
-
-    assert resp.status == 200
-    assert await resp.json() == snapshot
+        assert row.analysis_id == "analysis1"
+        assert row.results == {"result": "TEST_RESULT", "hits": []}

@@ -1,13 +1,5 @@
-import sys
 from enum import Enum
 
-from aiohttp import ClientConnectorError
-from openfga_sdk import (
-    ApiClient as OpenFgaApiClient,
-)
-from openfga_sdk import (
-    Configuration as OpenFgaConfiguration,
-)
 from openfga_sdk import (
     CreateStoreRequest,
     OpenFgaApi,
@@ -29,49 +21,16 @@ class OpenfgaScheme(str, Enum):
     HTTPS = "https"
 
 
-async def connect_openfga(
-    openfga_host: str,
-    openfga_scheme: str,
-    openfga_store_name: str,
-) -> OpenFgaApi:
-    """Connects to an OpenFGA server and configures the store id.
-    Returns the application client instance.
-    """
-    configuration = OpenFgaConfiguration(
-        api_scheme=openfga_scheme,
-        api_host=openfga_host,
-    )
-
-    logger.info("connecting to openfga")
-
-    try:
-        api_instance = OpenFgaApi(OpenFgaApiClient(configuration))
-
-        configuration.store_id = await get_or_create_openfga_store(
-            api_instance,
-            openfga_store_name,
-        )
-
-        await write_openfga_authorization_model(api_instance)
-
-    except ClientConnectorError:
-        logger.critical("could not connect to openfga")
-        sys.exit(1)
-
-    return api_instance
-
-
 async def delete_openfga_tuples(
     api_instance: OpenFgaApi,
     object_type: ResourceType,
     object_id: int | str,
 ):
-    """Delete all tuples for a given object type and id in the provided OpenFGA API
-    instance.
+    """Delete all tuples for a given object type and ID in OpenFGA.
 
     :param api_instance: the OpenFGA API instance.
-    :param object_type:
-    :param object_id:s
+    :param object_type: the type of the object to delete tuples for.
+    :param object_id: the ID of the object to delete tuples for.
     """
     response = await api_instance.read(
         ReadRequest(
@@ -92,9 +51,11 @@ async def delete_openfga_tuples(
 async def get_or_create_openfga_store(
     api_instance: OpenFgaApi,
     openfga_store_name: str,
-):
-    """Get the ID of the OpenFGA store with the passed ``openfga_store_name`` or create
-    one and return the ID.
+) -> str:
+    """Get or create a named OpenFGA store.
+
+    Returns an existing named store with the passed ``openfga_store_name``. If none
+    exists, a new store is created and its ID is returned.
 
     :return: the store id
     """

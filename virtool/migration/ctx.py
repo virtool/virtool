@@ -17,7 +17,7 @@ from structlog import get_logger
 import virtool.mongo.connect
 from virtool.api.custom_json import dump_string
 from virtool.authorization.client import AuthorizationClient
-from virtool.authorization.openfga import connect_openfga
+from virtool.authorization.connect import connect_openfga
 from virtool.config.cls import MigrationConfig
 
 logger = get_logger("migration")
@@ -92,7 +92,7 @@ async def create_migration_context(config: MigrationConfig) -> MigrationContext:
         sys.exit(1)
 
     mongo_database, openfga = await asyncio.gather(
-        virtool.mongo.connect.connect_mongo(
+        virtool.mongo.connect.connect_motor_database(
             config.mongodb_connection_string,
             config.mongodb_name,
         ),

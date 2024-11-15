@@ -1,7 +1,6 @@
 name: ci
 
 on:
-  merge_group:
   pull_request:
     branches:
       - "main"
@@ -9,17 +8,15 @@ on:
     branches:
       - "main"
 
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: virtool/virtool
+  REGISTRY: ghcr.io
+
 jobs:
-  commitlint:
-    runs-on: ubuntu-22.04
-    if: github.event_name == 'pull_request'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Commitlint
-        uses: wagoid/commitlint-github-action@v5
+  # Build the Docker image so we now it is successful before we create a release and try
+  # to push a production image to the registry.
   build:
     runs-on: ubuntu-22.04
     steps:
@@ -31,6 +28,44 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+
+  # Generate the OpenAPI specification and upload it as an artifact.
+  oas:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Setup Poetry
+        id: setup-poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      - name: Load Cached Packages
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install Packages
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction
+      - name: Write OAS
+        run: |
+          mkdir -p virtool/spec
+          poetry run virtool oas > virtool/spec/openapi.json
+      - name: Upload OAS
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi.json
+          path: virtool/spec/openapi.json
+
+  # Run our test suite.
   test:
     runs-on: ubuntu-22.04
     services:
@@ -60,9 +95,9 @@ jobs:
           docker run --network ${{ job.services.postgres.network }} --rm openfga/openfga:v0.2.5 migrate --datastore-engine postgres --datastore-uri 'postgres://virtool:virtool@postgres:5432/openfga?sslmode=disable'
           docker run -d --name openfga --network=${{ job.services.postgres.network }} -p 8080:8080 openfga/openfga:v0.2.5 run --datastore-engine postgres --datastore-uri 'postgres://virtool:virtool@postgres:5432/openfga?sslmode=disable' --playground-enabled=false
       - name: Start MongoDB
-        uses: supercharge/mongodb-github-action@1.7.0
+        uses: supercharge/mongodb-github-action@1.11.0
         with:
-          mongodb-version: 4.4
+          mongodb-version: 6.0
           mongodb-replica-set: rs
       - name: Setup Python
         id: setup-python
@@ -101,71 +136,15 @@ jobs:
           --redis-connection-string redis://localhost:6379
           --snapshot-details
           --snapshot-warn-unused
-  oas:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Setup Poetry
-        id: setup-poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
-      - name: Load Cached Packages
-        id: cached-poetry-dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-      - name: Install Packages
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction
-      - name: Write OAS
-        run: |
-          mkdir -p virtool/spec
-          poetry run python run.py oas > virtool/spec/openapi.json
-      - name: Upload OAS
-        uses: actions/upload-artifact@v4
-        with:
-          name: openapi.json
-          path: virtool/spec/openapi.json
-  mypy:
-      runs-on: ubuntu-22.04
-      steps:
-        - name: Checkout
-          uses: actions/checkout@v4
-        - name: Setup Python
-          uses: actions/setup-python@v5
-          with:
-            python-version: '3.12'
-        - name: Install Poetry
-          uses: snok/install-poetry@v1
-          with:
-            virtualenvs-create: true
-            virtualenvs-in-project: true
-            installer-parallel: true
-        - name: Load Cached Packages
-          id: cached-poetry-dependencies
-          uses: actions/cache@v4
-          with:
-            path: .venv
-            key: venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-        - name: Install Packages
-          if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-          run: poetry install --no-interaction
-        - name: Run
-          continue-on-error: true
-          run: poetry run mypy virtool
+
   release:
     runs-on: ubuntu-22.04
+    if: github.repository_owner == 'Virtool' && github.event_name == 'push'
     needs: [build, oas, test]
-    if: github.event_name == 'push'
+    outputs:
+      git-tag: ${{ steps.semantic.outputs.git-tag }}
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -179,9 +158,41 @@ jobs:
         with:
           node-version: 20
       - name: Install semantic-release
-        run: npm i semantic-release@v23.0.8 conventional-changelog-conventionalcommits@7.0.2
+        run: npm i semantic-release@v23.0.8 @semantic-release/exec@v6.0.3 conventional-changelog-conventionalcommits@7.0.2
       - name: Run semantic-release
         id: semantic
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release
+  ghcr:
+    runs-on: ubuntu-22.04
+    if: github.repository_owner == 'Virtool' && github.event_name == 'push' && needs.release.outputs.git-tag != ''
+    needs: [release]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.git-tag }}
+      - name: Login to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract Docker Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          context: git
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
+      - name: Build and Push
+        id: push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+      - name: Trigger Cloudflare Hook
+        if: steps.semantic.outputs.git-tag != ''
+        run: curl -X POST ${{ secrets.CLOUDFLARE_HOOK }}

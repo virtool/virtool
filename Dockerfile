@@ -6,8 +6,10 @@ ENV PATH="/root/.local/bin:${PATH}" \
     POETRY_VIRTUALENVS_IN_PROJECT=1 \
     POETRY_VIRTUALENVS_CREATE=1
 WORKDIR /app
-COPY poetry.lock pyproject.toml ./
-RUN poetry install --without dev --no-root && rm -rf "$POETRY_CACHE_DIR"
+COPY pyproject.toml poetry.lock ./
+RUN poetry install --without dev
+COPY . ./
+RUN poetry install --only-root
 
 FROM python:3.12-bookworm as version
 COPY .git .
@@ -29,12 +31,11 @@ ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
 COPY --from=ghcr.io/virtool/workflow-tools:2.0.1 /usr/local/bin/bowtie* /usr/local/bin/
 COPY --from=build /app/.venv /app/.venv
-COPY alembic.ini run.py ./
+COPY alembic.ini ./
 COPY --from=version /VERSION .
 COPY assets ./assets
 COPY virtool ./virtool
 COPY --chmod=0755 assets/bowtie2-inspect /usr/local/bin/bowtie2-inspect
-
 EXPOSE 9950
-ENTRYPOINT ["python", "run.py"]
+ENTRYPOINT ["virtool"]
 CMD ["server"]

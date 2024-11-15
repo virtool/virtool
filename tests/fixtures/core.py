@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import arrow
@@ -34,53 +35,6 @@ def test_files_path():
     return Path(__file__).parent.parent / "test_files"
 
 
-@pytest.fixture()
-def test_random_alphanumeric(mocker):
-    class RandomAlphanumericTester:
-        def __init__(self):
-            self.choices = [
-                "aB67nm89jL56hj34AL90",
-                "fX1l90Rt45JK34bA7890",
-                "kl84Fg067jJa109lmQ021",
-                "yGlirXr7TSv4x6byFLUJ",
-                "G5cPJjvKH7g9lB9tpb3Q",
-                "v4xrYERY71lJD1JbIdcX",
-                "KfVw9vD27KGMly2qf45K",
-                "xjQVxIGHKsTQrVisJiKo",
-                "U3cuWAoQ3TDsy0wU7z0l",
-                "9PfsOM1B99KfaMz2Wu3C",
-            ]
-
-            self.history = []
-
-            self.last_choice = None
-
-        def __call__(self, length=6, mixed_case=False, excluded=None):
-            string = self.choices.pop()[:length]
-
-            if not mixed_case:
-                string = string.lower()
-
-            excluded = excluded or []
-
-            if string in excluded:
-                string = self.__call__(length, mixed_case, excluded)
-
-            self.history.append(string)
-            self.last_choice = string
-
-            return string
-
-        @property
-        def next_choice(self):
-            return self.choices[-1]
-
-    return mocker.patch(
-        "virtool.utils.random_alphanumeric",
-        new=RandomAlphanumericTester(),
-    )
-
-
 @pytest.fixture(scope="session")
 def static_time_obj() -> StaticTime:
     return StaticTime()
@@ -95,3 +49,12 @@ def static_time(mocker: MockerFixture, static_time_obj: StaticTime) -> StaticTim
 @pytest.fixture()
 def example_path() -> Path:
     return virtool_example_path
+
+
+@pytest.fixture()
+def pwd(tmp_path: Path):
+    """Use a temporary directory as the current working directory."""
+    prev_dir_path = Path.cwd()
+    os.chdir(tmp_path)
+    yield tmp_path
+    os.chdir(prev_dir_path)

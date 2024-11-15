@@ -87,7 +87,7 @@ async def get_sample_ready_false(fake: DataFaker, mongo: Mongo, static_time):
 @pytest.fixture()
 async def get_sample_data(
     mongo: "Mongo",
-        fake: DataFaker,
+    fake: DataFaker,
     pg: AsyncEngine,
     static_time,
 ):
@@ -172,7 +172,7 @@ async def get_sample_data(
 
 @pytest.fixture()
 async def find_samples_client(
-        fake: DataFaker,
+    fake: DataFaker,
     mongo: Mongo,
     spawn_client: ClientSpawner,
     static_time,
@@ -378,7 +378,7 @@ class TestGet:
 
     async def test_all_read(
         self,
-            fake: DataFaker,
+        fake: DataFaker,
         get_sample_data,
         snapshot: SnapshotAssertion,
         mongo: Mongo,
@@ -412,7 +412,7 @@ class TestGet:
     async def test_group_read(
         self,
         is_member: bool,
-            fake: DataFaker,
+        fake: DataFaker,
         get_sample_data,
         mongo: Mongo,
         snapshot: SnapshotAssertion,
@@ -460,7 +460,7 @@ class TestCreate:
         self,
         group_setting: str,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot_recent,
         mongo: Mongo,
         spawn_client: ClientSpawner,
@@ -514,7 +514,7 @@ class TestCreate:
     async def test_name_exists(
         self,
         path: str,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot,
         mongo: Mongo,
         spawn_client: ClientSpawner,
@@ -554,7 +554,7 @@ class TestCreate:
     async def test_force_choice(
         self,
         error: str | None,
-            fake: DataFaker,
+        fake: DataFaker,
         resp_is,
         mongo: Mongo,
         spawn_client: ClientSpawner,
@@ -596,7 +596,7 @@ class TestCreate:
 
     async def test_group_dne(
         self,
-            fake: DataFaker,
+        fake: DataFaker,
         resp_is,
         mongo: Mongo,
         spawn_client: ClientSpawner,
@@ -635,7 +635,7 @@ class TestCreate:
 
     async def test_subtraction_dne(
         self,
-            fake: DataFaker,
+        fake: DataFaker,
         resp_is,
         spawn_client: ClientSpawner,
     ):
@@ -657,7 +657,7 @@ class TestCreate:
     async def test_file_dne(
         self,
         one_exists: bool,
-            fake: DataFaker,
+        fake: DataFaker,
         mongo: Mongo,
         spawn_client: ClientSpawner,
         resp_is,
@@ -692,7 +692,7 @@ class TestCreate:
 
     async def test_label_dne(
         self,
-            fake: DataFaker,
+        fake: DataFaker,
         resp_is,
         spawn_client: ClientSpawner,
     ):
@@ -803,7 +803,7 @@ class TestEdit:
 
     async def test_subtraction_exists(
         self,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot,
         mongo: Mongo,
         spawn_client: ClientSpawner,
@@ -883,7 +883,7 @@ class TestDelete:
         self,
         data_path: Path,
         finalized: bool,
-            fake: DataFaker,
+        fake: DataFaker,
         spawn_client: ClientSpawner,
         tmp_path: Path,
     ):
@@ -904,7 +904,7 @@ class TestDelete:
         self,
         finalized: bool,
         data_path: Path,
-            fake: DataFaker,
+        fake: DataFaker,
         spawn_job_client,
     ):
         """Test that job client can delete a sample only when it is unfinalized."""
@@ -935,7 +935,7 @@ class TestDelete:
 
 
 async def test_find_analyses(
-        fake: DataFaker,
+    fake: DataFaker,
     snapshot: SnapshotAssertion,
     mongo: Mongo,
     spawn_client: ClientSpawner,
@@ -1106,7 +1106,7 @@ async def test_analyze(
     match error:
         case None:
             assert resp.status == 201
-            assert resp.headers["Location"] == "/analyses/fb085f7f"
+            assert resp.headers["Location"] == "/analyses/bf1b993c"
             assert await resp.json() == snapshot
         case "400_reference":
             await resp_is.bad_request(resp, "Reference does not exist")
@@ -1222,7 +1222,7 @@ class TestUploadReads:
     async def test_uncompressed(
         self,
         example_path: Path,
-            fake: DataFaker,
+        fake: DataFaker,
         mongo: Mongo,
         snapshot: SnapshotAssertion,
         spawn_job_client: JobClientSpawner,
@@ -1357,11 +1357,11 @@ async def test_download_artifact(
 class TestChangeSampleRights:
     async def test_update_group_id(
         self,
-            fake: DataFaker,
+        fake: DataFaker,
         get_sample_data,
-        mongo,
-        snapshot,
-        spawn_client,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
+        spawn_client: ClientSpawner,
     ):
         group = await fake.groups.create()
 
@@ -1374,17 +1374,18 @@ class TestChangeSampleRights:
     async def test_set_none_group_id(
         self,
         get_sample_data,
-            fake: DataFaker,
-        mongo,
-        snapshot,
-        spawn_client,
+        fake: DataFaker,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
+        spawn_client: ClientSpawner,
     ):
-        mongo.samples.find_one_and_update(
+        await mongo.samples.find_one_and_update(
             {"_id": "test"},
             {"$set": {"group": "fake_group"}},
         )
 
         client = await spawn_client(administrator=True, authenticated=True)
+
         resp = await client.patch(
             "/samples/test/rights",
             data={
@@ -1398,7 +1399,7 @@ class TestChangeSampleRights:
     async def test_update_group_rights(
         self,
         get_sample_data,
-        mongo,
+        mongo: Mongo,
         snapshot,
         spawn_client,
     ):
@@ -1430,7 +1431,7 @@ class TestChangeSampleRights:
     async def test_update_all_rights(
         self,
         get_sample_data,
-            fake: DataFaker,
+        fake: DataFaker,
         mongo: Mongo,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,

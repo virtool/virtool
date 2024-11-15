@@ -1,3 +1,8 @@
+import pytest
+from pytest_mock import MockerFixture
+
+from virtool.users.utils import hash_password
+
 pytest_plugins = (
     "tests.fixtures.authorization",
     "tests.fixtures.client",
@@ -58,3 +63,29 @@ def pytest_addoption(parser):
         dest="update_snapshots",
         help="Update snapshots (alias)",
     )
+
+
+@pytest.fixture(scope="session")
+def _hash_password_speedup_memo() -> dict[tuple[bytes, bytes] : bytes]:
+    """A dictionary of memoized hash_password calls."""
+    return {}
+
+
+@pytest.fixture(autouse=True)
+def _hash_password_speedup(
+    _hash_password_speedup_memo: dict[str:bytes],
+    mocker: MockerFixture,
+):
+    """Speed up ``hash_password`` calls by memoizing them."""
+
+    def m_hash_password(password: str):
+        if password in _hash_password_speedup_memo:
+            return _hash_password_speedup_memo[password]
+
+        hashed = hash_password(password)
+
+        _hash_password_speedup_memo[password] = hashed
+
+        return hashed
+
+    mocker.patch("virtool.users.utils.hash_password", m_hash_password)

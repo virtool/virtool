@@ -1,4 +1,356 @@
 # serializer version: 1
+# name: test_add_isolate[False-empty-False]
+  dict({
+    'default': True,
+    'id': 'bf1b993c',
+    'sequences': list([
+    ]),
+    'source_name': 'isolate',
+    'source_type': 'bob',
+  })
+# ---
+# name: test_add_isolate[False-empty-False].1
+  dict({
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'isolates': list([
+      dict({
+        'default': True,
+        'id': 'bf1b993c',
+        'source_name': 'isolate',
+        'source_type': 'bob',
+      }),
+    ]),
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': dict({
+      'id': 'hxn167',
+    }),
+    'remote_id': None,
+    'schema': list([
+    ]),
+    'verified': False,
+    'version': 1,
+  })
+# ---
+# name: test_add_isolate[False-empty-False].2
+  dict({
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Added Bob isolate as default',
+    'diff': list([
+      list([
+        'change',
+        'version',
+        list([
+          0,
+          1,
+        ]),
+      ]),
+      list([
+        'add',
+        'isolates',
+        list([
+          list([
+            0,
+            dict({
+              'default': True,
+              'id': 'bf1b993c',
+              'sequences': list([
+              ]),
+              'source_name': 'isolate',
+              'source_type': 'bob',
+            }),
+          ]),
+        ]),
+      ]),
+    ]),
+    'index': dict({
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    }),
+    'method_name': 'add_isolate',
+    'otu': dict({
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    }),
+    'reference': dict({
+      'id': 'hxn167',
+    }),
+    'user': dict({
+      'id': 'B',
+    }),
+  })
+# ---
+# name: test_add_isolate[False-empty-True]
+  dict({
+    'default': True,
+    'id': 'bf1b993c',
+    'sequences': list([
+    ]),
+    'source_name': 'isolate',
+    'source_type': 'bob',
+  })
+# ---
+# name: test_add_isolate[False-empty-True].1
+  dict({
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'isolates': list([
+      dict({
+        'default': True,
+        'id': 'bf1b993c',
+        'source_name': 'isolate',
+        'source_type': 'bob',
+      }),
+    ]),
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': dict({
+      'id': 'hxn167',
+    }),
+    'remote_id': None,
+    'schema': list([
+    ]),
+    'verified': False,
+    'version': 1,
+  })
+# ---
+# name: test_add_isolate[False-empty-True].2
+  dict({
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Added Bob isolate as default',
+    'diff': list([
+      list([
+        'change',
+        'version',
+        list([
+          0,
+          1,
+        ]),
+      ]),
+      list([
+        'add',
+        'isolates',
+        list([
+          list([
+            0,
+            dict({
+              'default': True,
+              'id': 'bf1b993c',
+              'sequences': list([
+              ]),
+              'source_name': 'isolate',
+              'source_type': 'bob',
+            }),
+          ]),
+        ]),
+      ]),
+    ]),
+    'index': dict({
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    }),
+    'method_name': 'add_isolate',
+    'otu': dict({
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    }),
+    'reference': dict({
+      'id': 'hxn167',
+    }),
+    'user': dict({
+      'id': 'B',
+    }),
+  })
+# ---
+# name: test_add_isolate[False-not_empty-False]
+  dict({
+    'default': False,
+    'id': 'bf1b993c',
+    'sequences': list([
+    ]),
+    'source_name': 'isolate',
+    'source_type': 'bob',
+  })
+# ---
+# name: test_add_isolate[False-not_empty-False].1
+  dict({
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'isolates': list([
+      dict({
+        'default': False,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      }),
+      dict({
+        'default': False,
+        'id': 'bf1b993c',
+        'source_name': 'isolate',
+        'source_type': 'bob',
+      }),
+    ]),
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': dict({
+      'id': 'hxn167',
+    }),
+    'remote_id': None,
+    'schema': list([
+    ]),
+    'verified': False,
+    'version': 1,
+  })
+# ---
+# name: test_add_isolate[False-not_empty-False].2
+  dict({
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Added Bob isolate',
+    'diff': list([
+      list([
+        'change',
+        'version',
+        list([
+          0,
+          1,
+        ]),
+      ]),
+      list([
+        'add',
+        'isolates',
+        list([
+          list([
+            1,
+            dict({
+              'default': False,
+              'id': 'bf1b993c',
+              'sequences': list([
+              ]),
+              'source_name': 'isolate',
+              'source_type': 'bob',
+            }),
+          ]),
+        ]),
+      ]),
+    ]),
+    'index': dict({
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    }),
+    'method_name': 'add_isolate',
+    'otu': dict({
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    }),
+    'reference': dict({
+      'id': 'hxn167',
+    }),
+    'user': dict({
+      'id': 'B',
+    }),
+  })
+# ---
+# name: test_add_isolate[False-not_empty-True]
+  dict({
+    'default': True,
+    'id': 'bf1b993c',
+    'sequences': list([
+    ]),
+    'source_name': 'isolate',
+    'source_type': 'bob',
+  })
+# ---
+# name: test_add_isolate[False-not_empty-True].1
+  dict({
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'isolates': list([
+      dict({
+        'default': False,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      }),
+      dict({
+        'default': True,
+        'id': 'bf1b993c',
+        'source_name': 'isolate',
+        'source_type': 'bob',
+      }),
+    ]),
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': dict({
+      'id': 'hxn167',
+    }),
+    'remote_id': None,
+    'schema': list([
+    ]),
+    'verified': False,
+    'version': 1,
+  })
+# ---
+# name: test_add_isolate[False-not_empty-True].2
+  dict({
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Added Bob isolate as default',
+    'diff': list([
+      list([
+        'change',
+        'version',
+        list([
+          0,
+          1,
+        ]),
+      ]),
+      list([
+        'add',
+        'isolates',
+        list([
+          list([
+            1,
+            dict({
+              'default': True,
+              'id': 'bf1b993c',
+              'sequences': list([
+              ]),
+              'source_name': 'isolate',
+              'source_type': 'bob',
+            }),
+          ]),
+        ]),
+      ]),
+    ]),
+    'index': dict({
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    }),
+    'method_name': 'add_isolate',
+    'otu': dict({
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    }),
+    'reference': dict({
+      'id': 'hxn167',
+    }),
+    'user': dict({
+      'id': 'B',
+    }),
+  })
+# ---
 # name: test_add_isolate[None-False-empty-False]
   dict({
     'default': True,
@@ -688,6 +1040,370 @@
             dict({
               'default': True,
               'id': '9pf',
+              'sequences': list([
+              ]),
+              'source_name': 'isolate',
+              'source_type': 'bob',
+            }),
+          ]),
+        ]),
+      ]),
+    ]),
+    'index': dict({
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    }),
+    'method_name': 'add_isolate',
+    'otu': dict({
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    }),
+    'reference': dict({
+      'id': 'hxn167',
+    }),
+    'user': dict({
+      'id': 'B',
+    }),
+  })
+# ---
+# name: test_add_isolate[True-empty-False]
+  dict({
+    'default': True,
+    'id': 'bf1b993c',
+    'sequences': list([
+    ]),
+    'source_name': 'isolate',
+    'source_type': 'bob',
+  })
+# ---
+# name: test_add_isolate[True-empty-False].1
+  dict({
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'isolates': list([
+      dict({
+        'default': True,
+        'id': 'bf1b993c',
+        'source_name': 'isolate',
+        'source_type': 'bob',
+      }),
+    ]),
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': dict({
+      'id': 'hxn167',
+    }),
+    'remote_id': None,
+    'schema': list([
+    ]),
+    'verified': False,
+    'version': 1,
+  })
+# ---
+# name: test_add_isolate[True-empty-False].2
+  dict({
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Added Bob isolate as default',
+    'diff': list([
+      list([
+        'change',
+        'version',
+        list([
+          0,
+          1,
+        ]),
+      ]),
+      list([
+        'add',
+        'isolates',
+        list([
+          list([
+            0,
+            dict({
+              'default': True,
+              'id': 'bf1b993c',
+              'sequences': list([
+              ]),
+              'source_name': 'isolate',
+              'source_type': 'bob',
+            }),
+          ]),
+        ]),
+      ]),
+    ]),
+    'index': dict({
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    }),
+    'method_name': 'add_isolate',
+    'otu': dict({
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    }),
+    'reference': dict({
+      'id': 'hxn167',
+    }),
+    'user': dict({
+      'id': 'B',
+    }),
+  })
+# ---
+# name: test_add_isolate[True-empty-True]
+  dict({
+    'default': True,
+    'id': 'bf1b993c',
+    'sequences': list([
+    ]),
+    'source_name': 'isolate',
+    'source_type': 'bob',
+  })
+# ---
+# name: test_add_isolate[True-empty-True].1
+  dict({
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'isolates': list([
+      dict({
+        'default': True,
+        'id': 'bf1b993c',
+        'source_name': 'isolate',
+        'source_type': 'bob',
+      }),
+    ]),
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': dict({
+      'id': 'hxn167',
+    }),
+    'remote_id': None,
+    'schema': list([
+    ]),
+    'verified': False,
+    'version': 1,
+  })
+# ---
+# name: test_add_isolate[True-empty-True].2
+  dict({
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Added Bob isolate as default',
+    'diff': list([
+      list([
+        'change',
+        'version',
+        list([
+          0,
+          1,
+        ]),
+      ]),
+      list([
+        'add',
+        'isolates',
+        list([
+          list([
+            0,
+            dict({
+              'default': True,
+              'id': 'bf1b993c',
+              'sequences': list([
+              ]),
+              'source_name': 'isolate',
+              'source_type': 'bob',
+            }),
+          ]),
+        ]),
+      ]),
+    ]),
+    'index': dict({
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    }),
+    'method_name': 'add_isolate',
+    'otu': dict({
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    }),
+    'reference': dict({
+      'id': 'hxn167',
+    }),
+    'user': dict({
+      'id': 'B',
+    }),
+  })
+# ---
+# name: test_add_isolate[True-not_empty-False]
+  dict({
+    'default': False,
+    'id': 'bf1b993c',
+    'sequences': list([
+    ]),
+    'source_name': 'isolate',
+    'source_type': 'bob',
+  })
+# ---
+# name: test_add_isolate[True-not_empty-False].1
+  dict({
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'isolates': list([
+      dict({
+        'default': True,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      }),
+      dict({
+        'default': False,
+        'id': 'bf1b993c',
+        'source_name': 'isolate',
+        'source_type': 'bob',
+      }),
+    ]),
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': dict({
+      'id': 'hxn167',
+    }),
+    'remote_id': None,
+    'schema': list([
+    ]),
+    'verified': False,
+    'version': 1,
+  })
+# ---
+# name: test_add_isolate[True-not_empty-False].2
+  dict({
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Added Bob isolate',
+    'diff': list([
+      list([
+        'change',
+        'version',
+        list([
+          0,
+          1,
+        ]),
+      ]),
+      list([
+        'add',
+        'isolates',
+        list([
+          list([
+            1,
+            dict({
+              'default': False,
+              'id': 'bf1b993c',
+              'sequences': list([
+              ]),
+              'source_name': 'isolate',
+              'source_type': 'bob',
+            }),
+          ]),
+        ]),
+      ]),
+    ]),
+    'index': dict({
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    }),
+    'method_name': 'add_isolate',
+    'otu': dict({
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    }),
+    'reference': dict({
+      'id': 'hxn167',
+    }),
+    'user': dict({
+      'id': 'B',
+    }),
+  })
+# ---
+# name: test_add_isolate[True-not_empty-True]
+  dict({
+    'default': True,
+    'id': 'bf1b993c',
+    'sequences': list([
+    ]),
+    'source_name': 'isolate',
+    'source_type': 'bob',
+  })
+# ---
+# name: test_add_isolate[True-not_empty-True].1
+  dict({
+    '_id': '6116cba1',
+    'abbreviation': 'PVF',
+    'isolates': list([
+      dict({
+        'default': False,
+        'id': 'cab8b360',
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      }),
+      dict({
+        'default': True,
+        'id': 'bf1b993c',
+        'source_name': 'isolate',
+        'source_type': 'bob',
+      }),
+    ]),
+    'last_indexed_version': 0,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': dict({
+      'id': 'hxn167',
+    }),
+    'remote_id': None,
+    'schema': list([
+    ]),
+    'verified': False,
+    'version': 1,
+  })
+# ---
+# name: test_add_isolate[True-not_empty-True].2
+  dict({
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Added Bob isolate as default',
+    'diff': list([
+      list([
+        'change',
+        'version',
+        list([
+          0,
+          1,
+        ]),
+      ]),
+      list([
+        'change',
+        list([
+          'isolates',
+          0,
+          'default',
+        ]),
+        list([
+          True,
+          False,
+        ]),
+      ]),
+      list([
+        'add',
+        'isolates',
+        list([
+          list([
+            1,
+            dict({
+              'default': True,
+              'id': 'bf1b993c',
               'sequences': list([
               ]),
               'source_name': 'isolate',

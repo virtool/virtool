@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field, conlist, constr
 from virtool_core.models.analysis import AnalysisMinimal
@@ -229,13 +229,13 @@ class CreateSampleResponse(Sample):
 
 
 class UpdateSampleRequest(BaseModel):
-    name: Optional[constr(strip_whitespace=True, min_length=1)]
-    host: Optional[constr(strip_whitespace=True)]
-    isolate: Optional[constr(strip_whitespace=True)]
-    locale: Optional[constr(strip_whitespace=True)]
-    notes: Optional[constr(strip_whitespace=True)]
-    labels: Optional[list]
-    subtractions: Optional[list]
+    name: constr(strip_whitespace=True, min_length=1) | None
+    host: constr(strip_whitespace=True) | None
+    isolate: constr(strip_whitespace=True) | None
+    locale: constr(strip_whitespace=True) | None
+    notes: constr(strip_whitespace=True) | None
+    labels: list | None
+    subtractions: list | None
 
     _prevent_none = prevent_none("*")
 
@@ -472,7 +472,7 @@ class GetSampleAnalysesResponse(AnalysisMinimal):
 class CreateAnalysisRequest(BaseModel):
     ml: int | None
     ref_id: str
-    subtractions: list[str] | None
+    subtractions: list[str] = Field(default_factory=list)
     workflow: AnalysisWorkflow
 
     _prevent_none = prevent_none("subtractions")

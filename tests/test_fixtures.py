@@ -2,8 +2,13 @@ import datetime
 
 import arrow
 import pytest
+from sqlalchemy.ext.asyncio import AsyncEngine
+from virtool_core.redis import Redis
 
+from tests.fixtures.client import ClientSpawner
 from tests.fixtures.snapshot_date import validate_time
+from virtool.authorization.client import AuthorizationClient
+from virtool.mongo.core import Mongo
 
 
 def test_time_not_recent_iso_string(snapshot_recent):
@@ -49,5 +54,21 @@ def test_nested_timestamps(snapshot_recent):
             "message": "Administrative instance message",
             "created_at": "2021-11-24T19:40:03.320000Z",
             "updated_at": "2021-11-24T19:40:03.320000Z",
-        }
+        },
     } == snapshot_recent
+
+
+async def test_data_and_client_databases(
+    authorization_client: AuthorizationClient,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    redis: Redis,
+    spawn_client: ClientSpawner,
+):
+    """Test that data layer, database, and client fixtures refer to the same clients."""
+    client = await spawn_client()
+
+    assert authorization_client is client.app["authorization"]
+    assert mongo is client.app["mongo"]
+    assert pg is client.app["pg"]
+    assert redis is client.app["redis"]

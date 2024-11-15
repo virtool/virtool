@@ -95,6 +95,7 @@ def create_data_layer(
     :return: the application data layer
     """
     jobs_client = JobsClient(redis)
+    http_client = HTTPClient(client)
 
     data_layer = DataLayer(
         AccountData(authorization_client, mongo, pg),
@@ -108,7 +109,7 @@ def create_data_layer(
         JobsData(jobs_client, mongo, pg),
         LabelsData(mongo, pg),
         MessagesData(pg, mongo),
-        MLData(config, HTTPClient(client), pg),
+        MLData(config, http_client, pg),
         OTUData(mongo, config.data_path),
         ReferencesData(mongo, pg, config, client),
         SamplesData(config, mongo, pg, jobs_client),

@@ -17,6 +17,7 @@ from virtool_core.redis import Redis
 import virtool.jobs.main
 from virtool.api.custom_json import dump_string
 from virtool.app import create_app
+from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.openfga import OpenfgaScheme
 from virtool.config.cls import ServerConfig
 from virtool.data.layer import DataLayer
@@ -80,9 +81,6 @@ class VirtoolTestClient:
 
         self.app = self._test_client.server.app
         """The test server's application object."""
-
-        self.mongo = get_mongo_from_app(self.app)
-        """The server Mongo object."""
 
         self.user: VirtoolTestClientUser = test_client_user
         """
@@ -194,9 +192,11 @@ class ClientSpawner(Protocol):
 @pytest.fixture()
 def spawn_client(
     aiohttp_client,
+    authorization_client: AuthorizationClient,
     data_path: Path,
-        fake: DataFaker,
+    fake: DataFaker,
     mocker,
+    mongo: Mongo,
     mongo_connection_string: str,
     mongo_name: str,
     openfga_host: str,
@@ -355,7 +355,13 @@ def spawn_client(
             use_b2c=False,
         )
 
+        mocker.patch(
+            "virtool.startup.connect_authorization_client",
+            return_value=authorization_client,
+        )
         mocker.patch("virtool.startup.connect_pg", return_value=pg)
+        mocker.patch("virtool.startup.connect_mongo", return_value=mongo)
+        mocker.patch("virtool.startup._connect_redis", return_value=redis)
 
         app = create_app(config)
 

@@ -3,18 +3,18 @@
   list([
     tuple(
       'build_index',
-      'bf1b993c',
+      '7cf872dc',
     ),
   ])
 # ---
 # name: TestCreate.test[True][index]
   dict({
-    '_id': 'fb085f7f',
+    '_id': '3cbb22cc',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'has_files': True,
     'has_json': False,
     'job': dict({
-      'id': 'bf1b993c',
+      'id': '7cf872dc',
     }),
     'manifest': dict({
       'bar': 2,
@@ -32,11 +32,11 @@
 # ---
 # name: TestCreate.test[True][job]
   dict({
-    '_id': 'bf1b993c',
+    '_id': '7cf872dc',
     'acquired': False,
     'archived': False,
     'args': dict({
-      'index_id': 'fb085f7f',
+      'index_id': '3cbb22cc',
       'index_version': 0,
       'manifest': dict({
         'bar': 2,
@@ -84,11 +84,11 @@
     'files': list([
     ]),
     'has_files': True,
-    'id': 'fb085f7f',
+    'id': '3cbb22cc',
     'job': dict({
       'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
-      'id': 'bf1b993c',
+      'id': '7cf872dc',
       'progress': 0,
       'stage': None,
       'state': 'waiting',
@@ -119,7 +119,7 @@
   })
 # ---
 # name: TestCreate.test[True][location]
-  'https://virtool.example.com/indexes/fb085f7f'
+  'https://virtool.example.com/indexes/3cbb22cc'
 # ---
 # name: TestFind.test
   dict({

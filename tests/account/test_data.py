@@ -25,7 +25,7 @@ from virtool.users.pg import SQLUser
 async def test_create_api_key(
     has_permission: bool,
     data_layer: DataLayer,
-        fake: DataFaker,
+    fake: DataFaker,
     mocker,
     mongo: Mongo,
     snapshot: SnapshotAssertion,
@@ -154,7 +154,7 @@ async def test_update(
     data_layer: DataLayer,
     mongo: Mongo,
     pg: AsyncEngine,
-        fake: DataFaker,
+    fake: DataFaker,
     snapshot_recent: SnapshotAssertion,
 ):
     user = await fake.users.create(password="hello_world_1")

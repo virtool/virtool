@@ -42,6 +42,7 @@ async def filter_analyses_by_sample_rights(
     """Filter a list of analyses based on the user's rights to the samples they are
     associated with.
 
+    :param client: the client making the request
     :param mongo: the application database client
     :param analyses: the analyses to filter
     :return: the filtered analyses

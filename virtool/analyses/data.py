@@ -1,10 +1,9 @@
 import asyncio
 import math
 from datetime import datetime
-from typing import Optional, Tuple
 
 import sentry_sdk
-from sqlalchemy import delete
+from sqlalchemy import delete, insert, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 from virtool_core.models.analysis import Analysis, AnalysisFile, AnalysisSearchResult
@@ -14,13 +13,13 @@ import virtool.analyses.format
 import virtool.uploads.db
 from virtool.analyses.checks import (
     check_analysis_nuvs_sequence,
-    check_analysis_workflow,
+    check_if_analysis_is_nuvs,
+    check_if_analysis_is_running,
     check_if_analysis_modified,
-    check_if_analysis_running,
 )
 from virtool.analyses.db import filter_analyses_by_sample_rights
 from virtool.analyses.files import create_analysis_file
-from virtool.analyses.models import SQLAnalysisFile
+from virtool.analyses.models import SQLAnalysisFile, SQLAnalysisResult
 from virtool.analyses.utils import (
     attach_analysis_files,
 )
@@ -33,6 +32,7 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.events import Operation, emit, emits
+from virtool.data.topg import both_transactions
 from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
 from virtool.jobs.transforms import AttachJobTransform
@@ -46,11 +46,10 @@ from virtool.samples.oas import CreateAnalysisRequest
 from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.db import (
     AttachSubtractionsTransform,
-    subtraction_processor,
 )
 from virtool.uploads.utils import naive_writer
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import wait_for_checks
+from virtool.utils import base_processor, wait_for_checks
 
 logger = get_logger("analyses")
 
@@ -120,7 +119,7 @@ class AnalysisData(DataLayerDomain):
 
         data: tuple[list[dict], int] | None = None
 
-        with sentry_sdk.start_span(op="mongo", description="aggregate_find_analyses"):
+        with sentry_sdk.start_span(op="mongo", name="aggregate_find_analyses"):
             async for paginate_dict in self._mongo.analyses.aggregate(pipeline):
                 data = (
                     paginate_dict["data"],
@@ -133,18 +132,20 @@ class AnalysisData(DataLayerDomain):
 
         documents, total_count = data
 
-        with sentry_sdk.start_span(
-            op="mongo",
-            description="filter_analyses_by_sample_rights",
-        ):
-            documents = await filter_analyses_by_sample_rights(
-                client,
-                self._mongo,
-                documents,
-            )
+        documents = await filter_analyses_by_sample_rights(
+            client,
+            self._mongo,
+            documents,
+        )
+
+        # Have to do this because Iimi analyses have ``None`` for subtractions.
+        # TODO: Make all analyses have an empty list for subtractions.
+        for document in documents:
+            if document.get("subtractions") is None:
+                document["subtractions"] = []
 
         documents = await apply_transforms(
-            [subtraction_processor(d) for d in documents],
+            [base_processor(d) for d in documents],
             [
                 AttachMLTransform(self._pg),
                 AttachJobTransform(self._mongo),
@@ -154,13 +155,15 @@ class AnalysisData(DataLayerDomain):
             ],
         )
 
-        return AnalysisSearchResult(
-            documents=documents,
-            found_count=total_count,
-            total_count=total_count,
-            page=page,
-            page_count=int(math.ceil(total_count / per_page)),
-            per_page=per_page,
+        return AnalysisSearchResult.parse_obj(
+            {
+                "documents": documents,
+                "found_count": total_count,
+                "total_count": total_count,
+                "page": page,
+                "page_count": int(math.ceil(total_count / per_page)),
+                "per_page": per_page,
+            },
         )
 
     async def get(
@@ -181,14 +184,29 @@ class AnalysisData(DataLayerDomain):
 
         await wait_for_checks(check_if_analysis_modified(if_modified_since, document))
 
-        analysis = await attach_analysis_files(self._pg, analysis_id, document)
+        document = await attach_analysis_files(self._pg, analysis_id, document)
 
-        if analysis["ready"]:
-            analysis = await virtool.analyses.format.format_analysis(
+        if document["ready"]:
+            if document["results"] == "sql":
+                async with AsyncSession(self._pg) as session:
+                    result = await session.execute(
+                        select(SQLAnalysisResult.results).where(
+                            SQLAnalysisResult.analysis_id == analysis_id,
+                        ),
+                    )
+
+                    document["results"] = result.scalars().one()
+
+            document = await virtool.analyses.format.format_analysis(
                 self._config,
                 self._mongo,
-                analysis,
+                document,
             )
+
+        # Have to do this because Iimi analyses have ``None`` for subtractions.
+        # TODO: Make all analyses have an empty list for subtractions.
+        if document.get("subtractions") is None:
+            document["subtractions"] = []
 
         transforms = [
             AttachJobTransform(self._mongo),
@@ -198,13 +216,13 @@ class AnalysisData(DataLayerDomain):
             AttachUserTransform(self._mongo),
         ]
 
-        if analysis["workflow"] == "nuvs":
+        if document["workflow"] == "nuvs":
             transforms.append(AttachNuVsBLAST(self._pg))
 
-        analysis = await apply_transforms(subtraction_processor(analysis), transforms)
+        document = await apply_transforms(base_processor(document), transforms)
 
-        return Analysis(
-            **{**analysis, "job": analysis["job"] if analysis["job"] else None},
+        return Analysis.parse_obj(
+            {**document, "job": document["job"] if document["job"] else None},
         )
 
     @emits(Operation.CREATE, "analyses")
@@ -228,43 +246,42 @@ class AnalysisData(DataLayerDomain):
         :return: the analysis
 
         """
-        index_id, index_version = await get_current_id_and_version(
-            self._mongo,
-            data.ref_id,
-        )
-
         created_at = virtool.utils.timestamp()
 
-        sample = await self._mongo.samples.find_one(sample_id, ["name"])
+        (
+            (index_id, index_version),
+            sample_name,
+        ) = await asyncio.gather(
+            get_current_id_and_version(self._mongo, data.ref_id),
+            get_one_field(self._mongo.samples, "name", sample_id),
+        )
 
-        async with self._mongo.create_session() as session:
-            job_id = await get_new_id(self._mongo.jobs, session=session)
+        analysis_id = await get_new_id(self._mongo.analyses)
+        job_id = await get_new_id(self._mongo.jobs)
 
-            analysis_id = await get_new_id(self._mongo.analyses, session=session)
-
-            await self._mongo.analyses.insert_one(
-                {
-                    "_id": analysis_id,
-                    "created_at": created_at,
-                    "files": [],
-                    "index": {"id": index_id, "version": index_version},
-                    "job": {"id": job_id},
-                    "ml": data.ml,
-                    "reference": {
-                        "id": data.ref_id,
-                    },
-                    "ready": False,
-                    "results": None,
-                    "sample": {"id": sample_id},
-                    "space": {"id": space_id},
-                    "subtractions": data.subtractions,
-                    "updated_at": created_at,
-                    "user": {
-                        "id": user_id,
-                    },
-                    "workflow": data.workflow.value,
+        await self._mongo.analyses.insert_one(
+            {
+                "_id": analysis_id,
+                "created_at": created_at,
+                "files": [],
+                "index": {"id": index_id, "version": index_version},
+                "job": {"id": job_id},
+                "ml": data.ml,
+                "reference": {
+                    "id": data.ref_id,
                 },
-            )
+                "ready": False,
+                "results": None,
+                "sample": {"id": sample_id},
+                "space": {"id": space_id},
+                "subtractions": data.subtractions,
+                "updated_at": created_at,
+                "user": {
+                    "id": user_id,
+                },
+                "workflow": data.workflow.value,
+            },
+        )
 
         await self.data.jobs.create(
             data.workflow.value,
@@ -272,7 +289,7 @@ class AnalysisData(DataLayerDomain):
                 "analysis_id": analysis_id,
                 "ref_id": data.ref_id,
                 "sample_id": sample_id,
-                "sample_name": sample["name"],
+                "sample_name": sample_name,
                 "index_id": index_id,
                 "subtractions": data.subtractions,
             },
@@ -334,26 +351,43 @@ class AnalysisData(DataLayerDomain):
             # Only the jobs API is allowed to delete incomplete analyses.
             raise ResourceConflictError
 
-        await self._mongo.analyses.delete_one({"_id": analysis.id})
-
-        path = (
-            self._config.data_path
-            / "samples"
-            / analysis.sample.id
-            / "analysis"
-            / analysis_id
-        )
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            await asyncio.gather(
+                self._mongo.analyses.delete_one(
+                    {"_id": analysis.id},
+                    session=mongo_session,
+                ),
+                pg_session.execute(
+                    delete(SQLAnalysisResult).where(
+                        SQLAnalysisResult.analysis_id == analysis_id,
+                    ),
+                ),
+            )
 
         try:
-            await asyncio.to_thread(rm, path, True)
+            await asyncio.to_thread(
+                rm,
+                self._config.data_path
+                / "samples"
+                / analysis.sample.id
+                / "analysis"
+                / analysis_id,
+                True,
+            )
         except FileNotFoundError:
             pass
 
         await recalculate_workflow_tags(self._mongo, analysis.sample.id)
 
-        sample = await self.data.samples.get(analysis.sample.id)
-
-        emit(sample, "samples", "recalculate_workflow_tags", Operation.UPDATE)
+        emit(
+            await self.data.samples.get(analysis.sample.id),
+            "samples",
+            "recalculate_workflow_tags",
+            Operation.UPDATE,
+        )
         emit(analysis, "analyses", "delete", Operation.DELETE)
 
     async def upload_file(
@@ -362,10 +396,10 @@ class AnalysisData(DataLayerDomain):
         analysis_id: str,
         analysis_format: str,
         name: str,
-    ) -> Optional[AnalysisFile]:
+    ) -> AnalysisFile | None:
         """Uploads a new analysis result file.
 
-        :param reader: the file reader
+        :param chunks: a chunker that yields chunks of data
         :param analysis_id: the analysis ID
         :param analysis_format: the format of the analysis
         :param name: the name of the analysis file
@@ -385,16 +419,14 @@ class AnalysisData(DataLayerDomain):
 
         upload_id = analysis_file["id"]
 
-        analysis_file_path = (
-            self._config.data_path / "analyses" / analysis_file["name_on_disk"]
-        )
-
         try:
-            size = await naive_writer(chunks, analysis_file_path)
+            size = await naive_writer(
+                chunks,
+                self._config.data_path / "analyses" / analysis_file["name_on_disk"],
+            )
         except asyncio.CancelledError:
             logger.info("analysis file upload aborted", upload_id=upload_id)
             await delete_row(self._pg, upload_id, SQLAnalysisFile)
-
             return None
 
         analysis_file = await virtool.uploads.db.finalize(
@@ -419,7 +451,11 @@ class AnalysisData(DataLayerDomain):
 
         raise ResourceNotFoundError()
 
-    async def download(self, analysis_id: str, extension: str) -> Tuple[str, str]:
+    async def download(
+        self,
+        analysis_id: str,
+        extension: str,
+    ) -> tuple[bytes | str, str]:
         """Get an analysis to be downloaded in CSV or XSLX format.
 
         :param analysis_id: the analysis ID
@@ -427,6 +463,16 @@ class AnalysisData(DataLayerDomain):
         :return: formatted file and file content type
         """
         document = await self._mongo.analyses.find_one(analysis_id)
+
+        if document["results"] == "sql":
+            async with AsyncSession(self._pg) as session:
+                result = await session.execute(
+                    select(SQLAnalysisResult.results).where(
+                        SQLAnalysisResult.analysis_id == analysis_id,
+                    ),
+                )
+
+                document["results"] = result.scalars().one()
 
         if not document:
             raise ResourceNotFoundError()
@@ -450,25 +496,35 @@ class AnalysisData(DataLayerDomain):
             "text/csv",
         )
 
-    async def blast(self, analysis_id: str, sequence_index: int) -> Optional[str]:
+    async def blast(self, analysis_id: str, sequence_index: int) -> str | None:
         """BLAST a contig sequence that is part of a NuVs result record.
 
         :param analysis_id: the analysis ID
         :param sequence_index: the sequence index
         :return: the nuvs sequence
         """
+        timestamp = virtool.utils.timestamp()
+
         document = await self._mongo.analyses.find_one(
             {"_id": analysis_id},
             ["ready", "workflow", "results", "sample"],
         )
 
+        if document["results"] == "sql":
+            async with AsyncSession(self._pg) as session:
+                result = await session.execute(
+                    select(SQLAnalysisResult.results).where(
+                        SQLAnalysisResult.analysis_id == analysis_id,
+                    ),
+                )
+
+                document["results"] = result.scalars().one()
+
         await wait_for_checks(
-            check_analysis_workflow(document["workflow"]),
-            check_if_analysis_running(document["ready"]),
+            check_if_analysis_is_nuvs(document["workflow"]),
+            check_if_analysis_is_running(document["ready"]),
             check_analysis_nuvs_sequence(document, sequence_index),
         )
-
-        timestamp = virtool.utils.timestamp()
 
         async with AsyncSession(self._pg) as session:
             await session.execute(
@@ -523,18 +579,31 @@ class AnalysisData(DataLayerDomain):
         if document.get("ready"):
             raise ResourceConflictError
 
-        document = await self._mongo.analyses.find_one_and_update(
-            {"_id": analysis_id},
-            {"$set": {"results": results, "ready": True}},
-        )
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            await pg_session.execute(
+                insert(SQLAnalysisResult).values(
+                    analysis_id=analysis_id,
+                    results=results,
+                ),
+            )
+
+            document = await self._mongo.analyses.find_one_and_update(
+                {"_id": analysis_id},
+                {"$set": {"results": "sql", "ready": True}},
+                session=mongo_session,
+            )
 
         sample_id = document["sample"]["id"]
 
         await recalculate_workflow_tags(self._mongo, sample_id)
 
-        analysis = await self.get(analysis_id, None)
-
-        sample = await self.data.samples.get(sample_id)
+        analysis, sample = await asyncio.gather(
+            self.get(analysis_id, None),
+            self.data.samples.get(sample_id),
+        )
 
         emit(
             sample,

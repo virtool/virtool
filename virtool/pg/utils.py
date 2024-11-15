@@ -1,17 +1,20 @@
 import sys
 from enum import Enum
-from typing import Optional, Type, Union
 
 import orjson
 from sqlalchemy import select, text
 from sqlalchemy.engine.result import ScalarResult
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from structlog import get_logger
+from typing_extensions import TypeVar
 
 from virtool.api.custom_json import dump_string
 from virtool.pg.base import Base
 
 logger = get_logger("pg")
+
+RowType = TypeVar("RowType", bound=Base)
+"""TypeVar for SQL row types."""
 
 
 class SQLEnum(Enum):
@@ -62,7 +65,7 @@ async def check_version(engine: AsyncEngine):
     logger.info("found postgres", version=version)
 
 
-async def delete_row(pg: AsyncEngine, id_: int, model: Type[Base]):
+async def delete_row(pg: AsyncEngine, id_: int, model: type[Base]):
     """Deletes a row in the `model` SQL model by its row `id_`.
 
     :param pg: the application AsyncEngine object
@@ -77,7 +80,9 @@ async def delete_row(pg: AsyncEngine, id_: int, model: Type[Base]):
             await session.commit()
 
 
-async def get_row_by_id(pg: AsyncEngine, model: Type[Base], id_: int) -> Base | None:
+async def get_row_by_id(
+    pg: AsyncEngine, model: type[RowType], id_: int
+) -> RowType | None:
     """Get a row from a SQL `model` by its `id`.
 
     :param pg: the application AsyncEngine object
@@ -88,7 +93,11 @@ async def get_row_by_id(pg: AsyncEngine, model: Type[Base], id_: int) -> Base | 
     return await get_row(pg, model, ("id", id_))
 
 
-async def get_row(pg: AsyncEngine, model: Type[Base], match: tuple) -> Optional[Base]:
+async def get_row(
+    pg: AsyncEngine,
+    model: type[RowType],
+    match: tuple,
+) -> RowType | None:
     """Get a row from the SQL `model` that matches a query and column combination.
 
     :param pg: the application AsyncEngine object
@@ -105,9 +114,9 @@ async def get_row(pg: AsyncEngine, model: Type[Base], match: tuple) -> Optional[
 
 async def get_rows(
     pg: AsyncEngine,
-    model: Type[Base],
+    model: type[Base],
     filter_: str = "name",
-    query: Optional[Union[str, int, bool, SQLEnum]] = None,
+    query: str | int | bool | SQLEnum | None = None,
 ) -> ScalarResult:
     """Get one or more rows from the `model` SQL model by its `filter_`.
 
@@ -131,7 +140,7 @@ async def get_rows(
 
 async def get_generic(
     pg: AsyncEngine,
-    statement: Type[Base],
+    statement: type[Base],
 ) -> ScalarResult:
     """Generic function for getting data from SQL database.
 

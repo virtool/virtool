@@ -11,18 +11,15 @@ from structlog import get_logger
 from virtool_core.redis import Redis
 
 from virtool.authorization.client import (
-    AuthorizationClient,
     get_authorization_client_from_app,
 )
-from virtool.authorization.openfga import connect_openfga
+from virtool.authorization.connect import connect_authorization_client
 from virtool.config import get_config_from_app
 from virtool.data.events import EventPublisher
 from virtool.data.layer import create_data_layer
 from virtool.data.utils import get_data_from_app
 from virtool.migration.pg import check_data_revision_version
 from virtool.mongo.connect import connect_mongo
-from virtool.mongo.core import Mongo
-from virtool.mongo.identifier import RandomIdProvider
 from virtool.mongo.migrate import migrate_status
 from virtool.mongo.utils import get_mongo_from_app
 from virtool.oidc.utils import JWKArgs
@@ -45,6 +42,12 @@ class B2C:
     authority: str
     jwk_args: JWKArgs = None
     auth_code_flow: dict = None
+
+
+async def _connect_redis(redis_connection_string: str) -> Redis:
+    redis = Redis(redis_connection_string)
+    await redis.connect()
+    return redis
 
 
 async def startup_b2c(app: App):
@@ -121,17 +124,18 @@ async def startup_databases(app: App):
     """
     config = get_config_from_app(app)
 
-    redis = Redis(config.redis_connection_string)
-
-    mongo, pg, _, openfga_instance = await asyncio.gather(
-        connect_mongo(config.mongodb_connection_string, config.mongodb_database),
-        connect_pg(config.postgres_connection_string),
-        redis.connect(),
-        connect_openfga(
+    authorization_client, mongo, pg, redis = await asyncio.gather(
+        connect_authorization_client(
             config.openfga_host,
             config.openfga_scheme,
             config.openfga_store_name,
         ),
+        connect_mongo(
+            config.mongodb_connection_string,
+            config.mongodb_database,
+        ),
+        connect_pg(config.postgres_connection_string),
+        _connect_redis(config.redis_connection_string),
     )
 
     if not get_config_from_app(app).no_revision_check:
@@ -139,8 +143,8 @@ async def startup_databases(app: App):
 
     app.update(
         {
-            "authorization": AuthorizationClient(openfga_instance),
-            "mongo": Mongo(mongo, RandomIdProvider()),
+            "authorization": authorization_client,
+            "mongo": mongo,
             "pg": pg,
             "redis": redis,
         },
@@ -231,7 +235,7 @@ async def startup_version(app: App):
     :param app: the application object
 
     """
-    version = await determine_server_version()
+    version = await asyncio.to_thread(determine_server_version)
 
     logger.info("starting virtool", version=version, mode=app["mode"])
 
@@ -246,7 +250,9 @@ async def startup_ws(app: App):
 
     scheduler = get_scheduler_from_app(app)
 
-    await scheduler.spawn(ws.run())
-    await scheduler.spawn(ws.periodically_close_expired_websocket_connections())
+    await asyncio.gather(
+        scheduler.spawn(ws.run()),
+        scheduler.spawn(ws.periodically_close_expired_websocket_connections()),
+    )
 
     app["ws"] = ws

@@ -2,10 +2,9 @@
 
 import asyncio
 import gzip
+from collections.abc import AsyncGenerator
 from pathlib import Path
-from typing import AsyncGenerator, Type
 
-import aiofiles
 from faker import Faker
 from faker.providers import (
     BaseProvider,
@@ -62,8 +61,8 @@ async def fake_file_chunker(path: Path) -> AsyncGenerator[bytearray, None]:
     :param path: the path to the file
     :return: an async generator that yields chunks of the file
     """
-    async with aiofiles.open(path, "rb") as f:
-        yield await f.read(CHUNK_SIZE)
+    with open(path, "rb") as f:
+        yield f.read(CHUNK_SIZE)
 
 
 async def gzip_file_chunker(path: Path) -> AsyncGenerator[bytearray, None]:
@@ -396,7 +395,7 @@ class TasksFakerDomain(DataFakerDomain):
             {},
         )
 
-    async def create_with_class(self, cls: Type[BaseTask], context: dict) -> Task:
+    async def create_with_class(self, cls: type[BaseTask], context: dict) -> Task:
         """Create a fake task.
 
         :param cls: the type of task
@@ -529,7 +528,6 @@ class SubtractionFakerDomain(DataFakerDomain):
         :param finalized whether the subtraction should be finalized
         :return: the created subtraction
         """
-
         subtraction = await self._layer.subtractions.create(
             CreateSubtractionRequest(
                 name="foo",
@@ -542,7 +540,7 @@ class SubtractionFakerDomain(DataFakerDomain):
 
         if upload_files:
             for path in sorted(
-                (example_path / "subtractions" / "arabidopsis_thaliana").iterdir()
+                (example_path / "subtractions" / "arabidopsis_thaliana").iterdir(),
             ):
                 await self._layer.subtractions.upload_file(
                     subtraction.id,
