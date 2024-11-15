@@ -10,6 +10,7 @@ from asyncio import to_thread
 from pathlib import Path
 
 import arrow
+import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from virtool_core.utils import compress_file, file_stats
@@ -126,17 +127,6 @@ async def upgrade(ctx: MigrationContext):
         ):
             sample_id = sample["_id"]
             for file in sample["files"]:
-                from_ = file.get("from")
-
-                upload = SQLUpload(
-                    name=from_["name"],
-                    name_on_disk=from_["id"],
-                    size=from_["size"],
-                    uploaded_at=from_.get("uploaded_at"),
-                    removed=True,
-                    reserved=True,
-                )
-
                 reads = SQLSampleReads(
                     name=file["name"],
                     name_on_disk=file["name"],
@@ -144,9 +134,40 @@ async def upgrade(ctx: MigrationContext):
                     sample=sample_id,
                 )
 
+                from_ = file.get("from")
+
+                upload = (
+                    (
+                        await pg_session.scalars(
+                            select(SQLUpload).where(
+                                SQLUpload.name_on_disk == from_["id"],
+                            ),
+                        )
+                    )
+                    .unique()
+                    .one_or_none()
+                )
+
+                if not upload:
+                    from_size = from_.get("size")
+                    if from_size is None and (ctx.data_path / "files").exists():
+                        file_path = ctx.data_path / "files" / from_.get("id")
+                        from_size = (
+                            file_path.stat().st_size if file_path.exists() else 0
+                        )
+
+                    upload = SQLUpload(
+                        name=from_["name"],
+                        name_on_disk=from_["id"],
+                        size=from_size,
+                        uploaded_at=from_.get("uploaded_at"),
+                        removed=True,
+                        reserved=True,
+                    )
+
                 upload.reads.append(reads)
 
-                pg_session.add_all([upload, reads])
+                pg_session.add_all([reads, upload])
 
             await ctx.mongo.samples.update_one(
                 {"_id": sample_id},
@@ -163,19 +184,73 @@ async def upgrade(ctx: MigrationContext):
             await to_thread(path.unlink, missing_ok=True)
 
 
-async def test_upgrade(ctx, snapshot):
-    async with ctx.pg.begin() as conn:
-        await conn.run_sync(SQLSampleReads.metadata.create_all)
-        await conn.run_sync(SQLUpload.metadata.create_all)
-        await conn.commit()
+class TestUpgrade:
+    @pytest.fixture()
+    def create_files(self, ctx):
+        async def func(sample):
+            read_path = ctx.data_path / "samples" / sample["_id"]
+            read_path.mkdir(parents=True, exist_ok=True)
+            files = sample.get("files")
 
-    samples = [
-        {
+            if files:
+                files = [files] if isinstance(files, dict) else files
+                for file in files:
+                    read_path.joinpath(file["name"]).write_text(file["name"])
+
+        return func
+
+    @pytest.fixture()
+    def verify_snapshots(self, ctx, snapshot):
+        async def func(sample):
+            assert [sample async for sample in ctx.mongo.samples.find({})] == snapshot(
+                name="mongo_after",
+            )
+
+            async with AsyncSession(ctx.pg) as session:
+                assert (
+                    await session.execute(select(SQLUpload))
+                ).unique().scalars().all() == snapshot(name="SQLUploads after")
+                assert (
+                    await session.execute(select(SQLSampleReads))
+                ).scalars().all() == snapshot(name="SQLSampleReads after")
+
+            assert os.listdir(ctx.data_path / "samples" / sample["_id"]) == snapshot(
+                name=f"{sample["_id"]}files after",
+            )
+
+        return func
+
+    @pytest.fixture(autouse=True)
+    async def setup_pg(self, ctx):
+        async with ctx.pg.begin() as conn:
+            await conn.run_sync(SQLSampleReads.metadata.create_all)
+            await conn.run_sync(SQLUpload.metadata.create_all)
+            await conn.commit()
+
+    @staticmethod
+    async def test_modern_sample(ctx, verify_snapshots, setup_pg):
+        sample = {
             "_id": "modern_sample",
             "is_legacy": False,
             "paired": False,
-        },
-        {
+        }
+
+        read_path = ctx.data_path / "samples" / sample["_id"]
+        read_path.mkdir(parents=True, exist_ok=True)
+
+        await ctx.mongo.samples.insert_one(sample)
+
+        await upgrade(ctx)
+
+        await verify_snapshots(sample)
+
+    @staticmethod
+    async def test_unpaired_legacy(
+        ctx,
+        create_files,
+        verify_snapshots,
+    ):
+        sample = {
             "_id": "unpaired_legacy",
             "is_legacy": True,
             "paired": False,
@@ -191,8 +266,140 @@ async def test_upgrade(ctx, snapshot):
                     },
                 },
             ],
-        },
-        {
+        }
+
+        await create_files(sample)
+
+        await ctx.mongo.samples.insert_one(sample)
+
+        await upgrade(ctx)
+
+        await verify_snapshots(sample)
+
+    @staticmethod
+    async def test_unpaired_legacy_pre_existing_upload(
+        create_files,
+        ctx,
+        verify_snapshots,
+        static_time,
+    ):
+        sample = {
+            "_id": "unpaired_legacy_pre_existing_upload",
+            "is_legacy": True,
+            "paired": False,
+            "files": [
+                {
+                    "name": "reads_1.fastq",
+                    "size": 1,
+                    "raw": True,
+                    "from": {
+                        "id": "unpaired_legacy_pre_existing_upload.fastq",
+                        "name": "unpaired_legacy_pre_existing_upload.fastq",
+                        "size": 1,
+                    },
+                },
+            ],
+        }
+
+        async with AsyncSession(ctx.pg) as session:
+            session.add(
+                SQLUpload(
+                    name="unpaired_legacy_pre_existing_upload",
+                    name_on_disk="unpaired_legacy_pre_existing_upload.fastq",
+                    size=10,
+                    uploaded_at=static_time.datetime,
+                    removed=False,
+                    reserved=True,
+                ),
+            )
+            await session.commit()
+
+        await create_files(sample)
+
+        await ctx.mongo.samples.insert_one(sample)
+
+        await upgrade(ctx)
+
+        await verify_snapshots(sample)
+
+    @staticmethod
+    async def test_unpaired_legacy_no_from_size(
+        create_files,
+        ctx,
+        verify_snapshots,
+    ):
+        sample = {
+            "_id": "unpaired_legacy_no_from_size",
+            "is_legacy": True,
+            "paired": False,
+            "files": [
+                {
+                    "name": "reads_1.fastq",
+                    "size": 1,
+                    "raw": True,
+                    "from": {
+                        "id": "unpaired_legacy_no_from_size.fastq",
+                        "name": "unpaired_legacy_no_from_size.fastq",
+                    },
+                },
+            ],
+        }
+
+        await create_files(sample)
+
+        files_path = ctx.data_path / "files"
+        files_path.mkdir(parents=True, exist_ok=True)
+        files_path.joinpath("unpaired_legacy_no_from_size.fastq").write_text(
+            "unpaired_legacy_no_from_size",
+        )
+
+        await ctx.mongo.samples.insert_one(sample)
+
+        await upgrade(ctx)
+
+        await verify_snapshots(sample)
+
+    @staticmethod
+    async def test_unpaired_legacy_no_from_size_unrecoverable(
+        create_files,
+        ctx,
+        verify_snapshots,
+    ):
+        sample = {
+            "_id": "unpaired_legacy_no_from_size_unrecoverable",
+            "is_legacy": True,
+            "paired": False,
+            "files": [
+                {
+                    "name": "reads_1.fastq",
+                    "size": 1,
+                    "raw": True,
+                    "from": {
+                        "id": "unpaired_legacy_no_from_size_unrecoverable.fastq",
+                        "name": "unpaired_legacy_no_from_size_unrecoverable.fastq",
+                    },
+                },
+            ],
+        }
+
+        files_path = ctx.data_path / "files"
+        files_path.mkdir(parents=True, exist_ok=True)
+
+        await create_files(sample)
+
+        await ctx.mongo.samples.insert_one(sample)
+
+        await upgrade(ctx)
+
+        await verify_snapshots(sample)
+
+    @staticmethod
+    async def test_paired_unknown_legacy(
+        create_files,
+        ctx,
+        verify_snapshots,
+    ):
+        sample = {
             "_id": "paired_unknown_legacy",
             "paired": True,
             "files": [
@@ -217,8 +424,23 @@ async def test_upgrade(ctx, snapshot):
                     },
                 },
             ],
-        },
-        {
+        }
+
+        await create_files(sample)
+
+        await ctx.mongo.samples.insert_one(sample)
+
+        await upgrade(ctx)
+
+        await verify_snapshots(sample)
+
+    @staticmethod
+    async def test_unpaired_unknown_legacy(
+        create_files,
+        ctx,
+        verify_snapshots,
+    ):
+        sample = {
             "_id": "unpaired_unknown_legacy",
             "paired": False,
             "files": [
@@ -233,8 +455,23 @@ async def test_upgrade(ctx, snapshot):
                     },
                 },
             ],
-        },
-        {
+        }
+
+        await create_files(sample)
+
+        await ctx.mongo.samples.insert_one(sample)
+
+        await upgrade(ctx)
+
+        await verify_snapshots(sample)
+
+    @staticmethod
+    async def test_unpaired_legacy_compressed(
+        create_files,
+        ctx,
+        verify_snapshots,
+    ):
+        sample = {
             "_id": "unpaired_legacy_compressed",
             "paired": False,
             "is_legacy": True,
@@ -244,14 +481,29 @@ async def test_upgrade(ctx, snapshot):
                     "size": 1,
                     "raw": False,
                     "from": {
-                        "id": "unpaired_unknown_legacy_compressed.fastq",
-                        "name": "unpaired_unknown_legacy_compressed.fastq",
+                        "id": "unpaired_legacy_compressed.fastq",
+                        "name": "unpaired_legacy_compressed.fastq",
                         "size": 1,
                     },
                 },
             ],
-        },
-        {
+        }
+
+        await create_files(sample)
+
+        await ctx.mongo.samples.insert_one(sample)
+
+        await upgrade(ctx)
+
+        await verify_snapshots(sample)
+
+    @staticmethod
+    async def test_unpaired_legacy_partial_compression(
+        create_files,
+        ctx,
+        verify_snapshots,
+    ):
+        sample = {
             "_id": "unpaired_legacy_partial_compression",
             "paired": False,
             "files": [
@@ -266,46 +518,16 @@ async def test_upgrade(ctx, snapshot):
                     },
                 },
             ],
-        },
-    ]
+        }
 
-    for sample in samples:
-        read_path = ctx.data_path / "samples" / sample["_id"]
-        read_path.mkdir(parents=True, exist_ok=True)
-        files = sample.get("files")
+        await create_files(sample)
 
-        if files:
-            files = [files] if isinstance(files, dict) else files
-            for file in files:
-                read_path.joinpath(file["name"]).write_text(file["name"])
-
-    (
-        ctx.data_path
-        / "samples"
-        / "unpaired_legacy_partial_compression"
-        / "reads_1.fq.gz"
-    ).write_text("unpaired_legacy_partial_compression")
-
-    await ctx.mongo.samples.insert_many(samples)
-
-    await upgrade(ctx)
-
-    assert [sample async for sample in ctx.mongo.samples.find({})] == snapshot(
-        name="mongo_after",
-    )
-
-    async with AsyncSession(ctx.pg) as session:
-        assert (
-            await session.execute(select(SQLUpload).order_by(SQLUpload.id))
-        ).unique().scalars().all() == snapshot(name="SQLUploads after")
-
-        assert (
-            await session.execute(select(SQLSampleReads).order_by(SQLSampleReads.id))
-        ).scalars().all() == snapshot(name="SQLSampleReads after")
-
-    for sample in samples:
-        assert sorted(
-            os.listdir(ctx.data_path / "samples" / sample["_id"])
-        ) == snapshot(
-            name=f"{sample["_id"]}files after",
+        (ctx.data_path / "samples" / sample["_id"] / "reads_1.fq.gz").write_text(
+            sample["_id"],
         )
+
+        await ctx.mongo.samples.insert_one(sample)
+
+        await upgrade(ctx)
+
+        await verify_snapshots(sample)
