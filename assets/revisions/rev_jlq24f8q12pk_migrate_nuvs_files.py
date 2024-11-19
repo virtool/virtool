@@ -38,7 +38,7 @@ async def long_session(mongo: "Mongo"):
     :param mongo: the application MongoDB client
     """
     async with (
-        await mongo.motor_database.client.start_session() as session,
+        await mongo.client.start_session() as session,
     ):
 
         async def refresh_session():
@@ -54,7 +54,7 @@ async def long_session(mongo: "Mongo"):
 
 
 async def upgrade(ctx: MigrationContext):
-    with long_session(ctx.mongo) as mongo_session:
+    async with long_session(ctx.mongo) as mongo_session:
         async for analysis in ctx.mongo.analyses.find(
             {"workflow": "nuvs"},
             session=mongo_session,
