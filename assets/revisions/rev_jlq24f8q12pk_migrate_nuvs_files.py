@@ -1,5 +1,4 @@
-"""
-migrate nuvs files
+"""migrate nuvs files
 
 Revision ID: jlq24f8q12pk
 Date: 2024-05-31 20:25:49.413590
@@ -30,83 +29,111 @@ virtool_down_revision = "t05gnq2g81qz"
 required_alembic_revision = None
 
 
+@asynccontextmanager
+async def long_session(mongo: "Mongo"):
+    """A context manager responsible for spinning up and tearing down a long running mongodb
+    session
+
+    :param mongo: the application MongoDB client
+    """
+    async with (
+        await mongo.motor_database.client.start_session() as session,
+    ):
+
+        async def refresh_session():
+            while True:
+                await asyncio.sleep(600)
+                mongo.adminCommand({"refreshSession": [session]})
+
+        refresh_thread = asyncio.to_thread(refresh_session)
+
+        yield session
+
+        refresh_thread.close()
+
+
 async def upgrade(ctx: MigrationContext):
-    async for analysis in ctx.mongo.analyses.find({"workflow": "nuvs"}):
-        analysis_id = analysis["_id"]
-        sample_id = analysis["sample"]["id"]
+    with long_session(ctx.mongo) as mongo_session:
+        async for analysis in ctx.mongo.analyses.find(
+            {"workflow": "nuvs"},
+            session=mongo_session,
+        ):
+            analysis_id = analysis["_id"]
+            sample_id = analysis["sample"]["id"]
 
-        old_path = ctx.data_path / "samples" / sample_id / "analysis" / analysis_id
-        target_path = ctx.data_path / "analyses" / analysis_id
-
-        async with AsyncSession(ctx.pg) as session:
-            exists = (
-                await session.execute(
-                    select(SQLAnalysisFile).filter_by(analysis=analysis_id),
-                )
-            ).scalar()
-
-        if await asyncio.to_thread(old_path.is_dir) and not exists:
-            await asyncio.to_thread(target_path.mkdir, exist_ok=True, parents=True)
-
-            analysis_files = []
-
-            for filename in sorted(os.listdir(old_path)):
-                if filename in (
-                    "hmm.tsv",
-                    "assembly.fa",
-                    "orfs.fa",
-                    "unmapped_hosts.fq",
-                    "unmapped_otus.fq",
-                ):
-                    analysis_files.append(filename)
-                    if filename == "hmm.tsv":
-                        await asyncio.to_thread(
-                            shutil.copy, old_path / "hmm.tsv", target_path / "hmm.tsv"
-                        )
-                    else:
-                        await asyncio.to_thread(
-                            compress_file,
-                            old_path / filename,
-                            target_path / f"{filename}.gz",
-                        )
-
-            sql_analysis_files = []
-
-            for filename in analysis_files:
-                file_type = check_nuvs_file_type(filename)
-
-                if not filename.endswith(".tsv"):
-                    filename += ".gz"
-
-                size = (await asyncio.to_thread(file_stats, target_path / filename))[
-                    "size"
-                ]
-
-                sql_analysis_files.append(
-                    SQLAnalysisFile(
-                        name=filename,
-                        analysis=analysis_id,
-                        format=file_type,
-                        size=size,
-                    ),
-                )
+            old_path = ctx.data_path / "samples" / sample_id / "analysis" / analysis_id
+            target_path = ctx.data_path / "analyses" / analysis_id
 
             async with AsyncSession(ctx.pg) as session:
-                session.add_all(sql_analysis_files)
+                exists = (
+                    await session.execute(
+                        select(SQLAnalysisFile).filter_by(analysis=analysis_id),
+                    )
+                ).scalar()
 
-                await session.flush()
+            if await asyncio.to_thread(old_path.is_dir) and not exists:
+                await asyncio.to_thread(target_path.mkdir, exist_ok=True, parents=True)
 
-                for analysis_file in sql_analysis_files:
-                    analysis_file.name_on_disk = (
-                        f"{analysis_file.id}-{analysis_file.name}"
+                analysis_files = []
+
+                for filename in sorted(os.listdir(old_path)):
+                    if filename in (
+                        "hmm.tsv",
+                        "assembly.fa",
+                        "orfs.fa",
+                        "unmapped_hosts.fq",
+                        "unmapped_otus.fq",
+                    ):
+                        analysis_files.append(filename)
+                        if filename == "hmm.tsv":
+                            await asyncio.to_thread(
+                                shutil.copy,
+                                old_path / "hmm.tsv",
+                                target_path / "hmm.tsv",
+                            )
+                        else:
+                            await asyncio.to_thread(
+                                compress_file,
+                                old_path / filename,
+                                target_path / f"{filename}.gz",
+                            )
+
+                sql_analysis_files = []
+
+                for filename in analysis_files:
+                    file_type = check_nuvs_file_type(filename)
+
+                    if not filename.endswith(".tsv"):
+                        filename += ".gz"
+
+                    size = (
+                        await asyncio.to_thread(file_stats, target_path / filename)
+                    )["size"]
+
+                    sql_analysis_files.append(
+                        SQLAnalysisFile(
+                            name=filename,
+                            analysis=analysis_id,
+                            format=file_type,
+                            size=size,
+                        ),
                     )
 
-                await session.commit()
+                async with AsyncSession(ctx.pg) as session:
+                    session.add_all(sql_analysis_files)
+
+                    await session.flush()
+
+                    for analysis_file in sql_analysis_files:
+                        analysis_file.name_on_disk = (
+                            f"{analysis_file.id}-{analysis_file.name}"
+                        )
+
+                    await session.commit()
 
 
 def check_nuvs_file_type(file_name: str) -> str:
-    """
-    Get the NuVs analysis file type based on the extension of given `file_name`
+    """Get the NuVs analysis file type based on the extension of given `file_name`
 
     :param file_name: NuVs analysis file name
     :return: file type
@@ -135,7 +162,7 @@ async def test_upgrade(ctx, snapshot):
     analysis_path.joinpath("unmapped_otus.fq").write_text("FASTQ file")
 
     await ctx.mongo.analyses.insert_one(
-        {"_id": "bar", "workflow": "nuvs", "sample": {"id": "foo"}}
+        {"_id": "bar", "workflow": "nuvs", "sample": {"id": "foo"}},
     )
 
     await upgrade(ctx)
