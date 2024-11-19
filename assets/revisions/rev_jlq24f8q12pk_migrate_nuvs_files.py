@@ -46,11 +46,11 @@ async def long_session(mongo: "Mongo"):
                 await asyncio.sleep(600)
                 mongo.adminCommand({"refreshSession": [session]})
 
-        refresh_thread = asyncio.to_thread(refresh_session)
+        refresh_task = asyncio.Task(refresh_session())
 
         yield session
 
-        refresh_thread.close()
+        refresh_task.cancel()
 
 
 async def upgrade(ctx: MigrationContext):
