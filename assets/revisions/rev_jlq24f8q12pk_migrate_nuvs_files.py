@@ -44,7 +44,7 @@ async def long_session(mongo: "Mongo"):
         async def refresh_session():
             while True:
                 await asyncio.sleep(600)
-                mongo.adminCommand({"refreshSession": [session]})
+                await mongo.command({"refreshSessions": [session.session_id]})
 
         refresh_task = asyncio.Task(refresh_session())
 
