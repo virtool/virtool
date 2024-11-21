@@ -288,5 +288,12 @@
       'name': 'Add analysis results table',
       'revision': 'b79c1e6cf56c',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 42,
+      'name': 'update subtraction nicknames created_at and file names',
+      'revision': 'oxu8ghlvuqmh',
+    }),
   ])
 # ---
