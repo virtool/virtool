@@ -8,7 +8,6 @@ Date: 2024-05-31 20:25:49.413590
 import asyncio
 import os
 import shutil
-from contextlib import asynccontextmanager
 
 import arrow
 from sqlalchemy import select
@@ -17,6 +16,7 @@ from virtool_core.utils import compress_file, file_stats
 
 from virtool.analyses.models import SQLAnalysisFile
 from virtool.migration import MigrationContext
+from virtool.migration.db import persistent_session
 
 # Revision identifiers.
 name = "migrate nuvs files"
@@ -30,31 +30,8 @@ virtool_down_revision = "t05gnq2g81qz"
 required_alembic_revision = None
 
 
-@asynccontextmanager
-async def long_session(mongo: "Mongo"):
-    """A context manager responsible for spinning up and tearing down a long running mongodb
-    session
-
-    :param mongo: the application MongoDB client
-    """
-    async with (
-        await mongo.client.start_session() as session,
-    ):
-
-        async def refresh_session():
-            while True:
-                await asyncio.sleep(600)
-                await mongo.command({"refreshSessions": [session.session_id]})
-
-        refresh_task = asyncio.Task(refresh_session())
-
-        yield session
-
-        refresh_task.cancel()
-
-
 async def upgrade(ctx: MigrationContext):
-    async with long_session(ctx.mongo) as mongo_session:
+    async with persistent_session(ctx.mongo) as mongo_session:
         async for analysis in ctx.mongo.analyses.find(
             {"workflow": "nuvs"},
             session=mongo_session,
