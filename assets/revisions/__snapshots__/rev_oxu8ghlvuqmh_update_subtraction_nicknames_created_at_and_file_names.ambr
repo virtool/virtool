@@ -1,0 +1,23 @@
+# serializer version: 1
+# name: test_upgrade
+  list([
+    dict({
+      '_id': 'complete',
+      'created_at': datetime,
+      'file': dict({
+        'id': 'complete_file_id',
+        'name': 'complete_file_name',
+      }),
+      'nickname': 'complete_nickname',
+    }),
+    dict({
+      '_id': 'legacy',
+      'created_at': datetime,
+      'file': dict({
+        'id': 'legacy_file_id',
+        'name': 'legacy_file_id',
+      }),
+      'nickname': '',
+    }),
+  ])
+# ---
