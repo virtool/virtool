@@ -34,7 +34,10 @@ async def upgrade(ctx: MigrationContext):
         {"created_at": {"$exists": False}},
     ):
         index_stats = (
-            ctx.data_path / "subtractions" / subtraction["_id"] / "reference.1.bt2"
+            ctx.data_path
+            / "subtractions"
+            / subtraction["_id"].replace(" ", "_")
+            / "reference.1.bt2"
         ).stat()
 
         created_at = (
