@@ -37,7 +37,7 @@ async def upgrade(ctx: MigrationContext):
             ctx.data_path
             / "subtractions"
             / subtraction["_id"].replace(" ", "_")
-            / "reference.1.bt2"
+            / "subtraction.1.bt2"
         ).stat()
 
         created_at = (
@@ -81,7 +81,7 @@ async def test_upgrade(ctx: MigrationContext, snapshot):
 
     subtraction_path = ctx.data_path / "subtractions" / "legacy"
     subtraction_path.mkdir(exist_ok=True, parents=True)
-    index_file = subtraction_path / "reference.1.bt2"
+    index_file = subtraction_path / "subtraction.1.bt2"
     index_file.write_text("subtraction_index")
 
     await upgrade(ctx)
