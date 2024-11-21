@@ -25,12 +25,12 @@ required_alembic_revision = None
 
 
 async def upgrade(ctx: MigrationContext):
-    await ctx.mongo.subtractions.update_many(
+    await ctx.mongo.subtraction.update_many(
         {"nickname": {"$exists": False}},
         {"$set": {"nickname": ""}},
     )
 
-    async for subtraction in ctx.mongo.subtractions.find(
+    async for subtraction in ctx.mongo.subtraction.find(
         {"created_at": {"$exists": False}},
     ):
         index_stats = (
@@ -43,12 +43,12 @@ async def upgrade(ctx: MigrationContext):
             else index_stats.st_mtime
         )
 
-        await ctx.mongo.subtractions.update_one(
+        await ctx.mongo.subtraction.update_one(
             {"_id": subtraction["_id"]},
             {"$set": {"created_at": datetime.datetime.fromtimestamp(created_at)}},
         )
 
-    await ctx.mongo.subtractions.update_many(
+    await ctx.mongo.subtraction.update_many(
         filter={"file.name": {"$exists": False}},
         update=[
             {
@@ -61,7 +61,7 @@ async def upgrade(ctx: MigrationContext):
 
 
 async def test_upgrade(ctx: MigrationContext, snapshot):
-    await ctx.mongo.subtractions.insert_many(
+    await ctx.mongo.subtraction.insert_many(
         [
             {
                 "_id": "complete",
@@ -84,5 +84,5 @@ async def test_upgrade(ctx: MigrationContext, snapshot):
     await upgrade(ctx)
 
     assert [
-        subtraction async for subtraction in ctx.mongo.subtractions.find({})
+        subtraction async for subtraction in ctx.mongo.subtraction.find({})
     ] == snapshot(matcher=path_type({".*created_at": (datetime.datetime,)}, regex=True))
