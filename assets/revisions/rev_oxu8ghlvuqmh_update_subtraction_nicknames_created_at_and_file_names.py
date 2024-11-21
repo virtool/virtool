@@ -52,7 +52,7 @@ async def upgrade(ctx: MigrationContext):
         )
 
     await ctx.mongo.subtraction.update_many(
-        filter={"file.name": {"$exists": False}},
+        filter={"file.name": None},
         update=[
             {
                 "$set": {
@@ -74,7 +74,7 @@ async def test_upgrade(ctx: MigrationContext, snapshot):
             },
             {
                 "_id": "legacy",
-                "file": {"id": "legacy_file_id"},
+                "file": {"id": "legacy_file_id", "name": None},
             },
         ],
     )
