@@ -25,42 +25,48 @@ required_alembic_revision = None
 
 
 async def upgrade(ctx: MigrationContext):
-    await ctx.mongo.subtraction.update_many(
-        {"nickname": {"$exists": False}},
-        {"$set": {"nickname": ""}},
-    )
+    with await ctx.mongo.motor_database.client.start_session() as mongo_session:
+        async with mongo_session.start_transaction():
+            await ctx.mongo.subtraction.update_many(
+                {"nickname": {"$exists": False}},
+                {"$set": {"nickname": ""}},
+                session=mongo_session,
+            )
 
-    async for subtraction in ctx.mongo.subtraction.find(
-        {"created_at": {"$exists": False}},
-    ):
-        index_stats = (
-            ctx.data_path
-            / "subtractions"
-            / subtraction["_id"].replace(" ", "_")
-            / "subtraction.1.bt2"
-        ).stat()
+            async for subtraction in ctx.mongo.subtraction.find(
+                {"created_at": {"$exists": False}},
+                session=mongo_session,
+            ):
+                index_stats = (
+                    ctx.data_path
+                    / "subtractions"
+                    / subtraction["_id"].replace(" ", "_")
+                    / "subtraction.1.bt2"
+                ).stat()
 
-        created_at = (
-            index_stats.st_ctime
-            if index_stats.st_ctime < index_stats.st_mtime
-            else index_stats.st_mtime
-        )
+                created_at = (
+                    index_stats.st_ctime
+                    if index_stats.st_ctime < index_stats.st_mtime
+                    else index_stats.st_mtime
+                )
 
-        await ctx.mongo.subtraction.update_one(
-            {"_id": subtraction["_id"]},
-            {"$set": {"created_at": datetime.datetime.fromtimestamp(created_at)}},
-        )
+                await ctx.mongo.subtraction.update_one(
+                    {"_id": subtraction["_id"]},
+                    {"$set": {"created_at": arrow.get(created_at).naive}},
+                    session=mongo_session,
+                )
 
-    await ctx.mongo.subtraction.update_many(
-        filter={"file.name": None},
-        update=[
-            {
-                "$set": {
-                    "file.name": "$file.id",
-                },
-            },
-        ],
-    )
+            await ctx.mongo.subtraction.update_many(
+                {"file.name": None},
+                update=[
+                    {
+                        "$set": {
+                            "file.name": "$file.id",
+                        },
+                    },
+                ],
+                session=mongo_session,
+            )
 
 
 async def test_upgrade(ctx: MigrationContext, snapshot):
@@ -81,11 +87,11 @@ async def test_upgrade(ctx: MigrationContext, snapshot):
 
     subtraction_path = ctx.data_path / "subtractions" / "legacy"
     subtraction_path.mkdir(exist_ok=True, parents=True)
-    index_file = subtraction_path / "subtraction.1.bt2"
-    index_file.write_text("subtraction_index")
+    index_file_path = subtraction_path / "subtraction.1.bt2"
+    index_file_path.write_text("subtraction_index")
 
     await upgrade(ctx)
 
-    assert [
-        subtraction async for subtraction in ctx.mongo.subtraction.find({})
-    ] == snapshot(matcher=path_type({".*created_at": (datetime.datetime,)}, regex=True))
+    assert await ctx.mongo.subtraction.find({}).to_list() == snapshot(
+        matcher=path_type({".*created_at": (datetime.datetime,)}, regex=True),
+    )
