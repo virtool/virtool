@@ -1,5 +1,4 @@
-"""
-migrate nuvs files
+"""migrate nuvs files
 
 Revision ID: jlq24f8q12pk
 Date: 2024-05-31 20:25:49.413590
@@ -31,11 +30,15 @@ required_alembic_revision = None
 
 
 async def upgrade(ctx: MigrationContext):
-    async for analysis in ctx.mongo.analyses.find({"workflow": "nuvs"}):
-        analysis_id = analysis["_id"]
-        sample_id = analysis["sample"]["id"]
+    analysis_list = [
+        (analysis["_id"], analysis["sample"]["id"])
+        async for analysis in ctx.mongo.analyses.find(
+            {"workflow": "nuvs"}, projection={"sample": 1}
+        )
+    ]
 
-        old_path = ctx.data_path / "samples" / sample_id / "analysis" / analysis_id
+    for analysis_id, sample_id in analysis_list:
+        source_path = ctx.data_path / "samples" / sample_id / "analysis" / analysis_id
         target_path = ctx.data_path / "analyses" / analysis_id
 
         async with AsyncSession(ctx.pg) as session:
@@ -45,12 +48,12 @@ async def upgrade(ctx: MigrationContext):
                 )
             ).scalar()
 
-        if await asyncio.to_thread(old_path.is_dir) and not exists:
+        if await asyncio.to_thread(source_path.is_dir) and not exists:
             await asyncio.to_thread(target_path.mkdir, exist_ok=True, parents=True)
 
             analysis_files = []
 
-            for filename in sorted(os.listdir(old_path)):
+            for filename in sorted(os.listdir(source_path)):
                 if filename in (
                     "hmm.tsv",
                     "assembly.fa",
@@ -61,12 +64,14 @@ async def upgrade(ctx: MigrationContext):
                     analysis_files.append(filename)
                     if filename == "hmm.tsv":
                         await asyncio.to_thread(
-                            shutil.copy, old_path / "hmm.tsv", target_path / "hmm.tsv"
+                            shutil.copy,
+                            source_path / "hmm.tsv",
+                            target_path / "hmm.tsv",
                         )
                     else:
                         await asyncio.to_thread(
                             compress_file,
-                            old_path / filename,
+                            source_path / filename,
                             target_path / f"{filename}.gz",
                         )
 
@@ -105,8 +110,7 @@ async def upgrade(ctx: MigrationContext):
 
 
 def check_nuvs_file_type(file_name: str) -> str:
-    """
-    Get the NuVs analysis file type based on the extension of given `file_name`
+    """Get the NuVs analysis file type based on the extension of given `file_name`
 
     :param file_name: NuVs analysis file name
     :return: file type
@@ -135,7 +139,7 @@ async def test_upgrade(ctx, snapshot):
     analysis_path.joinpath("unmapped_otus.fq").write_text("FASTQ file")
 
     await ctx.mongo.analyses.insert_one(
-        {"_id": "bar", "workflow": "nuvs", "sample": {"id": "foo"}}
+        {"_id": "bar", "workflow": "nuvs", "sample": {"id": "foo"}},
     )
 
     await upgrade(ctx)
