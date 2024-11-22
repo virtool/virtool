@@ -35,29 +35,10 @@ async def upgrade(ctx: MigrationContext):
             session=mongo_session,
         )
 
-        async for subtraction in ctx.mongo.subtraction.find(
-            {"created_at": {"$exists": False}},
-            session=mongo_session,
-        ):
-            index_stats = (
-                ctx.data_path
-                / "subtractions"
-                / subtraction["_id"].replace(" ", "_")
-                / "subtraction.1.bt2"
-            ).stat()
-
-            created_at = (
-                index_stats.st_ctime
-                if index_stats.st_ctime < index_stats.st_mtime
-                else index_stats.st_mtime
-            )
-
-            await ctx.mongo.subtraction.update_one(
-                {"_id": subtraction["_id"]},
-                {"$set": {"created_at": arrow.get(created_at).naive}},
-                session=mongo_session,
-            )
-
+    async with (
+        await ctx.mongo.client.start_session() as mongo_session,
+        mongo_session.start_transaction(),
+    ):
         await ctx.mongo.subtraction.update_many(
             {"file.name": None},
             update=[
@@ -68,6 +49,27 @@ async def upgrade(ctx: MigrationContext):
                 },
             ],
             session=mongo_session,
+        )
+
+    async for subtraction in ctx.mongo.subtraction.find(
+        {"created_at": {"$exists": False}},
+    ):
+        index_stats = (
+            ctx.data_path
+            / "subtractions"
+            / subtraction["_id"].replace(" ", "_")
+            / "subtraction.1.bt2"
+        ).stat()
+
+        created_at = (
+            index_stats.st_ctime
+            if index_stats.st_ctime < index_stats.st_mtime
+            else index_stats.st_mtime
+        )
+
+        await ctx.mongo.subtraction.update_one(
+            {"_id": subtraction["_id"]},
+            {"$set": {"created_at": arrow.get(created_at).naive}},
         )
 
 
