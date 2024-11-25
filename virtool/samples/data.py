@@ -364,11 +364,14 @@ class SamplesData(DataLayerDomain):
             )
 
         if result.deleted_count:
-            await to_thread(
-                virtool_core.utils.rm,
-                join_sample_path(self._config, sample_id),
-                recursive=True,
-            )
+            try:
+                await to_thread(
+                    virtool_core.utils.rm,
+                    join_sample_path(self._config, sample_id),
+                    recursive=True,
+                )
+            except FileNotFoundError:
+                pass
 
             return sample
 
