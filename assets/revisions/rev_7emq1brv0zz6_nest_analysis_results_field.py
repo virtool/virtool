@@ -44,9 +44,11 @@ async def upgrade(ctx: MigrationContext):
                     "results": {
                         **results,
                         "read_count": document["read_count"],
-                        # TODO: add a migration that detects cases where subtraction_count DNE and set a flag
-                        # As is this prevents the crash during migration, but does not correct the underlying
-                        # data structure problem
+                        # TODO: add a migration that detects cases where
+                        # subtraction_count DNE and set a flag.
+                        # This prevents the crash during migration, but
+                        # does not correct the underlying data structure
+                        # problem
                         **(
                             {
                                 "subtracted_count": document["subtracted_count"],
