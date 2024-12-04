@@ -16,6 +16,7 @@ from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.types import Document
 from virtool.users.db import ATTACH_PROJECTION, B2CUserAttributes
+from virtool.users.pg import UserType
 from virtool.users.settings import DEFAULT_USER_SETTINGS
 from virtool.users.utils import (
     check_legacy_password,
@@ -69,6 +70,7 @@ async def create_user(
     handle: str,
     password: str | None,
     force_reset: bool,
+    user_type: UserType,
     b2c_user_attributes: B2CUserAttributes | None = None,
     session: AsyncIOMotorClientSession | None = None,
 ) -> Document:
@@ -81,6 +83,7 @@ async def create_user(
         "last_password_change": virtool.utils.timestamp(),
         "primary_group": None,
         "settings": DEFAULT_USER_SETTINGS,
+        "type": user_type,
     }
 
     if password is None:
