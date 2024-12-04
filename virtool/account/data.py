@@ -26,7 +26,7 @@ from virtool.groups.transforms import AttachGroupsTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.users.mongo import validate_credentials
-from virtool.users.pg import SQLUser
+from virtool.users.pg import SQLUser, UserType
 from virtool.users.utils import limit_permissions
 from virtool.utils import base_processor, hash_key
 
@@ -387,10 +387,14 @@ class AccountData(DataLayerDomain):
         # the database and/or password are invalid.
         document = await self._mongo.users.find_one({"handle": data.username})
 
-        if not document or not await validate_credentials(
-            self._mongo,
-            document["_id"],
-            data.password,
+        if (
+            not document
+            or document["type"] == UserType.bot
+            or not await validate_credentials(
+                self._mongo,
+                document["_id"],
+                data.password,
+            )
         ):
             raise ResourceError()
 
