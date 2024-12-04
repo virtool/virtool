@@ -158,7 +158,7 @@ async def authenticate_with_session(req: Request, handler: Callable) -> Response
         raise APIUnauthorized("User is deactivated", error_id="deactivated_user")
 
     if user == UserType.bot:
-        raise HTTPForbidden("Cannot authenticate system users", error_id="system_user")
+        raise HTTPForbidden("Cannot authenticate system users")
 
     req["client"] = UserClient(
         administrator_role=user.administrator_role,
