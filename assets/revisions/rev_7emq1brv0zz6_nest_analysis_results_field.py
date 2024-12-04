@@ -1,18 +1,15 @@
-"""
-Nest analysis results field
+"""Nest analysis results field
 
 Revision ID: 7emq1brv0zz6
 Date: 2022-06-09 20:38:11.017655
 
 """
+
 import asyncio
 
 import arrow
 
 # Revision identifiers.
-from pymongo import UpdateOne
-from virtool_core.mongo import buffered_bulk_writer
-
 from virtool.migration import MigrationContext
 
 name = "Nest analysis results field"
@@ -24,8 +21,7 @@ virtool_down_revision = None
 
 
 async def upgrade(ctx: MigrationContext):
-    """
-    Move the ``subtracted_count`` and ``read_count`` fields from the document to the
+    """Move the ``subtracted_count`` and ``read_count`` fields from the document to the
     ``results`` sub-document.
 
     This supports the new jobs API model where only a ``results`` field can be set on
@@ -39,57 +35,54 @@ async def upgrade(ctx: MigrationContext):
         "results.hits": {"$exists": False},
     }
 
-    async with buffered_bulk_writer(ctx.mongo.analyses) as writer:
-        async for document in ctx.mongo.analyses.find(query):
-            _id = document["_id"]
+    async for document in ctx.mongo.analyses.find(query):
+        results = {"hits": document["results"]}
+        update = {}
+        if document["workflow"] == "pathoscope_bowtie":
+            update = {
+                "$set": {
+                    "results": {
+                        **results,
+                        "read_count": document["read_count"],
+                        # TODO: add a migration that detects cases where
+                        # subtraction_count DNE and set a flag.
+                        # This prevents the crash during migration, but
+                        # does not correct the underlying data structure
+                        # problem
+                        **(
+                            {
+                                "subtracted_count": document["subtracted_count"],
+                            }
+                            if "subtracted_count" in document
+                            else {}
+                        ),
+                    },
+                },
+                "$unset": {"read_count": "", "subtracted_count": ""},
+            }
 
-            results = {"hits": document["results"]}
+        elif document["workflow"] == "nuvs":
+            update = {"$set": {"results": results}}
 
-            if document["workflow"] == "pathoscope_bowtie":
-                await writer.add(
-                    UpdateOne(
-                        {"_id": _id},
-                        {
-                            "$set": {
-                                "results": {
-                                    **results,
-                                    "read_count": document["read_count"],
-                                    "subtracted_count": document["subtracted_count"],
-                                }
-                            },
-                            "$unset": {"read_count": "", "subtracted_count": ""},
-                        },
-                    )
-                )
+        elif document["workflow"] == "aodp":
+            update = {
+                "$set": {
+                    "results": {
+                        **results,
+                        "join_histogram": document["join_histogram"],
+                        "joined_pair_count": document["joined_pair_count"],
+                        "remainder_pair_count": document["remainder_pair_count"],
+                    },
+                },
+                "$unset": {
+                    "join_histogram": "",
+                    "joined_pair_count": "",
+                    "remainder_pair_count": "",
+                },
+            }
 
-            elif document["workflow"] == "nuvs":
-                await writer.add(
-                    UpdateOne({"_id": _id}, {"$set": {"results": results}})
-                )
-
-            elif document["workflow"] == "aodp":
-                await writer.add(
-                    UpdateOne(
-                        {"_id": _id},
-                        {
-                            "$set": {
-                                "results": {
-                                    **results,
-                                    "join_histogram": document["join_histogram"],
-                                    "joined_pair_count": document["joined_pair_count"],
-                                    "remainder_pair_count": document[
-                                        "remainder_pair_count"
-                                    ],
-                                }
-                            },
-                            "$unset": {
-                                "join_histogram": "",
-                                "joined_pair_count": "",
-                                "remainder_pair_count": "",
-                            },
-                        },
-                    )
-                )
+        if update:
+            await ctx.mongo.analyses.update_one({"_id": document["_id"]}, update)
 
     if await ctx.mongo.analyses.count_documents(query) > 0:
         raise Exception("Some analyses still have a non-nested results field")
@@ -123,6 +116,12 @@ async def test_upgrade(ctx: MigrationContext, snapshot):
                     "subtracted_count": 112,
                     "workflow": "pathoscope_bowtie",
                 },
+                {
+                    "_id": "no_subtracted_count",
+                    "read_count": 1209,
+                    "results": [1, 2, 3, 4, 5],
+                    "workflow": "pathoscope_bowtie",
+                },
                 {"_id": "baz", "results": [9, 8, 7, 6, 5], "workflow": "nuvs"},
                 {
                     "_id": "bad",
@@ -147,7 +146,7 @@ async def test_upgrade(ctx: MigrationContext, snapshot):
                     "results": None,
                     "workflow": "aodp",
                 },
-            ]
+            ],
         ),
     )
 

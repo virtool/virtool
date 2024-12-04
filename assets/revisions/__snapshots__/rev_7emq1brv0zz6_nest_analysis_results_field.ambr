@@ -47,6 +47,20 @@
       'workflow': 'pathoscope_bowtie',
     }),
     dict({
+      '_id': 'no_subtracted_count',
+      'results': dict({
+        'hits': list([
+          1,
+          2,
+          3,
+          4,
+          5,
+        ]),
+        'read_count': 1209,
+      }),
+      'workflow': 'pathoscope_bowtie',
+    }),
+    dict({
       '_id': 'baz',
       'results': dict({
         'hits': list([
