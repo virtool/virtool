@@ -294,6 +294,7 @@ class UsersData(DataLayerDomain):
                 handle,
                 None,
                 force_reset,
+                user_type=UserType.user,
                 b2c_user_attributes=b2c_user_attributes,
                 session=mongo_session,
             )
