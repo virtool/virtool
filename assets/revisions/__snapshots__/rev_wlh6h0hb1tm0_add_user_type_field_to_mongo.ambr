@@ -1,0 +1,17 @@
+# serializer version: 1
+# name: test_upgrade
+  list([
+    dict({
+      '_id': 'no type',
+      'type': 'user',
+    }),
+    dict({
+      '_id': 'user_type',
+      'type': 'user',
+    }),
+    dict({
+      '_id': 'bot_type',
+      'type': 'bot',
+    }),
+  ])
+# ---

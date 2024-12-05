@@ -822,6 +822,12 @@
     'reset': False,
   })
 # ---
+# name: test_login_system_user
+  dict({
+    'id': 'bad_request',
+    'message': 'Invalid username or password',
+  })
+# ---
 # name: test_remove_api_key[404]
   dict({
     'id': 'not_found',

@@ -282,6 +282,7 @@
       'show_versions': True,
       'skip_quick_analyze_dialog': True,
     }),
+    'type': 'user',
   })
 # ---
 # name: test_create[None][location]

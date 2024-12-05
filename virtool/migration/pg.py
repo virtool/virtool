@@ -9,7 +9,7 @@ from structlog import get_logger
 from virtool.migration.cls import AppliedRevision
 from virtool.pg.base import Base
 
-REQUIRED_VIRTOOL_REVISION = "b79c1e6cf56c"
+REQUIRED_VIRTOOL_REVISION = "wlh6h0hb1tm0"
 
 logger = get_logger("migration")
 
