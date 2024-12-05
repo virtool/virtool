@@ -4,7 +4,6 @@ from contextlib import suppress
 import jwt
 from aiohttp import BasicAuth, web
 from aiohttp.web import Request, Response
-from aiohttp.web_exceptions import HTTPForbidden
 from structlog import get_logger
 
 from virtool.api.client import UserClient
@@ -19,7 +18,6 @@ from virtool.data.utils import get_data_from_req
 from virtool.errors import AuthError
 from virtool.oidc.utils import validate_token
 from virtool.users.db import B2CUserAttributes
-from virtool.users.pg import UserType
 from virtool.users.utils import limit_permissions
 
 logger = get_logger("authn")
@@ -156,9 +154,6 @@ async def authenticate_with_session(req: Request, handler: Callable) -> Response
 
     if not user.active:
         raise APIUnauthorized("User is deactivated", error_id="deactivated_user")
-
-    if user == UserType.bot:
-        raise HTTPForbidden("Cannot authenticate system users")
 
     req["client"] = UserClient(
         administrator_role=user.administrator_role,

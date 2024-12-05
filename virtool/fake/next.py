@@ -51,6 +51,7 @@ from virtool.tasks.task import BaseTask
 from virtool.uploads.models import UploadType
 from virtool.uploads.utils import CHUNK_SIZE
 from virtool.users.oas import UpdateUserRequest
+from virtool.users.pg import UserType
 
 
 async def fake_file_chunker(path: Path) -> AsyncGenerator[bytearray, None]:
@@ -450,11 +451,12 @@ class UsersFakerDomain(DataFakerDomain):
 
     async def create(
         self,
+        administrator_role: AdministratorRole | None = None,
         handle: str | None = None,
         groups: list[Group] | None = None,
         password: str | None = None,
         primary_group: Group | None = None,
-        administrator_role: AdministratorRole | None = None,
+        type: UserType | None = None,
     ) -> User:
         """Create a fake user.
 
@@ -471,6 +473,7 @@ class UsersFakerDomain(DataFakerDomain):
         user = await self._layer.users.create(
             handle or self._faker.profile()["username"],
             password or self._faker.password(),
+            user_type=type or UserType.user,
         )
 
         if administrator_role:

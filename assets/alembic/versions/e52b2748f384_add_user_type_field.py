@@ -18,14 +18,14 @@ depends_on = None
 
 
 def upgrade() -> None:
-    user_type_enum = postgresql.ENUM("user", "bot", name="usertype")
+    user_type_enum = postgresql.ENUM("user", "system", "unknown", name="usertype")
     user_type_enum.create(op.get_bind())
 
     op.add_column(
         "users",
         sa.Column(
             "type",
-            postgresql.ENUM("user", "bot", name="usertype"),
+            user_type_enum,
             nullable=True,
         ),
     )

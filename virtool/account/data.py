@@ -389,7 +389,7 @@ class AccountData(DataLayerDomain):
 
         if (
             not document
-            or document["type"] == UserType.bot
+            or document["type"] != UserType.user
             or not await validate_credentials(
                 self._mongo,
                 document["_id"],

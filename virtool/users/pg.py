@@ -11,6 +11,8 @@ from virtool.pg.utils import SQLEnum
 
 
 class SQLUserGroup(Base):
+    """SQL model defining the associations between users and groups."""
+
     __tablename__ = "user_groups"
 
     group_id: Mapped[int] = mapped_column(
@@ -38,11 +40,16 @@ class SQLUserGroup(Base):
 
 
 class UserType(str, SQLEnum):
+    """Enumerated type specifying valid user types."""
+
     user = "user"
-    bot = "bot"
+    system = "system"
+    unknown = "unknown"
 
 
 class SQLUser(Base):
+    """SQL model for storing user information."""
+
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -60,7 +67,8 @@ class SQLUser(Base):
     password: Mapped[bytes | None]
     settings: Mapped[dict] = mapped_column(JSONB)
     type: Mapped[UserType] = mapped_column(
-        Enum(UserType, name="usertype"), nullable=False
+        Enum(UserType, name="usertype"),
+        nullable=False,
     )
 
     user_group_associations: Mapped[list[SQLUserGroup]] = relationship(

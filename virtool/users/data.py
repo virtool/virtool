@@ -2,7 +2,6 @@ import asyncio
 import math
 import random
 
-from aiohttp.web_exceptions import HTTPForbidden
 from pymongo.errors import DuplicateKeyError
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -12,6 +11,7 @@ from virtool_core.models.user import User, UserSearchResult
 
 import virtool.users.utils
 import virtool.utils
+from virtool.api.errors import APIForbidden
 from virtool.api.utils import compose_regex_query
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import AdministratorRoleAssignment
@@ -411,13 +411,13 @@ class UsersData(DataLayerDomain):
         :param data: the update data object
         :return: the updated user
         """
-        user = await self._mongo.users.find_one({"_id": user_id})
+        user = await self._mongo.users.find_one({"_id": user_id}, projection=["type"])
 
         if not user:
             raise ResourceNotFoundError("User does not exist")
 
-        if user["type"] == UserType.bot:
-            raise HTTPForbidden("Cannot update system users")
+        if user["type"] != UserType.user:
+            raise APIForbidden("Cannot update system users")
 
         data = data.dict(exclude_unset=True)
 

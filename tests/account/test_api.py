@@ -9,7 +9,7 @@ from virtool.groups.oas import PermissionsUpdate
 from virtool.mongo.core import Mongo
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.users.oas import UpdateUserRequest
-from virtool.users.utils import Permission, hash_password
+from virtool.users.utils import Permission
 
 
 async def test_get(
@@ -503,6 +503,7 @@ async def test_is_valid_email(value, spawn_client, resp_is):
     ],
 )
 async def test_login(
+    fake: DataFaker,
     mongo: Mongo,
     spawn_client: ClientSpawner,
     body,
@@ -511,14 +512,7 @@ async def test_login(
 ):
     client = await spawn_client()
 
-    await mongo.users.insert_one(
-        {
-            "user_id": "abc123",
-            "handle": "foobar",
-            "password": hash_password("p@ssword123"),
-            "type": "user",
-        },
-    )
+    await fake.users.create(handle="foobar", password="p@ssword123")
 
     resp = await client.post("/account/login", body)
 
@@ -527,20 +521,14 @@ async def test_login(
 
 
 async def test_login_system_user(
+    fake: DataFaker,
     mongo: Mongo,
     spawn_client: ClientSpawner,
-    snapshot,
+    snapshot: SnapshotAssertion,
 ):
     client = await spawn_client()
 
-    await mongo.users.insert_one(
-        {
-            "user_id": "abc123",
-            "handle": "foobar",
-            "password": hash_password("p@ssword123"),
-            "type": "bot",
-        },
-    )
+    fake.users.create(handle="foobar", password="p@ssword123", type="system")
 
     resp = await client.post(
         "/account/login",
