@@ -528,7 +528,7 @@ async def test_login_system_user(
 ):
     client = await spawn_client()
 
-    fake.users.create(handle="foobar", password="p@ssword123", type="system")
+    fake.users.create(handle="foobar", password="p@ssword123", user_type="system")
 
     resp = await client.post(
         "/account/login",
