@@ -456,7 +456,7 @@ class UsersFakerDomain(DataFakerDomain):
         groups: list[Group] | None = None,
         password: str | None = None,
         primary_group: Group | None = None,
-        type: UserType | None = None,
+        user_type: UserType | None = None,
     ) -> User:
         """Create a fake user.
 
@@ -467,13 +467,14 @@ class UsersFakerDomain(DataFakerDomain):
         :param password: the users password
         :param primary_group: the users primary group
         :param administrator_role: the users administrator role
+        :param user_type: the users type
 
         :return: a new fake user
         """
         user = await self._layer.users.create(
             handle or self._faker.profile()["username"],
             password or self._faker.password(),
-            user_type=type or UserType.user,
+            user_type=user_type or UserType.user,
         )
 
         if administrator_role:
