@@ -50,7 +50,7 @@ def create_default_map():
 
 
 def entry():
-    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+    uvloop.install()
     default_map = create_default_map()
     cli(default_map=default_map)
 
