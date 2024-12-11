@@ -7,7 +7,7 @@ Date: 2024-12-09 21:39:37.692957
 
 import arrow
 import pytest
-from sqlalchemy import Select, insert, select, update
+from sqlalchemy import Select, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from syrupy import SnapshotAssertion
 
@@ -62,18 +62,14 @@ async def upgrade(ctx: MigrationContext):
                 await session.execute(
                     insert(SQLUserGroup).values(
                         [
-                            {"user_id": sqluser.id, "group_id": group}
+                            {
+                                "user_id": sqluser.id,
+                                "group_id": group,
+                                "primary": user["primary_group"] == group,
+                            }
                             for group in groups
                         ],
                     ),
-                )
-
-            if primary_group := user["primary_group"]:
-                await session.execute(
-                    update(SQLUserGroup)
-                    .where(primary_group == SQLUserGroup.group_id)
-                    .where(sqluser.id == SQLUserGroup.user_id)
-                    .values(primary=True),
                 )
 
             await session.commit()
