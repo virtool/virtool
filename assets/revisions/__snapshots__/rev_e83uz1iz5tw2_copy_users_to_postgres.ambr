@@ -1,0 +1,22 @@
+# serializer version: 1
+# name: TestUpgrade.test_upgrade
+  list([
+    <SQLUser(id='1', active='True', b2c_display_name='', b2c_given_name='', b2c_family_name='', b2c_oid='None', email='', force_reset='False', handle='modern_user', invalidate_sessions='False', last_password_change='datetime', legacy_id='9SYJ3IWB', settings='{'show_ids': True, 'show_versions': True, 'quick_analyze_workflow': 'pathoscope_bowtie', 'skip_quick_analyze_dialog': True}', groups='[]', primary_group='[]')>,
+  ])
+# ---
+# name: TestUpgrade.test_upgrade_existing_sql_user
+  list([
+    <SQLUser(id='1', active='True', b2c_display_name='', b2c_given_name='', b2c_family_name='', b2c_oid='None', email='', force_reset='False', handle='pre-existing sql user', invalidate_sessions='False', last_password_change='datetime', legacy_id='9SYJ3IWB', settings='{}', groups='[]', primary_group='[]')>,
+  ])
+# ---
+# name: TestUpgrade.test_upgrade_groups
+  list([
+    <SQLUser(id='1', active='True', b2c_display_name='', b2c_given_name='', b2c_family_name='', b2c_oid='None', email='', force_reset='False', handle='modern_user', invalidate_sessions='False', last_password_change='datetime', legacy_id='9SYJ3IWB', settings='{'show_ids': True, 'show_versions': True, 'quick_analyze_workflow': 'pathoscope_bowtie', 'skip_quick_analyze_dialog': True}', groups='[<SQLGroup(id=1, legacy_id=None, name=test_group, permissions={})>]', primary_group='[<SQLGroup(id=1, legacy_id=None, name=test_group, permissions={})>]')>,
+  ])
+# ---
+# name: test_upgrade
+  list([
+    (<SQLUser(id='2', active='True', b2c_display_name='', b2c_given_name='', b2c_family_name='', b2c_oid='None', email='', force_reset='False', handle='mod ... (248 characters truncated) ... p(id=1, legacy_id=None, name=test_group_2, permissions={})>]', primary_group='[<SQLGroup(id=1, legacy_id=None, name=test_group_2, permissions={})>]')>,),
+    (<SQLUser(id='1', active='True', b2c_display_name='', b2c_given_name='', b2c_family_name='', b2c_oid='None', email='', force_reset='False', handle='pre ... (23 characters truncated) ... validate_sessions='False', last_password_change='datetime', legacy_id='62SY6GFJ', settings='{'test_setting': True}', groups='[]', primary_group='[]')>,),
+  ])
+# ---
