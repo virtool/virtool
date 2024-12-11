@@ -7,10 +7,11 @@ Date: 2024-12-09 21:39:37.692957
 
 import arrow
 import pytest
-from numpy import insert
 from sqlalchemy import Select, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from syrupy import SnapshotAssertion
 
+from tests.fixtures.core import StaticTime
 from virtool.groups.pg import SQLGroup
 from virtool.migration import MigrationContext
 from virtool.users.pg import SQLUser, SQLUserGroup
@@ -80,7 +81,7 @@ async def upgrade(ctx: MigrationContext):
 
 class TestUpgrade:
     @pytest.fixture(autouse=True)
-    async def setup_postgres(self, ctx):
+    async def setup_postgres(self, ctx: MigrationContext):
         async with ctx.pg.begin() as conn:
             await conn.run_sync(SQLGroup.metadata.create_all)
             await conn.run_sync(SQLUserGroup.metadata.create_all)
@@ -88,7 +89,7 @@ class TestUpgrade:
             await conn.commit()
 
     @pytest.fixture()
-    def verify_snapshots(self, ctx, snapshot):
+    def verify_snapshots(self, ctx: MigrationContext, snapshot: SnapshotAssertion):
         async def func():
             async with AsyncSession(ctx.pg) as session:
                 users = (
@@ -118,12 +119,20 @@ class TestUpgrade:
             },
         }
 
-    async def test_upgrade(self, base_user, ctx, verify_snapshots):
+    @staticmethod
+    async def test_upgrade(base_user, ctx: MigrationContext, verify_snapshots):
+        """Verify a basic mongo user without groups is correctly migrated to postgres"""
         await ctx.mongo.users.insert_one(base_user)
         await upgrade(ctx)
         await verify_snapshots()
 
-    async def test_upgrade_groups(self, base_user, ctx, verify_snapshots):
+    @staticmethod
+    async def test_upgrade_groups(
+        base_user,
+        ctx: MigrationContext,
+        verify_snapshots,
+    ):
+        """Verify a mongo user with groups is correctly migrated to postgres"""
         async with AsyncSession(ctx.pg) as session:
             group = SQLGroup(name="test_group", permissions={})
             session.add(group)
@@ -140,13 +149,16 @@ class TestUpgrade:
 
         await verify_snapshots()
 
+    @staticmethod
     async def test_upgrade_existing_sql_user(
-        self,
         base_user,
-        ctx,
+        ctx: MigrationContext,
         verify_snapshots,
-        static_time,
+        static_time: StaticTime,
     ):
+        """Verify that users that have both mongo and postgres records are
+        not migrated
+        """
         async with AsyncSession(ctx.pg) as session:
             session.add(
                 SQLUser(
