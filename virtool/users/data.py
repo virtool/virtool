@@ -11,6 +11,7 @@ from virtool_core.models.user import User, UserSearchResult
 
 import virtool.users.utils
 import virtool.utils
+from virtool.api.errors import APIForbidden
 from virtool.api.utils import compose_regex_query
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import AdministratorRoleAssignment
@@ -35,7 +36,7 @@ from virtool.users.mongo import (
     create_user,
 )
 from virtool.users.oas import UpdateUserRequest
-from virtool.users.pg import SQLUser, SQLUserGroup
+from virtool.users.pg import SQLUser, SQLUserGroup, UserType
 from virtool.users.settings import DEFAULT_USER_SETTINGS
 from virtool.users.transforms import AttachPermissionsTransform
 from virtool.utils import base_processor
@@ -113,7 +114,7 @@ class UsersData(DataLayerDomain):
 
         async for paginate_dict in self._mongo.users.aggregate(
             [
-                {"$match": {}},
+                {"$match": {"type": {"$eq": "user"}}},
                 {
                     "$facet": {
                         "total_count": [
@@ -233,12 +234,14 @@ class UsersData(DataLayerDomain):
         handle: str,
         password: str,
         force_reset: bool = False,
+        user_type: UserType = UserType.user,
     ) -> User:
         """Create a new user.
 
         :param handle: the requested handle for the user
         :param password: a password
         :param force_reset: force the user to reset password on next login
+        :param user_type: the type of user
         :return: the user document
         """
         async with both_transactions(self._mongo, self._pg) as (
@@ -250,6 +253,7 @@ class UsersData(DataLayerDomain):
                 handle,
                 password,
                 force_reset,
+                user_type,
                 session=mongo_session,
             )
 
@@ -261,6 +265,7 @@ class UsersData(DataLayerDomain):
                     legacy_id=document["_id"],
                     password=document["password"],
                     settings=DEFAULT_USER_SETTINGS,
+                    type=user_type,
                 ),
             )
 
@@ -289,6 +294,7 @@ class UsersData(DataLayerDomain):
                 handle,
                 None,
                 force_reset,
+                user_type=UserType.user,
                 b2c_user_attributes=b2c_user_attributes,
                 session=mongo_session,
             )
@@ -305,6 +311,7 @@ class UsersData(DataLayerDomain):
                     legacy_id=document["_id"],
                     password=None,
                     settings=DEFAULT_USER_SETTINGS,
+                    type=UserType.user,
                 ),
             )
 
@@ -404,8 +411,13 @@ class UsersData(DataLayerDomain):
         :param data: the update data object
         :return: the updated user
         """
-        if not await id_exists(self._mongo.users, user_id):
+        user = await self._mongo.users.find_one({"_id": user_id}, projection=["type"])
+
+        if not user:
             raise ResourceNotFoundError("User does not exist")
+
+        if user["type"] != UserType.user:
+            raise APIForbidden("Cannot update system users")
 
         data = data.dict(exclude_unset=True)
 

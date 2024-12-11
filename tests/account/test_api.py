@@ -9,7 +9,7 @@ from virtool.groups.oas import PermissionsUpdate
 from virtool.mongo.core import Mongo
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.users.oas import UpdateUserRequest
-from virtool.users.utils import Permission, hash_password
+from virtool.users.utils import Permission
 
 
 async def test_get(
@@ -128,7 +128,7 @@ async def test_update_settings(data, status, spawn_client, resp_is, snapshot):
 
 
 async def test_get_api_keys(
-        fake: DataFaker,
+    fake: DataFaker,
     mongo: Mongo,
     spawn_client: ClientSpawner,
     snapshot,
@@ -177,7 +177,7 @@ class TestCreateAPIKey:
         has_perm,
         req_perm,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         mocker,
         snapshot,
         spawn_client: ClientSpawner,
@@ -248,7 +248,7 @@ class TestUpdateAPIKey:
         has_admin: bool,
         has_perm: bool,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         mongo: Mongo,
         snapshot,
         spawn_client: ClientSpawner,
@@ -344,7 +344,7 @@ async def test_remove_api_key(
 
 
 async def test_remove_all_api_keys(
-        fake: DataFaker,
+    fake: DataFaker,
     mongo: Mongo,
     spawn_client: ClientSpawner,
 ):
@@ -503,6 +503,7 @@ async def test_is_valid_email(value, spawn_client, resp_is):
     ],
 )
 async def test_login(
+    fake: DataFaker,
     mongo: Mongo,
     spawn_client: ClientSpawner,
     body,
@@ -511,17 +512,30 @@ async def test_login(
 ):
     client = await spawn_client()
 
-    await mongo.users.insert_one(
-        {
-            "user_id": "abc123",
-            "handle": "foobar",
-            "password": hash_password("p@ssword123"),
-        },
-    )
+    await fake.users.create(handle="foobar", password="p@ssword123")
 
     resp = await client.post("/account/login", body)
 
     assert resp.status == status
+    assert await resp.json() == snapshot
+
+
+async def test_login_system_user(
+    fake: DataFaker,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+    snapshot: SnapshotAssertion,
+):
+    client = await spawn_client()
+
+    fake.users.create(handle="foobar", password="p@ssword123", user_type="system")
+
+    resp = await client.post(
+        "/account/login",
+        {"username": "foobar", "password": "p@ssword123", "remember": False},
+    )
+
+    assert resp.status == 400
     assert await resp.json() == snapshot
 
 
@@ -536,7 +550,7 @@ async def test_login(
 async def test_login_reset(
     spawn_client,
     snapshot,
-        fake: DataFaker,
+    fake: DataFaker,
     request_path,
     correct_code,
     data_layer: DataLayer,
