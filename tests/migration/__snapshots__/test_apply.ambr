@@ -295,5 +295,12 @@
       'name': 'update subtraction nicknames created_at and file names',
       'revision': 'oxu8ghlvuqmh',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 43,
+      'name': 'copy users to postgres',
+      'revision': 'e83uz1iz5tw2',
+    }),
   ])
 # ---
