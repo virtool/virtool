@@ -5,7 +5,7 @@ Date: 2024-12-09 21:39:37.692957
 
 """
 
-from collections.abc import Sequence
+from collections.abc import Callable, Coroutine, Sequence
 
 import arrow
 import pytest
@@ -16,6 +16,7 @@ from syrupy import SnapshotAssertion
 
 from virtool.groups.pg import SQLGroup
 from virtool.migration import MigrationContext
+from virtool.types import Document
 from virtool.users.pg import SQLUser, SQLUserGroup
 
 # Revision identifiers.
@@ -77,6 +78,9 @@ async def upgrade(ctx: MigrationContext) -> None:
 class TestUpgrade:
     """Verify that users are correctly moved to postgres."""
 
+    base_user: Document
+    fetch_users: Callable[[], Coroutine[None, None, Sequence[SQLUser]]]
+
     @pytest.fixture(autouse=True)
     async def setup(self, ctx: MigrationContext, static_time):
         """Ensure the environment is set up for each test."""
@@ -115,7 +119,7 @@ class TestUpgrade:
         ctx: MigrationContext,
         snapshot: SnapshotAssertion,
     ) -> None:
-        """Verify a basic mongo user without groups is correctly migrated to postgres."""
+        """Verify a mongo user without groups is correctly migrated to postgres."""
         await ctx.mongo.users.insert_one(self.base_user)
         await upgrade(ctx)
         assert await self.fetch_users() == snapshot
