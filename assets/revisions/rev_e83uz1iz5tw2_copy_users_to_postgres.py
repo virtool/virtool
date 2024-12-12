@@ -11,7 +11,6 @@ from sqlalchemy import Select, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from syrupy import SnapshotAssertion
 
-from tests.fixtures.core import StaticTime
 from virtool.groups.pg import SQLGroup
 from virtool.migration import MigrationContext
 from virtool.users.pg import SQLUser, SQLUserGroup
@@ -150,7 +149,7 @@ class TestUpgrade:
         base_user,
         ctx: MigrationContext,
         verify_snapshots,
-        static_time: StaticTime,
+        static_time,
     ):
         """Verify that users that have both mongo and postgres records are
         not migrated
