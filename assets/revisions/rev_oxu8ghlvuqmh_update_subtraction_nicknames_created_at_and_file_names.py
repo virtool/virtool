@@ -58,7 +58,7 @@ async def upgrade(ctx: MigrationContext):
             / "subtraction.1.bt2"
         ).stat()
 
-        created_at = (
+        subtraction_created_at = (
             index_stats.st_ctime
             if index_stats.st_ctime < index_stats.st_mtime
             else index_stats.st_mtime
@@ -66,5 +66,5 @@ async def upgrade(ctx: MigrationContext):
 
         await ctx.mongo.subtraction.update_one(
             {"_id": subtraction["_id"]},
-            {"$set": {"created_at": arrow.get(created_at).naive}},
+            {"$set": {"created_at": arrow.get(subtraction_created_at).naive}},
         )
