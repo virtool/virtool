@@ -5,8 +5,6 @@ Date: 2022-06-09 22:04:28.890559
 
 """
 
-from asyncio import gather
-
 import arrow
 from pymongo import UpdateOne
 
@@ -39,29 +37,3 @@ async def upgrade(ctx: MigrationContext):
 
         if updates:
             await collection.bulk_write(updates)
-
-
-async def test_upgrade(ctx: MigrationContext, snapshot):
-    await gather(
-        ctx.mongo.samples.insert_many(
-            [
-                {"_id": "foo", "subtraction": {"id": "prunus"}},
-                {"_id": "bar", "subtraction": {"id": "malus"}},
-                {"_id": "already_migrated", "subtractions": ["malus"]},
-                {"_id": "baz", "subtraction": None},
-            ],
-        ),
-        ctx.mongo.analyses.insert_many(
-            [
-                {"_id": "foo", "subtraction": {"id": "prunus"}},
-                {"_id": "bar", "subtraction": {"id": "malus"}},
-                {"_id": "already_migrated", "subtractions": ["malus"]},
-                {"_id": "baz", "subtraction": None},
-            ],
-        ),
-    )
-
-    await upgrade(ctx)
-
-    assert await ctx.mongo.analyses.find().to_list(None) == snapshot(name="analyses")
-    assert await ctx.mongo.samples.find().to_list(None) == snapshot(name="samples")

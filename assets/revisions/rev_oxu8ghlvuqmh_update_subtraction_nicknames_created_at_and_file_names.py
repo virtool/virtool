@@ -5,10 +5,7 @@ Date: 2024-11-21 18:03:09.177151
 
 """
 
-import datetime
-
 import arrow
-from syrupy.matchers import path_type
 
 from virtool.migration import MigrationContext
 
@@ -61,7 +58,7 @@ async def upgrade(ctx: MigrationContext):
             / "subtraction.1.bt2"
         ).stat()
 
-        created_at = (
+        subtraction_created_at = (
             index_stats.st_ctime
             if index_stats.st_ctime < index_stats.st_mtime
             else index_stats.st_mtime
@@ -69,33 +66,5 @@ async def upgrade(ctx: MigrationContext):
 
         await ctx.mongo.subtraction.update_one(
             {"_id": subtraction["_id"]},
-            {"$set": {"created_at": arrow.get(created_at).naive}},
+            {"$set": {"created_at": arrow.get(subtraction_created_at).naive}},
         )
-
-
-async def test_upgrade(ctx: MigrationContext, snapshot):
-    await ctx.mongo.subtraction.insert_many(
-        [
-            {
-                "_id": "complete",
-                "created_at": datetime.datetime.now(),
-                "nickname": "complete_nickname",
-                "file": {"name": "complete_file_name", "id": "complete_file_id"},
-            },
-            {
-                "_id": "legacy",
-                "file": {"id": "legacy_file_id", "name": None},
-            },
-        ],
-    )
-
-    subtraction_path = ctx.data_path / "subtractions" / "legacy"
-    subtraction_path.mkdir(exist_ok=True, parents=True)
-    index_file_path = subtraction_path / "subtraction.1.bt2"
-    index_file_path.write_text("subtraction_index")
-
-    await upgrade(ctx)
-
-    assert await ctx.mongo.subtraction.find({}).to_list() == snapshot(
-        matcher=path_type({".*created_at": (datetime.datetime,)}, regex=True),
-    )

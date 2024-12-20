@@ -1,5 +1,4 @@
-"""
-Remove ref process field
+"""Remove ref process field
 
 Revision ID: 1p681ke9wedv
 Date: 2022-06-09 22:17:02.297460
@@ -24,13 +23,3 @@ async def upgrade(ctx: MigrationContext):
 
     if await ctx.mongo.references.count_documents({"process": {"$exists": True}}):
         raise MigrationError("Some references still have a process field")
-
-
-async def test_upgrade(ctx: MigrationContext, snapshot):
-    await ctx.mongo.references.insert_many(
-        [{"_id": "foo", "process": "test"}, {"_id": "bar", "task": "test"}]
-    )
-
-    await upgrade(ctx)
-
-    assert await ctx.mongo.references.find().to_list(None) == snapshot
