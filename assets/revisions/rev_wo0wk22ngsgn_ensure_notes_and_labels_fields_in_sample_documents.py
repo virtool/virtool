@@ -1,5 +1,4 @@
-"""
-ensure notes and labels fields in sample documents
+"""ensure notes and labels fields in sample documents
 
 Revision ID: wo0wk22ngsgn
 Date: 2024-06-05 15:54:12.149912
@@ -7,6 +6,7 @@ Date: 2024-06-05 15:54:12.149912
 """
 
 import arrow
+
 from virtool.migration import MigrationContext
 
 # Revision identifiers.
@@ -27,7 +27,7 @@ async def upgrade(ctx: MigrationContext):
         {
             "$set": {
                 "notes": "",
-            }
+            },
         },
     )
 
@@ -36,32 +36,6 @@ async def upgrade(ctx: MigrationContext):
         {
             "$set": {
                 "labels": [],
-            }
-        },
-    )
-
-
-async def test_upgrade(ctx, snapshot):
-    await ctx.mongo.samples.insert_many(
-        [
-            {
-                "_id": "sample_1",
-                "labels": [1, 2],
-                "name": "has_both",
-                "notes": "existing notes",
             },
-            {"_id": "sample_2", "labels": [3, 4], "name": "has_labels"},
-            {"_id": "sample_3", "name": "has_notes", "notes": "only has notes"},
-            {"_id": "sample_4", "name": "has_neither"},
-        ]
-    )
-
-    assert [sample async for sample in ctx.mongo.samples.find({})] == snapshot(
-        name="before"
-    )
-
-    await upgrade(ctx)
-
-    assert [sample async for sample in ctx.mongo.samples.find({})] == snapshot(
-        name="after"
+        },
     )

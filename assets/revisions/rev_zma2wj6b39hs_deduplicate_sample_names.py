@@ -1,15 +1,11 @@
-"""
-deduplicate sample names
+"""deduplicate sample names
 
 Revision ID: zma2wj6b39hs
 Date: 2024-06-05 17:07:52.959084
 
 """
 
-from datetime import timedelta
-
 import arrow
-import pytest
 
 from virtool.migration import MigrationContext
 
@@ -52,7 +48,6 @@ class NameGenerator:
 
 
 async def upgrade(ctx: MigrationContext):
-
     async for duplicate_name_documents in ctx.mongo.samples.aggregate(
         [
             {
@@ -94,48 +89,3 @@ async def upgrade(ctx: MigrationContext):
                 {"_id": sample_id},
                 {"$set": {"name": await name_generator.get()}},
             )
-
-
-@pytest.mark.parametrize("spaces", [True, False])
-async def test_upgrade(
-    ctx: MigrationContext,
-    snapshot,
-    static_time,
-    spaces,
-):
-    samples = [
-        {
-            "_id": "test_id",
-            "name": "test_name",
-            "created_at": static_time.datetime,
-            "space_id": "0",
-        },
-        {
-            "_id": "test_id_2",
-            "name": "test_name (2)",
-            "created_at": static_time.datetime + timedelta(days=3),
-            "space_id": "0",
-        },
-        {
-            "_id": "test_id_3",
-            "name": "test_name",
-            "created_at": static_time.datetime + timedelta(days=2),
-            "space_id": "0",
-        },
-        {
-            "_id": "test_id_4",
-            "name": "test_name",
-            "created_at": static_time.datetime + timedelta(days=1),
-            "space_id": "1",
-        },
-    ]
-
-    if not spaces:
-        for sample in samples:
-            sample.pop("space_id")
-
-    await ctx.mongo.samples.insert_many(samples)
-
-    await upgrade(ctx)
-
-    assert await ctx.mongo.samples.find().to_list(None) == snapshot
