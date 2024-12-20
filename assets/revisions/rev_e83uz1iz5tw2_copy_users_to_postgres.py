@@ -5,10 +5,11 @@ Date: 2024-12-09 21:39:37.692957
 
 """
 
-from collections.abc import Callable, Coroutine, Sequence
+from collections.abc import Awaitable, Callable, Sequence
 
 import arrow
 import pytest
+from asyncpg.exceptions import UniqueViolationError
 from sqlalchemy import insert, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -55,8 +56,11 @@ async def upgrade(ctx: MigrationContext) -> None:
 
             try:
                 await session.flush()
-            except IntegrityError:
-                continue
+
+            except IntegrityError as e:
+                if e.orig.pgcode == UniqueViolationError.sqlstate:
+                    continue
+                raise
 
             if groups := user["groups"]:
                 await session.execute(
@@ -79,7 +83,7 @@ class TestUpgrade:
     """Verify that users are correctly moved to postgres."""
 
     base_user: Document
-    fetch_users: Callable[[], Coroutine[None, None, Sequence[SQLUser]]]
+    fetch_users: Callable[[], Awaitable[Sequence[SQLUser]]]
 
     @pytest.fixture(autouse=True)
     async def setup(self, ctx: MigrationContext, static_time):
