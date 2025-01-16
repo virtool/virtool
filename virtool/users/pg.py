@@ -47,7 +47,7 @@ class SQLUser(Base):
     b2c_oid: Mapped[str | None]
     email: Mapped[str] = mapped_column(default="", nullable=False)
     force_reset: Mapped[bool] = mapped_column(default=False)
-    handle: Mapped[str]
+    handle: Mapped[str] = mapped_column(unique=True)
     invalidate_sessions: Mapped[bool] = mapped_column(default=False)
     last_password_change: Mapped[datetime]
     legacy_id: Mapped[str | None] = mapped_column(unique=True)
