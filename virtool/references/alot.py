@@ -2,7 +2,6 @@ import copy
 import datetime
 from dataclasses import dataclass
 
-from pymongo import DeleteOne, InsertOne, UpdateOne
 from virtool_core.models.enums import HistoryMethod
 
 import virtool.utils
@@ -18,21 +17,15 @@ from virtool.utils import random_alphanumeric
 
 @dataclass
 class OTUInsertion:
+    """Represents the insertion of an OTU, sequences, and creation history record."""
+
     history: dict
     id: str
     otu: dict
     sequences: list[dict]
 
 
-@dataclass
-class OTUUpsertion:
-    otu: UpdateOne
-    sequence_deletes: list[DeleteOne]
-    sequence_inserts: list[InsertOne]
-    sequence_updates: list[UpdateOne]
-
-
-def prepare_history(
+def prepare_insertion_history(
     history_method: HistoryMethod,
     old: dict | None,
     new: dict | None,
@@ -84,10 +77,11 @@ def prepare_otu_insertion(
     created_at: datetime.datetime,
     history_method: HistoryMethod,
     otu: dict,
-    otu_id: str,
     ref_id: str,
     user_id: str,
 ) -> OTUInsertion:
+    otu_id = random_alphanumeric(length=8)
+
     copied = copy.deepcopy(otu)
 
     copied.update(
@@ -96,6 +90,7 @@ def prepare_otu_insertion(
             "created_at": created_at,
             "imported": True,
             "last_indexed_version": None,
+            "lower_name": otu["name"].lower(),
             "reference": {"id": ref_id},
             "remote": {"id": otu["_id"]},
             "schema": otu.get("schema", []),
@@ -146,112 +141,8 @@ def prepare_otu_insertion(
         del isolate["sequences"]
 
     return OTUInsertion(
-        prepare_history(history_method, None, copied, user_id),
+        prepare_insertion_history(history_method, None, copied, user_id),
         otu_id,
         copied,
         sequences,
-    )
-
-
-def prepare_otu_update(
-    new_otu: dict,
-    old_otu: dict,
-    reference_id: str,
-):
-    copied = copy.deepcopy(old_otu)
-
-    old_sequence_remote_ids = {
-        sequence["remote"]["id"]
-        for isolate in copied["isolates"]
-        for sequence in isolate["sequences"]
-    }
-
-    new_sequence_ids = {
-        sequence["_id"]
-        for isolate in new_otu["isolates"]
-        for sequence in isolate["sequences"]
-    }
-
-    to_insert_sequence_remote_ids = new_sequence_ids - old_sequence_remote_ids
-    to_update_sequence_remote_ids = new_sequence_ids & old_sequence_remote_ids
-
-    copied.update(
-        {
-            "abbreviation": old_otu["abbreviation"],
-            "isolates": old_otu["isolates"],
-            "lower_name": old_otu["name"].lower(),
-            "name": old_otu["name"],
-            "schema": old_otu.get("schema", []),
-            "version": old_otu["version"] + 1,
-        },
-    )
-
-    otu_update = UpdateOne(
-        {"_id": old_otu["_id"]},
-        {
-            "$inc": {"version": 1},
-            "$set": {
-                "abbreviation": old_otu["abbreviation"],
-                "isolates": old_otu["isolates"],
-                "lower_name": old_otu["name"].lower(),
-                "name": old_otu["name"],
-                "schema": old_otu.get("schema", []),
-            },
-        },
-    )
-
-    sequence_deletes = []
-    sequence_inserts = []
-    sequence_updates = []
-
-    for isolate in new_otu["isolates"]:
-        for sequence in isolate["sequences"]:
-            sequence_remote_id = sequence["_id"]
-
-            if sequence_remote_id in to_update_sequence_remote_ids:
-                sequence_updates.append(
-                    UpdateOne(
-                        {"reference.id": reference_id, "remote.id": sequence_remote_id},
-                        {
-                            "$set": {
-                                "accession": sequence["accession"],
-                                "definition": sequence["definition"],
-                                "host": sequence["host"],
-                                "segment": sequence.get("segment", ""),
-                                "sequence": sequence["sequence"],
-                            },
-                        },
-                    ),
-                )
-
-            elif sequence_remote_id in to_insert_sequence_remote_ids:
-                sequence_inserts.append(
-                    InsertOne(
-                        {
-                            "_id": random_alphanumeric(length=12),
-                            "accession": sequence["accession"],
-                            "definition": sequence["definition"],
-                            "host": sequence["host"],
-                            "isolate_id": isolate["id"],
-                            "otu_id": old_otu["_id"],
-                            "segment": sequence.get("segment", ""),
-                            "sequence": sequence["sequence"],
-                            "reference": {"id": reference_id},
-                            "remote": {"id": sequence_remote_id},
-                        },
-                    ),
-                )
-
-            else:
-                sequence_deletes.append(
-                    DeleteOne(
-                        {"reference.id": reference_id, "remote.id": sequence_remote_id},
-                    ),
-                )
-
-    return OTUUpsertion(
-        otu_update,
-        sequence_deletes,
-        sequence_inserts,
-        sequence_updates,
     )
