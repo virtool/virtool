@@ -302,5 +302,12 @@
       'name': 'copy users to postgres',
       'revision': 'e83uz1iz5tw2',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 44,
+      'name': 'ensure user handle uniqueness',
+      'revision': 'bc0ae38a70bb',
+    }),
   ])
 # ---
