@@ -971,13 +971,15 @@ class ReferencesData(DataLayerDomain):
         release: Document,
         progress_handler: TaskProgressHandler,
     ) -> None:
-        tracker = AccumulatingProgressHandlerWrapper(progress_handler, len(data.otus))
+        tracker = AccumulatingProgressHandlerWrapper(progress_handler, 4)
 
         created_at: datetime = await get_one_field(
-            self._mongo.references,
+            self._mongo.references, 
             "created_at",
             ref_id,
         )
+
+        await tracker.add(1)
 
         await self._mongo.references.update_one(
             {"_id": ref_id},
@@ -990,6 +992,8 @@ class ReferencesData(DataLayerDomain):
             },
         )
 
+        await tracker.add(1)
+
         await populate_insert_only_reference(
             created_at,
             HistoryMethod.remote,
@@ -998,6 +1002,8 @@ class ReferencesData(DataLayerDomain):
             ref_id,
             user_id,
         )
+
+        await tracker.add(1)
 
         await self._mongo.references.update_one(
             {"_id": ref_id, "updates.id": release["id"]},
@@ -1008,6 +1014,8 @@ class ReferencesData(DataLayerDomain):
                 },
             },
         )
+
+        await tracker.add(1)
 
         emit(
             await self.get(ref_id),
