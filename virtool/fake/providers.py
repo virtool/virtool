@@ -87,26 +87,24 @@ class SequenceProvider(BaseProvider):
 
     def sequence(
         self,
-        min: int = MIN_SEQUENCE_LENGTH,
-        max: int = MAX_SEQUENCE_LENGTH,
+        min_length: int = MIN_SEQUENCE_LENGTH,
+        max_length: int = MAX_SEQUENCE_LENGTH,
     ) -> str:
-        """Return a pseudorandom string consisting of
-        acceptable genetic sequence letters.
-        """
+        """Return a pseudorandom string consisting of acceptable nucleotide letters."""
         return "".join(
             self.random_elements(
                 NUCLEOTIDE_PROBABILITIES,
-                self.random_int(min, max),
+                self.random_int(min_length, max_length),
                 use_weighting=True,
             ),
         )
 
     def sequence_length(
         self,
-        min: int = MIN_SEQUENCE_LENGTH,
-        max: int = MAX_SEQUENCE_LENGTH,
+        min_length: int = MIN_SEQUENCE_LENGTH,
+        max_length: int = MAX_SEQUENCE_LENGTH,
     ) -> int:
-        return self.random_int(min, max)
+        return self.random_int(min_length, max_length)
 
 
 class JobsProvider(BaseProvider):
@@ -124,18 +122,22 @@ class JobsProvider(BaseProvider):
             self.random_element(WORKFLOW_STATUS),
         ]
 
-    def archive(self):
+    def archive(self) -> bool:
         return self.pybool()
 
 
 class MongoIDProvider(BaseProvider):
-    def mongo_id(self):
+    """MongoDB ID provider."""
+
+    def mongo_id(self) -> str:
+        """Return a pseudorandom MongoDB ID."""
         return "".join(self.random_choices(ID_CHARACTERS, length=8))
 
 
 class OrganismProvider(BaseProvider):
-    """Organism name provider. Recombines parts of preexisting taxon names
-    to create quasi-realistic organisms.
+    """Organism name provider.
+
+    Recombines parts of preexisting taxon names to create quasi-realistic organisms.
     """
 
     def condition_adjective(self) -> str:
@@ -216,9 +218,7 @@ class SegmentProvider(BaseProvider):
         return self.random_element(["DNA", "RNA"])
 
     def segment_key(self) -> str:
-        """Return a segment key denoting the key identifier
-        in the segment.
-        """
+        """Return a segment key denoting the key identifier in the segment."""
         return self.random_element(
             ["1", "2", "A", "B", "C", "L", "N", "M", "R", "S", "U3"],
         )

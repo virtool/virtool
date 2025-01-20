@@ -68,16 +68,15 @@ class TestAdd:
 
         new, _ = test_otu_edit
 
-        async with mongo.create_session() as session:
-            change = await virtool.history.db.add(
-                mongo,
-                pg,
-                f"Created {new['name']}",
-                HistoryMethod.create,
-                old,
-                new,
-                "test",
-            )
+        change = await virtool.history.db.add(
+            mongo,
+            pg,
+            f"Created {new['name']}",
+            HistoryMethod.create,
+            old,
+            new,
+            "test",
+        )
 
         assert change == snapshot
         assert await mongo.history.find_one() == snapshot

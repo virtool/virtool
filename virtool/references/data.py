@@ -896,7 +896,7 @@ class ReferencesData(DataLayerDomain):
 
         tracker = AccumulatingProgressHandlerWrapper(
             progress_handler,
-            len(data.otus),
+            3,
         )
 
         await self._mongo.references.update_one(
@@ -910,6 +910,8 @@ class ReferencesData(DataLayerDomain):
             },
         )
 
+        await tracker.add(1)
+
         insertions = [
             prepare_otu_insertion(
                 created_at,
@@ -920,6 +922,8 @@ class ReferencesData(DataLayerDomain):
             )
             for otu in data.otus
         ]
+
+        await tracker.add(1)
 
         try:
             sequences = []
@@ -949,6 +953,8 @@ class ReferencesData(DataLayerDomain):
                 self._mongo.sequences.delete_many({"reference.id": ref_id}),
             )
             raise
+
+        await tracker.add(1)
 
         emit(
             await self.get(ref_id),

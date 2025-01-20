@@ -30,7 +30,7 @@ class TestGet:
         """Test that a valid request returns the expected history item."""
         client = await spawn_client(authenticated=True)
 
-        user, _ = await asyncio.gather(
+        await asyncio.gather(
             fake.users.create(),
             mongo.references.insert_one({**test_ref}),
         )
