@@ -1,5 +1,5 @@
-FROM python:3.12.3-bookworm as build
-RUN curl -sSL https://install.python-poetry.org | python - --version 1.7.1
+FROM python:3.12.3-bookworm AS build
+RUN curl -sSL https://install.python-poetry.org | python - --version 2.0.0
 ENV PATH="/root/.local/bin:${PATH}" \
     POETRY_CACHE_DIR='/tmp/poetry_cache' \
     POETRY_NO_INTERACTION=1 \
@@ -7,11 +7,11 @@ ENV PATH="/root/.local/bin:${PATH}" \
     POETRY_VIRTUALENVS_CREATE=1
 WORKDIR /app
 COPY pyproject.toml poetry.lock ./
-RUN poetry install --without dev
+RUN poetry install --without dev --no-root
 COPY . ./
 RUN poetry install --only-root
 
-FROM python:3.12-bookworm as version
+FROM python:3.12-bookworm AS version
 COPY .git .
 RUN <<EOF
 git describe --tags | awk -F - '
@@ -25,7 +25,7 @@ git describe --tags | awk -F - '
 EOF
 
 
-FROM python:3.12.3-bookworm as runtime
+FROM python:3.12.3-bookworm AS runtime
 WORKDIR /app
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
