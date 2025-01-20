@@ -1,102 +1,4 @@
 # serializer version: 1
-# name: TestAdd.test
-  dict({
-    '_id': '6116cba1.1',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'description': 'Edited Prunus virus E',
-    'diff': list([
-      tuple(
-        'change',
-        'abbreviation',
-        tuple(
-          'PVF',
-          '',
-        ),
-      ),
-      tuple(
-        'change',
-        'name',
-        tuple(
-          'Prunus virus F',
-          'Prunus virus E',
-        ),
-      ),
-      tuple(
-        'change',
-        'version',
-        tuple(
-          0,
-          1,
-        ),
-      ),
-    ]),
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
-    'method_name': 'edit',
-    'otu': dict({
-      'id': '6116cba1',
-      'name': 'Prunus virus F',
-      'version': 1,
-    }),
-    'reference': dict({
-      'id': 'hxn167',
-    }),
-    'user': dict({
-      'id': 'test',
-    }),
-  })
-# ---
-# name: TestAdd.test.1
-  dict({
-    '_id': '6116cba1.1',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'description': 'Edited Prunus virus E',
-    'diff': list([
-      list([
-        'change',
-        'abbreviation',
-        list([
-          'PVF',
-          '',
-        ]),
-      ]),
-      list([
-        'change',
-        'name',
-        list([
-          'Prunus virus F',
-          'Prunus virus E',
-        ]),
-      ]),
-      list([
-        'change',
-        'version',
-        list([
-          0,
-          1,
-        ]),
-      ]),
-    ]),
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
-    'method_name': 'edit',
-    'otu': dict({
-      'id': '6116cba1',
-      'name': 'Prunus virus F',
-      'version': 1,
-    }),
-    'reference': dict({
-      'id': 'hxn167',
-    }),
-    'user': dict({
-      'id': 'test',
-    }),
-  })
-# ---
 # name: TestAdd.test_create
   dict({
     '_id': '6116cba1.0',
@@ -157,38 +59,7 @@
     '_id': '6116cba1.0',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'description': 'Created Prunus virus F',
-    'diff': dict({
-      '_id': '6116cba1',
-      'abbreviation': 'PVF',
-      'imported': True,
-      'isolates': list([
-        dict({
-          'default': True,
-          'isolate_id': 'cab8b360',
-          'sequences': list([
-            dict({
-              '_id': 'KX269872',
-              'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
-              'host': 'sweet cherry',
-              'isolate_id': 'cab8b360',
-              'segment': None,
-              'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
-            }),
-          ]),
-          'source_name': '8816-v2',
-          'source_type': 'isolate',
-        }),
-      ]),
-      'last_indexed_version': 0,
-      'lower_name': 'prunus virus f',
-      'name': 'Prunus virus F',
-      'reference': dict({
-        'id': 'hxn167',
-      }),
-      'schema': list([
-      ]),
-      'version': 0,
-    }),
+    'diff': 'postgres',
     'index': dict({
       'id': 'unbuilt',
       'version': 'unbuilt',
@@ -207,7 +78,138 @@
     }),
   })
 # ---
-# name: TestAdd.test_remove
+# name: TestAdd.test_create.2
+  <SQLHistoryDiff(id=1, change_id=6116cba1.0, diff={'_id': '6116cba1', 'name': 'Prunus virus F', 'schema': [], 'version': 0, 'imported': True, 'isolates': [{'default': True, 'sequences': [{'_id': 'KX269872', 'host': 'sweet cherry', 'segment': None, 'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC', 'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.', 'isolate_id': 'cab8b360'}], 'isolate_id': 'cab8b360', 'source_name': '8816-v2', 'source_type': 'isolate'}], 'reference': {'id': 'hxn167'}, 'lower_name': 'prunus virus f', 'abbreviation': 'PVF', 'last_indexed_version': 0})>
+# ---
+# name: TestAdd.test_edit
+  dict({
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'This is a description',
+    'diff': list([
+      tuple(
+        'change',
+        'abbreviation',
+        tuple(
+          'PVF',
+          '',
+        ),
+      ),
+      tuple(
+        'change',
+        'name',
+        tuple(
+          'Prunus virus F',
+          'Prunus virus E',
+        ),
+      ),
+      tuple(
+        'change',
+        'version',
+        tuple(
+          0,
+          1,
+        ),
+      ),
+    ]),
+    'index': dict({
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    }),
+    'method_name': 'edit',
+    'otu': dict({
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    }),
+    'reference': dict({
+      'id': 'hxn167',
+    }),
+    'user': dict({
+      'id': 'test',
+    }),
+  })
+# ---
+# name: TestAdd.test_edit.1
+  dict({
+    '_id': '6116cba1.1',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'This is a description',
+    'diff': 'postgres',
+    'index': dict({
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    }),
+    'method_name': 'edit',
+    'otu': dict({
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 1,
+    }),
+    'reference': dict({
+      'id': 'hxn167',
+    }),
+    'user': dict({
+      'id': 'test',
+    }),
+  })
+# ---
+# name: TestAdd.test_edit.2
+  list([
+    list([
+      'change',
+      'abbreviation',
+      list([
+        'PVF',
+        '',
+      ]),
+    ]),
+    list([
+      'change',
+      'name',
+      list([
+        'Prunus virus F',
+        'Prunus virus E',
+      ]),
+    ]),
+    list([
+      'change',
+      'version',
+      list([
+        0,
+        1,
+      ]),
+    ]),
+  ])
+# ---
+# name: TestAdd.test_remove[diff]
+  <SQLHistoryDiff(id=1, change_id=6116cba1.removed, diff={'_id': '6116cba1', 'name': 'Prunus virus F', 'schema': [], 'version': 0, 'imported': True, 'isolates': [{'default': True, 'sequences': [{'_id': 'KX269872', 'host': 'sweet cherry', 'segment': None, 'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC', 'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.', 'isolate_id': 'cab8b360'}], 'isolate_id': 'cab8b360', 'source_name': '8816-v2', 'source_type': 'isolate'}], 'reference': {'id': 'hxn167'}, 'lower_name': 'prunus virus f', 'abbreviation': 'PVF', 'last_indexed_version': 0})>
+# ---
+# name: TestAdd.test_remove[document]
+  dict({
+    '_id': '6116cba1.removed',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Removed Prunus virus F',
+    'diff': 'postgres',
+    'index': dict({
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    }),
+    'method_name': 'remove',
+    'otu': dict({
+      'id': '6116cba1',
+      'name': 'Prunus virus F',
+      'version': 'removed',
+    }),
+    'reference': dict({
+      'id': 'hxn167',
+    }),
+    'user': dict({
+      'id': 'test',
+    }),
+  })
+# ---
+# name: TestAdd.test_remove[return_value]
   dict({
     '_id': '6116cba1.removed',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -262,65 +264,7 @@
     }),
   })
 # ---
-# name: TestAdd.test_remove.1
-  dict({
-    '_id': '6116cba1.removed',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'description': 'Removed Prunus virus F',
-    'diff': dict({
-      '_id': '6116cba1',
-      'abbreviation': 'PVF',
-      'imported': True,
-      'isolates': list([
-        dict({
-          'default': True,
-          'isolate_id': 'cab8b360',
-          'sequences': list([
-            dict({
-              '_id': 'KX269872',
-              'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
-              'host': 'sweet cherry',
-              'isolate_id': 'cab8b360',
-              'segment': None,
-              'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
-            }),
-          ]),
-          'source_name': '8816-v2',
-          'source_type': 'isolate',
-        }),
-      ]),
-      'last_indexed_version': 0,
-      'lower_name': 'prunus virus f',
-      'name': 'Prunus virus F',
-      'reference': dict({
-        'id': 'hxn167',
-      }),
-      'schema': list([
-      ]),
-      'version': 0,
-    }),
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
-    'method_name': 'remove',
-    'otu': dict({
-      'id': '6116cba1',
-      'name': 'Prunus virus F',
-      'version': 'removed',
-    }),
-    'reference': dict({
-      'id': 'hxn167',
-    }),
-    'user': dict({
-      'id': 'test',
-    }),
-  })
-# ---
-# name: test_get_most_recent_change[False]
-  None
-# ---
-# name: test_get_most_recent_change[True]
+# name: TestGetMostRecentChange.test_ok
   dict({
     '_id': '6116cba1.2',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -336,7 +280,7 @@
     }),
   })
 # ---
-# name: test_patch_to_version[False]
+# name: test_patch_to_version[False][current]
   dict({
     '_id': '6116cba1',
     'abbreviation': 'TST',
@@ -355,7 +299,7 @@
     'version': 3,
   })
 # ---
-# name: test_patch_to_version[False].1
+# name: test_patch_to_version[False][patched]
   dict({
     '_id': '6116cba1',
     'abbreviation': 'TST',
@@ -391,16 +335,16 @@
     'version': 1,
   })
 # ---
-# name: test_patch_to_version[False].2
+# name: test_patch_to_version[False][reverted_change_ids]
   list([
     '6116cba1.3',
     '6116cba1.2',
   ])
 # ---
-# name: test_patch_to_version[True]
+# name: test_patch_to_version[True][current]
   None
 # ---
-# name: test_patch_to_version[True].1
+# name: test_patch_to_version[True][patched]
   dict({
     '_id': '6116cba1',
     'abbreviation': 'TST',
@@ -436,7 +380,7 @@
     'version': 1,
   })
 # ---
-# name: test_patch_to_version[True].2
+# name: test_patch_to_version[True][reverted_change_ids]
   list([
     '6116cba1.removed',
     '6116cba1.3',
