@@ -91,41 +91,6 @@
     'workflow': 'nuvs',
   })
 # ---
-# name: test_finalize_large
-  dict({
-    'created_at': '2015-10-06T20:00:00Z',
-    'files': list([
-    ]),
-    'id': 'analysis1',
-    'index': dict({
-      'id': 'foo',
-      'version': 2,
-    }),
-    'job': None,
-    'ml': None,
-    'ready': True,
-    'reference': dict({
-      'data_type': 'genome',
-      'id': 'baz',
-      'name': 'Baz',
-    }),
-    'results': dict({
-      'hits': list([
-      ]),
-    }),
-    'sample': dict({
-      'id': 'sample1',
-    }),
-    'subtractions': list([
-    ]),
-    'updated_at': '2015-10-06T20:00:00Z',
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 'bf1b993c',
-    }),
-    'workflow': 'nuvs',
-  })
-# ---
 # name: test_find
   dict({
     'documents': list([
@@ -371,50 +336,6 @@
     'updated_at': '2015-10-06T20:00:00Z',
     'user': dict({
       'handle': 'leeashley',
-      'id': 'fb085f7f',
-    }),
-    'workflow': 'pathoscope_bowtie',
-  })
-# ---
-# name: test_get[None-True-True].1
-  dict({
-    '_id': 'foobar',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'files': list([
-      dict({
-        'analysis': 'foobar',
-        'description': None,
-        'format': 'fasta',
-        'id': 1,
-        'name': 'reference.fa',
-        'name_on_disk': '1-reference.fa',
-        'size': None,
-        'uploaded_at': None,
-      }),
-    ]),
-    'index': dict({
-      'id': 'bar',
-      'version': 3,
-    }),
-    'job': dict({
-      'id': '3cbb22cc',
-    }),
-    'ready': True,
-    'reference': dict({
-      'id': 'baz',
-    }),
-    'results': dict({
-      'hits': list([
-      ]),
-    }),
-    'sample': dict({
-      'id': 'baz',
-    }),
-    'subtractions': list([
-      'plum',
-      'apple',
-    ]),
-    'user': dict({
       'id': 'fb085f7f',
     }),
     'workflow': 'pathoscope_bowtie',
