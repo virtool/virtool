@@ -56,25 +56,30 @@ class ImportReferenceTask(BaseTask):
 
         self.import_data: ReferenceSourceData | None = None
 
-    async def load_file(self):
-        path = Path(self.context["path"])
-
+    async def load_file(self) -> None:
         try:
-            import_data = await to_thread(load_reference_file, path)
+            import_data = await to_thread(
+                load_reference_file,
+                Path(self.context["path"]),
+            )
         except json.decoder.JSONDecodeError as err:
             return await self._set_error(str(err).split("JSONDecodeError: ")[1])
         except OSError as err:
             if "Not a gzipped file" in str(err):
-                return await self._set_error("Not a gzipped file")
+                await self._set_error("Not a gzipped file")
+            else:
+                await self._set_error(str(err))
 
-            return await self._set_error(str(err))
+            return None
 
         if errors := check_import_data(import_data, strict=False, verify=True):
-            return await self._set_error(errors)
+            await self._set_error(errors)
+        else:
+            self.import_data = ReferenceSourceData(**import_data)
 
-        self.import_data = ReferenceSourceData(**import_data)
+        return None
 
-    async def import_reference(self):
+    async def import_reference(self) -> None:
         ref_id = self.context["ref_id"]
         user_id = self.context["user_id"]
 
