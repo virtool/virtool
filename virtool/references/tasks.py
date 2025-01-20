@@ -2,7 +2,7 @@ import json
 from asyncio import to_thread
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING
 
 from aiohttp import ClientConnectorError
 
@@ -30,7 +30,7 @@ class CloneReferenceTask(BaseTask):
         self,
         task_id: int,
         data: "DataLayer",
-        context: Dict,
+        context: dict,
         temp_dir: TemporaryDirectory,
     ):
         super().__init__(task_id, data, context, temp_dir)
@@ -93,14 +93,14 @@ class RemoteReferenceTask(BaseTask):
         self,
         task_id: int,
         data: "DataLayer",
-        context: Dict,
+        context: dict,
         temp_dir: TemporaryDirectory,
     ):
         super().__init__(task_id, data, context, temp_dir)
 
         self.steps = [self.download, self.populate]
 
-        self.import_data: Optional[ReferenceSourceData] = None
+        self.import_data: ReferenceSourceData | None = None
 
     async def download(self):
         tracker = AccumulatingProgressHandlerWrapper(
@@ -143,7 +143,7 @@ class UpdateRemoteReferenceTask(BaseTask):
         self,
         task_id: int,
         data: "DataLayer",
-        context: Dict,
+        context: dict,
         temp_dir: TemporaryDirectory,
     ):
         super().__init__(task_id, data, context, temp_dir)
@@ -152,7 +152,7 @@ class UpdateRemoteReferenceTask(BaseTask):
 
         self.download_url = self.context["release"]["download_url"]
         self.download_size = self.context["release"]["size"]
-        self.source_data: Optional[ReferenceSourceData] = None
+        self.source_data: ReferenceSourceData | None = None
 
     async def download(self):
         tracker = AccumulatingProgressHandlerWrapper(
@@ -188,7 +188,7 @@ class CleanReferencesTask(BaseTask):
         self,
         task_id: int,
         data: "DataLayer",
-        context: Dict,
+        context: dict,
         temp_dir: TemporaryDirectory,
     ):
         super().__init__(task_id, data, context, temp_dir)
