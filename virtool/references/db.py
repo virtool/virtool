@@ -2,7 +2,6 @@
 
 import asyncio
 import datetime
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pymongo
@@ -59,15 +58,13 @@ if TYPE_CHECKING:
 
 
 async def processor(mongo: "Mongo", document: Document) -> Document:
-    """Process a reference document to a form that can be dispatched or returned in a
-    list.
+    """Process a reference document to a form that can be expressed in a list.
 
-    Used `attach_computed` for complete representations of the reference.
+    Used ``attach_computed`` for complete representations of the reference.
 
     :param mongo: the application Mongo client
     :param document: the document to process
     :return: the processed document
-
     """
     document = base_processor(document)
 
@@ -180,18 +177,13 @@ async def check_right(req: Request, ref_id: str, right: str) -> bool:
 
             break
 
-    for group in groups:
-        if group[right] and group["id"] in req["client"].groups:
-            return True
-
-    return False
+    return any(group[right] and group["id"] in client.groups for group in groups)
 
 
 async def check_source_type(mongo: "Mongo", ref_id: str, source_type: str) -> bool:
-    """Check if the provided `source_type` is valid based on the current reference
-    source type configuration.
+    """Check `source_type` is valid based on the reference configuration.
 
-    :param mongo: the application database client
+    :param mongo: the application MongoDB client
     :param ref_id: the reference context
     :param source_type: the source type to check
     :return: source type is valid
@@ -417,12 +409,13 @@ async def get_manifest(mongo: "Mongo", ref_id: str) -> Document:
     :return: a manifest of otu ids and versions
 
     """
-    manifest = {}
-
-    async for document in mongo.otus.find({"reference.id": ref_id}, ["version"]):
-        manifest[document["_id"]] = document["version"]
-
-    return manifest
+    return {
+        document["_id"]: document["version"]
+        async for document in mongo.otus.find(
+            {"reference.id": ref_id},
+            ["version"],
+        )
+    }
 
 
 async def get_otu_count(mongo: "Mongo", ref_id: str) -> int:
@@ -624,21 +617,20 @@ async def create_remote(
 
 
 async def insert_change(
-    data_path: Path,
     mongo: "Mongo",
+    pg: AsyncEngine,
     otu_id: str,
-    verb: HistoryMethod,
+    method_name: HistoryMethod,
     user_id: str,
     session: AsyncIOMotorClientSession,
     old: Document | None = None,
-):
-    """Insert a history document for the OTU identified by `otu_id` and the passed
-    `verb`.
+) -> None:
+    """Insert a history document for an OTU involved in import, remote, or clone.
 
-    :param data_path: system path to the applications datafolder
     :param mongo: the application database object
+    :param pg: the application PostgreSQL database object
     :param otu_id: the ID of the OTU the change is for
-    :param verb: the change verb (eg. remove, insert)
+    :param method_name: the change verb (eg. remove, insert)
     :param user_id: the ID of the requesting user
     :param old: the old joined OTU document
     :param session: a Mongo session
@@ -648,22 +640,22 @@ async def insert_change(
 
     name = joined["name"]
 
-    e = "" if verb.value[-1] == "e" else "e"
+    e = "" if method_name.value[-1] == "e" else "e"
 
-    description = f"{verb.value.capitalize()}{e}d {name}"
+    description = f"{method_name.value.capitalize()}{e}d {name}"
 
     if abbreviation := joined.get("abbreviation"):
         description = f"{description} ({abbreviation})"
 
     await virtool.history.db.add(
         mongo,
-        data_path,
-        verb,
+        pg,
+        description,
+        method_name,
         old,
         joined,
-        description,
         user_id,
-        session=session,
+        mongo_session=session,
     )
 
 
