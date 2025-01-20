@@ -1,12 +1,16 @@
+"""The data layer domain for OTUs."""
+
 import asyncio
 from collections.abc import Mapping
 from copy import deepcopy
 from pathlib import Path
+from pprint import pprint
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo.results import DeleteResult
+from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.enums import HistoryMethod
-from virtool_core.models.otu import OTU, Sequence
+from virtool_core.models.otu import OTU, OTUIsolate, OTUSequence, Sequence
 
 import virtool.history.db
 import virtool.otus.db
@@ -34,11 +38,14 @@ from virtool.utils import base_processor
 
 
 class OTUData:
+    """The data layer domain for OTUs."""
+
     name = "otus"
 
-    def __init__(self, mongo: Mongo, data_path: Path):
-        self._mongo = mongo
+    def __init__(self, data_path: Path, mongo: Mongo, pg: AsyncEngine) -> None:
         self._data_path = data_path
+        self._mongo = mongo
+        self._pg = pg
 
     async def find(self, query: Mapping, term: str | None, verified: bool | None):
         return await virtool.otus.db.find(self._mongo, term, query, verified)
@@ -58,6 +65,13 @@ class OTUData:
             document,
             [AttachReferenceTransform(self._mongo)],
         )
+
+        most_recent_change = await virtool.history.db.get_most_recent_change(
+            self._mongo,
+            otu_id,
+        )
+
+        pprint(most_recent_change)
 
         return OTU(
             **{
@@ -224,20 +238,20 @@ class OTUData:
                     "isolates": [],
                     "version": 0,
                     "reference": {"id": ref_id},
-                    "schema": [],
+                    "schema": data.dict()["otu_schema"],
                 },
                 session=session,
             )
 
             await virtool.history.db.add(
                 self._mongo,
-                self._data_path,
+                self._pg,
+                compose_create_description(document_),
                 HistoryMethod.create,
                 None,
                 document_,
-                compose_create_description(document_),
                 user_id,
-                session=session,
+                mongo_session=session,
             )
 
             return document_
@@ -302,18 +316,18 @@ class OTUData:
 
             await virtool.history.db.add(
                 self._mongo,
-                self._data_path,
-                HistoryMethod.edit,
-                old,
-                new,
+                self._pg,
                 compose_edit_description(
                     new["name"],
                     new["abbreviation"],
                     old["abbreviation"],
                     new["schema"],
                 ),
+                HistoryMethod.edit,
+                old,
+                new,
                 user_id,
-                session=session,
+                mongo_session=session,
             )
 
         await self._mongo.with_transaction(func)
@@ -354,13 +368,13 @@ class OTUData:
 
             await virtool.history.db.add(
                 self._mongo,
-                self._data_path,
+                self._pg,
+                description,
                 HistoryMethod.remove,
                 joined,
                 None,
-                description,
                 user_id,
-                session=session,
+                mongo_session=session,
             )
 
             return delete_result
@@ -374,8 +388,8 @@ class OTUData:
         source_name: str,
         user_id: str,
         default: bool = False,
-    ):
-        async def func(session: AsyncIOMotorClientSession) -> Document:
+    ) -> OTUIsolate:
+        async def func(session: AsyncIOMotorClientSession) -> OTUIsolate:
             document = await self._mongo.otus.find_one(otu_id, session=session)
 
             isolates = deepcopy(document["isolates"])
@@ -448,20 +462,18 @@ class OTUData:
 
             await virtool.history.db.add(
                 self._mongo,
-                self._data_path,
+                self._pg,
+                description,
                 HistoryMethod.add_isolate,
                 old,
                 new,
-                description,
                 user_id,
-                session=session,
+                mongo_session=session,
             )
 
-            return isolate_
+            return OTUIsolate(**{**isolate_, "sequences": []})
 
-        isolate = await self._mongo.with_transaction(func)
-
-        return {**isolate, "sequences": []}
+        return await self._mongo.with_transaction(func)
 
     async def update_isolate(
         self,
@@ -514,13 +526,13 @@ class OTUData:
             # Use the old and new entry to add a new history document for the change.
             await virtool.history.db.add(
                 self._mongo,
-                self._data_path,
+                self._pg,
+                f"Renamed {old_isolate_name} to {new_isolate_name}",
                 HistoryMethod.edit_isolate,
                 old,
                 new_,
-                f"Renamed {old_isolate_name} to {new_isolate_name}",
                 user_id,
-                session=session,
+                mongo_session=session,
             )
 
             return new_
@@ -597,13 +609,13 @@ class OTUData:
             # Use the old and new entry to add a new history document for the change.
             await virtool.history.db.add(
                 self._mongo,
-                self._data_path,
+                self._pg,
+                f"Set {format_isolate_name(isolate)} as default",
                 HistoryMethod.set_as_default,
                 old,
                 new,
-                f"Set {format_isolate_name(isolate)} as default",
                 user_id,
-                session=session,
+                mongo_session=session,
             )
 
             return find_isolate(new["isolates"], isolate_id)
@@ -679,13 +691,13 @@ class OTUData:
 
             await virtool.history.db.add(
                 self._mongo,
-                self._data_path,
+                self._pg,
+                description,
                 HistoryMethod.remove_isolate,
                 old,
                 new,
-                description,
                 user_id,
-                session=session,
+                mongo_session=session,
             )
 
         await self._mongo.with_transaction(func)
@@ -702,8 +714,8 @@ class OTUData:
         segment: str | None = None,
         sequence_id: str | None = None,
         target: str | None = None,
-    ):
-        async def func(session: AsyncIOMotorClientSession) -> Document:
+    ) -> OTUSequence:
+        async def func(session: AsyncIOMotorClientSession) -> OTUSequence:
             old = await virtool.otus.db.join(self._mongo, otu_id, session=session)
 
             to_insert = {
@@ -749,18 +761,18 @@ class OTUData:
 
             await virtool.history.db.add(
                 self._mongo,
-                self._data_path,
+                self._pg,
+                f"Created new sequence {accession} in {isolate_name}",
                 HistoryMethod.create_sequence,
                 old,
                 new,
-                f"Created new sequence {accession} in {isolate_name}",
                 user_id,
-                session=session,
+                mongo_session=session,
             )
 
-            return document
+            return OTUSequence(**document)
 
-        return base_processor(await self._mongo.with_transaction(func))
+        return await self._mongo.with_transaction(func)
 
     async def get_sequence(
         self,
@@ -825,13 +837,13 @@ class OTUData:
 
             await virtool.history.db.add(
                 self._mongo,
-                self._data_path,
+                self._pg,
+                f"Edited sequence {sequence_id} in {isolate_name}",
                 HistoryMethod.edit_sequence,
                 old,
                 new,
-                f"Edited sequence {sequence_id} in {isolate_name}",
                 user_id,
-                session=session,
+                mongo_session=session,
             )
 
             return document
@@ -880,13 +892,13 @@ class OTUData:
 
             await virtool.history.db.add(
                 self._mongo,
-                self._data_path,
+                self._pg,
+                f"Removed sequence {sequence_id} from {isolate_name}",
                 HistoryMethod.remove_sequence,
                 old,
                 new,
-                f"Removed sequence {sequence_id} from {isolate_name}",
                 user_id,
-                session=session,
+                mongo_session=session,
             )
 
         await self._mongo.with_transaction(func)
