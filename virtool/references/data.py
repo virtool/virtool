@@ -907,55 +907,45 @@ class ReferencesData(DataLayerDomain):
 
         tracker = AccumulatingProgressHandlerWrapper(
             progress_handler,
-            (len(data.otus) * 2),
+            len(data.otus),
         )
 
-        inserted_otu_ids = []
-
-        async with self._mongo.create_session() as session:
-            await self._mongo.references.update_one(
-                {"_id": ref_id},
-                {
-                    "$set": {
-                        "data_type": data.data_type,
-                        "organism": data.organism,
-                        "targets": data.targets,
-                    },
+        await self._mongo.references.update_one(
+            {"_id": ref_id},
+            {
+                "$set": {
+                    "data_type": data.data_type,
+                    "organism": data.organism,
+                    "targets": data.targets,
                 },
-            )
+            },
+        )
 
-            for chunk in chunk_list(data.otus, 10):
-                chunk_otu_ids = await asyncio.gather(
-                    *[
-                        insert_joined_otu(
-                            self._mongo,
-                            otu,
-                            created_at,
-                            ref_id,
-                            user_id,
-                            session,
-                        )
-                        for otu in chunk
-                    ],
-                )
-                inserted_otu_ids.extend(chunk_otu_ids)
-                await tracker.add(len(chunk))
+        try:
+            for otu in data.otus:
+                async with self._mongo.create_session() as session:
+                    otu_id = await insert_joined_otu(
+                        self._mongo,
+                        otu,
+                        created_at,
+                        ref_id,
+                        user_id,
+                        session,
+                    )
 
-            for chunk in chunk_list(inserted_otu_ids, 10):
-                await asyncio.gather(
-                    *[
-                        insert_change(
-                            self._config.data_path,
-                            self._mongo,
-                            otu_id,
-                            HistoryMethod.import_otu,
-                            user_id,
-                            session,
-                        )
-                        for otu_id in chunk
-                    ],
-                )
-                await tracker.add(len(chunk))
+                    await insert_change(
+                        self._mongo,
+                        self._pg,
+                        otu_id,
+                        HistoryMethod.import_otu,
+                        user_id,
+                        session,
+                    )
+
+                    await tracker.add(1)
+        except Exception:
+            await self._mongo.references.delete_one({"_id": ref_id})
+            raise
 
         emit(
             await self.get(ref_id),
@@ -980,20 +970,19 @@ class ReferencesData(DataLayerDomain):
             ref_id,
         )
 
-        async with self._mongo.create_session() as session:
-            await self._mongo.references.update_one(
-                {"_id": ref_id},
-                {
-                    "$set": {
-                        "data_type": data.data_type.value,
-                        "organism": data.organism,
-                        "targets": data.targets,
-                    },
+        await self._mongo.references.update_one(
+            {"_id": ref_id},
+            {
+                "$set": {
+                    "data_type": data.data_type.value,
+                    "organism": data.organism,
+                    "targets": data.targets,
                 },
-                session=session,
-            )
+            },
+        )
 
-            for otu in data.otus:
+        for otu in data.otus:
+            async with self._mongo.create_session() as session:
                 otu_id = await insert_joined_otu(
                     self._mongo,
                     otu,
@@ -1004,27 +993,25 @@ class ReferencesData(DataLayerDomain):
                 )
 
                 await insert_change(
-                    self._config.data_path,
                     self._mongo,
+                    self._pg,
                     otu_id,
                     HistoryMethod.remote,
                     user_id,
                     session,
                 )
 
-                await tracker.add(1)
+            await tracker.add(1)
 
-            await self._mongo.references.update_one(
-                {"_id": ref_id, "updates.id": release["id"]},
-                {
-                    "$set": {
-                        "installed": create_update_subdocument(release, True, user_id),
-                        "updates.$.ready": True,
-                        "updating": False,
-                    },
+        await self._mongo.references.update_one(
+            {"_id": ref_id, "updates.id": release["id"]},
+            {
+                "$set": {
+                    "updates.$.ready": True,
+                    "updating": False,
                 },
-                session=session,
-            )
+            },
+        )
 
         emit(
             await self.get(ref_id),
