@@ -21,7 +21,6 @@ import virtool.github
 import virtool.history.db
 import virtool.mongo.utils
 import virtool.utils
-from virtool.api.client import UserClient
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.topg import compose_legacy_id_expression
 from virtool.data.transforms import apply_transforms
@@ -31,6 +30,7 @@ from virtool.mongo.utils import get_mongo_from_req
 from virtool.otus.db import join
 from virtool.otus.utils import verify
 from virtool.pg.utils import get_row
+from virtool.references.alot import prepare_otu_insertion
 from virtool.references.bulk_models import (
     OTUData,
     OTUDelete,
@@ -54,6 +54,7 @@ from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
 if TYPE_CHECKING:
+    from virtool.api.client import UserClient
     from virtool.mongo.core import Mongo
 
 
@@ -721,6 +722,52 @@ async def insert_joined_otu(
         await mongo.sequences.insert_one(sequence, session=session)
 
     return document["_id"]
+
+
+async def populate_insert_only_reference(
+    created_at: datetime,
+    history_method: HistoryMethod,
+    mongo: "Mongo",
+    otus: list[dict],
+    reference_id: str,
+    user_id: str,
+) -> None:
+    insertions = [
+        prepare_otu_insertion(
+            created_at,
+            history_method,
+            otu,
+            reference_id,
+            user_id,
+        )
+        for otu in otus
+    ]
+
+    try:
+        sequences = []
+
+        for insertion in insertions:
+            sequences.extend(insertion.sequences)
+
+        await asyncio.gather(
+            mongo.history.insert_many(
+                [insertion.history for insertion in insertions],
+                None,
+            ),
+            mongo.otus.insert_many(
+                [insertion.otu for insertion in insertions],
+                None,
+            ),
+            mongo.sequences.insert_many(sequences, None),
+        )
+    except Exception:
+        await asyncio.gather(
+            mongo.otus.delete_many({"reference.id": reference_id}),
+            mongo.history.delete_many({"reference.id": reference_id}),
+            mongo.references.delete_one({"_id": reference_id}),
+            mongo.sequences.delete_many({"reference.id": reference_id}),
+        )
+        raise
 
 
 async def prepare_update_joined_otu(
