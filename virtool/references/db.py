@@ -2,7 +2,6 @@
 
 import asyncio
 import datetime
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pymongo
@@ -22,7 +21,6 @@ import virtool.github
 import virtool.history.db
 import virtool.mongo.utils
 import virtool.utils
-from virtool.api.client import UserClient
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.topg import compose_legacy_id_expression
 from virtool.data.transforms import apply_transforms
@@ -32,6 +30,7 @@ from virtool.mongo.utils import get_mongo_from_req
 from virtool.otus.db import join
 from virtool.otus.utils import verify
 from virtool.pg.utils import get_row
+from virtool.references.alot import prepare_otu_insertion
 from virtool.references.bulk_models import (
     OTUData,
     OTUDelete,
@@ -55,19 +54,18 @@ from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
 if TYPE_CHECKING:
+    from virtool.api.client import UserClient
     from virtool.mongo.core import Mongo
 
 
 async def processor(mongo: "Mongo", document: Document) -> Document:
-    """Process a reference document to a form that can be dispatched or returned in a
-    list.
+    """Process a reference document to a form that can be expressed in a list.
 
-    Used `attach_computed` for complete representations of the reference.
+    Used ``attach_computed`` for complete representations of the reference.
 
     :param mongo: the application Mongo client
     :param document: the document to process
     :return: the processed document
-
     """
     document = base_processor(document)
 
@@ -180,18 +178,13 @@ async def check_right(req: Request, ref_id: str, right: str) -> bool:
 
             break
 
-    for group in groups:
-        if group[right] and group["id"] in req["client"].groups:
-            return True
-
-    return False
+    return any(group[right] and group["id"] in client.groups for group in groups)
 
 
 async def check_source_type(mongo: "Mongo", ref_id: str, source_type: str) -> bool:
-    """Check if the provided `source_type` is valid based on the current reference
-    source type configuration.
+    """Check `source_type` is valid based on the reference configuration.
 
-    :param mongo: the application database client
+    :param mongo: the application MongoDB client
     :param ref_id: the reference context
     :param source_type: the source type to check
     :return: source type is valid
@@ -417,12 +410,13 @@ async def get_manifest(mongo: "Mongo", ref_id: str) -> Document:
     :return: a manifest of otu ids and versions
 
     """
-    manifest = {}
-
-    async for document in mongo.otus.find({"reference.id": ref_id}, ["version"]):
-        manifest[document["_id"]] = document["version"]
-
-    return manifest
+    return {
+        document["_id"]: document["version"]
+        async for document in mongo.otus.find(
+            {"reference.id": ref_id},
+            ["version"],
+        )
+    }
 
 
 async def get_otu_count(mongo: "Mongo", ref_id: str) -> int:
@@ -624,21 +618,20 @@ async def create_remote(
 
 
 async def insert_change(
-    data_path: Path,
     mongo: "Mongo",
+    pg: AsyncEngine,
     otu_id: str,
-    verb: HistoryMethod,
+    method_name: HistoryMethod,
     user_id: str,
     session: AsyncIOMotorClientSession,
     old: Document | None = None,
-):
-    """Insert a history document for the OTU identified by `otu_id` and the passed
-    `verb`.
+) -> None:
+    """Insert a history document for an OTU involved in import, remote, or clone.
 
-    :param data_path: system path to the applications datafolder
     :param mongo: the application database object
+    :param pg: the application PostgreSQL database object
     :param otu_id: the ID of the OTU the change is for
-    :param verb: the change verb (eg. remove, insert)
+    :param method_name: the change verb (eg. remove, insert)
     :param user_id: the ID of the requesting user
     :param old: the old joined OTU document
     :param session: a Mongo session
@@ -648,22 +641,22 @@ async def insert_change(
 
     name = joined["name"]
 
-    e = "" if verb.value[-1] == "e" else "e"
+    e = "" if method_name.value[-1] == "e" else "e"
 
-    description = f"{verb.value.capitalize()}{e}d {name}"
+    description = f"{method_name.value.capitalize()}{e}d {name}"
 
     if abbreviation := joined.get("abbreviation"):
         description = f"{description} ({abbreviation})"
 
     await virtool.history.db.add(
         mongo,
-        data_path,
-        verb,
+        pg,
+        description,
+        method_name,
         old,
         joined,
-        description,
         user_id,
-        session=session,
+        mongo_session=session,
     )
 
 
@@ -729,6 +722,52 @@ async def insert_joined_otu(
         await mongo.sequences.insert_one(sequence, session=session)
 
     return document["_id"]
+
+
+async def populate_insert_only_reference(
+    created_at: datetime,
+    history_method: HistoryMethod,
+    mongo: "Mongo",
+    otus: list[dict],
+    reference_id: str,
+    user_id: str,
+) -> None:
+    insertions = [
+        prepare_otu_insertion(
+            created_at,
+            history_method,
+            otu,
+            reference_id,
+            user_id,
+        )
+        for otu in otus
+    ]
+
+    try:
+        sequences = []
+
+        for insertion in insertions:
+            sequences.extend(insertion.sequences)
+
+        await asyncio.gather(
+            mongo.history.insert_many(
+                [insertion.history for insertion in insertions],
+                None,
+            ),
+            mongo.otus.insert_many(
+                [insertion.otu for insertion in insertions],
+                None,
+            ),
+            mongo.sequences.insert_many(sequences, None),
+        )
+    except Exception:
+        await asyncio.gather(
+            mongo.otus.delete_many({"reference.id": reference_id}),
+            mongo.history.delete_many({"reference.id": reference_id}),
+            mongo.references.delete_one({"_id": reference_id}),
+            mongo.sequences.delete_many({"reference.id": reference_id}),
+        )
+        raise
 
 
 async def prepare_update_joined_otu(

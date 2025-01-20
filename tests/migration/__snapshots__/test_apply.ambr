@@ -309,5 +309,12 @@
       'name': 'ensure user handle uniqueness',
       'revision': 'bc0ae38a70bb',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 45,
+      'name': 'add history_diffs table',
+      'revision': '86d4e93bb0bd',
+    }),
   ])
 # ---

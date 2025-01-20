@@ -128,7 +128,7 @@ async def test_update_settings(data, status, spawn_client, resp_is, snapshot):
 
 
 async def test_get_api_keys(
-        fake: DataFaker,
+    fake: DataFaker,
     mongo: Mongo,
     spawn_client: ClientSpawner,
     snapshot,
@@ -177,7 +177,7 @@ class TestCreateAPIKey:
         has_perm,
         req_perm,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         mocker,
         snapshot,
         spawn_client: ClientSpawner,
@@ -248,7 +248,7 @@ class TestUpdateAPIKey:
         has_admin: bool,
         has_perm: bool,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         mongo: Mongo,
         snapshot,
         spawn_client: ClientSpawner,
@@ -344,7 +344,7 @@ async def test_remove_api_key(
 
 
 async def test_remove_all_api_keys(
-        fake: DataFaker,
+    fake: DataFaker,
     mongo: Mongo,
     spawn_client: ClientSpawner,
 ):
@@ -536,7 +536,7 @@ async def test_login(
 async def test_login_reset(
     spawn_client,
     snapshot,
-        fake: DataFaker,
+    fake: DataFaker,
     request_path,
     correct_code,
     data_layer: DataLayer,

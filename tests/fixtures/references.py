@@ -1,12 +1,14 @@
 import aiohttp.web
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from pytest_mock import MockerFixture
 
 
 @pytest.fixture(params=[True, False])
-def check_ref_right(mocker, request):
+def check_ref_right(mocker: MockerFixture, request):
     mock = mocker.patch(
-        "virtool.references.db.check_right", make_mocked_coro(request.param)
+        "virtool.references.db.check_right",
+        make_mocked_coro(request.param),
     )
 
     mock.__bool__ = lambda x: request.param
@@ -16,16 +18,19 @@ def check_ref_right(mocker, request):
     return mock
 
 
-@pytest.fixture
+@pytest.fixture()
 def test_ref():
     return {
         "_id": "hxn167",
         "data_type": "genome",
+        "groups": [],
         "name": "Reference A",
+        "source_types": ["isolate", "strain"],
+        "users": [],
     }
 
 
-@pytest.fixture
+@pytest.fixture()
 def reference(static_time):
     return {
         "_id": "3tt0w336",
@@ -45,7 +50,7 @@ def reference(static_time):
                 "modify": True,
                 "modify_otu": True,
                 "remove": True,
-            }
+            },
         ],
         "user": {"id": "igboyes"},
         "imported_from": {

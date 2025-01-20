@@ -1,5 +1,3 @@
-from typing import Union
-
 from aiohttp import web
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r403, r404
@@ -37,7 +35,7 @@ routes = Routes()
 
 @routes.view("/otus/{otu_id}")
 class OTUView(PydanticView):
-    async def get(self, otu_id: str, /) -> Union[r200[OTU], r403, r404]:
+    async def get(self, otu_id: str, /) -> r200[OTU] | r403 | r404:
         """Get an OTU.
 
         Fetches the details of an OTU.
@@ -73,7 +71,7 @@ class OTUView(PydanticView):
         otu_id: str,
         /,
         data: UpdateOTURequest,
-    ) -> Union[r200[OTU], r400, r403, r404]:
+    ) -> r200[OTU] | r400 | r403 | r404:
         """Update an OTU.
 
         Checks to make sure the supplied OTU name and abbreviation don't already exist
@@ -128,7 +126,7 @@ class OTUView(PydanticView):
 
         return json_response(otu)
 
-    async def delete(self, otu_id: str, /) -> Union[r204, r401, r403, r404]:
+    async def delete(self, otu_id: str, /) -> r204 | r401 | r403 | r404:
         """Delete an OTU.
 
         Deletes and OTU and its associated isolates and sequences.
@@ -178,7 +176,7 @@ class IsolatesView(PydanticView):
         otu_id: str,
         /,
         data: CreateIsolateRequest,
-    ) -> Union[r201[OTUIsolate], r401, r404]:
+    ) -> r201[OTUIsolate] | r401 | r404:
         """Create an isolate.
 
         Creates an isolate on the OTU specified by `otu_id`.
@@ -219,7 +217,7 @@ class IsolatesView(PydanticView):
         return json_response(
             isolate,
             status=201,
-            headers={"Location": f"/otus/{otu_id}/isolates/{isolate['id']}"},
+            headers={"Location": f"/otus/{otu_id}/isolates/{isolate.id}"},
         )
 
 
@@ -230,7 +228,7 @@ class IsolateView(PydanticView):
         otu_id: str,
         isolate_id: str,
         /,
-    ) -> Union[r200[OTUIsolate], r404]:
+    ) -> r200[OTUIsolate] | r404:
         """Get an isolate.
 
         Fetches the details of an isolate.
@@ -284,7 +282,7 @@ class IsolateView(PydanticView):
         isolate_id: str,
         /,
         data: UpdateIsolateRequest,
-    ) -> Union[r200[OTUIsolate], r401, r404]:
+    ) -> r200[OTUIsolate] | r401 | r404:
         """Update an isolate.
 
         Updates an isolate using 'otu_id' and 'isolate_id'.
@@ -440,7 +438,7 @@ class SequencesView(PydanticView):
         ):
             raise APIBadRequest(message)
 
-        sequence_document = await get_data_from_req(self.request).otus.create_sequence(
+        sequence = await get_data_from_req(self.request).otus.create_sequence(
             otu_id,
             isolate_id,
             data.accession,
@@ -452,12 +450,12 @@ class SequencesView(PydanticView):
             target=data.target,
         )
 
+        location = f"/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence.id}"
+
         return json_response(
-            sequence_document,
+            sequence,
             status=201,
-            headers={
-                "Location": f"/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_document['id']}",
-            },
+            headers={"Location": location},
         )
 
 
@@ -511,7 +509,7 @@ class SequenceView(PydanticView):
         sequence_id: str,
         /,
         data: UpdateSequenceRequest,
-    ) -> Union[r200[Sequence], r400, r401, r403, r404]:
+    ) -> r200[Sequence] | r400 | r401 | r403 | r404:
         """Update a sequence.
 
         Updates a sequence using its 'otu id', 'isolate id' and 'sequence id'.

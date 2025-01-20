@@ -18,11 +18,13 @@ from faker.providers import (
 )
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from virtool_core.models.enums import Molecule
 from virtool_core.models.group import Group
 from virtool_core.models.hmm import HMM
 from virtool_core.models.job import Job, JobState
 from virtool_core.models.label import Label
 from virtool_core.models.ml import MLModel
+from virtool_core.models.otu import OTU, OTUSegment
 from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.subtraction import Subtraction
 from virtool_core.models.task import Task
@@ -31,11 +33,13 @@ from virtool_core.models.user import User
 
 from virtool.data.layer import DataLayer
 from virtool.example import example_path
+from virtool.fake.providers import OrganismProvider, SegmentProvider, SequenceProvider
 from virtool.groups.oas import PermissionsUpdate, UpdateGroupRequest
 from virtool.groups.pg import SQLGroup
 from virtool.jobs.utils import WORKFLOW_NAMES
 from virtool.ml.tasks import SyncMLModelsTask
 from virtool.mongo.core import Mongo
+from virtool.otus.oas import CreateOTURequest
 from virtool.references.tasks import (
     CleanReferencesTask,
     CloneReferenceTask,
@@ -117,12 +121,16 @@ class DataFaker:
         self.faker.add_provider(python)
         self.faker.add_provider(file)
         self.faker.add_provider(job_provider)
+        self.faker.add_provider(OrganismProvider)
+        self.faker.add_provider(SegmentProvider)
+        self.faker.add_provider(SequenceProvider)
 
         self.groups = GroupsFakerDomain(self)
         self.hmm = HMMFakerDomain(self)
         self.jobs = JobsFakerDomain(self)
         self.labels = LabelsFakerDomain(self)
         self.ml = MLFakerDomain(self)
+        self.otus = OTUsFakerDomain(self)
         self.subtractions = SubtractionFakerDomain(self)
         self.tasks = TasksFakerDomain(self)
         self.users = UsersFakerDomain(self)
@@ -372,6 +380,61 @@ class MLFakerDomain(DataFakerDomain):
             prerelease=self._faker.pybool(),
             published_at=self._faker.date_time(),
             size=self._faker.pyint(),
+        )
+
+
+class OTUsFakerDomain(DataFakerDomain):
+    model = OTU
+
+    async def create(self, ref_id: str, user: User, name: str = "") -> OTU:
+        """Create a new fake OTU."""
+        otu = await self.create_empty(ref_id, user, name)
+
+        isolate = await self._layer.otus.add_isolate(
+            otu.id,
+            "isolate",
+            self._faker.word().capitalize(),
+            user.id,
+        )
+
+        for segment in otu.otu_schema:
+            await self._layer.otus.create_sequence(
+                otu.id,
+                isolate.id,
+                self._faker.accession(),
+                self._faker.sentence(),
+                self._faker.sequence(),
+                user.id,
+                self._faker.host(),
+                segment.name,
+            )
+
+        return await self._layer.otus.get(otu.id)
+
+    async def create_empty(self, ref_id: str, user: User, name: str = "") -> OTU:
+        """Create a fake OTU with no isolates."""
+        if not name:
+            name = self._faker.organism()
+
+        abbreviation = "".join([part[0].upper() for part in name.split(" ")])
+
+        segments = [
+            OTUSegment(
+                name=self._faker.segment(prefix="RNA"),
+                required=True,
+                molecule=Molecule.ss_rna,
+            )
+            for _ in range(self._faker.pyint(1, 3))
+        ]
+
+        return await self._layer.otus.create(
+            ref_id,
+            CreateOTURequest(
+                name=name,
+                abbreviation=abbreviation,
+                schema=segments,
+            ),
+            user.id,
         )
 
 

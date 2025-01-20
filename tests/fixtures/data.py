@@ -2,6 +2,7 @@
 
 import pytest
 from aiohttp import ClientSession
+from pytest_mock import MockerFixture
 from redis import Redis
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -16,7 +17,7 @@ from virtool.tasks.data import TasksData
 def data_layer(
     authorization_client: AuthorizationClient,
     config,
-    mocker,
+    mocker: MockerFixture,
     mongo: Mongo,
     pg: AsyncEngine,
     redis: Redis,

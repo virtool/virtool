@@ -2,7 +2,7 @@ import json
 from asyncio import to_thread
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING
 
 from aiohttp import ClientConnectorError
 
@@ -30,7 +30,7 @@ class CloneReferenceTask(BaseTask):
         self,
         task_id: int,
         data: "DataLayer",
-        context: Dict,
+        context: dict,
         temp_dir: TemporaryDirectory,
     ):
         super().__init__(task_id, data, context, temp_dir)
@@ -56,25 +56,30 @@ class ImportReferenceTask(BaseTask):
 
         self.import_data: ReferenceSourceData | None = None
 
-    async def load_file(self):
-        path = Path(self.context["path"])
-
+    async def load_file(self) -> None:
         try:
-            import_data = await to_thread(load_reference_file, path)
+            import_data = await to_thread(
+                load_reference_file,
+                Path(self.context["path"]),
+            )
         except json.decoder.JSONDecodeError as err:
             return await self._set_error(str(err).split("JSONDecodeError: ")[1])
         except OSError as err:
             if "Not a gzipped file" in str(err):
-                return await self._set_error("Not a gzipped file")
+                await self._set_error("Not a gzipped file")
+            else:
+                await self._set_error(str(err))
 
-            return await self._set_error(str(err))
+            return None
 
         if errors := check_import_data(import_data, strict=False, verify=True):
-            return await self._set_error(errors)
+            await self._set_error(errors)
+        else:
+            self.import_data = ReferenceSourceData(**import_data)
 
-        self.import_data = ReferenceSourceData(**import_data)
+        return None
 
-    async def import_reference(self):
+    async def import_reference(self) -> None:
         ref_id = self.context["ref_id"]
         user_id = self.context["user_id"]
 
@@ -93,14 +98,14 @@ class RemoteReferenceTask(BaseTask):
         self,
         task_id: int,
         data: "DataLayer",
-        context: Dict,
+        context: dict,
         temp_dir: TemporaryDirectory,
     ):
         super().__init__(task_id, data, context, temp_dir)
 
         self.steps = [self.download, self.populate]
 
-        self.import_data: Optional[ReferenceSourceData] = None
+        self.import_data: ReferenceSourceData | None = None
 
     async def download(self):
         tracker = AccumulatingProgressHandlerWrapper(
@@ -143,7 +148,7 @@ class UpdateRemoteReferenceTask(BaseTask):
         self,
         task_id: int,
         data: "DataLayer",
-        context: Dict,
+        context: dict,
         temp_dir: TemporaryDirectory,
     ):
         super().__init__(task_id, data, context, temp_dir)
@@ -152,7 +157,7 @@ class UpdateRemoteReferenceTask(BaseTask):
 
         self.download_url = self.context["release"]["download_url"]
         self.download_size = self.context["release"]["size"]
-        self.source_data: Optional[ReferenceSourceData] = None
+        self.source_data: ReferenceSourceData | None = None
 
     async def download(self):
         tracker = AccumulatingProgressHandlerWrapper(
@@ -188,7 +193,7 @@ class CleanReferencesTask(BaseTask):
         self,
         task_id: int,
         data: "DataLayer",
-        context: Dict,
+        context: dict,
         temp_dir: TemporaryDirectory,
     ):
         super().__init__(task_id, data, context, temp_dir)
