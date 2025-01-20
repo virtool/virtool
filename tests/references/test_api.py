@@ -10,6 +10,8 @@ from virtool_core.models.enums import Permission
 
 import virtool.utils
 from tests.fixtures.client import ClientSpawner
+from tests.fixtures.core import StaticTime
+from tests.fixtures.response import RespIs
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
@@ -23,7 +25,7 @@ from virtool.utils import get_http_session_from_app
 
 async def test_find(
     data_layer: DataLayer,
-        fake: DataFaker,
+    fake: DataFaker,
     pg: AsyncEngine,
     snapshot,
     mongo: Mongo,
@@ -133,7 +135,15 @@ async def test_find(
 
 
 @pytest.mark.parametrize("error", [404, None])
-async def test_get(error, mongo: Mongo, spawn_client, pg, snapshot, fake: DataFaker, static_time):
+async def test_get(
+    error,
+    mongo: Mongo,
+    spawn_client,
+    pg,
+    snapshot,
+    fake: DataFaker,
+    static_time,
+):
     client = await spawn_client(authenticated=True, administrator=True)
 
     user_1 = await fake.users.create()
@@ -263,7 +273,7 @@ class TestCreate:
 
     async def test_clone(
         self,
-            fake: DataFaker,
+        fake: DataFaker,
         mongo: Mongo,
         spawn_client: ClientSpawner,
         snapshot: SnapshotAssertion,
@@ -353,7 +363,7 @@ class TestCreate:
 async def test_edit(
     data_type: str,
     error: str | None,
-        fake: DataFaker,
+    fake: DataFaker,
     mocker,
     resp_is,
     snapshot,
@@ -455,7 +465,7 @@ async def test_edit(
 
 
 async def test_delete(
-        fake: DataFaker,
+    fake: DataFaker,
     mongo: Mongo,
     spawn_client: ClientSpawner,
     static_time,
@@ -705,11 +715,12 @@ class TestCreateOTU:
         self,
         abbreviation: str | None,
         error: str | None,
-        resp_is,
-        snapshot,
+        data_layer: DataLayer,
         mongo: Mongo,
-        spawn_client,
-        static_time,
+        resp_is: RespIs,
+        snapshot: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+        static_time: StaticTime,
     ):
         """Test that a valid request results in the creation of a otu document and a
         ``201`` response.
@@ -754,11 +765,17 @@ class TestCreateOTU:
                     resp.headers["Location"]
                     == "https://virtool.example.com/otus/bf1b993c"
                 )
-                assert await resp.json() == snapshot(name="json")
-                assert await asyncio.gather(
-                    mongo.otus.find_one(),
-                    mongo.history.find_one(),
-                ) == snapshot(name="db")
+                body = await resp.json()
+                assert body == snapshot(name="resp")
+
+                assert await data_layer.otus.get(body["id"]) == snapshot(name="otu")
+
+                assert await data_layer.history.get(
+                    body["most_recent_change"]["id"],
+                ) == snapshot(
+                    name="history",
+                )
+
             case "403":
                 await resp_is.insufficient_rights(resp)
             case "404":
@@ -837,7 +854,7 @@ class TestCreateOTU:
 
 async def test_create_index(
     check_ref_right,
-        fake: DataFaker,
+    fake: DataFaker,
     mocker,
     resp_is,
     mongo: Mongo,
@@ -892,7 +909,7 @@ async def test_create_index(
 @pytest.mark.parametrize("error", [None, "400_dne", "400_exists", "404"])
 async def test_create_user(
     error: str | None,
-        fake: DataFaker,
+    fake: DataFaker,
     resp_is,
     snapshot: SnapshotAssertion,
     mongo: Mongo,
@@ -974,7 +991,7 @@ async def test_create_user(
 @pytest.mark.parametrize("error", [None, "400_dne", "400_exists", "404"])
 async def test_create_group(
     error: str | None,
-        fake: DataFaker,
+    fake: DataFaker,
     resp_is,
     snapshot: SnapshotAssertion,
     mongo: Mongo,
@@ -1040,7 +1057,7 @@ async def test_create_group(
 @pytest.mark.parametrize("error", [None, "404_ref", "404_user"])
 async def test_update_user(
     error: str | None,
-        fake: DataFaker,
+    fake: DataFaker,
     resp_is,
     snapshot: SnapshotAssertion,
     mongo: Mongo,
@@ -1105,7 +1122,7 @@ async def test_update_user(
 )
 async def test_update_group(
     error: str | None,
-        fake: DataFaker,
+    fake: DataFaker,
     resp_is,
     snapshot,
     mongo: Mongo,
@@ -1171,7 +1188,7 @@ async def test_update_group(
 )
 async def test_delete_user(
     error: str | None,
-        fake: DataFaker,
+    fake: DataFaker,
     resp_is,
     snapshot: SnapshotAssertion,
     mongo: Mongo,
@@ -1230,7 +1247,7 @@ async def test_delete_user(
 @pytest.mark.parametrize("error", [None, "404_group", "404_ref"])
 async def test_delete_group(
     error: str | None,
-        fake: DataFaker,
+    fake: DataFaker,
     resp_is,
     snapshot: SnapshotAssertion,
     mongo: Mongo,

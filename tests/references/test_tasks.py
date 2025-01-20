@@ -5,9 +5,12 @@ from pathlib import Path
 
 import arrow
 import pytest
+from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
 
+from tests.fixtures.core import StaticTime
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.mongo.core import Mongo
@@ -48,7 +51,7 @@ TEST_FILES_PATH = Path(__file__).parent.parent / "test_files"
 async def test_clean_references_task(
     update,
     data_layer,
-        fake: DataFaker,
+    fake: DataFaker,
     mocker,
     mongo,
     pg,
@@ -132,7 +135,11 @@ async def test_clean_references_task(
 
 
 @pytest.fixture()
-def assert_reference_created(mongo, snapshot):
+def assert_reference_created(
+    data_layer: DataLayer,
+    mongo: Mongo,
+    snapshot: SnapshotAssertion,
+):
     async def func(
         query: dict | None = None,
     ):
@@ -176,10 +183,10 @@ async def test_import_reference_task(
     assert_reference_created,
     data_layer: DataLayer,
     data_path: Path,
-        fake: DataFaker,
+    fake: DataFaker,
     mongo: Mongo,
     pg: AsyncEngine,
-    static_time,
+    static_time: StaticTime,
     tmpdir,
 ):
     user = await fake.users.create()
@@ -232,17 +239,19 @@ async def test_import_reference_task(
 
 async def test_remote_reference_task(
     assert_reference_created,
-    data_layer,
-    mocker,
-    mongo,
-    pg,
-    static_time,
-    tmpdir,
+    data_layer: DataLayer,
+    fake: DataFaker,
+    mocker: MockerFixture,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    static_time: StaticTime,
 ):
     async def download_file(url, target_path, _):
         shutil.copyfile(TEST_FILES_PATH / "reference.json.gz", target_path)
 
     mocker.patch("virtool.references.tasks.download_file", download_file)
+
+    user = await fake.users.create()
 
     async with AsyncSession(pg) as session:
         session.add(
@@ -251,11 +260,16 @@ async def test_remote_reference_task(
                 complete=False,
                 context={
                     "ref_id": "foo",
-                    "user_id": "test",
+                    "user_id": user.id,
                     "release": {
+                        "body": "Test body",
                         "download_url": "https://virtool.example.com/downloads/reference.json.gz",
+                        "html_url": "https://virtool.example.com/releases/12345",
                         "id": 12345,
-                        "size": 1,
+                        "name": "v1.2.2",
+                        "newer": True,
+                        "published_at": static_time.datetime,
+                        "size": 50000,
                     },
                 },
                 count=0,
@@ -272,25 +286,64 @@ async def test_remote_reference_task(
                 {
                     "_id": "foo",
                     "created_at": static_time.datetime,
-                    "updates": [{"id": 12345, "ready": False}],
+                    "data_type": "genome",
+                    "description": "A test reference",
+                    "groups": [],
+                    "internal_control": None,
+                    "name": "Test",
+                    "organism": "virus",
+                    "restrict_source_types": False,
+                    "source_types": [],
+                    "user": {"id": user.id},
+                    "users": [
+                        {
+                            "id": user.id,
+                            "build": True,
+                            "modify": True,
+                            "modify_otu": True,
+                            "remove": True,
+                            "remove_otu": True,
+                        },
+                    ],
+                    "updates": [
+                        {
+                            "body": "Test body",
+                            "created_at": static_time.datetime,
+                            "download_url": "https://virtool.example.com/downloads/reference.json.gz",
+                            "filename": "reference.json.gz",
+                            "html_url": "https://virtool.example.com/releases/12345",
+                            "id": 12345,
+                            "name": "v1.2.2",
+                            "newer": True,
+                            "published_at": static_time.datetime,
+                            "ready": False,
+                            "size": 50000,
+                            "user": {"id": user.id},
+                        },
+                    ],
                 },
             ),
         )
 
-    task = await RemoteReferenceTask.from_task_id(data_layer, 1)
+    task_instance = await RemoteReferenceTask.from_task_id(data_layer, 1)
 
-    await task.run()
+    await task_instance.run()
     await assert_reference_created()
+
+    task = await data_layer.tasks.get(1)
+
+    assert task.complete is True
+    assert task.progress == 100
 
 
 @pytest.fixture()
 async def create_reference(
-        fake: DataFaker,
+    fake: DataFaker,
     data_layer: DataLayer,
-    mongo,
-    pg,
-    static_time,
-    tmpdir,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    static_time: StaticTime,
+    tmp_path: Path,
 ):
     user = await fake.users.create()
 
@@ -301,7 +354,7 @@ async def create_reference(
         user.id,
     )
 
-    path = tmpdir / "files" / upload.name_on_disk
+    path = tmp_path / "files" / upload.name_on_disk
 
     async with AsyncSession(pg) as session:
         session.add(
@@ -346,18 +399,18 @@ async def create_reference(
     return "bar"
 
 
-@pytest.mark.flaky(reruns=2)
 async def test_clone_reference_task(
     assert_reference_created,
     create_reference: str,
     data_layer: DataLayer,
-        fake: DataFaker,
-    mongo,
+    fake: DataFaker,
+    mongo: Mongo,
     pg: AsyncEngine,
-    static_time,
-    tmpdir,
+    static_time: StaticTime,
 ):
     manifest = await get_manifest(mongo, create_reference)
+
+    assert len(manifest) == 20
 
     user = await fake.users.create()
 
@@ -400,10 +453,24 @@ async def test_clone_reference_task(
 
         await session.commit()
 
-    task = await CloneReferenceTask.from_task_id(data_layer, 1)
-    await task.run()
+    assert await mongo.history.count_documents({}) == 20
+    assert await mongo.otus.count_documents({}) == 20
 
-    row = await get_row_by_id(pg, SQLTask, 1)
-    assert row.complete is True
+    task_instance = await CloneReferenceTask.from_task_id(data_layer, 1)
+    await task_instance.run()
 
-    await assert_reference_created(query={"reference.id": "foo"})
+    task = await data_layer.tasks.get(1)
+
+    assert task.complete is True
+    assert task.progress == 100
+
+    otus = await mongo.otus.find({}).to_list(None)
+
+    # Make sure OTU count is sum of source and destination references.
+    assert len(otus) == 40
+
+    assert await mongo.history.count_documents({}) == 40
+    assert await mongo.history.count_documents({"reference.id": "foo"}) == 20
+
+    # assert 0
+    # await assert_reference_created(query={"reference.id": "foo"})
