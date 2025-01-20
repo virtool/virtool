@@ -155,7 +155,11 @@ def assert_reference_created(
         assert otus == snapshot(
             name="otus",
             matcher=path_type(
-                {".*_id": (str,), ".*created_at": (datetime.datetime,)},
+                {
+                    ".*_id": (str,),
+                    r".*\d\.id": (str,),
+                    ".*created_at": (datetime.datetime,),
+                },
                 regex=True,
             ),
         )
@@ -172,7 +176,9 @@ def assert_reference_created(
 
         assert history == snapshot(
             name="history",
-            matcher=path_type({".*_id": (str,), ".*otu.id": (str,)}, regex=True),
+            matcher=path_type(
+                {".*_id": (str,), r".*\d\.id": (str,), ".*otu.id": (str,)}, regex=True
+            ),
         )
 
     return func
