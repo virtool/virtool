@@ -974,7 +974,7 @@ class ReferencesData(DataLayerDomain):
         tracker = AccumulatingProgressHandlerWrapper(progress_handler, 4)
 
         created_at: datetime = await get_one_field(
-            self._mongo.references, 
+            self._mongo.references,
             "created_at",
             ref_id,
         )
