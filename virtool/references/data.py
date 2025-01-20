@@ -853,34 +853,41 @@ class ReferencesData(DataLayerDomain):
 
         cloned_reference = await self._mongo.references.find_one(ref_id)
 
-        async with self._mongo.create_session() as session:
-            for source_otu_id, version in manifest.items():
-                _, patched, _ = await patch_to_version(
-                    self._config.data_path,
-                    self._mongo,
-                    source_otu_id,
-                    version,
-                )
+        insertions = []
 
-                otu_id = await insert_joined_otu(
-                    self._mongo,
-                    patched,
-                    cloned_reference["created_at"],
-                    ref_id,
-                    user_id,
-                    session,
-                )
+        for source_otu_id, version in manifest.items():
+            _, patched, _ = await patch_to_version(
+                self._config.data_path,
+                self._mongo,
+                source_otu_id,
+                version,
+            )
 
-                await insert_change(
-                    self._config.data_path,
-                    self._mongo,
-                    otu_id,
-                    HistoryMethod.clone,
-                    user_id,
-                    session,
-                )
+            insertion = prepare_otu_insertion(
+                cloned_reference["created_at"],
+                HistoryMethod.clone,
+                patched,
+                random_alphanumeric(),
+                ref_id,
+                user_id,
+            )
 
-                await tracker.add(1)
+            insertions.append(insertion)
+
+        await asyncio.gather(
+            self._mongo.history.insert_many(
+                [i.history for i in insertions],
+                None,
+            ),
+            self._mongo.otus.insert_many(
+                [i.otu for i in insertions],
+                None,
+            ),
+            self._mongo.sequences.insert_many(
+                [sequence for i in insertions for sequence in i.sequences],
+                None,
+            ),
+        )
 
         emit(
             await self.get(ref_id),
