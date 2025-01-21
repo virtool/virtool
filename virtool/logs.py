@@ -12,7 +12,16 @@ logging.basicConfig(
 )
 
 
-def _exception_level_to_error(event_dict):
+def _exception_level_to_error(event_dict: dict) -> dict:
+    """Convert the log level of an exception event to error.
+
+    The `structlog_sentry` processor does not like the `exception` level which is used
+    by `structlog`.
+
+    :param event_dict: the event dictionary
+    :return: the event dictionary with the level changed to error
+
+    """
     if event_dict.get("level") == "exception":
         event_dict["level"] = "error"
 
