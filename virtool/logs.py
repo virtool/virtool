@@ -12,6 +12,22 @@ logging.basicConfig(
 )
 
 
+def _exception_level_to_error(event_dict: dict) -> dict:
+    """Convert the log level of an exception event to error.
+
+    The `structlog_sentry` processor does not like the `exception` level which is used
+    by `structlog`.
+
+    :param event_dict: the event dictionary
+    :return: the event dictionary with the level changed to error
+
+    """
+    if event_dict.get("level") == "exception":
+        event_dict["level"] = "error"
+
+    return event_dict
+
+
 def configure_logging(use_sentry: bool):
     """Configure logging for Virtool.
 
@@ -22,24 +38,30 @@ def configure_logging(use_sentry: bool):
 
     """
     processors = [
-        structlog.stdlib.filter_by_level,
         structlog.stdlib.add_logger_name,
         structlog.stdlib.add_log_level,
-        structlog.stdlib.PositionalArgumentsFormatter(),
         structlog.processors.TimeStamper(fmt="%Y-%m-%dT%H:%M:%SZ"),
-        structlog.processors.StackInfoRenderer(),
-        structlog.processors.UnicodeDecoder(),
+        structlog.stdlib.PositionalArgumentsFormatter(),
     ]
 
     if use_sentry:
-        processors.append(
-            SentryProcessor(event_level=logging.WARNING, level=logging.INFO),
+        processors.extend(
+            [
+                _exception_level_to_error,
+                SentryProcessor(event_level=logging.WARNING, level=logging.INFO),
+            ],
         )
 
-    processors.append(
-        LogfmtRenderer(
-            key_order=["timestamp", "level", "logger", "event"],
-        ),
+    processors.extend(
+        [
+            structlog.stdlib.filter_by_level,
+            structlog.stdlib.PositionalArgumentsFormatter(),
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.UnicodeDecoder(),
+            LogfmtRenderer(
+                key_order=["timestamp", "level", "logger", "event"],
+            ),
+        ],
     )
 
     structlog.configure(
