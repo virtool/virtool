@@ -3,6 +3,7 @@ import sys
 
 import structlog
 from structlog.processors import LogfmtRenderer
+from structlog.types import EventDict
 from structlog_sentry import SentryProcessor
 
 logging.basicConfig(
@@ -12,7 +13,11 @@ logging.basicConfig(
 )
 
 
-def _exception_level_to_error(event_dict: dict) -> dict:
+def _exception_level_to_error(
+    _: logging.Logger,
+    __: str,
+    event_dict: EventDict,
+) -> EventDict:
     """Convert the log level of an exception event to error.
 
     The `structlog_sentry` processor does not like the `exception` level which is used
