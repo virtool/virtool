@@ -14,7 +14,7 @@ from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.user import User
 from virtool_core.redis import Redis
 
-import virtool.jobs.main
+import virtool.jobs.app
 from virtool.api.custom_json import dump_string
 from virtool.app import create_app
 from virtool.authorization.client import AuthorizationClient
@@ -28,7 +28,7 @@ from virtool.groups.oas import PermissionsUpdate
 from virtool.mongo.core import Mongo
 from virtool.mongo.identifier import FakeIdProvider
 from virtool.mongo.utils import get_mongo_from_app
-from virtool.users.oas import UpdateUserRequest
+from virtool.users.oas import UserUpdateRequest
 from virtool.utils import hash_key
 
 
@@ -67,7 +67,7 @@ class VirtoolTestClientUser:
         """
         user = await self._data_layer.users.update(
             self.id,
-            UpdateUserRequest(groups=group_ids),
+            UserUpdateRequest(groups=group_ids),
         )
 
         self.groups = user.groups

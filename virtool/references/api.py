@@ -4,8 +4,6 @@ TODO: Drop support for string group ids when we fully migrate to SQL.
 """
 
 from aiohttp.web_response import Response
-from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r202, r204, r400, r403, r404, r502
 from virtool_core.models.otu import OTU
 from virtool_core.models.roles import AdministratorRole
 
@@ -21,6 +19,8 @@ from virtool.api.errors import (
 )
 from virtool.api.policy import PermissionRoutePolicy, policy
 from virtool.api.routes import Routes
+from virtool.api.status import R200, R201, R202, R204, R400, R403, R404, R502
+from virtool.api.view import APIView
 from virtool.authorization.permissions import LegacyPermission
 from virtool.data.errors import (
     ResourceConflictError,
@@ -28,28 +28,27 @@ from virtool.data.errors import (
     ResourceNotFoundError,
     ResourceRemoteError,
 )
-from virtool.data.utils import get_data_from_req
 from virtool.indexes.oas import ListIndexesResponse
-from virtool.otus.oas import CreateOTURequest, FindOTUsResponse
+from virtool.otus.oas import OTUCreateRequest, OTUSearchResponse
 from virtool.references.db import check_right
 from virtool.references.oas import (
-    CreateReferenceGroupRequest,
-    CreateReferenceGroupResponse,
-    CreateReferenceIndexesResponse,
-    CreateReferenceRequest,
     CreateReferenceResponse,
     CreateReferenceUpdateResponse,
-    CreateReferenceUserRequest,
-    FindReferencesResponse,
     GetReferenceUpdateResponse,
+    IndexCreateResponse,
+    ReferenceCreateGroupRequest,
+    ReferenceCreateGroupResponse,
+    ReferenceCreateRequest,
+    ReferenceCreateUserRequest,
     ReferenceGroupResponse,
     ReferenceGroupsResponse,
     ReferenceHistoryResponse,
     ReferenceReleaseResponse,
     ReferenceResponse,
     ReferenceRightsRequest,
-    ReferenceUsersResponse,
-    UpdateReferenceRequest,
+    ReferenceSearchResponse,
+    ReferenceUpdateRequest,
+    ReferenceUserResponse,
 )
 
 routes = Routes()
@@ -62,10 +61,10 @@ RIGHTS_SCHEMA = {
 }
 
 
-@routes.view("/spaces/{space_id}/refs")
-@routes.view("/refs")
-class ReferencesView(PydanticView):
-    async def get(self, find: str | None) -> r200[FindReferencesResponse]:
+@routes.web.view("/spaces/{space_id}/refs")
+@routes.web.view("/refs")
+class ReferencesView(APIView):
+    async def get(self, find: str | None) -> R200[ReferenceSearchResponse]:
         """Find references.
 
         Lists references that match the find term.
@@ -73,7 +72,7 @@ class ReferencesView(PydanticView):
         Status Codes:
             200: Successful operation
         """
-        search_result = await get_data_from_req(self.request).references.find(
+        search_result = await self.data.references.find(
             find,
             self.request["client"].user_id,
             self.request["client"].administrator_role == AdministratorRole.FULL,
@@ -86,8 +85,8 @@ class ReferencesView(PydanticView):
     @policy(PermissionRoutePolicy(LegacyPermission.CREATE_REF))
     async def post(
         self,
-        data: CreateReferenceRequest,
-    ) -> r200[CreateReferenceResponse] | r400 | r403 | r502:
+        data: ReferenceCreateRequest,
+    ) -> R200[CreateReferenceResponse] | R400 | R403 | R502:
         """Create a reference.
 
         Creates an empty reference.
@@ -99,7 +98,7 @@ class ReferencesView(PydanticView):
             502: Could not reach GitHub
         """
         try:
-            reference = await get_data_from_req(self.request).references.create(
+            reference = await self.data.references.create(
                 data,
                 self.request["client"].user_id,
             )
@@ -125,11 +124,10 @@ class ReferencesView(PydanticView):
         )
 
 
-@routes.view("/spaces/{space_id}/refs/{ref_id}")
-@routes.view("/refs/{ref_id}")
-@routes.jobs_api.get("/refs/{ref_id}")
-class ReferenceView(PydanticView):
-    async def get(self, ref_id: str, /) -> r200[ReferenceResponse] | r403 | r404:
+@routes.web.view("/refs/{ref_id}")
+@routes.job.get("/refs/{ref_id}")
+class ReferenceView(APIView):
+    async def get(self, ref_id: str, /) -> R200[ReferenceResponse] | R403 | R404:
         """Get a reference.
 
         Fetches the details of a reference.
@@ -141,7 +139,7 @@ class ReferenceView(PydanticView):
 
         """
         try:
-            reference = await get_data_from_req(self.request).references.get(ref_id)
+            reference = await self.data.references.get(ref_id)
         except ResourceNotFoundError:
             raise APINotFound()
 
@@ -151,8 +149,8 @@ class ReferenceView(PydanticView):
         self,
         ref_id: str,
         /,
-        data: UpdateReferenceRequest,
-    ) -> r200[ReferenceResponse] | r403 | r404:
+        data: ReferenceUpdateRequest,
+    ) -> R200[ReferenceResponse] | R403 | R404:
         """Update a reference.
 
         Updates an existing reference.
@@ -170,7 +168,7 @@ class ReferenceView(PydanticView):
             raise APINotFound
 
         try:
-            reference = await get_data_from_req(self.request).references.update(
+            reference = await self.data.references.update(
                 ref_id,
                 data,
             )
@@ -181,7 +179,7 @@ class ReferenceView(PydanticView):
 
         return json_response(reference)
 
-    async def delete(self, ref_id: str, /) -> r202 | r403 | r404:
+    async def delete(self, ref_id: str, /) -> R202 | R403 | R404:
         """Delete a reference.
 
         Deletes a reference and its associated OTUs, history, and indexes. Deleting a
@@ -194,7 +192,7 @@ class ReferenceView(PydanticView):
 
         """
         try:
-            await get_data_from_req(self.request).references.remove(
+            await self.data.references.remove(
                 ref_id,
                 self.request,
             )
@@ -204,9 +202,9 @@ class ReferenceView(PydanticView):
         return Response(status=204)
 
 
-@routes.view("/refs/{ref_id}/release")
-class ReferenceReleaseView(PydanticView):
-    async def get(self, ref_id: str, /) -> r200[ReferenceReleaseResponse]:
+@routes.web.view("/refs/{ref_id}/release")
+class ReferenceReleaseView(APIView):
+    async def get(self, ref_id: str, /) -> R200[ReferenceReleaseResponse]:
         """Get latest update.
 
         Fetches the latest remote reference update from GitHub.
@@ -219,7 +217,7 @@ class ReferenceReleaseView(PydanticView):
 
         """
         try:
-            release = await get_data_from_req(self.request).references.get_release(
+            release = await self.data.references.get_release(
                 ref_id,
                 self.request.app,
             )
@@ -233,10 +231,10 @@ class ReferenceReleaseView(PydanticView):
         return json_response(release)
 
 
-@routes.view("/spaces/{space_id}/refs/{ref_id}/updates")
-@routes.view("/refs/{ref_id}/updates")
-class ReferenceUpdatesView(PydanticView):
-    async def get(self, ref_id: str, /) -> r200[GetReferenceUpdateResponse]:
+@routes.web.view("/spaces/{space_id}/refs/{ref_id}/updates")
+@routes.web.view("/refs/{ref_id}/updates")
+class ReferenceUpdatesView(APIView):
+    async def get(self, ref_id: str, /) -> R200[GetReferenceUpdateResponse]:
         """List updates.
 
         Lists all updates made to the reference.
@@ -245,7 +243,7 @@ class ReferenceUpdatesView(PydanticView):
             200: Successful operation
         """
         try:
-            updates = await get_data_from_req(self.request).references.get_updates(
+            updates = await self.data.references.get_updates(
                 ref_id,
             )
         except ResourceNotFoundError:
@@ -257,7 +255,7 @@ class ReferenceUpdatesView(PydanticView):
         self,
         ref_id: str,
         /,
-    ) -> r201[CreateReferenceUpdateResponse] | r403 | r404:
+    ) -> R201[CreateReferenceUpdateResponse] | R403 | R404:
         """Update a reference.
 
         Updates the reference to the last version of the linked remote reference.
@@ -271,7 +269,7 @@ class ReferenceUpdatesView(PydanticView):
             raise APIInsufficientRights()
 
         try:
-            update = await get_data_from_req(self.request).references.create_update(
+            update = await self.data.references.create_update(
                 ref_id,
                 self.request["client"].user_id,
             )
@@ -283,16 +281,16 @@ class ReferenceUpdatesView(PydanticView):
         return json_response(update, status=201)
 
 
-@routes.view("/spaces/{space_id}/refs/{ref_id}/otus")
-@routes.view("/refs/{ref_id}/otus")
-class ReferenceOTUsView(PydanticView):
+@routes.web.view("/spaces/{space_id}/refs/{ref_id}/otus")
+@routes.web.view("/refs/{ref_id}/otus")
+class ReferenceOTUsView(APIView):
     async def get(
         self,
         ref_id: str,
         /,
         find: str | None,
         verified: bool | None,
-    ) -> r200[FindOTUsResponse] | r404:
+    ) -> R200[OTUSearchResponse] | R404:
         """Find OTUs.
 
         Lists OTUs by name or abbreviation. Results are paginated.
@@ -302,7 +300,7 @@ class ReferenceOTUsView(PydanticView):
             404: Not found
         """
         try:
-            data = await get_data_from_req(self.request).references.find_otus(
+            data = await self.data.references.find_otus(
                 find,
                 verified,
                 ref_id,
@@ -316,8 +314,8 @@ class ReferenceOTUsView(PydanticView):
         self,
         ref_id: str,
         /,
-        data: CreateOTURequest,
-    ) -> r201[OTU] | r400 | r403 | r404:
+        data: OTUCreateRequest,
+    ) -> R201[OTU] | R400 | R403 | R404:
         """Create OTU.
 
         Creates an OTU.
@@ -333,7 +331,7 @@ class ReferenceOTUsView(PydanticView):
             raise APINotFound()
 
         try:
-            otu = await get_data_from_req(self.request).references.create_otu(
+            otu = await self.data.references.create_otu(
                 ref_id,
                 data,
                 self.request["client"].user_id,
@@ -346,15 +344,15 @@ class ReferenceOTUsView(PydanticView):
         return json_response(otu, status=201, headers={"Location": f"/otus/{otu.id}"})
 
 
-@routes.view("/spaces/{space_id}/refs/{ref_id}/history")
-@routes.view("/refs/{ref_id}/history")
-class ReferenceHistoryView(PydanticView):
+@routes.web.view("/spaces/{space_id}/refs/{ref_id}/history")
+@routes.web.view("/refs/{ref_id}/history")
+class ReferenceHistoryView(APIView):
     async def get(
         self,
         unbuilt: str | None,
         ref_id: str,
         /,
-    ) -> r200[ReferenceHistoryResponse] | r404:
+    ) -> R200[ReferenceHistoryResponse] | R404:
         """List history.
 
         Lists changes made to OTUs in the reference.
@@ -364,7 +362,7 @@ class ReferenceHistoryView(PydanticView):
             404: Not found
         """
         try:
-            data = await get_data_from_req(self.request).references.find_history(
+            data = await self.data.references.find_history(
                 ref_id,
                 unbuilt,
                 self.request.query,
@@ -375,10 +373,10 @@ class ReferenceHistoryView(PydanticView):
         return json_response(data)
 
 
-@routes.view("/spaces/{space_id}/refs/{ref_id}/indexes")
-@routes.view("/refs/{ref_id}/indexes")
-class ReferenceIndexesView(PydanticView):
-    async def get(self, ref_id: str, /) -> r200[ListIndexesResponse] | r404:
+@routes.web.view("/spaces/{space_id}/refs/{ref_id}/indexes")
+@routes.web.view("/refs/{ref_id}/indexes")
+class ReferenceIndexesView(APIView):
+    async def get(self, ref_id: str, /) -> R200[ListIndexesResponse] | R404:
         """List indexes.
 
         Lists indexes that have been created for the reference.
@@ -388,7 +386,7 @@ class ReferenceIndexesView(PydanticView):
             404: Not found
         """
         try:
-            data = await get_data_from_req(self.request).references.find_indexes(
+            data = await self.data.references.find_indexes(
                 ref_id,
                 self.request.query,
             )
@@ -401,7 +399,7 @@ class ReferenceIndexesView(PydanticView):
         self,
         ref_id: str,
         /,
-    ) -> r201[CreateReferenceIndexesResponse] | r403 | r404:
+    ) -> R201[IndexCreateResponse] | R403 | R404:
         """Create an index.
 
         Starts a job to rebuild the otus Bowtie2 index on disk.
@@ -416,7 +414,7 @@ class ReferenceIndexesView(PydanticView):
 
         """
         try:
-            document = await get_data_from_req(self.request).references.create_index(
+            document = await self.data.references.create_index(
                 ref_id,
                 self.request,
                 self.request["client"].user_id,
@@ -435,9 +433,9 @@ class ReferenceIndexesView(PydanticView):
         )
 
 
-@routes.view("/refs/{ref_id}/groups")
-class ReferenceGroupsView(PydanticView):
-    async def get(self, ref_id: str, /) -> r200[ReferenceGroupsResponse] | r404:
+@routes.web.view("/refs/{ref_id}/groups")
+class ReferenceGroupsView(APIView):
+    async def get(self, ref_id: str, /) -> R200[ReferenceGroupsResponse] | R404:
         """List groups.
 
         Lists all groups that have access to the reference.
@@ -447,7 +445,7 @@ class ReferenceGroupsView(PydanticView):
             404: Not found
         """
         try:
-            groups = await get_data_from_req(self.request).references.list_groups(
+            groups = await self.data.references.list_groups(
                 ref_id,
             )
         except ResourceNotFoundError:
@@ -459,8 +457,8 @@ class ReferenceGroupsView(PydanticView):
         self,
         ref_id: str,
         /,
-        data: CreateReferenceGroupRequest,
-    ) -> r201[CreateReferenceGroupResponse] | r400 | r403 | r404:
+        data: ReferenceCreateGroupRequest,
+    ) -> R201[ReferenceCreateGroupResponse] | R400 | R403 | R404:
         """Add a group.
 
         Adds a group to the reference. Groups can view, use, and modify the reference.
@@ -472,7 +470,7 @@ class ReferenceGroupsView(PydanticView):
             404: Not found
         """
         try:
-            group = await get_data_from_req(self.request).references.create_group(
+            group = await self.data.references.create_group(
                 ref_id,
                 data,
             )
@@ -488,14 +486,14 @@ class ReferenceGroupsView(PydanticView):
         )
 
 
-@routes.view("/refs/{ref_id}/groups/{group_id}")
-class ReferenceGroupView(PydanticView):
+@routes.web.view("/refs/{ref_id}/groups/{group_id}")
+class ReferenceGroupView(APIView):
     async def get(
         self,
         ref_id: str,
         group_id: int | str,
         /,
-    ) -> r200[ReferenceGroupResponse] | r404:
+    ) -> R200[ReferenceGroupResponse] | R404:
         """Get a group.
 
         Fetches the details of a group that has access to the reference.
@@ -505,7 +503,7 @@ class ReferenceGroupView(PydanticView):
             404: Not found
         """
         try:
-            group = await get_data_from_req(self.request).references.get_group(
+            group = await self.data.references.get_group(
                 ref_id,
                 group_id,
             )
@@ -520,7 +518,7 @@ class ReferenceGroupView(PydanticView):
         group_id: int | str,
         /,
         data: ReferenceRightsRequest,
-    ) -> r200[ReferenceGroupResponse] | r403 | r404:
+    ) -> R200[ReferenceGroupResponse] | R403 | R404:
         """Update a group.
 
         Updates the access rights a group has on the reference.
@@ -541,7 +539,7 @@ class ReferenceGroupView(PydanticView):
             raise APINotFound()
 
         try:
-            group = await get_data_from_req(self.request).references.update_group(
+            group = await self.data.references.update_group(
                 ref_id,
                 group_id,
                 data,
@@ -551,7 +549,7 @@ class ReferenceGroupView(PydanticView):
 
         return json_response(group)
 
-    async def delete(self, ref_id: str, group_id: int | str, /) -> r204 | r403 | r404:
+    async def delete(self, ref_id: str, group_id: int | str, /) -> R204 | R403 | R404:
         """Delete a group.
 
         Deletes a group from the reference.
@@ -572,7 +570,7 @@ class ReferenceGroupView(PydanticView):
             raise APINotFound()
 
         try:
-            await get_data_from_req(self.request).references.delete_group(
+            await self.data.references.delete_group(
                 ref_id,
                 group_id,
             )
@@ -582,15 +580,15 @@ class ReferenceGroupView(PydanticView):
         raise APINoContent()
 
 
-@routes.view("/spaces/{space_id}/refs/{ref_id}/users")
-@routes.view("/refs/{ref_id}/users")
-class ReferenceUsersView(PydanticView):
+@routes.web.view("/spaces/{space_id}/refs/{ref_id}/users")
+@routes.web.view("/refs/{ref_id}/users")
+class ReferenceUsersView(APIView):
     async def post(
         self,
         ref_id: str,
         /,
-        data: CreateReferenceUserRequest,
-    ) -> r201[list[ReferenceUsersResponse]] | r400 | r403 | r404:
+        data: ReferenceCreateUserRequest,
+    ) -> R201[list[ReferenceUserResponse]] | R400 | R403 | R404:
         """Add a user.
 
         Adds a user to the reference. Users can view, use, and modify the reference.
@@ -613,7 +611,7 @@ class ReferenceUsersView(PydanticView):
             raise APINotFound()
 
         try:
-            user = await get_data_from_req(self.request).references.create_user(
+            user = await self.data.references.create_user(
                 ref_id,
                 data,
             )
@@ -629,16 +627,16 @@ class ReferenceUsersView(PydanticView):
         )
 
 
-@routes.view("/spaces/{space_id}/refs/{ref_id}/users/{user_id}")
-@routes.view("/refs/{ref_id}/users/{user_id}")
-class ReferenceUserView(PydanticView):
+@routes.web.view("/spaces/{space_id}/refs/{ref_id}/users/{user_id}")
+@routes.web.view("/refs/{ref_id}/users/{user_id}")
+class ReferenceUserView(APIView):
     async def patch(
         self,
         ref_id: str,
         user_id: str,
         /,
         data: ReferenceRightsRequest,
-    ) -> r200[ReferenceGroupResponse] | r403 | r404:
+    ) -> R200[ReferenceGroupResponse] | R403 | R404:
         """Update a user.
 
         Updates the access rights a user has on the reference.
@@ -659,7 +657,7 @@ class ReferenceUserView(PydanticView):
             raise APINotFound()
 
         try:
-            user = await get_data_from_req(self.request).references.update_user(
+            user = await self.data.references.update_user(
                 ref_id,
                 user_id,
                 data,
@@ -669,7 +667,7 @@ class ReferenceUserView(PydanticView):
 
         return json_response(user)
 
-    async def delete(self, ref_id: str, user_id: str, /) -> r204 | r403 | r404:
+    async def delete(self, ref_id: str, user_id: str, /) -> R204 | R403 | R404:
         """Remove a user.
 
         Removes a user from the reference.
@@ -690,7 +688,7 @@ class ReferenceUserView(PydanticView):
             raise APINotFound()
 
         try:
-            await get_data_from_req(self.request).references.delete_user(
+            await self.data.references.delete_user(
                 ref_id,
                 user_id,
             )

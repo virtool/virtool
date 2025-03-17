@@ -19,8 +19,8 @@ from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
 from virtool.samples.fake import create_fake_sample
 from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
-from virtool.settings.oas import UpdateSettingsRequest
-from virtool.users.oas import UpdateUserRequest
+from virtool.settings.oas import SettingsUpdateRequest
+from virtool.users.oas import UserUpdateRequest
 
 
 class MockJobInterface:
@@ -429,7 +429,7 @@ class TestGet:
         if is_member:
             await get_data_from_app(client.app).users.update(
                 client.user.id,
-                UpdateUserRequest(groups=[group.id]),
+                UserUpdateRequest(groups=[group.id]),
             )
 
         await mongo.samples.update_one(
@@ -473,7 +473,7 @@ class TestCreate:
         group = await fake.groups.create()
 
         await data_layer.settings.update(
-            UpdateSettingsRequest(
+            SettingsUpdateRequest(
                 sample_group=group_setting,
                 sample_all_write=True,
                 sample_group_write=True,
@@ -482,12 +482,12 @@ class TestCreate:
 
         await data_layer.users.update(
             client.user.id,
-            UpdateUserRequest(groups=[*[g.id for g in client.user.groups], group.id]),
+            UserUpdateRequest(groups=[*[g.id for g in client.user.groups], group.id]),
         )
 
         await data_layer.users.update(
             client.user.id,
-            UpdateUserRequest(primary_group=group.id),
+            UserUpdateRequest(primary_group=group.id),
         )
 
         label = await fake.labels.create()
@@ -575,7 +575,7 @@ class TestCreate:
 
         await asyncio.gather(
             get_data_from_app(client.app).settings.update(
-                UpdateSettingsRequest(sample_group="force_choice"),
+                SettingsUpdateRequest(sample_group="force_choice"),
             ),
             mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
         )
@@ -607,14 +607,14 @@ class TestCreate:
         )
 
         await get_data_from_app(client.app).settings.update(
-            UpdateSettingsRequest(sample_group="force_choice"),
+            SettingsUpdateRequest(sample_group="force_choice"),
         )
 
         upload = await fake.uploads.create(user=await fake.users.create())
 
         await asyncio.gather(
             get_data_from_app(client.app).settings.update(
-                UpdateSettingsRequest(
+                SettingsUpdateRequest(
                     sample_group="force_choice",
                 ),
             ),

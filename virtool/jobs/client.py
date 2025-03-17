@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from asyncio import gather
 from enum import Enum
-from typing import List
 
 from structlog import get_logger
+from virtool_core.redis import Redis
 
 from virtool.jobs.utils import WORKFLOW_NAMES
 from virtool.types import Document
@@ -12,8 +12,13 @@ logger = get_logger("jobs")
 
 
 class JobCancellationResult(Enum):
+    """The result of a job cancellation request."""
+
     REMOVED_FROM_QUEUE = 0
+    """The job was removed from the queue because it had not been acquired."""
+
     CANCELLATION_DISPATCHED = 1
+    """The job was already acquired and a cancellation message was published."""
 
 
 class AbstractJobsClient(ABC):
@@ -38,10 +43,10 @@ class JobsClient(AbstractJobsClient):
 
     """
 
-    def __init__(self, redis):
+    def __init__(self, redis: Redis) -> None:
         self._redis = redis
 
-    async def enqueue(self, workflow: str, job_id: str):
+    async def enqueue(self, workflow: str, job_id: str) -> None:
         """Queue a job in Redis.
 
         :param workflow: the workflow name
@@ -80,7 +85,7 @@ class JobsClient(AbstractJobsClient):
 
         return JobCancellationResult.CANCELLATION_DISPATCHED
 
-    async def list(self) -> tuple[str]:
+    async def list(self) -> list[str]:
         """List all job IDs in Redis.
 
         :return: a list of job IDs
@@ -97,16 +102,19 @@ class JobsClient(AbstractJobsClient):
 class DummyJobsClient(AbstractJobsClient):
     """A jobs client used for testing without pushing job IDs into Redis."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.enqueued = []
         self.cancelled = []
 
-    async def enqueue(self, workflow: str, job_id: str):
+    async def enqueue(self, workflow: str, job_id: str) -> None:
+        """Enqueue a job by ID."""
         self.enqueued.append((workflow, job_id))
 
     async def cancel(self, job_id: str) -> Document:
+        """Cancel a job by ID."""
         self.cancelled.append(job_id)
         return {}
 
-    async def list(self) -> List[str]:
+    async def list(self) -> list[str]:
+        """List all job IDs in Redis."""
         return [jobs[1] for jobs in self.enqueued]

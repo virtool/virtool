@@ -1,43 +1,44 @@
-"""
-Request and response models use to validate requests and autogenerate the OpenAPI
+"""Request and response models use to validate requests and autogenerate the OpenAPI
 specification.
 """
 
-from pydantic import BaseModel, Field, constr
+from typing import Annotated
+
+from pydantic import BaseModel, ConfigDict, StringConstraints
 from virtool_core.models.group import Group
+
+from virtool.validation import RequestModel, Unset, UnsetType
 
 
 class PermissionsUpdate(BaseModel):
-    """
-    Possible permissions that will be updated for a user and group.
-    """
+    """Possible permissions that will be updated for a user and group."""
 
-    cancel_job: bool | None
-    create_ref: bool | None
-    create_sample: bool | None
-    modify_hmm: bool | None
-    modify_subtraction: bool | None
-    remove_file: bool | None
-    remove_job: bool | None
-    upload_file: bool | None
+    cancel_job: bool | None = None
+    create_ref: bool | None = None
+    create_sample: bool | None = None
+    modify_hmm: bool | None = None
+    modify_subtraction: bool | None = None
+    remove_file: bool | None = None
+    remove_job: bool | None = None
+    upload_file: bool | None = None
 
 
-class CreateGroupRequest(BaseModel):
-    """
-    A schema for requests to create groups.
-    """
+class GroupCreateRequest(RequestModel):
+    """A schema for requests to create groups."""
 
-    name: constr(strip_whitespace=True, min_length=1) = Field(
-        description="a name for the group"
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {"name": "Research"},
+        },
     )
 
-    class Config:
-        schema_extra = {"example": {"name": "Research"}}
+    name: Annotated[str, StringConstraints(min_length=1, strip_whitespace=True)]
+    """A name for the group."""
 
 
-class CreateGroupResponse(Group):
-    class Config:
-        schema_extra = {
+class GroupCreateResponse(Group):
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "permissions": {
                     "cancel_job": True,
@@ -52,30 +53,33 @@ class CreateGroupResponse(Group):
                 "id": "research",
                 "name": "research",
                 "users": [],
-            }
-        }
-
-
-class UpdateGroupRequest(BaseModel):
-    """
-    Used when updating permissions and/or group `name`.
-    """
-
-    name: constr(min_length=1) | None = Field(description="a name for the group")
-
-    permissions: PermissionsUpdate | None = Field(
-        description="a permission update comprising an object keyed by permissions with boolean values"
+            },
+        },
     )
 
-    class Config:
-        schema_extra = {
-            "example": {"permissions": {"create_ref": True}, "name": "Managers" ""}
-        }
+
+class GroupUpdateRequest(RequestModel):
+    """A request validation model for updating groups."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {"permissions": {"create_ref": True}, "name": "Managers"},
+        },
+    )
+
+    name: Annotated[str | UnsetType, StringConstraints(min_length=1)] = Unset
+    """A name for the group."""
+
+    permissions: PermissionsUpdate | UnsetType = Unset
+    """A permission update comprising an object keyed by permission names with
+    boolean values."""
 
 
 class GroupResponse(Group):
-    class Config:
-        schema_extra = {
+    """A response model for a group."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "permissions": {
                     "cancel_job": True,
@@ -101,5 +105,6 @@ class GroupResponse(Group):
                         "id": "7CtBo2yG",
                     },
                 ],
-            }
-        }
+            },
+        },
+    )

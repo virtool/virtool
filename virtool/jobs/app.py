@@ -7,7 +7,7 @@ import virtool.api.accept
 import virtool.jobs.auth
 from virtool.api.errors import error_middleware
 from virtool.config.cls import ServerConfig
-from virtool.jobs.routes import startup_routes
+from virtool.routes import ROUTES
 from virtool.startup import (
     startup_data,
     startup_databases,
@@ -21,7 +21,7 @@ from virtool.startup import (
 from virtool.types import App
 
 
-async def create_app(config: ServerConfig):
+async def create_app(config: ServerConfig) -> Application:
     """Create the :class:`aiohttp.web.Application` for the jobs API process."""
     app = Application(
         client_max_size=1024**2 * 50,
@@ -67,3 +67,9 @@ async def shutdown(app: App):
 def run_jobs_server(config: ServerConfig):
     app = create_app(config)
     aiohttp.web.run_app(app=app, host=config.host, port=config.port)
+
+
+async def startup_routes(app: aiohttp.web.Application):
+    """Add routes to jobs API."""
+    for routes in ROUTES:
+        app.add_routes(routes.job)

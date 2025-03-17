@@ -2,12 +2,14 @@ import asyncio
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
 from syrupy.filters import props
 from virtool_core.models.enums import Permission
 
-from virtool.account.oas import CreateKeysRequest, UpdateAccountRequest
+from tests.fixtures.core import StaticTime
+from virtool.account.oas import AccountUpdateRequest, CreateKeyRequest
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
@@ -26,14 +28,13 @@ async def test_create_api_key(
     has_permission: bool,
     data_layer: DataLayer,
     fake: DataFaker,
-    mocker,
+    mocker: MockerFixture,
     mongo: Mongo,
     snapshot: SnapshotAssertion,
-    static_time,
+    static_time: StaticTime,
 ):
-    """Test that an API key is created correctly with varying key owner administrator status and
-    permissions.
-
+    """Test that an API key is created correctly with varying key owner administrator
+    status and permissions.
     """
     mocker.patch("virtool.account.mongo.get_alternate_id", make_mocked_coro("foo_0"))
     mocker.patch("virtool.utils.generate_key", return_value=("bar", "baz"))
@@ -51,7 +52,7 @@ async def test_create_api_key(
     user = await fake.users.create(groups=[group_1, group_2])
 
     _, api_key = await data_layer.account.create_key(
-        CreateKeysRequest(
+        CreateKeyRequest(
             name="Foo",
             permissions=PermissionsUpdate(create_sample=True, modify_subtraction=True),
         ),
@@ -68,7 +69,7 @@ class TestGetKey:
         user = await fake.users.create()
 
         _, api_key = await data_layer.account.create_key(
-            CreateKeysRequest(
+            CreateKeyRequest(
                 name="Foo",
                 permissions=PermissionsUpdate(
                     create_sample=True,
@@ -85,7 +86,7 @@ class TestGetKey:
         user = await fake.users.create()
 
         _, api_key = await data_layer.account.create_key(
-            CreateKeysRequest(
+            CreateKeyRequest(
                 name="Foo",
                 permissions=PermissionsUpdate(
                     create_sample=True,
@@ -105,7 +106,7 @@ class TestGetKeyBySecret:
         user = await fake.users.create()
 
         secret, api_key = await data_layer.account.create_key(
-            CreateKeysRequest(
+            CreateKeyRequest(
                 name="Foo",
                 permissions=PermissionsUpdate(
                     create_sample=True,
@@ -122,7 +123,7 @@ class TestGetKeyBySecret:
         user = await fake.users.create()
 
         await data_layer.account.create_key(
-            CreateKeysRequest(
+            CreateKeyRequest(
                 name="Foo",
                 permissions=PermissionsUpdate(
                     create_sample=True,
@@ -139,9 +140,9 @@ class TestGetKeyBySecret:
 @pytest.mark.parametrize(
     "update",
     [
-        UpdateAccountRequest(old_password="hello_world_1", password="hello_world_2"),
-        UpdateAccountRequest(email="hello@world.com"),
-        UpdateAccountRequest(
+        AccountUpdateRequest(old_password="hello_world_1", password="hello_world_2"),
+        AccountUpdateRequest(email="hello@world.com"),
+        AccountUpdateRequest(
             old_password="hello_world_1",
             password="hello_world_2",
             email="hello@world.com",
@@ -150,7 +151,7 @@ class TestGetKeyBySecret:
     ids=["password", "email", "password and email"],
 )
 async def test_update(
-    update: UpdateAccountRequest,
+    update: AccountUpdateRequest,
     data_layer: DataLayer,
     mongo: Mongo,
     pg: AsyncEngine,

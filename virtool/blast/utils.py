@@ -2,7 +2,6 @@ import io
 import json
 import re
 from asyncio import to_thread
-from typing import Tuple
 from zipfile import ZipFile
 
 from aiohttp import ClientSession
@@ -36,9 +35,8 @@ async def fetch_ncbi_blast_html(client: ClientSession, sequence: str):
         return await resp.text()
 
 
-def extract_blast_info(html: str) -> Tuple[str, int]:
-    """
-    Extract the RID and RTOE from BLAST HTML data containing a <QBlastInfo /> tag.
+def extract_blast_info(html: str) -> tuple[str, int]:
+    """Extract the RID and RTOE from BLAST HTML data containing a <QBlastInfo /> tag.
 
     :param html: the input HTML
     :return: a tuple containing the RID and RTOE
@@ -58,8 +56,7 @@ def extract_blast_info(html: str) -> Tuple[str, int]:
 
 
 def extract_blast_zip(data, rid: str) -> dict:
-    """
-    Extract the BLAST result JSON data given zipped binary data.
+    """Extract the BLAST result JSON data given zipped binary data.
 
     Fails if the data is not valid zip.
 
@@ -74,8 +71,7 @@ def extract_blast_zip(data, rid: str) -> dict:
 
 
 def format_blast_content(result: dict) -> dict:
-    """
-    Format the BLAST result data from NCBI into a format easily usable by Virtool.
+    """Format the BLAST result data from NCBI into a format easily usable by Virtool.
 
     :param result: the raw BLAST result
     :return: the formatted BLAST result
@@ -83,14 +79,14 @@ def format_blast_content(result: dict) -> dict:
     """
     if len(result) != 1:
         raise virtool.errors.NCBIError(
-            f"Unexpected BLAST result count {len(result)} returned"
+            f"Unexpected BLAST result count {len(result)} returned",
         )
 
     result = result["BlastOutput2"]
 
     if len(result) != 1:
         raise virtool.errors.NCBIError(
-            f"Unexpected BLAST result count {len(result)} returned"
+            f"Unexpected BLAST result count {len(result)} returned",
         )
 
     result = result["report"]
@@ -110,8 +106,7 @@ def format_blast_content(result: dict) -> dict:
 
 
 def format_blast_hit(hit: dict) -> dict:
-    """
-    Format a BLAST hit from NCBI into a format more usable by Virtool.
+    """Format a BLAST hit from NCBI into a format more usable by Virtool.
 
     :param hit: the BLAST hit
     :return: the formatted hit
@@ -136,8 +131,7 @@ def format_blast_hit(hit: dict) -> dict:
 
 
 async def check_rid(client_session: ClientSession, rid: str) -> bool:
-    """
-    Check if the BLAST process identified by the passed RID is ready.
+    """Check if the BLAST process identified by the passed RID is ready.
 
     :param client_session: the application http session
     :param rid: the RID to check
@@ -145,23 +139,24 @@ async def check_rid(client_session: ClientSession, rid: str) -> bool:
 
     """
     async with client_session.get(
-        BLAST_URL, params={"CMD": "Get", "RID": rid, "FORMAT_OBJECT": "SearchInfo"}
+        BLAST_URL,
+        params={"CMD": "Get", "RID": rid, "FORMAT_OBJECT": "SearchInfo"},
     ) as resp:
         if resp.status != 200:
             body = await resp.text()
 
             raise virtool.errors.NCBIError(
-                f"RID check request returned status {resp.status} and body:\n{body}"
+                f"RID check request returned status {resp.status} and body:\n{body}",
             )
 
         return "Status=WAITING" not in await resp.text()
 
 
 async def initialize_ncbi_blast(
-    client_session: ClientSession, sequence: str
-) -> Tuple[str, int]:
-    """
-    Send a request to NCBI to BLAST the passed sequence.
+    client_session: ClientSession,
+    sequence: str,
+) -> tuple[str, int]:
+    """Send a request to NCBI to BLAST the passed sequence.
 
     Return the RID and RTOE from the response.
 
@@ -186,7 +181,7 @@ async def initialize_ncbi_blast(
             body = await resp.text()
 
             raise virtool.errors.NCBIError(
-                f"BLAST request returned {resp.status} with body:\n{body}"
+                f"BLAST request returned {resp.status} with body:\n{body}",
             )
 
         html = await resp.text()
@@ -195,8 +190,7 @@ async def initialize_ncbi_blast(
 
 
 async def fetch_nuvs_blast_result(client_session: ClientSession, rid: str) -> dict:
-    """
-    Retrieve the BLAST result with the given `rid` from NCBI.
+    """Retrieve the BLAST result with the given `rid` from NCBI.
 
     :param client_session: the application http session
     :param rid: the rid to retrieve a result for

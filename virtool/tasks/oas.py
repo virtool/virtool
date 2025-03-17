@@ -1,12 +1,16 @@
-from typing import Optional
+from typing import Annotated
 
-from pydantic import BaseModel, conint
-from virtool_core.models.task import TaskMinimal, Task
+from pydantic import BaseModel, ConfigDict, Field
+from virtool_core.models.task import Task, TaskMinimal
+
+from virtool.validation import Unset, UnsetType
 
 
-class GetTasksResponse(TaskMinimal):
-    class Config:
-        schema_extra = {
+class TaskMinimalResponse(TaskMinimal):
+    """A model for a minimal task list item in a response."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": [
                 {
                     "complete": True,
@@ -18,14 +22,17 @@ class GetTasksResponse(TaskMinimal):
                     "progress": 100,
                     "step": "remove_referenced_otus",
                     "type": "delete_reference",
-                }
-            ]
-        }
+                },
+            ],
+        },
+    )
 
 
 class TaskResponse(Task):
-    class Config:
-        schema_extra = {
+    """A response model for a task."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "complete": True,
                 "context": {"user_id": "virtool"},
@@ -36,11 +43,19 @@ class TaskResponse(Task):
                 "progress": 100,
                 "step": "remove_referenced_otus",
                 "type": "delete_reference",
-            }
-        }
+            },
+        },
+    )
 
 
 class TaskUpdate(BaseModel):
-    step: Optional[str]
-    progress: Optional[conint(ge=0, le=100)]
-    error: Optional[str]
+    """A model for an update to a task."""
+
+    step: str | UnsetType = Unset
+    """The current step of the task."""
+
+    progress: Annotated[int | UnsetType, Field(default=Unset, ge=0, le=100)]
+    """The progress of the task."""
+
+    error: str | UnsetType = Unset
+    """An error message for the task."""

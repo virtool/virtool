@@ -18,7 +18,7 @@ from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.users.db import B2CUserAttributes
 from virtool.users.mongo import validate_credentials
-from virtool.users.oas import UpdateUserRequest
+from virtool.users.oas import UserUpdateRequest
 from virtool.users.pg import SQLUser
 
 
@@ -51,7 +51,7 @@ class TestFind:
 
         user_1, user_2, _, _, user_5 = self.users
 
-        await data_layer.users.update(user_5.id, UpdateUserRequest(active=False))
+        await data_layer.users.update(user_5.id, UserUpdateRequest(active=False))
 
         await authorization_client.add(
             AdministratorRoleAssignment(user_1.id, AdministratorRole.BASE),
@@ -217,7 +217,7 @@ class TestUpdate:
 
         user = await data_layer.users.update(
             user.id,
-            UpdateUserRequest(force_reset=True),
+            UserUpdateRequest(force_reset=True),
         )
 
         doc, row = await asyncio.gather(
@@ -231,7 +231,7 @@ class TestUpdate:
 
         user = await data_layer.users.update(
             user.id,
-            UpdateUserRequest(force_reset=False),
+            UserUpdateRequest(force_reset=False),
         )
 
         doc, row = await asyncio.gather(
@@ -261,7 +261,7 @@ class TestUpdate:
         # Set initial groups.
         obj = await data_layer.users.update(
             user.id,
-            UpdateUserRequest(groups=[group_1.id, group_3.id]),
+            UserUpdateRequest(groups=[group_1.id, group_3.id]),
         )
 
         doc, row = await asyncio.gather(
@@ -276,7 +276,7 @@ class TestUpdate:
         # Update groups, removing one and adding another.
         obj = await data_layer.users.update(
             user.id,
-            UpdateUserRequest(groups=[group_2.id, group_1.id]),
+            UserUpdateRequest(groups=[group_2.id, group_1.id]),
         )
 
         doc, row = await asyncio.gather(
@@ -289,7 +289,7 @@ class TestUpdate:
         assert row == snapshot_recent(name="pg_2", exclude=props("password"))
 
         # Remove all groups.
-        obj = await data_layer.users.update(user.id, UpdateUserRequest(groups=[]))
+        obj = await data_layer.users.update(user.id, UserUpdateRequest(groups=[]))
 
         doc, row = await asyncio.gather(
             mongo.users.find_one({"_id": user.id}),
@@ -316,7 +316,7 @@ class TestUpdate:
 
         obj = await data_layer.users.update(
             user.id,
-            UpdateUserRequest(groups=[]),
+            UserUpdateRequest(groups=[]),
         )
 
         assert obj.primary_group is None
@@ -344,7 +344,7 @@ class TestUpdate:
 
         obj = await data_layer.users.update(
             user.id,
-            UpdateUserRequest(primary_group=group.id),
+            UserUpdateRequest(primary_group=group.id),
         )
 
         doc, row = await asyncio.gather(
@@ -374,7 +374,7 @@ class TestUpdate:
         with pytest.raises(ResourceConflictError) as err:
             await data_layer.users.update(
                 user.id,
-                UpdateUserRequest(primary_group=group.id),
+                UserUpdateRequest(primary_group=group.id),
             )
 
         assert str(err.value) == "User is not member of primary group"
@@ -390,7 +390,7 @@ class TestUpdate:
         with pytest.raises(ResourceConflictError) as err:
             await data_layer.users.update(
                 user.id,
-                UpdateUserRequest(primary_group=3),
+                UserUpdateRequest(primary_group=3),
             )
 
         assert str(err.value) == "Non-existent group: 3"
@@ -409,7 +409,7 @@ class TestUpdate:
 
         assert await data_layer.users.update(
             user.id,
-            UpdateUserRequest(password="hello_world"),
+            UserUpdateRequest(password="hello_world"),
         ) == snapshot_recent(name="obj")
 
         assert await mongo.users.find_one() == snapshot_recent(
@@ -432,7 +432,7 @@ class TestUpdate:
         with pytest.raises(ResourceNotFoundError) as err:
             await data_layer.users.update(
                 "user_id",
-                UpdateUserRequest(groups=[]),
+                UserUpdateRequest(groups=[]),
             )
 
         assert str(err.value) == "User does not exist"

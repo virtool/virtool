@@ -1,5 +1,3 @@
-from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r409
 from pydantic import Field
 from structlog import get_logger
 from virtool_core.models.roles import AdministratorRole, SpaceRoleType
@@ -14,12 +12,14 @@ from virtool.api.policy import (
     policy,
 )
 from virtool.api.routes import Routes
+from virtool.api.status import R200, R201, R400, R403, R404, R409
 from virtool.api.utils import (
     compose_regex_query,
     paginate,
     set_session_id_cookie,
     set_session_token_cookie,
 )
+from virtool.api.view import APIView
 from virtool.authorization.client import get_authorization_client_from_req
 from virtool.authorization.relationships import UserRoleAssignment
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
@@ -32,18 +32,19 @@ from virtool.users.oas import (
     CreateUserRequest,
     PermissionResponse,
     PermissionsResponse,
-    UpdateUserRequest,
+    UserUpdateRequest,
 )
 from virtool.users.transforms import AttachPermissionsTransform
 from virtool.utils import base_processor
+from virtool.validation import is_set
 
 routes = Routes()
 
 logger = get_logger("users")
 
 
-@routes.view("/users")
-class UsersView(PydanticView):
+@routes.web.view("/users")
+class UsersView(APIView):
     """A view for listing and creating users."""
 
     async def get(
@@ -55,7 +56,7 @@ class UsersView(PydanticView):
         find: str | None = Field(
             description="Filter by partial matches to user handles.",
         ),
-    ) -> r200[User]:
+    ) -> R200[User]:
         """Find users.
 
         Find all Virtool users.
@@ -103,7 +104,7 @@ class UsersView(PydanticView):
     async def post(
         self,
         data: CreateUserRequest,
-    ) -> r201[User] | r400 | r403:
+    ) -> R201[User] | R400 | R403:
         """Create a user.
 
         Creates a new user.
@@ -121,7 +122,7 @@ class UsersView(PydanticView):
             raise APIBadRequest(error)
 
         try:
-            user = await get_data_from_req(self.request).users.create(
+            user = await self.data.users.create(
                 data.handle,
                 data.password,
                 data.force_reset,
@@ -136,15 +137,15 @@ class UsersView(PydanticView):
         )
 
 
-@routes.view("/users/first")
-class FirstUserView(PydanticView):
+@routes.web.view("/users/first")
+class FirstUserView(APIView):
     """A view for creating the first user."""
 
     @policy(PublicRoutePolicy)
     async def put(
         self,
         data: CreateFirstUserRequest,
-    ) -> r201[User] | r400 | r403:
+    ) -> R201[User] | R400 | R403:
         """Create a first user.
 
         Creates the first user for the instance. This endpoint will not succeed more
@@ -158,7 +159,7 @@ class FirstUserView(PydanticView):
             400: Bad request
             403: Not permitted
         """
-        if await get_data_from_req(self.request).users.check_users_exist():
+        if await self.data.users.check_users_exist():
             logger.error("attempted to create first user when users already exist")
             raise APIConflict("Virtool already has at least one user")
 
@@ -168,7 +169,7 @@ class FirstUserView(PydanticView):
         if error := await check_password_length(self.request, password=data.password):
             raise APIBadRequest(error)
 
-        user = await get_data_from_req(self.request).users.create_first(
+        user = await self.data.users.create_first(
             data.handle,
             data.password,
         )
@@ -192,12 +193,12 @@ class FirstUserView(PydanticView):
         return response
 
 
-@routes.view("/users/{user_id}")
-class UserView(PydanticView):
+@routes.web.view("/users/{user_id}")
+class UserView(APIView):
     """A view for retrieving and updating users."""
 
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
-    async def get(self, user_id: str, /) -> r200[User] | r403 | r404:
+    async def get(self, user_id: str, /) -> R200[User] | R403 | R404:
         """Retrieve a user.
 
         Fetches the details for a user.
@@ -208,7 +209,7 @@ class UserView(PydanticView):
             404: Not found
         """
         try:
-            user = await get_data_from_req(self.request).users.get(user_id)
+            user = await self.data.users.get(user_id)
         except ResourceNotFoundError:
             raise APINotFound()
 
@@ -219,8 +220,8 @@ class UserView(PydanticView):
         self,
         user_id: str,
         /,
-        data: UpdateUserRequest,
-    ) -> r200[User] | r400 | r403 | r404 | r409:
+        data: UserUpdateRequest,
+    ) -> R200[User] | R400 | R403 | R404 | R409:
         """Update a user.
 
         Updates and existing user with the provided parameters.  Users cannot modify
@@ -234,15 +235,16 @@ class UserView(PydanticView):
             404: Not found
             409: User is not member of group
         """
-        if data.password is not None:
-            if error := await check_password_length(
+        if is_set(data.password) and (
+            error := await check_password_length(
                 self.request,
                 password=data.password,
-            ):
-                raise APIBadRequest(error)
+            )
+        ):
+            raise APIBadRequest(error)
 
         try:
-            user = await get_data_from_req(self.request).users.update(user_id, data)
+            user = await self.data.users.update(user_id, data)
         except ResourceConflictError as err:
             raise APIBadRequest(str(err))
         except ResourceNotFoundError:
@@ -251,9 +253,9 @@ class UserView(PydanticView):
         return json_response(user)
 
 
-@routes.view("/users/{user_id}/permissions")
-class PermissionsView(PydanticView):
-    async def get(self, user_id: str, /) -> r200[PermissionsResponse]:
+@routes.web.view("/users/{user_id}/permissions")
+class PermissionsView(APIView):
+    async def get(self, user_id: str, /) -> R200[PermissionsResponse]:
         """List user roles.
 
         Lists all roles that a user has on the space.
@@ -268,15 +270,15 @@ class PermissionsView(PydanticView):
         return json_response([{"id": permission} for permission in permissions])
 
 
-@routes.view("/users/{user_id}/permissions/{role}")
-class PermissionView(PydanticView):
+@routes.web.view("/users/{user_id}/permissions/{role}")
+class PermissionView(APIView):
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def put(
         self,
         user_id: str,
         role: SpaceRoleType,
         /,
-    ) -> r200[PermissionResponse]:
+    ) -> R200[PermissionResponse]:
         """Add user role.
 
         Adds a role for a user.
@@ -296,7 +298,7 @@ class PermissionView(PydanticView):
         user_id: str,
         role: SpaceRoleType,
         /,
-    ) -> r200[PermissionResponse]:
+    ) -> R200[PermissionResponse]:
         """Delete user permission.
 
         Removes a permission for a user.

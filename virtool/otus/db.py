@@ -1,6 +1,7 @@
 """Work with OTUs in the database."""
 
-from typing import Any, Dict, List, Mapping, Optional
+from collections.abc import Mapping
+from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 
@@ -13,7 +14,7 @@ from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
-from virtool.utils import base_processor, to_bool
+from virtool.utils import base_processor
 
 SEQUENCE_PROJECTION = (
     "_id",
@@ -66,18 +67,15 @@ async def check_name_and_abbreviation(
 
 async def find(
     mongo: "Mongo",
-    term: Optional[str],
+    term: str | None,
     req_query: Mapping,
-    verified: Optional[bool],
-    ref_id: Optional[str] = None,
+    verified: bool | None,
+    ref_id: str | None = None,
 ) -> dict[str, Any] | list[dict | None]:
     mongo_query = {}
 
     if term:
         mongo_query.update(compose_regex_query(term, ["name", "abbreviation"]))
-
-    if verified is not None:
-        mongo_query["verified"] = to_bool(verified)
 
     base_query = None
 
@@ -141,8 +139,8 @@ async def join(
 async def bulk_join_query(
     mongo: "Mongo",
     query: dict,
-    session: Optional[AsyncIOMotorClientSession] = None,
-) -> List[Dict[str, Any]]:
+    session: AsyncIOMotorClientSession | None = None,
+) -> list[dict[str, Any]]:
     """Join the otu associated with the supplied ``otu_id`` with its sequences.
 
     If an OTU is passed, the document will not be pulled from the database.
@@ -161,9 +159,9 @@ async def bulk_join_query(
 
 async def bulk_join_ids(
     mongo,
-    ids: List[str],
-    session: Optional[AsyncIOMotorClientSession] = None,
-) -> List[Dict[str, Any]]:
+    ids: list[str],
+    session: AsyncIOMotorClientSession | None = None,
+) -> list[dict[str, Any]]:
     """Join the otu associated with the supplied ``otu_id`` with its sequences.
 
     If an OTU is passed, the document will not be pulled from the database.
@@ -184,9 +182,9 @@ async def bulk_join_ids(
 
 async def bulk_join_documents(
     mongo,
-    otus: List[Document],
-    session: Optional[AsyncIOMotorClientSession] = None,
-) -> List[Dict[str, Any]]:
+    otus: list[Document],
+    session: AsyncIOMotorClientSession | None = None,
+) -> list[dict[str, Any]]:
     """Join the otu associated with the supplied ``otu_id`` with its sequences.
 
     If an OTU is passed, the document will not be pulled from the database.
@@ -263,7 +261,7 @@ async def verify(mongo: "Mongo", otu_id: str, joined: dict = None) -> dict | Non
 async def increment_otu_version(
     mongo: "Mongo",
     otu_id: str,
-    session: Optional[AsyncIOMotorClientSession] = None,
+    session: AsyncIOMotorClientSession | None = None,
 ) -> Document:
     """Increment the `version` field by one for the OTU identified by `otu_id`.
 
@@ -283,8 +281,8 @@ async def increment_otu_version(
 async def update_otu_verification(
     mongo: "Mongo",
     joined: dict,
-    session: Optional[AsyncIOMotorClientSession] = None,
-) -> Optional[dict]:
+    session: AsyncIOMotorClientSession | None = None,
+) -> dict | None:
     issues = virtool.otus.utils.verify(joined)
 
     if issues is None:
@@ -302,7 +300,7 @@ async def update_sequence_segments(
     mongo: "Mongo",
     old: dict,
     new: dict,
-    session: Optional[AsyncIOMotorClientSession] = None,
+    session: AsyncIOMotorClientSession | None = None,
 ):
     if old is None or new is None or "schema" not in old:
         return
@@ -322,10 +320,10 @@ async def check_sequence_segment_or_target(
     mongo: "Mongo",
     otu_id: str,
     isolate_id: str,
-    sequence_id: Optional[str],
+    sequence_id: str | None,
     ref_id: str,
     data: dict,
-) -> Optional[str]:
+) -> str | None:
     """Check that segment or target field is compatible with the reference.
 
     Returns an error message string if the segment or target provided in `data` is not

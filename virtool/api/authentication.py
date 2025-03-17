@@ -24,8 +24,7 @@ logger = get_logger("authn")
 
 
 def get_ip(req: Request) -> str:
-    """A convenience function for getting the client IP address from a
-    :class:`~Request` object.
+    """Get the client IP address from a :class:`~Request` object.
 
     :param req: the request
     :return: the client's IP address string
@@ -165,9 +164,7 @@ async def authenticate_with_session(req: Request, handler: Callable) -> Response
         session_id=session.id,
     )
 
-    resp = await handler(req)
-
-    return resp
+    return await handler(req)
 
 
 @web.middleware

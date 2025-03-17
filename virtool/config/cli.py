@@ -5,6 +5,7 @@ import json
 
 import click
 import uvloop
+from pydantic import BaseModel
 from structlog import get_logger
 
 from virtool.app import run_api_server
@@ -30,12 +31,12 @@ from virtool.config.options import (
     redis_connection_string_option,
     sentry_dsn_option,
 )
-from virtool.jobs.main import run_jobs_server
+from virtool.jobs.app import run_jobs_server
 from virtool.logs import configure_logging
 from virtool.migration.apply import apply
 from virtool.migration.create import create_revision
 from virtool.migration.show import show_revisions
-from virtool.oas.cmd import show_oas
+from virtool.oas.build import generate_oas
 from virtool.tasks.main import run_task_runner, run_task_spawner
 
 logger = get_logger("config")
@@ -120,9 +121,71 @@ def start_jobs_api(**kwargs):
 
 
 @cli.command
-def oas():
+@click.option("--components", help="Generate OpenAPI components only.", is_flag=True)
+@click.option("--paths", help="Generate OpenAPI paths only.", is_flag=True)
+def oas(components: bool, paths: bool):
     """Work with the Virtool OpenAPI specification."""
-    show_oas()
+    oas = generate_oas()
+
+    if components and paths:
+        ...
+
+    elif components:
+        click.echo(
+            oas.components.model_dump_json(by_alias=True, exclude_unset=True, indent=2),
+        )
+
+    elif paths:
+
+        class Outer(BaseModel):
+            paths: dict
+
+        outer = Outer(paths=oas.paths)
+
+        click.echo(
+            outer.model_dump_json(by_alias=True, exclude_unset=True, indent=2),
+        )
+
+    else:
+        click.echo(
+            oas.model_dump_json(by_alias=True, exclude_unset=True, indent=2),
+        )
+
+
+@cli.group("migration")
+def migration():
+    """Run and manage Virtool data migrations."""
+
+
+@migration.command("apply")
+@data_path_option
+@mongodb_connection_string_option
+@openfga_options
+@postgres_connection_string_option
+def migration_apply(**kwargs):
+    """Apply all pending migrations."""
+    configure_logging(False)
+    logger.info("starting migration")
+    asyncio.run(apply(MigrationConfig(**kwargs)))
+
+
+@migration.command("create")
+@click.option("--name", help="Name of the migration", required=True, type=str)
+def migration_create(name: str):
+    """Create a new migration revision."""
+    create_revision(name)
+
+
+@migration.command("show")
+def migration_show(**kwargs):
+    """Apply all pending migrations."""
+    configure_logging(False)
+    show_revisions()
+
+
+@cli.group("tasks")
+def tasks():
+    """Manage Virtool tasks."""
 
 
 @cli.group("migration")

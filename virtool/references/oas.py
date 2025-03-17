@@ -1,109 +1,112 @@
-from typing import List, Optional, Union
+from typing import Annotated
 
-from pydantic import BaseModel, Field, constr, root_validator, validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    field_validator,
+    model_validator,
+)
 from virtool_core.models.history import HistorySearchResult
 from virtool_core.models.index import IndexMinimal
 from virtool_core.models.reference import (
     Reference,
+    ReferenceDataType,
     ReferenceGroup,
     ReferenceInstalled,
     ReferenceRelease,
     ReferenceSearchResult,
     ReferenceUser,
 )
-from virtool_core.models.validators import prevent_none
 
-ALLOWED_REMOTE = ["virtool/ref-plant-viruses"]
-ALLOWED_DATA_TYPE = ["barcode", "genome"]
+from virtool.validation import Unset, UnsetType, is_set
 
-
-def check_data_type(data_type: str) -> str:
-    """Checks that the data type is valid."""
-    if data_type not in ALLOWED_DATA_TYPE:
-        raise ValueError("data type not allowed")
-
-    return data_type
+_ALLOWED_REMOTES = ["virtool/ref-plant-viruses"]
 
 
-class CreateReferenceRequest(BaseModel):
-    name: constr(strip_whitespace=True) = Field(
-        default="",
-        description="the virus name",
-    )
-    description: constr(strip_whitespace=True) = Field(
-        default="",
-        description="a longer description for the reference",
-    )
-    data_type: str = Field(default="genome", description="the sequence data type")
-    organism: str = Field(default="", description="the organism")
-    release_id: Optional[str] = Field(
-        default=11447367,
-        description="the id of the GitHub release to install",
-    )
-    clone_from: Optional[str] = Field(
-        description="a valid ref_id that the new reference should be cloned from",
-    )
-    import_from: Optional[str] = Field(
-        description="a valid file_id that the new reference should be imported from",
-    )
-    remote_from: Optional[str] = Field(
-        description="a valid GitHub slug to download and update the new reference from",
-    )
+class ReferenceCreateRequest(BaseModel):
+    """A request model for creating a new reference."""
 
-    _prevent_none = prevent_none(
-        "release_id",
-        "clone_from",
-        "import_from",
-        "remote_from",
-    )
-
-    @root_validator
-    def check_values(cls, values: Union[str, constr]):
-        """Checks that only one of clone_from, import_from or
-        remote_from are inputted, if any.
-        """
-        clone_from, import_from, remote_from = (
-            values.get("clone_from"),
-            values.get("import_from"),
-            values.get("remote_from"),
-        )
-
-        if clone_from:
-            if import_from or remote_from:
-                raise ValueError(
-                    "Only one of clone_from, import_from and remote_from are allowed",
-                )
-        elif import_from:
-            if clone_from or remote_from:
-                raise ValueError(
-                    "Only one of clone_from, import_from and remote_from are allowed",
-                )
-        elif remote_from:
-            if clone_from or import_from:
-                raise ValueError(
-                    "Only one of clone_from, import_from and remote_from are allowed",
-                )
-
-            if remote_from not in ALLOWED_REMOTE:
-                raise ValueError("provided remote not allowed")
-
-        return values
-
-    _data_validation = validator("data_type", allow_reuse=True)(check_data_type)
-
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "name": "Plant Viruses",
                 "organism": "viruses",
                 "data_type": "genome",
             },
-        }
+        },
+    )
+
+    clone_from: str | UnsetType = Field(
+        default=Unset,
+        description="a valid ref_id that the new reference should be cloned from",
+    )
+
+    data_type: ReferenceDataType = Field(
+        default=ReferenceDataType.genome,
+        description="the sequence data type",
+    )
+
+    description: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True),
+        Field(
+            default="",
+            description="a longer description for the reference",
+        ),
+    ]
+
+    import_from: str | UnsetType = Field(
+        default=Unset,
+        description="a valid file_id that the new reference should be imported from",
+    )
+
+    name: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True),
+        Field(
+            description="the virus name",
+            min_length=1,
+        ),
+    ]
+
+    organism: str = Field(default="", description="the organism")
+
+    release_id: str | UnsetType = Field(
+        default=11447367,
+        description="The id of the GitHub release to install.",
+    )
+
+    remote_from: str | UnsetType = Field(
+        default=Unset,
+        description="A GitHub slug from which to download reference updaates.",
+    )
+
+    @model_validator(mode="after")
+    def check_sources(self: "ReferenceCreateRequest") -> "ReferenceCreateRequest":
+        """Check that clone_from, import_from or remote_from are mutually exclusive."""
+        # Check if more than one is set
+        if (
+            sum(bool(x) for x in [self.clone_from, self.import_from, self.remote_from])
+            > 1
+        ):
+            msg = "Only one of clone_from, import_from, and remote_from is allowed"
+            raise ValueError(msg)
+
+        # Validate `remote_from` if set
+        if self.remote_from and self.remote_from not in _ALLOWED_REMOTES:
+            msg = "Provided remote not allowed"
+            raise ValueError(msg)
+
+        return self
 
 
 class CreateReferenceResponse(Reference):
-    class Config:
-        schema_extra = {
+    """A response model for a created reference."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "cloned_from": {"id": "pat6xdn3", "name": "Plant Viruses"},
                 "contributors": [
@@ -178,12 +181,15 @@ class CreateReferenceResponse(Reference):
                     },
                 ],
             },
-        }
+        },
+    )
 
 
-class FindReferencesResponse(ReferenceSearchResult):
-    class Config:
-        schema_extra = {
+class ReferenceSearchResponse(ReferenceSearchResult):
+    """A response model for a reference search result."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "documents": [
                     {
@@ -237,12 +243,15 @@ class FindReferencesResponse(ReferenceSearchResult):
                 "per_page": 25,
                 "total_count": 2,
             },
-        }
+        },
+    )
 
 
 class ReferenceResponse(Reference):
-    class Config:
-        schema_extra = {
+    """A response model for a reference."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "cloned_from": {"id": "pat6xdn3", "name": "Plant Viruses"},
                 "created_at": "2022-01-28T23:42:48.321000Z",
@@ -286,12 +295,15 @@ class ReferenceResponse(Reference):
                     },
                 ],
             },
-        }
+        },
+    )
 
 
 class ReferenceReleaseResponse(ReferenceRelease):
-    class Config:
-        schema_extra = {
+    """A response model for a reference release."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": 11449913,
                 "name": "v0.1.2",
@@ -306,99 +318,192 @@ class ReferenceReleaseResponse(ReferenceRelease):
                 "retrieved_at": "2018-06-14T19:52:17.465000Z",
                 "newer": True,
             },
-        }
-
-
-class ReferenceTargetRequest(BaseModel):
-    name: constr(min_length=1)
-    description: constr(strip_whitespace=True) = Field(default="")
-    required: bool = Field(default=False)
-    length: Optional[int]
-
-    _prevent_none = prevent_none("length")
-
-
-class UpdateReferenceRequest(BaseModel):
-    name: constr(strip_whitespace=True, min_length=1) | None = Field(
-        description="the virus name",
-    )
-    description: constr(strip_whitespace=True) | None = Field(
-        description="a longer description for the reference",
-    )
-    internal_control: str | None = Field(
-        description="set the OTU identified by the passed id as the internal control for the reference",
-    )
-    organism: Optional[constr(strip_whitespace=True)] = Field(
-        description="the organism",
-    )
-    restrict_source_types: Optional[bool] = Field(
-        description="option to restrict source types",
-    )
-    source_types: Optional[List[constr(strip_whitespace=True, min_length=1)]] = Field(
-        description="source types",
-    )
-    targets: Optional[List[ReferenceTargetRequest]] = Field(
-        description="list of target sequences",
+        },
     )
 
-    _prevent_none = prevent_none(
-        "description",
-        "internal_control",
-        "name",
-        "organism",
-        "restrict_source_types",
-        "source_types",
-        "targets",
-    )
 
-    class Config:
-        schema_extra = {
+class ReferenceTargetUpdate(BaseModel):
+    """A model for creating a new reference target.
+
+    This model is nested in a reference update request.
+    """
+
+    name: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True),
+        Field(
+            description="The display name for the target.",
+            min_length=1,
+        ),
+    ]
+
+    description: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True),
+        Field(
+            default="",
+            description="A longer description for the target.",
+        ),
+    ]
+
+    required: Annotated[
+        bool,
+        Field(
+            default=False,
+            description="Whether the target is required for isolate validation.",
+        ),
+    ]
+
+    length: Annotated[
+        int | UnsetType,
+        Field(
+            default=Unset,
+            description="The target length.",
+        ),
+    ]
+
+
+class ReferenceUpdateRequest(BaseModel):
+    """A request validation model for updating a reference."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "name": "Regulated Pests",
                 "organism": "phytoplasma",
                 "internal_control": "ah4m5jqz",
             },
-        }
+        },
+    )
 
-    @validator("targets", check_fields=False)
-    def check_targets_name(cls, targets):
-        """Sets `name` to the provided `id` if it is `None`."""
+    description: Annotated[
+        str | UnsetType,
+        StringConstraints(strip_whitespace=True),
+        Field(
+            default=Unset,
+            description="a longer description for the reference",
+        ),
+    ]
+
+    internal_control: str | UnsetType = Field(
+        default=Unset,
+        description=(
+            "set the OTU identified by the passed id as the internal control for the "
+            "reference"
+        ),
+    )
+
+    name: Annotated[
+        str | UnsetType,
+        StringConstraints(strip_whitespace=True),
+        Field(
+            default=Unset,
+            description="the virus name",
+            min_length=1,
+        ),
+    ]
+
+    organism: Annotated[
+        str | UnsetType,
+        StringConstraints(strip_whitespace=True),
+        Field(
+            default=Unset,
+            description="the organism",
+        ),
+    ]
+
+    restrict_source_types: Annotated[
+        bool | UnsetType,
+        Field(
+            default=Unset,
+            description="option to restrict source types",
+        ),
+    ]
+
+    source_types: (
+        list[
+            Annotated[
+                str,
+                StringConstraints(strip_whitespace=True),
+                Field(
+                    description="source types",
+                    min_length=1,
+                ),
+            ]
+        ]
+        | UnsetType
+    ) = Field(default=Unset, description="The allowed source types.")
+
+    targets: Annotated[
+        list[ReferenceTargetUpdate] | UnsetType,
+        Field(
+            default=Unset,
+            description="list of target sequences",
+        ),
+    ]
+
+    @field_validator("targets")
+    @classmethod
+    def check_duplicate_target_names(
+        cls: "ReferenceUpdateRequest",
+        targets: list[ReferenceTargetUpdate] | UnsetType,
+    ) -> list[ReferenceTargetUpdate] | UnsetType:
+        """Check that the targets field does not contain duplicate names."""
+        if not is_set(targets):
+            return targets
+
         names = [t.name for t in targets]
 
         if len(names) != len(set(names)):
-            raise ValueError("The targets field may not contain duplicate names")
+            msg = "The targets field may not contain duplicate names"
+            raise ValueError(msg)
 
         return targets
 
 
 class ReferenceRightsRequest(BaseModel):
-    build: bool | None = Field(
-        description="allow members to build new indexes for the reference",
+    """A validation model for a request to update reference rights."""
+
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"build": True, "modify": True}},
     )
-    modify: bool | None = Field(
-        description="allow members to modify the reference metadata and settings",
+
+    build: bool | UnsetType = Field(
+        default=Unset,
+        description="Allow members to build new indexes for the reference.",
     )
-    modify_otu: bool | None = Field(
-        description="allow members to modify the reference’s member OTUs",
+
+    modify: bool | UnsetType = Field(
+        default=Unset,
+        description="Allow members to modify the reference metadata and settings.",
     )
-    remove: bool | None = Field(description="allow members to remove the reference")
 
-    class Config:
-        schema_extra = {"example": {"build": True, "modify": True}}
+    modify_otu: bool | UnsetType = Field(
+        default=Unset,
+        description="Allow members to modify the reference’s member OTUs.",
+    )
 
-    _prevent_none = prevent_none("*")
-
-
-class CreateReferenceGroupRequest(ReferenceRightsRequest):
-    group_id: int = Field(description="the id of the group to add")
-
-    class Config:
-        schema_extra = {"example": {"group_id": 2, "modify_otu": True}}
+    remove: bool | UnsetType = Field(
+        default=Unset,
+        description="Allow members to remove the reference.",
+    )
 
 
-class CreateReferenceGroupResponse(ReferenceGroup):
-    class Config:
-        schema_extra = {
+class ReferenceCreateGroupRequest(ReferenceRightsRequest):
+    """A validation model for a request to create a new reference group."""
+
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"group_id": 2, "modify_otu": True}},
+    )
+
+    group_id: int = Field(description="The ID of the user group.")
+
+
+class ReferenceCreateGroupResponse(ReferenceGroup):
+    """A response model for creating a reference group."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": [
                 {
                     "build": False,
@@ -409,12 +514,15 @@ class CreateReferenceGroupResponse(ReferenceGroup):
                     "remove": False,
                 },
             ],
-        }
+        },
+    )
 
 
 class ReferenceGroupsResponse(ReferenceGroup):
-    class Config:
-        schema_extra = {
+    """A response model for a list of reference groups."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": [
                 {
                     "build": False,
@@ -425,12 +533,15 @@ class ReferenceGroupsResponse(ReferenceGroup):
                     "remove": False,
                 },
             ],
-        }
+        },
+    )
 
 
 class ReferenceGroupResponse(ReferenceGroup):
-    class Config:
-        schema_extra = {
+    """A response model for a reference group."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "build": False,
                 "created_at": "2022-06-10T20:00:34.129000Z",
@@ -439,19 +550,25 @@ class ReferenceGroupResponse(ReferenceGroup):
                 "modify_otu": False,
                 "remove": False,
             },
-        }
+        },
+    )
 
 
-class CreateReferenceUserRequest(ReferenceRightsRequest):
-    user_id: str = Field(description="the id of the user to add")
+class ReferenceCreateUserRequest(ReferenceRightsRequest):
+    """A validation model for a request to create a new reference user."""
 
-    class Config:
-        schema_extra = {"example": {"user_id": "sidney", "modify_otu": True}}
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"user_id": "sidney", "modify_otu": True}},
+    )
+
+    user_id: str = Field(description="The ID of the user.")
 
 
-class ReferenceUsersResponse(ReferenceUser):
-    class Config:
-        schema_extra = {
+class ReferenceUserResponse(ReferenceUser):
+    """A response model for a reference user."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": "sidney",
                 "created_at": "2018-05-23T19:14:04.285000Z",
@@ -460,12 +577,13 @@ class ReferenceUsersResponse(ReferenceUser):
                 "modify_otu": True,
                 "remove": False,
             },
-        }
+        },
+    )
 
 
 class GetReferenceUpdateResponse(ReferenceInstalled):
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": [
                 {
                     "id": 11447367,
@@ -480,12 +598,13 @@ class GetReferenceUpdateResponse(ReferenceInstalled):
                     "ready": True,
                 },
             ],
-        }
+        },
+    )
 
 
 class CreateReferenceUpdateResponse(ReferenceRelease):
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": 10742520,
                 "name": "v0.3.0",
@@ -500,12 +619,13 @@ class CreateReferenceUpdateResponse(ReferenceRelease):
                 "newer": True,
                 "retrieved_at": "2018-04-14T19:52:17.465000Z",
             },
-        }
+        },
+    )
 
 
-class CreateReferenceIndexesResponse(IndexMinimal):
-    class Config:
-        schema_extra = {
+class IndexCreateResponse(IndexMinimal):
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "change_count": 0,
                 "created_at": "2015-10-06T20:00:00Z",
@@ -518,12 +638,13 @@ class CreateReferenceIndexesResponse(IndexMinimal):
                 "user": {"administrator": False, "handle": "bob", "id": "test"},
                 "version": 9,
             },
-        }
+        },
+    )
 
 
 class ReferenceHistoryResponse(HistorySearchResult):
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "documents": [
                     {
@@ -551,4 +672,5 @@ class ReferenceHistoryResponse(HistorySearchResult):
                 "per_page": 1,
                 "page": 1,
             },
-        }
+        },
+    )

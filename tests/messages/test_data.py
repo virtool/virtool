@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.data.errors import ResourceConflictError
 from virtool.messages.data import MessagesData
 from virtool.messages.models import SQLInstanceMessage
-from virtool.messages.oas import CreateMessageRequest, UpdateMessageRequest
+from virtool.messages.oas import MessageCreateRequest, MessageUpdateRequest
 from virtool.mongo.core import Mongo
 
 
@@ -64,8 +64,9 @@ class TestGet:
 async def test_create(snapshot, static_time, messages_data, fake):
     user = await fake.users.create()
 
-    create_request = CreateMessageRequest(
-        color="blue", message="This is a test message",
+    create_request = MessageCreateRequest(
+        color="blue",
+        message="This is a test message",
     )
 
     await messages_data.create(create_request, user.id)
@@ -89,7 +90,7 @@ async def test_update(snapshot, pg, static_time, messages_data, fake):
         )
         await session.commit()
 
-    update_request = UpdateMessageRequest(color="red", message="Updated Message")
+    update_request = MessageUpdateRequest(color="red", message="Updated Message")
 
     await messages_data.update(update_request)
 

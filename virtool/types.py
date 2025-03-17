@@ -1,11 +1,10 @@
 """Custom types aliases for Virtool."""
 
+from collections.abc import AsyncIterable, Awaitable, Callable, Sequence
 from datetime import datetime
 from typing import (
     Any,
-    Awaitable,
-    Callable,
-    Sequence,
+    Protocol,
     TypeAlias,
 )
 
@@ -17,6 +16,33 @@ An aiohttp application or similar dictionary.
 
 In testing ``dict``-like objects are sometimes used in place of an application.
 """
+
+# async def multipart_file_chunker(
+#     reader: MultipartReader,
+# ) -> AsyncGenerator[bytearray, None]:
+#     """Iterates through a ``MultipartReader`` as ``bytearray`` chunks."""
+#     file = await reader.next()
+#
+#     while True:
+#         chunk = await file.read_chunk(CHUNK_SIZE)
+#
+#         if not chunk:
+#             break
+#
+#         yield chunk
+
+
+class Chunker(Protocol):
+    """A protocol for a function that chunks a file.
+
+    The function should accept a :class:`aiohttp.MultipartReader` and return an`
+
+
+    """
+
+    async def __call__(self, req: Request) -> AsyncIterable[bytearray]:
+        """Chunk a file from a multipart request."""
+
 
 Document: TypeAlias = dict[
     str,

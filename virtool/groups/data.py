@@ -13,11 +13,12 @@ from virtool.data.topg import both_transactions
 from virtool.groups.mongo import (
     update_member_users_and_api_keys,
 )
-from virtool.groups.oas import UpdateGroupRequest
+from virtool.groups.oas import GroupUpdateRequest
 from virtool.groups.pg import SQLGroup
 from virtool.mongo.core import Mongo
 from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor
+from virtool.validation import is_set
 
 
 class GroupsData:
@@ -144,7 +145,7 @@ class GroupsData:
         return await self.get(group_id)
 
     @emits(Operation.UPDATE)
-    async def update(self, group_id: int, data: UpdateGroupRequest) -> Group:
+    async def update(self, group_id: int, data: GroupUpdateRequest) -> Group:
         """Update the name or permissions for a group.
 
         :param group_id: the id of the group
@@ -162,18 +163,17 @@ class GroupsData:
             if not group:
                 raise ResourceNotFoundError
 
-            data = data.dict(exclude_unset=True)
-
             db_update = {}
 
-            if "name" in data:
-                group.name = data["name"]
+            if is_set(data.name):
+                group.name = data.name
 
-            if "permissions" in data:
-                group.permissions = {**group.permissions, **data["permissions"]}
+            if is_set(data.permissions):
+                group.permissions = {**group.permissions, **data.permissions}
 
             if db_update:
                 group.update(db_update)
+
                 await update_member_users_and_api_keys(
                     self._mongo,
                     mongo_session,
@@ -183,7 +183,7 @@ class GroupsData:
 
         return await self.get(group_id)
 
-    async def delete(self, group_id: int):
+    async def delete(self, group_id: int) -> None:
         """Delete a group by its id.
 
         Deletes the group and updates all member user permissions if they are affected

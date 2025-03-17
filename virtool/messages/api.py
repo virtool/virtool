@@ -1,29 +1,24 @@
-from typing import Union, Optional
-
-from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r404, r409
-
-from virtool.api.errors import APINotFound, APIConflict
 from virtool.api.custom_json import json_response
-from virtool.data.utils import get_data_from_req
+from virtool.api.errors import APIConflict, APINotFound
 from virtool.api.routes import Routes
+from virtool.api.status import R200, R404, R409
+from virtool.api.view import APIView
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.messages.oas import (
-    MessageResponse,
-    CreateMessageRequest,
     CreateMessageResponse,
+    MessageCreateRequest,
+    MessageResponse,
+    MessageUpdateRequest,
     UpdateMessageResponse,
-    UpdateMessageRequest,
 )
-from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 
 routes = Routes()
 
 
-@routes.view("/instance_message")
-class MessagesView(PydanticView):
-    async def get(self) -> r200[Optional[MessageResponse]]:
-        """
-        Get the administrative instance message.
+@routes.web.view("/instance_message")
+class MessagesView(APIView):
+    async def get(self) -> R200[MessageResponse | None]:
+        """Get the administrative instance message.
 
         Fetches the active administrative instance message.
 
@@ -31,15 +26,14 @@ class MessagesView(PydanticView):
             200: Successful operation
         """
         try:
-            instance_message = await get_data_from_req(self.request).messages.get()
+            instance_message = await self.data.messages.get()
         except (ResourceNotFoundError, ResourceConflictError):
             return json_response(None)
 
         return json_response(instance_message)
 
-    async def put(self, data: CreateMessageRequest) -> r200[CreateMessageResponse]:
-        """
-        Create an administrative instance message.
+    async def put(self, data: MessageCreateRequest) -> R200[CreateMessageResponse]:
+        """Create an administrative instance message.
 
         Creates a new administrative instance message.
 
@@ -48,19 +42,22 @@ class MessagesView(PydanticView):
         """
         user_id = self.request["client"].user_id
 
-        instance_message = await get_data_from_req(self.request).messages.create(
-            data, user_id
+        instance_message = await self.data.messages.create(
+            data,
+            user_id,
         )
 
         return json_response(
-            instance_message, status=200, headers={"Location": "/instance_message"}
+            instance_message,
+            status=200,
+            headers={"Location": "/instance_message"},
         )
 
     async def patch(
-        self, data: UpdateMessageRequest
-    ) -> Union[r200[UpdateMessageResponse], r404, r409]:
-        """
-        Update the administrative instance message.
+        self,
+        data: MessageUpdateRequest,
+    ) -> R200[UpdateMessageResponse] | R404 | R409:
+        """Update the administrative instance message.
 
         Updates the existing active administrative instance message.
 
@@ -70,8 +67,8 @@ class MessagesView(PydanticView):
             409: No active message set
         """
         try:
-            instance_message = await get_data_from_req(self.request).messages.update(
-                data
+            instance_message = await self.data.messages.update(
+                data,
             )
         except ResourceNotFoundError:
             raise APINotFound()

@@ -1,8 +1,9 @@
 """Work with release manifests published on www.virtool.ca."""
+
 import datetime
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Dict, List, TypeAlias
+from typing import TypeAlias
 
 from aiohttp import ClientSession
 
@@ -54,13 +55,12 @@ class ReleaseManifestItem:
     """The size of the release asset in bytes."""
 
 
-ReleaseManifest: TypeAlias = List[ReleaseManifestItem]
+ReleaseManifest: TypeAlias = list[ReleaseManifestItem]
 """The list of releases returned in a JSON payload from www.virtool.ca/releases."""
 
 
 class ReleaseType(str, Enum):
-    """
-    The types of releases that can be fetched from www.virtool.ca.
+    """The types of releases that can be fetched from www.virtool.ca.
 
     The value of each member is used as part of the URL path to the release manifest.
     For example `REFERENCES` is used to construct a URL like
@@ -74,16 +74,15 @@ class ReleaseType(str, Enum):
 
 
 async def fetch_release_manifest_from_virtool(
-    session: ClientSession, release_type: ReleaseType
-) -> Optional[Dict]:
-    """
-    Get releases of a single :class:``ReleaseType`` from www.virtool.ca/releases.
+    session: ClientSession,
+    release_type: ReleaseType,
+) -> dict | None:
+    """Get releases of a single :class:``ReleaseType`` from www.virtool.ca/releases.
 
     :param session: the application HTTP client session
     :param release_type: the type of repository manifest to fetch
     :return: the releases of the requested repository
     """
-
     url = f"https://www.virtool.ca/releases/{release_type.value}.json"
 
     async with session.get(url) as resp:

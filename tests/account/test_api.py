@@ -7,8 +7,8 @@ from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.groups.oas import PermissionsUpdate
 from virtool.mongo.core import Mongo
-from virtool.settings.oas import UpdateSettingsRequest
-from virtool.users.oas import UpdateUserRequest
+from virtool.settings.oas import SettingsUpdateRequest
+from virtool.users.oas import UserUpdateRequest
 from virtool.users.utils import Permission, hash_password
 
 
@@ -69,7 +69,7 @@ async def test_update(
     client = await spawn_client(authenticated=True)
 
     await get_data_from_app(client.app).settings.update(
-        UpdateSettingsRequest(minimum_password_length=8),
+        SettingsUpdateRequest(minimum_password_length=8),
     )
 
     resp = await client.patch("/account", body)
@@ -128,7 +128,7 @@ async def test_update_settings(data, status, spawn_client, resp_is, snapshot):
 
 
 async def test_get_api_keys(
-        fake: DataFaker,
+    fake: DataFaker,
     mongo: Mongo,
     spawn_client: ClientSpawner,
     snapshot,
@@ -177,7 +177,7 @@ class TestCreateAPIKey:
         has_perm,
         req_perm,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         mocker,
         snapshot,
         spawn_client: ClientSpawner,
@@ -198,7 +198,7 @@ class TestCreateAPIKey:
         if has_perm:
             await data_layer.users.update(
                 client.user.id,
-                UpdateUserRequest(groups=[group.id]),
+                UserUpdateRequest(groups=[group.id]),
             )
 
         body = {"name": "Foobar"}
@@ -248,7 +248,7 @@ class TestUpdateAPIKey:
         has_admin: bool,
         has_perm: bool,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         mongo: Mongo,
         snapshot,
         spawn_client: ClientSpawner,
@@ -265,7 +265,7 @@ class TestUpdateAPIKey:
 
         await data_layer.users.update(
             client.user.id,
-            UpdateUserRequest(administrator=has_admin, groups=[group.id]),
+            UserUpdateRequest(administrator=has_admin, groups=[group.id]),
         )
 
         await mongo.keys.insert_one(
@@ -344,7 +344,7 @@ async def test_remove_api_key(
 
 
 async def test_remove_all_api_keys(
-        fake: DataFaker,
+    fake: DataFaker,
     mongo: Mongo,
     spawn_client: ClientSpawner,
 ):
@@ -536,7 +536,7 @@ async def test_login(
 async def test_login_reset(
     spawn_client,
     snapshot,
-        fake: DataFaker,
+    fake: DataFaker,
     request_path,
     correct_code,
     data_layer: DataLayer,

@@ -1,21 +1,20 @@
-from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r201, r200, r204, r404
 from virtool_core.models.roles import AdministratorRole
 
-from virtool.api.errors import APINotFound, APIBadRequest, APINoContent
-from virtool.api.policy import policy, AdministratorRoutePolicy
 from virtool.api.custom_json import json_response
+from virtool.api.errors import APIBadRequest, APINoContent, APINotFound
+from virtool.api.policy import AdministratorRoutePolicy, policy
 from virtool.api.routes import Routes
-from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
-from virtool.data.utils import get_data_from_req
-from virtool.flags import flag, FlagName
+from virtool.api.status import R200, R201, R204, R404
+from virtool.api.view import APIView
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
+from virtool.flags import FlagName, flag
 from virtool.spaces.oas import (
-    UpdateSpaceRequest,
-    UpdateMemberRequest,
-    ListSpacesResponse,
-    GetSpaceResponse,
-    UpdateSpaceResponse,
-    ListMembersResponse,
+    SpaceListMembersResponse,
+    SpaceMemberUpdateRequest,
+    SpaceResponse,
+    SpacesListResponse,
+    SpaceUpdateRequest,
+    SpaceUpdateResponse,
     UpdateMemberResponse,
 )
 
@@ -23,31 +22,28 @@ routes = Routes()
 
 
 @flag(FlagName.SPACES)
-@routes.view("/spaces")
-class SpacesView(PydanticView):
-    async def get(self) -> r200[ListSpacesResponse]:
-        """
-        List spaces.
+@routes.web.view("/spaces")
+class SpacesView(APIView):
+    async def get(self) -> R200[SpacesListResponse]:
+        """List spaces.
 
         Get a list of all spaces that the requesting user is a member or owner of.
 
         Status Codes:
             200: Successful operation
         """
-
         return json_response(
-            await get_data_from_req(self.request).spaces.find(
-                self.request["client"].user_id
-            )
+            await self.data.spaces.find(
+                self.request["client"].user_id,
+            ),
         )
 
 
 @flag(FlagName.SPACES)
-@routes.view("/spaces/{space_id}")
-class SpaceView(PydanticView):
-    async def get(self, space_id: int, /) -> r200[GetSpaceResponse] | r404:
-        """
-        Get a space.
+@routes.web.view("/spaces/{space_id}")
+class SpaceView(APIView):
+    async def get(self, space_id: int, /) -> R200[SpaceResponse] | R404:
+        """Get a space.
 
         Fetches the complete representation of a space.
 
@@ -55,9 +51,8 @@ class SpaceView(PydanticView):
             200: Successful operation
             404: User not found
         """
-
         try:
-            space = await get_data_from_req(self.request).spaces.get(space_id)
+            space = await self.data.spaces.get(space_id)
         except ResourceNotFoundError:
             raise APINotFound()
 
@@ -65,10 +60,12 @@ class SpaceView(PydanticView):
 
     @policy(AdministratorRoutePolicy(AdministratorRole.SPACES))
     async def patch(
-        self, space_id: int, /, data: UpdateSpaceRequest
-    ) -> r201[UpdateSpaceResponse] | r404:
-        """
-        Update a space.
+        self,
+        space_id: int,
+        /,
+        data: SpaceUpdateRequest,
+    ) -> R201[SpaceUpdateResponse] | R404:
+        """Update a space.
 
         Changes the name or description of a space.
 
@@ -78,7 +75,7 @@ class SpaceView(PydanticView):
             404: User not found
         """
         try:
-            space = await get_data_from_req(self.request).spaces.update(space_id, data)
+            space = await self.data.spaces.update(space_id, data)
         except ResourceNotFoundError:
             raise APINotFound()
         except ResourceConflictError:
@@ -88,11 +85,10 @@ class SpaceView(PydanticView):
 
 
 @flag(FlagName.SPACES)
-@routes.view("/spaces/{space_id}/members")
-class SpaceMembersView(PydanticView):
-    async def get(self, space_id: int, /) -> r200[ListMembersResponse]:
-        """
-        List members.
+@routes.web.view("/spaces/{space_id}/members")
+class SpaceMembersView(APIView):
+    async def get(self, space_id: int, /) -> R200[SpaceListMembersResponse]:
+        """List members.
 
         Lists the members of a space and their roles.
 
@@ -100,8 +96,8 @@ class SpaceMembersView(PydanticView):
             200: Successful operation
         """
         try:
-            members = await get_data_from_req(self.request).spaces.find_members(
-                space_id
+            members = await self.data.spaces.find_members(
+                space_id,
             )
         except ResourceNotFoundError:
             raise APINotFound()
@@ -110,14 +106,17 @@ class SpaceMembersView(PydanticView):
 
 
 @flag(FlagName.SPACES)
-@routes.view("/spaces/{space_id}/members/{member_id}")
-class SpaceMemberView(PydanticView):
+@routes.web.view("/spaces/{space_id}/members/{member_id}")
+class SpaceMemberView(APIView):
     @policy(AdministratorRoutePolicy(AdministratorRole.SPACES))
     async def patch(
-        self, space_id: int, member_id: int | str, /, data: UpdateMemberRequest
-    ) -> r200[UpdateMemberResponse] | r404:
-        """
-        Update a member.
+        self,
+        space_id: int,
+        member_id: int | str,
+        /,
+        data: SpaceMemberUpdateRequest,
+    ) -> R200[UpdateMemberResponse] | R404:
+        """Update a member.
 
         Changes the roles of the space member.
 
@@ -126,8 +125,10 @@ class SpaceMemberView(PydanticView):
             404: User not found
         """
         try:
-            member = await get_data_from_req(self.request).spaces.update_member(
-                space_id, member_id, data
+            member = await self.data.spaces.update_member(
+                space_id,
+                member_id,
+                data,
             )
         except ResourceNotFoundError:
             raise APINotFound()
@@ -135,9 +136,8 @@ class SpaceMemberView(PydanticView):
         return json_response(member)
 
     @policy(AdministratorRoutePolicy(AdministratorRole.SPACES))
-    async def delete(self, space_id: int, member_id: int | str, /) -> r204 | r404:
-        """
-        Remove a member.
+    async def delete(self, space_id: int, member_id: int | str, /) -> R204 | R404:
+        """Remove a member.
 
         Removes a member from the space.
         They will no longer have access to any data in the space.
@@ -147,8 +147,9 @@ class SpaceMemberView(PydanticView):
             404: User not found
         """
         try:
-            await get_data_from_req(self.request).spaces.remove_member(
-                space_id, member_id
+            await self.data.spaces.remove_member(
+                space_id,
+                member_id,
             )
         except ResourceNotFoundError:
             raise APINotFound()

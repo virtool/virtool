@@ -1,5 +1,5 @@
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING
 
 from virtool.tasks.task import BaseTask
 
@@ -22,7 +22,7 @@ class TimeoutJobsTask(BaseTask):
         self,
         task_id: int,
         data: "DataLayer",
-        context: Dict,
+        context: dict,
         temp_dir: TemporaryDirectory,
     ):
         super().__init__(task_id, data, context, temp_dir)
@@ -46,7 +46,7 @@ class RelistJobsTask(BaseTask):
         self,
         task_id: int,
         data: "DataLayer",
-        context: Dict,
+        context: dict,
         temp_dir: TemporaryDirectory,
     ):
         super().__init__(task_id, data, context, temp_dir)

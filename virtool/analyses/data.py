@@ -233,7 +233,7 @@ class AnalysisData(DataLayerDomain):
         user_id: str,
         space_id: int,
     ) -> Analysis:
-        """Creates a new analysis.
+        """Create a new analysis.
 
         Ensures that a valid subtraction host was the submitted. Configures read and
         write permissions on the sample document and assigns it a creator username
@@ -256,8 +256,10 @@ class AnalysisData(DataLayerDomain):
             get_one_field(self._mongo.samples, "name", sample_id),
         )
 
-        analysis_id = await get_new_id(self._mongo.analyses)
-        job_id = await get_new_id(self._mongo.jobs)
+        analysis_id, job_id = await asyncio.gather(
+            get_new_id(self._mongo.analyses),
+            get_new_id(self._mongo.jobs),
+        )
 
         await self._mongo.analyses.insert_one(
             {

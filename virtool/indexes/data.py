@@ -1,7 +1,6 @@
 import asyncio
 from asyncio import to_thread
 from pathlib import Path
-from typing import List, Union
 
 from multidict import MultiDictProxy
 from sqlalchemy.exc import IntegrityError
@@ -37,7 +36,7 @@ from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import get_rows
 from virtool.references.db import lookup_nested_reference_by_id
 from virtool.references.transforms import AttachReferenceTransform
-from virtool.uploads.utils import multipart_file_chunker, naive_writer
+from virtool.uploads.utils import body_part_file_chunker, naive_writer
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor, compress_json_with_gzip, wait_for_checks
 
@@ -56,7 +55,7 @@ class IndexData:
         self,
         ready: bool,
         query: MultiDictProxy,
-    ) -> Union[List[IndexMinimal], IndexSearchResult]:
+    ) -> list[IndexMinimal] | IndexSearchResult:
         """List all indexes.
 
         :param ready: the request object
@@ -226,7 +225,7 @@ class IndexData:
                 join_index_path(self._config.data_path, reference_id, index_id) / name
             )
 
-            size = await naive_writer(multipart_file_chunker(await multipart()), path)
+            size = await naive_writer(body_part_file_chunker(await multipart()), path)
 
             index_file.size = size
             index_file.uploaded_at = virtool.utils.timestamp()

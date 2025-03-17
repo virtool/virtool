@@ -1,15 +1,15 @@
-from typing import Callable
+from collections.abc import Callable
 
 from aiohttp.web import Request, middleware
+from aiohttp.web_response import StreamResponse
 
 from virtool.api.custom_json import dump_bytes, dump_pretty_bytes
 
 
 @middleware
-async def accept_middleware(req: Request, handler: Callable):
-    """
-    Formats JSON if 'application/json' content type was not in request 'Accept' header.
-
+async def accept_middleware(req: Request, handler: Callable) -> StreamResponse:
+    """Formats JSON if 'application/json' content type was not in request 'Accept'
+    header.
     """
     accepts_json = False
 

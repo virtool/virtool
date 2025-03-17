@@ -1,39 +1,42 @@
-"""
-API request handlers for account endpoints.
+"""API request handlers for account endpoints.
 
 These endpoints modify and return data about the user account associated with the
 session or API key making the requests.
 
 """
+
+from contextlib import suppress
+
 from aiohttp.web import Response
-from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r404
 
 import virtool.api.authentication
 import virtool.api.routes
 from virtool.account.oas import (
-    UpdateAccountRequest,
-    UpdateSettingsRequest,
-    CreateKeysRequest,
-    UpdateKeyRequest,
-    ResetPasswordRequest,
-    CreateLoginRequest,
     AccountResponse,
-    UpdateAccountResponse,
     AccountSettingsResponse,
-    CreateAPIKeyResponse,
+    AccountSettingsUpdateRequest,
+    AccountUpdateRequest,
+    AccountUpdateResponse,
     APIKeyResponse,
-    LoginResponse,
-    AccountResetPasswordResponse,
+    CreateKeyRequest,
+    CreateKeyResponse,
+    CreateLoginRequest,
+    CreateLoginResponse,
     ListAPIKeysResponse,
+    ResetPasswordRequest,
+    ResetPasswordResponse,
+    UpdateKeyRequest,
 )
-from virtool.api.errors import APINotFound, APIBadRequest, APINoContent
-from virtool.api.policy import policy, PublicRoutePolicy
 from virtool.api.custom_json import json_response
+from virtool.api.errors import APIBadRequest, APINoContent, APINotFound
+from virtool.api.policy import PublicRoutePolicy, policy
+from virtool.api.status import R200, R201, R204, R400, R401, R404
 from virtool.api.utils import set_session_id_cookie, set_session_token_cookie
+from virtool.api.view import APIView
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.users.checks import check_password_length
+from virtool.validation import is_set
 
 routes = virtool.api.routes.Routes()
 """
@@ -41,11 +44,10 @@ A :class:`aiohttp.web.RouteTableDef` for account API routes.
 """
 
 
-@routes.view("/account")
-class AccountView(PydanticView):
-    async def get(self) -> r200[AccountResponse] | r401:
-        """
-        Get an account.
+@routes.web.view("/account")
+class AccountView(APIView):
+    async def get(self) -> R200[AccountResponse] | R401:
+        """Get an account.
 
         Fetches the details for the account associated with the user agent.
 
@@ -53,18 +55,17 @@ class AccountView(PydanticView):
             200: Successful Operation
             401: Requires Authorization
         """
-
-        account = await get_data_from_req(self.request).account.get(
-            self.request["client"].user_id
+        account = await self.data.account.get(
+            self.request["client"].user_id,
         )
 
         return json_response(account)
 
     async def patch(
-        self, data: UpdateAccountRequest
-    ) -> r200[UpdateAccountResponse] | r400 | r401:
-        """
-        Update an account.
+        self,
+        data: AccountUpdateRequest,
+    ) -> R200[AccountUpdateResponse] | R400 | R401:
+        """Update an account.
 
         Updates the account associated with the user agent.
 
@@ -79,29 +80,27 @@ class AccountView(PydanticView):
             400: Invalid input
             401: Requires Authorization
         """
-        data_dict = data.dict(exclude_unset=True)
-
-        if "password" in data_dict:
+        if is_set(data.password):
             error = await check_password_length(self.request, data.password)
 
             if error:
                 raise APIBadRequest(error)
 
         try:
-            account = await get_data_from_req(self.request).account.update(
-                self.request["client"].user_id, data
+            account = await self.data.account.update(
+                self.request["client"].user_id,
+                data,
             )
         except ResourceError:
             raise APIBadRequest("Invalid credentials")
 
-        return json_response(UpdateAccountResponse.parse_obj(account))
+        return json_response(AccountUpdateResponse.model_validate(account))
 
 
-@routes.view("/account/settings")
-class AccountsSettingsView(PydanticView):
-    async def get(self) -> r200[AccountSettingsResponse] | r401:
-        """
-        Get account settings.
+@routes.web.view("/account/settings")
+class AccountsSettingsView(APIView):
+    async def get(self) -> R200[AccountSettingsResponse] | R401:
+        """Get account settings.
 
         Fetches the settings for the account associated with the user agent.
 
@@ -109,17 +108,17 @@ class AccountsSettingsView(PydanticView):
             200: Successful operation
             401: Requires authorization
         """
-        account_settings = await get_data_from_req(self.request).account.get_settings(
-            self.request["client"].user_id
+        account_settings = await self.data.account.get_settings(
+            self.request["client"].user_id,
         )
 
         return json_response(AccountSettingsResponse.parse_obj(account_settings))
 
     async def patch(
-        self, data: UpdateSettingsRequest
-    ) -> r200[AccountSettingsResponse] | r400 | r401:
-        """
-        Update account settings.
+        self,
+        data: AccountSettingsUpdateRequest,
+    ) -> R200[AccountSettingsResponse] | R400 | R401:
+        """Update account settings.
 
         Updates the settings of the account associated with the user agent.
 
@@ -128,18 +127,18 @@ class AccountsSettingsView(PydanticView):
             400: Invalid input
             401: Requires Authorization
         """
-        settings = await get_data_from_req(self.request).account.update_settings(
-            data, self.request["client"].user_id
+        settings = await self.data.account.update_settings(
+            data,
+            self.request["client"].user_id,
         )
 
-        return json_response(AccountSettingsResponse.parse_obj(settings))
+        return json_response(AccountSettingsResponse.model_validate(settings))
 
 
-@routes.view("/account/keys")
-class KeysView(PydanticView):
-    async def get(self) -> r200[list[ListAPIKeysResponse]] | r401:
-        """
-        List API keys.
+@routes.web.view("/account/keys")
+class KeysView(APIView):
+    async def get(self) -> R200[list[ListAPIKeysResponse]] | R401:
+        """List API keys.
 
         Lists all API keys registered on the account associated with the user agent.
 
@@ -147,19 +146,20 @@ class KeysView(PydanticView):
             200: Successful operation
             401: Requires authorization
         """
-        keys = await get_data_from_req(self.request).account.get_keys(
-            self.request["client"].user_id
+        keys = await self.data.account.get_keys(
+            self.request["client"].user_id,
         )
 
         return json_response(
-            [ListAPIKeysResponse.parse_obj(key) for key in keys], status=200
+            [ListAPIKeysResponse.parse_obj(key) for key in keys],
+            status=200,
         )
 
     async def post(
-        self, data: CreateKeysRequest
-    ) -> r201[CreateAPIKeyResponse] | r400 | r401:
-        """
-        Create an API key.
+        self,
+        data: CreateKeyRequest,
+    ) -> R201[CreateKeyResponse] | R400 | R401:
+        """Create an API key.
 
         Creates a new API key on the account associated with the user agent.
 
@@ -171,19 +171,19 @@ class KeysView(PydanticView):
             400: Invalid input
             401: Requires authorization
         """
-        raw, key = await get_data_from_req(self.request).account.create_key(
-            data, self.request["client"].user_id
+        raw, key = await self.data.account.create_key(
+            data,
+            self.request["client"].user_id,
         )
 
         return json_response(
-            CreateAPIKeyResponse(**{**key.dict(), "key": raw}),
+            CreateKeyResponse(**{**key.dict(), "key": raw}),
             headers={"Location": f"/account/keys/{key.id}"},
             status=201,
         )
 
-    async def delete(self) -> r204 | r401:
-        """
-        Purge API keys.
+    async def delete(self) -> R204 | R401:
+        """Purge API keys.
 
         Deletes all API keys registered for the account associated with the user agent.
 
@@ -191,18 +191,17 @@ class KeysView(PydanticView):
             204: Successful operation
             401: Requires authorization
         """
-        await get_data_from_req(self.request).account.delete_keys(
-            self.request["client"].user_id
+        await self.data.account.delete_keys(
+            self.request["client"].user_id,
         )
 
-        raise APINoContent()
+        raise APINoContent
 
 
-@routes.view("/account/keys/{key_id}")
-class KeyView(PydanticView):
-    async def get(self, key_id: str, /) -> r200[APIKeyResponse] | r404:
-        """
-        Get an API key.
+@routes.web.view("/account/keys/{key_id}")
+class KeyView(APIView):
+    async def get(self, key_id: str, /) -> R200[APIKeyResponse] | R404:
+        """Get an API key.
 
         Fetches the details for an API key registered on the account associated with
         the user agent.
@@ -212,19 +211,22 @@ class KeyView(PydanticView):
             404: Not found
         """
         try:
-            key = await get_data_from_req(self.request).account.get_key(
-                self.request["client"].user_id, key_id
+            key = await self.data.account.get_key(
+                self.request["client"].user_id,
+                key_id,
             )
         except ResourceNotFoundError:
-            raise APINotFound()
+            raise APINotFound() from None
 
-        return json_response(APIKeyResponse.parse_obj(key), status=200)
+        return json_response(APIKeyResponse.model_validate(key), status=200)
 
     async def patch(
-        self, key_id: str, /, data: UpdateKeyRequest
-    ) -> r200[APIKeyResponse] | r400 | r401 | r404:
-        """
-        Update an API key.
+        self,
+        key_id: str,
+        /,
+        data: UpdateKeyRequest,
+    ) -> R200[APIKeyResponse] | R400 | R401 | R404:
+        """Update an API key.
 
         Updates the permissions an existing API key registered on the account
         associated with the user agent.
@@ -236,19 +238,14 @@ class KeyView(PydanticView):
             404: Not found
         """
         try:
-            key = await get_data_from_req(self.request).account.update_key(
-                self.request["client"].user_id,
-                key_id,
-                data,
-            )
+            key = await self.data.account.update_key(self.client.user_id, key_id, data)
         except ResourceNotFoundError:
-            raise APINotFound()
+            raise APINotFound() from None
 
-        return json_response(APIKeyResponse.parse_obj(key))
+        return json_response(APIKeyResponse.model_validate(key))
 
-    async def delete(self, key_id: str, /) -> r204 | r401 | r404:
-        """
-        Delete an API key.
+    async def delete(self, key_id: str, /) -> R204 | R401 | R404:
+        """Delete an API key.
 
         Removes an API key by its 'key id'.
 
@@ -258,8 +255,9 @@ class KeyView(PydanticView):
             404: Not found
         """
         try:
-            await get_data_from_req(self.request).account.delete_key(
-                self.request["client"].user_id, key_id
+            await self.data.account.delete_key(
+                self.request["client"].user_id,
+                key_id,
             )
         except ResourceNotFoundError:
             raise APINotFound()
@@ -267,12 +265,11 @@ class KeyView(PydanticView):
         raise APINoContent()
 
 
-@routes.view("/account/login")
-class LoginView(PydanticView):
+@routes.web.view("/account/login")
+class LoginView(APIView):
     @policy(PublicRoutePolicy)
-    async def post(self, data: CreateLoginRequest) -> r201[LoginResponse] | r400:
-        """
-        Login.
+    async def post(self, data: CreateLoginRequest) -> R201[CreateLoginResponse] | R400:
+        """Login.
 
         Logs in using the passed credentials.
 
@@ -283,23 +280,24 @@ class LoginView(PydanticView):
             201: Successful operation
             400: Invalid input
         """
-
         session_id = self.request["client"].session_id
         ip = virtool.api.authentication.get_ip(self.request)
 
         try:
-            user_id = await get_data_from_req(self.request).account.login(data)
+            user_id = await self.data.account.login(data)
         except ResourceError:
             raise APIBadRequest("Invalid username or password")
 
-        session = None
-        reset_code = None
         try:
-            session, reset_code = await get_data_from_req(
-                self.request
-            ).account.get_reset_session(ip, user_id, session_id, data.remember)
+            session, reset_code = await self.data.account.get_reset_session(
+                ip,
+                user_id,
+                session_id,
+                data.remember,
+            )
         except ResourceError:
-            pass
+            session = None
+            reset_code = None
 
         if reset_code:
             resp = json_response(
@@ -313,10 +311,10 @@ class LoginView(PydanticView):
             return resp
 
         if session_id is not None:
-            await get_data_from_req(self.request).sessions.delete(session_id)
+            await self.data.sessions.delete(session_id)
 
         session, token = await get_data_from_req(
-            self.request
+            self.request,
         ).sessions.create_authenticated(
             ip,
             user_id,
@@ -330,12 +328,11 @@ class LoginView(PydanticView):
         return resp
 
 
-@routes.view("/account/logout")
-class LogoutView(PydanticView):
+@routes.web.view("/account/logout")
+class LogoutView(APIView):
     @policy(PublicRoutePolicy)
-    async def get(self) -> r204:
-        """
-        Logout.
+    async def get(self) -> R204:
+        """Logout.
 
         Logs out the user by invalidating the session associated with the user agent. A
         new unauthenticated session ID is returned in cookies.
@@ -343,7 +340,7 @@ class LogoutView(PydanticView):
         Status Codes:
             204: Successful operation
         """
-        session = await get_data_from_req(self.request).account.logout(
+        session = await self.data.account.logout(
             self.request["client"].session_id,
             virtool.api.authentication.get_ip(self.request),
         )
@@ -356,14 +353,14 @@ class LogoutView(PydanticView):
         return resp
 
 
-@routes.view("/account/reset")
-class ResetView(PydanticView):
+@routes.web.view("/account/reset")
+class ResetView(APIView):
     @policy(PublicRoutePolicy)
     async def post(
-        self, data: ResetPasswordRequest
-    ) -> r200[AccountResetPasswordResponse] | r400:
-        """
-        Reset password.
+        self,
+        data: ResetPasswordRequest,
+    ) -> R200[ResetPasswordResponse] | R400:
+        """Reset password.
 
         Resets the password for the account associated with the requesting session.
 
@@ -375,7 +372,7 @@ class ResetView(PydanticView):
             raise APIBadRequest(error)
 
         try:
-            session, token = await get_data_from_req(self.request).account.reset(
+            session, token = await self.data.account.reset(
                 self.request["client"].session_id,
                 data,
                 virtool.api.authentication.get_ip(self.request),
@@ -383,10 +380,8 @@ class ResetView(PydanticView):
         except ResourceNotFoundError:
             raise APIBadRequest("Invalid session")
 
-        try:
+        with suppress(AttributeError):
             self.request["client"].authorize(session, is_api=False)
-        except AttributeError:
-            pass
 
         resp = json_response({"login": False, "reset": False}, status=200)
 

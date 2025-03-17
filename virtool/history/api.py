@@ -1,8 +1,3 @@
-from typing import Union
-
-from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r204, r403, r404, r409, r422
-
 import virtool.api.routes
 import virtool.references.db
 from virtool.api.custom_json import json_response
@@ -12,17 +7,18 @@ from virtool.api.errors import (
     APINoContent,
     APINotFound,
 )
+from virtool.api.status import R200, R204, R403, R404, R409, R422
+from virtool.api.view import APIView
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
-from virtool.data.utils import get_data_from_req
-from virtool.history.oas import HistoryResponse, ListHistoryResponse
+from virtool.history.oas import HistoryResponse, HistorySearchResponse
 from virtool.mongo.utils import get_mongo_from_req, get_one_field
 
 routes = virtool.api.routes.Routes()
 
 
-@routes.view("/history")
-class ChangesView(PydanticView):
-    async def get(self) -> Union[r200[ListHistoryResponse], r422]:
+@routes.web.view("/history")
+class ChangesView(APIView):
+    async def get(self) -> R200[HistorySearchResponse] | R422:
         """List history.
 
         Returns a list of change documents.
@@ -31,16 +27,16 @@ class ChangesView(PydanticView):
             200: Successful Operation
             422: Invalid query
         """
-        data = await get_data_from_req(self.request).history.find(
+        data = await self.data.history.find(
             req_query=self.request.query,
         )
 
-        return json_response(ListHistoryResponse.parse_obj(data))
+        return json_response(HistorySearchResponse.model_validate(data))
 
 
-@routes.view("/history/{change_id}")
-class ChangeView(PydanticView):
-    async def get(self, change_id: str, /) -> Union[r200[HistoryResponse], r404]:
+@routes.web.view("/history/{change_id}")
+class ChangeView(APIView):
+    async def get(self, change_id: str, /) -> R200[HistoryResponse] | R404:
         """Get a change document.
 
         Fetches a specific change document by its ``change_id``.
@@ -50,13 +46,13 @@ class ChangeView(PydanticView):
             404: Not found
         """
         try:
-            document = await get_data_from_req(self.request).history.get(change_id)
+            document = await self.data.history.get(change_id)
         except ResourceNotFoundError:
             raise APINotFound()
 
-        return json_response(HistoryResponse.parse_obj(document).dict())
+        return json_response(HistoryResponse.model_validate(document))
 
-    async def delete(self, change_id: str, /) -> Union[r204, r403, r404, r409]:
+    async def delete(self, change_id: str, /) -> R204 | R403 | R404 | R409:
         """Delete a change document.
 
         Removes the change document with the given ``change_id`` and
@@ -82,7 +78,7 @@ class ChangeView(PydanticView):
             raise APIInsufficientRights()
 
         try:
-            await get_data_from_req(self.request).history.delete(change_id)
+            await self.data.history.delete(change_id)
         except ResourceNotFoundError:
             raise APINotFound()
         except ResourceConflictError:

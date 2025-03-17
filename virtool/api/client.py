@@ -6,36 +6,31 @@ from virtool_core.models.roles import AdministratorRole
 class AbstractClient(ABC):
     @property
     @abstractmethod
-    def authenticated(self) -> bool:
-        ...
+    def authenticated(self) -> bool: ...
 
     @property
     @abstractmethod
-    def administrator_role(self) -> AdministratorRole | None:
-        ...
+    def administrator_role(self) -> AdministratorRole | None: ...
 
     @property
     @abstractmethod
-    def force_reset(self) -> bool:
-        ...
+    def force_reset(self) -> bool: ...
 
     @abstractmethod
-    def has_permission(self, permission: str) -> bool:
-        ...
+    def has_permission(self, permission: str) -> bool: ...
 
     @abstractmethod
-    def is_group_member(self, group_id: str) -> bool:
-        ...
+    def is_group_member(self, group_id: str) -> bool: ...
 
     @property
     @abstractmethod
-    def is_job(self) -> bool:
-        ...
+    def is_job(self) -> bool: ...
 
     @property
     @abstractmethod
-    def user_id(self) -> str | None:
-        ...
+    def user_id(self) -> str | None: ...
+
+
 
 
 class JobClient(AbstractClient):
@@ -43,7 +38,8 @@ class JobClient(AbstractClient):
         self.job_id = job_id
 
     @property
-    def administrator_role(self):
+    def administrator_role(self) -> AdministratorRole | None:
+        """The administrator role of the job."""
         return None
 
     @property

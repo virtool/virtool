@@ -1,10 +1,9 @@
 from asyncio import to_thread
-from collections.abc import AsyncGenerator, Callable
+from collections.abc import AsyncIterator, Callable
 from pathlib import Path
 from typing import Any
 
-from aiohttp import MultipartReader
-from cerberus import Validator
+from aiohttp import BodyPartReader, MultipartReader
 from structlog import get_logger
 
 from virtool.config.cls import Config
@@ -30,18 +29,25 @@ def is_gzip_compressed(chunk: bytes):
         raise OSError("Not a gzipped file")
 
 
-def naive_validator(req) -> Validator.errors:
-    """Validate `name` given in an HTTP request using cerberus"""
-    v = Validator({"name": {"type": "string", "required": True}}, allow_unknown=True)
+async def body_part_file_chunker(part: BodyPartReader) -> AsyncIterator[bytearray]:
+    """Iterate through a ``BodyPartReader`` as ``bytearray`` chunks.
 
-    if not v.validate(dict(req.query)):
-        return v.errors
+    :param part: a BodyPartReader object
+    :return: an async generator that yields bytearrays
+    """
+    while True:
+        chunk = await part.read_chunk(CHUNK_SIZE)
+
+        if not chunk:
+            break
+
+        yield chunk
 
 
 async def multipart_file_chunker(
     reader: MultipartReader,
-) -> AsyncGenerator[bytearray, None]:
-    """Iterates through a ``MultipartReader`` as ``bytearray`` chunks."""
+) -> AsyncIterator[bytearray]:
+    """Iterate through a ``MultipartReader`` as ``bytearray`` chunks."""
     file = await reader.next()
 
     while True:
@@ -54,7 +60,7 @@ async def multipart_file_chunker(
 
 
 async def naive_writer(
-    chunker,
+    chunker: AsyncIterator[bytearray],
     path: Path,
     on_first_chunk: Callable[[bytes], Any] | None = None,
 ) -> int:
@@ -71,7 +77,7 @@ async def naive_writer(
 
     async with ChunkWriter(path) as writer:
         async for chunk in chunker:
-            if type(chunk) is str:
+            if isinstance(chunk, str):
                 logger.warning(
                     "got string chunk while writing file",
                     path=path,

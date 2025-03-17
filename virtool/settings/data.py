@@ -1,7 +1,7 @@
 from virtool_core.models.settings import Settings
 
 from virtool.mongo.core import Mongo
-from virtool.settings.oas import UpdateSettingsRequest
+from virtool.settings.oas import SettingsUpdateRequest
 
 
 class SettingsData:
@@ -26,7 +26,7 @@ class SettingsData:
 
         return Settings(**settings)
 
-    async def update(self, data: UpdateSettingsRequest) -> Settings:
+    async def update(self, data: SettingsUpdateRequest) -> Settings:
         """Update the settings.
 
         :param data: updates to the current settings
@@ -34,7 +34,7 @@ class SettingsData:
         """
         updated = await self._mongo.settings.find_one_and_update(
             {"_id": "settings"},
-            {"$set": data.dict(exclude_unset=True)},
+            {"$set": data.model_dump(exclude_unset=True)},
         )
 
         return Settings(**updated)

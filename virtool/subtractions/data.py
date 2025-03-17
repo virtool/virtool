@@ -2,7 +2,8 @@ import asyncio
 import math
 import shutil
 from asyncio import CancelledError
-from typing import TYPE_CHECKING, AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import TYPE_CHECKING
 
 from multidict import MultiDictProxy
 from sqlalchemy import select
@@ -34,9 +35,9 @@ from virtool.subtractions.db import (
 )
 from virtool.subtractions.models import SQLSubtractionFile
 from virtool.subtractions.oas import (
-    CreateSubtractionRequest,
-    FinalizeSubtractionRequest,
-    UpdateSubtractionRequest,
+    SubtractionCreateRequest,
+    SubtractionFinalizeRequest,
+    SubtractionUpdateRequest,
 )
 from virtool.subtractions.utils import (
     FILES,
@@ -47,6 +48,7 @@ from virtool.uploads.models import SQLUpload
 from virtool.uploads.utils import naive_writer
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
+from virtool.validation import is_set
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
@@ -168,7 +170,7 @@ class SubtractionsData(DataLayerDomain):
     @emits(Operation.CREATE)
     async def create(
         self,
-        data: CreateSubtractionRequest,
+        data: SubtractionCreateRequest,
         user_id: str,
         space_id: int,
         subtraction_id: str | None = None,
@@ -268,16 +270,14 @@ class SubtractionsData(DataLayerDomain):
     async def update(
         self,
         subtraction_id: str,
-        data: UpdateSubtractionRequest,
+        data: SubtractionUpdateRequest,
     ) -> Subtraction:
-        data = data.dict(exclude_unset=True)
-
         update = {}
 
-        if "name" in data:
+        if is_set(data.name):
             update["name"] = data["name"]
 
-        if "nickname" in data:
+        if is_set(data.nickname):
             update["nickname"] = data["nickname"]
 
         document = await self._mongo.subtraction.find_one_and_update(
@@ -285,10 +285,10 @@ class SubtractionsData(DataLayerDomain):
             {"$set": update},
         )
 
-        if document is None:
-            raise ResourceNotFoundError
+        if document:
+            return await self.get(subtraction_id)
 
-        return await self.get(subtraction_id)
+        raise ResourceNotFoundError
 
     async def delete(self, subtraction_id: str):
         async with self._mongo.create_session() as session:
@@ -316,7 +316,7 @@ class SubtractionsData(DataLayerDomain):
     async def finalize(
         self,
         subtraction_id: str,
-        data: FinalizeSubtractionRequest,
+        data: SubtractionFinalizeRequest,
     ) -> Subtraction:
         """Finalize a subtraction.
 
@@ -343,7 +343,10 @@ class SubtractionsData(DataLayerDomain):
         raise ResourceNotFoundError
 
     async def upload_file(
-        self, subtraction_id: str, filename: str, chunker: AsyncGenerator[bytearray, None],
+        self,
+        subtraction_id: str,
+        filename: str,
+        chunker: AsyncGenerator[bytearray, None],
     ) -> SubtractionFile:
         """Handle a subtraction file upload.
 

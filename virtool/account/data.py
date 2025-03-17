@@ -1,3 +1,6 @@
+import asyncio
+from pprint import pprint
+
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncEngine
 from structlog import get_logger
@@ -9,14 +12,14 @@ from virtool.account.mongo import (
     compose_password_update,
 )
 from virtool.account.oas import (
-    CreateKeysRequest,
+    AccountSettingsUpdateRequest,
+    AccountUpdateRequest,
+    CreateKeyRequest,
     CreateLoginRequest,
     ResetPasswordRequest,
-    UpdateAccountRequest,
     UpdateKeyRequest,
-    UpdateSettingsRequest,
 )
-from virtool.administrators.oas import UpdateUserRequest
+from virtool.administrators.oas import UserUpdateRequest
 from virtool.authorization.client import AuthorizationClient
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceError, ResourceNotFoundError
@@ -29,6 +32,7 @@ from virtool.users.mongo import validate_credentials
 from virtool.users.pg import SQLUser
 from virtool.users.utils import limit_permissions
 from virtool.utils import base_processor, hash_key
+from virtool.validation import is_set
 
 PROJECTION = (
     "_id",
@@ -64,12 +68,25 @@ class AccountData(DataLayerDomain):
         :param user_id: the user ID
         :return: the user account
         """
-        user = await self.data.users.get(user_id)
+        user, extra = await asyncio.gather(
+            self.data.users.get(user_id),
+            self._mongo.users.find_one(
+                {"_id": user_id},
+                [
+                    "email",
+                    "reset",
+                ],
+            ),
+        )
+
+        if extra["email"] == "":
+            extra["email"] = None
 
         if user:
-            return Account(
-                **{
-                    **user.dict(),
+            return Account.model_validate(
+                {
+                    **user.model_dump(),
+                    **extra,
                     "settings": {
                         "quick_analyze_workflow": "nuvs",
                         "show_ids": False,
@@ -81,7 +98,7 @@ class AccountData(DataLayerDomain):
 
         raise ResourceNotFoundError("User not found")
 
-    async def update(self, user_id: str, data: UpdateAccountRequest) -> Account:
+    async def update(self, user_id: str, data: AccountUpdateRequest) -> Account:
         """Update the user account.
 
         :param user_id: the user ID
@@ -90,20 +107,18 @@ class AccountData(DataLayerDomain):
         """
         updates = {}
 
-        data_dict = data.dict(exclude_unset=True)
-
-        if "password" in data_dict:
+        if is_set(data.password):
             if not await validate_credentials(
                 self._mongo,
                 user_id,
-                data_dict["old_password"] or "",
+                data.old_password or "",
             ):
                 raise ResourceError("Invalid credentials")
 
-            updates.update(compose_password_update(data_dict["password"]))
+            updates.update(compose_password_update(data.password))
 
-        if "email" in data_dict:
-            updates["email"] = data_dict["email"]
+        if is_set(data.password):
+            updates["email"] = data.email
 
         if updates:
             async with both_transactions(self._mongo, self._pg) as (
@@ -129,7 +144,7 @@ class AccountData(DataLayerDomain):
         return await self.get(user_id)
 
     async def get_settings(self, user_id: str) -> AccountSettings:
-        """Gets account settings.
+        """Get the settings for the user with the passed ``user_id``.
 
         :param user_id: the user ID
         :return: the account settings
@@ -140,10 +155,10 @@ class AccountData(DataLayerDomain):
 
     async def update_settings(
         self,
-        data: UpdateSettingsRequest,
+        data: AccountSettingsUpdateRequest,
         user_id: str,
     ) -> AccountSettings:
-        """Updates account settings.
+        """Update the account settings for the user with the passed ``user_id``.
 
         :param data: the update to the account settings
         :param user_id: the user ID
@@ -157,7 +172,7 @@ class AccountData(DataLayerDomain):
 
         settings = {
             **settings_from_mongo,
-            **data.dict(exclude_unset=True),
+            **data.model_dump(exclude_unset=True),
         }
 
         if settings != settings_from_mongo:
@@ -189,7 +204,7 @@ class AccountData(DataLayerDomain):
         return AccountSettings(**settings)
 
     async def get_keys(self, user_id: str) -> list[APIKey]:
-        """Gets API keys associated with the authenticated user account.
+        """Get the API keys associated with the passed ``user_id``.
 
         :param user_id: the user ID
         :return: the api keys
@@ -283,7 +298,7 @@ class AccountData(DataLayerDomain):
 
     async def create_key(
         self,
-        data: CreateKeysRequest,
+        data: CreateKeyRequest,
         user_id: str,
     ) -> tuple[str, APIKey]:
         """Create a new API key.
@@ -334,29 +349,30 @@ class AccountData(DataLayerDomain):
         :param data: permissions update
         :return: the API key
         """
-        if data.permissions is None:
-            update = {}
-        else:
-            update = data.permissions.dict(exclude_unset=True)
+        if is_set(data.permissions):
+            old_permissions = await get_one_field(
+                self._mongo.keys,
+                "permissions",
+                {"id": key_id, "user.id": user_id},
+            )
 
-        if not await self._mongo.keys.count_documents({"id": key_id}):
-            raise ResourceNotFoundError()
+            if not old_permissions:
+                raise ResourceNotFoundError()
 
-        new_permissions = {
-            **(
-                await get_one_field(
-                    self._mongo.keys,
-                    "permissions",
-                    {"id": key_id, "user.id": user_id},
-                )
-            ),
-            **update,
-        }
+            update_result = await self._mongo.keys.update_one(
+                {"id": key_id},
+                {
+                    "$set": {
+                        "permissions": {
+                            **old_permissions,
+                            **data.permissions.model_dump(exclude_unset=True),
+                        },
+                    },
+                },
+            )
 
-        await self._mongo.keys.update_one(
-            {"id": key_id},
-            {"$set": {"permissions": new_permissions}},
-        )
+            if update_result.modified_count == 0:
+                raise ResourceNotFoundError()
 
         return await self.get_key(user_id, key_id)
 
@@ -433,7 +449,7 @@ class AccountData(DataLayerDomain):
         data: ResetPasswordRequest,
         ip: str,
     ) -> tuple[Session, str]:
-        """Resets the password for a session user.
+        """Reset the password for a session user.
 
         :param session_id: the ID of the session to reset
         :param data: the data needed to reset session
@@ -445,7 +461,7 @@ class AccountData(DataLayerDomain):
 
         await self.data.users.update(
             session.reset.user_id,
-            UpdateUserRequest(force_reset=False, password=data.password),
+            UserUpdateRequest(force_reset=False, password=data.password),
         )
 
         return await self.data.sessions.create_authenticated(

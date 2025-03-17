@@ -14,9 +14,9 @@ from virtool.data.layer import DataLayer
 from virtool.data.topg import both_transactions
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
-from virtool.groups.oas import PermissionsUpdate, UpdateGroupRequest
+from virtool.groups.oas import GroupUpdateRequest, PermissionsUpdate
 from virtool.mongo.core import Mongo
-from virtool.settings.oas import UpdateSettingsRequest
+from virtool.settings.oas import SettingsUpdateRequest
 from virtool.users.pg import SQLUser
 from virtool.users.utils import check_password
 
@@ -34,12 +34,12 @@ async def setup_update_user(
 
     await data_layer.groups.update(
         group_1.id,
-        UpdateGroupRequest(permissions=PermissionsUpdate(upload_file=True)),
+        GroupUpdateRequest(permissions=PermissionsUpdate(upload_file=True)),
     )
 
     await data_layer.groups.update(
         group_2.id,
-        UpdateGroupRequest(
+        GroupUpdateRequest(
             permissions=PermissionsUpdate(create_sample=True, create_ref=True),
         ),
     )
@@ -121,7 +121,7 @@ async def test_create(
     user = await fake.users.create()
 
     await get_data_from_app(client.app).settings.update(
-        UpdateSettingsRequest(minimum_password_length=8),
+        SettingsUpdateRequest(minimum_password_length=8),
     )
 
     data = {"handle": "fred", "password": "hello_world", "force_reset": False}

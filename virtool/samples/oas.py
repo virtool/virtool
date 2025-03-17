@@ -1,47 +1,19 @@
-from typing import Any
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Field, conlist, constr
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from virtool_core.models.analysis import AnalysisMinimal
 from virtool_core.models.enums import AnalysisWorkflow, LibraryType
-from virtool_core.models.samples import Sample, SampleMinimal
-from virtool_core.models.validators import prevent_none
+from virtool_core.models.samples import Sample
+
+from virtool.validation import Unset, UnsetType
+
+AcceptedSampleReadNames = Literal["reads_1.fq.gz", "reads_2.fq.gz"]
+"""Accepted read names for sample files."""
 
 
-class GetSamplesResponse(SampleMinimal):
-    class Config:
-        schema_extra = {
-            "example": [
-                {
-                    "created_at": "2022-05-20T23:48:00.901000Z",
-                    "host": "Malus domestica",
-                    "id": "9zn468u9",
-                    "isolate": "",
-                    "labels": [],
-                    "library_type": "normal",
-                    "name": "HX8",
-                    "notes": "",
-                    "nuvs": False,
-                    "pathoscope": True,
-                    "ready": True,
-                    "subtractions": ["0nhpi36p"],
-                    "user": {
-                        "administrator": True,
-                        "handle": "mrott",
-                        "id": "ihvze2u9",
-                    },
-                    "workflows": {
-                        "aodp": "incompatible",
-                        "nuvs": "none",
-                        "pathoscope": "none",
-                    },
-                },
-            ],
-        }
-
-
-class GetSampleResponse(Sample):
-    class Config:
-        schema_extra = {
+class SampleResponse(Sample):
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "all_read": False,
                 "all_write": False,
@@ -124,25 +96,54 @@ class GetSampleResponse(Sample):
                     "pathoscope": "none",
                 },
             },
-        }
+        },
+    )
 
 
-class CreateSampleRequest(BaseModel):
-    name: constr(strip_whitespace=True, min_length=1)
-    host: constr(strip_whitespace=True) = ""
-    isolate: constr(strip_whitespace=True) = ""
-    group: int | None = None
-    locale: constr(strip_whitespace=True) = ""
+class SampleCreateRequest(BaseModel):
+    """A request validator for creating a sample."""
+
+    model_config = ConfigDict(
+        use_attribute_docstrings=True,
+    )
+
+    files: list[Any] = Field(min_length=1, max_length=2)
+    """The sample files."""
+
+    group: int | None | UnsetType = Unset
+    """The group the sample belongs to."""
+
+    host: Annotated[str, StringConstraints(strip_whitespace=True)] = ""
+    """The source host."""
+
+    isolate: Annotated[str, StringConstraints(strip_whitespace=True)] = ""
+    """The isolate."""
+
+    labels: Annotated[list[int], Field(default_factory=list)]
+    """Labels to apply to the sample."""
+
     library_type: LibraryType = LibraryType.normal
-    subtractions: list = Field(default_factory=list)
-    files: conlist(item_type=Any, min_items=1, max_items=2)
+    """The sample library type."""
+
+    locale: Annotated[str, StringConstraints(strip_whitespace=True)] = ""
+    """The locale (eg. Canada)."""
+
+    name: Annotated[
+        str,
+        StringConstraints(min_length=1, strip_whitespace=True),
+    ]
+    """The name of the sample."""
+
     notes: str = ""
-    labels: list = Field(default_factory=list)
+    """User notes."""
+
+    subtractions: Annotated[list, Field(default_factory=list)]
+    """The default subtractions for the sample."""
 
 
 class CreateSampleResponse(Sample):
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "all_read": False,
                 "all_write": False,
@@ -165,35 +166,7 @@ class CreateSampleResponse(Sample):
                 "nuvs": False,
                 "paired": True,
                 "pathoscope": True,
-                "quality": {
-                    "bases": [
-                        [36.0, 37.0, 37.0, 37.0, 37.0, 37.0],
-                        [36.0, 37.0, 37.0, 37.0, 37.0, 37.0],
-                    ],
-                    "composition": [
-                        [29.0, 18.0, 15.0, 36.5],
-                        [25.5, 19.0, 31.5, 22.0],
-                    ],
-                    "count": 94601674,
-                    "encoding": "Sanger / Illumina 1.9\n",
-                    "gc": 43.0,
-                    "length": [150, 150],
-                    "sequences": [
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        18,
-                        298,
-                    ],
-                },
+                "quality": None,
                 "reads": [
                     {
                         "download_url": "/samples/9zn468u9/reads/reads_1.fq.gz",
@@ -225,33 +198,54 @@ class CreateSampleResponse(Sample):
                     "pathoscope": "none",
                 },
             },
-        }
+        },
+    )
 
 
-class UpdateSampleRequest(BaseModel):
-    name: constr(strip_whitespace=True, min_length=1) | None
-    host: constr(strip_whitespace=True) | None
-    isolate: constr(strip_whitespace=True) | None
-    locale: constr(strip_whitespace=True) | None
-    notes: constr(strip_whitespace=True) | None
-    labels: list | None
-    subtractions: list | None
+class SampleUpdateRequest(BaseModel):
+    """A request validator for updating a sample."""
 
-    _prevent_none = prevent_none("*")
-
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
-                "name": "Tobacco mosaic viru",
+                "name": "Tobacco mosaic virus",
                 "host": "Tobacco",
                 "labels": [1, 5, 6],
             },
-        }
+        },
+        use_attribute_docstrings=True,
+    )
+
+    host: Annotated[str | UnsetType, StringConstraints(strip_whitespace=True)] = Unset
+    """The host."""
+
+    isolate: Annotated[str | UnsetType, StringConstraints(strip_whitespace=True)] = (
+        Unset
+    )
+    """The source isolate."""
+
+    labels: list[int] | UnsetType = Unset
+    """Labels to apply to the sample."""
+
+    locale: Annotated[str, StringConstraints(strip_whitespace=True)] | Unset
+    """The locale."""
+
+    name: Annotated[
+        str | UnsetType,
+        StringConstraints(min_length=1, strip_whitespace=True),
+    ] = Unset
+    """The name."""
+
+    notes: Annotated[str, StringConstraints(strip_whitespace=True)] | Unset
+    """User notes."""
+
+    subtractions: list[str] | UnsetType = Unset
+    """The default subtractions for the sample."""
 
 
-class UpdateSampleResponse(Sample):
-    class Config:
-        schema_extra = {
+class SampleUpdateResponse(Sample):
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "all_read": False,
                 "all_write": False,
@@ -334,31 +328,42 @@ class UpdateSampleResponse(Sample):
                     "pathoscope": "none",
                 },
             },
-        }
+        },
+    )
 
 
-class UpdateRightsRequest(BaseModel):
-    group: int | str | None
-    all_read: bool | None
-    all_write: bool | None
-    group_read: bool | None
-    group_write: bool | None
+class SampleRightsUpdateRequest(BaseModel):
+    """A request validator for updating sample rights."""
 
-    _prevent_none = prevent_none("*")
-
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "group": "administrator",
                 "group_read": True,
                 "group_write": True,
             },
-        }
+        },
+    )
+
+    group: int | None | UnsetType = Unset
+    """Which group owns the sample."""
+
+    all_read: bool | UnsetType = Unset
+    """Whether all users can read the sample."""
+
+    all_write: bool | UnsetType = Unset
+    """Whether all users can write to the sample."""
+
+    group_read: bool | UnsetType = Unset
+    """Whether the owner group can read the sample."""
+
+    group_write: bool | UnsetType = Unset
+    """Whether the owner group can write to the sample."""
 
 
-class UpdateRightsResponse(Sample):
-    class Config:
-        schema_extra = {
+class SampleRightsResponse(Sample):
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "all_read": False,
                 "all_write": False,
@@ -441,12 +446,13 @@ class UpdateRightsResponse(Sample):
                     "pathoscope": "none",
                 },
             },
-        }
+        },
+    )
 
 
-class GetSampleAnalysesResponse(AnalysisMinimal):
-    class Config:
-        schema_extra = {
+class ListSampleAnalysesResponse(AnalysisMinimal):
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": [
                 {
                     "created_at": "2022-05-21T01:28:55.441000Z",
@@ -466,21 +472,32 @@ class GetSampleAnalysesResponse(AnalysisMinimal):
                     "workflow": "pathoscope_bowtie",
                 },
             ],
-        }
+        },
+    )
 
 
 class CreateAnalysisRequest(BaseModel):
-    ml: int | None
+    """A request validator for creating an analysis."""
+
+    ml: int | None = None
+    """The machine learning model to use for the analysis.
+
+    Only applicable to workflows that support it.
+    """
+
     ref_id: str
-    subtractions: list[str] = Field(default_factory=list)
+    """The reference to use for the analysis."""
+
+    subtractions: Annotated[list[str], Field(default_factory=list)]
+    """The subtractions to use for the analysis."""
+
     workflow: AnalysisWorkflow
+    """The workflow to use for the analysis."""
 
-    _prevent_none = prevent_none("subtractions")
 
-
-class CreateAnalysisResponse(AnalysisMinimal):
-    class Config:
-        schema_extra = {
+class AnalysisCreateResponse(AnalysisMinimal):
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "created_at": "2022-05-21T01:28:55.441000Z",
                 "id": "m9ktiz0i",
@@ -494,4 +511,12 @@ class CreateAnalysisResponse(AnalysisMinimal):
                 "user": {"administrator": True, "handle": "mrott", "id": "ihvze2u9"},
                 "workflow": "pathoscope_bowtie",
             },
-        }
+        },
+    )
+
+
+class FinalizeSampleRequest(BaseModel):
+    """A request validator for finalizing a sample."""
+
+    quality: dict
+    """The quality object for the sample."""

@@ -1,60 +1,203 @@
-from typing import Optional, List
+from typing import Annotated
 
-from pydantic import constr, BaseModel, Field
-from virtool_core.models.otu import OTUSegment, OTUSearchResult
-from virtool_core.models.validators import prevent_none
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from virtool_core.models.otu import OTUSearchResult, OTUSegment
 
+from virtool.validation import Unset, UnsetType
 
-class CreateOTURequest(BaseModel):
-    abbreviation: constr(strip_whitespace=True) = ""
-    name: constr(min_length=1, strip_whitespace=True)
-    otu_schema: List[OTUSegment] = Field(alias="schema", default_factory=list)
+_OTU_ABBREVIATION_DESCRIPTION = "An abbreviation (eg. TMV)."
+_OTU_NAME_DESCRIPTION = "The full name (eg. (eg. Tobacco mosaic virus)."
+_OTU_SCHEMA_DESCRIPTION = "The schema of the OTU."
 
+_ISOLATE_DEFAULT_DESCRIPTION = "Whether the isolate is the default for the OTU."
+_ISOLATE_SOURCE_NAME_DESCRIPTION = "The source name (eg. A1)."
+_ISOLATE_SOURCE_TYPE_DESCRIPTION = "The source type (eg. strain)."
 
-class UpdateOTURequest(BaseModel):
-    abbreviation: Optional[constr(strip_whitespace=True)]
-    name: Optional[constr(min_length=1, strip_whitespace=True)]
-    otu_schema: Optional[List[OTUSegment]] = Field(alias="schema")
-
-    _prevent_none = prevent_none("*")
-
-
-class CreateIsolateRequest(BaseModel):
-    default: bool = False
-    source_name: constr(strip_whitespace=True) = ""
-    source_type: constr(strip_whitespace=True) = ""
+_SEQUENCE_ACCESSION_DESCRIPTION = "A Genbank accession number."
+_SEQUENCE_DEFINITION_DESCRIPTION = "A Genbank definition."
+_SEQUENCE_HOST_DESCRIPTION = "The source host."
+_SEQUENCE_SEGMENT_DESCRIPTION = "The segment ID."
+_SEQUENCE_SEQUENCE_DESCRIPTION = "The nucleotide sequence."
+_SEQUENCE_SEQUENCE_PATTERN = r"^[ATCGNRYKM]+$"
+_SEQUENCE_TARGET_DESCRIPTION = "The target ID."
 
 
-class UpdateIsolateRequest(BaseModel):
-    source_name: Optional[constr(strip_whitespace=True)]
-    source_type: Optional[constr(strip_whitespace=True)]
+class OTUCreateRequest(BaseModel):
+    """A request validation model for creating an OTU."""
 
-    _prevent_none = prevent_none("*")
+    abbreviation: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True),
+        Field(default="", description=_OTU_ABBREVIATION_DESCRIPTION),
+    ]
+
+    name: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True),
+        Field(
+            min_length=1,
+            description=_OTU_NAME_DESCRIPTION,
+        ),
+    ]
+
+    schema_: Annotated[
+        list[OTUSegment],
+        Field(
+            alias="schema",
+            default_factory=list,
+            description=_OTU_SCHEMA_DESCRIPTION,
+        ),
+    ]
 
 
-class CreateSequenceRequest(BaseModel):
-    accession: constr(min_length=1, strip_whitespace=True)
-    definition: constr(min_length=1, strip_whitespace=True)
-    host: constr(strip_whitespace=True) = ""
-    segment: Optional[str] = None
-    sequence: constr(min_length=1, regex=r"^[ATCGNRYKM]+$")
-    target: Optional[str] = None
+class OTUUpdateRequest(BaseModel):
+    """A request validation model for updating an OTU."""
+
+    abbreviation: Annotated[
+        str | UnsetType,
+        StringConstraints(strip_whitespace=True),
+        Field(
+            default=Unset,
+            description=_OTU_ABBREVIATION_DESCRIPTION,
+        ),
+    ]
+
+    name: Annotated[
+        str | UnsetType,
+        StringConstraints(strip_whitespace=True),
+        Field(
+            default=Unset,
+            description=_OTU_NAME_DESCRIPTION,
+            min_length=1,
+        ),
+    ]
+
+    schema_: list[OTUSegment] | UnsetType = Field(
+        alias="schema",
+        default=Unset,
+        description=_OTU_SCHEMA_DESCRIPTION,
+    )
 
 
-class UpdateSequenceRequest(BaseModel):
-    accession: Optional[constr(min_length=1, strip_whitespace=True)]
-    definition: Optional[constr(min_length=1, strip_whitespace=True)]
-    host: Optional[constr(strip_whitespace=True)]
-    segment: Optional[str]
-    sequence: Optional[constr(min_length=1, regex=r"^[ATCGNRYKM]+$")]
-    target: Optional[str]
+class IsolateCreateRequest(BaseModel):
+    """A request validation model for creating an isolate."""
 
-    _prevent_none = prevent_none("accession", "definition", "host", "sequence")
+    default: Annotated[
+        bool,
+        Field(
+            default=False,
+            description=_ISOLATE_DEFAULT_DESCRIPTION,
+        ),
+    ]
+
+    source_name: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True),
+        Field(default="", description=_ISOLATE_SOURCE_NAME_DESCRIPTION),
+    ]
+
+    source_type: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True, to_lower=True),
+        Field(default="", description=_ISOLATE_SOURCE_TYPE_DESCRIPTION),
+    ]
 
 
-class FindOTUsResponse(OTUSearchResult):
-    class Config:
-        schema_extra = {
+class IsolateUpdateRequest(BaseModel):
+    """A request validation model for updating an isolate."""
+
+    source_name: Annotated[
+        str | UnsetType,
+        StringConstraints(strip_whitespace=True),
+        Field(default=Unset, description=_ISOLATE_SOURCE_NAME_DESCRIPTION),
+    ]
+
+    source_type: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True, to_lower=True),
+        Field(default="", description=_ISOLATE_SOURCE_TYPE_DESCRIPTION),
+    ]
+
+
+class SequenceCreateRequest(BaseModel):
+    """A request validation model for creating a sequence."""
+
+    accession: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True, to_upper=True),
+        Field(description=_SEQUENCE_ACCESSION_DESCRIPTION, min_length=1),
+    ]
+
+    definition: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True),
+        Field(description=_SEQUENCE_DEFINITION_DESCRIPTION, min_length=1),
+    ]
+
+    host: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True),
+        Field(default="", description=_SEQUENCE_HOST_DESCRIPTION),
+    ]
+
+    segment: Annotated[
+        str | None,
+        Field(default=None, description=_SEQUENCE_SEGMENT_DESCRIPTION),
+    ]
+
+    sequence: Annotated[
+        str,
+        StringConstraints(pattern=_SEQUENCE_SEQUENCE_PATTERN, to_upper=True),
+        Field(description=_SEQUENCE_SEQUENCE_DESCRIPTION, min_length=1),
+    ]
+
+    target: Annotated[
+        str | None,
+        Field(default=None, description=_SEQUENCE_TARGET_DESCRIPTION),
+    ]
+
+
+class SequenceUpdateRequest(BaseModel):
+    """A request validation model for updating a sequence."""
+
+    accession: Annotated[
+        str | UnsetType,
+        StringConstraints(strip_whitespace=True, to_upper=True),
+        Field(default=Unset, description=_SEQUENCE_ACCESSION_DESCRIPTION, min_length=1),
+    ]
+
+    definition: Annotated[
+        str | UnsetType,
+        StringConstraints(min_length=1, strip_whitespace=True),
+        Field(default=Unset, description=_SEQUENCE_DEFINITION_DESCRIPTION),
+    ]
+
+    host: Annotated[
+        str | UnsetType,
+        StringConstraints(strip_whitespace=True),
+        Field(default=Unset, description=_SEQUENCE_HOST_DESCRIPTION),
+    ]
+
+    segment: str | None | UnsetType = Field(
+        default=Unset,
+        description=_SEQUENCE_SEGMENT_DESCRIPTION,
+    )
+
+    sequence: Annotated[
+        str | UnsetType,
+        StringConstraints(pattern=_SEQUENCE_SEQUENCE_PATTERN, to_upper=True),
+        Field(default=Unset, description=_SEQUENCE_SEQUENCE_DESCRIPTION, min_length=1),
+    ]
+
+    target: str | None | UnsetType = Field(
+        default=Unset,
+        description=_SEQUENCE_TARGET_DESCRIPTION,
+    )
+
+
+class OTUSearchResponse(OTUSearchResult):
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "documents": [
                     {
@@ -264,5 +407,6 @@ class FindOTUsResponse(OTUSearchResult):
                 "page_count": 85,
                 "per_page": 25,
                 "total_count": 2102,
-            }
-        }
+            },
+        },
+    )

@@ -2,7 +2,6 @@ import asyncio
 import math
 from asyncio import gather
 from collections import defaultdict
-from typing import Dict, List, Optional
 
 import arrow
 from pymongo.results import UpdateResult
@@ -38,7 +37,7 @@ class JobsData:
         self._mongo = mongo
         self._pg = pg
 
-    async def _get_counts(self) -> Dict[str, Dict[str, int]]:
+    async def _get_counts(self) -> dict[str, dict[str, int]]:
         counts = defaultdict(dict)
 
         async for a in self._mongo.jobs.aggregate(
@@ -64,8 +63,8 @@ class JobsData:
         archived: bool | None,
         page: int,
         per_page: int,
-        states: List[JobState],
-        users: List[str],
+        states: list[JobState],
+        users: list[str],
     ) -> JobSearchResult:
         skip_count = 0
 
@@ -356,12 +355,12 @@ class JobsData:
     async def push_status(
         self,
         job_id: str,
-        state: Optional[JobState],
-        stage: Optional[str],
-        step_name: Optional[str] = None,
-        step_description: Optional[str] = None,
-        error: Optional[dict] = None,
-        progress: Optional[int] = None,
+        state: JobState | None,
+        stage: str | None,
+        step_name: str | None = None,
+        step_description: str | None = None,
+        error: dict | None = None,
+        progress: int | None = None,
     ):
         status = await get_one_field(self._mongo.jobs, "status", job_id)
 

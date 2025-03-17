@@ -1,9 +1,9 @@
-import logging.config
+"""Setup the server process."""
 
-import aiohttp.web
 import aiojobs
 import aiojobs.aiohttp
-from aiohttp_pydantic import oas
+from aiohttp.web import run_app
+from aiohttp.web_app import Application
 
 from virtool.api.accept import accept_middleware
 from virtool.api.authentication import authentication_middleware
@@ -14,7 +14,6 @@ from virtool.api.policy import route_policy_middleware
 from virtool.api.sessions import session_middleware
 from virtool.config.cls import Config
 from virtool.flags import FeatureFlags, feature_flag_middleware
-from virtool.routes import setup_routes
 from virtool.shutdown import (
     shutdown_authorization_client,
     shutdown_executors,
@@ -38,37 +37,8 @@ from virtool.startup import (
 )
 
 
-def create_app_without_startup():
-    logging.config.dictConfig(
-        {
-            "version": 1,
-            "disable_existing_loggers": True,
-        }
-    )
-
-    middlewares = [
-        logging_middleware,
-        headers_middleware,
-        error_middleware,
-        session_middleware,
-        authentication_middleware,
-        accept_middleware,
-        route_policy_middleware,
-    ]
-
-    app = aiohttp.web.Application(middlewares=middlewares)
-
-    setup_routes(app)
-    oas.setup(app)
-
-    return app
-
-
-def create_app(config: Config):
-    """
-    Creates the Virtool application.
-
-    """
+def create_app(config: Config) -> Application:
+    """Create the Virtool application."""
     middlewares = [
         logging_middleware,
         headers_middleware,
@@ -80,9 +50,7 @@ def create_app(config: Config):
         feature_flag_middleware,
     ]
 
-    app = aiohttp.web.Application(middlewares=middlewares)
-
-    oas.setup(app)
+    app = Application(middlewares=middlewares)
 
     app["config"] = config
     app["mode"] = "server"
@@ -104,7 +72,7 @@ def create_app(config: Config):
             startup_sentry,
             startup_check_db,
             startup_b2c,
-        ]
+        ],
     )
 
     app.on_response_prepare.append(on_prepare_location)
@@ -116,12 +84,13 @@ def create_app(config: Config):
             shutdown_executors,
             shutdown_scheduler,
             shutdown_redis,
-        ]
+        ],
     )
 
     return app
 
 
-def run_api_server(config: Config):
+def run_api_server(config: Config) -> None:
+    """Create and run the web API server."""
     app = create_app(config)
-    aiohttp.web.run_app(app=app, host=config.host, port=config.port, access_log=None)
+    run_app(app=app, host=config.host, port=config.port, access_log=None)

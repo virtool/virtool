@@ -7,12 +7,63 @@ from virtool.references.utils import (
     detect_duplicate_name,
     detect_duplicate_sequence_ids,
     detect_duplicates,
-    get_import_schema,
-    get_isolate_schema,
-    get_otu_schema,
     get_owner_user,
-    get_sequence_schema,
+    validate_otu,
 )
+
+
+class TestValidateOTU:
+    def test_valid(self, test_merged_otu: dict):
+        """Test that a valid OTU passes validation."""
+        assert validate_otu(test_merged_otu) is None
+
+    def test_missing_otu_field(self, test_merged_otu: dict):
+        """Test that an OTU missing a required field fails validation."""
+        del test_merged_otu["name"]
+
+        assert validate_otu(test_merged_otu) == {
+            "isolates": [],
+            "otu": [
+                {
+                    "msg": "Field required",
+                    "loc": ("name",),
+                },
+            ],
+            "sequences": [],
+        }
+
+    def test_missing_isolate_field(self, test_merged_otu: dict):
+        """Test that an OTU missing a required isolate field fails validation."""
+        del test_merged_otu["isolates"][0]["source_name"]
+
+        assert validate_otu(test_merged_otu) == {
+            "isolates": [
+                {
+                    "msg": "Field required",
+                    "loc": ("isolates", 0, "source_name"),
+                    "isolate_id": "cab8b360",
+                },
+            ],
+            "otu": [],
+            "sequences": [],
+        }
+
+    def test_missing_sequence_field(self, test_merged_otu: dict):
+        """Test that an OTU missing a required sequence field fails validation."""
+        del test_merged_otu["isolates"][0]["sequences"][0]["sequence"]
+
+        assert validate_otu(test_merged_otu) == {
+            "isolates": [],
+            "otu": [],
+            "sequences": [
+                {
+                    "isolate_id": "cab8b360",
+                    "msg": "Field required",
+                    "loc": ("isolates", 0, "sequences", 0, "sequence"),
+                    "sequence_id": "abcd1234",
+                },
+            ],
+        }
 
 
 @pytest.mark.parametrize("empty", [True, False])
@@ -69,7 +120,7 @@ def test_detect_duplicate_isolate_ids(has_dups, test_otu):
 
     if has_dups:
         assert duplicate_isolate_ids == {
-            test_otu["_id"]: {"name": "Prunus virus F", "duplicates": ["cab8b360"]}
+            test_otu["_id"]: {"name": "Prunus virus F", "duplicates": ["cab8b360"]},
         }
     else:
         assert duplicate_isolate_ids == {}
@@ -106,7 +157,7 @@ def test_detect_duplicate_sequence_ids(intra, seen, test_merged_otu):
 
     if intra:
         test_merged_otu["isolates"][0]["sequences"].append(
-            test_merged_otu["isolates"][0]["sequences"][0]
+            test_merged_otu["isolates"][0]["sequences"][0],
         )
 
     if seen:
@@ -115,7 +166,9 @@ def test_detect_duplicate_sequence_ids(intra, seen, test_merged_otu):
     duplicate_sequence_ids = set()
 
     detect_duplicate_sequence_ids(
-        test_merged_otu, duplicate_sequence_ids, seen_sequence_ids
+        test_merged_otu,
+        duplicate_sequence_ids,
+        seen_sequence_ids,
     )
 
     if intra or seen:
@@ -148,7 +201,7 @@ def test_detect_duplicates(strict, test_merged_otu):
             },
             {
                 "duplicates": {
-                    "6116cba1": {"duplicates": ["cab8b360"], "name": "Prunus virus F"}
+                    "6116cba1": {"duplicates": ["cab8b360"], "name": "Prunus virus F"},
                 },
                 "id": "duplicate_isolate_ids",
                 "message": "Duplicate isolate ids found in some OTUs",
@@ -179,36 +232,6 @@ def test_detect_duplicates(strict, test_merged_otu):
         ]
 
 
-@pytest.mark.parametrize("require_meta", [True, False])
-def test_get_import_schema(require_meta):
-    assert get_import_schema(require_meta) == {
-        "data_type": {"type": "string", "required": require_meta},
-        "organism": {"type": "string", "required": require_meta},
-        "otus": {"type": "list", "required": True},
-    }
-
-
-@pytest.mark.parametrize("require_id", [True, False])
-def test_get_isolate_schema(require_id):
-    assert get_isolate_schema(require_id) == {
-        "id": {"type": "string", "required": require_id},
-        "source_type": {"type": "string", "required": True},
-        "source_name": {"type": "string", "required": True},
-        "default": {"type": "boolean", "required": True},
-        "sequences": {"type": "list", "required": True},
-    }
-
-
-@pytest.mark.parametrize("require_id", [True, False])
-def test_get_otu_schema(require_id):
-    assert get_otu_schema(require_id) == {
-        "_id": {"type": "string", "required": require_id},
-        "abbreviation": {"type": "string"},
-        "name": {"type": "string", "required": True},
-        "isolates": {"type": "list", "required": True},
-    }
-
-
 def test_get_owner_user(static_time):
     assert get_owner_user("fred", static_time.datetime) == {
         "id": "fred",
@@ -217,14 +240,4 @@ def test_get_owner_user(static_time):
         "modify_otu": True,
         "remove": True,
         "created_at": static_time.datetime,
-    }
-
-
-@pytest.mark.parametrize("require_id", [True, False])
-def test_get_sequence_schema(require_id):
-    assert get_sequence_schema(require_id) == {
-        "_id": {"type": "string", "required": require_id},
-        "accession": {"type": "string", "required": True},
-        "definition": {"type": "string", "required": True},
-        "sequence": {"type": "string", "required": True},
     }

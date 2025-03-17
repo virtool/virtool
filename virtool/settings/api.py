@@ -1,45 +1,38 @@
-from typing import Union
-
-from aiohttp.web import Request, Response
-from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r403
-
 from virtool_core.models.roles import AdministratorRole
 
 from virtool.api.custom_json import json_response
-from virtool.data.utils import get_data_from_req
-from virtool.api.policy import policy, AdministratorRoutePolicy
+from virtool.api.policy import AdministratorRoutePolicy, policy
 from virtool.api.routes import Routes
+from virtool.api.status import R200, R403
+from virtool.api.view import APIView
 from virtool.settings.oas import (
-    GetSettingsResponse,
-    UpdateSettingsResponse,
-    UpdateSettingsRequest,
+    SettingsResponse,
+    SettingsUpdateRequest,
 )
 
 routes = Routes()
 
 
-@routes.view("/settings")
-class SettingsView(PydanticView):
-    async def get(self) -> r200[GetSettingsResponse]:
-        """
-        Get settings.
+@routes.job.get("/settings")
+@routes.web.view("/settings")
+class SettingsView(APIView):
+    async def get(self) -> R200[SettingsResponse]:
+        """Get settings.
 
         Fetches the complete application settings.
 
         Status Codes:
             200: Successful operation
         """
-        settings = await get_data_from_req(self.request).settings.get_all()
-
+        settings = await self.data.settings.get_all()
         return json_response(settings)
 
     @policy(AdministratorRoutePolicy(AdministratorRole.SETTINGS))
     async def patch(
-        self, data: UpdateSettingsRequest
-    ) -> Union[r200[UpdateSettingsResponse], r403]:
-        """
-        Update settings.
+        self,
+        data: SettingsUpdateRequest,
+    ) -> R200[SettingsResponse] | R403:
+        """Update settings.
 
         Updates the application settings.
 
@@ -47,18 +40,6 @@ class SettingsView(PydanticView):
             200: Successful operation
             403: Not permitted
         """
-        settings = await get_data_from_req(self.request).settings.update(data)
+        settings = await self.data.settings.update(data)
 
         return json_response(settings)
-
-
-@routes.jobs_api.get("/settings")
-async def get(req: Request) -> Response:
-    """
-    Get settings.
-
-    Fetches a complete document of the application settings.
-    """
-    settings = await get_data_from_req(req).settings.get_all()
-
-    return json_response(settings)

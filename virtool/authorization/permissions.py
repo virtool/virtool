@@ -1,16 +1,10 @@
-"""
-Permissions for checking a user's ability to access a request handler.
+"""Permissions for checking a user's ability to access a request handler."""
 
-"""
 from enum import Enum
-from typing import Union
 
 
 class ResourceType(str, Enum):
-    """
-    Types of resources a permission can apply to (e.g. 'app', 'sample', 'group').
-
-    """
+    """Types of resources a permission can apply to (e.g. 'app', 'sample', 'group')."""
 
     APP = "app"
     """The application itself (eg. update_settings, create_user)"""
@@ -25,12 +19,7 @@ class ResourceType(str, Enum):
 
 
 class LegacyPermission(str, Enum):
-    """
-    Global permissions for Virtool.
-
-
-
-    """
+    """Global permissions for Virtool."""
 
     CANCEL_JOB = "cancel_job"
     CREATE_REF = "create_ref"
@@ -114,10 +103,9 @@ class ReferencePermission(str, Enum):
 
 
 def adapt_permission_new_to_legacy(
-    permission: Union[Permission, ReferencePermission]
+    permission: Permission | ReferencePermission,
 ) -> LegacyPermission:
-    """
-    Return a legacy permission that corresponds to the provided new-style permission.
+    """Return a legacy permission that corresponds to the provided new-style permission.
     If the provided permission is already a legacy style permission, it is returned.
     :param permission: a permission
     :return: the permission

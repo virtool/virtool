@@ -1,107 +1,145 @@
-from typing import Optional
+from typing import Annotated
 
-from pydantic import BaseModel, constr, Field, validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    field_validator,
+)
 from virtool_core.models.label import Label
+from virtool_core.models.validators import normalize_hex_color
 
-from virtool_core.models.validators import normalize_hex_color, prevent_none
+from virtool.validation import Unset, UnsetType
+
+_LABEL_COLOR_DESCRIPTION = "A hexadecimal color for the label."
+"""A description for the label ``color`` field."""
+
+_LABEL_NAME_DESCRIPTION = "A unique display name."
+"""A description for the label ``name`` field."""
+
+_LABEL_DESCRIPTION_DESCRIPTION = "A longer description for the label."
+"""A description for the label ``description`` field."""
 
 
-class CreateLabelRequest(BaseModel):
-    """
-    Label fields for creating a new label.
-    """
+class LabelCreateRequest(BaseModel):
+    """A request validation model for creating a new label."""
 
-    name: constr(strip_whitespace=True, min_length=1) = Field(
-        description="unique name for the label document"
-    )
-    color: constr(strip_whitespace=True) = Field(
-        default="#A0AEC0", description="color of the label"
-    )
-    description: constr(strip_whitespace=True) = Field(
-        default="", description="description of the document"
-    )
-
-    _ensure_color_is_normalized: classmethod = validator("color", allow_reuse=True)(
-        normalize_hex_color
-    )
-
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "color": "#374151",
                 "description": "dsRNA/binding protein",
                 "name": "Binding protein",
-            }
-        }
+            },
+        },
+    )
+
+    name: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True),
+        Field(
+            description=_LABEL_NAME_DESCRIPTION,
+            min_length=1,
+        ),
+    ]
+
+    color: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True),
+        Field(
+            default="#A0AEC0",
+            description=_LABEL_COLOR_DESCRIPTION,
+        ),
+    ]
+
+    description: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True),
+        Field(
+            default="",
+            description=_LABEL_DESCRIPTION_DESCRIPTION,
+        ),
+    ]
+
+    @field_validator("color", mode="after")
+    @classmethod
+    def check_color(cls: "LabelCreateRequest", color: str) -> str:
+        """Ensure that the color is a valid hex color and normalize it."""
+        return normalize_hex_color(color)
 
 
-class CreateLabelResponse(Label):
-    class Config:
-        schema_extra = {
+class LabelCreateResponse(Label):
+    """A response model for creating a label."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "color": "#374151",
                 "count": 0,
                 "description": "dsRNA/binding protein",
                 "id": 23,
                 "name": "Binding protein",
-            }
-        }
-
-
-class UpdateLabelRequest(BaseModel):
-    """
-    Label fields for editing an existing label.
-    """
-
-    name: Optional[constr(strip_whitespace=True)] = Field(
-        description="A short display name"
-    )
-    color: Optional[constr(strip_whitespace=True)] = Field(
-        description="A hexadecimal color for the label"
-    )
-    description: Optional[constr(strip_whitespace=True)] = Field(
-        description="A longer description for the label"
+            },
+        },
     )
 
-    _ensure_color_is_normalized: classmethod = validator("color", allow_reuse=True)(
-        normalize_hex_color
-    )
 
-    _prevent_none = prevent_none("*")
+class LabelUpdateRequest(BaseModel):
+    """Label fields for editing an existing label."""
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "color": "#93C5FD",
                 "description": "Field samples from 2022 harvest",
                 "name": "Blueberry 2022",
-            }
-        }
+            },
+        },
+    )
+
+    name: Annotated[
+        str | UnsetType,
+        StringConstraints(strip_whitespace=True),
+        Field(default=Unset, description=_LABEL_NAME_DESCRIPTION),
+    ]
+
+    color: Annotated[
+        str | UnsetType,
+        StringConstraints(strip_whitespace=True),
+        Field(
+            default=Unset,
+            description=_LABEL_COLOR_DESCRIPTION,
+        ),
+    ]
+
+    description: Annotated[
+        str | UnsetType,
+        StringConstraints(strip_whitespace=True),
+        Field(
+            default=Unset,
+            description=_LABEL_DESCRIPTION_DESCRIPTION,
+        ),
+    ]
+
+    @field_validator("color", mode="after")
+    @classmethod
+    def check_color(cls: "LabelUpdateRequest", color: str) -> str:
+        """Ensure that the color is a valid hex color and normalize it."""
+        return normalize_hex_color(color)
 
 
 class LabelResponse(Label):
-    class Config:
-        schema_extra = {
+    """A response model for a single label."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "color": "#6B7280",
                 "count": 0,
                 "description": "dsRNA/Ab",
                 "id": 22,
                 "name": "Ab",
-            }
-        }
-
-
-class GetLabelResponse(Label):
-    class Config:
-        schema_extra = {
-            "example": [
-                {
-                    "color": "#6B7280",
-                    "count": 0,
-                    "description": "dsRNA/Ab",
-                    "id": 22,
-                    "name": "Ab",
-                }
-            ]
-        }
+            },
+        },
+    )

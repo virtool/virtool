@@ -1,7 +1,6 @@
 import shutil
 from asyncio import to_thread
 from pathlib import Path
-from typing import Optional
 
 from virtool_core.models.settings import Settings
 
@@ -37,7 +36,7 @@ def create_fake_composition(fake: FakerWrapper):
         sent += 1
 
 
-async def create_fake_quality(fake: Optional[FakerWrapper]) -> dict:
+async def create_fake_quality(fake: FakerWrapper | None) -> dict:
     if fake is None:
         fake = FakerWrapper()
 

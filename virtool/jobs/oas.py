@@ -1,12 +1,14 @@
-from typing import List
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+from virtool_core.models.job import Job, JobMinimal, JobState
 
-from pydantic import BaseModel, validator
-from virtool_core.models.job import JobMinimal, Job
+from virtool.validation import UnsetType
 
 
-class GetJobResponse(JobMinimal):
-    class Config:
-        schema_extra = {
+class JobSearchResponse(JobMinimal):
+    """A response model for a job search."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": [
                 {
                     "archived": False,
@@ -50,7 +52,9 @@ class GetJobResponse(JobMinimal):
                             "progress": 16,
                             "stage": "eliminate_otus",
                             "state": "running",
-                            "step_description": "Map sample reads to reference OTUs and discard.",
+                            "step_description": (
+                                "Map sample reads to reference OTUs and discard."
+                            ),
                             "step_name": "Eliminate Otus",
                             "timestamp": "2022-07-08T18:48:11.287000Z",
                         },
@@ -59,7 +63,9 @@ class GetJobResponse(JobMinimal):
                             "progress": 33,
                             "stage": "eliminate_subtraction",
                             "state": "running",
-                            "step_description": "Map remaining reads to the subtraction and discard.",
+                            "step_description": (
+                                "Map remaining reads to the subtraction and discard."
+                            ),
                             "step_name": "Eliminate Subtraction",
                             "timestamp": "2022-07-08T19:00:24.291000Z",
                         },
@@ -68,7 +74,9 @@ class GetJobResponse(JobMinimal):
                             "progress": 50,
                             "stage": "reunite_pairs",
                             "state": "running",
-                            "step_description": "Reunite paired reads after elimination.",
+                            "step_description": (
+                                "Reunite paired reads after elimination."
+                            ),
                             "step_name": "Reunite Pairs",
                             "timestamp": "2022-07-08T19:02:53.618000Z",
                         },
@@ -95,7 +103,9 @@ class GetJobResponse(JobMinimal):
                             "progress": 100,
                             "stage": "vfam",
                             "state": "running",
-                            "step_description": "Search for viral motifs in ORF translations.",
+                            "step_description": (
+                                "Search for viral motifs in ORF translations."
+                            ),
                             "step_name": "Vfam",
                             "timestamp": "2022-07-08T19:07:44.531000Z",
                         },
@@ -158,7 +168,9 @@ class GetJobResponse(JobMinimal):
                             "progress": 16,
                             "stage": "eliminate_otus",
                             "state": "running",
-                            "step_description": "Map sample reads to reference OTUs and discard.",
+                            "step_description": (
+                                "Map sample reads to reference OTUs and discard."
+                            ),
                             "step_name": "Eliminate Otus",
                             "timestamp": "2022-07-08T20:16:11.688000Z",
                         },
@@ -167,7 +179,9 @@ class GetJobResponse(JobMinimal):
                             "progress": 33,
                             "stage": "eliminate_subtraction",
                             "state": "running",
-                            "step_description": "Map remaining reads to the subtraction and discard.",
+                            "step_description": (
+                                "Map remaining reads to the subtraction and discard."
+                            ),
                             "step_name": "Eliminate Subtraction",
                             "timestamp": "2022-07-08T20:22:29.872000Z",
                         },
@@ -176,7 +190,9 @@ class GetJobResponse(JobMinimal):
                             "progress": 50,
                             "stage": "reunite_pairs",
                             "state": "running",
-                            "step_description": "Reunite paired reads after elimination.",
+                            "step_description": (
+                                "Reunite paired reads after elimination."
+                            ),
                             "step_name": "Reunite Pairs",
                             "timestamp": "2022-07-08T20:23:59.985000Z",
                         },
@@ -203,7 +219,9 @@ class GetJobResponse(JobMinimal):
                             "progress": 100,
                             "stage": "vfam",
                             "state": "running",
-                            "step_description": "Search for viral motifs in ORF translations.",
+                            "step_description": (
+                                "Search for viral motifs in ORF translations."
+                            ),
                             "step_name": "Vfam",
                             "timestamp": "2022-07-08T20:30:36.530000Z",
                         },
@@ -224,13 +242,16 @@ class GetJobResponse(JobMinimal):
                     },
                     "workflow": "nuvs",
                 },
-            ]
-        }
+            ],
+        },
+    )
 
 
 class JobResponse(Job):
-    class Config:
-        schema_extra = {
+    """A response model for a job."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "acquired": True,
                 "archived": False,
@@ -282,7 +303,9 @@ class JobResponse(Job):
                         "progress": 16,
                         "stage": "eliminate_otus",
                         "state": "running",
-                        "step_description": "Map sample reads to reference OTUs and discard.",
+                        "step_description": (
+                            "Map sample reads to reference OTUs and discard."
+                        ),
                         "step_name": "Eliminate Otus",
                         "timestamp": "2022-07-08T18:48:11.287000Z",
                     },
@@ -291,7 +314,9 @@ class JobResponse(Job):
                         "progress": 33,
                         "stage": "eliminate_subtraction",
                         "state": "running",
-                        "step_description": "Map remaining reads to the subtraction and discard.",
+                        "step_description": (
+                            "Map remaining reads to the subtraction and discard."
+                        ),
                         "step_name": "Eliminate Subtraction",
                         "timestamp": "2022-07-08T19:00:24.291000Z",
                     },
@@ -327,7 +352,9 @@ class JobResponse(Job):
                         "progress": 100,
                         "stage": "vfam",
                         "state": "running",
-                        "step_description": "Search for viral motifs in ORF translations.",
+                        "step_description": (
+                            "Search for viral motifs in ORF translations."
+                        ),
                         "step_name": "Vfam",
                         "timestamp": "2022-07-08T19:07:44.531000Z",
                     },
@@ -347,20 +374,57 @@ class JobResponse(Job):
                     "id": "88yksx67",
                 },
                 "workflow": "nuvs",
-            }
-        }
+            },
+        },
+    )
 
 
-class ArchiveJobSchema(BaseModel):
-    id: str
-    archived: bool
+class JobArchiveRequest(BaseModel):
+    """A request to archive a job."""
 
-    @validator("archived")
-    def check_archived(cls, archived: bool) -> bool:
-        if archived is False:
-            raise ValueError("The `archived` field can only be `true`")
-        return archived
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {"archived": True},
+        },
+        use_attribute_docstrings=True,
+    )
+
+    archived: bool | UnsetType = UnsetType
+    """Whether the job is archived."""
 
 
-class ArchiveJobsRequest(BaseModel):
-    update: ArchiveJobSchema
+class JobStatusError(BaseModel):
+    """An error report included in a job status creation request."""
+
+    model_config = ConfigDict(
+        use_attribute_docstrings=True,
+    )
+
+    details: list[str]
+    """The detail of the error."""
+
+    traceback: list[str]
+    """The traceback of the error."""
+
+    type: str
+    """The type of the error."""
+
+
+class JobCreateStatusRequest(BaseModel):
+    """A request to create a new job status record."""
+
+    error: JobStatusError | None
+    progress: int = Field(ge=0, le=100)
+    stage: str
+    step_name: str | None
+    step_description: str | None
+    state: JobState
+
+    @model_validator(mode="after")
+    def check_error_state(self) -> "JobCreateStatusRequest":
+        """Check that if the status state is 'error', an error has been provided."""
+        if self.state == JobState.ERROR and self.error is None:
+            msg = "An error must be provided when the status state is 'error'"
+            raise ValueError(msg)
+
+        return self

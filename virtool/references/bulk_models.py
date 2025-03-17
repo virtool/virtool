@@ -1,5 +1,6 @@
+from collections.abc import Callable, Coroutine
 from dataclasses import astuple, dataclass, field
-from typing import Any, Callable, Coroutine, List, Optional, Union
+from typing import Any
 
 from pymongo import DeleteMany, DeleteOne, UpdateOne
 from virtool_core.models.enums import HistoryMethod
@@ -12,14 +13,14 @@ class HistoryChange:
     verb: HistoryMethod
     description: str
     otu_id: str
-    old: Optional[dict] = None
+    old: dict | None = None
 
 
 @dataclass
 class SequenceChanges:
-    updates: Optional[List[UpdateOne]] = field(default_factory=list)
-    inserts: Optional[List[dict]] = field(default_factory=list)
-    deletes: Optional[List[DeleteMany]] = field(default_factory=list)
+    updates: list[UpdateOne] | None = field(default_factory=list)
+    inserts: list[dict] | None = field(default_factory=list)
+    deletes: list[DeleteMany] | None = field(default_factory=list)
 
     @property
     def sequence_changes(self):
@@ -28,11 +29,11 @@ class SequenceChanges:
 
 @dataclass(init=True)
 class OTUChange:
-    otu_change: Union[UpdateOne, dict, DeleteOne]
+    otu_change: UpdateOne | dict | DeleteOne
     sequences: SequenceChanges
     history_method: HistoryMethod
-    old: Optional[dict] = None
-    otu_id: Optional[str] = None
+    old: dict | None = None
+    otu_id: str | None = None
 
     def __post_init__(self):
         self.remaining_sequence_changes = self.sequences.sequence_changes
@@ -88,22 +89,22 @@ class OTUData:
 
 class BufferData:
     data: Any
-    callback: Optional[Callable[[Any], Coroutine]]
+    callback: Callable[[Any], Coroutine] | None
 
 
 @dataclass
 class DBBufferData(BufferData):
-    data: Union[UpdateOne, DeleteOne, DeleteMany, dict]
-    callback: Optional[Callable[[Any], Coroutine]] = None
+    data: UpdateOne | DeleteOne | DeleteMany | dict
+    callback: Callable[[Any], Coroutine] | None = None
 
 
 @dataclass
 class OTUUpdateBufferData(BufferData):
-    data: Union[dict, OTUData, OTUChange]
-    callback: Optional[Callable[[Any], Coroutine]] = None
+    data: dict | OTUData | OTUChange
+    callback: Callable[[Any], Coroutine] | None = None
 
 
 @dataclass
 class DataChunk:
-    data: List[BufferData]
+    data: list[BufferData]
     bulk_function: Callable[[Any], Coroutine]

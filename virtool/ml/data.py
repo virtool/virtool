@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict, List
+import builtins
 
 import arrow
 from sqlalchemy import asc, desc, select
@@ -173,7 +173,7 @@ class MLData(DataLayerDomain):
                 release.size,
             )
 
-    async def load(self, releases: Dict[str, List[ReleaseManifestItem]]):
+    async def load(self, releases: dict[str, builtins.list[ReleaseManifestItem]]):
         """Load into the database.
 
         This method is intended to be called by the `sync` method or data faking

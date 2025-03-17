@@ -3,7 +3,7 @@ from aiohttp import BasicAuth
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from virtool.data.utils import get_data_from_app
 from virtool.mongo.core import Mongo
-from virtool.settings.oas import UpdateSettingsRequest
+from virtool.settings.oas import SettingsUpdateRequest
 from virtool.utils import hash_key
 
 
@@ -39,7 +39,7 @@ class TestJobAuthentication:
         client = await spawn_client(auth=BasicAuth("job-foo", key))
 
         await get_data_from_app(client.app).settings.update(
-            UpdateSettingsRequest(minimum_password_length=8),
+            SettingsUpdateRequest(minimum_password_length=8),
         )
 
         await mongo.jobs.insert_one({"_id": "foo", "key": hash_key(key)})

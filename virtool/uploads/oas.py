@@ -1,9 +1,12 @@
-from virtool_core.models.upload import UploadMinimal, Upload
+from pydantic import ConfigDict
+from virtool_core.models.upload import Upload, UploadMinimal
 
 
-class GetUploadsResponse(UploadMinimal):
-    class Config:
-        schema_extra = {
+class UploadMinimalResponse(UploadMinimal):
+    """A response model for a minimal upload."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": [
                 {
                     "id": 106,
@@ -22,14 +25,17 @@ class GetUploadsResponse(UploadMinimal):
                         "handle": "mrott",
                         "id": "ihvze2u9",
                     },
-                }
-            ]
-        }
+                },
+            ],
+        },
+    )
 
 
-class CreateUploadResponse(Upload):
-    class Config:
-        schema_extra = {
+class UploadResponse(Upload):
+    """A response model for an upload."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": 106,
                 "created_at": "2022-01-22T17:28:21.491000Z",
@@ -47,5 +53,6 @@ class CreateUploadResponse(Upload):
                     "handle": "mrott",
                     "id": "ihvze2u9",
                 },
-            }
-        }
+            },
+        },
+    )

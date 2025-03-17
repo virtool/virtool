@@ -1,54 +1,68 @@
-from typing import Optional
+from typing import Annotated
 
-from pydantic import BaseModel, Field, constr
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from virtool_core.models.sample_base import SampleNested
 from virtool_core.models.subtraction import (
-    SubtractionMinimal,
-    Subtraction,
     NucleotideComposition,
+    Subtraction,
 )
-from virtool_core.models.validators import prevent_none
+
+from virtool.validation import Unset, UnsetType
 
 
-class UpdateSubtractionRequest(BaseModel):
-    """
-    Used when modifying a Subtraction
-    """
+class SubtractionCreateRequest(BaseModel):
+    """Used for creating a new Subtraction."""
 
-    name: Optional[constr(strip_whitespace=True, min_length=1)] = Field(
-        description="A unique name for the host"
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {"name": "Foobar", "nickname": "foo", "upload_id": 1234},
+        },
+        use_attribute_docstrings=True,
     )
-    nickname: Optional[constr(strip_whitespace=True)] = Field(
-        description="A nickname for the host"
+
+    name: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True, min_length=1),
+    ]
+    """A unique name for the host (eg. Arabidopsis)."""
+
+    nickname: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True),
+    ] = ""
+    """A nickname for the host (eg. Thale cress)."""
+
+    upload_id: int
+    """The ID of the upload from which to create the subtraction."""
+
+
+class SubtractionUpdateRequest(BaseModel):
+    """A request validation model for updating a subtraction."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {"name": "Arabidopsis", "nickname": "Thale cress"},
+        },
+        use_attribute_docstrings=True,
     )
 
-    class Config:
-        schema_extra = {"example": {"name": "Arabidopsis", "nickname": "Thale cress"}}
+    name: Annotated[
+        str | UnsetType,
+        StringConstraints(strip_whitespace=True, min_length=1),
+    ] = Unset
+    """The unique subtraction name."""
 
-    _prevent_none = prevent_none("*")
-
-
-class CreateSubtractionRequest(BaseModel):
-    """
-    Used for creating a new Subtraction.
-    """
-
-    name: constr(strip_whitespace=True, min_length=1) = Field(
-        description="A unique name for the host (eg. Arabidopsis)"
+    nickname: Annotated[str | UnsetType, StringConstraints(strip_whitespace=True)] = (
+        Unset
     )
-    nickname: constr(strip_whitespace=True) = Field(
-        description="A nickname of the host", default=""
-    )
-    upload_id: int = Field(description="The unique id of the file")
-
-    class Config:
-        schema_extra = {
-            "example": {"name": "Foobar", "nickname": "foo", "upload_id": 1234}
-        }
+    """A nickname for the host."""
 
 
-class CreateSubtractionResponse(Subtraction):
-    class Config:
-        schema_extra = {
+class SubtractionCreateResponse(Subtraction):
+    """A response model for a new subtraction."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "created_at": "2015-10-06T20:00:00Z",
                 "deleted": False,
@@ -64,40 +78,28 @@ class CreateSubtractionResponse(Subtraction):
                     "handle": "bob",
                     "id": "test",
                 },
-            }
-        }
+            },
+        },
+    )
 
 
-class FinalizeSubtractionRequest(BaseModel):
-    count: int
+class SubtractionFinalizeRequest(BaseModel):
+    """A request validation model for finalizing a subtraction."""
+
+    model_config = ConfigDict(
+        use_attribute_docstrings=True,
+    )
+
+    count: int = Field(ge=1)
+    """The number of sequences in the subtraction."""
+
     gc: NucleotideComposition
-
-
-class GetSubtractionResponse(SubtractionMinimal):
-    class Config:
-        schema_extra = {
-            "example": [
-                {
-                    "count": 9,
-                    "created_at": "2021-12-21T23:52:13.185000Z",
-                    "file": {"id": 58, "name": "arabidopsis_thaliana_+_plastids.fa.gz"},
-                    "id": "q0ek30si",
-                    "name": "Arabidopsis thaliana",
-                    "nickname": "",
-                    "ready": True,
-                    "user": {
-                        "administrator": True,
-                        "handle": "igboyes",
-                        "id": "igboyes",
-                    },
-                }
-            ]
-        }
+    """The nucleotide composition of the subtraction."""
 
 
 class SubtractionResponse(Subtraction):
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "count": 9,
                 "created_at": "2021-12-21T23:52:13.185000Z",
@@ -173,5 +175,11 @@ class SubtractionResponse(Subtraction):
                 "nickname": "",
                 "ready": True,
                 "user": {"administrator": True, "handle": "igboyes", "id": "igboyes"},
-            }
-        }
+            },
+        },
+    )
+
+
+_nested = [SampleNested]
+
+SubtractionCreateResponse.model_rebuild()

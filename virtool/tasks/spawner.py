@@ -2,7 +2,6 @@ import asyncio
 from asyncio import CancelledError
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import List, Tuple, Type
 
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,7 +19,7 @@ logger = get_logger("spawner")
 class PeriodicTask:
     """A dataclass that holds information about a periodic task registration."""
 
-    task: Type[BaseTask]
+    task: type[BaseTask]
     interval: int
     last_triggered: datetime | None = None
 
@@ -32,7 +31,7 @@ class TaskSpawnerService:
 
         self.registered = []
 
-    async def register(self, tasks: List[Tuple[Type[BaseTask], int]]):
+    async def register(self, tasks: list[tuple[type[BaseTask], int]]):
         """Registers tasks and sets the last triggered time attribute."""
         for task, interval in tasks:
             async with AsyncSession(self._pg) as session:
@@ -50,7 +49,7 @@ class TaskSpawnerService:
             else:
                 self.registered.append(PeriodicTask(task, interval))
 
-    async def run(self, tasks: List[Tuple[Type[BaseTask], int]]):
+    async def run(self, tasks: list[tuple[type[BaseTask], int]]):
         """Run the task spawner service.
 
         The task spawner service will periodically check for tasks that need to be run

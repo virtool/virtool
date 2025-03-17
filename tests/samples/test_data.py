@@ -13,10 +13,10 @@ from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
-from virtool.samples.oas import CreateSampleRequest
-from virtool.settings.oas import UpdateSettingsRequest
+from virtool.samples.oas import SampleCreateRequest
+from virtool.settings.oas import SettingsUpdateRequest
 from virtool.uploads.models import SQLUpload
-from virtool.users.oas import UpdateUserRequest
+from virtool.users.oas import UserUpdateRequest
 
 
 @pytest.fixture()
@@ -84,7 +84,7 @@ class TestCreate:
         self,
         group_setting: str,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         pg: AsyncEngine,
         mongo: Mongo,
         snapshot_recent,
@@ -99,7 +99,7 @@ class TestCreate:
         group = await fake.groups.create()
 
         await data_layer.settings.update(
-            UpdateSettingsRequest(
+            SettingsUpdateRequest(
                 sample_group=group_setting,
                 sample_all_write=True,
                 sample_group_write=True,
@@ -107,12 +107,12 @@ class TestCreate:
         )
         await data_layer.users.update(
             client.user.id,
-            UpdateUserRequest(groups=[*[g.id for g in client.user.groups], group.id]),
+            UserUpdateRequest(groups=[*[g.id for g in client.user.groups], group.id]),
         )
 
         await data_layer.users.update(
             client.user.id,
-            UpdateUserRequest(primary_group=group.id),
+            UserUpdateRequest(primary_group=group.id),
         )
 
         label = await fake.labels.create()
@@ -132,7 +132,7 @@ class TestCreate:
         if group_setting == "force_choice":
             data["group"] = group.id
 
-        await data_layer.samples.create(CreateSampleRequest(**data), client.user.id, 0)
+        await data_layer.samples.create(SampleCreateRequest(**data), client.user.id, 0)
 
         sample, upload = await asyncio.gather(
             mongo.samples.find_one(),

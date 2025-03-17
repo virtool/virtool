@@ -1,5 +1,3 @@
-from typing import List
-
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -9,10 +7,11 @@ from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
 from virtool.data.transforms import apply_transforms
 from virtool.labels.models import SQLLabel
-from virtool.labels.oas import UpdateLabelRequest
+from virtool.labels.oas import LabelUpdateRequest
 from virtool.labels.transforms import AttachSampleCountsTransform
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_generic
+from virtool.validation import is_set
 
 
 class LabelsData:
@@ -22,7 +21,7 @@ class LabelsData:
         self._mongo = mongo
         self._pg = pg
 
-    async def find(self, term: str) -> List[LabelMinimal]:
+    async def find(self, term: str) -> list[LabelMinimal]:
         """List all sample labels.
 
         :param term: the query term
@@ -91,15 +90,13 @@ class LabelsData:
         return Label(**document)
 
     @emits(Operation.UPDATE)
-    async def update(self, label_id: int, data: UpdateLabelRequest) -> Label:
+    async def update(self, label_id: int, data: LabelUpdateRequest) -> Label:
         """Edit an existing label.
 
         :param label_id: the ID of the existing label to edit
         :param data: label fields for editing the existing label
         :return: the label
         """
-        data = data.dict(exclude_unset=True)
-
         async with AsyncSession(self._pg) as session:
             result = await session.execute(select(SQLLabel).filter_by(id=label_id))
             label = result.scalar()
@@ -107,13 +104,13 @@ class LabelsData:
             if label is None:
                 raise ResourceNotFoundError()
 
-            if "name" in data:
+            if is_set(data.name):
                 label.name = data["name"]
 
-            if "color" in data:
+            if is_set(data.color):
                 label.color = data["color"]
 
-            if "description" in data:
+            if is_set(data.description):
                 label.description = data["description"]
 
             row = label.to_dict()
@@ -123,23 +120,26 @@ class LabelsData:
             except IntegrityError:
                 raise ResourceConflictError()
 
-        document = await apply_transforms(
-            row,
-            [AttachSampleCountsTransform(self._mongo)],
+        return Label.model_validate(
+            await apply_transforms(
+                row,
+                [AttachSampleCountsTransform(self._mongo)],
+            ),
         )
 
-        return Label(**document)
-
-    async def delete(self, label_id: int):
+    async def delete(self, label_id: int) -> None:
         """Delete an existing label.
 
         :param label_id: ID of the label to delete
         """
         label = await self.get(label_id)
 
-        async with AsyncSession(
-            self._pg,
-        ) as session, self._mongo.create_session() as mongo_session:
+        async with (
+            AsyncSession(
+                self._pg,
+            ) as session,
+            self._mongo.create_session() as mongo_session,
+        ):
             result = await session.execute(select(SQLLabel).filter_by(id=label_id))
             label = result.scalar()
 

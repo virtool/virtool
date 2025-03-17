@@ -1,5 +1,6 @@
-from typing import List, Callable
+from collections.abc import Callable
 from enum import Enum
+
 from aiohttp import web
 from aiohttp.web import Request
 
@@ -13,11 +14,9 @@ class FlagName(Enum):
 
 
 class FeatureFlags:
-    """
-    Maintains default values for feature flags and can accepts list of enabled flags.
-    """
+    """Maintains default values for feature flags and can accepts list of enabled flags."""
 
-    def __init__(self, overrides: List[FlagName]):
+    def __init__(self, overrides: list[FlagName]):
         self._flags = {
             FlagName.ADMINISTRATOR_ROLES: True,
             FlagName.ML_MODELS: False,
@@ -32,16 +31,14 @@ class FeatureFlags:
             )
 
     def check_flag_enabled(self, feature_flag: FlagName) -> bool:
-        """
-        Checks whether the specified feature flag is enabled.
+        """Checks whether the specified feature flag is enabled.
         :param feature_flag: the name of the feature flag
         """
         return getattr(self, feature_flag.name)
 
 
 def flag(feature_flag: FlagName):
-    """
-    Prevents access to the decorated request handler if "feature_flag" is not enabled.
+    """Prevents access to the decorated request handler if "feature_flag" is not enabled.
     :param feature_flag: feature flag name associated with the route
     """
 
@@ -54,10 +51,7 @@ def flag(feature_flag: FlagName):
 
 @web.middleware
 async def feature_flag_middleware(req: Request, handler: Callable):
-    """
-    Enables or disables routes based on feature flag value.
-    """
-
+    """Enables or disables routes based on feature flag value."""
     feature_flag = getattr(handler, "feature_flag", None)
 
     if (

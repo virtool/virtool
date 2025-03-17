@@ -1,58 +1,79 @@
-from pydantic import BaseModel, Field, constr
-from virtool_core.models.validators import prevent_none
+from typing import Annotated
+
+from pydantic import BaseModel, ConfigDict, StringConstraints
+
+from virtool.validation import Unset, UnsetType
 
 
 class CreateFirstUserRequest(BaseModel):
-    """User fields for adding the first user to a user database."""
+    """A request validation model for creating the first user."""
 
-    handle: constr(strip_whitespace=True, min_length=1) = Field(
-        description="the unique handle for the user",
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "handle": "admin",
+                "password": "password",
+            },
+        },
+        use_attribute_docstrings=True,
     )
 
-    password: constr(min_length=1) = Field(description="the password for the user")
+    handle: Annotated[str, StringConstraints(min_length=1, strip_whitespace=True)]
+    """A unique handle for the user."""
+
+    password: Annotated[str, StringConstraints(min_length=1)]
+    """The user's password."""
 
 
 class CreateUserRequest(CreateFirstUserRequest):
-    """User fields for creating a new user."""
+    """A request validation model for creating a user."""
 
-    force_reset: bool = Field(
-        default=True,
-        description="forces a password reset next time the user logs in",
+    force_reset: bool = True
+    """Force a password reset next time the user logs in."""
+
+
+class UserUpdateRequest(BaseModel):
+    """A validation model for a user update request."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "active": True,
+                "force_reset": True,
+                "groups": [1, 2],
+                "password": "password",
+                "primary_group": 1,
+            },
+        },
+        use_attribute_docstrings=True,
     )
 
+    active: bool | UnsetType = Unset
+    """Whether the user account is activated or not."""
 
-class UpdateUserRequest(BaseModel):
-    """User fields for updating a user."""
+    force_reset: bool | UnsetType = Unset
+    """Force a password reset next time the user logs in."""
 
-    active: bool | None = Field(description="make a user active or not")
+    groups: list[int | str] | UnsetType = Unset
+    """The groups the user belongs to."""
 
-    force_reset: bool | None = Field(
-        description="forces a password reset next time the user logs in",
-    )
+    password: str | UnsetType = Unset
+    """The new password."""
 
-    groups: list[int | str] | None = Field(
-        description="sets the IDs of groups the user belongs to",
-    )
-
-    password: str | None = Field(description="the new password")
-
-    primary_group: int | None = Field(
-        description="set the ID of the user's primary group",
-    )
-
-    _prevent_none = prevent_none("active", "force_reset", "groups", "password")
+    primary_group: int | None | UnsetType = Unset
+    """The ID of the user's primary group."""
 
 
 class PermissionsResponse(BaseModel):
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": [
                 "create_ref",
                 "create_sample",
             ],
-        }
+        },
+    )
 
 
 class PermissionResponse(BaseModel):
-    class Config:
-        schema_extra = {"example": True}
+    model_config = ConfigDict(json_schema_extra={"example": True})

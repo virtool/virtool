@@ -8,18 +8,18 @@ from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
-from virtool.otus.oas import CreateOTURequest, UpdateOTURequest, UpdateSequenceRequest
+from virtool.otus.oas import OTUCreateRequest, OTUUpdateRequest, SequenceUpdateRequest
 
 
 @pytest.mark.parametrize(
     "data",
     [
-        CreateOTURequest(abbreviation="TMV", name="Tobacco mosaic virus"),
-        CreateOTURequest(name="Prunus virus A"),
+        OTUCreateRequest(abbreviation="TMV", name="Tobacco mosaic virus"),
+        OTUCreateRequest(name="Prunus virus A"),
     ],
 )
 async def test_create(
-    data: CreateOTURequest,
+    data: OTUCreateRequest,
     data_layer: DataLayer,
     fake: DataFaker,
     mongo: Mongo,
@@ -72,10 +72,10 @@ async def test_get_fasta(mongo, snapshot, test_otu, test_sequence, data_layer):
 
 @pytest.mark.parametrize(
     "data",
-    [UpdateOTURequest(abbreviation="TMV", name="Tobacco mosaic virus")],
+    [OTUUpdateRequest(abbreviation="TMV", name="Tobacco mosaic virus")],
 )
 async def test_update(
-    data: UpdateOTURequest,
+    data: OTUUpdateRequest,
     data_layer: DataLayer,
     fake: DataFaker,
     mongo: Mongo,
@@ -250,7 +250,7 @@ async def test_remove_sequence(
         ),
     )
 
-    await data_layer.otus.remove_sequence("6116cba1", "cab8b360", "baz", "bob")
+    await data_layer.otus.delete_sequence("6116cba1", "cab8b360", "baz", "bob")
 
     assert await mongo.otus.find_one() == snapshot
     assert await mongo.history.find_one() == snapshot
@@ -360,7 +360,7 @@ async def test_update_sequence(
         mongo.sequences.insert_one(test_sequence),
     )
 
-    update = UpdateSequenceRequest(
+    update = SequenceUpdateRequest(
         accession="987xyz",
         definition="Hello world",
         host="Apple",

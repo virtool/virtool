@@ -7,16 +7,18 @@ from virtool_core.models.group import Permissions
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
-from virtool.groups.oas import UpdateGroupRequest
+from virtool.groups.oas import GroupUpdateRequest
 from virtool.groups.pg import SQLGroup
 from virtool.pg.utils import get_row_by_id
-from virtool.users.oas import UpdateUserRequest
+from virtool.users.oas import UserUpdateRequest
 from virtool.users.pg import SQLUserGroup
 from virtool.users.utils import generate_base_permissions
 
 
 async def test_list(
-        data_layer: DataLayer, fake: DataFaker, snapshot: SnapshotAssertion,
+    data_layer: DataLayer,
+    fake: DataFaker,
+    snapshot: SnapshotAssertion,
 ):
     """Test that the method lists all groups in the instance."""
     for _ in range(10):
@@ -31,7 +33,7 @@ class TestFind:
         self,
         page: int,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot_recent: SnapshotAssertion,
     ):
         """Test that the correct page of groups and the correct search metadata values
@@ -53,7 +55,7 @@ class TestFind:
         self,
         term: str,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot_recent: SnapshotAssertion,
     ):
         """Test that only matching groups are returned when a search term is provided."""
@@ -65,8 +67,7 @@ class TestFind:
 
 class TestGet:
     async def test_ok(self, data_layer: DataLayer, fake: DataFaker, snapshot):
-        """Ensure the correct group is returned when passed a postgres integer ID
-        """
+        """Ensure the correct group is returned when passed a postgres integer ID"""
         group = await fake.groups.create()
 
         await fake.users.create(groups=[group])
@@ -75,8 +76,7 @@ class TestGet:
         assert await data_layer.groups.get(group.id) == snapshot
 
     async def test_not_found(self, data_layer: DataLayer):
-        """Ensure the correct exception is raised when the group does not exist.
-        """
+        """Ensure the correct exception is raised when the group does not exist."""
         with pytest.raises(ResourceNotFoundError):
             await data_layer.groups.get(5)
 
@@ -112,7 +112,10 @@ async def test_update_name(
     assert group == snapshot(name="group_before")
     assert await get_row_by_id(pg, SQLGroup, group.id) == snapshot(name="pg_before")
 
-    group = await data_layer.groups.update(group.id, UpdateGroupRequest(name="Renamed"))
+    group = await data_layer.groups.update(
+        group.id,
+        GroupUpdateRequest(name="Renamed"),
+    )
 
     assert group.name == "Renamed"
     assert group == snapshot(name="group_after")
@@ -132,7 +135,7 @@ async def test_update_permissions(
 
     group = await data_layer.groups.update(
         group.id,
-        UpdateGroupRequest(
+        GroupUpdateRequest(
             permissions={"create_sample": True, "modify_subtraction": True},
         ),
     )
@@ -148,7 +151,8 @@ async def test_update_permissions(
     assert await get_row_by_id(pg, SQLGroup, group.id) == snapshot(name="pg_added")
 
     group = await data_layer.groups.update(
-        group.id, UpdateGroupRequest(permissions={"create_sample": False}),
+        group.id,
+        GroupUpdateRequest(permissions={"create_sample": False}),
     )
     assert group == snapshot(name="group_removed")
     assert group.permissions == Permissions(
@@ -162,7 +166,7 @@ class TestDelete:
         """Test that deletion of a group removes it from both databases."""
         user = await fake.users.create()
         group = await data_layer.groups.create("Test")
-        await data_layer.users.update(user.id, UpdateUserRequest(groups=[group.id]))
+        await data_layer.users.update(user.id, UserUpdateRequest(groups=[group.id]))
 
         async with AsyncSession(pg) as session:
             user_associations = (

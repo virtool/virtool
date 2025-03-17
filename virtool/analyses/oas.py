@@ -1,9 +1,14 @@
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict
 from virtool_core.models.analysis import Analysis, AnalysisSearchResult
 
 
-class FindAnalysesResponse(AnalysisSearchResult):
-    class Config:
-        schema_extra = {
+class AnalysesSearchResponse(AnalysisSearchResult):
+    """A response model for a search result of analyses."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "documents": [
                     {
@@ -22,20 +27,21 @@ class FindAnalysesResponse(AnalysisSearchResult):
                             "id": "ihvze2u9",
                         },
                         "workflow": "pathoscope_bowtie",
-                    }
+                    },
                 ],
                 "found_count": 2621,
                 "page": 1,
                 "page_count": 105,
                 "per_page": 25,
                 "total_count": 2621,
-            }
-        }
+            },
+        },
+    )
 
 
 class AnalysisResponse(Analysis):
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "created_at": "2022-08-15T17:42:35.979000Z",
                 "files": [
@@ -48,7 +54,7 @@ class AnalysisResponse(Analysis):
                         "name_on_disk": "3145-report.tsv",
                         "size": 4120,
                         "uploaded_at": "2022-08-15T17:48:02.467000Z",
-                    }
+                    },
                 ],
                 "id": "ofv7rp4v",
                 "index": {"id": "u3lm1rk8", "version": 14},
@@ -67,12 +73,12 @@ class AnalysisResponse(Analysis):
                                     "sequences": [],
                                     "source_name": "WA-MR",
                                     "source_type": "isolate",
-                                }
+                                },
                             ],
                             "length": 18671,
                             "name": "Grapevine leafroll-associated virus 3",
                             "version": 30,
-                        }
+                        },
                     ],
                     "read_count": 584,
                     "subtracted_count": 0,
@@ -82,5 +88,17 @@ class AnalysisResponse(Analysis):
                 "updated_at": "2022-08-15T17:42:35.979000Z",
                 "user": {"administrator": True, "handle": "mrott", "id": "ihvze2u9"},
                 "workflow": "pathoscope_bowtie",
-            }
-        }
+            },
+        },
+    )
+
+
+class AnalysisFinalizeRequest(BaseModel):
+    """A validation model for a request to finalize an analysis."""
+
+    model_config = ConfigDict(
+        use_attribute_docstrings=True,
+    )
+
+    results: dict[str, Any]
+    """The results of the analysis."""

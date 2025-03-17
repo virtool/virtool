@@ -74,12 +74,14 @@ async def create_user(
 ) -> Document:
     document = {
         "active": True,
+        "email": "",
         "force_reset": force_reset,
         "groups": [],
         "handle": handle,
         "invalidate_sessions": False,
         "last_password_change": virtool.utils.timestamp(),
         "primary_group": None,
+        "reset": False,
         "settings": DEFAULT_USER_SETTINGS,
     }
 

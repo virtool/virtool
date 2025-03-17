@@ -24,7 +24,7 @@ import virtool.history.db
 import virtool.indexes.db
 import virtool.otus.db
 import virtool.utils
-from virtool.api.errors import APIInsufficientRights
+from virtool.api.errors import APIBadRequest, APIInsufficientRights
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.config import Config
 from virtool.data.domain import DataLayerDomain
@@ -42,7 +42,7 @@ from virtool.groups.pg import SQLGroup
 from virtool.history.db import patch_to_version
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app, get_new_id, get_one_field, id_exists
-from virtool.otus.oas import CreateOTURequest
+from virtool.otus.oas import OTUCreateRequest
 from virtool.pg.utils import get_row
 from virtool.references.bulk import BulkOTUUpdater
 from virtool.references.db import (
@@ -61,11 +61,11 @@ from virtool.references.db import (
     processor,
 )
 from virtool.references.oas import (
-    CreateReferenceGroupRequest,
-    CreateReferenceRequest,
-    CreateReferenceUserRequest,
+    ReferenceCreateGroupRequest,
+    ReferenceCreateRequest,
+    ReferenceCreateUserRequest,
     ReferenceRightsRequest,
-    UpdateReferenceRequest,
+    ReferenceUpdateRequest,
 )
 from virtool.references.tasks import (
     CloneReferenceTask,
@@ -85,6 +85,7 @@ from virtool.uploads.models import SQLUpload
 from virtool.users.mongo import extend_user
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import chunk_list, get_http_session_from_app, get_safely
+from virtool.validation import is_set
 
 
 class ReferencesData(DataLayerDomain):
@@ -153,10 +154,10 @@ class ReferencesData(DataLayerDomain):
         )
 
     @emits(Operation.CREATE)
-    async def create(self, data: CreateReferenceRequest, user_id: str) -> Reference:
+    async def create(self, data: ReferenceCreateRequest, user_id: str) -> Reference:
         settings = await self.data.settings.get_all()
 
-        if data.clone_from:
+        if is_set(data.clone_from):
             if not await self._mongo.references.count_documents(
                 {"_id": data.clone_from},
             ):
@@ -173,26 +174,25 @@ class ReferencesData(DataLayerDomain):
                 user_id,
             )
 
-            context = {
-                "created_at": document["created_at"],
-                "manifest": manifest,
-                "ref_id": document["_id"],
-                "user_id": user_id,
-            }
-
-            task = await self.data.tasks.create(CloneReferenceTask, context=context)
+            task = await self.data.tasks.create(
+                CloneReferenceTask,
+                context={
+                    "created_at": document["created_at"],
+                    "manifest": manifest,
+                    "ref_id": document["_id"],
+                    "user_id": user_id,
+                },
+            )
 
             document["task"] = {"id": task.id}
 
-        elif data.import_from:
+        elif is_set(data.import_from):
             if not await get_row(
                 self._pg,
                 SQLUpload,
                 ("name_on_disk", data.import_from),
             ):
                 raise ResourceNotFoundError("File not found")
-
-            path = self._config.data_path / "files" / data.import_from
 
             document = await virtool.references.db.create_import(
                 self._mongo,
@@ -206,18 +206,19 @@ class ReferencesData(DataLayerDomain):
                 data.organism,
             )
 
-            context = {
-                "created_at": document["created_at"],
-                "path": str(path),
-                "ref_id": document["_id"],
-                "user_id": user_id,
-            }
-
-            task = await self.data.tasks.create(ImportReferenceTask, context=context)
+            task = await self.data.tasks.create(
+                ImportReferenceTask,
+                context={
+                    "created_at": document["created_at"],
+                    "path": str(self._config.data_path / "files" / data.import_from),
+                    "ref_id": document["_id"],
+                    "user_id": user_id,
+                },
+            )
 
             document["task"] = {"id": task.id}
 
-        elif data.remote_from:
+        elif is_set(data.remote_from):
             try:
                 release = await virtool.github.get_release(
                     self._client,
@@ -249,14 +250,15 @@ class ReferencesData(DataLayerDomain):
                 data.data_type,
             )
 
-            context = {
-                "release": release,
-                "ref_id": document["_id"],
-                "created_at": document["created_at"],
-                "user_id": user_id,
-            }
-
-            task = await self.data.tasks.create(RemoteReferenceTask, context=context)
+            task = await self.data.tasks.create(
+                RemoteReferenceTask,
+                context={
+                    "release": release,
+                    "ref_id": document["_id"],
+                    "created_at": document["created_at"],
+                    "user_id": user_id,
+                },
+            )
 
             document["task"] = {"id": task.id}
 
@@ -350,25 +352,26 @@ class ReferencesData(DataLayerDomain):
         return Reference(**document)
 
     @emits(Operation.UPDATE)
-    async def update(self, ref_id: str, data: UpdateReferenceRequest) -> Reference:
+    async def update(self, ref_id: str, data: ReferenceUpdateRequest) -> Reference:
         """Update a reference."""
         document = await self._mongo.references.find_one(ref_id)
 
         if document is None:
             raise ResourceNotFoundError()
 
-        data = data.dict(exclude_unset=True)
-
         # Setting targets on a reference that is not barcode data is not allowed.
-        if document["data_type"] != "barcode":
-            data.pop("targets", None)
+        if is_set(data.targets) and document["data_type"] != "barcode":
+            raise APIBadRequest("Targets can only be set on barcode references")
 
-        await self._mongo.references.update_one({"_id": ref_id}, {"$set": data})
+        await self._mongo.references.update_one(
+            {"_id": ref_id},
+            {"$set": data.model_dump(exclude_unset=True)},
+        )
 
         return await self.get(ref_id)
 
-    async def remove(self, ref_id: str, req):
-        if not await virtool.references.db.check_right(req, ref_id, "remove"):
+    async def remove(self, ref_id: str, request):
+        if not await virtool.references.db.check_right(request, ref_id, "remove"):
             raise APIInsufficientRights()
 
         reference = await self.get(ref_id)
@@ -481,7 +484,7 @@ class ReferencesData(DataLayerDomain):
     async def create_otu(
         self,
         ref_id: str,
-        data: CreateOTURequest,
+        data: OTUCreateRequest,
         user_id: str,
     ) -> OTU:
         # Check if either the name or abbreviation are already in use. Send a ``400`` if
@@ -591,7 +594,7 @@ class ReferencesData(DataLayerDomain):
     async def create_group(
         self,
         ref_id: str,
-        data: CreateReferenceGroupRequest,
+        data: ReferenceCreateGroupRequest,
     ) -> ReferenceGroup:
         """Create a reference group.
 
@@ -676,11 +679,11 @@ class ReferencesData(DataLayerDomain):
         if document is None:
             raise ResourceNotFoundError()
 
-        data = data.dict(exclude_unset=True)
+        dump = data.model_dump(exclude_unset=True)
 
         for group in document["groups"]:
             if group["id"] == group_id:
-                group.update({key: data.get(key, group[key]) for key in RIGHTS})
+                group.update({key: dump.get(key, group[key]) for key in RIGHTS})
 
                 await self._mongo.references.update_one(
                     {"_id": ref_id},
@@ -739,7 +742,7 @@ class ReferencesData(DataLayerDomain):
     async def create_user(
         self,
         ref_id: str,
-        data: CreateReferenceUserRequest,
+        data: ReferenceCreateUserRequest,
     ) -> ReferenceUser:
         """Create a reference user.
 
@@ -791,11 +794,11 @@ class ReferencesData(DataLayerDomain):
         if document is None:
             raise ResourceNotFoundError()
 
-        data = data.dict(exclude_unset=True)
+        dump = data.model_dump(exclude_unset=True)
 
         for user in document["users"]:
             if user["id"] == user_id:
-                user.update({key: data.get(key, user[key]) for key in RIGHTS})
+                user.update({key: dump.get(key, user[key]) for key in RIGHTS})
 
                 await self._mongo.references.update_one(
                     {"_id": ref_id},

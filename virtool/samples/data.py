@@ -3,6 +3,7 @@
 import asyncio
 import math
 from asyncio import gather, to_thread
+from contextlib import suppress
 from typing import Any
 
 import virtool_core.utils
@@ -27,6 +28,7 @@ from virtool.jobs.transforms import AttachJobTransform
 from virtool.labels.transforms import AttachLabelsTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_new_id, get_one_field
+from virtool.pg.utils import get_rows
 from virtool.samples.checks import (
     check_labels_do_not_exist,
     check_name_is_in_use,
@@ -39,7 +41,7 @@ from virtool.samples.db import (
     recalculate_workflow_tags,
 )
 from virtool.samples.models import SQLSampleReads
-from virtool.samples.oas import CreateSampleRequest, UpdateSampleRequest
+from virtool.samples.oas import SampleCreateRequest, SampleUpdateRequest
 from virtool.samples.utils import SampleRight, join_sample_path
 from virtool.subtractions.db import (
     AttachSubtractionsTransform,
@@ -47,6 +49,7 @@ from virtool.subtractions.db import (
 from virtool.uploads.models import SQLUpload
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor, chunk_list, wait_for_checks
+from virtool.validation import is_set
 
 
 class SamplesData(DataLayerDomain):
@@ -228,7 +231,7 @@ class SamplesData(DataLayerDomain):
     @emits(Operation.CREATE)
     async def create(
         self,
-        data: CreateSampleRequest,
+        data: SampleCreateRequest,
         user_id: str,
         space_id: int,
         _id: str | None = None,
@@ -346,13 +349,25 @@ class SamplesData(DataLayerDomain):
 
     @emits(Operation.DELETE)
     async def delete(self, sample_id: str) -> Sample:
-        """Deletes the sample identified by ``sample_id`` and all its analyses.
+        """Delete the sample identified by ``sample_id``.
+
+        Deletes the sample's files, reads, and analyses. Releases any uploads reserved
+        by the sample.
 
         :param sample_id: the id of the sample to delete
-        :return: the mongodb deletion result
+        :return: the sample
 
         """
         sample = await self.get(sample_id)
+
+        upload_ids = [
+            upload
+            for reads in await get_rows(self._pg, SQLSampleReads, "sample", sample_id)
+            if (upload := reads.upload)
+        ]
+
+        if upload_ids:
+            await self.data.uploads.release(upload_ids)
 
         async with self._mongo.create_session() as session:
             result, _ = await asyncio.gather(
@@ -364,14 +379,12 @@ class SamplesData(DataLayerDomain):
             )
 
         if result.deleted_count:
-            try:
+            with suppress(FileNotFoundError):
                 await to_thread(
                     virtool_core.utils.rm,
                     join_sample_path(self._config, sample_id),
                     recursive=True,
                 )
-            except FileNotFoundError:
-                pass
 
             return sample
 
@@ -434,7 +447,7 @@ class SamplesData(DataLayerDomain):
         return await self.get(sample_id)
 
     @emits(Operation.UPDATE)
-    async def update(self, sample_id: str, data: UpdateSampleRequest) -> Sample:
+    async def update(self, sample_id: str, data: SampleUpdateRequest) -> Sample:
         """Update the sample identified by ``sample_id``.
 
         :param sample_id: the id of the sample to update
@@ -442,26 +455,27 @@ class SamplesData(DataLayerDomain):
         :return: the updated sample
 
         """
-        data = data.dict(exclude_unset=True)
-
         aws = []
 
-        if "name" in data:
+        if is_set(data.name):
             aws.append(
                 check_name_is_in_use(self._mongo, data["name"], sample_id=sample_id),
             )
 
-        if "labels" in data:
+        if is_set(data.labels):
             aws.append(check_labels_do_not_exist(self._pg, data["labels"]))
 
-        if "subtractions" in data:
+        if is_set(data.subtractions):
             aws.append(
                 check_subtractions_do_not_exist(self._mongo, data["subtractions"]),
             )
 
         await wait_for_checks(*aws)
 
-        await self._mongo.samples.update_one({"_id": sample_id}, {"$set": data})
+        await self._mongo.samples.update_one(
+            {"_id": sample_id},
+            {"$set": data.model_dump(exclude_unset=True)},
+        )
 
         return await self.get(sample_id)
 

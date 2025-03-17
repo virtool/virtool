@@ -1,7 +1,6 @@
 import os
 from asyncio import to_thread
 from pathlib import Path
-from typing import List
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -21,8 +20,7 @@ FILES = (
 
 
 def check_subtraction_file_type(file_name: str) -> str:
-    """
-    Get the subtraction file type based on the extension of given `file_name`
+    """Get the subtraction file type based on the extension of given `file_name`
 
     :param file_name: subtraction file name
     :return: file type
@@ -42,9 +40,8 @@ def join_subtraction_index_path(config: Config, subtraction_id: str) -> Path:
     return join_subtraction_path(config, subtraction_id) / "subtraction"
 
 
-async def get_subtraction_files(pg: AsyncEngine, subtraction: str) -> List[dict]:
-    """
-    Prepare a list of files from 'SubtractionFile' table to be added to 'files' field.
+async def get_subtraction_files(pg: AsyncEngine, subtraction: str) -> list[dict]:
+    """Prepare a list of files from 'SubtractionFile' table to be added to 'files' field.
 
     :param pg: PostgreSQL AsyncEngine object
     :param subtraction: the ID of the subtraction
@@ -56,7 +53,7 @@ async def get_subtraction_files(pg: AsyncEngine, subtraction: str) -> List[dict]
         files = (
             (
                 await session.execute(
-                    select(SQLSubtractionFile).filter_by(subtraction=subtraction)
+                    select(SQLSubtractionFile).filter_by(subtraction=subtraction),
                 )
             )
             .scalars()
@@ -69,8 +66,7 @@ async def get_subtraction_files(pg: AsyncEngine, subtraction: str) -> List[dict]
 
 
 async def rename_bowtie_files(path: Path):
-    """
-    Rename all Bowtie2 index files from 'reference' to 'subtraction'.
+    """Rename all Bowtie2 index files from 'reference' to 'subtraction'.
 
     :param path: the subtraction path
 
@@ -78,5 +74,7 @@ async def rename_bowtie_files(path: Path):
     for file_path in await to_thread(path.iterdir):
         if file_path.suffix == ".bt2":
             await to_thread(
-                os.rename, file_path, str(file_path).replace("reference", "subtraction")
+                os.rename,
+                file_path,
+                str(file_path).replace("reference", "subtraction"),
             )

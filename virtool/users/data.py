@@ -34,11 +34,12 @@ from virtool.users.mongo import (
     compose_primary_group_update,
     create_user,
 )
-from virtool.users.oas import UpdateUserRequest
+from virtool.users.oas import UserUpdateRequest
 from virtool.users.pg import SQLUser, SQLUserGroup
 from virtool.users.settings import DEFAULT_USER_SETTINGS
 from virtool.users.transforms import AttachPermissionsTransform
 from virtool.utils import base_processor
+from virtool.validation import is_set
 
 PROJECTION = [
     "_id",
@@ -395,7 +396,7 @@ class UsersData(DataLayerDomain):
         return await self.get(user_id)
 
     @emits(Operation.UPDATE)
-    async def update(self, user_id: str, data: UpdateUserRequest) -> User:
+    async def update(self, user_id: str, data: UserUpdateRequest) -> User:
         """Update a user.
 
         Sessions and API keys are updated as well.
@@ -407,22 +408,20 @@ class UsersData(DataLayerDomain):
         if not await id_exists(self._mongo.users, user_id):
             raise ResourceNotFoundError("User does not exist")
 
-        data = data.dict(exclude_unset=True)
-
         mongo_update = {}
         pg_update = {}
 
-        if "active" in data:
+        if is_set(data.active):
             for u in (mongo_update, pg_update):
                 u.update({"active": data["active"], "invalidate_sessions": True})
 
-        if "force_reset" in data:
+        if is_set(data.force_reset):
             for u in (mongo_update, pg_update):
                 u.update(
                     {"force_reset": data["force_reset"], "invalidate_sessions": True},
                 )
 
-        if "password" in data:
+        if is_set(data.password):
             for u in (mongo_update, pg_update):
                 u.update(
                     {
@@ -432,7 +431,7 @@ class UsersData(DataLayerDomain):
                     },
                 )
 
-        if "groups" in data:
+        if is_set(data.groups):
             current_primary_group = await get_one_field(
                 self._mongo.users,
                 "primary_group",
@@ -447,12 +446,12 @@ class UsersData(DataLayerDomain):
                 ),
             )
 
-        if "primary_group" in data:
+        if is_set(data.primary_group):
             mongo_update.update(
                 await compose_primary_group_update(
                     self._mongo,
                     self._pg,
-                    data.get("groups"),
+                    data.groups,
                     data["primary_group"],
                     user_id,
                 ),

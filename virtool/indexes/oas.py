@@ -1,9 +1,9 @@
-from virtool_core.models.index import IndexSearchResult, Index, IndexMinimal
+from virtool_core.models.index import Index, IndexMinimal, IndexSearchResult
 
 
 class ListIndexesResponse(IndexSearchResult):
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "documents": [
                     {
@@ -47,13 +47,13 @@ class ListIndexesResponse(IndexSearchResult):
                 "total_otu_count": 123,
                 "change_count": 12,
                 "modified_otu_count": 3,
-            }
+            },
         }
 
 
 class ReadyIndexesResponse(IndexMinimal):
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "documents": [
                     {
@@ -88,14 +88,14 @@ class ReadyIndexesResponse(IndexMinimal):
                         "change_count": 2,
                         "modified_otu_count": 2,
                     },
-                ]
-            }
+                ],
+            },
         }
 
 
-class GetIndexResponse(Index):
+class IndexResponse(Index):
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "version": 0,
                 "created_at": "2015-10-06T20:00:00Z",

@@ -2,9 +2,10 @@
 
 import asyncio
 from asyncio import to_thread
+from collections.abc import Awaitable, Callable
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Awaitable, Callable, Optional, Type
+from typing import TYPE_CHECKING
 
 from structlog import get_logger
 
@@ -54,7 +55,7 @@ class BaseTask:
         self.errored: bool = False
         """Set ``True`` when the task has encountered an error."""
 
-        self.step: Optional[Callable] = None
+        self.step: Callable | None = None
         """
         The name of the step the task is current executing.
 
@@ -160,7 +161,7 @@ class BaseTask:
         self.errored = True
 
 
-def get_task_from_name(task_name: str) -> Type[BaseTask]:
+def get_task_from_name(task_name: str) -> type[BaseTask]:
     """Get a task subclass by its ``name``.
 
     For example, ``get_task_from_name("add_subtraction_files")`` will return the

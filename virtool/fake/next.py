@@ -31,7 +31,7 @@ from virtool_core.models.user import User
 
 from virtool.data.layer import DataLayer
 from virtool.example import example_path
-from virtool.groups.oas import PermissionsUpdate, UpdateGroupRequest
+from virtool.groups.oas import GroupUpdateRequest, PermissionsUpdate
 from virtool.groups.pg import SQLGroup
 from virtool.jobs.utils import WORKFLOW_NAMES
 from virtool.ml.tasks import SyncMLModelsTask
@@ -43,14 +43,14 @@ from virtool.references.tasks import (
 )
 from virtool.releases import ReleaseManifestItem
 from virtool.subtractions.oas import (
-    CreateSubtractionRequest,
-    FinalizeSubtractionRequest,
     NucleotideComposition,
+    SubtractionCreateRequest,
+    SubtractionFinalizeRequest,
 )
 from virtool.tasks.task import BaseTask
 from virtool.uploads.models import UploadType
 from virtool.uploads.utils import CHUNK_SIZE
-from virtool.users.oas import UpdateUserRequest
+from virtool.users.oas import UserUpdateRequest
 
 
 async def fake_file_chunker(path: Path) -> AsyncGenerator[bytearray, None]:
@@ -281,7 +281,7 @@ class GroupsFakerDomain(DataFakerDomain):
         if permissions:
             group = await self._layer.groups.update(
                 group.id,
-                UpdateGroupRequest(permissions=permissions),
+                GroupUpdateRequest(permissions=permissions),
             )
 
         return group
@@ -482,7 +482,7 @@ class UsersFakerDomain(DataFakerDomain):
         if groups and primary_group:
             return await self._layer.users.update(
                 user.id,
-                UpdateUserRequest(
+                UserUpdateRequest(
                     groups=list({group.id for group in groups} | {primary_group.id}),
                     primary_group=primary_group.id,
                 ),
@@ -491,13 +491,13 @@ class UsersFakerDomain(DataFakerDomain):
         if groups:
             return await self._layer.users.update(
                 user.id,
-                UpdateUserRequest(groups=[group.id for group in groups]),
+                UserUpdateRequest(groups=[group.id for group in groups]),
             )
 
         if primary_group:
             return await self._layer.users.update(
                 user.id,
-                UpdateUserRequest(
+                UserUpdateRequest(
                     groups=[primary_group.id],
                     primary_group=primary_group.id,
                 ),
@@ -529,7 +529,7 @@ class SubtractionFakerDomain(DataFakerDomain):
         :return: the created subtraction
         """
         subtraction = await self._layer.subtractions.create(
-            CreateSubtractionRequest(
+            SubtractionCreateRequest(
                 name="foo",
                 nickname="bar",
                 upload_id=upload.id,
@@ -553,7 +553,7 @@ class SubtractionFakerDomain(DataFakerDomain):
 
         return await self._layer.subtractions.finalize(
             subtraction.id,
-            FinalizeSubtractionRequest(
+            SubtractionFinalizeRequest(
                 count=1,
                 gc=NucleotideComposition(**{k: 0.2 for k in "actgn"}),
             ),

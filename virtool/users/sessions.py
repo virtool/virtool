@@ -77,12 +77,14 @@ class SessionData(DataLayerDomain):
         :return: the session id, the session model, and the session token
         """
         session = Session(
+            authentication=None,
             created_at=virtool.utils.timestamp(),
             ip=ip,
             id=await self._create_session_id(),
+            reset=None,
         )
 
-        await self._redis.set(session.id, dump_string(session), expire=600)
+        await self._redis.set(session.id, session.model_dump_json(), expire=600)
 
         return session
 
@@ -116,6 +118,7 @@ class SessionData(DataLayerDomain):
             "created_at": virtool.utils.timestamp(),
             "id": session_id,
             "ip": ip,
+            "reset": None,
         }
 
         await self._redis.set(
@@ -132,7 +135,7 @@ class SessionData(DataLayerDomain):
         user_id: str,
         remember: bool,
     ) -> tuple[Session, str]:
-        """Creates a new reset session.
+        """Create a new reset session.
 
         :param ip: the ip address of the client
         :param user_id: the user id of the client
@@ -143,6 +146,7 @@ class SessionData(DataLayerDomain):
         session_id = await self._create_session_id()
 
         session = {
+            "authentication": None,
             "created_at": virtool.utils.timestamp(),
             "id": session_id,
             "ip": ip,
@@ -181,7 +185,7 @@ class SessionData(DataLayerDomain):
         if session["authentication"]["token"] != hash_key(session_token):
             raise ResourceNotFoundError("Invalid session token")
 
-        return Session(**session)
+        return Session(reset=None, **session)
 
     async def check_session_is_authenticated(self, session_id: str) -> bool:
         """Checks whether a session is authenticated.
@@ -212,7 +216,7 @@ class SessionData(DataLayerDomain):
             await self.delete(session_id)
             raise ResourceNotFoundError("Session not found")
 
-        return Session(**session)
+        return Session(authentication=None, reset=None, **session)
 
     async def get_reset(self, session_id: str, reset_code: str) -> Session:
         """Gets a session with a pending password reset given its ``session_id`` and its
@@ -237,7 +241,7 @@ class SessionData(DataLayerDomain):
             await self.delete(session_id)
             raise ResourceNotFoundError("Invalid reset code")
 
-        return Session(**session)
+        return Session(authentication=None, reset=None, **session)
 
     async def delete(self, session_id: str):
         """Deletes the session with the provided ``session_id``.

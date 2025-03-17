@@ -1,5 +1,3 @@
-from typing import Dict, Optional
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -29,7 +27,7 @@ async def create_artifact_file(
     name_on_disk: str,
     sample: str,
     artifact_type: str,
-) -> Dict[str, any]:
+) -> dict[str, any]:
     """Create a row in an SQL table that represents uploaded sample artifact file.
 
     :param pg: PostgreSQL AsyncEngine object
@@ -64,8 +62,8 @@ async def create_reads_file(
     name: str,
     name_on_disk: str,
     sample_id: str,
-    upload_id: Optional[int] = None,
-) -> Dict[str, any]:
+    upload_id: int | None = None,
+) -> dict[str, any]:
     """Create a row in a SQL table that represents uploaded sample reads files.
 
     :param pg: PostgreSQL AsyncEngine object

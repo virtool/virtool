@@ -1,29 +1,36 @@
-from typing import Optional
-from pydantic import BaseModel, Field, constr
+from typing import Annotated
 
+from pydantic import BaseModel, ConfigDict, StringConstraints
 from virtool_core.models.roles import (
-    SpaceRole,
     SpaceLabelRole,
     SpaceProjectRole,
     SpaceReferenceRole,
+    SpaceRole,
     SpaceSampleRole,
     SpaceSubtractionRole,
     SpaceUploadRole,
 )
 
+from virtool.validation import Unset, UnsetType
 
-class ListSpacesResponse(BaseModel):
-    class Config:
-        schema_extra = {
+
+class SpacesListResponse(BaseModel):
+    """A response model for a list of spaces."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": [
-                {"id": 0, "name": "Space 0", "description": "The default space."}
+                {"id": 0, "name": "Space 0", "description": "The default space."},
             ],
-        }
+        },
+    )
 
 
-class GetSpaceResponse(BaseModel):
-    class Config:
-        schema_extra = {
+class SpaceResponse(BaseModel):
+    """A response model for a space."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": 0,
                 "name": "Space 0",
@@ -43,31 +50,31 @@ class GetSpaceResponse(BaseModel):
                         "sample": None,
                         "subtraction": None,
                         "upload": None,
-                    }
+                    },
                 ],
-            }
-        }
-
-
-class UpdateSpaceRequest(BaseModel):
-    """
-    Used when updating the name or description of the space.
-    """
-
-    name: Optional[constr(strip_whitespace=True)] = Field(
-        description="the unique display name for the space"
-    )
-    description: Optional[constr(strip_whitespace=True)] = Field(
-        description="the description for the space"
+            },
+        },
     )
 
-    class Config:
-        schema_extra = {"example": {"name": "My Space"}}
+
+class SpaceUpdateRequest(BaseModel):
+    """A request validation model for updating a space."""
+
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"name": "My Space"}},
+        use_attribute_docstrings=True,
+    )
+
+    name: Annotated[str | UnsetType, StringConstraints(strip_whitespace=True)] = Unset
+    """The name of the space."""
+
+    description: Annotated[str, StringConstraints(strip_whitespace=True)] = ""
+    """A description for the space."""
 
 
-class UpdateSpaceResponse(BaseModel):
-    class Config:
-        schema_extra = {
+class SpaceUpdateResponse(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": 0,
                 "name": "My Space",
@@ -87,15 +94,16 @@ class UpdateSpaceResponse(BaseModel):
                         "sample": None,
                         "subtraction": None,
                         "upload": None,
-                    }
+                    },
                 ],
-            }
-        }
+            },
+        },
+    )
 
 
-class ListMembersResponse(BaseModel):
-    class Config:
-        schema_extra = {
+class SpaceListMembersResponse(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "items": [
                     {
@@ -109,7 +117,7 @@ class ListMembersResponse(BaseModel):
                         "sample": None,
                         "subtraction": None,
                         "upload": None,
-                    }
+                    },
                 ],
                 "available_roles": [
                     {
@@ -214,30 +222,33 @@ class ListMembersResponse(BaseModel):
                         "description": "View or use uploads.",
                     },
                 ],
-            }
-        }
+            },
+        },
+    )
 
 
-class UpdateMemberRequest(BaseModel):
-    """
-    Used when updating the roles of a member in the space.
-    """
+class SpaceMemberUpdateRequest(BaseModel):
+    """Used when updating the roles of a member in the space."""
 
-    role: Optional[SpaceRole]
-    label: Optional[SpaceLabelRole]
-    project: Optional[SpaceProjectRole]
-    reference: Optional[SpaceReferenceRole]
-    sample: Optional[SpaceSampleRole]
-    subtraction: Optional[SpaceSubtractionRole]
-    upload: Optional[SpaceUploadRole]
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"role": "member"}},
+        use_attribute_docstrings=True,
+    )
 
-    class Config:
-        schema_extra = {"example": {"role": "member"}}
+    role: SpaceRole | UnsetType = Unset
+    label: SpaceLabelRole | UnsetType = Unset
+    project: SpaceProjectRole | UnsetType = Unset
+    reference: SpaceReferenceRole | UnsetType = Unset
+    sample: SpaceSampleRole | UnsetType = Unset
+    subtraction: SpaceSubtractionRole | UnsetType = Unset
+    upload: SpaceUploadRole | UnsetType = Unset
 
 
 class UpdateMemberResponse(BaseModel):
-    class Config:
-        schema_extra = {
+    """A response model for updating a member."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": [
                 {
                     "id": "test",
@@ -250,6 +261,7 @@ class UpdateMemberResponse(BaseModel):
                     "sample": None,
                     "subtraction": None,
                     "upload": None,
-                }
-            ]
-        }
+                },
+            ],
+        },
+    )

@@ -1,8 +1,6 @@
 """The data layer piece for tasks."""
 
-from typing import Type
-
-from sqlalchemy import delete, desc, select
+from sqlalchemy import delete, desc, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.task import Task
 
@@ -58,34 +56,27 @@ class TasksData:
         raise ResourceNotFoundError
 
     @emits(Operation.UPDATE)
-    async def update(self, task_id: int, task_update: TaskUpdate) -> Task:
+    async def update(self, task_id: int, data: TaskUpdate) -> Task:
         """Update a task record with given `task_id`
 
         :param task_id: the id of the task
-        :param task_update: as task update objectd
-        :return: the task record
+        :param data: a task update object
+        :return: the task
 
         """
         async with AsyncSession(self._pg) as session:
-            result = await session.execute(select(SQLTask).filter_by(id=task_id))
-            task = result.scalar()
+            result = await session.execute(
+                update(SQLTask)
+                .filter_by(id=task_id)
+                .values(data.model_dump(exclude_unset=True)),
+            )
 
-            data = task_update.dict(exclude_unset=True)
-
-            if "progress" in data:
-                task.progress = data["progress"]
-
-            if "error" in data:
-                task.error = data["error"]
-
-            if "step" in data:
-                task.step = data["step"]
-
-            task = Task(**task.to_dict())
+            if not result.rowcount:
+                raise ResourceNotFoundError
 
             await session.commit()
 
-        return task
+        return await self.get(task_id)
 
     @emits(Operation.UPDATE)
     async def complete(self, task_id: int) -> Task:
@@ -132,7 +123,7 @@ class TasksData:
     @emits(Operation.CREATE)
     async def create(
         self,
-        task_class: Type[BaseTask],
+        task_class: type[BaseTask],
         context: dict | None = None,
     ) -> Task:
         """Register a new task.

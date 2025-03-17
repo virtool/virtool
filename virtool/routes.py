@@ -1,3 +1,5 @@
+from aiohttp.web_urldispatcher import UrlDispatcher
+
 import virtool.account.api
 import virtool.administrators.api
 import virtool.analyses.api
@@ -23,7 +25,7 @@ import virtool.subtractions.api
 import virtool.tasks.api
 import virtool.uploads.api
 import virtool.users.api
-import virtool.ws.route
+import virtool.ws.api
 
 ROUTES = (
     virtool.account.api.routes,
@@ -50,14 +52,17 @@ ROUTES = (
     virtool.tasks.api.routes,
     virtool.uploads.api.routes,
     virtool.users.api.routes,
+    virtool.ws.api.routes,
 )
 
 
 def setup_routes(app, dev: bool = False):
-    app.router.add_get("/ws", virtool.ws.route.root)
+    setup_routes_on_router(app.router, dev)
 
+
+def setup_routes_on_router(router: UrlDispatcher, dev: bool = False):
     if dev:
-        app.router.add_routes(virtool.dev.api.routes)
+        router.add_routes(virtool.dev.api.routes)
 
     for routes in ROUTES:
-        app.router.add_routes(routes)
+        router.add_routes(routes.web)

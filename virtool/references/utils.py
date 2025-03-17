@@ -3,10 +3,8 @@ import json
 from datetime import datetime
 from operator import itemgetter
 from pathlib import Path
-from typing import Dict, List, Optional, Set
 
-from cerberus import Validator
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from virtool_core.models.reference import ReferenceDataType
 
 import virtool.otus.utils
@@ -17,40 +15,28 @@ RIGHTS = ["build", "modify", "modify_otu", "remove"]
 class ReferenceSourceData(BaseModel):
     data_type: ReferenceDataType = ReferenceDataType.genome
     organism: str = "Unknown"
-    otus: List[Dict]
-    targets: Optional[List[Dict]] = None
+    otus: list[dict]
+    targets: list[dict] | None = None
 
 
-def check_import_data(
-    data: Dict,
-    strict: bool = True,
-    verify: bool = True,
-) -> List[dict]:
+def check_import_data(data: dict) -> list[dict]:
     errors = detect_duplicates(data["otus"])
 
-    v = Validator(get_import_schema(require_meta=strict), allow_unknown=True)
-
-    v.validate(data)
-
-    if v.errors:
-        errors.append({"id": "file", "issues": v.errors})
+    try:
+        ref = ImportableReference.model_validate(data)
+    except ValidationError as err:
+        errors.append({"id": "file", "issues": err.errors()})
+        return errors
 
     otus = {}
 
-    for otu in data["otus"]:
-        verification = None
-
-        if verify:
-            verification = virtool.otus.utils.verify(otu)
-
-        validation = validate_otu(otu, strict)
-
+    for otu in ref.otus:
         issues = {}
 
-        if verification:
+        if verification := virtool.otus.utils.verify(otu):
             issues["verification"] = verification
 
-        if validation:
+        if validation := validate_otu(otu):
             issues["validation"] = validation
 
         if issues:
@@ -80,7 +66,7 @@ def check_will_change(old: dict, imported: dict) -> bool:
     old_isolates = sorted(old["isolates"], key=itemgetter("id"))
 
     # Check isolate by isolate. Order is ignored.
-    for new_isolate, old_isolate in zip(new_isolates, old_isolates):
+    for new_isolate, old_isolate in zip(new_isolates, old_isolates, strict=True):
         # Will change if a value property of the isolate has changed.
         for key in ("id", "source_type", "source_name", "default"):
             if new_isolate[key] != old_isolate[key]:
@@ -99,7 +85,11 @@ def check_will_change(old: dict, imported: dict) -> bool:
             key=lambda d: d["remote"]["id"],
         )
 
-        for new_sequence, old_sequence in zip(new_sequences, old_sequences):
+        for new_sequence, old_sequence in zip(
+            new_sequences,
+            old_sequences,
+            strict=True,
+        ):
             for key in ("accession", "definition", "host", "sequence"):
                 if new_sequence[key] != old_sequence[key]:
                     return True
@@ -142,8 +132,8 @@ def detect_duplicate_isolate_ids(joined: dict, duplicate_isolate_ids: dict):
 
 def detect_duplicate_sequence_ids(
     joined: dict,
-    duplicate_sequence_ids: Set[str],
-    seen_sequence_ids: Set[str],
+    duplicate_sequence_ids: set[str],
+    seen_sequence_ids: set[str],
 ):
     sequence_ids = virtool.otus.utils.extract_sequence_ids(joined)
 
@@ -161,7 +151,7 @@ def detect_duplicate_sequence_ids(
     seen_sequence_ids.update(sequence_ids)
 
 
-def detect_duplicate_name(joined: dict, duplicates: Set[str], seen: Set[str]):
+def detect_duplicate_name(joined: dict, duplicates: set[str], seen: set[str]):
     lowered = joined["name"].lower()
 
     if joined["name"].lower() in seen:
@@ -170,7 +160,7 @@ def detect_duplicate_name(joined: dict, duplicates: Set[str], seen: Set[str]):
         seen.add(lowered)
 
 
-def detect_duplicates(otus: List[dict], strict: bool = True) -> List[dict]:
+def detect_duplicates(otus: list[dict], strict: bool = True) -> list[dict]:
     duplicate_abbreviations = set()
     duplicate_ids = set()
     duplicate_isolate_ids = {}
@@ -256,33 +246,6 @@ def detect_duplicates(otus: List[dict], strict: bool = True) -> List[dict]:
     return errors
 
 
-def get_import_schema(require_meta: bool = True) -> dict:
-    return {
-        "data_type": {"type": "string", "required": require_meta},
-        "organism": {"type": "string", "required": require_meta},
-        "otus": {"type": "list", "required": True},
-    }
-
-
-def get_isolate_schema(require_id: bool) -> dict:
-    return {
-        "id": {"type": "string", "required": require_id},
-        "source_type": {"type": "string", "required": True},
-        "source_name": {"type": "string", "required": True},
-        "default": {"type": "boolean", "required": True},
-        "sequences": {"type": "list", "required": True},
-    }
-
-
-def get_otu_schema(require_id: bool) -> dict:
-    return {
-        "_id": {"type": "string", "required": require_id},
-        "abbreviation": {"type": "string"},
-        "name": {"type": "string", "required": True},
-        "isolates": {"type": "list", "required": True},
-    }
-
-
 def get_owner_user(user_id: str, created_at: datetime) -> dict:
     return {
         "id": user_id,
@@ -294,51 +257,93 @@ def get_owner_user(user_id: str, created_at: datetime) -> dict:
     }
 
 
-def get_sequence_schema(require_id: bool) -> dict:
-    return {
-        "_id": {"type": "string", "required": require_id},
-        "accession": {"type": "string", "required": True},
-        "definition": {"type": "string", "required": True},
-        "sequence": {"type": "string", "required": True},
-    }
+class ImportableSequence(BaseModel):
+    """A validator for a sequence in an importable reference data set."""
+
+    _id: str
+    accession: str
+    definition: str
+    sequence: str
+
+
+class ImportableIsolate(BaseModel):
+    """A validator for an isolate in an importable reference data set."""
+
+    id: str
+    source_type: str
+    source_name: str
+    default: bool
+    sequences: list[ImportableSequence]
+
+
+class ImportableOTU(BaseModel):
+    """A validator for an OTU in an importable reference data set."""
+
+    _id: str
+    abbreviation: str
+    name: str
+    isolates: list[ImportableIsolate]
+
+
+class ImportableReference(BaseModel):
+    """A validator for the metadata in a reference file."""
+
+    data_type: ReferenceDataType
+    organism: str = "Unknown"
+    otus: list[dict]
+    targets: list[dict] | None = None
 
 
 def load_reference_file(path: Path) -> dict:
-    """Load a list of merged otus documents from a file associated with a Virtool
-    reference file.
+    """Load the importable reference at ``path``.
 
     :param path: the path to the otus.json.gz file
     :return: the otus data to import
     """
-    if not path.suffixes == [".json", ".gz"]:
-        raise ValueError("Reference file must be a gzip-compressed JSON file")
+    if path.suffixes != [".json", ".gz"]:
+        msg = "Reference file must be a gzip-compressed JSON file"
+        raise ValueError(msg)
 
-    with open(path, "rb") as handle, gzip.open(handle, "rt") as gzip_file:
+    with path.open("rb") as handle, gzip.open(handle, "rt") as gzip_file:
         return json.load(gzip_file)
 
 
-def validate_otu(otu: dict, strict: bool) -> dict:
-    report = {"otu": None, "isolates": {}, "sequences": {}}
+def validate_otu(otu: dict) -> dict | None:
+    report = {"otu": [], "isolates": [], "sequences": []}
 
-    otu_validator = Validator(get_otu_schema(strict), allow_unknown=True)
+    try:
+        ImportableOTU.model_validate(otu)
+    except ValidationError as exc:
+        for error in exc.errors():
+            del error["input"]
+            del error["type"]
+            del error["url"]
 
-    if not otu_validator.validate(otu):
-        report["otu"] = otu_validator.errors
+            try:
+                level = error["loc"][-3]
+            except IndexError:
+                level = "otu"
 
-    report["isolates"] = {}
+            if level == "otu":
+                report["otu"].append(error)
+                continue
 
-    if "isolates" in otu:
-        isolate_validator = Validator(get_isolate_schema(strict), allow_unknown=True)
-        sequence_validator = Validator(get_sequence_schema(strict), allow_unknown=True)
+            isolate_index = error["loc"][1]
+            isolate_id = otu["isolates"][isolate_index]["id"]
 
-        for isolate in otu["isolates"]:
-            if not isolate_validator.validate(isolate):
-                report["isolates"][isolate["id"]] = isolate_validator.errors
+            if level == "isolates":
+                report["isolates"].append({**error, "isolate_id": isolate_id})
+            else:
+                sequence_index = error["loc"][3]
+                sequence_id = otu["isolates"][isolate_index]["sequences"][
+                    sequence_index
+                ]["_id"]
 
-            if "sequences" in isolate:
-                for sequence in isolate["sequences"]:
-                    if not sequence_validator.validate(sequence):
-                        report["sequences"][sequence["_id"]] = isolate_validator.errors
+                report["sequences"].append(
+                    {**error, "isolate_id": isolate_id, "sequence_id": sequence_id},
+                )
 
     if any(value for value in report.values()):
         return report
+
+    return None

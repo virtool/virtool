@@ -24,7 +24,6 @@ git describe --tags | awk -F - '
   }' > VERSION
 EOF
 
-
 FROM python:3.12.3-bookworm as runtime
 WORKDIR /app
 ENV VIRTUAL_ENV=/app/.venv \

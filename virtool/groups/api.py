@@ -1,36 +1,34 @@
-from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r201, r200, r204, r404, r400
-from pydantic import conint
+from pydantic import Field
 from virtool_core.models.group import GroupMinimal, GroupSearchResult
 from virtool_core.models.roles import AdministratorRole
 
 from virtool.api.custom_json import json_response
-from virtool.api.errors import APINotFound, APIBadRequest, APINoContent
-from virtool.api.policy import policy, AdministratorRoutePolicy
+from virtool.api.errors import APIBadRequest, APINoContent, APINotFound
+from virtool.api.policy import AdministratorRoutePolicy, policy
 from virtool.api.routes import Routes
-from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
-from virtool.data.utils import get_data_from_req
+from virtool.api.status import R200, R201, R204, R400, R404
+from virtool.api.view import APIView
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.groups.oas import (
-    CreateGroupRequest,
-    UpdateGroupRequest,
-    CreateGroupResponse,
+    GroupCreateRequest,
+    GroupCreateResponse,
     GroupResponse,
+    GroupUpdateRequest,
 )
 
 routes = Routes()
 
 
-@routes.view("/groups")
-class GroupsView(PydanticView):
+@routes.web.view("/groups")
+class GroupsView(APIView):
     async def get(
         self,
-        page: conint(ge=1) = 1,
-        per_page: conint(ge=1, le=100) = 25,
-        paginate: bool = False,
+        page: int = Field(default=1, ge=1),
+        per_page: int = Field(default=25, ge=1, le=100),
+        paginate: bool = Field(default=False),
         term: str | None = None,
-    ) -> r200[list[GroupMinimal] | GroupSearchResult]:
-        """
-        List groups.
+    ) -> R200[list[GroupMinimal] | GroupSearchResult]:
+        """List groups.
 
         Lists all user groups. The group IDs and names are included in the response.
 
@@ -38,18 +36,15 @@ class GroupsView(PydanticView):
             200: Successful operation
         """
         if paginate:
-            result = await get_data_from_req(self.request).groups.find(
-                page, per_page, term
-            )
+            result = await self.data.groups.find(page, per_page, term)
         else:
-            result = await get_data_from_req(self.request).groups.list()
+            result = await self.data.groups.list()
 
         return json_response(result)
 
     @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
-    async def post(self, data: CreateGroupRequest) -> r201[CreateGroupResponse] | r400:
-        """
-        Create a group.
+    async def post(self, data: GroupCreateRequest) -> R201[GroupCreateResponse] | R400:
+        """Create a group.
 
         Creates a new group with the given name.
 
@@ -64,7 +59,7 @@ class GroupsView(PydanticView):
         name = data.name
 
         try:
-            group = await get_data_from_req(self.request).groups.create(name)
+            group = await self.data.groups.create(name)
         except ResourceConflictError:
             raise APIBadRequest("Group already exists")
 
@@ -75,11 +70,10 @@ class GroupsView(PydanticView):
         )
 
 
-@routes.view("/groups/{group_id}")
-class GroupView(PydanticView):
-    async def get(self, group_id: int, /) -> r200[GroupResponse] | r404:
-        """
-        Get a group.
+@routes.web.view("/groups/{group_id}")
+class GroupView(APIView):
+    async def get(self, group_id: int, /) -> R200[GroupResponse] | R404:
+        """Get a group.
 
         Fetches the complete representation of a single user group including its
         permissions.
@@ -89,7 +83,7 @@ class GroupView(PydanticView):
             404: Group not found
         """
         try:
-            group = await get_data_from_req(self.request).groups.get(group_id)
+            group = await self.data.groups.get(group_id)
         except ResourceNotFoundError:
             raise APINotFound()
 
@@ -97,10 +91,12 @@ class GroupView(PydanticView):
 
     @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
     async def patch(
-        self, group_id: int, /, data: UpdateGroupRequest
-    ) -> r200[GroupResponse] | r404:
-        """
-        Update a group.
+        self,
+        group_id: int,
+        /,
+        data: GroupUpdateRequest,
+    ) -> R200[GroupResponse] | R404:
+        """Update a group.
 
         Updates a group's name or permissions.
 
@@ -112,16 +108,15 @@ class GroupView(PydanticView):
             404: Group not found
         """
         try:
-            group = await get_data_from_req(self.request).groups.update(group_id, data)
+            group = await self.data.groups.update(group_id, data)
         except ResourceNotFoundError:
             raise APINotFound()
 
         return json_response(GroupResponse.parse_obj(group))
 
     @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
-    async def delete(self, group_id: int, /) -> r204 | r404:
-        """
-        Delete a group.
+    async def delete(self, group_id: int, /) -> R204 | R404:
+        """Delete a group.
 
         Deletes a group by its 'group id'.
 
@@ -131,7 +126,7 @@ class GroupView(PydanticView):
 
         """
         try:
-            await get_data_from_req(self.request).groups.delete(group_id)
+            await self.data.groups.delete(group_id)
         except ResourceNotFoundError:
             raise APINotFound()
 

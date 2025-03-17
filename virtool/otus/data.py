@@ -25,12 +25,18 @@ from virtool.otus.db import (
     increment_otu_version,
     update_otu_verification,
 )
-from virtool.otus.oas import CreateOTURequest, UpdateOTURequest, UpdateSequenceRequest
+from virtool.otus.oas import (
+    IsolateUpdateRequest,
+    OTUCreateRequest,
+    OTUUpdateRequest,
+    SequenceUpdateRequest,
+)
 from virtool.otus.utils import find_isolate, format_isolate_name
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
+from virtool.validation import is_set
 
 
 class OTUData:
@@ -204,7 +210,7 @@ class OTUData:
             fasta,
         )
 
-    async def create(self, ref_id: str, data: CreateOTURequest, user_id: str) -> OTU:
+    async def create(self, ref_id: str, data: OTUCreateRequest, user_id: str) -> OTU:
         """Create an OTU and it's first history record.
 
         :param ref_id: the ID of the parent reference
@@ -246,7 +252,7 @@ class OTUData:
 
         return await self.get(document["_id"])
 
-    async def update(self, otu_id: str, data: UpdateOTURequest, user_id: str) -> OTU:
+    async def update(self, otu_id: str, data: OTUUpdateRequest, user_id: str) -> OTU:
         """Update an OTU.
 
         Modifiable fields are `name`, `abbreviation`, and `schema`. Method creates a
@@ -262,17 +268,15 @@ class OTUData:
         # because we are definitely going to modify the otu.
         update = {"verified": False}
 
-        data = data.dict(by_alias=True, exclude_unset=True)
-
         # If the name is changing, update the ``lower_name`` field in the otu document.
-        if "name" in data:
+        if is_set(data.name):
             name = data["name"]
             update.update({"name": name, "lower_name": name.lower()})
 
-        if "abbreviation" in data:
+        if is_set(data.abbreviation):
             update["abbreviation"] = data["abbreviation"]
 
-        if "schema" in data:
+        if is_set(data.schema):
             update["schema"] = data["schema"]
 
         async def func(session: AsyncIOMotorClientSession):
@@ -468,19 +472,18 @@ class OTUData:
         otu_id: str,
         isolate_id: str,
         user_id: str,
-        source_type: str | None = None,
-        source_name: str | None = None,
+        data: IsolateUpdateRequest,
     ):
         isolates = await get_one_field(self._mongo.otus, "isolates", otu_id)
 
         isolate = find_isolate(isolates, isolate_id)
         old_isolate_name = format_isolate_name(isolate)
 
-        if source_type is not None:
-            isolate["source_type"] = source_type
+        if is_set(data.source_type):
+            isolate["source_type"] = data.source_type
 
-        if source_name is not None:
-            isolate["source_name"] = source_name
+        if is_set(data.source_name):
+            isolate["source_name"] = data.source_name
 
         new_isolate_name = format_isolate_name(isolate)
 
@@ -791,17 +794,21 @@ class OTUData:
         isolate_id: str,
         sequence_id: str,
         user_id: str,
-        data: UpdateSequenceRequest,
+        data: SequenceUpdateRequest,
     ):
-        data = data.dict(exclude_unset=True)
-
         update = {
-            key: data[key]
-            for key in ("accession", "definition", "host", "segment", "target")
-            if key in data
+            attr.__name__: attr
+            for attr in (
+                data.accession,
+                data.definition,
+                data.host,
+                data.segment,
+                data.target,
+            )
+            if is_set(attr)
         }
 
-        if "sequence" in data:
+        if is_set(data.sequence):
             update["sequence"] = data["sequence"].replace(" ", "").replace("\n", "")
 
         async def func(session: AsyncIOMotorClientSession) -> Document:
@@ -838,7 +845,7 @@ class OTUData:
 
         return base_processor(await self._mongo.with_transaction(func))
 
-    async def remove_sequence(
+    async def delete_sequence(
         self,
         otu_id: str,
         isolate_id: str,

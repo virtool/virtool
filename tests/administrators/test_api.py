@@ -15,7 +15,7 @@ from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
-from virtool.settings.oas import UpdateSettingsRequest
+from virtool.settings.oas import SettingsUpdateRequest
 from virtool.users.mongo import validate_credentials
 from virtool.users.utils import check_password
 
@@ -41,7 +41,7 @@ async def test_get_roles(spawn_client: ClientSpawner, snapshot: SnapshotAssertio
 async def test_list_users(
     authorization_client: AuthorizationClient,
     spawn_client: ClientSpawner,
-        fake: DataFaker,
+    fake: DataFaker,
     snapshot: SnapshotAssertion,
 ):
     client = await spawn_client(
@@ -67,7 +67,7 @@ async def test_list_users(
 
 async def test_get_user(
     authorization_client: AuthorizationClient,
-        fake: DataFaker,
+    fake: DataFaker,
     spawn_client: ClientSpawner,
     snapshot: SnapshotAssertion,
     static_time,
@@ -93,7 +93,7 @@ async def test_get_user(
 async def test_create(
     error: str | None,
     data_layer: DataLayer,
-        fake: DataFaker,
+    fake: DataFaker,
     mongo: Mongo,
     resp_is,
     snapshot: SnapshotAssertion,
@@ -108,7 +108,7 @@ async def test_create(
     user = await fake.users.create()
 
     await get_data_from_app(client.app).settings.update(
-        UpdateSettingsRequest(minimum_password_length=8),
+        SettingsUpdateRequest(minimum_password_length=8),
     )
 
     data = {"handle": "fred", "password": "hello_world", "force_reset": False}
@@ -159,7 +159,7 @@ async def test_create(
     [None, AdministratorRole.USERS, AdministratorRole.FULL],
 )
 async def test_update_admin_role(
-        fake: DataFaker,
+    fake: DataFaker,
     spawn_client: ClientSpawner,
     snapshot: SnapshotAssertion,
     role: AdministratorRole,
@@ -180,7 +180,7 @@ async def test_update_admin_role(
 class TestUpdateUser:
     async def test_force_reset(
         self,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
@@ -200,7 +200,7 @@ class TestUpdateUser:
 
     async def test_groups(
         self,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
@@ -249,7 +249,7 @@ class TestUpdateUser:
     async def test_password(
         self,
         mongo: Mongo,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
         password,
@@ -291,7 +291,7 @@ class TestUpdateUser:
     async def test_primary_group(
         self,
         is_member: bool,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot,
         spawn_client: ClientSpawner,
     ):
@@ -325,7 +325,7 @@ class TestAdministratorRoles:
     async def test_ok(
         self,
         role: AdministratorRole,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot,
         spawn_client: ClientSpawner,
     ):
@@ -377,7 +377,7 @@ class TestAdministratorRoles:
         self,
         role: AdministratorRole,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         spawn_client: ClientSpawner,
     ):
         """Test that an administrator with a lower role or non-administrator can't change a

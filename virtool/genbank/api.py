@@ -1,37 +1,35 @@
-"""
-Provides request handlers for accessing GenBank through the web server.
+"""Provides request handlers for accessing GenBank through the web server."""
 
-"""
 from aiohttp import ClientConnectorError
-from aiohttp.web import Response
 
 import virtool.genbank.http
-from virtool.api.errors import APINotFound, APIBadGateway
 from virtool.api.custom_json import json_response
+from virtool.api.errors import APIBadGateway, APINotFound
 from virtool.api.routes import Routes
+from virtool.api.status import R200, R404, R502
+from virtool.api.view import APIView
 from virtool.utils import get_http_session_from_app
 
 routes = Routes()
 
 
-@routes.get("/genbank/{accession}")
-async def get(req) -> Response:
-    """
-    Retrieve the Genbank data associated with the given accession and transform it into
-    a Virtool-style sequence document.
+@routes.web.view("/genbank/{accession}")
+class GenbankView(APIView):
+    async def get(self, accession: str) -> R200 | R404 | R502:
+        """Retrieve the Genbank data associated with the given accession.
 
-    """
-    accession = req.match_info["accession"]
+        Transform the data into Virtool-compatible format and return it as JSON.
+        """
+        try:
+            data = await virtool.genbank.http.fetch(
+                get_http_session_from_app(self.request.app),
+                accession,
+            )
 
-    try:
-        data = await virtool.genbank.http.fetch(
-            get_http_session_from_app(req.app), accession
-        )
+            if data:
+                return json_response(data)
 
-        if data is None:
-            raise APINotFound()
+            raise APINotFound
 
-        return json_response(data)
-
-    except ClientConnectorError:
-        raise APIBadGateway("Could not reach NCBI")
+        except ClientConnectorError:
+            raise APIBadGateway("Could not reach NCBI")
