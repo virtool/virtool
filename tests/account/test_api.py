@@ -526,7 +526,7 @@ async def test_login(
 
 
 @pytest.mark.parametrize(
-    "request_path,correct_code",
+    ("request_path", "correct_code"),
     [
         ("account/keys", True),
         ("account/reset", True),
@@ -534,41 +534,42 @@ async def test_login(
     ],
 )
 async def test_login_reset(
-    spawn_client,
-    snapshot,
-    fake: DataFaker,
-    request_path,
-    correct_code,
+    request_path: str,
+    correct_code: bool,
     data_layer: DataLayer,
+    spawn_client: ClientSpawner,
+    snapshot: SnapshotAssertion,
 ) -> None:
     client = await spawn_client(authenticated=False)
 
-    data = {
-        "username": "foobar",
-        "handle": "foobar",
-        "password": "hello_world",
-        "force_reset": True,
-    }
     await data_layer.users.create("foobar", "hello_world", True)
-    resp = await client.post("/account/login", data)
-    reset_json_data = await resp.json()
+
+    resp = await client.post(
+        "/account/login",
+        {
+            "username": "foobar",
+            "handle": "foobar",
+            "password": "hello_world",
+            "force_reset": True,
+        },
+    )
+
+    resp_data = await resp.json()
 
     assert "session_id=session" in resp.headers.get("Set-Cookie")
-    assert reset_json_data.get("reset_code") is not None
-    assert reset_json_data.get("reset") is True
+    assert resp_data.get("reset_code") is not None
+    assert resp_data.get("reset") is True
 
-    reset_data = {
+    data = {
         "password": "invalid",
-        "reset_code": reset_json_data.get("reset_code")
-        if correct_code
-        else "wrong_code",
+        "reset_code": resp_data.get("reset_code") if correct_code else "wrong_code",
     }
 
-    resp = await client.post(request_path, reset_data)
+    resp = await client.post(request_path, data)
     assert await resp.json() == snapshot
 
-    reset_data["password"] = "hello_world"
+    data["password"] = "hello_world"
 
-    resp = await client.post(request_path, reset_data)
+    resp = await client.post(request_path, data)
 
     assert await resp.json() == snapshot

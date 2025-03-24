@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from json.decoder import JSONDecodeError
 from typing import get_origin
 
+from aiohttp import ContentTypeError
 from aiohttp.helpers import parse_mimetype
 from aiohttp.web_request import BaseRequest, Request
 from pydantic import BaseModel, create_model
@@ -115,11 +116,12 @@ class BodyInjector(AbstractInjector):
             return injectable
 
         if robust_issubclass(self.parameter.type, BaseModel):
-            if parse_mimetype(request.content_type).type != "application/json":
-                raise APIBadRequest(message="JSON content type is required") from None
-
             try:
                 body = await request.json()
+            except ContentTypeError:
+                raise APIBadRequest(
+                    message="Content-Type must be application/json",
+                ) from None
             except JSONDecodeError:
                 raise APIBadRequest(message="Malformed JSON") from None
 
@@ -137,9 +139,9 @@ class BodyInjector(AbstractInjector):
             ):
                 raise APIBadRequest(message="Body must be a JSON object") from None
 
-            injectable.kwargs = [self.parameter.name] = model.model_validate(
+            injectable.kwargs[self.parameter.name] = model.model_validate(
                 body,
-            ).model_dump()
+            )
 
         return injectable
 

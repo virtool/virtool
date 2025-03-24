@@ -113,12 +113,7 @@ class VirtoolTestClient:
         return await self._test_client.get(url, headers=headers, params=params)
 
     async def post(self, url: str, data: dict | None) -> ClientResponse:
-        payload = None
-
-        if data:
-            payload = dump_string(data)
-
-        return await self._test_client.post(url, data=payload)
+        return await self._test_client.post(url, json=data)
 
     async def post_form(self, url: str, data) -> ClientResponse:
         return await self._test_client.post(url, data=data)
@@ -422,6 +417,7 @@ def spawn_client(
             auth=auth,
             auto_decompress=False,
             cookies=cookies,
+            json_serialize=dump_string,
         )
 
         get_mongo_from_app(test_client.app).id_provider = FakeIdProvider()
