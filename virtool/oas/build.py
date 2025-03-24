@@ -257,6 +257,7 @@ def generate_oas() -> OAS3:
 
     for path in oas.paths.values():
         print(path)
+
         for operation in path.operations:
             print(operation)
 

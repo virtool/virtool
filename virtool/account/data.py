@@ -1,5 +1,4 @@
 import asyncio
-from pprint import pprint
 
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -79,8 +78,8 @@ class AccountData(DataLayerDomain):
             ),
         )
 
-        if extra["email"] == "":
-            extra["email"] = None
+        if extra.get("email") is None:
+            extra["email"] = ""
 
         if user:
             return Account.model_validate(

@@ -94,7 +94,7 @@ class AccountView(APIView):
         except ResourceError:
             raise APIBadRequest("Invalid credentials")
 
-        return json_response(AccountUpdateResponse.model_validate(account))
+        return json_response(account)
 
 
 @routes.web.view("/account/settings")

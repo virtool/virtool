@@ -80,6 +80,7 @@ sphinx-autobuild = "^2021.3.14"
 sphinx-autodoc-typehints = "^1.24.0"
 sphinx-autofixture = "^0.4.0"
 sphinx-toolbox = "^3.5.0"
+pyright = "^1.1.397"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

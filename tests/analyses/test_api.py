@@ -1,7 +1,6 @@
 import asyncio
 import os
 from pathlib import Path
-from pprint import pprint
 
 import pytest
 from pytest_mock import MockerFixture
@@ -668,8 +667,6 @@ async def test_finalize(
     else:
         data = {"results": {"result": "TEST_RESULT", "hits": []}}
 
-    pprint(data)
-
     resp = await client.patch("/analyses/analysis1", json=data)
 
     if error:
@@ -678,7 +675,7 @@ async def test_finalize(
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-        document,row = await asyncio.gather(
+        document, row = await asyncio.gather(
             mongo.analyses.find_one(),
             get_row_by_id(pg, SQLAnalysisResult, 1),
         )

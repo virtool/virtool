@@ -219,15 +219,13 @@ class SessionData(DataLayerDomain):
         return Session(authentication=None, reset=None, **session)
 
     async def get_reset(self, session_id: str, reset_code: str) -> Session:
-        """Gets a session with a pending password reset given its ``session_id`` and its
-        valid ``reset_code``.
+        """Get a session with a pending password reset.
 
         If the passed ``reset_code`` is not valid for the session with the passed
         ``session_id``, :exception:``ResourceNotFound` will be raised.
 
         :param session_id: the session id
-        :param reset_code: the reset code fopr
-        :raises:
+        :param reset_code: the reset code
         :return: the associated user_id and remember boolean
         """
         session = await self._get(session_id)
@@ -241,10 +239,10 @@ class SessionData(DataLayerDomain):
             await self.delete(session_id)
             raise ResourceNotFoundError("Invalid reset code")
 
-        return Session(authentication=None, reset=None, **session)
+        return Session(**{"authentication": None, "reset": None, **session})
 
     async def delete(self, session_id: str):
-        """Deletes the session with the provided ``session_id``.
+        """Delete the session with the provided ``session_id``.
 
         :param session_id: the id of the session to remove
         """

@@ -1,7 +1,4 @@
-"""Database utilities for managing users.
-
-TODO: Drop legacy group id support when we fully migrate to integer ids.
-"""
+"""Database utilities for managing users."""
 
 from dataclasses import dataclass
 

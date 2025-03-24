@@ -348,7 +348,7 @@ class UsersData(DataLayerDomain):
         ):
             return await self.get(document["_id"])
 
-        handle = f"{b2c_user_attributes.given_name}-{b2c_user_attributes.family_name}-{random.randint(1, 100)}"
+        handle = "{b2c_user_attributes.given_name}-{b2c_user_attributes.family_name}-{random.randint(1, 100)}"
 
         while await self._mongo.users.count_documents({"handle": handle}):
             handle = f"{b2c_user_attributes.given_name}-{b2c_user_attributes.family_name}-{random.randint(1, 100)}"
@@ -413,19 +413,19 @@ class UsersData(DataLayerDomain):
 
         if is_set(data.active):
             for u in (mongo_update, pg_update):
-                u.update({"active": data["active"], "invalidate_sessions": True})
+                u.update({"active": data.active, "invalidate_sessions": True})
 
         if is_set(data.force_reset):
             for u in (mongo_update, pg_update):
                 u.update(
-                    {"force_reset": data["force_reset"], "invalidate_sessions": True},
+                    {"force_reset": data.force_reset, "invalidate_sessions": True},
                 )
 
         if is_set(data.password):
             for u in (mongo_update, pg_update):
                 u.update(
                     {
-                        "password": virtool.users.utils.hash_password(data["password"]),
+                        "password": virtool.users.utils.hash_password(data.password),
                         "last_password_change": virtool.utils.timestamp(),
                         "invalidate_sessions": True,
                     },

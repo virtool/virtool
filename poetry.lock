@@ -2011,6 +2011,18 @@ fast = ["fastnumbers (>=2.0.0)"]
 icu = ["PyICU (>=1.0.0)"]
 
 [[package]]
+name = "nodeenv"
+version = "1.9.1"
+description = "Node.js virtual environment builder"
+optional = false
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
+groups = ["dev"]
+files = [
+    {file = "nodeenv-1.9.1-py2.py3-none-any.whl", hash = "sha256:ba11c9782d29c27c70ffbdda2d7415098754709be8a7056d79a737cd901155c9"},
+    {file = "nodeenv-1.9.1.tar.gz", hash = "sha256:6ec12890a2dab7946721edbfbcd91f3319c6ccc9aec47be7c7e6b7011ee6645f"},
+]
+
+[[package]]
 name = "numpy"
 version = "1.26.4"
 description = "Fundamental package for array computing in Python"
@@ -2681,6 +2693,27 @@ ocsp = ["certifi ; os_name == \"nt\" or sys_platform == \"darwin\"", "cryptograp
 snappy = ["python-snappy"]
 test = ["pytest (>=8.2)", "pytest-asyncio (>=0.24.0)"]
 zstd = ["zstandard"]
+
+[[package]]
+name = "pyright"
+version = "1.1.397"
+description = "Command line wrapper for pyright"
+optional = false
+python-versions = ">=3.7"
+groups = ["dev"]
+files = [
+    {file = "pyright-1.1.397-py3-none-any.whl", hash = "sha256:2e93fba776e714a82b085d68f8345b01f91ba43e1ab9d513e79b70fc85906257"},
+    {file = "pyright-1.1.397.tar.gz", hash = "sha256:07530fd65a449e4b0b28dceef14be0d8e0995a7a5b1bb2f3f897c3e548451ce3"},
+]
+
+[package.dependencies]
+nodeenv = ">=1.6.0"
+typing-extensions = ">=4.1"
+
+[package.extras]
+all = ["nodejs-wheel-binaries", "twine (>=3.4.1)"]
+dev = ["twine (>=3.4.1)"]
+nodejs = ["nodejs-wheel-binaries"]
 
 [[package]]
 name = "pytest"
@@ -3792,14 +3825,14 @@ test = ["aiohttp (>=3.10.5)", "flake8 (>=5.0,<6.0)", "mypy (>=0.800)", "psutil",
 
 [[package]]
 name = "virtool-core"
-version = "15.0.0"
+version = "15.0.1"
 description = "Core utilities for Virtool."
 optional = false
 python-versions = "<3.13,>=3.12"
 groups = ["main"]
 files = [
-    {file = "virtool_core-15.0.0-py3-none-any.whl", hash = "sha256:30ae81efa753d80ac74b6d058a8312fa831ef437688c4a6ae40dbd94662dafb6"},
-    {file = "virtool_core-15.0.0.tar.gz", hash = "sha256:53027ce763641a39df4afae3f9c3c5c7c5906175b61f821c45db6988b40ecd87"},
+    {file = "virtool_core-15.0.1-py3-none-any.whl", hash = "sha256:907773f7372542516bd2ece57ac0f9a561150dcffb2094c86517b719ebadbe55"},
+    {file = "virtool_core-15.0.1.tar.gz", hash = "sha256:0d1e26dfbb8a0370a410baab14a854b332fd0fbe4381e21e21bea2f1d0f9739b"},
 ]
 
 [package.dependencies]
@@ -4032,4 +4065,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.1"
 python-versions = "~3.12"
-content-hash = "e0485e87888d95e56c0d0626ee18d988a1d30fd7cef7973e61cc0397489bad0e"
+content-hash = "7e9488204b943a9e32058b5ebe6af0f68c66d3fe7a2b285b0d34cc799ec91d2d"
