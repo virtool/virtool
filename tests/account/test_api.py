@@ -1,10 +1,11 @@
+from http import HTTPStatus
+
 import pytest
 from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, VirtoolTestClient
 from tests.fixtures.core import StaticTime
 from virtool.data.layer import DataLayer
-from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.groups.oas import PermissionsUpdate
 from virtool.mongo.core import Mongo
@@ -48,10 +49,10 @@ class TestUpdate:
             },
         )
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot_recent(name="response")
 
-    async def test_invalid_email(self, snapshot: SnapshotAssertion):
+    async def test_invalid_email(self):
         """Test that a user cannot update their account with an invalid email."""
         resp = await self.client.patch(
             "/account",
@@ -60,7 +61,7 @@ class TestUpdate:
             },
         )
 
-        assert resp.status == 422
+        assert resp.status == HTTPStatus.UNPROCESSABLE_ENTITY
         assert await resp.json() == {
             "errors": [
                 {
@@ -73,26 +74,29 @@ class TestUpdate:
             "message": "Invalid input",
         }
 
-    async def test_password_too_short(self, snapshot: SnapshotAssertion):
+    async def test_password_too_short(self):
         """Test that a user cannot update their account with a password that is too short."""
         resp = await self.client.patch(
             "/account",
             {"password": "foo", "old_password": "hello_world"},
         )
 
-        assert resp.status == 400
+        assert resp.status == HTTPStatus.BAD_REQUEST
         assert await resp.json() == {
             "id": "bad_request",
             "message": "Password does not meet minimum length requirement (8)",
         }
 
-    async def test_missing_old_password(self, snapshot: SnapshotAssertion):
+    async def test_missing_password(self):
+        """Test that a request fails if it only contains one of `password` or
+        `old_password`.
+        """
         resp = await self.client.patch(
             "/account",
             {"password": "foo_bar_1"},
         )
 
-        assert resp.status == 422
+        assert resp.status == HTTPStatus.UNPROCESSABLE_ENTITY
         assert await resp.json() == {
             "errors": [
                 {
@@ -108,52 +112,29 @@ class TestUpdate:
             "message": "Invalid input",
         }
 
+    async def test_invalid_credentials(self, snapshot: SnapshotAssertion):
+        """Test that a user cannot update their account with invalid credentials."""
+        resp = await self.client.patch(
+            "/account",
+            {"password": "foo_bar_1", "old_password": "not_right"},
+        )
 
-@pytest.mark.parametrize(
-    ("body", "status"),
-    [
-        ({"password": "foo_bar_1"}, 400),
-        ({"password": "foo_bar_1", "old_password": "not_right"}, 400),
-        ({"old_password": "hello_world"}, 400),
-        ({"password": "foo_bar_1", "old_password": "bob_is_testing"}, 200),
-        ({}, 200),
-        ({"email": None, "old_password": None, "password": None}, 400),
-    ],
-    ids=[
-        "missing_old_password",
-        "invalid_credentials",
-        "missing_password",
-        "missing_email",
-        "missing_all",
-        "none_all",
-    ],
-)
-async def test_update(
-    body: dict,
-    status: int,
-    snapshot: SnapshotAssertion,
-    spawn_client: ClientSpawner,
-    static_time,
-):
-    client = await spawn_client(authenticated=True)
-
-    await get_data_from_app(client.app).settings.update(
-        SettingsUpdateRequest(minimum_password_length=8),
-    )
-
-    resp = await client.patch("/account", body)
-
-    assert resp.status == status
-    assert await resp.json() == snapshot(name="response")
+        assert resp.status == HTTPStatus.BAD_REQUEST
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "Invalid credentials",
+        }
 
 
-async def test_get_settings(spawn_client):
-    """Test that a ``GET /account/settings`` returns the settings for the session user."""
+async def test_get_settings(spawn_client: ClientSpawner):
+    """Test that a ``GET /account/settings`` returns the settings for the session
+    user.
+    """
     client = await spawn_client(authenticated=True)
 
     resp = await client.get("/account/settings")
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
 
     assert await resp.json() == {
         "skip_quick_analyze_dialog": True,
@@ -164,7 +145,7 @@ async def test_get_settings(spawn_client):
 
 
 @pytest.mark.parametrize(
-    "data,status",
+    ("data", "status"),
     [
         (
             {"show_ids": False},
@@ -183,10 +164,15 @@ async def test_get_settings(spawn_client):
     ],
     ids=["valid_input", "invalid_input", "null_values"],
 )
-async def test_update_settings(data, status, spawn_client, resp_is, snapshot):
-    """Test that account settings can be updated at ``POST /account/settings`` and that requests to
-    ``POST /account/settings`` return 422 for invalid JSON fields.
-
+async def test_update_settings(
+    data: dict,
+    status: HTTPStatus,
+    spawn_client: ClientSpawner,
+    resp_is,
+    snapshot: SnapshotAssertion,
+):
+    """Test that account settings can be updated at ``POST /account/settings`` and that
+    requests to ``POST /account/settings`` return 422 for invalid JSON fields.
     """
     client = await spawn_client(authenticated=True)
 

@@ -112,7 +112,7 @@ class AccountsSettingsView(APIView):
             self.request["client"].user_id,
         )
 
-        return json_response(AccountSettingsResponse.parse_obj(account_settings))
+        return json_response(account_settings)
 
     async def patch(
         self,
@@ -127,12 +127,12 @@ class AccountsSettingsView(APIView):
             400: Invalid input
             401: Requires Authorization
         """
-        settings = await self.data.account.update_settings(
+        account_settings = await self.data.account.update_settings(
             data,
             self.request["client"].user_id,
         )
 
-        return json_response(AccountSettingsResponse.model_validate(settings))
+        return json_response(account_settings)
 
 
 @routes.web.view("/account/keys")

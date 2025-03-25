@@ -113,23 +113,7 @@ class APIView(AbstractView):
         errors = []
 
         for context, exception in exceptions:
-            for error in exception.errors(include_url=False):
-                print(error)
-                if "ctx" in error and "error" in error["ctx"]:
-                    message = str(error["ctx"]["error"])
-                else:
-                    logger.warning("Error context not found in Pydantic error")
-                    message = ""
-
-                if error["loc"]:
-                    errors.extend(
-                        [
-                            {"field": field, "message": message, "in": context}
-                            for field in error["loc"]
-                        ],
-                    )
-                else:
-                    errors.append({"field": "", "in": context, "message": message})
+            errors.extend(_handle_pydantic_validation_error(context, exception))
 
         raise APIInvalidInput(errors=errors)
 
@@ -169,3 +153,25 @@ def _inject_params(handler: Handler) -> Handler:
         return await handler(self, *args, **kwargs)
 
     return wrapped_handler
+
+
+def _handle_pydantic_validation_error(
+    context: HandlerParameterContext,
+    exception: ValidationError,
+) -> list[dict]:
+    """Handle a Pydantic validation error."""
+    errors = []
+
+    for error in exception.errors(include_url=False):
+        message = error["msg"]
+
+        for prefix in ("Value error, ", "Field required, "):
+            message = message.replace(prefix, "")
+
+        fields = error["loc"] or ("",)
+
+        errors.extend(
+            [{"field": field, "in": context, "message": message} for field in fields],
+        )
+
+    return errors
