@@ -10,7 +10,7 @@ from typing import get_origin
 from aiohttp import ContentTypeError
 from aiohttp.helpers import parse_mimetype
 from aiohttp.web_request import BaseRequest, Request
-from pydantic import BaseModel, create_model
+from pydantic import BaseModel, ValidationError, create_model
 
 from virtool.api.errors import APIBadRequest
 from virtool.api.introspect import (
@@ -61,6 +61,8 @@ class AbstractInjector(metaclass=ABCMeta):
 class PathInjector(AbstractInjector):
     """Validates, and injects the part of path inside the view positional args."""
 
+    name = "path"
+
     def __init__(self, parameters: HandlerParameters) -> None:
         self.parameters = parameters.path
 
@@ -77,6 +79,8 @@ class PathInjector(AbstractInjector):
 
 class BodyInjector(AbstractInjector):
     """Validates and injects the content of request body inside the view kwargs."""
+
+    name = "body"
 
     def __init__(self, parameters: HandlerParameters) -> None:
         self.parameter = parameters.body
@@ -139,15 +143,23 @@ class BodyInjector(AbstractInjector):
             ):
                 raise APIBadRequest(message="Body must be a JSON object") from None
 
-            injectable.kwargs[self.parameter.name] = model.model_validate(
-                body,
-            )
+            try:
+                injectable.kwargs[self.parameter.name] = model.model_validate(
+                    body,
+                )
+            except ValidationError as e:
+                return InjectorUpdate(
+                    HandlerParameterContext.BODY,
+                    errors=[e],
+                )
 
         return injectable
 
 
 class QueryStringInjector(AbstractInjector):
     """Validates and injects the query string inside the view kwargs."""
+
+    name = "query"
 
     def __init__(self, parameters: HandlerParameters) -> None:
         self.parameters = parameters.query
@@ -173,17 +185,23 @@ class QueryStringInjector(AbstractInjector):
         self.model = create_model("QueryStringModel", **fields)
 
     async def inject(self, request: BaseRequest) -> InjectorUpdate:
-        validated = self.model.model_validate(
-            {
-                key: (
-                    values
-                    if len(values := request.query.getall(key)) > 1
-                    or key in self._multi_valued_parameters
-                    else value
-                )
-                for key, value in request.query.items()
-            },
-        ).model_dump()
+        try:
+            validated = self.model.model_validate(
+                {
+                    key: (
+                        values
+                        if len(values := request.query.getall(key)) > 1
+                        or key in self._multi_valued_parameters
+                        else value
+                    )
+                    for key, value in request.query.items()
+                },
+            ).model_dump()
+        except ValidationError as e:
+            return InjectorUpdate(
+                HandlerParameterContext.QUERY,
+                errors=[e],
+            )
 
         for group_parameter in self.parameters.groups.values():
             group = group_parameter.type()
@@ -203,12 +221,15 @@ class HeadersInjector(AbstractInjector):
         self.parameters = parameters.headers
 
     async def inject(self, request: BaseRequest) -> InjectorUpdate:
-        validated = self.parameters.model.model_validate(
-            {
-                name.lower().replace("-", "_"): value
-                for name, value in request.headers.items()
-            },
-        ).model_dump()
+        try:
+            validated = self.parameters.model.model_validate(
+                {
+                    name.lower().replace("-", "_"): value
+                    for name, value in request.headers.items()
+                },
+            ).model_dump()
+        except ValidationError as e:
+            return InjectorUpdate(HandlerParameterContext.HEADERS, errors=[e])
 
         for group_parameter in self.parameters.groups.values():
             group = group_parameter.type()

@@ -194,6 +194,41 @@
     }),
   })
 # ---
+# name: TestUpdate.test_ok[response]
+  dict({
+    'active': True,
+    'administrator_role': None,
+    'b2c': None,
+    'b2c_display_name': None,
+    'b2c_family_name': None,
+    'b2c_given_name': None,
+    'b2c_oid': None,
+    'email': 'virtool.devs@gmail.com',
+    'force_reset': False,
+    'groups': list([
+    ]),
+    'handle': 'bob',
+    'id': 'bf1b993c',
+    'last_password_change': 'approximately_now_isoformat',
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    }),
+    'primary_group': None,
+    'settings': dict({
+      'quick_analyze_workflow': 'nuvs',
+      'show_ids': False,
+      'show_versions': False,
+      'skip_quick_analyze_dialog': False,
+    }),
+  })
+# ---
 # name: TestUpdateAPIKey.test[False-False]
   dict({
     'created_at': '2015-10-06T20:00:00Z',
@@ -837,7 +872,7 @@
     'b2c_family_name': None,
     'b2c_given_name': None,
     'b2c_oid': None,
-    'email': None,
+    'email': 'virtool.devs@gmail.com',
     'force_reset': False,
     'groups': list([
     ]),
@@ -872,7 +907,7 @@
     'b2c_family_name': None,
     'b2c_given_name': None,
     'b2c_oid': None,
-    'email': None,
+    'email': '',
     'force_reset': False,
     'groups': list([
     ]),

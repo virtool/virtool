@@ -1,7 +1,8 @@
 import pytest
 from syrupy import SnapshotAssertion
 
-from tests.fixtures.client import ClientSpawner
+from tests.fixtures.client import ClientSpawner, VirtoolTestClient
+from tests.fixtures.core import StaticTime
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
@@ -15,7 +16,7 @@ from virtool.users.utils import Permission, hash_password
 async def test_get(
     snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
-    static_time,
+    static_time: StaticTime,
 ):
     client = await spawn_client(authenticated=True)
 
@@ -25,20 +26,92 @@ async def test_get(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.parametrize(
-    "body,status",
-    [
-        (
+class TestUpdate:
+    client: VirtoolTestClient
+
+    @pytest.fixture(autouse=True)
+    async def _setup(self, data_layer: DataLayer, spawn_client: ClientSpawner):
+        self.client = await spawn_client(authenticated=True)
+
+        await data_layer.settings.update(
+            SettingsUpdateRequest(minimum_password_length=8),
+        )
+
+    async def test_ok(self, snapshot_recent: SnapshotAssertion):
+        """Test that a user can update their account when all fields are valid."""
+        resp = await self.client.patch(
+            "/account",
             {
                 "email": "virtool.devs@gmail.com",
                 "password": "foo_bar_1",
                 "old_password": "bob_is_testing",
             },
-            200,
-        ),
-        ({"email": "virtool.devs@gmail.com"}, 200),
-        ({"email": "invalid_email@"}, 400),
-        ({"password": "foo", "old_password": "hello_world"}, 400),
+        )
+
+        assert resp.status == 200
+        assert await resp.json() == snapshot_recent(name="response")
+
+    async def test_invalid_email(self, snapshot: SnapshotAssertion):
+        """Test that a user cannot update their account with an invalid email."""
+        resp = await self.client.patch(
+            "/account",
+            {
+                "email": "invalid_email@",
+            },
+        )
+
+        assert resp.status == 422
+        assert await resp.json() == {
+            "errors": [
+                {
+                    "message": "The format of the email is invalid",
+                    "field": "email",
+                    "in": "body",
+                },
+            ],
+            "id": "invalid_input",
+            "message": "Invalid input",
+        }
+
+    async def test_password_too_short(self, snapshot: SnapshotAssertion):
+        """Test that a user cannot update their account with a password that is too short."""
+        resp = await self.client.patch(
+            "/account",
+            {"password": "foo", "old_password": "hello_world"},
+        )
+
+        assert resp.status == 400
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "Password does not meet minimum length requirement (8)",
+        }
+
+    async def test_missing_old_password(self, snapshot: SnapshotAssertion):
+        resp = await self.client.patch(
+            "/account",
+            {"password": "foo_bar_1"},
+        )
+
+        assert resp.status == 422
+        assert await resp.json() == {
+            "errors": [
+                {
+                    "field": "",
+                    "in": "body",
+                    "message": (
+                        "The old password needs to be given in order for the password "
+                        "to be changed."
+                    ),
+                },
+            ],
+            "id": "invalid_input",
+            "message": "Invalid input",
+        }
+
+
+@pytest.mark.parametrize(
+    ("body", "status"),
+    [
         ({"password": "foo_bar_1"}, 400),
         ({"password": "foo_bar_1", "old_password": "not_right"}, 400),
         ({"old_password": "hello_world"}, 400),
@@ -47,10 +120,6 @@ async def test_get(
         ({"email": None, "old_password": None, "password": None}, 400),
     ],
     ids=[
-        "all_valid",
-        "good_email",
-        "invalid_email",
-        "short_password",
         "missing_old_password",
         "invalid_credentials",
         "missing_password",
@@ -315,10 +384,10 @@ class TestUpdateAPIKey:
 
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_remove_api_key(
-    error,
+    error: str | None,
     mongo: Mongo,
+    snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
-    snapshot,
 ):
     client = await spawn_client(authenticated=True)
 
@@ -374,7 +443,7 @@ async def test_remove_all_api_keys(
     ]
 
 
-async def test_logout(spawn_client):
+async def test_logout(spawn_client: ClientSpawner):
     """Test that calling the logout endpoint results in the current session being removed and the user being logged
     out.
 
@@ -409,7 +478,11 @@ async def test_logout(spawn_client):
         ("DELETE", "/account/keys"),
     ],
 )
-async def test_requires_authorization(method: str, path: str, spawn_client):
+async def test_requires_authorization(
+    method: str,
+    path: str,
+    spawn_client: ClientSpawner,
+):
     """Test that a '401 Requires authorization' response is sent when the session is not
     authenticated.
 

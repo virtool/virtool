@@ -9,6 +9,7 @@ into JSON. The pretty dumper is used for formatting JSON for viewing in the brow
 """
 
 import datetime
+from pprint import pprint
 from typing import Any
 
 import arrow
@@ -76,6 +77,8 @@ def dump_pretty_bytes(obj: object) -> bytes:
     :return: a JSON bytestring
 
     """
+    pprint(obj)
+
     return orjson.dumps(
         obj,
         default=default_serializer,

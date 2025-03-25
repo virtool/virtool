@@ -50,7 +50,7 @@ class AccountUpdateRequest(BaseModel):
 
         if self.old_password and not self.password:
             msg = (
-                "The new password needs to be provided in order for the password to be "
+                "A new password needs to be provided in order for the password to be "
                 "changed."
             )
             raise ValueError(msg)

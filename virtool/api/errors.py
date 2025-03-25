@@ -128,7 +128,7 @@ class APIInvalidInput(APIUnprocessableEntity):
     def __init__(self, errors: list[dict]) -> None:
         super().__init__()
 
-        self.errors = [] if errors is None else []
+        self.errors = [] if errors is None else errors
         """A list of errors that occurred during request processing.
 
         These will almost invariably be Pydantic 2 validation errors.
@@ -165,26 +165,26 @@ async def error_middleware(req: Request, handler: Callable) -> StreamResponse:
     """
     try:
         return await handler(req)
-    except APIException as err:
-        if isinstance(err, APINoContent):
+    except APIException as e:
+        if isinstance(e, APINoContent):
             return Response(
-                status=err.status_code,
+                status=e.status_code,
                 headers={
                     "Content-Type": "application/json",
                 },
             )
 
         body = {
-            "id": err.id,
-            "message": err.message,
+            "id": e.id,
+            "message": e.message,
         }
 
-        if isinstance(err, APIInvalidInput | APIInvalidQuery):
-            body["errors"] = err.errors
+        if isinstance(e, APIInvalidInput):
+            body["errors"] = e.errors
 
         return json_response(
             body,
-            status=err.status_code,
+            status=e.status_code,
         )
 
 

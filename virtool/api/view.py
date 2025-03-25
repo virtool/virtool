@@ -6,6 +6,7 @@ Borrows Pydantic-based validation concepts from aiohttp_pydantic.
 import asyncio
 from collections.abc import Generator
 from functools import wraps
+from logging import getLogger
 from typing import Any, ClassVar, Never
 
 from aiohttp.abc import AbstractView
@@ -20,6 +21,7 @@ from virtool.api.errors import APIInvalidInput
 from virtool.api.inject import (
     BodyInjector,
     HeadersInjector,
+    InjectorUpdate,
     PathInjector,
     QueryStringInjector,
 )
@@ -27,6 +29,8 @@ from virtool.api.introspect import HandlerIntrospection
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_req
 from virtool.oas.utils import HandlerParameterContext
+
+logger = getLogger("api")
 
 
 class APIView(AbstractView):
@@ -110,13 +114,22 @@ class APIView(AbstractView):
 
         for context, exception in exceptions:
             for error in exception.errors(include_url=False):
-                error_with_context = error.copy()
-                error_with_context["in"] = context
-
+                print(error)
                 if "ctx" in error and "error" in error["ctx"]:
-                    error_with_context["ctx"]["error"] = str(error["ctx"]["error"])
+                    message = str(error["ctx"]["error"])
+                else:
+                    logger.warning("Error context not found in Pydantic error")
+                    message = ""
 
-                errors.append(error_with_context)
+                if error["loc"]:
+                    errors.extend(
+                        [
+                            {"field": field, "message": message, "in": context}
+                            for field in error["loc"]
+                        ],
+                    )
+                else:
+                    errors.append({"field": "", "in": context, "message": message})
 
         raise APIInvalidInput(errors=errors)
 
@@ -136,7 +149,7 @@ def _inject_params(handler: Handler) -> Handler:
 
     @wraps(handler)
     async def wrapped_handler(self: APIView) -> StreamResponse:
-        updates = await asyncio.gather(
+        updates: list[InjectorUpdate] = await asyncio.gather(
             *[injector.inject(self.request) for injector in injectors],
         )
 
@@ -146,10 +159,8 @@ def _inject_params(handler: Handler) -> Handler:
         errors: list[tuple[HandlerParameterContext, ValidationError]] = []
 
         for update in updates:
-            if update.errors:
-                errors.extend(update.errors)
-
             args.extend(update.args)
+            errors.extend([(update.context, e) for e in update.errors])
             kwargs.update(update.kwargs)
 
         if errors:
