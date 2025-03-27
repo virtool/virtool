@@ -196,7 +196,9 @@ def format_pathoscope_isolates(
             format_pathoscope_sequences(isolate["sequences"], hits_by_sequence_ids),
         )
 
-        if any((key in sequence for sequence in sequences) for key in ("pi", "final")):
+        if any(
+            any(key in sequence for sequence in sequences) for key in ("pi", "final")
+        ):
             yield {**isolate, "sequences": sequences}
 
 
