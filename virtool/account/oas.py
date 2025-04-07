@@ -13,7 +13,7 @@ from virtool_core.models.account import Account, AccountSettings, APIKey, check_
 from virtool_core.models.enums import QuickAnalyzeWorkflow
 
 from virtool.groups.oas import PermissionsUpdate
-from virtool.validation import Unset, UnsetType
+from virtool.validation import MaybeUnset, Unset, UnsetType
 
 
 class AccountUpdateRequest(BaseModel):
@@ -99,16 +99,16 @@ class AccountSettingsUpdateRequest(BaseModel):
         use_attribute_docstrings=True,
     )
 
-    quick_analyze_workflow: QuickAnalyzeWorkflow | UnsetType = Unset
+    quick_analyze_workflow: MaybeUnset[QuickAnalyzeWorkflow]
     """The workflow to use for quick analysis."""
 
-    show_ids: bool | UnsetType = Unset
+    show_ids: MaybeUnset[bool]
     """Whether to show resource IDs explicitly in the UI."""
 
-    show_versions: bool | UnsetType = Unset
+    show_versions: MaybeUnset[bool]
     """Show document versions in client where possible"""
 
-    skip_quick_analyze_dialog: bool | UnsetType = Unset
+    skip_quick_analyze_dialog: MaybeUnset[bool]
     """Whether to skip the quick analysis dialog."""
 
 

@@ -200,6 +200,8 @@ class AccountData(DataLayerDomain):
                         method="account.update_settings",
                     )
 
+        print(settings)
+
         return AccountSettings(**settings)
 
     async def get_keys(self, user_id: str) -> list[APIKey]:

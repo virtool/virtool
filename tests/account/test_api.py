@@ -19,6 +19,7 @@ async def test_get(
     spawn_client: ClientSpawner,
     static_time: StaticTime,
 ):
+    """Test that a user can get their account information."""
     client = await spawn_client(authenticated=True)
 
     resp = await client.get("/account")
@@ -151,7 +152,7 @@ async def test_get_settings(spawn_client: ClientSpawner):
             {"show_ids": False},
             200,
         ),
-        ({"foo_bar": True, "show_ids": "foo"}, 400),
+        ({"foo_bar": True, "show_ids": "foo"}, 422),
         (
             {
                 "show_ids": None,
@@ -159,7 +160,7 @@ async def test_get_settings(spawn_client: ClientSpawner):
                 "skip_quick_analyze_dialog": None,
                 "quick_analyze_workflow": None,
             },
-            400,
+            422,
         ),
     ],
     ids=["valid_input", "invalid_input", "null_values"],
