@@ -19,5 +19,15 @@
       }),
       'nickname': '',
     }),
+    dict({
+      '_id': 'deleted_legacy',
+      'created_at': datetime,
+      'deleted': True,
+      'file': dict({
+        'id': 'legacy_file_id',
+        'name': 'legacy_file_id',
+      }),
+      'nickname': '',
+    }),
   ])
 # ---
