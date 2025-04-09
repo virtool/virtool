@@ -51,18 +51,24 @@ async def upgrade(ctx: MigrationContext):
     async for subtraction in ctx.mongo.subtraction.find(
         {"created_at": {"$exists": False}},
     ):
-        index_stats = (
-            ctx.data_path
-            / "subtractions"
-            / subtraction["_id"].replace(" ", "_")
-            / "subtraction.1.bt2"
-        ).stat()
+        try:
+            index_stats = (
+                ctx.data_path
+                / "subtractions"
+                / subtraction["_id"].replace(" ", "_")
+                / "subtraction.1.bt2"
+            ).stat()
 
-        subtraction_created_at = (
-            index_stats.st_ctime
-            if index_stats.st_ctime < index_stats.st_mtime
-            else index_stats.st_mtime
-        )
+            subtraction_created_at = (
+                index_stats.st_ctime
+                if index_stats.st_ctime < index_stats.st_mtime
+                else index_stats.st_mtime
+            )
+        except FileNotFoundError:
+            if subtraction["deleted"]:
+                subtraction_created_at = arrow.now()
+            else:
+                raise
 
         await ctx.mongo.subtraction.update_one(
             {"_id": subtraction["_id"]},

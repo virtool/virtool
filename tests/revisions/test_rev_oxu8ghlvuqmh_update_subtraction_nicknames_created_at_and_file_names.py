@@ -21,6 +21,11 @@ async def test_upgrade(ctx: MigrationContext, snapshot):
                 "_id": "legacy",
                 "file": {"id": "legacy_file_id", "name": None},
             },
+            {
+                "_id": "deleted_legacy",
+                "file": {"id": "legacy_file_id", "name": None},
+                "deleted": True,
+            },
         ],
     )
 
