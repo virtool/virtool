@@ -39,7 +39,11 @@ class TestUpgrade:
                     await session.execute(select(SQLSampleReads))
                 ).scalars().all() == snapshot(name="SQLSampleReads after")
 
-            assert os.listdir(ctx.data_path / "samples" / sample["_id"]) == snapshot(
+            assert sorted(
+                os.listdir(
+                    ctx.data_path / "samples" / sample["_id"],
+                ),
+            ) == snapshot(
                 name=f"{sample["_id"]}files after",
             )
 
