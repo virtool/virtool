@@ -6,7 +6,6 @@ from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
 from syrupy.filters import props
-from virtool_core.models.enums import Permission
 
 from tests.fixtures.core import StaticTime
 from virtool.account.oas import AccountUpdateRequest, CreateKeyRequest
@@ -41,12 +40,7 @@ async def test_create_api_key(
 
     group_1 = await fake.groups.create()
     group_2 = await fake.groups.create(
-        PermissionsUpdate(
-            **{
-                Permission.create_sample: True,
-                Permission.modify_subtraction: has_permission,
-            },
-        ),
+        PermissionsUpdate(create_sample=True, modify_subtraction=has_permission)
     )
 
     user = await fake.users.create(groups=[group_1, group_2])
@@ -119,7 +113,9 @@ class TestGetKeyBySecret:
         assert await data_layer.account.get_key_by_secret(user.id, secret) == api_key
 
     async def test_not_found(self, data_layer: DataLayer, fake: DataFaker):
-        """Test that ``ResourceNotFoundError`` is raised when the key secret is invalid."""
+        """Test that ``ResourceNotFoundError`` is raised when the key secret is
+        invalid.
+        """
         user = await fake.users.create()
 
         await data_layer.account.create_key(
@@ -153,9 +149,9 @@ class TestGetKeyBySecret:
 async def test_update(
     update: AccountUpdateRequest,
     data_layer: DataLayer,
+    fake: DataFaker,
     mongo: Mongo,
     pg: AsyncEngine,
-    fake: DataFaker,
     snapshot_recent: SnapshotAssertion,
 ):
     user = await fake.users.create(password="hello_world_1")

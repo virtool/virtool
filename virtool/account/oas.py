@@ -13,7 +13,7 @@ from virtool_core.models.account import Account, AccountSettings, APIKey, check_
 from virtool_core.models.enums import QuickAnalyzeWorkflow
 
 from virtool.groups.oas import PermissionsUpdate
-from virtool.validation import MaybeUnset, Unset, UnsetType
+from virtool.validation import MaybeUnset, Unset, UnsetType, RequestModel
 
 
 class AccountUpdateRequest(BaseModel):
@@ -112,14 +112,13 @@ class AccountSettingsUpdateRequest(BaseModel):
     """Whether to skip the quick analysis dialog."""
 
 
-class CreateKeyRequest(BaseModel):
+class CreateKeyRequest(RequestModel):
     """A validation model for a request to create a new API key."""
 
     model_config = ConfigDict(
         json_schema_extra={
             "example": {"name": "Foobar", "permissions": {"create_sample": True}},
         },
-        use_attribute_docstrings=True,
     )
 
     name: Annotated[str, StringConstraints(min_length=1, strip_whitespace=True)]

@@ -106,6 +106,9 @@ class AccountData(DataLayerDomain):
         """
         updates = {}
 
+        if is_set(data.email):
+            updates["email"] = data.email
+
         if is_set(data.password):
             if not await validate_credentials(
                 self._mongo,
@@ -115,9 +118,6 @@ class AccountData(DataLayerDomain):
                 raise ResourceError("Invalid credentials")
 
             updates.update(compose_password_update(data.password))
-
-        if is_set(data.password):
-            updates["email"] = data.email
 
         if updates:
             async with both_transactions(self._mongo, self._pg) as (
@@ -199,8 +199,6 @@ class AccountData(DataLayerDomain):
                         "user not found in postgres",
                         method="account.update_settings",
                     )
-
-        print(settings)
 
         return AccountSettings(**settings)
 
@@ -420,8 +418,7 @@ class AccountData(DataLayerDomain):
         session_id: str,
         remember: bool,
     ) -> tuple[Session, str]:
-        """Check if user password should be reset and return a reset code if it
-        should be.
+        """If a user's password should be reset return a reset code.
 
         :param ip: the ip address of the requesting client
         :param user_id: the login session ID

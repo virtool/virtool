@@ -4,23 +4,23 @@ specification.
 
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, StringConstraints
+from pydantic import ConfigDict, StringConstraints
 from virtool_core.models.group import Group
 
-from virtool.validation import RequestModel, Unset, UnsetType
+from virtool.validation import MaybeUnset, RequestModel, Unset, UnsetType
 
 
-class PermissionsUpdate(BaseModel):
+class PermissionsUpdate(RequestModel):
     """Possible permissions that will be updated for a user and group."""
 
-    cancel_job: bool | None = None
-    create_ref: bool | None = None
-    create_sample: bool | None = None
-    modify_hmm: bool | None = None
-    modify_subtraction: bool | None = None
-    remove_file: bool | None = None
-    remove_job: bool | None = None
-    upload_file: bool | None = None
+    cancel_job: MaybeUnset[bool] = Unset
+    create_ref: MaybeUnset[bool] = Unset
+    create_sample: MaybeUnset[bool] = Unset
+    modify_hmm: MaybeUnset[bool] = Unset
+    modify_subtraction: MaybeUnset[bool] = Unset
+    remove_file: MaybeUnset[bool] = Unset
+    remove_job: MaybeUnset[bool] = Unset
+    upload_file: MaybeUnset[bool] = Unset
 
 
 class GroupCreateRequest(RequestModel):

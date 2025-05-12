@@ -107,6 +107,7 @@
     'invalidate_sessions': False,
     'last_password_change': 'approximately_now_datetime',
     'primary_group': None,
+    'reset': False,
     'settings': dict({
       'quick_analyze_workflow': 'pathoscope_bowtie',
       'show_ids': True,
@@ -130,6 +131,7 @@
     'invalidate_sessions': False,
     'last_password_change': 'approximately_now_datetime',
     'primary_group': None,
+    'reset': False,
     'settings': dict({
       'quick_analyze_workflow': 'pathoscope_bowtie',
       'show_ids': True,
@@ -145,6 +147,7 @@
   dict({
     '_id': 'bf1b993c',
     'active': True,
+    'email': '',
     'force_reset': False,
     'groups': list([
     ]),
@@ -152,6 +155,7 @@
     'invalidate_sessions': False,
     'last_password_change': 'approximately_now_datetime',
     'primary_group': None,
+    'reset': False,
     'settings': dict({
       'quick_analyze_workflow': 'pathoscope_bowtie',
       'show_ids': True,
