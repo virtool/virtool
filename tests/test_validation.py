@@ -1,3 +1,5 @@
+from pprint import pprint
+
 from virtool.validation import RequestModel, Unset, UnsetType
 
 
@@ -10,6 +12,8 @@ class TestRequestModel:
     def test_set(self):
         model = TestModel(name="John", nickname="Johnny")
 
+        pprint(model)
+
         assert model.name == "John"
         assert model.nickname == "Johnny"
         assert model.model_dump() == {
@@ -20,8 +24,11 @@ class TestRequestModel:
     def test_unset(self):
         model = TestModel.model_validate({"name": "John"})
 
+        pprint(model)
+        print(type(model.nickname))
+
         assert model.name == "John"
-        assert model.nickname is UnsetType
+        assert model.nickname is Unset
         assert model.model_dump() == {
             "name": "John",
         }

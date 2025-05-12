@@ -1,10 +1,7 @@
-from typing import Any, Generic, TypeVar
+from typing import Annotated, Any, Generic, TypeVar, get_type_hints
 
-from pydantic import BaseModel, ConfigDict, GetCoreSchemaHandler
+from pydantic import BaseModel, ConfigDict, GetCoreSchemaHandler, field_serializer
 from pydantic_core import core_schema
-from pydantic_core.core_schema import PlainValidatorFunctionSchema
-
-T = TypeVar("T")
 
 
 class RequestModel(BaseModel):
@@ -15,57 +12,84 @@ class RequestModel(BaseModel):
     """
 
     model_config = ConfigDict(
+        extra="forbid",
         use_attribute_docstrings=True,
+        validate_default=True,
     )
 
-    def model_dump(self, *args, **kwargs):
-        return {
-            key: value
-            for key, value in super().model_dump(*args, **kwargs).items()
-            if value is not Unset
-        }
+    @field_serializer("*")
+    def serialize_unset(self, value: Any, _info):
+        """Exclude Unset values from serialization."""
+        if isinstance(value, UnsetType):
+            # Return a special marker that will cause the field to be excluded
+            return ...
+
+        return value
+
+    def model_dump(self, **kwargs):
+        """Override model_dump to exclude Unset values by default."""
+        exclude_unset = kwargs.pop("exclude_unset", True)
+        result = super().model_dump(**kwargs)
+
+        if exclude_unset:
+            # Remove Unset values from the resultQ
+            return {k: v for k, v in result.items() if not isinstance(v, UnsetType)}
+        return result
+
+    def model_dump_json(self, **kwargs):
+        """Override model_dump_json to exclude Unset values by default."""
+        kwargs.setdefault("exclude_unset", True)
+        return super().model_dump_json(**kwargs)
 
 
 class UnsetType:
     """Sentinel value representing an unset field."""
 
     def __bool__(self) -> bool:
-        return False  # Treat as falsy in conditions
+        """Return ``False`` to indicate that the value is unset."""
+        return False
 
     def __repr__(self) -> str:
+        """Return a string representation of the UnsetType."""
         return "<Unset>"
 
     @classmethod
     def __get_pydantic_core_schema__(
         cls,
-        source_type: Any,
-        handler: GetCoreSchemaHandler,
-    ) -> PlainValidatorFunctionSchema:
-        schema = handler.generate_schema(UnsetType)
-        return core_schema.no_info_plain_validator_function(schema)
+        _source_type: Any,
+        _handler: GetCoreSchemaHandler,
+    ) -> core_schema.CoreSchema:
+        """Generate schema for UnsetType."""
+        return core_schema.is_instance_schema(UnsetType)
 
 
 Unset = UnsetType()
 """A sentinel value to indicate that a parameter has not been set."""
 
 
-class MaybeUnset(Generic[T]):
+T = TypeVar("T")
+
+
+class UnsetAnnotation(Generic[T]):
     """Type that allows distinguishing between `Unset` and explicit `None`."""
 
-    def __init__(self, value: T | UnsetType = Unset):
-        self.value = value
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls: type, _source_type: Any, _handler: GetCoreSchemaHandler
+    ) -> core_schema.CoreSchema:
+        """Generate a schema that allows either T or UnsetType."""
+        # Get the inner type
+        inner_type = get_type_hints(_source_type)["__orig_bases__"][0].__args__[0]
+        inner_schema = _handler.generate_schema(inner_type)
 
-    def __repr__(self) -> str:
-        return f"MaybeUnset({self.value!r})"
+        # Create a schema that accepts either the inner type or UnsetType
+        return core_schema.union_schema(
+            [inner_schema, core_schema.is_instance_schema(UnsetType)]
+        )
 
-    def __bool__(self) -> bool:
-        return self.value is not Unset
 
-    def __eq__(self, other):
-        if isinstance(other, MaybeUnset):
-            return self.value == other.value
-
-        return self.value == other
+# Type annotation for fields that can be unset
+MaybeUnset = Annotated[T, UnsetAnnotation[T]]
 
 
 def is_set(value: object) -> bool:
