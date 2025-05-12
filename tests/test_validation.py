@@ -24,9 +24,6 @@ class TestRequestModel:
     def test_unset(self):
         model = TestModel.model_validate({"name": "John"})
 
-        pprint(model)
-        print(type(model.nickname))
-
         assert model.name == "John"
         assert model.nickname is Unset
         assert model.model_dump() == {
