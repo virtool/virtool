@@ -1,6 +1,6 @@
 from typing import Annotated, Any, Generic, TypeVar, get_type_hints
 
-from pydantic import BaseModel, ConfigDict, GetCoreSchemaHandler, field_serializer
+from pydantic import BaseModel, ConfigDict, GetCoreSchemaHandler
 from pydantic_core import core_schema
 
 
@@ -12,33 +12,20 @@ class RequestModel(BaseModel):
     """
 
     model_config = ConfigDict(
-        extra="forbid",
         use_attribute_docstrings=True,
         validate_default=True,
     )
 
-    @field_serializer("*")
-    def serialize_unset(self, value: Any, _info):
-        """Exclude Unset values from serialization."""
-        if isinstance(value, UnsetType):
-            # Return a special marker that will cause the field to be excluded
-            return ...
-
-        return value
-
     def model_dump(self, **kwargs):
         """Override model_dump to exclude Unset values by default."""
-        exclude_unset = kwargs.pop("exclude_unset", True)
-        result = super().model_dump(**kwargs)
-
-        if exclude_unset:
-            # Remove Unset values from the resultQ
-            return {k: v for k, v in result.items() if not isinstance(v, UnsetType)}
-        return result
+        return {
+            key: value
+            for key, value in super().model_dump(**kwargs).items()
+            if value is not Unset
+        }
 
     def model_dump_json(self, **kwargs):
         """Override model_dump_json to exclude Unset values by default."""
-        kwargs.setdefault("exclude_unset", True)
         return super().model_dump_json(**kwargs)
 
 
@@ -55,8 +42,8 @@ class UnsetType:
 
     @classmethod
     def __get_pydantic_core_schema__(
-        cls,
-        _source_type: Any,
+        cls: type,
+        _source_type: type,
         _handler: GetCoreSchemaHandler,
     ) -> core_schema.CoreSchema:
         """Generate schema for UnsetType."""
