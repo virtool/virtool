@@ -11,6 +11,7 @@ from aiohttp import ContentTypeError
 from aiohttp.helpers import parse_mimetype
 from aiohttp.web_request import BaseRequest, Request
 from pydantic import BaseModel, ValidationError, create_model
+from typing_extensions import NoDefault
 
 from virtool.api.errors import APIBadRequest
 from virtool.api.introspect import (
@@ -19,7 +20,6 @@ from virtool.api.introspect import (
 from virtool.oas.uploaded_file import UploadBody
 from virtool.oas.utils import HandlerParameterContext, robust_issubclass
 from virtool.uploads.utils import body_part_file_chunker
-from virtool.validation import Unset
 
 
 @dataclass
@@ -177,7 +177,7 @@ class QueryStringInjector(AbstractInjector):
         fields = {}
 
         for parameter in self.parameters:
-            if parameter.default is not Unset:
+            if parameter.default is not NoDefault:
                 fields[parameter.name] = (parameter.type, parameter.default)
             else:
                 fields[parameter.name] = (parameter.type, ...)

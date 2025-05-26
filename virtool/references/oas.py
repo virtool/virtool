@@ -1,7 +1,6 @@
 from typing import Annotated
 
 from pydantic import (
-    BaseModel,
     ConfigDict,
     Field,
     StringConstraints,
@@ -20,12 +19,12 @@ from virtool_core.models.reference import (
     ReferenceUser,
 )
 
-from virtool.validation import Unset, UnsetType, is_set
+from virtool.api.model import RequestModel
 
 _ALLOWED_REMOTES = ["virtool/ref-plant-viruses"]
 
 
-class ReferenceCreateRequest(BaseModel):
+class ReferenceCreateRequest(RequestModel):
     """A request model for creating a new reference."""
 
     model_config = ConfigDict(
@@ -38,29 +37,17 @@ class ReferenceCreateRequest(BaseModel):
         },
     )
 
-    clone_from: str | UnsetType = Field(
-        default=Unset,
-        description="a valid ref_id that the new reference should be cloned from",
-    )
+    clone_from: str = None
+    """The ID of the reference that the new reference should be cloned from."""
 
-    data_type: ReferenceDataType = Field(
-        default=ReferenceDataType.genome,
-        description="the sequence data type",
-    )
+    data_type: ReferenceDataType = ReferenceDataType.genome
+    """The sequence data type."""
 
-    description: Annotated[
-        str,
-        StringConstraints(strip_whitespace=True),
-        Field(
-            default="",
-            description="a longer description for the reference",
-        ),
-    ]
+    description: Annotated[str, StringConstraints(strip_whitespace=True)] = ""
+    """A longer description for the reference."""
 
-    import_from: str | UnsetType = Field(
-        default=Unset,
-        description="a valid file_id that the new reference should be imported from",
-    )
+    import_from: str | None = None
+    """The ID of the uploaded file from which the new reference should be imported."""
 
     name: Annotated[
         str,
@@ -71,17 +58,16 @@ class ReferenceCreateRequest(BaseModel):
         ),
     ]
 
-    organism: str = Field(default="", description="the organism")
+    organism: str = ""
+    """The organism represented in the reference (eg. virus)."""
 
-    release_id: str | UnsetType = Field(
+    release_id: str | None = Field(
         default=11447367,
         description="The id of the GitHub release to install.",
     )
 
-    remote_from: str | UnsetType = Field(
-        default=Unset,
-        description="A GitHub slug from which to download reference updaates.",
-    )
+    remote_from: str = None
+    """A GitHub slug from which to download reference updates."""
 
     @model_validator(mode="after")
     def check_sources(self: "ReferenceCreateRequest") -> "ReferenceCreateRequest":
@@ -322,7 +308,7 @@ class ReferenceReleaseResponse(ReferenceRelease):
     )
 
 
-class ReferenceTargetUpdate(BaseModel):
+class ReferenceTargetUpdate(RequestModel):
     """A model for creating a new reference target.
 
     This model is nested in a reference update request.
@@ -354,16 +340,11 @@ class ReferenceTargetUpdate(BaseModel):
         ),
     ]
 
-    length: Annotated[
-        int | UnsetType,
-        Field(
-            default=Unset,
-            description="The target length.",
-        ),
-    ]
+    length: int = None
+    """The target length."""
 
 
-class ReferenceUpdateRequest(BaseModel):
+class ReferenceUpdateRequest(RequestModel):
     """A request validation model for updating a reference."""
 
     model_config = ConfigDict(
@@ -376,80 +357,41 @@ class ReferenceUpdateRequest(BaseModel):
         },
     )
 
-    description: Annotated[
-        str | UnsetType,
-        StringConstraints(strip_whitespace=True),
-        Field(
-            default=Unset,
-            description="a longer description for the reference",
-        ),
-    ]
+    description: Annotated[str, StringConstraints(strip_whitespace=True)] = None
+    """A longer description for the reference."""
 
-    internal_control: str | UnsetType = Field(
-        default=Unset,
-        description=(
-            "set the OTU identified by the passed id as the internal control for the "
-            "reference"
-        ),
-    )
+    internal_control: str = None
+    """The ID of the OTU to set as the internal control for the reference."""
 
-    name: Annotated[
-        str | UnsetType,
-        StringConstraints(strip_whitespace=True),
-        Field(
-            default=Unset,
-            description="the virus name",
-            min_length=1,
-        ),
-    ]
+    name: Annotated[str, StringConstraints(min_length=1, strip_whitespace=True)]
+    """The name of the reference."""
 
-    organism: Annotated[
-        str | UnsetType,
-        StringConstraints(strip_whitespace=True),
-        Field(
-            default=Unset,
-            description="the organism",
-        ),
-    ]
+    organism: Annotated[str, StringConstraints(strip_whitespace=True)] = None
+    """The organism represented in the reference (eg. virus)."""
 
-    restrict_source_types: Annotated[
-        bool | UnsetType,
-        Field(
-            default=Unset,
-            description="option to restrict source types",
-        ),
-    ]
+    restrict_source_types: bool = None
+    """Whether to restrict the source types of the isolates in the reference."""
 
-    source_types: (
-        list[
-            Annotated[
-                str,
-                StringConstraints(strip_whitespace=True),
-                Field(
-                    description="source types",
-                    min_length=1,
-                ),
-            ]
+    source_types: list[
+        Annotated[
+            str,
+            StringConstraints(min_length=1, strip_whitespace=True),
         ]
-        | UnsetType
-    ) = Field(default=Unset, description="The allowed source types.")
+    ] = None
 
-    targets: Annotated[
-        list[ReferenceTargetUpdate] | UnsetType,
-        Field(
-            default=Unset,
-            description="list of target sequences",
-        ),
-    ]
+    """The allowed source types for the isolates in the reference."""
+
+    targets: list[ReferenceTargetUpdate] = None
+    """The target sequences for the reference."""
 
     @field_validator("targets")
     @classmethod
     def check_duplicate_target_names(
         cls: "ReferenceUpdateRequest",
-        targets: list[ReferenceTargetUpdate] | UnsetType,
-    ) -> list[ReferenceTargetUpdate] | UnsetType:
+        targets: list[ReferenceTargetUpdate],
+    ) -> list[ReferenceTargetUpdate]:
         """Check that the targets field does not contain duplicate names."""
-        if not is_set(targets):
+        if "targets" not in cls.__pydantic_fields_set__:
             return targets
 
         names = [t.name for t in targets]
@@ -461,32 +403,24 @@ class ReferenceUpdateRequest(BaseModel):
         return targets
 
 
-class ReferenceRightsRequest(BaseModel):
+class ReferenceRightsRequest(RequestModel):
     """A validation model for a request to update reference rights."""
 
     model_config = ConfigDict(
         json_schema_extra={"example": {"build": True, "modify": True}},
     )
 
-    build: bool | UnsetType = Field(
-        default=Unset,
-        description="Allow members to build new indexes for the reference.",
-    )
+    build: bool = None
+    """Allow members to build new indexes for the reference."""
 
-    modify: bool | UnsetType = Field(
-        default=Unset,
-        description="Allow members to modify the reference metadata and settings.",
-    )
+    modify: bool = None
+    """Allow members to modify the reference metadata and settings."""
 
-    modify_otu: bool | UnsetType = Field(
-        default=Unset,
-        description="Allow members to modify the reference’s member OTUs.",
-    )
+    modify_otu: bool = None
+    """Allow members to modify the reference’s member OTUs."""
 
-    remove: bool | UnsetType = Field(
-        default=Unset,
-        description="Allow members to remove the reference.",
-    )
+    remove: bool = None
+    """Allow members to remove the reference."""
 
 
 class ReferenceCreateGroupRequest(ReferenceRightsRequest):
@@ -561,7 +495,8 @@ class ReferenceCreateUserRequest(ReferenceRightsRequest):
         json_schema_extra={"example": {"user_id": "sidney", "modify_otu": True}},
     )
 
-    user_id: str = Field(description="The ID of the user.")
+    user_id: str
+    """The ID of the user to add to the reference."""
 
 
 class ReferenceUserResponse(ReferenceUser):

@@ -300,7 +300,7 @@ class RightsView(APIView):
         ):
             raise APIInsufficientRights("Must be administrator or sample owner")
 
-        if is_set(data.group):
+        if is_set(data, "group"):
             async with AsyncSession(pg) as session:
                 result = await session.execute(
                     select(SQLGroup.id).where(SQLGroup.id == data.group),

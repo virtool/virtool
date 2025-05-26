@@ -2,7 +2,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, StringConstraints
 
-from virtool.validation import Unset, UnsetType
+from virtool.api.model import RequestModel
 
 
 class CreateFirstUserRequest(BaseModel):
@@ -32,7 +32,7 @@ class CreateUserRequest(CreateFirstUserRequest):
     """Force a password reset next time the user logs in."""
 
 
-class UserUpdateRequest(BaseModel):
+class UserUpdateRequest(RequestModel):
     """A validation model for a user update request."""
 
     model_config = ConfigDict(
@@ -44,23 +44,22 @@ class UserUpdateRequest(BaseModel):
                 "password": "password",
                 "primary_group": 1,
             },
-        },
-        use_attribute_docstrings=True,
+        }
     )
 
-    active: bool | UnsetType = Unset
+    active: bool = None
     """Whether the user account is activated or not."""
 
-    force_reset: bool | UnsetType = Unset
+    force_reset: bool = None
     """Force a password reset next time the user logs in."""
 
-    groups: list[int | str] | UnsetType = Unset
+    groups: list[int | str] = None
     """The groups the user belongs to."""
 
-    password: str | UnsetType = Unset
+    password: str = None
     """The new password."""
 
-    primary_group: int | None | UnsetType = Unset
+    primary_group: int = None
     """The ID of the user's primary group."""
 
 

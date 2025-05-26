@@ -2,8 +2,6 @@ from pydantic import BaseModel, Field, field_validator
 from virtool_core.models.enums import MessageColor
 from virtool_core.models.instancemessage import InstanceMessage
 
-from virtool.validation import Unset, UnsetType
-
 
 class MessageCreateRequest(BaseModel):
     """A request model for creating a new instance message."""
@@ -15,20 +13,14 @@ class MessageCreateRequest(BaseModel):
 class MessageUpdateRequest(BaseModel):
     """A request validation model for updating an instance message."""
 
-    active: bool | UnsetType = Field(
-        default=Unset,
-        description="Whether the message will be displayed.",
-    )
+    active: bool = None
+    """Whether the message will be displayed."""
 
-    color: MessageColor | UnsetType = Field(
-        default=Unset,
-        description="A highlight color.",
-    )
+    color: MessageColor = None
+    """A highlight color."""
 
-    message: str | UnsetType = Field(
-        default=Unset,
-        description="The message content.",
-    )
+    message: str = None
+    """The message content."""
 
     @field_validator("active")
     @classmethod

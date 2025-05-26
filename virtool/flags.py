@@ -39,6 +39,7 @@ class FeatureFlags:
 
 def flag(feature_flag: FlagName):
     """Prevents access to the decorated request handler if "feature_flag" is not enabled.
+
     :param feature_flag: feature flag name associated with the route
     """
 

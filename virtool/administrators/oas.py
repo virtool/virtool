@@ -2,51 +2,49 @@ from pydantic import BaseModel, ConfigDict
 from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.user import User
 
-from virtool.validation import Unset, UnsetType
+from virtool.api.model import RequestModel
 
 
-class RunActionRequest(BaseModel):
+class RunActionRequest(RequestModel):
     """Used when running an action on a task."""
 
     model_config = ConfigDict(
         json_schema_extra={
             "example": {"name": "relist_jobs"},
-        },
-        use_attribute_docstrings=True,
+        }
     )
 
     name: str
     """The name of the action to run."""
 
 
-class AdministratorRoleUpdateRequest(BaseModel):
+class AdministratorRoleUpdateRequest(RequestModel):
     """A validation model for a request to update an administrator's role."""
 
     model_config = ConfigDict(
         json_schema_extra={"example": {"user_id": "foo", "role": "users"}},
-        use_attribute_docstrings=True,
     )
 
-    role: AdministratorRole | None | UnsetType = Unset
+    role: AdministratorRole | None = None
     """The role to assign to the user."""
 
 
-class UserUpdateRequest(BaseModel):
+class UserUpdateRequest(RequestModel):
     """A validation model for a user update request."""
 
-    active: bool | UnsetType = Unset
+    active: bool = None
     """The activation status of the user."""
 
-    force_reset: bool | UnsetType = Unset
+    force_reset: bool = None
     """Force the user to reset their password on next login."""
 
-    groups: list[int | str] | UnsetType = Unset
+    groups: list[int | str] = None
     """The groups the user belongs to."""
 
-    password: str | UnsetType = Unset
+    password: str = None
     """A new password for the user."""
 
-    primary_group: int | UnsetType = Unset
+    primary_group: int = None
     """The user's primary group."""
 
 

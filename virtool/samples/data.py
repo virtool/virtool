@@ -457,15 +457,15 @@ class SamplesData(DataLayerDomain):
         """
         aws = []
 
-        if is_set(data.name):
+        if is_set(data, "name"):
             aws.append(
                 check_name_is_in_use(self._mongo, data["name"], sample_id=sample_id),
             )
 
-        if is_set(data.labels):
+        if is_set(data, "labels"):
             aws.append(check_labels_do_not_exist(self._pg, data["labels"]))
 
-        if is_set(data.subtractions):
+        if is_set(data, "subtractions"):
             aws.append(
                 check_subtractions_do_not_exist(self._mongo, data["subtractions"]),
             )

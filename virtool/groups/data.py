@@ -165,10 +165,10 @@ class GroupsData:
 
             db_update = {}
 
-            if is_set(data.name):
+            if is_set(data, "name"):
                 group.name = data.name
 
-            if is_set(data.permissions):
+            if is_set(data, "permissions"):
                 group.permissions = {**group.permissions, **data.permissions}
 
             if db_update:

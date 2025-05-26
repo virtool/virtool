@@ -12,29 +12,25 @@ from pydantic import (
 from virtool_core.models.account import Account, AccountSettings, APIKey, check_email
 from virtool_core.models.enums import QuickAnalyzeWorkflow
 
+from virtool.api.model import RequestModel
 from virtool.groups.oas import PermissionsUpdate
-from virtool.validation import MaybeUnset, Unset, UnsetType, RequestModel
 
 
-class AccountUpdateRequest(BaseModel):
+class AccountUpdateRequest(RequestModel):
     """Fields for updating a user account."""
 
-    model_config = ConfigDict(
-        use_attribute_docstrings=True,
-    )
-
-    email: constr(strip_whitespace=True) | UnsetType = Unset
+    email: constr(strip_whitespace=True) = None
     """An email address."""
 
-    old_password: str | UnsetType = Unset
+    old_password: str = None
     """The old password for verification."""
 
-    password: str | UnsetType = Unset
+    password: str = None
     """The new password."""
 
     @field_validator("email", mode="after")
     @classmethod
-    def check_email(cls: type, email: str) -> str:
+    def check_email(cls: type, email: str) -> str | None:
         """Check if the email is valid."""
         return check_email(email)
 
@@ -92,23 +88,19 @@ class AccountUpdateResponse(Account):
     )
 
 
-class AccountSettingsUpdateRequest(BaseModel):
-    """Fields for updating a user account's settings."""
+class AccountSettingsUpdateRequest(RequestModel):
+    """A request body that updates a user's account settings."""
 
-    model_config = ConfigDict(
-        use_attribute_docstrings=True,
-    )
-
-    quick_analyze_workflow: MaybeUnset[QuickAnalyzeWorkflow]
+    quick_analyze_workflow: QuickAnalyzeWorkflow = None
     """The workflow to use for quick analysis."""
 
-    show_ids: MaybeUnset[bool]
+    show_ids: bool = None
     """Whether to show resource IDs explicitly in the UI."""
 
-    show_versions: MaybeUnset[bool]
+    show_versions: bool = None
     """Show document versions in client where possible"""
 
-    skip_quick_analyze_dialog: MaybeUnset[bool]
+    skip_quick_analyze_dialog: bool = None
     """Whether to skip the quick analysis dialog."""
 
 
@@ -161,19 +153,20 @@ class CreateKeyResponse(APIKey):
     """
 
 
-class UpdateKeyRequest(BaseModel):
+class UpdateKeyRequest(RequestModel):
     """A validation model for a request to update an existing API key."""
 
     model_config = ConfigDict(
         json_schema_extra={
             "example": {"permissions": {"modify_subtraction": True}},
         },
-        use_attribute_docstrings=True,
     )
 
-    permissions: PermissionsUpdate | UnsetType = Unset
-    """A permission update comprising an object keyed by permissions with boolean
-    values."""
+    permissions: PermissionsUpdate = None
+    """An object containing permissions and their boolean settings.
+
+    This is a partial update, so only the permissions that are set will be updated.
+    """
 
 
 class APIKeyResponse(APIKey):
@@ -201,7 +194,7 @@ class APIKeyResponse(APIKey):
     )
 
 
-class CreateLoginRequest(BaseModel):
+class CreateLoginRequest(RequestModel):
     """A validation model for a login request."""
 
     model_config = ConfigDict(
@@ -212,7 +205,6 @@ class CreateLoginRequest(BaseModel):
                 "remember": False,
             },
         },
-        use_attribute_docstrings=True,
     )
 
     username: Annotated[str, StringConstraints(min_length=1)]
@@ -237,7 +229,7 @@ class CreateLoginResponse(BaseModel):
     """Whether the user needs to reset their password."""
 
 
-class ResetPasswordRequest(BaseModel):
+class ResetPasswordRequest(RequestModel):
     """A validation model for a password reset request."""
 
     model_config = ConfigDict(
@@ -246,8 +238,7 @@ class ResetPasswordRequest(BaseModel):
                 "password": "p@ssword123",
                 "reset_code": "4bcda8b3bcaf5f84cc6e26a3d23a6179f29d356e43c9ced1b6de0b1",
             },
-        },
-        use_attribute_docstrings=True,
+        }
     )
 
     password: str

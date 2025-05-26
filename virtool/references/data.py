@@ -157,7 +157,7 @@ class ReferencesData(DataLayerDomain):
     async def create(self, data: ReferenceCreateRequest, user_id: str) -> Reference:
         settings = await self.data.settings.get_all()
 
-        if is_set(data.clone_from):
+        if is_set(data, "clone_from"):
             if not await self._mongo.references.count_documents(
                 {"_id": data.clone_from},
             ):
@@ -186,7 +186,7 @@ class ReferencesData(DataLayerDomain):
 
             document["task"] = {"id": task.id}
 
-        elif is_set(data.import_from):
+        elif is_set(data, "import_from"):
             if not await get_row(
                 self._pg,
                 SQLUpload,
@@ -218,7 +218,7 @@ class ReferencesData(DataLayerDomain):
 
             document["task"] = {"id": task.id}
 
-        elif is_set(data.remote_from):
+        elif is_set(data, "remote_from"):
             try:
                 release = await virtool.github.get_release(
                     self._client,
@@ -360,7 +360,7 @@ class ReferencesData(DataLayerDomain):
             raise ResourceNotFoundError()
 
         # Setting targets on a reference that is not barcode data is not allowed.
-        if is_set(data.targets) and document["data_type"] != "barcode":
+        if is_set(data, "targets") and document["data_type"] != "barcode":
             raise APIBadRequest("Targets can only be set on barcode references")
 
         await self._mongo.references.update_one(

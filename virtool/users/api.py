@@ -235,7 +235,7 @@ class UserView(APIView):
             404: Not found
             409: User is not member of group
         """
-        if is_set(data.password) and (
+        if is_set(data, "password") and (
             error := await check_password_length(
                 self.request,
                 password=data.password,

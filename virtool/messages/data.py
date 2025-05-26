@@ -76,14 +76,14 @@ class MessagesData:
             if not message.active:
                 raise ResourceConflictError("The message is inactive")
 
-            if is_set(data.color):
+            if is_set(data, "color"):
                 message.color = data["color"]
 
-            if is_set(data.message):
+            if is_set(data, "message"):
                 message.message = data["message"]
                 message.updated_at = virtool.utils.timestamp()
 
-            if is_set(data.active):
+            if is_set(data, "active"):
                 message.active = data["active"]
 
             message_dict = message.to_dict()

@@ -1,9 +1,9 @@
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import ConfigDict, Field
 from virtool_core.models.task import Task, TaskMinimal
 
-from virtool.validation import Unset, UnsetType
+from virtool.api.model import RequestModel
 
 
 class TaskMinimalResponse(TaskMinimal):
@@ -48,14 +48,14 @@ class TaskResponse(Task):
     )
 
 
-class TaskUpdate(BaseModel):
+class TaskUpdate(RequestModel):
     """A model for an update to a task."""
 
-    step: str | UnsetType = Unset
+    step: str = None
     """The current step of the task."""
 
-    progress: Annotated[int | UnsetType, Field(default=Unset, ge=0, le=100)]
+    progress: Annotated[int, Field(ge=0, le=100)]
     """The progress of the task."""
 
-    error: str | UnsetType = Unset
+    error: str = None
     """An error message for the task."""

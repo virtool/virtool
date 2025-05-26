@@ -168,7 +168,7 @@ class AdminUserView(APIView):
                 error_id="insufficient_privileges",
             )
 
-        if is_set(data.password) and (
+        if is_set(data, "password") and (
             error := await check_password_length(self.request, password=data.password)
         ):
             raise APIBadRequest(error)
@@ -204,7 +204,7 @@ class AdminRoleView(APIView):
             raise APIBadRequest("Administrators cannot change their own role.")
 
         try:
-            if is_set(data.role):
+            if is_set(data, "role"):
                 user = await self.data.users.set_administrator_role(
                     user_id,
                     data.role,

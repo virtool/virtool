@@ -10,8 +10,6 @@ from pydantic import (
 from virtool_core.models.label import Label
 from virtool_core.models.validators import normalize_hex_color
 
-from virtool.validation import Unset, UnsetType
-
 _LABEL_COLOR_DESCRIPTION = "A hexadecimal color for the label."
 """A description for the label ``color`` field."""
 
@@ -99,28 +97,26 @@ class LabelUpdateRequest(BaseModel):
     )
 
     name: Annotated[
-        str | UnsetType,
+        str,
         StringConstraints(strip_whitespace=True),
-        Field(default=Unset, description=_LABEL_NAME_DESCRIPTION),
-    ]
+        Field(description=_LABEL_NAME_DESCRIPTION),
+    ] = None
 
     color: Annotated[
-        str | UnsetType,
+        str,
         StringConstraints(strip_whitespace=True),
         Field(
-            default=Unset,
             description=_LABEL_COLOR_DESCRIPTION,
         ),
-    ]
+    ] = None
 
     description: Annotated[
-        str | UnsetType,
+        str,
         StringConstraints(strip_whitespace=True),
         Field(
-            default=Unset,
             description=_LABEL_DESCRIPTION_DESCRIPTION,
         ),
-    ]
+    ] = None
 
     @field_validator("color", mode="after")
     @classmethod

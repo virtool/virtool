@@ -411,17 +411,17 @@ class UsersData(DataLayerDomain):
         mongo_update = {}
         pg_update = {}
 
-        if is_set(data.active):
+        if is_set(data, "active"):
             for u in (mongo_update, pg_update):
                 u.update({"active": data.active, "invalidate_sessions": True})
 
-        if is_set(data.force_reset):
+        if is_set(data, "force_reset"):
             for u in (mongo_update, pg_update):
                 u.update(
                     {"force_reset": data.force_reset, "invalidate_sessions": True},
                 )
 
-        if is_set(data.password):
+        if is_set(data, "password"):
             for u in (mongo_update, pg_update):
                 u.update(
                     {
@@ -431,7 +431,7 @@ class UsersData(DataLayerDomain):
                     },
                 )
 
-        if is_set(data.groups):
+        if is_set(data, "groups"):
             current_primary_group = await get_one_field(
                 self._mongo.users,
                 "primary_group",
@@ -446,7 +446,7 @@ class UsersData(DataLayerDomain):
                 ),
             )
 
-        if is_set(data.primary_group):
+        if is_set(data, "primary_group"):
             mongo_update.update(
                 await compose_primary_group_update(
                     self._mongo,

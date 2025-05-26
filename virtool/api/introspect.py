@@ -12,12 +12,12 @@ from typing import Any, TypeVar, Union, get_type_hints
 
 from aiohttp.typedefs import Handler
 from pydantic import BaseModel, create_model
+from typing_extensions import NoDefault
 
 from virtool.api.status import StatusCode, is_status_coded
 from virtool.oas.error import DocstringParsingError, DuplicateParameterNamesError
 from virtool.oas.uploaded_file import UploadBody
 from virtool.oas.utils import is_pydantic_base_model, robust_issubclass
-from virtool.validation import Unset
 
 
 class HandleParameterSource(Enum):
@@ -144,7 +144,7 @@ class HandlerParameter:
     @property
     def required(self) -> bool:
         """Whether the parameter is required."""
-        return self.default is Unset
+        return self.default is None and self.type is not None
 
 
 class HandlerParameterGroup(SimpleNamespace):
@@ -182,7 +182,7 @@ class HandlerParameterGroup(SimpleNamespace):
             # Use __annotations__ to know if an attribute is overwritten to remove the
             # default value.
             for name in base.__annotations__:
-                if (default := attrs.get(name, Unset)) is Unset:
+                if (default := attrs.get(name, NoDefault)) is NoDefault:
                     defaults.pop(name, None)
                 else:
                     defaults[name] = default
@@ -193,7 +193,7 @@ class HandlerParameterGroup(SimpleNamespace):
 
         return {
             name: HandlerParameter(
-                default=defaults.get(name, Unset),
+                default=defaults.get(name, NoDefault),
                 name=name,
                 source=source,
                 type=types[name],
@@ -255,7 +255,7 @@ class HandlerParameters:
                 msg = f"The parameter {name} must have an annotation"
                 raise RuntimeError(msg)
 
-            default = Unset if spec.default is spec.empty else spec.default
+            default = NoDefault if spec.default is spec.empty else spec.default
 
             annotation = type_hints[name]
 
@@ -369,7 +369,7 @@ class HandlerParameters:
         spec = {}
 
         for parameter in self.unpacked:
-            if parameter.default is Unset:
+            if parameter.default is NoDefault:
                 spec[parameter.name] = (parameter.type, ...)
             else:
                 spec[parameter.name] = (parameter.type, parameter.default)
@@ -497,7 +497,7 @@ def parse_group_parameters(
         # Use __annotations__ to know if an attribute is overwritten to remove the
         # default value.
         for name in base.__annotations__:
-            if (default := attrs.get(name, Unset)) is Unset:
+            if (default := attrs.get(name, NoDefault)) is NoDefault:
                 defaults.pop(name, None)
             else:
                 defaults[name] = default
@@ -508,7 +508,7 @@ def parse_group_parameters(
 
     return [
         HandlerParameter(
-            default=defaults.get(name, Unset),
+            default=defaults.get(name, NoDefault),
             name=name,
             source=source,
             type=types[name],

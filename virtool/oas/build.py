@@ -17,7 +17,6 @@ from virtool.oas.utils import (
     robust_issubclass,
 )
 from virtool.routes import setup_routes_on_router
-from virtool.validation import Unset
 
 _APP_KEY_NOT_SET = object()
 
@@ -53,7 +52,7 @@ def create_operation_from_handler(handler) -> tuple[OASOperation, dict]:
             "required": True,
         }
 
-        if parameter.default is not Unset:
+        if parameter.default is None:
             oas_parameter.update({"default": parameter.default, "required": False})
 
         if robust_issubclass(parameter.type, BaseModel):

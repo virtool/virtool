@@ -310,7 +310,8 @@ class IsolateView(APIView):
             raise APIInsufficientRights()
 
         if is_set(
-            data.source_type,
+            data,
+            "source_type",
         ) and not await virtool.references.db.check_source_type(
             mongo,
             ref_id,

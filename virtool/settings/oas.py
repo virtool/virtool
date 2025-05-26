@@ -1,9 +1,9 @@
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import ConfigDict, StringConstraints
 from virtool_core.models.settings import Settings
 
-from virtool.validation import Unset, UnsetType
+from virtool.api.model import RequestModel
 
 
 class SettingsResponse(Settings):
@@ -28,43 +28,34 @@ class SettingsResponse(Settings):
     )
 
 
-class SettingsUpdateRequest(BaseModel):
+class SettingsUpdateRequest(RequestModel):
     """A request validation model for updating settings."""
 
-    model_config = ConfigDict(
-        use_attribute_docstrings=True,
-    )
-
-    default_source_types: Annotated[
-        list[str] | UnsetType,
-        Field(default_factory=lambda: ["isolate", "strain"]),
-    ] = Unset
+    default_source_types: list[str] = None
     """The default source types for new references."""
 
-    enable_api: bool | UnsetType = Unset
+    enable_api: bool = None
     """Whether the API is enabled."""
 
-    hmm_slug: Annotated[str | UnsetType, StringConstraints(strip_whitespace=True)] = (
-        Unset
-    )
+    hmm_slug: Annotated[str, StringConstraints(strip_whitespace=True)] = None
     """The slug of the HMM repository to use."""
 
-    minimum_password_length: int | UnsetType = Unset
+    minimum_password_length: int = None
     """The minimum length of user passwords."""
 
-    sample_group: str | None | UnsetType = Unset
+    sample_group: str | None = None
     """The policy for sample group permissions. One of 'none', 'force_choice', or
     'all'.
     """
 
-    sample_group_read: bool | UnsetType = Unset
+    sample_group_read: bool = None
     """Whether users can read samples in groups by default."""
 
-    sample_group_write: bool | UnsetType = Unset
+    sample_group_write: bool = None
     """Whether users can write samples in groups by default."""
 
-    sample_all_read: bool | UnsetType = Unset
+    sample_all_read: bool = None
     """Whether users can read all samples by default."""
 
-    sample_all_write: bool | UnsetType = Unset
+    sample_all_write: bool = None
     """Whether users can write all samples by default."""

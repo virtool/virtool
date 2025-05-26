@@ -274,11 +274,11 @@ class SubtractionsData(DataLayerDomain):
     ) -> Subtraction:
         update = {}
 
-        if is_set(data.name):
-            update["name"] = data["name"]
+        if is_set(data, "name"):
+            update["name"] = data.name
 
-        if is_set(data.nickname):
-            update["nickname"] = data["nickname"]
+        if is_set(data, "nickname"):
+            update["nickname"] = data.nickname
 
         document = await self._mongo.subtraction.find_one_and_update(
             {"_id": subtraction_id},

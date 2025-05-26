@@ -1,0 +1,54 @@
+# serializer version: 1
+# name: TestHandlerReturnValue.test[schema]
+  defaultdict({
+    '200': dict({
+      'content': dict({
+        'application/json': dict({
+          'schema': dict({
+            'description': '''
+              A label for categorizing samples in Virtool.
+              
+              This is the full representation of a label and includes the number of samples that
+              have been assigned the label.
+            ''',
+            'properties': dict({
+              'color': dict({
+                'title': 'Color',
+                'type': 'string',
+              }),
+              'count': dict({
+                'title': 'Count',
+                'type': 'integer',
+              }),
+              'description': dict({
+                'title': 'Description',
+                'type': 'string',
+              }),
+              'id': dict({
+                'title': 'Id',
+                'type': 'integer',
+              }),
+              'name': dict({
+                'title': 'Name',
+                'type': 'string',
+              }),
+            }),
+            'required': list([
+              'color',
+              'description',
+              'id',
+              'name',
+              'count',
+            ]),
+            'title': 'Label',
+            'type': 'object',
+          }),
+        }),
+      }),
+    }),
+    '404': dict({
+      'content': dict({
+      }),
+    }),
+  })
+# ---

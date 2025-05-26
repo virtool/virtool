@@ -3,8 +3,6 @@ from typing import Annotated
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from virtool_core.models.otu import OTUSearchResult, OTUSegment
 
-from virtool.validation import Unset, UnsetType
-
 _OTU_ABBREVIATION_DESCRIPTION = "An abbreviation (eg. TMV)."
 _OTU_NAME_DESCRIPTION = "The full name (eg. (eg. Tobacco mosaic virus)."
 _OTU_SCHEMA_DESCRIPTION = "The schema of the OTU."
@@ -54,29 +52,29 @@ class OTUUpdateRequest(BaseModel):
     """A request validation model for updating an OTU."""
 
     abbreviation: Annotated[
-        str | UnsetType,
+        str,
         StringConstraints(strip_whitespace=True),
         Field(
-            default=Unset,
             description=_OTU_ABBREVIATION_DESCRIPTION,
         ),
-    ]
+    ] = None
 
     name: Annotated[
-        str | UnsetType,
+        str,
         StringConstraints(strip_whitespace=True),
         Field(
-            default=Unset,
             description=_OTU_NAME_DESCRIPTION,
             min_length=1,
         ),
-    ]
+    ] = None
 
-    schema_: list[OTUSegment] | UnsetType = Field(
-        alias="schema",
-        default=Unset,
-        description=_OTU_SCHEMA_DESCRIPTION,
-    )
+    schema_: Annotated[
+        list[OTUSegment],
+        Field(
+            alias="schema",
+            description=_OTU_SCHEMA_DESCRIPTION,
+        ),
+    ] = None
 
 
 class IsolateCreateRequest(BaseModel):
@@ -107,16 +105,16 @@ class IsolateUpdateRequest(BaseModel):
     """A request validation model for updating an isolate."""
 
     source_name: Annotated[
-        str | UnsetType,
+        str,
         StringConstraints(strip_whitespace=True),
-        Field(default=Unset, description=_ISOLATE_SOURCE_NAME_DESCRIPTION),
-    ]
+        Field(description=_ISOLATE_SOURCE_NAME_DESCRIPTION),
+    ] = None
 
     source_type: Annotated[
         str,
         StringConstraints(strip_whitespace=True, to_lower=True),
-        Field(default="", description=_ISOLATE_SOURCE_TYPE_DESCRIPTION),
-    ]
+        Field(description=_ISOLATE_SOURCE_TYPE_DESCRIPTION),
+    ] = None
 
 
 class SequenceCreateRequest(BaseModel):
@@ -161,38 +159,42 @@ class SequenceUpdateRequest(BaseModel):
     """A request validation model for updating a sequence."""
 
     accession: Annotated[
-        str | UnsetType,
+        str,
         StringConstraints(strip_whitespace=True, to_upper=True),
-        Field(default=Unset, description=_SEQUENCE_ACCESSION_DESCRIPTION, min_length=1),
-    ]
+        Field(description=_SEQUENCE_ACCESSION_DESCRIPTION, min_length=1),
+    ] = None
 
     definition: Annotated[
-        str | UnsetType,
+        str,
         StringConstraints(min_length=1, strip_whitespace=True),
-        Field(default=Unset, description=_SEQUENCE_DEFINITION_DESCRIPTION),
-    ]
+        Field(description=_SEQUENCE_DEFINITION_DESCRIPTION),
+    ] = None
 
     host: Annotated[
-        str | UnsetType,
+        str,
         StringConstraints(strip_whitespace=True),
-        Field(default=Unset, description=_SEQUENCE_HOST_DESCRIPTION),
-    ]
+        Field(description=_SEQUENCE_HOST_DESCRIPTION),
+    ] = None
 
-    segment: str | None | UnsetType = Field(
-        default=Unset,
-        description=_SEQUENCE_SEGMENT_DESCRIPTION,
-    )
+    segment: Annotated[
+        str | None,
+        Field(
+            description=_SEQUENCE_SEGMENT_DESCRIPTION,
+        ),
+    ] = None
 
     sequence: Annotated[
-        str | UnsetType,
+        str | None,
         StringConstraints(pattern=_SEQUENCE_SEQUENCE_PATTERN, to_upper=True),
-        Field(default=Unset, description=_SEQUENCE_SEQUENCE_DESCRIPTION, min_length=1),
-    ]
+        Field(description=_SEQUENCE_SEQUENCE_DESCRIPTION, min_length=1),
+    ] = None
 
-    target: str | None | UnsetType = Field(
-        default=Unset,
-        description=_SEQUENCE_TARGET_DESCRIPTION,
-    )
+    target: Annotated[
+        str | None,
+        Field(
+            description=_SEQUENCE_TARGET_DESCRIPTION,
+        ),
+    ] = None
 
 
 class OTUSearchResponse(OTUSearchResult):

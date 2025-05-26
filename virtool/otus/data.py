@@ -266,17 +266,16 @@ class OTUData:
         """
         # Update the ``modified`` and ``verified`` fields in the otu document now,
         # because we are definitely going to modify the otu.
-        update = {"verified": False}
+        update: Document = {"verified": False}
 
         # If the name is changing, update the ``lower_name`` field in the otu document.
-        if is_set(data.name):
-            name = data["name"]
-            update.update({"name": name, "lower_name": name.lower()})
+        if is_set(data, "name"):
+            update.update({"name": data.name, "lower_name": data.name.lower()})
 
-        if is_set(data.abbreviation):
-            update["abbreviation"] = data["abbreviation"]
+        if is_set(data, "abbreviation"):
+            update["abbreviation"] = data.abbreviation
 
-        if is_set(data.schema):
+        if is_set(data, "schema"):
             update["schema"] = data["schema"]
 
         async def func(session: AsyncIOMotorClientSession):
@@ -479,10 +478,10 @@ class OTUData:
         isolate = find_isolate(isolates, isolate_id)
         old_isolate_name = format_isolate_name(isolate)
 
-        if is_set(data.source_type):
+        if is_set(data, "source_type"):
             isolate["source_type"] = data.source_type
 
-        if is_set(data.source_name):
+        if is_set(data, "source_name"):
             isolate["source_name"] = data.source_name
 
         new_isolate_name = format_isolate_name(isolate)
@@ -796,19 +795,20 @@ class OTUData:
         user_id: str,
         data: SequenceUpdateRequest,
     ):
-        update = {
-            attr.__name__: attr
-            for attr in (
-                data.accession,
-                data.definition,
-                data.host,
-                data.segment,
-                data.target,
+        update: Document = {
+            key: value
+            for key, value in data.model_dump(exclude_unset=True).items()
+            if key
+            in (
+                "accession",
+                "definition",
+                "host",
+                "segment",
+                "target",
             )
-            if is_set(attr)
         }
 
-        if is_set(data.sequence):
+        if is_set(data, "sequence"):
             update["sequence"] = data["sequence"].replace(" ", "").replace("\n", "")
 
         async def func(session: AsyncIOMotorClientSession) -> Document:

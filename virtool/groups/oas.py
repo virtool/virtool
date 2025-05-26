@@ -1,26 +1,22 @@
-"""Request and response models use to validate requests and autogenerate the OpenAPI
-specification.
-"""
-
 from typing import Annotated
 
 from pydantic import ConfigDict, StringConstraints
 from virtool_core.models.group import Group
 
-from virtool.validation import MaybeUnset, RequestModel, Unset, UnsetType
+from virtool.api.model import RequestModel
 
 
 class PermissionsUpdate(RequestModel):
     """Possible permissions that will be updated for a user and group."""
 
-    cancel_job: MaybeUnset[bool] = Unset
-    create_ref: MaybeUnset[bool] = Unset
-    create_sample: MaybeUnset[bool] = Unset
-    modify_hmm: MaybeUnset[bool] = Unset
-    modify_subtraction: MaybeUnset[bool] = Unset
-    remove_file: MaybeUnset[bool] = Unset
-    remove_job: MaybeUnset[bool] = Unset
-    upload_file: MaybeUnset[bool] = Unset
+    cancel_job: bool = None
+    create_ref: bool = None
+    create_sample: bool = None
+    modify_hmm: bool = None
+    modify_subtraction: bool = None
+    remove_file: bool = None
+    remove_job: bool = None
+    upload_file: bool = None
 
 
 class GroupCreateRequest(RequestModel):
@@ -67,10 +63,10 @@ class GroupUpdateRequest(RequestModel):
         },
     )
 
-    name: Annotated[str | UnsetType, StringConstraints(min_length=1)] = Unset
+    name: Annotated[str, StringConstraints(min_length=1)] = None
     """A name for the group."""
 
-    permissions: PermissionsUpdate | UnsetType = Unset
+    permissions: PermissionsUpdate = None
     """A permission update comprising an object keyed by permission names with
     boolean values."""
 

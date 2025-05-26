@@ -1,28 +1,27 @@
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import ConfigDict, Field, StringConstraints
 from virtool_core.models.sample_base import SampleNested
 from virtool_core.models.subtraction import (
     NucleotideComposition,
     Subtraction,
 )
 
-from virtool.validation import Unset, UnsetType
+from virtool.api.model import RequestModel
 
 
-class SubtractionCreateRequest(BaseModel):
+class SubtractionCreateRequest(RequestModel):
     """Used for creating a new Subtraction."""
 
     model_config = ConfigDict(
         json_schema_extra={
             "example": {"name": "Foobar", "nickname": "foo", "upload_id": 1234},
-        },
-        use_attribute_docstrings=True,
+        }
     )
 
     name: Annotated[
         str,
-        StringConstraints(strip_whitespace=True, min_length=1),
+        StringConstraints(min_length=1, strip_whitespace=True),
     ]
     """A unique name for the host (eg. Arabidopsis)."""
 
@@ -36,25 +35,22 @@ class SubtractionCreateRequest(BaseModel):
     """The ID of the upload from which to create the subtraction."""
 
 
-class SubtractionUpdateRequest(BaseModel):
+class SubtractionUpdateRequest(RequestModel):
     """A request validation model for updating a subtraction."""
 
     model_config = ConfigDict(
         json_schema_extra={
             "example": {"name": "Arabidopsis", "nickname": "Thale cress"},
-        },
-        use_attribute_docstrings=True,
+        }
     )
 
     name: Annotated[
-        str | UnsetType,
-        StringConstraints(strip_whitespace=True, min_length=1),
-    ] = Unset
+        str,
+        StringConstraints(min_length=1, strip_whitespace=True),
+    ] = None
     """The unique subtraction name."""
 
-    nickname: Annotated[str | UnsetType, StringConstraints(strip_whitespace=True)] = (
-        Unset
-    )
+    nickname: Annotated[str, StringConstraints(strip_whitespace=True)] = None
     """A nickname for the host."""
 
 
@@ -83,12 +79,8 @@ class SubtractionCreateResponse(Subtraction):
     )
 
 
-class SubtractionFinalizeRequest(BaseModel):
+class SubtractionFinalizeRequest(RequestModel):
     """A request validation model for finalizing a subtraction."""
-
-    model_config = ConfigDict(
-        use_attribute_docstrings=True,
-    )
 
     count: int = Field(ge=1)
     """The number of sequences in the subtraction."""

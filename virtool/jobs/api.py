@@ -147,7 +147,7 @@ class JobArchiveView(APIView):
             400: Job already archived
             404: Not found
         """
-        if is_set(data.archived):
+        if is_set(data, "archived"):
             try:
                 await self.data.jobs.archive(job_id, data.archived)
             except ResourceNotFoundError:

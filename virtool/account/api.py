@@ -6,7 +6,6 @@ session or API key making the requests.
 """
 
 from contextlib import suppress
-from pprint import pprint
 
 from aiohttp.web import Response
 
@@ -81,7 +80,7 @@ class AccountView(APIView):
             400: Invalid input
             401: Requires Authorization
         """
-        if is_set(data.password):
+        if is_set(data, "password"):
             error = await check_password_length(self.request, data.password)
 
             if error:
@@ -128,8 +127,6 @@ class AccountsSettingsView(APIView):
             400: Invalid input
             401: Requires Authorization
         """
-        pprint(data.model_dump(exclude_unset=True))
-
         account_settings = await self.data.account.update_settings(
             data,
             self.request["client"].user_id,

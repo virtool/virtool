@@ -5,7 +5,7 @@ from virtool_core.models.analysis import AnalysisMinimal
 from virtool_core.models.enums import AnalysisWorkflow, LibraryType
 from virtool_core.models.samples import Sample
 
-from virtool.validation import Unset, UnsetType
+from virtool.api.model import RequestModel
 
 AcceptedSampleReadNames = Literal["reads_1.fq.gz", "reads_2.fq.gz"]
 """Accepted read names for sample files."""
@@ -110,7 +110,7 @@ class SampleCreateRequest(BaseModel):
     files: list[Any] = Field(min_length=1, max_length=2)
     """The sample files."""
 
-    group: int | None | UnsetType = Unset
+    group: int | None = None
     """The group the sample belongs to."""
 
     host: Annotated[str, StringConstraints(strip_whitespace=True)] = ""
@@ -202,7 +202,7 @@ class CreateSampleResponse(Sample):
     )
 
 
-class SampleUpdateRequest(BaseModel):
+class SampleUpdateRequest(RequestModel):
     """A request validator for updating a sample."""
 
     model_config = ConfigDict(
@@ -216,30 +216,25 @@ class SampleUpdateRequest(BaseModel):
         use_attribute_docstrings=True,
     )
 
-    host: Annotated[str | UnsetType, StringConstraints(strip_whitespace=True)] = Unset
+    host: Annotated[str, StringConstraints(strip_whitespace=True)] = None
     """The host."""
 
-    isolate: Annotated[str | UnsetType, StringConstraints(strip_whitespace=True)] = (
-        Unset
-    )
+    isolate: Annotated[str, StringConstraints(strip_whitespace=True)] = None
     """The source isolate."""
 
-    labels: list[int] | UnsetType = Unset
+    labels: list[int] = None
     """Labels to apply to the sample."""
 
-    locale: Annotated[str, StringConstraints(strip_whitespace=True)] | Unset
+    locale: Annotated[str, StringConstraints(strip_whitespace=True)] = None
     """The locale."""
 
-    name: Annotated[
-        str | UnsetType,
-        StringConstraints(min_length=1, strip_whitespace=True),
-    ] = Unset
+    name: Annotated[str, StringConstraints(min_length=1, strip_whitespace=True)] = None
     """The name."""
 
-    notes: Annotated[str, StringConstraints(strip_whitespace=True)] | Unset
+    notes: Annotated[str, StringConstraints(strip_whitespace=True)] = None
     """User notes."""
 
-    subtractions: list[str] | UnsetType = Unset
+    subtractions: list[str] = None
     """The default subtractions for the sample."""
 
 
@@ -332,7 +327,7 @@ class SampleUpdateResponse(Sample):
     )
 
 
-class SampleRightsUpdateRequest(BaseModel):
+class SampleRightsUpdateRequest(RequestModel):
     """A request validator for updating sample rights."""
 
     model_config = ConfigDict(
@@ -345,19 +340,19 @@ class SampleRightsUpdateRequest(BaseModel):
         },
     )
 
-    group: int | None | UnsetType = Unset
+    group: int | None = None
     """Which group owns the sample."""
 
-    all_read: bool | UnsetType = Unset
+    all_read: bool = None
     """Whether all users can read the sample."""
 
-    all_write: bool | UnsetType = Unset
+    all_write: bool = None
     """Whether all users can write to the sample."""
 
-    group_read: bool | UnsetType = Unset
+    group_read: bool = None
     """Whether the owner group can read the sample."""
 
-    group_write: bool | UnsetType = Unset
+    group_write: bool = None
     """Whether the owner group can write to the sample."""
 
 

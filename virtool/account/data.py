@@ -106,10 +106,10 @@ class AccountData(DataLayerDomain):
         """
         updates = {}
 
-        if is_set(data.email):
+        if is_set(data, "email"):
             updates["email"] = data.email
 
-        if is_set(data.password):
+        if is_set(data, "password"):
             if not await validate_credentials(
                 self._mongo,
                 user_id,
@@ -348,7 +348,7 @@ class AccountData(DataLayerDomain):
         :param data: permissions update
         :return: the API key
         """
-        if is_set(data.permissions):
+        if is_set(data, "permissions"):
             old_permissions = await get_one_field(
                 self._mongo.keys,
                 "permissions",

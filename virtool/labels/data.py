@@ -104,13 +104,13 @@ class LabelsData:
             if label is None:
                 raise ResourceNotFoundError()
 
-            if is_set(data.name):
+            if is_set(data, "name"):
                 label.name = data["name"]
 
-            if is_set(data.color):
+            if is_set(data, "color"):
                 label.color = data["color"]
 
-            if is_set(data.description):
+            if is_set(data, "description"):
                 label.description = data["description"]
 
             row = label.to_dict()

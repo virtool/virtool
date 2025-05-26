@@ -11,7 +11,7 @@ from virtool_core.models.roles import (
     SpaceUploadRole,
 )
 
-from virtool.validation import Unset, UnsetType
+from virtool.api.model import RequestModel
 
 
 class SpacesListResponse(BaseModel):
@@ -57,19 +57,18 @@ class SpaceResponse(BaseModel):
     )
 
 
-class SpaceUpdateRequest(BaseModel):
+class SpaceUpdateRequest(RequestModel):
     """A request validation model for updating a space."""
 
     model_config = ConfigDict(
         json_schema_extra={"example": {"name": "My Space"}},
-        use_attribute_docstrings=True,
     )
-
-    name: Annotated[str | UnsetType, StringConstraints(strip_whitespace=True)] = Unset
-    """The name of the space."""
 
     description: Annotated[str, StringConstraints(strip_whitespace=True)] = ""
     """A description for the space."""
+
+    name: Annotated[str, StringConstraints(strip_whitespace=True)] = None
+    """The name of the space."""
 
 
 class SpaceUpdateResponse(BaseModel):
@@ -227,21 +226,20 @@ class SpaceListMembersResponse(BaseModel):
     )
 
 
-class SpaceMemberUpdateRequest(BaseModel):
+class SpaceMemberUpdateRequest(RequestModel):
     """Used when updating the roles of a member in the space."""
 
     model_config = ConfigDict(
         json_schema_extra={"example": {"role": "member"}},
-        use_attribute_docstrings=True,
     )
 
-    role: SpaceRole | UnsetType = Unset
-    label: SpaceLabelRole | UnsetType = Unset
-    project: SpaceProjectRole | UnsetType = Unset
-    reference: SpaceReferenceRole | UnsetType = Unset
-    sample: SpaceSampleRole | UnsetType = Unset
-    subtraction: SpaceSubtractionRole | UnsetType = Unset
-    upload: SpaceUploadRole | UnsetType = Unset
+    role: SpaceRole = None
+    label: SpaceLabelRole = None
+    project: SpaceProjectRole = None
+    reference: SpaceReferenceRole = None
+    sample: SpaceSampleRole = None
+    subtraction: SpaceSubtractionRole = None
+    upload: SpaceUploadRole = None
 
 
 class UpdateMemberResponse(BaseModel):

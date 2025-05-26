@@ -1,8 +1,6 @@
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from virtool_core.models.job import Job, JobMinimal, JobState
 
-from virtool.validation import UnsetType
-
 
 class JobSearchResponse(JobMinimal):
     """A response model for a job search."""
@@ -389,7 +387,7 @@ class JobArchiveRequest(BaseModel):
         use_attribute_docstrings=True,
     )
 
-    archived: bool | UnsetType = UnsetType
+    archived: bool = None
     """Whether the job is archived."""
 
 
