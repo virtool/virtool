@@ -1,5 +1,5 @@
-FROM python:3.12.3-bookworm AS build
-RUN curl -sSL https://install.python-poetry.org | python - --version 2.0.0
+FROM python:3.12-bookworm AS build
+RUN curl -sSL https://install.python-poetry.org | python -
 ENV PATH="/root/.local/bin:${PATH}" \
     POETRY_CACHE_DIR='/tmp/poetry_cache' \
     POETRY_NO_INTERACTION=1 \
@@ -25,7 +25,7 @@ git describe --tags | awk -F - '
 EOF
 
 
-FROM python:3.12.3-bookworm AS runtime
+FROM python:3.12-bookworm AS runtime
 WORKDIR /app
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
