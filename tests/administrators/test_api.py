@@ -360,7 +360,7 @@ class TestAdministratorRoles:
         assert resp.status == 400
         assert await resp.json() == {
             "id": "bad_request",
-            "message": "Cannot change own role",
+            "message": "Administrators cannot change their own role.",
         }
 
     @pytest.mark.parametrize(

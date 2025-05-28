@@ -169,7 +169,10 @@ class GroupsData:
                 group.name = data.name
 
             if is_set(data, "permissions"):
-                group.permissions = {**group.permissions, **data.permissions}
+                group.permissions = {
+                    **group.permissions,
+                    **data.permissions.model_dump(exclude_unset=True),
+                }
 
             if db_update:
                 group.update(db_update)

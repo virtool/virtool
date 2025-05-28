@@ -34,12 +34,12 @@ from virtool_core.models.user import User
 from virtool.data.layer import DataLayer
 from virtool.example import example_path
 from virtool.fake.providers import OrganismProvider, SegmentProvider, SequenceProvider
-from virtool.groups.oas import PermissionsUpdate, UpdateGroupRequest
+from virtool.groups.oas import GroupUpdateRequest, PermissionsUpdate
 from virtool.groups.pg import SQLGroup
 from virtool.jobs.utils import WORKFLOW_NAMES
 from virtool.ml.tasks import SyncMLModelsTask
 from virtool.mongo.core import Mongo
-from virtool.otus.oas import CreateOTURequest
+from virtool.otus.oas import OTUCreateRequest
 from virtool.references.tasks import (
     CleanReferencesTask,
     CloneReferenceTask,
@@ -429,7 +429,7 @@ class OTUsFakerDomain(DataFakerDomain):
 
         return await self._layer.otus.create(
             ref_id,
-            CreateOTURequest(
+            OTUCreateRequest(
                 name=name,
                 abbreviation=abbreviation,
                 schema=segments,

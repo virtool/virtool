@@ -151,7 +151,7 @@ class KeysView(APIView):
         )
 
         return json_response(
-            [ListAPIKeysResponse.parse_obj(key) for key in keys],
+            [ListAPIKeysResponse.model_validate(key.model_dump()) for key in keys],
             status=200,
         )
 
@@ -218,7 +218,9 @@ class KeyView(APIView):
         except ResourceNotFoundError:
             raise APINotFound() from None
 
-        return json_response(APIKeyResponse.model_validate(key), status=200)
+        return json_response(
+            APIKeyResponse.model_validate(key.model_dump()), status=200
+        )
 
     async def patch(
         self,
@@ -242,7 +244,7 @@ class KeyView(APIView):
         except ResourceNotFoundError:
             raise APINotFound() from None
 
-        return json_response(APIKeyResponse.model_validate(key))
+        return json_response(APIKeyResponse.model_validate(key.model_dump()))
 
     async def delete(self, key_id: str, /) -> R204 | R401 | R404:
         """Delete an API key.

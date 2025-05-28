@@ -21,13 +21,16 @@ authors = [
     {name = "Tiansheng Sui"},
     {name = "Bryce Davidson"},
 ]
+
+license = "MIT"
 maintainers = [
     {name = "Ian Boyes", email = "dev@igboyes.com"},
 ]
-license = "MIT"
+
+[tool.poetry]
+package-mode = false
 
 [tool.poetry.dependencies]
-python = "~3.12"
 aiohttp = {extras = ["speedups"], version = "^3.11"}
 aiojobs = "^1.0.0"
 alembic = {extras = ["tz"], version = "^1.14"}
@@ -37,6 +40,7 @@ bcrypt = "^4.2.1"
 biopython = "^1.84"
 certifi = "^2024.8.30"
 click = "^8.0.1"
+deprecated = "^1.2.15"
 dictdiffer = "^0.9.0"
 email-validator = "^2.0.0"
 faker = "^12.3.3"
@@ -46,20 +50,16 @@ openfga-sdk = "^0.1.1"
 openpyxl = "^3.1.5"
 orjson = "^3.8.0"
 piccolo-theme = "^0.24.0"
-pydantic = "1.10.16"
-PyYAML = "^6.0.0"
-PyJWT = "^2.9.0"
+pydantic = ">=2.0.0"
+pyjwt = "^2.10.1"
+pyyaml = "^6.0.2"
 semver = "^2.13.0"
 sentry-sdk = "^2.18.0"
-setuptools = "^75.3.0"
-SQLAlchemy = "2.0.24"
+sqlalchemy = "^2.0.41"
 structlog-sentry = "^2.1.0"
 uvloop = "^0.21.0"
 virtool-core = "^15.0.0"
 visvalingamwyatt = "^0.1.4"
-deprecated = "^1.2.15"
-jsonref = "^1.1.0"
-
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.6.0"
@@ -78,7 +78,7 @@ sphinx-autobuild = "^2021.3.14"
 sphinx-autodoc-typehints = "^1.24.0"
 sphinx-autofixture = "^0.4.0"
 sphinx-toolbox = "^3.5.0"
-pyright = "^1.1.397"
+syrupy = "^4.9.1"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

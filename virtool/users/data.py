@@ -441,7 +441,7 @@ class UsersData(DataLayerDomain):
             mongo_update.update(
                 await compose_groups_update(
                     self._pg,
-                    data["groups"],
+                    data.groups,
                     current_primary_group,
                 ),
             )
@@ -452,7 +452,7 @@ class UsersData(DataLayerDomain):
                     self._mongo,
                     self._pg,
                     data.groups,
-                    data["primary_group"],
+                    data.primary_group,
                     user_id,
                 ),
             )
@@ -497,13 +497,13 @@ class UsersData(DataLayerDomain):
                         delete(SQLUserGroup).where(SQLUserGroup.user_id == user.id),
                     )
 
-                    if data["groups"]:
+                    if data.groups:
                         # Don't do this if the new groups list is not empty.
                         await pg_session.execute(
                             insert(SQLUserGroup).values(
                                 [
                                     {"user_id": user.id, "group_id": group_id}
-                                    for group_id in data["groups"]
+                                    for group_id in data.groups
                                 ],
                             ),
                         )
@@ -518,7 +518,7 @@ class UsersData(DataLayerDomain):
                     result = await pg_session.execute(
                         update(SQLUserGroup)
                         .where(SQLUserGroup.user_id == user.id)
-                        .where(SQLUserGroup.group_id == data["primary_group"])
+                        .where(SQLUserGroup.group_id == data.primary_group)
                         .values(primary=True),
                     )
 
@@ -535,7 +535,7 @@ class UsersData(DataLayerDomain):
         return await self.get(user_id)
 
     async def check_users_exist(self) -> bool:
-        """Checks that users exist.
+        """Check that at least one user exists.
 
         :returns: True if users exist otherwise False
         """

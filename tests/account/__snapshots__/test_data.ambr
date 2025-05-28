@@ -1,32 +1,6 @@
 # serializer version: 1
 # name: test_create_api_key[does_not_have_permission][data]
-  dict({
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': list([
-      dict({
-        'id': 2,
-        'legacy_id': None,
-        'name': 'architects',
-      }),
-      dict({
-        'id': 1,
-        'legacy_id': None,
-        'name': 'musicians',
-      }),
-    ]),
-    'id': 'foo_0',
-    'name': 'Foo',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': True,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-  })
+  APIKey(id='foo_0', created_at=datetime.datetime(2015, 10, 6, 20, 0), groups=[GroupMinimal(id=2, legacy_id=None, name='architects'), GroupMinimal(id=1, legacy_id=None, name='musicians')], name='Foo', permissions=Permissions(cancel_job=False, create_ref=False, create_sample=True, modify_hmm=False, modify_subtraction=False, remove_file=False, remove_job=False, upload_file=False))
 # ---
 # name: test_create_api_key[does_not_have_permission][mongo]
   dict({
@@ -48,33 +22,7 @@
   })
 # ---
 # name: test_create_api_key[has_permission][data]
-  dict({
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': list([
-      dict({
-        'id': 2,
-        'legacy_id': None,
-        'name': 'architects',
-      }),
-      dict({
-        'id': 1,
-        'legacy_id': None,
-        'name': 'musicians',
-      }),
-    ]),
-    'id': 'foo_0',
-    'name': 'Foo',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': True,
-      'modify_hmm': False,
-      'modify_subtraction': True,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-  })
+  APIKey(id='foo_0', created_at=datetime.datetime(2015, 10, 6, 20, 0), groups=[GroupMinimal(id=2, legacy_id=None, name='architects'), GroupMinimal(id=1, legacy_id=None, name='musicians')], name='Foo', permissions=Permissions(cancel_job=False, create_ref=False, create_sample=True, modify_hmm=False, modify_subtraction=True, remove_file=False, remove_job=False, upload_file=False))
 # ---
 # name: test_create_api_key[has_permission][mongo]
   dict({
@@ -117,7 +65,7 @@
   })
 # ---
 # name: test_update[email][pg]
-  <SQLUser(id='1', active='True', b2c_display_name='', b2c_given_name='', b2c_family_name='', b2c_oid='None', email='hello@world.com', force_reset='False', handle='leeashley', invalidate_sessions='False', last_password_change='datetime', legacy_id='bf1b993c', settings='{'show_ids': True, 'show_versions': True, 'quick_analyze_workflow': 'pathoscope_bowtie', 'skip_quick_analyze_dialog': True}', groups='[]', primary_group='[]')>
+  <SQLUser(id='1', active='True', b2c_display_name='', b2c_given_name='', b2c_family_name='', b2c_oid='None', email='hello@world.com', force_reset='False', handle='leeashley', invalidate_sessions='False', last_password_change='datetime', legacy_id='bf1b993c', settings='{'show_ids': True, 'show_versions': True, 'quick_analyze_workflow': 'pathoscope_bowtie', 'skip_quick_analyze_dialog': True}', groups='[]', primary_group='None')>
 # ---
 # name: test_update[password and email][mongo]
   dict({
@@ -141,7 +89,7 @@
   })
 # ---
 # name: test_update[password and email][pg]
-  <SQLUser(id='1', active='True', b2c_display_name='', b2c_given_name='', b2c_family_name='', b2c_oid='None', email='hello@world.com', force_reset='False', handle='leeashley', invalidate_sessions='False', last_password_change='datetime', legacy_id='bf1b993c', settings='{'show_ids': True, 'show_versions': True, 'quick_analyze_workflow': 'pathoscope_bowtie', 'skip_quick_analyze_dialog': True}', groups='[]', primary_group='[]')>
+  <SQLUser(id='1', active='True', b2c_display_name='', b2c_given_name='', b2c_family_name='', b2c_oid='None', email='hello@world.com', force_reset='False', handle='leeashley', invalidate_sessions='False', last_password_change='datetime', legacy_id='bf1b993c', settings='{'show_ids': True, 'show_versions': True, 'quick_analyze_workflow': 'pathoscope_bowtie', 'skip_quick_analyze_dialog': True}', groups='[]', primary_group='None')>
 # ---
 # name: test_update[password][mongo]
   dict({
@@ -165,5 +113,5 @@
   })
 # ---
 # name: test_update[password][pg]
-  <SQLUser(id='1', active='True', b2c_display_name='', b2c_given_name='', b2c_family_name='', b2c_oid='None', email='', force_reset='False', handle='leeashley', invalidate_sessions='False', last_password_change='datetime', legacy_id='bf1b993c', settings='{'show_ids': True, 'show_versions': True, 'quick_analyze_workflow': 'pathoscope_bowtie', 'skip_quick_analyze_dialog': True}', groups='[]', primary_group='[]')>
+  <SQLUser(id='1', active='True', b2c_display_name='', b2c_given_name='', b2c_family_name='', b2c_oid='None', email='', force_reset='False', handle='leeashley', invalidate_sessions='False', last_password_change='datetime', legacy_id='bf1b993c', settings='{'show_ids': True, 'show_versions': True, 'quick_analyze_workflow': 'pathoscope_bowtie', 'skip_quick_analyze_dialog': True}', groups='[]', primary_group='None')>
 # ---

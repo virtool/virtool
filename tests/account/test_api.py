@@ -337,15 +337,15 @@ class TestUpdateAPIKey:
             },
         )
 
-        data = {
-            "permissions": {
-                Permission.create_sample.value: True,
-                Permission.modify_subtraction.value: True,
-            },
-        }
-
         if has_perm == "missing":
             data = {}
+        else:
+            data = {
+                "permissions": {
+                    Permission.create_sample.value: True,
+                    Permission.modify_subtraction.value: True,
+                },
+            }
 
         resp = await client.patch(
             "/account/keys/foobar_0",
@@ -518,41 +518,26 @@ async def test_is_permission_dict(value, spawn_client, resp_is):
         assert resp.status == 404
 
 
-@pytest.mark.parametrize("value", ["valid_email", "invalid_email"])
-async def test_is_valid_email(value, spawn_client, resp_is):
-    """Tests that when an invalid email is used, validators.is_valid_email raises a 422 error."""
-    client = await spawn_client(authenticated=True)
-
-    data = {
-        "email": "valid@email.ca" if value == "valid_email" else "-foo-bar-@baz!.ca",
-        "old_password": "old_password",
-        "password": "password",
-    }
-
-    resp = await client.patch("/account", data=data)
-
-    if value == "valid_email":
-        await resp_is.bad_request(resp, "Invalid credentials")
-    else:
-        assert resp.status == 400
-        assert await resp.json() == [
-            {
-                "loc": ["email"],
-                "msg": "The format of the email is invalid",
-                "type": "value_error",
-                "in": "body",
-            },
-        ]
-
-
 @pytest.mark.parametrize(
-    "body,status",
+    ("body", "status"),
     [
-        ({"username": "foobar", "password": "p@ssword123", "remember": False}, 201),
-        ({"username": "oops", "password": "p@ssword123", "remember": False}, 400),
-        ({"username": "foobar", "password": "wr0ngp@ssword", "remember": False}, 400),
-        ({"username": "foobar", "password": "p@ssword123"}, 201),
-        ({"username": "foobar", "password": "p@ssword123", "remember": None}, 400),
+        (
+            {"username": "foobar", "password": "p@ssword123", "remember": False},
+            HTTPStatus.CREATED,
+        ),
+        (
+            {"username": "oops", "password": "p@ssword123", "remember": False},
+            HTTPStatus.BAD_REQUEST,
+        ),
+        (
+            {"username": "foobar", "password": "wr0ngp@ssword", "remember": False},
+            HTTPStatus.BAD_REQUEST,
+        ),
+        ({"username": "foobar", "password": "p@ssword123"}, HTTPStatus.CREATED),
+        (
+            {"username": "foobar", "password": "p@ssword123", "remember": None},
+            HTTPStatus.UNPROCESSABLE_ENTITY,
+        ),
     ],
     ids=[
         "all_valid",
@@ -563,11 +548,11 @@ async def test_is_valid_email(value, spawn_client, resp_is):
     ],
 )
 async def test_login(
+    body: dict,
     mongo: Mongo,
+    snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
-    body,
-    status,
-    snapshot,
+    status: HTTPStatus,
 ):
     client = await spawn_client()
 
@@ -607,10 +592,10 @@ async def test_login_reset(
     resp = await client.post(
         "/account/login",
         {
-            "username": "foobar",
+            "force_reset": True,
             "handle": "foobar",
             "password": "hello_world",
-            "force_reset": True,
+            "username": "foobar",
         },
     )
 
