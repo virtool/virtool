@@ -44,8 +44,8 @@
 # ---
 # name: TestUpgrade.test_paired_unknown_legacy[paired_unknown_legacyfiles after]
   list([
-    'reads_2.fq.gz',
     'reads_1.fq.gz',
+    'reads_2.fq.gz',
   ])
 # ---
 # name: TestUpgrade.test_unpaired_legacy[SQLSampleReads after]

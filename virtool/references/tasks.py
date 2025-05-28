@@ -57,10 +57,11 @@ class ImportReferenceTask(BaseTask):
         self.import_data: ImportableReference | None = None
 
     async def load_file(self) -> None:
-        path = Path(self.context["path"])
-
         try:
-            import_data = await to_thread(load_reference_file, path)
+            import_data = await to_thread(
+                load_reference_file,
+                Path(self.context["path"]),
+            )
         except json.decoder.JSONDecodeError as err:
             await self._set_error(str(err).split("JSONDecodeError: ")[1])
             return

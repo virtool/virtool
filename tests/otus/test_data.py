@@ -1,10 +1,18 @@
+"""Tests for the OTU data layer.
+
+TODO: Move detailed side-effect and other testing from the API layer to this module.
+TODO: Remove direct database access as much as possible.
+TODO: Use `fake` fixture.
+
+"""
+
 import asyncio
 from asyncio import gather
 
 import pytest
 from syrupy import SnapshotAssertion
 
-from virtool.data.errors import ResourceNotFoundError
+from tests.fixtures.core import StaticTime
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
@@ -17,29 +25,30 @@ from virtool.otus.oas import OTUCreateRequest, OTUUpdateRequest, SequenceUpdateR
         OTUCreateRequest(abbreviation="TMV", name="Tobacco mosaic virus"),
         OTUCreateRequest(name="Prunus virus A"),
     ],
+    ids=["full", "no_abbreviation"],
 )
 async def test_create(
     data: OTUCreateRequest,
     data_layer: DataLayer,
     fake: DataFaker,
     mongo: Mongo,
-    snapshot,
-    static_time,
-    test_ref,
-    tmp_path,
+    snapshot: SnapshotAssertion,
+    static_time: StaticTime,
+    test_ref: dict,
 ):
     user = await fake.users.create()
-
     await mongo.references.insert_one(test_ref)
 
-    assert await data_layer.otus.create(test_ref["_id"], data, user.id) == snapshot(
-        name="return",
-    )
+    otu = await data_layer.otus.create(test_ref["_id"], data, user.id)
 
-    assert await asyncio.gather(
-        mongo.otus.find_one(),
-        mongo.history.find_one(),
-    ) == snapshot(name="db")
+    assert otu == snapshot(name="return_value")
+
+    otu = await data_layer.otus.get(otu.id)
+
+    assert otu == snapshot(name="otu")
+    assert await data_layer.history.get(otu.most_recent_change.id) == snapshot(
+        name="history",
+    )
 
 
 async def test_get_fasta(mongo, snapshot, test_otu, test_sequence, data_layer):
@@ -80,126 +89,32 @@ async def test_update(
     fake: DataFaker,
     mongo: Mongo,
     snapshot: SnapshotAssertion,
-    static_time,
-    test_otu,
-    test_ref,
-    tmp_path,
+    static_time: StaticTime,
+    test_ref: dict,
 ):
-    await mongo.references.insert_one(test_ref)
-
     user, _ = await asyncio.gather(
         fake.users.create(),
-        mongo.otus.insert_one(test_otu),
+        mongo.references.insert_one(test_ref),
     )
 
-    assert await data_layer.otus.update("6116cba1", data, user.id) == snapshot
+    otu = await fake.otus.create(test_ref["_id"], user)
 
-    assert await asyncio.gather(
-        mongo.otus.find_one(),
-        mongo.history.find_one(),
-    ) == snapshot(name="db")
-
-
-@pytest.mark.parametrize("default", [True, False])
-@pytest.mark.parametrize("empty", [True, False], ids=["empty", "not_empty"])
-@pytest.mark.parametrize("existing_default", [True, False])
-async def test_add_isolate(
-    default,
-    empty,
-    existing_default,
-    mongo,
-    snapshot,
-    test_otu,
-    static_time,
-    tmp_path,
-    data_layer,
-):
-    """Test that adding an isolate works correctly.
-
-    Ensures that setting the default isolate works correctly in all cases.
-
-    """
-    test_otu["isolates"][0]["default"] = existing_default
-
-    if empty:
-        test_otu["isolates"] = []
-
-    await mongo.otus.insert_one(test_otu)
-
-    assert (
-        await data_layer.otus.add_isolate(
-            "6116cba1",
-            "bob",
-            "isolate",
-            "B",
-            default=default,
-        )
-        == snapshot
-    )
-    assert await mongo.otus.find_one() == snapshot
-    assert await mongo.history.find_one() == snapshot
-
-
-async def test_update_isolate(
-    mongo,
-    snapshot,
-    test_otu,
-    static_time,
-    tmp_path,
-    data_layer,
-):
-    await mongo.otus.insert_one(test_otu)
-
-    assert (
-        await data_layer.otus.update_isolate(
-            "6116cba1",
-            "cab8b360",
-            "bob",
-            source_type="strain",
-            source_name="0",
-        )
-        == snapshot
+    updated_otu = await data_layer.otus.update(
+        otu.id,
+        UpdateOTURequest(abbreviation="TMV", name="Tobacco mosaic virus"),
+        user.id,
     )
 
-    assert await mongo.otus.find_one() == snapshot
-    assert await mongo.history.find_one() == snapshot
+    assert updated_otu.name == "Tobacco mosaic virus"
+    assert updated_otu.abbreviation == "TMV"
+    assert updated_otu.version == otu.version + 1
+    assert updated_otu == snapshot(name="return_value")
 
+    # Return value should be the same as the object returned from get().
+    assert await data_layer.otus.get(otu.id) == updated_otu
 
-@pytest.mark.parametrize("isolate_id", ["cab8b360", "bar"])
-async def test_remove_isolate(
-    isolate_id,
-    mongo,
-    snapshot,
-    test_otu,
-    test_sequence,
-    static_time,
-    tmp_path,
-    data_layer,
-):
-    """Test removing an isolate. Make sure the default isolate is reassigned if the default isolate is removed."""
-    test_otu["isolates"].append(
-        {
-            "default": False,
-            "id": "bar",
-            "source_type": "isolate",
-            "source_name": "A",
-        },
-    )
-
-    await gather(
-        mongo.otus.insert_one(test_otu),
-        mongo.sequences.insert_one(test_sequence),
-    )
-
-    await data_layer.otus.remove_isolate("6116cba1", isolate_id, "bob")
-
-    assert (
-        await asyncio.gather(
-            mongo.otus.find_one(),
-            mongo.history.find_one(),
-            mongo.sequences.find().to_list(None),
-        )
-        == snapshot
+    assert await data_layer.history.get(updated_otu.most_recent_change.id) == snapshot(
+        name="history",
     )
 
 
@@ -391,12 +306,10 @@ async def test_get_sequence_fasta(mongo, data_layer, test_otu, test_sequence):
     await mongo.otus.insert_one(test_otu)
     await mongo.sequences.insert_one(test_sequence)
 
-    expected = (
+    assert await data_layer.otus.get_sequence_fasta(test_sequence["_id"]) == (
         "prunus_virus_f.isolate_8816-v2.abcd1234.fa",
         ">Prunus virus F|Isolate 8816-v2|abcd1234|27\nTGTTTAAGAGATTAAACAACCGCTTTC",
     )
-
-    assert await data_layer.otus.get_sequence_fasta(test_sequence["_id"]) == expected
 
 
 async def test_get_isolate_fasta(mongo, data_layer, test_otu, test_sequence):
@@ -407,16 +320,11 @@ async def test_get_isolate_fasta(mongo, data_layer, test_otu, test_sequence):
         session=None,
     )
 
-    expected = (
+    assert await data_layer.otus.get_isolate_fasta(
+        test_otu["_id"],
+        test_otu["isolates"][0]["id"],
+    ) == (
         "prunus_virus_f.isolate_8816-v2.fa",
         ">Prunus virus F|Isolate 8816-v2|abcd1234|27\nTGTTTAAGAGATTAAACAACCGCTTTC\n"
         ">Prunus virus F|Isolate 8816-v2|AX12345|12\nATAGAGGAGTTA",
-    )
-
-    assert (
-        await data_layer.otus.get_isolate_fasta(
-            test_otu["_id"],
-            test_otu["isolates"][0]["id"],
-        )
-        == expected
     )

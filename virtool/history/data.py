@@ -1,13 +1,15 @@
 from pathlib import Path
 from typing import Any
 
+from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.models.history import History, HistorySearchResult
 
 import virtool.otus.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
-from virtool.history.db import HISTORY_PROJECTION, DiffTransform, patch_to_version
+from virtool.history.db import HISTORY_PROJECTION, patch_to_version
+from virtool.history.transforms import AttachDiffTransform
 from virtool.mongo.core import Mongo
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.users.transforms import AttachUserTransform
@@ -17,12 +19,14 @@ from virtool.utils import base_processor
 class HistoryData:
     name = "history"
 
-    def __init__(self, data_path: Path, mongo: Mongo):
-        self.data_path = data_path
+    def __init__(self, data_path: Path, mongo: Mongo, pg: AsyncEngine):
+        self._data_path = data_path
         self._mongo = mongo
+        self._pg = pg
 
     async def find(self, req_query: Any) -> HistorySearchResult:
         """List all change documents.
+
         :param req_query: the request query
         :return: a list of all documents
         """
@@ -31,8 +35,10 @@ class HistoryData:
         return HistorySearchResult(**documents)
 
     async def get(self, change_id: str) -> History:
-        """Get a document given its ID.
-        :param change_id: the ID of the document to get
+        """Get a change by its ID.
+
+        :param change_id: the ID of the change.
+        :return: the change
         """
         document = await self._mongo.history.find_one(change_id, HISTORY_PROJECTION)
 
@@ -40,17 +46,20 @@ class HistoryData:
             document = await apply_transforms(
                 base_processor(document),
                 [
+                    AttachDiffTransform(self._data_path, self._pg),
                     AttachReferenceTransform(self._mongo),
                     AttachUserTransform(self._mongo),
-                    DiffTransform(self.data_path),
                 ],
             )
             return History(**document)
 
         raise ResourceNotFoundError()
 
-    async def delete(self, change_id: str):
-        """Delete a document given its ID.
+    async def delete(self, change_id: str) -> None:
+        """Delete a change given its ID.
+
+        Deleting the change will revert the changes make to the associated OTU.
+
         :param change_id: the ID of the document to delete
         """
         document = await self._mongo.history.find_one(change_id, ["reference"])
@@ -65,7 +74,7 @@ class HistoryData:
                 change["index"]["id"] != "unbuilt"
                 or change["index"]["version"] != "unbuilt"
             ):
-                raise virtool.errors.DatabaseError(
+                raise DatabaseError(
                     "Change is included in a build an not revertible",
                 )
 
@@ -75,7 +84,7 @@ class HistoryData:
                 otu_version = int(otu_version)
 
             _, patched, history_to_delete = await patch_to_version(
-                self.data_path,
+                self._data_path,
                 self._mongo,
                 otu_id,
                 otu_version - 1,

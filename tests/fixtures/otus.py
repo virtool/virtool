@@ -15,10 +15,10 @@ def import_data_file():
     return data
 
 
-@pytest.fixture
+@pytest.fixture()
 def test_otu(static_time):
     return {
-        "version": 0,
+        "_id": "6116cba1",
         "abbreviation": "PVF",
         "isolates": [
             {
@@ -26,20 +26,20 @@ def test_otu(static_time):
                 "id": "cab8b360",
                 "source_name": "8816-v2",
                 "source_type": "isolate",
-            }
+            },
         ],
         "last_indexed_version": 0,
         "lower_name": "prunus virus f",
-        "verified": False,
         "name": "Prunus virus F",
-        "schema": [],
         "reference": {"id": "hxn167"},
         "remote_id": None,
-        "_id": "6116cba1",
+        "schema": [],
+        "verified": False,
+        "version": 0,
     }
 
 
-@pytest.fixture
+@pytest.fixture()
 def test_isolate():
     return {
         "id": "cab8b360",
@@ -49,7 +49,7 @@ def test_isolate():
     }
 
 
-@pytest.fixture
+@pytest.fixture()
 def test_sequence():
     return {
         "_id": "abcd1234",
@@ -65,7 +65,7 @@ def test_sequence():
     }
 
 
-@pytest.fixture
+@pytest.fixture()
 def test_merged_otu(static_time):
     return {
         "remote_id": None,
@@ -87,11 +87,11 @@ def test_merged_otu(static_time):
                         "segment": None,
                         "reference": {"id": "ref"},
                         "remote": None,
-                    }
+                    },
                 ],
                 "source_name": "8816-v2",
                 "source_type": "isolate",
-            }
+            },
         ],
         "reference": {"id": "hxn167"},
         "last_indexed_version": 0,

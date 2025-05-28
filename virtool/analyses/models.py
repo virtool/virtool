@@ -21,7 +21,7 @@ class SQLAnalysisResult(Base):
     """SQL model to store analysis results.
 
     This is a temporary table and should be removed after analyses have been completely
-    moved to Postgre.
+    moved to Postgres.
     """
 
     __tablename__ = "analysis_results"

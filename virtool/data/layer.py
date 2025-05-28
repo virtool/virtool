@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from aiohttp import ClientSession
 from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool_core.redis import Redis
 
@@ -81,7 +82,7 @@ def create_data_layer(
     mongo: "Mongo",
     pg: AsyncEngine,
     config: Config,
-    client,
+    client: ClientSession,
     redis: Redis,
 ) -> DataLayer:
     """Create and return a data layer object.
@@ -97,20 +98,20 @@ def create_data_layer(
     jobs_client = JobsClient(redis)
     http_client = HTTPClient(client)
 
-    data_layer = DataLayer(
+    return DataLayer(
         AccountData(authorization_client, mongo, pg),
         AdministratorsData(authorization_client, mongo, pg),
         AnalysisData(mongo, config, pg),
         BLASTData(client, mongo, pg),
         GroupsData(authorization_client, mongo, pg),
-        HistoryData(config.data_path, mongo),
+        HistoryData(config.data_path, mongo, pg),
         HmmsData(client, config, mongo, pg),
         IndexData(mongo, config, pg),
         JobsData(jobs_client, mongo, pg),
         LabelsData(mongo, pg),
         MessagesData(pg, mongo),
         MLData(config, http_client, pg),
-        OTUData(mongo, config.data_path),
+        OTUData(config.data_path, mongo, pg),
         ReferencesData(mongo, pg, config, client),
         SamplesData(config, mongo, pg, jobs_client),
         SubtractionsData(config.base_url, config, mongo, pg),
@@ -121,5 +122,3 @@ def create_data_layer(
         UploadsData(config, mongo, pg),
         UsersData(authorization_client, mongo, pg),
     )
-
-    return data_layer

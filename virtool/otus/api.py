@@ -218,7 +218,7 @@ class IsolatesView(APIView):
         return json_response(
             isolate,
             status=201,
-            headers={"Location": f"/otus/{otu_id}/isolates/{isolate['id']}"},
+            headers={"Location": f"/otus/{otu_id}/isolates/{isolate.id}"},
         )
 
 
@@ -485,12 +485,12 @@ class SequencesView(APIView):
             target=data.target,
         )
 
+        location = f"/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence.id}"
+
         return json_response(
-            sequence_document,
+            sequence,
             status=201,
-            headers={
-                "Location": f"/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence_document['id']}",
-            },
+            headers={"Location": location},
         )
 
 

@@ -2,6 +2,8 @@ import asyncio
 from pathlib import Path
 
 import pytest
+from pytest_mock import MockerFixture
+from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
 
 from virtool.fake.next import DataFaker
@@ -14,8 +16,9 @@ async def test_get(
     data_path: Path,
     file,
     fake: DataFaker,
-    mocker,
+    mocker: MockerFixture,
     mongo: Mongo,
+    pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     static_time,
 ):
@@ -44,4 +47,4 @@ async def test_get(
         return_value="loaded",
     )
 
-    assert await HistoryData(data_path, mongo).get("baz.2") == snapshot
+    assert await HistoryData(data_path, mongo, pg).get("baz.2") == snapshot

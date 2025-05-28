@@ -132,7 +132,7 @@ class BaseTask:
             try:
                 await func()
             except Exception as err:
-                log.exception("Encountered error in task")
+                log.exception("encountered error in task")
                 await self._set_error(f"{type(err)}: {err!s}")
 
         if self.errored:

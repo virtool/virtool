@@ -379,7 +379,121 @@
     }),
   ])
 # ---
+# name: TestCreateOTU.test[None-None][history]
+  dict({
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Created Tobacco mosaic virus',
+    'diff': dict({
+      '_id': 'bf1b993c',
+      'abbreviation': '',
+      'isolates': list([
+      ]),
+      'last_indexed_version': None,
+      'lower_name': 'tobacco mosaic virus',
+      'name': 'Tobacco mosaic virus',
+      'reference': dict({
+        'id': 'foo',
+      }),
+      'schema': list([
+      ]),
+      'verified': False,
+      'version': 0,
+    }),
+    'id': 'bf1b993c.0',
+    'index': dict({
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    }),
+    'method_name': <HistoryMethod.create: 'create'>,
+    'otu': dict({
+      'id': 'bf1b993c',
+      'name': 'Tobacco mosaic virus',
+      'version': 0,
+    }),
+    'reference': dict({
+      'data_type': <ReferenceDataType.genome: 'genome'>,
+      'id': 'foo',
+      'name': 'Foo',
+    }),
+    'user': dict({
+      'handle': 'bob',
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
 # name: TestCreateOTU.test[None-None][json]
+  dict({
+    'abbreviation': '',
+    'id': 'bf1b993c',
+    'isolates': list([
+    ]),
+    'issues': dict({
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    }),
+    'last_indexed_version': None,
+    'most_recent_change': dict({
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Created Tobacco mosaic virus',
+      'id': 'bf1b993c.0',
+      'method_name': 'create',
+      'user': dict({
+        'handle': 'bob',
+        'id': 'bf1b993c',
+      }),
+    }),
+    'name': 'Tobacco mosaic virus',
+    'reference': dict({
+      'data_type': 'genome',
+      'id': 'foo',
+      'name': 'Foo',
+    }),
+    'remote': None,
+    'schema': list([
+    ]),
+    'verified': False,
+    'version': 0,
+  })
+# ---
+# name: TestCreateOTU.test[None-None][otu]
+  dict({
+    'abbreviation': '',
+    'id': 'bf1b993c',
+    'isolates': list([
+    ]),
+    'issues': dict({
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    }),
+    'last_indexed_version': None,
+    'most_recent_change': dict({
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'description': 'Created Tobacco mosaic virus',
+      'id': 'bf1b993c.0',
+      'method_name': <HistoryMethod.create: 'create'>,
+      'user': dict({
+        'handle': 'bob',
+        'id': 'bf1b993c',
+      }),
+    }),
+    'name': 'Tobacco mosaic virus',
+    'otu_schema': list([
+    ]),
+    'reference': dict({
+      'data_type': <ReferenceDataType.genome: 'genome'>,
+      'id': 'foo',
+      'name': 'Foo',
+    }),
+    'remote': None,
+    'verified': False,
+    'version': 0,
+  })
+# ---
+# name: TestCreateOTU.test[None-None][resp]
   dict({
     'abbreviation': '',
     'id': 'bf1b993c',
@@ -472,7 +586,121 @@
     }),
   ])
 # ---
+# name: TestCreateOTU.test[None-TMV][history]
+  dict({
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Created Tobacco mosaic virus (TMV)',
+    'diff': dict({
+      '_id': 'bf1b993c',
+      'abbreviation': 'TMV',
+      'isolates': list([
+      ]),
+      'last_indexed_version': None,
+      'lower_name': 'tobacco mosaic virus',
+      'name': 'Tobacco mosaic virus',
+      'reference': dict({
+        'id': 'foo',
+      }),
+      'schema': list([
+      ]),
+      'verified': False,
+      'version': 0,
+    }),
+    'id': 'bf1b993c.0',
+    'index': dict({
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    }),
+    'method_name': <HistoryMethod.create: 'create'>,
+    'otu': dict({
+      'id': 'bf1b993c',
+      'name': 'Tobacco mosaic virus',
+      'version': 0,
+    }),
+    'reference': dict({
+      'data_type': <ReferenceDataType.genome: 'genome'>,
+      'id': 'foo',
+      'name': 'Foo',
+    }),
+    'user': dict({
+      'handle': 'bob',
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
 # name: TestCreateOTU.test[None-TMV][json]
+  dict({
+    'abbreviation': 'TMV',
+    'id': 'bf1b993c',
+    'isolates': list([
+    ]),
+    'issues': dict({
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    }),
+    'last_indexed_version': None,
+    'most_recent_change': dict({
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Created Tobacco mosaic virus (TMV)',
+      'id': 'bf1b993c.0',
+      'method_name': 'create',
+      'user': dict({
+        'handle': 'bob',
+        'id': 'bf1b993c',
+      }),
+    }),
+    'name': 'Tobacco mosaic virus',
+    'reference': dict({
+      'data_type': 'genome',
+      'id': 'foo',
+      'name': 'Foo',
+    }),
+    'remote': None,
+    'schema': list([
+    ]),
+    'verified': False,
+    'version': 0,
+  })
+# ---
+# name: TestCreateOTU.test[None-TMV][otu]
+  dict({
+    'abbreviation': 'TMV',
+    'id': 'bf1b993c',
+    'isolates': list([
+    ]),
+    'issues': dict({
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    }),
+    'last_indexed_version': None,
+    'most_recent_change': dict({
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'description': 'Created Tobacco mosaic virus (TMV)',
+      'id': 'bf1b993c.0',
+      'method_name': <HistoryMethod.create: 'create'>,
+      'user': dict({
+        'handle': 'bob',
+        'id': 'bf1b993c',
+      }),
+    }),
+    'name': 'Tobacco mosaic virus',
+    'otu_schema': list([
+    ]),
+    'reference': dict({
+      'data_type': <ReferenceDataType.genome: 'genome'>,
+      'id': 'foo',
+      'name': 'Foo',
+    }),
+    'remote': None,
+    'verified': False,
+    'version': 0,
+  })
+# ---
+# name: TestCreateOTU.test[None-TMV][resp]
   dict({
     'abbreviation': 'TMV',
     'id': 'bf1b993c',
@@ -565,7 +793,121 @@
     }),
   ])
 # ---
+# name: TestCreateOTU.test[None-][history]
+  dict({
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'description': 'Created Tobacco mosaic virus',
+    'diff': dict({
+      '_id': 'bf1b993c',
+      'abbreviation': '',
+      'isolates': list([
+      ]),
+      'last_indexed_version': None,
+      'lower_name': 'tobacco mosaic virus',
+      'name': 'Tobacco mosaic virus',
+      'reference': dict({
+        'id': 'foo',
+      }),
+      'schema': list([
+      ]),
+      'verified': False,
+      'version': 0,
+    }),
+    'id': 'bf1b993c.0',
+    'index': dict({
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    }),
+    'method_name': <HistoryMethod.create: 'create'>,
+    'otu': dict({
+      'id': 'bf1b993c',
+      'name': 'Tobacco mosaic virus',
+      'version': 0,
+    }),
+    'reference': dict({
+      'data_type': <ReferenceDataType.genome: 'genome'>,
+      'id': 'foo',
+      'name': 'Foo',
+    }),
+    'user': dict({
+      'handle': 'bob',
+      'id': 'bf1b993c',
+    }),
+  })
+# ---
 # name: TestCreateOTU.test[None-][json]
+  dict({
+    'abbreviation': '',
+    'id': 'bf1b993c',
+    'isolates': list([
+    ]),
+    'issues': dict({
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    }),
+    'last_indexed_version': None,
+    'most_recent_change': dict({
+      'created_at': '2015-10-06T20:00:00Z',
+      'description': 'Created Tobacco mosaic virus',
+      'id': 'bf1b993c.0',
+      'method_name': 'create',
+      'user': dict({
+        'handle': 'bob',
+        'id': 'bf1b993c',
+      }),
+    }),
+    'name': 'Tobacco mosaic virus',
+    'reference': dict({
+      'data_type': 'genome',
+      'id': 'foo',
+      'name': 'Foo',
+    }),
+    'remote': None,
+    'schema': list([
+    ]),
+    'verified': False,
+    'version': 0,
+  })
+# ---
+# name: TestCreateOTU.test[None-][otu]
+  dict({
+    'abbreviation': '',
+    'id': 'bf1b993c',
+    'isolates': list([
+    ]),
+    'issues': dict({
+      'empty_isolate': False,
+      'empty_otu': True,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
+    }),
+    'last_indexed_version': None,
+    'most_recent_change': dict({
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'description': 'Created Tobacco mosaic virus',
+      'id': 'bf1b993c.0',
+      'method_name': <HistoryMethod.create: 'create'>,
+      'user': dict({
+        'handle': 'bob',
+        'id': 'bf1b993c',
+      }),
+    }),
+    'name': 'Tobacco mosaic virus',
+    'otu_schema': list([
+    ]),
+    'reference': dict({
+      'data_type': <ReferenceDataType.genome: 'genome'>,
+      'id': 'foo',
+      'name': 'Foo',
+    }),
+    'remote': None,
+    'verified': False,
+    'version': 0,
+  })
+# ---
+# name: TestCreateOTU.test[None-][resp]
   dict({
     'abbreviation': '',
     'id': 'bf1b993c',

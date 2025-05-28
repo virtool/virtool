@@ -10,6 +10,8 @@ from virtool_core.models.enums import Permission
 
 import virtool.utils
 from tests.fixtures.client import ClientSpawner
+from tests.fixtures.core import StaticTime
+from tests.fixtures.response import RespIs
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
@@ -713,11 +715,12 @@ class TestCreateOTU:
         self,
         abbreviation: str | None,
         error: str | None,
-        resp_is,
-        snapshot,
+        data_layer: DataLayer,
         mongo: Mongo,
-        spawn_client,
-        static_time,
+        resp_is: RespIs,
+        snapshot: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+        static_time: StaticTime,
     ):
         """Test that a valid request results in the creation of a otu document and a
         ``201`` response.
@@ -762,11 +765,17 @@ class TestCreateOTU:
                     resp.headers["Location"]
                     == "https://virtool.example.com/otus/bf1b993c"
                 )
-                assert await resp.json() == snapshot(name="json")
-                assert await asyncio.gather(
-                    mongo.otus.find_one(),
-                    mongo.history.find_one(),
-                ) == snapshot(name="db")
+                body = await resp.json()
+                assert body == snapshot(name="resp")
+
+                assert await data_layer.otus.get(body["id"]) == snapshot(name="otu")
+
+                assert await data_layer.history.get(
+                    body["most_recent_change"]["id"],
+                ) == snapshot(
+                    name="history",
+                )
+
             case "403":
                 await resp_is.insufficient_rights(resp)
             case "404":
