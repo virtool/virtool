@@ -148,12 +148,9 @@ class TestCreate:
 async def test_finalize(
     data_layer: DataLayer,
     get_sample_ready_false,
-    mongo: Mongo,
     snapshot_recent: SnapshotAssertion,
-    spawn_client: ClientSpawner,
-    tmp_path,
 ):
-    """Test that sample can be finalized"""
+    """Test that sample can be finalized."""
     quality = {
         "bases": [[1543]],
         "composition": [[6372]],

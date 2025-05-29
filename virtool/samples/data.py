@@ -247,7 +247,8 @@ class SamplesData(DataLayerDomain):
 
         try:
             uploads = [
-                (await self.data.uploads.get(file_)).dict() for file_ in data.files
+                (await self.data.uploads.get(file_)).model_dump()
+                for file_ in data.files
             ]
         except ResourceNotFoundError:
             raise ResourceConflictError("File does not exist")

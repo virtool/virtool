@@ -334,7 +334,7 @@ class SubtractionsData(DataLayerDomain):
 
         subtraction = await self._mongo.subtraction.update_one(
             {"_id": subtraction_id},
-            {"$set": {**data.dict(), "ready": True}},
+            {"$set": {**data.model_dump(), "ready": True}},
         )
 
         if subtraction:

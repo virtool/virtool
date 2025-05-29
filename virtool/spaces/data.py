@@ -117,7 +117,7 @@ class SpacesData:
         :param data: updates to the space.
         :return: the space
         """
-        data = data.dict(exclude_unset=True)
+        data = data.model_dump(exclude_unset=True)
 
         async with AsyncSession(self._pg) as session:
             result = await session.execute(select(SQLSpace).filter_by(id=space_id))
@@ -188,7 +188,7 @@ class SpacesData:
         :param data: the updates to the member
         :return: the space
         """
-        data = data.dict(exclude_unset=True)
+        data = data.model_dump(exclude_unset=True)
 
         async with AsyncSession(self._pg) as session:
             result = await session.execute(select(SQLSpace).filter_by(id=space_id))

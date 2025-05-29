@@ -99,7 +99,7 @@ class BLASTData(DataLayerDomain):
         analysis = await self.data.analyses.get(analysis_id, None)
 
         sequence = find_nuvs_sequence_by_index(
-            analysis.dict(by_alias=True),
+            analysis.model_dump(by_alias=True),
             sequence_index,
         )
 

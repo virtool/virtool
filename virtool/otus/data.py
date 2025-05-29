@@ -244,7 +244,7 @@ class OTUData:
                     "isolates": [],
                     "version": 0,
                     "reference": {"id": ref_id},
-                    "schema": data.dict()["otu_schema"],
+                    "schema": data.model_dump()["otu_schema"],
                 },
                 session=session,
             )

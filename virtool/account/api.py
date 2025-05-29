@@ -177,7 +177,7 @@ class KeysView(APIView):
         )
 
         return json_response(
-            CreateKeyResponse(**{**key.dict(), "key": raw}),
+            CreateKeyResponse(**{**key.model_dump(), "key": raw}),
             headers={"Location": f"/account/keys/{key.id}"},
             status=201,
         )

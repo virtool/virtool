@@ -271,7 +271,7 @@ class JobsData:
 
         job = await self.get(job_id)
 
-        return JobAcquired(**job.dict(), key=key)
+        return JobAcquired(**job.model_dump(), key=key)
 
     @emits(Operation.UPDATE)
     async def archive(self, job_id: str) -> Job:
@@ -406,7 +406,7 @@ class JobsData:
         if job is None:
             raise ResourceNotFoundError
 
-        if check_job_is_running_or_waiting(job.dict()):
+        if check_job_is_running_or_waiting(job.model_dump()):
             raise ResourceConflictError(
                 "Job is running or waiting and cannot be removed.",
             )

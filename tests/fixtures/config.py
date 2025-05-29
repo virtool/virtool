@@ -4,9 +4,13 @@ import pytest
 
 
 @pytest.fixture()
-def data_path(tmp_path) -> Path:
-    """A temporary ``data_path`` directory that is cleaned up after the test."""
-    return Path(tmp_path)
+def data_path(tmp_path: Path) -> Path:
+    """An application data directory that is cleaned up after the test.
+
+    This is the path that is configured in that application with the `--data-path`
+    option.
+    """
+    return tmp_path / "data"
 
 
 @pytest.fixture()

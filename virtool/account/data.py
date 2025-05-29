@@ -255,7 +255,7 @@ class AccountData(DataLayerDomain):
 
         document["permissions"] = limit_permissions(
             document["permissions"],
-            user.permissions.dict(),
+            user.permissions.model_dump(),
         )
 
         return APIKey(
@@ -291,7 +291,10 @@ class AccountData(DataLayerDomain):
             **{
                 **document,
                 "groups": user.groups,
-                "permissions": {**document["permissions"], **user.permissions.dict()},
+                "permissions": {
+                    **document["permissions"],
+                    **user.permissions.model_dump(),
+                },
             },
         )
 
@@ -319,7 +322,7 @@ class AccountData(DataLayerDomain):
                 "created_at": virtool.utils.timestamp(),
                 "groups": [group.id for group in user.groups],
                 "name": data.name,
-                "permissions": data.permissions.dict(exclude_unset=True),
+                "permissions": data.permissions.model_dump(exclude_unset=True),
                 "user": {"id": user_id},
             },
         )

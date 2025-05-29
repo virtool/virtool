@@ -46,7 +46,7 @@ class SettingsData:
         """
         existing = await self.get_all()
 
-        settings = {**(Settings().dict()), **existing.dict()}
+        settings = {**(Settings().model_dump()), **existing.model_dump()}
 
         await self._mongo.settings.update_one(
             {"_id": "settings"},

@@ -1,4 +1,5 @@
 from datetime import timedelta
+from http import HTTPStatus
 
 import arrow
 import pytest
@@ -394,7 +395,7 @@ class TestAdministratorRoles:
             {"role": AdministratorRole.BASE},
         )
 
-        assert resp.status == 403
+        assert resp.status == HTTPStatus.FORBIDDEN
         assert await resp.json() == {
             "id": "forbidden",
             "message": "Requires administrative privilege",

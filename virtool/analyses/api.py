@@ -62,7 +62,9 @@ class AnalysesView(APIView):
             self.request["client"],
         )
 
-        return json_response(AnalysesSearchResponse.model_validate(search_result))
+        return json_response(
+            AnalysesSearchResponse.model_validate(search_result.model_dump())
+        )
 
 
 @routes.web.get("/analyses/{analysis_id}")
@@ -177,7 +179,9 @@ class AnalysisView(APIView):
         raise APINoContent()
 
 
-@routes.job.view("/analyses/{analysis_id}/files/{upload_id}")
+@routes.job.get("/analyses/{analysis_id}/files/{upload_id}")
+@routes.job.post("/analyses/{analysis_id}/files/{upload_id}")
+@routes.job.put("/analyses/{analysis_id}/files/{upload_id}")
 @routes.web.get("/analyses/{analysis_id}/files/{upload_id}")
 class AnalysisFileView(APIView):
     """Request handlers for managing analysis files.

@@ -152,7 +152,7 @@ class EventPublisher:
                 event = await _events_target.get()
 
                 try:
-                    data = event.data.dict()
+                    data = event.data.model_dump()
                 except AttributeError:
                     logger.exception(
                         "Encountered exception while publishing event",

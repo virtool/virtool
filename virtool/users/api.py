@@ -182,7 +182,7 @@ class FirstUserView(APIView):
         )
 
         response = json_response(
-            user.dict(),
+            user.model_dump(),
             headers={"Location": f"/users/{user.id}"},
             status=201,
         )

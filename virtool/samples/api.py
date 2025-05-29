@@ -241,7 +241,7 @@ class SampleView(APIView):
         raise APINoContent()
 
 
-@routes.job.view("/samples/{sample_id}")
+@routes.job.patch("/samples/{sample_id}")
 class SampleFinalizeView(APIView):
     """Finalize a sample.
 

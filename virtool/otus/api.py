@@ -101,7 +101,7 @@ class OTUView(APIView):
             raise APIInsufficientRights()
 
         name, abbreviation, otu_schema = evaluate_changes(
-            data.dict(by_alias=True, exclude_unset=True),
+            data.model_dump(by_alias=True, exclude_unset=True),
             document,
         )
 
@@ -469,7 +469,7 @@ class SequencesView(APIView):
             isolate_id,
             None,
             ref_id,
-            data.dict(),
+            data.model_dump(),
         ):
             raise APIBadRequest(message)
 
@@ -582,7 +582,7 @@ class SequenceView(APIView):
             isolate_id,
             sequence_id,
             document["reference"]["id"],
-            data.dict(exclude_unset=True),
+            data.model_dump(exclude_unset=True),
         ):
             raise APIBadRequest(message)
 

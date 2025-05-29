@@ -78,7 +78,9 @@ async def authenticate_with_api_key(
         authenticated=True,
         force_reset=False,
         groups=[group.id for group in user.groups],
-        permissions=limit_permissions(user.permissions.dict(), key.permissions.dict()),
+        permissions=limit_permissions(
+            user.permissions.model_dump(), key.permissions.model_dump()
+        ),
         user_id=user.id,
     )
 
@@ -131,7 +133,7 @@ async def authenticate_with_b2c(req: Request, handler: Callable) -> Response:
         authenticated=True,
         force_reset=False,
         groups=[group.id for group in user.groups],
-        permissions=user.permissions.dict(),
+        permissions=user.permissions.model_dump(),
         user_id=user.id,
         session_id=None,
     )
@@ -159,7 +161,7 @@ async def authenticate_with_session(req: Request, handler: Callable) -> Response
         authenticated=True,
         force_reset=user.force_reset,
         groups=[group.id for group in user.groups],
-        permissions=user.permissions.dict(),
+        permissions=user.permissions.model_dump(),
         user_id=user.id,
         session_id=session.id,
     )
