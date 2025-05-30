@@ -24,13 +24,18 @@ logger = get_logger("authn")
 
 
 def get_ip(req: Request) -> str:
-    """A convenience function for getting the client IP address from a
-    :class:`~Request` object.
+    """Get the client IP address from a request.
+
+    Sometimes the transport is known, in which the returned IP address is
+    an empty string.
 
     :param req: the request
     :return: the client's IP address string
 
     """
+    if req.transport is None:
+        return ""
+
     return req.transport.get_extra_info("peername")[0]
 
 
