@@ -1,4 +1,5 @@
 import datetime
+from http import HTTPStatus
 
 import aiohttp
 from structlog import get_logger
@@ -96,20 +97,17 @@ async def get_release(
         url,
         headers=headers,
     ) as resp:
-        rate_limit_remaining = resp.headers.get("X-RateLimit-Remaining", "00")
-        rate_limit = resp.headers.get("X-RateLimit-Limit", "00")
+        rate_limit_remaining = int(resp.headers.get("X-RateLimit-Remaining", "00"))
+        rate_limit = int(resp.headers.get("X-RateLimit-Limit", "00"))
 
-        if (
-            rate_limit_remaining == 0
-            or int(rate_limit) / int(rate_limit_remaining) > 2.0
-        ):
+        if rate_limit_remaining == 0 or rate_limit / rate_limit_remaining > 2.0:
             logger.warning(
                 "less than half of github rate limit remaining",
                 remaining=rate_limit_remaining,
                 limit=rate_limit,
             )
 
-        if resp.status == 200:
+        if resp.status == HTTPStatus.OK:
             data = await resp.json()
 
             if len(data["assets"]) == 0:
@@ -117,7 +115,7 @@ async def get_release(
 
             return dict(data, etag=resp.headers["etag"])
 
-        if resp.status == 304:
+        if resp.status == HTTPStatus.NOT_MODIFIED:
             return None
 
         logger.warning(
