@@ -1,11 +1,10 @@
 from copy import deepcopy
-from typing import List, Optional, Tuple, Union
 
 from virtool.types import Document
 from virtool.utils import base_processor
 
 
-def evaluate_changes(data: dict, document: dict) -> Tuple[str, str, Document]:
+def evaluate_changes(data: dict, document: dict) -> tuple[str, str, Document]:
     name = data.get("name")
     abbreviation = data.get("abbreviation")
     schema = data.get("schema")
@@ -34,9 +33,8 @@ def evaluate_changes(data: dict, document: dict) -> Tuple[str, str, Document]:
     return name, abbreviation, schema
 
 
-def extract_sequence_ids(otu: dict) -> List[str]:
-    """
-    Extract all sequence ids from a merged otu.
+def extract_sequence_ids(otu: dict) -> list[str]:
+    """Extract all sequence ids from a merged otu.
 
     :param otu: the merged otu
 
@@ -61,9 +59,8 @@ def extract_sequence_ids(otu: dict) -> List[str]:
     return sequence_ids
 
 
-def find_isolate(isolates: List[dict], isolate_id: str) -> dict:
-    """
-    Return the isolate identified by ``isolate_id`` from a list of isolates.
+def find_isolate(isolates: list[dict], isolate_id: str) -> dict:
+    """Return the isolate identified by ``isolate_id`` from a list of isolates.
 
     :param isolates: a list of isolate dicts
     :param isolate_id: the isolate_id of the isolate to return
@@ -74,12 +71,11 @@ def find_isolate(isolates: List[dict], isolate_id: str) -> dict:
 
 
 def format_otu(
-    joined: Optional[Document],
-    issues: Optional[Union[Document, bool]] = False,
-    most_recent_change: Optional[Document] = None,
+    joined: Document | None,
+    issues: Document | bool | None = False,
+    most_recent_change: Document | None = None,
 ) -> Document:
-    """
-    Join and format an OTU.
+    """Join and format an OTU.
 
     Join the otu identified by the passed ``otu_id`` or use the ``joined`` otu document
     if available. Then, format the joined otu into a format that can be directly
@@ -116,8 +112,7 @@ def format_otu(
 
 
 def format_isolate_name(isolate: Document) -> str:
-    """
-    Take a complete or partial isolate ``dict`` and return a readable isolate name.
+    """Take a complete or partial isolate ``dict`` and return a readable isolate name.
 
     :param isolate: an isolate containing source_type and source_name fields
     :return: an isolate name
@@ -128,9 +123,8 @@ def format_isolate_name(isolate: Document) -> str:
     return " ".join((isolate["source_type"].capitalize(), isolate["source_name"]))
 
 
-def merge_otu(otu: dict, sequences: List[dict]) -> dict:
-    """
-    Merge the given sequences in the given otu document.
+def merge_otu(otu: dict, sequences: list[dict]) -> dict:
+    """Merge the given sequences in the given otu document.
 
     The otu will gain a ``sequences`` field containing a list of its associated sequence
     documents.
@@ -150,9 +144,8 @@ def merge_otu(otu: dict, sequences: List[dict]) -> dict:
     return merged
 
 
-def split(merged: Document) -> Tuple[Document, List[Document]]:
-    """
-    Split a merged otu document into a list of sequence documents associated with the
+def split(merged: Document) -> tuple[Document, list[Document]]:
+    """Split a merged otu document into a list of sequence documents associated with the
     otu and a regular otu document containing no sequence sub-documents.
 
     :param merged: the merged otu to split
@@ -168,9 +161,8 @@ def split(merged: Document) -> Tuple[Document, List[Document]]:
     return otu, sequences
 
 
-def verify(joined: Document) -> Union[bool, Document]:
-    """
-    Checks that the passed otu and sequences constitute valid Virtool records and can be
+def verify(joined: Document) -> bool | Document:
+    """Checks that the passed otu and sequences constitute valid Virtool records and can be
     included in an index.
 
     Error fields are:
@@ -206,7 +198,8 @@ def verify(joined: Document) -> Union[bool, Document]:
         isolate_sequence_counts.append(isolate_sequence_count)
 
         errors["empty_sequence"] += filter(
-            lambda sequence: len(sequence["sequence"]) == 0, isolate_sequences
+            lambda sequence: len(sequence["sequence"]) == 0,
+            isolate_sequences,
         )
 
     # Give an isolate_inconsistency error the number of sequences is not the same for
@@ -228,3 +221,39 @@ def verify(joined: Document) -> Union[bool, Document]:
         return errors
 
     return None
+
+
+def format_fasta_entry(
+    otu_name: str,
+    isolate_name: str,
+    sequence_id: str,
+    sequence: str,
+) -> str:
+    """Create a FASTA header and sequence block for an OTU sequence.
+
+    :param otu_name: the otu name to include in the header
+    :param isolate_name: the isolate name to include in the header
+    :param sequence_id: the sequence id to include in the header
+    :param sequence: the sequence for the FASTA entry
+    :return: a FASTA entry
+
+    """
+    return f">{otu_name}|{isolate_name}|{sequence_id}|{len(sequence)}\n{sequence}"
+
+
+def format_fasta_filename(*args) -> str:
+    """Format a FASTA filename of the form "otu.isolate.sequence_id.fa".
+
+    :param args: the filename parts
+    :return: a compound FASTA filename
+
+    """
+    if len(args) > 3:
+        raise ValueError("Unexpected number of filename parts")
+
+    if len(args) == 0:
+        raise ValueError("At least one filename part required")
+
+    filename = ".".join(args).replace(" ", "_") + ".fa"
+
+    return filename.lower()
