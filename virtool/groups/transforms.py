@@ -3,6 +3,7 @@ Transforms for attaching groups to resources.
 
 TODO: Drop legacy group id support when we fully migrate to integer ids.
 """
+
 from typing import Any
 
 from sqlalchemy import select

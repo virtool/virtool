@@ -123,7 +123,7 @@ async def test_fetch_and_update_release(mongo: Mongo, fake_app, snapshot, static
 
 
 async def test_get_reference_groups(
-        fake: DataFaker,
+    fake: DataFaker,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
 ):

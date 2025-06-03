@@ -1,4 +1,5 @@
 """Tasks for downloading and installing machine learning models used in Virtool."""
+
 from tempfile import TemporaryDirectory
 from typing import Dict, TYPE_CHECKING
 

@@ -13,7 +13,7 @@ from virtool.utils import get_temp_dir
 
 async def test_task(
     data_layer: DataLayer,
-        fake: DataFaker,
+    fake: DataFaker,
     mocker: MockerFixture,
     mongo: Mongo,
     pg: AsyncEngine,

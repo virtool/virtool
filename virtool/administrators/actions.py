@@ -10,8 +10,7 @@ if TYPE_CHECKING:
 
 
 class Action(ABC):
-    async def run(self, data_layer: "DataLayer", *args, **kwargs):
-        ...
+    async def run(self, data_layer: "DataLayer", *args, **kwargs): ...
 
 
 class TaskAction:

@@ -19,7 +19,7 @@ from virtool.tasks.models import SQLTask
 async def test_list(
     has_last_checked_at: bool,
     data_layer: DataLayer,
-        fake: DataFaker,
+    fake: DataFaker,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     static_time,
@@ -51,7 +51,7 @@ async def test_list(
 
 async def test_get(
     data_layer: DataLayer,
-        fake: DataFaker,
+    fake: DataFaker,
     snapshot,
 ):
     """Test that MLData.get() returns a complete representation of an ML model."""
@@ -66,7 +66,7 @@ async def test_load(
     data_path: Path,
     data_layer: DataLayer,
     example_path,
-        fake: DataFaker,
+    fake: DataFaker,
     mocker: MockerFixture,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,

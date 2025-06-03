@@ -15,7 +15,7 @@ async def test_create_fake_sample(
     paired,
     finalized,
     data_layer: DataLayer,
-        fake: DataFaker,
+    fake: DataFaker,
     snapshot,
     spawn_client: ClientSpawner,
     static_time,

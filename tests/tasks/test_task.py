@@ -30,11 +30,9 @@ class DummyBaseTask(BaseTask):
 
         self.steps = [self.step_one, self.step_two]
 
-    async def step_one(self):
-        ...
+    async def step_one(self): ...
 
-    async def step_two(self):
-        ...
+    async def step_two(self): ...
 
 
 class DummyTask(BaseTask):

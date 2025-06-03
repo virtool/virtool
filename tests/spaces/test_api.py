@@ -61,7 +61,7 @@ async def test_list(
 
 
 async def test_get(
-        fake: DataFaker,
+    fake: DataFaker,
     pg: AsyncEngine,
     snapshot,
     spawn_client: ClientSpawner,
@@ -136,7 +136,7 @@ async def test_update(
 
 
 async def test_list_space_members(
-        fake: DataFaker,
+    fake: DataFaker,
     pg: AsyncEngine,
     snapshot,
     spawn_client: ClientSpawner,
@@ -178,7 +178,7 @@ async def test_list_space_members(
 
 
 async def test_update_member_roles(
-        fake: DataFaker,
+    fake: DataFaker,
     pg: AsyncEngine,
     snapshot,
     spawn_client: ClientSpawner,
@@ -220,7 +220,7 @@ async def test_update_member_roles(
 
 
 async def test_remove_member(
-        fake: DataFaker,
+    fake: DataFaker,
     pg: AsyncEngine,
     spawn_client: ClientSpawner,
     static_time,

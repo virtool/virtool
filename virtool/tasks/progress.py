@@ -4,12 +4,10 @@ from typing import Callable, Awaitable
 
 class AbstractProgressHandler(ABC):
     @abstractmethod
-    async def set_error(self, error: str):
-        ...
+    async def set_error(self, error: str): ...
 
     @abstractmethod
-    async def set_progress(self, progress: int):
-        ...
+    async def set_progress(self, progress: int): ...
 
 
 class TaskProgressHandler(AbstractProgressHandler):

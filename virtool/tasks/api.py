@@ -1,4 +1,5 @@
 """Request handlers for querying tasks."""
+
 from typing import List
 
 from aiohttp_pydantic import PydanticView

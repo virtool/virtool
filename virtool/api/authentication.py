@@ -89,8 +89,6 @@ async def authenticate_with_api_key(
     return await handler(req)
 
 
-
-
 async def authenticate_with_session(req: Request, handler: Callable) -> Response:
     """Authenticate the given request with session information in the cookie."""
     session = req["session"]

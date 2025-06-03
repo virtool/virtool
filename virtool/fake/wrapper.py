@@ -2,6 +2,7 @@
 A wrapper for the `fake` package that adds some Virtool-specific functionality.
 
 """
+
 from faker import Faker
 from faker.providers import address, date_time, lorem, misc, profile, python
 

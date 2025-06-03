@@ -5,6 +5,7 @@ These endpoints modify and return data about the user account associated with th
 session or API key making the requests.
 
 """
+
 from aiohttp.web import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r404

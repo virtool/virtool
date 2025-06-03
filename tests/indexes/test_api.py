@@ -34,7 +34,7 @@ OTUS_JSON_PATH = Path.cwd() / "tests/test_files/index/otus.json.gz"
 class TestFind:
     async def test(
         self,
-            fake: DataFaker,
+        fake: DataFaker,
         mocker,
         mongo: Mongo,
         snapshot: SnapshotAssertion,
@@ -112,7 +112,7 @@ class TestFind:
 
     async def test_ready(
         self,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot,
         mongo: Mongo,
         spawn_client: ClientSpawner,
@@ -169,7 +169,7 @@ class TestFind:
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(
     error,
-        fake: DataFaker,
+    fake: DataFaker,
     mocker,
     resp_is,
     snapshot,
@@ -296,7 +296,7 @@ class TestCreate:
     async def test(
         self,
         check_ref_right,
-            fake: DataFaker,
+        fake: DataFaker,
         mocker,
         resp_is,
         snapshot: SnapshotAssertion,
@@ -401,7 +401,7 @@ class TestCreate:
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_find_history(
     error,
-        fake: DataFaker,
+    fake: DataFaker,
     static_time,
     snapshot,
     mongo: Mongo,
@@ -483,7 +483,7 @@ async def test_find_history(
 @pytest.mark.parametrize("error", [None, 404])
 async def test_delete_index(
     error,
-        fake: DataFaker,
+    fake: DataFaker,
     mongo: Mongo,
     spawn_job_client: JobClientSpawner,
     static_time,
@@ -541,7 +541,7 @@ async def test_delete_index(
 async def test_upload(
     error: str | None,
     data_path: Path,
-        fake: DataFaker,
+    fake: DataFaker,
     mongo: Mongo,
     pg: AsyncEngine,
     resp_is,
@@ -611,7 +611,7 @@ async def test_upload(
 @pytest.mark.parametrize("error", [None, "409_genome", "409_fasta", "404_reference"])
 async def test_finalize(
     error: str | None,
-        fake: DataFaker,
+    fake: DataFaker,
     mongo: Mongo,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,

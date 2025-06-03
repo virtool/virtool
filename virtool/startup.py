@@ -34,14 +34,10 @@ from virtool.ws.server import WSServer
 logger = get_logger("startup")
 
 
-
-
 async def _connect_redis(redis_connection_string: str) -> Redis:
     redis = Redis(redis_connection_string)
     await redis.connect()
     return redis
-
-
 
 
 async def startup_check_db(app: App):

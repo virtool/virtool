@@ -1,4 +1,5 @@
 """Work with release manifests published on www.virtool.ca."""
+
 import datetime
 from dataclasses import dataclass
 from enum import Enum

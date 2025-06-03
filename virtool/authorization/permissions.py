@@ -2,6 +2,7 @@
 Permissions for checking a user's ability to access a request handler.
 
 """
+
 from enum import Enum
 from typing import Union
 
@@ -114,7 +115,7 @@ class ReferencePermission(str, Enum):
 
 
 def adapt_permission_new_to_legacy(
-    permission: Union[Permission, ReferencePermission]
+    permission: Union[Permission, ReferencePermission],
 ) -> LegacyPermission:
     """
     Return a legacy permission that corresponds to the provided new-style permission.

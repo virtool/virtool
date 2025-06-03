@@ -7,7 +7,12 @@ from aiohttp_pydantic.oas.typing import r200, r404
 from pydantic import Field
 from virtool_core.models.index import IndexSearchResult
 
-from virtool.api.errors import APINotFound, APIInsufficientRights, APIConflict, APINoContent
+from virtool.api.errors import (
+    APINotFound,
+    APIInsufficientRights,
+    APIConflict,
+    APINoContent,
+)
 from virtool.api.custom_json import json_response
 from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceNotFoundError, ResourceConflictError

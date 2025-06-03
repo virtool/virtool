@@ -343,7 +343,10 @@ class SubtractionsData(DataLayerDomain):
         raise ResourceNotFoundError
 
     async def upload_file(
-        self, subtraction_id: str, filename: str, chunker: AsyncGenerator[bytearray, None],
+        self,
+        subtraction_id: str,
+        filename: str,
+        chunker: AsyncGenerator[bytearray, None],
     ) -> SubtractionFile:
         """Handle a subtraction file upload.
 

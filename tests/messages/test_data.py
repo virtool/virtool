@@ -65,7 +65,8 @@ async def test_create(snapshot, static_time, messages_data, fake):
     user = await fake.users.create()
 
     create_request = CreateMessageRequest(
-        color="blue", message="This is a test message",
+        color="blue",
+        message="This is a test message",
     )
 
     await messages_data.create(create_request, user.id)

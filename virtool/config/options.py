@@ -41,8 +41,6 @@ def address_options(func):
     return func
 
 
-
-
 base_url_option = click.option(
     "--base-url",
     default=get_from_environment("base_url", ""),
@@ -76,14 +74,17 @@ flags_option = click.option(
 mongodb_connection_string_option = click.option(
     "--mongodb-connection-string",
     default=get_from_environment(
-        "mongodb_connection_string", "mongodb://root:virtool@localhost:27017/virtool",
+        "mongodb_connection_string",
+        "mongodb://root:virtool@localhost:27017/virtool",
     ),
     help="The MongoDB connection string",
     type=str,
 )
 
 no_check_db_option = click.option(
-    "--no-check-db", help="Start without checking and repairing database", is_flag=True,
+    "--no-check-db",
+    help="Start without checking and repairing database",
+    is_flag=True,
 )
 
 no_revision_check_option = click.option(
@@ -140,7 +141,8 @@ postgres_connection_string_option = click.option(
 redis_connection_string_option = click.option(
     "--redis-connection-string",
     default=get_from_environment(
-        "redis_connection_string", "redis://root:virtool@localhost:6379",
+        "redis_connection_string",
+        "redis://root:virtool@localhost:6379",
     ),
     help="The Redis connection string",
     required=True,
