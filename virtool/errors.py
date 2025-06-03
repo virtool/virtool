@@ -1,16 +1,14 @@
-class AuthError(Exception): ...
+class DatabaseError(Exception):
+    """Raised when an error occurs while accessing the database."""
 
 
-class DatabaseError(Exception): ...
+class GitHubError(Exception):
+    """Raised when an error occurs while communicating with GitHub."""
 
 
-class GitHubError(Exception): ...
+class NCBIError(Exception):
+    """Raised when an error occurs while communicating with NCBI."""
 
 
-class NCBIError(Exception): ...
-
-
-class PolicyError(Exception): ...
-
-
-class WebError(Exception): ...
+class PolicyError(Exception):
+    """Raised when a policy is violated."""

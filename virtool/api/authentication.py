@@ -1,7 +1,5 @@
 from collections.abc import Callable
-from contextlib import suppress
 
-import jwt
 from aiohttp import BasicAuth, web
 from aiohttp.web import Request, Response
 from structlog import get_logger
@@ -12,10 +10,8 @@ from virtool.api.policy import (
     PublicRoutePolicy,
     get_handler_policy,
 )
-from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.errors import AuthError
 from virtool.users.utils import limit_permissions
 
 logger = get_logger("authn")
@@ -35,21 +31,6 @@ def get_ip(req: Request) -> str:
         return ""
 
     return req.transport.get_extra_info("peername")[0]
-
-
-def decode_authorization(authorization: str) -> tuple[str, str]:
-    """Parse and decode an API key from an HTTP authorization header value.
-
-    :param authorization: the authorization header value for an API request
-    :return: the user id and API key parsed from the authorization header
-
-    """
-    try:
-        auth = BasicAuth.decode(authorization)
-    except ValueError as error:
-        raise AuthError(str(error))
-
-    return auth.login, auth.password
 
 
 async def authenticate_with_api_key(
@@ -139,20 +120,23 @@ async def authentication_middleware(req: Request, handler) -> Response:
 
     if req.headers.get("AUTHORIZATION"):
         # Authenticate the request with an API key or job key.
+
         try:
-            holder_id, key = decode_authorization(req.headers.get("AUTHORIZATION"))
-        except AuthError:
+            decoded = BasicAuth.decode(req.headers.get("AUTHORIZATION"))
+        except ValueError:
             raise APIUnauthorized(
                 "Malformed Authorization header",
                 "malformed_authorization_header",
             )
 
-        if holder_id.startswith("job"):
+        if decoded.login.startswith("job"):
             raise APIUnauthorized(
                 "Jobs cannot authenticate against this service",
                 "malformed_authorization_header",
             )
 
-        return await authenticate_with_api_key(req, handler, holder_id, key)
+        return await authenticate_with_api_key(
+            req, handler, decoded.login, decoded.password
+        )
 
     return await authenticate_with_session(req, handler)

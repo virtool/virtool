@@ -1,7 +1,5 @@
 import asyncio
-import sys
 from concurrent.futures import ProcessPoolExecutor
-from dataclasses import dataclass
 
 from aiohttp import ClientSession
 from aiojobs.aiohttp import get_scheduler_from_app
