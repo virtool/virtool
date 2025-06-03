@@ -2,19 +2,10 @@ import asyncio
 import math
 from asyncio import gather
 from collections import defaultdict
-from typing import Dict, List, Optional
 
 import arrow
 from pymongo.results import UpdateResult
 from sqlalchemy.ext.asyncio import AsyncEngine
-from virtool_core.models.job import (
-    Job,
-    JobAcquired,
-    JobMinimal,
-    JobPing,
-    JobSearchResult,
-    JobState,
-)
 from virtool_core.models.user import UserNested
 
 import virtool.utils
@@ -22,6 +13,14 @@ from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
 from virtool.data.transforms import apply_transforms
 from virtool.jobs.client import AbstractJobsClient, JobCancellationResult
+from virtool.jobs.models import (
+    Job,
+    JobAcquired,
+    JobMinimal,
+    JobPing,
+    JobSearchResult,
+    JobState,
+)
 from virtool.jobs.utils import check_job_is_running_or_waiting, compose_status
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
@@ -38,12 +37,11 @@ class JobsData:
         self._mongo = mongo
         self._pg = pg
 
-    async def _get_counts(self) -> Dict[str, Dict[str, int]]:
+    async def _get_counts(self) -> dict[str, dict[str, int]]:
         counts = defaultdict(dict)
 
         async for a in self._mongo.jobs.aggregate(
             [
-                {"$match": {"archived": False}},
                 {"$addFields": {"last_status": {"$last": "$status"}}},
                 {
                     "$group": {
@@ -61,21 +59,17 @@ class JobsData:
 
     async def find(
         self,
-        archived: bool | None,
         page: int,
         per_page: int,
-        states: List[JobState],
-        users: List[str],
+        states: list[JobState],
+        users: list[str],
     ) -> JobSearchResult:
         skip_count = 0
 
         if page > 1:
             skip_count = (page - 1) * per_page
 
-        match_query = {
-            **({"archived": archived} if archived is not None else {}),
-            **({"user.id": {"$in": users}} if users else {}),
-        }
+        match_query = {"user.id": {"$in": users}} if users else {}
 
         match_state = (
             {"state": {"$in": [state.value for state in states]}} if states else {}
@@ -126,7 +120,6 @@ class JobsData:
                         "data": {
                             "_id": True,
                             "created_at": True,
-                            "archived": True,
                             "progress": True,
                             "stage": True,
                             "state": True,
@@ -189,7 +182,6 @@ class JobsData:
         """
         document = {
             "acquired": False,
-            "archived": False,
             "args": job_args,
             "key": None,
             "ping": None,
@@ -274,26 +266,6 @@ class JobsData:
 
         return JobAcquired(**job.dict(), key=key)
 
-    @emits(Operation.UPDATE)
-    async def archive(self, job_id: str) -> Job:
-        """Set the `archived` field on a job to `True` and return the complete document.
-
-        :param job_id: the ID of the job to start
-        :return: the complete job document
-
-        """
-        archived = await get_one_field(self._mongo.jobs, "archived", job_id)
-
-        if archived is None:
-            raise ResourceNotFoundError("Job not found")
-
-        if archived is True:
-            raise ResourceConflictError("Job already archived")
-
-        await self._mongo.jobs.update_one({"_id": job_id}, {"$set": {"archived": True}})
-
-        return await self.get(job_id)
-
     async def ping(self, job_id: str) -> JobPing:
         """Update the `ping` field on a job to the current time and
         return .
@@ -356,12 +328,12 @@ class JobsData:
     async def push_status(
         self,
         job_id: str,
-        state: Optional[JobState],
-        stage: Optional[str],
-        step_name: Optional[str] = None,
-        step_description: Optional[str] = None,
-        error: Optional[dict] = None,
-        progress: Optional[int] = None,
+        state: JobState | None,
+        stage: str | None,
+        step_name: str | None = None,
+        step_description: str | None = None,
+        error: dict | None = None,
+        progress: int | None = None,
     ):
         status = await get_one_field(self._mongo.jobs, "status", job_id)
 

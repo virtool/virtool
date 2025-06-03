@@ -1,7 +1,4 @@
-from typing import List
-
-from pydantic import BaseModel, validator
-from virtool_core.models.job import JobMinimal, Job
+from virtool_core.models.job import Job, JobMinimal
 
 
 class GetJobResponse(JobMinimal):
@@ -9,7 +6,6 @@ class GetJobResponse(JobMinimal):
         schema_extra = {
             "example": [
                 {
-                    "archived": False,
                     "created_at": "2022-07-08T18:37:44.936000Z",
                     "id": "splu0pq3",
                     "progress": 100,
@@ -117,7 +113,6 @@ class GetJobResponse(JobMinimal):
                     "workflow": "nuvs",
                 },
                 {
-                    "archived": False,
                     "created_at": "2022-07-08T20:07:29.213000Z",
                     "id": "qs3d5bnp",
                     "progress": 100,
@@ -233,7 +228,6 @@ class JobResponse(Job):
         schema_extra = {
             "example": {
                 "acquired": True,
-                "archived": False,
                 "args": {
                     "analysis_id": "rr8iryfy",
                     "index_id": "u3lm1rk8",
@@ -349,18 +343,3 @@ class JobResponse(Job):
                 "workflow": "nuvs",
             }
         }
-
-
-class ArchiveJobSchema(BaseModel):
-    id: str
-    archived: bool
-
-    @validator("archived")
-    def check_archived(cls, archived: bool) -> bool:
-        if archived is False:
-            raise ValueError("The `archived` field can only be `true`")
-        return archived
-
-
-class ArchiveJobsRequest(BaseModel):
-    update: ArchiveJobSchema

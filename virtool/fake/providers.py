@@ -2,7 +2,6 @@ import string
 from collections import OrderedDict
 
 from faker.providers import BaseProvider
-from virtool_core.models.job import JobState
 
 from virtool.fake.values import (
     ORGANISM_DESCRIPTOR_ADJECTIVES,
@@ -13,6 +12,7 @@ from virtool.fake.values import (
     ORGANISM_TYPES,
     ORGANISM_VIRUSES,
 )
+from virtool.jobs.models import JobState
 
 ID_CHARACTERS = string.ascii_lowercase + string.digits
 """Characters that can be used in a MongoDB-based Virtool resource ID."""
@@ -121,9 +121,6 @@ class JobsProvider(BaseProvider):
             {"state": JobState.RUNNING.value, "stage": "first"},
             self.random_element(WORKFLOW_STATUS),
         ]
-
-    def archive(self) -> bool:
-        return self.pybool()
 
 
 class MongoIDProvider(BaseProvider):

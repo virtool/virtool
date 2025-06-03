@@ -1,26 +1,23 @@
-from typing import List
-
 from aiohttp.web_response import StreamResponse
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.injectors import CONTEXT
 from aiohttp_pydantic.oas.typing import r200, r400, r403, r404, r409
-from pydantic import Field, conint, ValidationError
-from virtool_core.models.job import JobMinimal, JobSearchResult, JobState
+from pydantic import Field, ValidationError, conint
 
-from virtool.api.errors import APINotFound, APIBadRequest, APIConflict
 from virtool.api.custom_json import json_response
+from virtool.api.errors import APIBadRequest, APIConflict, APINotFound
+from virtool.api.policy import PermissionRoutePolicy, policy
+from virtool.api.routes import Routes
+from virtool.api.schema import schema
 from virtool.authorization.permissions import LegacyPermission
 from virtool.data.errors import (
     ResourceConflictError,
     ResourceNotFoundError,
 )
 from virtool.data.utils import get_data_from_req
-from virtool.api.policy import policy, PermissionRoutePolicy
-from virtool.api.routes import Routes
-from virtool.api.schema import schema
+from virtool.jobs.models import JobSearchResult, JobState
 from virtool.jobs.oas import (
     JobResponse,
-    ArchiveJobsRequest,
 )
 
 routes = Routes()
@@ -30,14 +27,12 @@ routes = Routes()
 class JobsView(PydanticView):
     async def get(
         self,
-        archived: bool | None = None,
         page: conint(ge=1) = 1,
         per_page: conint(ge=1, le=100) = 25,
-        state: List[JobState] = Field(default_factory=list),
-        user: List[str] = Field(default_factory=list),
+        state: list[JobState] = Field(default_factory=list),
+        user: list[str] = Field(default_factory=list),
     ) -> r200[JobSearchResult] | r400:
-        """
-        Find jobs.
+        """Find jobs.
 
         Lists jobs on the instance.
 
@@ -51,37 +46,13 @@ class JobsView(PydanticView):
             400: Invalid query
         """
         return json_response(
-            await get_data_from_req(self.request).jobs.find(
-                archived, page, per_page, state, user
-            )
+            await get_data_from_req(self.request).jobs.find(page, per_page, state, user)
         )
-
-    async def patch(self, data: ArchiveJobsRequest) -> r200[List[JobMinimal]] | r400:
-        """
-        Update archived field.
-
-        Sets the archived field on job documents.
-
-        Status Codes:
-            200: Successful operation
-            400: Jobs not found
-            400: Archived field not set
-            400: Invalid archived field
-        """
-        try:
-            jobs = await get_data_from_req(self.request).jobs.archive(
-                job_id=data.update.id
-            )
-        except ResourceNotFoundError as err:
-            raise APIBadRequest(str(err))
-
-        return json_response(jobs)
 
     async def on_validation_error(
         self, exception: ValidationError, context: CONTEXT
     ) -> StreamResponse:
-        """
-        This method is a hook to intercept ValidationError.
+        """This method is a hook to intercept ValidationError.
 
         This hook can be redefined to return a custom HTTP response error.
         The exception is a pydantic.ValidationError and the context is "body",
@@ -101,8 +72,7 @@ class JobsView(PydanticView):
 @routes.view("/jobs/{job_id}")
 class JobView(PydanticView):
     async def get(self, job_id: str, /) -> r200[JobResponse] | r404:
-        """
-        Get a job.
+        """Get a job.
 
         Fetches the details for a job.
 
@@ -120,8 +90,7 @@ class JobView(PydanticView):
 
 @routes.jobs_api.get("/jobs/{job_id}")
 async def get(req):
-    """
-    Get a job.
+    """Get a job.
 
     Fetches a job using the 'job id'.
     """
@@ -136,8 +105,7 @@ async def get(req):
 @routes.jobs_api.patch("/jobs/{job_id}")
 @schema({"acquired": {"type": "boolean", "allowed": [True], "required": True}})
 async def acquire(req):
-    """
-    Sets the acquired field on the job document.
+    """Sets the acquired field on the job document.
 
     This is used to let the server know that a job process has accepted the ID and needs
     to have the secure token returned to it. Pushes a status record indicating the job
@@ -154,30 +122,11 @@ async def acquire(req):
     return json_response(document)
 
 
-@routes.patch("/jobs/{job_id}/archive")
-@routes.jobs_api.patch("/jobs/{job_id}/archive")
-async def archive(req):
-    """
-    Update archived field.
-
-    Sets the archived field on the job document.
-    """
-    try:
-        document = await get_data_from_req(req).jobs.archive(req.match_info["job_id"])
-    except ResourceNotFoundError:
-        raise APINotFound()
-    except ResourceConflictError:
-        raise APIBadRequest("Job already archived")
-
-    return json_response(document)
-
-
 @routes.view("/jobs/{job_id}/cancel")
 class CancelJobView(PydanticView):
     @policy(PermissionRoutePolicy(LegacyPermission.CANCEL_JOB))
     async def put(self, job_id: str, /) -> r200[JobResponse] | r403 | r404 | r409:
-        """
-        Cancel a job.
+        """Cancel a job.
 
         Cancels a job using its 'job id'.
 
@@ -199,8 +148,7 @@ class CancelJobView(PydanticView):
 
 @routes.jobs_api.put("/jobs/{job_id}/ping")
 async def ping(req):
-    """
-    Ping a job.
+    """Ping a job.
 
     Updates the ping time on the job. The job will time out if this
     endpoint isn't called at least once every five minutes.
@@ -260,8 +208,7 @@ async def ping(req):
     }
 )
 async def push_status(req):
-    """
-    Push status.
+    """Push status.
 
     Push a status update to a job.
     """
