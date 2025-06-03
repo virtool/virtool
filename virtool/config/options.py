@@ -41,44 +41,6 @@ def address_options(func):
     return func
 
 
-def b2c_options(func):
-    for decorator in [
-        click.option(
-            "--use-b2c",
-            default=get_from_environment("use_b2c", False),
-            help="Use Azure AD B2C for authentication",
-            is_flag=True,
-        ),
-        click.option(
-            "--b2c-client-id",
-            default=get_from_environment("b2c_client_id", ""),
-            help="Azure AD B2C client ID (required for --use-b2c)",
-            type=str,
-        ),
-        click.option(
-            "--b2c-client-secret",
-            default=get_from_environment("b2c_client_secret", ""),
-            help="Azure AD B2C client secret (required for --use-b2c)",
-            type=str,
-        ),
-        click.option(
-            "--b2c-tenant",
-            default=get_from_environment("b2c_tenant", ""),
-            help="Azure AD B2C tenant name",
-            type=str,
-        ),
-        click.option(
-            "--b2c-user-flow",
-            default=get_from_environment("b2c_user_flow", ""),
-            help="Azure AD B2C signupsignin user flow, required for --use-b2c",
-            type=str,
-        ),
-    ]:
-        func = decorator(func)
-
-    return func
-
-
 base_url_option = click.option(
     "--base-url",
     default=get_from_environment("base_url", ""),
@@ -112,14 +74,17 @@ flags_option = click.option(
 mongodb_connection_string_option = click.option(
     "--mongodb-connection-string",
     default=get_from_environment(
-        "mongodb_connection_string", "mongodb://root:virtool@localhost:27017/virtool",
+        "mongodb_connection_string",
+        "mongodb://root:virtool@localhost:27017/virtool",
     ),
     help="The MongoDB connection string",
     type=str,
 )
 
 no_check_db_option = click.option(
-    "--no-check-db", help="Start without checking and repairing database", is_flag=True,
+    "--no-check-db",
+    help="Start without checking and repairing database",
+    is_flag=True,
 )
 
 no_revision_check_option = click.option(
@@ -176,7 +141,8 @@ postgres_connection_string_option = click.option(
 redis_connection_string_option = click.option(
     "--redis-connection-string",
     default=get_from_environment(
-        "redis_connection_string", "redis://root:virtool@localhost:6379",
+        "redis_connection_string",
+        "redis://root:virtool@localhost:6379",
     ),
     help="The Redis connection string",
     required=True,

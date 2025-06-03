@@ -19,9 +19,7 @@ async def sleep_patch():
     ],
 )
 async def test_relist_jobs(fake: DataFaker, pg, mongo, mocker, state, listed, snapshot):
-    """Test that jobs are relisted in redis that are in the waiting state and are no longer in redis.
-
-    """
+    """Test that jobs are relisted in redis that are in the waiting state and are no longer in redis."""
     user = await fake.users.create()
     job = await fake.jobs.create(user)
     dummy_client = DummyJobsClient()

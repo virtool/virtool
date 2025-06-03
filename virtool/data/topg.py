@@ -27,11 +27,13 @@ async def both_transactions(mongo: "Mongo", pg: AsyncEngine):
     :param pg: the application PostgreSQL client
 
     """
-    async with AsyncSession(
-        pg,
-    ) as pg_session, await (
-        mongo.motor_database.client.start_session()
-    ) as mongo_session, mongo_session.start_transaction():
+    async with (
+        AsyncSession(
+            pg,
+        ) as pg_session,
+        await mongo.motor_database.client.start_session() as mongo_session,
+        mongo_session.start_transaction(),
+    ):
         # An exception will be raised here if there is a problem with the MongoDB
         # transaction.
         yield mongo_session, pg_session

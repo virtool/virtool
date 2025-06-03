@@ -1,5 +1,4 @@
-"""
-Request and response models use to validate requests and autogenerate the OpenAPI
+"""Request and response models use to validate requests and autogenerate the OpenAPI
 specification.
 """
 
@@ -8,9 +7,7 @@ from virtool_core.models.group import Group
 
 
 class PermissionsUpdate(BaseModel):
-    """
-    Possible permissions that will be updated for a user and group.
-    """
+    """Possible permissions that will be updated for a user and group."""
 
     cancel_job: bool | None
     create_ref: bool | None
@@ -23,12 +20,10 @@ class PermissionsUpdate(BaseModel):
 
 
 class CreateGroupRequest(BaseModel):
-    """
-    A schema for requests to create groups.
-    """
+    """A schema for requests to create groups."""
 
     name: constr(strip_whitespace=True, min_length=1) = Field(
-        description="a name for the group"
+        description="a name for the group",
     )
 
     class Config:
@@ -52,24 +47,22 @@ class CreateGroupResponse(Group):
                 "id": "research",
                 "name": "research",
                 "users": [],
-            }
+            },
         }
 
 
 class UpdateGroupRequest(BaseModel):
-    """
-    Used when updating permissions and/or group `name`.
-    """
+    """Used when updating permissions and/or group `name`."""
 
     name: constr(min_length=1) | None = Field(description="a name for the group")
 
     permissions: PermissionsUpdate | None = Field(
-        description="a permission update comprising an object keyed by permissions with boolean values"
+        description="a permission update comprising an object keyed by permissions with boolean values",
     )
 
     class Config:
         schema_extra = {
-            "example": {"permissions": {"create_ref": True}, "name": "Managers" ""}
+            "example": {"permissions": {"create_ref": True}, "name": "Managers"},
         }
 
 
@@ -92,14 +85,9 @@ class GroupResponse(Group):
                 "users": [
                     {
                         "administrator": False,
-                        "b2c": None,
-                        "b2c_display_name": None,
-                        "b2c_family_name": None,
-                        "b2c_given_name": None,
-                        "b2c_oid": None,
                         "handle": "leeashley",
                         "id": "7CtBo2yG",
                     },
                 ],
-            }
+            },
         }

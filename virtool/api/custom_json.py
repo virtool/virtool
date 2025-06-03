@@ -8,6 +8,7 @@ The :func:`dumps` and :func:`pretty_dumps` functions stringify Python data struc
 into JSON. The pretty dumper is used for formatting JSON for viewing in the browser.
 
 """
+
 import datetime
 from typing import Any
 

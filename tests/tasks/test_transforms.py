@@ -35,12 +35,10 @@ async def test_attach_task_transform_single(fake: DataFaker, pg: AsyncEngine, sn
     await fake.tasks.create()
     task = await fake.tasks.create()
 
-    assert (
-        await asyncio.gather(
-            apply_transforms(
-                {"id": 1, "task": {"id": task.id}}, [AttachTaskTransform(pg)],
-            ),
-            apply_transforms({"id": 2, "task": None}, [AttachTaskTransform(pg)]),
-        )
-        == snapshot(matcher=path_type({".*created_at": (datetime,)}, regex=True))
-    )
+    assert await asyncio.gather(
+        apply_transforms(
+            {"id": 1, "task": {"id": task.id}},
+            [AttachTaskTransform(pg)],
+        ),
+        apply_transforms({"id": 2, "task": None}, [AttachTaskTransform(pg)]),
+    ) == snapshot(matcher=path_type({".*created_at": (datetime,)}, regex=True))

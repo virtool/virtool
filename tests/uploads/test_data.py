@@ -18,7 +18,7 @@ async def test_create(
     data_path: Path,
     data_layer: DataLayer,
     example_path: Path,
-        fake: DataFaker,
+    fake: DataFaker,
     pg: AsyncEngine,
     snapshot,
 ):
@@ -56,7 +56,7 @@ async def test_create(
 async def test_delete(
     data_path: Path,
     data_layer: DataLayer,
-        fake: DataFaker,
+    fake: DataFaker,
     snapshot_recent: SnapshotAssertion,
 ):
     before = await fake.uploads.create(user=await fake.users.create())
@@ -86,7 +86,7 @@ async def test_delete(
 async def test_release(
     multi: bool,
     data_layer: DataLayer,
-        fake: DataFaker,
+    fake: DataFaker,
     pg: AsyncEngine,
 ):
     user = await fake.users.create()

@@ -9,7 +9,9 @@ from virtool.mongo.utils import get_one_field
 
 
 async def test_update_member_users_and_api_keys(
-        fake: DataFaker, mongo: Mongo, pg: AsyncEngine,
+    fake: DataFaker,
+    mongo: Mongo,
+    pg: AsyncEngine,
 ):
     group_1 = await fake.groups.create()
     group_2 = await fake.groups.create()
@@ -22,7 +24,10 @@ async def test_update_member_users_and_api_keys(
 
     async with AsyncSession(pg) as pg_session, mongo.create_session() as mongo_session:
         await update_member_users_and_api_keys(
-            mongo, mongo_session, pg_session, group_2.id,
+            mongo,
+            mongo_session,
+            pg_session,
+            group_2.id,
         )
 
     assert await get_one_field(mongo.users, "groups", user.id) == [group_1.id]

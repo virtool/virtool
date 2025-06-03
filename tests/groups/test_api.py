@@ -9,7 +9,7 @@ from virtool.groups.oas import PermissionsUpdate
 class TestFind:
     async def test_list(
         self,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
@@ -29,7 +29,7 @@ class TestFind:
 
     async def test_paginate(
         self,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
@@ -69,7 +69,7 @@ class TestCreate:
 
     async def test_duplicate(
         self,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot,
         spawn_client: ClientSpawner,
     ):
@@ -90,7 +90,7 @@ class TestCreate:
 @pytest.mark.parametrize("status", [200, 404])
 async def test_get(
     status: int,
-        fake: DataFaker,
+    fake: DataFaker,
     snapshot,
     spawn_client: ClientSpawner,
 ):
@@ -114,7 +114,7 @@ async def test_get(
 class TestUpdate:
     async def test(
         self,
-            fake: DataFaker,
+        fake: DataFaker,
         spawn_client: ClientSpawner,
         snapshot: SnapshotAssertion,
     ):

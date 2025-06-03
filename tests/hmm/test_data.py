@@ -1,10 +1,10 @@
 from virtool.fake.next import DataFaker
 
 
-async def test_get_status(config, data_layer, fake: DataFaker, mongo, snapshot, static_time):
-    """Test that function works when the HMM data are being updated and when they are not.
-
-    """
+async def test_get_status(
+    config, data_layer, fake: DataFaker, mongo, snapshot, static_time
+):
+    """Test that function works when the HMM data are being updated and when they are not."""
     user = await fake.users.create()
 
     await mongo.status.insert_one(

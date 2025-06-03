@@ -19,7 +19,7 @@ _job_response_matcher = path_type(
 class TestFind:
     async def test_basic(
         self,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot,
         spawn_client: ClientSpawner,
     ):
@@ -43,7 +43,7 @@ class TestFind:
     async def test_archived(
         self,
         archived: bool,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot,
         spawn_client: ClientSpawner,
     ):
@@ -116,7 +116,7 @@ class TestFind:
     async def test_state(
         self,
         state: str,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot,
         spawn_client: ClientSpawner,
     ):
@@ -190,7 +190,7 @@ async def test_get(error, fake: DataFaker, snapshot, spawn_client):
 class TestAcquire:
     async def test_ok(
         self,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot,
         spawn_job_client: JobClientSpawner,
     ):
@@ -243,7 +243,7 @@ class TestAcquire:
 class TestArchive:
     async def test_ok(
         self,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot,
         spawn_client: ClientSpawner,
     ):
@@ -259,7 +259,7 @@ class TestArchive:
 
     async def test_already_archived(
         self,
-            fake: DataFaker,
+        fake: DataFaker,
         spawn_client: ClientSpawner,
     ):
         """Test that a 400 is returned when the job is already archived."""
@@ -322,7 +322,9 @@ class TestPing:
     "error",
     [None, 404, "409_complete", "409_errored", "409_cancelled"],
 )
-async def test_cancel(error, snapshot, mongo, fake: DataFaker, resp_is, spawn_client, test_job):
+async def test_cancel(
+    error, snapshot, mongo, fake: DataFaker, resp_is, spawn_client, test_job
+):
     client = await spawn_client(authenticated=True, permissions=[Permission.cancel_job])
 
     user = await fake.users.create()
@@ -367,7 +369,7 @@ class TestPushStatus:
     async def test(
         self,
         error,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot,
         resp_is,
         mongo: Mongo,
@@ -404,7 +406,7 @@ class TestPushStatus:
 
     async def test_name_and_description(
         self,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot,
         mongo: Mongo,
         spawn_client,
@@ -434,7 +436,7 @@ class TestPushStatus:
 
     async def test_bad_state(
         self,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot,
         mongo: Mongo,
         spawn_client,
@@ -476,7 +478,7 @@ class TestPushStatus:
         error_type,
         traceback,
         details,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot,
         mongo: Mongo,
         spawn_client,

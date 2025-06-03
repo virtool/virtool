@@ -69,7 +69,9 @@ class JobsView(PydanticView):
             400: Invalid archived field
         """
         try:
-            jobs = await get_data_from_req(self.request).jobs.archive(job_id=data.update.id)
+            jobs = await get_data_from_req(self.request).jobs.archive(
+                job_id=data.update.id
+            )
         except ResourceNotFoundError as err:
             raise APIBadRequest(str(err))
 

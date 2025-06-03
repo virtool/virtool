@@ -10,7 +10,9 @@ from virtool.users.transforms import AttachPermissionsTransform, AttachUserTrans
 
 
 async def test_permission_transform(
-        no_permissions: dict[str, bool], pg: AsyncEngine, snapshot: SnapshotAssertion,
+    no_permissions: dict[str, bool],
+    pg: AsyncEngine,
+    snapshot: SnapshotAssertion,
 ):
     """Test that the transform works with legacy and SQL ids, as well as a single document
     or a list of documents.
@@ -56,31 +58,28 @@ async def test_permission_transform(
 
         await session.commit()
 
-    assert (
-        await apply_transforms(
-            {"id": "bob", "groups": [1, "group_5"]},
-            [AttachPermissionsTransform(pg)],
-        )
-        == snapshot(name="single")
-    )
+    assert await apply_transforms(
+        {"id": "bob", "groups": [1, "group_5"]},
+        [AttachPermissionsTransform(pg)],
+    ) == snapshot(name="single")
 
-    assert (
-        await apply_transforms(
-            [
-                {"id": "joe", "groups": [1, "group_5"]},
-                {"id": "mae", "groups": [3, 4]},
-                {"id": "wil", "groups": []},
-                {"id": "pam", "groups": ["group_2"]},
-            ],
-            [AttachPermissionsTransform(pg)],
-        )
-        == snapshot(name="multi")
-    )
+    assert await apply_transforms(
+        [
+            {"id": "joe", "groups": [1, "group_5"]},
+            {"id": "mae", "groups": [3, 4]},
+            {"id": "wil", "groups": []},
+            {"id": "pam", "groups": ["group_2"]},
+        ],
+        [AttachPermissionsTransform(pg)],
+    ) == snapshot(name="multi")
 
 
 @pytest.mark.parametrize("multiple", [True, False])
 async def test_attach_user_transform(
-        multiple: bool, fake: DataFaker, mongo: Mongo, snapshot: SnapshotAssertion,
+    multiple: bool,
+    fake: DataFaker,
+    mongo: Mongo,
+    snapshot: SnapshotAssertion,
 ):
     user_1 = await fake.users.create()
     user_2 = await fake.users.create()

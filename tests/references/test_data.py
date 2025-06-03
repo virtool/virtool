@@ -21,7 +21,7 @@ class TestUpdate:
         control_exists: bool,
         control_id: str | None,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         mocker,
         mongo: Mongo,
         snapshot,
@@ -60,7 +60,8 @@ class TestUpdate:
         )
 
         update = UpdateReferenceRequest(
-            name="Tester", description="This is a test reference.",
+            name="Tester",
+            description="This is a test reference.",
         )
 
         if control_id is not None:
@@ -79,13 +80,12 @@ class TestCreateUser:
     async def test_ok(
         self,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         mongo: Mongo,
         snapshot,
         static_time,
     ):
-        """Test that a user can be added to a reference.
-        """
+        """Test that a user can be added to a reference."""
         user_1 = await fake.users.create()
         user_2 = await fake.users.create()
 
@@ -106,22 +106,24 @@ class TestCreateUser:
             },
         )
 
-        assert (
-            await data_layer.references.create_user(
-                "foo",
-                CreateReferenceUserRequest(
-                    build=True, modify_otu=True, user_id=user_2.id,
-                ),
-            )
-            == snapshot(name="obj")
-        )
+        assert await data_layer.references.create_user(
+            "foo",
+            CreateReferenceUserRequest(
+                build=True,
+                modify_otu=True,
+                user_id=user_2.id,
+            ),
+        ) == snapshot(name="obj")
         assert await mongo.references.find_one() == snapshot(name="mongo")
 
     async def test_duplicate(
-            self, data_layer: DataLayer, fake: DataFaker, mongo: Mongo, static_time,
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        static_time,
     ):
-        """Test that a user cannot be added to a reference if they are already a member.
-        """
+        """Test that a user cannot be added to a reference if they are already a member."""
         user_1 = await fake.users.create()
         user_2 = await fake.users.create()
 
@@ -146,15 +148,16 @@ class TestCreateUser:
             await data_layer.references.create_user(
                 "foo",
                 CreateReferenceUserRequest(
-                    build=True, modify_otu=True, user_id=user_2.id,
+                    build=True,
+                    modify_otu=True,
+                    user_id=user_2.id,
                 ),
             )
 
         assert "User already exists" in str(err)
 
     async def test_not_found(self, data_layer: DataLayer):
-        """Test that a `NotFound` error is raised when the reference does not exist.
-        """
+        """Test that a `NotFound` error is raised when the reference does not exist."""
         with pytest.raises(ResourceNotFoundError):
             await data_layer.references.create_user(
                 "foo",
@@ -162,10 +165,12 @@ class TestCreateUser:
             )
 
     async def test_user_does_not_exist(
-            self, data_layer: DataLayer, mongo: Mongo, static_time,
+        self,
+        data_layer: DataLayer,
+        mongo: Mongo,
+        static_time,
     ):
-        """Test that a `NotFound` error is raised when the user does not exist.
-        """
+        """Test that a `NotFound` error is raised when the user does not exist."""
         await mongo.references.insert_one(
             {
                 "_id": "foo",
@@ -187,7 +192,9 @@ class TestCreateUser:
             await data_layer.references.create_user(
                 "foo",
                 CreateReferenceUserRequest(
-                    build=True, modify_otu=True, user_id="not_exists",
+                    build=True,
+                    modify_otu=True,
+                    user_id="not_exists",
                 ),
             )
 
@@ -198,13 +205,12 @@ class TestUpdateUser:
     async def test_ok(
         self,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         mongo: Mongo,
         snapshot,
         static_time,
     ):
-        """Test that the rights of a reference user can be updated.
-        """
+        """Test that the rights of a reference user can be updated."""
         user_1 = await fake.users.create()
         user_2 = await fake.users.create()
 
@@ -234,28 +240,22 @@ class TestUpdateUser:
             },
         )
 
-        assert (
-            await data_layer.references.update_user(
-                "foo",
-                user_2.id,
-                ReferenceRightsRequest(
-                    modify_otu=False,
-                ),
-            )
-            == snapshot(name="obj_1")
-        )
+        assert await data_layer.references.update_user(
+            "foo",
+            user_2.id,
+            ReferenceRightsRequest(
+                modify_otu=False,
+            ),
+        ) == snapshot(name="obj_1")
 
-        assert (
-            await data_layer.references.update_user(
-                "foo",
-                user_2.id,
-                ReferenceRightsRequest(
-                    modify=True,
-                    modify_otu=True,
-                ),
-            )
-            == snapshot(name="obj_2")
-        )
+        assert await data_layer.references.update_user(
+            "foo",
+            user_2.id,
+            ReferenceRightsRequest(
+                modify=True,
+                modify_otu=True,
+            ),
+        ) == snapshot(name="obj_2")
 
         assert await mongo.references.find_one() == snapshot(name="mongo")
 
@@ -264,7 +264,7 @@ class TestUpdateUser:
         self,
         reference_exists: bool,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         mongo: Mongo,
         static_time,
     ):
@@ -305,13 +305,12 @@ class TestDeleteUser:
     async def test_ok(
         self,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         mongo: Mongo,
         snapshot,
         static_time,
     ):
-        """Test that a user can be deleted from a reference.
-        """
+        """Test that a user can be deleted from a reference."""
         user_1 = await fake.users.create()
         user_2 = await fake.users.create()
 
@@ -356,7 +355,7 @@ class TestDeleteUser:
         self,
         reference_exists: bool,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         mongo: Mongo,
         static_time,
     ):
@@ -391,13 +390,12 @@ class TestCreateGroup:
     async def test_ok_and_duplicate(
         self,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         mongo: Mongo,
         snapshot,
         static_time,
     ):
-        """Test that a group can be added to a reference.
-        """
+        """Test that a group can be added to a reference."""
         user = await fake.users.create()
         group = await fake.groups.create()
 
@@ -418,15 +416,14 @@ class TestCreateGroup:
             },
         )
 
-        assert (
-            await data_layer.references.create_group(
-                "foo",
-                CreateReferenceGroupRequest(
-                    build=True, modify_otu=True, group_id=group.id,
-                ),
-            )
-            == snapshot(name="obj")
-        )
+        assert await data_layer.references.create_group(
+            "foo",
+            CreateReferenceGroupRequest(
+                build=True,
+                modify_otu=True,
+                group_id=group.id,
+            ),
+        ) == snapshot(name="obj")
 
         assert await mongo.references.find_one() == snapshot(name="mongo")
 
@@ -436,7 +433,9 @@ class TestCreateGroup:
             await data_layer.references.create_group(
                 "foo",
                 CreateReferenceGroupRequest(
-                    build=True, modify_otu=True, group_id=group.id,
+                    build=True,
+                    modify_otu=True,
+                    group_id=group.id,
                 ),
             )
 
@@ -445,29 +444,29 @@ class TestCreateGroup:
     async def test_not_found(
         self,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
     ):
-        """Test that `ResourceNotFound` is raised when the reference does not exist.
-        """
+        """Test that `ResourceNotFound` is raised when the reference does not exist."""
         group = await fake.groups.create()
 
         with pytest.raises(ResourceNotFoundError):
             await data_layer.references.create_group(
                 "foo",
                 CreateReferenceGroupRequest(
-                    build=True, modify_otu=True, group_id=group.id,
+                    build=True,
+                    modify_otu=True,
+                    group_id=group.id,
                 ),
             )
 
     async def test_group_does_not_exist(
         self,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         mongo: Mongo,
         static_time,
     ):
-        """Test that `ResourceNotFound` is raised when the group does not exist.
-        """
+        """Test that `ResourceNotFound` is raised when the group does not exist."""
         user = await fake.users.create()
 
         await mongo.references.insert_one(
@@ -500,13 +499,12 @@ class TestUpdateGroup:
     async def test_ok(
         self,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         mongo: Mongo,
         snapshot,
         static_time,
     ):
-        """Test that the rights of a reference group can be updated.
-        """
+        """Test that the rights of a reference group can be updated."""
         user = await fake.users.create()
         group = await fake.groups.create()
 
@@ -536,14 +534,11 @@ class TestUpdateGroup:
             },
         )
 
-        assert (
-            await data_layer.references.update_group(
-                "foo",
-                group.id,
-                ReferenceRightsRequest(build=False, modify=True),
-            )
-            == snapshot(name="obj")
-        )
+        assert await data_layer.references.update_group(
+            "foo",
+            group.id,
+            ReferenceRightsRequest(build=False, modify=True),
+        ) == snapshot(name="obj")
 
         assert await mongo.references.find_one() == snapshot(name="mongo")
 
@@ -556,7 +551,7 @@ class TestUpdateGroup:
         self,
         reference_exists: bool,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         mongo: Mongo,
         static_time,
     ):
@@ -597,13 +592,12 @@ class TestDeleteGroup:
     async def test_ok(
         self,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         mongo: Mongo,
         snapshot,
         static_time,
     ):
-        """Test that a group can be deleted from a reference.
-        """
+        """Test that a group can be deleted from a reference."""
         user = await fake.users.create()
         group = await fake.groups.create()
 
@@ -648,7 +642,7 @@ class TestDeleteGroup:
         self,
         reference_exists: bool,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         mongo: Mongo,
         static_time,
     ):

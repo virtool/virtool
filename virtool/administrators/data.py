@@ -9,11 +9,6 @@ PROJECTION = (
     "_id",
     "active",
     "administrator_role",
-    "b2c",
-    "b2c_display_name",
-    "b2c_family_name",
-    "b2c_given_name",
-    "b2c_oid",
     "force_reset",
     "groups",
     "handle",
@@ -27,15 +22,17 @@ class AdministratorsData(DataLayerDomain):
     name = "administrators"
 
     def __init__(
-        self, authorization_client: AuthorizationClient, mongo: Mongo, pg: AsyncEngine
+        self,
+        authorization_client: AuthorizationClient,
+        mongo: Mongo,
+        pg: AsyncEngine,
     ):
         self._authorization_client = authorization_client
         self._mongo = mongo
         self._pg = pg
 
     async def run_action(self, name: str):
-        """
-        Run an action
+        """Run an action
 
         Runs an action with the given name.
 

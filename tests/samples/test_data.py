@@ -84,7 +84,7 @@ class TestCreate:
         self,
         group_setting: str,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         pg: AsyncEngine,
         mongo: Mongo,
         snapshot_recent,

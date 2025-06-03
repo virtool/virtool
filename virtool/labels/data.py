@@ -137,9 +137,12 @@ class LabelsData:
         """
         label = await self.get(label_id)
 
-        async with AsyncSession(
-            self._pg,
-        ) as session, self._mongo.create_session() as mongo_session:
+        async with (
+            AsyncSession(
+                self._pg,
+            ) as session,
+            self._mongo.create_session() as mongo_session,
+        ):
             result = await session.execute(select(SQLLabel).filter_by(id=label_id))
             label = result.scalar()
 

@@ -2,6 +2,7 @@
 The client class and utilities for managing authorization.
 
 """
+
 import asyncio
 
 from aiohttp.web_request import Request

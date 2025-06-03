@@ -1,4 +1,5 @@
 """Request handlers for querying and downloading machine learning models."""
+
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r404

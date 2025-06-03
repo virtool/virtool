@@ -1,14 +1,10 @@
-from typing import Optional
-
 from pydantic import BaseModel, Field
 from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.validators import prevent_none
 
 
 class RunActionRequest(BaseModel):
-    """
-    Used when running an action on a task
-    """
+    """Used when running an action on a task"""
 
     name: str = Field(description="the action to run")
 
@@ -17,11 +13,9 @@ class RunActionRequest(BaseModel):
 
 
 class UpdateAdministratorRoleRequest(BaseModel):
-    """
-    Used when adding a user as an administrator
-    """
+    """Used when adding a user as an administrator"""
 
-    role: Optional[AdministratorRole] = Field(
+    role: AdministratorRole | None = Field(
         description="the administrator role for the user",
     )
 
@@ -33,17 +27,17 @@ class UpdateUserRequest(BaseModel):
     active: bool | None = Field(description="deactivate a user")
 
     force_reset: bool | None = Field(
-        description="Forces a password reset next time the user logs in"
+        description="Forces a password reset next time the user logs in",
     )
 
     groups: list[int | str] | None = Field(
-        description="Sets the IDs of groups the user belongs to"
+        description="Sets the IDs of groups the user belongs to",
     )
 
     password: str | None = Field(description="the new password")
 
     primary_group: int | None = Field(
-        description="Sets the ID of the user's primary group"
+        description="Sets the ID of the user's primary group",
     )
 
     _prevent_none = prevent_none("active", "force_reset", "groups", "password")
@@ -80,7 +74,7 @@ class ListRolesResponse(BaseModel):
                     "setting is not enabled.\n     - Manage HMMs and common references.\n     - "
                     "View all running jobs.\n     - Cancel any job.\n    ",
                 },
-            ]
+            ],
         }
 
 
@@ -93,11 +87,6 @@ class ListAdministratorResponse(BaseModel):
                         "handle": "leeashley",
                         "id": "TxWalSSn",
                         "active": True,
-                        "b2c": None,
-                        "b2c_display_name": None,
-                        "b2c_family_name": None,
-                        "b2c_given_name": None,
-                        "b2c_oid": None,
                         "force_reset": False,
                         "groups": [],
                         "last_password_change": "2023-03-20T22:46:26.151000Z",
@@ -118,11 +107,6 @@ class ListAdministratorResponse(BaseModel):
                         "handle": "zclark",
                         "id": "fb085f7f",
                         "active": True,
-                        "b2c": None,
-                        "b2c_display_name": None,
-                        "b2c_family_name": None,
-                        "b2c_given_name": None,
-                        "b2c_oid": None,
                         "force_reset": False,
                         "groups": [],
                         "last_password_change": "2023-03-20T22:46:26.151000Z",
@@ -140,7 +124,7 @@ class ListAdministratorResponse(BaseModel):
                         "administrator_role": "full",
                     },
                 ],
-            }
+            },
         }
 
 
@@ -151,11 +135,6 @@ class UserResponse(BaseModel):
                 "id": "TxWalSSn",
                 "handle": "user_handle",
                 "active": True,
-                "b2c": None,
-                "b2c_display_name": None,
-                "b2c_family_name": None,
-                "b2c_given_name": None,
-                "b2c_oid": None,
                 "force_reset": False,
                 "groups": [],
                 "last_password_change": "2023-03-20T22:46:26.151000Z",
@@ -171,5 +150,5 @@ class UserResponse(BaseModel):
                 },
                 "primary_group": None,
                 "administrator_role": "base",
-            }
+            },
         }

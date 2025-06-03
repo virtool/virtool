@@ -12,7 +12,6 @@ import virtool.jobs.api
 import virtool.labels.api
 import virtool.messages.api
 import virtool.ml.api
-import virtool.oidc.api
 import virtool.otus.api
 import virtool.references.api
 import virtool.samples.api
@@ -39,7 +38,6 @@ ROUTES = (
     virtool.messages.api.routes,
     virtool.ml.api.routes,
     virtool.otus.api.routes,
-    virtool.oidc.api.routes,
     virtool.references.api.routes,
     virtool.samples.api.routes,
     virtool.settings.api.routes,

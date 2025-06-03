@@ -16,7 +16,9 @@ from virtool.users.utils import generate_base_permissions
 
 
 async def test_list(
-        data_layer: DataLayer, fake: DataFaker, snapshot: SnapshotAssertion,
+    data_layer: DataLayer,
+    fake: DataFaker,
+    snapshot: SnapshotAssertion,
 ):
     """Test that the method lists all groups in the instance."""
     for _ in range(10):
@@ -31,7 +33,7 @@ class TestFind:
         self,
         page: int,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot_recent: SnapshotAssertion,
     ):
         """Test that the correct page of groups and the correct search metadata values
@@ -53,7 +55,7 @@ class TestFind:
         self,
         term: str,
         data_layer: DataLayer,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot_recent: SnapshotAssertion,
     ):
         """Test that only matching groups are returned when a search term is provided."""
@@ -65,8 +67,7 @@ class TestFind:
 
 class TestGet:
     async def test_ok(self, data_layer: DataLayer, fake: DataFaker, snapshot):
-        """Ensure the correct group is returned when passed a postgres integer ID
-        """
+        """Ensure the correct group is returned when passed a postgres integer ID"""
         group = await fake.groups.create()
 
         await fake.users.create(groups=[group])
@@ -75,8 +76,7 @@ class TestGet:
         assert await data_layer.groups.get(group.id) == snapshot
 
     async def test_not_found(self, data_layer: DataLayer):
-        """Ensure the correct exception is raised when the group does not exist.
-        """
+        """Ensure the correct exception is raised when the group does not exist."""
         with pytest.raises(ResourceNotFoundError):
             await data_layer.groups.get(5)
 
@@ -148,7 +148,8 @@ async def test_update_permissions(
     assert await get_row_by_id(pg, SQLGroup, group.id) == snapshot(name="pg_added")
 
     group = await data_layer.groups.update(
-        group.id, UpdateGroupRequest(permissions={"create_sample": False}),
+        group.id,
+        UpdateGroupRequest(permissions={"create_sample": False}),
     )
     assert group == snapshot(name="group_removed")
     assert group.permissions == Permissions(

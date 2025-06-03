@@ -4,11 +4,11 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.filters import props
-from syrupy.matchers import path_type
 from virtool_core.models.group import GroupMinimal
 from virtool_core.models.roles import AdministratorRole
 from virtool_core.models.user import UserSearchResult
 
+from tests.fixtures.core import StaticTime
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
@@ -16,7 +16,6 @@ from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
-from virtool.users.db import B2CUserAttributes
 from virtool.users.mongo import validate_credentials
 from virtool.users.oas import UpdateUserRequest
 from virtool.users.pg import SQLUser
@@ -438,48 +437,6 @@ class TestUpdate:
         assert str(err.value) == "User does not exist"
 
 
-@pytest.mark.parametrize("exists", [True, False])
-async def test_find_or_create_b2c_user(
-    exists: bool,
-    data_layer: DataLayer,
-    fake: DataFaker,
-    mongo: Mongo,
-    snapshot: SnapshotAssertion,
-    static_time,
-):
-    fake_user = await fake.users.create()
-
-    await mongo.users.update_one(
-        {"_id": fake_user.id},
-        {
-            "$set": {
-                "last_password_change": static_time.datetime,
-                "force_reset": False,
-                "b2c_oid": "abc123" if exists else "def456",
-                "b2c_given_name": "Bilbo",
-                "b2c_family_name": "Baggins",
-                "b2c_display_name": "Bilbo",
-            },
-        },
-    )
-
-    user = await data_layer.users.find_or_create_b2c_user(
-        B2CUserAttributes(
-            oid="abc123",
-            display_name="Fred",
-            given_name="Fred",
-            family_name="Smith",
-        ),
-    )
-
-    if not exists:
-        assert "Fred-Smith" in user.handle
-        # Make sure handle ends with integer.
-        assert int(user.handle.split("-")[-1])
-
-    assert user == snapshot(matcher=path_type({"handle": (str,)}))
-
-
 class TestCheckUsersExist:
     async def test_no_users_exist(self, data_layer: DataLayer):
         """Verify that the user existence check returns False when no users exist."""
@@ -498,7 +455,7 @@ async def test_set_administrator_role(
     data_layer: DataLayer,
     fake: DataFaker,
     snapshot: SnapshotAssertion,
-    static_time,
+    static_time: StaticTime,
 ):
     """Test changing the administrator role of a user."""
     user = await fake.users.create()

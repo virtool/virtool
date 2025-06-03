@@ -101,7 +101,7 @@ class TestFind:
     async def test(
         self,
         upload_type: UploadType | None,
-            fake: DataFaker,
+        fake: DataFaker,
         spawn_client: ClientSpawner,
         snapshot,
         static_time,
@@ -140,7 +140,7 @@ class TestFind:
         self,
         page: int | None,
         per_page: int | None,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot,
         spawn_client: ClientSpawner,
         static_time,
@@ -173,7 +173,7 @@ class TestFind:
 
 async def test_get(
     example_path: Path,
-        fake: DataFaker,
+    fake: DataFaker,
     spawn_client: ClientSpawner,
 ):
     """Test `GET /uploads/:id` to assure that it lets you download a file."""

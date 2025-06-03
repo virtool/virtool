@@ -1,11 +1,8 @@
 import asyncio
-import sys
 from concurrent.futures import ProcessPoolExecutor
-from dataclasses import dataclass
 
 from aiohttp import ClientSession
 from aiojobs.aiohttp import get_scheduler_from_app
-from msal import ClientApplication
 from pymongo.errors import CollectionInvalid
 from structlog import get_logger
 from virtool_core.redis import Redis
@@ -22,7 +19,6 @@ from virtool.migration.pg import check_data_revision_version
 from virtool.mongo.connect import connect_mongo
 from virtool.mongo.migrate import migrate_status
 from virtool.mongo.utils import get_mongo_from_app
-from virtool.oidc.utils import JWKArgs
 from virtool.pg.utils import connect_pg
 from virtool.routes import setup_routes
 from virtool.sentry import setup
@@ -36,52 +32,10 @@ from virtool.ws.server import WSServer
 logger = get_logger("startup")
 
 
-@dataclass
-class B2C:
-    msal: ClientApplication
-    authority: str
-    jwk_args: JWKArgs = None
-    auth_code_flow: dict = None
-
-
 async def _connect_redis(redis_connection_string: str) -> Redis:
     redis = Redis(redis_connection_string)
     await redis.connect()
     return redis
-
-
-async def startup_b2c(app: App):
-    """Initiate connection to Azure AD B2C tenant.
-
-    :param app: Application object
-    """
-    config = get_config_from_app(app)
-
-    if not config.use_b2c:
-        return
-
-    if not all(
-        [
-            config.b2c_client_id,
-            config.b2c_client_secret,
-            config.b2c_tenant,
-            config.b2c_user_flow,
-        ],
-    ):
-        logger.critical(
-            "Required B2C client information not provided for --use-b2c option",
-        )
-        sys.exit(1)
-
-    authority = f"https://{config.b2c_tenant}.b2clogin.com/{config.b2c_tenant}.onmicrosoft.com/{config.b2c_user_flow}"
-
-    msal = ClientApplication(
-        client_id=get_config_from_app(app).b2c_client_id,
-        authority=authority,
-        client_credential=get_config_from_app(app).b2c_client_secret,
-    )
-
-    app["b2c"] = B2C(msal, authority)
 
 
 async def startup_check_db(app: App):

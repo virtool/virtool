@@ -8,7 +8,7 @@ from virtool.mongo.core import Mongo
 class TestFind:
     async def test_find(
         self,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot,
         mongo: Mongo,
         spawn_client: ClientSpawner,
@@ -41,7 +41,7 @@ class TestFind:
 
     async def test_find_by_name(
         self,
-            fake: DataFaker,
+        fake: DataFaker,
         snapshot,
         spawn_client: ClientSpawner,
     ):
@@ -66,7 +66,7 @@ class TestFind:
 @pytest.mark.parametrize("status", [200, 404])
 async def test_get(
     status: int,
-        fake: DataFaker,
+    fake: DataFaker,
     snapshot,
     mongo: Mongo,
     spawn_client: ClientSpawner,
@@ -95,7 +95,7 @@ async def test_get(
 @pytest.mark.parametrize("error", [None, "400_exists", "400_color"])
 async def test_create(
     error: str | None,
-        fake: DataFaker,
+    fake: DataFaker,
     resp_is,
     spawn_client: ClientSpawner,
 ):
@@ -133,7 +133,7 @@ async def test_create(
 @pytest.mark.parametrize("error", [None, "404", "400_name", "400_color", "400_null"])
 async def test_edit(
     error: str | None,
-        fake: DataFaker,
+    fake: DataFaker,
     resp_is,
     snapshot,
     mongo: Mongo,
@@ -191,7 +191,7 @@ async def test_edit(
 @pytest.mark.parametrize("status", [204, 404])
 async def test_remove(
     status: int,
-        fake: DataFaker,
+    fake: DataFaker,
     mock_samples: list[dict],
     snapshot,
     mongo: Mongo,

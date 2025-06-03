@@ -678,7 +678,7 @@ async def test_finalize(
         assert resp.status == 200
         assert await resp.json() == snapshot
 
-        document,row = await asyncio.gather(
+        document, row = await asyncio.gather(
             mongo.analyses.find_one(),
             get_row_by_id(pg, SQLAnalysisResult, 1),
         )

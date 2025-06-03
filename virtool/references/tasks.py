@@ -8,7 +8,6 @@ from aiohttp import ClientConnectorError
 
 from virtool.api.custom_json import dump_string
 from virtool.data.http import download_file
-from virtool.errors import WebError
 from virtool.references.utils import (
     ReferenceSourceData,
     check_import_data,
@@ -121,7 +120,7 @@ class RemoteReferenceTask(BaseTask):
                 path,
                 tracker.add,
             )
-        except (ClientConnectorError, WebError):
+        except ClientConnectorError:
             await self._set_error("Could not download reference data")
 
         import_data = await to_thread(load_reference_file, path)
@@ -169,7 +168,7 @@ class UpdateRemoteReferenceTask(BaseTask):
 
         try:
             await download_file(self.download_url, path, tracker.add)
-        except (ClientConnectorError, WebError):
+        except ClientConnectorError:
             return await self._set_error("Could not download reference data")
 
         data = await to_thread(load_reference_file, path)

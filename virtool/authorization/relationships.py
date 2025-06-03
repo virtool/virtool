@@ -1,6 +1,7 @@
 """
 Classes that represent relationships between users and other resources.
 """
+
 from abc import ABC, abstractmethod
 from typing import Union, List
 
@@ -33,34 +34,28 @@ class AbstractRelationship(ABC):
 
     @property
     @abstractmethod
-    def object_id(self) -> Union[str, int]:
-        ...
+    def object_id(self) -> Union[str, int]: ...
 
     @property
     @abstractmethod
-    def object_type(self) -> ResourceType:
-        ...
+    def object_type(self) -> ResourceType: ...
 
     @property
     @abstractmethod
-    def user_id(self) -> str:
-        ...
+    def user_id(self) -> str: ...
 
     @property
     @abstractmethod
-    def user_type(self) -> str:
-        ...
+    def user_type(self) -> str: ...
 
     @property
     @abstractmethod
-    def relation(self) -> str:
-        ...
+    def relation(self) -> str: ...
 
     def __repr__(self):
         return f"<{self.__class__.__name__} {self.user_type}:{self.user_id} {self.relation} {self.object_id}:{self.object_type}>"
 
     async def remove_tuples(self, openfga: OpenFgaApi, add_list: List) -> None:
-
         for request in add_list:
             relation_tuple = request.writes.tuple_keys[0]
 
@@ -123,7 +118,6 @@ class AdministratorRoleAssignment(AbstractRelationship):
         return "user"
 
     async def remove_tuples(self, openfga: OpenFgaApi, add_list: List) -> None:
-
         for request in add_list:
             relation_tuple = request.writes.tuple_keys[0]
 
@@ -190,7 +184,6 @@ class SpaceMembership(AbstractRelationship):
         return "user"
 
     async def remove_tuples(self, openfga: OpenFgaApi, add_list: List) -> None:
-
         for request in add_list:
             relation_tuple = request.writes.tuple_keys[0]
 
