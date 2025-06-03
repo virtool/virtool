@@ -333,10 +333,6 @@ def spawn_client(
         """
         config = ServerConfig(
             base_url=base_url,
-            b2c_client_id="",
-            b2c_client_secret="",
-            b2c_tenant="",
-            b2c_user_flow="",
             data_path=data_path,
             dev=dev,
             flags=[],
@@ -352,7 +348,6 @@ def spawn_client(
             real_ip_header="",
             redis_connection_string=redis_connection_string,
             sentry_dsn="",
-            use_b2c=False,
         )
 
         mocker.patch(
@@ -412,8 +407,6 @@ def spawn_client(
 
             cookies = {"session_id": session_id, "session_token": session_token}
 
-        elif config.use_b2c:
-            cookies = {"id_token": "foobar"}
         else:
             cookies = {"session_id": "dne"}
 
@@ -478,10 +471,6 @@ def spawn_job_client(
         app = await virtool.jobs.main.create_app(
             ServerConfig(
                 base_url=base_url,
-                b2c_client_id="",
-                b2c_client_secret="",
-                b2c_tenant="",
-                b2c_user_flow="",
                 data_path=data_path,
                 dev=dev,
                 flags=[],
@@ -497,7 +486,6 @@ def spawn_job_client(
                 real_ip_header="",
                 redis_connection_string=redis_connection_string,
                 sentry_dsn="",
-                use_b2c=False,
             ),
         )
 

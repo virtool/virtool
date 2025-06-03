@@ -15,7 +15,7 @@ from virtool.groups.pg import SQLGroup
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.types import Document
-from virtool.users.db import ATTACH_PROJECTION, B2CUserAttributes
+from virtool.users.db import ATTACH_PROJECTION
 from virtool.users.settings import DEFAULT_USER_SETTINGS
 from virtool.users.utils import (
     check_legacy_password,
@@ -67,9 +67,8 @@ async def compose_primary_group_update(
 async def create_user(
     mongo: Mongo,
     handle: str,
-    password: str | None,
+    password: str,
     force_reset: bool,
-    b2c_user_attributes: B2CUserAttributes | None = None,
     session: AsyncIOMotorClientSession | None = None,
 ) -> Document:
     document = {
@@ -79,30 +78,10 @@ async def create_user(
         "handle": handle,
         "invalidate_sessions": False,
         "last_password_change": virtool.utils.timestamp(),
+        "password": virtool.users.utils.hash_password(password),
         "primary_group": None,
         "settings": DEFAULT_USER_SETTINGS,
     }
-
-    if password is None:
-        if b2c_user_attributes is None:
-            raise ValueError("Missing b2c_user_attributes")
-
-        if await mongo.users.count_documents(
-            {"b2c_oid": b2c_user_attributes.oid},
-            limit=1,
-        ):
-            raise ResourceConflictError("User oid already exists")
-
-        document.update(
-            {
-                "b2c_oid": b2c_user_attributes.oid,
-                "b2c_display_name": b2c_user_attributes.display_name,
-                "b2c_given_name": b2c_user_attributes.given_name,
-                "b2c_family_name": b2c_user_attributes.family_name,
-            },
-        )
-    else:
-        document["password"] = virtool.users.utils.hash_password(password)
 
     try:
         return await mongo.users.insert_one(document, session=session)

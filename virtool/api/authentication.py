@@ -16,8 +16,6 @@ from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.errors import AuthError
-from virtool.oidc.utils import validate_token
-from virtool.users.db import B2CUserAttributes
 from virtool.users.utils import limit_permissions
 
 logger = get_logger("authn")
@@ -91,61 +89,6 @@ async def authenticate_with_api_key(
     return await handler(req)
 
 
-async def authenticate_with_b2c(req: Request, handler: Callable) -> Response:
-    """Authenticate requests when req.app["config"].use_b2c is True.
-
-    If no id_token cookie is attached to request, redirect to /acquire_tokens
-
-    If id_token cookie is found, attempt to validate to gather user information from
-    claims. If token is expired, redirect to /refresh_tokens. If token is invalid for
-    some other reason, redirect to /delete_tokens
-
-    find or create user based on token claims, then populate req["cient"] with user
-    information and return the response from the handler.
-
-    :param req: the request to handle
-    :param handler: the handler to call with the request if authenticated
-    :return: the response
-    """
-    token = req.headers.get("bearer") or req.cookies.get("bearer")
-
-    if token is None:
-        raise APIUnauthorized(
-            "No B2C token found in headers or cookies",
-            error_id="no_b2c_token",
-        )
-
-    try:
-        token_claims = await validate_token(req.app, token)
-    except jwt.ExpiredSignatureError:
-        raise APIUnauthorized()
-
-    user = await get_data_from_req(req).users.find_or_create_b2c_user(
-        B2CUserAttributes(
-            display_name=token_claims["name"],
-            given_name=token_claims.get("given_name", ""),
-            family_name=token_claims.get("family_name", ""),
-            oid=token_claims["oid"],
-        ),
-    )
-
-    if user.active is False:
-        raise APIUnauthorized("User is deactivated", error_id="deactivated_user")
-
-    req["client"] = UserClient(
-        administrator_role=user.administrator_role,
-        authenticated=True,
-        force_reset=False,
-        groups=[group.id for group in user.groups],
-        permissions=user.permissions.dict(),
-        user_id=user.id,
-        session_id=None,
-    )
-
-    resp = await handler(req)
-    resp.set_cookie("bearer", token, httponly=True, max_age=2600000)
-
-    return resp
 
 
 async def authenticate_with_session(req: Request, handler: Callable) -> Response:
@@ -213,9 +156,5 @@ async def authentication_middleware(req: Request, handler) -> Response:
             )
 
         return await authenticate_with_api_key(req, handler, holder_id, key)
-
-    if get_config_from_req(req).use_b2c:
-        with suppress(APIUnauthorized):
-            return await authenticate_with_b2c(req, handler)
 
     return await authenticate_with_session(req, handler)

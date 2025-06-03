@@ -16,7 +16,6 @@ from virtool.config.cls import (
 )
 from virtool.config.options import (
     address_options,
-    b2c_options,
     base_url_option,
     data_path_option,
     dev_option,
@@ -66,7 +65,6 @@ def server():
 
 @server.command("api")
 @address_options
-@b2c_options
 @base_url_option
 @data_path_option
 @dev_option
@@ -110,11 +108,6 @@ def start_jobs_api(**kwargs):
         ServerConfig(
             **kwargs,
             base_url="",
-            b2c_client_id="",
-            b2c_client_secret="",
-            b2c_tenant="",
-            b2c_user_flow="",
-            use_b2c=False,
         ),
     )
 

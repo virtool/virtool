@@ -43,10 +43,6 @@ class MigrationConfig:
 @dataclass
 class ServerConfig:
     base_url: str
-    b2c_client_id: str | None
-    b2c_client_secret: str | None
-    b2c_tenant: str | None
-    b2c_user_flow: str | None
     data_path: Path
     dev: bool
     flags: list[FlagName]
@@ -61,7 +57,6 @@ class ServerConfig:
     postgres_connection_string: str
     real_ip_header: str
     redis_connection_string: str
-    use_b2c: bool
     sentry_dsn: str | None
 
     @property

@@ -1,8 +1,6 @@
 import asyncio
 import math
-import random
 
-from pymongo.errors import DuplicateKeyError
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine
 from structlog import get_logger
@@ -27,7 +25,6 @@ from virtool.groups.transforms import AttachGroupsTransform, AttachPrimaryGroupT
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field, id_exists
 from virtool.users.db import (
-    B2CUserAttributes,
     compose_groups_update,
 )
 from virtool.users.mongo import (
@@ -43,11 +40,6 @@ from virtool.utils import base_processor
 PROJECTION = [
     "_id",
     "active",
-    "b2c",
-    "b2c_display_name",
-    "b2c_family_name",
-    "b2c_given_name",
-    "b2c_oid",
     "handle",
     "force_reset",
     "groups",
@@ -266,50 +258,6 @@ class UsersData(DataLayerDomain):
 
         return await self.get(document["_id"])
 
-    @emits(Operation.CREATE)
-    async def create_b2c(
-        self,
-        handle: str,
-        b2c_user_attributes: B2CUserAttributes,
-        force_reset: bool = False,
-    ) -> User:
-        """Create a new user using Azure B2C information.
-
-        :param handle: the requested handle for the user
-        :param force_reset: force the user to reset password on next login
-        :param  b2c_user_attributes: Azure b2c user attributes used to describe a user
-        :return: the user document
-        """
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
-            document = await create_user(
-                self._mongo,
-                handle,
-                None,
-                force_reset,
-                b2c_user_attributes=b2c_user_attributes,
-                session=mongo_session,
-            )
-
-            pg_session.add(
-                SQLUser(
-                    b2c_display_name=b2c_user_attributes.display_name,
-                    b2c_given_name=b2c_user_attributes.given_name,
-                    b2c_family_name=b2c_user_attributes.family_name,
-                    b2c_oid=b2c_user_attributes.oid,
-                    force_reset=force_reset,
-                    handle=handle,
-                    last_password_change=virtool.utils.timestamp(),
-                    legacy_id=document["_id"],
-                    password=None,
-                    settings=DEFAULT_USER_SETTINGS,
-                ),
-            )
-
-        return await self.get(document["_id"])
-
     async def create_first(self, handle: str, password: str) -> User:
         """Create the first instance user.
 
@@ -328,36 +276,6 @@ class UsersData(DataLayerDomain):
         await self.set_administrator_role(document.id, AdministratorRole.FULL)
 
         return await self.get(document.id)
-
-    async def find_or_create_b2c_user(
-        self,
-        b2c_user_attributes: B2CUserAttributes,
-    ) -> User:
-        """Search for existing user using an OID.
-
-        If not found, create new user with the OID and user attributes. Auto-generate a
-        handle.
-
-        :param b2c_user_attributes: User attributes collected from ID token claims
-        :return: the found or created user
-        """
-        if document := await self._mongo.users.find_one(
-            {"b2c_oid": b2c_user_attributes.oid},
-            ["_id"],
-        ):
-            return await self.get(document["_id"])
-
-        handle = f"{b2c_user_attributes.given_name}-{b2c_user_attributes.family_name}-{random.randint(1, 100)}"
-
-        while await self._mongo.users.count_documents({"handle": handle}):
-            handle = f"{b2c_user_attributes.given_name}-{b2c_user_attributes.family_name}-{random.randint(1, 100)}"
-
-        try:
-            user = await self.create_b2c(handle, b2c_user_attributes)
-        except DuplicateKeyError:
-            return await self.find_or_create_b2c_user(b2c_user_attributes)
-
-        return user
 
     async def set_administrator_role(
         self,

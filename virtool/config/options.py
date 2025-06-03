@@ -41,42 +41,6 @@ def address_options(func):
     return func
 
 
-def b2c_options(func):
-    for decorator in [
-        click.option(
-            "--use-b2c",
-            default=get_from_environment("use_b2c", False),
-            help="Use Azure AD B2C for authentication",
-            is_flag=True,
-        ),
-        click.option(
-            "--b2c-client-id",
-            default=get_from_environment("b2c_client_id", ""),
-            help="Azure AD B2C client ID (required for --use-b2c)",
-            type=str,
-        ),
-        click.option(
-            "--b2c-client-secret",
-            default=get_from_environment("b2c_client_secret", ""),
-            help="Azure AD B2C client secret (required for --use-b2c)",
-            type=str,
-        ),
-        click.option(
-            "--b2c-tenant",
-            default=get_from_environment("b2c_tenant", ""),
-            help="Azure AD B2C tenant name",
-            type=str,
-        ),
-        click.option(
-            "--b2c-user-flow",
-            default=get_from_environment("b2c_user_flow", ""),
-            help="Azure AD B2C signupsignin user flow, required for --use-b2c",
-            type=str,
-        ),
-    ]:
-        func = decorator(func)
-
-    return func
 
 
 base_url_option = click.option(
