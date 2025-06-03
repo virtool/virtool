@@ -1,3 +1,4 @@
+from contextlib import suppress
 from copy import deepcopy
 
 from virtool.types import Document
@@ -9,15 +10,11 @@ def evaluate_changes(data: dict, document: dict) -> tuple[str, str, Document]:
     abbreviation = data.get("abbreviation")
     schema = data.get("schema")
 
-    try:
+    with suppress(AttributeError):
         name = name.strip()
-    except AttributeError:
-        pass
 
-    try:
+    with suppress(AttributeError):
         abbreviation = abbreviation.strip()
-    except AttributeError:
-        pass
 
     if name == document["name"]:
         name = None
@@ -145,8 +142,9 @@ def merge_otu(otu: dict, sequences: list[dict]) -> dict:
 
 
 def split(merged: Document) -> tuple[Document, list[Document]]:
-    """Split a merged otu document into a list of sequence documents associated with the
-    otu and a regular otu document containing no sequence sub-documents.
+    """Split a merged OTU into an reduced OTU and list of associated sequences.
+
+    The returned OTU contains no sequence sub-documents.
 
     :param merged: the merged otu to split
     :return: a tuple containing the new otu document and a list of sequence documents
@@ -161,9 +159,11 @@ def split(merged: Document) -> tuple[Document, list[Document]]:
     return otu, sequences
 
 
-def verify(joined: Document) -> bool | Document:
-    """Checks that the passed otu and sequences constitute valid Virtool records and can be
-    included in an index.
+def verify(joined: Document) -> bool | Document | None:
+    """Check that the passed OTU is valid.
+
+    This function must be called on a joined OTU (contains sequences sub-documents). Any
+    OTUs being included in a new index must be verified.
 
     Error fields are:
     * emtpy_otu - otu has no isolates associated with it.
@@ -241,19 +241,19 @@ def format_fasta_entry(
     return f">{otu_name}|{isolate_name}|{sequence_id}|{len(sequence)}\n{sequence}"
 
 
-def format_fasta_filename(*args) -> str:
+def format_fasta_filename(*parts: str) -> str:
     """Format a FASTA filename of the form "otu.isolate.sequence_id.fa".
 
-    :param args: the filename parts
+    :param parts: the filename parts
     :return: a compound FASTA filename
 
     """
-    if len(args) > 3:
+    if len(parts) > 3:
         raise ValueError("Unexpected number of filename parts")
 
-    if len(args) == 0:
+    if len(parts) == 0:
         raise ValueError("At least one filename part required")
 
-    filename = ".".join(args).replace(" ", "_") + ".fa"
+    filename = ".".join(parts).replace(" ", "_") + ".fa"
 
     return filename.lower()
