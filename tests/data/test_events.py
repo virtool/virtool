@@ -1,7 +1,6 @@
 import asyncio
 
 from redis import Redis
-from virtool_core.models.basemodel import BaseModel
 
 from virtool.data.domain import DataLayerDomain
 from virtool.data.events import (
@@ -13,9 +12,10 @@ from virtool.data.events import (
     emits,
     listen_for_events,
 )
+from virtool.models import VirtoolBaseModel
 
 
-class Emitted(BaseModel):
+class Emitted(VirtoolBaseModel):
     name: str
     age: int
 
@@ -66,7 +66,7 @@ async def test_emits_named():
     assert event.operation == Operation.UPDATE
 
 
-async def test_publish_and_listen(loop, redis: Redis):
+async def test_publish_and_listen(redis: Redis):
     """Test that an event published with ``emit()`` can be received by an
     ``EventListener``.
     """

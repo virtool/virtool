@@ -11,6 +11,7 @@ from virtool_core.models.basemodel import BaseModel
 from virtool_core.redis import Redis
 
 from virtool.api.custom_json import dump_string
+from virtool.models import VirtoolBaseModel
 from virtool.utils import get_model_by_name, timestamp
 
 logger = get_logger("events")
@@ -83,7 +84,9 @@ async def dangerously_get_event() -> Event:
     return await _events_target.get()
 
 
-def emit(data: BaseModel, domain: str, name: str, operation: Operation):
+def emit(
+    data: BaseModel | VirtoolBaseModel, domain: str, name: str, operation: Operation
+):
     """Emit an event."""
     if data is None:
         logger.warning("emit event with no data")
