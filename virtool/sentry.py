@@ -1,3 +1,5 @@
+"""Sentry integration for error tracking, performance monitoring, and log capture."""
+
 import sentry_sdk
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
@@ -7,8 +9,12 @@ logger = get_logger("sentry")
 
 
 def traces_sampler(sampling_context: dict) -> float:
-    """A Sentry transaction sampler that samples all transactions except for WebSocket
-    connections.
+    """Sample all transactions except for WebSocket connections.
+
+    This is a Sentry traces sampler function to be used with the Sentry SDK.
+
+    :param sampling_context: A dictionary containing context about the current request.
+    :return: A float representing the sampling rate.
     """
     try:
         target_url = sampling_context["aiohttp_request"].rel_url
@@ -31,6 +37,9 @@ def setup(server_version: str | None, dsn: str):
 
     sentry_sdk.init(
         dsn=dsn,
+        _experiments={
+            "enable_logs": True,
+        },
         integrations=[
             AioHttpIntegration(),
             LoggingIntegration(event_level=None, level=None),
