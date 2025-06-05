@@ -13,8 +13,8 @@ from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r204, r400, r403, r404, r409
 from pydantic import conint
 
-from virtool.analyses.models import AnalysisFormat
 from virtool.analyses.oas import AnalysisResponse, FindAnalysesResponse
+from virtool.analyses.sql import AnalysisFormat
 from virtool.api.custom_json import datetime_to_isoformat, json_response
 from virtool.api.errors import (
     APIBadRequest,

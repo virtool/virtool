@@ -12,7 +12,7 @@ from assets.revisions.rev_ohcocrre6rha_migrate_subtraction_files import (
     upgrade,
 )
 from virtool.migration import MigrationContext
-from virtool.subtractions.models import SQLSubtractionFile
+from virtool.subtractions.pg import SQLSubtractionFile
 
 
 async def test_upgrade(

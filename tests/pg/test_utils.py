@@ -1,9 +1,7 @@
-from typing import Any
-
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy.filters import paths
 
-from virtool.indexes.models import SQLIndexFile
+from virtool.indexes.sql import SQLIndexFile
 from virtool.pg.utils import connect_pg, delete_row, get_row, get_row_by_id, get_rows
 
 

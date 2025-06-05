@@ -5,12 +5,11 @@ import arrow
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy.matchers import path_type
-from virtool_core.models.job import JobState
 
 from virtool.fake.next import DataFaker
 from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
-from virtool.jobs.utils import compose_status
+from virtool.jobs.models import JobState
 
 
 @pytest.fixture()
@@ -98,31 +97,6 @@ async def test_acquire(
     )
 
     assert await jobs_data.acquire("foo") == snapshot
-    assert await mongo.jobs.find_one() == snapshot
-
-
-async def test_archive(
-    mongo, fake: DataFaker, jobs_data: JobsData, pg, snapshot, static_time
-):
-    user = await fake.users.create()
-
-    status = compose_status(JobState.WAITING, None)
-
-    await mongo.jobs.insert_one(
-        {
-            "_id": "foo",
-            "status": [status],
-            "archived": False,
-            "acquired": False,
-            "key": None,
-            "user": {"id": user.id},
-            "rights": {},
-            "workflow": "build_index",
-            "args": {},
-        },
-    )
-
-    assert await jobs_data.archive("foo") == snapshot
     assert await mongo.jobs.find_one() == snapshot
 
 

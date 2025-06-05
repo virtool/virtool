@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.analyses.models import SQLAnalysisFile
+from virtool.analyses.sql import SQLAnalysisFile
 
 
 async def create_analysis_file(

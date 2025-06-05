@@ -17,7 +17,7 @@ from virtool_core.utils import file_stats
 from virtool.api.custom_json import dump_bytes
 from virtool.history.db import patch_to_version
 from virtool.indexes.db import INDEX_FILE_NAMES
-from virtool.indexes.models import IndexType, SQLIndexFile
+from virtool.indexes.sql import IndexType, SQLIndexFile
 from virtool.indexes.utils import join_index_path
 from virtool.migration import MigrationContext
 from virtool.types import Document

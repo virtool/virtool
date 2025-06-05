@@ -16,7 +16,7 @@ from virtool.indexes.db import (
     get_patched_otus,
     update_last_indexed_versions,
 )
-from virtool.indexes.models import SQLIndexFile
+from virtool.indexes.sql import SQLIndexFile
 from virtool.mongo.core import Mongo
 
 

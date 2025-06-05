@@ -4,10 +4,10 @@ import arrow
 import pytest
 from syrupy.matchers import path_type
 from virtool_core.models.enums import Permission
-from virtool_core.models.job import JobState
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from virtool.fake.next import DataFaker
+from virtool.jobs.models import JobState
 from virtool.mongo.core import Mongo
 
 _job_response_matcher = path_type(
@@ -38,32 +38,6 @@ class TestFind:
 
         assert resp.status == 200
         assert await resp.json() == snapshot(matcher=_job_response_matcher)
-
-    @pytest.mark.parametrize("archived", [True, False])
-    async def test_archived(
-        self,
-        archived: bool,
-        fake: DataFaker,
-        snapshot,
-        spawn_client: ClientSpawner,
-    ):
-        """Test that jobs are filtered correctly when archived is ``true`` or ``false``."""
-        client = await spawn_client(authenticated=True)
-
-        user = await fake.users.create()
-
-        await fake.jobs.create(user=user)
-        await fake.jobs.create(user=user, archived=True)
-        await fake.jobs.create(user=user)
-        await fake.jobs.create(user=user, archived=True)
-        await fake.jobs.create(user=user)
-
-        resp = await client.get(f"/jobs?archived={archived}")
-        body = await resp.json()
-
-        assert resp.status == 200
-        assert body == snapshot(matcher=_job_response_matcher)
-        assert all(job["archived"] == archived for job in body["documents"])
 
     async def test_user(self, fake: DataFaker, spawn_client: ClientSpawner):
         """Test that jobs are filtered correctly when user id(s) are provided."""
@@ -232,55 +206,6 @@ class TestAcquire:
         client = await spawn_job_client(authenticated=True)
 
         resp = await client.patch("/jobs/foo", json={"acquired": True})
-
-        assert resp.status == 404
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found",
-        }
-
-
-class TestArchive:
-    async def test_ok(
-        self,
-        fake: DataFaker,
-        snapshot,
-        spawn_client: ClientSpawner,
-    ):
-        """Test that a job can be archived."""
-        client = await spawn_client(authenticated=True)
-
-        job = await fake.jobs.create(await fake.users.create())
-
-        resp = await client.patch(f"/jobs/{job.id}/archive", data={"archived": True})
-
-        assert resp.status == 200
-        assert await resp.json() == snapshot(matcher=_job_response_matcher)
-
-    async def test_already_archived(
-        self,
-        fake: DataFaker,
-        spawn_client: ClientSpawner,
-    ):
-        """Test that a 400 is returned when the job is already archived."""
-        client = await spawn_client(authenticated=True)
-
-        user = await fake.users.create()
-        job = await fake.jobs.create(user, archived=True)
-
-        resp = await client.patch(f"/jobs/{job.id}/archive", data={"archived": True})
-
-        assert resp.status == 400
-        assert await resp.json() == {
-            "id": "bad_request",
-            "message": "Job already archived",
-        }
-
-    async def test_not_found(self, spawn_client: ClientSpawner):
-        """Test that a 404 is returned when the job doesn't exist."""
-        client = await spawn_client(authenticated=True)
-
-        resp = await client.patch("/jobs/foo/archive", data={"archived": True})
 
         assert resp.status == 404
         assert await resp.json() == {

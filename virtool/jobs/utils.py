@@ -1,8 +1,5 @@
-from typing import Optional
-
-from virtool_core.models.job import JobState
-
 import virtool.utils
+from virtool.jobs.models import JobState
 from virtool.types import Document
 
 WORKFLOW_NAMES = (
@@ -16,15 +13,14 @@ WORKFLOW_NAMES = (
 
 
 def compose_status(
-    state: Optional[JobState],
-    stage: Optional[str],
-    step_name: Optional[str] = None,
-    step_description: Optional[str] = None,
-    error: Optional[dict] = None,
-    progress: Optional[int] = 0,
+    state: JobState | None,
+    stage: str | None,
+    step_name: str | None = None,
+    step_description: str | None = None,
+    error: dict | None = None,
+    progress: int | None = 0,
 ) -> Document:
-    """
-    Compose a status subdocument for a job.
+    """Compose a status subdocument for a job.
 
     :param state: the current state
     :param stage: the current stage
@@ -46,8 +42,5 @@ def compose_status(
 
 
 def check_job_is_running_or_waiting(document: Document) -> bool:
-    """
-    Returns a boolean indicating whether the passed job document is in the running or
-    waiting state.
-    """
+    """Return a boolean indicating whether the passed job is running or waiting."""
     return document["status"][-1]["state"] in ("waiting", "running")

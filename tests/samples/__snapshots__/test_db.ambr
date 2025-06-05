@@ -31,66 +31,6 @@
     'pathoscope': 'none',
   })
 # ---
-# name: test_compress_sample_reads[False]
-  set({
-    'reads_1.fq.gz',
-  })
-# ---
-# name: test_compress_sample_reads[False].1
-  dict({
-    '_id': 'foo',
-    'files': list([
-      dict({
-        'download_url': '/download/samples/foo/reads_1.fq.gz',
-        'from': dict({
-          'id': 'M_S11_R1_001.fastq',
-          'name': 'M_S11_R1_001.fastq',
-          'size': 3750821789,
-        }),
-        'name': 'reads_1.fq.gz',
-        'raw': False,
-        'size': 6586501,
-      }),
-    ]),
-    'paired': False,
-  })
-# ---
-# name: test_compress_sample_reads[True]
-  set({
-    'reads_1.fq.gz',
-    'reads_2.fq.gz',
-  })
-# ---
-# name: test_compress_sample_reads[True].1
-  dict({
-    '_id': 'foo',
-    'files': list([
-      dict({
-        'download_url': '/download/samples/foo/reads_1.fq.gz',
-        'from': dict({
-          'id': 'M_S11_R1_001.fastq',
-          'name': 'M_S11_R1_001.fastq',
-          'size': 3750821789,
-        }),
-        'name': 'reads_1.fq.gz',
-        'raw': False,
-        'size': 6586501,
-      }),
-      dict({
-        'download_url': '/download/samples/foo/reads_2.fq.gz',
-        'from': dict({
-          'id': 'M_S11_R1_001.fastq',
-          'name': 'M_S11_R1_001.fastq',
-          'size': 3750821789,
-        }),
-        'name': 'reads_2.fq.gz',
-        'raw': False,
-        'size': 6586501,
-      }),
-    ]),
-    'paired': True,
-  })
-# ---
 # name: test_create_sample
   dict({
     'all_read': True,
@@ -166,37 +106,4 @@
       'pathoscope': 'none',
     }),
   })
-# ---
-# name: test_update_is_compressed
-  list([
-    dict({
-      '_id': 'foo',
-      'files': list([
-        dict({
-          'name': 'reads_1.fq.gz',
-        }),
-        dict({
-          'name': 'reads_2.fq.gz',
-        }),
-      ]),
-      'is_compressed': True,
-    }),
-    dict({
-      '_id': 'baz',
-      'files': list([
-        dict({
-          'name': 'reads_1.fastq',
-        }),
-      ]),
-    }),
-    dict({
-      '_id': 'bar',
-      'files': list([
-        dict({
-          'name': 'reads_1.fq.gz',
-        }),
-      ]),
-      'is_compressed': True,
-    }),
-  ])
 # ---

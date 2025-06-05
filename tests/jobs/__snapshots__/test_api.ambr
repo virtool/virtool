@@ -2,7 +2,6 @@
 # name: TestAcquire.test_ok
   dict({
     'acquired': True,
-    'archived': False,
     'args': dict({
       'fact': 'LdJCGRddpwdyFKunVyUD',
       'nearly': 951.93581531826,
@@ -45,156 +44,6 @@
     'workflow': 'jobs_pathoscope_bowtie',
   })
 # ---
-# name: TestArchive.test_ok
-  dict({
-    'acquired': False,
-    'archived': True,
-    'args': dict({
-      'fact': 'LdJCGRddpwdyFKunVyUD',
-      'nearly': 951.93581531826,
-      'network': 'fhKcDVBJbHFDutYbbXjg',
-      'season': 6981,
-      'task': 'RrnFxjyvDAqsRnDaMrco',
-      'third': 'SUEXExIZVPeFzGRmMglP',
-    }),
-    'created_at': str,
-    'id': '7cf872dc',
-    'ping': None,
-    'progress': 10,
-    'stage': 'NzFJEUSgqMReEKilxKJT',
-    'state': 'preparing',
-    'status': list([
-      dict({
-        'error': None,
-        'progress': 0,
-        'stage': None,
-        'state': 'waiting',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': str,
-      }),
-      dict({
-        'error': None,
-        'progress': 10,
-        'stage': 'NzFJEUSgqMReEKilxKJT',
-        'state': 'preparing',
-        'step_description': 'bTDOKidKxUVFacqRcQYv',
-        'step_name': 'NzFJEUSgqMReEKilxKJT',
-        'timestamp': str,
-      }),
-    ]),
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 'fb085f7f',
-    }),
-    'workflow': 'jobs_pathoscope_bowtie',
-  })
-# ---
-# name: TestFind.test_archived[False]
-  dict({
-    'counts': dict({
-      'preparing': dict({
-        'jobs_pathoscope_bowtie': 1,
-      }),
-      'waiting': dict({
-        'jobs_build_index': 1,
-        'jobs_pathoscope_bowtie': 1,
-      }),
-    }),
-    'documents': list([
-      dict({
-        'archived': False,
-        'created_at': str,
-        'id': 'f60bae36',
-        'progress': 0,
-        'stage': None,
-        'state': 'waiting',
-        'user': dict({
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
-        }),
-        'workflow': 'jobs_pathoscope_bowtie',
-      }),
-      dict({
-        'archived': False,
-        'created_at': str,
-        'id': 'da42dca3',
-        'progress': 0,
-        'stage': None,
-        'state': 'waiting',
-        'user': dict({
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
-        }),
-        'workflow': 'jobs_build_index',
-      }),
-      dict({
-        'archived': False,
-        'created_at': str,
-        'id': '7cf872dc',
-        'progress': 10,
-        'stage': 'NzFJEUSgqMReEKilxKJT',
-        'state': 'preparing',
-        'user': dict({
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
-        }),
-        'workflow': 'jobs_pathoscope_bowtie',
-      }),
-    ]),
-    'found_count': 3,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 5,
-  })
-# ---
-# name: TestFind.test_archived[True]
-  dict({
-    'counts': dict({
-      'preparing': dict({
-        'jobs_pathoscope_bowtie': 1,
-      }),
-      'waiting': dict({
-        'jobs_build_index': 1,
-        'jobs_pathoscope_bowtie': 1,
-      }),
-    }),
-    'documents': list([
-      dict({
-        'archived': True,
-        'created_at': str,
-        'id': '09d01419',
-        'progress': 100,
-        'stage': 'GapNGCiKyJNmNoZgTcnB',
-        'state': 'complete',
-        'user': dict({
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
-        }),
-        'workflow': 'jobs_build_index',
-      }),
-      dict({
-        'archived': True,
-        'created_at': str,
-        'id': '3cbb22cc',
-        'progress': 30,
-        'stage': 'NkznHZPGfxsRfFzDHwBJ',
-        'state': 'error',
-        'user': dict({
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
-        }),
-        'workflow': 'jobs_nuvs',
-      }),
-    ]),
-    'found_count': 2,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 5,
-  })
-# ---
 # name: TestFind.test_basic
   dict({
     'counts': dict({
@@ -223,7 +72,6 @@
     }),
     'documents': list([
       dict({
-        'archived': False,
         'created_at': str,
         'id': '9c61c0ca',
         'progress': 30,
@@ -236,7 +84,6 @@
         'workflow': 'jobs_build_index',
       }),
       dict({
-        'archived': False,
         'created_at': str,
         'id': '7cce8f87',
         'progress': 50,
@@ -249,7 +96,6 @@
         'workflow': 'jobs_pathoscope_bowtie',
       }),
       dict({
-        'archived': False,
         'created_at': str,
         'id': '83e4c4f6',
         'progress': 60,
@@ -262,7 +108,6 @@
         'workflow': 'jobs_aodp',
       }),
       dict({
-        'archived': False,
         'created_at': str,
         'id': '606cd773',
         'progress': 100,
@@ -275,7 +120,6 @@
         'workflow': 'jobs_create_sample',
       }),
       dict({
-        'archived': False,
         'created_at': str,
         'id': '031ff6cb',
         'progress': 60,
@@ -307,12 +151,6 @@
       'type': 'type_error.enum',
     }),
   ])
-# ---
-# name: TestPing.test_not_found
-  dict({
-    'id': 'not_found',
-    'message': 'Not found',
-  })
 # ---
 # name: TestPushStatus.test[None]
   dict({
@@ -930,79 +768,9 @@
     'timestamp': '2015-10-06T20:00:00Z',
   })
 # ---
-# name: test_bulk_archive[None]
-  list([
-    dict({
-      'archived': True,
-      'created_at': '2019-03-07T23:20:30Z',
-      'id': '7467tozj',
-      'progress': 95,
-      'stage': None,
-      'state': 'waiting',
-      'user': dict({
-        'handle': 'bob',
-        'id': 'bf1b993c',
-      }),
-      'workflow': 'build_index',
-    }),
-    dict({
-      'archived': True,
-      'created_at': '2017-09-21T03:00:07Z',
-      'id': '8cy4mjvp',
-      'progress': 97,
-      'stage': None,
-      'state': 'waiting',
-      'user': dict({
-        'handle': 'bob',
-        'id': 'bf1b993c',
-      }),
-      'workflow': 'build_index',
-    }),
-    dict({
-      'archived': True,
-      'created_at': '2024-08-23T20:27:15Z',
-      'id': '8vvqvnuk',
-      'progress': 90,
-      'stage': None,
-      'state': 'waiting',
-      'user': dict({
-        'handle': 'bob',
-        'id': 'bf1b993c',
-      }),
-      'workflow': 'nuvs',
-    }),
-    dict({
-      'archived': True,
-      'created_at': '2021-08-30T04:32:27Z',
-      'id': 'awvuon9b',
-      'progress': 66,
-      'stage': None,
-      'state': 'waiting',
-      'user': dict({
-        'handle': 'bob',
-        'id': 'bf1b993c',
-      }),
-      'workflow': 'pathoscope',
-    }),
-    dict({
-      'archived': True,
-      'created_at': '2023-02-28T08:11:58Z',
-      'id': 'sk1wj693',
-      'progress': 82,
-      'stage': None,
-      'state': 'waiting',
-      'user': dict({
-        'handle': 'bob',
-        'id': 'bf1b993c',
-      }),
-      'workflow': 'create_sample',
-    }),
-  ])
-# ---
 # name: test_cancel[None]
   dict({
     'acquired': False,
-    'archived': False,
     'args': dict({
       'analysis_id': 'e410429b',
       'index_id': '465428b0',
@@ -1056,7 +824,6 @@
 # name: test_get[None]
   dict({
     'acquired': False,
-    'archived': False,
     'args': dict({
       'fact': 'LdJCGRddpwdyFKunVyUD',
       'nearly': 951.93581531826,

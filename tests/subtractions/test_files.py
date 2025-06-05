@@ -1,8 +1,8 @@
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.subtractions.files
-from virtool.subtractions.models import SQLSubtractionFile
+from virtool.subtractions.pg import SQLSubtractionFile
 
 
 async def test_create_subtraction_files(snapshot, tmp_path, pg: AsyncEngine):

@@ -21,12 +21,10 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.enums import Molecule
 from virtool_core.models.group import Group
 from virtool_core.models.hmm import HMM
-from virtool_core.models.job import Job, JobState
 from virtool_core.models.label import Label
 from virtool_core.models.ml import MLModel
 from virtool_core.models.otu import OTU, OTUSegment
 from virtool_core.models.roles import AdministratorRole
-from virtool_core.models.subtraction import Subtraction
 from virtool_core.models.task import Task
 from virtool_core.models.upload import Upload
 from virtool_core.models.user import User
@@ -36,6 +34,7 @@ from virtool.example import example_path
 from virtool.fake.providers import OrganismProvider, SegmentProvider, SequenceProvider
 from virtool.groups.oas import PermissionsUpdate, UpdateGroupRequest
 from virtool.groups.pg import SQLGroup
+from virtool.jobs.models import Job, JobState
 from virtool.jobs.utils import WORKFLOW_NAMES
 from virtool.ml.tasks import SyncMLModelsTask
 from virtool.mongo.core import Mongo
@@ -46,6 +45,7 @@ from virtool.references.tasks import (
     RefreshReferenceReleasesTask,
 )
 from virtool.releases import ReleaseManifestItem
+from virtool.subtractions.models import Subtraction
 from virtool.subtractions.oas import (
     CreateSubtractionRequest,
     FinalizeSubtractionRequest,
@@ -155,32 +155,18 @@ class JobsFakerDomain(DataFakerDomain):
     async def create(
         self,
         user: User,
-        archived: bool = False,
         state: JobState | None = None,
         workflow: str | None = None,
     ) -> Job:
         """Create a fake job.
 
-        A completely valid job will be created which follows the rules:
-
-        * The job will be in an archive-able state if ``archived`` is ``True``.
-        * The job status updates will be in a valid order.
+        A job will be created with status updates in a valid order.
 
         :param user: the user that created the job
-        :param archived: whether the job should be archived
         :param state: the state the most recent status update should have
         :param workflow: the workflow the job is running
         :return:
         """
-        if archived and state in [
-            JobState.WAITING,
-            JobState.PREPARING,
-            JobState.RUNNING,
-        ]:
-            raise ValueError(
-                "Cannot create an archived job in the waiting, preparing, or running states",
-            )
-
         job = await self._layer.jobs.create(
             workflow or self._faker.workflow(),
             self._faker.pydict(nb_elements=6, value_types=[str, int, float]),
@@ -190,16 +176,6 @@ class JobsFakerDomain(DataFakerDomain):
 
         if state:
             target_state = state
-        elif archived:
-            target_state = self._faker.random_element(
-                [
-                    JobState.CANCELLED,
-                    JobState.COMPLETE,
-                    JobState.ERROR,
-                    JobState.TERMINATED,
-                    JobState.TIMEOUT,
-                ],
-            )
         else:
             target_state = self._faker.random_element(
                 [
@@ -218,7 +194,7 @@ class JobsFakerDomain(DataFakerDomain):
         progress = 0
 
         while progress <= 50:
-            if previous_status.state == target_state:
+            if previous_status.state is target_state:
                 break
 
             if progress == 50:
@@ -244,9 +220,6 @@ class JobsFakerDomain(DataFakerDomain):
                 error=None,
                 progress=100 if next_state == JobState.COMPLETE else progress,
             )
-
-        if archived:
-            return await self._layer.jobs.archive(job.id)
 
         return await self._layer.jobs.get(job.id)
 

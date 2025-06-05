@@ -82,7 +82,6 @@
 # name: test_groups_and_users[job]
   dict({
     'acquired': False,
-    'archived': False,
     'args': dict({
       'foreign': -9158348948.40671,
       'movie': 748,
@@ -163,7 +162,6 @@
 # name: test_jobs[job]
   dict({
     'acquired': False,
-    'archived': False,
     'args': dict({
       'fact': 'LdJCGRddpwdyFKunVyUD',
       'nearly': 951.93581531826,
@@ -280,7 +278,6 @@
     }),
     'id': '7cf872dc',
     'job': dict({
-      'archived': False,
       'created_at': 'approximately_now_datetime',
       'id': 'fb085f7f',
       'progress': 0,

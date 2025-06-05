@@ -4,7 +4,7 @@ import asyncio
 from collections.abc import Mapping
 from copy import deepcopy
 from pathlib import Path
-from pprint import pprint
+from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo.results import DeleteResult
@@ -52,7 +52,10 @@ class OTUData:
         self._mongo = mongo
         self._pg = pg
 
-    async def find(self, query: Mapping, term: str | None, verified: bool | None):
+    async def find(
+        self, query: Mapping, term: str | None, verified: bool | None
+    ) -> dict[str, Any] | list[dict | None]:
+        """Find OTUs matching the given query."""
         return await virtool.otus.db.find(self._mongo, term, query, verified)
 
     async def get(self, otu_id: str) -> OTU:
@@ -66,23 +69,22 @@ class OTUData:
         if document is None:
             raise ResourceNotFoundError
 
-        document = await apply_transforms(
-            document,
-            [AttachReferenceTransform(self._mongo)],
+        document, most_recent_change = await asyncio.gather(
+            apply_transforms(
+                document,
+                [AttachReferenceTransform(self._mongo)],
+            ),
+            virtool.history.db.get_most_recent_change(
+                self._mongo,
+                otu_id,
+            ),
         )
-
-        most_recent_change = await virtool.history.db.get_most_recent_change(
-            self._mongo,
-            otu_id,
-        )
-
-        pprint(most_recent_change)
 
         return OTU(
             **{
                 **document,
                 "most_recent_change": await apply_transforms(
-                    document["most_recent_change"],
+                    most_recent_change,
                     [AttachUserTransform(self._mongo)],
                 ),
             },

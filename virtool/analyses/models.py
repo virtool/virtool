@@ -1,46 +1,58 @@
-from sqlalchemy import BigInteger, Column, DateTime, Enum, Integer, String
-from sqlalchemy.dialects.postgresql import JSONB
+from datetime import datetime
+from typing import Any
 
-from virtool.pg.base import Base
-from virtool.pg.utils import SQLEnum
+from pydantic import root_validator
+from virtool_core.models.basemodel import BaseModel
+from virtool_core.models.ml import MLModelRelease
+from virtool_core.models.reference import ReferenceNested
 
-
-class AnalysisFormat(str, SQLEnum):
-    """Enumerated type for analysis file formats"""
-
-    sam = "sam"
-    bam = "bam"
-    fasta = "fasta"
-    fastq = "fastq"
-    csv = "csv"
-    tsv = "tsv"
-    json = "json"
+from virtool.indexes.models import IndexNested
+from virtool.jobs.models import JobMinimal
+from virtool.models import SearchResult, UserNested
+from virtool.subtractions.models import SubtractionNested
 
 
-class SQLAnalysisResult(Base):
-    """SQL model to store analysis results.
-
-    This is a temporary table and should be removed after analyses have been completely
-    moved to Postgres.
-    """
-
-    __tablename__ = "analysis_results"
-
-    id = Column(Integer, primary_key=True)
-    analysis_id = Column(String, unique=True)
-    results = Column(JSONB)
+class AnalysisSample(BaseModel):
+    id: str
 
 
-class SQLAnalysisFile(Base):
-    """SQL model to store new analysis files"""
+class AnalysisMinimal(BaseModel):
+    created_at: datetime
+    id: str
+    index: IndexNested
+    job: JobMinimal | None
+    ml: MLModelRelease | None
+    ready: bool
+    reference: ReferenceNested
+    sample: AnalysisSample
+    subtractions: list[SubtractionNested]
+    updated_at: datetime
+    user: UserNested
+    workflow: str
 
-    __tablename__ = "analysis_files"
+    @root_validator(pre=True)
+    def fill_update_at(cls, values: dict):
+        if "updated_at" not in values:
+            values["updated_at"] = values["created_at"]
 
-    id = Column(Integer, primary_key=True)
-    analysis = Column(String)
-    description = Column(String)
-    format = Column(Enum(AnalysisFormat))
-    name = Column(String)
-    name_on_disk = Column(String, unique=True)
-    size = Column(BigInteger)
-    uploaded_at = Column(DateTime)
+        return values
+
+
+class AnalysisFile(BaseModel):
+    analysis: str
+    description: str | None = None
+    format: str
+    id: int
+    name: str
+    name_on_disk: str
+    size: int | None
+    uploaded_at: datetime | None
+
+
+class Analysis(AnalysisMinimal):
+    files: list[AnalysisFile]
+    results: dict[str, Any] | None
+
+
+class AnalysisSearchResult(SearchResult):
+    documents: list[AnalysisMinimal]

@@ -2,12 +2,11 @@
 
 import asyncio
 from collections import defaultdict
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.samples import WorkflowState
 from virtool_core.models.settings import Settings
 
 import virtool.errors
@@ -20,7 +19,8 @@ from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
-from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
+from virtool.samples.models import WorkflowState
+from virtool.samples.sql import SQLSampleArtifact, SQLSampleReads
 from virtool.samples.utils import PATHOSCOPE_TASK_NAMES
 from virtool.types import Document
 from virtool.uploads.models import SQLUpload
@@ -117,7 +117,7 @@ async def check_rights(db, sample_id: str | None, client, write: bool = True) ->
     return has_read and (write is False or has_write)
 
 
-def compose_sample_workflow_query(workflows: List[str]) -> Optional[Dict[str, Dict]]:
+def compose_sample_workflow_query(workflows: list[str]) -> dict[str, dict] | None:
     """Compose a MongoDB query for filtering samples by completed workflow.
 
     :param workflows:
@@ -146,7 +146,7 @@ def compose_sample_workflow_query(workflows: List[str]) -> Optional[Dict[str, Di
     return None
 
 
-def convert_workflow_condition(condition: str) -> Optional[dict]:
+def convert_workflow_condition(condition: str) -> dict | None:
     return {"none": False, "pending": "ip", "ready": True}.get(condition)
 
 
@@ -220,7 +220,7 @@ async def create_sample(
     return base_processor(document)
 
 
-async def get_sample_owner(mongo: "Mongo", sample_id: str) -> Optional[str]:
+async def get_sample_owner(mongo: "Mongo", sample_id: str) -> str | None:
     """A Shortcut function for getting the owner user id of a sample given its
     ``sample_id``.
 
@@ -237,7 +237,7 @@ async def get_sample_owner(mongo: "Mongo", sample_id: str) -> Optional[str]:
     return None
 
 
-def define_initial_workflows(library_type) -> Dict[str, str]:
+def define_initial_workflows(library_type) -> dict[str, str]:
     """Checks for incompatibility workflow states
 
     :param library_type: to check for compatability

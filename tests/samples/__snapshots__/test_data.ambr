@@ -172,7 +172,6 @@
     'is_legacy': False,
     'isolate': '',
     'job': dict({
-      'archived': False,
       'created_at': 'not_approximately_now_datetime',
       'id': 'fb085f7f',
       'progress': 10,

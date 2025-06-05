@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 import os
 from pathlib import Path
 
@@ -11,7 +10,7 @@ from virtool_core.models.enums import Permission
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
-from virtool.subtractions.models import SQLSubtractionFile
+from virtool.subtractions.pg import SQLSubtractionFile
 from virtool.uploads.models import UploadType
 
 
@@ -186,7 +185,6 @@ class TestUploadSubtractionFileAsJob:
         snapshot_recent: SnapshotAssertion,
     ):
         """Checks successful creation of a subtraction file."""
-
         user = await fake.users.create()
         upload = await fake.uploads.create(
             user=user,

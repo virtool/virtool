@@ -6,7 +6,6 @@ import sentry_sdk
 from sqlalchemy import delete, insert, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
-from virtool_core.models.analysis import Analysis, AnalysisFile, AnalysisSearchResult
 from virtool_core.utils import rm
 
 import virtool.analyses.format
@@ -19,7 +18,8 @@ from virtool.analyses.checks import (
 )
 from virtool.analyses.db import filter_analyses_by_sample_rights
 from virtool.analyses.files import create_analysis_file
-from virtool.analyses.models import SQLAnalysisFile, SQLAnalysisResult
+from virtool.analyses.models import AnalysisSearchResult, Analysis, AnalysisFile
+from virtool.analyses.sql import SQLAnalysisFile, SQLAnalysisResult
 from virtool.analyses.utils import (
     attach_analysis_files,
 )

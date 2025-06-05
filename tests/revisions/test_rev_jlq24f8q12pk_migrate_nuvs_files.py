@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from assets.revisions.rev_jlq24f8q12pk_migrate_nuvs_files import upgrade
-from virtool.analyses.models import SQLAnalysisFile
+from virtool.analyses.sql import SQLAnalysisFile
 
 
 async def test_upgrade(ctx, snapshot):

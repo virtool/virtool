@@ -17,7 +17,7 @@ from virtool_core.utils import compress_file, rm
 
 from virtool.migration import MigrationContext
 from virtool.subtractions.files import create_subtraction_files
-from virtool.subtractions.models import SQLSubtractionFile
+from virtool.subtractions.pg import SQLSubtractionFile
 from virtool.subtractions.utils import (
     FILES,
     rename_bowtie_files,

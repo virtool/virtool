@@ -14,7 +14,6 @@ from sqlalchemy import exc, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 from virtool_core.models.roles import AdministratorRole
-from virtool_core.models.samples import SampleSearchResult
 from virtool_core.utils import file_stats
 
 import virtool.uploads.db
@@ -55,7 +54,7 @@ from virtool.samples.files import (
     create_reads_file,
     get_existing_reads,
 )
-from virtool.samples.models import ArtifactType, SQLSampleArtifact, SQLSampleReads
+from virtool.samples.models import SampleSearchResult
 from virtool.samples.oas import (
     CreateAnalysisRequest,
     CreateAnalysisResponse,
@@ -68,6 +67,7 @@ from virtool.samples.oas import (
     UpdateSampleRequest,
     UpdateSampleResponse,
 )
+from virtool.samples.sql import ArtifactType, SQLSampleArtifact, SQLSampleReads
 from virtool.samples.utils import SampleRight, join_sample_path
 from virtool.uploads.utils import (
     is_gzip_compressed,

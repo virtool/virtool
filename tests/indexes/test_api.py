@@ -22,7 +22,7 @@ from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.indexes.db import INDEX_FILE_NAMES
 from virtool.indexes.files import create_index_file
-from virtool.indexes.models import SQLIndexFile
+from virtool.indexes.sql import SQLIndexFile
 from virtool.indexes.utils import check_index_file_type
 from virtool.jobs.client import DummyJobsClient
 from virtool.mongo.core import Mongo

@@ -1,23 +1,20 @@
-from typing import Optional
-
 from pydantic import BaseModel, Field, constr
-from virtool_core.models.subtraction import (
-    SubtractionMinimal,
-    Subtraction,
-    NucleotideComposition,
-)
 from virtool_core.models.validators import prevent_none
+
+from virtool.subtractions.models import (
+    NucleotideComposition,
+    Subtraction,
+    SubtractionMinimal,
+)
 
 
 class UpdateSubtractionRequest(BaseModel):
-    """
-    Used when modifying a Subtraction
-    """
+    """Used when modifying a Subtraction."""
 
-    name: Optional[constr(strip_whitespace=True, min_length=1)] = Field(
+    name: constr(strip_whitespace=True, min_length=1) | None = Field(
         description="A unique name for the host"
     )
-    nickname: Optional[constr(strip_whitespace=True)] = Field(
+    nickname: constr(strip_whitespace=True) | None = Field(
         description="A nickname for the host"
     )
 
@@ -28,9 +25,7 @@ class UpdateSubtractionRequest(BaseModel):
 
 
 class CreateSubtractionRequest(BaseModel):
-    """
-    Used for creating a new Subtraction.
-    """
+    """Used for creating a new Subtraction."""
 
     name: constr(strip_whitespace=True, min_length=1) = Field(
         description="A unique name for the host (eg. Arabidopsis)"

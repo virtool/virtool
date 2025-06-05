@@ -2,7 +2,8 @@
 
 import asyncio
 import asyncio.tasks
-from typing import Any, List, Mapping, Optional
+from collections.abc import Mapping
+from typing import Any
 
 import pymongo
 from motor.motor_asyncio import AsyncIOMotorClientSession
@@ -15,7 +16,7 @@ import virtool.utils
 from virtool.api.utils import paginate
 from virtool.config.cls import Config
 from virtool.data.transforms import AbstractTransform, apply_transforms
-from virtool.indexes.models import SQLIndexFile
+from virtool.indexes.sql import SQLIndexFile
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
 from virtool.references.transforms import AttachReferenceTransform
@@ -95,7 +96,7 @@ async def create(
     ref_id: str,
     user_id: str,
     job_id: str,
-    index_id: Optional[str] = None,
+    index_id: str | None = None,
 ) -> dict:
     """Create a new index and update history to show the version and id of the new
     index.
@@ -220,7 +221,7 @@ async def get_current_id_and_version(
     return document["_id"], document["version"]
 
 
-async def get_otus(mongo: "Mongo", index_id: str) -> List[dict]:
+async def get_otus(mongo: "Mongo", index_id: str) -> list[dict]:
     """Return a list of otus and number of changes for a specific index.
 
     :param mongo: the application database client
@@ -261,7 +262,7 @@ async def get_next_version(mongo: "Mongo", ref_id: str) -> int:
     return await mongo.indexes.count_documents({"reference.id": ref_id, "ready": True})
 
 
-async def get_unbuilt_stats(mongo: "Mongo", ref_id: Optional[str] = None) -> dict:
+async def get_unbuilt_stats(mongo: "Mongo", ref_id: str | None = None) -> dict:
     """Get the number of unbuilt changes and number of OTUs affected by those changes.
 
     Used to populate the metadata for an index find request.Can search against a

@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 from virtool.samples.files import create_reads_file
-from virtool.samples.models import SQLSampleReads
+from virtool.samples.sql import SQLSampleReads
 
 
 async def test_create_reads_file(

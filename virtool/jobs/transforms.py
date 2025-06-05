@@ -8,7 +8,7 @@ from virtool.utils import base_processor, get_safely
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
 
-ATTACHED_JOB_PROJECTION = ["archived", "status", "user", "workflow"]
+ATTACHED_JOB_PROJECTION = ["status", "user", "workflow"]
 
 
 class AttachJobTransform(AbstractTransform):

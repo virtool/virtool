@@ -6,7 +6,7 @@ from syrupy import SnapshotAssertion
 from syrupy.filters import props
 from virtool_core.models.enums import AnalysisWorkflow
 
-from virtool.analyses.models import SQLAnalysisFile
+from virtool.analyses.sql import SQLAnalysisFile
 from virtool.api.client import UserClient
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker

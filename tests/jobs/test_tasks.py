@@ -1,9 +1,9 @@
 import pytest
-from virtool_core.models.job import JobState
 
 from virtool.fake.next import DataFaker
 from virtool.jobs.client import DummyJobsClient
 from virtool.jobs.data import JobsData
+from virtool.jobs.models import JobState
 
 
 async def sleep_patch():
