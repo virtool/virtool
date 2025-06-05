@@ -1,6 +1,6 @@
 from virtool.data.errors import ResourceConflictError
 from virtool.indexes.db import INDEX_FILE_NAMES
-from virtool.indexes.models import IndexType
+from virtool.indexes.sql import IndexType
 
 
 async def check_fasta_file_uploaded(results: dict):

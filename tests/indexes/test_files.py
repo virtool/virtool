@@ -1,8 +1,8 @@
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.indexes.files
-from virtool.indexes.models import SQLIndexFile
+from virtool.indexes.sql import SQLIndexFile
 
 
 async def test_create_index_file(snapshot, pg: AsyncEngine):

@@ -1,4 +1,4 @@
-from virtool_core.models.analysis import Analysis, AnalysisSearchResult
+from virtool.analyses.models import Analysis, AnalysisSearchResult
 
 
 class FindAnalysesResponse(AnalysisSearchResult):

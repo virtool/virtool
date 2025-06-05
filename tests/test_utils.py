@@ -7,13 +7,13 @@ from pathlib import Path
 import arrow
 import pytest
 from virtool_core.models.basemodel import BaseModel
-from virtool_core.models.samples import Sample
 from virtool_core.utils import decompress_tgz
 
 import virtool.utils
 from virtool.api.errors import APIBadRequest
 from virtool.data.errors import ResourceConflictError
-from virtool.utils import wait_for_checks, get_model_by_name
+from virtool.samples.models import Sample
+from virtool.utils import get_model_by_name, wait_for_checks
 
 
 @pytest.fixture(scope="session")
@@ -51,8 +51,7 @@ def test_decompress_tgz(tmp_path):
 
 
 def test_generate_key(mocker):
-    """
-    Test that API keys are generated using UUID4 and that :func:`generate_api_key()` returns the
+    """Test that API keys are generated using UUID4 and that :func:`generate_api_key()` returns the
     raw and hashed version of the key. Hashing is done through a call to :func:`hash_api_key`.
 
     """
@@ -75,7 +74,7 @@ def test_get_model_by_name():
 
 class TestRandomAlphanumeric:
     def test_default(self, alphanumeric):
-        for _ in range(0, 10):
+        for _ in range(10):
             result = virtool.utils.random_alphanumeric()
             assert len(result) == 6
             assert all(a in alphanumeric for a in result)
@@ -87,7 +86,7 @@ class TestRandomAlphanumeric:
             assert all(a in alphanumeric for a in result)
 
     def test_excluded(self, alphanumeric):
-        for _ in range(0, 5):
+        for _ in range(5):
             result = virtool.utils.random_alphanumeric(excluded=["87e9wa"])
             assert result != "87e9wa"
             assert len(result) == 6
@@ -95,8 +94,7 @@ class TestRandomAlphanumeric:
 
 
 def test_timestamp(mocker):
-    """
-    Test that the timestamp util returns a datetime object with the last 3 digits of the
+    """Test that the timestamp util returns a datetime object with the last 3 digits of the
     microsecond frame set to zero.
 
     """
@@ -115,10 +113,7 @@ def test_timestamp(mocker):
     "value,result", [("true", True), ("1", True), ("false", False), ("0", False)]
 )
 def test_to_bool(value, result):
-    """
-    Test that function converts expected input values correctly.
-
-    """
+    """Test that function converts expected input values correctly."""
     assert virtool.utils.to_bool(value) == result
 
 

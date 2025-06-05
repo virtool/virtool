@@ -18,6 +18,7 @@ from aiohttp.web import Application
 from pydantic import BaseModel
 
 from virtool.api.custom_json import dump_bytes
+from virtool.models import VirtoolBaseModel
 
 SUB_DIRS = [
     "files",
@@ -120,6 +121,10 @@ def get_all_subclasses(cls):
 
 
 def get_model_by_name(name: str) -> type[BaseModel]:
+    for cls in get_all_subclasses(VirtoolBaseModel):
+        if cls.__name__ == name:
+            return cls
+
     for cls in get_all_subclasses(BaseModel):
         if cls.__name__ == name:
             return cls

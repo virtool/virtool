@@ -1,28 +1,27 @@
 from asyncio import to_thread
-from typing import Union
 
 from aiohttp.web import FileResponse, Request
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r404
 from pydantic import Field
-from virtool_core.models.index import IndexSearchResult
 
-from virtool.api.errors import (
-    APINotFound,
-    APIInsufficientRights,
-    APIConflict,
-    APINoContent,
-)
 from virtool.api.custom_json import json_response
+from virtool.api.errors import (
+    APIConflict,
+    APIInsufficientRights,
+    APINoContent,
+    APINotFound,
+)
+from virtool.api.routes import Routes
 from virtool.config import get_config_from_req
-from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.history.oas import ListHistoryResponse
-from virtool.api.routes import Routes
 from virtool.indexes.db import INDEX_FILE_NAMES
+from virtool.indexes.models import IndexSearchResult
 from virtool.indexes.oas import (
-    ListIndexesResponse,
     GetIndexResponse,
+    ListIndexesResponse,
     ReadyIndexesResponse,
 )
 from virtool.indexes.utils import check_index_file_type, join_index_path
@@ -40,8 +39,7 @@ class IndexesView(PydanticView):
             description="Return only indexes that are ready for use in analysis.",
         ),
     ) -> r200[ListIndexesResponse] | r200[list[ReadyIndexesResponse]]:
-        """
-        Find indexes.
+        """Find indexes.
 
         Lists all existing indexes.
 
@@ -61,9 +59,8 @@ class IndexesView(PydanticView):
 @routes.view("/indexes/{index_id}")
 @routes.jobs_api.get("/indexes/{index_id}")
 class IndexView(PydanticView):
-    async def get(self, index_id: str, /) -> Union[r200[GetIndexResponse], r404]:
-        """
-        Get an index.
+    async def get(self, index_id: str, /) -> r200[GetIndexResponse] | r404:
+        """Get an index.
 
         Fetches the details for an index.
 
@@ -82,8 +79,7 @@ class IndexView(PydanticView):
 
 @routes.jobs_api.get("/indexes/{index_id}/files/otus.json.gz")
 async def download_otus_json(req):
-    """
-    Download OTUs json.
+    """Download OTUs json.
 
     Downloads a complete compressed JSON representation of the index OTUs.
 
@@ -106,9 +102,8 @@ async def download_otus_json(req):
 
 @routes.view("/indexes/{index_id}/files/{filename}")
 class IndexFileView(PydanticView):
-    async def get(self, index_id: str, filename: str, /) -> Union[r200, r404]:
-        """
-        Download index files.
+    async def get(self, index_id: str, filename: str, /) -> r200 | r404:
+        """Download index files.
 
         Downloads files relating to a given index.
 
@@ -150,8 +145,7 @@ class IndexFileView(PydanticView):
 
 @routes.jobs_api.get("/indexes/{index_id}/files/{filename}")
 async def download_index_file_for_jobs(req: Request):
-    """
-    Download index files for jobs.
+    """Download index files for jobs.
 
     Downloads files relating to a given index for jobs.
 
@@ -180,8 +174,7 @@ async def download_index_file_for_jobs(req: Request):
 
 @routes.jobs_api.put("/indexes/{index_id}/files/{filename}")
 async def upload(req):
-    """
-    Upload an index file.
+    """Upload an index file.
 
     Uploads a new index file.
     """
@@ -214,8 +207,7 @@ async def upload(req):
 
 @routes.jobs_api.patch("/indexes/{index_id}")
 async def finalize(req):
-    """
-    Finalize an index.
+    """Finalize an index.
 
     Sets the `ready` flag and updates associated OTUs' `last_indexed_version` fields.
 
@@ -234,9 +226,8 @@ async def finalize(req):
 
 @routes.view("/indexes/{index_id}/history")
 class IndexHistoryView(PydanticView):
-    async def get(self, index_id: str, /) -> Union[r200[ListHistoryResponse], r404]:
-        """
-        List history.
+    async def get(self, index_id: str, /) -> r200[ListHistoryResponse] | r404:
+        """List history.
 
         Lists history changes for a specific index.
 
@@ -257,8 +248,7 @@ class IndexHistoryView(PydanticView):
 
 @routes.jobs_api.delete("/indexes/{index_id}")
 async def delete_index(req: Request):
-    """
-    Delete an index.
+    """Delete an index.
 
     Deletes the index with the given id and reset history relating to that index.
     """

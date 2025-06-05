@@ -1,8 +1,5 @@
-from typing import List, Optional, Union
-
 from pydantic import BaseModel, Field, constr, root_validator, validator
 from virtool_core.models.history import HistorySearchResult
-from virtool_core.models.index import IndexMinimal
 from virtool_core.models.reference import (
     Reference,
     ReferenceGroup,
@@ -12,6 +9,8 @@ from virtool_core.models.reference import (
     ReferenceUser,
 )
 from virtool_core.models.validators import prevent_none
+
+from virtool.indexes.models import IndexMinimal
 
 ALLOWED_REMOTE = ["virtool/ref-plant-viruses"]
 ALLOWED_DATA_TYPE = ["barcode", "genome"]
@@ -36,17 +35,17 @@ class CreateReferenceRequest(BaseModel):
     )
     data_type: str = Field(default="genome", description="the sequence data type")
     organism: str = Field(default="", description="the organism")
-    release_id: Optional[str] = Field(
+    release_id: str | None = Field(
         default=11447367,
         description="the id of the GitHub release to install",
     )
-    clone_from: Optional[str] = Field(
+    clone_from: str | None = Field(
         description="a valid ref_id that the new reference should be cloned from",
     )
-    import_from: Optional[str] = Field(
+    import_from: str | None = Field(
         description="a valid file_id that the new reference should be imported from",
     )
-    remote_from: Optional[str] = Field(
+    remote_from: str | None = Field(
         description="a valid GitHub slug to download and update the new reference from",
     )
 
@@ -58,7 +57,7 @@ class CreateReferenceRequest(BaseModel):
     )
 
     @root_validator
-    def check_values(cls, values: Union[str, constr]):
+    def check_values(cls, values: str):
         """Checks that only one of clone_from, import_from or
         remote_from are inputted, if any.
         """
@@ -313,7 +312,7 @@ class ReferenceTargetRequest(BaseModel):
     name: constr(min_length=1)
     description: constr(strip_whitespace=True) = Field(default="")
     required: bool = Field(default=False)
-    length: Optional[int]
+    length: int | None
 
     _prevent_none = prevent_none("length")
 
@@ -328,16 +327,16 @@ class UpdateReferenceRequest(BaseModel):
     internal_control: str | None = Field(
         description="set the OTU identified by the passed id as the internal control for the reference",
     )
-    organism: Optional[constr(strip_whitespace=True)] = Field(
+    organism: constr(strip_whitespace=True) | None = Field(
         description="the organism",
     )
-    restrict_source_types: Optional[bool] = Field(
+    restrict_source_types: bool | None = Field(
         description="option to restrict source types",
     )
-    source_types: Optional[List[constr(strip_whitespace=True, min_length=1)]] = Field(
+    source_types: list[constr(strip_whitespace=True, min_length=1)] | None = Field(
         description="source types",
     )
-    targets: Optional[List[ReferenceTargetRequest]] = Field(
+    targets: list[ReferenceTargetRequest] | None = Field(
         description="list of target sequences",
     )
 

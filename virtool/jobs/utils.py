@@ -1,6 +1,5 @@
-from virtool_core.models.job import JobState
-
 import virtool.utils
+from virtool.jobs.models import JobState
 from virtool.types import Document
 
 WORKFLOW_NAMES = (

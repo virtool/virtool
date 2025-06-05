@@ -106,7 +106,6 @@
     }),
     'id': '7cf872dc',
     'job': dict({
-      'archived': False,
       'created_at': 'approximately_now_datetime',
       'id': 'fb085f7f',
       'progress': 0,

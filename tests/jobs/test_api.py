@@ -4,10 +4,10 @@ import arrow
 import pytest
 from syrupy.matchers import path_type
 from virtool_core.models.enums import Permission
-from virtool_core.models.job import JobState
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from virtool.fake.next import DataFaker
+from virtool.jobs.models import JobState
 from virtool.mongo.core import Mongo
 
 _job_response_matcher = path_type(

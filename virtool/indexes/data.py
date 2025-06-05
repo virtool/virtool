@@ -1,14 +1,12 @@
 import asyncio
 from asyncio import to_thread
 from pathlib import Path
-from typing import List, Union
 
 from multidict import MultiDictProxy
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 from virtool_core.models.history import HistorySearchResult
-from virtool_core.models.index import Index, IndexFile, IndexMinimal, IndexSearchResult
 from virtool_core.models.reference import ReferenceNested
 
 import virtool.history.db
@@ -29,7 +27,8 @@ from virtool.indexes.db import (
     lookup_index_otu_counts,
     update_last_indexed_versions,
 )
-from virtool.indexes.models import SQLIndexFile
+from virtool.indexes.models import IndexSearchResult, IndexMinimal, Index, IndexFile
+from virtool.indexes.sql import SQLIndexFile
 from virtool.indexes.utils import join_index_path
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
@@ -56,7 +55,7 @@ class IndexData:
         self,
         ready: bool,
         query: MultiDictProxy,
-    ) -> Union[List[IndexMinimal], IndexSearchResult]:
+    ) -> list[IndexMinimal] | IndexSearchResult:
         """List all indexes.
 
         :param ready: the request object

@@ -10,7 +10,6 @@ from pymongo.results import UpdateResult
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.models.roles import AdministratorRole
-from virtool_core.models.samples import Sample, SampleSearchResult
 
 import virtool.utils
 from virtool.api.client import UserClient
@@ -38,8 +37,9 @@ from virtool.samples.db import (
     define_initial_workflows,
     recalculate_workflow_tags,
 )
-from virtool.samples.models import SQLSampleReads
+from virtool.samples.models import SampleSearchResult, Sample
 from virtool.samples.oas import CreateSampleRequest, UpdateSampleRequest
+from virtool.samples.sql import SQLSampleReads
 from virtool.samples.utils import SampleRight, join_sample_path
 from virtool.subtractions.db import (
     AttachSubtractionsTransform,

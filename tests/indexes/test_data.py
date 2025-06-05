@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
-from virtool.indexes.models import SQLIndexFile
+from virtool.indexes.sql import SQLIndexFile
 from virtool.mongo.core import Mongo
 
 

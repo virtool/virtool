@@ -4,7 +4,7 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.future import select
 
-from virtool.analyses.models import SQLAnalysisFile
+from virtool.analyses.sql import SQLAnalysisFile
 
 WORKFLOW_NAMES = ("aodp", "nuvs", "pathoscope_bowtie")
 

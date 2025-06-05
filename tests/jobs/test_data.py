@@ -5,11 +5,11 @@ import arrow
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy.matchers import path_type
-from virtool_core.models.job import JobState
 
 from virtool.fake.next import DataFaker
 from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
+from virtool.jobs.models import JobState
 
 
 @pytest.fixture()

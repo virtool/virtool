@@ -1,15 +1,12 @@
-from typing import Dict
-
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.indexes.models import SQLIndexFile
+from virtool.indexes.sql import SQLIndexFile
 
 
 async def create_index_file(
     pg: AsyncEngine, index_id: str, file_type: str, name: str, size: int
-) -> Dict[str, any]:
-    """
-    Create a row in the `index_files` SQL table that represents an index file.
+) -> dict[str, any]:
+    """Create a row in the `index_files` SQL table that represents an index file.
 
     :param pg: PostgreSQL AsyncEngine object
     :param index_id: ID that corresponds to a parent index

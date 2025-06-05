@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from virtool_core.utils import compress_file, file_stats
 
 from virtool.migration import MigrationContext
-from virtool.samples.models import SQLSampleReads
+from virtool.samples.sql import SQLSampleReads
 from virtool.uploads.models import SQLUpload
 
 # Revision identifiers.

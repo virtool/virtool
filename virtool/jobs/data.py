@@ -341,8 +341,8 @@ class JobsData:
             raise ResourceNotFoundError
 
         if JobState(status[-1]["state"]) in (
-            JobState.COMPLETE,
             JobState.CANCELLED,
+            JobState.COMPLETE,
             JobState.ERROR,
             JobState.TERMINATED,
             JobState.TIMEOUT,

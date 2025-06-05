@@ -4,7 +4,6 @@ import asyncio
 from collections.abc import Mapping
 from copy import deepcopy
 from pathlib import Path
-from pprint import pprint
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo.results import DeleteResult
@@ -75,8 +74,6 @@ class OTUData:
             self._mongo,
             otu_id,
         )
-
-        pprint(most_recent_change)
 
         return OTU(
             **{

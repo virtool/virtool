@@ -2,7 +2,6 @@
 # name: test_acquire
   dict({
     'acquired': True,
-    'archived': False,
     'args': dict({
     }),
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -58,67 +57,9 @@
     'workflow': 'build_index',
   })
 # ---
-# name: test_archive
-  dict({
-    'acquired': False,
-    'archived': True,
-    'args': dict({
-    }),
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'id': 'foo',
-    'ping': None,
-    'progress': 0,
-    'stage': None,
-    'state': <JobState.WAITING: 'waiting'>,
-    'status': list([
-      dict({
-        'error': None,
-        'progress': 0,
-        'stage': None,
-        'state': <JobState.WAITING: 'waiting'>,
-        'step_description': None,
-        'step_name': None,
-        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
-      }),
-    ]),
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 'bf1b993c',
-    }),
-    'workflow': 'build_index',
-  })
-# ---
-# name: test_archive.1
-  dict({
-    '_id': 'foo',
-    'acquired': False,
-    'archived': True,
-    'args': dict({
-    }),
-    'key': None,
-    'rights': dict({
-    }),
-    'status': list([
-      dict({
-        'error': None,
-        'progress': 0,
-        'stage': None,
-        'state': 'waiting',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
-      }),
-    ]),
-    'user': dict({
-      'id': 'bf1b993c',
-    }),
-    'workflow': 'build_index',
-  })
-# ---
 # name: test_cancel
   dict({
     'acquired': False,
-    'archived': False,
     'args': dict({
     }),
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -172,7 +113,6 @@
 # name: test_create[None]
   dict({
     'acquired': False,
-    'archived': False,
     'args': dict({
       'sample_id': 'foo',
     }),
@@ -204,7 +144,6 @@
   dict({
     '_id': 'fb085f7f',
     'acquired': False,
-    'archived': False,
     'args': dict({
       'sample_id': 'foo',
     }),
@@ -236,7 +175,6 @@
 # name: test_create[bar]
   dict({
     'acquired': False,
-    'archived': False,
     'args': dict({
       'sample_id': 'foo',
     }),
@@ -268,7 +206,6 @@
   dict({
     '_id': 'bar',
     'acquired': False,
-    'archived': False,
     'args': dict({
       'sample_id': 'foo',
     }),

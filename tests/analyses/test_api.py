@@ -7,15 +7,15 @@ import pytest
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
-from virtool_core.models.job import JobState
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from tests.fixtures.core import StaticTime
 from tests.fixtures.response import RespIs
 from virtool.analyses.files import create_analysis_file
-from virtool.analyses.models import SQLAnalysisFile, SQLAnalysisResult
+from virtool.analyses.sql import SQLAnalysisFile, SQLAnalysisResult
 from virtool.config import get_config_from_app
 from virtool.fake.next import DataFaker
+from virtool.jobs.models import JobState
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 

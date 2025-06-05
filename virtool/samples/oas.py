@@ -1,10 +1,11 @@
 from typing import Any
 
 from pydantic import BaseModel, Field, conlist, constr
-from virtool_core.models.analysis import AnalysisMinimal
 from virtool_core.models.enums import AnalysisWorkflow, LibraryType
-from virtool_core.models.samples import Sample, SampleMinimal
 from virtool_core.models.validators import prevent_none
+
+from virtool.analyses.models import AnalysisMinimal
+from virtool.samples.models import SampleMinimal, Sample
 
 
 class GetSamplesResponse(SampleMinimal):

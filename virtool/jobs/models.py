@@ -2,18 +2,16 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from virtool_core.models.basemodel import BaseModel
-
-from virtool.models import SearchResult, UserNested
+from virtool.models import SearchResult, UserNested, VirtoolBaseModel
 
 
-class JobError(BaseModel):
+class JobError(VirtoolBaseModel):
     details: list[str]
     traceback: list[str]
     type: str
 
 
-class JobPing(BaseModel):
+class JobPing(VirtoolBaseModel):
     """A model for the ping status a job."""
 
     pinged_at: datetime
@@ -31,7 +29,7 @@ class JobState(Enum):
     WAITING = "waiting"
 
 
-class JobStatus(BaseModel):
+class JobStatus(VirtoolBaseModel):
     """A model for a job status record."""
 
     error: JobError | None = None
@@ -43,7 +41,7 @@ class JobStatus(BaseModel):
     timestamp: datetime
 
 
-class JobNested(BaseModel):
+class JobNested(VirtoolBaseModel):
     """A model for a job that is nested within another model."""
 
     id: str

@@ -192,6 +192,7 @@ async def listen_for_events(redis: Redis) -> AsyncGenerator[Event, None]:
     """Yield events as they are received."""
     async for received in redis.subscribe("channel:events"):
         payload = received.pop("payload")
+
         cls = get_model_by_name(payload["model"])
 
         yield Event(**received, data=cls(**payload["data"]))

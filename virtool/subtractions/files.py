@@ -1,19 +1,17 @@
 from asyncio import to_thread
 from pathlib import Path
-from typing import List, Union
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool_core.utils import file_stats
 
-from virtool.subtractions.models import SQLSubtractionFile
+from virtool.subtractions.pg import SQLSubtractionFile
 from virtool.subtractions.utils import check_subtraction_file_type
 
 
 async def create_subtraction_files(
-    pg: AsyncEngine, subtraction_id: str, files: List[str], path: Union[str, Path]
+    pg: AsyncEngine, subtraction_id: str, files: list[str], path: str | Path
 ):
-    """
-    Create multiple rows in the `subtraction_files` SQL table in a single transaction.
+    """Create multiple rows in the `subtraction_files` SQL table in a single transaction.
 
     :param pg: PostgreSQL AsyncEngine object
     :param subtraction_id: ID that corresponds to a parent subtraction

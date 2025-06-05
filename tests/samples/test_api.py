@@ -18,7 +18,7 @@ from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
 from virtool.samples.fake import create_fake_sample
-from virtool.samples.models import SQLSampleArtifact, SQLSampleReads
+from virtool.samples.sql import SQLSampleArtifact, SQLSampleReads
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.users.oas import UpdateUserRequest
 

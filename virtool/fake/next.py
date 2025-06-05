@@ -25,7 +25,6 @@ from virtool_core.models.label import Label
 from virtool_core.models.ml import MLModel
 from virtool_core.models.otu import OTU, OTUSegment
 from virtool_core.models.roles import AdministratorRole
-from virtool_core.models.subtraction import Subtraction
 from virtool_core.models.task import Task
 from virtool_core.models.upload import Upload
 from virtool_core.models.user import User
@@ -46,6 +45,7 @@ from virtool.references.tasks import (
     RefreshReferenceReleasesTask,
 )
 from virtool.releases import ReleaseManifestItem
+from virtool.subtractions.models import Subtraction
 from virtool.subtractions.oas import (
     CreateSubtractionRequest,
     FinalizeSubtractionRequest,
@@ -194,7 +194,7 @@ class JobsFakerDomain(DataFakerDomain):
         progress = 0
 
         while progress <= 50:
-            if previous_status.state == target_state:
+            if previous_status.state is target_state:
                 break
 
             if progress == 50:

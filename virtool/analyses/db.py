@@ -5,7 +5,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.analyses.models import SQLAnalysisFile
+from virtool.analyses.sql import SQLAnalysisFile
 from virtool.data.transforms import AbstractTransform
 from virtool.mongo.core import Mongo
 from virtool.samples.utils import get_sample_rights

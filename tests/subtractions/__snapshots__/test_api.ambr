@@ -30,7 +30,6 @@
     }),
     'id': '7cf872dc',
     'job': dict({
-      'archived': False,
       'created_at': 'approximately_now_isoformat',
       'id': 'fb085f7f',
       'progress': 0,
@@ -67,7 +66,6 @@
   dict({
     '_id': 'bf1b993c',
     'acquired': False,
-    'archived': False,
     'args': dict({
       'files': list([
         dict({
@@ -200,7 +198,6 @@
     }),
     'id': '7cf872dc',
     'job': dict({
-      'archived': False,
       'created_at': 'approximately_now_isoformat',
       'id': 'fb085f7f',
       'progress': 0,
@@ -338,7 +335,6 @@
     }),
     'id': '7cf872dc',
     'job': dict({
-      'archived': False,
       'created_at': 'approximately_now_isoformat',
       'id': 'fb085f7f',
       'progress': 0,
@@ -476,7 +472,6 @@
     }),
     'id': '7cf872dc',
     'job': dict({
-      'archived': False,
       'created_at': 'approximately_now_isoformat',
       'id': 'fb085f7f',
       'progress': 0,
@@ -614,7 +609,6 @@
     }),
     'id': '7cf872dc',
     'job': dict({
-      'archived': False,
       'created_at': 'approximately_now_isoformat',
       'id': 'fb085f7f',
       'progress': 0,
@@ -689,7 +683,6 @@
         }),
         'id': '3cbb22cc',
         'job': dict({
-          'archived': False,
           'created_at': 'approximately_now_isoformat',
           'id': '7cf872dc',
           'progress': 0,
@@ -718,7 +711,6 @@
         }),
         'id': '09d01419',
         'job': dict({
-          'archived': False,
           'created_at': 'approximately_now_isoformat',
           'id': 'da42dca3',
           'progress': 0,
@@ -759,7 +751,6 @@
         }),
         'id': '3cbb22cc',
         'job': dict({
-          'archived': False,
           'created_at': 'approximately_now_isoformat',
           'id': '7cf872dc',
           'progress': 0,
@@ -788,7 +779,6 @@
         }),
         'id': '153ff459',
         'job': dict({
-          'archived': False,
           'created_at': 'approximately_now_isoformat',
           'id': 'f60bae36',
           'progress': 0,
@@ -829,7 +819,6 @@
         }),
         'id': '3cbb22cc',
         'job': dict({
-          'archived': False,
           'created_at': 'approximately_now_isoformat',
           'id': '7cf872dc',
           'progress': 0,
@@ -858,7 +847,6 @@
         }),
         'id': '09d01419',
         'job': dict({
-          'archived': False,
           'created_at': 'approximately_now_isoformat',
           'id': 'da42dca3',
           'progress': 0,
@@ -887,7 +875,6 @@
         }),
         'id': '153ff459',
         'job': dict({
-          'archived': False,
           'created_at': 'approximately_now_isoformat',
           'id': 'f60bae36',
           'progress': 0,
@@ -916,7 +903,6 @@
         }),
         'id': '031ff6cb',
         'job': dict({
-          'archived': False,
           'created_at': 'approximately_now_isoformat',
           'id': '7aa59bf4',
           'progress': 0,
@@ -945,7 +931,6 @@
         }),
         'id': '83e4c4f6',
         'job': dict({
-          'archived': False,
           'created_at': 'approximately_now_isoformat',
           'id': '606cd773',
           'progress': 0,
@@ -1061,7 +1046,6 @@
     }),
     'id': '3cbb22cc',
     'job': dict({
-      'archived': False,
       'created_at': 'approximately_now_isoformat',
       'id': '7cf872dc',
       'progress': 0,
@@ -1159,7 +1143,6 @@
     }),
     'id': '7cf872dc',
     'job': dict({
-      'archived': False,
       'created_at': 'approximately_now_isoformat',
       'id': 'fb085f7f',
       'progress': 0,

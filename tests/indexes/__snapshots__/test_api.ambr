@@ -34,7 +34,6 @@
   dict({
     '_id': '7cf872dc',
     'acquired': False,
-    'archived': False,
     'args': dict({
       'index_id': '3cbb22cc',
       'index_version': 0,
@@ -86,7 +85,6 @@
     'has_files': True,
     'id': '3cbb22cc',
     'job': dict({
-      'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
       'id': '7cf872dc',
       'progress': 0,
@@ -131,7 +129,6 @@
         'has_files': True,
         'id': 'bar',
         'job': dict({
-          'archived': False,
           'created_at': '2015-10-06T20:00:00Z',
           'id': '7cf872dc',
           'progress': 10,
@@ -162,7 +159,6 @@
         'has_files': True,
         'id': 'foo',
         'job': dict({
-          'archived': False,
           'created_at': '2015-10-06T20:00:00Z',
           'id': '3cbb22cc',
           'progress': 40,
@@ -205,7 +201,6 @@
       'has_files': True,
       'id': 'daz',
       'job': dict({
-        'archived': False,
         'created_at': '2015-10-06T20:00:00Z',
         'id': '7cf872dc',
         'progress': 10,
@@ -236,7 +231,6 @@
       'has_files': True,
       'id': 'bot',
       'job': dict({
-        'archived': False,
         'created_at': '2015-10-06T20:00:00Z',
         'id': '7cf872dc',
         'progress': 10,
@@ -356,7 +350,6 @@
     'has_files': True,
     'id': 'test_index',
     'job': dict({
-      'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
       'id': 'fb085f7f',
       'progress': 10,
@@ -540,7 +533,6 @@
     'has_files': True,
     'id': 'foobar',
     'job': dict({
-      'archived': False,
       'created_at': '2015-10-06T20:00:00Z',
       'id': '7cf872dc',
       'progress': 10,

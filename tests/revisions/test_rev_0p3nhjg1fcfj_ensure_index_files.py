@@ -15,7 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from assets.revisions.rev_0p3nhjg1fcfj_ensure_index_files import upgrade
-from virtool.indexes.models import IndexType, SQLIndexFile
+from virtool.indexes.sql import IndexType, SQLIndexFile
 from virtool.migration import MigrationContext
 
 # Revision identifiers.

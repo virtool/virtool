@@ -1,4 +1,4 @@
-from virtool_core.models.job import Job, JobMinimal
+from virtool.jobs.models import JobMinimal, Job
 
 
 class GetJobResponse(JobMinimal):

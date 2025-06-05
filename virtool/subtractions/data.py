@@ -2,18 +2,14 @@ import asyncio
 import math
 import shutil
 from asyncio import CancelledError
-from typing import TYPE_CHECKING, AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import TYPE_CHECKING
 
 from multidict import MultiDictProxy
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
-from virtool_core.models.subtraction import (
-    Subtraction,
-    SubtractionFile,
-    SubtractionSearchResult,
-)
 from virtool_core.utils import rm
 
 import virtool.mongo.utils
@@ -32,12 +28,17 @@ from virtool.subtractions.db import (
     attach_computed,
     unlink_default_subtractions,
 )
-from virtool.subtractions.models import SQLSubtractionFile
+from virtool.subtractions.models import (
+    Subtraction,
+    SubtractionFile,
+    SubtractionSearchResult,
+)
 from virtool.subtractions.oas import (
     CreateSubtractionRequest,
     FinalizeSubtractionRequest,
     UpdateSubtractionRequest,
 )
+from virtool.subtractions.pg import SQLSubtractionFile
 from virtool.subtractions.utils import (
     FILES,
     check_subtraction_file_type,
