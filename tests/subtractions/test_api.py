@@ -8,10 +8,10 @@ from syrupy.assertion import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from virtool.fake.next import DataFaker
+from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
 from virtool.subtractions.pg import SQLSubtractionFile
 from virtool.uploads.sql import UploadType
-from virtool_core.models.enums import Permission
 
 
 async def test_find_empty_subtractions(

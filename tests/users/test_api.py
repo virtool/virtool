@@ -2,8 +2,6 @@ import pytest
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
-from virtool_core.models.enums import Permission
-from virtool_core.models.roles import SpaceReferenceRole, SpaceSampleRole
 
 from tests.fixtures.client import ClientSpawner
 from tests.fixtures.core import StaticTime
@@ -15,6 +13,8 @@ from virtool.data.topg import both_transactions
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.groups.oas import PermissionsUpdate, UpdateGroupRequest
+from virtool.models.enums import Permission
+from virtool.models.roles import SpaceReferenceRole, SpaceSampleRole
 from virtool.mongo.core import Mongo
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.users.pg import SQLUser

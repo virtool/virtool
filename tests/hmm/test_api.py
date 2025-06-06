@@ -2,14 +2,13 @@ import json
 import shutil
 from pathlib import Path
 
-import aiofiles
 import pytest
-from virtool_core.utils import decompress_file
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app
+from virtool.utils import decompress_file
 
 
 @pytest.fixture()
@@ -139,13 +138,13 @@ async def test_get_hmm_annotations(data_path: Path, spawn_job_client: JobClientS
     async with client.get("/hmms/files/annotations.json.gz") as response:
         assert response.status == 200
 
-        async with aiofiles.open(compressed_hmm_annotations, "wb") as f:
-            await f.write(await response.read())
+        with compressed_hmm_annotations.open("wb") as f:
+            f.write(await response.read())
 
         decompress_file(compressed_hmm_annotations, decompressed_hmm_annotations)
 
-        async with aiofiles.open(decompressed_hmm_annotations, "r") as f:
-            hmms = json.loads(await f.read())
+        with decompressed_hmm_annotations.open("r") as f:
+            hmms = json.loads(f.read())
 
         assert hmms == [{"id": "foo"}, {"id": "bar"}]
 

@@ -8,11 +8,6 @@ import pytest
 from aiohttp import BasicAuth, ClientResponse
 from aiohttp.web import RouteTableDef
 from sqlalchemy.ext.asyncio import AsyncEngine
-from virtool_core.models.enums import Permission
-from virtool_core.models.group import GroupMinimal
-from virtool_core.models.roles import AdministratorRole
-from virtool_core.models.user import User
-from virtool_core.redis import Redis
 
 import virtool.jobs.main
 from virtool.api.custom_json import dump_string
@@ -24,10 +19,15 @@ from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.flags import FeatureFlags, FlagName
+from virtool.groups.models import GroupMinimal
 from virtool.groups.oas import PermissionsUpdate
+from virtool.models.enums import Permission
+from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.mongo.identifier import FakeIdProvider
 from virtool.mongo.utils import get_mongo_from_app
+from virtool.redis import Redis
+from virtool.users.models import User
 from virtool.users.oas import UpdateUserRequest
 from virtool.utils import hash_key
 

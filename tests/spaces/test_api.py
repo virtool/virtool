@@ -1,24 +1,26 @@
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.roles import (
+from syrupy import SnapshotAssertion
+
+from tests.fixtures.client import ClientSpawner
+from tests.fixtures.core import StaticTime
+from virtool.authorization.client import get_authorization_client_from_app
+from virtool.authorization.relationships import SpaceMembership, UserRoleAssignment
+from virtool.fake.next import DataFaker
+from virtool.flags import FlagName
+from virtool.models.roles import (
     SpaceLabelRole,
     SpaceProjectRole,
     SpaceRole,
     SpaceSampleRole,
 )
-
-from tests.fixtures.client import ClientSpawner
-from virtool.authorization.client import get_authorization_client_from_app
-from virtool.authorization.relationships import SpaceMembership, UserRoleAssignment
-from virtool.fake.next import DataFaker
-from virtool.flags import FlagName
 from virtool.spaces.sql import SQLSpace
 
 
 async def test_list(
     pg: AsyncEngine,
+    snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
-    snapshot,
-    static_time,
+    static_time: StaticTime,
 ):
     client = await spawn_client(
         administrator=True,

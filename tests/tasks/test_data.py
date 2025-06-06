@@ -6,11 +6,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 from virtool.jobs.tasks import TimeoutJobsTask
+from virtool.redis import Redis
 from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
 from virtool.tasks.oas import TaskUpdate
 from virtool.tasks.sql import SQLTask
-from virtool_core.redis import Redis
 
 
 async def test_find(

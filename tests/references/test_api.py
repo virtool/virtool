@@ -14,13 +14,13 @@ from tests.fixtures.response import RespIs
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
+from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app, get_one_field
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.tasks.sql import SQLTask
 from virtool.users.oas import UpdateUserRequest
 from virtool.utils import get_http_session_from_app
-from virtool_core.models.enums import Permission
 
 
 async def test_find(

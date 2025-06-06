@@ -10,9 +10,9 @@ from syrupy import SnapshotAssertion
 import virtool.history.db
 from tests.fixtures.core import StaticTime
 from virtool.history.sql import SQLHistoryDiff
+from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
-from virtool_core.models.enums import HistoryMethod
 
 
 class TestAdd:

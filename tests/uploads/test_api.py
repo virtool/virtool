@@ -6,8 +6,8 @@ from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner
 from virtool.fake.next import DataFaker
+from virtool.models.enums import Permission
 from virtool.uploads.sql import UploadType
-from virtool_core.models.enums import Permission
 
 
 @pytest.fixture()

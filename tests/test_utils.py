@@ -6,14 +6,13 @@ from pathlib import Path
 
 import arrow
 import pytest
-from virtool_core.models.basemodel import BaseModel
-from virtool_core.utils import decompress_tgz
 
 import virtool.utils
 from virtool.api.errors import APIBadRequest
 from virtool.data.errors import ResourceConflictError
+from virtool.models import BaseModel
 from virtool.samples.models import Sample
-from virtool.utils import get_model_by_name, wait_for_checks
+from virtool.utils import decompress_tgz, get_model_by_name, wait_for_checks
 
 
 @pytest.fixture(scope="session")
