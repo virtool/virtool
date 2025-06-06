@@ -4,7 +4,7 @@ from virtool.jobs.models import JobMinimal
 from virtool.models import SearchResult
 from virtool.models.base import BaseModel
 from virtool.samples.models_base import SampleNested
-from virtool.users.models import UserNested
+from virtool.users.models_base import UserNested
 
 
 class NucleotideComposition(BaseModel):

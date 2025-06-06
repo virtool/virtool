@@ -1,6 +1,6 @@
 from virtool.models.base import BaseModel
 from virtool.models.roles import AdministratorRole
-from virtool.users.models import UserNested
+from virtool.users.models_base import UserNested
 
 
 class AdministratorMinimal(UserNested):

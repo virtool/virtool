@@ -10,7 +10,7 @@ from virtool.models import SearchResult
 from virtool.models.base import BaseModel
 from virtool.references.models import ReferenceNested
 from virtool.subtractions.models import SubtractionNested
-from virtool.users.models import UserNested
+from virtool.users.models_base import UserNested
 
 
 class AnalysisSample(BaseModel):

@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, constr, root_validator, validator
 
+from virtool.history.models import HistorySearchResult
 from virtool.indexes.models import IndexMinimal
 from virtool.models.validators import prevent_none
 from virtool.references.models import (

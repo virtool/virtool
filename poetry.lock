@@ -1096,6 +1096,26 @@ dnspython = ">=2.0.0"
 idna = ">=2.0.0"
 
 [[package]]
+name = "enum-tools"
+version = "0.13.0"
+description = "Tools to expand Python's enum module."
+optional = false
+python-versions = ">=3.7"
+groups = ["main"]
+files = [
+    {file = "enum_tools-0.13.0-py3-none-any.whl", hash = "sha256:e0112b16767dd08cb94105844b52770eae67ece6f026916a06db4a3d330d2a95"},
+    {file = "enum_tools-0.13.0.tar.gz", hash = "sha256:0d13335e361d300dc0f8fd82c8cf9951417246f9676144f5ee1761eb690228eb"},
+]
+
+[package.dependencies]
+pygments = ">=2.6.1"
+typing-extensions = ">=3.7.4.3"
+
+[package.extras]
+all = ["sphinx (>=3.4.0)", "sphinx-jinja2-compat (>=0.1.1)", "sphinx-toolbox (>=2.16.0)"]
+sphinx = ["sphinx (>=3.4.0)", "sphinx-jinja2-compat (>=0.1.1)", "sphinx-toolbox (>=2.16.0)"]
+
+[[package]]
 name = "et-xmlfile"
 version = "2.0.0"
 description = "An implementation of lxml.xmlfile for the standard library"
@@ -3666,4 +3686,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.1"
 python-versions = ">3.12.0,<3.13.0"
-content-hash = "e57d64441a5741fc1749e378229695b7ff93e8b387e8f07e975a90f07a37ad49"
+content-hash = "72ad24bae026c88ad0c008960c6bfbc4b8165f9199290cadacc54c87e9889504"

@@ -15,7 +15,7 @@ from virtool.groups.mongo import (
 from virtool.groups.oas import UpdateGroupRequest
 from virtool.groups.pg import SQLGroup
 from virtool.mongo.core import Mongo
-from virtool.users.models import UserNested
+from virtool.users.models_base import UserNested
 from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor
 

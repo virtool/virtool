@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import arrow
 
-from virtool.users.models import UserNested
+from virtool.users.models_base import UserNested
 
 if TYPE_CHECKING:
     from pymongo.results import UpdateResult

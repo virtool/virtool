@@ -1,6 +1,8 @@
-from pydantic import BaseModel, Field
+from pydantic import Field
 
+from virtool.models import BaseModel
 from virtool.models.roles import AdministratorRole
+from virtool.models.validators import prevent_none
 
 
 class RunActionRequest(BaseModel):

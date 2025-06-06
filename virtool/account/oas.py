@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pydantic import BaseModel, Field, constr, root_validator, validator
 
 from virtool.account.models import Account, APIKey, check_email

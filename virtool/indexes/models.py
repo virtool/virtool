@@ -4,7 +4,7 @@ from virtool.jobs.models import JobMinimal
 from virtool.models import SearchResult
 from virtool.models.base import BaseModel
 from virtool.references.models import ReferenceNested
-from virtool.users.models import UserNested
+from virtool.users.models_base import UserNested
 
 
 class IndexNested(BaseModel):

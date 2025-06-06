@@ -5,7 +5,7 @@ from virtool.models import SearchResult
 from virtool.models.base import BaseModel
 from virtool.models.enums import HistoryMethod
 from virtool.references.models import ReferenceNested
-from virtool.users.models import UserNested
+from virtool.users.models_base import UserNested
 
 
 class HistoryIndex(BaseModel):

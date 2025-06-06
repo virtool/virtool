@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Any
 
 from virtool.models import BaseModel, SearchResult
-from virtool.users.models import UserNested
+from virtool.users.models_base import UserNested
 
 
 class JobError(BaseModel):

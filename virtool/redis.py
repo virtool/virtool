@@ -5,9 +5,8 @@ from typing import Any, TypeAlias
 
 import arrow
 import orjson
+import redis
 from structlog import get_logger
-
-from virtool.redis import ConnectionError as RedisConnectionError
 
 logger = get_logger("redis")
 
@@ -128,7 +127,7 @@ class Redis:
 
         try:
             self._client_info = await self._client.info()
-        except RedisConnectionError as e:
+        except ConnectionError as e:
             if "Connect call failed" in str(e):
                 raise RedisError("Could not connect")
 

@@ -5,7 +5,7 @@ from typing import Any
 from virtool.models import BaseModel, SearchResult
 from virtool.tasks.models import TaskDetailedNested
 from virtool.uploads.models import UploadMinimal
-from virtool.users.models import UserNested
+from virtool.users.models_base import UserNested
 
 
 class ReferenceClonedFrom(BaseModel):

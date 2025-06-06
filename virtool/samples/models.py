@@ -8,7 +8,7 @@ from virtool.models.enums import LibraryType
 from virtool.samples.models_base import SampleNested
 from virtool.subtractions.models import SubtractionNested
 from virtool.uploads.models import UploadMinimal
-from virtool.users.models import UserNested
+from virtool.users.models_base import UserNested
 
 
 class SampleArtifact(BaseModel):

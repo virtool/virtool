@@ -3,6 +3,8 @@ from typing import Any
 from pydantic import BaseModel, Field, conlist, constr
 
 from virtool.analyses.models import AnalysisMinimal
+from virtool.models.enums import LibraryType, AnalysisWorkflow
+from virtool.models.validators import prevent_none
 from virtool.samples.models import Sample
 
 

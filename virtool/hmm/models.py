@@ -6,7 +6,7 @@ from pydantic import validator
 from virtool.models import SearchResult
 from virtool.models.base import BaseModel
 from virtool.tasks.models import Task
-from virtool.users.models import UserNested
+from virtool.users.models_base import UserNested
 
 
 class HMMInstalled(BaseModel):

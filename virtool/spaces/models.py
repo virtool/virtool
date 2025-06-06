@@ -10,7 +10,7 @@ from virtool.models.roles import (
     SpaceSubtractionRole,
     SpaceUploadRole,
 )
-from virtool.users.models import UserNested
+from virtool.users.models_base import UserNested
 
 
 class SpaceMember(UserNested):

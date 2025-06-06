@@ -14,7 +14,7 @@ class LabelNested(BaseModel):
 class Label(LabelNested):
     count: int
 
-    _normalize_color = validator("color", allow_reuse=True)(normalize_hex_color())
+    _normalize_color = validator("color", allow_reuse=True)(normalize_hex_color)
 
     class Config:
         schema_extra = {

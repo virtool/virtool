@@ -11,10 +11,9 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r404
 
 import virtool.api.authentication
 import virtool.api.routes
-from virtool.account.models import AccountSettings, Account
+from virtool.account.models import Account, AccountSettings
 from virtool.account.oas import (
     AccountResetPasswordResponse,
-    AccountResponse,
     APIKeyResponse,
     CreateAPIKeyResponse,
     CreateKeysRequest,
