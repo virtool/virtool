@@ -3,6 +3,7 @@
 .github
 .idea
 .pytest_cache
+CLAUDE.md
 data
 docker
 docs

@@ -9,9 +9,9 @@ from openfga_sdk import (
     WriteRequest,
 )
 from structlog import get_logger
-from virtool_core.models.roles import AdministratorRole
 
 from virtool.authorization.permissions import Permission, ResourceType
+from virtool.models.roles import AdministratorRole
 
 logger = get_logger("openfga")
 

@@ -3,16 +3,14 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r404
 from pydantic import Field
 
 import virtool.api.routes
-from virtool.api.errors import APINotFound, APIBadRequest, APINoContent
 from virtool.api.custom_json import json_response
+from virtool.api.errors import APIBadRequest, APINoContent, APINotFound
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
+from virtool.labels.models import Label
 from virtool.labels.oas import (
     CreateLabelRequest,
     UpdateLabelRequest,
-    CreateLabelResponse,
-    GetLabelResponse,
-    LabelResponse,
 )
 
 routes = virtool.api.routes.Routes()
@@ -26,9 +24,8 @@ class LabelsView(PydanticView):
         find: str | None = Field(
             description="Provide text to filter by partial matches to the name field."
         ),
-    ) -> r200[list[GetLabelResponse]] | r400:
-        """
-        List labels.
+    ) -> r200[list[Label]] | r400:
+        """List labels.
 
         Lists all sample labels on the instance. Pagination is not supported; all labels
         are included in the response.
@@ -41,9 +38,8 @@ class LabelsView(PydanticView):
 
         return json_response([label.dict() for label in labels])
 
-    async def post(self, data: CreateLabelRequest) -> r201[CreateLabelResponse] | r400:
-        """
-        Create a label.
+    async def post(self, data: CreateLabelRequest) -> r201[Label] | r400:
+        """Create a label.
 
         Creates a new sample label.
 
@@ -72,9 +68,8 @@ class LabelsView(PydanticView):
 @routes.view("/spaces/{space_id}/labels/{label_id}")
 @routes.view("/labels/{label_id}")
 class LabelView(PydanticView):
-    async def get(self, label_id: int, /) -> r200[LabelResponse] | r404:
-        """
-        Get a label.
+    async def get(self, label_id: int, /) -> r200[Label] | r404:
+        """Get a label.
 
         Fetches the details for a sample label.
 
@@ -91,9 +86,8 @@ class LabelView(PydanticView):
 
     async def patch(
         self, label_id: int, /, data: UpdateLabelRequest
-    ) -> r200[LabelResponse] | r400 | r404:
-        """
-        Update a label.
+    ) -> r200[Label] | r400 | r404:
+        """Update a label.
 
         Updates an existing sample label.
 
@@ -114,8 +108,7 @@ class LabelView(PydanticView):
         return json_response(label)
 
     async def delete(self, label_id: int, /) -> r204 | r404:
-        """
-        Delete a label.
+        """Delete a label.
 
         Deletes an existing sample label.
 

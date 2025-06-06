@@ -1,7 +1,4 @@
-"""
-The client class and utilities for managing authorization.
-
-"""
+"""The client class and utilities for managing authorization."""
 
 import asyncio
 
@@ -15,26 +12,28 @@ from openfga_sdk import (
     TupleKeys,
     WriteRequest,
 )
-from virtool_core.models.enums import Permission
-from virtool_core.models.roles import (
-    AdministratorRole,
-    ReferenceRole,
-    SpaceRoleType,
-    SpaceRole,
-)
 
-from virtool.authorization.permissions import ReferencePermission, ResourceType
+from virtool.authorization.permissions import (
+    Permission,
+    ReferencePermission,
+    ResourceType,
+)
 from virtool.authorization.relationships import AbstractRelationship
 from virtool.authorization.results import (
     AddRelationshipResult,
     RemoveRelationshipResult,
 )
+from virtool.models.roles import (
+    AdministratorRole,
+    ReferenceRole,
+    SpaceRole,
+    SpaceRoleType,
+)
 from virtool.types import App
 
 
 class AuthorizationClient:
-    """
-    The Virtool authorization client.
+    """The Virtool authorization client.
 
     The client is currently backed by OpenFGA, but is built to abstract away the
     underlying authorization service.
@@ -56,10 +55,7 @@ class AuthorizationClient:
         resource_type: ResourceType,
         resource_id: str | int,
     ) -> bool:
-        """
-        Check whether a user has the given role on a resource.
-        """
-
+        """Check whether a user has the given role on a resource."""
         response = await self.openfga.check(
             CheckRequest(
                 tuple_key=TupleKey(
@@ -73,8 +69,7 @@ class AuthorizationClient:
         return response.allowed
 
     async def get_space_roles(self, space_id: int) -> list[str]:
-        """
-        Return a list of base roles for a space.
+        """Return a list of base roles for a space.
 
         :param space_id: the id of the space
         :return: a list of roles
@@ -106,8 +101,7 @@ class AuthorizationClient:
         return user_id, role
 
     async def list_administrators(self) -> list[tuple[str, AdministratorRole]]:
-        """
-        Return a list of user ids that are administrators and their roles.
+        """Return a list of user ids that are administrators and their roles.
 
         :return: a list of tuples containing user ids and their roles
 
@@ -126,8 +120,7 @@ class AuthorizationClient:
         )
 
     async def list_user_spaces(self, user_id: str) -> list[int]:
-        """
-        Return a list of ids of spaces the user is a member of.
+        """Return a list of ids of spaces the user is a member of.
 
         :param user_id: the id of the user
         :return: a list of space ids
@@ -166,8 +159,7 @@ class AuthorizationClient:
     async def list_reference_users(
         self, ref_id: str
     ) -> list[tuple[str, ReferenceRole]]:
-        """
-        List users and their roles on a reference.
+        """List users and their roles on a reference.
 
         The returned list only includes users that have an explicit role defined on the
         reference. Space members that have access to the reference through the space
@@ -192,10 +184,7 @@ class AuthorizationClient:
     async def list_space_users(
         self, space_id: int
     ) -> list[tuple[str, list[SpaceRole]]]:
-        """
-        List members of a space
-        """
-
+        """List members of a space"""
         response = await self.openfga.read(
             ReadRequest(
                 tuple_key=TupleKey(object=f"space:{space_id}"),
@@ -224,12 +213,10 @@ class AuthorizationClient:
         )
 
     async def add(self, *relationships: AbstractRelationship):
-        """
-        Add one or more authorization relationships.
+        """Add one or more authorization relationships.
 
         :param relationships:
         """
-
         requests = []
 
         for relationship in relationships:
@@ -267,9 +254,7 @@ class AuthorizationClient:
         return result
 
     async def remove(self, *relationships: AbstractRelationship):
-        """
-        Remove one or more authorization relationships.
-        """
+        """Remove one or more authorization relationships."""
         requests = [
             WriteRequest(
                 deletes=TupleKeys(
@@ -303,8 +288,7 @@ class AuthorizationClient:
 
 
 def get_authorization_client_from_app(app: App) -> "AuthorizationClient":
-    """
-    Get the authorization client instance from an :class:`virtool.types.App` object.
+    """Get the authorization client instance from an :class:`virtool.types.App` object.
 
     Use this when you need to access the authorization client outside a request handler.
 
@@ -314,8 +298,7 @@ def get_authorization_client_from_app(app: App) -> "AuthorizationClient":
 
 
 def get_authorization_client_from_req(req: Request) -> "AuthorizationClient":
-    """
-    Get the authorization client instance from a :class:``aiohttp.web.Request`` object.
+    """Get the authorization client instance from a :class:``aiohttp.web.Request``.
 
     Use this in request handlers instead of ``get_authorization_client_from_app``.
 

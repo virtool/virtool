@@ -5,7 +5,6 @@ from aiohttp import ClientSession
 from aiojobs.aiohttp import get_scheduler_from_app
 from pymongo.errors import CollectionInvalid
 from structlog import get_logger
-from virtool_core.redis import Redis
 
 from virtool.authorization.client import (
     get_authorization_client_from_app,
@@ -20,6 +19,7 @@ from virtool.mongo.connect import connect_mongo
 from virtool.mongo.migrate import migrate_status
 from virtool.mongo.utils import get_mongo_from_app
 from virtool.pg.utils import connect_pg
+from virtool.redis import Redis
 from virtool.routes import setup_routes
 from virtool.sentry import setup
 from virtool.tasks.client import TasksClient

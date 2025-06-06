@@ -1,22 +1,22 @@
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r201, r200, r204, r404
-from virtool_core.models.roles import AdministratorRole
+from aiohttp_pydantic.oas.typing import r200, r201, r204, r404
 
-from virtool.api.errors import APINotFound, APIBadRequest, APINoContent
-from virtool.api.policy import policy, AdministratorRoutePolicy
 from virtool.api.custom_json import json_response
+from virtool.api.errors import APIBadRequest, APINoContent, APINotFound
+from virtool.api.policy import AdministratorRoutePolicy, policy
 from virtool.api.routes import Routes
-from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.flags import flag, FlagName
+from virtool.flags import FlagName, flag
+from virtool.models.roles import AdministratorRole
 from virtool.spaces.oas import (
-    UpdateSpaceRequest,
-    UpdateMemberRequest,
-    ListSpacesResponse,
     GetSpaceResponse,
-    UpdateSpaceResponse,
     ListMembersResponse,
+    ListSpacesResponse,
+    UpdateMemberRequest,
     UpdateMemberResponse,
+    UpdateSpaceRequest,
+    UpdateSpaceResponse,
 )
 
 routes = Routes()
@@ -26,15 +26,13 @@ routes = Routes()
 @routes.view("/spaces")
 class SpacesView(PydanticView):
     async def get(self) -> r200[ListSpacesResponse]:
-        """
-        List spaces.
+        """List spaces.
 
         Get a list of all spaces that the requesting user is a member or owner of.
 
         Status Codes:
             200: Successful operation
         """
-
         return json_response(
             await get_data_from_req(self.request).spaces.find(
                 self.request["client"].user_id
@@ -46,8 +44,7 @@ class SpacesView(PydanticView):
 @routes.view("/spaces/{space_id}")
 class SpaceView(PydanticView):
     async def get(self, space_id: int, /) -> r200[GetSpaceResponse] | r404:
-        """
-        Get a space.
+        """Get a space.
 
         Fetches the complete representation of a space.
 
@@ -55,7 +52,6 @@ class SpaceView(PydanticView):
             200: Successful operation
             404: User not found
         """
-
         try:
             space = await get_data_from_req(self.request).spaces.get(space_id)
         except ResourceNotFoundError:
@@ -67,8 +63,7 @@ class SpaceView(PydanticView):
     async def patch(
         self, space_id: int, /, data: UpdateSpaceRequest
     ) -> r201[UpdateSpaceResponse] | r404:
-        """
-        Update a space.
+        """Update a space.
 
         Changes the name or description of a space.
 
@@ -91,8 +86,7 @@ class SpaceView(PydanticView):
 @routes.view("/spaces/{space_id}/members")
 class SpaceMembersView(PydanticView):
     async def get(self, space_id: int, /) -> r200[ListMembersResponse]:
-        """
-        List members.
+        """List members.
 
         Lists the members of a space and their roles.
 
@@ -116,8 +110,7 @@ class SpaceMemberView(PydanticView):
     async def patch(
         self, space_id: int, member_id: int | str, /, data: UpdateMemberRequest
     ) -> r200[UpdateMemberResponse] | r404:
-        """
-        Update a member.
+        """Update a member.
 
         Changes the roles of the space member.
 
@@ -136,8 +129,7 @@ class SpaceMemberView(PydanticView):
 
     @policy(AdministratorRoutePolicy(AdministratorRole.SPACES))
     async def delete(self, space_id: int, member_id: int | str, /) -> r204 | r404:
-        """
-        Remove a member.
+        """Remove a member.
 
         Removes a member from the space.
         They will no longer have access to any data in the space.

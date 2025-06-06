@@ -8,16 +8,16 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
-from virtool_core.models.enums import LibraryType, Permission
-from virtool_core.models.samples import WorkflowState
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner, VirtoolTestClient
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
+from virtool.models.enums import LibraryType, Permission
 from virtool.mongo.core import Mongo
 from virtool.samples.fake import create_fake_sample
+from virtool.samples.models import WorkflowState
 from virtool.samples.sql import SQLSampleArtifact, SQLSampleReads
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.users.oas import UpdateUserRequest

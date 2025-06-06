@@ -5,13 +5,13 @@ from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
 from syrupy.filters import props
-from virtool_core.models.enums import Permission
 
 from virtool.account.oas import CreateKeysRequest, UpdateAccountRequest
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.groups.oas import PermissionsUpdate
+from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.users.pg import SQLUser
@@ -31,9 +31,8 @@ async def test_create_api_key(
     snapshot: SnapshotAssertion,
     static_time,
 ):
-    """Test that an API key is created correctly with varying key owner administrator status and
-    permissions.
-
+    """Test that an API key is created correctly with varying key owner administrator
+    status and permissions.
     """
     mocker.patch("virtool.account.mongo.get_alternate_id", make_mocked_coro("foo_0"))
     mocker.patch("virtool.utils.generate_key", return_value=("bar", "baz"))

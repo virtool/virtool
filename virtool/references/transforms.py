@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.pg.utils import get_row_by_id
 from virtool.types import Document
-from virtool.uploads.models import SQLUpload
+from virtool.uploads.sql import SQLUpload
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor, get_safely
 

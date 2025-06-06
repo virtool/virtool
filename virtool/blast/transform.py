@@ -3,16 +3,14 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.blast.models import SQLNuVsBlast
+from virtool.blast.sql import SQLNuVsBlast
 from virtool.data.transforms import AbstractTransform
 from virtool.types import Document
 from virtool.utils import get_safely
 
 
 class AttachNuVsBLAST(AbstractTransform):
-    """
-    Attach BLAST records to NuVs analysis documents.
-    """
+    """Attach BLAST records to NuVs analysis documents."""
 
     def __init__(self, pg: AsyncEngine):
         self._pg = pg

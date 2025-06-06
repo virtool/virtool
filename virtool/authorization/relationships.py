@@ -1,17 +1,14 @@
-"""
-Classes that represent relationships between users and other resources.
-"""
+"""Classes that represent relationships between users and other resources."""
 
 from abc import ABC, abstractmethod
-from typing import Union, List
 
-from openfga_sdk import OpenFgaApi, ReadRequest, TupleKey, WriteRequest, TupleKeys
+from openfga_sdk import OpenFgaApi, ReadRequest, TupleKey, TupleKeys, WriteRequest
 
 from virtool.authorization.permissions import ResourceType
-from virtool_core.models.roles import (
-    SpaceRole,
+from virtool.models.roles import (
     AdministratorRole,
     ReferenceRole,
+    SpaceRole,
     SpaceRoleType,
 )
 
@@ -34,7 +31,7 @@ class AbstractRelationship(ABC):
 
     @property
     @abstractmethod
-    def object_id(self) -> Union[str, int]: ...
+    def object_id(self) -> str | int: ...
 
     @property
     @abstractmethod
@@ -55,7 +52,7 @@ class AbstractRelationship(ABC):
     def __repr__(self):
         return f"<{self.__class__.__name__} {self.user_type}:{self.user_id} {self.relation} {self.object_id}:{self.object_type}>"
 
-    async def remove_tuples(self, openfga: OpenFgaApi, add_list: List) -> None:
+    async def remove_tuples(self, openfga: OpenFgaApi, add_list: list) -> None:
         for request in add_list:
             relation_tuple = request.writes.tuple_keys[0]
 
@@ -85,15 +82,14 @@ class AbstractRelationship(ABC):
 
 
 class AdministratorRoleAssignment(AbstractRelationship):
-    """
-    Represents a user being assigned an administrative role in the application.
+    """Represents a user being assigned an administrative role in the application.
 
     It is exclusive because a user can only have one administrative role at a time.
     """
 
     exclusive = True
 
-    def __init__(self, user_id: Union[int, str], role: AdministratorRole):
+    def __init__(self, user_id: int | str, role: AdministratorRole):
         self._user_id = user_id
         self._role = role
 
@@ -110,14 +106,14 @@ class AdministratorRoleAssignment(AbstractRelationship):
         return self._role.value
 
     @property
-    def user_id(self) -> Union[int, str]:
+    def user_id(self) -> int | str:
         return self._user_id
 
     @property
     def user_type(self) -> str:
         return "user"
 
-    async def remove_tuples(self, openfga: OpenFgaApi, add_list: List) -> None:
+    async def remove_tuples(self, openfga: OpenFgaApi, add_list: list) -> None:
         for request in add_list:
             relation_tuple = request.writes.tuple_keys[0]
 
@@ -158,13 +154,13 @@ class SpaceMembership(AbstractRelationship):
 
     """
 
-    def __init__(self, user_id: Union[int, str], space_id: int, role: SpaceRole):
+    def __init__(self, user_id: int | str, space_id: int, role: SpaceRole):
         self._user_id = user_id
         self._role = role
         self._space_id = space_id
 
     @property
-    def object_id(self) -> Union[int, str]:
+    def object_id(self) -> int | str:
         return self._space_id
 
     @property
@@ -176,14 +172,14 @@ class SpaceMembership(AbstractRelationship):
         return self._role.value
 
     @property
-    def user_id(self) -> Union[int, str]:
+    def user_id(self) -> int | str:
         return self._user_id
 
     @property
     def user_type(self) -> str:
         return "user"
 
-    async def remove_tuples(self, openfga: OpenFgaApi, add_list: List) -> None:
+    async def remove_tuples(self, openfga: OpenFgaApi, add_list: list) -> None:
         for request in add_list:
             relation_tuple = request.writes.tuple_keys[0]
 
@@ -251,7 +247,7 @@ class SpaceRoleAssignment(AbstractRelationship):
         return self._role.value
 
     @property
-    def user_id(self) -> Union[int, str]:
+    def user_id(self) -> int | str:
         return f"{self._space_id}#member"
 
     @property
@@ -260,10 +256,7 @@ class SpaceRoleAssignment(AbstractRelationship):
 
 
 class UserRoleAssignment(AbstractRelationship):
-    """
-    Represents a user having a given role in a space.
-
-    """
+    """Represents a user having a given role in a space."""
 
     def __init__(self, user_id: str, space_id: int, role: SpaceRoleType):
         self._space_id = space_id
@@ -292,10 +285,7 @@ class UserRoleAssignment(AbstractRelationship):
 
 
 class ReferenceRoleAssignment(AbstractRelationship):
-    """
-    Represents a user having a given role on a reference.
-
-    """
+    """Represents a user having a given role on a reference."""
 
     def __init__(self, ref_id: str, user_id: str, role: ReferenceRole):
         self._ref_id = ref_id

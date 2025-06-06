@@ -2,10 +2,10 @@ from asyncio import to_thread
 from pathlib import Path
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.utils import file_stats
 
 from virtool.subtractions.pg import SQLSubtractionFile
 from virtool.subtractions.utils import check_subtraction_file_type
+from virtool.utils import file_stats
 
 
 async def create_subtraction_files(

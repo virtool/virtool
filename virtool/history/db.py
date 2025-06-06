@@ -10,19 +10,19 @@ import dictdiffer
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.enums import HistoryMethod
 
 import virtool.history.utils
 import virtool.otus.db
 import virtool.utils
 from virtool.api.utils import paginate
 from virtool.data.transforms import apply_transforms
-from virtool.history.models import SQLHistoryDiff
+from virtool.history.sql import SQLHistoryDiff
 from virtool.history.utils import (
     calculate_diff,
     compose_history_description,
     derive_otu_information,
 )
+from virtool.models.enums import HistoryMethod
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.db import ATTACH_PROJECTION

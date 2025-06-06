@@ -13,8 +13,6 @@ from pydantic import Field, conint, constr
 from sqlalchemy import exc, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
-from virtool_core.models.roles import AdministratorRole
-from virtool_core.utils import file_stats
 
 import virtool.uploads.db
 import virtool.uploads.utils
@@ -41,6 +39,7 @@ from virtool.data.errors import (
 from virtool.data.utils import get_data_from_req
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
+from virtool.models.roles import AdministratorRole
 from virtool.mongo.utils import get_mongo_from_req, get_one_field
 from virtool.pg.utils import delete_row, get_rows
 from virtool.samples.db import (
@@ -74,6 +73,7 @@ from virtool.uploads.utils import (
     multipart_file_chunker,
     naive_validator,
 )
+from virtool.utils import file_stats
 
 logger = get_logger("samples")
 

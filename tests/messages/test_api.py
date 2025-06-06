@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from tests.fixtures.client import ClientSpawner
 from virtool.fake.next import DataFaker
-from virtool.messages.models import SQLInstanceMessage
+from virtool.messages.sql import SQLInstanceMessage
 
 
 @pytest.fixture()

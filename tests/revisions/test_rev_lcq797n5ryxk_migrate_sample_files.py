@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from assets.revisions.rev_lcq797n5ryxk_migrate_sample_files import upgrade
 from virtool.samples.sql import SQLSampleReads
-from virtool.uploads.models import SQLUpload
+from virtool.uploads.sql import SQLUpload
 
 
 class TestUpgrade:

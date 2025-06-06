@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
 from virtool.samples.sql import SQLSampleArtifact, SQLSampleReads
-from virtool.uploads.models import SQLUpload
+from virtool.uploads.sql import SQLUpload
 
 
 async def get_existing_reads(pg: AsyncEngine, sample_id: str) -> list[str]:

@@ -1,20 +1,19 @@
-from typing import Optional, List
+from pydantic import BaseModel, Field, constr
 
-from pydantic import constr, BaseModel, Field
-from virtool_core.models.otu import OTUSegment, OTUSearchResult
-from virtool_core.models.validators import prevent_none
+from virtool.models.validators import prevent_none
+from virtool.otus.models import OTUSearchResult, OTUSegment
 
 
 class CreateOTURequest(BaseModel):
     abbreviation: constr(strip_whitespace=True) = ""
     name: constr(min_length=1, strip_whitespace=True)
-    otu_schema: List[OTUSegment] = Field(alias="schema", default_factory=list)
+    otu_schema: list[OTUSegment] = Field(alias="schema", default_factory=list)
 
 
 class UpdateOTURequest(BaseModel):
-    abbreviation: Optional[constr(strip_whitespace=True)]
-    name: Optional[constr(min_length=1, strip_whitespace=True)]
-    otu_schema: Optional[List[OTUSegment]] = Field(alias="schema")
+    abbreviation: constr(strip_whitespace=True) | None
+    name: constr(min_length=1, strip_whitespace=True) | None
+    otu_schema: list[OTUSegment] | None = Field(alias="schema")
 
     _prevent_none = prevent_none("*")
 
@@ -26,8 +25,8 @@ class CreateIsolateRequest(BaseModel):
 
 
 class UpdateIsolateRequest(BaseModel):
-    source_name: Optional[constr(strip_whitespace=True)]
-    source_type: Optional[constr(strip_whitespace=True)]
+    source_name: constr(strip_whitespace=True) | None
+    source_type: constr(strip_whitespace=True) | None
 
     _prevent_none = prevent_none("*")
 
@@ -36,18 +35,18 @@ class CreateSequenceRequest(BaseModel):
     accession: constr(min_length=1, strip_whitespace=True)
     definition: constr(min_length=1, strip_whitespace=True)
     host: constr(strip_whitespace=True) = ""
-    segment: Optional[str] = None
+    segment: str | None = None
     sequence: constr(min_length=1, regex=r"^[ATCGNRYKM]+$")
-    target: Optional[str] = None
+    target: str | None = None
 
 
 class UpdateSequenceRequest(BaseModel):
-    accession: Optional[constr(min_length=1, strip_whitespace=True)]
-    definition: Optional[constr(min_length=1, strip_whitespace=True)]
-    host: Optional[constr(strip_whitespace=True)]
-    segment: Optional[str]
-    sequence: Optional[constr(min_length=1, regex=r"^[ATCGNRYKM]+$")]
-    target: Optional[str]
+    accession: constr(min_length=1, strip_whitespace=True) | None
+    definition: constr(min_length=1, strip_whitespace=True) | None
+    host: constr(strip_whitespace=True) | None
+    segment: str | None
+    sequence: constr(min_length=1, regex="^[ATCGNRYKM]+$") | None
+    target: str | None
 
     _prevent_none = prevent_none("accession", "definition", "host", "sequence")
 

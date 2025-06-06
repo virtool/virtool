@@ -18,26 +18,23 @@ from faker.providers import (
 )
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.enums import Molecule
-from virtool_core.models.group import Group
-from virtool_core.models.hmm import HMM
-from virtool_core.models.label import Label
-from virtool_core.models.ml import MLModel
-from virtool_core.models.otu import OTU, OTUSegment
-from virtool_core.models.roles import AdministratorRole
-from virtool_core.models.task import Task
-from virtool_core.models.upload import Upload
-from virtool_core.models.user import User
 
 from virtool.data.layer import DataLayer
 from virtool.example import example_path
 from virtool.fake.providers import OrganismProvider, SegmentProvider, SequenceProvider
+from virtool.groups.models import Group
 from virtool.groups.oas import PermissionsUpdate, UpdateGroupRequest
 from virtool.groups.pg import SQLGroup
+from virtool.hmm.models import HMM
 from virtool.jobs.models import Job, JobState
 from virtool.jobs.utils import WORKFLOW_NAMES
+from virtool.labels.models import Label
+from virtool.ml.models import MLModel
 from virtool.ml.tasks import SyncMLModelsTask
+from virtool.models.enums import Molecule
+from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
+from virtool.otus.models import OTU, OTUSegment
 from virtool.otus.oas import CreateOTURequest
 from virtool.references.tasks import (
     CleanReferencesTask,
@@ -51,9 +48,12 @@ from virtool.subtractions.oas import (
     FinalizeSubtractionRequest,
     NucleotideComposition,
 )
+from virtool.tasks.models import Task
 from virtool.tasks.task import BaseTask
-from virtool.uploads.models import UploadType
+from virtool.uploads.models import Upload
+from virtool.uploads.sql import UploadType
 from virtool.uploads.utils import CHUNK_SIZE
+from virtool.users.models import User
 from virtool.users.oas import UpdateUserRequest
 
 
@@ -451,7 +451,7 @@ class UploadsFakerDomain(DataFakerDomain):
         upload_type: UploadType = UploadType.reads,
         name: str = "test.fq.gz",
         reserved: bool = False,
-    ) -> Upload:
+    ) -> UploadType:
         """Create a fake upload.
 
         A completely valid user will be created.

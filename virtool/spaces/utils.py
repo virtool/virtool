@@ -2,20 +2,20 @@ import asyncio
 from enum import EnumMeta
 
 from structlog import get_logger
-from virtool_core.models.roles import (
-    SpaceRole,
+
+from virtool.authorization.client import AuthorizationClient
+from virtool.authorization.relationships import UserRoleAssignment
+from virtool.models.roles import (
     SpaceLabelRole,
     SpaceProjectRole,
     SpaceReferenceRole,
+    SpaceRole,
     SpaceSampleRole,
     SpaceSubtractionRole,
     SpaceUploadRole,
 )
-from virtool_core.models.spaces import SpaceMember
-
-from virtool.authorization.client import AuthorizationClient
-from virtool.authorization.relationships import UserRoleAssignment
 from virtool.mongo.core import Mongo
+from virtool.spaces.models import SpaceMember
 
 logger = get_logger("spaces")
 

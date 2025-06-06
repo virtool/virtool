@@ -1,8 +1,5 @@
-from typing import Optional
-
 from aiohttp import web
 from aiohttp.web import Request, Response
-from virtool_core.models.session import Session
 
 from virtool.api.authentication import get_ip
 from virtool.api.utils import set_session_id_cookie
@@ -10,6 +7,7 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.utils import get_data_from_req
+from virtool.models.sessions import Session
 from virtool.utils import get_safely
 
 
@@ -33,7 +31,7 @@ async def session_middleware(req: Request, handler) -> Response:
     return resp
 
 
-async def get_session(req: Request) -> Optional[Session]:
+async def get_session(req: Request) -> Session | None:
     session_id = req.cookies.get("session_id")
     session_token = req.cookies.get("session_token")
     sessions_data = get_data_from_req(req).sessions
@@ -52,4 +50,4 @@ async def get_session(req: Request) -> Optional[Session]:
 
             return await sessions_data.get_anonymous(session_id)
     except ResourceNotFoundError:
-        pass
+        return None

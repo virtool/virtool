@@ -1,10 +1,10 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
-from virtool_core.models.roles import AdministratorRole
 
 from virtool.api.client import UserClient
 from virtool.fake.next import DataFaker
+from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.references.db import (
     check_right,

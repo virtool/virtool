@@ -1,7 +1,7 @@
-from typing import Optional
+from pydantic import conint
 
-from pydantic import BaseModel, conint
-from virtool_core.models.task import TaskMinimal, Task
+from virtool.models import BaseModel
+from virtool.tasks.models import Task, TaskMinimal
 
 
 class GetTasksResponse(TaskMinimal):
@@ -41,6 +41,6 @@ class TaskResponse(Task):
 
 
 class TaskUpdate(BaseModel):
-    step: Optional[str]
-    progress: Optional[conint(ge=0, le=100)]
-    error: Optional[str]
+    step: str | None
+    progress: conint(ge=0, le=100) | None
+    error: str | None

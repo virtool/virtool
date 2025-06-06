@@ -9,8 +9,6 @@ from typing import Any
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo.results import DeleteResult
 from sqlalchemy.ext.asyncio import AsyncEngine
-from virtool_core.models.enums import HistoryMethod
-from virtool_core.models.otu import OTU, OTUIsolate, OTUSequence, Sequence
 
 import virtool.history.db
 import virtool.otus.db
@@ -22,6 +20,7 @@ from virtool.history.utils import (
     compose_edit_description,
     compose_remove_description,
 )
+from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.otus.db import (
@@ -29,6 +28,7 @@ from virtool.otus.db import (
     increment_otu_version,
     update_otu_verification,
 )
+from virtool.otus.models import OTU, OTUIsolate, OTUSequence, Sequence
 from virtool.otus.oas import CreateOTURequest, UpdateOTURequest, UpdateSequenceRequest
 from virtool.otus.utils import (
     find_isolate,

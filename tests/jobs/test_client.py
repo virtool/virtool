@@ -1,12 +1,12 @@
 import asyncio
 
 import pytest
-from virtool_core.redis import Redis
 
 from virtool.jobs.client import (
     JobCancellationResult,
     JobsClient,
 )
+from virtool.redis import Redis
 
 
 @pytest.fixture()

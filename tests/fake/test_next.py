@@ -3,7 +3,7 @@ from datetime import datetime
 from syrupy.matchers import path_type
 
 from virtool.fake.next import DataFaker
-from virtool.uploads.models import UploadType
+from virtool.uploads.sql import UploadType
 
 
 async def test_groups_and_users(fake: DataFaker, snapshot):

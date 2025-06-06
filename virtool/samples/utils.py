@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.api.client import AbstractClient
 from virtool.api.errors import APIBadRequest
 from virtool.config.cls import Config
-from virtool.labels.models import SQLLabel
+from virtool.labels.sql import SQLLabel
 
 PATHOSCOPE_TASK_NAMES = ["pathoscope_bowtie", "pathoscope_barracuda"]
 

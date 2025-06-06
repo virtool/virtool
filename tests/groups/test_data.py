@@ -2,11 +2,11 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
-from virtool_core.models.group import Permissions
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.groups.models import Permissions
 from virtool.groups.oas import UpdateGroupRequest
 from virtool.groups.pg import SQLGroup
 from virtool.pg.utils import get_row_by_id

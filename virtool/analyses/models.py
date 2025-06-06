@@ -2,14 +2,15 @@ from datetime import datetime
 from typing import Any
 
 from pydantic import root_validator
-from virtool_core.models.basemodel import BaseModel
-from virtool_core.models.ml import MLModelRelease
-from virtool_core.models.reference import ReferenceNested
 
 from virtool.indexes.models import IndexNested
 from virtool.jobs.models import JobMinimal
-from virtool.models import SearchResult, UserNested
+from virtool.ml.models import MLModelRelease
+from virtool.models import SearchResult
+from virtool.models.base import BaseModel
+from virtool.references.models import ReferenceNested
 from virtool.subtractions.models import SubtractionNested
+from virtool.users.models_base import UserNested
 
 
 class AnalysisSample(BaseModel):

@@ -1,10 +1,10 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from virtool.tasks.models import SQLTask
+from virtool.tasks.sql import SQLTask
 
 
-@pytest.fixture
+@pytest.fixture()
 async def test_tasks(pg, static_time):
     task_1 = SQLTask(
         id=1,

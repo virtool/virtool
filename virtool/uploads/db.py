@@ -1,5 +1,3 @@
-from typing import Dict, List, Optional, Type
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -8,7 +6,7 @@ from virtool.data.transforms import AbstractTransform
 from virtool.pg.base import Base
 from virtool.pg.utils import get_row_by_id
 from virtool.types import Document
-from virtool.uploads.models import SQLUpload
+from virtool.uploads.sql import SQLUpload
 
 
 class AttachUploadTransform(AbstractTransform):
@@ -28,7 +26,7 @@ class AttachUploadTransform(AbstractTransform):
 
         return await get_row_by_id(self._pg, SQLUpload, upload_id)
 
-    async def prepare_many(self, documents: List[Document]) -> Dict[int, Dict]:
+    async def prepare_many(self, documents: list[Document]) -> dict[int, dict]:
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
                 select(SQLUpload).where(
@@ -45,7 +43,7 @@ class AttachUploadTransform(AbstractTransform):
         }
 
 
-async def finalize(pg, size: int, id_: int, model: Type[Base]) -> Optional[dict]:
+async def finalize(pg, size: int, id_: int, model: type[Base]) -> dict | None:
     """Finalize row creation for tables that store uploaded files.
 
     Updates table with file information and sets `ready`    to `True`.

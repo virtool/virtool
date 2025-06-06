@@ -4,23 +4,23 @@ import pytest
 
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.permissions import (
-    ResourceType,
     Permission,
+    ResourceType,
 )
 from virtool.authorization.relationships import (
-    UserRoleAssignment,
-    SpaceMembership,
     AdministratorRoleAssignment,
-    SpaceRoleAssignment,
     ReferenceRoleAssignment,
+    SpaceMembership,
+    SpaceRoleAssignment,
+    UserRoleAssignment,
 )
-from virtool_core.models.roles import (
-    SpaceSubtractionRole,
-    SpaceRole,
+from virtool.models.roles import (
     AdministratorRole,
     ReferenceRole,
     SpaceProjectRole,
+    SpaceRole,
     SpaceSampleRole,
+    SpaceSubtractionRole,
 )
 
 
@@ -150,11 +150,9 @@ async def test_list_reference_users(authorization_client: AuthorizationClient):
 
 
 async def test_add_idempotent(authorization_client: AuthorizationClient):
-    """
-    Ensure that adding a relationship that already exists does not raise an error and
+    """Ensure that adding a relationship that already exists does not raise an error and
     does not add a duplicate.
     """
-
     await authorization_client.add(
         SpaceMembership("ryanf", 0, SpaceRole.MEMBER),
         UserRoleAssignment("ryanf", 0, SpaceSubtractionRole.EDITOR),

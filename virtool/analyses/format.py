@@ -14,11 +14,11 @@ from typing import TYPE_CHECKING, Any
 
 import openpyxl.styles
 import visvalingamwyatt as vw
-from virtool_core.models.enums import AnalysisWorkflow
 
 import virtool.analyses.utils
 from virtool.config.cls import Config
 from virtool.history.db import patch_to_version
+from virtool.models.enums import AnalysisWorkflow
 from virtool.otus.utils import format_isolate_name
 from virtool.utils import load_json
 

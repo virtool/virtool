@@ -1,27 +1,31 @@
 import asyncio
 import math
 from asyncio import to_thread
+from contextlib import suppress
+from typing import TYPE_CHECKING
 
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.upload import Upload, UploadSearchResult
-from virtool_core.utils import rm
 
 import virtool.utils
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.events import Operation, emits
 from virtool.data.transforms import apply_transforms
-from virtool.mongo.core import Mongo
-from virtool.uploads.models import SQLUpload, UploadType
+from virtool.uploads.models import Upload, UploadSearchResult
+from virtool.uploads.sql import SQLUpload, UploadType
 from virtool.uploads.utils import naive_writer
 from virtool.users.transforms import AttachUserTransform
+from virtool.utils import rm
+
+if TYPE_CHECKING:
+    from virtool.mongo.core import Mongo
 
 
 class UploadsData(DataLayerDomain):
     name = "uploads"
 
-    def __init__(self, config, mongo: "Mongo", pg):
+    def __init__(self, config, mongo: "Mongo", pg: AsyncEngine):
         self._config = config
         self._mongo: Mongo = mongo
         self._pg: AsyncEngine = pg
@@ -191,16 +195,16 @@ class UploadsData(DataLayerDomain):
             **await apply_transforms(upload, [AttachUserTransform(self._mongo)]),
         )
 
-        try:
+        with suppress(FileNotFoundError):
             await to_thread(rm, self._config.data_path / "files" / upload.name_on_disk)
-        except FileNotFoundError:
-            pass
 
         return upload
 
-    async def release(self, upload_ids: int | list[int]):
-        """Release the uploads in `upload_ids` by setting the `reserved` field to
-        `False`.
+    async def release(self, upload_ids: int | list[int]) -> None:
+        """Release the uploads in `upload_ids`.
+
+        The `reserved` field is set to `False`, allowing the uploads to be used for
+        sample creation.
 
         :param upload_ids: List of upload ids
         """
@@ -219,9 +223,11 @@ class UploadsData(DataLayerDomain):
 
             await session.commit()
 
-    async def reserve(self, upload_ids: int | list[int]):
-        """Reserve the uploads in `upload_ids` by setting the `reserved` field to
-        `True`.
+    async def reserve(self, upload_ids: int | list[int]) -> None:
+        """Reserve the uploads in `upload_ids`.
+
+        The `reserved` field is set to `True`, preventing the uploads from being used
+        for sample creation.
 
         :param upload_ids: List of upload ids
         """

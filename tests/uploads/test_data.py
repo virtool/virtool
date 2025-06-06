@@ -11,7 +11,7 @@ from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.pg.utils import get_row_by_id
-from virtool.uploads.models import SQLUpload, UploadType
+from virtool.uploads.sql import SQLUpload, UploadType
 
 
 async def test_create(

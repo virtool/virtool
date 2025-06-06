@@ -22,8 +22,8 @@ from virtool.references.tasks import (
     ImportReferenceTask,
     RemoteReferenceTask,
 )
-from virtool.tasks.models import SQLTask
-from virtool.uploads.models import UploadType
+from virtool.tasks.sql import SQLTask
+from virtool.uploads.sql import UploadType
 from virtool.utils import get_temp_dir
 
 TEST_FILES_PATH = Path(__file__).parent.parent / "test_files"

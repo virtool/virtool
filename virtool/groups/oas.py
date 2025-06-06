@@ -1,9 +1,7 @@
-"""Request and response models use to validate requests and autogenerate the OpenAPI
-specification.
-"""
+from pydantic import Field, constr
 
-from pydantic import BaseModel, Field, constr
-from virtool_core.models.group import Group
+from virtool.groups.models import Group
+from virtool.models.base import BaseModel
 
 
 class PermissionsUpdate(BaseModel):
@@ -28,27 +26,6 @@ class CreateGroupRequest(BaseModel):
 
     class Config:
         schema_extra = {"example": {"name": "Research"}}
-
-
-class CreateGroupResponse(Group):
-    class Config:
-        schema_extra = {
-            "example": {
-                "permissions": {
-                    "cancel_job": True,
-                    "create_ref": False,
-                    "create_sample": True,
-                    "modify_hmm": False,
-                    "modify_subtraction": False,
-                    "remove_file": False,
-                    "remove_job": True,
-                    "upload_file": True,
-                },
-                "id": "research",
-                "name": "research",
-                "users": [],
-            },
-        }
 
 
 class UpdateGroupRequest(BaseModel):

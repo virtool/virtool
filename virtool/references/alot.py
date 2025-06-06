@@ -2,14 +2,13 @@ import copy
 import datetime
 from dataclasses import dataclass
 
-from virtool_core.models.enums import HistoryMethod
-
 import virtool.utils
 from virtool.history.utils import (
     calculate_diff,
     compose_history_description,
     derive_otu_information,
 )
+from virtool.models.enums import HistoryMethod
 from virtool.otus.utils import verify
 from virtool.types import Document
 from virtool.utils import random_alphanumeric

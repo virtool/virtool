@@ -71,6 +71,16 @@ async def engine(
     )
 
     async with engine_without_db.connect() as conn:
+        # Terminate all connections to the database before dropping it
+        await conn.execute(
+            text(
+                f"""
+                SELECT pg_terminate_backend(pid)
+                FROM pg_stat_activity
+                WHERE datname = '{pg_db_name}' AND pid <> pg_backend_pid();
+                """,
+            ),
+        )
         await conn.execute(
             text(
                 f"DROP DATABASE IF EXISTS {pg_db_name};",
@@ -81,6 +91,8 @@ async def engine(
                 f"CREATE DATABASE {pg_db_name};",
             ),
         )
+    
+    await engine_without_db.dispose()
 
     engine = create_async_engine(
         pg_connection_string,
@@ -96,6 +108,31 @@ async def engine(
     yield engine
 
     await engine.dispose()
+    
+    # Force close all connections to the database before dropping it
+    engine_without_db = create_async_engine(
+        pg_base_connection_string,
+        isolation_level="AUTOCOMMIT",
+    )
+    
+    async with engine_without_db.connect() as conn:
+        # Terminate all other connections to the database
+        await conn.execute(
+            text(
+                f"""
+                SELECT pg_terminate_backend(pid)
+                FROM pg_stat_activity
+                WHERE datname = '{pg_db_name}' AND pid <> pg_backend_pid();
+                """,
+            ),
+        )
+        await conn.execute(
+            text(
+                f"DROP DATABASE IF EXISTS {pg_db_name};",
+            ),
+        )
+    
+    await engine_without_db.dispose()
 
 
 @pytest.fixture()

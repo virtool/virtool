@@ -4,10 +4,9 @@ from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 
 from structlog import get_logger
-from virtool_core.utils import decompress_tgz
 
 from virtool.data.http import download_file
-from virtool.utils import load_json
+from virtool.utils import decompress_tgz, load_json
 
 if TYPE_CHECKING:
     from virtool.data.layer import DataLayer

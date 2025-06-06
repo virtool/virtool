@@ -3,13 +3,12 @@ import json
 from datetime import datetime
 from operator import itemgetter
 from pathlib import Path
-from typing import Dict, List, Optional, Set
 
 from cerberus import Validator
 from pydantic import BaseModel
-from virtool_core.models.reference import ReferenceDataType
 
 import virtool.otus.utils
+from virtool.references.models import ReferenceDataType
 
 RIGHTS = ["build", "modify", "modify_otu", "remove"]
 
@@ -17,15 +16,15 @@ RIGHTS = ["build", "modify", "modify_otu", "remove"]
 class ReferenceSourceData(BaseModel):
     data_type: ReferenceDataType = ReferenceDataType.genome
     organism: str = "Unknown"
-    otus: List[Dict]
-    targets: Optional[List[Dict]] = None
+    otus: list[dict]
+    targets: list[dict] | None = None
 
 
 def check_import_data(
-    data: Dict,
+    data: dict,
     strict: bool = True,
     verify: bool = True,
-) -> List[dict]:
+) -> list[dict]:
     errors = detect_duplicates(data["otus"])
 
     v = Validator(get_import_schema(require_meta=strict), allow_unknown=True)
@@ -80,7 +79,7 @@ def check_will_change(old: dict, imported: dict) -> bool:
     old_isolates = sorted(old["isolates"], key=itemgetter("id"))
 
     # Check isolate by isolate. Order is ignored.
-    for new_isolate, old_isolate in zip(new_isolates, old_isolates):
+    for new_isolate, old_isolate in zip(new_isolates, old_isolates, strict=False):
         # Will change if a value property of the isolate has changed.
         for key in ("id", "source_type", "source_name", "default"):
             if new_isolate[key] != old_isolate[key]:
@@ -99,7 +98,9 @@ def check_will_change(old: dict, imported: dict) -> bool:
             key=lambda d: d["remote"]["id"],
         )
 
-        for new_sequence, old_sequence in zip(new_sequences, old_sequences):
+        for new_sequence, old_sequence in zip(
+            new_sequences, old_sequences, strict=False
+        ):
             for key in ("accession", "definition", "host", "sequence"):
                 if new_sequence[key] != old_sequence[key]:
                     return True
@@ -142,8 +143,8 @@ def detect_duplicate_isolate_ids(joined: dict, duplicate_isolate_ids: dict):
 
 def detect_duplicate_sequence_ids(
     joined: dict,
-    duplicate_sequence_ids: Set[str],
-    seen_sequence_ids: Set[str],
+    duplicate_sequence_ids: set[str],
+    seen_sequence_ids: set[str],
 ):
     sequence_ids = virtool.otus.utils.extract_sequence_ids(joined)
 
@@ -161,7 +162,7 @@ def detect_duplicate_sequence_ids(
     seen_sequence_ids.update(sequence_ids)
 
 
-def detect_duplicate_name(joined: dict, duplicates: Set[str], seen: Set[str]):
+def detect_duplicate_name(joined: dict, duplicates: set[str], seen: set[str]):
     lowered = joined["name"].lower()
 
     if joined["name"].lower() in seen:
@@ -170,7 +171,7 @@ def detect_duplicate_name(joined: dict, duplicates: Set[str], seen: Set[str]):
         seen.add(lowered)
 
 
-def detect_duplicates(otus: List[dict], strict: bool = True) -> List[dict]:
+def detect_duplicates(otus: list[dict], strict: bool = True) -> list[dict]:
     duplicate_abbreviations = set()
     duplicate_ids = set()
     duplicate_isolate_ids = {}

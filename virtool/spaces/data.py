@@ -1,19 +1,8 @@
-from typing import List, Union
+from typing import TYPE_CHECKING
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.roles import (
-    SpaceLabelRole,
-    SpaceProjectRole,
-    SpaceReferenceRole,
-    SpaceRole,
-    SpaceSampleRole,
-    SpaceSubtractionRole,
-    SpaceUploadRole,
-)
-from virtool_core.models.spaces import MemberSearchResult, Space, SpaceMinimal
-from virtool_core.utils import document_enum
 
 import virtool.utils
 from virtool.authorization.client import AuthorizationClient
@@ -25,9 +14,22 @@ from virtool.data.errors import (
     ResourceConflictError,
     ResourceNotFoundError,
 )
-from virtool.mongo.core import Mongo
+from virtool.doc import document_enum
+from virtool.models.roles import (
+    SpaceLabelRole,
+    SpaceProjectRole,
+    SpaceReferenceRole,
+    SpaceRole,
+    SpaceSampleRole,
+    SpaceSubtractionRole,
+    SpaceUploadRole,
+)
+from virtool.spaces.models import SpaceMinimal, Space, MemberSearchResult
+from virtool.spaces.sql import SQLSpace
+
+if TYPE_CHECKING:
+    from virtool.mongo.core import Mongo
 from virtool.mongo.utils import id_exists
-from virtool.spaces.models import SQLSpace
 from virtool.spaces.oas import (
     UpdateMemberRequest,
     UpdateSpaceRequest,
@@ -64,7 +66,7 @@ class SpacesData:
         self._mongo = mongo
         self._pg = pg
 
-    async def find(self, user_id: str) -> List[SpaceMinimal]:
+    async def find(self, user_id: str) -> list[SpaceMinimal]:
         """Find all spaces that the user is a member of.
 
         :param user_id: the user ID
@@ -289,7 +291,7 @@ class SpacesData:
 
         raise ResourceNotFoundError
 
-    async def remove_member(self, space_id: int, member_id: Union[str, int]):
+    async def remove_member(self, space_id: int, member_id: str | int):
         """Remove a member from the space.
 
         :param space_id: the space id.

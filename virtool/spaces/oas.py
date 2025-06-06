@@ -1,11 +1,10 @@
-from typing import Optional
 from pydantic import BaseModel, Field, constr
 
-from virtool_core.models.roles import (
-    SpaceRole,
+from virtool.models.roles import (
     SpaceLabelRole,
     SpaceProjectRole,
     SpaceReferenceRole,
+    SpaceRole,
     SpaceSampleRole,
     SpaceSubtractionRole,
     SpaceUploadRole,
@@ -50,14 +49,12 @@ class GetSpaceResponse(BaseModel):
 
 
 class UpdateSpaceRequest(BaseModel):
-    """
-    Used when updating the name or description of the space.
-    """
+    """Used when updating the name or description of the space."""
 
-    name: Optional[constr(strip_whitespace=True)] = Field(
+    name: constr(strip_whitespace=True) | None = Field(
         description="the unique display name for the space"
     )
-    description: Optional[constr(strip_whitespace=True)] = Field(
+    description: constr(strip_whitespace=True) | None = Field(
         description="the description for the space"
     )
 
@@ -219,17 +216,15 @@ class ListMembersResponse(BaseModel):
 
 
 class UpdateMemberRequest(BaseModel):
-    """
-    Used when updating the roles of a member in the space.
-    """
+    """Used when updating the roles of a member in the space."""
 
-    role: Optional[SpaceRole]
-    label: Optional[SpaceLabelRole]
-    project: Optional[SpaceProjectRole]
-    reference: Optional[SpaceReferenceRole]
-    sample: Optional[SpaceSampleRole]
-    subtraction: Optional[SpaceSubtractionRole]
-    upload: Optional[SpaceUploadRole]
+    role: SpaceRole | None
+    label: SpaceLabelRole | None
+    project: SpaceProjectRole | None
+    reference: SpaceReferenceRole | None
+    sample: SpaceSampleRole | None
+    subtraction: SpaceSubtractionRole | None
+    upload: SpaceUploadRole | None
 
     class Config:
         schema_extra = {"example": {"role": "member"}}

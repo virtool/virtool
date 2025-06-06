@@ -1,14 +1,11 @@
 """API request handlers for managing and querying HMM data."""
 
 import asyncio
-from typing import Union
 
 from aiohttp.web import Response
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r502
-from virtool_core.models.hmm import HMM, HMMInstalled, HMMSearchResult
-from virtool_core.models.roles import AdministratorRole
 
 from virtool.api.custom_json import json_response
 from virtool.api.errors import APIBadGateway, APIConflict, APINotFound
@@ -22,6 +19,8 @@ from virtool.data.errors import (
     ResourceRemoteError,
 )
 from virtool.data.utils import get_data_from_req
+from virtool.hmm.models import HMMSearchResult, HMMInstalled, HMM
+from virtool.models.roles import AdministratorRole
 from virtool.mongo.utils import get_mongo_from_req, get_one_field
 
 routes = Routes()
@@ -79,7 +78,7 @@ class StatusView(PydanticView):
 
 @routes.view("/hmms/status/release")
 class ReleaseView(PydanticView):
-    async def get(self) -> Union[r200[Response], r502]:
+    async def get(self) -> r200[Response] | r502:
         """Get the latest HMM release.
 
         Fetches the latest release for the HMM data.
@@ -117,7 +116,7 @@ class UpdatesView(PydanticView):
         return json_response(updates)
 
     @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
-    async def post(self) -> Union[r201[HMMInstalled], r400, r403]:
+    async def post(self) -> r201[HMMInstalled] | r400 | r403:
         """Install HMMs.
 
         Installs the latest official HMM database from GitHub.
@@ -141,7 +140,7 @@ class UpdatesView(PydanticView):
 
 @routes.view("/hmms/{hmm_id}")
 class HMMView(PydanticView):
-    async def get(self, hmm_id: str, /) -> Union[r200[HMM], r404]:
+    async def get(self, hmm_id: str, /) -> r200[HMM] | r404:
         """Get an HMM.
 
         Fetches the details for an HMM annotation.

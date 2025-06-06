@@ -4,7 +4,6 @@ import arrow
 import pytest
 from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
-from virtool_core.models.roles import AdministratorRole
 
 from tests.fixtures.client import ClientSpawner
 from virtool.authorization.client import (
@@ -14,6 +13,7 @@ from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
+from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.users.mongo import validate_credentials

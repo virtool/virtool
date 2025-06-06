@@ -4,7 +4,7 @@ from virtool.data.utils import get_data_from_app, get_data_from_req
 from virtool.fake.next import DataFaker
 from virtool.mongo.utils import get_mongo_from_app, get_mongo_from_req
 from virtool.samples.fake import create_fake_sample
-from virtool.uploads.models import UploadType
+from virtool.uploads.sql import UploadType
 from virtool.utils import random_alphanumeric
 
 routes = Routes()

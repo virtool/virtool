@@ -3,11 +3,11 @@ from pathlib import Path
 import pytest
 from aiohttp import ClientResponse
 from syrupy import SnapshotAssertion
-from virtool_core.models.enums import Permission
 
 from tests.fixtures.client import ClientSpawner
 from virtool.fake.next import DataFaker
-from virtool.uploads.models import UploadType
+from virtool.models.enums import Permission
+from virtool.uploads.sql import UploadType
 
 
 @pytest.fixture()

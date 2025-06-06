@@ -3,11 +3,11 @@ from asyncio import CancelledError
 from asyncio import Task as AsyncioTask
 
 from structlog import get_logger
-from virtool_core.models.task import Task
 
 from virtool.data.errors import ResourceError
 from virtool.data.layer import DataLayer
 from virtool.tasks.client import AbstractTasksClient
+from virtool.tasks.models import Task
 from virtool.tasks.task import BaseTask, get_task_from_name
 
 logger = get_logger("tasks")
@@ -60,19 +60,19 @@ class TaskRunner:
 
         :param task_id: the ID of the task to run
         """
-        sql_task: Task = await self._data.tasks.get(task_id)
+        task: Task = await self._data.tasks.get(task_id)
 
-        log = logger.bind(id=task_id, name=sql_task.type)
+        log = logger.bind(id=task_id, name=task.type)
 
         log.info("starting task")
 
         try:
-            cls = get_task_from_name(sql_task.type)
+            cls = get_task_from_name(task.type)
         except ResourceError as err:
             if "Invalid task name" in str(err):
                 log.warning(
                     "encountered invalid task name. skipping task.",
-                    name=sql_task.type,
+                    name=task.type,
                 )
                 return
 

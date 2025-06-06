@@ -1,9 +1,6 @@
 import shutil
 from asyncio import to_thread
 from pathlib import Path
-from typing import Optional
-
-from virtool_core.models.settings import Settings
 
 from virtool.config import get_config_from_app
 from virtool.data.utils import get_data_from_app
@@ -12,6 +9,7 @@ from virtool.fake.wrapper import FakerWrapper
 from virtool.mongo.utils import get_mongo_from_app
 from virtool.samples.db import create_sample
 from virtool.samples.files import create_reads_file
+from virtool.settings.models import Settings
 from virtool.types import App
 
 READ_FILES_PATH = example_path / "reads"
@@ -37,7 +35,7 @@ def create_fake_composition(fake: FakerWrapper):
         sent += 1
 
 
-async def create_fake_quality(fake: Optional[FakerWrapper]) -> dict:
+async def create_fake_quality(fake: FakerWrapper | None) -> dict:
     if fake is None:
         fake = FakerWrapper()
 

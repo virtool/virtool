@@ -4,13 +4,13 @@ import asyncio
 
 from aiohttp.web_app import Application
 from aiojobs.aiohttp import get_scheduler_from_app
-from virtool_core.redis import Redis
 
 from virtool.config import get_config_from_app
 from virtool.hmm.tasks import HMMRefreshTask
 from virtool.jobs.tasks import TimeoutJobsTask
 from virtool.ml.tasks import SyncMLModelsTask
 from virtool.pg.utils import connect_pg
+from virtool.redis import Redis
 from virtool.references.tasks import CleanReferencesTask, RefreshReferenceReleasesTask
 from virtool.samples.tasks import (
     UpdateSampleWorkflowsTask,
@@ -21,10 +21,9 @@ from virtool.tasks.spawner import TaskSpawnerService
 
 
 async def startup_databases_for_spawner(app: Application):
-    """Creates Redis and Postgres connections
+    """Create Redis and Postgres connections.
 
     :param app: the app object
-
     """
     config = get_config_from_app(app)
 

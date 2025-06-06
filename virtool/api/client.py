@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from virtool_core.models.roles import AdministratorRole
+from virtool.models.roles import AdministratorRole
 
 
 class AbstractClient(ABC):

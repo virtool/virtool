@@ -3,9 +3,6 @@ import asyncio
 from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r202, r400, r403, r404
-from virtool_core.models.roles import AdministratorRole
-from virtool_core.models.user import User
-from virtool_core.utils import document_enum
 
 from virtool.administrators.oas import (
     ListAdministratorResponse,
@@ -29,8 +26,11 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.utils import get_data_from_req
+from virtool.doc import document_enum
 from virtool.flags import FlagName, flag
+from virtool.models.roles import AdministratorRole
 from virtool.users.checks import check_password_length
+from virtool.users.models import User
 from virtool.users.oas import CreateUserRequest
 
 routes = Routes()

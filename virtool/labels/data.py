@@ -1,15 +1,13 @@
-from typing import List
-
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.label import Label, LabelMinimal
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
 from virtool.data.transforms import apply_transforms
-from virtool.labels.models import SQLLabel
+from virtool.labels.models import Label, LabelMinimal
 from virtool.labels.oas import UpdateLabelRequest
+from virtool.labels.sql import SQLLabel
 from virtool.labels.transforms import AttachSampleCountsTransform
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_generic
@@ -22,7 +20,7 @@ class LabelsData:
         self._mongo = mongo
         self._pg = pg
 
-    async def find(self, term: str) -> List[LabelMinimal]:
+    async def find(self, term: str) -> list[LabelMinimal]:
         """List all sample labels.
 
         :param term: the query term

@@ -11,8 +11,6 @@ import pytest
 from aiohttp.web_exceptions import HTTPNoContent
 from aiohttp.web_response import json_response
 from aiohttp_pydantic import PydanticView
-from virtool_core.models.enums import Permission
-from virtool_core.models.roles import AdministratorRole
 
 from tests.fixtures.client import ClientSpawner
 from virtool.api.policy import (
@@ -25,6 +23,8 @@ from virtool.api.policy import (
 from virtool.api.routes import Routes
 from virtool.authorization.permissions import LegacyPermission
 from virtool.errors import PolicyError
+from virtool.models.enums import Permission
+from virtool.models.roles import AdministratorRole
 
 
 @pytest.fixture()

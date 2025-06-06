@@ -3,8 +3,6 @@ import asyncio
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
-from virtool_core.models.enums import HistoryMethod, Molecule
-from virtool_core.models.otu import OTU, OTUIsolate, OTUSegment, OTUSequence
 from yarl import URL
 
 from tests.fixtures.client import ClientSpawner, VirtoolTestClient
@@ -13,7 +11,9 @@ from tests.fixtures.response import RespIs
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.models.enums import HistoryMethod, Molecule
 from virtool.mongo.core import Mongo
+from virtool.otus.models import OTU, OTUIsolate, OTUSegment, OTUSequence
 from virtool.otus.oas import CreateOTURequest
 
 

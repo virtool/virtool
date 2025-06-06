@@ -1,6 +1,5 @@
-from virtool_core.models.settings import Settings
-
 from virtool.mongo.core import Mongo
+from virtool.settings.models import Settings
 from virtool.settings.oas import UpdateSettingsRequest
 
 

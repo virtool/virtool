@@ -1,5 +1,3 @@
-from typing import Union
-
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r204, r403, r404, r409, r422
 
@@ -14,7 +12,7 @@ from virtool.api.errors import (
 )
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.history.oas import HistoryResponse, ListHistoryResponse
+from virtool.history.models import History, HistorySearchResult
 from virtool.mongo.utils import get_mongo_from_req, get_one_field
 
 routes = virtool.api.routes.Routes()
@@ -22,7 +20,7 @@ routes = virtool.api.routes.Routes()
 
 @routes.view("/history")
 class ChangesView(PydanticView):
-    async def get(self) -> Union[r200[ListHistoryResponse], r422]:
+    async def get(self) -> r200[HistorySearchResult] | r422:
         """List history.
 
         Returns a list of change documents.
@@ -35,12 +33,12 @@ class ChangesView(PydanticView):
             req_query=self.request.query,
         )
 
-        return json_response(ListHistoryResponse.parse_obj(data))
+        return json_response(data)
 
 
 @routes.view("/history/{change_id}")
 class ChangeView(PydanticView):
-    async def get(self, change_id: str, /) -> Union[r200[HistoryResponse], r404]:
+    async def get(self, change_id: str, /) -> r200[History] | r404:
         """Get a change document.
 
         Fetches a specific change document by its ``change_id``.
@@ -50,13 +48,13 @@ class ChangeView(PydanticView):
             404: Not found
         """
         try:
-            document = await get_data_from_req(self.request).history.get(change_id)
+            history = await get_data_from_req(self.request).history.get(change_id)
         except ResourceNotFoundError:
             raise APINotFound()
 
-        return json_response(HistoryResponse.parse_obj(document).dict())
+        return json_response(history)
 
-    async def delete(self, change_id: str, /) -> Union[r204, r403, r404, r409]:
+    async def delete(self, change_id: str, /) -> r204 | r403 | r404 | r409:
         """Delete a change document.
 
         Removes the change document with the given ``change_id`` and

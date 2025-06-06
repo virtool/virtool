@@ -7,12 +7,12 @@ Date: 2024-05-22 20:47:09.866326
 
 from asyncio import to_thread
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import arrow
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from virtool_core.utils import file_stats
 
 from virtool.api.custom_json import dump_bytes
 from virtool.history.db import patch_to_version
@@ -21,7 +21,10 @@ from virtool.indexes.sql import IndexType, SQLIndexFile
 from virtool.indexes.utils import join_index_path
 from virtool.migration import MigrationContext
 from virtool.types import Document
-from virtool.utils import compress_json_with_gzip
+from virtool.utils import compress_json_with_gzip, file_stats
+
+if TYPE_CHECKING:
+    from virtool.mongo.core import Mongo
 
 # Revision identifiers.
 name = "ensure index files"

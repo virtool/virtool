@@ -1,8 +1,8 @@
 from sqlalchemy import Integer, String
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import mapped_column, Mapped
-from virtool_core.models.enums import Permission
+from sqlalchemy.orm import Mapped, mapped_column
 
+from virtool.models.enums import Permission
 from virtool.pg.base import Base
 from virtool.users.utils import generate_base_permissions
 
@@ -17,14 +17,11 @@ class SQLGroup(Base):
 
 
 def merge_group_permissions(groups: list[dict]) -> dict[str, bool]:
-    """
-    Return a :class:`dict` of permissions that will be inherited by a user belonging to
-    all the passed ``groups``.
+    """Merge permissions granted by membership in a list of groups.
 
     :param groups: a list of group dictionaries
     :return: a dict keyed by permission names with boolean values indicating the state
     of the permission
-
     """
     permission_dict = generate_base_permissions()
 

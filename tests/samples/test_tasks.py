@@ -5,7 +5,7 @@ from virtool.data.layer import DataLayer
 from virtool.samples.tasks import (
     UpdateSampleWorkflowsTask,
 )
-from virtool.tasks.models import SQLTask
+from virtool.tasks.sql import SQLTask
 from virtool.utils import get_temp_dir
 
 

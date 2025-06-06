@@ -7,17 +7,6 @@ from multidict import MultiDictProxy
 from semver import VersionInfo
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.enums import HistoryMethod
-from virtool_core.models.history import HistorySearchResult
-from virtool_core.models.otu import OTU, OTUSearchResult
-from virtool_core.models.reference import (
-    Reference,
-    ReferenceGroup,
-    ReferenceInstalled,
-    ReferenceRelease,
-    ReferenceSearchResult,
-    ReferenceUser,
-)
 
 import virtool.history.db
 import virtool.indexes.db
@@ -39,9 +28,12 @@ from virtool.errors import GitHubError
 from virtool.github import create_update_subdocument, format_release
 from virtool.groups.pg import SQLGroup
 from virtool.history.db import patch_to_version
-from virtool.indexes.models import IndexSearchResult, IndexMinimal
+from virtool.history.models import HistorySearchResult
+from virtool.indexes.models import IndexMinimal, IndexSearchResult
+from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app, get_new_id, get_one_field, id_exists
+from virtool.otus.models import OTU, OTUSearchResult
 from virtool.otus.oas import CreateOTURequest
 from virtool.pg.utils import get_row
 from virtool.references.alot import prepare_otu_insertion
@@ -59,6 +51,14 @@ from virtool.references.db import (
     get_unbuilt_count,
     populate_insert_only_reference,
     processor,
+)
+from virtool.references.models import (
+    Reference,
+    ReferenceGroup,
+    ReferenceInstalled,
+    ReferenceRelease,
+    ReferenceSearchResult,
+    ReferenceUser,
 )
 from virtool.references.oas import (
     CreateReferenceGroupRequest,
@@ -81,7 +81,7 @@ from virtool.tasks.progress import (
 )
 from virtool.tasks.transforms import AttachTaskTransform
 from virtool.types import Document
-from virtool.uploads.models import SQLUpload
+from virtool.uploads.sql import SQLUpload
 from virtool.users.mongo import extend_user
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import get_http_session_from_app, get_safely

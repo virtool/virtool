@@ -1,7 +1,8 @@
 import hashlib
 
 import bcrypt
-from virtool_core.models.enums import Permission
+
+from virtool.models.enums import Permission
 
 
 def check_legacy_password(password: str, salt: str, hashed: str) -> bool:

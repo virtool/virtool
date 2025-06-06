@@ -3,13 +3,13 @@
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r404
-from virtool_core.models.ml import MLModelReleaseMinimal, MLModelListResult, MLModel
 
 from virtool.api.custom_json import json_response
 from virtool.api.errors import APINotFound
+from virtool.api.routes import Routes
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.api.routes import Routes
+from virtool.ml.models import MLModel, MLModelListResult, MLModelReleaseMinimal
 
 routes = Routes()
 
@@ -17,8 +17,7 @@ routes = Routes()
 @routes.view("/ml")
 class MLModelsView(PydanticView):
     async def get(self) -> r200[MLModelListResult]:
-        """
-        List models.
+        """List models.
 
         Lists all available machine learning models.
 
@@ -33,8 +32,7 @@ class MLModelsView(PydanticView):
 @routes.jobs_api.view("/ml/{model_id}")
 class MLModelView(PydanticView):
     async def get(self, model_id: int, /) -> r200[MLModel] | r404:
-        """
-        Get a model.
+        """Get a model.
 
         Fetches the details of a machine learning model, including all of its releases.
 
@@ -49,8 +47,7 @@ class MLModelView(PydanticView):
 @routes.jobs_api.view("/ml/{model_id}/releases/{release_id}")
 class MLModelReleaseView(PydanticView):
     async def get(self, release_id: int, /) -> r200[MLModelReleaseMinimal] | r404:
-        """
-        Get a model release.
+        """Get a model release.
 
         Fetches the details of a machine learning model release.
         """
@@ -66,8 +63,7 @@ class MLModelReleaseView(PydanticView):
 @routes.jobs_api.view("/ml/{model_id}/releases/{release_id}/model.tar.gz")
 class MLModelFileView(PydanticView):
     async def get(self, release_id: int, /) -> r200[bytes] | r404:
-        """
-        Download a model release.
+        """Download a model release.
 
         Downloads the archived model release.
         """

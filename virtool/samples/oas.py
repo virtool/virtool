@@ -1,43 +1,11 @@
 from typing import Any
 
 from pydantic import BaseModel, Field, conlist, constr
-from virtool_core.models.enums import AnalysisWorkflow, LibraryType
-from virtool_core.models.validators import prevent_none
 
 from virtool.analyses.models import AnalysisMinimal
-from virtool.samples.models import SampleMinimal, Sample
-
-
-class GetSamplesResponse(SampleMinimal):
-    class Config:
-        schema_extra = {
-            "example": [
-                {
-                    "created_at": "2022-05-20T23:48:00.901000Z",
-                    "host": "Malus domestica",
-                    "id": "9zn468u9",
-                    "isolate": "",
-                    "labels": [],
-                    "library_type": "normal",
-                    "name": "HX8",
-                    "notes": "",
-                    "nuvs": False,
-                    "pathoscope": True,
-                    "ready": True,
-                    "subtractions": ["0nhpi36p"],
-                    "user": {
-                        "administrator": True,
-                        "handle": "mrott",
-                        "id": "ihvze2u9",
-                    },
-                    "workflows": {
-                        "aodp": "incompatible",
-                        "nuvs": "none",
-                        "pathoscope": "none",
-                    },
-                },
-            ],
-        }
+from virtool.models.enums import LibraryType, AnalysisWorkflow
+from virtool.models.validators import prevent_none
+from virtool.samples.models import Sample
 
 
 class GetSampleResponse(Sample):

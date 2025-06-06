@@ -12,10 +12,10 @@ import shutil
 import arrow
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from virtool_core.utils import compress_file, file_stats
 
 from virtool.analyses.sql import SQLAnalysisFile
 from virtool.migration import MigrationContext
+from virtool.utils import compress_file, file_stats
 
 # Revision identifiers.
 name = "migrate nuvs files"
