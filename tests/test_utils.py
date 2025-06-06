@@ -12,7 +12,12 @@ from virtool.api.errors import APIBadRequest
 from virtool.data.errors import ResourceConflictError
 from virtool.models import BaseModel
 from virtool.samples.models import Sample
-from virtool.utils import decompress_tgz, get_model_by_name, wait_for_checks
+from virtool.utils import (
+    decompress_tgz,
+    get_model_by_name,
+    is_within_directory,
+    wait_for_checks,
+)
 
 
 @pytest.fixture(scope="session")
@@ -150,3 +155,105 @@ async def test_wait_for_checks(exception):
         return
 
     assert await wait_for_checks(check_one()) is None
+
+
+class TestIsWithinDirectory:
+    def test_ok(self, tmp_path: Path):
+        """Test that a path within a directory returns True."""
+        directory = tmp_path / "base"
+        directory.mkdir()
+        target = directory / "subdir" / "file.txt"
+
+        assert is_within_directory(directory, target) is True
+
+    def test_same_directory(self, tmp_path: Path):
+        """Test that the same directory returns True."""
+        directory = tmp_path / "base"
+        directory.mkdir()
+
+        assert is_within_directory(directory, directory) is True
+
+    def test_outside_directory(self, tmp_path: Path):
+        """Test that a path outside the directory returns False."""
+        directory = tmp_path / "base"
+        directory.mkdir()
+        outside = tmp_path / "other" / "file.txt"
+
+        assert is_within_directory(directory, outside) is False
+
+    def test_parent_directory(self, tmp_path: Path):
+        """Test that a parent directory returns False."""
+        directory = tmp_path / "base" / "subdir"
+        directory.mkdir(parents=True)
+        parent = tmp_path / "base"
+
+        assert is_within_directory(directory, parent) is False
+
+    def test_path_traversal_attack(self, tmp_path: Path):
+        """Test that directory traversal attempts return False."""
+        directory = tmp_path / "base"
+        directory.mkdir()
+
+        # Simulate a path traversal attack
+        malicious_path = directory / ".." / ".." / "etc" / "passwd"
+
+        assert is_within_directory(directory, malicious_path) is False
+
+    def test_relative_paths(self, tmp_path: Path):
+        """Test with relative paths."""
+        # Create a subdirectory structure
+        base_dir = tmp_path / "project"
+        base_dir.mkdir()
+        sub_dir = base_dir / "src"
+        sub_dir.mkdir()
+
+        # Change to the tmp directory and use relative paths
+        original_cwd = Path.cwd()
+        try:
+            os.chdir(tmp_path)
+
+            # Test relative directory and target
+            assert (
+                is_within_directory(Path("project"), Path("project/src/file.py"))
+                is True
+            )
+            assert is_within_directory(Path("project"), Path("other/file.py")) is False
+
+        finally:
+            os.chdir(original_cwd)
+
+    def test_symlink_paths(self, tmp_path: Path):
+        """Test behavior with symlink paths."""
+        directory = tmp_path / "base"
+        directory.mkdir()
+        outside_dir = tmp_path / "outside"
+        outside_dir.mkdir()
+
+        # Create a symlink that points outside the directory
+        symlink_path = directory / "symlink"
+        symlink_path.symlink_to(outside_dir)
+
+        assert is_within_directory(directory, symlink_path / "file.txt") is True
+
+    def test_deeply_nested_paths(self, tmp_path: Path):
+        """Test with deeply nested directory structures."""
+        directory = tmp_path / "base"
+        directory.mkdir()
+
+        # Create a deeply nested path
+        nested_path = directory / "a" / "b" / "c" / "d" / "e" / "f" / "file.txt"
+
+        assert is_within_directory(directory, nested_path) is True
+
+    def test_nonexistent_paths(self, tmp_path: Path):
+        """Test with non-existent paths."""
+        directory = tmp_path / "base"
+        directory.mkdir()
+
+        # Test with non-existent target within directory
+        target = directory / "nonexistent" / "file.txt"
+        assert is_within_directory(directory, target) is True
+
+        # Test with non-existent target outside directory
+        outside_target = tmp_path / "nonexistent" / "file.txt"
+        assert is_within_directory(directory, outside_target) is False

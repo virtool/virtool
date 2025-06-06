@@ -144,7 +144,7 @@ async def test_get_hmm_annotations(data_path: Path, spawn_job_client: JobClientS
         decompress_file(compressed_hmm_annotations, decompressed_hmm_annotations)
 
         with decompressed_hmm_annotations.open("r") as f:
-            hmms = json.loads(f.read())
+            hmms = json.load(f)
 
         assert hmms == [{"id": "foo"}, {"id": "bar"}]
 

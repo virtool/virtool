@@ -50,7 +50,7 @@ class AttachLabelsTransform(AbstractTransform):
 
 
 class AttachSampleCountsTransform(AbstractTransform):
-    """Attach the number of samples associated with the given label to the passed document."""
+    """Attach the number of associated samples to each label document."""
 
     def __init__(self, mongo: Mongo):
         self._mongo = mongo

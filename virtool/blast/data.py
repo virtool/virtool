@@ -39,8 +39,10 @@ class BLASTData(DataLayerDomain):
     async def create_nuvs_blast(
         self, analysis_id: str, sequence_index: int
     ) -> NuvsBlast:
-        """Create a NuVs BLAST record for the sequence associated with a specific analysis
-        ID and sequence index.
+        """Create a NuVs BLAST record.
+
+        Nuvs BlAST records are associated with a specific analysis ID and sequence
+        index in a Nuvs result.
 
         A task will be spawned that runs a BLAST search against NCBI and populates the
         database with result. The analysis and BLAST records are updated as the task

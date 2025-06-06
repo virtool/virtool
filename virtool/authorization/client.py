@@ -298,7 +298,7 @@ def get_authorization_client_from_app(app: App) -> "AuthorizationClient":
 
 
 def get_authorization_client_from_req(req: Request) -> "AuthorizationClient":
-    """Get the authorization client instance from a :class:``aiohttp.web.Request`` object.
+    """Get the authorization client instance from a :class:``aiohttp.web.Request``.
 
     Use this in request handlers instead of ``get_authorization_client_from_app``.
 

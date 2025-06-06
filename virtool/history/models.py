@@ -21,38 +21,26 @@ class HistoryOTU(BaseModel):
 
 class HistoryNested(BaseModel):
     created_at: datetime
-    """
-    When the change was made.
-    """
+    """When the change was made."""
 
     description: str
-    """
-    A human readable description for the change.
-    """
+    """A human readable description for the change."""
 
     id: str
-    """
-    The unique ID for the change.
-    """
+    """The unique ID for the change."""
 
     method_name: HistoryMethod
-    """
-    The name of the method that made the change (eg. edit_sequence). 
-    """
+    """The name of the method that made the change (eg. edit_sequence)."""
 
     user: UserNested
-    """
-    Identifying information for the user that made the change.
-    """
+    """Identifying information for the user that made the change."""
 
 
 class HistoryMinimal(HistoryNested):
     index: HistoryIndex | None
-    """
-    The index the change is included in.
-    
+    """The index the change is included in.
+
     This is optional as not all changes are included in an index.
-    
     """
 
     otu: HistoryOTU
@@ -70,7 +58,7 @@ class History(HistoryMinimal):
     diff: Any
     """
     The JSON diff for the change.
-    
+
     Generated using ``dictdiffer``.
     """
 

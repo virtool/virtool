@@ -9,6 +9,7 @@ import subprocess
 import tarfile
 import tempfile
 from collections.abc import Iterable
+from contextlib import suppress
 from pathlib import Path
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
@@ -35,28 +36,25 @@ SUB_DIRS = [
 
 
 def base_processor(document: dict | None) -> dict | None:
-    """Converts a document from MongoDB into one that form a JSON response.
+    """Convert a document from MongoDB into one that forms a JSON response.
 
     Removes the '_id' key and reassigns it to `id`.
 
     :param document: the document to process
     :return: processed document
-
     """
     if document is None:
         return None
 
     document = dict(document)
 
-    try:
-        document["id"] = document.pop("_id")
-    except KeyError:
-        pass
+    with suppress(KeyError):
+        document["id"] = str(document.pop("_id"))
 
     return document
 
 
-def chunk_list(lst: list, n: int):
+def chunk_list(lst: list, n: int) -> Iterable[list]:
     """Yield successive n-sized chunks from `lst`."""
     for i in range(0, len(lst), n):
         yield lst[i : i + n]
@@ -145,7 +143,7 @@ def dump_json(path: Path, data: Any) -> Any:
     :param path: the path to the JSON file
     :param data: the data to dump
     """
-    with open(path, "wb") as f:
+    with path.open("wb") as f:
         f.write(dump_bytes(data))
 
 
@@ -155,7 +153,7 @@ def load_json(path: Path) -> Any:
     :param path: the path to the JSON file
     :return: the loaded JSON object
     """
-    with open(path, "rb") as f:
+    with path.open("rb") as f:
         return orjson.loads(f.read())
 
 
@@ -164,7 +162,7 @@ def random_alphanumeric(
     mixed_case: bool | None = False,
     excluded: Iterable[str] | None = None,
 ) -> str:
-    """Generates a random string composed of letters and numbers.
+    """Generate a random string composed of letters and numbers.
 
     :param length: the length of the string.
     :param mixed_case: included alpha characters will be mixed case instead of lowercase
@@ -247,7 +245,10 @@ def is_gzipped(path: Path) -> bool:
 
 
 def rm(path: Path, recursive: bool = False) -> bool:
-    """Remove files. Wraps :func:`os.remove` and func:`shutil.rmtree`.
+    """Remove the file or directory at `path`.
+
+    Wraps :func:`os.remove` and func:`shutil.rmtree`.
+
     :param path: the path to remove
     :param recursive: the operation should recursively descend into dirs
     :return: a `bool` indicating if the operation was successful.
@@ -279,16 +280,17 @@ def file_length(path: Path) -> int:
 
 def file_stats(path: Path) -> dict:
     """Return the size and last modification date for the file at `path`.
+
     Wraps :func:`os.stat`
+
     :param path: the file path
     :return: the file size and modification datetime
     """
-    stats = os.stat(path)
-
+    stats = path.stat()
     return {"size": stats.st_size, "modify": arrow.get(stats.st_mtime).datetime}
 
 
-def decompress_tgz(path: Path, target: Path):
+def decompress_tgz(path: Path, target: Path) -> None:
     """Decompress the tar.gz file at ``path`` to the directory ``target``.
 
     :param path: the path to the tar.gz file.
@@ -300,37 +302,30 @@ def decompress_tgz(path: Path, target: Path):
 
 
 def is_within_directory(directory: Path, target: Path) -> bool:
-    """Check whether a file is within a directory.
-
-    :param directory: the path to the directory
-    :param target: the path to the file
-
-    """
-    abs_directory = os.path.abspath(directory)
-    abs_target = os.path.abspath(target)
-
-    prefix = os.path.commonprefix([abs_directory, abs_target])
-
-    return prefix == abs_directory
+    """Check if `target` is within `directory`."""
+    try:
+        target.relative_to(directory)
+    except ValueError:
+        return False
+    else:
+        return True
 
 
-def safely_extract_tgz(tar: TarFile, path: Path):
-    """Safely extract a tar.gz file, ensuring that all member files are within the tarball.
+def safely_extract_tgz(tar: TarFile, path: Path) -> None:
+    """Extract a tar.gz file, ensuring all members are in the target directory.
 
-    This prevents directory traversal attacks described in CVE-2007-4559.
-
-    :param tar: the tarfile
-    :param path: the path to extract to
+    :param tar: the tarfile object to extract
+    :param path: the path to the directory into which to extract the tar.gz file
     """
     for member in tar.getmembers():
-        if not is_within_directory(path, path / member.name):
+        if not (path / member.name).resolve().is_relative_to(path.resolve()):
             raise Exception("Attempted Path Traversal in Tar File")
 
     tar.extractall(path)
 
 
 def decompress_file_with_pigz(path: Path, target: Path, processes: int):
-    """Decompress a file using pigz
+    """Decompress a file using pigz.
 
     :param path: path to the compressed file to be decompressed
     :param target: path for the newly decompressed file to be stored
@@ -346,7 +341,7 @@ def decompress_file_with_pigz(path: Path, target: Path, processes: int):
         str(path.resolve()),
     ]
 
-    with open(target, "w") as f:
+    with target.open("w") as f:
         subprocess.call(command, stdout=f)
 
 
@@ -366,37 +361,37 @@ def decompress_file(path: Path, target: Path, processes: int = 1) -> None:
         decompress_file_with_gzip(path, target)
 
 
-def decompress_file_with_gzip(path: Path, target: Path):
-    """Decompress a file using gzip
+def decompress_file_with_gzip(path: Path, target: Path) -> None:
+    """Decompress a file using gzip.
 
     :param path: path to the compressed file to be decompressed
     :param target: path for the newly decompressed file to be stored
     """
-    with gzip.open(path, "rb") as f_in:
-        with open(target, "wb") as f_out:
-            shutil.copyfileobj(f_in, f_out)
+    with gzip.open(path, "rb") as f_in, target.open("wb") as f_out:
+        shutil.copyfileobj(f_in, f_out)
 
 
 def compress_file_with_pigz(path: Path, target: Path, processes: int):
-    """Use pigz to compress a file
+    """Use pigz to compress a file.
+
     :param path: path to the file to be compressed
     :param target: path where the compressed file should be stored
     :param processes: number of processes allowable for pigz (-p argument)
     """
     command = ["pigz", "-p", str(processes), "-k", "--stdout", str(path.resolve())]
 
-    with open(target, "wb") as f:
+    with target.open("wb") as f:
         subprocess.call(command, stdout=f)
 
 
 def compress_file_with_gzip(path: Path, target: Path) -> None:
-    """Compresses a file using gzip
+    """Compresse a file using gzip.
+
     :param path: path to the file to be compressed
     :param target: path where the compressed file should be stored
     """
-    with open(path, "rb") as f_in:
-        with gzip.open(target, "wb", compresslevel=6) as f_out:
-            shutil.copyfileobj(f_in, f_out)
+    with path.open("rb") as f_in, gzip.open(target, "wb", compresslevel=6) as f_out:
+        shutil.copyfileobj(f_in, f_out)
 
 
 def compress_file(path: Path, target: Path, processes: int = 1) -> None:
