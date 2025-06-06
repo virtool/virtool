@@ -24,6 +24,7 @@ from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
 from virtool.models.enums import HistoryMethod
+from virtool.models.roles import AdministratorRole
 from virtool.mongo.utils import get_mongo_from_req
 from virtool.otus.db import join
 from virtool.otus.utils import verify
