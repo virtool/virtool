@@ -1,15 +1,10 @@
-from typing import Optional
+from pydantic import BaseModel, Field, constr, validator
 
-from pydantic import BaseModel, constr, Field, validator
-from virtool_core.models.label import Label
-
-from virtool_core.models.validators import normalize_hex_color, prevent_none
+from virtool.models.validators import normalize_hex_color, prevent_none
 
 
 class CreateLabelRequest(BaseModel):
-    """
-    Label fields for creating a new label.
-    """
+    """Label fields for creating a new label."""
 
     name: constr(strip_whitespace=True, min_length=1) = Field(
         description="unique name for the label document"
@@ -35,31 +30,16 @@ class CreateLabelRequest(BaseModel):
         }
 
 
-class CreateLabelResponse(Label):
-    class Config:
-        schema_extra = {
-            "example": {
-                "color": "#374151",
-                "count": 0,
-                "description": "dsRNA/binding protein",
-                "id": 23,
-                "name": "Binding protein",
-            }
-        }
-
-
 class UpdateLabelRequest(BaseModel):
-    """
-    Label fields for editing an existing label.
-    """
+    """Label fields for editing an existing label."""
 
-    name: Optional[constr(strip_whitespace=True)] = Field(
+    name: constr(strip_whitespace=True) | None = Field(
         description="A short display name"
     )
-    color: Optional[constr(strip_whitespace=True)] = Field(
+    color: constr(strip_whitespace=True) | None = Field(
         description="A hexadecimal color for the label"
     )
-    description: Optional[constr(strip_whitespace=True)] = Field(
+    description: constr(strip_whitespace=True) | None = Field(
         description="A longer description for the label"
     )
 
@@ -76,32 +56,4 @@ class UpdateLabelRequest(BaseModel):
                 "description": "Field samples from 2022 harvest",
                 "name": "Blueberry 2022",
             }
-        }
-
-
-class LabelResponse(Label):
-    class Config:
-        schema_extra = {
-            "example": {
-                "color": "#6B7280",
-                "count": 0,
-                "description": "dsRNA/Ab",
-                "id": 22,
-                "name": "Ab",
-            }
-        }
-
-
-class GetLabelResponse(Label):
-    class Config:
-        schema_extra = {
-            "example": [
-                {
-                    "color": "#6B7280",
-                    "count": 0,
-                    "description": "dsRNA/Ab",
-                    "id": 22,
-                    "name": "Ab",
-                }
-            ]
         }

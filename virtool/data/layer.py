@@ -2,7 +2,6 @@ from dataclasses import dataclass
 
 from aiohttp import ClientSession
 from sqlalchemy.ext.asyncio import AsyncEngine
-from virtool_core.redis import Redis
 
 from virtool.account.data import AccountData
 from virtool.administrators.data import AdministratorsData
@@ -22,6 +21,7 @@ from virtool.messages.data import MessagesData
 from virtool.ml.data import MLData
 from virtool.mongo.core import Mongo
 from virtool.otus.data import OTUData
+from virtool.redis import Redis
 from virtool.references.data import ReferencesData
 from virtool.samples.data import SamplesData
 from virtool.settings.data import SettingsData

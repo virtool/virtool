@@ -1,8 +1,6 @@
-from __future__ import annotations
-
 import datetime
 
-from virtool_core.models.basemodel import BaseModel
+from virtool.models import BaseModel
 
 
 class MLModelReleaseMinimal(BaseModel):

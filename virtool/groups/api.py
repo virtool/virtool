@@ -1,21 +1,20 @@
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r201, r200, r204, r404, r400
+from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r404
 from pydantic import conint
-from virtool_core.models.group import GroupMinimal, GroupSearchResult
-from virtool_core.models.roles import AdministratorRole
 
 from virtool.api.custom_json import json_response
-from virtool.api.errors import APINotFound, APIBadRequest, APINoContent
-from virtool.api.policy import policy, AdministratorRoutePolicy
+from virtool.api.errors import APIBadRequest, APINoContent, APINotFound
+from virtool.api.policy import AdministratorRoutePolicy, policy
 from virtool.api.routes import Routes
-from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
+from virtool.groups.models import Group, GroupMinimal, GroupSearchResult
 from virtool.groups.oas import (
     CreateGroupRequest,
-    UpdateGroupRequest,
-    CreateGroupResponse,
     GroupResponse,
+    UpdateGroupRequest,
 )
+from virtool.models.roles import AdministratorRole
 
 routes = Routes()
 
@@ -29,8 +28,7 @@ class GroupsView(PydanticView):
         paginate: bool = False,
         term: str | None = None,
     ) -> r200[list[GroupMinimal] | GroupSearchResult]:
-        """
-        List groups.
+        """List groups.
 
         Lists all user groups. The group IDs and names are included in the response.
 
@@ -47,9 +45,8 @@ class GroupsView(PydanticView):
         return json_response(result)
 
     @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
-    async def post(self, data: CreateGroupRequest) -> r201[CreateGroupResponse] | r400:
-        """
-        Create a group.
+    async def post(self, data: CreateGroupRequest) -> r201[Group] | r400:
+        """Create a group.
 
         Creates a new group with the given name.
 
@@ -69,7 +66,7 @@ class GroupsView(PydanticView):
             raise APIBadRequest("Group already exists")
 
         return json_response(
-            GroupResponse.parse_obj(group),
+            group,
             status=201,
             headers={"Location": f"/groups/{group.id}"},
         )
@@ -78,8 +75,7 @@ class GroupsView(PydanticView):
 @routes.view("/groups/{group_id}")
 class GroupView(PydanticView):
     async def get(self, group_id: int, /) -> r200[GroupResponse] | r404:
-        """
-        Get a group.
+        """Get a group.
 
         Fetches the complete representation of a single user group including its
         permissions.
@@ -99,8 +95,7 @@ class GroupView(PydanticView):
     async def patch(
         self, group_id: int, /, data: UpdateGroupRequest
     ) -> r200[GroupResponse] | r404:
-        """
-        Update a group.
+        """Update a group.
 
         Updates a group's name or permissions.
 
@@ -120,8 +115,7 @@ class GroupView(PydanticView):
 
     @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
     async def delete(self, group_id: int, /) -> r204 | r404:
-        """
-        Delete a group.
+        """Delete a group.
 
         Deletes a group by its 'group id'.
 

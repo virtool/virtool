@@ -1,9 +1,8 @@
 from datetime import datetime
 
-from virtool_core.models.basemodel import BaseModel
-from virtool_core.models.group import GroupMinimal, Permissions
-from virtool_core.models.roles import AdministratorRole
-from virtool_core.models.searchresult import SearchResult
+from virtool.groups.models import GroupMinimal, Permissions
+from virtool.models import BaseModel, SearchResult
+from virtool.models.roles import AdministratorRole
 
 
 class UserNested(BaseModel):

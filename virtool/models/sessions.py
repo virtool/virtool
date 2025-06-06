@@ -1,7 +1,6 @@
 from datetime import datetime
-from typing import Optional
 
-from virtool_core.models.basemodel import BaseModel
+from virtool.models import BaseModel
 
 
 class SessionAuthentication(BaseModel):
@@ -14,8 +13,8 @@ class SessionPasswordReset(BaseModel):
 
 
 class Session(BaseModel):
-    authentication: Optional[SessionAuthentication]
+    authentication: SessionAuthentication | None
     created_at: datetime
     id: str
     ip: str
-    reset: Optional[SessionPasswordReset]
+    reset: SessionPasswordReset | None

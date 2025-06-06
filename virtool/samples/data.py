@@ -10,7 +10,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
-import virtool_core.utils
 from virtool.api.client import UserClient
 from virtool.api.utils import compose_regex_query
 from virtool.config.cls import Config
@@ -23,6 +22,7 @@ from virtool.groups.pg import SQLGroup
 from virtool.jobs.client import JobsClient
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.labels.transforms import AttachLabelsTransform
+from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.samples.checks import (
@@ -46,7 +46,6 @@ from virtool.subtractions.db import (
 from virtool.uploads.sql import SQLUpload
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor, chunk_list, wait_for_checks
-from virtool_core.models.roles import AdministratorRole
 
 
 class SamplesData(DataLayerDomain):
@@ -366,7 +365,7 @@ class SamplesData(DataLayerDomain):
         if result.deleted_count:
             try:
                 await to_thread(
-                    virtool_core.utils.rm,
+                    virtool.utils.rm,
                     join_sample_path(self._config, sample_id),
                     recursive=True,
                 )
@@ -421,7 +420,7 @@ class SamplesData(DataLayerDomain):
 
                 try:
                     await to_thread(
-                        virtool_core.utils.rm,
+                        virtool.utils.rm,
                         self._config.data_path / "files" / row.name_on_disk,
                     )
                 except FileNotFoundError:

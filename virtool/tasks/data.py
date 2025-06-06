@@ -7,10 +7,10 @@ import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
 from virtool.tasks.client import AbstractTasksClient
+from virtool.tasks.models import Task
 from virtool.tasks.oas import TaskUpdate
 from virtool.tasks.sql import SQLTask
 from virtool.tasks.task import BaseTask
-from virtool_core.models.task import Task
 
 
 class TasksData:

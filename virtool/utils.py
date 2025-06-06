@@ -15,16 +15,13 @@ from string import ascii_letters, ascii_lowercase, digits
 from tarfile import TarFile
 from typing import Any
 
-import aiofiles
 import arrow
 import orjson
 from aiohttp import ClientSession
 from aiohttp.web import Application
-from pydantic import BaseModel
 
 from virtool.api.custom_json import dump_bytes
-from virtool.models import VirtoolBaseModel
-from virtool_core.utils import decompress_file_with_gzip, safely_extract_tgz
+from virtool.models.base import BaseModel
 
 SUB_DIRS = [
     "files",
@@ -127,10 +124,6 @@ def get_all_subclasses(cls):
 
 
 def get_model_by_name(name: str) -> type[BaseModel]:
-    for cls in get_all_subclasses(VirtoolBaseModel):
-        if cls.__name__ == name:
-            return cls
-
     for cls in get_all_subclasses(BaseModel):
         if cls.__name__ == name:
             return cls
@@ -269,16 +262,16 @@ def rm(path: Path, recursive: bool = False) -> bool:
         raise
 
 
-async def file_length(path: Path) -> int:
-    """Asynchronously determine length of a file
+def file_length(path: Path) -> int:
+    """Determine the number of lines in a file.
 
     :param path: path to file of which to compute the length
-    :return: the length of the file in bytes
+    :return: the number of lines in the file
     """
     length = 0
 
-    async with aiofiles.open(path) as f:
-        async for _ in f:
+    with path.open() as f:
+        for _ in f:
             length += 1
 
     return length

@@ -21,10 +21,10 @@ from virtool.mongo.utils import get_one_field
 from virtool.samples.models import WorkflowState
 from virtool.samples.sql import SQLSampleArtifact, SQLSampleReads
 from virtool.samples.utils import PATHOSCOPE_TASK_NAMES
+from virtool.settings.models import Settings
 from virtool.types import Document
 from virtool.uploads.sql import SQLUpload
 from virtool.utils import base_processor
-from virtool_core.models.settings import Settings
 
 SAMPLE_RIGHTS_PROJECTION = {
     "_id": False,

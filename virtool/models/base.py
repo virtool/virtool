@@ -1,4 +1,5 @@
-from pydantic import BaseModel as PydanticBaseModel, root_validator
+from pydantic import BaseModel as PydanticBaseModel
+from pydantic import root_validator
 
 
 class BaseModel(PydanticBaseModel):

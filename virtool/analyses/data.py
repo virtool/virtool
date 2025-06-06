@@ -48,8 +48,7 @@ from virtool.subtractions.db import (
 )
 from virtool.uploads.utils import naive_writer
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import base_processor, wait_for_checks
-from virtool_core.utils import rm
+from virtool.utils import base_processor, rm, wait_for_checks
 
 logger = get_logger("analyses")
 

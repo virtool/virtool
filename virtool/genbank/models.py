@@ -1,6 +1,6 @@
 from pydantic import validator
 
-from virtool_core.models.basemodel import BaseModel
+from virtool.models.base import BaseModel
 
 VALID_SEQUENCE = frozenset("cagntCAGNT")
 
@@ -13,9 +13,7 @@ class Genbank(BaseModel):
 
     @validator("sequence")
     def check_sequence(cls, sequence: str | None) -> str | None:
-        """
-        Checks if the given sequence is valid.
-        """
+        """Checks if the given sequence is valid."""
         if sequence:
             if not set(sequence) <= VALID_SEQUENCE:
                 raise ValueError("The format of the sequence is invalid")

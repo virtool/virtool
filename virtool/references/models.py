@@ -2,11 +2,10 @@ import enum
 from datetime import datetime
 from typing import Any
 
-from virtool_core.models.basemodel import BaseModel
-from virtool_core.models.searchresult import SearchResult
-from virtool_core.models.task import TaskDetailedNested
-from virtool_core.models.upload import Upload
-from virtool_core.models.user import UserNested
+from virtool.models import BaseModel, SearchResult
+from virtool.tasks.models import TaskDetailedNested
+from virtool.uploads.models import UploadMinimal
+from virtool.users.models import UserNested
 
 
 class ReferenceClonedFrom(BaseModel):
@@ -93,7 +92,7 @@ class ReferenceNested(BaseModel):
 class ReferenceMinimal(ReferenceNested):
     cloned_from: ReferenceClonedFrom | None = None
     created_at: datetime
-    imported_from: Upload | None = None
+    imported_from: UploadMinimal | None = None
     installed: ReferenceInstalled | None = None
     internal_control: str | None
     latest_build: ReferenceBuild | None

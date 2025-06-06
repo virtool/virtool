@@ -3,19 +3,19 @@ import math
 from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.group import Group, GroupMinimal, GroupSearchResult
-from virtool_core.models.user import UserNested
 
 from virtool.authorization.client import AuthorizationClient
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
 from virtool.data.topg import both_transactions
+from virtool.groups.models import Group, GroupMinimal, GroupSearchResult
 from virtool.groups.mongo import (
     update_member_users_and_api_keys,
 )
 from virtool.groups.oas import UpdateGroupRequest
 from virtool.groups.pg import SQLGroup
 from virtool.mongo.core import Mongo
+from virtool.users.models import UserNested
 from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor
 

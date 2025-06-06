@@ -12,7 +12,7 @@ from virtool.authorization.permissions import LegacyPermission
 from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.uploads.oas import CreateUploadResponse, GetUploadsResponse
+from virtool.uploads.models import Upload
 from virtool.uploads.sql import UploadType
 from virtool.uploads.utils import get_upload_path, multipart_file_chunker
 
@@ -28,7 +28,7 @@ class UploadsView(PydanticView):
         page: conint(ge=1) = 1,
         per_page: conint(ge=1, le=100) = 25,
         upload_type: str | None = None,
-    ) -> r200[list[GetUploadsResponse]]:
+    ) -> r200[list[Upload]]:
         """List uploads.
 
         Lists JSON details of all files uploaded to the instance.
@@ -48,7 +48,7 @@ class UploadsView(PydanticView):
         /,
         name: str,
         upload_type: UploadType = Field(alias="type"),
-    ) -> r201[CreateUploadResponse] | r401 | r403 | r404:
+    ) -> r201[Upload] | r401 | r403 | r404:
         """Upload a file.
 
         Accepts file uploads as multipart requests. The request should contain a single

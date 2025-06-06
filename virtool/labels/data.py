@@ -5,12 +5,12 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
 from virtool.data.transforms import apply_transforms
+from virtool.labels.models import Label, LabelMinimal
 from virtool.labels.oas import UpdateLabelRequest
 from virtool.labels.sql import SQLLabel
 from virtool.labels.transforms import AttachSampleCountsTransform
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_generic
-from virtool_core.models.label import Label, LabelMinimal
 
 
 class LabelsData:

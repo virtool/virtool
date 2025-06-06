@@ -13,6 +13,13 @@ from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.file import FileDescriptor
 from virtool.data.http import HTTPClient
+from virtool.ml.models import (
+    MLModel,
+    MLModelListResult,
+    MLModelMinimal,
+    MLModelRelease,
+    MLModelReleaseMinimal,
+)
 from virtool.ml.pg import SQLMLModel, SQLMLModelRelease
 from virtool.ml.tasks import SyncMLModelsTask
 from virtool.releases import (
@@ -22,13 +29,6 @@ from virtool.releases import (
 )
 from virtool.tasks.sql import SQLTask
 from virtool.utils import timestamp
-from virtool_core.models.ml import (
-    MLModel,
-    MLModelListResult,
-    MLModelMinimal,
-    MLModelRelease,
-    MLModelReleaseMinimal,
-)
 
 logger = get_logger("ml")
 

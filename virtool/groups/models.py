@@ -1,18 +1,10 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING, List
-
-from virtool_core.models.basemodel import BaseModel
-from virtool_core.models.searchresult import SearchResult
-
-if TYPE_CHECKING:
-    from virtool_core.models.user import UserNested
+from virtool.models import SearchResult
+from virtool.models.base import BaseModel
+from virtool.users.models import UserNested
 
 
 class Permissions(BaseModel):
-    """
-    The permissions possessed by a user and group.
-    """
+    """The permissions possessed by a user and group."""
 
     cancel_job: bool = False
     create_ref: bool = False
@@ -34,6 +26,25 @@ class Group(GroupMinimal):
     permissions: Permissions
     users: list[UserNested]
 
+    class Config:
+        schema_extra = {
+            "example": {
+                "permissions": {
+                    "cancel_job": True,
+                    "create_ref": False,
+                    "create_sample": True,
+                    "modify_hmm": False,
+                    "modify_subtraction": False,
+                    "remove_file": False,
+                    "remove_job": True,
+                    "upload_file": True,
+                },
+                "id": "research",
+                "name": "research",
+                "users": [],
+            },
+        }
+
 
 class GroupSearchResult(SearchResult):
-    items: List[GroupMinimal]
+    items: list[GroupMinimal]

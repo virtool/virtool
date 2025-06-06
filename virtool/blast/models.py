@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from virtool_core.models.basemodel import BaseModel
-from virtool_core.models.task import TaskNested
+from virtool.models.base import BaseModel
+from virtool.tasks.models import TaskNested
 
 
 class NuvsBlast(BaseModel):

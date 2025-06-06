@@ -1,5 +1,4 @@
-"""
-API request handlers for account endpoints.
+"""API request handlers for account endpoints.
 
 These endpoints modify and return data about the user account associated with the
 session or API key making the requests.
@@ -12,25 +11,25 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r404
 
 import virtool.api.authentication
 import virtool.api.routes
+from virtool.account.models import AccountSettings, Account
 from virtool.account.oas import (
-    UpdateAccountRequest,
-    UpdateSettingsRequest,
-    CreateKeysRequest,
-    UpdateKeyRequest,
-    ResetPasswordRequest,
-    CreateLoginRequest,
-    AccountResponse,
-    UpdateAccountResponse,
-    AccountSettingsResponse,
-    CreateAPIKeyResponse,
-    APIKeyResponse,
-    LoginResponse,
     AccountResetPasswordResponse,
+    AccountResponse,
+    APIKeyResponse,
+    CreateAPIKeyResponse,
+    CreateKeysRequest,
+    CreateLoginRequest,
     ListAPIKeysResponse,
+    LoginResponse,
+    ResetPasswordRequest,
+    UpdateAccountRequest,
+    UpdateAccountResponse,
+    UpdateKeyRequest,
+    UpdateSettingsRequest,
 )
-from virtool.api.errors import APINotFound, APIBadRequest, APINoContent
-from virtool.api.policy import policy, PublicRoutePolicy
 from virtool.api.custom_json import json_response
+from virtool.api.errors import APIBadRequest, APINoContent, APINotFound
+from virtool.api.policy import PublicRoutePolicy, policy
 from virtool.api.utils import set_session_id_cookie, set_session_token_cookie
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
@@ -44,9 +43,8 @@ A :class:`aiohttp.web.RouteTableDef` for account API routes.
 
 @routes.view("/account")
 class AccountView(PydanticView):
-    async def get(self) -> r200[AccountResponse] | r401:
-        """
-        Get an account.
+    async def get(self) -> r200[Account] | r401:
+        """Get an account.
 
         Fetches the details for the account associated with the user agent.
 
@@ -54,7 +52,6 @@ class AccountView(PydanticView):
             200: Successful Operation
             401: Requires Authorization
         """
-
         account = await get_data_from_req(self.request).account.get(
             self.request["client"].user_id
         )
@@ -64,8 +61,7 @@ class AccountView(PydanticView):
     async def patch(
         self, data: UpdateAccountRequest
     ) -> r200[UpdateAccountResponse] | r400 | r401:
-        """
-        Update an account.
+        """Update an account.
 
         Updates the account associated with the user agent.
 
@@ -100,9 +96,8 @@ class AccountView(PydanticView):
 
 @routes.view("/account/settings")
 class AccountsSettingsView(PydanticView):
-    async def get(self) -> r200[AccountSettingsResponse] | r401:
-        """
-        Get account settings.
+    async def get(self) -> r200[AccountSettings] | r401:
+        """Get account settings.
 
         Fetches the settings for the account associated with the user agent.
 
@@ -114,13 +109,12 @@ class AccountsSettingsView(PydanticView):
             self.request["client"].user_id
         )
 
-        return json_response(AccountSettingsResponse.parse_obj(account_settings))
+        return json_response(account_settings)
 
     async def patch(
         self, data: UpdateSettingsRequest
-    ) -> r200[AccountSettingsResponse] | r400 | r401:
-        """
-        Update account settings.
+    ) -> r200[AccountSettings] | r400 | r401:
+        """Update account settings.
 
         Updates the settings of the account associated with the user agent.
 
@@ -133,14 +127,13 @@ class AccountsSettingsView(PydanticView):
             data, self.request["client"].user_id
         )
 
-        return json_response(AccountSettingsResponse.parse_obj(settings))
+        return json_response(settings)
 
 
 @routes.view("/account/keys")
 class KeysView(PydanticView):
     async def get(self) -> r200[list[ListAPIKeysResponse]] | r401:
-        """
-        List API keys.
+        """List API keys.
 
         Lists all API keys registered on the account associated with the user agent.
 
@@ -159,8 +152,7 @@ class KeysView(PydanticView):
     async def post(
         self, data: CreateKeysRequest
     ) -> r201[CreateAPIKeyResponse] | r400 | r401:
-        """
-        Create an API key.
+        """Create an API key.
 
         Creates a new API key on the account associated with the user agent.
 
@@ -183,8 +175,7 @@ class KeysView(PydanticView):
         )
 
     async def delete(self) -> r204 | r401:
-        """
-        Purge API keys.
+        """Purge API keys.
 
         Deletes all API keys registered for the account associated with the user agent.
 
@@ -202,8 +193,7 @@ class KeysView(PydanticView):
 @routes.view("/account/keys/{key_id}")
 class KeyView(PydanticView):
     async def get(self, key_id: str, /) -> r200[APIKeyResponse] | r404:
-        """
-        Get an API key.
+        """Get an API key.
 
         Fetches the details for an API key registered on the account associated with
         the user agent.
@@ -224,8 +214,7 @@ class KeyView(PydanticView):
     async def patch(
         self, key_id: str, /, data: UpdateKeyRequest
     ) -> r200[APIKeyResponse] | r400 | r401 | r404:
-        """
-        Update an API key.
+        """Update an API key.
 
         Updates the permissions an existing API key registered on the account
         associated with the user agent.
@@ -248,8 +237,7 @@ class KeyView(PydanticView):
         return json_response(APIKeyResponse.parse_obj(key))
 
     async def delete(self, key_id: str, /) -> r204 | r401 | r404:
-        """
-        Delete an API key.
+        """Delete an API key.
 
         Removes an API key by its 'key id'.
 
@@ -272,8 +260,7 @@ class KeyView(PydanticView):
 class LoginView(PydanticView):
     @policy(PublicRoutePolicy)
     async def post(self, data: CreateLoginRequest) -> r201[LoginResponse] | r400:
-        """
-        Login.
+        """Login.
 
         Logs in using the passed credentials.
 
@@ -284,7 +271,6 @@ class LoginView(PydanticView):
             201: Successful operation
             400: Invalid input
         """
-
         session_id = self.request["client"].session_id
         ip = virtool.api.authentication.get_ip(self.request)
 
@@ -335,8 +321,7 @@ class LoginView(PydanticView):
 class LogoutView(PydanticView):
     @policy(PublicRoutePolicy)
     async def get(self) -> r204:
-        """
-        Logout.
+        """Logout.
 
         Logs out the user by invalidating the session associated with the user agent. A
         new unauthenticated session ID is returned in cookies.
@@ -363,8 +348,7 @@ class ResetView(PydanticView):
     async def post(
         self, data: ResetPasswordRequest
     ) -> r200[AccountResetPasswordResponse] | r400:
-        """
-        Reset password.
+        """Reset password.
 
         Resets the password for the account associated with the requesting session.
 

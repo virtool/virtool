@@ -11,7 +11,7 @@ from virtool.authorization.client import get_authorization_client_from_app
 from virtool.authorization.relationships import SpaceMembership, UserRoleAssignment
 from virtool.fake.next import DataFaker
 from virtool.flags import FlagName
-from virtool.spaces.models import SQLSpace
+from virtool.spaces.sql import SQLSpace
 
 
 async def test_list(

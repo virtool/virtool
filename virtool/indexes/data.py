@@ -6,8 +6,6 @@ from multidict import MultiDictProxy
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
-from virtool_core.models.history import HistorySearchResult
-from virtool_core.models.reference import ReferenceNested
 
 import virtool.history.db
 import virtool.indexes.db
@@ -22,12 +20,13 @@ from virtool.data.errors import (
 from virtool.data.events import Operation, emit, emits
 from virtool.data.transforms import apply_transforms
 from virtool.history.db import HISTORY_LIST_PROJECTION
+from virtool.history.models import HistorySearchResult
 from virtool.indexes.checks import check_fasta_file_uploaded, check_index_files_uploaded
 from virtool.indexes.db import (
     lookup_index_otu_counts,
     update_last_indexed_versions,
 )
-from virtool.indexes.models import IndexSearchResult, IndexMinimal, Index, IndexFile
+from virtool.indexes.models import Index, IndexFile, IndexMinimal, IndexSearchResult
 from virtool.indexes.sql import SQLIndexFile
 from virtool.indexes.utils import join_index_path
 from virtool.jobs.transforms import AttachJobTransform
@@ -35,6 +34,7 @@ from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import get_rows
 from virtool.references.db import lookup_nested_reference_by_id
+from virtool.references.models import ReferenceNested
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.uploads.utils import multipart_file_chunker, naive_writer
 from virtool.users.transforms import AttachUserTransform

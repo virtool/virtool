@@ -16,7 +16,7 @@ from virtool.api.routes import Routes
 from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.history.oas import ListHistoryResponse
+from virtool.history.models import HistorySearchResult
 from virtool.indexes.db import INDEX_FILE_NAMES
 from virtool.indexes.models import IndexSearchResult
 from virtool.indexes.oas import (
@@ -226,7 +226,7 @@ async def finalize(req):
 
 @routes.view("/indexes/{index_id}/history")
 class IndexHistoryView(PydanticView):
-    async def get(self, index_id: str, /) -> r200[ListHistoryResponse] | r404:
+    async def get(self, index_id: str, /) -> r200[HistorySearchResult] | r404:
         """List history.
 
         Lists history changes for a specific index.

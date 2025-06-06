@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import virtool.utils
 from virtool.analyses.utils import find_nuvs_sequence_by_index
 from virtool.blast.db import delete_nuvs_blast, get_nuvs_blast
+from virtool.blast.models import NuvsBlast
 from virtool.blast.sql import SQLNuVsBlast
 from virtool.blast.task import BLASTTask
 from virtool.blast.utils import (
@@ -20,7 +21,6 @@ from virtool.blast.utils import (
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceNotFoundError
 from virtool.types import Document
-from virtool_core.models.blast import NuvsBlast
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo

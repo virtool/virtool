@@ -46,8 +46,7 @@ from virtool.subtractions.utils import (
 from virtool.uploads.sql import SQLUpload
 from virtool.uploads.utils import naive_writer
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import base_processor
-from virtool_core.utils import rm
+from virtool.utils import base_processor, rm
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo

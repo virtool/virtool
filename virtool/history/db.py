@@ -22,12 +22,12 @@ from virtool.history.utils import (
     compose_history_description,
     derive_otu_information,
 )
+from virtool.models.enums import HistoryMethod
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.db import ATTACH_PROJECTION
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
-from virtool_core.models.enums import HistoryMethod
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo

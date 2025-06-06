@@ -1,17 +1,17 @@
 import datetime
 from enum import Enum
 
-from virtool_core.models.enums import LibraryType
-from virtool_core.models.label import LabelNested
-from virtool_core.models.upload import Upload
-
 from virtool.jobs.models import JobMinimal
-from virtool.models import SearchResult, UserNested, VirtoolBaseModel
+from virtool.labels.models import LabelNested
+from virtool.models import BaseModel, SearchResult
+from virtool.models.enums import LibraryType
 from virtool.samples.models_base import SampleNested
 from virtool.subtractions.models import SubtractionNested
+from virtool.uploads.models import UploadMinimal
+from virtool.users.models import UserNested
 
 
-class SampleArtifact(VirtoolBaseModel):
+class SampleArtifact(BaseModel):
     id: int
     download_url: str
     name: str
@@ -34,7 +34,7 @@ class WorkflowState(Enum):
     """The workflow is currently running, but not complete."""
 
 
-class SampleWorkflows(VirtoolBaseModel):
+class SampleWorkflows(BaseModel):
     aodp: WorkflowState
     nuvs: WorkflowState
     pathoscope: WorkflowState
@@ -54,8 +54,38 @@ class SampleMinimal(SampleNested):
     user: UserNested
     workflows: SampleWorkflows
 
+    class Config:
+        schema_extra = {
+            "example": [
+                {
+                    "created_at": "2022-05-20T23:48:00.901000Z",
+                    "host": "Malus domestica",
+                    "id": "9zn468u9",
+                    "isolate": "",
+                    "labels": [],
+                    "library_type": "normal",
+                    "name": "HX8",
+                    "notes": "",
+                    "nuvs": False,
+                    "pathoscope": True,
+                    "ready": True,
+                    "subtractions": ["0nhpi36p"],
+                    "user": {
+                        "administrator": True,
+                        "handle": "mrott",
+                        "id": "ihvze2u9",
+                    },
+                    "workflows": {
+                        "aodp": "incompatible",
+                        "nuvs": "none",
+                        "pathoscope": "none",
+                    },
+                },
+            ],
+        }
 
-class Quality(VirtoolBaseModel):
+
+class Quality(BaseModel):
     bases: list[list[int | float]]
     composition: list[list[int | float]]
     count: int
@@ -65,14 +95,14 @@ class Quality(VirtoolBaseModel):
     sequences: list[int]
 
 
-class Read(VirtoolBaseModel):
+class Read(BaseModel):
     download_url: str
     id: int
     name: str
     name_on_disk: str
     sample: str
     size: int
-    upload: Upload | None
+    upload: UploadMinimal | None
     uploaded_at: datetime.datetime
 
 

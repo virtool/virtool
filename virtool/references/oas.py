@@ -1,6 +1,8 @@
 from pydantic import BaseModel, Field, constr, root_validator, validator
-from virtool_core.models.history import HistorySearchResult
-from virtool_core.models.reference import (
+
+from virtool.indexes.models import IndexMinimal
+from virtool.models.validators import prevent_none
+from virtool.references.models import (
     Reference,
     ReferenceGroup,
     ReferenceInstalled,
@@ -8,9 +10,6 @@ from virtool_core.models.reference import (
     ReferenceSearchResult,
     ReferenceUser,
 )
-from virtool_core.models.validators import prevent_none
-
-from virtool.indexes.models import IndexMinimal
 
 ALLOWED_REMOTE = ["virtool/ref-plant-viruses"]
 ALLOWED_DATA_TYPE = ["barcode", "genome"]

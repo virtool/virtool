@@ -1,13 +1,43 @@
-from sqlalchemy import Column, DateTime, Integer, String
+from datetime import datetime
 
-from virtool.pg.base import Base
+from virtool.models import BaseModel
+from virtool.models.roles import (
+    SpaceLabelRole,
+    SpaceProjectRole,
+    SpaceReferenceRole,
+    SpaceRole,
+    SpaceSampleRole,
+    SpaceSubtractionRole,
+    SpaceUploadRole,
+)
+from virtool.users.models import UserNested
 
 
-class SQLSpace(Base):
-    __tablename__ = "spaces"
+class SpaceMember(UserNested):
+    role: SpaceRole
+    label_role: SpaceLabelRole | None
+    project_role: SpaceProjectRole | None
+    reference_role: SpaceReferenceRole | None
+    sample_role: SpaceSampleRole | None
+    subtraction_role: SpaceSubtractionRole | None
+    upload_role: SpaceUploadRole | None
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True, nullable=False)
-    description = Column(String, default="", nullable=False)
-    created_at = Column(DateTime, nullable=False)
-    updated_at = Column(DateTime, nullable=False)
+
+class SpaceNested(BaseModel):
+    id: int
+    name: str
+
+
+class SpaceMinimal(SpaceNested):
+    description: str
+
+
+class Space(SpaceMinimal):
+    created_at: datetime
+    updated_at: datetime
+    members: list[SpaceMember]
+
+
+class MemberSearchResult(BaseModel):
+    items: list[SpaceMember]
+    available_roles: list[dict]

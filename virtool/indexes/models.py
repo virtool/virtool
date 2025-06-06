@@ -1,12 +1,13 @@
 from datetime import datetime
 
-from virtool_core.models.reference import ReferenceNested
-
 from virtool.jobs.models import JobMinimal
-from virtool.models import SearchResult, UserNested, VirtoolBaseModel
+from virtool.models import SearchResult
+from virtool.models.base import BaseModel
+from virtool.references.models import ReferenceNested
+from virtool.users.models import UserNested
 
 
-class IndexNested(VirtoolBaseModel):
+class IndexNested(BaseModel):
     id: str
     version: int
 
@@ -17,22 +18,22 @@ class IndexMinimal(IndexNested):
     has_files: bool
     job: JobMinimal | None
     modified_otu_count: int
+    ready: bool
     reference: ReferenceNested
     user: UserNested
-    ready: bool
 
 
 class IndexContributor(UserNested):
     count: int
 
 
-class IndexOTU(VirtoolBaseModel):
+class IndexOTU(BaseModel):
     change_count: int
     id: str
     name: str
 
 
-class IndexFile(VirtoolBaseModel):
+class IndexFile(BaseModel):
     download_url: str
     id: int
     index: str

@@ -4,11 +4,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.transforms import apply_transforms
+from virtool.messages.models import InstanceMessage
 from virtool.messages.oas import CreateMessageRequest, UpdateMessageRequest
 from virtool.messages.sql import SQLInstanceMessage
 from virtool.mongo.core import Mongo
 from virtool.users.transforms import AttachUserTransform
-from virtool_core.models.instancemessage import InstanceMessage
 
 
 class MessagesData:

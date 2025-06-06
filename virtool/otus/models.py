@@ -1,12 +1,9 @@
-from typing import List, Optional, Union
-
 from pydantic import Field, root_validator
 
-from virtool_core.models.basemodel import BaseModel
-from virtool_core.models.enums import Molecule
-from virtool_core.models.history import HistoryNested
-from virtool_core.models.reference import ReferenceNested
-from virtool_core.models.searchresult import SearchResult
+from virtool.history.models import HistoryNested
+from virtool.models import BaseModel, SearchResult
+from virtool.models.enums import Molecule
+from virtool.references.models import ReferenceNested
 
 
 class OTUMinimal(BaseModel):
@@ -32,10 +29,10 @@ class OTUSequence(BaseModel):
     definition: str
     host: str | None = Field(default="")
     id: str
-    remote: Optional[OTURemote]
-    segment: Optional[str]
+    remote: OTURemote | None
+    segment: str | None
     sequence: str
-    target: Optional[str]
+    target: str | None
 
 
 class Sequence(OTUSequence):
@@ -48,13 +45,13 @@ class Sequence(OTUSequence):
 class OTUIsolate(BaseModel):
     default: bool
     id: str
-    sequences: List[OTUSequence]
+    sequences: list[OTUSequence]
     source_name: str
     source_type: str
 
 
 class OTUSegment(BaseModel):
-    molecule: Optional[Molecule]
+    molecule: Molecule | None
     name: str
     required: bool
 
@@ -68,14 +65,14 @@ class OTUSegment(BaseModel):
 
 
 class OTU(OTUMinimal):
-    isolates: List[OTUIsolate]
-    issues: Optional[Union[dict, bool]]
-    last_indexed_version: Optional[int]
+    isolates: list[OTUIsolate]
+    issues: dict | bool | None
+    last_indexed_version: int | None
     most_recent_change: HistoryNested
-    otu_schema: List[OTUSegment] = Field(alias="schema")
-    remote: Optional[OTURemote]
+    otu_schema: list[OTUSegment] = Field(alias="schema")
+    remote: OTURemote | None
 
 
 class OTUSearchResult(SearchResult):
-    documents: List[OTUMinimal]
+    documents: list[OTUMinimal]
     modified_count: int

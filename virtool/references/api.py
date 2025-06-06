@@ -6,8 +6,6 @@ TODO: Drop support for string group ids when we fully migrate to SQL.
 from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r202, r204, r400, r403, r404, r502
-from virtool_core.models.otu import OTU
-from virtool_core.models.roles import AdministratorRole
 
 import virtool.references.db
 from virtool.api.custom_json import json_response
@@ -30,6 +28,8 @@ from virtool.data.errors import (
 )
 from virtool.data.utils import get_data_from_req
 from virtool.indexes.oas import ListIndexesResponse
+from virtool.models.roles import AdministratorRole
+from virtool.otus.models import OTU
 from virtool.otus.oas import CreateOTURequest, FindOTUsResponse
 from virtool.references.db import check_right
 from virtool.references.oas import (

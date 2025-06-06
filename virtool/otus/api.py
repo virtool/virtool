@@ -1,7 +1,6 @@
 from aiohttp import web
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r403, r404
-from virtool_core.models.otu import OTU, OTUIsolate, OTUSequence, Sequence
 
 import virtool.otus.db
 import virtool.references.db
@@ -19,6 +18,7 @@ from virtool.data.utils import get_data_from_req
 from virtool.history.db import HISTORY_LIST_PROJECTION
 from virtool.mongo.utils import get_mongo_from_req, get_one_field
 from virtool.otus.db import SEQUENCE_PROJECTION
+from virtool.otus.models import OTU, OTUIsolate, OTUSequence, Sequence
 from virtool.otus.oas import (
     CreateIsolateRequest,
     CreateSequenceRequest,
