@@ -1,20 +1,26 @@
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, Integer, String
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column
+from datetime import datetime
+from typing import Any
 
-from virtool.pg.base import Base
+from virtool_core.models.basemodel import BaseModel
 
 
-class SQLTask(Base):
-    __tablename__ = "tasks"
+class TaskNested(BaseModel):
+    id: int
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    complete = Column(Boolean, default=False)
-    context = Column(JSONB)
-    count = Column(Integer, default=0)
-    created_at = Column(DateTime, nullable=False)
-    error = Column(String)
-    file_size = Column(BigInteger)
-    progress = Column(Integer, default=0)
-    step = Column(String)
-    type = Column(String, nullable=False)
+
+class TaskDetailedNested(TaskNested):
+    complete: bool
+    created_at: datetime
+    error: str | None = None
+    progress: int
+    step: str | None
+    type: str
+
+
+class Task(TaskDetailedNested):
+    context: dict[str, Any]
+    count: int
+    file_size: int | None = None
+
+
+TaskMinimal = Task

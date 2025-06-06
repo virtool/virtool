@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict, List
+import builtins
 
 import arrow
 from sqlalchemy import asc, desc, select
@@ -7,13 +7,6 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.orm import joinedload
 from structlog import get_logger
-from virtool_core.models.ml import (
-    MLModel,
-    MLModelListResult,
-    MLModelMinimal,
-    MLModelRelease,
-    MLModelReleaseMinimal,
-)
 
 from virtool.config import Config
 from virtool.data.domain import DataLayerDomain
@@ -27,8 +20,15 @@ from virtool.releases import (
     ReleaseType,
     fetch_release_manifest_from_virtool,
 )
-from virtool.tasks.models import SQLTask
+from virtool.tasks.sql import SQLTask
 from virtool.utils import timestamp
+from virtool_core.models.ml import (
+    MLModel,
+    MLModelListResult,
+    MLModelMinimal,
+    MLModelRelease,
+    MLModelReleaseMinimal,
+)
 
 logger = get_logger("ml")
 
@@ -173,7 +173,7 @@ class MLData(DataLayerDomain):
                 release.size,
             )
 
-    async def load(self, releases: Dict[str, List[ReleaseManifestItem]]):
+    async def load(self, releases: dict[str, builtins.list[ReleaseManifestItem]]):
         """Load into the database.
 
         This method is intended to be called by the `sync` method or data faking

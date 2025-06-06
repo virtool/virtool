@@ -13,9 +13,6 @@ from semver import VersionInfo
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
-from virtool_core.models.enums import HistoryMethod
-from virtool_core.models.roles import AdministratorRole
-from virtool_core.models.settings import Settings
 
 import virtool.github
 import virtool.history.db
@@ -48,10 +45,13 @@ from virtool.releases import (
     fetch_release_manifest_from_virtool,
 )
 from virtool.types import Document
-from virtool.uploads.models import SQLUpload
+from virtool.uploads.sql import SQLUpload
 from virtool.users.mongo import extend_user
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
+from virtool_core.models.enums import HistoryMethod
+from virtool_core.models.roles import AdministratorRole
+from virtool_core.models.settings import Settings
 
 if TYPE_CHECKING:
     from virtool.api.client import UserClient

@@ -12,7 +12,7 @@ from syrupy.matchers import path_type
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.ml.tasks import SyncMLModelsTask
-from virtool.tasks.models import SQLTask
+from virtool.tasks.sql import SQLTask
 
 
 @pytest.mark.parametrize("has_last_checked_at", [True, False])

@@ -3,8 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.errors import ResourceConflictError
 from virtool.messages.data import MessagesData
-from virtool.messages.models import SQLInstanceMessage
 from virtool.messages.oas import CreateMessageRequest, UpdateMessageRequest
+from virtool.messages.sql import SQLInstanceMessage
 from virtool.mongo.core import Mongo
 
 

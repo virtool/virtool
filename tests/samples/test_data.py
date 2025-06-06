@@ -3,9 +3,6 @@ import asyncio
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
-from virtool_core.models.enums import LibraryType, Permission
-from virtool_core.models.samples import WorkflowState
-from virtool_core.redis import Redis
 
 from tests.fixtures.client import ClientSpawner
 from virtool.data.errors import ResourceConflictError
@@ -15,8 +12,11 @@ from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.samples.oas import CreateSampleRequest
 from virtool.settings.oas import UpdateSettingsRequest
-from virtool.uploads.models import SQLUpload
+from virtool.uploads.sql import SQLUpload
 from virtool.users.oas import UpdateUserRequest
+from virtool_core.models.enums import LibraryType, Permission
+from virtool_core.models.samples import WorkflowState
+from virtool_core.redis import Redis
 
 
 @pytest.fixture()

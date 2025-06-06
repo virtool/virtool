@@ -7,7 +7,6 @@ from typing import Any
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.settings import Settings
 
 import virtool.errors
 import virtool.mongo.utils
@@ -23,8 +22,9 @@ from virtool.samples.models import WorkflowState
 from virtool.samples.sql import SQLSampleArtifact, SQLSampleReads
 from virtool.samples.utils import PATHOSCOPE_TASK_NAMES
 from virtool.types import Document
-from virtool.uploads.models import SQLUpload
+from virtool.uploads.sql import SQLUpload
 from virtool.utils import base_processor
+from virtool_core.models.settings import Settings
 
 SAMPLE_RIGHTS_PROJECTION = {
     "_id": False,

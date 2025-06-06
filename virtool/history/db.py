@@ -10,14 +10,13 @@ import dictdiffer
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.enums import HistoryMethod
 
 import virtool.history.utils
 import virtool.otus.db
 import virtool.utils
 from virtool.api.utils import paginate
 from virtool.data.transforms import apply_transforms
-from virtool.history.models import SQLHistoryDiff
+from virtool.history.sql import SQLHistoryDiff
 from virtool.history.utils import (
     calculate_diff,
     compose_history_description,
@@ -28,6 +27,7 @@ from virtool.types import Document
 from virtool.users.db import ATTACH_PROJECTION
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
+from virtool_core.models.enums import HistoryMethod
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo

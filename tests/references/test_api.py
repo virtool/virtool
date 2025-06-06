@@ -6,7 +6,6 @@ from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
-from virtool_core.models.enums import Permission
 
 import virtool.utils
 from tests.fixtures.client import ClientSpawner
@@ -18,9 +17,10 @@ from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app, get_one_field
 from virtool.settings.oas import UpdateSettingsRequest
-from virtool.tasks.models import SQLTask
+from virtool.tasks.sql import SQLTask
 from virtool.users.oas import UpdateUserRequest
 from virtool.utils import get_http_session_from_app
+from virtool_core.models.enums import Permission
 
 
 async def test_find(

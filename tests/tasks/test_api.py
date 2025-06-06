@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from tests.fixtures.client import ClientSpawner
-from virtool.tasks.models import SQLTask
+from virtool.tasks.sql import SQLTask
 
 
 async def test_find(spawn_client, pg: AsyncEngine, snapshot, static_time):

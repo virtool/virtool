@@ -1,50 +1,32 @@
-from sqlalchemy import (
-    BigInteger,
-    Boolean,
-    Column,
-    DateTime,
-    Enum,
-    Integer,
-    String,
-    ForeignKey,
-)
-from sqlalchemy.orm import relationship, Mapped
+from datetime import datetime
+from typing import Optional, List
 
-from virtool.pg.base import Base
-from virtool.pg.utils import SQLEnum
+from virtool_core.models.basemodel import BaseModel
+from virtool_core.models.searchresult import SearchResult
+from virtool_core.models.user import UserNested
 
 
-class UploadType(str, SQLEnum):
+class UploadMinimal(BaseModel):
     """
-    Enumerated type for possible upload types
-
+    Model for user uploads.
     """
 
-    hmm = "hmm"
-    reference = "reference"
-    reads = "reads"
-    subtraction = "subtraction"
+    id: int
+    created_at: datetime
+    name: str
+    name_on_disk: str
+    ready: bool
+    removed: bool
+    removed_at: Optional[datetime]
+    reserved: bool
+    size: Optional[int]
+    type: str
+    uploaded_at: Optional[datetime]
+    user: UserNested
 
 
-class SQLUpload(Base):
-    """
-    SQL table to store all new uploads
+Upload = UploadMinimal
 
-    """
 
-    __tablename__ = "uploads"
-
-    id: Column = Column(Integer, primary_key=True)
-    created_at: Column = Column(DateTime)
-    name: Column = Column(String)
-    name_on_disk: Column = Column(String, unique=True)
-    ready: Column = Column(Boolean, default=False, nullable=False)
-    reads: Column = relationship("SQLSampleReads", lazy="joined")
-    removed: Column = Column(Boolean, default=False, nullable=False)
-    removed_at: Column = Column(DateTime)
-    reserved: Column = Column(Boolean, default=False, nullable=False)
-    size: Column = Column(BigInteger)
-    space: Mapped[int] = Column(Integer, ForeignKey("spaces.id"), nullable=True)
-    type: Column = Column(Enum(UploadType))
-    user: Column = Column(String)
-    uploaded_at: Column = Column(DateTime)
+class UploadSearchResult(SearchResult):
+    items: List[UploadMinimal]

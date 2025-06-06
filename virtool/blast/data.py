@@ -1,34 +1,33 @@
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING
 from zipfile import BadZipFile
 
 from aiohttp import ClientSession
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.blast import NuvsBlast
 
 import virtool.utils
 from virtool.analyses.utils import find_nuvs_sequence_by_index
-from virtool.blast.db import get_nuvs_blast, delete_nuvs_blast
-from virtool.blast.models import SQLNuVsBlast
+from virtool.blast.db import delete_nuvs_blast, get_nuvs_blast
+from virtool.blast.sql import SQLNuVsBlast
 from virtool.blast.task import BLASTTask
 from virtool.blast.utils import (
+    check_rid,
     extract_blast_info,
     fetch_ncbi_blast_html,
-    check_rid,
+    fetch_nuvs_blast_result,
+    format_blast_content,
 )
-from virtool.blast.utils import format_blast_content, fetch_nuvs_blast_result
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceNotFoundError
 from virtool.types import Document
+from virtool_core.models.blast import NuvsBlast
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
 
 
 class BLASTData(DataLayerDomain):
-    """
-    A data layer piece for BLAST data.
-    """
+    """A data layer piece for BLAST data."""
 
     name = "blast"
 
@@ -40,8 +39,7 @@ class BLASTData(DataLayerDomain):
     async def create_nuvs_blast(
         self, analysis_id: str, sequence_index: int
     ) -> NuvsBlast:
-        """
-        Create a NuVs BLAST record for the sequence associated with a specific analysis
+        """Create a NuVs BLAST record for the sequence associated with a specific analysis
         ID and sequence index.
 
         A task will be spawned that runs a BLAST search against NCBI and populates the
@@ -87,8 +85,7 @@ class BLASTData(DataLayerDomain):
         return blast
 
     async def initialize_on_ncbi(self, analysis_id: str, sequence_index: int):
-        """
-        Send a request to NCBI to BLAST the passed sequence.
+        """Send a request to NCBI to BLAST the passed sequence.
 
         Return the RID and RTOE from the response.
 
@@ -121,8 +118,7 @@ class BLASTData(DataLayerDomain):
         return blast
 
     async def get_nuvs_blast(self, analysis_id: str, sequence_index: int) -> NuvsBlast:
-        """
-        Get a NuVs BLAST record by its analysis ID and sequence index.
+        """Get a NuVs BLAST record by its analysis ID and sequence index.
 
         :param analysis_id:
         :param sequence_index:
@@ -137,8 +133,7 @@ class BLASTData(DataLayerDomain):
         analysis_id: str,
         sequence_index: int,
     ):
-        """
-        Sync our BLAST resource with NCBI.
+        """Sync our BLAST resource with NCBI.
 
         Send a request to NCBI to check on the status of a BLAST request. Update the
         ``last_checked_at`` field.
@@ -187,8 +182,7 @@ class BLASTData(DataLayerDomain):
         return await self.get_nuvs_blast(analysis_id, sequence_index)
 
     async def delete_nuvs_blast(self, analysis_id: str, sequence_index: int) -> int:
-        """
-        Remove a NuVs BLAST record.
+        """Remove a NuVs BLAST record.
 
         :param analysis_id: the analysis the BLAST belongs to
         :param sequence_index: the index of the BLASTed NuVs sequence
@@ -206,9 +200,8 @@ class BLASTData(DataLayerDomain):
 
         return deleted_count
 
-    async def list_by_analysis(self, analysis_id: str) -> List[Document]:
-        """
-        Get all BLAST records associated with an analysis.
+    async def list_by_analysis(self, analysis_id: str) -> list[Document]:
+        """Get all BLAST records associated with an analysis.
 
         :param analysis_id: the ID of the analysis to list BLASTs for
         :return: a list of BLAST records

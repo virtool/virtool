@@ -1,35 +1,16 @@
-from sqlalchemy import (
-    Boolean,
-    Column,
-    DateTime,
-    ForeignKey,
-    Integer,
-    JSON,
-    String,
-    UniqueConstraint,
-)
-from sqlalchemy.orm import relationship, Mapped, mapped_column
+from datetime import datetime
 
-from virtool.pg.base import Base
-from virtool.tasks.models import SQLTask
+from virtool_core.models.basemodel import BaseModel
+from virtool_core.models.task import TaskNested
 
 
-class SQLNuVsBlast(Base):
-    __tablename__ = "nuvs_blast"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    analysis_id: Mapped[str]
-    sequence_index = Column(Integer, nullable=False)
-    created_at = Column(DateTime, nullable=False)
-    updated_at = Column(DateTime, nullable=False)
-    last_checked_at = Column(DateTime, nullable=False)
-    error = Column(String)
-    interval = Column(Integer, default=3)
-    rid = Column(String(24))
-    ready = Column(Boolean, nullable=False)
-    result = Column(JSON)
-    task_id = Column(Integer, ForeignKey("tasks.id"))
-
-    task = relationship(SQLTask)
-
-    __table_args__ = (UniqueConstraint("analysis_id", "sequence_index"),)
+class NuvsBlast(BaseModel):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    last_checked_at: datetime
+    error: str | None
+    rid: str | None
+    ready: bool = False
+    result: dict | None
+    task: TaskNested | None

@@ -4,8 +4,6 @@ from asyncio import to_thread
 
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.upload import Upload, UploadSearchResult
-from virtool_core.utils import rm
 
 import virtool.utils
 from virtool.data.domain import DataLayerDomain
@@ -13,9 +11,11 @@ from virtool.data.errors import ResourceNotFoundError
 from virtool.data.events import Operation, emits
 from virtool.data.transforms import apply_transforms
 from virtool.mongo.core import Mongo
-from virtool.uploads.models import SQLUpload, UploadType
+from virtool.uploads.sql import SQLUpload, UploadType
 from virtool.uploads.utils import naive_writer
 from virtool.users.transforms import AttachUserTransform
+from virtool_core.models.upload import Upload, UploadSearchResult
+from virtool_core.utils import rm
 
 
 class UploadsData(DataLayerDomain):

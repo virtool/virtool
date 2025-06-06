@@ -1,10 +1,11 @@
-from typing import Any, Awaitable, List
+from collections.abc import Awaitable
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.labels.models import SQLLabel
 from virtool.data.transforms import AbstractTransform
+from virtool.labels.sql import SQLLabel
 from virtool.mongo.core import Mongo
 from virtool.types import Document
 
@@ -13,7 +14,7 @@ class AttachLabelsTransform(AbstractTransform):
     def __init__(self, pg: AsyncEngine):
         self._pg = pg
 
-    async def _fetch_labels(self, label_ids: List[int]) -> List[Document]:
+    async def _fetch_labels(self, label_ids: list[int]) -> list[Document]:
         async with AsyncSession(self._pg) as session:
             results = await session.execute(
                 select(SQLLabel).where(SQLLabel.id.in_(label_ids))
@@ -49,10 +50,7 @@ class AttachLabelsTransform(AbstractTransform):
 
 
 class AttachSampleCountsTransform(AbstractTransform):
-    """
-    Attach the number of samples associated with the given label to the passed document.
-
-    """
+    """Attach the number of samples associated with the given label to the passed document."""
 
     def __init__(self, mongo: Mongo):
         self._mongo = mongo

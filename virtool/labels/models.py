@@ -1,14 +1,20 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from pydantic import validator
 
-from virtool.pg.base import Base
+from virtool_core.models.basemodel import BaseModel
+from virtool_core.models.validators import normalize_hex_color
 
 
-class SQLLabel(Base):
-    __tablename__ = "labels"
+class LabelNested(BaseModel):
+    color: str
+    description: str
+    id: int
+    name: str
 
-    id = Column(Integer, primary_key=True)
-    color = Column(String(length=7))
-    description = Column(String, default="")
-    name = Column(String, unique=True)
-    space: Mapped[int] = mapped_column(ForeignKey("spaces.id"), nullable=True)
+
+class Label(LabelNested):
+    count: int
+
+    _normalize_color = validator("color", allow_reuse=True)(normalize_hex_color)
+
+
+LabelMinimal = Label

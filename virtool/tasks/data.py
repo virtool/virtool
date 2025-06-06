@@ -1,18 +1,16 @@
 """The data layer piece for tasks."""
 
-from typing import Type
-
 from sqlalchemy import delete, desc, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.task import Task
 
 import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
 from virtool.tasks.client import AbstractTasksClient
-from virtool.tasks.models import SQLTask
 from virtool.tasks.oas import TaskUpdate
+from virtool.tasks.sql import SQLTask
 from virtool.tasks.task import BaseTask
+from virtool_core.models.task import Task
 
 
 class TasksData:
@@ -132,7 +130,7 @@ class TasksData:
     @emits(Operation.CREATE)
     async def create(
         self,
-        task_class: Type[BaseTask],
+        task_class: type[BaseTask],
         context: dict | None = None,
     ) -> Task:
         """Register a new task.

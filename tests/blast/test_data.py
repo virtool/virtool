@@ -7,14 +7,14 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.blast.data import BLASTData
-from virtool.blast.models import SQLNuVsBlast
+from virtool.blast.sql import SQLNuVsBlast
 from virtool.blast.task import BLASTTask
 from virtool.data.layer import DataLayer
 from virtool.tasks.data import TasksData
-from virtool.tasks.models import SQLTask
+from virtool.tasks.sql import SQLTask
 
 
-@pytest.fixture
+@pytest.fixture()
 async def blast_data(mocker, mongo, pg: AsyncEngine, static_time, redis):
     blast_data = BLASTData(mocker.Mock(spec=ClientSession), mongo, pg)
     blast_data.bind_layer(mocker.Mock(spec=DataLayer))
@@ -83,8 +83,7 @@ async def test_create_nuvs_blast(blast_data: BLASTData, pg, snapshot):
 
 class TestCheckNuvsBlast:
     async def test_running(self, blast_data: BLASTData, mocker, pg, snapshot):
-        """
-        Check that the ``last_checked_at`` field is updated when the BLAST is still
+        """Check that the ``last_checked_at`` field is updated when the BLAST is still
         running on NCBI.
         """
         mocker.patch("virtool.blast.data.check_rid", return_value=False)
@@ -108,8 +107,7 @@ class TestCheckNuvsBlast:
         assert await blast_data.get_nuvs_blast("analysis", 12) == snapshot(name="after")
 
     async def test_result(self, blast_data: BLASTData, mocker, pg, snapshot):
-        """
-        Check that the following occur when the BLAST is complete on NCBI:
+        """Check that the following occur when the BLAST is complete on NCBI:
 
         1. The ``last_checked_at`` field is updated.
         2. The ``ready`` field is set to ``True``.
@@ -146,8 +144,7 @@ class TestCheckNuvsBlast:
         assert await blast_data.get_nuvs_blast("analysis", 12) == snapshot
 
     async def test_bad_zip_file(self, blast_data: BLASTData, mocker, pg, snapshot):
-        """
-        Test that the error field on the BLAST record is set when a BadZipFile error is
+        """Test that the error field on the BLAST record is set when a BadZipFile error is
         encountered.
 
         """

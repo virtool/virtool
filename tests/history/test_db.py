@@ -6,13 +6,13 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
-from virtool_core.models.enums import HistoryMethod
 
 import virtool.history.db
 from tests.fixtures.core import StaticTime
-from virtool.history.models import SQLHistoryDiff
+from virtool.history.sql import SQLHistoryDiff
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
+from virtool_core.models.enums import HistoryMethod
 
 
 class TestAdd:

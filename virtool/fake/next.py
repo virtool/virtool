@@ -18,16 +18,6 @@ from faker.providers import (
 )
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.enums import Molecule
-from virtool_core.models.group import Group
-from virtool_core.models.hmm import HMM
-from virtool_core.models.label import Label
-from virtool_core.models.ml import MLModel
-from virtool_core.models.otu import OTU, OTUSegment
-from virtool_core.models.roles import AdministratorRole
-from virtool_core.models.task import Task
-from virtool_core.models.upload import Upload
-from virtool_core.models.user import User
 
 from virtool.data.layer import DataLayer
 from virtool.example import example_path
@@ -52,9 +42,19 @@ from virtool.subtractions.oas import (
     NucleotideComposition,
 )
 from virtool.tasks.task import BaseTask
-from virtool.uploads.models import UploadType
+from virtool.uploads.sql import UploadType
 from virtool.uploads.utils import CHUNK_SIZE
 from virtool.users.oas import UpdateUserRequest
+from virtool_core.models.enums import Molecule
+from virtool_core.models.group import Group
+from virtool_core.models.hmm import HMM
+from virtool_core.models.label import Label
+from virtool_core.models.ml import MLModel
+from virtool_core.models.otu import OTU, OTUSegment
+from virtool_core.models.roles import AdministratorRole
+from virtool_core.models.task import Task
+from virtool_core.models.upload import Upload
+from virtool_core.models.user import User
 
 
 async def fake_file_chunker(path: Path) -> AsyncGenerator[bytearray, None]:

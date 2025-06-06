@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.history
 from virtool.data.transforms import AbstractTransform
-from virtool.history.models import SQLHistoryDiff
+from virtool.history.sql import SQLHistoryDiff
 from virtool.types import Document
 
 

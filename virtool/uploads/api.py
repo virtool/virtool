@@ -1,23 +1,20 @@
-from typing import List, Union, Optional
-
 from aiohttp.web_fileresponse import FileResponse
 from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r401, r403, r404
 from pydantic import Field, conint
 
-from virtool.api.errors import APINotFound
 from virtool.api.custom_json import json_response
+from virtool.api.errors import APINotFound
+from virtool.api.policy import PermissionRoutePolicy, policy
+from virtool.api.routes import Routes
 from virtool.authorization.permissions import LegacyPermission
 from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.api.policy import policy, PermissionRoutePolicy
-from virtool.api.routes import Routes
-from virtool.uploads.models import UploadType
-from virtool.uploads.oas import GetUploadsResponse, CreateUploadResponse
-from virtool.uploads.utils import get_upload_path
-from virtool.uploads.utils import multipart_file_chunker
+from virtool.uploads.oas import CreateUploadResponse, GetUploadsResponse
+from virtool.uploads.sql import UploadType
+from virtool.uploads.utils import get_upload_path, multipart_file_chunker
 
 routes = Routes()
 
@@ -27,20 +24,18 @@ routes = Routes()
 class UploadsView(PydanticView):
     async def get(
         self,
-        user: Optional[str] = None,
+        user: str | None = None,
         page: conint(ge=1) = 1,
         per_page: conint(ge=1, le=100) = 25,
-        upload_type: Optional[str] = None,
-    ) -> r200[List[GetUploadsResponse]]:
-        """
-        List uploads.
+        upload_type: str | None = None,
+    ) -> r200[list[GetUploadsResponse]]:
+        """List uploads.
 
         Lists JSON details of all files uploaded to the instance.
 
         Status Codes:
             200: Successful operation
         """
-
         uploads = await get_data_from_req(self.request).uploads.find(
             user, page, per_page, upload_type
         )
@@ -53,9 +48,8 @@ class UploadsView(PydanticView):
         /,
         name: str,
         upload_type: UploadType = Field(alias="type"),
-    ) -> Union[r201[CreateUploadResponse], r401, r403, r404]:
-        """
-        Upload a file.
+    ) -> r201[CreateUploadResponse] | r401 | r403 | r404:
+        """Upload a file.
 
         Accepts file uploads as multipart requests. The request should contain a single
         field ``file`` containing the file data.
@@ -85,9 +79,8 @@ class UploadsView(PydanticView):
 @routes.view("/spaces/{space_id}/uploads/{upload_id}")
 @routes.view("/uploads/{upload_id}")
 class UploadView(PydanticView):
-    async def get(self, upload_id: int, /) -> Union[r200[FileResponse], r404]:
-        """
-        Download an upload.
+    async def get(self, upload_id: int, /) -> r200[FileResponse] | r404:
+        """Download an upload.
 
         Downloads a previously uploaded file.
 
@@ -99,7 +92,6 @@ class UploadView(PydanticView):
             200: Successful operation
             404: Not found
         """
-
         try:
             upload = await get_data_from_req(self.request).uploads.get(upload_id)
 
@@ -118,9 +110,8 @@ class UploadView(PydanticView):
         )
 
     @policy(PermissionRoutePolicy(LegacyPermission.REMOVE_FILE))
-    async def delete(self, upload_id: int, /) -> Union[r204, r401, r403, r404]:
-        """
-        Delete an upload.
+    async def delete(self, upload_id: int, /) -> r204 | r401 | r403 | r404:
+        """Delete an upload.
 
         Deletes an upload using its 'upload id'.
 
@@ -130,7 +121,6 @@ class UploadView(PydanticView):
             403: Not permitted
             404: Not found
         """
-
         try:
             await get_data_from_req(self.request).uploads.delete(upload_id)
         except ResourceNotFoundError:
@@ -141,8 +131,7 @@ class UploadView(PydanticView):
 
 @routes.jobs_api.get("/uploads/{id}")
 async def download(req):
-    """
-    Download an upload.
+    """Download an upload.
 
     Downloads an upload using its 'upload id'.
     """

@@ -1,15 +1,14 @@
+import json
 import os
+import tarfile
 from pathlib import Path
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.hmm.tasks import HMMInstallTask
+from virtool.tasks.sql import SQLTask
 from virtool.utils import get_temp_dir
-from virtool.tasks.models import SQLTask
-
-import tarfile
-import json
 
 annotations = [
     {

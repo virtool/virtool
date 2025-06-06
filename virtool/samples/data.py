@@ -5,13 +5,12 @@ import math
 from asyncio import gather, to_thread
 from typing import Any
 
-import virtool_core.utils
 from pymongo.results import UpdateResult
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.roles import AdministratorRole
 
 import virtool.utils
+import virtool_core.utils
 from virtool.api.client import UserClient
 from virtool.api.utils import compose_regex_query
 from virtool.config.cls import Config
@@ -37,16 +36,17 @@ from virtool.samples.db import (
     define_initial_workflows,
     recalculate_workflow_tags,
 )
-from virtool.samples.models import SampleSearchResult, Sample
+from virtool.samples.models import Sample, SampleSearchResult
 from virtool.samples.oas import CreateSampleRequest, UpdateSampleRequest
 from virtool.samples.sql import SQLSampleReads
 from virtool.samples.utils import SampleRight, join_sample_path
 from virtool.subtractions.db import (
     AttachSubtractionsTransform,
 )
-from virtool.uploads.models import SQLUpload
+from virtool.uploads.sql import SQLUpload
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor, chunk_list, wait_for_checks
+from virtool_core.models.roles import AdministratorRole
 
 
 class SamplesData(DataLayerDomain):
