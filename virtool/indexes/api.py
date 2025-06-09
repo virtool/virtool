@@ -18,9 +18,8 @@ from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.history.models import HistorySearchResult
 from virtool.indexes.db import INDEX_FILE_NAMES
-from virtool.indexes.models import IndexSearchResult
+from virtool.indexes.models import Index, IndexSearchResult
 from virtool.indexes.oas import (
-    GetIndexResponse,
     ListIndexesResponse,
     ReadyIndexesResponse,
 )
@@ -59,7 +58,7 @@ class IndexesView(PydanticView):
 @routes.view("/indexes/{index_id}")
 @routes.jobs_api.get("/indexes/{index_id}")
 class IndexView(PydanticView):
-    async def get(self, index_id: str, /) -> r200[GetIndexResponse] | r404:
+    async def get(self, index_id: str, /) -> r200[Index] | r404:
         """Get an index.
 
         Fetches the details for an index.

@@ -19,7 +19,7 @@ from virtool.data.errors import (
     ResourceRemoteError,
 )
 from virtool.data.utils import get_data_from_req
-from virtool.hmm.models import HMMSearchResult, HMMInstalled, HMM
+from virtool.hmm.models import HMM, HMMInstalled, HMMSearchResult
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.utils import get_mongo_from_req, get_one_field
 
@@ -27,7 +27,7 @@ routes = Routes()
 
 
 @routes.view("/hmms")
-class HmmsView(PydanticView):
+class HMMsView(PydanticView):
     async def get(self) -> r200[HMMSearchResult]:
         """Find HMMs.
 

@@ -8,7 +8,7 @@ from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
 from virtool.tasks.client import AbstractTasksClient
 from virtool.tasks.models import Task
-from virtool.tasks.oas import TaskUpdate
+from virtool.tasks.oas import UpdateTaskRequest
 from virtool.tasks.sql import SQLTask
 from virtool.tasks.task import BaseTask
 
@@ -56,7 +56,7 @@ class TasksData:
         raise ResourceNotFoundError
 
     @emits(Operation.UPDATE)
-    async def update(self, task_id: int, task_update: TaskUpdate) -> Task:
+    async def update(self, task_id: int, task_update: UpdateTaskRequest) -> Task:
         """Update a task record with given `task_id`
 
         :param task_id: the id of the task

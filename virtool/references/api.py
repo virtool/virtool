@@ -27,28 +27,26 @@ from virtool.data.errors import (
     ResourceRemoteError,
 )
 from virtool.data.utils import get_data_from_req
+from virtool.history.models import HistorySearchResult
+from virtool.indexes.models import IndexMinimal
 from virtool.indexes.oas import ListIndexesResponse
 from virtool.models.roles import AdministratorRole
-from virtool.otus.models import OTU
-from virtool.otus.oas import CreateOTURequest, FindOTUsResponse
+from virtool.otus.models import OTU, OTUSearchResult
+from virtool.otus.oas import CreateOTURequest
 from virtool.references.db import check_right
+from virtool.references.models import (
+    Reference,
+    ReferenceGroup,
+    ReferenceInstalled,
+    ReferenceRelease,
+    ReferenceSearchResult,
+    ReferenceUser,
+)
 from virtool.references.oas import (
     CreateReferenceGroupRequest,
-    CreateReferenceGroupResponse,
-    CreateReferenceIndexesResponse,
     CreateReferenceRequest,
-    CreateReferenceResponse,
-    CreateReferenceUpdateResponse,
     CreateReferenceUserRequest,
-    FindReferencesResponse,
-    GetReferenceUpdateResponse,
-    ReferenceGroupResponse,
-    ReferenceGroupsResponse,
-    ReferenceHistoryResponse,
-    ReferenceReleaseResponse,
-    ReferenceResponse,
     ReferenceRightsRequest,
-    ReferenceUsersResponse,
     UpdateReferenceRequest,
 )
 
@@ -65,7 +63,7 @@ RIGHTS_SCHEMA = {
 @routes.view("/spaces/{space_id}/refs")
 @routes.view("/refs")
 class ReferencesView(PydanticView):
-    async def get(self, find: str | None) -> r200[FindReferencesResponse]:
+    async def get(self, find: str | None) -> r200[ReferenceSearchResult]:
         """Find references.
 
         Lists references that match the find term.
@@ -87,7 +85,7 @@ class ReferencesView(PydanticView):
     async def post(
         self,
         data: CreateReferenceRequest,
-    ) -> r200[CreateReferenceResponse] | r400 | r403 | r502:
+    ) -> r200[Reference] | r400 | r403 | r502:
         """Create a reference.
 
         Creates an empty reference.
@@ -129,7 +127,7 @@ class ReferencesView(PydanticView):
 @routes.view("/refs/{ref_id}")
 @routes.jobs_api.get("/refs/{ref_id}")
 class ReferenceView(PydanticView):
-    async def get(self, ref_id: str, /) -> r200[ReferenceResponse] | r403 | r404:
+    async def get(self, ref_id: str, /) -> r200[Reference] | r403 | r404:
         """Get a reference.
 
         Fetches the details of a reference.
@@ -152,7 +150,7 @@ class ReferenceView(PydanticView):
         ref_id: str,
         /,
         data: UpdateReferenceRequest,
-    ) -> r200[ReferenceResponse] | r403 | r404:
+    ) -> r200[Reference] | r403 | r404:
         """Update a reference.
 
         Updates an existing reference.
@@ -206,7 +204,7 @@ class ReferenceView(PydanticView):
 
 @routes.view("/refs/{ref_id}/release")
 class ReferenceReleaseView(PydanticView):
-    async def get(self, ref_id: str, /) -> r200[ReferenceReleaseResponse]:
+    async def get(self, ref_id: str, /) -> r200[ReferenceRelease]:
         """Get latest update.
 
         Fetches the latest remote reference update from GitHub.
@@ -236,7 +234,7 @@ class ReferenceReleaseView(PydanticView):
 @routes.view("/spaces/{space_id}/refs/{ref_id}/updates")
 @routes.view("/refs/{ref_id}/updates")
 class ReferenceUpdatesView(PydanticView):
-    async def get(self, ref_id: str, /) -> r200[GetReferenceUpdateResponse]:
+    async def get(self, ref_id: str, /) -> r200[ReferenceInstalled]:
         """List updates.
 
         Lists all updates made to the reference.
@@ -257,7 +255,7 @@ class ReferenceUpdatesView(PydanticView):
         self,
         ref_id: str,
         /,
-    ) -> r201[CreateReferenceUpdateResponse] | r403 | r404:
+    ) -> r201[ReferenceRelease] | r403 | r404:
         """Update a reference.
 
         Updates the reference to the last version of the linked remote reference.
@@ -292,7 +290,7 @@ class ReferenceOTUsView(PydanticView):
         /,
         find: str | None,
         verified: bool | None,
-    ) -> r200[FindOTUsResponse] | r404:
+    ) -> r200[OTUSearchResult] | r404:
         """Find OTUs.
 
         Lists OTUs by name or abbreviation. Results are paginated.
@@ -340,8 +338,8 @@ class ReferenceOTUsView(PydanticView):
             )
         except ResourceNotFoundError:
             raise APINotFound()
-        except ResourceError as err:
-            raise APIBadRequest(str(err))
+        except ResourceError as e:
+            raise APIBadRequest(str(e))
 
         return json_response(otu, status=201, headers={"Location": f"/otus/{otu.id}"})
 
@@ -354,7 +352,7 @@ class ReferenceHistoryView(PydanticView):
         unbuilt: str | None,
         ref_id: str,
         /,
-    ) -> r200[ReferenceHistoryResponse] | r404:
+    ) -> r200[HistorySearchResult] | r404:
         """List history.
 
         Lists changes made to OTUs in the reference.
@@ -401,7 +399,7 @@ class ReferenceIndexesView(PydanticView):
         self,
         ref_id: str,
         /,
-    ) -> r201[CreateReferenceIndexesResponse] | r403 | r404:
+    ) -> r201[IndexMinimal] | r403 | r404:
         """Create an index.
 
         Starts a job to rebuild the otus Bowtie2 index on disk.
@@ -437,7 +435,7 @@ class ReferenceIndexesView(PydanticView):
 
 @routes.view("/refs/{ref_id}/groups")
 class ReferenceGroupsView(PydanticView):
-    async def get(self, ref_id: str, /) -> r200[ReferenceGroupsResponse] | r404:
+    async def get(self, ref_id: str, /) -> r200[ReferenceGroup] | r404:
         """List groups.
 
         Lists all groups that have access to the reference.
@@ -460,7 +458,7 @@ class ReferenceGroupsView(PydanticView):
         ref_id: str,
         /,
         data: CreateReferenceGroupRequest,
-    ) -> r201[CreateReferenceGroupResponse] | r400 | r403 | r404:
+    ) -> r201[ReferenceGroup] | r400 | r403 | r404:
         """Add a group.
 
         Adds a group to the reference. Groups can view, use, and modify the reference.
@@ -495,7 +493,7 @@ class ReferenceGroupView(PydanticView):
         ref_id: str,
         group_id: int | str,
         /,
-    ) -> r200[ReferenceGroupResponse] | r404:
+    ) -> r200[ReferenceGroup] | r404:
         """Get a group.
 
         Fetches the details of a group that has access to the reference.
@@ -520,7 +518,7 @@ class ReferenceGroupView(PydanticView):
         group_id: int | str,
         /,
         data: ReferenceRightsRequest,
-    ) -> r200[ReferenceGroupResponse] | r403 | r404:
+    ) -> r200[ReferenceGroup] | r403 | r404:
         """Update a group.
 
         Updates the access rights a group has on the reference.
@@ -590,7 +588,7 @@ class ReferenceUsersView(PydanticView):
         ref_id: str,
         /,
         data: CreateReferenceUserRequest,
-    ) -> r201[list[ReferenceUsersResponse]] | r400 | r403 | r404:
+    ) -> r201[list[ReferenceUser]] | r400 | r403 | r404:
         """Add a user.
 
         Adds a user to the reference. Users can view, use, and modify the reference.
@@ -638,7 +636,7 @@ class ReferenceUserView(PydanticView):
         user_id: str,
         /,
         data: ReferenceRightsRequest,
-    ) -> r200[ReferenceGroupResponse] | r403 | r404:
+    ) -> r200[ReferenceUser] | r403 | r404:
         """Update a user.
 
         Updates the access rights a user has on the reference.

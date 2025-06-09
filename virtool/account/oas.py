@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field, constr, root_validator, validator
 
-from virtool.account.models import Account, APIKey, check_email
+from virtool.account.models import APIKey, check_email
 from virtool.groups.oas import PermissionsUpdate
 from virtool.models.enums import QuickAnalyzeWorkflow
 from virtool.models.validators import prevent_none
@@ -43,37 +43,6 @@ class UpdateAccountRequest(BaseModel):
                 "email": "dev@virtool.ca",
                 "password": "foo_bar_1",
                 "old_password": "hello_world",
-            }
-        }
-
-
-class UpdateAccountResponse(Account):
-    class Config:
-        schema_extra = {
-            "example": {
-                "administrator_role": None,
-                "email": "dev@virtool.ca",
-                "groups": [],
-                "handle": "bob",
-                "id": "test",
-                "last_password_change": "2015-10-06T20:00:00Z",
-                "permissions": {
-                    "cancel_job": False,
-                    "create_ref": False,
-                    "create_sample": False,
-                    "modify_hmm": False,
-                    "modify_subtraction": False,
-                    "remove_file": False,
-                    "remove_job": False,
-                    "upload_file": False,
-                },
-                "primary_group": {"id": 6, "name": "Technicians"},
-                "settings": {
-                    "quick_analyze_workflow": "pathoscope_bowtie",
-                    "show_ids": True,
-                    "show_versions": True,
-                    "skip_quick_analyze_dialog": True,
-                },
             }
         }
 
@@ -155,28 +124,6 @@ class UpdateKeyRequest(BaseModel):
     _prevent_none = prevent_none("*")
 
 
-class APIKeyResponse(APIKey):
-    class Config:
-        schema_extra = {
-            "example": {
-                "created_at": "2015-10-06T20:00:00Z",
-                "groups": [],
-                "id": "foobar_0",
-                "name": "Foobar",
-                "permissions": {
-                    "cancel_job": False,
-                    "create_ref": False,
-                    "create_sample": True,
-                    "modify_hmm": False,
-                    "modify_subtraction": False,
-                    "remove_file": False,
-                    "remove_job": False,
-                    "upload_file": False,
-                },
-            }
-        }
-
-
 class CreateLoginRequest(BaseModel):
     username: constr(min_length=1) = Field(description="account username")
     password: constr(min_length=1) = Field(description="account password")
@@ -221,27 +168,3 @@ class ResetPasswordRequest(BaseModel):
 class AccountResetPasswordResponse(BaseModel):
     class Config:
         schema_extra = {"example": {"login": False, "reset": False}}
-
-
-class ListAPIKeysResponse(APIKey):
-    class Config:
-        schema_extra = {
-            "example": [
-                {
-                    "created_at": "2015-10-06T20:00:00Z",
-                    "groups": [],
-                    "id": "baz_1",
-                    "name": "Baz",
-                    "permissions": {
-                        "cancel_job": False,
-                        "create_ref": False,
-                        "create_sample": True,
-                        "modify_hmm": False,
-                        "modify_subtraction": False,
-                        "remove_file": False,
-                        "remove_job": False,
-                        "upload_file": False,
-                    },
-                }
-            ]
-        }

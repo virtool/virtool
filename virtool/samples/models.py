@@ -122,6 +122,92 @@ class Sample(SampleMinimal):
     reads: list[Read]
     subtractions: list[SubtractionNested]
 
+    class Config:
+        schema_extra = {
+            "example": {
+                "all_read": False,
+                "all_write": False,
+                "artifacts": [],
+                "created_at": "2022-05-20T23:48:00.901000Z",
+                "format": "fastq",
+                "group": {"id": 4, "name": "Sidney"},
+                "group_read": True,
+                "group_write": True,
+                "hold": True,
+                "host": "Malus domestica",
+                "id": "9zn468u9",
+                "is_legacy": False,
+                "isolate": "",
+                "labels": [],
+                "library_type": "normal",
+                "locale": "",
+                "name": "HX8",
+                "notes": "",
+                "nuvs": False,
+                "paired": True,
+                "pathoscope": True,
+                "quality": {
+                    "bases": [
+                        [36.0, 37.0, 37.0, 37.0, 37.0, 37.0],
+                        [36.0, 37.0, 37.0, 37.0, 37.0, 37.0],
+                    ],
+                    "composition": [
+                        [29.0, 18.0, 15.0, 36.5],
+                        [25.5, 19.0, 31.5, 22.0],
+                    ],
+                    "count": 94601674,
+                    "encoding": "Sanger / Illumina 1.9\n",
+                    "gc": 43.0,
+                    "length": [150, 150],
+                    "sequences": [
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        18,
+                        298,
+                    ],
+                },
+                "reads": [
+                    {
+                        "download_url": "/samples/9zn468u9/reads/reads_1.fq.gz",
+                        "id": 713,
+                        "name": "reads_1.fq.gz",
+                        "name_on_disk": "reads_1.fq.gz",
+                        "sample": "9zn468u9",
+                        "size": 3540467819,
+                        "upload": None,
+                        "uploaded_at": "2022-05-21T00:10:27.418000Z",
+                    },
+                    {
+                        "download_url": "/samples/9zn468u9/reads/reads_2.fq.gz",
+                        "id": 714,
+                        "name": "reads_2.fq.gz",
+                        "name_on_disk": "reads_2.fq.gz",
+                        "sample": "9zn468u9",
+                        "size": 3321721014,
+                        "upload": None,
+                        "uploaded_at": "2022-05-21T00:11:10.743000Z",
+                    },
+                ],
+                "ready": True,
+                "subtractions": [{"id": "0nhpi36p", "name": "Malus domestica"}],
+                "user": {"administrator": True, "handle": "mrott", "id": "ihvze2u9"},
+                "workflows": {
+                    "aodp": "incompatible",
+                    "nuvs": "none",
+                    "pathoscope": "none",
+                },
+            },
+        }
+
 
 class SampleSearchResult(SearchResult):
     documents: list[SampleMinimal]

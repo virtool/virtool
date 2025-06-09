@@ -11,18 +11,15 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r404
 
 import virtool.api.authentication
 import virtool.api.routes
-from virtool.account.models import Account, AccountSettings
+from virtool.account.models import Account, AccountSettings, APIKey
 from virtool.account.oas import (
     AccountResetPasswordResponse,
-    APIKeyResponse,
     CreateAPIKeyResponse,
     CreateKeysRequest,
     CreateLoginRequest,
-    ListAPIKeysResponse,
     LoginResponse,
     ResetPasswordRequest,
     UpdateAccountRequest,
-    UpdateAccountResponse,
     UpdateKeyRequest,
     UpdateSettingsRequest,
 )
@@ -57,9 +54,7 @@ class AccountView(PydanticView):
 
         return json_response(account)
 
-    async def patch(
-        self, data: UpdateAccountRequest
-    ) -> r200[UpdateAccountResponse] | r400 | r401:
+    async def patch(self, data: UpdateAccountRequest) -> r200[Account] | r400 | r401:
         """Update an account.
 
         Updates the account associated with the user agent.
@@ -90,7 +85,7 @@ class AccountView(PydanticView):
         except ResourceError:
             raise APIBadRequest("Invalid credentials")
 
-        return json_response(UpdateAccountResponse.parse_obj(account))
+        return json_response(account)
 
 
 @routes.view("/account/settings")
@@ -131,7 +126,7 @@ class AccountsSettingsView(PydanticView):
 
 @routes.view("/account/keys")
 class KeysView(PydanticView):
-    async def get(self) -> r200[list[ListAPIKeysResponse]] | r401:
+    async def get(self) -> r200[list[APIKey]] | r401:
         """List API keys.
 
         Lists all API keys registered on the account associated with the user agent.
@@ -144,9 +139,7 @@ class KeysView(PydanticView):
             self.request["client"].user_id
         )
 
-        return json_response(
-            [ListAPIKeysResponse.parse_obj(key) for key in keys], status=200
-        )
+        return json_response(keys, status=200)
 
     async def post(
         self, data: CreateKeysRequest
@@ -191,7 +184,7 @@ class KeysView(PydanticView):
 
 @routes.view("/account/keys/{key_id}")
 class KeyView(PydanticView):
-    async def get(self, key_id: str, /) -> r200[APIKeyResponse] | r404:
+    async def get(self, key_id: str, /) -> r200[APIKey] | r404:
         """Get an API key.
 
         Fetches the details for an API key registered on the account associated with
@@ -208,11 +201,11 @@ class KeyView(PydanticView):
         except ResourceNotFoundError:
             raise APINotFound()
 
-        return json_response(APIKeyResponse.parse_obj(key), status=200)
+        return json_response(key, status=200)
 
     async def patch(
         self, key_id: str, /, data: UpdateKeyRequest
-    ) -> r200[APIKeyResponse] | r400 | r401 | r404:
+    ) -> r200[APIKey] | r400 | r401 | r404:
         """Update an API key.
 
         Updates the permissions an existing API key registered on the account
@@ -233,7 +226,7 @@ class KeyView(PydanticView):
         except ResourceNotFoundError:
             raise APINotFound()
 
-        return json_response(APIKeyResponse.parse_obj(key))
+        return json_response(key)
 
     async def delete(self, key_id: str, /) -> r204 | r401 | r404:
         """Delete an API key.

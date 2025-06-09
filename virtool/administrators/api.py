@@ -10,7 +10,6 @@ from virtool.administrators.oas import (
     RunActionRequest,
     UpdateAdministratorRoleRequest,
     UpdateUserRequest,
-    UserResponse,
 )
 from virtool.api.custom_json import json_response
 from virtool.api.errors import APIBadRequest, APIForbidden, APINotFound
@@ -129,7 +128,7 @@ class AdminUsersView(PydanticView):
 @routes.view("/admin/users/{user_id}")
 class AdminUserView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
-    async def get(self, user_id: str, /) -> r200[UserResponse] | r404:
+    async def get(self, user_id: str, /) -> r200[User] | r404:
         """Get a user.
 
         Fetches the details of a user.
@@ -151,7 +150,7 @@ class AdminUserView(PydanticView):
         user_id: str,
         /,
         data: UpdateUserRequest,
-    ) -> r200[UserResponse] | r404:
+    ) -> r200[User] | r404:
         """Update a user.
 
         Status Codes:
@@ -193,7 +192,7 @@ class AdminRoleView(PydanticView):
         user_id: str,
         /,
         data: UpdateAdministratorRoleRequest,
-    ) -> r200[UserResponse] | r404:
+    ) -> r200[User] | r404:
         """Set administrator role.
 
         Updates the user's administrator role.
