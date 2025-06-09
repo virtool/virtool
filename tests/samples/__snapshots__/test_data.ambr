@@ -163,7 +163,7 @@
     ]),
     'created_at': 'not_approximately_now_datetime',
     'format': 'fastq',
-    'group': 'none',
+    'group': None,
     'group_read': True,
     'group_write': True,
     'hold': False,
