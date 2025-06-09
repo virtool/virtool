@@ -1,7 +1,7 @@
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from virtool.blast.models import SQLNuVsBlast
+from virtool.blast.sql import SQLNuVsBlast
 
 
 async def get_nuvs_blast(

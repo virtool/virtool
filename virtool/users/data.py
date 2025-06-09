@@ -4,8 +4,6 @@ import math
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine
 from structlog import get_logger
-from virtool_core.models.roles import AdministratorRole
-from virtool_core.models.user import User, UserSearchResult
 
 import virtool.users.utils
 import virtool.utils
@@ -22,11 +20,13 @@ from virtool.data.events import Operation, emits
 from virtool.data.topg import both_transactions
 from virtool.data.transforms import apply_transforms
 from virtool.groups.transforms import AttachGroupsTransform, AttachPrimaryGroupTransform
+from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field, id_exists
 from virtool.users.db import (
     compose_groups_update,
 )
+from virtool.users.models import User, UserSearchResult
 from virtool.users.mongo import (
     compose_primary_group_update,
     create_user,

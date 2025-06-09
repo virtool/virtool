@@ -1,7 +1,8 @@
 import asyncio
 
 import pytest
-from virtool_core.redis import Redis
+
+from virtool.redis import Redis
 
 
 @pytest.fixture(scope="session")

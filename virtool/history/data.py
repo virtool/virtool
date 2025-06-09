@@ -2,13 +2,13 @@ from pathlib import Path
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncEngine
-from virtool_core.models.history import History, HistorySearchResult
 
 import virtool.otus.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
 from virtool.history.db import HISTORY_PROJECTION, patch_to_version
+from virtool.history.models import History, HistorySearchResult
 from virtool.history.transforms import AttachDiffTransform
 from virtool.mongo.core import Mongo
 from virtool.references.transforms import AttachReferenceTransform

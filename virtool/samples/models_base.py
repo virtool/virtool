@@ -1,8 +1,8 @@
-from virtool.models import VirtoolBaseModel
+from virtool.models.base import BaseModel
 
 
-class SampleID(VirtoolBaseModel):
-    """A base model for samples that only includes the 'id' field"""
+class SampleID(BaseModel):
+    """A base model for samples that only includes the 'id' field."""
 
     id: str
     """The unique identifier for the sample"""

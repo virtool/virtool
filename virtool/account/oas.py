@@ -1,26 +1,23 @@
-from typing import Union, Optional
+from __future__ import annotations
 
-from pydantic import BaseModel, constr, Field, root_validator, validator
-from virtool_core.models.account import Account, AccountSettings, check_email, APIKey
-from virtool_core.models.enums import QuickAnalyzeWorkflow
-from virtool_core.models.validators import prevent_none
+from pydantic import BaseModel, Field, constr, root_validator, validator
 
+from virtool.account.models import Account, APIKey, check_email
 from virtool.groups.oas import PermissionsUpdate
+from virtool.models.enums import QuickAnalyzeWorkflow
+from virtool.models.validators import prevent_none
 
 
 class UpdateAccountRequest(BaseModel):
-    """
-    Fields for updating a user account.
-    """
+    """Fields for updating a user account."""
 
     email: constr(strip_whitespace=True) | None = Field(description="an email address")
     old_password: str | None = Field(description="the old password for verification")
     password: str | None = Field(description="the new password")
 
     @root_validator
-    def check_password(cls, values: Union[str, constr]):
-        """
-        Checks if old_password has also been input if a new password
+    def check_password(cls, values: str | constr):
+        """Checks if old_password has also been input if a new password
         is provided.
         """
         old_password, password = values.get("old_password"), values.get("password")
@@ -30,11 +27,10 @@ class UpdateAccountRequest(BaseModel):
                 raise ValueError(
                     "The old password needs to be given in order for the password to be changed"
                 )
-        else:
-            if old_password:
-                raise ValueError(
-                    "The new password needs to be given in order for the password to be changed"
-                )
+        elif old_password:
+            raise ValueError(
+                "The new password needs to be given in order for the password to be changed"
+            )
 
         return values
 
@@ -83,9 +79,7 @@ class UpdateAccountResponse(Account):
 
 
 class UpdateSettingsRequest(BaseModel):
-    """
-    Fields for updating a user account's settings.
-    """
+    """Fields for updating a user account's settings."""
 
     quick_analyze_workflow: QuickAnalyzeWorkflow | None = Field(
         description="workflow to use for quick analysis"
@@ -110,7 +104,7 @@ class CreateKeysRequest(BaseModel):
     name: constr(strip_whitespace=True, min_length=1) = Field(
         description="a non-unique name for the API key"
     )
-    permissions: Optional[PermissionsUpdate] = Field(
+    permissions: PermissionsUpdate | None = Field(
         default=PermissionsUpdate(),
         description="an object describing the permissions the new key will have. "
         "Any unset permissions will default to false",
@@ -227,51 +221,6 @@ class ResetPasswordRequest(BaseModel):
 class AccountResetPasswordResponse(BaseModel):
     class Config:
         schema_extra = {"example": {"login": False, "reset": False}}
-
-
-class AccountResponse(Account):
-    class Config:
-        schema_extra = {
-            "example": {
-                "administrator_role": None,
-                "groups": [],
-                "handle": "bob",
-                "id": "test",
-                "last_password_change": "2015-10-06T20:00:00Z",
-                "permissions": {
-                    "cancel_job": False,
-                    "create_ref": False,
-                    "create_sample": False,
-                    "modify_hmm": False,
-                    "modify_subtraction": False,
-                    "remove_file": False,
-                    "remove_job": False,
-                    "upload_file": False,
-                },
-                "primary_group": {
-                    "id": 5,
-                    "name": "Technician",
-                },
-                "settings": {
-                    "quick_analyze_workflow": "pathoscope_bowtie",
-                    "show_ids": True,
-                    "show_versions": True,
-                    "skip_quick_analyze_dialog": True,
-                },
-            }
-        }
-
-
-class AccountSettingsResponse(AccountSettings):
-    class Config:
-        schema_extra = {
-            "example": {
-                "skip_quick_analyze_dialog": True,
-                "show_ids": True,
-                "show_versions": True,
-                "quick_analyze_workflow": "pathoscope_bowtie",
-            }
-        }
 
 
 class ListAPIKeysResponse(APIKey):

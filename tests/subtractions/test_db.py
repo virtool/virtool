@@ -1,5 +1,3 @@
-import pytest
-
 import virtool.subtractions.db
 from virtool.data.transforms import apply_transforms
 from virtool.fake.next import DataFaker
@@ -7,7 +5,7 @@ from virtool.subtractions.db import (
     AttachSubtractionsTransform,
     unlink_default_subtractions,
 )
-from virtool.uploads.models import UploadType
+from virtool.uploads.sql import UploadType
 
 
 class TestAttachSubtractions:

@@ -6,17 +6,17 @@ from sqlalchemy import engine_from_config, pool
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool.analyses.sql import SQLAnalysisFile
-from virtool.blast.models import SQLNuVsBlast
+from virtool.blast.sql import SQLNuVsBlast
 from virtool.groups.pg import SQLGroup
 from virtool.indexes.sql import SQLIndexFile
-from virtool.labels.models import SQLLabel
-from virtool.messages.models import SQLInstanceMessage
+from virtool.labels.sql import SQLLabel
+from virtool.messages.sql import SQLInstanceMessage
 from virtool.ml.pg import SQLMLModel, SQLMLModelRelease
 from virtool.pg.base import Base
 from virtool.samples.sql import SQLSampleArtifact, SQLSampleReads
-from virtool.spaces.models import SQLSpace
+from virtool.spaces.sql import SQLSpace
 from virtool.subtractions.pg import SQLSubtractionFile
-from virtool.uploads.models import SQLUpload
+from virtool.uploads.sql import SQLUpload
 from virtool.users.pg import SQLUser, SQLUserGroup
 
 config = context.config

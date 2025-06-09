@@ -1,50 +1,54 @@
-from sqlalchemy import (
-    BigInteger,
-    Boolean,
-    Column,
-    DateTime,
-    Enum,
-    Integer,
-    String,
-    ForeignKey,
-)
-from sqlalchemy.orm import relationship, Mapped
+from datetime import datetime
 
-from virtool.pg.base import Base
-from virtool.pg.utils import SQLEnum
+from virtool.models import SearchResult
+from virtool.models.base import BaseModel
+from virtool.users.models_base import UserNested
 
 
-class UploadType(str, SQLEnum):
-    """
-    Enumerated type for possible upload types
+class UploadMinimal(BaseModel):
+    """Model for user uploads."""
 
-    """
+    id: int
+    created_at: datetime
+    name: str
+    name_on_disk: str
+    ready: bool
+    removed: bool
+    removed_at: datetime | None
+    reserved: bool
+    size: int | None
+    type: str
+    uploaded_at: datetime | None
+    user: UserNested
 
-    hmm = "hmm"
-    reference = "reference"
-    reads = "reads"
-    subtraction = "subtraction"
+    class Config:
+        schema_extra = {
+            "example": [
+                {
+                    "id": 106,
+                    "created_at": "2022-01-22T17:28:21.491000Z",
+                    "name": "MPI19_L3_2.fq.gz",
+                    "name_on_disk": "106-MPI19_L3_2.fq.gz",
+                    "ready": True,
+                    "removed": False,
+                    "removed_at": None,
+                    "reserved": True,
+                    "size": 3356803271,
+                    "type": "reads",
+                    "uploaded_at": "2022-01-22T17:31:59.801000Z",
+                    "user": {
+                        "administrator": True,
+                        "handle": "mrott",
+                        "id": "ihvze2u9",
+                    },
+                }
+            ]
+        }
 
 
-class SQLUpload(Base):
-    """
-    SQL table to store all new uploads
+Upload = UploadMinimal
+"""Complete Upload model with all fields."""
 
-    """
 
-    __tablename__ = "uploads"
-
-    id: Column = Column(Integer, primary_key=True)
-    created_at: Column = Column(DateTime)
-    name: Column = Column(String)
-    name_on_disk: Column = Column(String, unique=True)
-    ready: Column = Column(Boolean, default=False, nullable=False)
-    reads: Column = relationship("SQLSampleReads", lazy="joined")
-    removed: Column = Column(Boolean, default=False, nullable=False)
-    removed_at: Column = Column(DateTime)
-    reserved: Column = Column(Boolean, default=False, nullable=False)
-    size: Column = Column(BigInteger)
-    space: Mapped[int] = Column(Integer, ForeignKey("spaces.id"), nullable=True)
-    type: Column = Column(Enum(UploadType))
-    user: Column = Column(String)
-    uploaded_at: Column = Column(DateTime)
+class UploadSearchResult(SearchResult):
+    items: list[UploadMinimal]

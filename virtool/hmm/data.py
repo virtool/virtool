@@ -3,13 +3,10 @@ import shutil
 from asyncio import to_thread
 from functools import cached_property
 from pathlib import Path
-from typing import Dict, List
 
 from aiohttp import ClientSession
 from multidict import MultiDictProxy
 from sqlalchemy.ext.asyncio import AsyncEngine
-from virtool_core.models.hmm import HMM, HMMInstalled, HMMSearchResult, HMMStatus
-from virtool_core.utils import compress_file_with_gzip
 
 import virtool.hmm.db
 from virtool.api.utils import compose_regex_query, paginate
@@ -27,7 +24,9 @@ from virtool.hmm.db import (
     fetch_and_update_release,
     generate_annotations_json_file,
 )
+from virtool.hmm.models import HMM, HMMInstalled, HMMSearchResult, HMMStatus
 from virtool.hmm.tasks import HMMInstallTask
+from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.tasks.progress import (
     AbstractProgressHandler,
@@ -35,12 +34,15 @@ from virtool.tasks.progress import (
 )
 from virtool.tasks.transforms import AttachTaskTransform
 from virtool.users.transforms import AttachUserTransform
+from virtool.utils import compress_file_with_gzip
 
 
 class HmmsData(DataLayerDomain):
     name = "hmms"
 
-    def __init__(self, client: ClientSession, config: Config, mongo, pg: AsyncEngine):
+    def __init__(
+        self, client: ClientSession, config: Config, mongo: Mongo, pg: AsyncEngine
+    ):
         self._client = client
         self._config = config
         self._mongo = mongo
@@ -141,7 +143,7 @@ class HmmsData(DataLayerDomain):
 
     async def install(
         self,
-        annotations: List[Dict],
+        annotations: list[dict],
         release,
         user_id: str,
         progress_handler: AbstractProgressHandler,

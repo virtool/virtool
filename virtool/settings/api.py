@@ -1,18 +1,14 @@
-from typing import Union
-
 from aiohttp.web import Request, Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r403
 
-from virtool_core.models.roles import AdministratorRole
-
 from virtool.api.custom_json import json_response
-from virtool.data.utils import get_data_from_req
-from virtool.api.policy import policy, AdministratorRoutePolicy
+from virtool.api.policy import AdministratorRoutePolicy, policy
 from virtool.api.routes import Routes
+from virtool.data.utils import get_data_from_req
+from virtool.models.roles import AdministratorRole
+from virtool.settings.models import Settings
 from virtool.settings.oas import (
-    GetSettingsResponse,
-    UpdateSettingsResponse,
     UpdateSettingsRequest,
 )
 
@@ -21,9 +17,8 @@ routes = Routes()
 
 @routes.view("/settings")
 class SettingsView(PydanticView):
-    async def get(self) -> r200[GetSettingsResponse]:
-        """
-        Get settings.
+    async def get(self) -> r200[Settings]:
+        """Get settings.
 
         Fetches the complete application settings.
 
@@ -35,11 +30,8 @@ class SettingsView(PydanticView):
         return json_response(settings)
 
     @policy(AdministratorRoutePolicy(AdministratorRole.SETTINGS))
-    async def patch(
-        self, data: UpdateSettingsRequest
-    ) -> Union[r200[UpdateSettingsResponse], r403]:
-        """
-        Update settings.
+    async def patch(self, data: UpdateSettingsRequest) -> r200[Settings] | r403:
+        """Update settings.
 
         Updates the application settings.
 
@@ -54,8 +46,7 @@ class SettingsView(PydanticView):
 
 @routes.jobs_api.get("/settings")
 async def get(req: Request) -> Response:
-    """
-    Get settings.
+    """Get settings.
 
     Fetches a complete document of the application settings.
     """

@@ -2,9 +2,9 @@ import asyncio
 from asyncio import CancelledError
 
 from structlog import get_logger
-from virtool_core.redis import Redis
 
 from virtool.data.events import Operation, listen_for_events
+from virtool.redis import Redis
 from virtool.users.sessions import SessionData
 from virtool.ws.cls import WSDeleteMessage, WSInsertMessage
 from virtool.ws.connection import WSConnection

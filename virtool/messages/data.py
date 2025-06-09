@@ -1,13 +1,13 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from virtool_core.models.instancemessage import InstanceMessage
 
-from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 import virtool.utils
-from virtool.messages.models import SQLInstanceMessage
-from virtool.messages.oas import CreateMessageRequest, UpdateMessageRequest
-from virtool.mongo.core import Mongo
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.transforms import apply_transforms
+from virtool.messages.models import InstanceMessage
+from virtool.messages.oas import CreateMessageRequest, UpdateMessageRequest
+from virtool.messages.sql import SQLInstanceMessage
+from virtool.mongo.core import Mongo
 from virtool.users.transforms import AttachUserTransform
 
 
@@ -17,10 +17,7 @@ class MessagesData:
         self._mongo = mongo
 
     async def get(self) -> InstanceMessage:
-        """
-        Get the active administrative instance message.
-        """
-
+        """Get the active administrative instance message."""
         async with AsyncSession(self._pg) as session:
             instance_message = (
                 await session.execute(
@@ -43,10 +40,7 @@ class MessagesData:
         raise ResourceConflictError
 
     async def create(self, data: CreateMessageRequest, user_id: str) -> InstanceMessage:
-        """
-        Create an administrative instance message.
-        """
-
+        """Create an administrative instance message."""
         instance_message = SQLInstanceMessage(
             color=data.color,
             message=data.message,
@@ -66,10 +60,7 @@ class MessagesData:
         return InstanceMessage(**document)
 
     async def update(self, data: UpdateMessageRequest) -> InstanceMessage:
-        """
-        Update the active administrative instance message.
-        """
-
+        """Update the active administrative instance message."""
         data = data.dict(exclude_unset=True)
 
         async with AsyncSession(self._pg) as session:

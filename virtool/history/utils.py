@@ -6,9 +6,9 @@ from pathlib import Path
 
 import arrow
 import dictdiffer
-from virtool_core.models.enums import HistoryMethod
 
 from virtool.config import get_config_from_app
+from virtool.models.enums import HistoryMethod
 
 
 def calculate_diff(old: dict, new: dict) -> list:

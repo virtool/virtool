@@ -1,16 +1,15 @@
-from sqlalchemy import Column, Integer, Boolean, Enum, String, DateTime
-from virtool_core.models.enums import MessageColor
+from datetime import datetime
 
-from virtool.pg.base import Base
+from virtool.models.base import BaseModel
+from virtool.models.enums import MessageColor
+from virtool.users.models_base import UserNested
 
 
-class SQLInstanceMessage(Base):
-    __tablename__ = "instance_messages"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    active = Column(Boolean, default=True)
-    color = Column(Enum(MessageColor), nullable=False)
-    message = Column(String)
-    created_at = Column(DateTime)
-    updated_at = Column(DateTime)
-    user = Column(String)
+class InstanceMessage(BaseModel):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    message: str
+    color: MessageColor
+    user: UserNested
+    active: bool

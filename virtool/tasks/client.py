@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from virtool_core.redis import Redis
+from virtool.redis import Redis
 
 REDIS_TASKS_LIST_KEY = "tasks"
 """The key for the list used to queue tasks in Redis."""

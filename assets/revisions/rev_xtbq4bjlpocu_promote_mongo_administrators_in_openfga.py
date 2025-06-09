@@ -6,10 +6,10 @@ Date: 2023-11-29 16:53:59.196976
 """
 
 import arrow
-from virtool_core.models.roles import AdministratorRole
 
 from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.migration import MigrationContext
+from virtool.models.roles import AdministratorRole
 
 # Revision identifiers.
 name = "promote mongo administrators in openFGA"

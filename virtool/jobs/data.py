@@ -2,11 +2,16 @@ import asyncio
 import math
 from asyncio import gather
 from collections import defaultdict
+from typing import TYPE_CHECKING
 
 import arrow
-from pymongo.results import UpdateResult
+
+from virtool.users.models_base import UserNested
+
+if TYPE_CHECKING:
+    from pymongo.results import UpdateResult
+
 from sqlalchemy.ext.asyncio import AsyncEngine
-from virtool_core.models.user import UserNested
 
 import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError

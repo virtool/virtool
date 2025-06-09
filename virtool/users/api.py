@@ -2,8 +2,6 @@ from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r409
 from pydantic import Field
 from structlog import get_logger
-from virtool_core.models.roles import AdministratorRole, SpaceRoleType
-from virtool_core.models.user import User
 
 import virtool.api.authentication
 from virtool.api.custom_json import json_response
@@ -25,8 +23,10 @@ from virtool.authorization.relationships import UserRoleAssignment
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.transforms import apply_transforms
 from virtool.data.utils import get_data_from_req
+from virtool.models.roles import AdministratorRole, SpaceRoleType
 from virtool.mongo.utils import get_mongo_from_req
 from virtool.users.checks import check_password_length
+from virtool.users.models import User
 from virtool.users.oas import (
     CreateFirstUserRequest,
     CreateUserRequest,

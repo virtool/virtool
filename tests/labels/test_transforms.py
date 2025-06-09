@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 from virtool.data.transforms import apply_transforms
-from virtool.labels.models import SQLLabel
+from virtool.labels.sql import SQLLabel
 from virtool.labels.transforms import AttachLabelsTransform, AttachSampleCountsTransform
 from virtool.mongo.core import Mongo
 

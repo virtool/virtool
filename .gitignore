@@ -15,6 +15,7 @@ __pycache__
 /docs/_build
 /misc
 /watch
+CLAUDE.md
 config.json
 settings.json
 env

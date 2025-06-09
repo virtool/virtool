@@ -4,9 +4,6 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.filters import props
-from virtool_core.models.group import GroupMinimal
-from virtool_core.models.roles import AdministratorRole
-from virtool_core.models.user import UserSearchResult
 
 from tests.fixtures.core import StaticTime
 from virtool.authorization.client import AuthorizationClient
@@ -14,8 +11,11 @@ from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.groups.models import GroupMinimal
+from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
+from virtool.users.models import UserSearchResult
 from virtool.users.mongo import validate_credentials
 from virtool.users.oas import UpdateUserRequest
 from virtool.users.pg import SQLUser

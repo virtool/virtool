@@ -1,6 +1,6 @@
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
-from virtool.uploads.models import UploadType
+from virtool.uploads.sql import UploadType
 
 
 async def test_finalize(

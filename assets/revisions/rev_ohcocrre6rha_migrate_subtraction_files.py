@@ -13,7 +13,6 @@ from pathlib import Path
 import arrow
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from virtool_core.utils import compress_file, rm
 
 from virtool.migration import MigrationContext
 from virtool.subtractions.files import create_subtraction_files
@@ -22,6 +21,7 @@ from virtool.subtractions.utils import (
     FILES,
     rename_bowtie_files,
 )
+from virtool.utils import compress_file, rm
 
 # Revision identifiers.
 name = "migrate subtraction files"

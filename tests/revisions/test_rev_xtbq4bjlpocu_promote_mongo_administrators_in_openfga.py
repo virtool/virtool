@@ -1,10 +1,9 @@
-from virtool_core.models.roles import AdministratorRole
-
 from assets.revisions.rev_xtbq4bjlpocu_promote_mongo_administrators_in_openfga import (
     upgrade,
 )
 from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.migration import MigrationContext
+from virtool.models.roles import AdministratorRole
 
 
 async def test_upgrade(ctx: MigrationContext, snapshot):

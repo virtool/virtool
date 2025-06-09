@@ -1,10 +1,9 @@
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncEngine
 from structlog import get_logger
-from virtool_core.models.account import Account, AccountSettings, APIKey
-from virtool_core.models.session import Session
 
 import virtool.utils
+from virtool.account.models import Account, AccountSettings, APIKey
 from virtool.account.mongo import (
     compose_password_update,
 )
@@ -23,6 +22,7 @@ from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.topg import both_transactions
 from virtool.data.transforms import apply_transforms
 from virtool.groups.transforms import AttachGroupsTransform
+from virtool.models.sessions import Session
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.users.mongo import validate_credentials

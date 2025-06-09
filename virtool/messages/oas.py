@@ -1,9 +1,8 @@
-from typing import Optional
-
 from pydantic import BaseModel, validator
-from virtool_core.models.enums import MessageColor
-from virtool_core.models.instancemessage import InstanceMessage
-from virtool_core.models.validators import prevent_none
+
+from virtool.messages.models import InstanceMessage
+from virtool.models.enums import MessageColor
+from virtool.models.validators import prevent_none
 
 
 class CreateMessageRequest(BaseModel):
@@ -12,9 +11,9 @@ class CreateMessageRequest(BaseModel):
 
 
 class UpdateMessageRequest(BaseModel):
-    color: Optional[MessageColor]
-    message: Optional[str]
-    active: Optional[bool]
+    color: MessageColor | None
+    message: str | None
+    active: bool | None
 
     _prevent_none = prevent_none("*")
 

@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from assets.revisions.rev_ulapmx8i3vpg_move_files_to_sql import upgrade
 from virtool.migration import MigrationContext
-from virtool.uploads.models import SQLUpload
+from virtool.uploads.sql import SQLUpload
 
 
 async def test_upgrade(ctx: MigrationContext, snapshot):

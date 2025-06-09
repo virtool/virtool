@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.migration import MigrationContext
-from virtool.uploads.models import SQLUpload
+from virtool.uploads.sql import SQLUpload
 
 # Revision identifiers.
 name = "move files to sql"

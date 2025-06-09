@@ -3,11 +3,6 @@
   dict({
     'active': True,
     'administrator_role': <AdministratorRole.FULL: 'full'>,
-    'b2c': None,
-    'b2c_display_name': None,
-    'b2c_family_name': None,
-    'b2c_given_name': None,
-    'b2c_oid': None,
     'force_reset': False,
     'groups': list([
     ]),
@@ -93,11 +88,6 @@
   dict({
     'active': True,
     'administrator_role': None,
-    'b2c': None,
-    'b2c_display_name': None,
-    'b2c_family_name': None,
-    'b2c_given_name': None,
-    'b2c_oid': None,
     'force_reset': False,
     'groups': list([
     ]),
@@ -164,11 +154,6 @@
   dict({
     'active': True,
     'administrator_role': None,
-    'b2c': None,
-    'b2c_display_name': None,
-    'b2c_family_name': None,
-    'b2c_given_name': None,
-    'b2c_oid': None,
     'force_reset': False,
     'groups': list([
     ]),
@@ -235,11 +220,6 @@
   dict({
     'active': True,
     'administrator_role': None,
-    'b2c': None,
-    'b2c_display_name': None,
-    'b2c_family_name': None,
-    'b2c_given_name': None,
-    'b2c_oid': None,
     'force_reset': True,
     'groups': list([
     ]),
@@ -290,11 +270,6 @@
       dict({
         'active': False,
         'administrator_role': None,
-        'b2c': None,
-        'b2c_display_name': None,
-        'b2c_family_name': None,
-        'b2c_given_name': None,
-        'b2c_oid': None,
         'force_reset': False,
         'groups': list([
         ]),
@@ -327,11 +302,6 @@
       dict({
         'active': True,
         'administrator_role': None,
-        'b2c': None,
-        'b2c_display_name': None,
-        'b2c_family_name': None,
-        'b2c_given_name': None,
-        'b2c_oid': None,
         'force_reset': False,
         'groups': list([
         ]),
@@ -357,11 +327,6 @@
       dict({
         'active': True,
         'administrator_role': <AdministratorRole.BASE: 'base'>,
-        'b2c': None,
-        'b2c_display_name': None,
-        'b2c_family_name': None,
-        'b2c_given_name': None,
-        'b2c_oid': None,
         'force_reset': False,
         'groups': list([
           dict({
@@ -397,11 +362,6 @@
       dict({
         'active': True,
         'administrator_role': None,
-        'b2c': None,
-        'b2c_display_name': None,
-        'b2c_family_name': None,
-        'b2c_given_name': None,
-        'b2c_oid': None,
         'force_reset': False,
         'groups': list([
         ]),
@@ -427,11 +387,6 @@
       dict({
         'active': True,
         'administrator_role': <AdministratorRole.FULL: 'full'>,
-        'b2c': None,
-        'b2c_display_name': None,
-        'b2c_family_name': None,
-        'b2c_given_name': None,
-        'b2c_oid': None,
         'force_reset': False,
         'groups': list([
         ]),
@@ -468,11 +423,6 @@
       dict({
         'active': True,
         'administrator_role': None,
-        'b2c': None,
-        'b2c_display_name': None,
-        'b2c_family_name': None,
-        'b2c_given_name': None,
-        'b2c_oid': None,
         'force_reset': False,
         'groups': list([
         ]),
@@ -505,11 +455,6 @@
       dict({
         'active': True,
         'administrator_role': <AdministratorRole.BASE: 'base'>,
-        'b2c': None,
-        'b2c_display_name': None,
-        'b2c_family_name': None,
-        'b2c_given_name': None,
-        'b2c_oid': None,
         'force_reset': False,
         'groups': list([
           dict({
@@ -746,11 +691,6 @@
   dict({
     'active': True,
     'administrator_role': None,
-    'b2c': None,
-    'b2c_display_name': None,
-    'b2c_family_name': None,
-    'b2c_given_name': None,
-    'b2c_oid': None,
     'force_reset': False,
     'groups': list([
       dict({
@@ -784,11 +724,6 @@
   dict({
     'active': True,
     'administrator_role': None,
-    'b2c': None,
-    'b2c_display_name': None,
-    'b2c_family_name': None,
-    'b2c_given_name': None,
-    'b2c_oid': None,
     'force_reset': False,
     'groups': list([
       dict({
@@ -822,11 +757,6 @@
   dict({
     'active': True,
     'administrator_role': None,
-    'b2c': None,
-    'b2c_display_name': None,
-    'b2c_family_name': None,
-    'b2c_given_name': None,
-    'b2c_oid': None,
     'force_reset': False,
     'groups': list([
     ]),
@@ -900,11 +830,6 @@
   dict({
     'active': True,
     'administrator_role': None,
-    'b2c': None,
-    'b2c_display_name': None,
-    'b2c_family_name': None,
-    'b2c_given_name': None,
-    'b2c_oid': None,
     'force_reset': False,
     'groups': list([
     ]),
@@ -973,11 +898,6 @@
   dict({
     'active': True,
     'administrator_role': None,
-    'b2c': None,
-    'b2c_display_name': None,
-    'b2c_family_name': None,
-    'b2c_given_name': None,
-    'b2c_oid': None,
     'force_reset': False,
     'groups': list([
       dict({
@@ -1052,11 +972,6 @@
   dict({
     'active': True,
     'administrator_role': None,
-    'b2c': None,
-    'b2c_display_name': None,
-    'b2c_family_name': None,
-    'b2c_given_name': None,
-    'b2c_oid': None,
     'force_reset': False,
     'groups': list([
       dict({
@@ -1115,11 +1030,6 @@
   dict({
     'active': True,
     'administrator_role': None,
-    'b2c': None,
-    'b2c_display_name': None,
-    'b2c_family_name': None,
-    'b2c_given_name': None,
-    'b2c_oid': None,
     'force_reset': False,
     'groups': list([
     ]),
@@ -1143,11 +1053,6 @@
   dict({
     'active': True,
     'administrator_role': <AdministratorRole.BASE: 'base'>,
-    'b2c': None,
-    'b2c_display_name': None,
-    'b2c_family_name': None,
-    'b2c_given_name': None,
-    'b2c_oid': None,
     'force_reset': False,
     'groups': list([
     ]),
@@ -1171,11 +1076,6 @@
   dict({
     'active': True,
     'administrator_role': <AdministratorRole.FULL: 'full'>,
-    'b2c': None,
-    'b2c_display_name': None,
-    'b2c_family_name': None,
-    'b2c_given_name': None,
-    'b2c_oid': None,
     'force_reset': False,
     'groups': list([
     ]),

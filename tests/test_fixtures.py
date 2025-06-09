@@ -3,15 +3,16 @@ import datetime
 import arrow
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
-from virtool_core.redis import Redis
+from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner
 from tests.fixtures.snapshot_date import validate_time
 from virtool.authorization.client import AuthorizationClient
 from virtool.mongo.core import Mongo
+from virtool.redis import Redis
 
 
-def test_time_not_recent_iso_string(snapshot_recent):
+def test_time_not_recent_iso_string(snapshot_recent: SnapshotAssertion):
     timestamp = "2020/09/26"
     assert validate_time(timestamp) == snapshot_recent
 

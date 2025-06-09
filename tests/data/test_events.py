@@ -12,10 +12,10 @@ from virtool.data.events import (
     emits,
     listen_for_events,
 )
-from virtool.models import VirtoolBaseModel
+from virtool.models.base import BaseModel
 
 
-class Emitted(VirtoolBaseModel):
+class Emitted(BaseModel):
     name: str
     age: int
 

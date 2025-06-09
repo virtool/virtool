@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, constr
-from virtool_core.models.validators import prevent_none
 
+from virtool.models.validators import prevent_none
 from virtool.subtractions.models import (
     NucleotideComposition,
     Subtraction,

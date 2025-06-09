@@ -10,7 +10,6 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
-from virtool_core.utils import rm
 
 import virtool.mongo.utils
 import virtool.utils
@@ -44,10 +43,10 @@ from virtool.subtractions.utils import (
     check_subtraction_file_type,
     join_subtraction_path,
 )
-from virtool.uploads.models import SQLUpload
+from virtool.uploads.sql import SQLUpload
 from virtool.uploads.utils import naive_writer
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import base_processor
+from virtool.utils import base_processor, rm
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo

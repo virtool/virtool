@@ -42,11 +42,7 @@ authenticated session, the data layer should raise a generic
 
 import secrets
 from datetime import timedelta
-
-from virtool_core.models.session import (
-    Session,
-)
-from virtool_core.redis import Redis
+from typing import TYPE_CHECKING
 
 import virtool.utils
 from virtool.api.custom_json import dump_string, isoformat_to_datetime
@@ -54,7 +50,11 @@ from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import (
     ResourceNotFoundError,
 )
-from virtool.types import Document
+from virtool.models.sessions import Session
+from virtool.redis import Redis
+
+if TYPE_CHECKING:
+    from virtool.types import Document
 from virtool.utils import get_safely, hash_key
 
 
