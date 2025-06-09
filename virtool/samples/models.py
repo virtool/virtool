@@ -1,6 +1,7 @@
 import datetime
 from enum import Enum
 
+from virtool.groups.models import GroupMinimal
 from virtool.jobs.models import JobMinimal
 from virtool.labels.models import LabelNested
 from virtool.models import BaseModel, SearchResult
@@ -111,7 +112,7 @@ class Sample(SampleMinimal):
     all_write: bool
     artifacts: list[SampleArtifact]
     format: str
-    group: int | str | None
+    group: GroupMinimal | None
     group_read: bool
     group_write: bool
     hold: bool

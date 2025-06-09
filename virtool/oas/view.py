@@ -1,8 +1,7 @@
-import copy
 import typing
 from inspect import getdoc
 from itertools import count
-from typing import Optional, Type, get_type_hints
+from typing import get_type_hints
 
 from aiohttp.web_app import Application
 from aiohttp_pydantic.injectors import _parse_func_signature
@@ -15,8 +14,7 @@ from pydantic import BaseModel
 
 
 class _OASResponseBuilder:
-    """
-    Parse the type annotated as returned by a function and
+    """Parse the type annotated as returned by a function and
     generate the OAS operation response.
     """
 
@@ -44,40 +42,16 @@ class _OASResponseBuilder:
         return self._handle_pydantic_base_model(obj)
 
     def _handle_status_code_type(self, obj, *args):
+        print(f"Handling status code type: {obj}")
         if is_status_code_type(typing.get_origin(obj)):
-            example, new_dict = None, None
             status_code = typing.get_origin(obj).__name__[1:]
             schema = self._handle_list(typing.get_args(obj)[0])
-            if args:
-                # example request exists
-                try:
-                    example = schema["example"]
-                except KeyError:
-                    pass
 
-                if example:
-                    # update response body to match request
-                    new_dict = copy.deepcopy(schema)
-                    request = args[0]
-                    for key, value in request.items():
-                        if key in example:
-                            old_value = new_dict["example"][key]
-                            if isinstance(old_value, dict):
-                                old_value.update(value)
-                            else:
-                                new_dict["example"][key] = value
+            self._oas_operation.responses[status_code].content = {
+                "application/json": {"schema": schema}
+            }
 
-            if new_dict:
-                self._oas_operation.responses[status_code].content = {
-                    "application/json": {"schema": new_dict}
-                }
-            else:
-                self._oas_operation.responses[status_code].content = {
-                    "application/json": {"schema": schema}
-                }
-
-            desc = self._status_code_descriptions.get(int(status_code))
-            if desc:
+            if desc := self._status_code_descriptions.get(int(status_code)):
                 self._oas_operation.responses[status_code].description = desc
 
         elif is_status_code_type(obj):
@@ -98,7 +72,7 @@ class _OASResponseBuilder:
 
 
 def _add_http_method_to_oas(
-    oas: OpenApiSpec3, oas_path: PathItem, http_method: str, view: Type[PydanticView]
+    oas: OpenApiSpec3, oas_path: PathItem, http_method: str, view: type[PydanticView]
 ):
     http_method = http_method.lower()
     oas_operation: OperationObject = getattr(oas_path, http_method)
@@ -170,12 +144,10 @@ def _add_http_method_to_oas(
 
 def generate_oas(
     app: Application,
-    version_spec: Optional[str] = None,
-    title_spec: Optional[str] = None,
+    version_spec: str | None = None,
+    title_spec: str | None = None,
 ) -> dict:
-    """
-    Generate and return Open Api Specification from PydanticView in application.
-    """
+    """Generate and return Open Api Specification from PydanticView in application."""
     oas = OpenApiSpec3()
 
     if version_spec is not None:
@@ -189,7 +161,7 @@ def generate_oas(
             if not is_pydantic_view(resource_route.handler):
                 continue
 
-            view: Type[PydanticView] = resource_route.handler
+            view: type[PydanticView] = resource_route.handler
             info = resource_route.get_info()
             path = oas.paths[info.get("path", info.get("formatter"))]
             if resource_route.method == "*":
