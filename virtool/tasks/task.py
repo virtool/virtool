@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from structlog import get_logger
 
 from virtool.data.errors import ResourceError
-from virtool.tasks.oas import TaskUpdate
+from virtool.tasks.oas import UpdateTaskRequest
 from virtool.tasks.progress import TaskProgressHandler
 
 if TYPE_CHECKING:
@@ -115,7 +115,7 @@ class BaseTask:
 
             await self.data.tasks.update(
                 self.task_id,
-                TaskUpdate(
+                UpdateTaskRequest(
                     step=self.step.__name__,
                     progress=self.step_progress_basis,
                 ),
@@ -153,11 +153,11 @@ class BaseTask:
 
     async def _set_progress(self, progress: int):
         """Update the overall progress value for the task."""
-        await self.data.tasks.update(self.task_id, TaskUpdate(progress=progress))
+        await self.data.tasks.update(self.task_id, UpdateTaskRequest(progress=progress))
 
     async def _set_error(self, error: str):
         """Set task error status"""
-        await self.data.tasks.update(self.task_id, TaskUpdate(error=error))
+        await self.data.tasks.update(self.task_id, UpdateTaskRequest(error=error))
         self.errored = True
 
 

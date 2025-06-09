@@ -26,6 +26,8 @@ class UpdateAdministratorRoleRequest(BaseModel):
 
 
 class UpdateUserRequest(BaseModel):
+    """A request body for updating a user."""
+
     active: bool | None = Field(description="deactivate a user")
 
     force_reset: bool | None = Field(
@@ -126,31 +128,5 @@ class ListAdministratorResponse(BaseModel):
                         "administrator_role": "full",
                     },
                 ],
-            },
-        }
-
-
-class UserResponse(BaseModel):
-    class Config:
-        schema_extra = {
-            "example": {
-                "id": "TxWalSSn",
-                "handle": "user_handle",
-                "active": True,
-                "force_reset": False,
-                "groups": [],
-                "last_password_change": "2023-03-20T22:46:26.151000Z",
-                "permissions": {
-                    "cancel_job": False,
-                    "create_ref": False,
-                    "create_sample": False,
-                    "modify_hmm": False,
-                    "modify_subtraction": False,
-                    "remove_file": False,
-                    "remove_job": False,
-                    "upload_file": False,
-                },
-                "primary_group": None,
-                "administrator_role": "base",
             },
         }

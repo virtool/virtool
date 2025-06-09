@@ -15,10 +15,7 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.utils import get_data_from_req
-from virtool.jobs.models import JobSearchResult, JobState
-from virtool.jobs.oas import (
-    JobResponse,
-)
+from virtool.jobs.models import Job, JobSearchResult, JobState
 
 routes = Routes()
 
@@ -71,7 +68,7 @@ class JobsView(PydanticView):
 
 @routes.view("/jobs/{job_id}")
 class JobView(PydanticView):
-    async def get(self, job_id: str, /) -> r200[JobResponse] | r404:
+    async def get(self, job_id: str, /) -> r200[Job] | r404:
         """Get a job.
 
         Fetches the details for a job.
@@ -125,7 +122,7 @@ async def acquire(req):
 @routes.view("/jobs/{job_id}/cancel")
 class CancelJobView(PydanticView):
     @policy(PermissionRoutePolicy(LegacyPermission.CANCEL_JOB))
-    async def put(self, job_id: str, /) -> r200[JobResponse] | r403 | r404 | r409:
+    async def put(self, job_id: str, /) -> r200[Job] | r403 | r404 | r409:
         """Cancel a job.
 
         Cancels a job using its 'job id'.

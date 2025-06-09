@@ -12,12 +12,10 @@ from virtool.api.schema import schema
 from virtool.authorization.permissions import LegacyPermission
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.subtractions.models import SubtractionSearchResult
+from virtool.subtractions.models import Subtraction, SubtractionSearchResult
 from virtool.subtractions.oas import (
     CreateSubtractionRequest,
-    CreateSubtractionResponse,
     FinalizeSubtractionRequest,
-    SubtractionResponse,
     UpdateSubtractionRequest,
 )
 from virtool.uploads.utils import multipart_file_chunker
@@ -52,7 +50,7 @@ class SubtractionsView(PydanticView):
     @policy(PermissionRoutePolicy(LegacyPermission.MODIFY_SUBTRACTION))
     async def post(
         self, data: CreateSubtractionRequest
-    ) -> r201[CreateSubtractionResponse] | r400 | r403:
+    ) -> r201[Subtraction] | r400 | r403:
         """Create a subtraction.
 
         Creates a new subtraction.
@@ -87,7 +85,7 @@ class SubtractionsView(PydanticView):
 @routes.view("/subtractions/{subtraction_id}")
 @routes.jobs_api.get("/subtractions/{subtraction_id}")
 class SubtractionView(PydanticView):
-    async def get(self, subtraction_id: str, /) -> r200[SubtractionResponse] | r404:
+    async def get(self, subtraction_id: str, /) -> r200[Subtraction] | r404:
         """Get a subtraction.
 
         Fetches the details of a subtraction.
@@ -109,7 +107,7 @@ class SubtractionView(PydanticView):
     @policy(PermissionRoutePolicy(LegacyPermission.MODIFY_SUBTRACTION))
     async def patch(
         self, subtraction_id: str, /, data: UpdateSubtractionRequest
-    ) -> r200[SubtractionResponse] | r400 | r403 | r404:
+    ) -> r200[Subtraction] | r400 | r403 | r404:
         """Update a subtraction.
 
         Updates the name or nickname of an existing subtraction.

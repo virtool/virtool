@@ -1,29 +1,24 @@
-from typing import Union, Optional
-
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r404, r409
 
-from virtool.api.errors import APINotFound, APIConflict
 from virtool.api.custom_json import json_response
-from virtool.data.utils import get_data_from_req
+from virtool.api.errors import APIConflict, APINotFound
 from virtool.api.routes import Routes
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
+from virtool.data.utils import get_data_from_req
+from virtool.messages.models import InstanceMessage
 from virtool.messages.oas import (
-    MessageResponse,
     CreateMessageRequest,
-    CreateMessageResponse,
-    UpdateMessageResponse,
     UpdateMessageRequest,
 )
-from virtool.data.errors import ResourceNotFoundError, ResourceConflictError
 
 routes = Routes()
 
 
 @routes.view("/instance_message")
 class MessagesView(PydanticView):
-    async def get(self) -> r200[Optional[MessageResponse]]:
-        """
-        Get the administrative instance message.
+    async def get(self) -> r200[InstanceMessage | None]:
+        """Get the administrative instance message.
 
         Fetches the active administrative instance message.
 
@@ -37,9 +32,8 @@ class MessagesView(PydanticView):
 
         return json_response(instance_message)
 
-    async def put(self, data: CreateMessageRequest) -> r200[CreateMessageResponse]:
-        """
-        Create an administrative instance message.
+    async def put(self, data: CreateMessageRequest) -> r200[InstanceMessage]:
+        """Create an administrative instance message.
 
         Creates a new administrative instance message.
 
@@ -58,9 +52,8 @@ class MessagesView(PydanticView):
 
     async def patch(
         self, data: UpdateMessageRequest
-    ) -> Union[r200[UpdateMessageResponse], r404, r409]:
-        """
-        Update the administrative instance message.
+    ) -> r200[InstanceMessage] | r404 | r409:
+        """Update the administrative instance message.
 
         Updates the existing active administrative instance message.
 

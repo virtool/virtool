@@ -82,8 +82,30 @@ class Account(User):
 
 
 class APIKey(BaseModel):
+    """A user's API key."""
+
     id: str
     created_at: datetime
     groups: list[GroupMinimal]
     name: str
     permissions: Permissions
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "created_at": "2015-10-06T20:00:00Z",
+                "groups": [],
+                "id": "foobar_0",
+                "name": "Foobar",
+                "permissions": {
+                    "cancel_job": False,
+                    "create_ref": False,
+                    "create_sample": True,
+                    "modify_hmm": False,
+                    "modify_subtraction": False,
+                    "remove_file": False,
+                    "remove_job": False,
+                    "upload_file": False,
+                },
+            }
+        }

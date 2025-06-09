@@ -9,7 +9,7 @@ from virtool.jobs.tasks import TimeoutJobsTask
 from virtool.redis import Redis
 from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
-from virtool.tasks.oas import TaskUpdate
+from virtool.tasks.oas import UpdateTaskRequest
 from virtool.tasks.sql import SQLTask
 
 
@@ -80,15 +80,15 @@ async def test_get(
 @pytest.mark.parametrize(
     "update",
     [
-        TaskUpdate(step="two"),
-        TaskUpdate(step="three", progress=55),
-        TaskUpdate(progress=55),
-        TaskUpdate(error="failed_task"),
+        UpdateTaskRequest(step="two"),
+        UpdateTaskRequest(step="three", progress=55),
+        UpdateTaskRequest(progress=55),
+        UpdateTaskRequest(error="failed_task"),
     ],
     ids=["step", "step_progress", "progress", "error"],
 )
 async def test_update(
-    update: TaskUpdate,
+    update: UpdateTaskRequest,
     pg: AsyncEngine,
     tasks_data: TasksData,
     snapshot,

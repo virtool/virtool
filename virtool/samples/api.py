@@ -16,6 +16,7 @@ from structlog import get_logger
 
 import virtool.uploads.db
 import virtool.uploads.utils
+from virtool.analyses.models import AnalysisMinimal
 from virtool.api.client import UserClient
 from virtool.api.custom_json import json_response
 from virtool.api.errors import (
@@ -53,18 +54,12 @@ from virtool.samples.files import (
     create_reads_file,
     get_existing_reads,
 )
-from virtool.samples.models import SampleSearchResult
+from virtool.samples.models import Sample, SampleSearchResult
 from virtool.samples.oas import (
     CreateAnalysisRequest,
-    CreateAnalysisResponse,
     CreateSampleRequest,
-    CreateSampleResponse,
-    GetSampleAnalysesResponse,
-    GetSampleResponse,
     UpdateRightsRequest,
-    UpdateRightsResponse,
     UpdateSampleRequest,
-    UpdateSampleResponse,
 )
 from virtool.samples.sql import ArtifactType, SQLSampleArtifact, SQLSampleReads
 from virtool.samples.utils import SampleRight, join_sample_path
@@ -114,7 +109,7 @@ class SamplesView(PydanticView):
     async def post(
         self,
         data: CreateSampleRequest,
-    ) -> r201[CreateSampleResponse] | r400 | r403:
+    ) -> r201[Sample] | r400 | r403:
         """Create a sample.
 
         Creates a new sample with the given name, labels and subtractions.
@@ -148,7 +143,7 @@ class SamplesView(PydanticView):
 @routes.view("/spaces/{space_id}/samples/{sample_id}")
 @routes.view("/samples/{sample_id}")
 class SampleView(PydanticView):
-    async def get(self, sample_id: str, /) -> r200[GetSampleResponse] | r403 | r404:
+    async def get(self, sample_id: str, /) -> r200[Sample] | r403 | r404:
         """Get a sample.
 
         Fetches the details for a sample.
@@ -177,7 +172,7 @@ class SampleView(PydanticView):
         sample_id: str,
         /,
         data: UpdateSampleRequest,
-    ) -> r200[UpdateSampleResponse] | r400 | r403 | r404:
+    ) -> r200[Sample] | r400 | r403 | r404:
         """Update a sample.
 
         Updates a sample using its 'sample id'.
@@ -287,7 +282,7 @@ class RightsView(PydanticView):
         sample_id: str,
         /,
         data: UpdateRightsRequest,
-    ) -> r200[UpdateRightsResponse] | r400 | r403 | r404:
+    ) -> r200[Sample] | r400 | r403 | r404:
         """Update rights settings.
 
         Updates the rights settings for the specified sample document.
@@ -378,7 +373,7 @@ class AnalysesView(PydanticView):
         page: conint(ge=1) = 1,
         per_page: conint(ge=1, le=100) = 25,
         /,
-    ) -> r200[list[GetSampleAnalysesResponse]] | r403 | r404:
+    ) -> r200[list[AnalysisMinimal]] | r403 | r404:
         """Get analyses.
 
         Lists the analyses associated with the given `sample_id`.
@@ -402,7 +397,7 @@ class AnalysesView(PydanticView):
         sample_id: str,
         /,
         data: CreateAnalysisRequest,
-    ) -> r201[CreateAnalysisResponse] | r400 | r403 | r404:
+    ) -> r201[AnalysisMinimal] | r400 | r403 | r404:
         """Start analysis job.
 
         Starts an analysis job for a given sample.

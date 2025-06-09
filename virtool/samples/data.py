@@ -18,6 +18,7 @@ from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emits
 from virtool.data.topg import compose_legacy_id_expression
 from virtool.data.transforms import apply_transforms
+from virtool.groups.models import GroupMinimal
 from virtool.groups.pg import SQLGroup
 from virtool.jobs.client import JobsClient
 from virtool.jobs.transforms import AttachJobTransform
@@ -200,8 +201,6 @@ class SamplesData(DataLayerDomain):
     async def get(self, sample_id: str) -> Sample:
         """Get a sample by its id.
 
-        TODO: Return `None` for unset group instead of `"none"`.
-
         :param sample_id: the id of the sample
         :return: the sample
         :raises ResourceNotFoundError: when the sample does not exist
@@ -222,7 +221,32 @@ class SamplesData(DataLayerDomain):
             ],
         )
 
-        return Sample(**{**document, "paired": len(document["reads"]) == 2})
+        group = None
+
+        if document["group"] is not None:
+            async with AsyncSession(self._pg) as session:
+                result = await session.execute(
+                    select(SQLGroup).where(
+                        compose_legacy_id_expression(SQLGroup, [document["group"]]),
+                    ),
+                )
+
+                row = result.unique().scalar_one_or_none()
+
+            if row:
+                group = GroupMinimal(
+                    id=row.id,
+                    name=row.name,
+                    legacy_id=row.legacy_id,
+                )
+
+        return Sample(
+            **{
+                **document,
+                "group": group,
+                "paired": len(document["reads"]) == 2,
+            }
+        )
 
     @emits(Operation.CREATE)
     async def create(

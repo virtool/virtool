@@ -11,7 +11,6 @@ from virtool.data.utils import get_data_from_req
 from virtool.groups.models import Group, GroupMinimal, GroupSearchResult
 from virtool.groups.oas import (
     CreateGroupRequest,
-    GroupResponse,
     UpdateGroupRequest,
 )
 from virtool.models.roles import AdministratorRole
@@ -74,7 +73,7 @@ class GroupsView(PydanticView):
 
 @routes.view("/groups/{group_id}")
 class GroupView(PydanticView):
-    async def get(self, group_id: int, /) -> r200[GroupResponse] | r404:
+    async def get(self, group_id: int, /) -> r200[Group] | r404:
         """Get a group.
 
         Fetches the complete representation of a single user group including its
@@ -89,12 +88,12 @@ class GroupView(PydanticView):
         except ResourceNotFoundError:
             raise APINotFound()
 
-        return json_response(GroupResponse.parse_obj(group))
+        return json_response(group)
 
     @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
     async def patch(
         self, group_id: int, /, data: UpdateGroupRequest
-    ) -> r200[GroupResponse] | r404:
+    ) -> r200[Group] | r404:
         """Update a group.
 
         Updates a group's name or permissions.
@@ -111,7 +110,7 @@ class GroupView(PydanticView):
         except ResourceNotFoundError:
             raise APINotFound()
 
-        return json_response(GroupResponse.parse_obj(group))
+        return json_response(group)
 
     @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
     async def delete(self, group_id: int, /) -> r204 | r404:

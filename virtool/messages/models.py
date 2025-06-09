@@ -13,3 +13,16 @@ class InstanceMessage(BaseModel):
     color: MessageColor
     user: UserNested
     active: bool
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "id": 1,
+                "active": True,
+                "color": "red",
+                "message": "Administrative instance message",
+                "created_at": "2021-11-24T19:40:03.320000Z",
+                "updated_at": "2021-11-24T19:40:03.320000Z",
+                "user": {"id": "ian", "handle": "ianboyes", "administrator": True},
+            }
+        }
