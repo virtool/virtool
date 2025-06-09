@@ -304,7 +304,7 @@ def decompress_tgz(path: Path, target: Path) -> None:
 def is_within_directory(directory: Path, target: Path) -> bool:
     """Check if `target` is within `directory`."""
     try:
-        target.relative_to(directory)
+        target.resolve().relative_to(directory.resolve())
     except ValueError:
         return False
     else:

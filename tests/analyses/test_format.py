@@ -1,6 +1,9 @@
 import json
+from pathlib import Path
 
 import pytest
+from pytest_mock import MockerFixture
+from syrupy import SnapshotAssertion
 
 import virtool.analyses
 from virtool.analyses.format import load_results, transform_coverage_to_coordinates
@@ -8,39 +11,43 @@ from virtool.mongo.core import Mongo
 
 
 @pytest.mark.parametrize("loadable", [True, False])
-async def test_load_results(loadable, config, mocker, tmp_path):
-    """Test that results are loaded from a `results.json` as expected. Check that the file loading action is not pursued
-    if the results are stored in the analysis document.
+async def test_load_results(
+    loadable: bool, config, mocker: MockerFixture, tmp_path: Path
+):
+    """Test that results are loaded from a `results.json` as expected.
 
+    Check that the file loading action is not pursued if the results are stored in the
+    analysis document.
     """
     results = {"foo": "bar", "bar": "baz"}
 
-    document = {
-        "_id": "foo",
-        "results": "file" if loadable else {"baz": "foo"},
-        "sample": {"id": "bar"},
-    }
-
-    results_file = tmp_path / "results.json"
-    results_file.write_text(json.dumps(results))
+    results_path = tmp_path / "results.json"
+    results_path.write_text(json.dumps(results))
 
     m_join_analysis_json_path = mocker.patch(
         "virtool.analyses.utils.join_analysis_json_path",
-        return_value=str(results_file),
+        return_value=results_path,
     )
 
-    result = await load_results(config, document)
+    result = await load_results(
+        config,
+        {
+            "_id": "foo",
+            "results": "file" if loadable else {"baz": "foo"},
+            "sample": {"id": "bar"},
+        },
+    )
 
     if loadable:
         m_join_analysis_json_path.assert_called_with(tmp_path, "foo", "bar")
-
         assert result == {"_id": "foo", "results": results, "sample": {"id": "bar"}}
-
-        return
-
-    m_join_analysis_json_path.assert_not_called()
-
-    assert result == {"_id": "foo", "results": {"baz": "foo"}, "sample": {"id": "bar"}}
+    else:
+        m_join_analysis_json_path.assert_not_called()
+        assert result == {
+            "_id": "foo",
+            "results": {"baz": "foo"},
+            "sample": {"id": "bar"},
+        }
 
 
 @pytest.mark.parametrize(
@@ -164,13 +171,17 @@ async def test_load_results(loadable, config, mocker, tmp_path):
         ],
     ],
 )
-def test_transform_coverage_to_coordinates(coverage, snapshot):
-    """Test that two sample coverage data sets are correctly converted to coordinates."""
+def test_transform_coverage_to_coordinates(
+    coverage: list[int], snapshot: SnapshotAssertion
+):
+    """Test that two sample coverage datasets are correctly converted to coordinates."""
     assert transform_coverage_to_coordinates(coverage) == snapshot
 
 
 @pytest.mark.parametrize("workflow", [None, "foobar", "nuvs", "pathoscope"])
-async def test_format_analysis(workflow: str | None, config, mocker, mongo: Mongo):
+async def test_format_analysis(
+    workflow: str | None, config, mocker: MockerFixture, mongo: Mongo
+):
     """Ensure that:
     * the correct formatting function is called based on the workflow field.
     * an exception is raised if the workflow field cannot be processed.

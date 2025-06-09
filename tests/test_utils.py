@@ -233,7 +233,7 @@ class TestIsWithinDirectory:
         symlink_path = directory / "symlink"
         symlink_path.symlink_to(outside_dir)
 
-        assert is_within_directory(directory, symlink_path / "file.txt") is True
+        assert is_within_directory(directory, symlink_path / "file.txt") is False
 
     def test_deeply_nested_paths(self, tmp_path: Path):
         """Test with deeply nested directory structures."""
