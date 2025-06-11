@@ -15,6 +15,7 @@
     'key': str,
     'ping': None,
     'progress': 3,
+    'retries': 0,
     'stage': None,
     'state': 'preparing',
     'status': list([
@@ -41,33 +42,33 @@
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),
-    'workflow': 'jobs_pathoscope_bowtie',
+    'workflow': 'pathoscope_bowtie',
   })
 # ---
 # name: TestFind.test_basic
   dict({
     'counts': dict({
       'cancelled': dict({
-        'jobs_create_sample': 1,
+        'create_sample': 1,
       }),
       'complete': dict({
-        'jobs_create_sample': 1,
+        'create_sample': 1,
       }),
       'error': dict({
-        'jobs_aodp': 1,
-        'jobs_create_sample': 1,
-        'jobs_pathoscope_bowtie': 1,
+        'aodp': 1,
+        'create_sample': 1,
+        'pathoscope_bowtie': 1,
       }),
       'terminated': dict({
-        'jobs_build_index': 1,
-        'jobs_nuvs': 2,
+        'build_index': 1,
+        'nuvs': 2,
       }),
       'timeout': dict({
-        'jobs_aodp': 1,
+        'aodp': 1,
       }),
       'waiting': dict({
-        'jobs_aodp': 1,
-        'jobs_nuvs': 1,
+        'aodp': 1,
+        'nuvs': 1,
       }),
     }),
     'documents': list([
@@ -81,7 +82,7 @@
           'handle': 'zclark',
           'id': '7cf872dc',
         }),
-        'workflow': 'jobs_build_index',
+        'workflow': 'build_index',
       }),
       dict({
         'created_at': str,
@@ -93,7 +94,7 @@
           'handle': 'zclark',
           'id': '7cf872dc',
         }),
-        'workflow': 'jobs_pathoscope_bowtie',
+        'workflow': 'pathoscope_bowtie',
       }),
       dict({
         'created_at': str,
@@ -105,7 +106,7 @@
           'handle': 'zclark',
           'id': '7cf872dc',
         }),
-        'workflow': 'jobs_aodp',
+        'workflow': 'aodp',
       }),
       dict({
         'created_at': str,
@@ -117,7 +118,7 @@
           'handle': 'zclark',
           'id': '7cf872dc',
         }),
-        'workflow': 'jobs_create_sample',
+        'workflow': 'create_sample',
       }),
       dict({
         'created_at': str,
@@ -129,7 +130,7 @@
           'handle': 'zclark',
           'id': '7cf872dc',
         }),
-        'workflow': 'jobs_create_sample',
+        'workflow': 'create_sample',
       }),
     ]),
     'found_count': 11,
@@ -783,6 +784,7 @@
     'id': '4c530449',
     'ping': None,
     'progress': 0,
+    'retries': 0,
     'stage': 'mk_analysis_dir',
     'state': 'running',
     'status': list([
@@ -823,7 +825,7 @@
 # ---
 # name: test_get[None]
   dict({
-    'acquired': False,
+    'acquired': True,
     'args': dict({
       'fact': 'LdJCGRddpwdyFKunVyUD',
       'nearly': 951.93581531826,
@@ -836,6 +838,7 @@
     'id': '7cf872dc',
     'ping': None,
     'progress': 10,
+    'retries': 0,
     'stage': 'NzFJEUSgqMReEKilxKJT',
     'state': 'preparing',
     'status': list([
@@ -844,6 +847,15 @@
         'progress': 0,
         'stage': None,
         'state': 'waiting',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': str,
+      }),
+      dict({
+        'error': None,
+        'progress': 3,
+        'stage': None,
+        'state': 'preparing',
         'step_description': None,
         'step_name': None,
         'timestamp': str,
@@ -862,6 +874,6 @@
       'handle': 'leeashley',
       'id': 'fb085f7f',
     }),
-    'workflow': 'jobs_pathoscope_bowtie',
+    'workflow': 'pathoscope_bowtie',
   })
 # ---

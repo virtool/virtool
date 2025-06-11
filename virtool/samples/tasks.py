@@ -1,7 +1,7 @@
 from virtool.tasks.task import BaseTask
 
 
-class UpdateSampleWorkflowsTask(BaseTask):
+class SampleWorkflowsUpdateTask(BaseTask):
     """Updates workflows, nuvs, and pathoscoope fields for samples"""
 
     name = "update_sample_workflows"

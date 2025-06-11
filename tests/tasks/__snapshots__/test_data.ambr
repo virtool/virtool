@@ -10,8 +10,8 @@
     'file_size': None,
     'id': 1,
     'progress': 0,
-    'step': 'timeout_jobs',
-    'type': 'timeout_jobs',
+    'step': 'clean_jobs',
+    'type': 'clean_jobs',
   })
 # ---
 # name: test_find

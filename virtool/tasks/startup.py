@@ -1,5 +1,3 @@
-"""AIOHTTP startup functions for the task spawner and runner services."""
-
 import asyncio
 
 from aiohttp.web_app import Application
@@ -7,20 +5,28 @@ from aiojobs.aiohttp import get_scheduler_from_app
 
 from virtool.config import get_config_from_app
 from virtool.hmm.tasks import HMMRefreshTask
-from virtool.jobs.tasks import TimeoutJobsTask
-from virtool.ml.tasks import SyncMLModelsTask
+from virtool.jobs.tasks import JobsCleanTask
+from virtool.ml.tasks import MLModelsSyncTask
 from virtool.pg.utils import connect_pg
 from virtool.redis import Redis
-from virtool.references.tasks import CleanReferencesTask, RefreshReferenceReleasesTask
+from virtool.references.tasks import ReferenceReleasesRefreshTask, ReferencesCleanTask
 from virtool.samples.tasks import (
-    UpdateSampleWorkflowsTask,
+    SampleWorkflowsUpdateTask,
 )
 from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
 from virtool.tasks.spawner import TaskSpawnerService
 
 
-async def startup_databases_for_spawner(app: Application):
+async def startup_data_layer_for_spawner(app: Application) -> None:
+    """Create the tasks datalayer and adds it to the app.
+
+    :param app: the :class:`aiohttp.web.Application` object
+    """
+    app["tasks_datalayer"] = TasksData(app["pg"], TasksClient(app["redis"]))
+
+
+async def startup_databases_for_spawner(app: Application) -> None:
     """Create Redis and Postgres connections.
 
     :param app: the app object
@@ -37,25 +43,17 @@ async def startup_databases_for_spawner(app: Application):
     app.update({"pg": pg, "redis": redis})
 
 
-async def startup_datalayer_for_spawner(app: Application):
-    """Creates the tasks datalayer and adds it to the app.
-
-    :param app: the :class:`aiohttp.web.Application` object
-    """
-    app["tasks_datalayer"] = TasksData(app["pg"], TasksClient(app["redis"]))
-
-
-async def startup_task_spawner(app: Application):
-    """Starts the task spawner."""
-    tasks = [
-        (CleanReferencesTask, 3600),
-        (HMMRefreshTask, 600),
-        (RefreshReferenceReleasesTask, 600),
-        (SyncMLModelsTask, 600),
-        (TimeoutJobsTask, 3600),
-        (UpdateSampleWorkflowsTask, 3600),
-    ]
-
+async def startup_task_spawner(app: Application) -> None:
+    """Start the task spawner."""
     await get_scheduler_from_app(app).spawn(
-        TaskSpawnerService(app["pg"], app["tasks_datalayer"]).run(tasks),
+        TaskSpawnerService(app["pg"], app["tasks_datalayer"]).run(
+            [
+                (HMMRefreshTask, 600),
+                (JobsCleanTask, 600),
+                (MLModelsSyncTask, 600),
+                (ReferenceReleasesRefreshTask, 600),
+                (ReferencesCleanTask, 3600),
+                (SampleWorkflowsUpdateTask, 3600),
+            ]
+        ),
     )

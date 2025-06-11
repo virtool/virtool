@@ -1,6 +1,7 @@
 """Easily create fake data."""
 
 import asyncio
+import datetime
 import gzip
 from collections.abc import AsyncGenerator
 from pathlib import Path
@@ -30,16 +31,17 @@ from virtool.jobs.models import Job, JobState
 from virtool.jobs.utils import WORKFLOW_NAMES
 from virtool.labels.models import Label
 from virtool.ml.models import MLModel
-from virtool.ml.tasks import SyncMLModelsTask
+from virtool.ml.tasks import MLModelsSyncTask
 from virtool.models.enums import Molecule
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.otus.models import OTU, OTUSegment
 from virtool.otus.oas import CreateOTURequest
+from virtool.redis import Redis
 from virtool.references.tasks import (
-    CleanReferencesTask,
     CloneReferenceTask,
-    RefreshReferenceReleasesTask,
+    ReferenceReleasesRefreshTask,
+    ReferencesCleanTask,
 )
 from virtool.releases import ReleaseManifestItem
 from virtool.subtractions.models import Subtraction
@@ -108,10 +110,11 @@ class VirtoolProvider(BaseProvider):
 
 
 class DataFaker:
-    def __init__(self, layer: DataLayer, mongo: Mongo, pg: AsyncEngine):
+    def __init__(self, layer: DataLayer, mongo: Mongo, pg: AsyncEngine, redis: Redis):
         self.layer = layer
         self.mongo = mongo
         self.pg = pg
+        self.redis = redis
 
         self.faker = Faker()
         self.faker.seed_instance(0)
@@ -145,6 +148,7 @@ class DataFakerDomain:
         self._layer: DataLayer = data_faker.layer
         self._mongo = data_faker.mongo
         self._pg = data_faker.pg
+        self._redis = data_faker.redis
 
         self.history = []
 
@@ -155,6 +159,7 @@ class JobsFakerDomain(DataFakerDomain):
     async def create(
         self,
         user: User,
+        pinged_at: datetime.datetime | None = None,
         state: JobState | None = None,
         workflow: str | None = None,
     ) -> Job:
@@ -163,12 +168,13 @@ class JobsFakerDomain(DataFakerDomain):
         A job will be created with status updates in a valid order.
 
         :param user: the user that created the job
+        :param pinged_at: the time the job was last pinged.
         :param state: the state the most recent status update should have
         :param workflow: the workflow the job is running
         :return:
         """
         job = await self._layer.jobs.create(
-            workflow or self._faker.workflow(),
+            (workflow or self._faker.workflow()).replace("jobs_", ""),
             self._faker.pydict(nb_elements=6, value_types=[str, int, float]),
             user.id,
             0,
@@ -189,6 +195,16 @@ class JobsFakerDomain(DataFakerDomain):
                     JobState.WAITING,
                 ],
             )
+
+        if target_state != JobState.WAITING:
+            removed_count = await self._redis.lrem(f"jobs_{job.workflow}", 1, job.id)
+
+            if removed_count == 0:
+                raise ValueError(
+                    f"Job ID {job.id} not found in Redis list for workflow {job.workflow}.",
+                )
+
+            job = await self._layer.jobs.acquire(job.id)
 
         previous_status = job.status[0]
         progress = 0
@@ -219,6 +235,14 @@ class JobsFakerDomain(DataFakerDomain):
                 step_description=self._faker.pystr(),
                 error=None,
                 progress=100 if next_state == JobState.COMPLETE else progress,
+            )
+
+        if pinged_at:
+            await self._mongo.jobs.update_one(
+                {"_id": job.id},
+                {
+                    "$set": {"ping": {"pinged_at": pinged_at}},
+                },
             )
 
         return await self._layer.jobs.get(job.id)
@@ -422,10 +446,10 @@ class TasksFakerDomain(DataFakerDomain):
         return await self._layer.tasks.create(
             self._faker.random_element(
                 [
-                    RefreshReferenceReleasesTask,
-                    SyncMLModelsTask,
+                    ReferenceReleasesRefreshTask,
+                    MLModelsSyncTask,
                     CloneReferenceTask,
-                    CleanReferencesTask,
+                    ReferencesCleanTask,
                 ],
             ),
             {},

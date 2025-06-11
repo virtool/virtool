@@ -21,7 +21,7 @@ from virtool.ml.models import (
     MLModelReleaseMinimal,
 )
 from virtool.ml.pg import SQLMLModel, SQLMLModelRelease
-from virtool.ml.tasks import SyncMLModelsTask
+from virtool.ml.tasks import MLModelsSyncTask
 from virtool.releases import (
     ReleaseManifestItem,
     ReleaseType,
@@ -76,7 +76,7 @@ class MLData(DataLayerDomain):
 
             task_result = await session.execute(
                 select(SQLTask)
-                .where(SQLTask.type == SyncMLModelsTask.name)
+                .where(SQLTask.type == MLModelsSyncTask.name)
                 .order_by(desc(SQLTask.created_at)),
             )
 

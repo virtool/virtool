@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.layer import DataLayer
 from virtool.samples.tasks import (
-    UpdateSampleWorkflowsTask,
+    SampleWorkflowsUpdateTask,
 )
 from virtool.tasks.sql import SQLTask
 from virtool.utils import get_temp_dir
@@ -66,7 +66,7 @@ async def test_update_workflows_fields(
         )
         await session.commit()
 
-    task = UpdateSampleWorkflowsTask(1, data_layer, {}, get_temp_dir())
+    task = SampleWorkflowsUpdateTask(1, data_layer, {}, get_temp_dir())
 
     await task.run()
 

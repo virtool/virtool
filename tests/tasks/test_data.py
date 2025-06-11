@@ -5,7 +5,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
-from virtool.jobs.tasks import TimeoutJobsTask
+from tests.fixtures.core import StaticTime
+from virtool.jobs.tasks import JobsCleanTask
 from virtool.redis import Redis
 from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
@@ -14,11 +15,10 @@ from virtool.tasks.sql import SQLTask
 
 
 async def test_find(
-    snapshot,
-    spawn_client,
     pg: AsyncEngine,
+    snapshot: SnapshotAssertion,
     tasks_data: TasksData,
-    static_time,
+    static_time: StaticTime,
 ):
     task_1 = SQLTask(
         id=1,
@@ -52,11 +52,10 @@ async def test_find(
 
 
 async def test_get(
-    snapshot,
-    spawn_client,
     pg: AsyncEngine,
+    snapshot: SnapshotAssertion,
+    static_time: StaticTime,
     tasks_data: TasksData,
-    static_time,
 ):
     async with AsyncSession(pg) as session:
         session.add(
@@ -90,9 +89,9 @@ async def test_get(
 async def test_update(
     update: UpdateTaskRequest,
     pg: AsyncEngine,
+    snapshot: SnapshotAssertion,
+    static_time: StaticTime,
     tasks_data: TasksData,
-    snapshot,
-    static_time,
 ):
     async with AsyncSession(pg) as session:
         session.add(
@@ -113,17 +112,16 @@ async def test_update(
 
 
 async def test_add(
-    loop,
     pg: AsyncEngine,
     redis: Redis,
     snapshot: SnapshotAssertion,
-    static_time,
+    static_time: StaticTime,
     tasks_data: TasksData,
 ):
     """Test that the TasksClient can successfully publish a Pub/Sub message to the tasks Redis channel."""
     tasks_client = TasksClient(redis)
 
-    await tasks_data.create(TimeoutJobsTask)
+    await tasks_data.create(JobsCleanTask)
 
     task_id = await wait_for(tasks_client.pop(), timeout=3)
 

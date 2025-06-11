@@ -5,6 +5,7 @@ import json
 import os
 import shutil
 from datetime import timedelta
+from http import HTTPStatus
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import ANY
@@ -17,14 +18,16 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
+from tests.fixtures.core import StaticTime
+from tests.fixtures.response import RespIs
 from virtool.config import get_config_from_app
-from virtool.data.utils import get_data_from_app
+from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.indexes.db import INDEX_FILE_NAMES
 from virtool.indexes.files import create_index_file
 from virtool.indexes.sql import SQLIndexFile
 from virtool.indexes.utils import check_index_file_type
-from virtool.jobs.client import DummyJobsClient
+from virtool.jobs.models import QueuedJobID
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app
 
@@ -296,13 +299,14 @@ class TestCreate:
     async def test(
         self,
         check_ref_right,
+        data_layer: DataLayer,
         fake: DataFaker,
-        mocker,
-        resp_is,
-        snapshot: SnapshotAssertion,
+        mocker: MockerFixture,
         mongo: Mongo,
+        resp_is: RespIs,
+        snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
-        static_time,
+        static_time: StaticTime,
     ):
         mocker.patch("virtool.utils.generate_key", return_value=("foo", "bar"))
 
@@ -310,9 +314,6 @@ class TestCreate:
             authenticated=True,
             base_url="https://virtool.example.com",
         )
-
-        data = get_data_from_app(client.app)
-        data.jobs._client = DummyJobsClient()
 
         user = await fake.users.create()
 
@@ -342,16 +343,18 @@ class TestCreate:
             await resp_is.insufficient_rights(resp)
             return
 
-        assert resp.status == 201
+        assert resp.status == HTTPStatus.CREATED
         assert await resp.json() == snapshot(name="json")
         assert resp.headers["Location"] == snapshot(name="location")
-        assert data.jobs._client.enqueued == snapshot(name="enqueued")
 
         index, job = await asyncio.gather(
             mongo.indexes.find_one(),
             mongo.jobs.find_one(),
         )
 
+        assert await data_layer.jobs.list_queued_ids() == [
+            QueuedJobID(job["_id"], "jobs_build_index")
+        ]
         assert index == snapshot(name="index")
         assert job == snapshot(name="job")
 

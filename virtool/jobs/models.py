@@ -1,9 +1,18 @@
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from typing import Any
 
 from virtool.models import BaseModel, SearchResult
 from virtool.users.models_base import UserNested
+
+
+@dataclass(frozen=True)
+class QueuedJobID:
+    __slots__ = ("job_id", "workflow")
+
+    job_id: str
+    workflow: str
 
 
 class JobError(BaseModel):
@@ -298,6 +307,9 @@ class Job(JobMinimal):
 
     args: dict[str, Any]
     """The arguments used to run the job."""
+
+    retries: int = 0
+    """The number of times the job has been retried."""
 
     status: list[JobStatus]
     """The status record of a job."""

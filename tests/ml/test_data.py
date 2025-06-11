@@ -11,7 +11,7 @@ from syrupy.matchers import path_type
 
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
-from virtool.ml.tasks import SyncMLModelsTask
+from virtool.ml.tasks import MLModelsSyncTask
 from virtool.tasks.sql import SQLTask
 
 
@@ -39,7 +39,7 @@ async def test_list(
                     created_at=static_time.datetime,
                     progress=100,
                     step="sync",
-                    type=SyncMLModelsTask.name,
+                    type=MLModelsSyncTask.name,
                 ),
             )
             await session.commit()

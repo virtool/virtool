@@ -17,9 +17,9 @@ from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.references.db import get_manifest
 from virtool.references.tasks import (
-    CleanReferencesTask,
     CloneReferenceTask,
     ImportReferenceTask,
+    ReferencesCleanTask,
     RemoteReferenceTask,
 )
 from virtool.tasks.sql import SQLTask
@@ -123,7 +123,7 @@ async def test_clean_references_task(
         session.add(task)
         await session.commit()
 
-    task = CleanReferencesTask(1, data_layer, {}, get_temp_dir())
+    task = ReferencesCleanTask(1, data_layer, {}, get_temp_dir())
     await task.run()
 
     task = await get_row_by_id(pg, SQLTask, 1)
