@@ -533,7 +533,8 @@ class JobsData:
         if job.retries >= 3:
             raise ResourceConflictError("Job has already been retried 3 times")
 
-        # Handle PREPARING jobs without ping field - check if they've been preparing too long
+        # Handle PREPARING jobs without ping field - check if they've been preparing too
+        # long.
         if job.ping is None:
             if job.state == JobState.PREPARING:
                 # Find the timestamp when the job entered PREPARING state
@@ -548,7 +549,8 @@ class JobsData:
                         "Cannot determine when job entered PREPARING state"
                     )
 
-                # If job has been PREPARING for more than 3 minutes without a ping, consider it stalled
+                # If job has been PREPARING for more than 3 minutes without a ping,
+                # consider it stalled.
                 if preparing_timestamp > now.shift(minutes=-3).naive:
                     raise ResourceConflictError(
                         "Job has been PREPARING for less than 3 minutes"
@@ -666,8 +668,8 @@ class JobsData:
 
         if job.state == JobState.WAITING:
             return await self.retry_waiting_job(job_id)
-        else:
-            return await self.retry_stalled_job(job_id)
+
+        return await self.retry_stalled_job(job_id)
 
     async def clean(self):
         """Retry all eligible jobs.
