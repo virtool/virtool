@@ -18,7 +18,7 @@ import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
 from virtool.data.transforms import apply_transforms
-from virtool.jobs.client import AbstractJobsClient, JobCancellationResult
+from virtool.jobs.client import JobCancellationResult, JobsClient
 from virtool.jobs.models import (
     Job,
     JobAcquired,
@@ -40,7 +40,7 @@ logger = get_logger("jobs")
 class JobsData:
     name = "jobs"
 
-    def __init__(self, client: AbstractJobsClient, mongo: Mongo, pg: AsyncEngine):
+    def __init__(self, client: JobsClient, mongo: Mongo, pg: AsyncEngine):
         self._client = client
         self._mongo = mongo
         self._pg = pg
