@@ -208,7 +208,7 @@ class SamplesData(DataLayerDomain):
         document = await self._mongo.samples.find_one({"_id": sample_id})
 
         if document is None:
-            raise ResourceNotFoundError()
+            raise ResourceNotFoundError
 
         document = await apply_transforms(
             base_processor(document),
@@ -223,6 +223,9 @@ class SamplesData(DataLayerDomain):
 
         group = None
 
+        if document["group"] == "none":
+            document["group"] = None
+
         if document["group"] is not None:
             async with AsyncSession(self._pg) as session:
                 result = await session.execute(
@@ -231,7 +234,7 @@ class SamplesData(DataLayerDomain):
                     ),
                 )
 
-                row = result.unique().scalar_one_or_none()
+                row = result.scalar_one_or_none()
 
             if row:
                 group = GroupMinimal(
@@ -508,7 +511,12 @@ class SamplesData(DataLayerDomain):
         ):
             return True
 
-        is_group_member = bool(document["group"] and document["group"] in client.groups)
+        # Handle both None and "none" during the transition period
+        group = document["group"]
+        if group == "none":
+            group = None
+            
+        is_group_member = bool(group and group in client.groups)
 
         if right == SampleRight.read:
             return document["all_read"] or (is_group_member and document["group_read"])

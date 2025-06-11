@@ -1,6 +1,6 @@
 from typing import Any
 
-from pydantic import Field, conlist, constr
+from pydantic import Field, conlist, constr, root_validator
 
 from virtool.models import BaseModel
 from virtool.models.enums import AnalysisWorkflow, LibraryType
@@ -18,6 +18,15 @@ class CreateSampleRequest(BaseModel):
     files: conlist(item_type=Any, min_items=1, max_items=2)
     notes: str = ""
     labels: list = Field(default_factory=list)
+
+    @root_validator
+    def validate_group(cls, values):
+        group = values.get("group")
+        
+        if group == "none":
+            values["group"] = None
+            
+        return values
 
 
 class UpdateSampleRequest(BaseModel):
@@ -42,18 +51,27 @@ class UpdateSampleRequest(BaseModel):
 
 
 class UpdateRightsRequest(BaseModel):
-    group: int | str | None
     all_read: bool | None
     all_write: bool | None
+    group: int | str | None
     group_read: bool | None
     group_write: bool | None
 
-    _prevent_none = prevent_none("*")
+    @root_validator
+    def validate_group(cls, values):
+        group = values.get("group")
+
+        if group == "none":
+            values["group"] = None
+
+        return values
+
+    _prevent_none = prevent_none("all_read", "all_write", "group_read", "group_write")
 
     class Config:
         schema_extra = {
             "example": {
-                "group": "administrator",
+                "group": 4,
                 "group_read": True,
                 "group_write": True,
             },
