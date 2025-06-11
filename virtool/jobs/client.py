@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 from asyncio import gather
 from enum import Enum
 
@@ -7,31 +6,21 @@ from structlog import get_logger
 from virtool.jobs.models import QueuedJobID
 from virtool.jobs.utils import WORKFLOW_NAMES
 from virtool.redis import Redis
-from virtool.types import Document
 
 logger = get_logger("jobs")
 
 
 class JobCancellationResult(Enum):
-    REMOVED_FROM_QUEUE = 0
+    """The result of a job cancellation request."""
+
     CANCELLATION_DISPATCHED = 1
+    """Whether the job cancellation was dispatched to job runners."""
+
+    REMOVED_FROM_QUEUE = 0
+    """Whether the job was removed from the queue."""
 
 
-class AbstractJobsClient(ABC):
-    @abstractmethod
-    async def enqueue(self, workflow: str, job_id: str): ...
-
-    @abstractmethod
-    async def cancel(self, job_id: str) -> Document: ...
-
-    @abstractmethod
-    async def remove(self, job_id: str): ...
-
-    @abstractmethod
-    async def list(self) -> list[QueuedJobID]: ...
-
-
-class JobsClient(AbstractJobsClient):
+class JobsClient:
     """A jobs client based on Redis.
 
     Pushes new job IDs to Redis lists to distribute them to job runner processes.
@@ -42,7 +31,8 @@ class JobsClient(AbstractJobsClient):
 
     """
 
-    def __init__(self, redis: Redis):
+    def __init__(self, redis: Redis) -> None:
+        """Initialize the JobsClient with a Redis instance."""
         self._redis = redis
 
     async def enqueue(self, workflow: str, job_id: str) -> QueuedJobID:
@@ -87,7 +77,7 @@ class JobsClient(AbstractJobsClient):
 
         return JobCancellationResult.CANCELLATION_DISPATCHED
 
-    async def remove(self, job_id: str):
+    async def remove(self, job_id: str) -> None:
         """Remove a job from Redis queues without cancellation logic.
 
         :param job_id: the ID of the job to remove
@@ -120,33 +110,3 @@ class JobsClient(AbstractJobsClient):
             )
             for job_id in job_ids
         ]
-
-
-class DummyJobsClient(AbstractJobsClient):
-    """A jobs client used for testing without pushing job IDs into Redis."""
-
-    def __init__(self):
-        self.enqueued = []
-        self.cancelled = []
-
-    async def enqueue(self, workflow: str, job_id: str):
-        self.enqueued.append((workflow, job_id))
-
-    async def cancel(self, job_id: str) -> Document:
-        self.cancelled.append(job_id)
-        self.enqueued = [
-            (workflow, id_) for workflow, id_ in self.enqueued if id_ != job_id
-        ]
-        return {}
-
-    async def remove(self, job_id: str):
-        """Remove a job from the enqueued list.
-
-        :param job_id: the ID of the job to remove
-        """
-        self.enqueued = [
-            (workflow, id_) for workflow, id_ in self.enqueued if id_ != job_id
-        ]
-
-    async def list(self) -> list[QueuedJobID]:
-        return [QueuedJobID(id_, workflow) for workflow, id_ in self.enqueued]
