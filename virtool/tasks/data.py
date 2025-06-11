@@ -1,11 +1,11 @@
 """The data layer piece for tasks."""
 
-from sqlalchemy import delete, desc, select
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
-from virtool.data.events import Operation, emit, emits
+from virtool.data.events import Operation, emits
 from virtool.tasks.client import AbstractTasksClient
 from virtool.tasks.models import Task
 from virtool.tasks.oas import UpdateTaskRequest
@@ -57,12 +57,11 @@ class TasksData:
 
     @emits(Operation.UPDATE)
     async def update(self, task_id: int, task_update: UpdateTaskRequest) -> Task:
-        """Update a task record with given `task_id`
+        """Update a task record with given `task_id`.
 
         :param task_id: the id of the task
         :param task_update: as task update objectd
         :return: the task record
-
         """
         async with AsyncSession(self._pg) as session:
             result = await session.execute(select(SQLTask).filter_by(id=task_id))
@@ -109,23 +108,6 @@ class TasksData:
             await session.commit()
 
         return task
-
-    async def remove(self, task_id: int):
-        """Delete a task.
-
-        :param task_id: ID of the task
-
-        """
-        task = await self.get(task_id)
-
-        if not task:
-            raise ResourceNotFoundError
-
-        async with AsyncSession(self._pg) as session:
-            await session.execute(delete(SQLTask).where(SQLTask.id == task_id))
-            await session.commit()
-
-        emit(task, "tasks", "delete", Operation.DELETE)
 
     @emits(Operation.CREATE)
     async def create(

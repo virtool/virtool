@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from sqlalchemy import desc, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
 from virtool.tasks.data import TasksData
@@ -25,14 +25,14 @@ class PeriodicTask:
 
 
 class TaskSpawnerService:
-    def __init__(self, pg, tasks_datalayer: TasksData):
+    def __init__(self, pg: AsyncEngine, tasks_datalayer: TasksData):
         self._pg = pg
         self._tasks_datalayer = tasks_datalayer
 
         self.registered = []
 
-    async def register(self, tasks: list[tuple[type[BaseTask], int]]):
-        """Registers tasks and sets the last triggered time attribute."""
+    async def register(self, tasks: list[tuple[type[BaseTask], int]]) -> None:
+        """Register tasks and set the last triggered time attribute."""
         for task, interval in tasks:
             async with AsyncSession(self._pg) as session:
                 result = (
@@ -49,7 +49,7 @@ class TaskSpawnerService:
             else:
                 self.registered.append(PeriodicTask(task, interval))
 
-    async def run(self, tasks: list[tuple[type[BaseTask], int]]):
+    async def run(self, tasks: list[tuple[type[BaseTask], int]]) -> None:
         """Run the task spawner service.
 
         The task spawner service will periodically check for tasks that need to be run
@@ -69,14 +69,14 @@ class TaskSpawnerService:
             logger.info("stopped task spawner")
 
     @property
-    def wait_time(self):
+    def wait_time(self) -> float:
         """Time until the next task can be run."""
         return min(
             calculate_wait_time(item.interval, item.last_triggered)
             for item in self.registered
         )
 
-    async def check_or_spawn_task(self, periodic_task: PeriodicTask):
+    async def check_or_spawn_task(self, periodic_task: PeriodicTask) -> PeriodicTask:
         """Spawns task if enough time has passed."""
         if check_interval_exceeded(
             periodic_task.interval,
@@ -90,8 +90,9 @@ class TaskSpawnerService:
         return periodic_task
 
 
-def check_interval_exceeded(interval: int, last_triggered: datetime | None):
-    """Checks whether the time elapsed has exceeded the set interval.
+def check_interval_exceeded(interval: int, last_triggered: datetime | None) -> bool:
+    """Check whether the time elapsed has exceeded the set interval.
+
     :param interval: how frequently the task should be triggered in seconds
     :param last_triggered: the time the task was last triggered
     """
@@ -100,8 +101,9 @@ def check_interval_exceeded(interval: int, last_triggered: datetime | None):
     return (timestamp() - last_triggered) >= timedelta(seconds=interval)
 
 
-def calculate_wait_time(interval: int, last_triggered: datetime | None):
-    """Calculates the wait time.
+def calculate_wait_time(interval: int, last_triggered: datetime | None) -> float:
+    """Calculate the wait time.
+
     :param interval: how frequently the task should be triggered in seconds
     :param last_triggered: the time the task was last triggered
     """

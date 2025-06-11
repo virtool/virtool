@@ -1,8 +1,7 @@
 """Tasks for downloading and installing machine learning models used in Virtool."""
 
 from tempfile import TemporaryDirectory
-from typing import Dict, TYPE_CHECKING
-
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from virtool.data.layer import DataLayer
@@ -10,14 +9,14 @@ if TYPE_CHECKING:
 from virtool.tasks.task import BaseTask
 
 
-class SyncMLModelsTask(BaseTask):
+class MLModelsSyncTask(BaseTask):
     name = "sync_ml_models"
 
     def __init__(
         self,
         task_id: int,
         data: "DataLayer",
-        context: Dict,
+        context: dict,
         temp_dir: TemporaryDirectory,
     ):
         super().__init__(task_id, data, context, temp_dir)

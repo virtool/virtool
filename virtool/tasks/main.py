@@ -26,8 +26,8 @@ from virtool.startup import (
 )
 from virtool.tasks.api import TaskServicesRootView
 from virtool.tasks.startup import (
+    startup_data_layer_for_spawner,
     startup_databases_for_spawner,
-    startup_datalayer_for_spawner,
     startup_task_spawner,
 )
 
@@ -93,7 +93,7 @@ def run_task_spawner(config: TaskSpawnerConfig):
             startup_http_client_session,
             startup_databases_for_spawner,
             startup_events,
-            startup_datalayer_for_spawner,
+            startup_data_layer_for_spawner,
             startup_executors,
             startup_task_spawner,
         ],

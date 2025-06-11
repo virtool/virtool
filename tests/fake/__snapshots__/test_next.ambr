@@ -71,7 +71,7 @@
 # ---
 # name: test_groups_and_users[job]
   dict({
-    'acquired': False,
+    'acquired': True,
     'args': dict({
       'foreign': -9158348948.40671,
       'movie': 748,
@@ -84,6 +84,7 @@
     'id': '7cf872dc',
     'ping': None,
     'progress': 50,
+    'retries': 0,
     'stage': 'JURZHTCWaKMqqBTFitpK',
     'state': <JobState.TIMEOUT: 'timeout'>,
     'status': list([
@@ -92,6 +93,15 @@
         'progress': 0,
         'stage': None,
         'state': <JobState.WAITING: 'waiting'>,
+        'step_description': None,
+        'step_name': None,
+        'timestamp': datetime,
+      }),
+      dict({
+        'error': None,
+        'progress': 3,
+        'stage': None,
+        'state': <JobState.PREPARING: 'preparing'>,
         'step_description': None,
         'step_name': None,
         'timestamp': datetime,
@@ -146,12 +156,12 @@
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),
-    'workflow': 'jobs_aodp',
+    'workflow': 'aodp',
   })
 # ---
 # name: test_jobs[job]
   dict({
-    'acquired': False,
+    'acquired': True,
     'args': dict({
       'fact': 'LdJCGRddpwdyFKunVyUD',
       'nearly': 951.93581531826,
@@ -164,6 +174,7 @@
     'id': 'fb085f7f',
     'ping': None,
     'progress': 10,
+    'retries': 0,
     'stage': 'NzFJEUSgqMReEKilxKJT',
     'state': <JobState.PREPARING: 'preparing'>,
     'status': list([
@@ -172,6 +183,15 @@
         'progress': 0,
         'stage': None,
         'state': <JobState.WAITING: 'waiting'>,
+        'step_description': None,
+        'step_name': None,
+        'timestamp': datetime,
+      }),
+      dict({
+        'error': None,
+        'progress': 3,
+        'stage': None,
+        'state': <JobState.PREPARING: 'preparing'>,
         'step_description': None,
         'step_name': None,
         'timestamp': datetime,
@@ -190,7 +210,7 @@
       'handle': 'leeashley',
       'id': 'bf1b993c',
     }),
-    'workflow': 'jobs_pathoscope_bowtie',
+    'workflow': 'pathoscope_bowtie',
   })
 # ---
 # name: test_subtractions

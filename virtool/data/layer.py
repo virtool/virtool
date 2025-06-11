@@ -36,10 +36,7 @@ from virtool.users.sessions import SessionData
 
 @dataclass
 class DataLayer:
-    """Provides access to Virtool application data through an abstract interface over
-    database and storage.
-
-    """
+    """Provides access to application data."""
 
     account: AccountData
     administrators: AdministratorsData

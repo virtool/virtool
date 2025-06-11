@@ -11,13 +11,13 @@ routes = Routes()
 
 
 @routes.post("/dev")
-async def dev(req):
-    data = await req.json()
+async def dev(request):
+    data = await request.json()
     command = data.get("command")
-    app = req.app
+    app = request.app
 
     if command == "clear_users":
-        mongo = get_mongo_from_req(req)
+        mongo = get_mongo_from_req(request)
 
         await mongo.users.delete_many({})
         await mongo.sessions.delete_many({})
@@ -28,7 +28,7 @@ async def dev(req):
         mongo = get_mongo_from_app(app)
         pg = app["pg"]
 
-        fake = DataFaker(layer, mongo, pg)
+        fake = DataFaker(layer, mongo, pg, request["redis"])
 
         user = await fake.users.create()
         upload = await fake.uploads.create(
@@ -41,14 +41,14 @@ async def dev(req):
 
     if command == "create_sample":
         await create_fake_sample(
-            req.app,
+            request.app,
             random_alphanumeric(8),
-            req["client"].user_id,
+            request["client"].user_id,
             False,
             True,
         )
 
     if command == "force_delete_jobs":
-        await get_data_from_req(req).jobs.force_delete()
+        await get_data_from_req(request).jobs.force_delete()
 
     raise APINoContent()

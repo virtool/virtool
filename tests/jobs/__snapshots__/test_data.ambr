@@ -9,6 +9,7 @@
     'key': 'key',
     'ping': None,
     'progress': 3,
+    'retries': 0,
     'stage': None,
     'state': <JobState.PREPARING: 'preparing'>,
     'status': list([
@@ -66,6 +67,7 @@
     'id': 'foo',
     'ping': None,
     'progress': 0,
+    'retries': 0,
     'stage': 'foo',
     'state': <JobState.RUNNING: 'running'>,
     'status': list([
@@ -120,6 +122,7 @@
     'id': 'fb085f7f',
     'ping': None,
     'progress': 0,
+    'retries': 0,
     'stage': None,
     'state': <JobState.WAITING: 'waiting'>,
     'status': list([
@@ -182,6 +185,7 @@
     'id': 'bar',
     'ping': None,
     'progress': 0,
+    'retries': 0,
     'stage': None,
     'state': <JobState.WAITING: 'waiting'>,
     'status': list([
@@ -233,155 +237,4 @@
     }),
     'workflow': 'create_sample',
   })
-# ---
-# name: test_timeout
-  list([
-    dict({
-      '_id': 'ok_new',
-      'state': 'running',
-      'status': list([
-        dict({
-          'error': None,
-          'progress': 0.33,
-          'stage': 'foo',
-          'state': 'waiting',
-          'step_description': 'Foo a bar',
-          'step_name': 'foo',
-          'timestamp': datetime,
-        }),
-        dict({
-          'error': None,
-          'progress': 0.33,
-          'stage': 'foo',
-          'state': 'running',
-          'step_description': 'Foo a bar',
-          'step_name': 'foo',
-          'timestamp': datetime,
-        }),
-      ]),
-    }),
-    dict({
-      '_id': 'ok_ping',
-      'state': 'running',
-      'status': list([
-        dict({
-          'error': None,
-          'progress': 0.33,
-          'stage': 'foo',
-          'state': 'waiting',
-          'step_description': 'Foo a bar',
-          'step_name': 'foo',
-          'timestamp': datetime,
-        }),
-        dict({
-          'error': None,
-          'progress': 0.33,
-          'stage': 'foo',
-          'state': 'running',
-          'step_description': 'Foo a bar',
-          'step_name': 'foo',
-          'timestamp': datetime,
-        }),
-      ]),
-    }),
-    dict({
-      '_id': 'ok_state',
-      'state': 'complete',
-      'status': list([
-        dict({
-          'error': None,
-          'progress': 0.33,
-          'stage': 'foo',
-          'state': 'waiting',
-          'step_description': 'Foo a bar',
-          'step_name': 'foo',
-          'timestamp': datetime,
-        }),
-        dict({
-          'error': None,
-          'progress': 0.33,
-          'stage': 'foo',
-          'state': 'running',
-          'step_description': 'Foo a bar',
-          'step_name': 'foo',
-          'timestamp': datetime,
-        }),
-        dict({
-          'error': None,
-          'progress': 1,
-          'stage': 'Bar',
-          'state': 'complete',
-          'step_description': 'bar a foo',
-          'step_name': 'bar',
-          'timestamp': datetime,
-        }),
-      ]),
-    }),
-    dict({
-      '_id': 'bad_old',
-      'state': 'timeout',
-      'status': list([
-        dict({
-          'error': None,
-          'progress': 0.33,
-          'stage': 'foo',
-          'state': 'waiting',
-          'step_description': 'Foo a bar',
-          'step_name': 'foo',
-          'timestamp': datetime,
-        }),
-        dict({
-          'error': None,
-          'progress': 0.33,
-          'stage': 'foo',
-          'state': 'running',
-          'step_description': 'Foo a bar',
-          'step_name': 'foo',
-          'timestamp': datetime,
-        }),
-        dict({
-          'error': None,
-          'progress': 0.33,
-          'stage': 'foo',
-          'state': 'timeout',
-          'step_description': 'Foo a bar',
-          'step_name': 'foo',
-          'timestamp': datetime,
-        }),
-      ]),
-    }),
-    dict({
-      '_id': 'bad_ping',
-      'state': 'timeout',
-      'status': list([
-        dict({
-          'error': None,
-          'progress': 0.33,
-          'stage': 'foo',
-          'state': 'waiting',
-          'step_description': 'Foo a bar',
-          'step_name': 'foo',
-          'timestamp': datetime,
-        }),
-        dict({
-          'error': None,
-          'progress': 0.33,
-          'stage': 'foo',
-          'state': 'running',
-          'step_description': 'Foo a bar',
-          'step_name': 'foo',
-          'timestamp': datetime,
-        }),
-        dict({
-          'error': None,
-          'progress': 0.33,
-          'stage': 'foo',
-          'state': 'timeout',
-          'step_description': 'Foo a bar',
-          'step_name': 'foo',
-          'timestamp': datetime,
-        }),
-      ]),
-    }),
-  ])
 # ---

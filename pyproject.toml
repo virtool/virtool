@@ -52,22 +52,21 @@ msal = "^1.16.0"
 openfga-sdk = "^0.1.1"
 openpyxl = "^3.1.5"
 orjson = "^3.8.0"
-piccolo-theme = "^0.24.0"
 pydantic = "1.10.16"
-PyYAML = "^6.0.0"
-PyJWT = "^2.9.0"
+pyyaml = "^6.0.0"
+pyjwt = "^2.9.0"
 semver = "^2.13.0"
 sentry-sdk = "^2.18.0"
 setuptools = "^75.3.0"
-SQLAlchemy = "2.0.24"
+sqlalchemy = "2.0.24"
 structlog-sentry = "^2.1.0"
 uvloop = "^0.21.0"
 visvalingamwyatt = "^0.1.4"
 redis = "^6.2.0"
 enum-tools = "^0.13.0"
 
-
 [tool.poetry.group.dev.dependencies]
+furo = "^2024.8.6"
 mypy = "^1.6.0"
 pytest = "^8.3.4"
 pytest-aiohttp = "^1.0.5"
@@ -79,14 +78,17 @@ pytest-structlog = "^0.6"
 pytest-xdist = "^3.3.1"
 ruff = "^0.4.1"
 snakeviz = "^2.2.0"
-sphinx = "^7.0.1"
-sphinx-autobuild = "^2021.3.14"
-sphinx-autodoc-typehints = "^1.24.0"
+sphinx = "^8.2.3"
+sphinx-autobuild = "^2024"
 sphinx-autofixture = "^0.4.0"
-sphinx-toolbox = "^3.5.0"
+sphinx-toolbox = "^4.0.0"
 syrupy = "^4.5.0"
 
 [tool.pytest.ini_options]
+addopts = [
+    "-n", "auto",  # Automatically use the number of available CPUs
+    "--maxprocesses", "12",
+]
 asyncio_mode = "auto"
 python_files = ["test_*.py"]
 testpaths = ["tests"]

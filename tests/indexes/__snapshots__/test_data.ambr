@@ -75,7 +75,7 @@
         'handle': 'leeashley',
         'id': 'bf1b993c',
       }),
-      'workflow': 'jobs_pathoscope_bowtie',
+      'workflow': 'pathoscope_bowtie',
     }),
     'manifest': dict({
     }),
