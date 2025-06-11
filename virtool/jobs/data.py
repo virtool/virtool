@@ -612,6 +612,7 @@ class JobsData:
                 if job.state == JobState.PREPARING:
                     # Find the timestamp when the job entered PREPARING state
                     preparing_timestamp = None
+
                     for status in reversed(job.status):
                         if status.state == JobState.PREPARING:
                             preparing_timestamp = status.timestamp
@@ -624,10 +625,10 @@ class JobsData:
                         raise ResourceConflictError(
                             "Job has been PREPARING for less than 3 minutes"
                         )
-                    else:
-                        raise ResourceConflictError(
-                            "Job has invalid ping field or timestamp"
-                        )
+
+                    raise ResourceConflictError(
+                        "Job has invalid ping field or timestamp"
+                    )
                 else:
                     raise ResourceConflictError("RUNNING job has invalid ping field")
 
