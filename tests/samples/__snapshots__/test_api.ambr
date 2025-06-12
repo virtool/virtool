@@ -13,7 +13,7 @@
       }),
     ]),
     'format': 'fastq',
-    'group': 'none',
+    'group': None,
     'group_read': True,
     'group_write': True,
     'hold': False,
@@ -51,7 +51,7 @@
   dict({
     'all_read': True,
     'all_write': True,
-    'group': 'none',
+    'group': None,
     'group_read': True,
     'group_write': True,
     'user': dict({

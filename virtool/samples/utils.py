@@ -66,7 +66,12 @@ def get_sample_rights(sample: dict, client: AbstractClient):
     ):
         return True, True
 
-    is_group_member = sample["group"] and client.is_group_member(sample["group"])
+    # Handle both None and "none" during the transition period
+    group = sample["group"]
+    if group == "none":
+        group = None
+
+    is_group_member = group and client.is_group_member(group)
 
     read = sample["all_read"] or (is_group_member and sample["group_read"])
 
