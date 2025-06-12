@@ -26,6 +26,7 @@ from virtool.jobs.models import (
     JobPing,
     JobSearchResult,
     JobState,
+    QueuedJobID,
 )
 from virtool.jobs.utils import check_job_is_running_or_waiting, compose_status
 from virtool.mongo.core import Mongo
@@ -167,7 +168,7 @@ class JobsData:
             page=page,
         )
 
-    async def list_queued_ids(self) -> list[str]:
+    async def list_queued_ids(self) -> list[QueuedJobID]:
         """List all job IDs in Redis.
 
         :return: a list of job IDs
@@ -657,7 +658,7 @@ class JobsData:
         await asyncio.sleep(0.5)
         queued_entries.extend(await self.list_queued_ids())
 
-        queued_ids = {entry.job_id for entry in queued_entries}
+        queued_ids = {entry.id for entry in queued_entries}
 
         if job_id in queued_ids:
             raise ResourceConflictError("Job is already queued")

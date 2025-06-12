@@ -9,9 +9,9 @@ from virtool.users.models_base import UserNested
 
 @dataclass(frozen=True)
 class QueuedJobID:
-    __slots__ = ("job_id", "workflow")
+    __slots__ = ("id", "workflow")
 
-    job_id: str
+    id: str
     workflow: str
 
 
