@@ -515,7 +515,7 @@ class SamplesData(DataLayerDomain):
         group = document["group"]
         if group == "none":
             group = None
-            
+
         is_group_member = bool(group and group in client.groups)
 
         if right == SampleRight.read:

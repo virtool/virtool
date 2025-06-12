@@ -70,7 +70,7 @@ def get_sample_rights(sample: dict, client: AbstractClient):
     group = sample["group"]
     if group == "none":
         group = None
-    
+
     is_group_member = group and client.is_group_member(group)
 
     read = sample["all_read"] or (is_group_member and sample["group_read"])

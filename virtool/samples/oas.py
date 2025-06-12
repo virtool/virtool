@@ -22,10 +22,10 @@ class CreateSampleRequest(BaseModel):
     @root_validator
     def validate_group(cls, values):
         group = values.get("group")
-        
+
         if group == "none":
             values["group"] = None
-            
+
         return values
 
 
