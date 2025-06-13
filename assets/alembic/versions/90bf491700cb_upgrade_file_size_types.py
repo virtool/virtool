@@ -5,6 +5,7 @@ Revises: e694fb270acb
 Create Date: 2022-01-12 16:14:01.280566
 
 """
+
 from alembic import op
 from sqlalchemy import BigInteger, Integer
 

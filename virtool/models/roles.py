@@ -1,4 +1,5 @@
 """All Virtool roles."""
+
 from enum import Enum
 
 
@@ -35,8 +36,7 @@ class AdministratorRole(str, Enum):
 
 
 class SpaceRole(str, Enum):
-    """
-    Roles that are bestowed to users in a space.
+    """Roles that are bestowed to users in a space.
 
     Un-prefixed base roles are ones that apply to the space directly. Only one can be
     selected at a time.

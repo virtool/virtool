@@ -166,7 +166,9 @@ class TestRetry:
         """Test a job cannot be retried if it has no ping field."""
         job = await fake.jobs.create(self.user, state=JobState.RUNNING)
 
-        with pytest.raises(ResourceConflictError, match="RUNNING job has no recorded ping field"):
+        with pytest.raises(
+            ResourceConflictError, match="RUNNING job has no recorded ping field"
+        ):
             await data_layer.jobs.retry(job.id)
 
     @pytest.mark.parametrize(
@@ -234,11 +236,11 @@ class TestRetry:
         """Test that PREPARING jobs with no ping field can be retried when stalled (> 3 minutes)."""
         # Create a job and manually put it in PREPARING state with no ping and old timestamp
         job = await fake.jobs.create(self.user, state=JobState.WAITING)
-        
+
         # Remove from queue and acquire it (puts it in PREPARING state)
         await data_layer.jobs._client.remove(job.id)
         job = await data_layer.jobs.acquire(job.id)
-        
+
         # Set the PREPARING status timestamp to > 3 minutes ago and remove ping
         old_timestamp = arrow.utcnow().shift(minutes=-4).datetime
         await mongo.jobs.update_one(
@@ -248,7 +250,7 @@ class TestRetry:
                     "ping": None,
                     "status.1.timestamp": old_timestamp,  # status[1] should be the PREPARING record
                 }
-            }
+            },
         )
 
         retried_job = await data_layer.jobs.retry(job.id)
@@ -266,11 +268,11 @@ class TestRetry:
         """Test that PREPARING jobs with no ping field cannot be retried when not stalled (< 3 minutes)."""
         # Create a job and manually put it in PREPARING state with no ping and recent timestamp
         job = await fake.jobs.create(self.user, state=JobState.WAITING)
-        
+
         # Remove from queue and acquire it (puts it in PREPARING state)
         await data_layer.jobs._client.remove(job.id)
         job = await data_layer.jobs.acquire(job.id)
-        
+
         # Set the PREPARING status timestamp to < 3 minutes ago and remove ping
         recent_timestamp = arrow.utcnow().shift(minutes=-2).datetime
         await mongo.jobs.update_one(
@@ -280,11 +282,12 @@ class TestRetry:
                     "ping": None,
                     "status.1.timestamp": recent_timestamp,  # status[1] should be the PREPARING record
                 }
-            }
+            },
         )
 
         with pytest.raises(
-            ResourceConflictError, match="Job has been PREPARING for less than 3 minutes"
+            ResourceConflictError,
+            match="Job has been PREPARING for less than 3 minutes",
         ):
             await data_layer.jobs.retry(job.id)
 
@@ -441,13 +444,15 @@ class TestTimeout:
         with pytest.raises(ResourceNotFoundError):
             await data_layer.jobs.timeout("nonexistent")
 
-    async def test_invalid_ping_field(self, data_layer: DataLayer, fake: DataFaker, mongo: Mongo):
+    async def test_invalid_ping_field(
+        self, data_layer: DataLayer, fake: DataFaker, mongo: Mongo
+    ):
         """Test timeout fails when ping field is None."""
         job = await fake.jobs.create(self.user, state=JobState.RUNNING)
-        
+
         # Remove ping field to simulate invalid state
         await mongo.jobs.update_one({"_id": job.id}, {"$unset": {"ping": 1}})
-        
+
         with pytest.raises(ResourceConflictError, match="Job has invalid ping field"):
             await data_layer.jobs.timeout(job.id)
 
@@ -460,8 +465,8 @@ class TestTimeout:
         )
 
         with pytest.raises(
-            ResourceConflictError, 
-            match="Job has been pinged within the last 5 minutes and cannot be timed out"
+            ResourceConflictError,
+            match="Job has been pinged within the last 5 minutes and cannot be timed out",
         ):
             await data_layer.jobs.timeout(job.id)
 
@@ -480,35 +485,37 @@ class TestTimeout:
         )
 
         with pytest.raises(
-            ResourceConflictError, 
-            match=f"Job is not in a state that can be timed out: {state}"
+            ResourceConflictError,
+            match=f"Job is not in a state that can be timed out: {state}",
         ):
             await data_layer.jobs.timeout(job.id)
 
-    async def test_preserves_latest_status_fields(self, data_layer: DataLayer, fake: DataFaker):
+    async def test_preserves_latest_status_fields(
+        self, data_layer: DataLayer, fake: DataFaker
+    ):
         """Test timeout preserves stage, step info, and progress from latest status."""
         job = await fake.jobs.create(
             self.user,
             state=JobState.RUNNING,
             pinged_at=arrow.utcnow().shift(minutes=-6).datetime,
         )
-        
+
         # Add a status with specific stage, step, and progress info
         await data_layer.jobs.push_status(
-            job.id, 
-            JobState.RUNNING, 
+            job.id,
+            JobState.RUNNING,
             "processing_data",
             step_name="Data Processing",
             step_description="Processing uploaded files",
-            progress=75
+            progress=75,
         )
-        
+
         timed_out_job = await data_layer.jobs.timeout(job.id)
-        
+
         # Verify the TIMEOUT status preserves the latest status fields
         timeout_status = timed_out_job.status[-1]
         assert timeout_status.state == JobState.TIMEOUT
         assert timeout_status.stage == "processing_data"
-        assert timeout_status.step_name == "Data Processing" 
+        assert timeout_status.step_name == "Data Processing"
         assert timeout_status.step_description == "Processing uploaded files"
         assert timeout_status.progress == 75
