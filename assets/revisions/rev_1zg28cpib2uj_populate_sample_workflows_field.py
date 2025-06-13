@@ -1,13 +1,13 @@
-"""
-Populate sample workflows field
+"""Populate sample workflows field
 
 Revision ID: 1zg28cpib2uj
 Date: 2023-06-05 20:22:37.084509
 
 """
+
 import arrow
 
-from virtool.migration import MigrationError, MigrationContext
+from virtool.migration import MigrationContext, MigrationError
 from virtool.samples.db import recalculate_workflow_tags
 
 # Revision identifiers.
@@ -23,10 +23,7 @@ required_alembic_revision = None
 
 
 async def upgrade(ctx: MigrationContext):
-    """
-    Add a ``workflows`` field for all samples where it is missing.
-
-    """
+    """Add a ``workflows`` field for all samples where it is missing."""
     for sample_id in await ctx.mongo.samples.distinct(
         "_id", {"workflows": {"$exists": False}}
     ):
