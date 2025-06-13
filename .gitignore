@@ -4,11 +4,13 @@ __pycache__
 *.pyc
 .idea
 .cache
+.claude
 .coverage.cog*
 .coverage
 .DS_store
 .pytest_cache
 .venv
+.vscode
 /assets/prunus_persica
 /build
 /data
@@ -22,4 +24,3 @@ env
 node_modules
 prof
 tags
-.vscode

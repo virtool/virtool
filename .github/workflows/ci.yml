@@ -196,3 +196,37 @@ jobs:
       - name: Trigger Cloudflare Hook
         if: steps.semantic.outputs.git-tag != ''
         run: curl -X POST ${{ secrets.CLOUDFLARE_HOOK }}
+
+  pypi:
+    runs-on: ubuntu-22.04
+    if: github.repository_owner == 'Virtool' && github.event_name == 'push' && needs.release.outputs.git-tag
+    needs: [release]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.git-tag }}
+      - name: Setup Python
+        id: setup-python
+        uses: actions/setup-python@v5
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      - name: Load Cached Packages
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install Packages
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction
+      - name: Set version
+        run: poetry version ${{ needs.release.outputs.git-tag }} && poetry lock
+      - name: Build
+        run: poetry build
+      - name: Publish
+        run: poetry publish -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_TOKEN }}

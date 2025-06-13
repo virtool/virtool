@@ -22,15 +22,19 @@ authors = [
     {name = "Bryce Davidson"},
 ]
 maintainers = [
-    {name = "Ian Boyes", email = "dev@igboyes.com"},
+    {name = "Ian Boyes" },
+    {name = "Reece Hoffmann" },
 ]
 license = "MIT"
+version = "0.0.0"
 
 [project.scripts]
 virtool = "virtool.config.cli:entry"
 
 [tool.poetry]
-version = "0.0.0"
+packages = [
+    { include = "virtool" },
+]
 
 [tool.poetry.dependencies]
 aiohttp = {extras = ["speedups"], version = "^3.10"}
