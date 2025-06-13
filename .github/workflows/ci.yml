@@ -29,6 +29,34 @@ jobs:
         with:
           context: .
 
+  # Check code formatting with ruff.
+  ruff-format:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Setup Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      - name: Load Cached Packages
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install Packages
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction
+      - name: Check formatting
+        run: poetry run ruff format --check
+
   # Generate the OpenAPI specification and upload it as an artifact.
   oas:
     runs-on: ubuntu-22.04
@@ -140,7 +168,7 @@ jobs:
   release:
     runs-on: ubuntu-22.04
     if: github.repository_owner == 'Virtool' && github.event_name == 'push'
-    needs: [build, oas, test]
+    needs: [build, oas, test, ruff-format]
     outputs:
       git-tag: ${{ steps.semantic.outputs.git-tag }}
     permissions:
