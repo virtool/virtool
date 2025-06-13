@@ -39,7 +39,6 @@ from virtool.references.bulk_models import (
 )
 from virtool.references.utils import (
     check_will_change,
-    get_owner_user,
 )
 from virtool.releases import (
     GetReleaseError,
@@ -494,7 +493,16 @@ async def create_document(
         user = {"id": user_id}
 
     if not users:
-        users = [get_owner_user(user_id, created_at)]
+        users = [
+            {
+                "id": user_id,
+                "build": True,
+                "modify": True,
+                "modify_otu": True,
+                "created_at": created_at,
+                "remove": True,
+            }
+        ]
 
     document = {
         "_id": ref_id,
