@@ -8,6 +8,7 @@ from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.references.db import (
     check_right,
+    create_document,
     fetch_and_update_release,
     get_manifest,
     get_reference_groups,
@@ -155,3 +156,35 @@ async def test_get_reference_groups(
         )
         == snapshot
     )
+
+
+async def test_create_document_owner_user(
+    mongo: Mongo,
+    static_time,
+):
+    from virtool.settings.models import Settings
+
+    settings = Settings(default_source_types=["isolate", "strain"])
+
+    document = await create_document(
+        mongo,
+        settings,
+        "Test Reference",
+        "virus",
+        "Test description",
+        "genome",
+        static_time.datetime,
+        user_id="fred",
+    )
+
+    # Verify the owner user was created correctly
+    assert len(document["users"]) == 1
+    owner_user = document["users"][0]
+    assert owner_user == {
+        "id": "fred",
+        "build": True,
+        "modify": True,
+        "modify_otu": True,
+        "created_at": static_time.datetime,
+        "remove": True,
+    }

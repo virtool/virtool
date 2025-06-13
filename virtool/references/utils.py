@@ -1,61 +1,179 @@
 import gzip
 import json
-from datetime import datetime
 from operator import itemgetter
 from pathlib import Path
 
-from cerberus import Validator
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, validator
 
-import virtool.otus.utils
 from virtool.references.models import ReferenceDataType
 
 RIGHTS = ["build", "modify", "modify_otu", "remove"]
 
 
+class ReferenceSourceDataError(Exception):
+    """An exception raised when source data used to create a reference is invalid."""
+
+    def __init__(self, errors: list[dict] | None = None):
+        super().__init__("Found errors in reference input.")
+
+        self.errors = errors if errors else []
+
+
+class ReferenceSourceSequence(BaseModel):
+    """Pydantic validator for sequence data being used to populate a new reference."""
+
+    id: str = Field(min_length=1, alias="_id")
+    accession: str = Field(min_length=1)
+    definition: str
+    sequence: str = Field(min_length=10)
+
+    class Config:
+        extra = "allow"
+        allow_population_by_field_name = True
+
+
+class ReferenceSourceIsolate(BaseModel):
+    """Pydantic validator for isolate data."""
+
+    id: str
+    default: bool
+    source_type: str
+    source_name: str
+    sequences: list[ReferenceSourceSequence] = Field(min_items=1)
+
+    class Config:
+        extra = "allow"
+        allow_population_by_field_name = True
+
+
+class ReferenceSourceOTU(BaseModel):
+    """Pydantic validator for OTU data."""
+
+    id: str = Field(alias="_id")
+    abbreviation: str = ""
+    name: str
+    isolates: list[ReferenceSourceIsolate] = Field(min_items=1)
+
+    class Config:
+        extra = "allow"
+        allow_population_by_field_name = True
+
+
 class ReferenceSourceData(BaseModel):
     data_type: ReferenceDataType = ReferenceDataType.genome
     organism: str = "Unknown"
-    otus: list[dict]
-    targets: list[dict] | None = None
+    targets: list[str] | None = None
+    otus: list[ReferenceSourceOTU] = Field(min_items=1)
 
+    @validator("otus")
+    def validate_no_duplicate_names(cls, v):
+        """Validate that there are no duplicate OTU names."""
+        duplicate_names = set()
+        seen_names = set()
 
-def check_import_data(
-    data: dict,
-    strict: bool = True,
-    verify: bool = True,
-) -> list[dict]:
-    errors = detect_duplicates(data["otus"])
+        for otu in v:
+            lowered = otu.name.lower()
 
-    v = Validator(get_import_schema(require_meta=strict), allow_unknown=True)
+            if lowered in seen_names:
+                duplicate_names.add(otu.name)
+            else:
+                seen_names.add(lowered)
 
-    v.validate(data)
+        if duplicate_names:
+            raise ValueError(f"Duplicate OTU names found: {list(duplicate_names)}")
+        return v
 
-    if v.errors:
-        errors.append({"id": "file", "issues": v.errors})
+    @validator("otus")
+    def validate_no_duplicate_abbreviations(cls, v):
+        """Validate that there are no duplicate OTU abbreviations."""
+        duplicate_abbreviations = set()
+        seen_abbreviations = set()
 
-    otus = {}
+        for otu in v:
+            abbreviation = otu.abbreviation
+            if abbreviation:
+                if abbreviation in seen_abbreviations:
+                    duplicate_abbreviations.add(abbreviation)
+                else:
+                    seen_abbreviations.add(abbreviation)
 
-    for otu in data["otus"]:
-        verification = None
+        if duplicate_abbreviations:
+            raise ValueError(
+                f"Duplicate OTU abbreviations found: {list(duplicate_abbreviations)}"
+            )
 
-        if verify:
-            verification = virtool.otus.utils.verify(otu)
+        return v
 
-        validation = validate_otu(otu, strict)
+    @validator("otus")
+    def validate_no_duplicate_ids(cls, v):
+        """Validate that there are no duplicate OTU IDs."""
+        duplicate_ids = set()
+        seen_ids = set()
 
-        issues = {}
+        for otu in v:
+            if otu.id in seen_ids:
+                duplicate_ids.add(otu.id)
+            else:
+                seen_ids.add(otu.id)
 
-        if verification:
-            issues["verification"] = verification
+        if duplicate_ids:
+            raise ValueError(f"Duplicate OTU ids found: {list(duplicate_ids)}")
 
-        if validation:
-            issues["validation"] = validation
+        return v
 
-        if issues:
-            otus[otu["_id"]] = issues
+    @validator("otus")
+    def validate_no_duplicate_isolate_ids(cls, v):
+        """Validate that there are no duplicate isolate IDs within OTUs."""
+        duplicate_isolate_ids = {}
 
-    return errors
+        for otu in v:
+            duplicates = set()
+            isolate_ids = [i.id for i in otu.isolates]
+
+            for isolate_id in isolate_ids:
+                if isolate_ids.count(isolate_id) > 1:
+                    duplicates.add(isolate_id)
+
+            if duplicates:
+                duplicate_isolate_ids[otu.id] = {
+                    "name": otu.id,
+                    "duplicates": list(duplicates),
+                }
+
+        if duplicate_isolate_ids:
+            raise ValueError(
+                f"Duplicate isolate ids found in some OTUs: {duplicate_isolate_ids}"
+            )
+        return v
+
+    @validator("otus")
+    def validate_no_duplicate_sequence_ids(cls, v):
+        """Validate that there are no duplicate sequence IDs."""
+        duplicate_sequence_ids = set()
+        seen_sequence_ids = set()
+
+        for otu in v:
+            # Extract sequence IDs from the OTU model
+            sequence_ids = []
+            for isolate in otu.isolates:
+                sequence_ids.extend([sequence.id for sequence in isolate.sequences])
+
+            duplicate_sequence_ids.update(
+                {i for i in sequence_ids if sequence_ids.count(i) > 1},
+            )
+
+            sequence_ids = set(sequence_ids)
+
+            # Add sequence ids that have already been seen and are in the OTU.
+            duplicate_sequence_ids.update(seen_sequence_ids & sequence_ids)
+
+            # Add all sequences to seen list.
+            seen_sequence_ids.update(sequence_ids)
+
+        if duplicate_sequence_ids:
+            raise ValueError(f"Duplicate sequence ids found: {duplicate_sequence_ids}")
+
+        return v
 
 
 def check_will_change(old: dict, imported: dict) -> bool:
@@ -86,13 +204,13 @@ def check_will_change(old: dict, imported: dict) -> bool:
                 return True
 
         # Check if sequence ids have changed.
-        if {i["_id"] for i in new_isolate["sequences"]} != {
+        if {i["id"] for i in new_isolate["sequences"]} != {
             i["remote"]["id"] for i in old_isolate["sequences"]
         }:
             return True
 
         # Check sequence-by-sequence. Order is ignored.
-        new_sequences = sorted(new_isolate["sequences"], key=itemgetter("_id"))
+        new_sequences = sorted(new_isolate["sequences"], key=itemgetter("id"))
         old_sequences = sorted(
             old_isolate["sequences"],
             key=lambda d: d["remote"]["id"],
@@ -108,202 +226,6 @@ def check_will_change(old: dict, imported: dict) -> bool:
     return False
 
 
-def detect_duplicate_abbreviation(joined: dict, duplicates: set, seen: set):
-    abbreviation = joined.get("abbreviation", "")
-
-    if abbreviation:
-        if abbreviation in seen:
-            duplicates.add(abbreviation)
-        else:
-            seen.add(abbreviation)
-
-
-def detect_duplicate_ids(joined: dict, duplicate_ids: set, seen_ids: set):
-    if joined["_id"] in seen_ids:
-        duplicate_ids.add(joined["_id"])
-    else:
-        seen_ids.add(joined["_id"])
-
-
-def detect_duplicate_isolate_ids(joined: dict, duplicate_isolate_ids: dict):
-    duplicates = set()
-
-    isolate_ids = [i["id"] for i in joined["isolates"]]
-
-    for isolate_id in isolate_ids:
-        if isolate_ids.count(isolate_id) > 1:
-            duplicates.add(isolate_id)
-
-    if duplicates:
-        duplicate_isolate_ids[joined["_id"]] = {
-            "name": joined["name"],
-            "duplicates": list(duplicates),
-        }
-
-
-def detect_duplicate_sequence_ids(
-    joined: dict,
-    duplicate_sequence_ids: set[str],
-    seen_sequence_ids: set[str],
-):
-    sequence_ids = virtool.otus.utils.extract_sequence_ids(joined)
-
-    # Add sequence ids that are duplicated within an OTU to the duplicate set.
-    duplicate_sequence_ids.update(
-        {i for i in sequence_ids if sequence_ids.count(i) > 1},
-    )
-
-    sequence_ids = set(sequence_ids)
-
-    # Add sequence ids that have already been seen and are in the OTU.
-    duplicate_sequence_ids.update(seen_sequence_ids & sequence_ids)
-
-    # Add all sequences to seen list.
-    seen_sequence_ids.update(sequence_ids)
-
-
-def detect_duplicate_name(joined: dict, duplicates: set[str], seen: set[str]):
-    lowered = joined["name"].lower()
-
-    if joined["name"].lower() in seen:
-        duplicates.add(joined["name"])
-    else:
-        seen.add(lowered)
-
-
-def detect_duplicates(otus: list[dict], strict: bool = True) -> list[dict]:
-    duplicate_abbreviations = set()
-    duplicate_ids = set()
-    duplicate_isolate_ids = {}
-    duplicate_names = set()
-    duplicate_sequence_ids = set()
-
-    seen_abbreviations = set()
-    seen_ids = set()
-    seen_names = set()
-    seen_sequence_ids = set()
-
-    for joined in otus:
-        detect_duplicate_abbreviation(
-            joined,
-            duplicate_abbreviations,
-            seen_abbreviations,
-        )
-
-        detect_duplicate_name(joined, duplicate_names, seen_names)
-
-        if strict:
-            detect_duplicate_ids(
-                joined,
-                duplicate_ids,
-                seen_ids,
-            )
-
-            detect_duplicate_isolate_ids(joined, duplicate_isolate_ids)
-
-            detect_duplicate_sequence_ids(
-                joined,
-                duplicate_sequence_ids,
-                seen_sequence_ids,
-            )
-
-    errors = []
-
-    if duplicate_abbreviations:
-        errors.append(
-            {
-                "id": "duplicate_abbreviations",
-                "message": "Duplicate OTU abbreviations found",
-                "duplicates": list(duplicate_abbreviations),
-            },
-        )
-
-    if duplicate_ids:
-        errors.append(
-            {
-                "id": "duplicate_ids",
-                "message": "Duplicate OTU ids found",
-                "duplicates": list(duplicate_ids),
-            },
-        )
-
-    if duplicate_isolate_ids:
-        errors.append(
-            {
-                "id": "duplicate_isolate_ids",
-                "message": "Duplicate isolate ids found in some OTUs",
-                "duplicates": duplicate_isolate_ids,
-            },
-        )
-
-    if duplicate_names:
-        errors.append(
-            {
-                "id": "duplicate_names",
-                "message": "Duplicate OTU names found",
-                "duplicates": list(duplicate_names),
-            },
-        )
-
-    if duplicate_sequence_ids:
-        errors.append(
-            {
-                "id": "duplicate_sequence_ids",
-                "message": "Duplicate sequence ids found",
-                "duplicates": duplicate_sequence_ids,
-            },
-        )
-
-    return errors
-
-
-def get_import_schema(require_meta: bool = True) -> dict:
-    return {
-        "data_type": {"type": "string", "required": require_meta},
-        "organism": {"type": "string", "required": require_meta},
-        "otus": {"type": "list", "required": True},
-    }
-
-
-def get_isolate_schema(require_id: bool) -> dict:
-    return {
-        "id": {"type": "string", "required": require_id},
-        "source_type": {"type": "string", "required": True},
-        "source_name": {"type": "string", "required": True},
-        "default": {"type": "boolean", "required": True},
-        "sequences": {"type": "list", "required": True},
-    }
-
-
-def get_otu_schema(require_id: bool) -> dict:
-    return {
-        "_id": {"type": "string", "required": require_id},
-        "abbreviation": {"type": "string"},
-        "name": {"type": "string", "required": True},
-        "isolates": {"type": "list", "required": True},
-    }
-
-
-def get_owner_user(user_id: str, created_at: datetime) -> dict:
-    return {
-        "id": user_id,
-        "build": True,
-        "modify": True,
-        "modify_otu": True,
-        "created_at": created_at,
-        "remove": True,
-    }
-
-
-def get_sequence_schema(require_id: bool) -> dict:
-    return {
-        "_id": {"type": "string", "required": require_id},
-        "accession": {"type": "string", "required": True},
-        "definition": {"type": "string", "required": True},
-        "sequence": {"type": "string", "required": True},
-    }
-
-
 def load_reference_file(path: Path) -> dict:
     """Load a list of merged otus documents from a file associated with a Virtool
     reference file.
@@ -316,30 +238,3 @@ def load_reference_file(path: Path) -> dict:
 
     with open(path, "rb") as handle, gzip.open(handle, "rt") as gzip_file:
         return json.load(gzip_file)
-
-
-def validate_otu(otu: dict, strict: bool) -> dict:
-    report = {"otu": None, "isolates": {}, "sequences": {}}
-
-    otu_validator = Validator(get_otu_schema(strict), allow_unknown=True)
-
-    if not otu_validator.validate(otu):
-        report["otu"] = otu_validator.errors
-
-    report["isolates"] = {}
-
-    if "isolates" in otu:
-        isolate_validator = Validator(get_isolate_schema(strict), allow_unknown=True)
-        sequence_validator = Validator(get_sequence_schema(strict), allow_unknown=True)
-
-        for isolate in otu["isolates"]:
-            if not isolate_validator.validate(isolate):
-                report["isolates"][isolate["id"]] = isolate_validator.errors
-
-            if "sequences" in isolate:
-                for sequence in isolate["sequences"]:
-                    if not sequence_validator.validate(sequence):
-                        report["sequences"][sequence["_id"]] = isolate_validator.errors
-
-    if any(value for value in report.values()):
-        return report

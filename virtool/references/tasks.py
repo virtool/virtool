@@ -6,11 +6,9 @@ from typing import TYPE_CHECKING
 
 from aiohttp import ClientConnectorError
 
-from virtool.api.custom_json import dump_string
 from virtool.data.http import download_file
 from virtool.references.utils import (
     ReferenceSourceData,
-    check_import_data,
     load_reference_file,
 )
 from virtool.tasks.progress import AccumulatingProgressHandlerWrapper
@@ -71,10 +69,7 @@ class ImportReferenceTask(BaseTask):
 
             return None
 
-        if errors := check_import_data(import_data, strict=False, verify=True):
-            await self._set_error(errors)
-        else:
-            self.import_data = ReferenceSourceData(**import_data)
+        self.import_data = ReferenceSourceData.parse_obj(import_data)
 
         return None
 
@@ -123,12 +118,9 @@ class RemoteReferenceTask(BaseTask):
         except ClientConnectorError:
             await self._set_error("Could not download reference data")
 
-        import_data = await to_thread(load_reference_file, path)
+        from_json = await to_thread(load_reference_file, path)
 
-        if error := check_import_data(import_data, strict=True, verify=True):
-            await self._set_error(dump_string(error))
-
-        self.import_data = ReferenceSourceData(**import_data)
+        self.import_data = ReferenceSourceData(**from_json)
 
     async def populate(self):
         await self.data.references.populate_remote_reference(

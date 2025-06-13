@@ -916,7 +916,7 @@ class ReferencesData(DataLayerDomain):
             prepare_otu_insertion(
                 created_at,
                 HistoryMethod.import_otu,
-                otu,
+                otu.dict(by_alias=True),
                 ref_id,
                 user_id,
             )
@@ -998,7 +998,7 @@ class ReferencesData(DataLayerDomain):
             created_at,
             HistoryMethod.remote,
             self._mongo,
-            data.otus,
+            [otu.dict(by_alias=True) for otu in data.otus],
             ref_id,
             user_id,
         )

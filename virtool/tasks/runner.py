@@ -68,8 +68,8 @@ class TaskRunner:
 
         try:
             cls = get_task_from_name(task.type)
-        except ResourceError as err:
-            if "Invalid task name" in str(err):
+        except ResourceError as e:
+            if "Invalid task name" in str(e):
                 log.warning(
                     "encountered invalid task name. skipping task.",
                     name=task.type,

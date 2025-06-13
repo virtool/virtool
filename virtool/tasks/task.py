@@ -4,6 +4,7 @@ import asyncio
 from asyncio import to_thread
 from collections.abc import Awaitable, Callable
 from pathlib import Path
+from pprint import pprint
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 
@@ -116,8 +117,8 @@ class BaseTask:
             await self.data.tasks.update(
                 self.task_id,
                 UpdateTaskRequest(
-                    step=self.step.__name__,
                     progress=self.step_progress_basis,
+                    step=self.step.__name__,
                 ),
             )
 
@@ -131,9 +132,10 @@ class BaseTask:
 
             try:
                 await func()
-            except Exception as err:
+            except Exception as e:
+                pprint(e)
                 log.exception("encountered error in task")
-                await self._set_error(f"{type(err)}: {err!s}")
+                await self._set_error(f"{type(e)}: {e!s}")
 
         if self.errored:
             await self.cleanup()
