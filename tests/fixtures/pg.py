@@ -91,7 +91,7 @@ async def engine(
                 f"CREATE DATABASE {pg_db_name};",
             ),
         )
-    
+
     await engine_without_db.dispose()
 
     engine = create_async_engine(
@@ -108,13 +108,13 @@ async def engine(
     yield engine
 
     await engine.dispose()
-    
+
     # Force close all connections to the database before dropping it
     engine_without_db = create_async_engine(
         pg_base_connection_string,
         isolation_level="AUTOCOMMIT",
     )
-    
+
     async with engine_without_db.connect() as conn:
         # Terminate all other connections to the database
         await conn.execute(
@@ -131,7 +131,7 @@ async def engine(
                 f"DROP DATABASE IF EXISTS {pg_db_name};",
             ),
         )
-    
+
     await engine_without_db.dispose()
 
 

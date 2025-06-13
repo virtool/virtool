@@ -5,8 +5,9 @@ Revises: 77be1d95da09
 Create Date: 2024-01-04 01:39:59.377946+00:00
 
 """
-from alembic import op
+
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
@@ -17,8 +18,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    """
-    Upgrade the schema for the final implementation of users.
+    """Upgrade the schema for the final implementation of users.
 
     * Bring back the `settings` field as a JSONB column.
     * Drop the `administrator` and `primary_key_id` columns and associated constraint.

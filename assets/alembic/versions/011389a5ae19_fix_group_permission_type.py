@@ -6,8 +6,9 @@ Create Date: 2023-06-22 00:14:04.248267+00:00
 
 Fix incorrect column type from previous migration.
 """
-from alembic import op
+
 import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "011389a5ae19"
