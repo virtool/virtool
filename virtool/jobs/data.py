@@ -201,6 +201,7 @@ class JobsData:
             "args": job_args,
             "key": None,
             "ping": None,
+            "retries": 0,
             "rights": {},
             "space": {"id": space_id},
             "state": JobState.WAITING.value,
