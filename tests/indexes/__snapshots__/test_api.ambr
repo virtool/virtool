@@ -38,6 +38,7 @@
     }),
     'key': None,
     'ping': None,
+    'retries': 0,
     'rights': dict({
     }),
     'space': dict({
