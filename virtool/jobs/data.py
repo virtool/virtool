@@ -2,6 +2,7 @@ import asyncio
 import math
 from asyncio import gather
 from collections import defaultdict
+from datetime import timedelta
 from typing import TYPE_CHECKING
 
 import arrow
@@ -426,33 +427,45 @@ class JobsData:
 
         job = await self.get(job_id)
 
-        if job is None:
-            raise ResourceNotFoundError("Job not found")
-
-        if job.ping is None:
-            raise ResourceConflictError(
-                f"Job has invalid ping field and cannot be timed out: {job.ping}",
-            )
-
-        if job.ping.pinged_at > now.shift(minutes=-5).naive:
-            raise ResourceConflictError(
-                "Job has been pinged within the last 5 minutes and cannot be timed out",
-            )
-
-        if job.state not in (
-            JobState.WAITING,
-            JobState.PREPARING,
-            JobState.RUNNING,
-        ):
-            raise ResourceConflictError(
-                f"Job is not in a state that can be timed out: {job.state}",
-            )
-
         latest_status = job.status[-1]
 
         async with self._mongo.create_session() as session:
-            await self._mongo.jobs.update_one(
-                {"_id": job.id},
+            result = await self._mongo.jobs.update_one(
+                {
+                    "_id": job.id,
+                    "$or": [
+                        # WAITING
+                        {
+                            "state": JobState.WAITING.value,
+                            "status.-1.timestamp": job.status[-1].timestamp
+                            + timedelta(hours=36),
+                        },
+                        # PREPARING
+                        {
+                            "state": JobState.PREPARING.value,
+                            "$or": [
+                                {
+                                    "ping.pinged_at": {
+                                        "$lt": now.shift(minutes=-5).naive
+                                    }
+                                },
+                                {
+                                    "ping": None,
+                                    "status.-1.timestamp": job.status[-1].timestamp
+                                    + timedelta(hours=36),
+                                },
+                            ],
+                        },
+                    ],
+                    "retries": {"$gt": 5},
+                    "status.-1.state": {
+                        "$in": [
+                            JobState.WAITING.value,
+                            JobState.PREPARING.value,
+                            JobState.RUNNING.value,
+                        ]
+                    },
+                },
                 {
                     "$set": {"state": JobState.TIMEOUT.value},
                     "$push": {
@@ -468,6 +481,26 @@ class JobsData:
                 },
                 session=session,
             )
+
+        job = await self.get(job_id)
+
+        if result.modified_count == 0:
+            if job is None:
+                raise ResourceNotFoundError("Job not found")
+
+            if job.ping.pinged_at > now.shift(minutes=-5).naive:
+                raise ResourceConflictError(
+                    "Job has been pinged within the last 5 minutes",
+                )
+
+            if job.state not in (
+                JobState.WAITING,
+                JobState.PREPARING,
+                JobState.RUNNING,
+            ):
+                raise ResourceConflictError(
+                    f"Job is not in a state that can be timed out: {job.state}",
+                )
 
         return await self.get(job_id)
 
