@@ -82,7 +82,9 @@
     }),
     'created_at': datetime,
     'id': '7cf872dc',
-    'ping': None,
+    'ping': dict({
+      'pinged_at': datetime,
+    }),
     'progress': 50,
     'retries': 0,
     'stage': 'JURZHTCWaKMqqBTFitpK',
@@ -172,7 +174,9 @@
     }),
     'created_at': datetime,
     'id': 'fb085f7f',
-    'ping': None,
+    'ping': dict({
+      'pinged_at': datetime,
+    }),
     'progress': 10,
     'retries': 0,
     'stage': 'NzFJEUSgqMReEKilxKJT',

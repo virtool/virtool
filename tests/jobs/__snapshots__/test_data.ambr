@@ -7,7 +7,9 @@
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'id': 'foo',
     'key': 'key',
-    'ping': None,
+    'ping': dict({
+      'pinged_at': datetime.datetime(2015, 10, 6, 20, 0),
+    }),
     'progress': 3,
     'retries': 0,
     'stage': None,
@@ -38,6 +40,9 @@
     'args': dict({
     }),
     'key': 'hashed',
+    'ping': dict({
+      'pinged_at': datetime.datetime(2015, 10, 6, 20, 0),
+    }),
     'rights': dict({
     }),
     'state': 'preparing',

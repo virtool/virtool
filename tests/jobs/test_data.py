@@ -162,15 +162,6 @@ class TestRetry:
         ):
             await data_layer.jobs.retry(job.id)
 
-    async def test_no_ping_field(self, data_layer: DataLayer, fake: DataFaker):
-        """Test a job cannot be retried if it has no ping field."""
-        job = await fake.jobs.create(self.user, state=JobState.RUNNING)
-
-        with pytest.raises(
-            ResourceConflictError, match="RUNNING job has no recorded ping field"
-        ):
-            await data_layer.jobs.retry(job.id)
-
     @pytest.mark.parametrize(
         "state",
         [JobState.COMPLETE, JobState.ERROR, JobState.TERMINATED, JobState.TIMEOUT],

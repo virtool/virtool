@@ -29,6 +29,7 @@ async def test_groups_and_users(fake: DataFaker, snapshot):
         matcher=path_type(
             {
                 "created_at": (datetime,),
+                ".*pinged_at": (datetime,),
                 ".*timestamp": (datetime,),
             },
             regex=True,
@@ -44,6 +45,7 @@ async def test_jobs(fake: DataFaker, snapshot):
         matcher=path_type(
             {
                 "created_at": (datetime,),
+                ".*pinged_at": (datetime,),
                 ".*timestamp": (datetime,),
             },
             regex=True,
