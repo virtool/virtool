@@ -271,6 +271,9 @@ class JobsData:
                 "$set": {
                     "acquired": True,
                     "key": hashed,
+                    "ping": {
+                        "pinged_at": virtool.utils.timestamp(),
+                    },
                     "state": JobState.PREPARING.value,
                 },
                 "$push": {
