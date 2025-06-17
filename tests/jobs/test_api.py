@@ -2,6 +2,7 @@ import datetime
 
 import arrow
 import pytest
+from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
@@ -11,7 +12,12 @@ from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
 
 _job_response_matcher = path_type(
-    {".*created_at": (str,), ".*key": (str,), ".*timestamp": (str,)},
+    {
+        ".*created_at": (str,),
+        ".*key": (str,),
+        ".*pinged_at": (str,),
+        ".*timestamp": (str,),
+    },
     regex=True,
 )
 
@@ -20,7 +26,7 @@ class TestFind:
     async def test_basic(
         self,
         fake: DataFaker,
-        snapshot,
+        snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
         client = await spawn_client(authenticated=True)

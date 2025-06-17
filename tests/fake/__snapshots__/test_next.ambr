@@ -83,7 +83,7 @@
     'created_at': datetime,
     'id': '7cf872dc',
     'ping': dict({
-      'pinged_at': datetime.datetime(2025, 6, 17, 23, 21, 15, 786000),
+      'pinged_at': datetime,
     }),
     'progress': 50,
     'retries': 0,
@@ -175,7 +175,7 @@
     'created_at': datetime,
     'id': 'fb085f7f',
     'ping': dict({
-      'pinged_at': datetime.datetime(2025, 6, 17, 23, 21, 15, 496000),
+      'pinged_at': datetime,
     }),
     'progress': 10,
     'retries': 0,

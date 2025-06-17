@@ -13,7 +13,9 @@
     'created_at': str,
     'id': 'fb085f7f',
     'key': str,
-    'ping': None,
+    'ping': dict({
+      'pinged_at': str,
+    }),
     'progress': 3,
     'retries': 0,
     'stage': None,
@@ -836,7 +838,9 @@
     }),
     'created_at': str,
     'id': '7cf872dc',
-    'ping': None,
+    'ping': dict({
+      'pinged_at': str,
+    }),
     'progress': 10,
     'retries': 0,
     'stage': 'NzFJEUSgqMReEKilxKJT',
