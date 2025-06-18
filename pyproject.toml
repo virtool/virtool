@@ -90,10 +90,6 @@ norecursedirs = [".claude", ".git", ".github", "assets", "data", "docs"]
 testpaths = ["tests"]
 
 [tool.pytest.ini_options]
-addopts = [
-    "-n", "auto",  # Automatically use the number of available CPUs
-    "--maxprocesses", "12",
-]
 asyncio_mode = "auto"
 python_files = ["test_*.py"]
 testpaths = ["tests"]

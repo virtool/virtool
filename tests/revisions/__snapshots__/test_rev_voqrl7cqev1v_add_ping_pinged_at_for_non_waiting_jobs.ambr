@@ -1,0 +1,105 @@
+# serializer version: 1
+# name: test_upgrade
+  list([
+    dict({
+      '_id': 'waiting_job_with_no_ping',
+      'ping': dict({
+        'pinged_at': datetime,
+      }),
+      'status': list([
+        dict({
+          'state': 'waiting',
+          'timestamp': datetime.datetime(2025, 6, 18, 10, 0),
+        }),
+      ]),
+    }),
+    dict({
+      '_id': 'running_job_with_no_ping',
+      'ping': dict({
+        'pinged_at': datetime,
+      }),
+      'status': list([
+        dict({
+          'state': 'waiting',
+          'timestamp': datetime.datetime(2025, 6, 18, 10, 0),
+        }),
+        dict({
+          'state': 'running',
+          'timestamp': datetime.datetime(2025, 6, 18, 10, 0),
+        }),
+      ]),
+    }),
+    dict({
+      '_id': 'complete_job_with_no_ping',
+      'ping': dict({
+        'pinged_at': datetime,
+      }),
+      'status': list([
+        dict({
+          'state': 'waiting',
+          'timestamp': datetime.datetime(2025, 6, 18, 10, 0),
+        }),
+        dict({
+          'state': 'running',
+          'timestamp': datetime.datetime(2025, 6, 18, 10, 0),
+        }),
+        dict({
+          'state': 'complete',
+          'timestamp': datetime.datetime(2025, 6, 18, 10, 0),
+        }),
+      ]),
+    }),
+    dict({
+      '_id': 'error_job_with_no_ping',
+      'ping': dict({
+        'pinged_at': datetime,
+      }),
+      'status': list([
+        dict({
+          'state': 'waiting',
+          'timestamp': datetime.datetime(2025, 6, 18, 10, 0),
+        }),
+        dict({
+          'state': 'running',
+          'timestamp': datetime.datetime(2025, 6, 18, 10, 0),
+        }),
+        dict({
+          'state': 'error',
+          'timestamp': datetime.datetime(2025, 6, 18, 10, 0),
+        }),
+      ]),
+    }),
+    dict({
+      '_id': 'job_with_existing_ping',
+      'ping': dict({
+        'pinged_at': datetime,
+      }),
+      'status': list([
+        dict({
+          'state': 'waiting',
+          'timestamp': datetime.datetime(2025, 6, 18, 10, 0),
+        }),
+        dict({
+          'state': 'running',
+          'timestamp': datetime.datetime(2025, 6, 18, 10, 0),
+        }),
+      ]),
+    }),
+    dict({
+      '_id': 'job_without_ping_field',
+      'ping': dict({
+        'pinged_at': datetime,
+      }),
+      'status': list([
+        dict({
+          'state': 'waiting',
+          'timestamp': datetime.datetime(2025, 6, 18, 10, 0),
+        }),
+        dict({
+          'state': 'running',
+          'timestamp': datetime.datetime(2025, 6, 18, 10, 0),
+        }),
+      ]),
+    }),
+  ])
+# ---
