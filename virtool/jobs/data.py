@@ -507,175 +507,6 @@ class JobsData:
 
         return await self.get(job_id)
 
-    async def retry_waiting_job(self, job_id: str) -> Job:
-        """Retry a WAITING job by re-enqueueing it.
-
-        This method handles jobs that are in WAITING state with ping: None.
-        It simply increments the retry count and re-enqueues the job.
-
-        :param job_id: the ID of the job to retry
-        :return: the updated job document
-        """
-        job = await self.get(job_id)
-
-        if job.state != JobState.WAITING:
-            raise ResourceConflictError("Job is not in WAITING state")
-
-        if job.retries >= 3:
-            raise ResourceConflictError("Job has already been retried 3 times")
-
-        if job.ping is not None:
-            raise ResourceConflictError("WAITING job should not have ping field set")
-
-        async with self._mongo.create_session() as session:
-            result = await self._mongo.jobs.update_one(
-                {
-                    "_id": job_id,
-                    "ping": None,
-                    "state": JobState.WAITING.value,
-                    "$or": [
-                        {"retries": {"$exists": False}},
-                        {"retries": {"$lt": 3}},
-                    ],
-                },
-                {
-                    "$inc": {"retries": 1},
-                },
-                session=session,
-            )
-
-        if result.modified_count == 0:
-            raise ResourceNotFoundError("Job not found or not eligible for retry")
-
-        await self._client.enqueue(job.workflow, job_id)
-
-        return await self.get(job_id)
-
-    async def retry_stalled_job(self, job_id: str) -> Job:
-        """Retry a PREPARING or RUNNING job by resetting and re-enqueueing it.
-
-        This method handles jobs that are in PREPARING or RUNNING state and have
-        not been pinged recently, indicating they may be stalled. PREPARING jobs
-        without a ping field are considered stalled if they've been in that state
-        for more than 3 minutes.
-
-        :param job_id: the ID of the job to retry
-        :return: the updated job document
-        """
-        now = arrow.utcnow()
-        job = await self.get(job_id)
-
-        if job.state not in (JobState.PREPARING, JobState.RUNNING):
-            raise ResourceConflictError("Job is not in PREPARING or RUNNING state")
-
-        if job.retries >= 3:
-            raise ResourceConflictError("Job has already been retried 3 times")
-
-        # Handle PREPARING jobs without ping field - check if they've been preparing too
-        # long.
-        if job.ping is None and job.state == JobState.PREPARING:
-            # Find the timestamp when the job entered PREPARING state
-            preparing_timestamp = None
-            for status in reversed(job.status):
-                if status.state == JobState.PREPARING:
-                    preparing_timestamp = status.timestamp
-                    break
-
-            if preparing_timestamp is None:
-                raise ResourceConflictError(
-                    "Cannot determine when job entered PREPARING state"
-                )
-
-            # If job has been PREPARING for more than 3 minutes without a ping,
-            # consider it stalled.
-            if preparing_timestamp > now.shift(minutes=-3).naive:
-                raise ResourceConflictError(
-                    "Job has been PREPARING for less than 3 minutes"
-                )
-
-        elif job.ping.pinged_at > now.shift(minutes=-5).naive:
-            raise ResourceConflictError("Job has been pinged within the last 5 minutes")
-
-        result = await self._mongo.jobs.update_one(
-            {
-                "_id": job_id,
-                "$and": [
-                    {
-                        "$or": [
-                            {"ping.pinged_at": {"$lt": now.shift(minutes=-5).naive}},
-                            {"ping": None},
-                        ]
-                    },
-                    {
-                        "$or": [
-                            {"retries": {"$exists": False}},
-                            {"retries": {"$lt": 3}},
-                        ]
-                    },
-                ],
-                "state": {"$in": [JobState.PREPARING.value, JobState.RUNNING.value]},
-            },
-            {
-                "$inc": {"retries": 1},
-                "$set": {
-                    "acquired": False,
-                    "ping": None,
-                    "state": JobState.WAITING.value,
-                    "status": [
-                        compose_status(
-                            JobState.WAITING,
-                            None,
-                            progress=0,
-                        )
-                    ],
-                },
-            },
-        )
-
-        if result.modified_count == 0:
-            # Re-fetch job to provide better error message
-            job = await self.get(job_id)
-
-            if job.state not in (JobState.PREPARING, JobState.RUNNING):
-                raise ResourceConflictError("Job is not in PREPARING or RUNNING state")
-
-            if job.retries >= 3:
-                raise ResourceConflictError("Job has already been retried 3 times")
-
-            if job.ping is None:
-                if job.state == JobState.PREPARING:
-                    # Find the timestamp when the job entered PREPARING state
-                    preparing_timestamp = None
-
-                    for status in reversed(job.status):
-                        if status.state == JobState.PREPARING:
-                            preparing_timestamp = status.timestamp
-                            break
-
-                    if (
-                        preparing_timestamp
-                        and preparing_timestamp > now.shift(minutes=-3).naive
-                    ):
-                        raise ResourceConflictError(
-                            "Job has been PREPARING for less than 3 minutes"
-                        )
-
-                    raise ResourceConflictError(
-                        "Job has invalid ping field or timestamp"
-                    )
-                else:
-                    raise ResourceConflictError("RUNNING job has invalid ping field")
-
-            if job.ping and job.ping.pinged_at > now.shift(minutes=-5).naive:
-                raise ResourceConflictError(
-                    "Job has been pinged within the last 5 minutes"
-                )
-
-            raise ResourceNotFoundError("Job not found or not in a retryable state")
-
-        await self._client.enqueue(job.workflow, job_id)
-        return await self.get(job_id)
-
     @emits(Operation.UPDATE)
     async def retry(self, job_id: str) -> Job:
         """Retry a job.
@@ -698,13 +529,71 @@ class JobsData:
 
         job = await self.get(job_id)
 
-        if job.state not in (JobState.WAITING, JobState.PREPARING, JobState.RUNNING):
+        result = await self._mongo.jobs.update_one(
+            {
+                "_id": job_id,
+                "retries": {"$lt": 5},
+                "$or": [
+                    # WAITING
+                    {
+                        "state": JobState.WAITING.value,
+                    },
+                    # PREPARING or RUNNING
+                    {
+                        "state": {
+                            "$in": [JobState.PREPARING.value, JobState.RUNNING.value]
+                        },
+                        "ping.pinged_at": {
+                            "$lt": arrow.utcnow().shift(minutes=-5).naive
+                        },
+                    },
+                ],
+            },
+            {
+                "$inc": {"retries": 1},
+                "$set": {
+                    "acquired": False,
+                    "ping": None,
+                    "state": JobState.WAITING.value,
+                    "status": [
+                        compose_status(
+                            JobState.WAITING,
+                            None,
+                            progress=0,
+                        )
+                    ],
+                },
+            },
+        )
+
+        job = await self.get(job_id)
+
+        if result.modified_count == 0:
+            if job is None:
+                raise ResourceNotFoundError("Job not found")
+
+            if job.state not in (
+                JobState.WAITING,
+                JobState.PREPARING,
+                JobState.RUNNING,
+            ):
+                raise ResourceConflictError(
+                    f"Job is not in a state that can be retried: {job.state}",
+                )
+
+            if job.retries >= 5:
+                raise ResourceConflictError("Job has already been retried 5 times")
+
+            if job.ping and job.ping.pinged_at > arrow.utcnow().shift(minutes=-5).naive:
+                raise ResourceConflictError(
+                    "Job has been pinged within the last 5 minutes",
+                )
+
             raise ResourceConflictError("Job is not in a retryable state")
 
-        if job.state == JobState.WAITING:
-            return await self.retry_waiting_job(job_id)
+        await self._client.enqueue(job.workflow, job_id)
 
-        return await self.retry_stalled_job(job_id)
+        return job
 
     async def clean(self):
         """Retry all eligible jobs.
@@ -726,7 +615,7 @@ class JobsData:
             "_id",
             {
                 "ping.pinged_at": {"$lt": now.shift(minutes=-5).naive},
-                "retries": {"$exists": True, "$gte": 3},
+                "retries": {"$gte": 5},
                 "state": {
                     "$in": [
                         JobState.WAITING.value,
@@ -746,6 +635,7 @@ class JobsData:
             "_id",
             {
                 "_id": {"$nin": [queued.id for queued in queued_jobs]},
+                "ping.pinged_at": {"$lt": now.shift(minutes=-5).naive},
                 "state": {
                     "$in": [
                         state.value
@@ -756,10 +646,6 @@ class JobsData:
                         )
                     ]
                 },
-                "$or": [
-                    {"ping.pinged_at": {"$lt": now.shift(minutes=-5).naive}},
-                    {"ping": None},
-                ],
             },
         )
 
