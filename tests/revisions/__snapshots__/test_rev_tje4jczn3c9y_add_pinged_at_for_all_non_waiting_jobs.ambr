@@ -1,0 +1,85 @@
+# serializer version: 1
+# name: test_upgrade
+  list([
+    dict({
+      '_id': 'waiting_job',
+      'ping': None,
+      'pinged_at': datetime,
+      'status': list([
+        dict({
+          'state': 'waiting',
+          'timestamp': datetime.datetime(2025, 6, 17, 23, 45),
+        }),
+      ]),
+    }),
+    dict({
+      '_id': 'running_job_without_pinged_at',
+      'ping': None,
+      'pinged_at': datetime,
+      'status': list([
+        dict({
+          'state': 'waiting',
+          'timestamp': datetime.datetime(2025, 6, 17, 23, 45),
+        }),
+        dict({
+          'state': 'running',
+          'timestamp': datetime.datetime(2025, 6, 17, 23, 45),
+        }),
+      ]),
+    }),
+    dict({
+      '_id': 'complete_job_without_pinged_at',
+      'ping': None,
+      'pinged_at': datetime,
+      'status': list([
+        dict({
+          'state': 'waiting',
+          'timestamp': datetime.datetime(2025, 6, 17, 23, 45),
+        }),
+        dict({
+          'state': 'running',
+          'timestamp': datetime.datetime(2025, 6, 17, 23, 45),
+        }),
+        dict({
+          'state': 'complete',
+          'timestamp': datetime.datetime(2025, 6, 17, 23, 45),
+        }),
+      ]),
+    }),
+    dict({
+      '_id': 'job_with_existing_ping',
+      'ping': dict({
+        'pinged_at': datetime,
+      }),
+      'status': list([
+        dict({
+          'state': 'waiting',
+          'timestamp': datetime.datetime(2025, 6, 17, 23, 45),
+        }),
+        dict({
+          'state': 'running',
+          'timestamp': datetime.datetime(2025, 6, 17, 23, 45),
+        }),
+      ]),
+    }),
+    dict({
+      '_id': 'error_job_without_pinged_at',
+      'ping': None,
+      'pinged_at': datetime,
+      'status': list([
+        dict({
+          'state': 'waiting',
+          'timestamp': datetime.datetime(2025, 6, 17, 23, 45),
+        }),
+        dict({
+          'state': 'running',
+          'timestamp': datetime.datetime(2025, 6, 17, 23, 45),
+        }),
+        dict({
+          'state': 'error',
+          'timestamp': datetime.datetime(2025, 6, 17, 23, 45),
+        }),
+      ]),
+    }),
+  ])
+# ---

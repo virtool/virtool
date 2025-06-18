@@ -85,11 +85,11 @@ sphinx-autofixture = "^0.4.0"
 sphinx-toolbox = "^4.0.0"
 syrupy = "^4.5.0"
 
+[tool.pytest]
+norecursedirs = [".claude", ".git", ".github", "assets", "data", "docs"]
+testpaths = ["tests"]
+
 [tool.pytest.ini_options]
-addopts = [
-    "-n", "auto",  # Automatically use the number of available CPUs
-    "--maxprocesses", "12",
-]
 asyncio_mode = "auto"
 python_files = ["test_*.py"]
 testpaths = ["tests"]

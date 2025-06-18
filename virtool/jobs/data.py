@@ -272,6 +272,9 @@ class JobsData:
                 "$set": {
                     "acquired": True,
                     "key": hashed,
+                    "ping": {
+                        "pinged_at": virtool.utils.timestamp(),
+                    },
                     "state": JobState.PREPARING.value,
                 },
                 "$push": {
@@ -570,29 +573,25 @@ class JobsData:
 
         # Handle PREPARING jobs without ping field - check if they've been preparing too
         # long.
-        if job.ping is None:
-            if job.state == JobState.PREPARING:
-                # Find the timestamp when the job entered PREPARING state
-                preparing_timestamp = None
-                for status in reversed(job.status):
-                    if status.state == JobState.PREPARING:
-                        preparing_timestamp = status.timestamp
-                        break
+        if job.ping is None and job.state == JobState.PREPARING:
+            # Find the timestamp when the job entered PREPARING state
+            preparing_timestamp = None
+            for status in reversed(job.status):
+                if status.state == JobState.PREPARING:
+                    preparing_timestamp = status.timestamp
+                    break
 
-                if preparing_timestamp is None:
-                    raise ResourceConflictError(
-                        "Cannot determine when job entered PREPARING state"
-                    )
+            if preparing_timestamp is None:
+                raise ResourceConflictError(
+                    "Cannot determine when job entered PREPARING state"
+                )
 
-                # If job has been PREPARING for more than 3 minutes without a ping,
-                # consider it stalled.
-                if preparing_timestamp > now.shift(minutes=-3).naive:
-                    raise ResourceConflictError(
-                        "Job has been PREPARING for less than 3 minutes"
-                    )
-            else:
-                # RUNNING jobs should always have a ping field
-                raise ResourceConflictError("RUNNING job has no recorded ping field")
+            # If job has been PREPARING for more than 3 minutes without a ping,
+            # consider it stalled.
+            if preparing_timestamp > now.shift(minutes=-3).naive:
+                raise ResourceConflictError(
+                    "Job has been PREPARING for less than 3 minutes"
+                )
 
         elif job.ping.pinged_at > now.shift(minutes=-5).naive:
             raise ResourceConflictError("Job has been pinged within the last 5 minutes")
