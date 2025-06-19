@@ -75,6 +75,7 @@
       ]),
       'subtraction_id': 'fb085f7f',
     }),
+    'created_at': 'approximately_now_datetime',
     'key': None,
     'ping': None,
     'retries': 0,
