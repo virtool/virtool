@@ -151,14 +151,14 @@ test = ["pytest (==6.1.2)", "pytest-aiohttp (==0.3.0)", "pytest-cov (==2.10.1)",
 
 [[package]]
 name = "aiojobs"
-version = "1.2.1"
+version = "1.4.0"
 description = "Job scheduler for managing background tasks (asyncio)"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "aiojobs-1.2.1-py3-none-any.whl", hash = "sha256:88efd8e56295eff69efcc44488e41c38159bcbda2ac7c6884e4140674dace54f"},
-    {file = "aiojobs-1.2.1.tar.gz", hash = "sha256:59d6e7ad7829e9d0f73bfceeae28153b541be6b0959a08cc5ceb222717c888ff"},
+    {file = "aiojobs-1.4.0-py3-none-any.whl", hash = "sha256:e95eb0d10d1f6095aefb04d228d2b4b3747514503f26540de722c2228a8500ca"},
+    {file = "aiojobs-1.4.0.tar.gz", hash = "sha256:463665c75d1fcc46c78d44375c1034abf5e3f087894b0fc5ec4dd16ef90fdc98"},
 ]
 
 [package.extras]
@@ -3850,4 +3850,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.1"
 python-versions = ">3.12.0,<3.13.0"
-content-hash = "27d6915e027e1abe3c34a5ac28505b5c32a78b28739a20b6eee452b8738e093e"
+content-hash = "a6dfc35baea75bfea4050b35e709a379b913372b14fecbafc8aa02e3b808c951"
