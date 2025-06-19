@@ -285,17 +285,17 @@ class TestRetry:
     async def test_retry_limit_exceeded(
         self, data_layer: DataLayer, fake: DataFaker, mongo: Mongo
     ):
-        """Test that jobs with 3+ retries cannot be retried."""
+        """Test that jobs with 5+ retries cannot be retried."""
         job = await fake.jobs.create(
             self.user,
             state=JobState.RUNNING,
             pinged_at=arrow.utcnow().shift(minutes=-6).datetime,
         )
 
-        await mongo.jobs.update_one({"_id": job.id}, {"$set": {"retries": 3}})
+        await mongo.jobs.update_one({"_id": job.id}, {"$set": {"retries": 5}})
 
         with pytest.raises(
-            ResourceConflictError, match="Job has already been retried 3 times"
+            ResourceConflictError, match="Job has already been retried 5 times"
         ):
             await data_layer.jobs.retry(job.id)
 

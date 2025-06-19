@@ -38,6 +38,9 @@ from virtool.utils import base_processor
 
 logger = get_logger("jobs")
 
+JOB_MAX_RETRIES = 5
+"""Maximum number of times a job can be retried before it is timed out."""
+
 
 class JobsData:
     name = "jobs"
@@ -439,35 +442,22 @@ class JobsData:
                     "$or": [
                         # WAITING
                         {
-                            "state": JobState.WAITING.value,
+                            "status.-1.state": JobState.WAITING.value,
                             "status.-1.timestamp": job.status[-1].timestamp
                             + timedelta(hours=36),
                         },
-                        # PREPARING
+                        # RUNNING and PREPARING
                         {
-                            "state": JobState.PREPARING.value,
-                            "$or": [
-                                {
-                                    "ping.pinged_at": {
-                                        "$lt": now.shift(minutes=-5).naive
-                                    }
-                                },
-                                {
-                                    "ping": None,
-                                    "status.-1.timestamp": job.status[-1].timestamp
-                                    + timedelta(hours=36),
-                                },
-                            ],
+                            "ping.pinged_at": {"$lt": now.shift(minutes=-5).naive},
+                            "status.-1.state": {
+                                "$in": [
+                                    JobState.PREPARING.value,
+                                    JobState.RUNNING.value,
+                                ]
+                            },
                         },
                     ],
-                    "retries": {"$gt": 5},
-                    "status.-1.state": {
-                        "$in": [
-                            JobState.WAITING.value,
-                            JobState.PREPARING.value,
-                            JobState.RUNNING.value,
-                        ]
-                    },
+                    "retries": {"$gt": JOB_MAX_RETRIES},
                 },
                 {
                     "$set": {"state": JobState.TIMEOUT.value},
@@ -508,7 +498,7 @@ class JobsData:
         return await self.get(job_id)
 
     @emits(Operation.UPDATE)
-    async def retry(self, job_id: str) -> Job:
+    async def retry(self, job_id: str) -> Job | None:
         """Retry a job.
 
         This method dispatches to the appropriate retry method based on job state:
@@ -529,10 +519,13 @@ class JobsData:
 
         job = await self.get(job_id)
 
+        if job is None:
+            raise ResourceNotFoundError("Job not found")
+
         result = await self._mongo.jobs.update_one(
             {
                 "_id": job_id,
-                "retries": {"$lt": 5},
+                "retries": {"$lt": JOB_MAX_RETRIES},
                 "$or": [
                     # WAITING
                     {
@@ -560,6 +553,7 @@ class JobsData:
                             JobState.WAITING,
                             None,
                             progress=0,
+                            timestamp=job.status[-1].timestamp,
                         )
                     ],
                 },
@@ -581,8 +575,10 @@ class JobsData:
                     f"Job is not in a state that can be retried: {job.state}",
                 )
 
-            if job.retries >= 5:
-                raise ResourceConflictError("Job has already been retried 5 times")
+            if job.retries >= JOB_MAX_RETRIES:
+                raise ResourceConflictError(
+                    f"Job has already been retried {JOB_MAX_RETRIES} times"
+                )
 
             if job.ping and job.ping.pinged_at > arrow.utcnow().shift(minutes=-5).naive:
                 raise ResourceConflictError(
@@ -600,7 +596,7 @@ class JobsData:
 
         This task considers jobs in the WAITING, PREPARING, and RUNNING states.
 
-        1. If a job has been retried more than 3 times, it gets timed out.
+        1. If a job has been retried more than {MAX_JOB_RETRIES - 1} times, it gets timed out.
         2. If a job has not received a ping in the last 5 minutes, attempt to retry it.
 
         Times out all jobs that have a ping field and haven't received a ping in 5
@@ -610,12 +606,12 @@ class JobsData:
         now = arrow.utcnow()
 
         # Timeout jobs that have exceeded the ping threshold and have been retried more
-        # than 3 times.
+        # than {MAX_JOB_RETRIES - 1} times.
         for job_id in await self._mongo.jobs.distinct(
             "_id",
             {
                 "ping.pinged_at": {"$lt": now.shift(minutes=-5).naive},
-                "retries": {"$gte": 5},
+                "retries": {"$gt": JOB_MAX_RETRIES},
                 "state": {
                     "$in": [
                         JobState.WAITING.value,
