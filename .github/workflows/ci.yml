@@ -32,7 +32,7 @@ jobs:
 
   # Check code formatting with ruff.
   ruff-format:
-    name: Ruff Format
+    name: Ruff / Format
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
