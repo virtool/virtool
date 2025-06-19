@@ -242,7 +242,6 @@ class JobsData:
                 "id": document["_id"],
                 "state": last_update["state"],
                 "stage": last_update["stage"],
-                "created_at": status[0]["timestamp"],
                 "progress": status[-1]["progress"],
             },
             [AttachUserTransform(self._mongo)],

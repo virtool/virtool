@@ -1,6 +1,9 @@
-from typing import MutableMapping
+from collections.abc import MutableMapping
 
 import pytest
+
+from tests.fixtures.core import StaticTime
+from virtool.mongo.core import Mongo
 
 
 class TestJob(MutableMapping):
@@ -34,8 +37,8 @@ class TestJob(MutableMapping):
         return repr(self._data)
 
 
-@pytest.fixture
-def test_job(mongo, static_time):
+@pytest.fixture()
+def test_job(mongo: Mongo, static_time: StaticTime):
     return TestJob(
         mongo,
         {
@@ -50,6 +53,7 @@ def test_job(mongo, static_time):
                 "workflow": "nuvs",
                 "index_id": "465428b0",
             },
+            "created_at": static_time.datetime,
             "key": "bar",
             "rights": {},
             "status": [

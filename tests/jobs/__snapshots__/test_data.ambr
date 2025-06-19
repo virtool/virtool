@@ -39,6 +39,7 @@
     'archived': False,
     'args': dict({
     }),
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'key': 'hashed',
     'ping': dict({
       'pinged_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -99,6 +100,7 @@
     'archived': False,
     'args': dict({
     }),
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'rights': dict({
     }),
     'state': 'waiting',
