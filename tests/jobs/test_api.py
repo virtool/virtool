@@ -6,6 +6,7 @@ from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
+from tests.fixtures.response import RespIs
 from virtool.fake.next import DataFaker
 from virtool.jobs.models import JobState
 from virtool.models.enums import Permission
@@ -254,7 +255,13 @@ class TestPing:
     [None, 404, "409_complete", "409_errored", "409_cancelled"],
 )
 async def test_cancel(
-    error, snapshot, mongo, fake: DataFaker, resp_is, spawn_client, test_job
+    error,
+    fake: DataFaker,
+    mongo: Mongo,
+    resp_is: RespIs,
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
+    test_job,
 ):
     client = await spawn_client(authenticated=True, permissions=[Permission.cancel_job])
 

@@ -214,10 +214,13 @@ class JobsData:
             "workflow": workflow,
         }
 
+        document["created_at"] = document["status"][0]["timestamp"]
+
         if job_id:
             document["_id"] = job_id
 
         document = await self._mongo.jobs.insert_one(document)
+
         await self._client.enqueue(workflow, document["_id"])
 
         return await self.get(document["_id"])
@@ -243,7 +246,6 @@ class JobsData:
                 "id": document["_id"],
                 "state": last_update["state"],
                 "stage": last_update["stage"],
-                "created_at": status[0]["timestamp"],
                 "progress": status[-1]["progress"],
             },
             [AttachUserTransform(self._mongo)],

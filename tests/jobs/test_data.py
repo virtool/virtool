@@ -31,6 +31,7 @@ async def test_cancel(
     await mongo.jobs.insert_one(
         {
             "_id": "foo",
+            "created_at": static_time.datetime,
             "state": "waiting",
             "status": [
                 {
@@ -92,6 +93,7 @@ async def test_acquire(
         {
             "_id": "foo",
             "acquired": False,
+            "created_at": static_time.datetime,
             "key": None,
             "rights": {},
             "archived": False,
