@@ -155,6 +155,7 @@
     'args': dict({
       'sample_id': 'foo',
     }),
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'key': None,
     'ping': None,
     'retries': 0,
@@ -219,6 +220,7 @@
     'args': dict({
       'sample_id': 'foo',
     }),
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'key': None,
     'ping': None,
     'retries': 0,

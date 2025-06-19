@@ -210,10 +210,13 @@ class JobsData:
             "workflow": workflow,
         }
 
+        document["created_at"] = document["status"][0]["timestamp"]
+
         if job_id:
             document["_id"] = job_id
 
         document = await self._mongo.jobs.insert_one(document)
+
         await self._client.enqueue(workflow, document["_id"])
 
         return await self.get(document["_id"])
