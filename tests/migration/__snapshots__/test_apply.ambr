@@ -337,5 +337,12 @@
       'name': 'add ping.pinged_at for non-waiting jobs',
       'revision': 'voqrl7cqev1v',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 49,
+      'name': 'add job created_at field',
+      'revision': 'xi5y0imlpcq9',
+    }),
   ])
 # ---
