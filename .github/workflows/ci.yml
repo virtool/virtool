@@ -1,4 +1,4 @@
-name: ci
+name: CI
 
 on:
   pull_request:
@@ -18,6 +18,7 @@ jobs:
   # Build the Docker image so we now it is successful before we create a release and try
   # to push a production image to the registry.
   build:
+    name: Build
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
@@ -31,7 +32,8 @@ jobs:
 
   # Check code formatting with ruff.
   ruff-format:
-    runs-on: ubuntu-22.04
+    name: Ruff Format
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -59,7 +61,8 @@ jobs:
 
   # Generate the OpenAPI specification and upload it as an artifact.
   oas:
-    runs-on: ubuntu-22.04
+    name: Generate OAS
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -95,7 +98,8 @@ jobs:
 
   # Run our test suite.
   test:
-    runs-on: ubuntu-22.04
+    name: Test
+    runs-on: ubuntu-24.04
     services:
       redis:
         image: redis:6.0
@@ -166,6 +170,7 @@ jobs:
           --snapshot-warn-unused
 
   release:
+    name: "Publish / Release"
     runs-on: ubuntu-22.04
     if: github.repository_owner == 'Virtool' && github.event_name == 'push'
     needs: [build, oas, test, ruff-format]
@@ -193,6 +198,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release
   ghcr:
+    name: "Publish / GHCR"
     runs-on: ubuntu-22.04
     if: github.repository_owner == 'Virtool' && github.event_name == 'push' && needs.release.outputs.git-tag != ''
     needs: [release]
@@ -226,6 +232,7 @@ jobs:
         run: curl -X POST ${{ secrets.CLOUDFLARE_HOOK }}
 
   pypi:
+    name: "Publish / PyPI"
     runs-on: ubuntu-22.04
     if: github.repository_owner == 'Virtool' && github.event_name == 'push' && needs.release.outputs.git-tag
     needs: [release]
