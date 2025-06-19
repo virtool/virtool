@@ -7,9 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
 from virtool.migration.cls import AppliedRevision
+from virtool.migration.required import REQUIRED_VIRTOOL_REVISION
 from virtool.pg.base import Base
-
-REQUIRED_VIRTOOL_REVISION = "b79c1e6cf56c"
 
 logger = get_logger("migration")
 

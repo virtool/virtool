@@ -33,6 +33,7 @@ from virtool.jobs.main import run_jobs_server
 from virtool.logs import configure_logging
 from virtool.migration.apply import apply
 from virtool.migration.create import create_revision
+from virtool.migration.depend import depend
 from virtool.migration.show import show_revisions
 from virtool.oas.cmd import show_oas
 from virtool.tasks.main import run_task_runner, run_task_spawner
@@ -140,6 +141,13 @@ def migration_apply(**kwargs):
 def migration_create(name: str):
     """Create a new migration revision."""
     create_revision(name)
+
+
+@migration.command("depend")
+@click.option("--revision", help="Revision to depend on", default="latest", type=str)
+def migration_depend(revision: str):
+    """Update Virtool so that it depends on a revision having been applied."""
+    depend(revision)
 
 
 @migration.command("show")
