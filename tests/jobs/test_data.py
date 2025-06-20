@@ -401,7 +401,9 @@ class TestClean:
         )
 
         # Create a WAITING job not in queue that should be retried
-        waiting_job = await fake.jobs.create(self.user, state=JobState.WAITING, retries=1)
+        waiting_job = await fake.jobs.create(
+            self.user, state=JobState.WAITING, retries=1
+        )
         await data_layer.jobs._client.remove(waiting_job.id)
 
         await data_layer.jobs.clean()
