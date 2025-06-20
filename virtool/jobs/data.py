@@ -613,11 +613,10 @@ class JobsData:
 
         This task considers jobs in the WAITING, PREPARING, and RUNNING states.
 
-        1. If a job has been retried more than {MAX_JOB_RETRIES - 1} times, it gets timed out.
+        1. If a job has been retried more than MAX_JOB_RETRIES times, it gets timed out.
         2. If a job has not received a ping in the last 5 minutes, attempt to retry it.
+        3. If a WAITING job is not found in the queue, it is retried or timed out.
 
-        Times out all jobs that have a ping field and haven't received a ping in 5
-        minutes.
         """
         queued_entries_1 = await self.list_queued_ids()
         await asyncio.sleep(JOB_CLEAN_DOUBLE_CHECK_DELAY)
