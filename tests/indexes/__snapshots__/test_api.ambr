@@ -125,8 +125,8 @@
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': '7cf872dc',
-          'progress': 10,
-          'stage': 'NzFJEUSgqMReEKilxKJT',
+          'progress': 3,
+          'stage': None,
           'state': 'preparing',
           'user': dict({
             'handle': 'leeashley',
@@ -155,9 +155,9 @@
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': '3cbb22cc',
-          'progress': 40,
-          'stage': 'FmSbUMpDrznQOttiWmLr',
-          'state': 'cancelled',
+          'progress': 10,
+          'stage': 'sZgfLWqSLpRpfDzrPQgg',
+          'state': 'running',
           'user': dict({
             'handle': 'leeashley',
             'id': 'fb085f7f',
@@ -197,8 +197,8 @@
       'job': dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': '7cf872dc',
-        'progress': 10,
-        'stage': 'NzFJEUSgqMReEKilxKJT',
+        'progress': 3,
+        'stage': None,
         'state': 'preparing',
         'user': dict({
           'handle': 'leeashley',
@@ -227,8 +227,8 @@
       'job': dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': '7cf872dc',
-        'progress': 10,
-        'stage': 'NzFJEUSgqMReEKilxKJT',
+        'progress': 3,
+        'stage': None,
         'state': 'preparing',
         'user': dict({
           'handle': 'leeashley',
@@ -346,8 +346,8 @@
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
       'id': 'fb085f7f',
-      'progress': 10,
-      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'progress': 3,
+      'stage': None,
       'state': 'preparing',
       'user': dict({
         'handle': 'leeashley',
@@ -529,8 +529,8 @@
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
       'id': '7cf872dc',
-      'progress': 10,
-      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'progress': 3,
+      'stage': None,
       'state': 'preparing',
       'user': dict({
         'handle': 'leeashley',

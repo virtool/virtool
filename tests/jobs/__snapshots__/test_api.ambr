@@ -51,47 +51,46 @@
   dict({
     'counts': dict({
       'cancelled': dict({
-        'create_sample': 1,
-      }),
-      'complete': dict({
-        'create_sample': 1,
-      }),
-      'error': dict({
-        'aodp': 1,
-        'create_sample': 1,
         'pathoscope_bowtie': 1,
       }),
-      'terminated': dict({
+      'complete': dict({
+        'pathoscope_bowtie': 1,
+      }),
+      'preparing': dict({
+        'aodp': 1,
+        'create_sample': 3,
+        'pathoscope_bowtie': 1,
+      }),
+      'running': dict({
         'build_index': 1,
-        'nuvs': 2,
+        'create_subtraction': 1,
+      }),
+      'terminated': dict({
+        'nuvs': 1,
       }),
       'timeout': dict({
         'aodp': 1,
-      }),
-      'waiting': dict({
-        'aodp': 1,
-        'nuvs': 1,
       }),
     }),
     'documents': list([
       dict({
         'created_at': str,
         'id': '9c61c0ca',
-        'progress': 30,
-        'stage': 'CvVtXeeYGAaIAXQZUmce',
-        'state': 'terminated',
+        'progress': 3,
+        'stage': None,
+        'state': 'preparing',
         'user': dict({
           'handle': 'zclark',
           'id': '7cf872dc',
         }),
-        'workflow': 'build_index',
+        'workflow': 'create_sample',
       }),
       dict({
         'created_at': str,
         'id': '7cce8f87',
-        'progress': 50,
-        'stage': 'nOHABdcaOhguYUqQeuEZ',
-        'state': 'error',
+        'progress': 40,
+        'stage': 'BhtMCmVtuypvvfYhEGZT',
+        'state': 'cancelled',
         'user': dict({
           'handle': 'zclark',
           'id': '7cf872dc',
@@ -101,33 +100,33 @@
       dict({
         'created_at': str,
         'id': '83e4c4f6',
-        'progress': 60,
-        'stage': 'iLUYCkyqgDOaIrTOqeaP',
-        'state': 'error',
+        'progress': 3,
+        'stage': None,
+        'state': 'preparing',
         'user': dict({
           'handle': 'zclark',
           'id': '7cf872dc',
         }),
-        'workflow': 'aodp',
+        'workflow': 'pathoscope_bowtie',
       }),
       dict({
         'created_at': str,
         'id': '606cd773',
-        'progress': 100,
-        'stage': 'DTrfalRqlzXAreDlttNm',
-        'state': 'complete',
+        'progress': 10,
+        'stage': 'kuwHIKQEsDDoQuVheSsd',
+        'state': 'running',
         'user': dict({
           'handle': 'zclark',
           'id': '7cf872dc',
         }),
-        'workflow': 'create_sample',
+        'workflow': 'build_index',
       }),
       dict({
         'created_at': str,
         'id': '031ff6cb',
-        'progress': 60,
-        'stage': 'GNkXjEpGpwJnLsgFiwud',
-        'state': 'cancelled',
+        'progress': 3,
+        'stage': None,
+        'state': 'preparing',
         'user': dict({
           'handle': 'zclark',
           'id': '7cf872dc',
@@ -841,9 +840,9 @@
     'ping': dict({
       'pinged_at': str,
     }),
-    'progress': 10,
+    'progress': 3,
     'retries': 0,
-    'stage': 'NzFJEUSgqMReEKilxKJT',
+    'stage': None,
     'state': 'preparing',
     'status': list([
       dict({
@@ -862,15 +861,6 @@
         'state': 'preparing',
         'step_description': None,
         'step_name': None,
-        'timestamp': str,
-      }),
-      dict({
-        'error': None,
-        'progress': 10,
-        'stage': 'NzFJEUSgqMReEKilxKJT',
-        'state': 'preparing',
-        'step_description': 'bTDOKidKxUVFacqRcQYv',
-        'step_name': 'NzFJEUSgqMReEKilxKJT',
         'timestamp': str,
       }),
     ]),

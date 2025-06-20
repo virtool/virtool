@@ -28,15 +28,16 @@ def compose_status(
     :param step_description: a description of the current step
     :param error: an error dict
     :param progress: the current progress
+    :param timestamp: the timestamp of the status
     :return: a status subdocument
     """
     return {
+        "error": error,
+        "progress": progress,
         "state": state.value if state else None,
         "stage": stage,
         "step_name": step_name,
         "step_description": step_description,
-        "error": error,
-        "progress": progress,
         "timestamp": virtool.utils.timestamp(),
     }
 
