@@ -23,9 +23,10 @@ services:
     volumes:
       - ./setup_postgres.sh:/docker-entrypoint-initdb.d/setup_postgres.sh
     healthcheck:
-      test: pg_isready -U postgres -d virtool
+      test: pg_isready -U openfga -d openfga
       interval: 2s
-      retries: 5
+      retries: 10
+      start_period: 2s
 
   redis:
     image: redis:6.0
