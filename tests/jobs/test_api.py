@@ -172,7 +172,7 @@ class TestAcquire:
     async def test_ok(
         self,
         fake: DataFaker,
-        snapshot,
+        snapshot: SnapshotAssertion,
         spawn_job_client: JobClientSpawner,
     ):
         """Test that a job can be acquired."""

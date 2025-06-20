@@ -29,7 +29,7 @@ async def upgrade(ctx: MigrationContext):
 
     :param ctx: the migration context
     """
-    query = {"status.-1.state": {"$ne": "waiting"}, "ping": None}
+    query = {"state": {"$ne": "waiting"}, "ping": None}
 
     for job_id in await ctx.mongo.jobs.distinct("_id", query):
         status = await get_one_field(ctx.mongo.jobs, "status", job_id)

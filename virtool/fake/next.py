@@ -6,6 +6,7 @@ import gzip
 from collections.abc import AsyncGenerator
 from pathlib import Path
 
+import arrow
 from faker import Faker
 from faker.providers import (
     BaseProvider,
@@ -160,6 +161,7 @@ class JobsFakerDomain(DataFakerDomain):
         self,
         user: User,
         pinged_at: datetime.datetime | None = None,
+        retries: int = 0,
         state: JobState | None = None,
         workflow: str | None = None,
     ) -> Job:
@@ -169,6 +171,7 @@ class JobsFakerDomain(DataFakerDomain):
 
         :param user: the user that created the job
         :param pinged_at: the time the job was last pinged.
+        :param retries: the number of retries the job has undergone
         :param state: the state the most recent status update should have
         :param workflow: the workflow the job is running
         :return:
@@ -206,7 +209,7 @@ class JobsFakerDomain(DataFakerDomain):
 
             job = await self._layer.jobs.acquire(job.id)
 
-        previous_status = job.status[0]
+        previous_status = job.status[-1]
         progress = 0
 
         while progress <= 50:
@@ -237,11 +240,22 @@ class JobsFakerDomain(DataFakerDomain):
                 progress=100 if next_state == JobState.COMPLETE else progress,
             )
 
+        if target_state != JobState.WAITING and pinged_at is None:
+            pinged_at = arrow.utcnow().shift(minutes=-1).naive
+
         if pinged_at:
             await self._mongo.jobs.update_one(
                 {"_id": job.id},
                 {
                     "$set": {"ping": {"pinged_at": pinged_at}},
+                },
+            )
+
+        if retries > 0:
+            await self._mongo.jobs.update_one(
+                {"_id": job.id},
+                {
+                    "$set": {"retries": retries},
                 },
             )
 

@@ -1,5 +1,3 @@
-import datetime
-
 import virtool.utils
 from virtool.jobs.models import JobState
 from virtool.types import Document
@@ -21,7 +19,6 @@ def compose_status(
     step_description: str | None = None,
     error: dict | None = None,
     progress: int | None = 0,
-    timestamp: datetime.datetime | None = None,
 ) -> Document:
     """Compose a status subdocument for a job.
 
@@ -35,13 +32,13 @@ def compose_status(
     :return: a status subdocument
     """
     return {
+        "error": error,
+        "progress": progress,
         "state": state.value if state else None,
         "stage": stage,
         "step_name": step_name,
         "step_description": step_description,
-        "error": error,
-        "progress": progress,
-        "timestamp": timestamp or virtool.utils.timestamp(),
+        "timestamp": virtool.utils.timestamp(),
     }
 
 
