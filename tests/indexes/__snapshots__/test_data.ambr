@@ -68,8 +68,8 @@
     'job': dict({
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'id': 'fb085f7f',
-      'progress': 10,
-      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'progress': 3,
+      'stage': None,
       'state': <JobState.PREPARING: 'preparing'>,
       'user': dict({
         'handle': 'leeashley',

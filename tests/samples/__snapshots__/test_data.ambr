@@ -174,8 +174,8 @@
     'job': dict({
       'created_at': 'not_approximately_now_datetime',
       'id': 'fb085f7f',
-      'progress': 10,
-      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'progress': 3,
+      'stage': None,
       'state': <JobState.PREPARING: 'preparing'>,
       'user': dict({
         'handle': 'sallywalker',

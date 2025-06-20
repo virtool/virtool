@@ -542,8 +542,8 @@
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
       'id': 'fb085f7f',
-      'progress': 10,
-      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'progress': 3,
+      'stage': None,
       'state': 'preparing',
       'user': dict({
         'handle': 'sallywalker',
@@ -645,7 +645,7 @@
           'created_at': '2015-10-06T20:00:00Z',
           'id': '7cf872dc',
           'progress': 30,
-          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'stage': 'HTCWaKMqqBTFitpKyPAV',
           'state': 'terminated',
           'user': dict({
             'handle': 'leeashley',
@@ -804,7 +804,7 @@
           'created_at': '2015-10-06T20:00:00Z',
           'id': '7cf872dc',
           'progress': 30,
-          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'stage': 'HTCWaKMqqBTFitpKyPAV',
           'state': 'terminated',
           'user': dict({
             'handle': 'leeashley',
@@ -903,7 +903,7 @@
           'created_at': '2015-10-06T20:00:00Z',
           'id': '7cf872dc',
           'progress': 30,
-          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'stage': 'HTCWaKMqqBTFitpKyPAV',
           'state': 'terminated',
           'user': dict({
             'handle': 'leeashley',
@@ -1032,7 +1032,7 @@
           'created_at': '2015-10-06T20:00:00Z',
           'id': '7cf872dc',
           'progress': 30,
-          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'stage': 'HTCWaKMqqBTFitpKyPAV',
           'state': 'terminated',
           'user': dict({
             'handle': 'leeashley',
@@ -1150,7 +1150,7 @@
           'created_at': '2015-10-06T20:00:00Z',
           'id': '7cf872dc',
           'progress': 30,
-          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'stage': 'HTCWaKMqqBTFitpKyPAV',
           'state': 'terminated',
           'user': dict({
             'handle': 'leeashley',
@@ -1268,7 +1268,7 @@
           'created_at': '2015-10-06T20:00:00Z',
           'id': '7cf872dc',
           'progress': 30,
-          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'stage': 'HTCWaKMqqBTFitpKyPAV',
           'state': 'terminated',
           'user': dict({
             'handle': 'leeashley',
@@ -1356,7 +1356,7 @@
           'created_at': '2015-10-06T20:00:00Z',
           'id': '7cf872dc',
           'progress': 30,
-          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'stage': 'HTCWaKMqqBTFitpKyPAV',
           'state': 'terminated',
           'user': dict({
             'handle': 'leeashley',
@@ -1444,7 +1444,7 @@
           'created_at': '2015-10-06T20:00:00Z',
           'id': '7cf872dc',
           'progress': 30,
-          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'stage': 'HTCWaKMqqBTFitpKyPAV',
           'state': 'terminated',
           'user': dict({
             'handle': 'leeashley',
@@ -1644,7 +1644,7 @@
           'created_at': '2015-10-06T20:00:00Z',
           'id': '7cf872dc',
           'progress': 30,
-          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'stage': 'HTCWaKMqqBTFitpKyPAV',
           'state': 'terminated',
           'user': dict({
             'handle': 'leeashley',
@@ -1732,7 +1732,7 @@
           'created_at': '2015-10-06T20:00:00Z',
           'id': '7cf872dc',
           'progress': 30,
-          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'stage': 'HTCWaKMqqBTFitpKyPAV',
           'state': 'terminated',
           'user': dict({
             'handle': 'leeashley',
@@ -1820,7 +1820,7 @@
           'created_at': '2015-10-06T20:00:00Z',
           'id': '7cf872dc',
           'progress': 30,
-          'stage': 'ZHTCWaKMqqBTFitpKyPA',
+          'stage': 'HTCWaKMqqBTFitpKyPAV',
           'state': 'terminated',
           'user': dict({
             'handle': 'leeashley',
@@ -1992,8 +1992,8 @@
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
       'id': 'fb085f7f',
-      'progress': 10,
-      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'progress': 3,
+      'stage': None,
       'state': 'preparing',
       'user': dict({
         'handle': 'sallywalker',
@@ -2076,8 +2076,8 @@
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
       'id': 'fb085f7f',
-      'progress': 10,
-      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'progress': 3,
+      'stage': None,
       'state': 'preparing',
       'user': dict({
         'handle': 'sallywalker',
@@ -2125,7 +2125,7 @@
       }),
     ]),
     'user': dict({
-      'handle': 'monica23',
+      'handle': 'zwilliams',
       'id': 'fb085f7f',
     }),
     'workflows': dict({
@@ -2158,7 +2158,7 @@
     'group': dict({
       'id': 1,
       'legacy_id': None,
-      'name': 'interpreters',
+      'name': 'arboriculturists',
     }),
     'group_read': True,
     'group_write': True,
@@ -2170,8 +2170,8 @@
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
       'id': 'fb085f7f',
-      'progress': 10,
-      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'progress': 3,
+      'stage': None,
       'state': 'preparing',
       'user': dict({
         'handle': 'sallywalker',
@@ -2219,7 +2219,7 @@
       }),
     ]),
     'user': dict({
-      'handle': 'mathissusan',
+      'handle': 'sheena09',
       'id': 'fb085f7f',
     }),
     'workflows': dict({
@@ -2254,8 +2254,8 @@
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
       'id': 'fb085f7f',
-      'progress': 10,
-      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'progress': 3,
+      'stage': None,
       'state': 'preparing',
       'user': dict({
         'handle': 'sallywalker',
@@ -2391,8 +2391,8 @@
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
       'id': 'fb085f7f',
-      'progress': 10,
-      'stage': 'NzFJEUSgqMReEKilxKJT',
+      'progress': 3,
+      'stage': None,
       'state': 'preparing',
       'user': dict({
         'handle': 'sallywalker',
