@@ -5,11 +5,12 @@ Date: 2023-08-08 21:57:09.069211
 
 """
 
+import json
+
 import arrow
-from sqlalchemy import select
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from virtool.groups.pg import SQLGroup
 from virtool.migration import MigrationContext
 
 # Revision identifiers.
@@ -31,19 +32,24 @@ async def upgrade(ctx: MigrationContext):
     """
     async with AsyncSession(ctx.pg) as session:
         async for old_group in ctx.mongo.groups.find({}):
-            group = (
-                await session.execute(
-                    select(SQLGroup).where(SQLGroup.legacy_id == old_group["_id"]),
-                )
-            ).one_or_none()
+            # Check if group already exists
+            result = await session.execute(
+                text("SELECT id FROM groups WHERE legacy_id = :legacy_id"),
+                {"legacy_id": old_group["_id"]},
+            )
+            existing_group = result.first()
 
-            if not group:
-                session.add(
-                    SQLGroup(
-                        legacy_id=old_group["_id"],
-                        name=old_group.get("name") or old_group["_id"],
-                        permissions=old_group["permissions"],
-                    ),
+            if not existing_group:
+                await session.execute(
+                    text("""
+                        INSERT INTO groups (legacy_id, name, permissions)
+                        VALUES (:legacy_id, :name, :permissions)
+                    """),
+                    {
+                        "legacy_id": old_group["_id"],
+                        "name": old_group.get("name") or old_group["_id"],
+                        "permissions": json.dumps(old_group["permissions"]),
+                    },
                 )
 
         await session.commit()

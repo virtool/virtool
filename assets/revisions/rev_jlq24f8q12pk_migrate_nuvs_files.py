@@ -10,10 +10,9 @@ import os
 import shutil
 
 import arrow
-from sqlalchemy import select
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from virtool.analyses.sql import SQLAnalysisFile
 from virtool.migration import MigrationContext
 from virtool.utils import compress_file, file_stats
 
@@ -43,11 +42,11 @@ async def upgrade(ctx: MigrationContext):
         target_path = ctx.data_path / "analyses" / analysis_id
 
         async with AsyncSession(ctx.pg) as session:
-            exists = (
-                await session.execute(
-                    select(SQLAnalysisFile).filter_by(analysis=analysis_id),
-                )
-            ).scalar()
+            result = await session.execute(
+                text("SELECT id FROM analysis_files WHERE analysis = :analysis"),
+                {"analysis": analysis_id},
+            )
+            exists = result.scalar()
 
         if await asyncio.to_thread(source_path.is_dir) and not exists:
             await asyncio.to_thread(target_path.mkdir, exist_ok=True, parents=True)
@@ -76,35 +75,44 @@ async def upgrade(ctx: MigrationContext):
                             target_path / f"{filename}.gz",
                         )
 
-            sql_analysis_files = []
-
-            for filename in analysis_files:
-                file_type = check_nuvs_file_type(filename)
-
-                if not filename.endswith(".tsv"):
-                    filename += ".gz"
-
-                size = (await asyncio.to_thread(file_stats, target_path / filename))[
-                    "size"
-                ]
-
-                sql_analysis_files.append(
-                    SQLAnalysisFile(
-                        name=filename,
-                        analysis=analysis_id,
-                        format=file_type,
-                        size=size,
-                    ),
-                )
-
             async with AsyncSession(ctx.pg) as session:
-                session.add_all(sql_analysis_files)
+                for filename in analysis_files:
+                    file_type = check_nuvs_file_type(filename)
 
-                await session.flush()
+                    if not filename.endswith(".tsv"):
+                        filename += ".gz"
 
-                for analysis_file in sql_analysis_files:
-                    analysis_file.name_on_disk = (
-                        f"{analysis_file.id}-{analysis_file.name}"
+                    size = (
+                        await asyncio.to_thread(file_stats, target_path / filename)
+                    )["size"]
+
+                    # Insert analysis file and get the ID
+                    result = await session.execute(
+                        text("""
+                            INSERT INTO analysis_files (name, analysis, format, size)
+                            VALUES (:name, :analysis, :format, :size)
+                            RETURNING id
+                        """),
+                        {
+                            "name": filename,
+                            "analysis": analysis_id,
+                            "format": file_type,
+                            "size": size,
+                        },
+                    )
+                    file_id = result.scalar()
+
+                    # Update name_on_disk
+                    await session.execute(
+                        text("""
+                            UPDATE analysis_files 
+                            SET name_on_disk = :name_on_disk 
+                            WHERE id = :id
+                        """),
+                        {
+                            "name_on_disk": f"{file_id}-{filename}",
+                            "id": file_id,
+                        },
                     )
 
                 await session.commit()

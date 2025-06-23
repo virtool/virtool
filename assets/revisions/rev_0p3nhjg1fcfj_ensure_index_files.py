@@ -11,13 +11,12 @@ from typing import TYPE_CHECKING
 
 import arrow
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from sqlalchemy import select
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.api.custom_json import dump_bytes
 from virtool.history.db import patch_to_version
 from virtool.indexes.db import INDEX_FILE_NAMES
-from virtool.indexes.sql import IndexType, SQLIndexFile
 from virtool.indexes.utils import join_index_path
 from virtool.migration import MigrationContext
 from virtool.types import Document
@@ -64,27 +63,31 @@ async def upgrade(ctx: MigrationContext):
             continue
 
         async with AsyncSession(ctx.pg) as session:
-            first = (
-                await session.execute(
-                    select(SQLIndexFile).where(SQLIndexFile.index == index_id),
-                )
-            ).first()
+            result = await session.execute(
+                text("SELECT 1 FROM index_files WHERE index = :index_id LIMIT 1"),
+                {"index_id": index_id},
+            )
 
-            if first:
+            if result.first():
                 continue
 
-            session.add_all(
-                [
-                    SQLIndexFile(
-                        name=path.name,
-                        index=index_id,
-                        type=get_index_file_type_from_name(path.name),
-                        size=(await to_thread(file_stats, path))["size"],
+            for path in sorted(index_path.iterdir()):
+                if path.name in INDEX_FILE_NAMES:
+                    size = (await to_thread(file_stats, path))["size"]
+                    file_type = get_index_file_type_from_name(path.name)
+
+                    await session.execute(
+                        text("""
+                            INSERT INTO index_files (name, index, type, size)
+                            VALUES (:name, :index, :type, :size)
+                        """),
+                        {
+                            "name": path.name,
+                            "index": index_id,
+                            "type": file_type,
+                            "size": size,
+                        },
                     )
-                    for path in sorted(index_path.iterdir())
-                    if path.name in INDEX_FILE_NAMES
-                ],
-            )
 
             await session.commit()
 
@@ -218,14 +221,14 @@ def format_sequence_for_export(sequence: Document) -> Document:
     return cleaned_sequence
 
 
-def get_index_file_type_from_name(file_name: str) -> IndexType:
+def get_index_file_type_from_name(file_name: str) -> str:
     if ".json" in file_name:
-        return IndexType.json
+        return "json"
 
     if ".fa" in file_name:
-        return IndexType.fasta
+        return "fasta"
 
     if ".bt" in file_name:
-        return IndexType.bowtie2
+        return "bowtie2"
 
     raise ValueError(f"Filename does not map to valid IndexType: {file_name}")
