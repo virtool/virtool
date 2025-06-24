@@ -11,12 +11,11 @@ from glob import glob
 from pathlib import Path
 
 import arrow
-from sqlalchemy import select
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.migration import MigrationContext
 from virtool.subtractions.files import create_subtraction_files
-from virtool.subtractions.pg import SQLSubtractionFile
 from virtool.subtractions.utils import (
     FILES,
     rename_bowtie_files,
@@ -89,14 +88,14 @@ async def upgrade(ctx: MigrationContext):
         for filename in sorted(await asyncio.to_thread(os.listdir, path)):
             if filename in FILES:
                 async with AsyncSession(ctx.pg) as session:
-                    exists = (
-                        await session.execute(
-                            select(SQLSubtractionFile).filter_by(
-                                subtraction=subtraction_id,
-                                name=filename,
-                            ),
-                        )
-                    ).scalar()
+                    result = await session.execute(
+                        text("""
+                            SELECT id FROM subtraction_files 
+                            WHERE subtraction = :subtraction AND name = :name
+                        """),
+                        {"subtraction": subtraction_id, "name": filename},
+                    )
+                    exists = result.scalar()
 
                 if not exists:
                     subtraction_files.append(filename)

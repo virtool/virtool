@@ -9,12 +9,11 @@ from asyncio import to_thread
 from pathlib import Path
 
 import arrow
-from sqlalchemy import select
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.migration import MigrationContext
-from virtool.samples.sql import SQLSampleReads
-from virtool.uploads.sql import SQLUpload
+from virtool.types import Document
 from virtool.utils import compress_file, file_stats
 
 # Revision identifiers.
@@ -29,18 +28,7 @@ virtool_down_revision = "zma2wj6b39hs"
 required_alembic_revision = None
 
 
-def check_is_legacy(sample: dict[str, any]) -> bool:
-    """Check if a sample has legacy read files.
-
-    :param sample: the sample document
-    :return: whether the sample is a legacy sample
-    """
-    return not any(file.get("raw", False) for file in sample["files"]) and all(
-        file["name"] in {"reads_1.fastq", "reads_2.fastq"} for file in sample["files"]
-    )
-
-
-def check_is_compressed(sample: dict[str, any]) -> bool:
+def _check_is_compressed(sample: Document) -> bool:
     """Check if a sample has compressed read files.
 
     :param sample: the sample document
@@ -56,10 +44,21 @@ def check_is_compressed(sample: dict[str, any]) -> bool:
     )
 
 
+def _check_is_legacy(sample: dict[str, Document]) -> bool:
+    """Check if a sample has legacy read files.
+
+    :param sample: the sample document
+    :return: whether the sample is a legacy sample
+    """
+    return not any(file.get("raw", False) for file in sample["files"]) and all(
+        file["name"] in {"reads_1.fastq", "reads_2.fastq"} for file in sample["files"]
+    )
+
+
 async def compress_sample_reads(
     data_path: Path,
     paths: list[Path],
-    sample_files: dict[str, any],
+    sample_files: dict[str, Document],
     sample_id: int,
 ):
     """Compress the reads for one legacy samples.
@@ -79,7 +78,7 @@ async def compress_sample_reads(
             "reads_1.fq.gz" if "reads_1.fastq" in str(path) else "reads_2.fq.gz"
         )
 
-        target_path = data_path / "samples" / sample_id / target_filename
+        target_path = data_path / "samples" / str(sample_id) / target_filename
 
         await to_thread(compress_file, path, target_path, 1)
 
@@ -101,14 +100,14 @@ async def compress_sample_reads(
 async def upgrade(ctx: MigrationContext):
     async for sample in ctx.mongo.samples.find({"files": {"$exists": True}}):
         if "is_legacy" not in sample:
-            sample["is_legacy"] = check_is_legacy(sample)
+            sample["is_legacy"] = _check_is_legacy(sample)
 
         sample_path = ctx.data_path / "samples" / sample["_id"]
         paths = [sample_path / "reads_1.fastq"]
         if sample["paired"]:
             paths.append(sample_path / "reads_2.fastq")
 
-        if not check_is_compressed(sample):
+        if not _check_is_compressed(sample):
             sample["files"] = await compress_sample_reads(
                 ctx.data_path,
                 paths,
@@ -124,54 +123,67 @@ async def upgrade(ctx: MigrationContext):
             mongo_session.start_transaction(),
         ):
             sample_id = sample["_id"]
-            for file in sample["files"]:
-                reads = SQLSampleReads(
-                    name=file["name"],
-                    name_on_disk=file["name"],
-                    size=file["size"],
-                    sample=sample_id,
-                )
 
+            for file in sample["files"]:
                 from_ = file.get("from")
 
-                upload = (
-                    (
-                        await pg_session.scalars(
-                            select(SQLUpload).where(
-                                SQLUpload.name_on_disk == from_["id"],
-                            ),
-                        )
-                    )
-                    .unique()
-                    .one_or_none()
+                # Check if upload already exists
+                upload_result = await pg_session.execute(
+                    text("SELECT id FROM uploads WHERE name_on_disk = :name_on_disk"),
+                    {"name_on_disk": from_["id"]},
                 )
+                upload_row = upload_result.first()
 
-                if not upload:
+                if not upload_row:
                     from_size = from_.get("size")
+
                     if from_size is None and (ctx.data_path / "files").exists():
                         file_path = ctx.data_path / "files" / from_.get("id")
                         from_size = (
                             file_path.stat().st_size if file_path.exists() else 0
                         )
 
-                    upload = SQLUpload(
-                        name=from_["name"],
-                        name_on_disk=from_["id"],
-                        size=from_size,
-                        uploaded_at=from_.get("uploaded_at"),
-                        removed=True,
-                        reserved=True,
+                    # Insert upload and get the ID
+                    upload_insert_result = await pg_session.execute(
+                        text("""
+                            INSERT INTO uploads (name, name_on_disk, size, uploaded_at, removed, reserved, ready)
+                            VALUES (:name, :name_on_disk, :size, :uploaded_at, :removed, :reserved, :ready)
+                            RETURNING id
+                        """),
+                        {
+                            "name": from_["name"],
+                            "name_on_disk": from_["id"],
+                            "size": from_size,
+                            "uploaded_at": from_.get("uploaded_at"),
+                            "removed": True,
+                            "reserved": True,
+                            "ready": False,
+                        },
                     )
+                    upload_id = upload_insert_result.scalar()
+                else:
+                    upload_id = upload_row.id
 
-                upload.reads.append(reads)
-
-                pg_session.add_all([reads, upload])
+                # Insert sample reads with the upload_id
+                await pg_session.execute(
+                    text("""
+                        INSERT INTO sample_reads (name, name_on_disk, size, sample, upload)
+                        VALUES (:name, :name_on_disk, :size, :sample, :upload)
+                    """),
+                    {
+                        "name": file["name"],
+                        "name_on_disk": file["name"],
+                        "size": file["size"],
+                        "sample": sample_id,
+                        "upload": upload_id,
+                    },
+                )
 
             await ctx.mongo.samples.update_one(
                 {"_id": sample_id},
                 {
-                    "$unset": {"files": ""},
                     "$set": {"is_compressed": True, "is_legacy": sample["is_legacy"]},
+                    "$unset": {"files": ""},
                 },
                 session=mongo_session,
             )

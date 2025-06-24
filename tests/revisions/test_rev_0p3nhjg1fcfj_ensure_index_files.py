@@ -31,7 +31,7 @@ virtool_down_revision = "ulapmx8i3vpg"
 required_alembic_revision = None
 
 
-def get_index_file_type_from_name(file_name: str) -> IndexType:
+def _get_index_file_type_from_name(file_name: str) -> IndexType:
     if ".json" in file_name:
         return IndexType.json
 
@@ -91,7 +91,7 @@ class TestUpgrade:
                         SQLIndexFile(
                             name=f"previously upgraded {path.name}",
                             index="index_1",
-                            type=get_index_file_type_from_name(path.name),
+                            type=_get_index_file_type_from_name(path.name),
                             size=5,
                         )
                         for path in sorted(test_dir.iterdir())

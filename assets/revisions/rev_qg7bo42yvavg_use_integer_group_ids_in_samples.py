@@ -6,10 +6,9 @@ Date: 2023-11-03 17:44:08.949901
 """
 
 import arrow
-from sqlalchemy import select
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from virtool.groups.pg import SQLGroup
 from virtool.migration import MigrationContext
 
 # Revision identifiers.
@@ -26,10 +25,12 @@ required_alembic_revision = None
 
 async def upgrade(ctx: MigrationContext):
     async with AsyncSession(ctx.pg) as session:
-        result = await session.execute(select(SQLGroup))
+        result = await session.execute(
+            text("SELECT id, legacy_id FROM groups WHERE legacy_id IS NOT NULL")
+        )
 
         group_id_map: dict[str, int] = {
-            g.legacy_id: g.id for g in result.scalars() if g.legacy_id is not None
+            row.legacy_id: row.id for row in result.fetchall()
         }
 
     async for document in ctx.mongo.samples.find({}, ["group"]):

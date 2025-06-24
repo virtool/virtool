@@ -6,11 +6,10 @@ Date: 2024-05-16 22:44:08.942465
 """
 
 import arrow
-from sqlalchemy import select
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.migration import MigrationContext
-from virtool.uploads.sql import SQLUpload
 
 # Revision identifiers.
 name = "move files to sql"
@@ -29,11 +28,15 @@ async def upgrade(ctx: MigrationContext):
         async for document in ctx.mongo.files.find(
             {"type": {"$in": ["hmm", "reference", "reads", "subtraction"]}},
         ):
-            exists = (
-                await session.execute(
-                    select(SQLUpload).filter_by(name_on_disk=document["_id"]),
-                )
-            ).scalar()
+            result = await session.execute(
+                text(
+                    "SELECT 1 FROM uploads WHERE name_on_disk = :name_on_disk LIMIT 1"
+                ),
+                {"name_on_disk": document["_id"]},
+            )
+
+            if result.first():
+                continue
 
             size = document.get("size")
             if size is None and (ctx.data_path / "files").exists():
@@ -41,20 +44,24 @@ async def upgrade(ctx: MigrationContext):
                 size = file_path.stat().st_size if file_path.exists() else 0
 
             user = document["user"]
+            user_id = user if user is None else user["id"]
 
-            if not exists:
-                session.add(
-                    SQLUpload(
-                        name=document["name"],
-                        name_on_disk=document["_id"],
-                        ready=document["ready"],
-                        removed=False,
-                        reserved=document["reserved"],
-                        size=size,
-                        type=document["type"],
-                        user=user if user is None else user["id"],
-                        uploaded_at=document["uploaded_at"],
-                    ),
-                )
+            await session.execute(
+                text("""
+                    INSERT INTO uploads (name, name_on_disk, ready, removed, reserved, size, type, "user", uploaded_at)
+                    VALUES (:name, :name_on_disk, :ready, :removed, :reserved, :size, :type, :user, :uploaded_at)
+                """),
+                {
+                    "name": document["name"],
+                    "name_on_disk": document["_id"],
+                    "ready": document["ready"],
+                    "removed": False,
+                    "reserved": document["reserved"],
+                    "size": size,
+                    "type": document["type"],
+                    "user": user_id,
+                    "uploaded_at": document["uploaded_at"],
+                },
+            )
 
         await session.commit()
