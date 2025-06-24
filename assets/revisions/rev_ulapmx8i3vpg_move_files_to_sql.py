@@ -29,8 +29,10 @@ async def upgrade(ctx: MigrationContext):
             {"type": {"$in": ["hmm", "reference", "reads", "subtraction"]}},
         ):
             result = await session.execute(
-                text("SELECT 1 FROM uploads WHERE name_on_disk = :name_on_disk LIMIT 1"),
-                {"name_on_disk": document["_id"]}
+                text(
+                    "SELECT 1 FROM uploads WHERE name_on_disk = :name_on_disk LIMIT 1"
+                ),
+                {"name_on_disk": document["_id"]},
             )
 
             if result.first():
@@ -59,7 +61,7 @@ async def upgrade(ctx: MigrationContext):
                     "type": document["type"],
                     "user": user_id,
                     "uploaded_at": document["uploaded_at"],
-                }
+                },
             )
 
         await session.commit()
