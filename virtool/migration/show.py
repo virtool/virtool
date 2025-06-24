@@ -13,7 +13,6 @@ from virtool.migration.utils import (
 )
 
 
-
 class DowngradeSpecifier(NamedTuple):
     """A downgrade specifier for a revision."""
 
@@ -187,4 +186,6 @@ def show_revisions():
 
     for revision in all_revisions:
         date = arrow.get(revision.created_at).format("YYYY-MM-DD HH:mm:ss")
-        click.echo(f"{revision.id} - {revision.name} ({date}) [{revision.source.value}]")
+        click.echo(
+            f"{revision.id} - {revision.name} ({date}) [{revision.source.value}]"
+        )
