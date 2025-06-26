@@ -74,7 +74,6 @@ ignore = ["COM812", "D203", "D213", "EM102", "FBT001", "ISC001", "PLR0913"]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
-
 [dependency-groups]
 dev = [
     "furo<2025.0.0,>=2024.8.6",

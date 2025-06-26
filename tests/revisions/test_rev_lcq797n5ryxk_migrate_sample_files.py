@@ -44,7 +44,7 @@ class TestUpgrade:
                     ctx.data_path / "samples" / sample["_id"],
                 ),
             ) == snapshot(
-                name=f"{sample["_id"]}files after",
+                name=f"{sample['_id']}files after",
             )
 
         return func
