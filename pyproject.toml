@@ -39,7 +39,7 @@ dependencies = [
     "email-validator<3.0.0,>=2.0.0",
     "faker<13.0.0,>=12.3.3",
     "motor<4.0.0,>=3.7.1",
-    "openfga-sdk==0.1.1",
+    "openfga-sdk==0.9.4",
     "openpyxl<4.0.0,>=3.1.5",
     "orjson<4.0.0,>=3.10.18",
     "pydantic==1.10.16",
