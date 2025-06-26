@@ -1,15 +1,12 @@
 FROM python:3.12-bookworm AS build
-RUN curl -sSL https://install.python-poetry.org | python -
-ENV PATH="/root/.local/bin:${PATH}" \
-    POETRY_CACHE_DIR='/tmp/poetry_cache' \
-    POETRY_NO_INTERACTION=1 \
-    POETRY_VIRTUALENVS_IN_PROJECT=1 \
-    POETRY_VIRTUALENVS_CREATE=1
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy
 WORKDIR /app
-COPY pyproject.toml poetry.lock ./
-RUN poetry install --without dev --no-root
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev
 COPY . ./
-RUN poetry install --only-root
+RUN uv sync --frozen --no-dev
 
 FROM python:3.12-bookworm AS version
 COPY .git .

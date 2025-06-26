@@ -37,27 +37,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
         with:
-          python-version: '3.12'
-      - name: Setup Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
-      - name: Load Cached Packages
-        id: cached-poetry-dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-      - name: Install Packages
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction
+          version: "latest"
+      - name: Set up Python
+        run: uv python install
+      - name: Install dependencies
+        run: uv sync
       - name: Check formatting
-        run: poetry run ruff format --check
+        run: uv run ruff format --check
 
   # Generate the OpenAPI specification and upload it as an artifact.
   oas:
@@ -66,30 +55,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
         with:
-          python-version: '3.12'
-      - name: Setup Poetry
-        id: setup-poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
-      - name: Load Cached Packages
-        id: cached-poetry-dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-      - name: Install Packages
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction
+          version: "latest"
+      - name: Set up Python
+        run: uv python install
+      - name: Install dependencies
+        run: uv sync
       - name: Write OAS
         run: |
           mkdir -p virtool/spec
-          poetry run virtool oas > virtool/spec/openapi.json
+          uv run virtool oas > virtool/spec/openapi.json
       - name: Upload OAS
         uses: actions/upload-artifact@v4
         with:
@@ -131,26 +108,14 @@ jobs:
         with:
           mongodb-version: 6.0
           mongodb-replica-set: rs
-      - name: Setup Python
-        id: setup-python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
         with:
-          python-version: '3.12'
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
-      - name: Load Cached Packages
-        id: cached-poetry-dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-      - name: Install Packages
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction
+          version: "latest"
+      - name: Set up Python
+        run: uv python install
+      - name: Install dependencies
+        run: uv sync
       - name: Install bowtie
         run: | 
           wget https://github.com/BenLangmead/bowtie2/releases/download/v2.5.3/bowtie2-2.5.3-linux-x86_64.zip
@@ -159,7 +124,7 @@ jobs:
           ln -s /opt/bowtie2/bowtie* /usr/local/bin
       - name: Run
         run: >-
-          poetry run
+          uv run
           pytest
           --db-connection-string mongodb://localhost:27017
           -n 3
@@ -241,27 +206,17 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ needs.release.outputs.git-tag }}
-      - name: Setup Python
-        id: setup-python
-        uses: actions/setup-python@v5
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
         with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
-      - name: Load Cached Packages
-        id: cached-poetry-dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-      - name: Install Packages
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction
+          version: "latest"
+      - name: Set up Python
+        run: uv python install
+      - name: Install dependencies
+        run: uv sync
       - name: Set version
-        run: poetry version ${{ needs.release.outputs.git-tag }} && poetry lock
+        run: uv run python -c "import tomli_w; import tomllib; f=open('pyproject.toml','rb'); d=tomllib.load(f); f.close(); d['project']['version']='${{ needs.release.outputs.git-tag }}'; f=open('pyproject.toml','wb'); tomli_w.dump(d,f); f.close()"
       - name: Build
-        run: poetry build
+        run: uv build
       - name: Publish
-        run: poetry publish -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_TOKEN }}
+        run: uv publish --username ${{ secrets.PYPI_USERNAME }} --password ${{ secrets.PYPI_TOKEN }}
