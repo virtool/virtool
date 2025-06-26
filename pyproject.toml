@@ -65,7 +65,7 @@ timeout = 10
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["ANN101", "COM812", "D203", "D213", "EM102", "FBT001", "ISC001", "PLR0913"]
+ignore = ["COM812", "D203", "D213", "EM102", "FBT001", "ISC001", "PLR0913"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["ANN201", "ANN202", "D205", "S101", "S106"]
