@@ -1,11 +1,7 @@
 [project]
 name = "virtool"
 description = "Viral infection diagnostics using next-generation sequencing"
-dynamic = [
-    "dependencies",
-    "version"
-]
-requires-python = ">3.12.0,<3.13.0"
+requires-python = ">=3.12.3,<3.13"
 authors = [
     {name = "Ian Boyes"},
     {name = "Reece Hoffmann"},
@@ -27,64 +23,39 @@ maintainers = [
 ]
 license = "MIT"
 version = "0.0.0"
+dependencies = [
+    "aiohttp[speedups]<4.0,>=3.12",
+    "aiohttp-pydantic<2.0.0,>=1.12.1",
+    "aiojobs==1.2.1",
+    "alembic[tz]<2.0.0,>=1.16.2",
+    "arrow<2.0.0,>=1.3.0",
+    "asyncpg<1.0.0,>=0.30.0",
+    "bcrypt<5.0.0,>=4.0.0",
+    "biopython<2.0,>=1.84",
+    "Cerberus<2.0.0,>=1.3.4",
+    "certifi<2026.0.0,>=2025.6.15",
+    "click<9.0.0,>=8.2.1",
+    "dictdiffer<1.0.0,>=0.9.0",
+    "email-validator<3.0.0,>=2.0.0",
+    "faker<13.0.0,>=12.3.3",
+    "motor<4.0.0,>=3.7.1",
+    "openfga-sdk==0.1.1",
+    "openpyxl<4.0.0,>=3.1.5",
+    "orjson<4.0.0,>=3.10.18",
+    "pydantic==1.10.16",
+    "pyyaml<7.0.0,>=6.0.0",
+    "semver<3.0.0,>=2.13.0",
+    "sentry-sdk<3.0.0,>=2.30.0",
+    "sqlalchemy==2.0.24",
+    "structlog-sentry<3.0.0,>=2.1.0",
+    "uvloop<1.0.0,>=0.21.0",
+    "visvalingamwyatt<1.0.0,>=0.1.4",
+    "redis<7.0.0,>=6.2.0",
+    "enum-tools<1.0.0,>=0.13.0",
+]
 
 [project.scripts]
 virtool = "virtool.config.cli:entry"
-
-[tool.poetry]
-packages = [
-    { include = "virtool" },
-]
-
-[tool.poetry.dependencies]
-aiohttp = {extras = ["speedups"], version = "^3.12"}
-aiohttp-pydantic = "^1.12.1"
-aiojobs = "1.2.1" # Pinned because 1.3.0 breaks uploads.
-alembic = {extras = ["tz"], version = "^1.16.2"}
-arrow = "^1.3.0"
-asyncpg = "^0.30.0"
-bcrypt = "^4.0.0"
-biopython = "^1.84"
-Cerberus = "^1.3.4"
-certifi = "^2025.6.15"
-click = "^8.2.1"
-dictdiffer = "^0.9.0"
-email-validator = "^2.0.0"
-faker = "^12.3.3"
-motor = "^3.7.1"
-openfga-sdk = "^0.1.1"
-openpyxl = "^3.1.5"
-orjson = "^3.10.18"
-pydantic = "1.10.16"
-pyyaml = "^6.0.0"
-semver = "^2.13.0"
-sentry-sdk = "^2.30.0"
-sqlalchemy = "2.0.24"
-structlog-sentry = "^2.1.0"
-uvloop = "^0.21.0"
-visvalingamwyatt = "^0.1.4"
-redis = "^6.2.0"
-enum-tools = "^0.13.0"
-
-[tool.poetry.group.dev.dependencies]
-furo = "^2024.8.6"
-mypy = "^1.16.1"
-pytest = "^8.4.1"
-pytest-aiohttp = "^1.0.5"
-pytest-asyncio = "^0.21.0"
-pytest-mock = "^3.14.0"
-pytest-profiling = "^1.7.0"
-pytest-rerunfailures = "^10.2"
-pytest-structlog = "^1.1"
-pytest-timeout = "^2.4.0"
-pytest-xdist = "^3.7.0"
-ruff = "^0.4.1"
-snakeviz = "^2.2.0"
-sphinx = "^8.2.3"
-sphinx-autobuild = "^2024"
-sphinx-autofixture = "^0.4.0"
-sphinx-toolbox = "^4.0.0"
-syrupy = "^4.5.0"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -100,5 +71,28 @@ ignore = ["ANN101", "COM812", "D203", "D213", "EM102", "FBT001", "ISC001", "PLR0
 "tests/**" = ["ANN201", "ANN202", "D205", "S101", "S106"]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[dependency-groups]
+dev = [
+    "furo<2025.0.0,>=2024.8.6",
+    "mypy<2.0.0,>=1.16.1",
+    "pytest<9.0.0,>=8.4.1",
+    "pytest-aiohttp==1.0.5",
+    "pytest-asyncio==0.21.2",
+    "pytest-mock<4.0.0,>=3.14.0",
+    "pytest-profiling<2.0.0,>=1.7.0",
+    "pytest-rerunfailures<11.0,>=10.2",
+    "pytest-structlog<2.0,>=1.1",
+    "pytest-timeout<3.0.0,>=2.4.0",
+    "pytest-xdist<4.0.0,>=3.7.0",
+    "ruff<1.0.0,>=0.4.1",
+    "snakeviz<3.0.0,>=2.2.0",
+    "sphinx<9.0.0,>=8.2.3",
+    "sphinx-autobuild<2025,>=2024",
+    "sphinx-autofixture<1.0.0,>=0.4.0",
+    "sphinx-toolbox<5.0.0,>=4.0.0",
+    "syrupy<5.0.0,>=4.5.0",
+]
