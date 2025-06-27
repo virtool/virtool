@@ -1,7 +1,6 @@
 import asyncio
 
 from aiohttp.web_app import Application
-from aiojobs.aiohttp import get_scheduler_from_app
 
 from virtool.config import get_config_from_app
 from virtool.hmm.tasks import HMMRefreshTask
@@ -45,7 +44,7 @@ async def startup_databases_for_spawner(app: Application) -> None:
 
 async def startup_task_spawner(app: Application) -> None:
     """Start the task spawner."""
-    await get_scheduler_from_app(app).spawn(
+    task = asyncio.create_task(
         TaskSpawnerService(app["pg"], app["tasks_datalayer"]).run(
             [
                 (HMMRefreshTask, 600),
@@ -55,5 +54,6 @@ async def startup_task_spawner(app: Application) -> None:
                 (ReferencesCleanTask, 3600),
                 (SampleWorkflowsUpdateTask, 3600),
             ]
-        ),
+        )
     )
+    app.setdefault("background_tasks", []).append(task)

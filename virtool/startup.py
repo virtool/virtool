@@ -2,7 +2,6 @@ import asyncio
 from concurrent.futures import ProcessPoolExecutor
 
 from aiohttp import ClientSession
-from aiojobs.aiohttp import get_scheduler_from_app
 from pymongo.errors import CollectionInvalid
 from structlog import get_logger
 
@@ -108,7 +107,10 @@ async def startup_databases(app: App):
 async def startup_events(app: App):
     """Create and run the event publisher."""
     app["events"] = EventPublisher(app["redis"])
-    await get_scheduler_from_app(app).spawn(app["events"].run())
+    
+    # Create background task for event publisher
+    task = asyncio.create_task(app["events"].run())
+    app.setdefault("background_tasks", []).append(task)
 
 
 async def startup_executors(app: App):
@@ -180,7 +182,10 @@ async def startup_task_runner(app: App):
 
     """
     tasks_client = TasksClient(app["redis"])
-    await get_scheduler_from_app(app).spawn(TaskRunner(app["data"], tasks_client).run())
+    
+    # Create background task for task runner
+    task = asyncio.create_task(TaskRunner(app["data"], tasks_client).run())
+    app.setdefault("background_tasks", []).append(task)
 
 
 async def startup_version(app: App):
@@ -202,11 +207,9 @@ async def startup_ws(app: App):
 
     ws = WSServer(app["redis"])
 
-    scheduler = get_scheduler_from_app(app)
-
-    await asyncio.gather(
-        scheduler.spawn(ws.run()),
-        scheduler.spawn(ws.periodically_close_expired_websocket_connections()),
-    )
-
+    # Create background tasks for websocket server
+    ws_task = asyncio.create_task(ws.run())
+    cleanup_task = asyncio.create_task(ws.periodically_close_expired_websocket_connections())
+    
+    app.setdefault("background_tasks", []).extend([ws_task, cleanup_task])
     app["ws"] = ws

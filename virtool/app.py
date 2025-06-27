@@ -1,8 +1,6 @@
 import logging.config
 
 import aiohttp.web
-import aiojobs
-import aiojobs.aiohttp
 from aiohttp_pydantic import oas
 
 from virtool.api.accept import accept_middleware
@@ -87,7 +85,6 @@ def create_app(config: Config):
     app["mode"] = "server"
     app["flags"] = FeatureFlags(config.flags)
 
-    aiojobs.aiohttp.setup(app)
 
     app.on_startup.extend(
         [
