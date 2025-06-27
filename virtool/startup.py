@@ -107,7 +107,7 @@ async def startup_databases(app: App):
 async def startup_events(app: App):
     """Create and run the event publisher."""
     app["events"] = EventPublisher(app["redis"])
-    
+
     # Create background task for event publisher
     task = asyncio.create_task(app["events"].run())
     app.setdefault("background_tasks", []).append(task)
@@ -182,7 +182,7 @@ async def startup_task_runner(app: App):
 
     """
     tasks_client = TasksClient(app["redis"])
-    
+
     # Create background task for task runner
     task = asyncio.create_task(TaskRunner(app["data"], tasks_client).run())
     app.setdefault("background_tasks", []).append(task)
@@ -209,7 +209,9 @@ async def startup_ws(app: App):
 
     # Create background tasks for websocket server
     ws_task = asyncio.create_task(ws.run())
-    cleanup_task = asyncio.create_task(ws.periodically_close_expired_websocket_connections())
-    
+    cleanup_task = asyncio.create_task(
+        ws.periodically_close_expired_websocket_connections()
+    )
+
     app.setdefault("background_tasks", []).extend([ws_task, cleanup_task])
     app["ws"] = ws

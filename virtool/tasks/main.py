@@ -40,7 +40,6 @@ def run_task_runner(config: TaskRunnerConfig):
     app["config"] = config
     app["mode"] = "task_runner"
 
-
     app.add_routes([aiohttp.web.view("/", TaskServicesRootView)])
 
     app.on_startup.extend(
@@ -78,7 +77,6 @@ def run_task_spawner(config: TaskSpawnerConfig):
 
     app["config"] = config
     app["mode"] = "task_spawner"
-
 
     app.add_routes([aiohttp.web.view("/", TaskServicesRootView)])
 

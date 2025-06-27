@@ -35,7 +35,6 @@ async def create_app(config: ServerConfig):
     app["config"] = config
     app["mode"] = "jobs_api_server"
 
-
     app.on_startup.extend(
         [
             startup_version,

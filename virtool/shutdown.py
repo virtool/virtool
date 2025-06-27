@@ -55,13 +55,14 @@ async def shutdown_scheduler(app: Application):
     :param app: The application object
     """
     logger.info("cancelling background tasks")
-    
+
     background_tasks = app.get("background_tasks", [])
     for task in background_tasks:
         if not task.done():
             task.cancel()
-    
+
     # Wait for tasks to complete cancellation
     if background_tasks:
         import asyncio
+
         await asyncio.gather(*background_tasks, return_exceptions=True)

@@ -85,7 +85,6 @@ def create_app(config: Config):
     app["mode"] = "server"
     app["flags"] = FeatureFlags(config.flags)
 
-
     app.on_startup.extend(
         [
             startup_version,
