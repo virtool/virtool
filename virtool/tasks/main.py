@@ -1,7 +1,5 @@
 import aiohttp
 import aiohttp.web
-import aiojobs
-import aiojobs.aiohttp
 from aiohttp.web import Application
 
 from virtool.api.accept import accept_middleware
@@ -42,8 +40,6 @@ def run_task_runner(config: TaskRunnerConfig):
     app["config"] = config
     app["mode"] = "task_runner"
 
-    aiojobs.aiohttp.setup(app, close_timeout=600)
-
     app.add_routes([aiohttp.web.view("/", TaskServicesRootView)])
 
     app.on_startup.extend(
@@ -81,8 +77,6 @@ def run_task_spawner(config: TaskSpawnerConfig):
 
     app["config"] = config
     app["mode"] = "task_spawner"
-
-    aiojobs.aiohttp.setup(app)
 
     app.add_routes([aiohttp.web.view("/", TaskServicesRootView)])
 

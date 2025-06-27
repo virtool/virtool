@@ -2,7 +2,6 @@ from aiohttp.web import Application
 from structlog import get_logger
 
 from virtool.authorization.client import get_authorization_client_from_app
-from virtool.startup import get_scheduler_from_app
 from virtool.utils import get_http_session_from_app
 
 logger = get_logger("shutdown")
@@ -51,9 +50,19 @@ async def shutdown_redis(app: Application):
 
 
 async def shutdown_scheduler(app: Application):
-    """Attempt to the close the app's `aiojobs` scheduler.
+    """Cancel all background tasks.
 
     :param app: The application object
     """
-    logger.info("closing scheduler")
-    await get_scheduler_from_app(app).close()
+    logger.info("cancelling background tasks")
+
+    background_tasks = app.get("background_tasks", [])
+    for task in background_tasks:
+        if not task.done():
+            task.cancel()
+
+    # Wait for tasks to complete cancellation
+    if background_tasks:
+        import asyncio
+
+        await asyncio.gather(*background_tasks, return_exceptions=True)

@@ -1,6 +1,5 @@
 import aiohttp
 import aiohttp.web
-import aiojobs.aiohttp
 from aiohttp.web import Application
 
 import virtool.api.accept
@@ -35,8 +34,6 @@ async def create_app(config: ServerConfig):
 
     app["config"] = config
     app["mode"] = "jobs_api_server"
-
-    aiojobs.aiohttp.setup(app)
 
     app.on_startup.extend(
         [
