@@ -1,7 +1,6 @@
 import asyncio
 import os
 from pathlib import Path
-from pprint import pprint
 
 import pytest
 from pytest_mock import MockerFixture
@@ -15,12 +14,13 @@ from virtool.analyses.files import create_analysis_file
 from virtool.analyses.sql import SQLAnalysisFile, SQLAnalysisResult
 from virtool.config import get_config_from_app
 from virtool.fake.next import DataFaker
-from virtool.jobs.models import JobState
+from virtool.jobs.models import Job, JobState
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
+from virtool.users.models import User
 
 
-@pytest.fixture()
+@pytest.fixture
 def create_files(test_files_path, tmp_path):
     def files():
         path = test_files_path / "aodp" / "reference.fa"
@@ -588,8 +588,67 @@ async def test_blast(
 
 
 class TestFinalize:
-    async def test_not_found(self, spawn_job_client):
-        """Test that a 404 response is returned when the analysis does not exist."""
+    job: Job
+    user: User
+
+    @pytest.fixture(autouse=True)
+    async def _setup(self, fake: DataFaker, mongo: Mongo, static_time: StaticTime):
+        user = await fake.users.create()
+        job = await fake.jobs.create(state=JobState.RUNNING, user=user)
+
+        await asyncio.gather(
+            mongo.analyses.insert_one(
+                {
+                    "_id": "analysis1",
+                    "sample": {"id": "sample1"},
+                    "created_at": static_time.datetime,
+                    "files": [],
+                    "index": {"version": 2, "id": "foo"},
+                    "job": {"id": job.id},
+                    "ready": False,
+                    "reference": {"id": "baz"},
+                    "subtractions": [],
+                    "user": {"id": user.id},
+                    "workflow": "nuvs",
+                },
+            ),
+            mongo.references.insert_one(
+                {"_id": "baz", "name": "Baz", "data_type": "genome"},
+            ),
+            mongo.samples.insert_one(
+                {
+                    "_id": "sample1",
+                    "all_read": True,
+                    "all_write": True,
+                    "created_at": static_time.datetime,
+                    "format": "fastq",
+                    "group": "none",
+                    "group_read": False,
+                    "group_write": False,
+                    "hold": False,
+                    "host": "",
+                    "is_legacy": False,
+                    "isolate": "",
+                    "library_type": "normal",
+                    "locale": "",
+                    "name": "Sample 1",
+                    "notes": "",
+                    "ready": True,
+                    "subtractions": [],
+                    "user": {"id": user.id},
+                },
+            ),
+        )
+
+    async def test_ok(
+        self,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        snapshot: SnapshotAssertion,
+        spawn_job_client: JobClientSpawner,
+        static_time: StaticTime,
+    ):
         client = await spawn_job_client(authenticated=True)
 
         resp = await client.patch(
@@ -597,84 +656,6 @@ class TestFinalize:
             json={"results": {"result": "TEST_RESULT", "hits": []}},
         )
 
-        assert resp.status == 404
-
-
-@pytest.mark.parametrize("error", [None, 422, 409])
-async def test_finalize(
-    error: str | None,
-    fake: DataFaker,
-    mongo: Mongo,
-    pg: AsyncEngine,
-    snapshot: SnapshotAssertion,
-    spawn_job_client: JobClientSpawner,
-    static_time: StaticTime,
-):
-    user_1 = await fake.users.create()
-    user_2 = await fake.users.create()
-
-    job = await fake.jobs.create(user=user_2)
-
-    client = await spawn_job_client(authenticated=True)
-
-    await asyncio.gather(
-        mongo.references.insert_one(
-            {"_id": "baz", "name": "Baz", "data_type": "genome"},
-        ),
-        mongo.samples.insert_one(
-            {
-                "_id": "sample1",
-                "all_read": True,
-                "all_write": True,
-                "created_at": static_time.datetime,
-                "format": "fastq",
-                "group": "none",
-                "group_read": False,
-                "group_write": False,
-                "hold": False,
-                "host": "",
-                "is_legacy": False,
-                "isolate": "",
-                "library_type": "normal",
-                "locale": "",
-                "name": "Sample 1",
-                "notes": "",
-                "ready": True,
-                "subtractions": [],
-                "user": {"id": user_1.id},
-            },
-        ),
-    )
-
-    if error != 404:
-        await mongo.analyses.insert_one(
-            {
-                "_id": "analysis1",
-                "sample": {"id": "sample1"},
-                "created_at": static_time.datetime,
-                "files": [],
-                "index": {"version": 2, "id": "foo"},
-                "job": {"id": job.id},
-                "ready": error == 409,
-                "reference": {"id": "baz"},
-                "subtractions": [],
-                "user": {"id": user_1.id},
-                "workflow": "nuvs",
-            },
-        )
-
-    if error == 422:
-        data = {}
-    else:
-        data = {"results": {"result": "TEST_RESULT", "hits": []}}
-
-    pprint(data)
-
-    resp = await client.patch("/analyses/analysis1", json=data)
-
-    if error:
-        assert resp.status == error
-    else:
         assert resp.status == 200
         assert await resp.json() == snapshot
 
@@ -688,3 +669,54 @@ async def test_finalize(
 
         assert row.analysis_id == "analysis1"
         assert row.results == {"result": "TEST_RESULT", "hits": []}
+
+    async def test_not_found(self, spawn_job_client):
+        """Test that a 404 response is returned when the analysis does not exist."""
+        client = await spawn_job_client(authenticated=True)
+
+        resp = await client.patch(
+            "/analyses/analysis2",
+            json={"results": {"result": "TEST_RESULT", "hits": []}},
+        )
+
+        assert resp.status == 404
+
+    async def test_missing_results(
+        self,
+        fake: DataFaker,
+        mongo: Mongo,
+        spawn_job_client: JobClientSpawner,
+        static_time: StaticTime,
+    ):
+        client = await spawn_job_client(authenticated=True)
+
+        resp = await client.patch("/analyses/analysis1", json={})
+
+        assert resp.status == 422
+
+    async def test_already_ready(
+        self,
+        fake: DataFaker,
+        mongo: Mongo,
+        spawn_job_client: JobClientSpawner,
+        static_time: StaticTime,
+    ):
+        client = await spawn_job_client(authenticated=True)
+
+        # Finalize the analysis to trigger the error.
+        await mongo.analyses.update_one(
+            {"_id": "analysis1"},
+            {
+                "$set": {
+                    "ready": True,
+                    "results": {"result": "TEST_RESULT", "hits": []},
+                },
+            },
+        )
+
+        resp = await client.patch(
+            "/analyses/analysis1",
+            json={"results": {"result": "TEST_RESULT", "hits": []}},
+        )
+
+        assert resp.status == 409
