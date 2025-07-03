@@ -1790,7 +1790,7 @@ requires-dist = [
     { name = "pydantic", specifier = "==1.10.16" },
     { name = "pyyaml", specifier = ">=6.0.0,<7.0.0" },
     { name = "redis", specifier = ">=6.2.0,<7.0.0" },
-    { name = "semver", specifier = ">=2.13.0,<3.0.0" },
+    { name = "semver", specifier = ">=2.13.0,<4.0.0" },
     { name = "sentry-sdk", specifier = ">=2.30.0,<3.0.0" },
     { name = "sqlalchemy", specifier = "==2.0.24" },
     { name = "structlog-sentry", specifier = ">=2.1.0,<3.0.0" },
