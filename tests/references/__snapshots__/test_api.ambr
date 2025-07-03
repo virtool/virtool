@@ -1,6 +1,6 @@
 # serializer version: 1
 # name: TestCreate.test_clone[location]
-  '/refs/3cbb22cc'
+  '/references/v1/3cbb22cc'
 # ---
 # name: TestCreate.test_clone[resp]
   dict({
@@ -130,7 +130,7 @@
   })
 # ---
 # name: TestCreate.test_ok[barcode][location]
-  'https://virtool.example.com/refs/bf1b993c'
+  'https://virtool.example.com/references/v1/bf1b993c'
 # ---
 # name: TestCreate.test_ok[barcode][resp]
   dict({
@@ -180,7 +180,7 @@
   })
 # ---
 # name: TestCreate.test_ok[genome][location]
-  'https://virtool.example.com/refs/bf1b993c'
+  'https://virtool.example.com/references/v1/bf1b993c'
 # ---
 # name: TestCreate.test_ok[genome][resp]
   dict({
@@ -229,7 +229,7 @@
   })
 # ---
 # name: TestCreate.test_remote[location]
-  '/refs/bf1b993c'
+  '/references/v1/bf1b993c'
 # ---
 # name: TestCreate.test_remote[resp]
   dict({

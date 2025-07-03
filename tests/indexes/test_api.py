@@ -337,7 +337,7 @@ class TestCreate:
             new=make_mocked_coro({"foo": 1, "bar": 2}),
         )
 
-        resp = await client.post("/refs/foo/indexes", {})
+        resp = await client.post("/references/v1/foo/indexes", {})
 
         if not check_ref_right:
             await resp_is.insufficient_rights(resp)
@@ -382,7 +382,7 @@ class TestCreate:
         if error == "400_unverified":
             await mongo.otus.insert_one({"verified": False, "reference": {"id": "foo"}})
 
-        resp = await client.post("/refs/foo/indexes", {})
+        resp = await client.post("/references/v1/foo/indexes", {})
 
         if not check_ref_right:
             await resp_is.insufficient_rights(resp)
