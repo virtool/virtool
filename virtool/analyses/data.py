@@ -570,6 +570,8 @@ class AnalysisData(DataLayerDomain):
         :param results: the analysis results
         :return: the analysis
         """
+        updated_at = virtool.utils.timestamp()
+
         document = await self._mongo.analyses.find_one({"_id": analysis_id}, ["ready"])
 
         if not document:
@@ -591,7 +593,7 @@ class AnalysisData(DataLayerDomain):
 
             document = await self._mongo.analyses.find_one_and_update(
                 {"_id": analysis_id},
-                {"$set": {"results": "sql", "ready": True}},
+                {"$set": {"results": "sql", "ready": True, "updated_at": updated_at}},
                 session=mongo_session,
             )
 
