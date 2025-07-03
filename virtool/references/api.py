@@ -60,8 +60,7 @@ RIGHTS_SCHEMA = {
 }
 
 
-@routes.view("/spaces/{space_id}/refs")
-@routes.view("/refs")
+@routes.view("/references/v1")
 class ReferencesView(PydanticView):
     async def get(self, find: str | None) -> r200[ReferenceSearchResult]:
         """Find references.
@@ -119,13 +118,12 @@ class ReferencesView(PydanticView):
         return json_response(
             reference,
             status=201,
-            headers={"Location": f"/refs/{reference.id}"},
+            headers={"Location": f"/references/v1/{reference.id}"},
         )
 
 
-@routes.view("/spaces/{space_id}/refs/{ref_id}")
-@routes.view("/refs/{ref_id}")
-@routes.jobs_api.get("/refs/{ref_id}")
+@routes.view("/references/v1/{ref_id}")
+@routes.jobs_api.get("/references/v1/{ref_id}")
 class ReferenceView(PydanticView):
     async def get(self, ref_id: str, /) -> r200[Reference] | r403 | r404:
         """Get a reference.
@@ -202,7 +200,7 @@ class ReferenceView(PydanticView):
         return Response(status=204)
 
 
-@routes.view("/refs/{ref_id}/release")
+@routes.view("/references/v1/{ref_id}/release")
 class ReferenceReleaseView(PydanticView):
     async def get(self, ref_id: str, /) -> r200[ReferenceRelease]:
         """Get latest update.
@@ -231,8 +229,7 @@ class ReferenceReleaseView(PydanticView):
         return json_response(release)
 
 
-@routes.view("/spaces/{space_id}/refs/{ref_id}/updates")
-@routes.view("/refs/{ref_id}/updates")
+@routes.view("/references/v1/{ref_id}/updates")
 class ReferenceUpdatesView(PydanticView):
     async def get(self, ref_id: str, /) -> r200[ReferenceInstalled]:
         """List updates.
@@ -281,8 +278,7 @@ class ReferenceUpdatesView(PydanticView):
         return json_response(update, status=201)
 
 
-@routes.view("/spaces/{space_id}/refs/{ref_id}/otus")
-@routes.view("/refs/{ref_id}/otus")
+@routes.view("/references/v1/{ref_id}/otus")
 class ReferenceOTUsView(PydanticView):
     async def get(
         self,
@@ -344,8 +340,7 @@ class ReferenceOTUsView(PydanticView):
         return json_response(otu, status=201, headers={"Location": f"/otus/{otu.id}"})
 
 
-@routes.view("/spaces/{space_id}/refs/{ref_id}/history")
-@routes.view("/refs/{ref_id}/history")
+@routes.view("/references/v1/{ref_id}/history")
 class ReferenceHistoryView(PydanticView):
     async def get(
         self,
@@ -373,8 +368,7 @@ class ReferenceHistoryView(PydanticView):
         return json_response(data)
 
 
-@routes.view("/spaces/{space_id}/refs/{ref_id}/indexes")
-@routes.view("/refs/{ref_id}/indexes")
+@routes.view("/references/v1/{ref_id}/indexes")
 class ReferenceIndexesView(PydanticView):
     async def get(self, ref_id: str, /) -> r200[ListIndexesResponse] | r404:
         """List indexes.
@@ -433,7 +427,7 @@ class ReferenceIndexesView(PydanticView):
         )
 
 
-@routes.view("/refs/{ref_id}/groups")
+@routes.view("/references/v1/{ref_id}/groups")
 class ReferenceGroupsView(PydanticView):
     async def get(self, ref_id: str, /) -> r200[ReferenceGroup] | r404:
         """List groups.
@@ -482,11 +476,11 @@ class ReferenceGroupsView(PydanticView):
         return json_response(
             group,
             status=201,
-            headers={"Location": f"/refs/{ref_id}/groups/{group.id}"},
+            headers={"Location": f"/references/v1/{ref_id}/groups/{group.id}"},
         )
 
 
-@routes.view("/refs/{ref_id}/groups/{group_id}")
+@routes.view("/references/v1/{ref_id}/groups/{group_id}")
 class ReferenceGroupView(PydanticView):
     async def get(
         self,
@@ -580,8 +574,7 @@ class ReferenceGroupView(PydanticView):
         raise APINoContent()
 
 
-@routes.view("/spaces/{space_id}/refs/{ref_id}/users")
-@routes.view("/refs/{ref_id}/users")
+@routes.view("/references/v1/{ref_id}/users")
 class ReferenceUsersView(PydanticView):
     async def post(
         self,
@@ -623,12 +616,11 @@ class ReferenceUsersView(PydanticView):
         return json_response(
             user,
             status=201,
-            headers={"Location": f"/refs/{ref_id}/users/{user.id}"},
+            headers={"Location": f"/references/v1/{ref_id}/users/{user.id}"},
         )
 
 
-@routes.view("/spaces/{space_id}/refs/{ref_id}/users/{user_id}")
-@routes.view("/refs/{ref_id}/users/{user_id}")
+@routes.view("/references/v1/{ref_id}/users/{user_id}")
 class ReferenceUserView(PydanticView):
     async def patch(
         self,
