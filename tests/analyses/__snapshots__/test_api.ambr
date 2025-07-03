@@ -84,6 +84,7 @@
     }),
     'subtractions': list([
     ]),
+    'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
     'user': dict({
       'id': 'bf1b993c',
     }),
