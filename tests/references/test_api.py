@@ -123,7 +123,7 @@ async def test_find(
         )
         await session.commit()
 
-    resp = await client.get("/refs")
+    resp = await client.get("/references/v1")
     body = await resp.json()
 
     assert resp.status == 200
@@ -194,7 +194,7 @@ async def test_get(
 
         await session.commit()
 
-    resp = await client.get("/refs/bar")
+    resp = await client.get("/references/v1/bar")
 
     if error is None:
         assert resp.status == 200
@@ -226,7 +226,7 @@ class TestCreate:
         )
 
         resp = await client.post(
-            "/refs",
+            "/references/v1",
             {
                 "name": "Test Viruses",
                 "description": "A bunch of viruses used for testing",
@@ -260,7 +260,7 @@ class TestCreate:
         upload = await resp.json()
 
         resp = await client.post(
-            "/refs",
+            "/references/v1",
             {"name": "Test Viruses", "import_from": str(upload["name_on_disk"])},
         )
 
@@ -313,7 +313,7 @@ class TestCreate:
         )
 
         resp = await client.post(
-            "/refs",
+            "/references/v1",
             {
                 "name": "Test 1",
                 "organism": "viruses",
@@ -338,7 +338,7 @@ class TestCreate:
         )
 
         resp = await client.post(
-            "/refs",
+            "/references/v1",
             {
                 "name": "Test Remote",
                 "organism": "viruses",
@@ -436,7 +436,7 @@ async def test_edit(
         make_mocked_coro(return_value=can_modify),
     )
 
-    resp = await client.patch("/refs/foo", data)
+    resp = await client.patch("/references/v1/foo", data)
 
     match error:
         case None:
@@ -509,7 +509,7 @@ async def test_delete(
         },
     )
 
-    resp = await client.delete("/refs/foo")
+    resp = await client.delete("/references/v1/foo")
 
     assert await mongo.references.count_documents({}) == 0
     assert await resp.text() == ""
@@ -572,7 +572,7 @@ async def test_get_release(
         ),
     )
 
-    resp = await client.get("/refs/foo/release")
+    resp = await client.get("/references/v1/foo/release")
 
     if error == "400":
         await resp_is.bad_request(resp, "Not a remote reference")
@@ -634,7 +634,7 @@ async def test_list_updates(
         ),
     )
 
-    resp = await client.get("/refs/foo/updates")
+    resp = await client.get("/references/v1/foo/updates")
 
     id_exists.assert_called_with(ANY, "foo")
 
@@ -690,7 +690,7 @@ async def test_update(
             "enqueue",
         )
 
-    resp = await client.post("/refs/foo/updates", {})
+    resp = await client.post("/references/v1/foo/updates", {})
 
     if not check_ref_right:
         await resp_is.insufficient_rights(resp)
@@ -756,7 +756,7 @@ class TestCreateOTU:
         if abbreviation is not None:
             data["abbreviation"] = abbreviation
 
-        resp = await client.post("/refs/foo/otus", data)
+        resp = await client.post("/references/v1/foo/otus", data)
 
         match error:
             case None:
@@ -833,7 +833,7 @@ class TestCreateOTU:
             )
 
         resp = await client.post(
-            "/refs/foo/otus",
+            "/references/v1/foo/otus",
             {"name": "Tobacco mosaic virus", "abbreviation": "TMV"},
         )
 
@@ -893,7 +893,7 @@ async def test_create_index(
     # Pass ref exists check.
     mocker.patch("virtool.mongo.utils.id_exists", make_mocked_coro(False))
 
-    resp = await client.post("/refs/foo/indexes", {})
+    resp = await client.post("/references/v1/foo/indexes", {})
 
     if not check_ref_right:
         await resp_is.insufficient_rights(resp)
@@ -971,7 +971,7 @@ async def test_create_user(
         await mongo.references.insert_one(document)
 
     resp = await client.post(
-        "/refs/foo/users",
+        "/references/v1/foo/users",
         {"user_id": "fred" if error == "400_dne" else user.id, "modify": True},
     )
 
@@ -1037,7 +1037,7 @@ async def test_create_group(
         )
 
     resp = await client.post(
-        "/refs/foo/groups",
+        "/references/v1/foo/groups",
         {"group_id": 21 if error == "400_dne" else group_2.id, "modify": True},
     )
 
@@ -1103,7 +1103,7 @@ async def test_update_user(
         )
 
     resp = await client.patch(
-        f"/refs/foo/users/{'non_existent' if error == '404_user' else user.id}",
+        f"/references/v1/foo/users/{'non_existent' if error == '404_user' else user.id}",
         {"modify": True},
     )
 
@@ -1169,7 +1169,7 @@ async def test_update_group(
         )
 
     resp = await client.patch(
-        f"/refs/foo/groups/{21 if error == '404_group' else group.id}",
+        f"/references/v1/foo/groups/{21 if error == '404_group' else group.id}",
         {"modify_otu": True},
     )
 
@@ -1234,7 +1234,7 @@ async def test_delete_user(
         )
 
     resp = await client.delete(
-        f"/refs/foo/users/{21 if error == '404_user' else user.id}",
+        f"/references/v1/foo/users/{21 if error == '404_user' else user.id}",
     )
 
     if error:
@@ -1294,7 +1294,7 @@ async def test_delete_group(
         )
 
     resp = await client.delete(
-        f"/refs/foo/groups/{21 if error == '404_group' else group.id}",
+        f"/references/v1/foo/groups/{21 if error == '404_group' else group.id}",
     )
 
     if error:
@@ -1361,7 +1361,7 @@ async def test_find_otus(
     if verified is not None:
         query.append(f"verified={verified}")
 
-    path = "/refs/foo/otus"
+    path = "/references/v1/foo/otus"
 
     if query:
         path = f"{path}?{'&'.join(query)}"
