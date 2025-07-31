@@ -441,7 +441,8 @@ class SamplesData(DataLayerDomain):
             )
 
             for row in rows:
-                row.reads.clear()
+                if row.reads is not None:
+                    row.reads.clear()
                 row.removed = True
                 row.removed_at = virtool.utils.timestamp()
 

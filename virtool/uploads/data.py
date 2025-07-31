@@ -183,7 +183,8 @@ class UploadsData(DataLayerDomain):
             if not upload or upload.removed:
                 raise ResourceNotFoundError
 
-            upload.reads.clear()
+            if upload.reads is not None:
+                upload.reads.clear()
             upload.removed = True
             upload.removed_at = virtool.utils.timestamp()
 

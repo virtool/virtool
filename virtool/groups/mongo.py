@@ -58,7 +58,7 @@ async def update_member_users_and_api_keys(
             }
 
             if user["primary_group"] not in all_group_ids:
-                update["primary_group"] = ""
+                update["primary_group"] = None
 
             user = await mongo.users.find_one_and_update(
                 {"_id": user["_id"]},
