@@ -123,15 +123,15 @@
     'items': list([
       dict({
         'created_at': '2015-10-06T20:00:00Z',
-        'id': 3,
+        'id': 1,
         'name': 'test.fq.gz',
-        'name_on_disk': '3-test.fq.gz',
+        'name_on_disk': '1-test.fq.gz',
         'ready': True,
         'removed': False,
         'removed_at': None,
         'reserved': False,
         'size': 16700094,
-        'type': 'reference',
+        'type': 'reads',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
           'handle': 'leeashley',
@@ -151,15 +151,15 @@
     'items': list([
       dict({
         'created_at': '2015-10-06T20:00:00Z',
-        'id': 1,
+        'id': 4,
         'name': 'test.fq.gz',
-        'name_on_disk': '1-test.fq.gz',
+        'name_on_disk': '4-test.fq.gz',
         'ready': True,
         'removed': False,
         'removed_at': None,
         'reserved': False,
         'size': 16700094,
-        'type': 'reads',
+        'type': 'subtraction',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
           'handle': 'leeashley',
@@ -179,6 +179,23 @@
     'items': list([
       dict({
         'created_at': '2015-10-06T20:00:00Z',
+        'id': 4,
+        'name': 'test.fq.gz',
+        'name_on_disk': '4-test.fq.gz',
+        'ready': True,
+        'removed': False,
+        'removed_at': None,
+        'reserved': False,
+        'size': 16700094,
+        'type': 'subtraction',
+        'uploaded_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'fb085f7f',
+        }),
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
         'id': 1,
         'name': 'test.fq.gz',
         'name_on_disk': '1-test.fq.gz',
@@ -188,23 +205,6 @@
         'reserved': False,
         'size': 16700094,
         'type': 'reads',
-        'uploaded_at': '2015-10-06T20:00:00Z',
-        'user': dict({
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'id': 3,
-        'name': 'test.fq.gz',
-        'name_on_disk': '3-test.fq.gz',
-        'ready': True,
-        'removed': False,
-        'removed_at': None,
-        'reserved': False,
-        'size': 16700094,
-        'type': 'reference',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
           'handle': 'leeashley',

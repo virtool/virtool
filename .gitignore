@@ -11,12 +11,14 @@ __pycache__
 .pytest_cache
 .venv
 .vscode
+
 /assets/prunus_persica
 /build
 /data
 /docs/_build
 /misc
 /watch
+
 CLAUDE.md
 config.json
 settings.json
