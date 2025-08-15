@@ -1,7 +1,7 @@
 """Redirect middleware for handling URL redirects."""
 
 from aiohttp.web import middleware
-from aiohttp.web_exceptions import HTTPMovedPermanently, HTTPPermanentRedirect
+from aiohttp.web_exceptions import HTTPPermanentRedirect
 from structlog import getLogger
 
 logger = getLogger("api")
