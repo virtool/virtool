@@ -2,12 +2,16 @@
 
 from aiohttp.web import middleware
 from aiohttp.web_exceptions import HTTPMovedPermanently
+from structlog import getLogger
+
+logger = getLogger("api")
 
 
 @middleware
 async def redirect_middleware(request, handler):
     """Middleware to handle URL redirects."""
     path = request.path
+    forwarded_prefix = request.headers.get("X-Forwarded-Prefix", "")
 
     if path.startswith("/refs") or (
         path.startswith("/references") and not path.startswith("/references/v1")
@@ -18,11 +22,14 @@ async def redirect_middleware(request, handler):
         else:
             new_path = path.replace("/refs", "/references/v1", 1)
 
+        # If the original request had /api prefix, include it in the redirect
+        if forwarded_prefix:
+            new_path = f"{forwarded_prefix}/{new_path}"
+
         # Preserve query parameters
         if request.query_string:
             new_path += f"?{request.query_string}"
 
-        # Use relative redirect to avoid DNS issues in tests
         raise HTTPMovedPermanently(location=new_path)
 
     return await handler(request)

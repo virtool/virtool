@@ -3,6 +3,7 @@
 .github
 .idea
 .pytest_cache
+.venv
 CLAUDE.md
 data
 docker
