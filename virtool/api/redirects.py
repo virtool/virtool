@@ -1,7 +1,7 @@
 """Redirect middleware for handling URL redirects."""
 
 from aiohttp.web import middleware
-from aiohttp.web_exceptions import HTTPMovedPermanently
+from aiohttp.web_exceptions import HTTPMovedPermanently, HTTPPermanentRedirect
 from structlog import getLogger
 
 logger = getLogger("api")
@@ -30,6 +30,6 @@ async def redirect_middleware(request, handler):
         if request.query_string:
             new_path += f"?{request.query_string}"
 
-        raise HTTPMovedPermanently(location=new_path)
+        raise HTTPPermanentRedirect(location=new_path)
 
     return await handler(request)

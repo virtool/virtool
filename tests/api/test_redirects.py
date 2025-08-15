@@ -1,7 +1,7 @@
 """Tests for redirect middleware."""
 
 import pytest
-from aiohttp.web_exceptions import HTTPMovedPermanently
+from aiohttp.web_exceptions import HTTPPermanentRedirect
 
 from virtool.api.redirects import redirect_middleware
 
@@ -24,7 +24,7 @@ class TestRedirectMiddleware:
         """Test /refs redirects to /references/v1."""
         request = MockRequest("/refs")
 
-        with pytest.raises(HTTPMovedPermanently) as exc_info:
+        with pytest.raises(HTTPPermanentRedirect) as exc_info:
             await redirect_middleware(request, lambda _: None)
 
         assert exc_info.value.location == "/references/v1"
@@ -33,7 +33,7 @@ class TestRedirectMiddleware:
         """Test /refs/foo redirects to /references/v1/foo."""
         request = MockRequest("/refs/foo")
 
-        with pytest.raises(HTTPMovedPermanently) as exc_info:
+        with pytest.raises(HTTPPermanentRedirect) as exc_info:
             await redirect_middleware(request, lambda _: None)
 
         assert exc_info.value.location == "/references/v1/foo"
@@ -42,7 +42,7 @@ class TestRedirectMiddleware:
         """Test /references redirects to /references/v1."""
         request = MockRequest("/references")
 
-        with pytest.raises(HTTPMovedPermanently) as exc_info:
+        with pytest.raises(HTTPPermanentRedirect) as exc_info:
             await redirect_middleware(request, lambda _: None)
 
         assert exc_info.value.location == "/references/v1"
@@ -51,7 +51,7 @@ class TestRedirectMiddleware:
         """Test /references/foo redirects to /references/v1/foo."""
         request = MockRequest("/references/foo")
 
-        with pytest.raises(HTTPMovedPermanently) as exc_info:
+        with pytest.raises(HTTPPermanentRedirect) as exc_info:
             await redirect_middleware(request, lambda _: None)
 
         assert exc_info.value.location == "/references/v1/foo"
@@ -74,7 +74,7 @@ class TestRedirectMiddleware:
         """Test query parameters are preserved in redirects."""
         request = MockRequest("/refs", "param=value&other=test")
 
-        with pytest.raises(HTTPMovedPermanently) as exc_info:
+        with pytest.raises(HTTPPermanentRedirect) as exc_info:
             await redirect_middleware(request, lambda _: None)
 
         assert exc_info.value.location == "/references/v1?param=value&other=test"
@@ -106,7 +106,7 @@ class TestRedirectMiddleware:
         """Test nested paths redirect correctly."""
         request = MockRequest(path)
 
-        with pytest.raises(HTTPMovedPermanently) as exc_info:
+        with pytest.raises(HTTPPermanentRedirect) as exc_info:
             await redirect_middleware(request, lambda _: None)
 
         if path.startswith("/refs"):
@@ -120,7 +120,7 @@ class TestRedirectMiddleware:
         """Test /refs with /api prefix redirects to /api/references/v1."""
         request = MockRequest("/refs", headers={"X-Forwarded-Prefix": "/api"})
 
-        with pytest.raises(HTTPMovedPermanently) as exc_info:
+        with pytest.raises(HTTPPermanentRedirect) as exc_info:
             await redirect_middleware(request, lambda _: None)
 
         assert exc_info.value.location == "/api//references/v1"
@@ -129,7 +129,7 @@ class TestRedirectMiddleware:
         """Test /references with /api prefix redirects to /api/references/v1."""
         request = MockRequest("/references", headers={"X-Forwarded-Prefix": "/api"})
 
-        with pytest.raises(HTTPMovedPermanently) as exc_info:
+        with pytest.raises(HTTPPermanentRedirect) as exc_info:
             await redirect_middleware(request, lambda _: None)
 
         assert exc_info.value.location == "/api//references/v1"
@@ -138,7 +138,7 @@ class TestRedirectMiddleware:
         """Test /refs/foo with /api prefix redirects to /api/references/v1/foo."""
         request = MockRequest("/refs/foo", headers={"X-Forwarded-Prefix": "/api"})
 
-        with pytest.raises(HTTPMovedPermanently) as exc_info:
+        with pytest.raises(HTTPPermanentRedirect) as exc_info:
             await redirect_middleware(request, lambda _: None)
 
         assert exc_info.value.location == "/api//references/v1/foo"
@@ -149,7 +149,7 @@ class TestRedirectMiddleware:
             "/refs", query_string="param=value", headers={"X-Forwarded-Prefix": "/api"}
         )
 
-        with pytest.raises(HTTPMovedPermanently) as exc_info:
+        with pytest.raises(HTTPPermanentRedirect) as exc_info:
             await redirect_middleware(request, lambda _: None)
 
         assert exc_info.value.location == "/api//references/v1?param=value"
