@@ -1,5 +1,5 @@
 import pytest
-from aiohttp.client import ClientSession
+from aiohttp.client import ClientSession, ClientTimeout
 
 from virtool.startup import startup_http_client_session
 
@@ -30,4 +30,8 @@ async def test_startup_http_client_headers(loop, mocker, fake_app):
 
     await startup_http_client_session(fake_app)
 
-    m.assert_called_with(headers={"User-Agent": "virtool/v1.2.3"})
+    expected_timeout = ClientTimeout(total=30, sock_connect=10, sock_read=10)
+    m.assert_called_with(
+        headers={"User-Agent": "virtool/v1.2.3"},
+        timeout=expected_timeout,
+    )
