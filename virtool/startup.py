@@ -1,7 +1,7 @@
 import asyncio
 from concurrent.futures import ProcessPoolExecutor
 
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientTimeout
 from pymongo.errors import CollectionInvalid
 from structlog import get_logger
 
@@ -142,8 +142,10 @@ async def startup_http_client_session(app: App):
     """
     logger.info("starting http client")
 
+    timeout = ClientTimeout(total=30, sock_connect=10, sock_read=10)
     app["client"] = ClientSession(
         headers={"User-Agent": f"virtool/{get_version_from_app(app)}"},
+        timeout=timeout,
     )
 
 

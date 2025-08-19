@@ -1,11 +1,15 @@
 """Work with release manifests published on www.virtool.ca."""
 
+import asyncio
 import datetime
 from dataclasses import dataclass
 from enum import Enum
 from typing import Optional, Dict, List, TypeAlias
 
 from aiohttp import ClientSession
+from structlog import get_logger
+
+logger = get_logger("releases")
 
 
 @dataclass
@@ -87,14 +91,22 @@ async def fetch_release_manifest_from_virtool(
 
     url = f"https://www.virtool.ca/releases/{release_type.value}.json"
 
-    async with session.get(url) as resp:
-        if resp.status == 200:
-            return await resp.json(content_type=None)
+    try:
+        async with session.get(url) as resp:
+            if resp.status == 200:
+                return await resp.json(content_type=None)
 
-        if resp.status == 304:
-            return None
+            if resp.status == 304:
+                return None
 
-        raise GetReleaseError("release does not exist")
+            raise GetReleaseError("release does not exist")
+    except asyncio.TimeoutError:
+        logger.warning(
+            "timeout fetching release manifest from virtool.ca",
+            url=url,
+            release_type=release_type.value,
+        )
+        return None
 
 
 class GetReleaseError(Exception):

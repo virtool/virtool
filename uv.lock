@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.12.3, <3.13"
 
 [[package]]
@@ -1800,7 +1800,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "furo", specifier = ">=2024.8.6,<2025.0.0" },
+    { name = "furo", specifier = ">=2024.8.6,<2026.0.0" },
     { name = "mypy", specifier = ">=1.16.1,<2.0.0" },
     { name = "pytest", specifier = ">=8.4.1,<9.0.0" },
     { name = "pytest-aiohttp", specifier = "==1.0.5" },
