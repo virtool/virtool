@@ -1,0 +1,85 @@
+# serializer version: 1
+# name: test_error[status]
+  list([
+    dict({
+      'error': None,
+      'progress': 0,
+      'stage': None,
+      'state': <JobState.PREPARING: 'preparing'>,
+      'step_description': None,
+      'step_name': None,
+    }),
+    dict({
+      'error': None,
+      'progress': 0,
+      'stage': None,
+      'state': <JobState.PREPARING: 'preparing'>,
+      'step_description': None,
+      'step_name': None,
+    }),
+    dict({
+      'error': None,
+      'progress': 0,
+      'stage': 'raise_error',
+      'state': <JobState.RUNNING: 'running'>,
+      'step_description': '',
+      'step_name': 'Raise Error',
+    }),
+    dict({
+      'error': dict({
+        'details': list([
+        ]),
+        'type': 'ValueError',
+      }),
+      'progress': 0,
+      'stage': 'raise_error',
+      'state': <JobState.ERROR: 'error'>,
+      'step_description': '',
+      'step_name': 'Raise Error',
+    }),
+  ])
+# ---
+# name: test_ok[status]
+  list([
+    dict({
+      'error': None,
+      'progress': 0,
+      'stage': None,
+      'state': <JobState.PREPARING: 'preparing'>,
+      'step_description': None,
+      'step_name': None,
+    }),
+    dict({
+      'error': None,
+      'progress': 0,
+      'stage': None,
+      'state': <JobState.PREPARING: 'preparing'>,
+      'step_description': None,
+      'step_name': None,
+    }),
+    dict({
+      'error': None,
+      'progress': 0,
+      'stage': 'first',
+      'state': <JobState.RUNNING: 'running'>,
+      'step_description': 'Description of First.',
+      'step_name': 'First',
+    }),
+    dict({
+      'error': None,
+      'progress': 50,
+      'stage': 'second',
+      'state': <JobState.RUNNING: 'running'>,
+      'step_description': 'Description of Second.',
+      'step_name': 'Second',
+    }),
+    dict({
+      'error': None,
+      'progress': 100,
+      'stage': '',
+      'state': <JobState.COMPLETE: 'complete'>,
+      'step_description': '',
+      'step_name': '',
+    }),
+  ])
+# ---

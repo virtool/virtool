@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 import pytest
 from syrupy import SnapshotAssertion
 
@@ -21,7 +23,7 @@ async def test_get(
 
     resp = await client.get("/account")
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot
 
 
@@ -84,7 +86,7 @@ async def test_get_settings(spawn_client):
 
     resp = await client.get("/account/settings")
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
 
     assert await resp.json() == {
         "skip_quick_analyze_dialog": True,
@@ -296,7 +298,7 @@ class TestUpdateAPIKey:
             data,
         )
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
         assert await mongo.keys.find_one() == snapshot
 
@@ -383,11 +385,11 @@ async def test_logout(spawn_client):
 
     # Make sure the session is authorized
     resp = await client.get("/account")
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
 
     # Logout
     resp = await client.get("/account/logout")
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
 
     # Make sure that the session is no longer authorized
     resp = await client.get("/account")

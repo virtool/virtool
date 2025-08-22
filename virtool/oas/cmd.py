@@ -1,13 +1,13 @@
 import importlib
 import json
 
+import click
+
 from virtool.oas.view import generate_oas
 
 
 def show_oas():
-    """
-    Display Open API Specification on the stdout.
-    """
+    """Display Open API Specification on the stdout."""
     app = importlib.import_module("virtool.oas.app").app
     spec = generate_oas(app)
 
@@ -28,6 +28,4 @@ def show_oas():
                 }
             )
 
-    output = json.dumps(spec, sort_keys=True, indent=4)
-
-    print(output)
+    click.echo(json.dumps(spec, sort_keys=True, indent=4))

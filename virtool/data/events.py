@@ -69,7 +69,7 @@ _events_target = _InternalEventsTarget()
 def dangerously_clear_events():
     """Clear all events from the internal queue.
 
-    This should only be used in tests.
+    This should only be used in workflow.
 
     """
     _events_target.clear()
@@ -78,7 +78,7 @@ def dangerously_clear_events():
 async def dangerously_get_event() -> Event:
     """Get an event directly from the target.
 
-    This should only be used in tests.
+    This should only be used in workflow.
     """
     return await _events_target.get()
 

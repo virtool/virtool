@@ -26,7 +26,7 @@ async def test_list(
 ):
     """Test that MLData.list() returns a list of MLModel objects.
 
-    This test also indirectly tests that MLData.load() can be used by the data faker
+    This test also indirectly workflow that MLData.load() can be used by the data faker
     to populate the database with ML models and releases.
     """
     await fake.ml.populate()

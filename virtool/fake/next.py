@@ -53,7 +53,7 @@ from virtool.subtractions.oas import (
 )
 from virtool.tasks.models import Task
 from virtool.tasks.task import BaseTask
-from virtool.uploads.models import Upload
+from virtool.uploads.models import Upload, UploadMinimal
 from virtool.uploads.sql import UploadType
 from virtool.uploads.utils import CHUNK_SIZE
 from virtool.users.models import User
@@ -489,7 +489,7 @@ class UploadsFakerDomain(DataFakerDomain):
         upload_type: UploadType = UploadType.reads,
         name: str = "test.fq.gz",
         reserved: bool = False,
-    ) -> UploadType:
+    ) -> UploadMinimal:
         """Create a fake upload.
 
         A completely valid user will be created.
@@ -504,7 +504,7 @@ class UploadsFakerDomain(DataFakerDomain):
         if upload_type not in UploadType.to_list():
             upload_type = "reads"
 
-        fake_file_path = example_path / "reads/single.fq.gz"
+        fake_file_path = example_path / "sample/reads_1.fq.gz"
 
         upload = await self._layer.uploads.create(
             fake_file_chunker(fake_file_path),
@@ -629,6 +629,6 @@ class SubtractionFakerDomain(DataFakerDomain):
             subtraction.id,
             FinalizeSubtractionRequest(
                 count=1,
-                gc=NucleotideComposition(**{k: 0.2 for k in "actgn"}),
+                gc=NucleotideComposition(**dict.fromkeys("actgn", 0.2)),
             ),
         )

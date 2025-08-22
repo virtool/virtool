@@ -19,7 +19,7 @@ from virtool.uploads.sql import SQLUpload
 from virtool.users.oas import UpdateUserRequest
 
 
-@pytest.fixture()
+@pytest.fixture
 async def get_sample_ready_false(fake: DataFaker, mongo: Mongo, static_time):
     label = await fake.labels.create()
     user = await fake.users.create()

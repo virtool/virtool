@@ -4,7 +4,6 @@ import asyncio
 from asyncio import to_thread
 from collections.abc import Awaitable, Callable
 from pathlib import Path
-from pprint import pprint
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 
@@ -133,7 +132,6 @@ class BaseTask:
             try:
                 await func()
             except Exception as e:
-                pprint(e)
                 log.exception("encountered error in task")
                 await self._set_error(f"{type(e)}: {e!s}")
 

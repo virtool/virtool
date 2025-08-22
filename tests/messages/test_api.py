@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -6,7 +8,7 @@ from virtool.fake.next import DataFaker
 from virtool.messages.sql import SQLInstanceMessage
 
 
-@pytest.fixture()
+@pytest.fixture
 async def insert_test_message(fake: DataFaker, pg, static_time):
     async def insert(active=True):
         user = await fake.users.create()
@@ -44,7 +46,7 @@ async def test_get(
     resp = await client.get("/instance_message")
 
     if error is None:
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
     else:
         assert await resp.json() is None
@@ -62,7 +64,7 @@ async def test_create(snapshot, spawn_client: ClientSpawner, static_time):
         {"color": "red", "message": "This is a new message"},
     )
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
 
     assert await resp.json() == snapshot
 
@@ -83,7 +85,7 @@ class TestUpdate:
             {"color": "grey", "message": "Change test message content"},
         )
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
     async def test_not_found(self, spawn_client: ClientSpawner):

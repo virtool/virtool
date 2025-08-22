@@ -20,8 +20,6 @@ from virtool.history.utils import (
     write_diff_file,
 )
 
-TEST_DIFF_PATH = Path.cwd() / "tests" / "test_files" / "diff.json"
-
 
 def test_calculate_diff(test_otu_edit):
     """Test that a diff is correctly calculated. Should work since the tested function
@@ -214,13 +212,15 @@ def test_json_object_hook(static_time):
     assert result == {"foo": "bar", "created_at": static_time.datetime}
 
 
-def test_read_diff_file(mocker: MockerFixture, snapshot: SnapshotAssertion):
+def test_read_diff_file(
+    example_path: Path, mocker: MockerFixture, snapshot: SnapshotAssertion
+):
     """Test that a diff is parsed to a `dict` correctly. ISO format dates must be
     converted to `datetime` objects.
     """
     m = mocker.patch(
         "virtool.history.utils.join_diff_path",
-        return_value=TEST_DIFF_PATH,
+        return_value=(example_path / "diff.json"),
     )
 
     assert read_diff_file("foo", "bar", "baz") == snapshot
@@ -249,11 +249,13 @@ async def test_remove_diff_files(loop, tmp_path, config):
     assert os.listdir(history_dir) == ["bar_1.json"]
 
 
-async def test_write_diff_file(snapshot, tmp_path):
+async def test_write_diff_file(
+    example_path: Path, snapshot: SnapshotAssertion, tmp_path: Path
+):
     """Test that a diff file is written correctly."""
     (tmp_path / "history").mkdir()
 
-    with open(TEST_DIFF_PATH) as f:
+    with open(example_path / "diff.json") as f:
         diff = json.load(f)
 
     write_diff_file(tmp_path, "foo", "1", diff)

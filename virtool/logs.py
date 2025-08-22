@@ -13,15 +13,14 @@ logging.basicConfig(
 )
 
 
-def _exception_level_to_error(
-    _: logging.Logger,
-    __: str,
+def normalize_log_level(
+    _logger: object,
+    _method_name: str,
     event_dict: EventDict,
 ) -> EventDict:
-    """Convert the log level of an exception event to error.
+    """Map exception method calls to error level.
 
-    The `structlog_sentry` processor does not like the `exception` level which is used
-    by `structlog`.
+    The logging module doesn't have EXCEPTION level.
 
     :param event_dict: the event dictionary
     :return: the event dictionary with the level changed to error
@@ -36,37 +35,29 @@ def _exception_level_to_error(
 def configure_logging(use_sentry: bool):
     """Configure logging for Virtool.
 
-    If ``dev`` is enabled, logs will be in color and include debug messages.
-    If ``dev`` is disabled, logs will be plain JSON.
-
     :param use_sentry: whether to send logs to Sentry
 
     """
     processors = [
-        structlog.stdlib.add_logger_name,
+        structlog.stdlib.filter_by_level,
         structlog.stdlib.add_log_level,
-        structlog.processors.TimeStamper(fmt="%Y-%m-%dT%H:%M:%SZ"),
+        normalize_log_level,
+        structlog.stdlib.add_logger_name,
         structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.TimeStamper(fmt="%Y-%m-%dT%H:%M:%SZ"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.UnicodeDecoder(),
     ]
 
     if use_sentry:
-        processors.extend(
-            [
-                _exception_level_to_error,
-                SentryProcessor(event_level=logging.WARNING, level=logging.INFO),
-            ],
+        processors.append(
+            SentryProcessor(event_level=logging.WARNING, level=logging.INFO),
         )
 
-    processors.extend(
-        [
-            structlog.stdlib.filter_by_level,
-            structlog.stdlib.PositionalArgumentsFormatter(),
-            structlog.processors.StackInfoRenderer(),
-            structlog.processors.UnicodeDecoder(),
-            LogfmtRenderer(
-                key_order=["timestamp", "level", "logger", "event"],
-            ),
-        ],
+    processors.append(
+        LogfmtRenderer(
+            key_order=["timestamp", "level", "logger", "event"],
+        ),
     )
 
     structlog.configure(

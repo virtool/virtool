@@ -12,8 +12,6 @@ from virtool.samples.files import create_reads_file
 from virtool.settings.models import Settings
 from virtool.types import App
 
-READ_FILES_PATH = example_path / "reads"
-
 SAMPLE_ID_UNPAIRED = "sample_unpaired"
 SAMPLE_ID_PAIRED = "sample_paired"
 SAMPLE_ID_UNPAIRED_FINALIZED = "sample_unpaired_finalized"
@@ -78,7 +76,7 @@ async def create_fake_sample(
     if finalized is True:
         if paired:
             for n in (1, 2):
-                file_path = READ_FILES_PATH / f"paired_{n}.fq.gz"
+                file_path = example_path / "sample" / f"reads_{n}.fq.gz"
 
                 await copy_reads_file(app, file_path, f"reads_{n}.fq.gz", sample_id)
 
@@ -90,7 +88,7 @@ async def create_fake_sample(
                     sample_id,
                 )
         else:
-            file_path = READ_FILES_PATH / "single.fq.gz"
+            file_path = example_path / "sample" / "reads_1.fq.gz"
 
             await copy_reads_file(app, file_path, "reads_1.fq.gz", sample_id)
 

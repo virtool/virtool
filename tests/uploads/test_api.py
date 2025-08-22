@@ -1,3 +1,4 @@
+from http import HTTPStatus
 from pathlib import Path
 
 import pytest
@@ -10,10 +11,10 @@ from virtool.models.enums import Permission
 from virtool.uploads.sql import UploadType
 
 
-@pytest.fixture()
+@pytest.fixture
 def upload_request_form(example_path: Path):
     return {
-        "file": open(example_path / "reads/single.fq.gz", "rb"),
+        "file": open(example_path / "sample" / "reads_1.fq.gz", "rb"),
     }
 
 
@@ -32,12 +33,11 @@ class TestUpload:
         )
 
         resp = await client.post_form(
-            "/uploads?name=single.fq.gz&type=reads",
+            "/uploads?name=reads_1.fq.gz&type=reads",
             data=upload_request_form,
         )
 
         assert resp.status == 201
-        print(await resp.json())
         assert await resp.json() == snapshot_recent()
 
     async def test_no_upload_type(
@@ -53,11 +53,11 @@ class TestUpload:
         )
 
         resp = await client.post_form(
-            "/uploads?name=single.fq.gz",
+            "/uploads?name=reads_1.fq.gz",
             data=upload_request_form,
         )
 
-        assert resp.status == 400
+        assert resp.status == HTTPStatus.BAD_REQUEST
         assert await resp.json() == snapshot
 
     async def test_bad_upload_type(
@@ -76,7 +76,7 @@ class TestUpload:
             data=upload_request_form,
         )
 
-        assert resp.status == 400
+        assert resp.status == HTTPStatus.BAD_REQUEST
         assert await resp.json() == [
             {
                 "ctx": {
@@ -122,7 +122,7 @@ class TestFind:
 
         resp = await client.get(url)
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
     @pytest.mark.parametrize(
@@ -167,7 +167,7 @@ class TestFind:
 
         resp = await client.get(url)
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
 
@@ -183,8 +183,11 @@ async def test_get(
 
     resp: ClientResponse = await client.get(f"/uploads/{upload.id}")
 
-    assert resp.status == 200
-    assert await resp.read() == open(example_path / "reads/single.fq.gz", "rb").read()
+    assert resp.status == HTTPStatus.OK
+    assert (
+        await resp.read()
+        == open(example_path / "sample" / "reads_1.fq.gz", "rb").read()
+    )
 
 
 async def test_delete(fake: DataFaker, resp_is, spawn_client: ClientSpawner):

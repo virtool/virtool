@@ -12,7 +12,7 @@ from virtool.mongo.core import Mongo
 from virtool.redis import Redis
 
 
-@pytest.fixture()
+@pytest.fixture
 def app(mongo, pg, tmp_path, config, data_layer):
     return {
         "config": config,
@@ -23,7 +23,7 @@ def app(mongo, pg, tmp_path, config, data_layer):
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake(
     data_layer: "DataLayer",
     example_path: Path,
@@ -34,7 +34,7 @@ def fake(
 ):
     """Provides a :class:`DataFaker` object for generating deterministic fake data.
 
-    This fixture supersedes :fixture:`fake` and should be used in all new tests.
+    This fixture supersedes :fixture:`fake` and should be used in all new workflow.
 
     .. code-block:: python
 

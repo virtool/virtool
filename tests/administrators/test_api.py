@@ -1,4 +1,5 @@
 from datetime import timedelta
+from http import HTTPStatus
 
 import arrow
 import pytest
@@ -34,7 +35,7 @@ async def test_get_roles(spawn_client: ClientSpawner, snapshot: SnapshotAssertio
 
     resp = await client.get("/admin/roles")
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot
 
 
@@ -59,7 +60,7 @@ async def test_list_users(
 
     resp = await client.get("/admin/users")
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot(
         matcher=path_type({".*last_password_change": (str,)}, regex=True),
     )
@@ -85,7 +86,7 @@ async def test_get_user(
 
     resp = await client.get(f"/admin/users/{user.id}")
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot(matcher=_last_password_change_matcher)
 
 
@@ -173,7 +174,7 @@ async def test_update_admin_role(
 
     resp = await client.put(f"/admin/users/{user.id}/role", {"role": role})
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot(matcher=_last_password_change_matcher)
 
 
@@ -194,7 +195,7 @@ class TestUpdateUser:
         resp = await client.patch(f"/admin/users/{user.id}", {"force_reset": True})
         body = await resp.json()
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert body == snapshot(matcher=_last_password_change_matcher)
         assert body["force_reset"] is True
 
@@ -220,7 +221,7 @@ class TestUpdateUser:
             {"groups": [group_1.id, group_2.id]},
         )
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot(
             name="resp_1",
             matcher=_last_password_change_matcher,
@@ -228,7 +229,7 @@ class TestUpdateUser:
 
         resp = await client.patch(f"/admin/users/{user.id}", {"groups": [group_2.id]})
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot(
             name="resp_2",
             matcher=_last_password_change_matcher,
@@ -236,7 +237,7 @@ class TestUpdateUser:
 
         resp = await client.patch(f"/admin/users/{user.id}", {"groups": []})
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot(
             name="resp_3",
             matcher=_last_password_change_matcher,
@@ -274,7 +275,7 @@ class TestUpdateUser:
             assert body == snapshot()
             return
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert body == snapshot(matcher=_last_password_change_matcher)
 
         # We don't want this to ever happen.
@@ -311,7 +312,7 @@ class TestUpdateUser:
             f"/admin/users/{user.id}",
             {"primary_group": group.id},
         )
-        assert resp.status == 200 if is_member else 400
+        assert resp.status == HTTPStatus.OK if is_member else 400
         assert await resp.json() == snapshot(matcher=_last_password_change_matcher)
 
 
@@ -341,7 +342,7 @@ class TestAdministratorRoles:
         body = await resp.json()
 
         assert body == snapshot(matcher=_last_password_change_matcher)
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert body["administrator_role"] == (role.value if role else None)
         assert await (await client.get(f"/admin/users/{user.id}")).json() == body
 

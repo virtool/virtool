@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 from collections.abc import AsyncGenerator
-from typing import Any, TypeAlias
+from typing import Any
 
 import arrow
 import orjson
@@ -10,7 +10,7 @@ from structlog import get_logger
 
 logger = get_logger("redis")
 
-RedisElement: TypeAlias = float | int | str | dict
+type RedisElement = float | int | str | dict
 """A type alias for the types that can be stored in Redis, including JSON-serializable
 dictionaries.
 """
@@ -194,7 +194,7 @@ class Redis:
         .. code-block:: python
 
                 async for message in redis.subscribe("channel:cancel"):
-                    print(message)
+                    ...
 
         :param channel_name: the name of the channel to subscribe to
         :return: an async generator that yields messages

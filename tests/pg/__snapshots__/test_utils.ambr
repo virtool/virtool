@@ -2,7 +2,7 @@
 # name: test_connect_pg
   dict({
     'drivername': 'postgresql+asyncpg',
-    'host': 'localhost',
+    'host': 'postgres',
     'password': 'virtool',
     'query': immutabledict({
     }),

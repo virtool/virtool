@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 import pytest
 
 from tests.fixtures.client import ClientSpawner
@@ -36,7 +38,7 @@ class TestFind:
 
         resp = await client.get("/labels")
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
     async def test_find_by_name(
@@ -54,12 +56,12 @@ class TestFind:
 
         resp = await client.get(f"/labels?find={term}")
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
         resp = await client.get("/labels?find=Question")
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
 
@@ -176,7 +178,7 @@ async def test_edit(
 
     match error:
         case None:
-            assert resp.status == 200
+            assert resp.status == HTTPStatus.OK
             assert await resp.json() == snapshot
         case "404":
             await resp_is.not_found(resp)

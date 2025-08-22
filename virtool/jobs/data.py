@@ -2,7 +2,6 @@ import asyncio
 import math
 from asyncio import gather
 from collections import defaultdict
-from pprint import pprint
 from typing import TYPE_CHECKING
 
 import arrow
@@ -545,16 +544,6 @@ class JobsData:
             ],
         }
 
-        pprint(
-            {
-                "query": query,
-                "job_id": job_id,
-                "state": job.status[-1].state,
-                "retries": job.retries,
-                "pinged_at": job.ping.pinged_at if job.ping else None,
-            }
-        )
-
         result = await self._mongo.jobs.update_one(
             query,
             {
@@ -576,8 +565,6 @@ class JobsData:
 
         if result.modified_count:
             await self._client.enqueue(job.workflow, job_id)
-
-        pprint(job.dict())
 
         job = await self.get(job_id)
 

@@ -20,7 +20,7 @@ from virtool.mongo.utils import get_mongo_from_app
 from virtool.pg.utils import connect_pg
 from virtool.redis import Redis
 from virtool.routes import setup_routes
-from virtool.sentry import setup
+from virtool.sentry import configure_sentry
 from virtool.tasks.client import TasksClient
 from virtool.tasks.runner import TaskRunner
 from virtool.types import App
@@ -160,7 +160,7 @@ async def startup_sentry(app: App):
     """
     if get_config_from_app(app).sentry_dsn:
         logger.info("configuring sentry")
-        setup(app["version"], get_config_from_app(app).sentry_dsn)
+        configure_sentry(app["version"], get_config_from_app(app).sentry_dsn)
     else:
         logger.info("skipped configuring sentry")
 

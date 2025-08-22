@@ -1,5 +1,6 @@
 import asyncio
 import os
+from http import HTTPStatus
 from pathlib import Path
 
 import pytest
@@ -21,13 +22,19 @@ from virtool.users.models import User
 
 
 @pytest.fixture
-def create_files(test_files_path, tmp_path):
-    def files():
-        path = test_files_path / "aodp" / "reference.fa"
-        data = {"file": open(path, "rb")}
+def get_handle(example_path: Path):
+    handles = []
+
+    def func():
+        f_ = open(example_path / "sample" / "reads_1.fq.gz", "rb")
+        data = {"file": f_}
+        handles.append(f_)
         return data
 
-    return files
+    yield func
+
+    for f in handles:
+        f.close()
 
 
 async def test_find(
@@ -122,11 +129,11 @@ async def test_find(
 
     resp = await client.get("/analyses")
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot
 
 
-@pytest.mark.parametrize("ready, exists", [(True, True), (False, False)])
+@pytest.mark.parametrize(("ready", "exists"), [(True, True), (False, False)])
 @pytest.mark.parametrize(
     "error",
     [
@@ -203,7 +210,7 @@ async def test_get(
     resp = await client.get("/analyses/foobar")
 
     if error is None:
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
     elif error == "403":
@@ -364,14 +371,14 @@ async def test_remove(
 @pytest.mark.parametrize("error", [None, 400, 404, 422])
 async def test_upload_file(
     error: str | None,
-    create_files,
+    get_handle,
     mongo: Mongo,
     pg: AsyncEngine,
     resp_is,
-    snapshot,
+    snapshot: SnapshotAssertion,
     spawn_job_client: JobClientSpawner,
-    static_time,
-    tmp_path,
+    static_time: StaticTime,
+    tmp_path: Path,
 ):
     """Test that an analysis result file is properly uploaded and a row is inserted into
     the `analysis_files` SQL table.
@@ -390,20 +397,20 @@ async def test_upload_file(
     if error == 422:
         resp_put = await client.put(
             "/analyses/foobar/files?format=fasta",
-            data=create_files(),
+            data=get_handle(),
         )
         resp = await client.post(
             "/analyses/foobar/files?format=fasta",
-            data=create_files(),
+            data=get_handle(),
         )
     else:
         resp_put = await client.put(
             f"/analyses/foobar/files?name=reference.fa&format={format_}",
-            data=create_files(),
+            data=get_handle(),
         )
         resp = await client.post(
             f"/analyses/foobar/files?name=reference.fa&format={format_}",
-            data=create_files(),
+            data=get_handle(),
         )
 
     match error:
@@ -436,11 +443,11 @@ async def test_upload_file(
 class TestDownloadAnalysisResult:
     async def test_ok(
         self,
-        create_files,
+        example_path: Path,
+        get_handle,
         mongo: Mongo,
         spawn_client: ClientSpawner,
         spawn_job_client: JobClientSpawner,
-        test_files_path,
         tmp_path,
     ):
         """Test that an uploaded analysis result file can subsequently be downloaded."""
@@ -458,16 +465,16 @@ class TestDownloadAnalysisResult:
 
         await job_client.put(
             "/analyses/foobar/files?name=reference.fa&format=fasta",
-            data=create_files(),
+            data=get_handle(),
         )
 
         resp = await client.get("/analyses/foobar/files/1")
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
 
         assert (
             await resp.read()
-            == open(test_files_path / "aodp" / "reference.fa", "rb").read()
+            == open(example_path / "sample" / "reads_1.fq.gz", "rb").read()
         )
 
     async def test_not_found(
@@ -656,7 +663,7 @@ class TestFinalize:
             json={"results": {"result": "TEST_RESULT", "hits": []}},
         )
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
         document, row = await asyncio.gather(

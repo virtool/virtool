@@ -1,5 +1,7 @@
 """Sentry integration for error tracking, performance monitoring, and log capture."""
 
+import logging
+
 import sentry_sdk
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
@@ -8,16 +10,16 @@ from structlog import get_logger
 logger = get_logger("sentry")
 
 
-def traces_sampler(sampling_context: dict) -> float:
+def _traces_sampler(context: dict) -> float:
     """Sample all transactions except for WebSocket connections.
 
     This is a Sentry traces sampler function to be used with the Sentry SDK.
 
-    :param sampling_context: A dictionary containing context about the current request.
+    :param context: A dictionary containing context about the current request.
     :return: A float representing the sampling rate.
     """
     try:
-        target_url = sampling_context["aiohttp_request"].rel_url
+        target_url = context["aiohttp_request"].rel_url
     except KeyError:
         logger.warning("could not determine sentry transaction name")
         target_url = None
@@ -28,22 +30,27 @@ def traces_sampler(sampling_context: dict) -> float:
     return 0.6
 
 
-def setup(server_version: str | None, dsn: str):
-    logger.info(
-        "initializing sentry",
-        dsn=f"{dsn[:20]}...",
-        server_version=server_version,
-    )
+def configure_sentry(dsn: str, release: str):
+    if dsn:
+        logger.info("initializing sentry", dsn=f"{dsn[:15]}...")
 
-    sentry_sdk.init(
-        dsn=dsn,
-        _experiments={
-            "enable_logs": True,
-        },
-        integrations=[
-            AioHttpIntegration(),
-            LoggingIntegration(event_level=None, level=None),
-        ],
-        release=server_version,
-        traces_sampler=traces_sampler,
-    )
+        logger.info(
+            "initializing sentry",
+            dsn=f"{dsn[:20]}...",
+        )
+
+        sentry_sdk.init(
+            dsn=dsn,
+            _experiments={
+                "enable_logs": True,
+            },
+            integrations=[
+                AioHttpIntegration(),
+                LoggingIntegration(event_level=logging.WARNING, level=logging.INFO),
+            ],
+            release=release,
+            traces_sampler=_traces_sampler,
+        )
+
+    else:
+        logger.info("sentry disabled because no dsn was provided")

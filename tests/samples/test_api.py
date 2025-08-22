@@ -1,6 +1,7 @@
 import asyncio
 import gzip
 import os
+from http import HTTPStatus
 from pathlib import Path
 
 import arrow
@@ -28,7 +29,7 @@ class MockJobInterface:
         self.enqueue = make_mocked_coro()
 
 
-@pytest.fixture()
+@pytest.fixture
 async def get_sample_ready_false(fake: DataFaker, mongo: Mongo, static_time):
     label = await fake.labels.create()
     user = await fake.users.create()
@@ -84,7 +85,7 @@ async def get_sample_ready_false(fake: DataFaker, mongo: Mongo, static_time):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 async def get_sample_data(
     mongo: "Mongo",
     fake: DataFaker,
@@ -170,7 +171,7 @@ async def get_sample_data(
     return user.id
 
 
-@pytest.fixture()
+@pytest.fixture
 async def find_samples_client(
     fake: DataFaker,
     mongo: Mongo,
@@ -265,7 +266,7 @@ class TestFind:
             path += f"?find={find}"
 
         resp = await find_samples_client.get(path)
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
     @pytest.mark.parametrize("per_page,page", [(None, None), (2, 1), (2, 2)])
@@ -288,7 +289,7 @@ class TestFind:
             path += f"?{'&'.join(query)}"
 
         resp = await find_samples_client.get(path)
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
     @pytest.mark.parametrize("labels", [None, [3], [2, 3], [0]])
@@ -305,7 +306,7 @@ class TestFind:
             path += f"?label={query}"
 
         resp = await find_samples_client.get(path)
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
     @pytest.mark.parametrize(
@@ -330,7 +331,7 @@ class TestFind:
             path += f"?workflows={workflows_query}"
 
         resp = await find_samples_client.get(path)
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
 
@@ -346,7 +347,7 @@ class TestGet:
 
         resp = await client.get("/samples/test")
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot(name="resp")
 
     async def test_owner(
@@ -373,7 +374,7 @@ class TestGet:
 
         resp = await client.get("/samples/test")
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot(name="resp")
 
     async def test_all_read(
@@ -405,7 +406,7 @@ class TestGet:
 
         resp = await client.get("/samples/test")
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot(name="resp")
 
     @pytest.mark.parametrize("is_member", [True, False])
@@ -726,7 +727,7 @@ class TestEdit:
             },
         )
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
     async def test_name_exists(
@@ -864,7 +865,7 @@ async def test_finalize(
     resp = await client.patch("/samples/test", json=json)
 
     if field == "quality":
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
         with pytest.raises(ResourceNotFoundError):
@@ -1034,7 +1035,7 @@ async def test_find_analyses(
 
     resp = await client.get("/samples/test/analyses")
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot
 
 
@@ -1130,7 +1131,7 @@ async def test_upload_artifact(
     static_time,
 ):
     """Test that new artifacts can be uploaded after sample creation using the Jobs API."""
-    path = example_path / "reads" / "reads_1.fq.gz"
+    path = example_path / "sample" / "reads_1.fq.gz"
 
     client = await spawn_job_client(authenticated=True)
 
@@ -1194,21 +1195,21 @@ class TestUploadReads:
 
         resp_1 = await client.put(
             "/samples/test/reads/reads_1.fq.gz",
-            data={"file": open(example_path / "reads" / "reads_1.fq.gz", "rb")},
+            data={"file": open(example_path / "sample" / "reads_1.fq.gz", "rb")},
         )
 
         assert resp_1.status == 201
 
         resp_2 = await client.put(
             "/samples/test/reads/reads_2.fq.gz",
-            data={"file": open(example_path / "reads" / "reads_2.fq.gz", "rb")},
+            data={"file": open(example_path / "sample" / "reads_2.fq.gz", "rb")},
         )
 
         assert resp_2.status == 201
 
         resp_3 = await client.put(
             "/samples/test/reads/reads_2.fq.gz",
-            data={"file": open(example_path / "reads" / "reads_2.fq.gz", "rb")},
+            data={"file": open(example_path / "sample" / "reads_2.fq.gz", "rb")},
         )
 
         assert resp_3.status == 409
@@ -1242,7 +1243,7 @@ class TestUploadReads:
         resp = await client.put(
             f"/samples/test/reads/reads_1.fq.gz?upload={upload.id}",
             data={
-                "file": gzip.open(example_path / "reads" / "reads_1.fq.gz", "rb"),
+                "file": gzip.open(example_path / "sample" / "reads_1.fq.gz", "rb"),
             },
         )
 
@@ -1297,7 +1298,7 @@ async def test_download_reads(
     if error:
         assert resp.status == job_resp.status == 404
     else:
-        assert resp.status == job_resp.status == 200
+        assert resp.status == job_resp.status == HTTPStatus.OK
         assert (
             (data_path / "samples" / "foo" / file_name).read_bytes()
             == await resp.content.read()
@@ -1348,7 +1349,7 @@ async def test_download_artifact(
         assert resp.status == 404
         return
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert (
         data_path / "samples" / "foo" / "fastqc.txt"
     ).read_bytes() == await resp.content.read()

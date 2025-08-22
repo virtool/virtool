@@ -1,24 +1,21 @@
 """Custom types aliases for Virtool."""
 
+from collections.abc import Awaitable, Callable, Sequence
 from datetime import datetime
 from typing import (
     Any,
-    Awaitable,
-    Callable,
-    Sequence,
-    TypeAlias,
 )
 
 from aiohttp.web import Application, Request, Response
 
-App: TypeAlias = Application | dict[str, Any]
+type App = Application | dict[str, Any]
 """
 An aiohttp application or similar dictionary.
 
 In testing ``dict``-like objects are sometimes used in place of an application.
 """
 
-Document: TypeAlias = dict[
+type Document = dict[
     str,
     dict | list | bool | str | int | float | datetime | None,
 ]
@@ -29,13 +26,13 @@ Keys must be strings.
 """
 
 
-Projection: TypeAlias = dict[str, bool] | Sequence[str]
+type Projection = dict[str, bool] | Sequence[str]
 """
 A data structure that can be used to specify a MongoDB projection and is compatible with
 Motor interfaces.
 """
 
-RouteHandler: TypeAlias = Callable[[Request], Awaitable[Response]]
+type RouteHandler = Callable[[Request], Awaitable[Response]]
 """
 A handler method for an aiohttp route.
 

@@ -11,7 +11,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.pg.utils import get_row_by_id
-from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
 from virtool.tasks.spawner import PeriodicTask, TaskSpawnerService
 from virtool.tasks.sql import SQLTask
@@ -57,7 +56,7 @@ class DummyTask(BaseTask):
         await to_thread(os.remove, self.temp_path / "test.txt")
 
 
-@pytest.fixture()
+@pytest.fixture
 async def task(data_layer, pg: AsyncEngine, static_time) -> DummyTask:
     task = SQLTask(
         id=1,
@@ -124,16 +123,6 @@ async def test_run(error, task, pg: AsyncEngine):
         assert not os.path.exists(task.temp_path)
 
 
-@pytest.fixture()
-def test_channel():
-    return "test-task-channel"
-
-
-@pytest.fixture()
-def tasks_client(redis):
-    return TasksClient(redis)
-
-
 async def test_progress_handler_set_progress(task: BaseTask, pg: AsyncEngine):
     task.step = task.steps[0]
     tracker_1 = task.create_progress_handler()
@@ -185,7 +174,7 @@ async def test_register(pg: AsyncEngine, tasks_data: TasksData):
 
 
 async def test_check_or_spawn_task(pg: AsyncEngine, tasks_data: TasksData):
-    """First case tests that the task has spawned, second case ensures that it does not"""
+    """First case workflow that the task has spawned, second case ensures that it does not"""
     task_spawner_service = TaskSpawnerService(pg, tasks_data)
 
     # This time should trigger a spawn as it is greater than the interval.

@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -40,7 +42,7 @@ async def test_find(spawn_client, pg: AsyncEngine, snapshot, static_time):
 
     resp = await client.get("/tasks")
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot
 
 
@@ -78,5 +80,5 @@ async def test_get(
     if error:
         await resp_is.not_found(resp)
     else:
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot

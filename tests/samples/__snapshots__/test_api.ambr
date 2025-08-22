@@ -2577,7 +2577,7 @@
     'name': 'small.fq.gz',
     'name_on_disk': 'small.fq.gz',
     'sample': 'test',
-    'size': 9081,
+    'size': 723988,
     'type': 'fastq',
     'uploaded_at': '2015-10-06T20:00:00Z',
   })

@@ -24,7 +24,7 @@ async def test_create(
 ):
     user = await fake.users.create()
 
-    fake_file_path = example_path / "reads/single.fq.gz"
+    fake_file_path = example_path / "sample" / "reads_1.fq.gz"
 
     upload = await data_layer.uploads.create(
         fake_file_chunker(fake_file_path),
