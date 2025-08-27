@@ -1,3 +1,4 @@
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -6,7 +7,6 @@ from aiohttp import BasicAuth, ClientSession
 from structlog import get_logger
 
 from virtool.workflow.api.utils import (
-    API_CHUNK_SIZE,
     decode_json_response,
     raise_exception_by_status_code,
     retry,
@@ -16,8 +16,11 @@ from virtool.workflow.files import VirtoolFileFormat
 
 logger = get_logger("http")
 
+API_CHUNK_SIZE = 1024 * 1024 * 2
+"""The size of chunks to use when downloading files from the API in bytes."""
 
-class APIClient:
+
+class WorkflowAPIClient:
     def __init__(self, http: ClientSession, jobs_api_connection_string: str):
         self.http = http
         self.jobs_api_connection_string = jobs_api_connection_string
@@ -46,8 +49,9 @@ class APIClient:
 
     @retry
     async def patch_json(self, path: str, data: dict) -> dict:
-        """Make a patch request against the provided API ``path`` and return the response
-        as a dictionary of decoded JSON.
+        """Make a JSON-encoded patch request.
+
+        Returns the JSON response from the patch request as a dict.
 
         :param path: the API path to make the request against
         :param data: the data to send with the request
@@ -137,9 +141,9 @@ async def api_client(
     jobs_api_connection_string: str,
     job_id: str,
     key: str,
-):
-    """An authenticated :class:``APIClient`` to make requests against the jobs API."""
+) -> AsyncIterator[WorkflowAPIClient]:
+    """Create an authenticated :class:``APIClient`` to make API request."""
     async with ClientSession(
         auth=BasicAuth(login=f"job-{job_id}", password=key),
     ) as http:
-        yield APIClient(http, jobs_api_connection_string)
+        yield WorkflowAPIClient(http, jobs_api_connection_string)

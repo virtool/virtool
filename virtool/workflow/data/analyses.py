@@ -11,7 +11,7 @@ from virtool.jobs.models import JobNested
 from virtool.ml.models import MLModelRelease
 from virtool.references.models import ReferenceNested
 from virtool.subtractions.models import SubtractionNested
-from virtool.workflow.api.client import APIClient
+from virtool.workflow.client import WorkflowAPIClient
 from virtool.workflow.files import VirtoolFileFormat
 
 
@@ -20,7 +20,7 @@ class WFAnalysis:
 
     def __init__(
         self,
-        api: APIClient,
+        api: WorkflowAPIClient,
         analysis_id: str,
         index: IndexNested,
         ml: MLModelRelease | None,
@@ -81,7 +81,7 @@ class WFAnalysis:
 
 @fixture
 async def analysis(
-    _api: APIClient,
+    _api: WorkflowAPIClient,
     job: JobNested,
 ) -> WFAnalysis:
     """The analysis associated with the running workflow."""

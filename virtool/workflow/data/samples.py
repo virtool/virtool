@@ -11,7 +11,7 @@ from virtool.jobs.models import Job
 from virtool.models.enums import LibraryType
 from virtool.samples.models import Quality, Sample
 from virtool.workflow.analysis.utils import ReadPaths
-from virtool.workflow.api.client import APIClient
+from virtool.workflow.client import WorkflowAPIClient
 from virtool.workflow.data.uploads import WFUploads
 from virtool.workflow.errors import JobsAPINotFoundError
 
@@ -83,7 +83,7 @@ class WFNewSample:
 
 @fixture
 async def sample(
-    _api: APIClient,
+    _api: WorkflowAPIClient,
     job: Job,
     uploads: WFUploads,
     work_path: Path,
@@ -132,7 +132,7 @@ async def sample(
 
 @fixture
 async def new_sample(
-    _api: APIClient,
+    _api: WorkflowAPIClient,
     job: Job,
     uploads: WFUploads,
     work_path: Path,

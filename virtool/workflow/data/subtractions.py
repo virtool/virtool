@@ -12,7 +12,7 @@ from virtool.subtractions.models import (
     Subtraction,
     SubtractionFile,
 )
-from virtool.workflow.api.client import APIClient
+from virtool.workflow.client import WorkflowAPIClient
 from virtool.workflow.data.analyses import WFAnalysis
 from virtool.workflow.data.uploads import WFUploads
 from virtool.workflow.errors import MissingJobArgumentError
@@ -118,7 +118,7 @@ class WFNewSubtraction:
 
 @fixture
 async def subtractions(
-    _api: APIClient,
+    _api: WorkflowAPIClient,
     analysis: WFAnalysis,
     work_path: Path,
 ) -> list[WFSubtraction]:
@@ -160,7 +160,7 @@ async def subtractions(
 
 @fixture
 async def new_subtraction(
-    _api: APIClient,
+    _api: WorkflowAPIClient,
     job: Job,
     uploads: WFUploads,
     work_path: Path,

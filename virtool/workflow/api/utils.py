@@ -18,8 +18,6 @@ from virtool.workflow.errors import (
 
 logger = get_logger("api")
 
-API_CHUNK_SIZE = 1024 * 1024 * 2
-"""The size of chunks to use when downloading files from the API in bytes."""
 
 API_MAX_RETRIES = 5
 """The maximum number of retries for API requests."""

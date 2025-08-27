@@ -14,8 +14,8 @@ from virtool.logs import configure_logging
 from virtool.redis import Redis
 from virtool.sentry import configure_sentry
 from virtool.version import get_virtool_version
-from virtool.workflow.api.acquire import acquire_job_by_id
-from virtool.workflow.api.client import api_client
+from virtool.workflow.acquire import acquire_job_by_id
+from virtool.workflow.client import api_client
 from virtool.workflow.hooks import (
     cleanup_builtin_status_hooks,
     on_cancelled,

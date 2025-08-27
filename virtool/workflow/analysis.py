@@ -1,3 +1,5 @@
+"""Tools for workflows relating to sequence analysis."""
+
 from collections.abc import Callable
 from pathlib import Path
 

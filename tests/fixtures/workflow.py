@@ -10,7 +10,7 @@ from structlog import get_logger
 from virtool.config.cls import WorkflowConfig
 from virtool.data.file import ChunkWriter
 from virtool.workflow import hooks
-from virtool.workflow.api.client import api_client
+from virtool.workflow.client import api_client
 from virtool.workflow.pytest_plugin.data import WorkflowData
 from virtool.workflow.runtime.config import RunConfig
 from virtool.workflow.runtime.hook import Hook

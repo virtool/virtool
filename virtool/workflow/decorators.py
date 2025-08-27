@@ -3,7 +3,7 @@
 from collections.abc import Callable
 from types import ModuleType
 
-from virtool.workflow.errors import WorkflowStepsError
+from virtool.workflow.errors import WorkflowEmptyError
 from virtool.workflow.workflow import Workflow
 
 
@@ -42,6 +42,6 @@ def collect(module: ModuleType) -> Workflow:
             workflow.step(marked, **marked.__workflow_step_props__)
 
     if not workflow.steps:
-        raise WorkflowStepsError(str(module))
+        raise WorkflowEmptyError(str(module))
 
     return workflow

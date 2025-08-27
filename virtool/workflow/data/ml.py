@@ -10,7 +10,7 @@ from structlog import get_logger
 
 from virtool.ml.models import MLModelRelease
 from virtool.utils import decompress_tgz, make_directory
-from virtool.workflow.api.client import APIClient
+from virtool.workflow.client import WorkflowAPIClient
 from virtool.workflow.data.analyses import WFAnalysis
 
 logger = get_logger("api")
@@ -46,7 +46,7 @@ class WFMLModelRelease:
 
 @fixture
 async def ml(
-    _api: APIClient,
+    _api: WorkflowAPIClient,
     analysis: WFAnalysis,
     work_path: Path,
 ) -> WFMLModelRelease | None:

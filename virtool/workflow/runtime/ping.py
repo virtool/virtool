@@ -7,12 +7,12 @@ from contextlib import asynccontextmanager
 from aiohttp import ClientOSError, ServerDisconnectedError
 from structlog import get_logger
 
-from virtool.workflow.api.client import APIClient
+from virtool.workflow.client import WorkflowAPIClient
 
 logger = get_logger("api")
 
 
-async def _ping_periodically(api: APIClient, job_id: str) -> None:
+async def _ping_periodically(api: WorkflowAPIClient, job_id: str) -> None:
     retries = 0
 
     try:
@@ -36,7 +36,7 @@ async def _ping_periodically(api: APIClient, job_id: str) -> None:
 
 
 @asynccontextmanager
-async def ping_periodically(api: APIClient, job_id: str) -> AsyncIterator[None]:
+async def ping_periodically(api: WorkflowAPIClient, job_id: str) -> AsyncIterator[None]:
     """Ping the API to keep the job alive.
 
     While the context manager is open, a task runs that pings the API every 5 seconds.

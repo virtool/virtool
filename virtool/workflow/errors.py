@@ -1,8 +1,10 @@
 """Workflow exceptions."""
 
 from subprocess import SubprocessError
+from typing import TYPE_CHECKING
 
-from virtool.workflow import WorkflowStep
+if TYPE_CHECKING:
+    from virtool.workflow import WorkflowStep
 
 
 class JobAlreadyAcquiredError(Exception):
@@ -53,18 +55,22 @@ class MissingJobArgumentError(ValueError):
     """The `job.args` dict is missing a required key for some funcionality."""
 
 
-class WorkflowStepsError(Exception):
+class WorkflowEmptyError(Exception):
     """Raised when no workflow steps are found in a module."""
 
     def __init__(self, module: str) -> None:
+        """Initialize a WorkflowEmptyError with the affected module.
+
+        :param module: the module name
+        """
         super().__init__(f"No workflow steps could be found in {module}")
 
 
-class WorkflowStepDescriptionError(WorkflowStepsError):
+class WorkflowStepDescriptionError(WorkflowEmptyError):
     """Raised when a workflow step description is invalid."""
 
-    def __init__(self, step: WorkflowStep) -> None:
-        """Initialize a WorkflowStepDescriptionError exception instance.
+    def __init__(self, step: "WorkflowStep") -> None:
+        """Initialize a WorkflowStepDescriptionError with the affected step.
 
         :param step: the workflow step
         """

@@ -11,7 +11,7 @@ from virtool.indexes.models import Index
 from virtool.jobs.models import Job
 from virtool.references.models import ReferenceNested
 from virtool.utils import decompress_file
-from virtool.workflow.api.client import APIClient
+from virtool.workflow.client import WorkflowAPIClient
 from virtool.workflow.errors import MissingJobArgumentError
 from virtool.workflow.files import VirtoolFileFormat
 
@@ -89,7 +89,7 @@ class WFIndex:
 class WFNewIndex:
     def __init__(
         self,
-        api: APIClient,
+        api: WorkflowAPIClient,
         index_id: str,
         manifest: dict[str, int | str],
         path: Path,
@@ -154,7 +154,7 @@ class WFNewIndex:
 
 @fixture
 async def index(
-    _api: APIClient,
+    _api: WorkflowAPIClient,
     analysis: Analysis,
     proc: int,
     work_path: Path,
@@ -237,7 +237,7 @@ async def index(
 
 @fixture
 async def new_index(
-    _api: APIClient,
+    _api: WorkflowAPIClient,
     job: Job,
     proc: int,
     work_path: Path,

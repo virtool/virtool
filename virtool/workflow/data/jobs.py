@@ -5,7 +5,7 @@ from structlog import get_logger
 
 from virtool.jobs.models import Job, JobAcquired, JobState
 from virtool.workflow import Workflow, WorkflowStep
-from virtool.workflow.api.client import APIClient
+from virtool.workflow.client import WorkflowAPIClient
 
 MAX_TB = 50
 
@@ -13,13 +13,13 @@ logger = get_logger("api")
 
 
 @fixture
-async def job(_api: APIClient, _job: JobAcquired) -> Job:
+async def job(_api: WorkflowAPIClient, _job: JobAcquired) -> Job:
     return Job.parse_obj(_job)
 
 
 @fixture(scope="function")
 async def push_status(
-    _api: APIClient,
+    _api: WorkflowAPIClient,
     _job: JobAcquired,
     _error: Exception | None,
     _state: JobState,

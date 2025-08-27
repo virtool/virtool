@@ -11,7 +11,7 @@ from structlog import get_logger
 
 from virtool.hmm.models import HMM
 from virtool.utils import decompress_file
-from virtool.workflow.api.client import APIClient
+from virtool.workflow.client import WorkflowAPIClient
 
 logger = get_logger("api")
 
@@ -65,7 +65,7 @@ class WFHMMs:
 
 @fixture
 async def hmms(
-    _api: APIClient,
+    _api: WorkflowAPIClient,
     proc: int,
     work_path: Path,
 ) -> WFHMMs:

@@ -3,12 +3,12 @@ from pathlib import Path
 
 from pyfixtures import fixture
 
-from virtool.workflow.api.client import APIClient
+from virtool.workflow.client import WorkflowAPIClient
 
 
 @dataclass
 class WFUploads:
-    def __init__(self, api: APIClient):
+    def __init__(self, api: WorkflowAPIClient):
         self._api = api
 
     async def download(self, upload_id: int, path: Path) -> None:
@@ -17,7 +17,7 @@ class WFUploads:
 
 
 @fixture
-async def uploads(_api: APIClient) -> WFUploads:
+async def uploads(_api: WorkflowAPIClient) -> WFUploads:
     """Provides access to files that have been uploaded to the Virtool instance.
 
     Files can be downloaded into the workflow environment be calling
