@@ -78,13 +78,14 @@ def create_samples_routes(
         async def get(self):
             sample_id = self.request.match_info["sample_id"]
             filename = self.request.match_info["filename"]
+            safe_filename = Path(filename).name
 
             if sample_id != data.sample.id:
                 return generate_not_found()
 
             tempdir = Path(tempfile.mkdtemp())
 
-            file = tempdir / filename
+            file = tempdir / safe_filename
             file.touch()
 
             return FileResponse(file)
