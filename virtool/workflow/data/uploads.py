@@ -11,7 +11,7 @@ class WFUploads:
     def __init__(self, api: APIClient):
         self._api = api
 
-    async def download(self, upload_id: int, path: Path):
+    async def download(self, upload_id: int, path: Path) -> None:
         """Download the upload with the given ID to the given path."""
         await self._api.get_file(f"/uploads/{upload_id}", path)
 

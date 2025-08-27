@@ -2,7 +2,6 @@
 
 import asyncio
 import shutil
-import tarfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -10,7 +9,7 @@ from pyfixtures import fixture
 from structlog import get_logger
 
 from virtool.ml.models import MLModelRelease
-from virtool.utils import make_directory
+from virtool.utils import decompress_tgz, make_directory
 from virtool.workflow.api.client import APIClient
 from virtool.workflow.data.analyses import WFAnalysis
 
@@ -20,11 +19,6 @@ logger = get_logger("api")
 def _move_all_model_files(source_path: Path, target_path: Path):
     for file in source_path.iterdir():
         file.rename(target_path / file.name)
-
-
-def _untar(path: Path, target_path: Path):
-    with tarfile.open(path, "r:gz") as tar:
-        tar.extractall(target_path, filter="data")
 
 
 @dataclass
@@ -78,16 +72,17 @@ async def ml(
     )
 
     await make_directory(release.path)
-
     await _api.get_file(
         f"/ml/{model_id}/releases/{model_release_id}/model.tar.gz",
         release.file_path,
     )
 
-    await asyncio.to_thread(_untar, release.file_path, release.path)
+    log.info("downloaded ml model release")
+
+    await asyncio.to_thread(decompress_tgz, release.file_path, release.path)
     await asyncio.to_thread(_move_all_model_files, release.path / "model", release.path)
     await asyncio.to_thread(shutil.rmtree, release.path / "model")
 
-    log.info("downloaded ml model release file")
+    log.info("unpacked ml model release")
 
     return release

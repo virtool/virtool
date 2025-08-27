@@ -28,7 +28,7 @@ class WFAnalysis:
         sample: AnalysisSample,
         subtractions: list[SubtractionNested],
         workflow: str,
-    ):
+    ) -> None:
         self._api = api
 
         self.id = analysis_id
@@ -52,20 +52,18 @@ class WFAnalysis:
         self.workflow = workflow
         """The workflow being run to populate the analysis."""
 
-    async def delete(self):
+    async def delete(self) -> None:
         """Delete the analysis.
 
         This method should be called if the workflow fails before a result is uploaded.
         """
         await self._api.delete(f"/analyses/{self.id}")
 
-    async def upload_file(self, path: Path, fmt: VirtoolFileFormat = "unknown"):
-        """Upload files in the workflow environment that should be associated with the
-        current analysis.
+    async def upload_file(self, path: Path, fmt: VirtoolFileFormat = "unknown") -> None:
+        """Upload files that should be associated with the current analysis.
 
         :param path: the path to the file to upload
         :param fmt: the file format
-
         """
         await self._api.post_file(
             f"/analyses/{self.id}/files",
@@ -73,7 +71,7 @@ class WFAnalysis:
             fmt,
         )
 
-    async def upload_result(self, results: dict[str, Any]):
+    async def upload_result(self, results: dict[str, Any]) -> None:
         """Upload the results dict for the analysis.
 
         :param results: the analysis results
@@ -86,9 +84,7 @@ async def analysis(
     _api: APIClient,
     job: JobNested,
 ) -> WFAnalysis:
-    """A :class:`.WFAnalysis` object that represents the analysis associated with the running
-    workflow.
-    """
+    """The analysis associated with the running workflow."""
     id_ = job.args["analysis_id"]
 
     analysis_dict = await _api.get_json(f"/analyses/{id_}")

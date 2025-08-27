@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import time
 
+import pytest
 from pytest_structlog import StructuredLogCapture
 from structlog.testing import LogCapture
 
@@ -141,6 +142,7 @@ async def test_timeout(
     assert log.has("timed out while waiting for job id", level="warning")
 
 
+@pytest.mark.timeout(30)
 async def test_sigterm(
     jobs_api_connection_string: str,
     redis: Redis,

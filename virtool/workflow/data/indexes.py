@@ -85,37 +85,6 @@ class WFIndex:
         except KeyError:
             raise ValueError("The sequence_id does not exist in the index")
 
-    async def write_isolate_fasta(
-        self,
-        otu_ids: list[str],
-        path: Path,
-    ) -> dict[str, int]:
-        """Generate a FASTA file for all the isolates of the OTUs specified by ``otu_ids``.
-
-        :param otu_ids: the list of OTU IDs for which to generate and index
-        :param path: the path to the reference index directory
-        :return: a dictionary of the lengths of all sequences keyed by their IDS
-
-        """
-        unique_otu_ids = set(otu_ids)
-
-        def func():
-            with open(self.json_path) as f:
-                otus = [otu for otu in json.load(f) if otu["_id"] in unique_otu_ids]
-
-            lengths = {}
-
-            with open(path, "w") as f:
-                for otu in otus:
-                    for isolate in otu["isolates"]:
-                        for sequence in isolate["sequences"]:
-                            f.write(f">{sequence['_id']}\n{sequence['sequence']}\n")
-                            lengths[sequence["_id"]] = len(sequence["sequence"])
-
-            return lengths
-
-        return await asyncio.to_thread(func)
-
 
 class WFNewIndex:
     def __init__(
@@ -179,10 +148,7 @@ class WFNewIndex:
 
     @property
     def otus_json_path(self) -> Path:
-        """The path to the JSON representation of the reference index in the workflow's
-        work directory.
-
-        """
+        """The path to the JSON file of the index's OTUs in the workflow work path."""
         return self.path / "otus.json"
 
 
@@ -193,7 +159,7 @@ async def index(
     proc: int,
     work_path: Path,
 ) -> WFIndex:
-    """The :class:`WFIndex` for the current analysis job."""
+    """The reference index for the current analysis job."""
     id_ = analysis.index.id
 
     log = logger.bind(id=id_, resource="index")

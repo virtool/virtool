@@ -29,7 +29,7 @@ def discover_workflow(path: Path) -> Workflow:
         return collect(module)
 
 
-def load_builtin_fixtures():
+def load_builtin_fixtures() -> None:
     """Load built-in fixtures.
 
     This function is called before any fixtures defined in a workflow's
@@ -38,12 +38,10 @@ def load_builtin_fixtures():
 
     """
     import_module("virtool.workflow.data")
-    import_module("virtool.workflow.analysis.fastqc")
-    import_module("virtool.workflow.analysis.skewer")
     import_module("virtool.workflow.runtime.run_subprocess")
 
 
-def load_custom_fixtures():
+def load_custom_fixtures() -> None:
     """Load fixtures defined by the workflow author in ``fixtures.py``."""
     logger.info("importing fixtures.py")
 
@@ -56,10 +54,10 @@ def load_custom_fixtures():
 
 
 def load_workflow_from_file() -> Workflow:
-    """Load a workflow from a Python file at ``./workflow.py`` and return a :class:`.Workflow` object.
+    """Load a workflow from a Python file at ``./workflow.py``.
 
     :raises FileNotFoundError: If no workflow.py file is found.
-    :return: The workflow.
+    :return: the workflow.
     """
     logger.info("importing workflow.py")
 
@@ -91,8 +89,8 @@ def import_module_from_file(module_name: str, path: Path) -> ModuleType:
     module = module_from_spec(spec)
     if spec.loader is None:
         raise ImportError(f"could not load {path}")
-    spec.loader.exec_module(module)
 
+    spec.loader.exec_module(module)
     sys.path.remove(module_parent)
 
     return module

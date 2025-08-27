@@ -29,7 +29,7 @@ class TestIndex:
         assert index.path == work_path / "indexes" / workflow_data.analysis.index.id
         assert index.json_path == index.path / "otus.json"
 
-        assert set(p.name for p in index.path.iterdir()) == {
+        assert {p.name for p in index.path.iterdir()} == {
             "otus.json",
             "otus.json.gz",
             "reference.fa",
@@ -61,13 +61,6 @@ class TestIndex:
         assert index.get_sequence_length("zo05lb6m") == 3818
         assert index.get_otu_id_by_sequence_id("wqounsl3") == "q432t7gj"
 
-        await index.write_isolate_fasta(
-            ["c8gkzu9x", "bo6lf9l2", "ifvpy4ha"],
-            work_path / "test.fa",
-        )
-
-        assert open(work_path / "test.fa").read() == snapshot(name="fasta")
-
 
 class TestNewIndex:
     async def test_ok(
@@ -76,7 +69,9 @@ class TestNewIndex:
         work_path: Path,
         workflow_data: WorkflowData,
     ):
-        """Test that the ``new_index`` fixture instantiates and contains the expected data."""
+        """Test that the ``new_index`` fixture instantiates and contains the expected
+        data.
+        """
         workflow_data.job.args["index_id"] = workflow_data.new_index.id
 
         new_index: WFNewIndex = await scope.instantiate_by_key("new_index")
@@ -91,7 +86,9 @@ class TestNewIndex:
         scope: FixtureScope,
         workflow_data: WorkflowData,
     ):
-        """Test that the index fixture can be used to upload index files and finalize the index."""
+        """Test that the index fixture can be used to upload index files and finalize
+        the index.
+        """
         workflow_data.job.args["index_id"] = workflow_data.new_index.id
 
         new_index: WFNewIndex = await scope.instantiate_by_key("new_index")
@@ -118,7 +115,7 @@ class TestNewIndex:
 
         assert workflow_data.new_index.ready is True
 
-        assert set(p.name for p in captured_uploads_path.iterdir()) == {
+        assert {p.name for p in captured_uploads_path.iterdir()} == {
             "otus.json.gz",
             "reference.fa.gz",
             "reference.json.gz",
