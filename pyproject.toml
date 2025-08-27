@@ -101,6 +101,7 @@ build-backend = "pdm.backend"
 dev = [
     "furo>=2024.8.6,<2026.0.0",
     "mypy<2.0.0,>=1.16.1",
+    "pre-commit>=4.3.0",
     "pytest<9.0.0,>=8.4.1",
     "pytest-aiohttp==1.0.5",
     "pytest-asyncio==0.21.2",
