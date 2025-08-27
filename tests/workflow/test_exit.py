@@ -258,7 +258,9 @@ if __name__ == "__main__":
 
     # Wait for the terminated status to be committed
     if not await wait_for_job_status(workflow_data, [JobState.TERMINATED]):
-        current_status = [(update.state, update.progress) for update in workflow_data.job.status]
+        current_status = [
+            (update.state, update.progress) for update in workflow_data.job.status
+        ]
         pytest.fail(
             f"Timed out waiting for TERMINATED status after 10 seconds. "
             f"Current status sequence: {current_status}"
