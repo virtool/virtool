@@ -7,10 +7,10 @@
       'resource_id': 'foo',
       'test': True,
     }),
-    'created_at': datetime.datetime(2020, 1, 1, 1, 1, 1),
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'id': 'GMPXMVbyXHUfymCDaloV',
     'ping': dict({
-      'pinged_at': datetime.datetime(2020, 1, 1, 1, 1, 1),
+      'pinged_at': datetime.datetime(2015, 10, 6, 20, 0),
     }),
     'progress': 6380,
     'retries': 2313,
@@ -32,7 +32,7 @@
         'state': <JobState.ERROR: 'error'>,
         'step_description': None,
         'step_name': None,
-        'timestamp': datetime.datetime(2020, 1, 1, 1, 1, 1),
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
       }),
     ]),
     'user': dict({
