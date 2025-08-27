@@ -14,7 +14,6 @@ from virtool.workflow.analysis.utils import ReadPaths
 from virtool.workflow.api.client import APIClient
 from virtool.workflow.data.uploads import WFUploads
 from virtool.workflow.errors import JobsAPINotFoundError
-from virtool.workflow.files import VirtoolFileFormat
 
 logger = get_logger("api")
 
@@ -79,7 +78,7 @@ class WFNewSample:
 
     delete: Callable[[], Coroutine[None, None, None]]
     finalize: Callable[[dict[str, Any]], Coroutine[None, None, None]]
-    upload: Callable[[Path, VirtoolFileFormat], Coroutine[None, None, None]]
+    upload: Callable[[Path], Coroutine[None, None, None]]
 
 
 @fixture
@@ -176,7 +175,7 @@ async def new_sample(
     async def delete():
         await _api.delete(base_url_path)
 
-    async def upload(path: Path, fmt: VirtoolFileFormat = "fastq"):
+    async def upload(path: Path):
         await _api.put_file(f"{base_url_path}/reads/{path.name}", path, "fastq")
 
     return WFNewSample(

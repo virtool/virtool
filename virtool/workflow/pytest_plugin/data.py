@@ -1,10 +1,10 @@
-import datetime
 from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
 from pydantic_factories import ModelFactory, Use
 
+from tests.fixtures.core import StaticTime
 from virtool.analyses.models import Analysis, AnalysisSample
 from virtool.indexes.models import Index, IndexNested
 from virtool.jobs.models import JobAcquired, JobMinimal, JobPing
@@ -51,55 +51,55 @@ class WorkflowData:
 @pytest.fixture
 def workflow_data(
     example_path: Path,
-    static_datetime: datetime.datetime,
+    static_time: StaticTime,
 ) -> WorkflowData:
     class AnalysisFactory(ModelFactory):
         __model__ = Analysis
 
-        created_at = Use(lambda: static_datetime)
-        updated_at = Use(lambda: static_datetime)
+        created_at = Use(lambda: static_time.datetime)
+        updated_at = Use(lambda: static_time.datetime)
 
     class IndexFactory(ModelFactory[Index]):
         __model__ = Index
 
-        created_at = Use(lambda: static_datetime)
+        created_at = Use(lambda: static_time.datetime)
 
     IndexFactory.seed_random(12)
 
     class JobFactory(ModelFactory):
         __model__ = JobAcquired
 
-        created_at = Use(lambda: static_datetime)
-        timestamp = Use(lambda: static_datetime)
+        created_at = Use(lambda: static_time.datetime)
+        timestamp = Use(lambda: static_time.datetime)
 
     JobFactory.seed_random(55)
 
     class MLFactory(ModelFactory):
         __model__ = MLModelRelease
 
-        created_at = Use(lambda: static_datetime)
-        published_at = Use(lambda: static_datetime)
+        created_at = Use(lambda: static_time.datetime)
+        published_at = Use(lambda: static_time.datetime)
 
     class ReferenceFactory(ModelFactory):
         __model__ = Reference
 
-        created_at = Use(lambda: static_datetime)
+        created_at = Use(lambda: static_time.datetime)
 
     ReferenceFactory.seed_random(22)
 
     class SampleFactory(ModelFactory):
         __model__ = Sample
 
-        created_at = Use(lambda: static_datetime)
+        created_at = Use(lambda: static_time.datetime)
         removed_at = None
-        uploaded_at = Use(lambda: static_datetime)
+        uploaded_at = Use(lambda: static_time.datetime)
 
     SampleFactory.seed_random(5)
 
     class SubtractionFactory(ModelFactory):
         __model__ = Subtraction
 
-        created_at = Use(lambda: static_datetime)
+        created_at = Use(lambda: static_time.datetime)
 
     job: JobAcquired = JobFactory.build()
 
@@ -108,7 +108,7 @@ def workflow_data(
         "resource_id": "foo",
         "test": True,
     }
-    job.ping = JobPing(pinged_at=static_datetime)
+    job.ping = JobPing(pinged_at=static_time.datetime)
 
     """A finalized sample to be used for testing analyses."""
     sample = SampleFactory.build()

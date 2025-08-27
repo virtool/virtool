@@ -1,10 +1,10 @@
 import asyncio
-import datetime
 from pathlib import Path
 
 import pytest
 from structlog.testing import LogCapture
 
+from tests.fixtures.core import StaticTime
 from virtool.config.cls import WorkflowConfig
 from virtool.jobs.models import JobState, JobStatus
 from virtool.redis import Redis
@@ -85,7 +85,7 @@ async def test_terminated_by_cancellation(
     log: LogCapture,
     redis: Redis,
     redis_connection_string: str,
-    static_datetime: datetime.datetime,
+    static_time: StaticTime,
     tmp_path: Path,
     work_path: Path,
     workflow_data: WorkflowData,
@@ -98,7 +98,7 @@ async def test_terminated_by_cancellation(
         JobStatus(
             progress=0,
             state=JobState.WAITING,
-            timestamp=static_datetime,
+            timestamp=static_time.datetime,
         ),
     ]
 

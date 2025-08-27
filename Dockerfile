@@ -40,7 +40,6 @@ WORKDIR /app
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
 COPY --from=ghcr.io/virtool/tools:1.1.0 /tools/bowtie2/2.5.4/bowtie* /usr/local/bin/
-COPY --from=ghcr.io/virtool/tools:1.1.0 /tools/hmmer/3.2.1 /opt/hmmer
 COPY --from=ghcr.io/virtool/tools:1.1.0 /tools/pigz/2.8/pigz /usr/local/bin/
 COPY --from=build /app/.venv /app/.venv
 COPY alembic.ini ./

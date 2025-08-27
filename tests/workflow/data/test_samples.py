@@ -327,8 +327,8 @@ class TestNewSample:
 
         new_sample: WFNewSample = await scope.instantiate_by_key("new_sample")
 
-        await new_sample.upload(new_sample.uploads[0].path, "fastq")
-        await new_sample.upload(new_sample.uploads[1].path, "fastq")
+        await new_sample.upload(new_sample.uploads[0].path)
+        await new_sample.upload(new_sample.uploads[1].path)
 
         assert (captured_uploads_path / "reads_1.fq.gz").exists()
         assert (captured_uploads_path / "reads_2.fq.gz").exists()

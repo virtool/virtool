@@ -1,11 +1,11 @@
 import asyncio
-import datetime
 import time
 
 import pytest
 from pytest_structlog import StructuredLogCapture
 from structlog.testing import LogCapture
 
+from tests.fixtures.core import StaticTime
 from virtool.config.cls import WorkflowConfig
 from virtool.jobs.models import JobState, JobStatus
 from virtool.redis import Redis
@@ -49,7 +49,7 @@ async def wait_for_job_progress(
 async def test_cancellation(
     log: LogCapture,
     redis: Redis,
-    static_datetime: datetime.datetime,
+    static_time: StaticTime,
     workflow_config: WorkflowConfig,
     workflow_data: WorkflowData,
 ):
@@ -59,7 +59,7 @@ async def test_cancellation(
         JobStatus(
             progress=0,
             state=JobState.WAITING,
-            timestamp=static_datetime,
+            timestamp=static_time.datetime,
         ),
     ]
 
@@ -147,7 +147,7 @@ async def test_sigterm(
     jobs_api_connection_string: str,
     redis: Redis,
     redis_connection_string: str,
-    static_datetime: datetime.datetime,
+    static_time: StaticTime,
     workflow_config: WorkflowConfig,
     workflow_data: WorkflowData,
 ):
@@ -156,7 +156,7 @@ async def test_sigterm(
         JobStatus(
             progress=0,
             state=JobState.WAITING,
-            timestamp=static_datetime,
+            timestamp=static_time.datetime,
         ),
     ]
 

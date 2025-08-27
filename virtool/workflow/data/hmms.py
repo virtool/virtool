@@ -5,19 +5,22 @@ import json
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
-from shutil import which
 
 from pyfixtures import fixture
+from structlog import get_logger
 
 from virtool.hmm.models import HMM
 from virtool.utils import decompress_file
 from virtool.workflow.api.client import APIClient
-from virtool.workflow.runtime.run_subprocess import RunSubprocess
+
+logger = get_logger("api")
 
 
 @dataclass
 class WFHMMs:
-    """A class that exposes:
+    """Hidden Markov model data from Virtool.
+
+    Exposes:
 
     1. A :class:`dict` the links `HMMER <http://hmmer.org/>`_ cluster IDs to Virtool
        annotation IDs.
@@ -36,13 +39,15 @@ class WFHMMs:
 
     @cached_property
     def cluster_annotation_map(self) -> dict[int, str]:
-        """A :class:`dict` that maps cluster IDs used to identify HMMs in
-        `HMMER <http://hmmer.org/>`_ to annotation IDs used in Virtool.
+        """A dict that maps cluster IDs to annotation IDs.
+
+        This is used to link HMMs in `HMMER <http://hmmer.org/>`_ to annotations
+        records used in Virtool.
         """
         return {hmm.cluster: hmm.id for hmm in self.annotations}
 
     @property
-    def profiles_path(self):
+    def profiles_path(self) -> Path:
         """The path to the ``profiles.hmm`` file.
 
         It can be provided directly to HMMER.
@@ -62,9 +67,8 @@ class WFHMMs:
 async def hmms(
     _api: APIClient,
     proc: int,
-    run_subprocess: RunSubprocess,
     work_path: Path,
-):
+) -> WFHMMs:
     """A fixture for accessing HMM data.
 
     The ``*.hmm`` file is copied from the data directory and ``hmmpress`` is run to
@@ -77,29 +81,30 @@ async def hmms(
     :raises: :class:`RuntimeError`: hmmpress command failed
 
     """
-    if await asyncio.to_thread(which, "hmmpress") is None:
-        raise RuntimeError("hmmpress is not installed")
-
     hmms_path = work_path / "hmms"
     await asyncio.to_thread(hmms_path.mkdir, parents=True, exist_ok=True)
 
+    logger.info("downloading hmm annotations")
     annotations_path = hmms_path / "annotations.json"
     compressed_annotations_path = hmms_path / "annotations.json.gz"
     await _api.get_file("/hmms/files/annotations.json.gz", compressed_annotations_path)
+
+    logger.info("unpacking hmm annotations")
     await asyncio.to_thread(
         decompress_file,
         compressed_annotations_path,
         annotations_path,
         proc,
     )
+
+    logger.info("parsing hmm annotations")
     annotations = await asyncio.to_thread(
         lambda: [HMM(**hmm) for hmm in json.loads(annotations_path.read_text())],
     )
 
+    logger.info("downloading hmm profiles")
     profiles_path = hmms_path / "profiles.hmm"
     await _api.get_file("/hmms/files/profiles.hmm", profiles_path)
-    p = await run_subprocess(["hmmpress", str(profiles_path)])
-    if p.returncode != 0:
-        raise RuntimeError("hmmpress command failed")
 
+    logger.info("finished setuping up hmms")
     return WFHMMs(annotations, hmms_path)
