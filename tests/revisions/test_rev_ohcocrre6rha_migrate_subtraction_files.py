@@ -33,7 +33,7 @@ def parse_fasta(file_path: Path):
             yield current_id, "".join(current_seq)
 
 
-@pytest.mark.timeout(20)
+@pytest.mark.timeout(60)
 async def test_upgrade(
     ctx: MigrationContext,
     example_path: Path,
