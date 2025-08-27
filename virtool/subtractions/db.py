@@ -119,7 +119,7 @@ async def unlink_default_subtractions(
     mongo: "Mongo",
     subtraction_id: str,
     session: AsyncIOMotorClientSession,
-):
+) -> None:
     """Remove a subtraction as a default subtraction for samples.
 
     :param mongo: the application mongo object

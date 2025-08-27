@@ -335,7 +335,7 @@ class AnalysisData(DataLayerDomain):
         if right == "write":
             return write
 
-    async def delete(self, analysis_id: str, jobs_api_flag: bool):
+    async def delete(self, analysis_id: str, jobs_api_flag: bool) -> None:
         """Delete a single analysis by its ID.
 
         :param analysis_id: the analysis ID

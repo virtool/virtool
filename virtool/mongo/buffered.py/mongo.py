@@ -22,7 +22,7 @@ class BufferedBulkWriter:
         self._buffer: List[InsertOne | UpdateOne] = []
         self._session = session
 
-    async def add(self, request: InsertOne | UpdateOne):
+    async def add(self, request: InsertOne | UpdateOne) -> None:
         """
         Add a write request to the buffer.
 
@@ -37,7 +37,7 @@ class BufferedBulkWriter:
         if len(self._buffer) == self.batch_size:
             await self.flush()
 
-    async def flush(self):
+    async def flush(self) -> None:
         """
         Flush the buffered write requests to MongoDB.
 

@@ -15,7 +15,7 @@ from virtool.pg.utils import get_row_by_id
 from virtool.samples.oas import CreateAnalysisRequest
 
 
-@pytest.fixture()
+@pytest.fixture
 async def setup_sample(mongo: "Mongo", fake: DataFaker) -> str:
     user = await fake.users.create()
 
@@ -184,7 +184,7 @@ async def test_upload_file(
         0,
     )
 
-    chunks = fake_file_chunker(example_path / "reads/single.fq.gz")
+    chunks = fake_file_chunker(example_path / "sample" / "reads_1.fq.gz")
 
     analysis_file = await data_layer.analyses.upload_file(
         chunks,

@@ -18,7 +18,7 @@ alembic_down_revision = None
 virtool_down_revision = "1keyha5n6l0j"
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     await ctx.mongo.caches.update_many({}, {"$rename": {"hash": "key"}})
 
     if await ctx.mongo.caches.count_documents({"hash": {"$exists": True}}):

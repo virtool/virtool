@@ -14,11 +14,12 @@ from virtool.mongo.identifier import FakeIdProvider
 @pytest.fixture(scope="session")
 def mongo_connection_string(request):
     """The connection string for the MongoDB testing instance."""
-    return request.config.getoption("db_connection_string")
+    return "mongodb://root:virtool@mongo:27017"
 
 
-@pytest.fixture()
+@pytest.fixture
 def mongo_name(worker_id: str) -> str:
+    """The name of the MongoDB database for this test worker."""
     suffix = "".join(choices(ascii_lowercase, k=3))
     return f"vt-test-{worker_id}-{suffix}"
 
@@ -38,7 +39,7 @@ async def motor_client(mongo_connection_string: str):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 async def motor_database(
     motor_client: motor.motor_asyncio.AsyncIOMotorClient,
     mongo_name: str,
@@ -55,7 +56,7 @@ async def motor_database(
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def mongo(motor_database: AsyncIOMotorDatabase):
     return virtool.mongo.core.Mongo(motor_database, FakeIdProvider())
 

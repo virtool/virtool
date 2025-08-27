@@ -97,7 +97,7 @@ async def compress_sample_reads(
     return files
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     async for sample in ctx.mongo.samples.find({"files": {"$exists": True}}):
         if "is_legacy" not in sample:
             sample["is_legacy"] = _check_is_legacy(sample)

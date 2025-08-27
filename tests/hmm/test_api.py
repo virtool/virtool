@@ -1,5 +1,6 @@
 import json
 import shutil
+from http import HTTPStatus
 from pathlib import Path
 
 import pytest
@@ -11,7 +12,7 @@ from virtool.mongo.utils import get_mongo_from_app
 from virtool.utils import decompress_file
 
 
-@pytest.fixture()
+@pytest.fixture
 async def fake_hmm_status(mongo, fake: DataFaker, static_time):
     user = await fake.users.create()
 
@@ -70,7 +71,7 @@ async def test_find(
 
     resp = await client.get("/hmms")
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot
 
 
@@ -78,7 +79,7 @@ async def test_get_status(fake_hmm_status, snapshot, spawn_client, static_time):
     client = await spawn_client(authenticated=True)
     resp = await client.get("/hmms/status")
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot(name="json")
 
 
@@ -91,7 +92,7 @@ async def test_get_release(fake_hmm_status, spawn_client, snapshot):
 
     resp = await client.get("/hmms/status/release")
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot(name="json")
 
 
@@ -121,7 +122,7 @@ async def test_get(
         await resp_is.not_found(resp)
         return
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot(name="json")
 
 
@@ -136,7 +137,7 @@ async def test_get_hmm_annotations(data_path: Path, spawn_job_client: JobClientS
     decompressed_hmm_annotations = data_path / "annotations.json"
 
     async with client.get("/hmms/files/annotations.json.gz") as response:
-        assert response.status == 200
+        assert response.status == HTTPStatus.OK
 
         with compressed_hmm_annotations.open("wb") as f:
             f.write(await response.read())
@@ -174,7 +175,7 @@ async def test_get_hmm_profiles(
     resp = await client.get("/hmms/files/profiles.hmm")
 
     if data_exists and file_exists:
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert profiles_path.read_bytes() == await resp.content.read()
     else:
         assert resp.status == 404

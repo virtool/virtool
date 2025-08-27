@@ -22,7 +22,7 @@ virtool_down_revision = "2y6jeuxl2q0w"
 required_alembic_revision = None
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     """Add the `pinged_at` field to all non-waiting jobs.
 
     Use the last status timestamp for jobs that do not have a `pinged_at` field.

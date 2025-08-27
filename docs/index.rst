@@ -12,5 +12,5 @@ See the :ref:`index <workflow:index>` section for more details.
    transforms
    types
 
-   testing/faking
-   testing/fixtures
+   testing/index
+   workflow/index

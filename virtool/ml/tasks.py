@@ -23,6 +23,6 @@ class MLModelsSyncTask(BaseTask):
 
         self.steps = [self.sync]
 
-    async def sync(self):
+    async def sync(self) -> None:
         """Sync the local models with www.virtool.ca and the releases on GitHub."""
         await self.data.ml.sync()

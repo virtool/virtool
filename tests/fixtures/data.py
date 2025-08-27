@@ -13,7 +13,7 @@ from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
 
 
-@pytest.fixture()
+@pytest.fixture
 def data_layer(
     authorization_client: AuthorizationClient,
     config,
@@ -43,6 +43,6 @@ def data_layer(
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 async def tasks_data(pg: AsyncEngine, redis: Redis) -> TasksData:
     return TasksData(pg, TasksClient(redis))

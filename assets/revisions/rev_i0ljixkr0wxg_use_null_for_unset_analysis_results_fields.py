@@ -18,7 +18,7 @@ alembic_down_revision = None
 virtool_down_revision = "tlogeiyxl9uz"
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     await ctx.mongo.analyses.update_many(
         {"results": {"$exists": False}},
         {"$set": {"results": None}},

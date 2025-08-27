@@ -25,7 +25,7 @@ async def remove_user_roles(
     user_id: str | int,
     space_id: int,
     enums: list[EnumMeta],
-):
+) -> None:
     await asyncio.gather(
         *[
             authorization_client.remove(

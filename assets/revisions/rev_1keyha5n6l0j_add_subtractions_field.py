@@ -18,7 +18,7 @@ alembic_down_revision = None
 virtool_down_revision = "7emq1brv0zz6"
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     for collection in (ctx.mongo.analyses, ctx.mongo.samples):
         updates = []
 

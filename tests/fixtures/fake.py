@@ -2,6 +2,7 @@ import shutil
 from pathlib import Path
 
 import pytest
+from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool.data.http import HTTPClient
@@ -12,8 +13,8 @@ from virtool.mongo.core import Mongo
 from virtool.redis import Redis
 
 
-@pytest.fixture()
-def app(mongo, pg, tmp_path, config, data_layer):
+@pytest.fixture
+def app(config, data_layer: DataLayer, mongo: Mongo, pg: AsyncEngine):
     return {
         "config": config,
         "data": data_layer,
@@ -23,18 +24,18 @@ def app(mongo, pg, tmp_path, config, data_layer):
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake(
-    data_layer: "DataLayer",
+    data_layer: DataLayer,
     example_path: Path,
-    mocker,
+    mocker: MockerFixture,
     mongo: Mongo,
     pg: AsyncEngine,
     redis: Redis,
 ):
     """Provides a :class:`DataFaker` object for generating deterministic fake data.
 
-    This fixture supersedes :fixture:`fake` and should be used in all new tests.
+    This fixture supersedes :fixture:`fake` and should be used in all new workflow.
 
     .. code-block:: python
 

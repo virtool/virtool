@@ -13,7 +13,7 @@ async def update_member_users_and_api_keys(
     mongo_session: AsyncIOMotorClientSession,
     pg_session: AsyncSession,
     group_id: int,
-):
+) -> None:
     """For the ``group_id``, update member users ``groups`` and ``primary_group`` fields
     and update their API key permissions.
 

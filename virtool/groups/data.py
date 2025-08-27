@@ -183,7 +183,7 @@ class GroupsData:
 
         return await self.get(group_id)
 
-    async def delete(self, group_id: int):
+    async def delete(self, group_id: int) -> None:
         """Delete a group by its id.
 
         Deletes the group and updates all member user permissions if they are affected

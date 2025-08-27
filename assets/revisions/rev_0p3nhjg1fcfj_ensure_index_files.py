@@ -38,7 +38,7 @@ virtool_down_revision = "ulapmx8i3vpg"
 required_alembic_revision = None
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     async for index in ctx.mongo.indexes.find({"ready": True}):
         index_id = index["_id"]
 
@@ -98,7 +98,7 @@ async def ensure_json(
     data_path: Path,
     ref_id: str,
     manifest: dict,
-):
+) -> None:
     """Ensure that a there is a compressed JSON representation of the index found at
     `path`` exists.
 

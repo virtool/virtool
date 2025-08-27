@@ -1,0 +1,39 @@
+[tasks.docs]
+description = "Run the Sphinx autobuild server."
+run = "uv run sphinx-autobuild docs docs/_build"
+
+[tasks.test]
+description = "Run Python tests in Docker."
+run = [
+  "docker compose up -d test",
+  'docker compose exec test uv run pytest {{arg(name="pytest_args", var=true, default="")}}'
+]
+
+[tasks."test:build"]
+description = "Build test Docker image."
+env = { UID = "{{exec(command='id -u')}}", GID = "{{exec(command='id -g')}}" }
+run = "docker compose build test"
+
+[tasks."test:shell"]
+description = "Enter test container shell."
+env = { UID = "{{exec(command='id -u')}}", GID = "{{exec(command='id -g')}}" }
+run = [
+  "docker compose up -d test",
+  "docker compose exec test bash"
+]
+
+[tasks."test:down"]
+description = "Stop test environment."
+run = "docker compose down --remove-orphans"
+
+[tasks."format:check"]
+description = "Check code formatting with ruff."
+run = "uv run ruff format --check"
+
+[tasks.oas]
+description = "Generate OpenAPI specification."
+run = [
+  "mkdir -p virtool/spec",
+  "uv run virtool oas > virtool/spec/openapi.json"
+]
+

@@ -26,14 +26,14 @@ TABLE_NAMES = (
 )
 
 
-def upgrade():
+def upgrade() -> None:
     for table_name in TABLE_NAMES:
         op.alter_column(table_name, column_name="size", type_=BigInteger)
 
     op.alter_column("tasks", column_name="file_size", type_=BigInteger)
 
 
-def downgrade():
+def downgrade() -> None:
     for table_name in TABLE_NAMES:
         op.alter_column(table_name, column_name="size", type_=Integer)
 

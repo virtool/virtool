@@ -629,7 +629,7 @@ class OTUData:
 
         return await self._mongo.with_transaction(func)
 
-    async def remove_isolate(self, otu_id: str, isolate_id: str, user_id: str):
+    async def remove_isolate(self, otu_id: str, isolate_id: str, user_id: str) -> None:
         """Remove an isolate.
 
         :param otu_id: the ID of the parent OTU
@@ -863,7 +863,7 @@ class OTUData:
         isolate_id: str,
         sequence_id: str,
         user_id: str,
-    ):
+    ) -> None:
         """Remove a sequence.
 
         :param otu_id: the ID of the parent OTU:

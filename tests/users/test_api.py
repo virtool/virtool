@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 import pytest
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -21,7 +23,7 @@ from virtool.users.pg import SQLUser
 from virtool.users.utils import check_password
 
 
-@pytest.fixture()
+@pytest.fixture
 async def setup_update_user(
     data_layer: DataLayer,
     fake: DataFaker,
@@ -72,7 +74,7 @@ async def test_find(
 
     resp = await client.get(url)
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot
 
 
@@ -185,7 +187,7 @@ class TestUpdate:
             },
         )
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
     async def test_with_groups(
@@ -205,7 +207,7 @@ class TestUpdate:
             },
         )
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
     async def test_short_password(self, setup_update_user, snapshot: SnapshotAssertion):
@@ -292,7 +294,7 @@ async def test_list_permissions(
         f"/users/{user}/permissions",
     )
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot
 
 

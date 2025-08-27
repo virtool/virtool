@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from aiohttp import BasicAuth
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
@@ -14,7 +16,7 @@ class TestJobAuthentication:
 
         resp = await client.get("/")
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
 
     async def test_unauthenticated_root_fails(self, spawn_job_client: JobClientSpawner):
         """Check that a request against the root API URL"""

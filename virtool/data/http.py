@@ -27,7 +27,7 @@ class HTTPClient:
         url: str,
         target: Path,
         progress_handler: Callable[[float | int], Awaitable[int]] | None = None,
-    ):
+    ) -> None:
         """Download the binary file at ``url`` to the location specified by
         ``target_path``.
 
@@ -53,7 +53,7 @@ async def download_file(
     url: str,
     target_path: Path,
     progress_handler: Callable[[float | int], Awaitable[int]] | None = None,
-):
+) -> None:
     """Download the binary file ``url`` to the location specified by ``target_path``.
 
     :param url: the download URL for the release

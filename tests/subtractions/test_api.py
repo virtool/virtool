@@ -1,4 +1,5 @@
 import os
+from http import HTTPStatus
 from pathlib import Path
 
 import pytest
@@ -22,7 +23,7 @@ async def test_find_empty_subtractions(
 
     resp = await client.get("/subtractions")
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot
 
 
@@ -57,7 +58,7 @@ async def test_find(
 
     resp = await client.get(path)
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot_recent
 
 
@@ -78,7 +79,7 @@ async def test_get(
 
     resp = await client.get(f"/subtractions/{subtraction.id}")
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot_recent
 
 
@@ -94,7 +95,7 @@ async def test_get_from_job(fake: DataFaker, spawn_job_client, snapshot_recent):
 
     resp = await client.get(f"/subtractions/{subtraction.id}")
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot_recent
 
 
@@ -137,7 +138,7 @@ async def test_edit(
 
     resp = await client.patch(f"/subtractions/{subtraction.id}", data)
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot_recent
     assert await mongo.subtraction.find_one() == snapshot_recent
 
@@ -319,7 +320,7 @@ class TestFinalize:
 
         resp = await client.patch(f"/subtractions/{subtraction.id}", json=data)
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot_recent
 
     async def test_not_found(
@@ -493,8 +494,8 @@ class TestDownloadSubtractionFile:
             f"/subtractions/{subtraction.id}/files/subtraction.fa.gz",
         )
 
-        assert bowtie_resp.status == 200
-        assert fasta_resp.status == 200
+        assert bowtie_resp.status == HTTPStatus.OK
+        assert fasta_resp.status == HTTPStatus.OK
 
         assert (
             data_path / "subtractions" / subtraction.id / "subtraction.1.bt2"

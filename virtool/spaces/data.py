@@ -291,7 +291,7 @@ class SpacesData:
 
         raise ResourceNotFoundError
 
-    async def remove_member(self, space_id: int, member_id: str | int):
+    async def remove_member(self, space_id: int, member_id: str | int) -> None:
         """Remove a member from the space.
 
         :param space_id: the space id.

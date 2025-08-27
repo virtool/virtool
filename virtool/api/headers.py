@@ -18,7 +18,7 @@ async def headers_middleware(req, handler):
     return resp
 
 
-async def on_prepare_location(req: Request, resp: Response):
+async def on_prepare_location(req: Request, resp: Response) -> None:
     """
     Signal handler that adds base URL to Location header or Content-Location if possible
     """

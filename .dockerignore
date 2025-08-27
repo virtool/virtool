@@ -2,11 +2,10 @@
 .coveragerc
 .github
 .idea
+.pdm-build
 .pytest_cache
-.venv
+
 CLAUDE.md
 data
-docker
 docs
-watch
 tests

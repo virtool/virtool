@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
@@ -58,7 +60,7 @@ async def test_list(
 
     resp = await client.get("/spaces")
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot
 
 
@@ -99,7 +101,7 @@ async def test_get(
 
     resp = await client.get("/spaces/0")
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot
 
 
@@ -133,7 +135,7 @@ async def test_update(
         {"name": "New Name", "description": "New description"},
     )
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot
 
 
@@ -175,7 +177,7 @@ async def test_list_space_members(
 
     resp = await client.get("/spaces/0/members")
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot
 
 
@@ -217,7 +219,7 @@ async def test_update_member_roles(
         {"role": "member", "label": SpaceLabelRole.MANAGER},
     )
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot
 
 

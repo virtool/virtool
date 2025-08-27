@@ -23,6 +23,6 @@ class JobsCleanTask(BaseTask):
 
         self.steps = [self.clean_jobs]
 
-    async def clean_jobs(self):
+    async def clean_jobs(self) -> None:
         """Clean up all jobs."""
         await self.data.jobs.clean()

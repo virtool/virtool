@@ -13,14 +13,14 @@ from virtool.hmm.db import (
 )
 from virtool.mongo.core import Mongo
 
-JSON_RESULT_PATH = Path.cwd() / "tests" / "test_files" / "nuvs" / "results.json"
 
-
-async def test_get_hmms_referenced_in_files(data_path: Path, mongo: Mongo):
+async def test_get_hmms_referenced_in_files(
+    data_path: Path, example_path: Path, mongo: Mongo
+):
     path = data_path / "samples" / "foo" / "analysis" / "bar"
     path.mkdir(parents=True)
 
-    shutil.copy(JSON_RESULT_PATH, path / "results.json")
+    shutil.copy(example_path / "nuvs_results.json", path / "results.json")
 
     await mongo.analyses.insert_one(
         {"_id": "bar", "workflow": "nuvs", "sample": {"id": "foo"}, "results": "file"},

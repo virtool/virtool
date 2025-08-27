@@ -30,7 +30,7 @@ class ChunkWriter:
         await self._q.join()
         await self._task
 
-    async def write(self, chunk: bytes):
+    async def write(self, chunk: bytes) -> None:
         """Write a chunk of data to the file.
 
         :param chunk: the data to write

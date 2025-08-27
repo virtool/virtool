@@ -18,7 +18,7 @@ alembic_down_revision = None
 virtool_down_revision = "jhqn47cauoea"
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     await ctx.mongo.references.update_many({}, {"$unset": {"process": ""}})
 
     if await ctx.mongo.references.count_documents({"process": {"$exists": True}}):

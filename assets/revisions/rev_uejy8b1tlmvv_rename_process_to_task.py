@@ -21,7 +21,7 @@ virtool_down_revision = "jlq24f8q12pk"
 required_alembic_revision = None
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     await ctx.mongo.references.update_many(
         {"process": {"$exists": True}},
         {"$rename": {"process": "task"}},

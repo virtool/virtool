@@ -1,4 +1,5 @@
 import datetime
+from http import HTTPStatus
 
 import arrow
 import pytest
@@ -43,7 +44,7 @@ class TestFind:
 
         resp = await client.get("/jobs?per_page=5")
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot(matcher=_job_response_matcher)
 
     async def test_user(self, fake: DataFaker, spawn_client: ClientSpawner):
@@ -64,19 +65,19 @@ class TestFind:
         resp_1 = await client.get(f"/jobs?user={user_1.id}")
         body_1 = await resp_1.json()
 
-        assert resp_1.status == 200
+        assert resp_1.status == HTTPStatus.OK
         assert all(job["user"]["id"] == user_1.id for job in body_1["documents"])
 
         resp_2 = await client.get(f"/jobs?user={user_2.id}")
         body_2 = await resp_2.json()
 
-        assert resp_2.status == 200
+        assert resp_2.status == HTTPStatus.OK
         assert all(job["user"]["id"] == user_2.id for job in body_2["documents"])
 
         resp_3 = await client.get(f"/jobs?user={user_1.id}&user={user_2.id}")
         body_3 = await resp_3.json()
 
-        assert resp_3.status == 200
+        assert resp_3.status == HTTPStatus.OK
         assert all(
             job["user"]["id"] in [user_1.id, user_2.id] for job in body_3["documents"]
         )
@@ -124,7 +125,7 @@ class TestFind:
         resp = await client.get(f"/jobs?state={state}")
         body = await resp.json()
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert all(job["state"] == state for job in body["documents"])
 
     async def test_state_invalid(self, snapshot, spawn_client: ClientSpawner):
@@ -155,7 +156,7 @@ async def test_get(error, fake: DataFaker, snapshot, spawn_client):
     body = await resp.json()
 
     if error is None:
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert body == snapshot(matcher=_job_response_matcher)
 
         # Explicitly ensure the secret API key is not returned in the response.
@@ -186,7 +187,7 @@ class TestAcquire:
         resp = await client.patch(f"/jobs/{job.id}", json={"acquired": True})
         body = await resp.json()
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert body == snapshot(matcher=_job_response_matcher)
         assert "key" in body
 
@@ -198,7 +199,7 @@ class TestAcquire:
         job = await fake.jobs.create(user, state=JobState.WAITING)
 
         resp = await client.patch(f"/jobs/{job.id}", json={"acquired": True})
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
 
         resp = await client.patch(f"/jobs/{job.id}", json={"acquired": True})
 
@@ -234,7 +235,7 @@ class TestPing:
         resp = await client.put(f"/jobs/{job.id}/ping")
         body = await resp.json()
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
 
         assert len(body) == 1
         assert arrow.get(body["pinged_at"]) - arrow.utcnow() < datetime.timedelta(
@@ -293,7 +294,7 @@ async def test_cancel(
         await resp_is.conflict(resp, "Job cannot be cancelled in its current state")
         return
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
 
     body = await resp.json()
     assert body == snapshot

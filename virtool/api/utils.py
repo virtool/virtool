@@ -8,11 +8,11 @@ from virtool.types import Projection
 from virtool.utils import coerce_list
 
 
-def set_session_id_cookie(resp: Response, session_id: str):
+def set_session_id_cookie(resp: Response, session_id: str) -> None:
     resp.set_cookie("session_id", session_id, httponly=True, max_age=2600000)
 
 
-def set_session_token_cookie(resp: Response, session_token: str):
+def set_session_token_cookie(resp: Response, session_token: str) -> None:
     resp.set_cookie("session_token", session_token, httponly=True, max_age=2600000)
 
 

@@ -34,7 +34,7 @@ class CloneReferenceTask(BaseTask):
 
         self.steps = [self.clone]
 
-    async def clone(self):
+    async def clone(self) -> None:
         await self.data.references.populate_cloned_reference(
             self.context["manifest"],
             self.context["ref_id"],
@@ -101,7 +101,7 @@ class RemoteReferenceTask(BaseTask):
 
         self.import_data: ReferenceSourceData | None = None
 
-    async def download(self):
+    async def download(self) -> None:
         tracker = AccumulatingProgressHandlerWrapper(
             self.create_progress_handler(),
             self.context["release"]["size"],
@@ -122,7 +122,7 @@ class RemoteReferenceTask(BaseTask):
 
         self.import_data = ReferenceSourceData(**from_json)
 
-    async def populate(self):
+    async def populate(self) -> None:
         await self.data.references.populate_remote_reference(
             self.context["ref_id"],
             self.import_data,
@@ -167,7 +167,7 @@ class UpdateRemoteReferenceTask(BaseTask):
 
         self.source_data = ReferenceSourceData(**data)
 
-    async def update(self):
+    async def update(self) -> None:
         await self.data.references.update_remote_reference(
             self.context["ref_id"],
             self.source_data,
@@ -191,7 +191,7 @@ class ReferencesCleanTask(BaseTask):
 
         self.steps = [self.clean]
 
-    async def clean(self):
+    async def clean(self) -> None:
         await self.data.references.clean_all()
 
 
@@ -203,5 +203,5 @@ class ReferenceReleasesRefreshTask(BaseTask):
 
         self.steps = [self.refresh_remote_releases]
 
-    async def refresh_remote_releases(self):
+    async def refresh_remote_releases(self) -> None:
         await self.data.references.fetch_and_update_reference_releases()

@@ -12,7 +12,7 @@
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': 16700094,
+        'size': 723988,
         'type': 'reference',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
@@ -29,7 +29,7 @@
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': 16700094,
+        'size': 723988,
         'type': 'reads',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
@@ -46,7 +46,7 @@
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': 16700094,
+        'size': 723988,
         'type': 'subtraction',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
@@ -74,7 +74,7 @@
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': 16700094,
+        'size': 723988,
         'type': 'reads',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
@@ -102,7 +102,7 @@
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': 16700094,
+        'size': 723988,
         'type': 'reference',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
@@ -130,7 +130,7 @@
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': 16700094,
+        'size': 723988,
         'type': 'reads',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
@@ -158,7 +158,7 @@
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': 16700094,
+        'size': 723988,
         'type': 'subtraction',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
@@ -186,7 +186,7 @@
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': 16700094,
+        'size': 723988,
         'type': 'subtraction',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
@@ -203,7 +203,7 @@
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': 16700094,
+        'size': 723988,
         'type': 'reads',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
@@ -231,7 +231,7 @@
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': 16700094,
+        'size': 723988,
         'type': 'subtraction',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
@@ -248,7 +248,7 @@
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': 16700094,
+        'size': 723988,
         'type': 'reads',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
@@ -265,7 +265,7 @@
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': 16700094,
+        'size': 723988,
         'type': 'reference',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
@@ -304,7 +304,7 @@
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': 16700094,
+        'size': 723988,
         'type': 'subtraction',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
@@ -321,7 +321,7 @@
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': 16700094,
+        'size': 723988,
         'type': 'reads',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
@@ -338,7 +338,7 @@
         'removed': False,
         'removed_at': None,
         'reserved': False,
-        'size': 16700094,
+        'size': 723988,
         'type': 'reference',
         'uploaded_at': '2015-10-06T20:00:00Z',
         'user': dict({
@@ -357,13 +357,13 @@
   dict({
     'created_at': 'approximately_now_isoformat',
     'id': 1,
-    'name': 'single.fq.gz',
-    'name_on_disk': '1-single.fq.gz',
+    'name': 'reads_1.fq.gz',
+    'name_on_disk': '1-reads_1.fq.gz',
     'ready': True,
     'removed': False,
     'removed_at': None,
     'reserved': False,
-    'size': 16700094,
+    'size': 723988,
     'type': 'reads',
     'uploaded_at': 'approximately_now_isoformat',
     'user': dict({

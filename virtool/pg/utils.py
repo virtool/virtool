@@ -52,7 +52,7 @@ async def connect_pg(postgres_connection_string: str) -> AsyncEngine:
         sys.exit(1)
 
 
-async def check_version(engine: AsyncEngine):
+async def check_version(engine: AsyncEngine) -> None:
     """Check and log the Postgres sever version.
 
     :param engine: an AsyncConnection object
@@ -65,7 +65,7 @@ async def check_version(engine: AsyncEngine):
     logger.info("found postgres", version=version)
 
 
-async def delete_row(pg: AsyncEngine, id_: int, model: type[Base]):
+async def delete_row(pg: AsyncEngine, id_: int, model: type[Base]) -> None:
     """Deletes a row in the `model` SQL model by its row `id_`.
 
     :param pg: the application AsyncEngine object

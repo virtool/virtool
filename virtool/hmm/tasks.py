@@ -50,7 +50,7 @@ class HMMInstallTask(BaseTask):
             self.install,
         ]
 
-    async def download(self):
+    async def download(self) -> None:
         """Download the HMM release archive."""
         release = self.context["release"]
 
@@ -71,10 +71,10 @@ class HMMInstallTask(BaseTask):
             )
             await self._set_error("Could not download HMM data.")
 
-    async def decompress(self):
+    async def decompress(self) -> None:
         await to_thread(decompress_tgz, self.temp_path / "hmm.tar.gz", self.temp_path)
 
-    async def install(self):
+    async def install(self) -> None:
         annotations = await asyncio.to_thread(
             load_json,
             self.temp_path / "hmm" / "annotations.json",
@@ -88,7 +88,7 @@ class HMMInstallTask(BaseTask):
             self.temp_path / "hmm" / "profiles.hmm",
         )
 
-    async def cleanup(self):
+    async def cleanup(self) -> None:
         await self.data.hmms.clean_status()
 
 
@@ -108,5 +108,5 @@ class HMMRefreshTask(BaseTask):
 
         self.steps = [self.refresh]
 
-    async def refresh(self):
+    async def refresh(self) -> None:
         await self.data.hmms.update_release()

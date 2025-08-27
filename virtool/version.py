@@ -1,3 +1,4 @@
+from importlib import metadata
 from pathlib import Path
 
 from structlog import get_logger
@@ -26,3 +27,11 @@ def get_version_from_app(app) -> str:
     :return: the application version
     """
     return app["version"]
+
+
+def get_virtool_version() -> str:
+    """Get the version of the installed virtool package."""
+    try:
+        return metadata.version("virtool")
+    except metadata.PackageNotFoundError:
+        return "0.0.0"

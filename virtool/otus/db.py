@@ -303,7 +303,7 @@ async def update_sequence_segments(
     old: dict,
     new: dict,
     session: Optional[AsyncIOMotorClientSession] = None,
-):
+) -> None:
     if old is None or new is None or "schema" not in old:
         return
 

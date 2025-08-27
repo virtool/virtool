@@ -18,7 +18,7 @@ alembic_down_revision = "90bf491700cb"
 virtool_down_revision = None
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     """Move the ``subtracted_count`` and ``read_count`` fields from the document to the
     ``results`` sub-document.
 
