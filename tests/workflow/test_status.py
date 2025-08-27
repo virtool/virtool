@@ -91,6 +91,7 @@ async def test_error(
 
     @wf.step
     def raise_error():
+        """Raise and error for testing purposes."""
         raise error
 
     error_hook_called = False

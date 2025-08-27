@@ -13,7 +13,9 @@ from virtool.workflow.runtime.run import run_workflow
 async def test_success(
     clear_hooks, workflow_config: WorkflowConfig, workflow_data: WorkflowData
 ):
-    """Test that the on_success and on_finish hooks are triggered when a workflow succeeds."""
+    """Test that the on_success and on_finish hooks are triggered when a workflow
+    succeeds.
+    """
     wf = Workflow()
 
     @wf.step

@@ -174,12 +174,12 @@ async def main():
     @wf.step
     async def first():
         """Description of First."""
-        await asyncio.sleep(5)
+        await asyncio.sleep(2)
 
     @wf.step
     async def second():
         """Description of Second."""
-        await asyncio.sleep(10)
+        await asyncio.sleep(5)
 
     await start_runtime(
         WorkflowConfig(
@@ -216,7 +216,7 @@ if __name__ == "__main__":
 
     # Wait for the job to start running, then give it time to start the first step
     await wait_for_job_status(workflow_data, [JobState.RUNNING])
-    await asyncio.sleep(1.5)  # Terminate partway through the second step
+    await asyncio.sleep(3)  # Terminate partway through the second step
 
     # Send SIGTERM to the process
     proc.terminate()

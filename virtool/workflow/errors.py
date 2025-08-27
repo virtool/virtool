@@ -1,10 +1,6 @@
 """Workflow exceptions."""
 
 from subprocess import SubprocessError
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from virtool.workflow import WorkflowStep
 
 
 class JobAlreadyAcquiredError(Exception):
@@ -66,15 +62,15 @@ class WorkflowEmptyError(Exception):
         super().__init__(f"No workflow steps could be found in {module}")
 
 
-class WorkflowStepDescriptionError(WorkflowEmptyError):
+class WorkflowStepDescriptionError(Exception):
     """Raised when a workflow step description is invalid."""
 
-    def __init__(self, step: "WorkflowStep") -> None:
-        """Initialize a WorkflowStepDescriptionError with the affected step.
+    def __init__(self, name: str) -> None:
+        """Initialize a WorkflowStepDescriptionError with the affected step name.
 
         :param step: the workflow step
         """
-        super().__init__(f"{step} does not have a docstring")
+        super().__init__(f"{name} does not have a docstring")
 
 
 class SubprocessFailedError(SubprocessError):

@@ -83,7 +83,12 @@ select = ["ALL"]
 ignore = ["COM812", "D203", "D213", "EM102", "FBT001", "ISC001", "PLR0913"]
 
 [tool.ruff.lint.pydocstyle]
-ignore-decorators = ["pyfixtures.fixture", "pytest.fixture", "virtool.workflow.step"]
+ignore-decorators = [
+    "pyfixtures.fixture",
+    "pytest.fixture",
+    "virtool.workflow.step",
+    "virtool.workflow.workflow.Workflow.step"
+]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["ANN201", "ANN202", "D205", "S101", "S106"]

@@ -22,7 +22,7 @@
       'progress': 0,
       'stage': 'raise_error',
       'state': <JobState.RUNNING: 'running'>,
-      'step_description': '',
+      'step_description': 'Raise and error for testing purposes.',
       'step_name': 'Raise Error',
     }),
     dict({
@@ -34,7 +34,7 @@
       'progress': 0,
       'stage': 'raise_error',
       'state': <JobState.ERROR: 'error'>,
-      'step_description': '',
+      'step_description': 'Raise and error for testing purposes.',
       'step_name': 'Raise Error',
     }),
   ])

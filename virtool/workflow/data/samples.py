@@ -10,7 +10,7 @@ from structlog import get_logger
 from virtool.jobs.models import Job
 from virtool.models.enums import LibraryType
 from virtool.samples.models import Quality, Sample
-from virtool.workflow.analysis.utils import ReadPaths
+from virtool.workflow.analysis import ReadPaths
 from virtool.workflow.client import WorkflowAPIClient
 from virtool.workflow.data.uploads import WFUploads
 from virtool.workflow.errors import JobsAPINotFoundError

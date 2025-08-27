@@ -88,6 +88,6 @@ def _get_description_from_docstring(func: Callable[..., Any]) -> str:
     :raise ValueError: When `call` does not have a docstring
     """
     if func.__doc__ is None:
-        raise WorkflowStepDescriptionError
+        raise WorkflowStepDescriptionError(func.__name__)
 
     return func.__doc__.strip().split("\n")[0]
