@@ -238,7 +238,15 @@ if __name__ == "__main__":
     await asyncio.sleep(3)  # Terminate partway through the second step
 
     # Send SIGTERM to the process
-    proc.terminate()
+    if proc.returncode is None:
+        proc.terminate()
+    else:
+        # Process already completed - this helps diagnose timing issues in CI
+        stdout, stderr = await proc.communicate()
+        pytest.fail(
+            f"Process completed before SIGTERM could be sent (returncode: {proc.returncode}). "
+            f"Stdout: {stdout.decode()[:500]}... Stderr: {stderr.decode()[:500]}..."
+        )
 
     # Wait for the process to exit
     try:
