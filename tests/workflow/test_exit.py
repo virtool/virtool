@@ -245,7 +245,7 @@ if __name__ == "__main__":
         stdout, stderr = await proc.communicate()
         pytest.fail(
             f"Process completed before SIGTERM could be sent (returncode: {proc.returncode}). "
-            f"Stdout: {stdout.decode()[:500]}... Stderr: {stderr.decode()[:500]}..."
+            f"Stdout: {stdout.decode()[:2000]}... Stderr: {stderr.decode()[:2000]}..."
         )
 
     # Wait for the process to exit
