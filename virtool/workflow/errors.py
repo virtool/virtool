@@ -79,3 +79,9 @@ class WorkflowStepDescriptionError(WorkflowEmptyError):
 
 class SubprocessFailedError(SubprocessError):
     """Subprocess exited with non-zero status during a workflow."""
+
+    def __init__(self, command: list[str], return_code: int) -> None:
+        """Initialize a SubprocessFailedError with a command and return code."""
+        super().__init__(
+            f"Subprocess failed with exit code {return_code}: {' '.join(command)}"
+        )

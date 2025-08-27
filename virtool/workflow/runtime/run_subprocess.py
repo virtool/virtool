@@ -3,6 +3,7 @@
 import asyncio
 from asyncio.subprocess import Process
 from collections.abc import Callable, Coroutine
+from contextlib import suppress
 from pathlib import Path
 from typing import Protocol
 
@@ -134,10 +135,8 @@ async def _run_subprocess(
 
         # Have to do this in Python 3.10 to avoid Event loop closed error.
         # https://github.com/python/cpython/issues/88050
-        try:
+        with suppress(AttributeError):
             process._transport.close()
-        except AttributeError:
-            pass
 
         await process.wait()
         logger.info("subprocess exited", code=process.returncode)
@@ -152,8 +151,8 @@ async def _run_subprocess(
     # when the workflow fails for some other reason, hence not an exception
     if process.returncode not in [0, 15, -15]:
         raise SubprocessFailedError(
-            f"{command[0]} failed with exit code {process.returncode}\n"
-            f"arguments: {command}\n",
+            command=command,
+            return_code=process.returncode,
         )
 
     log.info(
