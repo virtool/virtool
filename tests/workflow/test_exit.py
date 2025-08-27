@@ -174,12 +174,12 @@ async def main():
     @wf.step
     async def first():
         """Description of First."""
-        await asyncio.sleep(1)
+        await asyncio.sleep(5)
 
     @wf.step
     async def second():
         """Description of Second."""
-        await asyncio.sleep(2)
+        await asyncio.sleep(10)
 
     await start_runtime(
         WorkflowConfig(

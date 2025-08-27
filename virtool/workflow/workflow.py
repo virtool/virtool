@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from virtool.utils import coerce_to_coroutine_function
+from virtool.workflow.errors import WorkflowStepDescriptionError
 
 
 @dataclass
@@ -87,6 +88,6 @@ def _get_description_from_docstring(func: Callable[..., Any]) -> str:
     :raise ValueError: When `call` does not have a docstring
     """
     if func.__doc__ is None:
-        raise ValueError(f"{func} does not have a docstring")
+        raise WorkflowStepDescriptionError
 
     return func.__doc__.strip().split("\n")[0]

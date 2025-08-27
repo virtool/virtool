@@ -12,7 +12,7 @@ from virtool.workflow.api.client import APIClient
 logger = get_logger("api")
 
 
-async def _ping_periodically(api: APIClient, job_id: str):
+async def _ping_periodically(api: APIClient, job_id: str) -> None:
     retries = 0
 
     try:

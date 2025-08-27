@@ -87,7 +87,10 @@ async def _run_subprocess(
     env: dict | None = None,
     cwd: str | None = None,
 ) -> asyncio.subprocess.Process:
-    """An implementation of :class:`RunSubprocess` using `asyncio.subprocess`."""
+    """Run a process with logging and event integration to the workflow framework.
+
+    Implements :class:`RunSubprocess` using `asyncio.subprocess`.
+    """
     log = logger.bind()
     log.info("running subprocess", command=command)
 

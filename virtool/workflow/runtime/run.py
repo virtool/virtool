@@ -52,27 +52,29 @@ def configure_status_hooks() -> None:
     """
 
     @on_step_start
-    async def handle_step_start(push_status):
+    async def handle_step_start(push_status) -> None:
         await push_status()
 
     @on_error(once=True)
-    async def handle_error(push_status):
+    async def handle_error(push_status) -> None:
         await push_status()
 
     @on_cancelled(once=True)
-    async def handle_cancelled(push_status):
+    async def handle_cancelled(push_status) -> None:
         await push_status()
 
     @on_terminated(once=True)
-    async def handle_terminated(push_status):
+    async def handle_terminated(push_status) -> None:
         await push_status()
 
     @on_success(once=True)
-    async def handle_success(push_status):
+    async def handle_success(push_status) -> None:
         await push_status()
 
 
-async def execute(workflow: Workflow, scope: FixtureScope, events: Events, logger) -> None:
+async def execute(
+    workflow: Workflow, scope: FixtureScope, events: Events, logger
+) -> None:
     """Execute a workflow.
 
     :param workflow: The workflow to execute

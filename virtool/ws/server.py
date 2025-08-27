@@ -13,7 +13,7 @@ logger = get_logger("ws")
 
 
 class WSServer:
-    def __init__(self, redis: Redis):
+    def __init__(self, redis: Redis) -> None:
         #: All active client connections.
         self._connections = []
         self._redis = redis

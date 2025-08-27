@@ -2,6 +2,8 @@
 
 from subprocess import SubprocessError
 
+from virtool.workflow import WorkflowStep
+
 
 class JobAlreadyAcquiredError(Exception):
     """Raised when an attempt is made to reacquire a job."""
@@ -56,6 +58,17 @@ class WorkflowStepsError(Exception):
 
     def __init__(self, module: str) -> None:
         super().__init__(f"No workflow steps could be found in {module}")
+
+
+class WorkflowStepDescriptionError(WorkflowStepsError):
+    """Raised when a workflow step description is invalid."""
+
+    def __init__(self, step: WorkflowStep) -> None:
+        """Initialize a WorkflowStepDescriptionError exception instance.
+
+        :param step: the workflow step
+        """
+        super().__init__(f"{step} does not have a docstring")
 
 
 class SubprocessFailedError(SubprocessError):
