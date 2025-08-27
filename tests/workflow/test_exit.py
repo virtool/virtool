@@ -46,6 +46,22 @@ async def wait_for_job_progress(
     return False
 
 
+async def wait_for_job_consumption(
+    redis: Redis, list_name: str, job_id: str, timeout: float = 10.0
+):
+    """Wait for a job ID to be consumed from the Redis list."""
+    start_time = time.time()
+
+    while time.time() - start_time < timeout:
+        # Check if job is still in the list
+        jobs = await redis.lrange(list_name, 0, -1)
+        if job_id not in jobs:
+            return True
+        await asyncio.sleep(0.1)
+
+    return False
+
+
 async def test_cancellation(
     log: LogCapture,
     redis: Redis,
@@ -190,7 +206,7 @@ async def main():
             redis_connection_string="{redis_connection_string}",
             redis_list_name="jobs_pathoscope",
             sentry_dsn="",
-            timeout=5,
+            timeout=10,
             work_path=Path("{workflow_config.work_path}"),
         ),
         workflow_loader=lambda: wf,
@@ -213,6 +229,9 @@ if __name__ == "__main__":
     )
 
     await redis.rpush("jobs_pathoscope", workflow_data.job.id)
+
+    # Wait for the job to be consumed from Redis (ensures workflow picked it up)
+    await wait_for_job_consumption(redis, "jobs_pathoscope", workflow_data.job.id)
 
     # Wait for the job to start running, then give it time to start the first step
     await wait_for_job_status(workflow_data, [JobState.RUNNING])
