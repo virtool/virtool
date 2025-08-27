@@ -37,6 +37,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Install mise
+        uses: jdx/mise-action@v2
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
@@ -46,7 +48,7 @@ jobs:
       - name: Install dependencies
         run: uv sync
       - name: Check formatting
-        run: uv run ruff format --check
+        run: mise run format:check
 
   # Generate the OpenAPI specification and upload it as an artifact.
   oas:
@@ -55,6 +57,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Install mise
+        uses: jdx/mise-action@v2
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
@@ -63,10 +67,8 @@ jobs:
         run: uv python install
       - name: Install dependencies
         run: uv sync
-      - name: Write OAS
-        run: |
-          mkdir -p virtool/spec
-          uv run virtool oas > virtool/spec/openapi.json
+      - name: Generate OAS
+        run: mise run oas
       - name: Upload OAS
         uses: actions/upload-artifact@v4
         with:
@@ -77,62 +79,18 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-24.04
-    services:
-      redis:
-        image: redis:6.0
-        ports:
-          - 6379:6379
-      postgres:
-        image: postgres:13.1
-        env:
-          POSTGRES_USER: virtool
-          POSTGRES_PASSWORD: virtool
-          POSTGRES_DB: virtool
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Start OpenFGA
-        run: |
-          bash .github/workflows/scripts/setup_postgres.sh          
-          docker run --network ${{ job.services.postgres.network }} --rm openfga/openfga:v0.2.5 migrate --datastore-engine postgres --datastore-uri 'postgres://virtool:virtool@postgres:5432/openfga?sslmode=disable'
-          docker run -d --name openfga --network=${{ job.services.postgres.network }} -p 8080:8080 openfga/openfga:v0.2.5 run --datastore-engine postgres --datastore-uri 'postgres://virtool:virtool@postgres:5432/openfga?sslmode=disable' --playground-enabled=false
-      - name: Start MongoDB
-        uses: supercharge/mongodb-github-action@1.11.0
-        with:
-          mongodb-version: 6.0
-          mongodb-replica-set: rs
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          version: "latest"
-      - name: Set up Python
-        run: uv python install
-      - name: Install dependencies
-        run: uv sync
-      - name: Install bowtie
-        run: | 
-          wget https://github.com/BenLangmead/bowtie2/releases/download/v2.5.3/bowtie2-2.5.3-linux-x86_64.zip
-          unzip bowtie2-2.5.3-linux-x86_64.zip
-          cp -rv bowtie2-2.5.3-linux-x86_64 /opt/bowtie2
-          ln -s /opt/bowtie2/bowtie* /usr/local/bin
-      - name: Run
-        run: >-
-          uv run
-          pytest
-          --db-connection-string mongodb://localhost:27017
-          -n 3
-          --openfga-host localhost:8080
-          --postgres-connection-string postgresql+asyncpg://virtool:virtool@localhost
-          --redis-connection-string redis://localhost:6379
-          --snapshot-details
-          --snapshot-warn-unused
+      - name: Install mise
+        uses: jdx/mise-action@v2
+      - name: Build test environment
+        run: mise run test:build
+      - name: Run tests
+        run: mise run test -- -n 3 --snapshot-details --snapshot-warn-unused
+      - name: Cleanup
+        if: always()
+        run: mise run test:down
 
   release:
     name: "Publish / Release"
