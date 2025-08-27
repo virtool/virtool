@@ -3,7 +3,7 @@
 from aiohttp.web import Request, WebSocketResponse
 
 from virtool.api.policy import WebSocketRoutePolicy, policy
-from virtool.ws.connection import WSConnection
+from virtool.ws.server import WSConnection
 
 
 @policy(WebSocketRoutePolicy)

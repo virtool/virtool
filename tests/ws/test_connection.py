@@ -2,10 +2,10 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 from aiohttp.web_ws import WebSocketResponse
 
-from virtool.api.custom_json import dump_string
 from virtool.api.client import UserClient
+from virtool.api.custom_json import dump_string
 from virtool.users.utils import Permission
-from virtool.ws.connection import WSConnection
+from virtool.ws.server import WSConnection
 
 
 @pytest.fixture
@@ -26,8 +26,7 @@ def ws(mocker):
 
 
 def test_init(ws):
-    """
-    Test that Connection object draws attributes from the passed session and websocket
+    """Test that Connection object draws attributes from the passed session and websocket
     handler.
 
     """
@@ -38,8 +37,7 @@ def test_init(ws):
 
 
 async def test_send(ws):
-    """
-    Test that calling the send method calls the send_json method on the underlying
+    """Test that calling the send method calls the send_json method on the underlying
     WebSocket response.
     """
     await ws.send(
@@ -61,8 +59,7 @@ async def test_send(ws):
 
 
 async def test_close(ws):
-    """
-    Test that closing the connection calls the close method on the underlying WebSocket
+    """Test that closing the connection calls the close method on the underlying WebSocket
     response.
     """
     await ws.close(1000)
