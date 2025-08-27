@@ -399,7 +399,7 @@ class JobsData:
 
         return job.status[-1]
 
-    async def delete(self, job_id: str):
+    async def delete(self, job_id: str) -> None:
         """Delete a job by its ID.
 
         :param job_id: the ID of the job to delete
@@ -421,7 +421,7 @@ class JobsData:
 
         emit(job, "jobs", "delete", Operation.DELETE)
 
-    async def force_delete(self):
+    async def force_delete(self) -> None:
         """Force the deletion of all jobs."""
         job_ids = await self._mongo.jobs.distinct("_id")
         await gather(*[self._client.cancel(job_id) for job_id in job_ids])
@@ -595,7 +595,7 @@ class JobsData:
 
         return job
 
-    async def clean(self):
+    async def clean(self) -> None:
         """Retry all eligible jobs.
 
         This task considers jobs in the WAITING, PREPARING, and RUNNING states.

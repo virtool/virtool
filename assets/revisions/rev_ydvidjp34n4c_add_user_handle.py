@@ -20,7 +20,7 @@ alembic_down_revision = None
 virtool_down_revision = "gr5j6jx8ap7f"
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     async for document in ctx.mongo.users.find({"handle": {"$exists": False}}):
         user_id = document["_id"]
 

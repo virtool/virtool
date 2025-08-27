@@ -6,7 +6,7 @@ import click
 from virtool.oas.view import generate_oas
 
 
-def show_oas():
+def show_oas() -> None:
     """Display Open API Specification on the stdout."""
     app = importlib.import_module("virtool.oas.app").app
     spec = generate_oas(app)

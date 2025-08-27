@@ -23,13 +23,13 @@ class TaskProgressHandler(AbstractProgressHandler):
         self._set_progress = set_progress
         self._progress = 0
 
-    async def set_error(self, error: str):
+    async def set_error(self, error: str) -> None:
         """
         Put the calling task into an error state and provide and ``error`` string.
         """
         await self._set_error(error)
 
-    async def set_progress(self, progress: int):
+    async def set_progress(self, progress: int) -> None:
         """
         Update the tasks progress with the progress of the current subtask
         """
@@ -58,7 +58,7 @@ class AccumulatingProgressHandlerWrapper:
         self._total = total
         self._accumulated = 0
 
-    async def add(self, value: int):
+    async def add(self, value: int) -> None:
         """
         Add a number of bytes onto the download handler and report progress.
 

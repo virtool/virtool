@@ -67,7 +67,7 @@ class APIClient:
         file_path: Path,
         file_format: VirtoolFileFormat,
         params: dict | None = None,
-    ):
+    ) -> None:
         if not params:
             params = {"name": file_path.name}
 
@@ -97,7 +97,7 @@ class APIClient:
         file_path: Path,
         file_format: VirtoolFileFormat,
         params: dict | None = None,
-    ):
+    ) -> None:
         if not params:
             params = {"name": file_path.name}
 

@@ -18,7 +18,7 @@ depends_on = None
 TABLE_NAMES = ("labels", "uploads")
 
 
-def upgrade():
+def upgrade() -> None:
     op.create_table(
         "spaces",
         sa.Column("id", sa.Integer(), nullable=False),
@@ -36,7 +36,7 @@ def upgrade():
         )
 
 
-def downgrade():
+def downgrade() -> None:
     for table_name in TABLE_NAMES:
         op.drop_column(table_name, "space")
 

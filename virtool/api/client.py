@@ -36,7 +36,7 @@ class JobClient(AbstractClient):
         self.job_id = job_id
 
     @property
-    def administrator_role(self):
+    def administrator_role(self) -> None:
         return None
 
     @property

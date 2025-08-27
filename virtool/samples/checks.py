@@ -12,7 +12,7 @@ async def check_name_is_in_use(
     name: str,
     sample_id: Optional[str] = None,
     session: Optional[AsyncIOMotorClientSession] = None,
-):
+) -> None:
     query = {"name": name}
 
     if sample_id:
@@ -24,7 +24,7 @@ async def check_name_is_in_use(
 
 async def check_subtractions_do_not_exist(
     db, subtractions: List[str], session: Optional[AsyncIOMotorClientSession] = None
-):
+) -> None:
     if non_existent_subtractions := await check_missing_ids(
         db.subtraction, subtractions, session=session
     ):
@@ -33,6 +33,6 @@ async def check_subtractions_do_not_exist(
         )
 
 
-async def check_labels_do_not_exist(pg, labels: List[int]):
+async def check_labels_do_not_exist(pg, labels: List[int]) -> None:
     if labels and (non_existent_labels := await check_labels(pg, labels)):
         raise ResourceConflictError(f"Labels do not exist: {non_existent_labels}")

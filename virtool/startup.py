@@ -54,7 +54,7 @@ async def startup_check_db(app: App):
         pass
 
 
-async def startup_data(app: App):
+async def startup_data(app: App) -> None:
     """Create the application data layer object.
 
     :param app: the application object
@@ -69,7 +69,7 @@ async def startup_data(app: App):
     )
 
 
-async def startup_databases(app: App):
+async def startup_databases(app: App) -> None:
     """Connects to MongoDB, Redis and Postgres concurrently
 
     :param app: the app object
@@ -104,7 +104,7 @@ async def startup_databases(app: App):
     )
 
 
-async def startup_events(app: App):
+async def startup_events(app: App) -> None:
     """Create and run the event publisher."""
     app["events"] = EventPublisher(app["redis"])
 
@@ -113,7 +113,7 @@ async def startup_events(app: App):
     app.setdefault("background_tasks", []).append(task)
 
 
-async def startup_executors(app: App):
+async def startup_executors(app: App) -> None:
     """An application ``on_startup`` callback that initializes a
     :class:`~ThreadPoolExecutor` and attaches it to the ``app`` object.
 
@@ -131,7 +131,7 @@ async def startup_executors(app: App):
     app["process_executor"] = process_executor
 
 
-async def startup_http_client_session(app: App):
+async def startup_http_client_session(app: App) -> None:
     """Create an async HTTP client session for the server.
 
     The client session is used to make requests to GitHub, NCBI, and
@@ -149,11 +149,11 @@ async def startup_http_client_session(app: App):
     )
 
 
-async def startup_routes(app: App):
+async def startup_routes(app: App) -> None:
     setup_routes(app, dev=get_config_from_app(app).dev)
 
 
-async def startup_sentry(app: App):
+async def startup_sentry(app: App) -> None:
     """Create a Sentry client and attach it to the application if a DSN was configured.
 
     :param app: the application object
@@ -165,7 +165,7 @@ async def startup_sentry(app: App):
         logger.info("skipped configuring sentry")
 
 
-async def startup_settings(app: App):
+async def startup_settings(app: App) -> None:
     """Draws settings from the settings database collection.
 
     Performs migration of old settings style to `v3.3.0` if necessary.
@@ -176,7 +176,7 @@ async def startup_settings(app: App):
     await get_data_from_app(app).settings.ensure()
 
 
-async def startup_task_runner(app: App):
+async def startup_task_runner(app: App) -> None:
     """An application `on_startup` callback that initializes a Virtool
     :class:`virtool.tasks.runner.TaskRunner` object and puts it in app state.
 
@@ -190,7 +190,7 @@ async def startup_task_runner(app: App):
     app.setdefault("background_tasks", []).append(task)
 
 
-async def startup_version(app: App):
+async def startup_version(app: App) -> None:
     """Store and log the Virtool version.
 
     :param app: the application object
@@ -203,7 +203,7 @@ async def startup_version(app: App):
     app["version"] = version
 
 
-async def startup_ws(app: App):
+async def startup_ws(app: App) -> None:
     """Start the websocket server."""
     logger.info("starting websocket server")
 

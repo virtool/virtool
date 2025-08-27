@@ -7,5 +7,5 @@ if TYPE_CHECKING:
 class DataLayerDomain:
     data: "DataLayer"
 
-    def bind_layer(self, layer: "DataLayer"):
+    def bind_layer(self, layer: "DataLayer") -> None:
         self.data = layer

@@ -65,7 +65,7 @@ async def create_fake_sample(
     user_id: str,
     paired: bool = False,
     finalized: bool = False,
-):
+) -> None:
     fake = app.get("fake", FakerWrapper())
 
     mongo = get_mongo_from_app(app)
@@ -129,7 +129,7 @@ async def create_fake_sample(
         )
 
 
-async def copy_reads_file(app: App, file_path: Path, filename: str, sample_id: str):
+async def copy_reads_file(app: App, file_path: Path, filename: str, sample_id: str) -> None:
     """Copy the example reads file to the sample directory.
 
     :param app: the application object

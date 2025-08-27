@@ -53,18 +53,18 @@ def create_default_map():
         return None
 
 
-def entry():
+def entry() -> None:
     uvloop.install()
     default_map = create_default_map()
     cli(default_map=default_map)
 
 
 @click.group()
-def cli(): ...
+def cli() -> None: ...
 
 
 @cli.group("server")
-def server():
+def server() -> None:
     """Run Virtool HTTP services."""
 
 
@@ -82,7 +82,7 @@ def server():
 @real_ip_header_option
 @redis_connection_string_option
 @sentry_dsn_option
-def start_api_server(**kwargs):
+def start_api_server(**kwargs) -> None:
     """Start a Virtool public API server."""
     configure_logging(bool(kwargs["sentry_dsn"]))
     logger.info("starting the public api service")
@@ -103,7 +103,7 @@ def start_api_server(**kwargs):
 @real_ip_header_option
 @redis_connection_string_option
 @sentry_dsn_option
-def start_jobs_api(**kwargs):
+def start_jobs_api(**kwargs) -> None:
     """Start a Virtool jobs API server."""
     configure_logging(bool(kwargs["sentry_dsn"]))
 
@@ -118,13 +118,13 @@ def start_jobs_api(**kwargs):
 
 
 @cli.command
-def oas():
+def oas() -> None:
     """Work with the Virtool OpenAPI specification."""
     show_oas()
 
 
 @cli.group("migration")
-def migration():
+def migration() -> None:
     """Run and manage Virtool data migrations."""
 
 
@@ -133,7 +133,7 @@ def migration():
 @mongodb_connection_string_option
 @openfga_options
 @postgres_connection_string_option
-def migration_apply(**kwargs):
+def migration_apply(**kwargs) -> None:
     """Apply all pending migrations."""
     configure_logging(False)
     logger.info("starting migration")
@@ -142,27 +142,27 @@ def migration_apply(**kwargs):
 
 @migration.command("create")
 @click.option("--name", help="Name of the migration", required=True, type=str)
-def migration_create(name: str):
+def migration_create(name: str) -> None:
     """Create a new migration revision."""
     create_revision(name)
 
 
 @migration.command("depend")
 @click.option("--revision", help="Revision to depend on", default="latest", type=str)
-def migration_depend(revision: str):
+def migration_depend(revision: str) -> None:
     """Update Virtool so that it depends on a revision having been applied."""
     depend(revision)
 
 
 @migration.command("show")
-def migration_show(**kwargs):
+def migration_show(**kwargs) -> None:
     """Apply all pending migrations."""
     configure_logging(False)
     show_revisions()
 
 
 @cli.group("tasks")
-def tasks():
+def tasks() -> None:
     """Manage Virtool tasks."""
 
 
@@ -176,7 +176,7 @@ def tasks():
 @postgres_connection_string_option
 @redis_connection_string_option
 @sentry_dsn_option
-def start_task_runner(dev: bool, **kwargs):
+def start_task_runner(dev: bool, **kwargs) -> None:
     """Start a service that pulls tasks queued in Redis and runs them."""
     configure_logging(bool(kwargs["sentry_dsn"]))
 
@@ -191,7 +191,7 @@ def start_task_runner(dev: bool, **kwargs):
 @postgres_connection_string_option
 @redis_connection_string_option
 @sentry_dsn_option
-def tasks_spawner(dev: bool, **kwargs):
+def tasks_spawner(dev: bool, **kwargs) -> None:
     """Schedule all periodically run tasks on hardcoded schedules"""
     configure_logging(bool(kwargs["sentry_dsn"]))
 
@@ -201,7 +201,7 @@ def tasks_spawner(dev: bool, **kwargs):
 
 
 @cli.group("workflow")
-def workflow():
+def workflow() -> None:
     """Manage Virtool workflows."""
 
 
@@ -260,7 +260,7 @@ def workflow_run(
     sentry_dsn: str,
     timeout: int,
     work_path: Path,
-):
+) -> None:
     """Run a workflow."""
     config = WorkflowConfig(
         dev=dev,

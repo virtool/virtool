@@ -121,7 +121,7 @@ class Redis:
 
         return self._client_info["redis_version"]
 
-    async def connect(self):
+    async def connect(self) -> None:
         """Connect to the Redis server and retrieve the server info."""
         logger.info("connecting to redis")
 
@@ -138,7 +138,7 @@ class Redis:
 
         self._ping_task = asyncio.create_task(self._ping())
 
-    async def close(self):
+    async def close(self) -> None:
         """Close the connection to the Redis server."""
         if self._ping_task:
             logger.info("disconnecting from redis")
@@ -161,7 +161,7 @@ class Redis:
 
         return _coerce_redis_response(value)
 
-    async def set(self, key: str, value: RedisElement, expire: int = 0):
+    async def set(self, key: str, value: RedisElement, expire: int = 0) -> None:
         """Set the value at ``key`` to value with an optional expiration time in
         seconds.
 
@@ -175,7 +175,7 @@ class Redis:
         else:
             await self._client.setex(key, expire, _coerce_redis_request(value))
 
-    async def delete(self, key: str):
+    async def delete(self, key: str) -> None:
         """Delete the value at ``key``."""
         await self._client.delete(key)
 
@@ -207,7 +207,7 @@ class Redis:
                 if message["type"] == "message":
                     yield _coerce_redis_response(message["data"])
 
-    async def publish(self, channel_name: str, message: RedisElement):
+    async def publish(self, channel_name: str, message: RedisElement) -> None:
         """Publish a message to a channel.
 
         :param channel_name: the name of the channel to publish to
@@ -283,6 +283,6 @@ class Redis:
             *[_coerce_redis_request(v) for v in values],
         )
 
-    async def flushdb(self):
+    async def flushdb(self) -> None:
         """Delete all keys in the current database."""
         await self._client.flushdb(asynchronous=False)

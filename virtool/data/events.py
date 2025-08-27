@@ -66,7 +66,7 @@ class _InternalEventsTarget:
 _events_target = _InternalEventsTarget()
 
 
-def dangerously_clear_events():
+def dangerously_clear_events() -> None:
     """Clear all events from the internal queue.
 
     This should only be used in workflow.
@@ -83,7 +83,7 @@ async def dangerously_get_event() -> Event:
     return await _events_target.get()
 
 
-def emit(data: BaseModel, domain: str, name: str, operation: Operation):
+def emit(data: BaseModel, domain: str, name: str, operation: Operation) -> None:
     """Emit an event."""
     if data is None:
         logger.warning("emit event with no data")
@@ -143,7 +143,7 @@ class EventPublisher:
     def __init__(self, redis: Redis):
         self._redis = redis
 
-    async def run(self):
+    async def run(self) -> None:
         """Start the event publisher."""
         logger.info("starting event publisher")
 

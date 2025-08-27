@@ -49,7 +49,7 @@ class RunSubprocess(Protocol):
 async def watch_pipe(
     stream: asyncio.StreamReader,
     handler: LineOutputHandler,
-):
+) -> None:
     """Watch the stdout or stderr stream and pass lines to the `handler` callback function.
 
     :param stream: a stdout or stderr file object
@@ -65,7 +65,7 @@ async def watch_pipe(
         await handler(line)
 
 
-def stderr_logger(line: bytes):
+def stderr_logger(line: bytes) -> None:
     """Log a line of stderr output and try to decode it as UTF-8.
 
     If the line is not decodable, log it as a string.

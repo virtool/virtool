@@ -30,7 +30,7 @@ def _traces_sampler(context: dict) -> float:
     return 0.6
 
 
-def configure_sentry(dsn: str, release: str):
+def configure_sentry(dsn: str, release: str) -> None:
     if dsn:
         logger.info("initializing sentry", dsn=f"{dsn[:15]}...")
 

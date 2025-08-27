@@ -17,7 +17,7 @@ class WSConnection:
         self.permissions = session.permissions
         self.session_id = session.session_id
 
-    async def send(self, message: WSMessage):
+    async def send(self, message: WSMessage) -> None:
         """
         Sends the passed JSON-encodable message to the connected client.
 
@@ -31,7 +31,7 @@ class WSConnection:
 
             await self.close(1002)
 
-    async def close(self, code: int):
+    async def close(self, code: int) -> None:
         """
         Closes the underlying websocket connection.
         :param code: closure code to send to the client

@@ -96,7 +96,7 @@ async def fetch_last_applied_revision(pg: AsyncEngine) -> AppliedRevision | None
         )
 
 
-async def check_data_revision_version(pg: AsyncEngine):
+async def check_data_revision_version(pg: AsyncEngine) -> None:
     """Check if the required MongoDB revision has been applied.
 
     Log a critical error and exit if the required revision has not been applied.

@@ -44,7 +44,7 @@ class BLASTTask(BaseTask):
         self.steps = [self.request]
         self.rid: Optional[str] = None
 
-    async def request(self):
+    async def request(self) -> None:
         """Make the initial request to NCBI to start a BLAST search.
 
         Checks are conducted by the data layer and will store the results or error
@@ -98,7 +98,7 @@ class BLASTTask(BaseTask):
 
                 break
 
-    async def wait_for_blast_search(self):
+    async def wait_for_blast_search(self) -> None:
         """Wait until the BLAST search completes.
 
         Keep check the BLAST status on NCBI with increasingly longer intervals between

@@ -367,7 +367,7 @@ class ReferencesData(DataLayerDomain):
 
         return await self.get(ref_id)
 
-    async def remove(self, ref_id: str, req):
+    async def remove(self, ref_id: str, req) -> None:
         if not await virtool.references.db.check_right(req, ref_id, "remove"):
             raise APIInsufficientRights()
 
@@ -716,7 +716,7 @@ class ReferencesData(DataLayerDomain):
 
         raise ResourceNotFoundError()
 
-    async def delete_group(self, ref_id: str, group_id: int | str):
+    async def delete_group(self, ref_id: str, group_id: int | str) -> None:
         document = await self._mongo.references.find_one(
             {"_id": ref_id, "groups.id": group_id},
             ["groups", "users"],
@@ -813,7 +813,7 @@ class ReferencesData(DataLayerDomain):
 
         raise ResourceNotFoundError()
 
-    async def delete_user(self, ref_id: str, user_id: str):
+    async def delete_user(self, ref_id: str, user_id: str) -> None:
         """Delete a reference user.
 
         :param ref_id: the id of the reference
@@ -1031,7 +1031,7 @@ class ReferencesData(DataLayerDomain):
         release: Document,
         user_id: str,
         progress_handler,
-    ):
+    ) -> None:
         """Update a remote reference to a newer version.
 
         * Update reference metadata.
@@ -1107,7 +1107,7 @@ class ReferencesData(DataLayerDomain):
             Operation.UPDATE,
         )
 
-    async def clean_all(self):
+    async def clean_all(self) -> None:
         """Clean corrupt updates from reference update lists.
 
         If the installed version is earlier than the last update, the last update is
@@ -1153,7 +1153,7 @@ class ReferencesData(DataLayerDomain):
                 Operation.UPDATE,
             )
 
-    async def fetch_and_update_reference_releases(self):
+    async def fetch_and_update_reference_releases(self) -> None:
         for ref_id in await self._mongo.references.distinct(
             "_id",
             {"remotes_from": {"$exists": True}},

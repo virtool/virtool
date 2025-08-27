@@ -32,7 +32,7 @@ pytest_plugins = (
 )
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser) -> None:
     parser.getgroup("syrupy").addoption(
         "--su",
         action="store_true",

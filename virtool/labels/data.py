@@ -128,7 +128,7 @@ class LabelsData:
 
         return Label(**document)
 
-    async def delete(self, label_id: int):
+    async def delete(self, label_id: int) -> None:
         """Delete an existing label.
 
         :param label_id: ID of the label to delete

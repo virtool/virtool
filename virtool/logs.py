@@ -32,7 +32,7 @@ def normalize_log_level(
     return event_dict
 
 
-def configure_logging(use_sentry: bool):
+def configure_logging(use_sentry: bool) -> None:
     """Configure logging for Virtool.
 
     :param use_sentry: whether to send logs to Sentry

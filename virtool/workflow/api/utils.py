@@ -104,7 +104,7 @@ async def decode_json_response(resp: ClientResponse) -> dict | list | None:
         raise ValueError(f"Response from  {resp.url} was not JSON. {await resp.text()}")
 
 
-async def raise_exception_by_status_code(resp: ClientResponse):
+async def raise_exception_by_status_code(resp: ClientResponse) -> None:
     """Raise an exception based on the status code of the response.
 
     :param resp: the response to check

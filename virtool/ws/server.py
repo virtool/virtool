@@ -18,7 +18,7 @@ class WSServer:
         self._connections = []
         self._redis = redis
 
-    async def run(self):
+    async def run(self) -> None:
         """Start the Websocket server."""
         try:
             async for event in listen_for_events(self._redis):
@@ -62,7 +62,7 @@ class WSServer:
 
         await self.close()
 
-    def add_connection(self, connection: WSConnection):
+    def add_connection(self, connection: WSConnection) -> None:
         """Add a connection to the websocket server.
 
         :param connection: the connection to add
@@ -71,7 +71,7 @@ class WSServer:
         self._connections.append(connection)
         logger.info("established websocket connection", user_id=connection.user_id)
 
-    def remove_connection(self, connection: WSConnection):
+    def remove_connection(self, connection: WSConnection) -> None:
         """Close and remove a connection.
 
         :param connection: the connection to remove
@@ -83,7 +83,7 @@ class WSServer:
         except ValueError:
             pass
 
-    async def periodically_close_expired_websocket_connections(self):
+    async def periodically_close_expired_websocket_connections(self) -> None:
         """Periodically check for and close connections with expired sessions."""
         session_data = SessionData(self._redis)
 
@@ -103,7 +103,7 @@ class WSServer:
         """A list of all authenticated connections."""
         return [conn for conn in self._connections if conn.user_id]
 
-    async def close(self):
+    async def close(self) -> None:
         """Close the server and all connections."""
         logger.info("closing websocket server")
 

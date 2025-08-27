@@ -65,7 +65,7 @@ def coerce_list(obj: Any) -> list:
     return [obj] if not isinstance(obj, list) else obj
 
 
-def compress_json_with_gzip(json_bytes: bytes, target: Path):
+def compress_json_with_gzip(json_bytes: bytes, target: Path) -> None:
     """Compress the JSON string to a gzipped file at `target`."""
     # gzip will fail to open the file if it's parent directory doesn't exist.
     target = Path(target)
@@ -176,7 +176,7 @@ def to_bool(obj):
     return str(obj).lower() in ["1", "true"]
 
 
-async def wait_for_checks(*aws):
+async def wait_for_checks(*aws) -> None:
     """Concurrently wait for awaitables the raise exceptions when checks fail.
 
     As soon as the first exception is raised, pending checks are cancelled and exception
@@ -306,7 +306,7 @@ def safely_extract_tgz(tar: TarFile, path: Path) -> None:
     tar.extractall(path)
 
 
-def decompress_file_with_pigz(path: Path, target: Path, processes: int):
+def decompress_file_with_pigz(path: Path, target: Path, processes: int) -> None:
     """Decompress a file using pigz.
 
     :param path: path to the compressed file to be decompressed
@@ -353,7 +353,7 @@ def decompress_file_with_gzip(path: Path, target: Path) -> None:
         shutil.copyfileobj(f_in, f_out)
 
 
-def compress_file_with_pigz(path: Path, target: Path, processes: int):
+def compress_file_with_pigz(path: Path, target: Path, processes: int) -> None:
     """Use pigz to compress a file.
 
     :param path: path to the file to be compressed
@@ -401,5 +401,5 @@ def coerce_to_coroutine_function(func: Callable):
     return _func
 
 
-async def make_directory(path: Path):
+async def make_directory(path: Path) -> None:
     await asyncio.to_thread(path.mkdir, exist_ok=True, parents=True)

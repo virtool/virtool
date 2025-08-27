@@ -239,7 +239,7 @@ class SessionData(DataLayerDomain):
 
         return Session(**session)
 
-    async def delete(self, session_id: str):
+    async def delete(self, session_id: str) -> None:
         """Deletes the session with the provided ``session_id``.
 
         :param session_id: the id of the session to remove

@@ -16,7 +16,7 @@ logger = get_logger("uploads")
 CHUNK_SIZE = 1024 * 1000 * 50
 
 
-def is_gzip_compressed(chunk: bytes):
+def is_gzip_compressed(chunk: bytes) -> None:
     """Check if a file is gzip compressed.
 
     Peek at the first two bytes for the gzip magic number and raise and exception if it

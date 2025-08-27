@@ -173,7 +173,7 @@ class MLData(DataLayerDomain):
                 release.size,
             )
 
-    async def load(self, releases: dict[str, builtins.list[ReleaseManifestItem]]):
+    async def load(self, releases: dict[str, builtins.list[ReleaseManifestItem]]) -> None:
         """Load into the database.
 
         This method is intended to be called by the `sync` method or data faking

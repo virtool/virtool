@@ -45,7 +45,7 @@ from virtool.workflow.utils import get_workflow_version
 from virtool.workflow.workflow import Workflow
 
 
-def configure_status_hooks():
+def configure_status_hooks() -> None:
     """Configure built-in job status hooks.
 
     Push status updates to API when various lifecycle hooks are triggered.
@@ -72,7 +72,7 @@ def configure_status_hooks():
         await push_status()
 
 
-async def execute(workflow: Workflow, scope: FixtureScope, events: Events, logger):
+async def execute(workflow: Workflow, scope: FixtureScope, events: Events, logger) -> None:
     """Execute a workflow.
 
     :param workflow: The workflow to execute
@@ -153,7 +153,7 @@ async def run_workflow(
     workflow: Workflow,
     events: Events,
     logger,
-):
+) -> None:
     # Configure hooks here so that they can be tested when using `run_workflow`.
     configure_status_hooks()
 

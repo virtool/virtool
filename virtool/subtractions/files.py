@@ -10,7 +10,7 @@ from virtool.utils import file_stats
 
 async def create_subtraction_files(
     pg: AsyncEngine, subtraction_id: str, files: list[str], path: str | Path
-):
+) -> None:
     """Create multiple rows in `subtraction_files` in a single transaction.
 
     :param pg: PostgreSQL AsyncEngine object

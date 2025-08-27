@@ -109,10 +109,10 @@ class WFNewIndex:
         self.reference = reference
         """The parent reference."""
 
-    async def delete(self):
+    async def delete(self) -> None:
         await self._api.delete(f"/indexes/{self.id}")
 
-    async def finalize(self):
+    async def finalize(self) -> None:
         """Finalize the current index."""
         await self._api.patch_json(f"/indexes/{self.id}", {})
 

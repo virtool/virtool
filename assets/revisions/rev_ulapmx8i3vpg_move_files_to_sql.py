@@ -23,7 +23,7 @@ virtool_down_revision = None
 required_alembic_revision = "e694fb270acb"
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     async with AsyncSession(ctx.pg) as session:
         async for document in ctx.mongo.files.find(
             {"type": {"$in": ["hmm", "reference", "reads", "subtraction"]}},
