@@ -4,7 +4,7 @@ from pytest_mock import MockerFixture
 from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner
-from tests.fixtures.core import StaticTime
+from virtool.workflow.pytest_plugin.utils import StaticTime
 from virtool.data.utils import get_data_from_app
 from virtool.mongo.core import Mongo
 from virtool.samples.db import (

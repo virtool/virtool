@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
 
-from tests.fixtures.core import StaticTime
+from virtool.workflow.pytest_plugin.utils import StaticTime
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.mongo.core import Mongo

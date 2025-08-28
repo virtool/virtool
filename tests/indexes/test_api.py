@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
-from tests.fixtures.core import StaticTime
+from virtool.workflow.pytest_plugin.utils import StaticTime
 from tests.fixtures.response import RespIs
 from virtool.config import get_config_from_app
 from virtool.data.layer import DataLayer

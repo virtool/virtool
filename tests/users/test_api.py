@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner
-from tests.fixtures.core import StaticTime
+from virtool.workflow.pytest_plugin.utils import StaticTime
 from tests.fixtures.response import RespIs
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import UserRoleAssignment

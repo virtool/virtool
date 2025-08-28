@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from pydantic_factories import ModelFactory, Use
 
-from tests.fixtures.core import StaticTime
+from virtool.workflow.pytest_plugin.utils import StaticTime
 from virtool.analyses.models import Analysis, AnalysisSample
 from virtool.indexes.models import Index, IndexNested
 from virtool.jobs.models import JobAcquired, JobMinimal, JobPing

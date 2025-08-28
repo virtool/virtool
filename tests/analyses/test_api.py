@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
-from tests.fixtures.core import StaticTime
+from virtool.workflow.pytest_plugin.utils import StaticTime
 from tests.fixtures.response import RespIs
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.sql import SQLAnalysisFile, SQLAnalysisResult

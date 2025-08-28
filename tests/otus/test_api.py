@@ -7,7 +7,7 @@ from syrupy import SnapshotAssertion
 from yarl import URL
 
 from tests.fixtures.client import ClientSpawner, VirtoolTestClient
-from tests.fixtures.core import StaticTime
+from virtool.workflow.pytest_plugin.utils import StaticTime
 from tests.fixtures.response import RespIs
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
