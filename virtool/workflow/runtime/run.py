@@ -38,7 +38,7 @@ from virtool.workflow.runtime.events import Events
 from virtool.workflow.runtime.path import create_work_path
 from virtool.workflow.runtime.ping import ping_periodically
 from virtool.workflow.runtime.redis import (
-    get_next_job_with_timeout,
+    get_next_job_id,
     wait_for_cancellation,
 )
 from virtool.workflow.utils import get_workflow_version
@@ -233,9 +233,8 @@ async def start_runtime(
 
     async with Redis(config.redis_connection_string) as redis:
         try:
-            job_id = await get_next_job_with_timeout(
-                config.redis_list_name, redis, config.timeout
-            )
+            async with asyncio.timeout(config.timeout):
+                job_id = await get_next_job_id(config.redis_list_name, redis)
         except TimeoutError:
             # This happens due to Kubernetes scheduling issues or job cancellations. It
             # is not an error.

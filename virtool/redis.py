@@ -24,6 +24,16 @@ class RedisChannelClosedError(RedisError):
     """An error raised when a Redis channel is closed while it is being read."""
 
 
+class RedisServerInfoError(RedisError):
+    """An error raised when a Redis server info is unavailable."""
+
+    def __init__(self) -> None:
+        """Initialize a RedisServerInfoError."""
+        super().__init__(
+            "Could not get server version because server info is not available."
+        )
+
+
 def _coerce_redis_request(value: RedisElement | None) -> bytes | int | float:
     if isinstance(value, (int, float)):
         return value
@@ -94,7 +104,7 @@ class Redis:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.close()
 
-    async def _ping(self):
+    async def _ping(self) -> None:
         """Ping the Redis server every two minutes.
 
         When using Azure Cache for Redis, connections inactive for more than 10 minutes
@@ -112,14 +122,17 @@ class Redis:
             ...
 
     @property
+    def database_id(self) -> int:
+        """The ID of the Redis database that this client is connected to."""
+        return self._client.connection_pool.connection_kwargs.get("db", 0)
+
+    @property
     def server_version(self) -> str:
         """The version of the connected Redis server."""
         if self._client_info is None:
-            raise RedisError(
-                "Could not get server version because server info is not available.",
-            )
+            raise RedisServerInfoError
 
-        return self._client_info["redis_version"]
+        return str(self._client_info["redis_version"])
 
     async def connect(self) -> None:
         """Connect to the Redis server and retrieve the server info."""

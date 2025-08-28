@@ -5,7 +5,6 @@ import json
 from pathlib import Path
 
 import click
-import uvloop
 from structlog import get_logger
 
 from virtool.app import run_api_server
@@ -54,7 +53,6 @@ def create_default_map():
 
 
 def entry() -> None:
-    uvloop.install()
     default_map = create_default_map()
     cli(default_map=default_map)
 

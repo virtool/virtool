@@ -11,7 +11,7 @@ from virtool.jobs.models import JobState, JobStatus
 from virtool.redis import Redis
 from virtool.workflow import Workflow
 from virtool.workflow.pytest_plugin.data import WorkflowData
-from virtool.workflow.runtime.redis import CANCELLATION_CHANNEL
+from virtool.workflow.runtime.redis import get_cancellation_channel
 from virtool.workflow.runtime.run import start_runtime
 
 
@@ -114,7 +114,7 @@ async def test_cancellation(
 
     await asyncio.sleep(5)
 
-    await redis.publish(CANCELLATION_CHANNEL, workflow_data.job.id)
+    await redis.publish(get_cancellation_channel(redis), workflow_data.job.id)
 
     await runtime_task
 
@@ -233,20 +233,16 @@ if __name__ == "__main__":
     # Wait for the job to be consumed from Redis (ensures workflow picked it up)
     await wait_for_job_consumption(redis, "jobs_pathoscope", workflow_data.job.id)
 
-    # Wait for the job to start running, then give it time to start the first step
+    # Wait for the job to start running, then give it time to start the first step.
     await wait_for_job_status(workflow_data, [JobState.RUNNING])
-    await asyncio.sleep(3)  # Terminate partway through the second step
 
-    # Send SIGTERM to the process
-    if proc.returncode is None:
-        proc.terminate()
-    else:
-        # Process already completed - this helps diagnose timing issues in CI
-        stdout, stderr = await proc.communicate()
-        pytest.fail(
-            f"Process completed before SIGTERM could be sent (returncode: {proc.returncode}). "
-            f"Stdout: {stdout.decode()[:2000]}... Stderr: {stderr.decode()[:2000]}..."
-        )
+    # Terminate partway through the second step.
+    await asyncio.sleep(2.5)
+
+    # Make sure process hasn't ended.
+    assert proc.returncode is None
+
+    proc.terminate()
 
     # Wait for the process to exit
     try:
@@ -255,6 +251,7 @@ if __name__ == "__main__":
         # If it doesn't exit cleanly, force kill it
         proc.kill()
         await proc.wait()
+        pytest.fail("Timed out waiting for job to complete")
 
     # Wait for the terminated status to be committed
     if not await wait_for_job_status(workflow_data, [JobState.TERMINATED]):

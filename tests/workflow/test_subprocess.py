@@ -11,7 +11,7 @@ from virtool.redis import Redis
 from virtool.workflow import RunSubprocess, Workflow
 from virtool.workflow.errors import SubprocessFailedError
 from virtool.workflow.pytest_plugin.data import WorkflowData
-from virtool.workflow.runtime.redis import CANCELLATION_CHANNEL
+from virtool.workflow.runtime.redis import get_cancellation_channel
 from virtool.workflow.runtime.run import start_runtime
 
 
@@ -155,7 +155,7 @@ async def test_terminated_by_cancellation(
     await asyncio.sleep(4)
 
     if cancel:
-        await redis.publish(CANCELLATION_CHANNEL, workflow_data.job.id)
+        await redis.publish(get_cancellation_channel(redis), workflow_data.job.id)
 
     await runtime_task
 

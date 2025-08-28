@@ -1,6 +1,6 @@
-import asyncio
 from asyncio import CancelledError
 from collections.abc import Callable
+from contextlib import suppress
 
 from structlog import get_logger
 
@@ -8,33 +8,17 @@ from virtool.redis import Redis
 
 logger = get_logger("redis")
 
-CANCELLATION_CHANNEL = "channel:cancel"
 
+def get_cancellation_channel(redis_client: Redis) -> str:
+    """Get the database-specific cancellation channel name.
 
-async def get_next_job_with_timeout(
-    list_name: str,
-    redis: Redis,
-    timeout: int | None = None,
-) -> str:
-    """Get the next job ID from a Redis list.
-
-    Raise a  :class:``Timeout`` error if an ID is not found in ``timeout``
-    seconds.
-
-    :param list_name: the name of the list to pop from
-    :param redis: the Redis client
-    :param timeout: seconds to wait before raising :class:``Timeout``
-    :return: the next job ID
+    :param redis_client: Redis client instance
+    :return: the channel name
     """
-    logger.info(
-        "waiting for a job",
-        timeout=f"{timeout if timeout else 'infinity'} seconds",
-    )
-
-    return await asyncio.wait_for(get_next_job(list_name, redis), timeout)
+    return f"channel:cancel:{redis_client.database_id}"
 
 
-async def get_next_job(list_name: str, redis: Redis) -> str:
+async def get_next_job_id(list_name: str, redis: Redis) -> str:
     """Get the next job ID from a Redis list.
 
     :param list_name: the name of the list to pop from
@@ -49,7 +33,7 @@ async def get_next_job(list_name: str, redis: Redis) -> str:
     raise ValueError("Unexpected None from job id list")
 
 
-async def wait_for_cancellation(redis: Redis, job_id: str, func: Callable):
+async def wait_for_cancellation(redis: Redis, job_id: str, func: Callable) -> None:
     """Call a function ``func`` when a job matching ``job_id`` is cancelled.
 
     :param redis: the Redis client
@@ -57,10 +41,7 @@ async def wait_for_cancellation(redis: Redis, job_id: str, func: Callable):
     :param func: the function to call when the job is cancelled
 
     """
-    try:
-        async for cancelled_job_id in redis.subscribe(CANCELLATION_CHANNEL):
+    with suppress(CancelledError):
+        async for cancelled_job_id in redis.subscribe(get_cancellation_channel(redis)):
             if cancelled_job_id == job_id:
-                return func()
-
-    except CancelledError:
-        ...
+                func()
