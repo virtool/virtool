@@ -5,7 +5,6 @@ __pycache__
 .cache
 .claude
 .DS_store
-.pdm-build
 .pytest_cache
 .venv
 .vscode
