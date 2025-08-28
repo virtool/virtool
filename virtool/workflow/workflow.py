@@ -20,21 +20,22 @@ class Workflow:
         *,
         name: str | None = None,
     ) -> Callable:
-        """Decorator for adding a step to the workflow."""
+        """Decorate a function to add a step to the workflow."""
         if step is None:
 
-            def _decorator(func: Callable):
+            def _decorator(func: Callable) -> None:
                 self.step(func, name=name)
 
             return _decorator
 
         step = WorkflowStep.from_callable(step, display_name=name)
         self.steps.append(step)
+
         return step
 
 
 @dataclass(frozen=True)
-class WorkflowStep:
+class WorkflowStep[P, T]:
     """Metadata for a workflow step.
 
     :param name: The presentation name for the step.
@@ -44,7 +45,7 @@ class WorkflowStep:
 
     display_name: str
     description: str
-    function: Callable[..., Awaitable[Any]]
+    function: Callable[P, Awaitable[T]]
 
     @classmethod
     def from_callable(
@@ -77,7 +78,8 @@ class WorkflowStep:
             function=func,
         )
 
-    async def __call__(self, *args, **kwargs):
+    async def __call__(self, *args: P.args, **kwargs: P.kwargs) -> T:
+        """Make the WorkflowStep callable by forwarding to the wrapped function."""
         return await self.function(*args, **kwargs)
 
 

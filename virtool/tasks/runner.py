@@ -1,14 +1,17 @@
 import asyncio
 from asyncio import CancelledError
 from asyncio import Task as AsyncioTask
+from typing import TYPE_CHECKING
 
 from structlog import get_logger
 
 from virtool.data.errors import ResourceError
 from virtool.data.layer import DataLayer
 from virtool.tasks.client import AbstractTasksClient
-from virtool.tasks.models import Task
 from virtool.tasks.task import BaseTask, get_task_from_name
+
+if TYPE_CHECKING:
+    from virtool.tasks.models import Task
 
 logger = get_logger("tasks")
 

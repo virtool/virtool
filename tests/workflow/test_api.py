@@ -8,7 +8,7 @@ from aiohttp import (
 )
 from pytest_structlog import StructuredLogCapture
 
-from virtool.workflow.api.utils import retry
+from virtool.workflow.api import retry
 
 
 async def test_retry_without_parameters(log: StructuredLogCapture):
