@@ -173,7 +173,7 @@ jobs:
       - name: Install dependencies
         run: uv sync
       - name: Set version
-        run: uv run python -c "import tomli_w; import tomllib; f=open('pyproject.toml','rb'); d=tomllib.load(f); f.close(); d['project']['version']='${{ needs.release.outputs.git-tag }}'; f=open('pyproject.toml','wb'); tomli_w.dump(d,f); f.close()"
+        run: uv version ${{ needs.release.outputs.git-tag }}
       - name: Build
         run: uv build
       - name: Publish
