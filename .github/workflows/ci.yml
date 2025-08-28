@@ -19,7 +19,7 @@ jobs:
   # to push a production image to the registry.
   build:
     name: Build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -94,7 +94,7 @@ jobs:
 
   release:
     name: "Publish / Release"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     if: github.repository_owner == 'Virtool' && github.event_name == 'push'
     needs: [build, oas, test, ruff-format]
     outputs:
@@ -122,7 +122,7 @@ jobs:
         run: npx semantic-release
   ghcr:
     name: "Publish / GHCR"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     if: github.repository_owner == 'Virtool' && github.event_name == 'push' && needs.release.outputs.git-tag != ''
     needs: [release]
     steps:
@@ -156,7 +156,7 @@ jobs:
 
   pypi:
     name: "Publish / PyPI"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     if: github.repository_owner == 'Virtool' && github.event_name == 'push' && needs.release.outputs.git-tag
     needs: [release]
     steps:
