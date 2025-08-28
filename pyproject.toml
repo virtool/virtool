@@ -60,6 +60,9 @@ dependencies = [
 [project.scripts]
 virtool = "virtool.cli:entry"
 
+[project.entry-points.pytest11]
+virtool = "virtool.workflow.pytest_plugin"
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]

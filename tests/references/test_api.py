@@ -11,7 +11,7 @@ from syrupy.matchers import path_type
 
 import virtool.utils
 from tests.fixtures.client import ClientSpawner
-from tests.fixtures.core import StaticTime
+from virtool.workflow.pytest_plugin.utils import StaticTime
 from tests.fixtures.response import RespIs
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app

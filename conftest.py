@@ -28,7 +28,6 @@ pytest_plugins = (
     "tests.fixtures.snapshot_date",
     "tests.fixtures.workflow",
     "tests.fixtures.workflow_api",
-    "virtool.workflow.pytest_plugin",
 )
 
 

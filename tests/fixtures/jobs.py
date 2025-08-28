@@ -2,7 +2,7 @@ from collections.abc import MutableMapping
 
 import pytest
 
-from tests.fixtures.core import StaticTime
+from virtool.workflow.pytest_plugin.utils import StaticTime
 from virtool.mongo.core import Mongo
 
 

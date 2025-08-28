@@ -5,7 +5,7 @@ import pytest
 from pytest_structlog import StructuredLogCapture
 from structlog.testing import LogCapture
 
-from tests.fixtures.core import StaticTime
+from virtool.workflow.pytest_plugin.utils import StaticTime
 from virtool.config.cls import WorkflowConfig
 from virtool.jobs.models import JobState, JobStatus
 from virtool.redis import Redis
