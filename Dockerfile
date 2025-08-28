@@ -1,10 +1,9 @@
-FROM python:3.12-bookworm AS build
+FROM python:3.13-bookworm AS build
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev
 COPY . ./
 RUN uv sync --frozen --no-dev
 
@@ -22,7 +21,7 @@ git describe --tags | awk -F - '
 EOF
 
 
-FROM python:3.12-bookworm AS test
+FROM python:3.13-bookworm AS test
 WORKDIR /app
 ENV VIRTUAL_ENV=/opt/venv
 COPY --from=ghcr.io/virtool/tools:1.1.0 /tools/bowtie2/2.5.4/bowtie* /usr/local/bin/
@@ -30,12 +29,13 @@ COPY --from=ghcr.io/virtool/tools:1.1.0 /tools/pigz/2.8/pigz /usr/local/bin/
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
-    UV_CACHE_DIR='/tmp/uv_cache'
+    UV_CACHE_DIR='/tmp/uv_cache' \
+    UV_PROJECT_ENVIRONMENT=/opt/venv
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen
 COPY . ./
+RUN uv sync --frozen
 
-FROM python:3.12-bookworm AS runtime
+FROM python:3.13-bookworm AS runtime
 WORKDIR /app
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
