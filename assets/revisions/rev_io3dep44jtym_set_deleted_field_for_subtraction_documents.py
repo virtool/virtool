@@ -21,7 +21,7 @@ virtool_down_revision = "0p3nhjg1fcfj"
 required_alembic_revision = None
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     ctx.mongo.subtraction.update_many(
         {"deleted": {"$exists": False}},
         {"$set": {"deleted": False}},

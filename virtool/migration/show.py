@@ -178,7 +178,7 @@ def load_all_revisions() -> list[GenericRevision]:
     return order_revisions([*load_alembic_revisions(), *load_virtool_revisions()])
 
 
-def show_revisions():
+def show_revisions() -> None:
     """Show all available revisions."""
     all_revisions = load_all_revisions()
 

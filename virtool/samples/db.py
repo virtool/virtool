@@ -308,7 +308,7 @@ async def recalculate_workflow_tags(
     mongo: "Mongo",
     sample_id: str,
     session: AsyncIOMotorClientSession | None = None,
-):
+) -> None:
     """Recalculate and apply workflow tags (eg. "ip", True) for a given sample.
 
     :param mongo: the application database client

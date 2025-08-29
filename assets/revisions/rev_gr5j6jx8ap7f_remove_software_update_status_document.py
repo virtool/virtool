@@ -18,7 +18,7 @@ alembic_down_revision = None
 virtool_down_revision = "1p681ke9wedv"
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     async with (
         await ctx.mongo.client.start_session() as session,
         session.start_transaction(),

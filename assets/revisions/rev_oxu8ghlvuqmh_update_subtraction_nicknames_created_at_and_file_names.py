@@ -21,7 +21,7 @@ virtool_down_revision = None
 required_alembic_revision = None
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     async with (
         await ctx.mongo.client.start_session() as mongo_session,
         mongo_session.start_transaction(),

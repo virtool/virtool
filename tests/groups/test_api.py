@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 import pytest
 from syrupy import SnapshotAssertion
 
@@ -24,7 +26,7 @@ class TestFind:
 
         resp = await client.get("/groups")
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
     async def test_paginate(
@@ -48,7 +50,7 @@ class TestFind:
 
         for page in [1, 2]:
             resp = await client.get(f"/groups?paginate=true&page={page}&per_page=10")
-            assert resp.status == 200
+            assert resp.status == HTTPStatus.OK
             assert await resp.json() == snapshot(name=f"page_{page}")
 
 
@@ -105,7 +107,7 @@ async def test_get(
 
     await fake.users.create(groups=[group])
 
-    resp = await client.get(f"/groups/{group.id if status == 200 else 5}")
+    resp = await client.get(f"/groups/{group.id if status == HTTPStatus.OK else 5}")
 
     assert resp.status == status
     assert await resp.json() == snapshot
@@ -139,7 +141,7 @@ class TestUpdate:
             },
         )
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
     async def test_not_found(self, snapshot, spawn_client: ClientSpawner):

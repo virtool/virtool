@@ -342,7 +342,7 @@
     'id': 1,
     'name': 'test',
     'name_on_disk': '1-test',
-    'size': 16700094,
+    'size': 723988,
     'uploaded_at': 'approximately_now_datetime',
   })
 # ---

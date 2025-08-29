@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
-from tests.fixtures.core import StaticTime
+from virtool.workflow.pytest_plugin.utils import StaticTime
 from tests.fixtures.response import RespIs
 from virtool.config import get_config_from_app
 from virtool.data.layer import DataLayer
@@ -31,18 +31,16 @@ from virtool.jobs.models import QueuedJobID
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app
 
-OTUS_JSON_PATH = Path.cwd() / "tests/test_files/index/otus.json.gz"
-
 
 class TestFind:
     async def test(
         self,
         fake: DataFaker,
-        mocker,
+        mocker: MockerFixture,
         mongo: Mongo,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
-        static_time,
+        static_time: StaticTime,
     ):
         client = await spawn_client(authenticated=True)
 
@@ -110,7 +108,7 @@ class TestFind:
 
         resp = await client.get("/indexes")
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
     async def test_ready(
@@ -165,20 +163,20 @@ class TestFind:
 
         resp = await client.get("/indexes?ready=True")
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(
-    error,
+    error: str | None,
     fake: DataFaker,
-    mocker,
-    resp_is,
-    snapshot,
+    mocker: MockerFixture,
+    resp_is: RespIs,
+    snapshot: SnapshotAssertion,
     mongo: Mongo,
     spawn_client: ClientSpawner,
-    static_time,
+    static_time: StaticTime,
 ):
     client = await spawn_client(authenticated=True)
 
@@ -241,7 +239,7 @@ async def test_get(
     resp = await client.get("/indexes/foobar")
 
     if error is None:
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
         m_get_contributors.assert_called_with(ANY, {"index.id": "foobar"})
@@ -254,11 +252,14 @@ async def test_get(
 async def test_download_otus_json(
     file_exists: bool,
     data_path: Path,
+    example_path: Path,
     mocker: MockerFixture,
     mongo: Mongo,
     spawn_job_client: JobClientSpawner,
 ):
-    with gzip.open(OTUS_JSON_PATH, "rt") as f:
+    otus_json_path = example_path / "indexes" / "otus.json.gz"
+
+    with gzip.open(otus_json_path, "rt") as f:
         expected = json.load(f)
 
     m_get_patched_otus = mocker.patch(
@@ -272,7 +273,7 @@ async def test_download_otus_json(
     index_dir.mkdir(parents=True)
 
     if file_exists:
-        shutil.copy(OTUS_JSON_PATH, index_dir / "otus.json.gz")
+        shutil.copy(otus_json_path, index_dir / "otus.json.gz")
 
     manifest = {"foo": 2, "bar": 1, "bad": 5}
 
@@ -284,7 +285,7 @@ async def test_download_otus_json(
         with gzip.open(BytesIO(await resp.read())) as f:
             result = json.load(f)
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert expected == result
 
     if not file_exists:
@@ -477,7 +478,7 @@ async def test_find_history(
     resp = await client.get("/indexes/foobar/history")
 
     if error is None:
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
     else:
         await resp_is.not_found(resp)
@@ -544,6 +545,7 @@ async def test_delete_index(
 async def test_upload(
     error: str | None,
     data_path: Path,
+    example_path: Path,
     fake: DataFaker,
     mongo: Mongo,
     pg: AsyncEngine,
@@ -553,7 +555,8 @@ async def test_upload(
     static_time,
 ):
     client = await spawn_job_client(authenticated=True)
-    path = Path.cwd() / "tests" / "test_files" / "index" / "reference.1.bt2"
+
+    path = example_path / "indexes" / "reference.1.bt2"
 
     files = {"file": open(path, "rb")}
 
@@ -671,7 +674,7 @@ async def test_finalize(
     assert await resp.json() == snapshot
 
     if not error:
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await mongo.otus.find_one("6116cba1") == snapshot
 
 
@@ -679,6 +682,7 @@ async def test_finalize(
 async def test_download(
     status: int,
     data_path: Path,
+    example_path: Path,
     mongo: Mongo,
     spawn_job_client: JobClientSpawner,
 ):
@@ -693,7 +697,7 @@ async def test_download(
         ),
     )
 
-    path = Path.cwd() / "tests" / "test_files" / "index" / "reference.1.bt2"
+    path = example_path / "indexes" / "reference.1.bt2"
     target_path = data_path / "references" / "test_reference" / "test_index"
     target_path.mkdir(parents=True)
     shutil.copyfile(path, target_path / "reference.1.bt2")
@@ -703,14 +707,14 @@ async def test_download(
 
     files_url = "/indexes/test_index/files/"
 
-    if status == 200:
+    if status == HTTPStatus.OK:
         files_url += "reference.1.bt2"
     elif status == 400:
         files_url += "foo.bar"
 
     async with client.get(files_url) as response:
         assert response.status == status
-        if response.status == 200:
+        if response.status == HTTPStatus.OK:
             with download_path.open("wb") as f:
                 f.write(await response.read())
 

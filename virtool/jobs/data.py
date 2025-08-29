@@ -2,7 +2,6 @@ import asyncio
 import math
 from asyncio import gather
 from collections import defaultdict
-from pprint import pprint
 from typing import TYPE_CHECKING
 
 import arrow
@@ -400,7 +399,7 @@ class JobsData:
 
         return job.status[-1]
 
-    async def delete(self, job_id: str):
+    async def delete(self, job_id: str) -> None:
         """Delete a job by its ID.
 
         :param job_id: the ID of the job to delete
@@ -422,7 +421,7 @@ class JobsData:
 
         emit(job, "jobs", "delete", Operation.DELETE)
 
-    async def force_delete(self):
+    async def force_delete(self) -> None:
         """Force the deletion of all jobs."""
         job_ids = await self._mongo.jobs.distinct("_id")
         await gather(*[self._client.cancel(job_id) for job_id in job_ids])
@@ -545,16 +544,6 @@ class JobsData:
             ],
         }
 
-        pprint(
-            {
-                "query": query,
-                "job_id": job_id,
-                "state": job.status[-1].state,
-                "retries": job.retries,
-                "pinged_at": job.ping.pinged_at if job.ping else None,
-            }
-        )
-
         result = await self._mongo.jobs.update_one(
             query,
             {
@@ -576,8 +565,6 @@ class JobsData:
 
         if result.modified_count:
             await self._client.enqueue(job.workflow, job_id)
-
-        pprint(job.dict())
 
         job = await self.get(job_id)
 
@@ -608,7 +595,7 @@ class JobsData:
 
         return job
 
-    async def clean(self):
+    async def clean(self) -> None:
         """Retry all eligible jobs.
 
         This task considers jobs in the WAITING, PREPARING, and RUNNING states.

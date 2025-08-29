@@ -7,8 +7,9 @@ _routes = RouteTableDef()
 
 @_routes.get("/foo")
 async def public_test_route(req: Request):
-    headers = {"Location": "/foo", "Content-Location": "/bar"}
-    return Response(status=200, headers=headers)
+    return Response(
+        status=200, headers={"Location": "/foo", "Content-Location": "/bar"}
+    )
 
 
 async def test_on_prepare_location_location(spawn_client):

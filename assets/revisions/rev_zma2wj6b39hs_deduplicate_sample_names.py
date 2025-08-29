@@ -32,7 +32,7 @@ class NameGenerator:
         self.db = mongo
         self.sample_number = 1
 
-    async def get(self):
+    async def get(self) -> str:
         self.sample_number += 1
 
         while await self.db.samples.count_documents(
@@ -47,7 +47,7 @@ class NameGenerator:
         return f"{self.base_name} ({self.sample_number})"
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     async for duplicate_name_documents in ctx.mongo.samples.aggregate(
         [
             {

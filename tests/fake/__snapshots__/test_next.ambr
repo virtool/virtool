@@ -315,7 +315,7 @@
     'removed': False,
     'removed_at': None,
     'reserved': True,
-    'size': 16700094,
+    'size': 723988,
     'type': 'reads',
     'uploaded_at': datetime,
     'user': dict({
@@ -334,7 +334,7 @@
     'removed': False,
     'removed_at': None,
     'reserved': False,
-    'size': 16700094,
+    'size': 723988,
     'type': 'subtraction',
     'uploaded_at': datetime,
     'user': dict({
@@ -353,7 +353,7 @@
     'removed': False,
     'removed_at': None,
     'reserved': False,
-    'size': 16700094,
+    'size': 723988,
     'type': 'reads',
     'uploaded_at': datetime,
     'user': dict({

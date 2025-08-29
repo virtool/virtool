@@ -21,7 +21,7 @@ virtool_down_revision = "ohcocrre6rha"
 required_alembic_revision = None
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     for collection in ["indexes", "samples", "subtractions"]:
         await ctx.mongo[collection].update_many(
             {"job": {"$exists": False}},

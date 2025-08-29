@@ -22,7 +22,7 @@ from virtool.migration.show import load_all_revisions
 logger = get_logger("migration")
 
 
-async def apply(config: MigrationConfig):
+async def apply(config: MigrationConfig) -> None:
     """Apply revisions up to the most recent revision provided by the Virtool release.
 
     The following safety measures are taken:
@@ -91,7 +91,7 @@ async def apply(config: MigrationConfig):
     logger.info("Migration complete")
 
 
-async def apply_one_revision(ctx: MigrationContext, revision: GenericRevision):
+async def apply_one_revision(ctx: MigrationContext, revision: GenericRevision) -> None:
     """Apply a single revision to Virtool data sources.
 
     The revision can be either a Virtool revision or an Alembic revision. Alembic
@@ -125,7 +125,7 @@ async def apply_one_revision(ctx: MigrationContext, revision: GenericRevision):
     log.info("Applied revision")
 
 
-async def apply_alembic(revision: str):
+async def apply_alembic(revision: str) -> None:
     """Apply the Alembic revision with the given id."""
     await asyncio.to_thread(
         alembic.command.upgrade,
@@ -136,7 +136,7 @@ async def apply_alembic(revision: str):
     )
 
 
-async def ensure_revisions_table(pg: AsyncEngine):
+async def ensure_revisions_table(pg: AsyncEngine) -> None:
     """Ensure that the `revisions` table exists in the database.
 
     :param pg: the PostgreSQL database connection

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import pytest
 
@@ -6,7 +7,7 @@ from tests.fixtures.client import ClientSpawner
 from virtool.config import get_config_from_app
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
-from virtool.samples.fake import READ_FILES_PATH, copy_reads_file, create_fake_sample
+from virtool.samples.fake import copy_reads_file, create_fake_sample
 
 
 @pytest.mark.parametrize("paired", [True, False])
@@ -41,8 +42,8 @@ async def test_create_fake_sample(
     assert sample == snapshot
 
 
-async def test_copy_reads_file(app):
-    file_path = READ_FILES_PATH / "paired_1.fq.gz"
+async def test_copy_reads_file(app, example_path: Path):
+    file_path = example_path / "sample" / "reads_1.fq.gz"
 
     await copy_reads_file(app, file_path, "reads_1.fq.gz", "sample_1")
 

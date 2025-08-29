@@ -18,7 +18,7 @@ class TasksClient(AbstractTasksClient):
     def __init__(self, redis: Redis):
         self._redis = redis
 
-    async def enqueue(self, task_type: str, task_id: int):
+    async def enqueue(self, task_type: str, task_id: int) -> None:
         await self._redis.rpush(REDIS_TASKS_LIST_KEY, task_id)
 
     async def pop(self) -> int | None:

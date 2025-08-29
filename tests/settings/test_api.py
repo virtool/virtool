@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner
@@ -10,7 +12,7 @@ async def test_get(
 
     resp = await client.get("/settings")
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot
 
 
@@ -26,5 +28,5 @@ async def test_update(
         {"enable_api": False, "enable_sentry": False, "minimum_password_length": 10},
     )
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot

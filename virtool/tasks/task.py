@@ -4,7 +4,6 @@ import asyncio
 from asyncio import to_thread
 from collections.abc import Awaitable, Callable
 from pathlib import Path
-from pprint import pprint
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 
@@ -106,7 +105,7 @@ class BaseTask:
         """
         return round(100 * (self.step_number - 1) / (len(self.steps)))
 
-    async def run(self):
+    async def run(self) -> None:
         """Run the task."""
         for func in self.steps:
             if self.errored:
@@ -133,7 +132,6 @@ class BaseTask:
             try:
                 await func()
             except Exception as e:
-                pprint(e)
                 log.exception("encountered error in task")
                 await self._set_error(f"{type(e)}: {e!s}")
 
@@ -144,7 +142,7 @@ class BaseTask:
 
         await to_thread(self.temp_dir.cleanup)
 
-    async def cleanup(self):
+    async def cleanup(self) -> None:
         """Override this method to run cleanup if the task fails."""
 
     async def _set_step_progress(self, progress: int):

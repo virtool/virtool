@@ -1,19 +1,14 @@
-"""
-Provides handlers for managing Websocket related requests.
-"""
+"""Provides handlers for managing Websocket related requests."""
 
 from aiohttp.web import Request, WebSocketResponse
 
-from virtool.api.policy import policy, WebSocketRoutePolicy
-from virtool.ws.connection import WSConnection
+from virtool.api.policy import WebSocketRoutePolicy, policy
+from virtool.ws.server import WSConnection
 
 
 @policy(WebSocketRoutePolicy)
 async def root(req: Request) -> WebSocketResponse:
-    """
-    Handles requests for WebSocket connections.
-
-    """
+    """Handle requests for WebSocket connections."""
     ws = WebSocketResponse(autoping=True, heartbeat=5)
 
     await ws.prepare(req)

@@ -19,7 +19,7 @@ alembic_down_revision = None
 virtool_down_revision = "i0ljixkr0wxg"
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     await ctx.mongo.jobs.update_many(
         {"ping": {"$exists": False}},
         {"$set": {"ping": None}},

@@ -23,7 +23,7 @@ virtool_down_revision = "okd9db53g0il"
 required_alembic_revision = None
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     async with AsyncSession(ctx.pg) as session:
         result = await session.execute(
             text("SELECT id, legacy_id FROM groups WHERE legacy_id IS NOT NULL")

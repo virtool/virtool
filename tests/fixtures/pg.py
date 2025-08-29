@@ -21,7 +21,7 @@ def pg_base_connection_string(request, pg_db_name: str):
     eg. ``postgresql+asyncpg://virtool:virtool@localhost``
 
     """
-    return request.config.getoption("postgres_connection_string")
+    return "postgresql+asyncpg://virtool:virtool@postgres:5432"
 
 
 @pytest.fixture(scope="session")
@@ -135,7 +135,7 @@ async def engine(
     await engine_without_db.dispose()
 
 
-@pytest.fixture()
+@pytest.fixture
 async def pg(engine: AsyncEngine):
     async with AsyncSession(engine) as session:
         tables = ",".join(table.name for table in Base.metadata.sorted_tables)

@@ -71,7 +71,7 @@ async def ensure_subtraction_folder_name(
     lowercase_path.rename(path)
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     async for subtraction in ctx.mongo.subtraction.find({"deleted": False}):
         subtraction_id = subtraction["_id"]
         path = join_subtraction_path(ctx.data_path, subtraction_id)
@@ -108,7 +108,7 @@ async def upgrade(ctx: MigrationContext):
         )
 
 
-async def generate_fasta_file(data_path: Path, subtraction_id: str):
+async def generate_fasta_file(data_path: Path, subtraction_id: str) -> None:
     """Generate a FASTA file for a subtraction that has Bowtie2 index files, but no
     FASTA file.
 

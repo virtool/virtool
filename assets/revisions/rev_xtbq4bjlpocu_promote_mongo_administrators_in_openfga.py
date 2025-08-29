@@ -23,7 +23,7 @@ virtool_down_revision = None
 required_alembic_revision = None
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     for user_id in await ctx.mongo.users.distinct("_id", {"administrator": True}):
         await ctx.authorization.add(
             AdministratorRoleAssignment(user_id, AdministratorRole.FULL),

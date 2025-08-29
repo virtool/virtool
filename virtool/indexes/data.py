@@ -316,7 +316,7 @@ class IndexData:
 
         return HistorySearchResult(**data)
 
-    async def delete(self, index_id: str):
+    async def delete(self, index_id: str) -> None:
         """Delete an index given it's id.
 
         :param index_id: the ID of the index to delete

@@ -148,7 +148,7 @@ class HmmsData(DataLayerDomain):
         user_id: str,
         progress_handler: AbstractProgressHandler,
         hmm_temp_profile_path,
-    ):
+    ) -> None:
         """Installs annotation and profiles given a list of annotation dictionaries and
         path to profile file.
 
@@ -215,7 +215,7 @@ class HmmsData(DataLayerDomain):
 
         return path
 
-    async def clean_status(self):
+    async def clean_status(self) -> None:
         """Reset the HMM status to its starting state.
 
         This is called in the event that an HMM data installation fails.
@@ -227,7 +227,7 @@ class HmmsData(DataLayerDomain):
                 session=session,
             )
 
-    async def update_release(self):
+    async def update_release(self) -> None:
         settings = await self.data.settings.get_all()
 
         await fetch_and_update_release(self._client, self._mongo, settings.hmm_slug)

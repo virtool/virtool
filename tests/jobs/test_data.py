@@ -6,7 +6,7 @@ from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
 
-from tests.fixtures.core import StaticTime
+from virtool.workflow.pytest_plugin.utils import StaticTime
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
@@ -17,7 +17,7 @@ from virtool.mongo.core import Mongo
 from virtool.users.models import User
 
 
-@pytest.fixture()
+@pytest.fixture
 async def jobs_data(mongo, mocker, pg: AsyncEngine) -> JobsData:
     return JobsData(mocker.Mock(spec=JobsClient), mongo, pg)
 
@@ -127,7 +127,7 @@ class TestRetry:
 
     @pytest.fixture(autouse=True)
     async def _setup(self, fake: DataFaker):
-        """Set up a user for all tests."""
+        """Set up a user for all workflow."""
         self.user = await fake.users.create()
 
     async def test_waiting(self, data_layer: DataLayer, mongo: Mongo, fake: DataFaker):
@@ -256,7 +256,7 @@ class TestTimeout:
 
     @pytest.fixture(autouse=True)
     async def _setup(self, fake: DataFaker):
-        """Set up a user for all tests."""
+        """Set up a user for all workflow."""
         self.user = await fake.users.create()
 
     async def test_waiting(self, data_layer: DataLayer, fake: DataFaker, mongo: Mongo):
@@ -376,10 +376,10 @@ class TestClean:
 
     @pytest.fixture(autouse=True)
     async def _setup(self, fake: DataFaker, mocker):
-        """Set up a user for all tests."""
+        """Set up a user for all workflow."""
         self.user = await fake.users.create()
 
-        # Patch out the delays in clean and retry methods to speed up tests.
+        # Patch out the delays in clean and retry methods to speed up workflow.
         mocker.patch("asyncio.sleep")
 
     async def test_ok(self, data_layer: DataLayer, fake: DataFaker, mongo: Mongo):

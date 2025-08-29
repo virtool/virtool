@@ -21,7 +21,7 @@ virtool_down_revision = None
 required_alembic_revision = None
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     """Run the upgrade migration."""
     await ctx.mongo.jobs.update_many(
         {

@@ -49,7 +49,7 @@ ROUTES = (
 )
 
 
-def setup_routes(app, dev: bool = False):
+def setup_routes(app, dev: bool = False) -> None:
     app.router.add_get("/ws", virtool.ws.route.root)
 
     if dev:

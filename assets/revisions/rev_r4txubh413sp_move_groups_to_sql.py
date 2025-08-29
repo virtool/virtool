@@ -25,7 +25,7 @@ virtool_down_revision = None
 required_alembic_revision = None
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     """Move groups to SQL.
 
     Some groups may already exist in both databases. In this case, no action is taken.

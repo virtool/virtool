@@ -54,13 +54,13 @@ async def create_app(config: ServerConfig):
     return app
 
 
-async def shutdown(app: App):
+async def shutdown(app: App) -> None:
     try:
         await app["redis"].close()
     except KeyError:
         ...
 
 
-def run_jobs_server(config: ServerConfig):
+def run_jobs_server(config: ServerConfig) -> None:
     app = create_app(config)
     aiohttp.web.run_app(app=app, host=config.host, port=config.port)

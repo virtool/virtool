@@ -18,7 +18,7 @@ alembic_down_revision = None
 virtool_down_revision = "ydvidjp34n4c"
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     """Set the ``active`` field to ``True`` for users that do not have the field.
 
     This means all users will be active. The application can set the field to ``False``

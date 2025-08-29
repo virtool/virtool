@@ -1,8 +1,10 @@
-from pathlib import Path
-
 import pytest
 from aiohttp.test_utils import make_mocked_request
+from pytest_mock import MockerFixture
+from syrupy import SnapshotAssertion
 
+from tests.fixtures.client import ClientSpawner
+from virtool.workflow.pytest_plugin.utils import StaticTime
 from virtool.data.utils import get_data_from_app
 from virtool.mongo.core import Mongo
 from virtool.samples.db import (
@@ -15,12 +17,10 @@ from virtool.samples.db import (
 )
 from virtool.samples.utils import calculate_workflow_tags
 
-FASTQ_PATH = Path(__file__).parent.parent / "test_files/test.fq"
-
 
 class TestCalculateWorkflowTags:
     @pytest.mark.parametrize(
-        "path_ready,path_tag",
+        ("path_ready", "path_tag"),
         [
             ([False, False], "ip"),
             ([True, False], True),
@@ -29,7 +29,7 @@ class TestCalculateWorkflowTags:
         ],
     )
     @pytest.mark.parametrize(
-        "alg1,alg2",
+        ("alg1", "alg2"),
         [
             ("bowtie", "bowtie"),
             ("bowtie", "barracuda"),
@@ -38,7 +38,7 @@ class TestCalculateWorkflowTags:
         ],
     )
     @pytest.mark.parametrize(
-        "nuvs_ready,nuvs_tag",
+        ("nuvs_ready", "nuvs_tag"),
         [
             ([False, False], "ip"),
             ([True, False], True),
@@ -72,7 +72,7 @@ class TestCalculateWorkflowTags:
         assert tags == {"pathoscope": path_tag, "nuvs": nuvs_tag}
 
 
-async def test_recalculate_workflow_tags(mocker, mongo: Mongo):
+async def test_recalculate_workflow_tags(mocker: MockerFixture, mongo: Mongo):
     await mongo.samples.insert_one({"_id": "test", "pathoscope": False, "nuvs": False})
 
     analysis_documents = [
@@ -143,19 +143,19 @@ class TestDeriveWorkflowStates:
 
     @pytest.mark.parametrize("workflow_name", ["nuvs", "pathoscope"])
     @pytest.mark.parametrize(
-        "analysis_states, final_workflow_state",
+        ("analysis_states", "final_workflow_state"),
         [
-            ([False, False], "pending"),
-            ([True, False], "complete"),
-            ([False, True], "complete"),
-            ([True, True], "complete"),
+            ((False, False), "pending"),
+            ((True, False), "complete"),
+            ((False, True), "complete"),
+            ((True, True), "complete"),
         ],
     )
     def test_derive_workflow_states(
         self,
-        workflow_name,
-        analysis_states,
-        final_workflow_state,
+        workflow_name: str,
+        analysis_states: tuple[bool, bool],
+        final_workflow_state: str,
     ):
         """Test that workflows are set to complete and pending as expected."""
         index = 0
@@ -183,7 +183,7 @@ class TestDeriveWorkflowStates:
         assert final_workflow_states == expected_workflow_states
 
     @pytest.mark.parametrize(
-        "analysis_states, final_workflow_state",
+        ("analysis_states", "final_workflow_state"),
         [
             ([False, False], "pending"),
             ([True, False], "complete"),
@@ -229,7 +229,13 @@ class TestGetSampleOwner:
         assert await get_sample_owner(mongo, "foobar") is None
 
 
-async def test_create_sample(mongo, mocker, snapshot, static_time, spawn_client):
+async def test_create_sample(
+    mongo: Mongo,
+    mocker: MockerFixture,
+    snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
+    static_time: StaticTime,
+):
     """Test that a sample can be properly created."""
     client = await spawn_client(administrator=True)
 

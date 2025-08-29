@@ -1,21 +1,7 @@
-import gzip
-import json
-from pathlib import Path
-
 import pytest
 
-TEST_FILES_PATH = Path.cwd() / "tests" / "test_files"
 
-
-@pytest.fixture(scope="session")
-def import_data_file():
-    with gzip.open(TEST_FILES_PATH / "otus.json.gz", "rt") as f:
-        data = json.load(f)
-
-    return data
-
-
-@pytest.fixture()
+@pytest.fixture
 def test_otu(static_time):
     return {
         "_id": "6116cba1",
@@ -39,7 +25,7 @@ def test_otu(static_time):
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def test_isolate():
     return {
         "id": "cab8b360",
@@ -49,7 +35,7 @@ def test_isolate():
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def test_sequence():
     return {
         "_id": "abcd1234",
@@ -65,7 +51,7 @@ def test_sequence():
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def test_merged_otu(static_time):
     return {
         "remote_id": None,

@@ -1,4 +1,5 @@
 import asyncio
+from http import HTTPStatus
 
 import pytest
 
@@ -28,7 +29,7 @@ async def test_find(
 
     resp = await client.get("/history")
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot
 
 
@@ -63,7 +64,7 @@ async def test_get(
         await resp_is.not_found(resp)
         return
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot
 
 

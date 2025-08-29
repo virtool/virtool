@@ -1,6 +1,6 @@
 import gzip
-import os
 import shutil
+from pathlib import Path
 
 import pytest
 from sqlalchemy import select
@@ -15,10 +15,29 @@ from virtool.migration import MigrationContext
 from virtool.subtractions.pg import SQLSubtractionFile
 
 
+def parse_fasta(file_path: Path):
+    """Parse a FASTA file and yield (sequence_id, sequence) tuples."""
+    with gzip.open(file_path, "rt") as f:
+        current_id = None
+        current_seq = []
+        for line in f:
+            line = line.strip()
+            if line.startswith(">"):
+                if current_id:
+                    yield current_id, "".join(current_seq)
+                current_id = line[1:].split()[0]
+                current_seq = []
+            else:
+                current_seq.append(line)
+        if current_id:
+            yield current_id, "".join(current_seq)
+
+
+@pytest.mark.timeout(60)
 async def test_upgrade(
     ctx: MigrationContext,
+    example_path: Path,
     snapshot: SnapshotAssertion,
-    test_files_path,
 ):
     async with ctx.pg.begin() as conn:
         await conn.run_sync(SQLSubtractionFile.metadata.create_all)
@@ -27,21 +46,23 @@ async def test_upgrade(
     subtraction_path = ctx.data_path / "subtractions" / "foo"
     subtraction_path.mkdir(parents=True)
 
-    for path in (test_files_path / "index").iterdir():
-        if path.name.startswith("host."):
+    example_subtraction_path = example_path / "subtractions" / "arabidopsis_thaliana"
+
+    for path in example_subtraction_path.iterdir():
+        if path.name != "subtraction.fa.gz":
             shutil.copy(
                 path,
-                subtraction_path / path.name.replace("host", "subtraction"),
+                subtraction_path / path.name,
             )
 
-    assert sorted(os.listdir(subtraction_path)) == [
+    assert {p.name for p in subtraction_path.iterdir()} == {
         "subtraction.1.bt2",
         "subtraction.2.bt2",
         "subtraction.3.bt2",
         "subtraction.4.bt2",
         "subtraction.rev.1.bt2",
         "subtraction.rev.2.bt2",
-    ]
+    }
 
     await ctx.mongo.subtraction.insert_one(
         {
@@ -53,7 +74,7 @@ async def test_upgrade(
 
     await upgrade(ctx)
 
-    assert sorted(os.listdir(subtraction_path)) == [
+    assert {p.name for p in subtraction_path.iterdir()} == {
         "subtraction.1.bt2",
         "subtraction.2.bt2",
         "subtraction.3.bt2",
@@ -61,15 +82,27 @@ async def test_upgrade(
         "subtraction.fa.gz",
         "subtraction.rev.1.bt2",
         "subtraction.rev.2.bt2",
-    ]
-
-    with gzip.open(subtraction_path / "subtraction.fa.gz", "rt") as f:
-        assert f.read() == snapshot
+    }
 
     async with AsyncSession(ctx.pg) as session:
         assert (
             await session.execute(select(SQLSubtractionFile))
-        ).scalars().all() == snapshot
+        ).scalars().all() == snapshot(name="pg")
+
+    expected_fasta = dict(
+        parse_fasta(
+            Path("assets/example/subtractions/arabidopsis_thaliana/subtraction.fa.gz")
+        )
+    )
+
+    # Stream through generated FASTA and compare one sequence at a time
+    for seq_id, sequence in parse_fasta(subtraction_path / "subtraction.fa.gz"):
+        assert seq_id in expected_fasta, f"Unexpected sequence ID: {seq_id}"
+        assert expected_fasta[seq_id] == sequence, f"Sequence mismatch for {seq_id}"
+        expected_fasta.pop(seq_id)
+
+    # Ensure no expected sequences were missed
+    assert not expected_fasta, f"Missing sequences: {list(expected_fasta.keys())}"
 
 
 class TestEnsureSubtractionFileName:

@@ -1,4 +1,5 @@
 import asyncio
+from http import HTTPStatus
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -6,7 +7,7 @@ from syrupy import SnapshotAssertion
 from yarl import URL
 
 from tests.fixtures.client import ClientSpawner, VirtoolTestClient
-from tests.fixtures.core import StaticTime
+from virtool.workflow.pytest_plugin.utils import StaticTime
 from tests.fixtures.response import RespIs
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
@@ -39,7 +40,7 @@ class TestGet:
 
         resp = await client.get(f"/otus/{otu.id}")
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
     async def test_not_found(self, spawn_client, resp_is):
@@ -132,7 +133,7 @@ class TestEdit:
         resp = await client.patch("/otus/6116cba1", data)
 
         if check_ref_right:
-            assert resp.status == 200
+            assert resp.status == HTTPStatus.OK
             assert await resp.json() == snapshot(name="json")
             assert await data_layer.otus.get("6116cba1") == snapshot(name="otu")
             assert await data_layer.history.get("6116cba1.1") == snapshot(
@@ -241,7 +242,7 @@ class TestEdit:
         resp = await client.patch(f"/otus/{test_otu['_id']}", data)
 
         if check_ref_right:
-            assert resp.status == 200
+            assert resp.status == HTTPStatus.OK
             assert await mongo.history.count_documents({}) == 1 + change_count
             assert await resp.json() == snapshot(name="json")
         else:
@@ -338,7 +339,7 @@ class TestListIsolates:
 
         resp = await client.get("/otus/6116cba1/isolates")
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot(name="json")
 
     async def test_not_found(
@@ -381,7 +382,7 @@ async def test_get_isolate(
         await resp_is.not_found(resp)
         return
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot
 
 
@@ -644,7 +645,7 @@ class TestUpdateIsolate:
             data,
         )
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot(name="json")
 
         otu = await data_layer.otus.get(self.otu.id)
@@ -676,7 +677,7 @@ class TestUpdateIsolate:
             },
         )
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
 
         body = await resp.json()
 
@@ -765,7 +766,7 @@ class TestSetAsDefault:
             {},
         )
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
 
         body = await resp.json()
 
@@ -798,7 +799,7 @@ class TestSetAsDefault:
             {},
         )
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot(name="json")
 
         assert await data_layer.otus.get(self.otu.id) == self.otu
@@ -983,7 +984,7 @@ class TestListSequences:
             f"/otus/{otu.id}/isolates/{otu.isolates[0].id}/sequences",
         )
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
     async def test_not_found(
@@ -1022,7 +1023,7 @@ class TestGetSequence:
             f"/otus/{otu.id}/isolates/{isolate.id}/sequences/{sequence.id}",
         )
 
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
 
@@ -1170,7 +1171,7 @@ class TestUpdateSequence:
         )
 
         if check_ref_right:
-            assert resp.status == 200
+            assert resp.status == HTTPStatus.OK
             assert await resp.json() == snapshot(name="json")
 
             otu = await data_layer.otus.get(self.otu.id)
@@ -1411,7 +1412,7 @@ async def test_download_otu(
         await resp_is.not_found(resp, "OTU not found")
         return
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
 
 
 @pytest.mark.parametrize("error", [None, "404_otu", "404_isolate"])
@@ -1441,7 +1442,7 @@ async def test_download_isolate(
     resp = await client.get(f"/otus/{test_otu['_id']}/isolates/{isolate_id}.fa")
 
     if error is None:
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         return
 
     await resp_is.not_found(resp)

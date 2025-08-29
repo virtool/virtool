@@ -12,7 +12,7 @@ from asyncio import gather
 import pytest
 from syrupy import SnapshotAssertion
 
-from tests.fixtures.core import StaticTime
+from virtool.workflow.pytest_plugin.utils import StaticTime
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo

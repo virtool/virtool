@@ -8,8 +8,10 @@ import shutil
 import subprocess
 import tarfile
 import tempfile
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from contextlib import suppress
+from functools import wraps
+from inspect import iscoroutinefunction
 from pathlib import Path
 from random import choice
 from string import ascii_letters, ascii_lowercase, digits
@@ -23,16 +25,6 @@ from aiohttp.web import Application
 
 from virtool.api.custom_json import dump_bytes
 from virtool.models.base import BaseModel
-
-SUB_DIRS = [
-    "files",
-    "references",
-    "subtractions",
-    "samples",
-    "history",
-    "hmm",
-    "logs/jobs",
-]
 
 
 def base_processor(document: dict | None) -> dict | None:
@@ -73,7 +65,7 @@ def coerce_list(obj: Any) -> list:
     return [obj] if not isinstance(obj, list) else obj
 
 
-def compress_json_with_gzip(json_bytes: bytes, target: Path):
+def compress_json_with_gzip(json_bytes: bytes, target: Path) -> None:
     """Compress the JSON string to a gzipped file at `target`."""
     # gzip will fail to open the file if it's parent directory doesn't exist.
     target = Path(target)
@@ -81,16 +73,6 @@ def compress_json_with_gzip(json_bytes: bytes, target: Path):
 
     with gzip.open(target, "wb") as f:
         f.write(json_bytes)
-
-
-def ensure_data_dir(data_path: Path):
-    """Ensure the application data structure is correct. Fix it if it is broken.
-
-    :param data_path: the path to create the data folder structure in
-
-    """
-    for subdir in SUB_DIRS:
-        os.makedirs(data_path / subdir, exist_ok=True)
 
 
 def generate_key() -> tuple[str, str]:
@@ -194,7 +176,7 @@ def to_bool(obj):
     return str(obj).lower() in ["1", "true"]
 
 
-async def wait_for_checks(*aws):
+async def wait_for_checks(*aws) -> None:
     """Concurrently wait for awaitables the raise exceptions when checks fail.
 
     As soon as the first exception is raised, pending checks are cancelled and exception
@@ -324,7 +306,7 @@ def safely_extract_tgz(tar: TarFile, path: Path) -> None:
     tar.extractall(path)
 
 
-def decompress_file_with_pigz(path: Path, target: Path, processes: int):
+def decompress_file_with_pigz(path: Path, target: Path, processes: int) -> None:
     """Decompress a file using pigz.
 
     :param path: path to the compressed file to be decompressed
@@ -371,7 +353,7 @@ def decompress_file_with_gzip(path: Path, target: Path) -> None:
         shutil.copyfileobj(f_in, f_out)
 
 
-def compress_file_with_pigz(path: Path, target: Path, processes: int):
+def compress_file_with_pigz(path: Path, target: Path, processes: int) -> None:
     """Use pigz to compress a file.
 
     :param path: path to the file to be compressed
@@ -405,3 +387,19 @@ def compress_file(path: Path, target: Path, processes: int = 1) -> None:
         compress_file_with_pigz(path, target, processes)
     else:
         compress_file_with_gzip(path, target)
+
+
+def coerce_to_coroutine_function(func: Callable):
+    """Wrap a non-async function in an async function."""
+    if iscoroutinefunction(func):
+        return func
+
+    @wraps(func)
+    async def _func(*args, **kwargs):
+        return func(*args, **kwargs)
+
+    return _func
+
+
+async def make_directory(path: Path) -> None:
+    await asyncio.to_thread(path.mkdir, exist_ok=True, parents=True)

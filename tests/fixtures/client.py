@@ -189,7 +189,7 @@ class ClientSpawner(Protocol):
         """
 
 
-@pytest.fixture()
+@pytest.fixture
 def spawn_client(
     aiohttp_client,
     authorization_client: AuthorizationClient,
@@ -229,7 +229,7 @@ def spawn_client(
 
             resp = await client.get("/")
 
-            assert resp.status == 200
+            assert resp.status == HTTPStatus.OK
 
     The client can be authenticated as fake user by setting the ``authenticated`` flag.
 
@@ -429,7 +429,7 @@ def spawn_client(
     return func
 
 
-@pytest.fixture()
+@pytest.fixture
 def spawn_job_client(
     aiohttp_client,
     data_path: Path,

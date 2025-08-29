@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 from collections.abc import AsyncGenerator
-from typing import Any, TypeAlias
+from typing import Any
 
 import arrow
 import orjson
@@ -10,7 +10,7 @@ from structlog import get_logger
 
 logger = get_logger("redis")
 
-RedisElement: TypeAlias = float | int | str | dict
+type RedisElement = float | int | str | dict
 """A type alias for the types that can be stored in Redis, including JSON-serializable
 dictionaries.
 """
@@ -22,6 +22,16 @@ class RedisError(Exception):
 
 class RedisChannelClosedError(RedisError):
     """An error raised when a Redis channel is closed while it is being read."""
+
+
+class RedisServerInfoError(RedisError):
+    """An error raised when a Redis server info is unavailable."""
+
+    def __init__(self) -> None:
+        """Initialize a RedisServerInfoError."""
+        super().__init__(
+            "Could not get server version because server info is not available."
+        )
 
 
 def _coerce_redis_request(value: RedisElement | None) -> bytes | int | float:
@@ -94,7 +104,7 @@ class Redis:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.close()
 
-    async def _ping(self):
+    async def _ping(self) -> None:
         """Ping the Redis server every two minutes.
 
         When using Azure Cache for Redis, connections inactive for more than 10 minutes
@@ -112,16 +122,19 @@ class Redis:
             ...
 
     @property
+    def database_id(self) -> int:
+        """The ID of the Redis database that this client is connected to."""
+        return self._client.connection_pool.connection_kwargs.get("db", 0)
+
+    @property
     def server_version(self) -> str:
         """The version of the connected Redis server."""
         if self._client_info is None:
-            raise RedisError(
-                "Could not get server version because server info is not available.",
-            )
+            raise RedisServerInfoError
 
-        return self._client_info["redis_version"]
+        return str(self._client_info["redis_version"])
 
-    async def connect(self):
+    async def connect(self) -> None:
         """Connect to the Redis server and retrieve the server info."""
         logger.info("connecting to redis")
 
@@ -138,7 +151,7 @@ class Redis:
 
         self._ping_task = asyncio.create_task(self._ping())
 
-    async def close(self):
+    async def close(self) -> None:
         """Close the connection to the Redis server."""
         if self._ping_task:
             logger.info("disconnecting from redis")
@@ -161,7 +174,7 @@ class Redis:
 
         return _coerce_redis_response(value)
 
-    async def set(self, key: str, value: RedisElement, expire: int = 0):
+    async def set(self, key: str, value: RedisElement, expire: int = 0) -> None:
         """Set the value at ``key`` to value with an optional expiration time in
         seconds.
 
@@ -175,7 +188,7 @@ class Redis:
         else:
             await self._client.setex(key, expire, _coerce_redis_request(value))
 
-    async def delete(self, key: str):
+    async def delete(self, key: str) -> None:
         """Delete the value at ``key``."""
         await self._client.delete(key)
 
@@ -194,7 +207,7 @@ class Redis:
         .. code-block:: python
 
                 async for message in redis.subscribe("channel:cancel"):
-                    print(message)
+                    ...
 
         :param channel_name: the name of the channel to subscribe to
         :return: an async generator that yields messages
@@ -207,7 +220,7 @@ class Redis:
                 if message["type"] == "message":
                     yield _coerce_redis_response(message["data"])
 
-    async def publish(self, channel_name: str, message: RedisElement):
+    async def publish(self, channel_name: str, message: RedisElement) -> None:
         """Publish a message to a channel.
 
         :param channel_name: the name of the channel to publish to
@@ -283,6 +296,6 @@ class Redis:
             *[_coerce_redis_request(v) for v in values],
         )
 
-    async def flushdb(self):
+    async def flushdb(self) -> None:
         """Delete all keys in the current database."""
         await self._client.flushdb(asynchronous=False)

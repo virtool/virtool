@@ -32,7 +32,7 @@ class TaskRunner:
         This is set to `None` when no task is running.
         """
 
-    async def run(self):
+    async def run(self) -> None:
         """Start the task runner.
 
         The task runner pulls task IDs from the tasks client, fetches them from the
