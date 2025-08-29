@@ -1,18 +1,19 @@
-import asyncio
-import datetime
+"""Redis client class, types, and errors."""
+
 from collections.abc import AsyncGenerator
+from types import TracebackType
 from typing import Any
 
-import arrow
 import orjson
 import redis
+from redis.backoff import ExponentialBackoff
+from redis.retry import Retry
 from structlog import get_logger
 
 logger = get_logger("redis")
 
 type RedisElement = float | int | str | dict
-"""A type alias for the types that can be stored in Redis, including JSON-serializable
-dictionaries.
+"""A type alias for the types that can be stored in Redis.
 """
 
 
@@ -20,8 +21,29 @@ class RedisError(Exception):
     """A generic error raised when interacting with Redis."""
 
 
-class RedisChannelClosedError(RedisError):
-    """An error raised when a Redis channel is closed while it is being read."""
+class RedisAuthenticationError(RedisError):
+    """Raised when Redis authentication fails."""
+
+    def __init__(self) -> None:
+        """Initialize a RedisAuthenticationError with the given message."""
+        super().__init__("Could not authenticate: invalid username or password")
+
+
+class RedisBlpopTimeoutError(RedisError):
+    """Raised when Redis BLPOP operation times out."""
+
+    def __init__(self, key: str) -> None:
+        """Initialize a RedisAuthenticationError with the given message."""
+        super().__init__(f"Redis BLPOP timed out for key {key}")
+        self.key = key
+
+
+class RedisConnectionError(RedisError):
+    """Raised when unable to connect to Redis server."""
+
+    def __init__(self) -> None:
+        """Initialize a RedisConnectionError with the given message."""
+        super().__init__("Could not connect")
 
 
 class RedisServerInfoError(RedisError):
@@ -34,14 +56,26 @@ class RedisServerInfoError(RedisError):
         )
 
 
-def _coerce_redis_request(value: RedisElement | None) -> bytes | int | float:
+class RedisValueError(RedisError):
+    """Raised when an invalid value type is passed to Redis operations."""
+
+    def __init__(self, value: object) -> None:
+        """Initialize a RedisValueError with the invalid value."""
+        super().__init__(f"Unsupported Redis value type: {type(value).__name__}")
+        self.value = value
+
+
+def _coerce_redis_request(value: RedisElement) -> bytes | int | float:
     if isinstance(value, (int, float)):
         return value
 
     if isinstance(value, dict):
         return orjson.dumps(value)
 
-    return str(value).encode("utf-8")
+    if isinstance(value, str):
+        return value.encode("utf-8")
+
+    raise RedisValueError(value)
 
 
 def _coerce_redis_response(value: bytes | str | int) -> RedisElement:
@@ -79,47 +113,32 @@ class Redis:
 
     """
 
-    def __init__(self, connection_string: str):
-        self._client = redis.asyncio.from_url(connection_string)
+    def __init__(self, connection_string: str) -> None:
+        """Initialize a Redis client from a connection string."""
+        self._client = redis.asyncio.from_url(
+            connection_string,
+            health_check_interval=120,
+            retry=Retry(ExponentialBackoff(cap=10, base=1), 25),
+            retry_on_error=[redis.ConnectionError, redis.TimeoutError],
+        )
         """The underlying Redis client object."""
 
         self._client_info: dict[str, Any] | None = None
         """The Redis server information, first fetched when the connection is opened."""
 
-        self._ping_task: asyncio.Task | None = None
-        """A task that pings the Redis server every two minutes to keep the connection
-        alive.
-        """
-
-        self.last_pong: datetime.datetime | None = None
-        """The time of the last successful ping.
-
-        `None` if no pings have been acknowledged.
-        """
-
-    async def __aenter__(self):
+    async def __aenter__(self) -> "Redis":
+        """Connect to a Redis server and return this wrapper."""
         await self.connect()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        """Close the connection."""
         await self.close()
-
-    async def _ping(self) -> None:
-        """Ping the Redis server every two minutes.
-
-        When using Azure Cache for Redis, connections inactive for more than 10 minutes
-        are dropped. Regular pings prevent this from happening.
-
-        """
-        try:
-            while True:
-                if await self._client.ping() is True:
-                    self.last_pong = arrow.utcnow().naive
-
-                await asyncio.sleep(120)
-
-        except asyncio.CancelledError:
-            ...
 
     @property
     def database_id(self) -> int:
@@ -140,25 +159,15 @@ class Redis:
 
         try:
             self._client_info = await self._client.info()
-        except ConnectionError as e:
-            if "Connect call failed" in str(e):
-                raise RedisError("Could not connect")
-
-            if "invalid username-password" in str(e):
-                raise RedisError("Could not authenticate: invalid username or password")
-
-            raise RedisError(f"Unhandled client error: {e}")
-
-        self._ping_task = asyncio.create_task(self._ping())
+        except redis.AuthenticationError as e:
+            raise RedisAuthenticationError from e
+        except redis.ConnectionError as e:
+            raise RedisConnectionError from e
 
     async def close(self) -> None:
         """Close the connection to the Redis server."""
-        if self._ping_task:
-            logger.info("disconnecting from redis")
-            self._ping_task.cancel()
-            await self._ping_task
-
         if self._client:
+            logger.info("disconnecting from redis")
             await self._client.aclose()
 
     async def get(self, key: str) -> RedisElement | None:
@@ -175,8 +184,9 @@ class Redis:
         return _coerce_redis_response(value)
 
     async def set(self, key: str, value: RedisElement, expire: int = 0) -> None:
-        """Set the value at ``key`` to value with an optional expiration time in
-        seconds.
+        """Set the value at ``key`` to value.
+
+        An optional expiry time can be provided.
 
         :param key: the key to set
         :param value: the value to set
@@ -199,7 +209,7 @@ class Redis:
     async def subscribe(
         self,
         channel_name: str,
-    ) -> AsyncGenerator[RedisElement, None]:
+    ) -> AsyncGenerator[RedisElement]:
         """Subscribe to a channel with ``channel_name`` and yield messages.
 
         Example:
@@ -230,12 +240,19 @@ class Redis:
         await self._client.publish(channel_name, _coerce_redis_request(message))
 
     async def blpop(self, key: str) -> RedisElement:
-        """Remove and return the first element of the list at ``key``, or block until
-        one is available.
+        """Remove and return the first element of the list at ``key``.
+
+        This method will block until a value is available.
+
+        :param key: the key to get
+        :return: the first element of the list
 
         """
-        _, value = await self._client.blpop([key])
+        result = await self._client.blpop([key])
+        if result is None:
+            raise RedisBlpopTimeoutError(key)
 
+        _, value = result
         return _coerce_redis_response(value)
 
     async def llen(self, key: str) -> int:
@@ -260,7 +277,7 @@ class Redis:
             for value in await self._client.lrange(key, start, end)
         ]
 
-    async def lpop(self, key: str):
+    async def lpop(self, key: str) -> RedisElement | None:
         """Remove and return the first element of the list at ``key``."""
         value = await self._client.lpop(key)
 
@@ -285,11 +302,12 @@ class Redis:
         """
         return await self._client.lrem(key, count, element)
 
-    async def rpush(self, key: str, *values: RedisElement):
+    async def rpush(self, key: str, *values: RedisElement) -> int:
         """Push ``values`` onto the tail of the list ``key``.
 
         :param key: the key of the list to push to
         :param values: the values to push
+        :return: the length of the list after pushing
         """
         return await self._client.rpush(
             key,
