@@ -160,7 +160,7 @@ async def startup_sentry(app: App) -> None:
     """
     if get_config_from_app(app).sentry_dsn:
         logger.info("configuring sentry")
-        configure_sentry(app["version"], get_config_from_app(app).sentry_dsn)
+        configure_sentry(get_config_from_app(app).sentry_dsn, app["version"])
     else:
         logger.info("skipped configuring sentry")
 
