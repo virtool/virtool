@@ -1,6 +1,7 @@
 """An HTTP client for the data layer."""
 
 from collections.abc import Awaitable, Callable
+from http import HTTPStatus
 from pathlib import Path
 
 from aiohttp import ClientSession
@@ -8,7 +9,8 @@ from aiohttp import ClientSession
 from virtool.data.file import ChunkWriter
 
 
-class HTTPClientError(Exception): ...
+class HTTPClientError(Exception):
+    """Raised when the Virtool HTTPClient encounters an error."""
 
 
 DOWNLOAD_CHUNK_SIZE = 1024 * 1024 * 4
@@ -28,17 +30,17 @@ class HTTPClient:
         target: Path,
         progress_handler: Callable[[float | int], Awaitable[int]] | None = None,
     ) -> None:
-        """Download the binary file at ``url`` to the location specified by
-        ``target_path``.
+        """Download a binary file.
 
         :param url: the download URL for the release
         :param target: the path to write the downloaded file to.
         :param progress_handler: a callable that will be called with the current
                                  progress when it changes.
-
         """
         async with self._session.get(url) as resp:
-            if resp.status > 399:
+            status = HTTPStatus(resp.status)
+
+            if status.is_client_error or status.is_server_error:
                 raise HTTPClientError
 
             async with ChunkWriter(target) as writer:

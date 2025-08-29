@@ -1,16 +1,39 @@
 """Workflow exceptions."""
 
+from http import HTTPStatus
 from subprocess import SubprocessError
+
+
+class JobAcquisitionError(Exception):
+    """Raised when there is a problem acquiring a job."""
+
+    def __init__(self, body: str, job_id: str, status: HTTPStatus | int) -> None:
+        """Initialize a JobAcquisitionError."""
+        self.body = body
+        self.job_id = job_id
+        self.status = HTTPStatus(status)
+
+        super().__init__("Unexpected API error during job acquisition")
 
 
 class JobAlreadyAcquiredError(Exception):
     """Raised when an attempt is made to reacquire a job."""
 
     def __init__(self, job_id: str) -> None:
-        """Initialize the exception with a message containing the job ID."""
+        """Initialize a JobAlreadyAcquiredError with a message containing the job ID."""
+        self.job_id = job_id
+
         super().__init__(
             f"Job {job_id} is has already been acquired.",
         )
+
+
+class JobsAPICannotConnectError(Exception):
+    """Raised when the workflow client cannot connect to the server."""
+
+    def __init__(self) -> None:
+        """Initialize a JobsAPICannotConnectError."""
+        super().__init__("Unable to connect to server.")
 
 
 class JobsAPIError(Exception):

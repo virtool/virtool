@@ -2,6 +2,7 @@
 
 import asyncio
 from asyncio import CancelledError
+from dataclasses import dataclass
 
 from aiohttp.web_ws import WebSocketResponse
 from structlog import get_logger
@@ -10,10 +11,39 @@ from virtool.api.client import UserClient
 from virtool.api.custom_json import dump_string
 from virtool.data.events import Operation, listen_for_events
 from virtool.redis import Redis
+from virtool.types import Document
 from virtool.users.sessions import SessionData
-from virtool.ws.cls import WSDeleteMessage, WSInsertMessage, WSMessage
 
 logger = get_logger("ws")
+
+
+@dataclass
+class WSMessage:
+    """A message sent to a websocket client."""
+
+    operation: str
+    interface: str
+
+
+@dataclass
+class WSInsertMessage(WSMessage):
+    """A message sent to a websocket client that describes a new resource."""
+
+    data: Document
+
+
+@dataclass
+class WSUpdateMessage(WSMessage):
+    """A message sent to a websocket client that describes an update to a resource."""
+
+    data: Document
+
+
+@dataclass
+class WSDeleteMessage(WSMessage):
+    """A message sent to a websocket client that lists IDs of deleted resources."""
+
+    data: list[int | str]
 
 
 class WSServer:

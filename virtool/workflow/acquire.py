@@ -1,13 +1,16 @@
+"""Functions for acquiring jobs from the Virtool API."""
+
 import asyncio
+from http import HTTPStatus
 
 from aiohttp import ClientConnectionError, ClientSession, TCPConnector
 from structlog import get_logger
 
 from virtool.jobs.models import JobAcquired
 from virtool.workflow.errors import (
+    JobAcquisitionError,
     JobAlreadyAcquiredError,
-    JobsAPIError,
-    JobsAPIServerError,
+    JobsAPICannotConnectError,
 )
 
 logger = get_logger("api")
@@ -36,22 +39,20 @@ async def acquire_job_by_id(
                 ) as resp:
                     logger.info("acquiring job", remaining_attempts=attempts, id=job_id)
 
-                    if resp.status == 200:
+                    if resp.status == HTTPStatus.OK:
                         job_json = await resp.json()
                         logger.info("acquired job", id=job_id)
                         return JobAcquired(**job_json)
 
-                    if resp.status == 400:
-                        if "already acquired" in await resp.text():
-                            raise JobAlreadyAcquiredError(await resp.json())
+                    if (
+                        resp.status == HTTPStatus.BAD_REQUEST
+                        and "already acquired" in await resp.text()
+                    ):
+                        raise JobAlreadyAcquiredError(job_id=job_id)
 
-                    logger.critical(
-                        "unexpected api error during job acquisition",
-                        status=resp.status,
-                        body=await resp.text(),
+                    raise JobAcquisitionError(
+                        body=await resp.text(), job_id=job_id, status=resp.status
                     )
-
-                    raise JobsAPIError("Unexpected API error during job acquisition")
 
             except ClientConnectionError:
                 logger.warning(
@@ -63,4 +64,4 @@ async def acquire_job_by_id(
 
             attempts -= 1
 
-    raise JobsAPIServerError("Unable to connect to server.")
+    raise JobsAPICannotConnectError

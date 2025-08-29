@@ -6,7 +6,7 @@ import aiofiles
 from aiohttp import BasicAuth, ClientSession
 from structlog import get_logger
 
-from virtool.workflow.api.utils import (
+from virtool.workflow.api import (
     decode_json_response,
     raise_exception_by_status_code,
     retry,
