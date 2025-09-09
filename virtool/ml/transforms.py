@@ -7,8 +7,7 @@ from virtool.types import Document
 
 
 class AttachMLTransform(AbstractTransform):
-    """
-    Attach more ML model release detail to a document with a field `ml` that
+    """Attach more ML model release detail to a document with a field `ml` that
     contains a ML model release id.
 
     If a document does not have `ml` field or it is `None`, the returned `ml` field will

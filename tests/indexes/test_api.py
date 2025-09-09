@@ -18,7 +18,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
-from virtool.workflow.pytest_plugin.utils import StaticTime
 from tests.fixtures.response import RespIs
 from virtool.config import get_config_from_app
 from virtool.data.layer import DataLayer
@@ -30,6 +29,7 @@ from virtool.indexes.utils import check_index_file_type
 from virtool.jobs.models import QueuedJobID
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app
+from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
 class TestFind:

@@ -24,7 +24,7 @@ from virtool.models.roles import (
     SpaceSubtractionRole,
     SpaceUploadRole,
 )
-from virtool.spaces.models import SpaceMinimal, Space, MemberSearchResult
+from virtool.spaces.models import MemberSearchResult, Space, SpaceMinimal
 from virtool.spaces.sql import SQLSpace
 
 if TYPE_CHECKING:

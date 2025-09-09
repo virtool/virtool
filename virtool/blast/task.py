@@ -1,6 +1,6 @@
 import asyncio
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING
 
 from structlog import get_logger
 
@@ -34,7 +34,7 @@ class BLASTTask(BaseTask):
         self,
         task_id: int,
         data: "DataLayer",
-        context: Dict,
+        context: dict,
         temp_dir: TemporaryDirectory,
     ):
         super().__init__(task_id, data, context, temp_dir)
@@ -42,7 +42,7 @@ class BLASTTask(BaseTask):
         self.analysis_id = self.context["analysis_id"]
         self.sequence_index = self.context["sequence_index"]
         self.steps = [self.request]
-        self.rid: Optional[str] = None
+        self.rid: str | None = None
 
     async def request(self) -> None:
         """Make the initial request to NCBI to start a BLAST search.
@@ -70,7 +70,7 @@ class BLASTTask(BaseTask):
 
                 break
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 await self.data.blast.delete_nuvs_blast(
                     self.analysis_id,
                     self.sequence_index,

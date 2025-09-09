@@ -59,11 +59,7 @@ async def upgrade(ctx: MigrationContext) -> None:
                 / "subtraction.1.bt2"
             ).stat()
 
-            subtraction_created_at = (
-                index_stats.st_ctime
-                if index_stats.st_ctime < index_stats.st_mtime
-                else index_stats.st_mtime
-            )
+            subtraction_created_at = min(index_stats.st_mtime, index_stats.st_ctime)
         except FileNotFoundError:
             if subtraction["deleted"]:
                 subtraction_created_at = arrow.now()

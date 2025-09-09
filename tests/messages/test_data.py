@@ -8,7 +8,7 @@ from virtool.messages.sql import SQLInstanceMessage
 from virtool.mongo.core import Mongo
 
 
-@pytest.fixture()
+@pytest.fixture
 async def messages_data(pg: AsyncEngine, mongo: Mongo) -> MessagesData:
     return MessagesData(pg, mongo)
 

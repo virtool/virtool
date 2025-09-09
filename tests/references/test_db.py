@@ -16,7 +16,7 @@ from virtool.references.db import (
 from virtool.startup import startup_http_client_session
 
 
-@pytest.fixture()
+@pytest.fixture
 async def fake_app():
     version = "v1.2.3"
 

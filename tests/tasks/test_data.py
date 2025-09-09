@@ -5,13 +5,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
-from virtool.workflow.pytest_plugin.utils import StaticTime
-from virtool.jobs.tasks import JobsCleanTask
+from virtool.jobs.tasks import JobsTimeoutTask
 from virtool.redis import Redis
 from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
 from virtool.tasks.oas import UpdateTaskRequest
 from virtool.tasks.sql import SQLTask
+from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
 async def test_find(
@@ -121,7 +121,7 @@ async def test_add(
     """Test that the TasksClient can successfully publish a Pub/Sub message to the tasks Redis channel."""
     tasks_client = TasksClient(redis)
 
-    await tasks_data.create(JobsCleanTask)
+    await tasks_data.create(JobsTimeoutTask)
 
     task_id = await wait_for(tasks_client.pop(), timeout=3)
 

@@ -4,21 +4,18 @@ from sqlalchemy import (
     Column,
     DateTime,
     Enum,
+    ForeignKey,
     Integer,
     String,
-    ForeignKey,
 )
-from sqlalchemy.orm import relationship, Mapped
+from sqlalchemy.orm import Mapped, relationship
 
 from virtool.pg.base import Base
 from virtool.pg.utils import SQLEnum
 
 
 class UploadType(str, SQLEnum):
-    """
-    Enumerated type for possible upload types
-
-    """
+    """Enumerated type for possible upload types"""
 
     hmm = "hmm"
     reference = "reference"
@@ -27,10 +24,7 @@ class UploadType(str, SQLEnum):
 
 
 class SQLUpload(Base):
-    """
-    SQL table to store all new uploads
-
-    """
+    """SQL table to store all new uploads"""
 
     __tablename__ = "uploads"
 

@@ -346,7 +346,7 @@ class SubtractionsData(DataLayerDomain):
         self,
         subtraction_id: str,
         filename: str,
-        chunker: AsyncGenerator[bytearray, None],
+        chunker: AsyncGenerator[bytearray],
     ) -> SubtractionFile:
         """Handle a subtraction file upload.
 

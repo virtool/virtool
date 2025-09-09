@@ -10,8 +10,8 @@ from virtool.users.db import (
     compose_groups_update,
 )
 from virtool.users.mongo import (
-    validate_credentials,
     compose_primary_group_update,
+    validate_credentials,
 )
 from virtool.users.utils import hash_password
 from virtool.utils import random_alphanumeric
@@ -75,8 +75,7 @@ class TestComposeGroupsUpdate:
         assert "Non-existent groups: 'group_3', 4" in str(err.value)
 
     async def test_primary_group(self, _group_one_and_two, pg: AsyncEngine):
-        """
-        Test that the primary group id is set to `None` in the update if it is not
+        """Test that the primary group id is set to `None` in the update if it is not
         included in the list of groups.
         """
         assert await compose_groups_update(pg, [1], 2) == {
@@ -87,8 +86,7 @@ class TestComposeGroupsUpdate:
 
 class TestComposePrimaryGroupUpdate:
     async def test_ok(self, _group_one_and_two, mongo: Mongo, pg: AsyncEngine):
-        """
-        Test that the ``primary_group`` is set correctly when the user is a member of
+        """Test that the ``primary_group`` is set correctly when the user is a member of
         the group.
         """
         await mongo.users.insert_one({"_id": "bob", "groups": [1, "group_2"]})
@@ -98,8 +96,7 @@ class TestComposePrimaryGroupUpdate:
         ) == {"primary_group": 1}
 
     async def test_non_existent_group(self, mongo: Mongo, pg: AsyncEngine):
-        """
-        Test that an exception is raised if the provided ``primary_group`` does not
+        """Test that an exception is raised if the provided ``primary_group`` does not
         exist in Postgres.
         """
         await mongo.users.insert_one({"_id": "bob", "groups": [5]})
@@ -118,8 +115,7 @@ class TestComposePrimaryGroupUpdate:
     async def test_not_a_member(
         self, _group_one_and_two, mongo: Mongo, pg: AsyncEngine
     ):
-        """
-        Test that an exception is raised if the user is not a member of the provided
+        """Test that an exception is raised if the user is not a member of the provided
         ``primary_group``.
         """
         await mongo.users.insert_one({"_id": "bob", "groups": [1]})
@@ -149,10 +145,7 @@ class TestComposePrimaryGroupUpdate:
 async def test_validate_credentials(
     legacy: bool, user_id: str, password: str, result: bool, mongo: Mongo
 ):
-    """
-    Test that valid, bcrypt-based credentials work.
-
-    """
+    """Test that valid, bcrypt-based credentials work."""
     document = {"_id": "test"}
 
     if legacy:
@@ -162,7 +155,7 @@ async def test_validate_credentials(
             {
                 "salt": salt,
                 "password": hashlib.sha512(
-                    salt.encode("utf-8") + "foobar".encode("utf-8")
+                    salt.encode("utf-8") + b"foobar"
                 ).hexdigest(),
             }
         )

@@ -1,12 +1,9 @@
-"""
-A wrapper for the `fake` package that adds some Virtool-specific functionality.
-
-"""
+"""A wrapper for the `fake` package that adds some Virtool-specific functionality."""
 
 from faker import Faker
 from faker.providers import address, date_time, lorem, misc, profile, python
 
-from virtool.fake.providers import MongoIDProvider, JobsProvider
+from virtool.fake.providers import JobsProvider, MongoIDProvider
 
 
 class FakerWrapper:
@@ -36,8 +33,7 @@ class FakerWrapper:
         self.random_element = self.fake.random_element
 
     def get_mongo_id(self) -> str:
-        """
-        Create a predictable, fake ID for MongoDB that imitates Virtool IDs.
+        """Create a predictable, fake ID for MongoDB that imitates Virtool IDs.
 
         :return: a fake MongoDB ID
 

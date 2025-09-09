@@ -286,6 +286,7 @@
       'created_at': 'approximately_now_datetime',
       'id': 'fb085f7f',
       'progress': 0,
+      'retries': 0,
       'stage': None,
       'state': <JobState.WAITING: 'waiting'>,
       'user': dict({

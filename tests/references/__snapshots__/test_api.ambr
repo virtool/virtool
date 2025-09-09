@@ -732,6 +732,7 @@
       'created_at': '2015-10-06T20:00:00Z',
       'id': '7cf872dc',
       'progress': 0,
+      'retries': 0,
       'stage': None,
       'state': 'waiting',
       'user': dict({

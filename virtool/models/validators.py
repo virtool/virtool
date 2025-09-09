@@ -5,8 +5,7 @@ from pydantic import validator
 
 
 def normalize_hex_color(color: str) -> str:
-    """
-    Validate a hex color and convert all alpha characters to uppercase.
+    """Validate a hex color and convert all alpha characters to uppercase.
 
     :param color: the hex color to validate
 
@@ -20,8 +19,7 @@ def normalize_hex_color(color: str) -> str:
 
 
 def check_optional_field(value: Any) -> Any:
-    """
-    Validate an optional value to check if it is being set to null when
+    """Validate an optional value to check if it is being set to null when
     it is not nullable.
 
     :param value: the optional value to validate

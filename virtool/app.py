@@ -64,10 +64,7 @@ def create_app_without_startup():
 
 
 def create_app(config: Config):
-    """
-    Creates the Virtool application.
-
-    """
+    """Creates the Virtool application."""
     middlewares = [
         logging_middleware,
         headers_middleware,

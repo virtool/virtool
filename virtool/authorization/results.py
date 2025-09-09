@@ -3,8 +3,7 @@ from dataclasses import dataclass
 
 @dataclass
 class AddRelationshipResult:
-    """
-    The result of adding one or more authorization relationships
+    """The result of adding one or more authorization relationships
     using the :class:`.AuthorizationClient`.
 
     :param added_count: The number of relationships that were added.
@@ -17,8 +16,7 @@ class AddRelationshipResult:
 
 @dataclass
 class RemoveRelationshipResult:
-    """
-    The result of removing one or more authorization relationships
+    """The result of removing one or more authorization relationships
     using the :class:`.AuthorizationClient`.
 
     :param not_found_count: The number of relationships that were not found.

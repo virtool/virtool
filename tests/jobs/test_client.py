@@ -10,7 +10,7 @@ from virtool.redis import Redis
 from virtool.workflow.runtime.redis import get_cancellation_channel
 
 
-@pytest.fixture()
+@pytest.fixture
 def jobs_client(redis: Redis) -> JobsClient:
     return JobsClient(redis)
 

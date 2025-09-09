@@ -24,10 +24,7 @@ from virtool.otus.db import (
 async def test_check_name_and_abbreviation(
     name, abbreviation, return_value, mongo, test_otu
 ):
-    """
-    Test that the function works properly for all possible inputs.
-
-    """
+    """Test that the function works properly for all possible inputs."""
     await mongo.otus.insert_one(test_otu)
 
     assert (
@@ -47,10 +44,7 @@ async def test_join(
     test_otu,
     test_sequence,
 ):
-    """
-    Test that an OTU is properly joined when only a ``otu_id`` is provided.
-
-    """
+    """Test that an OTU is properly joined when only a ``otu_id`` is provided."""
     await mongo.otus.insert_one(test_otu)
     await mongo.sequences.insert_one(test_sequence)
 
@@ -81,8 +75,7 @@ async def test_increment_otu_version(mongo, snapshot):
 async def test_check_segment_or_target(
     data_type, defined, missing, used, sequence_id, mongo
 ):
-    """
-    Test that issues with `segment` or `target` fields in sequence editing requests are
+    """Test that issues with `segment` or `target` fields in sequence editing requests are
     detected.
 
     """

@@ -1,6 +1,6 @@
 import typing
+from collections.abc import AsyncGenerator
 from pathlib import Path
-from typing import AsyncGenerator
 
 import aiofiles
 
@@ -121,7 +121,7 @@ def read_fasta(path: Path) -> list[tuple[str, str]]:
     return data
 
 
-async def read_fastq(f) -> AsyncGenerator[tuple, None]:
+async def read_fastq(f) -> AsyncGenerator[tuple]:
     """Read the FASTQ content in the file object `f`.
     Yields tuples containing the header, sequence, and quality.
 
@@ -164,7 +164,7 @@ async def read_fastq_from_path(path: Path) -> typing.AsyncIterable:
     :return: tuples containing the header, sequence, and quality
 
     """
-    async with aiofiles.open(path, "r") as f:
+    async with aiofiles.open(path) as f:
         async for record in read_fastq(f):
             yield record
 
@@ -181,7 +181,7 @@ async def read_fastq_headers(path: Path) -> list:
 
     had_plus = False
 
-    async with aiofiles.open(path, "r") as f:
+    async with aiofiles.open(path) as f:
         async for line in f:
             if line == "+\n":
                 had_plus = True

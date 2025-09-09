@@ -4,7 +4,6 @@ from aiohttp import ClientSession
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool.account.data import AccountData
-from virtool.administrators.data import AdministratorsData
 from virtool.analyses.data import AnalysisData
 from virtool.authorization.client import AuthorizationClient
 from virtool.blast.data import BLASTData
@@ -39,7 +38,6 @@ class DataLayer:
     """Provides access to application data."""
 
     account: AccountData
-    administrators: AdministratorsData
     analyses: AnalysisData
     blast: BLASTData
     groups: GroupsData
@@ -70,7 +68,6 @@ class DataLayer:
         self.references.bind_layer(self)
         self.sessions.bind_layer(self)
         self.account.bind_layer(self)
-        self.administrators.bind_layer(self)
         self.ml.bind_layer(self)
 
 
@@ -97,7 +94,6 @@ def create_data_layer(
 
     return DataLayer(
         AccountData(authorization_client, mongo, pg),
-        AdministratorsData(authorization_client, mongo, pg),
         AnalysisData(mongo, config, pg),
         BLASTData(client, mongo, pg),
         GroupsData(authorization_client, mongo, pg),

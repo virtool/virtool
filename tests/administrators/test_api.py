@@ -400,15 +400,3 @@ class TestAdministratorRoles:
             "id": "forbidden",
             "message": "Requires administrative privilege",
         }
-
-
-@pytest.mark.parametrize("name,status", [("relist_jobs", 202), ("foo", 400)])
-async def test_run_actions(name: str, status: int, spawn_client: ClientSpawner):
-    client = await spawn_client(
-        administrator=True,
-        authenticated=True,
-    )
-
-    resp = await client.put("/admin/actions", {"name": name})
-
-    assert resp.status == status

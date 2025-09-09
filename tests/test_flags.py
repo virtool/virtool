@@ -1,5 +1,5 @@
-from virtool.flags import FeatureFlags, FlagName
 from virtool.administrators.api import RolesView
+from virtool.flags import FeatureFlags, FlagName
 
 
 def test_check_flag_enabled():

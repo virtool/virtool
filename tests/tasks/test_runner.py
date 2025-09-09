@@ -1,6 +1,5 @@
 import asyncio
 from tempfile import TemporaryDirectory
-from typing import Dict
 
 import pytest
 
@@ -16,7 +15,7 @@ class DummyTriggerTask(BaseTask):
         self,
         task_id: int,
         data: "DataLayer",
-        context: Dict,
+        context: dict,
         temp_dir: TemporaryDirectory,
     ):
         super().__init__(task_id, data, context, temp_dir)
@@ -30,7 +29,7 @@ class DummyTriggerTask(BaseTask):
         self.done_flag.set()
 
 
-@pytest.fixture()
+@pytest.fixture
 def task_runner(data_layer, redis):
     return TaskRunner(data_layer, TasksClient(redis))
 

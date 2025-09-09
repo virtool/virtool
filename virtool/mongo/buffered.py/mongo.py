@@ -1,15 +1,11 @@
 from contextlib import asynccontextmanager
-from typing import List
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo import InsertOne, UpdateOne
 
 
 class BufferedBulkWriter:
-    """
-    Performs bulk writes against a MongoDB collection.
-
-    """
+    """Performs bulk writes against a MongoDB collection."""
 
     def __init__(
         self,
@@ -19,12 +15,11 @@ class BufferedBulkWriter:
     ):
         self.collection = collection
         self.batch_size = batch_size
-        self._buffer: List[InsertOne | UpdateOne] = []
+        self._buffer: list[InsertOne | UpdateOne] = []
         self._session = session
 
     async def add(self, request: InsertOne | UpdateOne) -> None:
-        """
-        Add a write request to the buffer.
+        """Add a write request to the buffer.
 
         If the buffer has reached ``batch_size`` all requests will be sent to MongoDB
         and the buffer will be emptied.
@@ -38,10 +33,7 @@ class BufferedBulkWriter:
             await self.flush()
 
     async def flush(self) -> None:
-        """
-        Flush the buffered write requests to MongoDB.
-
-        """
+        """Flush the buffered write requests to MongoDB."""
         if self._buffer:
             await self.collection.bulk_write(self._buffer, session=self._session)
             self._buffer = []
@@ -51,8 +43,7 @@ class BufferedBulkWriter:
 async def buffered_bulk_writer(
     collection, batch_size=100, session: AsyncIOMotorClientSession | None = None
 ):
-    """
-    A context manager for bulk writing to MongoDB.
+    """A context manager for bulk writing to MongoDB.
 
     Returns a :class:``BufferedBulkWriter`` object. Automatically flushes the buffer
     when the context manager exits.

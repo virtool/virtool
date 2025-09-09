@@ -4,7 +4,7 @@ from aiohttp.web_app import Application
 
 from virtool.config import get_config_from_app
 from virtool.hmm.tasks import HMMRefreshTask
-from virtool.jobs.tasks import JobsCleanTask
+from virtool.jobs.tasks import JobsTimeoutTask
 from virtool.ml.tasks import MLModelsSyncTask
 from virtool.pg.utils import connect_pg
 from virtool.redis import Redis
@@ -48,7 +48,7 @@ async def startup_task_spawner(app: Application) -> None:
         TaskSpawnerService(app["pg"], app["tasks_datalayer"]).run(
             [
                 (HMMRefreshTask, 600),
-                (JobsCleanTask, 600),
+                (JobsTimeoutTask, 600),
                 (MLModelsSyncTask, 600),
                 (ReferenceReleasesRefreshTask, 600),
                 (ReferencesCleanTask, 3600),

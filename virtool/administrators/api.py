@@ -1,13 +1,13 @@
+"""Routes for administrative functions."""
+
 import asyncio
 
-from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r202, r400, r403, r404
+from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404
 
 from virtool.administrators.oas import (
     ListAdministratorResponse,
     ListRolesResponse,
-    RunActionRequest,
     UpdateAdministratorRoleRequest,
     UpdateUserRequest,
 )
@@ -21,7 +21,6 @@ from virtool.authorization.client import (
 )
 from virtool.data.errors import (
     ResourceConflictError,
-    ResourceError,
     ResourceNotFoundError,
 )
 from virtool.data.utils import get_data_from_req
@@ -212,26 +211,6 @@ class AdminRoleView(PydanticView):
             raise APINotFound()
 
         return json_response(administrator, status=200)
-
-
-@routes.view("/admin/actions")
-class AdminActionsView(PydanticView):
-    @policy(AdministratorRoutePolicy(AdministratorRole.FULL))
-    async def put(self, data: RunActionRequest) -> r202 | r400:
-        """Initiate an action
-
-        Starts an action with the given name.
-
-        Status Codes:
-            200: Successful operation
-            404: User not found
-        """
-        try:
-            await get_data_from_req(self.request).administrators.run_action(data.name)
-        except ResourceError:
-            raise APIBadRequest("Invalid action name")
-
-        return Response(status=202)
 
 
 async def check_administrator_can_update_user(
