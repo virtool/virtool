@@ -28,7 +28,7 @@ virtool_down_revision = "t05gnq2g81qz"
 required_alembic_revision = None
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     analysis_list = [
         (analysis["_id"], analysis["sample"]["id"])
         async for analysis in ctx.mongo.analyses.find(

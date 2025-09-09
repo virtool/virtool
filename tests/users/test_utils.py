@@ -1,8 +1,6 @@
 import pytest
 
-
 import virtool.users.utils
-
 from virtool.users.utils import Permission
 
 
@@ -43,8 +41,7 @@ def test_check_legacy_password(password, salt, result):
     ids=["success", "failure"],
 )
 def test_check_password(password, hashed, result):
-    """
-    Test that passwords are validated against bcrypt hashed ones correctly in success and failure
+    """Test that passwords are validated against bcrypt hashed ones correctly in success and failure
     cases.
 
     """

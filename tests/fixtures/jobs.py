@@ -2,8 +2,8 @@ from collections.abc import MutableMapping
 
 import pytest
 
-from tests.fixtures.core import StaticTime
 from virtool.mongo.core import Mongo
+from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
 class TestJob(MutableMapping):
@@ -37,7 +37,7 @@ class TestJob(MutableMapping):
         return repr(self._data)
 
 
-@pytest.fixture()
+@pytest.fixture
 def test_job(mongo: Mongo, static_time: StaticTime):
     return TestJob(
         mongo,

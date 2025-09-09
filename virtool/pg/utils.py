@@ -1,12 +1,12 @@
 import sys
 from enum import Enum
+from typing import TypeVar
 
 import orjson
 from sqlalchemy import select, text
 from sqlalchemy.engine.result import ScalarResult
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from structlog import get_logger
-from typing_extensions import TypeVar
 
 from virtool.api.custom_json import dump_string
 from virtool.pg.base import Base
@@ -52,7 +52,7 @@ async def connect_pg(postgres_connection_string: str) -> AsyncEngine:
         sys.exit(1)
 
 
-async def check_version(engine: AsyncEngine):
+async def check_version(engine: AsyncEngine) -> None:
     """Check and log the Postgres sever version.
 
     :param engine: an AsyncConnection object
@@ -65,7 +65,7 @@ async def check_version(engine: AsyncEngine):
     logger.info("found postgres", version=version)
 
 
-async def delete_row(pg: AsyncEngine, id_: int, model: type[Base]):
+async def delete_row(pg: AsyncEngine, id_: int, model: type[Base]) -> None:
     """Deletes a row in the `model` SQL model by its row `id_`.
 
     :param pg: the application AsyncEngine object

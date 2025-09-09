@@ -13,6 +13,7 @@
       'created_at': '2015-10-06T20:00:00Z',
       'id': 'fb085f7f',
       'progress': 10,
+      'retries': 0,
       'stage': 'mXsosXGGLuvHakrmHtTD',
       'state': 'running',
       'user': dict({
@@ -91,82 +92,6 @@
     'updated_at': '2015-10-06T20:00:00Z',
   })
 # ---
-# name: test_finalize[None]
-  dict({
-    'created_at': '2015-10-06T20:00:00Z',
-    'files': list([
-    ]),
-    'id': 'analysis1',
-    'index': dict({
-      'id': 'foo',
-      'version': 2,
-    }),
-    'job': dict({
-      'created_at': '2015-10-06T20:00:00Z',
-      'id': '7cf872dc',
-      'progress': 50,
-      'stage': 'JURZHTCWaKMqqBTFitpK',
-      'state': 'timeout',
-      'user': dict({
-        'handle': 'zclark',
-        'id': 'fb085f7f',
-      }),
-      'workflow': 'aodp',
-    }),
-    'ml': None,
-    'ready': True,
-    'reference': dict({
-      'data_type': 'genome',
-      'id': 'baz',
-      'name': 'Baz',
-    }),
-    'results': dict({
-      'hits': list([
-      ]),
-    }),
-    'sample': dict({
-      'id': 'sample1',
-    }),
-    'subtractions': list([
-    ]),
-    'updated_at': '2015-10-06T20:00:00Z',
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 'bf1b993c',
-    }),
-    'workflow': 'nuvs',
-  })
-# ---
-# name: test_finalize[None].1
-  dict({
-    '_id': 'analysis1',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'files': list([
-    ]),
-    'index': dict({
-      'id': 'foo',
-      'version': 2,
-    }),
-    'job': dict({
-      'id': '7cf872dc',
-    }),
-    'ready': True,
-    'reference': dict({
-      'id': 'baz',
-    }),
-    'results': 'sql',
-    'sample': dict({
-      'id': 'sample1',
-    }),
-    'subtractions': list([
-    ]),
-    'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'user': dict({
-      'id': 'bf1b993c',
-    }),
-    'workflow': 'nuvs',
-  })
-# ---
 # name: test_find
   dict({
     'documents': list([
@@ -181,6 +106,7 @@
           'created_at': '2015-10-06T20:00:00Z',
           'id': '3cbb22cc',
           'progress': 50,
+          'retries': 0,
           'stage': 'JURZHTCWaKMqqBTFitpK',
           'state': 'timeout',
           'user': dict({
@@ -219,6 +145,7 @@
           'created_at': '2015-10-06T20:00:00Z',
           'id': '3cbb22cc',
           'progress': 50,
+          'retries': 0,
           'stage': 'JURZHTCWaKMqqBTFitpK',
           'state': 'timeout',
           'user': dict({
@@ -309,6 +236,7 @@
       'created_at': '2015-10-06T20:00:00Z',
       'id': '3cbb22cc',
       'progress': 100,
+      'retries': 0,
       'stage': 'JURZHTCWaKMqqBTFitpK',
       'state': 'complete',
       'user': dict({
@@ -373,6 +301,7 @@
       'created_at': '2015-10-06T20:00:00Z',
       'id': '3cbb22cc',
       'progress': 100,
+      'retries': 0,
       'stage': 'JURZHTCWaKMqqBTFitpK',
       'state': 'complete',
       'user': dict({
@@ -421,7 +350,7 @@
     'id': 1,
     'name': 'reference.fa',
     'name_on_disk': '1-reference.fa',
-    'size': 20466,
+    'size': 723988,
     'uploaded_at': '2015-10-06T20:00:00Z',
   })
 # ---
@@ -433,7 +362,7 @@
     'id': 2,
     'name': 'reference.fa',
     'name_on_disk': '2-reference.fa',
-    'size': 20466,
+    'size': 723988,
     'uploaded_at': '2015-10-06T20:00:00Z',
   })
 # ---

@@ -16,7 +16,7 @@ logger = get_logger("uploads")
 CHUNK_SIZE = 1024 * 1000 * 50
 
 
-def is_gzip_compressed(chunk: bytes):
+def is_gzip_compressed(chunk: bytes) -> None:
     """Check if a file is gzip compressed.
 
     Peek at the first two bytes for the gzip magic number and raise and exception if it
@@ -40,7 +40,7 @@ def naive_validator(req) -> Validator.errors:
 
 async def multipart_file_chunker(
     reader: MultipartReader,
-) -> AsyncGenerator[bytearray, None]:
+) -> AsyncGenerator[bytearray]:
     """Iterates through a ``MultipartReader`` as ``bytearray`` chunks."""
     file = await reader.next()
 

@@ -1,8 +1,8 @@
 import asyncio
 from asyncio import FIRST_COMPLETED, CancelledError, Queue
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Callable
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 
@@ -56,7 +56,7 @@ class WorkerPool:
             except CancelledError:
                 break
 
-    async def close(self):
+    async def close(self) -> None:
         join_task = asyncio.create_task(self._queue.join())
 
         await asyncio.wait([join_task, *self._workers], return_when=FIRST_COMPLETED)
@@ -77,23 +77,23 @@ class BaseDataBuffer:
         self.queue = queue
         self.flush_buffer = False
 
-    def add(self, data: BufferData):
+    def add(self, data: BufferData) -> None:
         self._buffer.append(data)
         self.flush()
 
-    def extend(self, updates: list[BufferData]):
+    def extend(self, updates: list[BufferData]) -> None:
         if updates is not None:
             self._buffer.extend(updates)
             self.flush()
 
-    def flush(self):
+    def flush(self) -> None:
         if len(self._buffer) >= 25 or self.flush_buffer:
             self.queue.put_nowait(
                 DataChunk(self._buffer, self.update_function),
             )
             self._buffer = []
 
-    async def finish(self):
+    async def finish(self) -> None:
         if self._buffer:
             await self.queue.put(
                 DataChunk(self._buffer, self.update_function),
@@ -217,18 +217,18 @@ class OTUDataBulkUpdater:
             mongo.history,
         )
 
-    def update(self, updates: list[OTUUpdate]):
+    def update(self, updates: list[OTUUpdate]) -> None:
         for update in updates:
             self.update_otu_buffer.add(
                 DBBufferData(update.otu_change, self._otu_changed(update)),
             )
 
-    def insert(self, update: OTUInsert):
+    def insert(self, update: OTUInsert) -> None:
         self.insert_otu_buffer.add(
             DBBufferData(update.otu_change, self._otu_changed(update)),
         )
 
-    def delete(self, otu_delete: OTUDelete):
+    def delete(self, otu_delete: OTUDelete) -> None:
         self.delete_otus_buffer.add(
             DBBufferData(otu_delete.otu_change, self._otu_changed(otu_delete)),
         )
@@ -239,12 +239,12 @@ class OTUDataBulkUpdater:
             ),
         )
 
-    async def insert_history(self, history_inserts: list[Document]):
+    async def insert_history(self, history_inserts: list[Document]) -> None:
         for history_insert in history_inserts:
             self.update_history_buffer.add(DBBufferData(history_insert))
         await self.progress_tracker.add(len(history_inserts))
 
-    async def finish(self):
+    async def finish(self) -> None:
         await asyncio.gather(
             self.update_otu_buffer.finish(),
             self.insert_otu_buffer.finish(),
@@ -445,11 +445,11 @@ class BulkOTUUpdater:
             created_at,
         )
 
-    def bulk_upsert(self, otus: list[dict]):
+    def bulk_upsert(self, otus: list[dict]) -> None:
         for otu in otus:
             self.prepare_upsert_buffer.add(OTUUpdateBufferData(otu))
 
-    def bulk_insert(self, otus: list[dict]):
+    def bulk_insert(self, otus: list[dict]) -> None:
         for otu in otus:
             insert_otu = prepare_insert_otu(
                 otu,
@@ -459,12 +459,12 @@ class BulkOTUUpdater:
             )
             self.update_db.insert(insert_otu)
 
-    async def delete(self, otu_id: str):
+    async def delete(self, otu_id: str) -> None:
         remove_otu = await prepare_remove_otu(self.mongo, otu_id, self.session)
         if remove_otu:
             self.update_db.delete(remove_otu)
 
-    async def finish(self):
+    async def finish(self) -> None:
         await asyncio.gather(
             self.prepare_upsert_buffer.finish(),
             self.prepare_otu_update_buffer.finish(),

@@ -7,7 +7,7 @@ from virtool.utils import get_http_session_from_app
 logger = get_logger("shutdown")
 
 
-async def shutdown_authorization_client(app: Application):
+async def shutdown_authorization_client(app: Application) -> None:
     """Attempt to close the OpenFGA client session.
 
     :param app: The application object
@@ -16,7 +16,7 @@ async def shutdown_authorization_client(app: Application):
     await get_authorization_client_from_app(app).close()
 
 
-async def shutdown_executors(app: Application):
+async def shutdown_executors(app: Application) -> None:
     """Attempt to close the `ThreadPoolExecutor` and `ProcessPoolExecutor`.
 
     :param app: the application object
@@ -27,7 +27,7 @@ async def shutdown_executors(app: Application):
         pass
 
 
-async def shutdown_http_client(app: Application):
+async def shutdown_http_client(app: Application) -> None:
     """Attempt to close the async HTTP client session.
 
     :param app: The application object
@@ -36,7 +36,7 @@ async def shutdown_http_client(app: Application):
     await get_http_session_from_app(app).close()
 
 
-async def shutdown_redis(app: Application):
+async def shutdown_redis(app: Application) -> None:
     """Attempt to close the application :class:`Redis` instance.
 
     :param app: the application object
@@ -49,7 +49,7 @@ async def shutdown_redis(app: Application):
         ...
 
 
-async def shutdown_scheduler(app: Application):
+async def shutdown_scheduler(app: Application) -> None:
     """Cancel all background tasks.
 
     :param app: The application object

@@ -1,0 +1,44 @@
+# serializer version: 1
+# name: test_ok[pydantic]
+  dict({
+    'acquired': False,
+    'args': dict({
+      'item_id': 1211,
+      'resource_id': 'foo',
+      'test': True,
+    }),
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'id': 'GMPXMVbyXHUfymCDaloV',
+    'ping': dict({
+      'pinged_at': datetime.datetime(2015, 10, 6, 20, 0),
+    }),
+    'progress': 6380,
+    'retries': 2614,
+    'stage': 'NdGxgYaOXiiqkTGjYkYt',
+    'state': <JobState.RUNNING: 'running'>,
+    'status': list([
+      dict({
+        'error': dict({
+          'details': list([
+            'hVGiBXJqoyUfQBjWTjzA',
+          ]),
+          'traceback': list([
+            'CAdPsEbpDIRnZLXrjSyO',
+          ]),
+          'type': 'qopAJsorWvViTxsrhYks',
+        }),
+        'progress': 7819,
+        'stage': 'oeIvGWAWpCToZkEGjNjL',
+        'state': <JobState.ERROR: 'error'>,
+        'step_description': None,
+        'step_name': None,
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      }),
+    ]),
+    'user': dict({
+      'handle': 'vCvtRxKGXgmQyAUnyEOt',
+      'id': 'bvWnrQEEKdspKjyjnWXs',
+    }),
+    'workflow': 'pwYkAshoKeJpPGLqzLeF',
+  })
+# ---

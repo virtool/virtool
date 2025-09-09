@@ -1,23 +1,17 @@
 VERSION
 __pycache__
-*.log*
 *.pyc
 .idea
 .cache
 .claude
-.coverage.cog*
-.coverage
 .DS_store
 .pytest_cache
 .venv
 .vscode
 
-/assets/prunus_persica
 /build
-/data
+/dist
 /docs/_build
-/misc
-/watch
 
 CLAUDE.md
 config.json

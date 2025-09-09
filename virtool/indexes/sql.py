@@ -5,10 +5,7 @@ from virtool.pg.utils import SQLEnum
 
 
 class IndexType(str, SQLEnum):
-    """
-    Enumerated type for index file types
-
-    """
+    """Enumerated type for index file types"""
 
     json = "json"
     fasta = "fasta"
@@ -16,10 +13,7 @@ class IndexType(str, SQLEnum):
 
 
 class SQLIndexFile(Base):
-    """
-    SQL model to store new index files
-
-    """
+    """SQL model to store new index files"""
 
     __tablename__ = "index_files"
     __table_args__ = (UniqueConstraint("index", "name"),)

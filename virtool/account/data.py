@@ -314,7 +314,7 @@ class AccountData(DataLayerDomain):
 
         return raw, await self.get_key(user_id, id_)
 
-    async def delete_keys(self, user_id: str):
+    async def delete_keys(self, user_id: str) -> None:
         """Delete all API keys for the account associated with the requesting session.
 
         :param user_id: the user ID
@@ -360,7 +360,7 @@ class AccountData(DataLayerDomain):
 
         return await self.get_key(user_id, key_id)
 
-    async def delete_key(self, user_id: str, key_id: str):
+    async def delete_key(self, user_id: str, key_id: str) -> None:
         """Delete an API key by its id.
 
         :param user_id: the user ID

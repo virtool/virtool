@@ -4,7 +4,7 @@ import pytest
 from virtool.fake.next import DataFaker
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_sample(static_time):
     return {
         "_id": "test",
@@ -24,7 +24,7 @@ def mock_sample(static_time):
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 async def mock_samples(fake: DataFaker, mock_sample, static_time):
     user_1 = await fake.users.create()
     user_2 = await fake.users.create()

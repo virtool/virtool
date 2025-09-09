@@ -184,7 +184,7 @@ class TestUpgrade:
             f.read()
 
 
-@pytest.fixture()
+@pytest.fixture
 async def create_task_index(
     config,
     reference,

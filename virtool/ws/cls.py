@@ -5,10 +5,7 @@ from virtool.types import Document
 
 @dataclass
 class WSMessage:
-    """
-    Represents a message sent to a websocket client.
-
-    """
+    """A message sent to a websocket client."""
 
     operation: str
     interface: str
@@ -16,31 +13,20 @@ class WSMessage:
 
 @dataclass
 class WSInsertMessage(WSMessage):
-    """
-    Represents a message sent to a websocket client that describes as new resource.
-
-    """
+    """A message sent to a websocket client that describes a new resource."""
 
     data: Document
 
 
 @dataclass
 class WSUpdateMessage(WSMessage):
-    """
-    Represents a message sent to a websocket client that describes an update to an
-    existing resource.
-
-    """
+    """A message sent to a websocket client that describes an update to a resource."""
 
     data: Document
 
 
 @dataclass
 class WSDeleteMessage(WSMessage):
-    """
-    Represents a message sent to a websocket client that lists the IDs of deleted
-    resources.
-
-    """
+    """A message sent to a websocket client that lists IDs of deleted resources."""
 
     data: list[int | str]

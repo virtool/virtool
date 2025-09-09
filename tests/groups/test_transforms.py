@@ -54,8 +54,7 @@ class TestAttachPrimaryGroup:
         )
 
     async def test_multiple_documents(self, no_permissions, pg: AsyncEngine, snapshot):
-        """
-        Test that the primary group is attached to multiple documents and the transform
+        """Test that the primary group is attached to multiple documents and the transform
         works with legacy ids.
         """
         async with AsyncSession(pg) as session:
@@ -98,13 +97,11 @@ class TestAttachGroups:
         pg: AsyncEngine,
         snapshot,
     ):
-        """
-        Test that the transform works with a single document with:
+        """Test that the transform works with a single document with:
         * ``groups`` is empty
         * ``groups`` contains both legacy and modern group ids
 
         """
-
         async with AsyncSession(pg) as session:
             session.add_all(
                 [
@@ -136,8 +133,7 @@ class TestAttachGroups:
     async def test_multiple_documents(
         self, no_permissions: dict[str, bool], pg: AsyncEngine, snapshot
     ):
-        """
-        Test that the transform works with multiple documents with:
+        """Test that the transform works with multiple documents with:
         * ``groups`` is empty
         * ``groups`` contains both legacy and modern group ids
         * ``groups`` contains only legacy group ids

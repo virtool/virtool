@@ -64,10 +64,7 @@ def create_app_without_startup():
 
 
 def create_app(config: Config):
-    """
-    Creates the Virtool application.
-
-    """
+    """Creates the Virtool application."""
     middlewares = [
         logging_middleware,
         headers_middleware,
@@ -119,6 +116,6 @@ def create_app(config: Config):
     return app
 
 
-def run_api_server(config: Config):
+def run_api_server(config: Config) -> None:
     app = create_app(config)
     aiohttp.web.run_app(app=app, host=config.host, port=config.port, access_log=None)

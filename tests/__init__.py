@@ -1,3 +1,3 @@
 import pytest
 
-pytest.register_assert_rewrite("tests.fixtures.response")
+pytest.register_assert_rewrite("workflow.fixtures.response")

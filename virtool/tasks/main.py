@@ -30,7 +30,7 @@ from virtool.tasks.startup import (
 )
 
 
-def run_task_runner(config: TaskRunnerConfig):
+def run_task_runner(config: TaskRunnerConfig) -> None:
     """Run the task runner service.
 
     :param config: the task runner configuration object
@@ -68,7 +68,7 @@ def run_task_runner(config: TaskRunnerConfig):
     aiohttp.web.run_app(app=app, host=config.host, port=config.port)
 
 
-def run_task_spawner(config: TaskSpawnerConfig):
+def run_task_spawner(config: TaskSpawnerConfig) -> None:
     """Run the task spawner service.
 
     :param config: the task spawner configuration object

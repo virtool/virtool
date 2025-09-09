@@ -10,7 +10,7 @@ from virtool.uploads.sql import SQLUpload
 
 
 class TestUpgrade:
-    @pytest.fixture()
+    @pytest.fixture
     def create_files(self, ctx):
         async def func(sample):
             read_path = ctx.data_path / "samples" / sample["_id"]
@@ -24,7 +24,7 @@ class TestUpgrade:
 
         return func
 
-    @pytest.fixture()
+    @pytest.fixture
     def verify_snapshots(self, ctx, snapshot):
         async def func(sample):
             assert [sample async for sample in ctx.mongo.samples.find({})] == snapshot(

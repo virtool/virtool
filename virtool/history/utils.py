@@ -213,7 +213,7 @@ def read_diff_file(data_path: Path, otu_id: str, otu_version: int | str):
         return json.load(f, object_hook=json_object_hook)
 
 
-async def remove_diff_files(app, id_list: list[str]):
+async def remove_diff_files(app, id_list: list[str]) -> None:
     """Remove multiple diff files given a list of change IDs (`id_list`).
 
     :param app: the application object
@@ -238,7 +238,7 @@ def write_diff_file(
     otu_id: str,
     otu_version: int | str,
     body,
-):
+) -> None:
     path = join_diff_path(data_path, otu_id, otu_version)
 
     with open(path, "w") as f:

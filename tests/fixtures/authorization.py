@@ -27,7 +27,7 @@ async def _openfga_api_cache() -> dict[str, OpenFgaApi]:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 async def openfga_api(
     _openfga_api_cache: dict[str, OpenFgaApi],
     openfga_host: str,
@@ -57,7 +57,7 @@ async def openfga_api(
     return openfga_api_
 
 
-@pytest.fixture()
+@pytest.fixture
 async def authorization_client(mocker, openfga_api: OpenFgaApi) -> AuthorizationClient:
     """An :class:`AuthorizationClient` instance backed by a testing OpenFGA server."""
     await asyncio.gather(
@@ -74,19 +74,19 @@ async def authorization_client(mocker, openfga_api: OpenFgaApi) -> Authorization
     return client
 
 
-@pytest.fixture()
+@pytest.fixture
 def openfga_host(request) -> str:
     """The host for the OpenFGA testing server."""
-    return request.config.getoption("openfga_host")
+    return "openfga:8080"
 
 
-@pytest.fixture()
+@pytest.fixture
 def openfga_scheme() -> OpenfgaScheme:
     """The scheme used by the OpenFGA testing server."""
     return OpenfgaScheme.HTTP
 
 
-@pytest.fixture()
+@pytest.fixture
 def openfga_store_name(worker_id: str) -> str:
     """The name of the OpenFGA store to use.
 

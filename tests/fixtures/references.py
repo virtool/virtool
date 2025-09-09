@@ -18,7 +18,7 @@ def check_ref_right(mocker: MockerFixture, request):
     return mock
 
 
-@pytest.fixture()
+@pytest.fixture
 def test_ref():
     return {
         "_id": "hxn167",
@@ -30,7 +30,7 @@ def test_ref():
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def reference(static_time):
     return {
         "_id": "3tt0w336",

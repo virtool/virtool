@@ -1,7 +1,7 @@
 [project]
 name = "virtool"
 description = "Viral infection diagnostics using next-generation sequencing"
-requires-python = ">=3.12.3,<3.13"
+requires-python = ">=3.13.7,<3.14"
 authors = [
     {name = "Ian Boyes"},
     {name = "Reece Hoffmann"},
@@ -16,6 +16,8 @@ authors = [
     {name = "Sebastian Chen"},
     {name = "Tiansheng Sui"},
     {name = "Bryce Davidson"},
+    {name = "Christine Wong Chong"},
+    {name = "Markus Swoveland"},
 ]
 maintainers = [
     {name = "Ian Boyes" },
@@ -47,36 +49,65 @@ dependencies = [
     "sentry-sdk<3.0.0,>=2.30.0",
     "sqlalchemy>=2.0.42",
     "structlog-sentry<3.0.0,>=2.1.0",
-    "uvloop<1.0.0,>=0.21.0",
     "visvalingamwyatt<1.0.0,>=0.1.4",
     "redis<7.0.0,>=6.2.0",
     "enum-tools<1.0.0,>=0.13.0",
+    "aiofiles>=24.1.0",
+    "pydantic-factories>=1.17.3",
+    "pyfixtures>=1.1.0",
 ]
 
 [project.scripts]
-virtool = "virtool.config.cli:entry"
+virtool = "virtool.cli:entry"
+
+[project.entry-points.pytest11]
+virtool = "virtool.workflow.pytest_plugin"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-python_files = ["test_*.py"]
 testpaths = ["tests"]
 timeout = 10
+
+[tool.ruff]
+exclude = [
+    "docs",
+    ".eggs",
+    ".git",
+    ".github",
+    ".mypy_cache",
+    ".pytest-cache",
+    ".ruff_cache",
+    "__pypackages__",
+]
 
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = ["COM812", "D203", "D213", "EM102", "FBT001", "ISC001", "PLR0913"]
 
+[tool.ruff.lint.pydocstyle]
+ignore-decorators = [
+    "pyfixtures.fixture",
+    "pytest.fixture",
+    "virtool.workflow.step",
+    "virtool.workflow.workflow.Workflow.step"
+]
+
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["ANN201", "ANN202", "D205", "S101", "S106"]
 
 [build-system]
-requires = ["pdm-backend"]
-build-backend = "pdm.backend"
+requires = ["uv_build>=0.8.13,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-root = ""
+module-name = "virtool"
 
 [dependency-groups]
 dev = [
     "furo>=2024.8.6,<2026.0.0",
     "mypy<2.0.0,>=1.16.1",
+    "pre-commit>=4.3.0",
     "pytest<9.0.0,>=8.4.1",
     "pytest-aiohttp==1.0.5",
     "pytest-asyncio==0.21.2",
@@ -94,3 +125,6 @@ dev = [
     "sphinx-toolbox<5.0.0,>=4.0.0",
     "syrupy<5.0.0,>=4.5.0",
 ]
+
+[virtualenvs]
+in-project = true

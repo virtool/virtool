@@ -22,7 +22,7 @@ virtool_down_revision = None
 required_alembic_revision = None
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     """Add a ``workflows`` field for all samples where it is missing."""
     for sample_id in await ctx.mongo.samples.distinct(
         "_id", {"workflows": {"$exists": False}}

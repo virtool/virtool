@@ -66,10 +66,10 @@ class _InternalEventsTarget:
 _events_target = _InternalEventsTarget()
 
 
-def dangerously_clear_events():
+def dangerously_clear_events() -> None:
     """Clear all events from the internal queue.
 
-    This should only be used in tests.
+    This should only be used in workflow.
 
     """
     _events_target.clear()
@@ -78,12 +78,12 @@ def dangerously_clear_events():
 async def dangerously_get_event() -> Event:
     """Get an event directly from the target.
 
-    This should only be used in tests.
+    This should only be used in workflow.
     """
     return await _events_target.get()
 
 
-def emit(data: BaseModel, domain: str, name: str, operation: Operation):
+def emit(data: BaseModel, domain: str, name: str, operation: Operation) -> None:
     """Emit an event."""
     if data is None:
         logger.warning("emit event with no data")
@@ -100,7 +100,7 @@ def emit(data: BaseModel, domain: str, name: str, operation: Operation):
 
 
 def emits(operation: Operation, domain: str | None = None, name: str | None = None):
-    """Emits the return value of the decorated method as an event.
+    """Emit the return value of the decorated method as an event.
 
     By default, ``domain`` is the name of the ``DataLayerDomain`` object the decorated
     method is bound to. It can be overridden by passing a value to the decorator.
@@ -143,7 +143,7 @@ class EventPublisher:
     def __init__(self, redis: Redis):
         self._redis = redis
 
-    async def run(self):
+    async def run(self) -> None:
         """Start the event publisher."""
         logger.info("starting event publisher")
 
@@ -188,7 +188,7 @@ class EventPublisher:
             pass
 
 
-async def listen_for_events(redis: Redis) -> AsyncGenerator[Event, None]:
+async def listen_for_events(redis: Redis) -> AsyncGenerator[Event]:
     """Yield events as they are received."""
     async for received in redis.subscribe("channel:events"):
         payload = received.pop("payload")

@@ -7,9 +7,10 @@ from virtool.jobs.client import (
     JobsClient,
 )
 from virtool.redis import Redis
+from virtool.workflow.runtime.redis import get_cancellation_channel
 
 
-@pytest.fixture()
+@pytest.fixture
 def jobs_client(redis: Redis) -> JobsClient:
     return JobsClient(redis)
 
@@ -54,7 +55,7 @@ async def test_cancel_running(jobs_client: JobsClient, redis: Redis):
     cancel_task = asyncio.create_task(cancel())
 
     # Check that job ID was published to cancellation channel.
-    async for message in redis.subscribe("channel:cancel"):
+    async for message in redis.subscribe(get_cancellation_channel(redis)):
         assert message == "foo"
         break
 

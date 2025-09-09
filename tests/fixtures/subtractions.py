@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from virtool.subtractions.pg import SQLSubtractionFile
 
 
-@pytest.fixture()
+@pytest.fixture
 async def test_subtraction_files(pg):
     file_1 = SQLSubtractionFile(
         id=1, name="subtraction.fq.gz", subtraction="foo", type="fasta", size=12345

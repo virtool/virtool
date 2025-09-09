@@ -1,5 +1,5 @@
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.migration.pg import SQLRevision, check_data_revision_version
 from virtool.utils import timestamp

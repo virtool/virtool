@@ -13,9 +13,11 @@ from virtool.data.errors import ResourceConflictError
 from virtool.models import BaseModel
 from virtool.samples.models import Sample
 from virtool.utils import (
+    coerce_to_coroutine_function,
     decompress_tgz,
     get_model_by_name,
     is_within_directory,
+    make_directory,
     wait_for_checks,
 )
 
@@ -33,24 +35,56 @@ def test_base_processor(document, result):
     assert virtool.utils.base_processor(document) == result
 
 
-def test_decompress_tgz(tmp_path):
-    path = tmp_path
+class TestCoerceToCoroutineFunction:
+    """Tests for coerce_to_coroutine_function."""
 
-    src_path = Path.cwd() / "tests" / "test_files" / "virtool.tar.gz"
+    def test_returns_async_function_unchanged(self):
+        """Test that async functions are returned as-is."""
 
-    shutil.copy(src_path, path)
+        async def async_func():
+            return "async"
 
-    decompress_tgz(path / "virtool.tar.gz", path / "de")
+        result = coerce_to_coroutine_function(async_func)
+        assert result is async_func
 
-    assert set(os.listdir(path)) == {"virtool.tar.gz", "de"}
+    def test_wraps_sync_function(self):
+        """Test that sync functions are wrapped in async."""
 
-    assert os.listdir(path / "de") == ["virtool"]
+        def sync_func():
+            return "sync"
 
-    assert set(os.listdir(path / "de" / "virtool")) == {
-        "run",
-        "client",
-        "VERSION",
-        "install.sh",
+        result = coerce_to_coroutine_function(sync_func)
+        assert result is not sync_func
+        assert callable(result)
+
+    async def test_wrapped_function_works(self):
+        """Test that wrapped sync function works correctly."""
+
+        def sync_func(x, y=10):
+            return x + y
+
+        async_func = coerce_to_coroutine_function(sync_func)
+        result = await async_func(5, y=15)
+        assert result == 20
+
+
+def test_decompress_tgz(example_path: Path, tmp_path: Path):
+    """Test the decompress_tgz successfully decompresses and unpacks a tar."""
+    shutil.copy(example_path / "ml" / "model.tar.gz", tmp_path)
+
+    decompress_tgz(tmp_path / "model.tar.gz", tmp_path / "de")
+
+    assert {p.name for p in tmp_path.iterdir()} == {"model.tar.gz", "de"}
+
+    assert {p.name for p in (tmp_path / "de").iterdir()} == {"model"}
+
+    assert {p.name for p in (tmp_path / "de" / "model").iterdir()} == {
+        "mappability_profile.rds",
+        "nucleotide_info.csv",
+        "reference.json.gz",
+        "trained_rf.rds",
+        "trained_xgb.rds",
+        "virus_segments.rds",
     }
 
 
@@ -257,3 +291,39 @@ class TestIsWithinDirectory:
         # Test with non-existent target outside directory
         outside_target = tmp_path / "nonexistent" / "file.txt"
         assert is_within_directory(directory, outside_target) is False
+
+
+class TestMakeDirectory:
+    async def test_make_directory(self, tmp_path: Path):
+        """Test that the simple case works."""
+        path = tmp_path / "base"
+
+        assert path.is_dir() is False
+
+        await make_directory(path)
+
+        assert path.is_dir() is True
+
+    async def test_exists(self, tmp_path: Path):
+        """Test that created a directory that already exists works."""
+        path = tmp_path / "base"
+        path.mkdir()
+
+        assert path.is_dir() is True
+
+        await make_directory(path)
+
+        assert path.is_dir() is True
+
+    async def test_with_parent(self, tmp_path: Path):
+        """Test that a parent directory is created automatically."""
+        base_path = tmp_path / "base"
+        next_path = base_path / "next"
+
+        assert base_path.is_dir() is False
+        assert next_path.is_dir() is False
+
+        await make_directory(next_path)
+
+        assert base_path.is_dir() is True
+        assert next_path.is_dir() is True

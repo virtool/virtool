@@ -16,7 +16,6 @@ pytest_plugins = (
     "tests.fixtures.history",
     "tests.fixtures.indexes",
     "tests.fixtures.jobs",
-    "tests.fixtures.logging",
     "tests.fixtures.migration",
     "tests.fixtures.otus",
     "tests.fixtures.pg",
@@ -26,36 +25,13 @@ pytest_plugins = (
     "tests.fixtures.samples",
     "tests.fixtures.settings",
     "tests.fixtures.subtractions",
-    "tests.fixtures.tasks",
     "tests.fixtures.snapshot_date",
+    "tests.fixtures.workflow",
+    "tests.fixtures.workflow_api",
 )
 
 
-def pytest_addoption(parser):
-    parser.addoption(
-        "--db-connection-string",
-        action="store",
-        default="mongodb://root:virtool@localhost:9001",
-    )
-
-    parser.addoption(
-        "--redis-connection-string",
-        action="store",
-        default="redis://:virtool@localhost:9003",
-    )
-
-    parser.addoption(
-        "--postgres-connection-string",
-        action="store",
-        default="postgresql+asyncpg://virtool:virtool@localhost:9002",
-    )
-
-    parser.addoption(
-        "--openfga-host",
-        action="store",
-        default="localhost:9004",
-    )
-
+def pytest_addoption(parser) -> None:
     parser.getgroup("syrupy").addoption(
         "--su",
         action="store_true",
@@ -66,14 +42,14 @@ def pytest_addoption(parser):
 
 
 @pytest.fixture(scope="session")
-def _hash_password_speedup_memo() -> dict[tuple[bytes, bytes] : bytes]:
+def _hash_password_speedup_memo() -> dict[tuple[bytes, bytes], bytes]:
     """A dictionary of memoized hash_password calls."""
     return {}
 
 
 @pytest.fixture(autouse=True)
 def _hash_password_speedup(
-    _hash_password_speedup_memo: dict[str:bytes],
+    _hash_password_speedup_memo: dict[str, bytes],
     mocker: MockerFixture,
 ):
     """Speed up ``hash_password`` calls by memoizing them."""

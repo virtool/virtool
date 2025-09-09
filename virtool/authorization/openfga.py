@@ -25,7 +25,7 @@ async def delete_openfga_tuples(
     api_instance: OpenFgaApi,
     object_type: ResourceType,
     object_id: int | str,
-):
+) -> None:
     """Delete all tuples for a given object type and ID in OpenFGA.
 
     :param api_instance: the OpenFGA API instance.
@@ -80,7 +80,7 @@ async def get_or_create_openfga_store(
     return response.id
 
 
-async def write_openfga_authorization_model(api_instance: OpenFgaApi):
+async def write_openfga_authorization_model(api_instance: OpenFgaApi) -> None:
     """Write the authorization model for the OpenFGA Store if it does not exist."""
     response = await api_instance.read_authorization_models()
 

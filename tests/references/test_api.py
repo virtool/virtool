@@ -1,4 +1,6 @@
 import asyncio
+from http import HTTPStatus
+from pathlib import Path
 from unittest.mock import ANY, call
 
 import pytest
@@ -9,7 +11,6 @@ from syrupy.matchers import path_type
 
 import virtool.utils
 from tests.fixtures.client import ClientSpawner
-from tests.fixtures.core import StaticTime
 from tests.fixtures.response import RespIs
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
@@ -21,6 +22,7 @@ from virtool.settings.oas import UpdateSettingsRequest
 from virtool.tasks.sql import SQLTask
 from virtool.users.oas import UpdateUserRequest
 from virtool.utils import get_http_session_from_app
+from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
 async def test_find(
@@ -126,7 +128,7 @@ async def test_find(
     resp = await client.get("/references/v1")
     body = await resp.json()
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert body == snapshot
 
     # Make sure the user does not have access to the reference "baz" where they are not
@@ -197,7 +199,7 @@ async def test_get(
     resp = await client.get("/references/v1/bar")
 
     if error is None:
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
     else:
         assert resp.status == 404
@@ -242,20 +244,21 @@ class TestCreate:
     @pytest.mark.flaky(reruns=2)
     async def test_import(
         self,
+        example_path: Path,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
-        static_time,
-        test_files_path,
+        static_time: StaticTime,
     ):
         client = await spawn_client(
             authenticated=True,
             permissions=[Permission.create_ref, Permission.upload_file],
         )
 
-        resp = await client.post_form(
-            "/uploads?upload_type=reference&name=reference.json.gz&type=reference",
-            data={"file": open(test_files_path / "reference.json.gz", "rb")},
-        )
+        with open(example_path / "indexes/reference.json.gz", "rb") as f:
+            resp = await client.post_form(
+                "/uploads?upload_type=reference&name=reference.json.gz&type=reference",
+                data={"file": f},
+            )
 
         upload = await resp.json()
 
@@ -582,7 +585,7 @@ async def test_get_release(
         await resp_is.not_found(resp)
         return
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
 
     assert await resp.json() == snapshot(
         matcher=path_type({".*etag": (str,)}, regex=True),
@@ -642,7 +645,7 @@ async def test_list_updates(
         await resp_is.not_found(resp)
         return
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot
 
     m_get_one_field.assert_called_with(ANY, "updates", "foo")
@@ -1109,7 +1112,7 @@ async def test_update_user(
 
     match error:
         case None:
-            assert resp.status == 200
+            assert resp.status == HTTPStatus.OK
             assert await resp.json() == snapshot
             assert await mongo.references.find_one() == snapshot
         case ("404_field", "404_ref"):
@@ -1175,7 +1178,7 @@ async def test_update_group(
 
     match error:
         case None:
-            assert resp.status == 200
+            assert resp.status == HTTPStatus.OK
             assert await resp.json() == snapshot(name="resp")
             assert await mongo.references.find_one() == snapshot(name="mongo")
         case ("404_group", "404_ref"):
@@ -1368,5 +1371,5 @@ async def test_find_otus(
 
     resp = await client.get(path)
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot

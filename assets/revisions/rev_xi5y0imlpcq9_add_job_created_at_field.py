@@ -21,7 +21,7 @@ virtool_down_revision = "voqrl7cqev1v"
 required_alembic_revision = None
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     """Add the `created_at` field to existing jobs based on their first status entry."""
     async for job in ctx.mongo.jobs.find(
         {"created_at": {"$exists": False}}, ["_id", "status"]

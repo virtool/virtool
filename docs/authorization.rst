@@ -9,4 +9,3 @@ Client
 
 .. automodule:: virtool.authorization.client
     :members:
-

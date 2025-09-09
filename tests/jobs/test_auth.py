@@ -1,18 +1,22 @@
-import aiohttp.web
+from http import HTTPStatus
+
+from aiohttp.web_request import Request
+from aiohttp.web_response import Response
+from aiohttp.web_routedef import RouteTableDef
 
 from virtool.mongo.core import Mongo
 
-test_routes = aiohttp.web.RouteTableDef()
+test_routes = RouteTableDef()
 
 
 @test_routes.patch("/jobs/{job_id}")
-def public_test_route(request: aiohttp.web.Request):
-    return aiohttp.web.Response(status=200)
+def public_test_route(request: Request):
+    return Response(status=200)
 
 
 @test_routes.get("/not_public")
-def non_public_test_route(request: aiohttp.web.Request):
-    return aiohttp.web.Response(status=200)
+def non_public_test_route(request: Request):
+    return Response(status=200)
 
 
 async def test_public_routes_are_public(mongo: Mongo, spawn_job_client):
@@ -25,7 +29,7 @@ async def test_public_routes_are_public(mongo: Mongo, spawn_job_client):
 
     response = await client.patch(f"/jobs/{job_id}")
 
-    assert response.status == 200
+    assert response.status == HTTPStatus.OK
 
 
 async def test_unauthorized_when_header_missing(spawn_job_client):
@@ -54,4 +58,4 @@ async def test_authorized_when_header_is_valid(spawn_job_client):
 
     response = await client.get("/not_public")
 
-    assert response.status == 200
+    assert response.status == HTTPStatus.OK

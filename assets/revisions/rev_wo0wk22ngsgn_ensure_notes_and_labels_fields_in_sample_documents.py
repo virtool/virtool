@@ -21,7 +21,7 @@ virtool_down_revision = "uejy8b1tlmvv"
 required_alembic_revision = None
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     await ctx.mongo.samples.update_many(
         {"notes": {"$exists": False}},
         {

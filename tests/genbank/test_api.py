@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 import pytest
 from aiohttp.client import ClientSession
 from aiohttp.test_utils import make_mocked_coro
@@ -24,5 +26,5 @@ async def test_get(error, mocker, resp_is, spawn_client):
 
     assert isinstance(m_fetch.call_args[0][0], ClientSession)
 
-    assert resp.status == 200
+    assert resp.status == HTTPStatus.OK
     assert await resp.json() == expected

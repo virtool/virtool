@@ -6,6 +6,7 @@ from structlog import get_logger
 from virtool.jobs.models import QueuedJobID
 from virtool.jobs.utils import WORKFLOW_NAMES
 from virtool.redis import Redis
+from virtool.workflow.runtime.redis import get_cancellation_channel
 
 logger = get_logger("jobs")
 
@@ -72,7 +73,7 @@ class JobsClient:
             logger.info("removed job from redis job list", id=job_id)
             return JobCancellationResult.REMOVED_FROM_QUEUE
 
-        await self._redis.publish("channel:cancel", job_id)
+        await self._redis.publish(get_cancellation_channel(self._redis), job_id)
         logger.info("requested job cancellation via redis", id=job_id)
 
         return JobCancellationResult.CANCELLATION_DISPATCHED

@@ -58,7 +58,7 @@ path_recent_time = path_type(
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def snapshot_recent(snapshot):
     return snapshot.with_defaults(
         matcher=path_recent_time,

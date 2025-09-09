@@ -286,6 +286,7 @@
       'created_at': 'approximately_now_datetime',
       'id': 'fb085f7f',
       'progress': 0,
+      'retries': 0,
       'stage': None,
       'state': <JobState.WAITING: 'waiting'>,
       'user': dict({
@@ -315,7 +316,7 @@
     'removed': False,
     'removed_at': None,
     'reserved': True,
-    'size': 16700094,
+    'size': 723988,
     'type': 'reads',
     'uploaded_at': datetime,
     'user': dict({
@@ -334,7 +335,7 @@
     'removed': False,
     'removed_at': None,
     'reserved': False,
-    'size': 16700094,
+    'size': 723988,
     'type': 'subtraction',
     'uploaded_at': datetime,
     'user': dict({
@@ -353,7 +354,7 @@
     'removed': False,
     'removed_at': None,
     'reserved': False,
-    'size': 16700094,
+    'size': 723988,
     'type': 'reads',
     'uploaded_at': datetime,
     'user': dict({

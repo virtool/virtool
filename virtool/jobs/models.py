@@ -66,6 +66,12 @@ class JobMinimal(JobNested):
     progress: int
     """The progress of the job as a percentage from 0 to 100."""
 
+    retries: int = 0
+    """The number of retries undertaken for this job.
+
+    This field is no longer used and will be removed.\
+    """
+
     stage: str | None
     """The current stage of the job."""
 
@@ -307,9 +313,6 @@ class Job(JobMinimal):
 
     args: dict[str, Any]
     """The arguments used to run the job."""
-
-    retries: int = 0
-    """The number of times the job has been retried."""
 
     status: list[JobStatus]
     """The status record of a job."""

@@ -39,7 +39,6 @@
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'key': None,
     'ping': None,
-    'retries': 0,
     'rights': dict({
     }),
     'space': dict({
@@ -82,6 +81,7 @@
       'created_at': '2015-10-06T20:00:00Z',
       'id': '7cf872dc',
       'progress': 0,
+      'retries': 0,
       'stage': None,
       'state': 'waiting',
       'user': dict({
@@ -126,6 +126,7 @@
           'created_at': '2015-10-06T20:00:00Z',
           'id': '7cf872dc',
           'progress': 3,
+          'retries': 0,
           'stage': None,
           'state': 'preparing',
           'user': dict({
@@ -156,6 +157,7 @@
           'created_at': '2015-10-06T20:00:00Z',
           'id': '3cbb22cc',
           'progress': 10,
+          'retries': 0,
           'stage': 'sZgfLWqSLpRpfDzrPQgg',
           'state': 'running',
           'user': dict({
@@ -198,6 +200,7 @@
         'created_at': '2015-10-06T20:00:00Z',
         'id': '7cf872dc',
         'progress': 3,
+        'retries': 0,
         'stage': None,
         'state': 'preparing',
         'user': dict({
@@ -228,6 +231,7 @@
         'created_at': '2015-10-06T20:00:00Z',
         'id': '7cf872dc',
         'progress': 3,
+        'retries': 0,
         'stage': None,
         'state': 'preparing',
         'user': dict({
@@ -347,6 +351,7 @@
       'created_at': '2015-10-06T20:00:00Z',
       'id': 'fb085f7f',
       'progress': 3,
+      'retries': 0,
       'stage': None,
       'state': 'preparing',
       'user': dict({
@@ -530,6 +535,7 @@
       'created_at': '2015-10-06T20:00:00Z',
       'id': '7cf872dc',
       'progress': 3,
+      'retries': 0,
       'stage': None,
       'state': 'preparing',
       'user': dict({
@@ -573,7 +579,7 @@
     'id': 1,
     'index': 'foo',
     'name': 'reference.1.bt2',
-    'size': 7205747,
+    'size': 4200473,
     'type': 'bowtie2',
   })
 # ---
@@ -589,5 +595,5 @@
   })
 # ---
 # name: test_upload[None].2
-  <SQLIndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=7205747)>
+  <SQLIndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=4200473)>
 # ---

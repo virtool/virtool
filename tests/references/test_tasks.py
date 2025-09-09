@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
 
-from tests.fixtures.core import StaticTime
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.mongo.core import Mongo
@@ -25,8 +24,7 @@ from virtool.references.tasks import (
 from virtool.tasks.sql import SQLTask
 from virtool.uploads.sql import UploadType
 from virtool.utils import get_temp_dir
-
-TEST_FILES_PATH = Path(__file__).parent.parent / "test_files"
+from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
 @pytest.mark.parametrize(
@@ -134,7 +132,7 @@ async def test_clean_references_task(
     assert await mongo.references.find_one({}) == snapshot
 
 
-@pytest.fixture()
+@pytest.fixture
 def assert_reference_created(
     data_layer: DataLayer,
     mongo: Mongo,
@@ -189,16 +187,16 @@ async def test_import_reference_task(
     assert_reference_created,
     data_layer: DataLayer,
     data_path: Path,
+    example_path: Path,
     fake: DataFaker,
     mongo: Mongo,
     pg: AsyncEngine,
     static_time: StaticTime,
-    tmpdir,
 ):
     user = await fake.users.create()
 
     upload = await data_layer.uploads.create(
-        fake_file_chunker(TEST_FILES_PATH / "reference.json.gz"),
+        fake_file_chunker(example_path / "indexes/reference.json.gz"),
         "import.json.gz",
         UploadType.reference,
         user.id,
@@ -246,6 +244,7 @@ async def test_import_reference_task(
 async def test_remote_reference_task(
     assert_reference_created,
     data_layer: DataLayer,
+    example_path: Path,
     fake: DataFaker,
     mocker: MockerFixture,
     mongo: Mongo,
@@ -253,7 +252,7 @@ async def test_remote_reference_task(
     static_time: StaticTime,
 ):
     async def download_file(url, target_path, _):
-        shutil.copyfile(TEST_FILES_PATH / "reference.json.gz", target_path)
+        shutil.copyfile(example_path / "indexes/reference.json.gz", target_path)
 
     mocker.patch("virtool.references.tasks.download_file", download_file)
 
@@ -342,8 +341,9 @@ async def test_remote_reference_task(
     assert task.progress == 100
 
 
-@pytest.fixture()
+@pytest.fixture
 async def create_reference(
+    example_path: Path,
     fake: DataFaker,
     data_layer: DataLayer,
     mongo: Mongo,
@@ -354,7 +354,7 @@ async def create_reference(
     user = await fake.users.create()
 
     upload = await data_layer.uploads.create(
-        fake_file_chunker(TEST_FILES_PATH / "reference.json.gz"),
+        fake_file_chunker(example_path / "indexes/reference.json.gz"),
         "import.json.gz",
         UploadType.reference,
         user.id,
@@ -477,6 +477,3 @@ async def test_clone_reference_task(
 
     assert await mongo.history.count_documents({}) == 40
     assert await mongo.history.count_documents({"reference.id": "foo"}) == 20
-
-    # assert 0
-    # await assert_reference_created(query={"reference.id": "foo"})

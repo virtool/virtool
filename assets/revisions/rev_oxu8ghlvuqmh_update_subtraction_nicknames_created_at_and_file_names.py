@@ -21,7 +21,7 @@ virtool_down_revision = None
 required_alembic_revision = None
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     async with (
         await ctx.mongo.client.start_session() as mongo_session,
         mongo_session.start_transaction(),
@@ -59,11 +59,7 @@ async def upgrade(ctx: MigrationContext):
                 / "subtraction.1.bt2"
             ).stat()
 
-            subtraction_created_at = (
-                index_stats.st_ctime
-                if index_stats.st_ctime < index_stats.st_mtime
-                else index_stats.st_mtime
-            )
+            subtraction_created_at = min(index_stats.st_mtime, index_stats.st_ctime)
         except FileNotFoundError:
             if subtraction["deleted"]:
                 subtraction_created_at = arrow.now()

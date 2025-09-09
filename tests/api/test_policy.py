@@ -27,7 +27,7 @@ from virtool.models.enums import Permission
 from virtool.models.roles import AdministratorRole
 
 
-@pytest.fixture()
+@pytest.fixture
 def privilege_routes():
     def func(route_policy):
         routes = Routes()

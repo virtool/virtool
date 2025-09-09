@@ -323,7 +323,7 @@ async def update_last_indexed_versions(
     mongo: "Mongo",
     ref_id: str,
     session: AsyncIOMotorClientSession,
-):
+) -> None:
     """Update the `last_indexed_version` field for OTUs associated with `ref_id`
 
     :param mongo: the application mongo client

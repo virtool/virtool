@@ -1,5 +1,4 @@
-"""
-* Add `tasks` subcommand.
+"""* Add `tasks` subcommand.
 * Add `update_remote_reference` data layer method.
 
 # Running Single Tasks

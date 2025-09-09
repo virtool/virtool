@@ -53,14 +53,14 @@ from virtool.subtractions.oas import (
 )
 from virtool.tasks.models import Task
 from virtool.tasks.task import BaseTask
-from virtool.uploads.models import Upload
+from virtool.uploads.models import Upload, UploadMinimal
 from virtool.uploads.sql import UploadType
 from virtool.uploads.utils import CHUNK_SIZE
 from virtool.users.models import User
 from virtool.users.oas import UpdateUserRequest
 
 
-async def fake_file_chunker(path: Path) -> AsyncGenerator[bytearray, None]:
+async def fake_file_chunker(path: Path) -> AsyncGenerator[bytearray]:
     """Read a chunk of size `CHUNK_SIZE` from a file.
 
     This is used to hijack the upload process and create fake uploads.
@@ -72,7 +72,7 @@ async def fake_file_chunker(path: Path) -> AsyncGenerator[bytearray, None]:
         yield f.read(CHUNK_SIZE)
 
 
-async def gzip_file_chunker(path: Path) -> AsyncGenerator[bytearray, None]:
+async def gzip_file_chunker(path: Path) -> AsyncGenerator[bytearray]:
     """Decompress and Read a chunk of size `CHUNK_SIZE` from a file.
 
     This is used to hijack the upload process and create fake uploads. It will
@@ -161,7 +161,6 @@ class JobsFakerDomain(DataFakerDomain):
         self,
         user: User,
         pinged_at: datetime.datetime | None = None,
-        retries: int = 0,
         state: JobState | None = None,
         workflow: str | None = None,
     ) -> Job:
@@ -171,7 +170,6 @@ class JobsFakerDomain(DataFakerDomain):
 
         :param user: the user that created the job
         :param pinged_at: the time the job was last pinged.
-        :param retries: the number of retries the job has undergone
         :param state: the state the most recent status update should have
         :param workflow: the workflow the job is running
         :return:
@@ -248,14 +246,6 @@ class JobsFakerDomain(DataFakerDomain):
                 {"_id": job.id},
                 {
                     "$set": {"ping": {"pinged_at": pinged_at}},
-                },
-            )
-
-        if retries > 0:
-            await self._mongo.jobs.update_one(
-                {"_id": job.id},
-                {
-                    "$set": {"retries": retries},
                 },
             )
 
@@ -489,7 +479,7 @@ class UploadsFakerDomain(DataFakerDomain):
         upload_type: UploadType = UploadType.reads,
         name: str = "test.fq.gz",
         reserved: bool = False,
-    ) -> UploadType:
+    ) -> UploadMinimal:
         """Create a fake upload.
 
         A completely valid user will be created.
@@ -504,7 +494,7 @@ class UploadsFakerDomain(DataFakerDomain):
         if upload_type not in UploadType.to_list():
             upload_type = "reads"
 
-        fake_file_path = example_path / "reads/single.fq.gz"
+        fake_file_path = example_path / "sample/reads_1.fq.gz"
 
         upload = await self._layer.uploads.create(
             fake_file_chunker(fake_file_path),
@@ -629,6 +619,6 @@ class SubtractionFakerDomain(DataFakerDomain):
             subtraction.id,
             FinalizeSubtractionRequest(
                 count=1,
-                gc=NucleotideComposition(**{k: 0.2 for k in "actgn"}),
+                gc=NucleotideComposition(**dict.fromkeys("actgn", 0.2)),
             ),
         )

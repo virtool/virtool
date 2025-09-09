@@ -1,7 +1,7 @@
 import pytest
 
 
-@pytest.fixture()
+@pytest.fixture
 async def test_settings(mongo):
     await mongo.settings.delete_one({"_id": "settings"})
 

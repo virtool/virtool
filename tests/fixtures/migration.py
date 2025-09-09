@@ -3,7 +3,7 @@
 Some of the fixtures in this module looks similar to other used for manipulating
 Postgres (eg. :fixture:`pg` and :fixture:`migration_pg`). The difference is the
 migration-flavoured fixtures dispose of the database after each test to eliminate any
-schema conflicts between tests.
+schema conflicts between workflow.
 
 """
 
@@ -27,7 +27,7 @@ from virtool.migration.ctx import MigrationContext, create_migration_context
 from virtool.migration.pg import SQLRevision
 
 
-@pytest.fixture()
+@pytest.fixture
 async def migration_pg_connection_string(
     loop,
     pg_base_connection_string: str,
@@ -36,7 +36,7 @@ async def migration_pg_connection_string(
     """The connection string to a Postgres database for testing migrations.
 
     The database only has the revisions table created to avoid conflicts with tables
-    required by regular tests.
+    required by regular workflow.
     """
     database = f"test_migration_{worker_id}"
 
@@ -75,7 +75,7 @@ async def migration_pg_connection_string(
     return connection_string
 
 
-@pytest.fixture()
+@pytest.fixture
 def migration_pg(migration_pg_connection_string: str):
     """A :class:`AsyncEngine` instance for a Postgres database for testing migrations."""
     return create_async_engine(
@@ -85,7 +85,7 @@ def migration_pg(migration_pg_connection_string: str):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def revisions_path(mocker, tmpdir) -> Path:
     path = Path(tmpdir) / "assets/revisions"
     mocker.patch("virtool.migration.create.get_revisions_path", return_value=path)
@@ -93,13 +93,13 @@ def revisions_path(mocker, tmpdir) -> Path:
     return path
 
 
-@pytest.fixture()
+@pytest.fixture
 def migration_mongo_name(worker_id: str) -> str:
     suffix = "".join(choices(ascii_lowercase, k=3))
     return f"vt-test-{worker_id}-mig-{suffix}"
 
 
-@pytest.fixture()
+@pytest.fixture
 def migration_config(
     data_path: Path,
     migration_pg_connection_string: str,
@@ -123,7 +123,7 @@ def migration_config(
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 async def ctx(
     migration_config: MigrationConfig, migration_mongo_name: str
 ) -> MigrationContext:
@@ -135,7 +135,7 @@ async def ctx(
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def apply_alembic(migration_pg_connection_string: str):
     os.environ["SQLALCHEMY_URL"] = migration_pg_connection_string
 

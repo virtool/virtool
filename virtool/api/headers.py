@@ -7,10 +7,7 @@ from virtool.config import get_config_from_req
 
 @middleware
 async def headers_middleware(req, handler):
-    """
-    Middleware that adds the current version of the API to the response.
-
-    """
+    """Middleware that adds the current version of the API to the response."""
     resp = await handler(req)
     resp.headers["X-Virtool-Version"] = req.app["version"]
     resp.headers["Server"] = "Virtool"
@@ -18,10 +15,8 @@ async def headers_middleware(req, handler):
     return resp
 
 
-async def on_prepare_location(req: Request, resp: Response):
-    """
-    Signal handler that adds base URL to Location header or Content-Location if possible
-    """
+async def on_prepare_location(req: Request, resp: Response) -> None:
+    """Signal handler that adds base URL to Location header or Content-Location if possible"""
     location = resp.headers.get("Location")
     base_url = get_config_from_req(req).base_url
 

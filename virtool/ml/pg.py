@@ -1,8 +1,7 @@
 import datetime
-from typing import List
 
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from virtool.pg.base import Base
 
@@ -17,16 +16,14 @@ class SQLMLModel(Base):
     description: Mapped[str] = mapped_column(default="", nullable=False)
     name: Mapped[str] = mapped_column(nullable=False, unique=True)
 
-    releases: Mapped[List["SQLMLModelRelease"]] = relationship(
+    releases: Mapped[list["SQLMLModelRelease"]] = relationship(
         back_populates="model",
         order_by="desc(SQLMLModelRelease.published_at)",
     )
 
 
 class SQLMLModelRelease(Base):
-    """
-    A class that represents a release of a machine learning model stored in Postgres.
-    """
+    """A class that represents a release of a machine learning model stored in Postgres."""
 
     __tablename__ = "ml_model_releases"
 

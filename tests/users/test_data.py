@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.filters import props
 
-from tests.fixtures.core import StaticTime
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
@@ -19,6 +18,7 @@ from virtool.users.models import UserSearchResult
 from virtool.users.mongo import validate_credentials
 from virtool.users.oas import UpdateUserRequest
 from virtool.users.pg import SQLUser
+from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
 class TestFind:

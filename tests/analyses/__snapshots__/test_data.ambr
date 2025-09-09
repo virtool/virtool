@@ -45,6 +45,7 @@
     'job': dict({
       'id': '7cf872dc',
       'progress': 0,
+      'retries': 0,
       'stage': None,
       'state': <JobState.WAITING: 'waiting'>,
       'user': dict({
@@ -127,6 +128,7 @@
     'job': dict({
       'id': '7cf872dc',
       'progress': 0,
+      'retries': 0,
       'stage': None,
       'state': <JobState.WAITING: 'waiting'>,
       'user': dict({
@@ -188,6 +190,7 @@
           'created_at': 'approximately_now_datetime',
           'id': 'da42dca3',
           'progress': 0,
+          'retries': 0,
           'stage': None,
           'state': <JobState.WAITING: 'waiting'>,
           'user': dict({
@@ -245,6 +248,7 @@
           'created_at': 'approximately_now_datetime',
           'id': 'f60bae36',
           'progress': 0,
+          'retries': 0,
           'stage': None,
           'state': <JobState.WAITING: 'waiting'>,
           'user': dict({
@@ -291,6 +295,7 @@
           'created_at': 'approximately_now_datetime',
           'id': 'da42dca3',
           'progress': 0,
+          'retries': 0,
           'stage': None,
           'state': <JobState.WAITING: 'waiting'>,
           'user': dict({
@@ -342,7 +347,7 @@
     'id': 1,
     'name': 'test',
     'name_on_disk': '1-test',
-    'size': 16700094,
+    'size': 723988,
     'uploaded_at': 'approximately_now_datetime',
   })
 # ---

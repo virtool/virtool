@@ -7,8 +7,7 @@ from virtool.migration.show import order_revisions
 
 class TestOrderRevisions:
     def test(self):
-        """
-        Test that an unordered list of revisions with interspersed Alembic and Virtool
+        """Test that an unordered list of revisions with interspersed Alembic and Virtool
         revisions is ordered correctly.
         """
         revisions = [
@@ -107,9 +106,7 @@ class TestOrderRevisions:
             order_revisions(revisions)
 
     def test_multiple_roots(self):
-        """
-        Test that an error is raised if there are multiple root revisions.
-        """
+        """Test that an error is raised if there are multiple root revisions."""
         revisions = [
             GenericRevision(
                 alembic_downgrade="rev_1",
@@ -166,9 +163,7 @@ class TestOrderRevisions:
             order_revisions(revisions)
 
     def test_non_alembic_root(self):
-        """
-        Test that an error is raised if the root revision is not an Alembic revision.
-        """
+        """Test that an error is raised if the root revision is not an Alembic revision."""
         revisions = [
             GenericRevision(
                 alembic_downgrade=None,

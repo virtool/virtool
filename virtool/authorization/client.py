@@ -44,7 +44,7 @@ class AuthorizationClient:
         #: The backing OpenFGA API instance.
         self.openfga = openfga
 
-    async def close(self):
+    async def close(self) -> None:
         """Close the authorization client."""
         await self.openfga.close()
 

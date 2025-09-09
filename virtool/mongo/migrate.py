@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 logger = get_logger("mongo")
 
 
-async def migrate_status(mongo: "Mongo"):
+async def migrate_status(mongo: "Mongo") -> None:
     """Automatically update the status collection.
 
     :param mongo: the application MongoDB object

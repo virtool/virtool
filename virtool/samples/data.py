@@ -146,9 +146,8 @@ class SamplesData(DataLayerDomain):
                 },
                 {
                     "$project": {
-                        "data": {
-                            item: True
-                            for item in (
+                        "data": dict.fromkeys(
+                            (
                                 "_id",
                                 "created_at",
                                 "host",
@@ -164,8 +163,9 @@ class SamplesData(DataLayerDomain):
                                 "labels",
                                 "subtractions",
                                 "workflows",
-                            )
-                        },
+                            ),
+                            True,
+                        ),
                         "total_count": {
                             "$arrayElemAt": ["$total_count.total_count", 0],
                         },
@@ -529,7 +529,7 @@ class SamplesData(DataLayerDomain):
 
         raise ValueError(f"Invalid sample right: {right}")
 
-    async def has_resources_for_analysis_job(self, ref_id, subtractions):
+    async def has_resources_for_analysis_job(self, ref_id, subtractions) -> None:
         """Checks that resources for analysis job exist.
         :param ref_id: the reference id
         :param subtractions: list of subtractions
@@ -553,7 +553,7 @@ class SamplesData(DataLayerDomain):
                     f"Subtractions do not exist: {','.join(non_existent_subtractions)}",
                 )
 
-    async def update_sample_workflows(self):
+    async def update_sample_workflows(self) -> None:
         sample_ids = await self._mongo.samples.distinct("_id")
 
         for chunk in chunk_list(sample_ids, 50):

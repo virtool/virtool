@@ -8,8 +8,8 @@ These will be available in the application context and should be accessed using
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TypeAlias
 
+from pydantic import BaseModel
 from pymongo.uri_parser import parse_uri
 
 from virtool.authorization.openfga import OpenfgaScheme
@@ -104,4 +104,35 @@ class TaskSpawnerConfig:
     sentry_dsn: str
 
 
-Config: TypeAlias = ServerConfig | TaskRunnerConfig | TaskSpawnerConfig
+class WorkflowConfig(BaseModel):
+    """The configuration for a workflow run."""
+
+    dev: bool
+    """Whether the workflow should run in development mode."""
+
+    jobs_api_connection_string: str
+    """The connection string for the jobs API."""
+
+    mem: int
+    """The memory limit for the workflow run."""
+
+    proc: int
+    """The number of processors available to the workflow run."""
+
+    redis_connection_string: str
+    """The connection string for the Redis database."""
+
+    redis_list_name: str
+    """The name of the redis list to pull job IDs from."""
+
+    sentry_dsn: str
+    """The DNS for reporting to Sentry."""
+
+    timeout: int
+    """How long to wait for a job ID from Redis."""
+
+    work_path: Path
+    """The path to a directory where the workflow can store temporary files."""
+
+
+type Config = ServerConfig | TaskRunnerConfig | TaskSpawnerConfig

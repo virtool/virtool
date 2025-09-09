@@ -19,7 +19,7 @@ alembic_down_revision = None
 virtool_down_revision = "6q5k8tz8uph3"
 
 
-async def upgrade(ctx: MigrationContext):
+async def upgrade(ctx: MigrationContext) -> None:
     """Create all database indexes.
 
     This was formerly done on application startup. It did not make sense to do this

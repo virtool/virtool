@@ -28,7 +28,7 @@ class DefaultRoutePolicy:
     unauthenticated clients to access the route.
     """
 
-    async def check(self, req: Request, handler, client):
+    async def check(self, req: Request, handler, client) -> None:
         """This method is a no-op for the default policy.
 
         A check for client authentication is built in to the policy. It can be disabled
@@ -38,7 +38,7 @@ class DefaultRoutePolicy:
 
         """
 
-    async def run_checks(self, req, handler, client):
+    async def run_checks(self, req, handler, client) -> None:
         if not self.allow_unauthenticated and not client.authenticated:
             raise APIUnauthorized("Requires authorization")
 
@@ -51,7 +51,7 @@ class AdministratorRoutePolicy(DefaultRoutePolicy):
     def __init__(self, role: AdministratorRole):
         self.role = role
 
-    async def check(self, req, handler, client: UserClient):
+    async def check(self, req, handler, client: UserClient) -> None:
         if not await get_authorization_client_from_req(req).check(
             client.user_id, self.role, ResourceType.APP, "virtool"
         ):
@@ -62,7 +62,7 @@ class PermissionRoutePolicy(DefaultRoutePolicy):
     def __init__(self, permission: LegacyPermission):
         self.permission = permission
 
-    async def check(self, req: Request, handler: Callable, client: UserClient):
+    async def check(self, req: Request, handler: Callable, client: UserClient) -> None:
         """Checks if the client has the required permission for the object.
 
         Raises ``HTTPForbidden`` if the client does not have the required permission.

@@ -14,7 +14,7 @@ from virtool.tasks.data import TasksData
 from virtool.tasks.sql import SQLTask
 
 
-@pytest.fixture()
+@pytest.fixture
 async def blast_data(mocker, mongo, pg: AsyncEngine, static_time, redis):
     blast_data = BLASTData(mocker.Mock(spec=ClientSession), mongo, pg)
     blast_data.bind_layer(mocker.Mock(spec=DataLayer))
