@@ -4,7 +4,6 @@ from pathlib import Path
 import pytest
 from pydantic_factories import ModelFactory, Use
 
-from virtool.workflow.pytest_plugin.utils import StaticTime
 from virtool.analyses.models import Analysis, AnalysisSample
 from virtool.indexes.models import Index, IndexNested
 from virtool.jobs.models import JobAcquired, JobMinimal, JobPing
@@ -12,7 +11,7 @@ from virtool.ml.models import MLModelRelease
 from virtool.references.models import Reference, ReferenceNested
 from virtool.samples.models import Sample
 from virtool.subtractions.models import Subtraction, SubtractionFile, SubtractionNested
-from virtool.workflow.pytest_plugin.utils import SUBTRACTION_FILENAMES
+from virtool.workflow.pytest_plugin.utils import SUBTRACTION_FILENAMES, StaticTime
 
 
 @dataclass

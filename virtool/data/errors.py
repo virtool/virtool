@@ -1,5 +1,4 @@
-"""
-Errors that are raised by the data layer.
+"""Errors that are raised by the data layer.
 
 In most cases, data layer methods are called by API request handlers. The request
 handler will catch these errors and return an appropriate response.
@@ -21,12 +20,9 @@ To stop the data layer from becoming a leaky abstraction:
 class ResourceError(Exception):
     """A base exception for data layer exceptions."""
 
-    ...
-
 
 class ResourceConflictError(ResourceError):
-    """
-    The operation could not be completed because it would conflict with an
+    """The operation could not be completed because it would conflict with an
     existing resource.
 
     In the context of a request handler, this error will generally result in a
@@ -43,12 +39,9 @@ class ResourceConflictError(ResourceError):
 
     """
 
-    ...
-
 
 class ResourceNotFoundError(ResourceError):
-    """
-    The requested resource does not exist.
+    """The requested resource does not exist.
 
     In the context of a request handler, this error will generally result in a
     **404 Not found** response.
@@ -74,12 +67,9 @@ class ResourceNotFoundError(ResourceError):
 
     """
 
-    ...
-
 
 class ResourceNotModifiedError(ResourceError):
-    """
-    The resource has not been modified since a provided date.
+    """The resource has not been modified since a provided date.
 
     In the context of a request handler, this error will generally result in a
     **304 Not modified** response.
@@ -89,12 +79,9 @@ class ResourceNotModifiedError(ResourceError):
 
     """
 
-    ...
-
 
 class ResourceRemoteError(Exception):
-    """
-    An error was encountered while retrieving a resource that depends on a remote
+    """An error was encountered while retrieving a resource that depends on a remote
     server.
 
     In the context of a request handler, this error will generally result in a
@@ -105,5 +92,3 @@ class ResourceRemoteError(Exception):
     https://www.virtool.ca/releases/references.json.
 
     """
-
-    ...

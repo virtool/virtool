@@ -13,19 +13,19 @@
       'pinged_at': datetime.datetime(2015, 10, 6, 20, 0),
     }),
     'progress': 6380,
-    'retries': 2313,
-    'stage': 'iPhGgaTklZTpXCJkWJYU',
+    'retries': 2614,
+    'stage': 'NdGxgYaOXiiqkTGjYkYt',
     'state': <JobState.RUNNING: 'running'>,
     'status': list([
       dict({
         'error': dict({
           'details': list([
-            'xZSYxzLypuhtZXGzreoO',
+            'hVGiBXJqoyUfQBjWTjzA',
           ]),
           'traceback': list([
-            'TsOOKINsKozOJpXHEaCn',
+            'CAdPsEbpDIRnZLXrjSyO',
           ]),
-          'type': 'IyQHPsHMRsRTJYXABiRW',
+          'type': 'qopAJsorWvViTxsrhYks',
         }),
         'progress': 7819,
         'stage': 'oeIvGWAWpCToZkEGjNjL',
@@ -36,9 +36,9 @@
       }),
     ]),
     'user': dict({
-      'handle': 'RaOtEacjXkNWWrsBOfMP',
-      'id': 'psihdpFaJrqQyqzKcYbM',
+      'handle': 'vCvtRxKGXgmQyAUnyEOt',
+      'id': 'bvWnrQEEKdspKjyjnWXs',
     }),
-    'workflow': 'SbXerFVrWCqqjehJZicZ',
+    'workflow': 'pwYkAshoKeJpPGLqzLeF',
   })
 # ---

@@ -100,7 +100,7 @@ def emit(data: BaseModel, domain: str, name: str, operation: Operation) -> None:
 
 
 def emits(operation: Operation, domain: str | None = None, name: str | None = None):
-    """Emits the return value of the decorated method as an event.
+    """Emit the return value of the decorated method as an event.
 
     By default, ``domain`` is the name of the ``DataLayerDomain`` object the decorated
     method is bound to. It can be overridden by passing a value to the decorator.
@@ -188,7 +188,7 @@ class EventPublisher:
             pass
 
 
-async def listen_for_events(redis: Redis) -> AsyncGenerator[Event, None]:
+async def listen_for_events(redis: Redis) -> AsyncGenerator[Event]:
     """Yield events as they are received."""
     async for received in redis.subscribe("channel:events"):
         payload = received.pop("payload")

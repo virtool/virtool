@@ -6,10 +6,7 @@ from virtool.pg.utils import SQLEnum
 
 
 class ArtifactType(str, SQLEnum):
-    """
-    Enumerated type for possible artifact types
-
-    """
+    """Enumerated type for possible artifact types"""
 
     sam = "sam"
     bam = "bam"
@@ -21,10 +18,7 @@ class ArtifactType(str, SQLEnum):
 
 
 class SQLSampleArtifact(Base):
-    """
-    SQL model to store sample artifacts
-
-    """
+    """SQL model to store sample artifacts"""
 
     __tablename__ = "sample_artifacts"
     __table_args__ = (UniqueConstraint("sample", "name"),)
@@ -39,10 +33,7 @@ class SQLSampleArtifact(Base):
 
 
 class SQLSampleReads(Base):
-    """
-    SQL model to store new sample reads files
-
-    """
+    """SQL model to store new sample reads files"""
 
     __tablename__ = "sample_reads"
     __table_args__ = (UniqueConstraint("sample", "name"),)

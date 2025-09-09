@@ -1,3 +1,1 @@
-"""
-Pytest fixtures for Virtool.
-"""
+"""Pytest fixtures for Virtool."""

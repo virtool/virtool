@@ -11,7 +11,6 @@ from syrupy.matchers import path_type
 
 import virtool.utils
 from tests.fixtures.client import ClientSpawner
-from virtool.workflow.pytest_plugin.utils import StaticTime
 from tests.fixtures.response import RespIs
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
@@ -23,6 +22,7 @@ from virtool.settings.oas import UpdateSettingsRequest
 from virtool.tasks.sql import SQLTask
 from virtool.users.oas import UpdateUserRequest
 from virtool.utils import get_http_session_from_app
+from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
 async def test_find(

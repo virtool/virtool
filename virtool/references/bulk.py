@@ -1,8 +1,8 @@
 import asyncio
 from asyncio import FIRST_COMPLETED, CancelledError, Queue
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Callable
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 

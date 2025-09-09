@@ -1,10 +1,10 @@
-from virtool.data.utils import get_data_from_req
 from aiohttp.web import Request
+
+from virtool.data.utils import get_data_from_req
 
 
 async def check_password_length(req: Request, password: str) -> str:
-    """
-    Return error text if the password in the request does not meet application length
+    """Return error text if the password in the request does not meet application length
     requirements.
     """
     settings = await get_data_from_req(req).settings.get_all()

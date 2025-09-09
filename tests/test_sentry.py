@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 from pytest_mock import MockerFixture
 
-from virtool.sentry import configure_sentry, _traces_sampler
+from virtool.sentry import _traces_sampler, configure_sentry
 
 
 class TestConfigureSentry:

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Callable, Awaitable
+from collections.abc import Awaitable, Callable
 
 
 class AbstractProgressHandler(ABC):
@@ -24,16 +24,11 @@ class TaskProgressHandler(AbstractProgressHandler):
         self._progress = 0
 
     async def set_error(self, error: str) -> None:
-        """
-        Put the calling task into an error state and provide and ``error`` string.
-        """
+        """Put the calling task into an error state and provide and ``error`` string."""
         await self._set_error(error)
 
     async def set_progress(self, progress: int) -> None:
-        """
-        Update the tasks progress with the progress of the current subtask
-        """
-
+        """Update the tasks progress with the progress of the current subtask"""
         if progress < self._progress:
             raise ValueError("Progress cannot decrease")
 
@@ -44,10 +39,7 @@ class TaskProgressHandler(AbstractProgressHandler):
 
 
 class AccumulatingProgressHandlerWrapper:
-    """
-    Reports progress in a file download to a ``AbstractProgressHandler``.
-
-    """
+    """Reports progress in a file download to a ``AbstractProgressHandler``."""
 
     def __init__(
         self,
@@ -59,10 +51,7 @@ class AccumulatingProgressHandlerWrapper:
         self._accumulated = 0
 
     async def add(self, value: int) -> None:
-        """
-        Add a number of bytes onto the download handler and report progress.
-
-        """
+        """Add a number of bytes onto the download handler and report progress."""
         self._accumulated += value
 
         await self._progress_handler.set_progress(

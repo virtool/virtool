@@ -60,7 +60,7 @@ from virtool.users.models import User
 from virtool.users.oas import UpdateUserRequest
 
 
-async def fake_file_chunker(path: Path) -> AsyncGenerator[bytearray, None]:
+async def fake_file_chunker(path: Path) -> AsyncGenerator[bytearray]:
     """Read a chunk of size `CHUNK_SIZE` from a file.
 
     This is used to hijack the upload process and create fake uploads.
@@ -72,7 +72,7 @@ async def fake_file_chunker(path: Path) -> AsyncGenerator[bytearray, None]:
         yield f.read(CHUNK_SIZE)
 
 
-async def gzip_file_chunker(path: Path) -> AsyncGenerator[bytearray, None]:
+async def gzip_file_chunker(path: Path) -> AsyncGenerator[bytearray]:
     """Decompress and Read a chunk of size `CHUNK_SIZE` from a file.
 
     This is used to hijack the upload process and create fake uploads. It will
@@ -161,7 +161,6 @@ class JobsFakerDomain(DataFakerDomain):
         self,
         user: User,
         pinged_at: datetime.datetime | None = None,
-        retries: int = 0,
         state: JobState | None = None,
         workflow: str | None = None,
     ) -> Job:
@@ -171,7 +170,6 @@ class JobsFakerDomain(DataFakerDomain):
 
         :param user: the user that created the job
         :param pinged_at: the time the job was last pinged.
-        :param retries: the number of retries the job has undergone
         :param state: the state the most recent status update should have
         :param workflow: the workflow the job is running
         :return:
@@ -248,14 +246,6 @@ class JobsFakerDomain(DataFakerDomain):
                 {"_id": job.id},
                 {
                     "$set": {"ping": {"pinged_at": pinged_at}},
-                },
-            )
-
-        if retries > 0:
-            await self._mongo.jobs.update_one(
-                {"_id": job.id},
-                {
-                    "$set": {"retries": retries},
                 },
             )
 

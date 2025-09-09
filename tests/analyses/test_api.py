@@ -9,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
-from virtool.workflow.pytest_plugin.utils import StaticTime
 from tests.fixtures.response import RespIs
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.sql import SQLAnalysisFile, SQLAnalysisResult
@@ -19,6 +18,7 @@ from virtool.jobs.models import Job, JobState
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.users.models import User
+from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
 @pytest.fixture

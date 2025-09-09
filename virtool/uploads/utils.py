@@ -40,7 +40,7 @@ def naive_validator(req) -> Validator.errors:
 
 async def multipart_file_chunker(
     reader: MultipartReader,
-) -> AsyncGenerator[bytearray, None]:
+) -> AsyncGenerator[bytearray]:
     """Iterates through a ``MultipartReader`` as ``bytearray`` chunks."""
     file = await reader.next()
 

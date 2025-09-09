@@ -175,6 +175,7 @@
       'created_at': 'not_approximately_now_datetime',
       'id': 'fb085f7f',
       'progress': 3,
+      'retries': 0,
       'stage': None,
       'state': <JobState.PREPARING: 'preparing'>,
       'user': dict({

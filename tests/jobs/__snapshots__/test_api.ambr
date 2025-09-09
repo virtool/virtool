@@ -77,6 +77,7 @@
         'created_at': str,
         'id': '9c61c0ca',
         'progress': 3,
+        'retries': 0,
         'stage': None,
         'state': 'preparing',
         'user': dict({
@@ -89,6 +90,7 @@
         'created_at': str,
         'id': '7cce8f87',
         'progress': 40,
+        'retries': 0,
         'stage': 'BhtMCmVtuypvvfYhEGZT',
         'state': 'cancelled',
         'user': dict({
@@ -101,6 +103,7 @@
         'created_at': str,
         'id': '83e4c4f6',
         'progress': 3,
+        'retries': 0,
         'stage': None,
         'state': 'preparing',
         'user': dict({
@@ -113,6 +116,7 @@
         'created_at': str,
         'id': '606cd773',
         'progress': 10,
+        'retries': 0,
         'stage': 'kuwHIKQEsDDoQuVheSsd',
         'state': 'running',
         'user': dict({
@@ -125,6 +129,7 @@
         'created_at': str,
         'id': '031ff6cb',
         'progress': 3,
+        'retries': 0,
         'stage': None,
         'state': 'preparing',
         'user': dict({

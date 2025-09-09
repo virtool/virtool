@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner
-from virtool.workflow.pytest_plugin.utils import StaticTime
 from tests.fixtures.response import RespIs
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.relationships import UserRoleAssignment
@@ -21,6 +20,7 @@ from virtool.mongo.core import Mongo
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.users.pg import SQLUser
 from virtool.users.utils import check_password
+from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
 @pytest.fixture

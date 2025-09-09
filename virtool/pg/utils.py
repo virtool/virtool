@@ -1,12 +1,12 @@
 import sys
 from enum import Enum
+from typing import TypeVar
 
 import orjson
 from sqlalchemy import select, text
 from sqlalchemy.engine.result import ScalarResult
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from structlog import get_logger
-from typing_extensions import TypeVar
 
 from virtool.api.custom_json import dump_string
 from virtool.pg.base import Base

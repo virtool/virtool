@@ -1,7 +1,7 @@
 from virtool.api.custom_json import json_response
-from virtool.config import get_config_from_req
-from virtool.api.policy import policy, PublicRoutePolicy
+from virtool.api.policy import PublicRoutePolicy, policy
 from virtool.api.routes import Routes
+from virtool.config import get_config_from_req
 from virtool.data.utils import get_data_from_req
 
 API_URL_ROOT = "https://www.virtool.ca/docs/api"
@@ -13,10 +13,7 @@ routes = Routes()
 @routes.jobs_api.get("/")
 @policy(PublicRoutePolicy)
 async def get(req):
-    """
-    Returns a generic message. Used during testing for acquiring a ``session_id``.
-
-    """
+    """Returns a generic message. Used during testing for acquiring a ``session_id``."""
     first_user = not await get_data_from_req(req).users.check_users_exist()
 
     app_data = {

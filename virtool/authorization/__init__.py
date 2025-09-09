@@ -1,6 +1,4 @@
-"""
-
-Authorization is the process of determining whether a user is allowed to perform an
+"""Authorization is the process of determining whether a user is allowed to perform an
 action.
 
 The Virtool :class:`.AuthorizationClient` is an abstraction over OpenFGA that provides

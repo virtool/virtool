@@ -96,7 +96,7 @@ class UsersData(DataLayerDomain):
         if term:
             query.update(compose_regex_query(term, ["handle"]))
 
-        projection = {field: True for field in PROJECTION}
+        projection = dict.fromkeys(PROJECTION, True)
 
         skip_count = 0
 

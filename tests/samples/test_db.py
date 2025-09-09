@@ -4,7 +4,6 @@ from pytest_mock import MockerFixture
 from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner
-from virtool.workflow.pytest_plugin.utils import StaticTime
 from virtool.data.utils import get_data_from_app
 from virtool.mongo.core import Mongo
 from virtool.samples.db import (
@@ -16,6 +15,7 @@ from virtool.samples.db import (
     recalculate_workflow_tags,
 )
 from virtool.samples.utils import calculate_workflow_tags
+from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
 class TestCalculateWorkflowTags:

@@ -7,10 +7,10 @@ if TYPE_CHECKING:
     from virtool.data.layer import DataLayer
 
 
-class JobsCleanTask(BaseTask):
-    """Relist jobs."""
+class JobsTimeoutTask(BaseTask):
+    """Timeout stalled jobs."""
 
-    name = "clean_jobs"
+    name = "timeout_jobs"
 
     def __init__(
         self,
@@ -21,8 +21,8 @@ class JobsCleanTask(BaseTask):
     ):
         super().__init__(task_id, data, context, temp_dir)
 
-        self.steps = [self.clean_jobs]
+        self.steps = [self.timeout_jobs]
 
-    async def clean_jobs(self) -> None:
-        """Clean up all jobs."""
-        await self.data.jobs.clean()
+    async def timeout_jobs(self) -> None:
+        """Timeout stalled jobs."""
+        await self.data.jobs.timeout_stalled_jobs()

@@ -16,7 +16,7 @@ from virtool.data.errors import (
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def analysis(static_time):
     return {
         "id": "baz",

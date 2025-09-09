@@ -8,11 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 import virtool.history.db
-from virtool.workflow.pytest_plugin.utils import StaticTime
 from virtool.history.sql import SQLHistoryDiff
 from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
+from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
 class TestAdd:

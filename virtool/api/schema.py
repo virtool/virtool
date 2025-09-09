@@ -9,8 +9,7 @@ from virtool.types import RouteHandler
 
 
 def schema(schema_dict: dict):
-    """
-    Validate that the json body of the request matches the given cerberus schema.
+    """Validate that the json body of the request matches the given cerberus schema.
 
     The validated json body will be available by `request["data"]`.
 

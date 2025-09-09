@@ -1,5 +1,4 @@
-"""
-Transforms for attaching groups to resources.
+"""Transforms for attaching groups to resources.
 
 TODO: Drop legacy group id support when we fully migrate to integer ids.
 """
@@ -7,7 +6,7 @@ TODO: Drop legacy group id support when we fully migrate to integer ids.
 from typing import Any
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.topg import compose_legacy_id_expression
 from virtool.data.transforms import AbstractTransform
@@ -16,8 +15,7 @@ from virtool.types import Document
 
 
 class AttachPrimaryGroupTransform(AbstractTransform):
-    """
-    Attach a minimal primary group to one or more documents with a ``primary_group``
+    """Attach a minimal primary group to one or more documents with a ``primary_group``
     field.
     """
 

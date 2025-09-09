@@ -146,9 +146,8 @@ class SamplesData(DataLayerDomain):
                 },
                 {
                     "$project": {
-                        "data": {
-                            item: True
-                            for item in (
+                        "data": dict.fromkeys(
+                            (
                                 "_id",
                                 "created_at",
                                 "host",
@@ -164,8 +163,9 @@ class SamplesData(DataLayerDomain):
                                 "labels",
                                 "subtractions",
                                 "workflows",
-                            )
-                        },
+                            ),
+                            True,
+                        ),
                         "total_count": {
                             "$arrayElemAt": ["$total_count.total_count", 0],
                         },

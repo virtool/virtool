@@ -1,7 +1,8 @@
 """Core database classes."""
 
+from collections.abc import Callable
 from contextlib import asynccontextmanager
-from typing import Any, Callable
+from typing import Any
 
 from motor.motor_asyncio import (
     AsyncIOMotorClientSession,
