@@ -12,7 +12,7 @@ from virtool.references.tasks import ReferenceReleasesRefreshTask, ReferencesCle
 from virtool.samples.tasks import (
     SampleWorkflowsUpdateTask,
 )
-from virtool.tasks.client import TasksClient
+from virtool.sessions.tasks import SessionCleanupTask
 from virtool.tasks.data import TasksData
 from virtool.tasks.spawner import TaskSpawnerService
 
@@ -22,7 +22,7 @@ async def startup_data_layer_for_spawner(app: Application) -> None:
 
     :param app: the :class:`aiohttp.web.Application` object
     """
-    app["tasks_datalayer"] = TasksData(app["pg"], TasksClient(app["redis"]))
+    app["tasks_datalayer"] = TasksData(app["pg"])
 
 
 async def startup_databases_for_spawner(app: Application) -> None:
@@ -53,6 +53,7 @@ async def startup_task_spawner(app: Application) -> None:
                 (ReferenceReleasesRefreshTask, 600),
                 (ReferencesCleanTask, 3600),
                 (SampleWorkflowsUpdateTask, 3600),
+                (SessionCleanupTask, 300),
             ]
         )
     )

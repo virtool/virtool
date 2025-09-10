@@ -16,7 +16,6 @@ from virtool.labels.oas import (
 routes = virtool.api.routes.Routes()
 
 
-@routes.view("/spaces/{space_id}/labels")
 @routes.view("/labels")
 class LabelsView(PydanticView):
     async def get(
@@ -65,7 +64,6 @@ class LabelsView(PydanticView):
         )
 
 
-@routes.view("/spaces/{space_id}/labels/{label_id}")
 @routes.view("/labels/{label_id}")
 class LabelView(PydanticView):
     async def get(self, label_id: int, /) -> r200[Label] | r404:

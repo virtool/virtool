@@ -5,15 +5,22 @@ from collections.abc import AsyncGenerator, Awaitable, Callable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
+from typing import ParamSpec, TypeVar
 
+import asyncpg
+import orjson
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
 from virtool.api.custom_json import dump_string
 from virtool.models.base import BaseModel
-from virtool.redis import Redis
-from virtool.utils import get_model_by_name, timestamp
+from virtool.utils import timestamp
 
 logger = get_logger("events")
+
+P = ParamSpec("P")
+R = TypeVar("R", bound=BaseModel)
 
 
 class Operation(str, Enum):
@@ -32,6 +39,15 @@ class Event:
     name: str
     operation: Operation
     timestamp: datetime
+
+
+@dataclass
+class ClientEvent:
+    """A notification received from Postgres LISTEN."""
+
+    domain: str
+    resource_id: str | int
+    operation: str
 
 
 class _InternalEventsTarget:
@@ -114,11 +130,11 @@ def emits(operation: Operation, domain: str | None = None, name: str | None = No
 
     """
 
-    def decorator(func: Callable[..., Awaitable[BaseModel]]):
+    def decorator(func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
         emitted_name = name or func.__name__
 
         @functools.wraps(func)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             # This is the DataLayerDomain object the method is bound to.
             obj = args[0]
 
@@ -136,12 +152,11 @@ def emits(operation: Operation, domain: str | None = None, name: str | None = No
 class EventPublisher:
     """Publishes events emitted in the application.
 
-    Events are published using Redis pub/sub.
-
+    Events are published using Postgres NOTIFY.
     """
 
-    def __init__(self, redis: Redis):
-        self._redis = redis
+    def __init__(self, pg: AsyncEngine):
+        self._pg = pg
 
     async def run(self) -> None:
         """Start the event publisher."""
@@ -152,47 +167,63 @@ class EventPublisher:
                 event = await _events_target.get()
 
                 try:
-                    data = event.data.dict()
-                except AttributeError:
+                    payload = dump_string(
+                        {
+                            "domain": event.domain,
+                            "resource_id": event.data.id,
+                            "operation": event.operation.value,
+                        }
+                    )
+
+                    async with AsyncSession(self._pg) as session:
+                        await session.execute(
+                            text("SELECT pg_notify(:channel, :payload)"),
+                            {"channel": "client_events", "payload": payload},
+                        )
+                        await session.commit()
+
+                    logger.info(
+                        "published event",
+                        domain=event.domain,
+                        resource_id=event.data.id,
+                        operation=event.operation,
+                    )
+                except Exception:
                     logger.exception(
-                        "Encountered exception while publishing event",
+                        "failed to publish event",
                         domain=event.domain,
                         name=event.name,
                         operation=event.operation,
                     )
-                    continue
-
-                await self._redis.publish(
-                    "channel:events",
-                    dump_string(
-                        {
-                            "domain": event.domain,
-                            "name": event.name,
-                            "operation": event.operation,
-                            "payload": {
-                                "data": data,
-                                "model": event.data.__class__.__name__,
-                            },
-                            "timestamp": event.timestamp,
-                        },
-                    ),
-                )
-
-                logger.info(
-                    "published event",
-                    domain=event.domain,
-                    name=event.name,
-                    operation=event.operation,
-                )
         except CancelledError:
             pass
 
 
-async def listen_for_events(redis: Redis) -> AsyncGenerator[Event]:
-    """Yield events as they are received."""
-    async for received in redis.subscribe("channel:events"):
-        payload = received.pop("payload")
+async def listen_for_client_events(
+    pg_connection_string: str,
+) -> AsyncGenerator[ClientEvent]:
+    """Listen for client events via Postgres NOTIFY.
 
-        cls = get_model_by_name(payload["model"])
+    Uses a dedicated asyncpg connection outside the SQLAlchemy pool.
+    """
+    conn = await asyncpg.connect(pg_connection_string)
+    queue: asyncio.Queue[str] = asyncio.Queue()
 
-        yield Event(**received, data=cls(**payload["data"]))
+    def on_notify(connection, pid, channel, payload):
+        queue.put_nowait(payload)
+
+    await conn.add_listener("client_events", on_notify)
+    logger.info("listening for client events")
+
+    try:
+        while True:
+            payload = await queue.get()
+            data = orjson.loads(payload)
+            yield ClientEvent(
+                domain=data["domain"],
+                resource_id=data["resource_id"],
+                operation=data["operation"],
+            )
+    finally:
+        await conn.remove_listener("client_events", on_notify)
+        await conn.close()

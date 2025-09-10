@@ -49,6 +49,7 @@ class ServerConfig:
     host: str
     mongodb_connection_string: str
     no_check_db: bool
+    no_periodic_tasks: bool
     no_revision_check: bool
     openfga_host: str
     openfga_scheme: str

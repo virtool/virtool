@@ -1,26 +1,17 @@
 from http import HTTPStatus
 
 import pytest
-from sqlalchemy import delete
-from sqlalchemy.ext.asyncio import AsyncEngine
-from syrupy import SnapshotAssertion
+from syrupy.assertion import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner
 from tests.fixtures.response import RespIs
-from virtool.authorization.client import AuthorizationClient
-from virtool.authorization.relationships import UserRoleAssignment
 from virtool.data.layer import DataLayer
-from virtool.data.topg import both_transactions
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.groups.oas import PermissionsUpdate, UpdateGroupRequest
 from virtool.models.enums import Permission
-from virtool.models.roles import SpaceReferenceRole, SpaceSampleRole
-from virtool.mongo.core import Mongo
+from virtool.models.roles import AdministratorRole
 from virtool.settings.oas import UpdateSettingsRequest
-from virtool.users.pg import SQLUser
-from virtool.users.utils import check_password
-from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
 @pytest.fixture
@@ -53,9 +44,8 @@ async def setup_update_user(
 async def test_find(
     find: str | None,
     fake: DataFaker,
-    snapshot: SnapshotAssertion,
+    snapshot_recent: SnapshotAssertion,
     spawn_client: ClientSpawner,
-    static_time,
 ):
     """Test that a ``GET /users`` returns a list of users."""
     client = await spawn_client(
@@ -75,106 +65,132 @@ async def test_find(
     resp = await client.get(url)
 
     assert resp.status == HTTPStatus.OK
-    assert await resp.json() == snapshot
+    assert await resp.json() == snapshot_recent
 
 
-@pytest.mark.parametrize("status", [200, 404])
-async def test_get(
-    status: int,
-    fake: DataFaker,
-    snapshot: SnapshotAssertion,
-    spawn_client: ClientSpawner,
-    static_time,
-):
-    """Test that a ``GET /users`` returns a list of users."""
-    client = await spawn_client(administrator=True, authenticated=True)
+class TestGet:
+    async def test_get(
+        self,
+        fake: DataFaker,
+        snapshot_recent: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that a ``GET /users`` returns a list of users."""
+        client = await spawn_client(administrator=True, authenticated=True)
 
-    group = await fake.groups.create()
+        group = await fake.groups.create()
 
-    user = await fake.users.create(
-        groups=[group, await fake.groups.create()],
-        primary_group=group,
-    )
+        user = await fake.users.create(
+            groups=[group, await fake.groups.create()],
+            primary_group=group,
+        )
 
-    await fake.users.create()
+        await fake.users.create()
 
-    resp = await client.get(f"/users/{'foo' if status == 404 else user.id}")
+        resp = await client.get(f"/users/{user.id}")
+        body = await resp.json()
 
-    assert resp.status == status
-    assert await resp.json() == snapshot
+        assert resp.status == HTTPStatus.OK
+        assert body["id"] == user.id
+        assert len(body["groups"]) == 2
+        assert body == snapshot_recent
+
+    async def test_not_found(self, spawn_client: ClientSpawner):
+        """Test that a 404 is returned when the user does not exist."""
+        client = await spawn_client(administrator=True, authenticated=True)
+
+        resp = await client.get("/users/99")
+
+        assert resp.status == HTTPStatus.NOT_FOUND
 
 
-@pytest.mark.parametrize("error", [None, "400_exists", "400_password", "400_reserved"])
-async def test_create(
-    error: str | None,
-    data_layer: DataLayer,
-    fake: DataFaker,
-    mongo: Mongo,
-    resp_is: RespIs,
-    snapshot: SnapshotAssertion,
-    spawn_client: ClientSpawner,
-    static_time: StaticTime,
-):
-    """Test that a valid request results in a user document being properly inserted."""
-    await mongo.users.create_index("handle", unique=True, sparse=True)
+class TestCreate:
+    async def test_ok(
+        self,
+        fake: DataFaker,
+        snapshot_recent: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that a valid request results in a user document being properly inserted."""
+        client = await spawn_client(administrator=True, authenticated=True)
 
-    client = await spawn_client(administrator=True, authenticated=True)
+        await fake.users.create()
 
-    user = await fake.users.create()
+        await get_data_from_app(client.app).settings.update(
+            UpdateSettingsRequest(minimum_password_length=8),
+        )
 
-    await get_data_from_app(client.app).settings.update(
-        UpdateSettingsRequest(minimum_password_length=8),
-    )
+        data = {"handle": "fred", "password": "hello_world", "force_reset": False}
 
-    data = {"handle": "fred", "password": "hello_world", "force_reset": False}
+        resp = await client.post("/users", data)
 
-    if error == "400_exists":
-        data["handle"] = user.handle
+        assert resp.status == 201
+        assert await resp.json() == snapshot_recent
+        assert resp.headers["Location"] == snapshot_recent(name="location")
 
-    if error == "400_reserved":
-        data["handle"] = "virtool"
+    @pytest.mark.parametrize("handle", ["testuser", "TestUser"])
+    async def test_exists(
+        self,
+        handle: str,
+        fake: DataFaker,
+        resp_is: RespIs,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that creating a user with an existing handle returns an error."""
+        client = await spawn_client(administrator=True, authenticated=True)
 
-    if error == "400_password":
-        data["password"] = "foo"
+        await fake.users.create(handle=handle)
 
-    resp = await client.post("/users", data)
+        resp = await client.post(
+            "/users",
+            {"handle": handle.lower(), "password": "hello_world", "force_reset": False},
+        )
 
-    if error == "400_exists":
         await resp_is.bad_request(resp, "User already exists")
-        return
 
-    if error == "400_password":
+    async def test_password_too_short(
+        self,
+        fake: DataFaker,
+        resp_is: RespIs,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that a password that is too short returns an error."""
+        client = await spawn_client(administrator=True, authenticated=True)
+
+        await fake.users.create()
+
+        data = {"handle": "fred", "password": "foo", "force_reset": False}
+
+        resp = await client.post("/users", data)
+
         await resp_is.bad_request(
             resp,
             "Password does not meet minimum length requirement (8)",
         )
-        return
 
-    if error == "400_reserved":
+    async def test_reserved_handle(
+        self,
+        fake: DataFaker,
+        resp_is: RespIs,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that creating a user with a reserved handle returns an error."""
+        client = await spawn_client(administrator=True, authenticated=True)
+
+        await fake.users.create()
+
+        data = {"handle": "virtool", "password": "hello_world", "force_reset": False}
+
+        resp = await client.post("/users", data)
+
         await resp_is.bad_request(resp, "Reserved user name: virtool")
-        return
-
-    assert resp.status == 201
-
-    resp_json = await resp.json()
-
-    assert resp_json == snapshot
-    assert resp.headers["Location"] == snapshot(name="location")
-
-    document = await mongo.users.find_one(resp_json["id"])
-    password = document.pop("password")
-
-    assert document == snapshot(name="db")
-    assert check_password("hello_world", password)
-    assert await data_layer.users.get(resp_json["id"]) == snapshot(name="data_layer")
 
 
 class TestUpdate:
     async def test_ok(
         self,
         setup_update_user,
-        snapshot: SnapshotAssertion,
-        static_time,
+        snapshot_recent: SnapshotAssertion,
     ):
         client, group_1, _, user = setup_update_user
 
@@ -188,13 +204,12 @@ class TestUpdate:
         )
 
         assert resp.status == HTTPStatus.OK
-        assert await resp.json() == snapshot
+        assert await resp.json() == snapshot_recent
 
     async def test_with_groups(
         self,
         setup_update_user,
-        snapshot: SnapshotAssertion,
-        static_time,
+        snapshot_recent: SnapshotAssertion,
     ):
         client, group_1, group_2, user = setup_update_user
 
@@ -208,7 +223,7 @@ class TestUpdate:
         )
 
         assert resp.status == HTTPStatus.OK
-        assert await resp.json() == snapshot
+        assert await resp.json() == snapshot_recent
 
     async def test_short_password(self, setup_update_user, snapshot: SnapshotAssertion):
         client, _, _, user = setup_update_user
@@ -233,7 +248,7 @@ class TestUpdate:
         resp = await client.patch(
             f"/users/{user.id}",
             data={
-                "primary_group": 4,
+                "primary_group": 99,
             },
         )
 
@@ -261,7 +276,7 @@ class TestUpdate:
         client, _, _, _ = setup_update_user
 
         resp = await client.patch(
-            "/users/bob",
+            "/users/99",
             data={
                 "primary_group": 1,
             },
@@ -271,104 +286,46 @@ class TestUpdate:
         assert await resp.json() == snapshot
 
 
-@pytest.mark.parametrize("user", ["test", "bob"])
-async def test_list_permissions(
-    authorization_client: AuthorizationClient,
-    spawn_client: ClientSpawner,
-    user,
-    snapshot: SnapshotAssertion,
-):
-    client = await spawn_client(
-        authenticated=True,
-        permissions=[Permission.create_sample, Permission.create_ref],
-    )
+class TestCreateFirstUser:
+    async def test_ok(
+        self,
+        snapshot_recent: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+    ):
+        """Test creating the first user when no users exist."""
+        client = await spawn_client()
 
-    authorization_client = client.app["authorization"]
+        response = await client.put(
+            "/users/first",
+            {"handle": "fred", "password": "hello_world"},
+        )
+        body = await response.json()
 
-    await authorization_client.add(
-        UserRoleAssignment("test", 0, SpaceSampleRole.EDITOR),
-        UserRoleAssignment("test", 0, SpaceReferenceRole.BUILDER),
-    )
+        assert response.status == HTTPStatus.CREATED
+        assert body["administrator_role"] == AdministratorRole.FULL
+        assert body["handle"] == "fred"
+        assert body == snapshot_recent
 
-    resp = await client.get(
-        f"/users/{user}/permissions",
-    )
+        response = await client.post(
+            "/account/login", {"handle": "fred", "password": "hello_world"}
+        )
 
-    assert resp.status == HTTPStatus.OK
-    assert await resp.json() == snapshot
+        assert response.status == HTTPStatus.CREATED
 
+    async def test_user_already_exists(
+        self,
+        fake: DataFaker,
+        snapshot_recent: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that creating first user fails when users already exist."""
+        client = await spawn_client()
+        await fake.users.create()
 
-@pytest.mark.parametrize(
-    "role, status",
-    [
-        (SpaceSampleRole.MANAGER, 200),
-        (None, 400),
-    ],
-    ids=["valid_permission", "invalid_permission"],
-)
-async def test_add_permission(
-    role: SpaceSampleRole,
-    status: int,
-    snapshot: SnapshotAssertion,
-    spawn_client: ClientSpawner,
-):
-    client = await spawn_client(administrator=True, authenticated=True)
-    if role is None:
-        resp = await client.put("/users/test/permissions/invalid", {})
-    else:
-        resp = await client.put(f"/users/test/permissions/{role.value}", {})
+        resp = await client.put(
+            "/users/first",
+            {"handle": "fred", "password": "hello_world"},
+        )
 
-    assert resp.status == status
-    assert await resp.json() == snapshot()
-
-
-@pytest.mark.parametrize(
-    "role, status",
-    [
-        (SpaceSampleRole.MANAGER, 200),
-        (None, 400),
-    ],
-    ids=["valid_permission", "invalid_permission"],
-)
-async def test_remove_permission(
-    role: SpaceSampleRole,
-    status: int,
-    snapshot: SnapshotAssertion,
-    spawn_client: ClientSpawner,
-):
-    client = await spawn_client(administrator=True, authenticated=True)
-
-    if role is None:
-        resp = await client.put("/users/test/permissions/invalid", {})
-    else:
-        resp = await client.put(f"/users/test/permissions/{role.value}", {})
-
-    assert resp.status == status
-    assert await resp.json() == snapshot()
-
-
-@pytest.mark.parametrize("first_user_exists, status", [(True, 409), (False, 201)])
-async def test_create_first_user(
-    first_user_exists: bool,
-    status: int,
-    mongo: Mongo,
-    pg: AsyncEngine,
-    snapshot: SnapshotAssertion,
-    spawn_client: ClientSpawner,
-    static_time,
-):
-    """Checks response when first user exists and does not exist."""
-    client = await spawn_client()
-
-    if not first_user_exists:
-        async with both_transactions(mongo, pg) as (mongo_session, pg_session):
-            await pg_session.execute(delete(SQLUser))
-            await mongo.users.delete_many({}, session=mongo_session)
-
-    resp = await client.put(
-        "/users/first",
-        {"handle": "fred", "password": "hello_world"},
-    )
-
-    assert resp.status == status
-    assert await resp.json() == snapshot
+        assert resp.status == HTTPStatus.CONFLICT
+        assert await resp.json() == snapshot_recent

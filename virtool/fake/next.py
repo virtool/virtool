@@ -379,7 +379,9 @@ class MLFakerDomain(DataFakerDomain):
             html_url=self._faker.url(),
             name=self._faker.pystr(),
             prerelease=self._faker.pybool(),
-            published_at=self._faker.date_time(),
+            published_at=self._faker.date_time(
+                end_datetime=datetime.datetime(2025, 11, 1)
+            ),
             size=self._faker.pyint(),
         )
 

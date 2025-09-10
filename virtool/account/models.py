@@ -9,10 +9,13 @@ from virtool.models.enums import AnalysisWorkflow
 from virtool.users.models import User
 
 
-def check_email(email: str | None) -> str | None:
+def check_email(email: str | None) -> str:
     """Checks if the given email is valid."""
     if email is None:
-        return None
+        raise ValueError("Value may not be null")
+
+    if email == "":
+        return email
 
     try:
         validate_email(email)
@@ -45,9 +48,20 @@ class ConstrainedEmail(ConstrainedStr):
 
 class Account(User):
     settings: AccountSettings
-    email: ConstrainedEmail | None
+    email: ConstrainedEmail
 
-    _email_validation = validator("email", allow_reuse=True)(check_email)
+    @validator("email", allow_reuse=True, pre=True)
+    def validate_email(cls, v):
+        if v is None:
+            return ""
+
+        if isinstance(v, str):
+            v = v.strip()
+
+        if v == "":
+            return ""
+
+        return check_email(v)
 
     class Config:
         schema_extra = {

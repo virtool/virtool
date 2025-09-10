@@ -1,11 +1,12 @@
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, Index
+from sqlalchemy import Enum, ForeignKey, Index, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from virtool.groups.pg import SQLGroup
+from virtool.models.roles import AdministratorRole
 from virtool.pg.base import Base
 
 
@@ -41,18 +42,26 @@ class SQLUser(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     active: Mapped[bool] = mapped_column(default=True)
+    administrator_role: Mapped[AdministratorRole | None] = mapped_column(
+        Enum(AdministratorRole, values_callable=lambda obj: [e.value for e in obj]),
+        nullable=True,
+    )
     b2c_display_name: Mapped[str] = mapped_column(default="")
     b2c_given_name: Mapped[str] = mapped_column(default="")
     b2c_family_name: Mapped[str] = mapped_column(default="")
     b2c_oid: Mapped[str | None]
     email: Mapped[str] = mapped_column(default="", nullable=False)
     force_reset: Mapped[bool] = mapped_column(default=False)
-    handle: Mapped[str] = mapped_column(unique=True)
+    handle: Mapped[str]
     invalidate_sessions: Mapped[bool] = mapped_column(default=False)
     last_password_change: Mapped[datetime]
     legacy_id: Mapped[str | None] = mapped_column(unique=True)
-    password: Mapped[bytes | None]
+    password: Mapped[bytes]
     settings: Mapped[dict] = mapped_column(JSONB)
+
+    __table_args__ = (
+        Index("users_handle_lower_unique", text("lower(handle)"), unique=True),
+    )
 
     user_group_associations: Mapped[list[SQLUserGroup]] = relationship(
         back_populates="user",

@@ -2,61 +2,69 @@
 
 import asyncio
 from asyncio import CancelledError
+from typing import TYPE_CHECKING
 
 from aiohttp.web_ws import WebSocketResponse
 from structlog import get_logger
 
 from virtool.api.client import UserClient
 from virtool.api.custom_json import dump_string
-from virtool.data.events import Operation, listen_for_events
+from virtool.data.events import listen_for_client_events
+from virtool.models.base import BaseModel
 from virtool.redis import Redis
-from virtool.users.sessions import SessionData
 from virtool.ws.cls import WSDeleteMessage, WSInsertMessage, WSMessage
+
+if TYPE_CHECKING:
+    from virtool.data.layer import DataLayer
 
 logger = get_logger("ws")
 
 
 class WSServer:
-    """A server that send WebSocket messages to connected clients."""
+    """A server that sends WebSocket messages to connected clients."""
 
-    def __init__(self, redis: Redis) -> None:
-        """Initialize the websocket server with a Redis client.
-
-        :param redis: a redis client.
-        """
+    def __init__(
+        self,
+        pg_connection_string: str,
+        data: "DataLayer",
+        redis: Redis,
+    ) -> None:
         self._connections = []
+        self._pg_connection_string = pg_connection_string
+        self._data = data
         self._redis = redis
+        self._data = data
 
     async def run(self) -> None:
         """Start the Websocket server."""
         try:
-            async for event in listen_for_events(self._redis):
-                if event.operation == Operation.CREATE:
-                    message = WSInsertMessage(
-                        interface=event.domain,
-                        operation="insert",
-                        data=event.data,
-                    )
-
-                elif event.operation == Operation.UPDATE:
-                    message = WSDeleteMessage(
-                        interface=event.domain,
-                        operation="update",
-                        data=event.data,
-                    )
-
-                else:
+            async for event in listen_for_client_events(self._pg_connection_string):
+                if event.operation == "delete":
                     message = WSDeleteMessage(
                         interface=event.domain,
                         operation="delete",
-                        data=[event.data.id],
+                        data=[event.resource_id],
+                    )
+                else:
+                    resource = await self._fetch_resource(
+                        event.domain,
+                        event.resource_id,
+                    )
+
+                    if resource is None:
+                        continue
+
+                    message = WSInsertMessage(
+                        interface=event.domain,
+                        operation="insert" if event.operation == "create" else "update",
+                        data=resource,
                     )
 
                 logger.info(
-                    "Sending WebSocket message",
+                    "sending websocket message",
                     domain=event.domain,
+                    resource_id=event.resource_id,
                     operation=event.operation,
-                    id=event.data.id,
                 )
 
                 await asyncio.gather(
@@ -70,6 +78,26 @@ class WSServer:
             pass
 
         await self.close()
+
+    async def _fetch_resource(
+        self,
+        domain: str,
+        resource_id: str | int,
+    ) -> BaseModel | None:
+        """Fetch a resource from the data layer by domain and ID."""
+        try:
+            domain_obj = getattr(self._data, domain)
+            return await domain_obj.get(resource_id)
+        except AttributeError:
+            logger.warning("unknown domain", domain=domain)
+            return None
+        except Exception:
+            logger.exception(
+                "failed to fetch resource",
+                domain=domain,
+                resource_id=resource_id,
+            )
+            return None
 
     def add_connection(self, connection: "WSConnection") -> None:
         """Add a connection to the websocket server.
@@ -93,13 +121,11 @@ class WSServer:
 
     async def periodically_close_expired_websocket_connections(self) -> None:
         """Periodically check for and close connections with expired sessions."""
-        session_data = SessionData(self._redis)
-
         while True:
             logger.info("closing expired websocket connections")
 
             for connection in self._connections:
-                if not await session_data.check_session_is_authenticated(
+                if not await self._data.sessions.check_session_is_authenticated(
                     connection.session_id,
                 ):
                     await connection.close(1001)

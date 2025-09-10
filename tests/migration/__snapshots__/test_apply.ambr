@@ -344,5 +344,47 @@
       'name': 'add job created_at field',
       'revision': 'xi5y0imlpcq9',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 50,
+      'name': 'add administrator_role to users',
+      'revision': 'c4d8f879657f',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 51,
+      'name': 'copy openfga administrator roles to postgres',
+      'revision': 'y5f2wuw2fte8',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 52,
+      'name': 'add task acquisition columns',
+      'revision': '189732b1ff59',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 53,
+      'name': 'make user password non-nullable',
+      'revision': 'd34e5f8a1b2c',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 54,
+      'name': 'add case insensitive unique index on user handle',
+      'revision': 'a23d6af751b3',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 55,
+      'name': 'add sessions table',
+      'revision': '1c57bca78c4c',
+    }),
   ])
 # ---

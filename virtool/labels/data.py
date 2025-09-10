@@ -36,6 +36,7 @@ class LabelsData:
         documents = await apply_transforms(
             [label.to_dict() for label in labels],
             [AttachSampleCountsTransform(self._mongo)],
+            self._pg,
         )
 
         return [LabelMinimal(**label) for label in documents]
@@ -64,6 +65,7 @@ class LabelsData:
         document = await apply_transforms(
             row,
             [AttachSampleCountsTransform(self._mongo)],
+            self._pg,
         )
 
         return Label(**document)
@@ -84,6 +86,7 @@ class LabelsData:
         document = await apply_transforms(
             label.to_dict(),
             [AttachSampleCountsTransform(self._mongo)],
+            self._pg,
         )
 
         return Label(**document)
@@ -124,6 +127,7 @@ class LabelsData:
         document = await apply_transforms(
             row,
             [AttachSampleCountsTransform(self._mongo)],
+            self._pg,
         )
 
         return Label(**document)

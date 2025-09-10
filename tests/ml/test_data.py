@@ -6,7 +6,7 @@ from unittest.mock import call
 import pytest
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from syrupy import SnapshotAssertion
+from syrupy.assertion import SnapshotAssertion
 from syrupy.matchers import path_type
 
 from virtool.data.layer import DataLayer
@@ -21,7 +21,7 @@ async def test_list(
     data_layer: DataLayer,
     fake: DataFaker,
     pg: AsyncEngine,
-    snapshot: SnapshotAssertion,
+    snapshot_recent: SnapshotAssertion,
     static_time,
 ):
     """Test that MLData.list() returns a list of MLModel objects.
@@ -44,20 +44,18 @@ async def test_list(
             )
             await session.commit()
 
-    assert await data_layer.ml.list() == snapshot(
-        matcher=path_type({".*created_at": (datetime.datetime,)}, regex=True),
-    )
+    assert await data_layer.ml.list() == snapshot_recent
 
 
 async def test_get(
     data_layer: DataLayer,
     fake: DataFaker,
-    snapshot,
+    snapshot_recent: SnapshotAssertion,
 ):
     """Test that MLData.get() returns a complete representation of an ML model."""
     await fake.ml.populate()
 
-    assert await data_layer.ml.get(1) == snapshot(
+    assert await data_layer.ml.get(1) == snapshot_recent(
         matcher=path_type({".*created_at": (datetime.datetime,)}, regex=True),
     )
 
@@ -65,12 +63,10 @@ async def test_get(
 async def test_load(
     data_path: Path,
     data_layer: DataLayer,
-    example_path,
+    example_path: Path,
     fake: DataFaker,
     mocker: MockerFixture,
-    pg: AsyncEngine,
-    snapshot: SnapshotAssertion,
-    static_time,
+    snapshot_recent: SnapshotAssertion,
 ):
     """Test that MLData.load() can load updated models into the database."""
 
@@ -89,9 +85,8 @@ async def test_load(
 
     await data_layer.ml.load({"ml-plant-viruses": first})
 
-    assert await data_layer.ml.list() == snapshot(
+    assert await data_layer.ml.list() == snapshot_recent(
         name="first",
-        matcher=path_type({".*created_at": (datetime.datetime,)}, regex=True),
     )
 
     await data_layer.ml.load(
@@ -104,17 +99,16 @@ async def test_load(
         },
     )
 
-    assert await data_layer.ml.list() == snapshot(
+    assert await data_layer.ml.list() == snapshot_recent(
         name="second",
-        matcher=path_type({".*created_at": (datetime.datetime,)}, regex=True),
     )
 
-    assert await data_layer.ml.get(1) == snapshot(
+    assert await data_layer.ml.get(1) == snapshot_recent(
         name="ml-plant-viruses",
         matcher=path_type({".*created_at": (datetime.datetime,)}, regex=True),
     )
 
-    assert await data_layer.ml.get(2) == snapshot(
+    assert await data_layer.ml.get(2) == snapshot_recent(
         name="ml-insect-viruses",
         matcher=path_type({".*created_at": (datetime.datetime,)}, regex=True),
     )
@@ -122,9 +116,9 @@ async def test_load(
     spy.assert_has_calls(
         [
             call("https://www.snyder.com/", data_path / "ml/1/model.tar.gz"),
-            call("http://walker.com/", data_path / "ml/2/model.tar.gz"),
-            call("http://www.morales.biz/", data_path / "ml/3/model.tar.gz"),
-            call("http://johnson.com/", data_path / "ml/9/model.tar.gz"),
+            call("http://acosta.com/", data_path / "ml/2/model.tar.gz"),
+            call("http://www.love.net/", data_path / "ml/3/model.tar.gz"),
+            call("https://butler.com/", data_path / "ml/9/model.tar.gz"),
         ],
         any_order=True,
     )

@@ -19,7 +19,6 @@ async def dev(request):
     if command == "clear_users":
         mongo = get_mongo_from_req(request)
 
-        await mongo.users.delete_many({})
         await mongo.sessions.delete_many({})
         await mongo.keys.delete_many({})
 

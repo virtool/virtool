@@ -1,11 +1,8 @@
-import datetime
 from pathlib import Path
 
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from syrupy import SnapshotAssertion
-from syrupy.matchers import path_type
 
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
@@ -20,7 +17,6 @@ async def test_create(
     example_path: Path,
     fake: DataFaker,
     pg: AsyncEngine,
-    snapshot,
 ):
     user = await fake.users.create()
 
@@ -33,19 +29,17 @@ async def test_create(
         user=user.id,
     )
 
-    assert upload == snapshot(
-        name="obj",
-        matcher=path_type(
-            {"created_at": (datetime.datetime,), "uploaded_at": (datetime.datetime,)},
-        ),
-    )
+    assert upload.name == "sample_1.fq.gz"
+    assert upload.name_on_disk.endswith("-sample_1.fq.gz")
+    assert upload.ready is True
+    assert upload.removed is False
+    assert upload.size == 723988
+    assert upload.type == "reads"
+    assert upload.user.id == user.id
 
-    assert (await get_row_by_id(pg, SQLUpload, upload.id)).to_dict() == snapshot(
-        name="sql",
-        matcher=path_type(
-            {"created_at": (datetime.datetime,), "uploaded_at": (datetime.datetime,)},
-        ),
-    )
+    row = await get_row_by_id(pg, SQLUpload, upload.id)
+    assert row.name == "sample_1.fq.gz"
+    assert row.name_on_disk == upload.name_on_disk
 
     assert (
         open(data_path / "files" / upload.name_on_disk, "rb").read()
@@ -57,22 +51,20 @@ async def test_delete(
     data_path: Path,
     data_layer: DataLayer,
     fake: DataFaker,
-    snapshot_recent: SnapshotAssertion,
 ):
     before = await fake.uploads.create(user=await fake.users.create())
 
     path = data_path / "files" / before.name_on_disk
 
     assert path.is_file()
-
     assert before.removed_at is None
 
     after = await data_layer.uploads.delete(before.id)
 
-    assert after == snapshot_recent(
-        name="after",
-    )
-
+    assert after.id == before.id
+    assert after.name == before.name
+    assert after.removed is True
+    assert after.removed_at is not None
     assert not path.is_file()
 
     with pytest.raises(ResourceNotFoundError):

@@ -23,14 +23,12 @@ from virtool.otus.data import OTUData
 from virtool.redis import Redis
 from virtool.references.data import ReferencesData
 from virtool.samples.data import SamplesData
+from virtool.sessions.data import SessionData
 from virtool.settings.data import SettingsData
-from virtool.spaces.data import SpacesData
 from virtool.subtractions.data import SubtractionsData
-from virtool.tasks.client import TasksClient
 from virtool.tasks.data import TasksData
 from virtool.uploads.data import UploadsData
 from virtool.users.data import UsersData
-from virtool.users.sessions import SessionData
 
 
 @dataclass
@@ -54,7 +52,6 @@ class DataLayer:
     subtractions: SubtractionsData
     sessions: SessionData
     settings: SettingsData
-    spaces: SpacesData
     tasks: TasksData
     uploads: UploadsData
     users: UsersData
@@ -102,16 +99,15 @@ def create_data_layer(
         IndexData(mongo, config, pg),
         JobsData(jobs_client, mongo, pg),
         LabelsData(mongo, pg),
-        MessagesData(pg, mongo),
+        MessagesData(pg),
         MLData(config, http_client, pg),
         OTUData(config.data_path, mongo, pg),
         ReferencesData(mongo, pg, config, client),
         SamplesData(config, mongo, pg, jobs_client),
         SubtractionsData(config.base_url, config, mongo, pg),
-        SessionData(redis),
+        SessionData(pg),
         SettingsData(mongo),
-        SpacesData(authorization_client, mongo, pg),
-        TasksData(pg, TasksClient(redis)),
+        TasksData(pg),
         UploadsData(config, mongo, pg),
-        UsersData(authorization_client, mongo, pg),
+        UsersData(pg),
     )

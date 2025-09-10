@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 from aiohttp import ClientResponse
 from syrupy import SnapshotAssertion
+from syrupy.matchers import path_type
 
 from tests.fixtures.client import ClientSpawner
 from virtool.fake.next import DataFaker
@@ -23,7 +24,7 @@ class TestUpload:
         self,
         upload_request_form,
         tmp_path,
-        snapshot_recent: SnapshotAssertion,
+        snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
         """Test `POST /uploads` to assure a file can be uploaded."""
@@ -37,8 +38,14 @@ class TestUpload:
             data=upload_request_form,
         )
 
+        body = await resp.json()
+
         assert resp.status == 201
-        assert await resp.json() == snapshot_recent()
+        assert body["name"] == "reads_1.fq.gz"
+        assert body["name_on_disk"].endswith("-reads_1.fq.gz")
+        assert body["ready"] is True
+        assert body["size"] == 723988
+        assert body["type"] == "reads"
 
     async def test_no_upload_type(
         self,
@@ -123,7 +130,9 @@ class TestFind:
         resp = await client.get(url)
 
         assert resp.status == HTTPStatus.OK
-        assert await resp.json() == snapshot
+        assert await resp.json() == snapshot(
+            matcher=path_type({".*name_on_disk": (str,)}, regex=True),
+        )
 
     @pytest.mark.parametrize(
         "per_page,page",
@@ -168,7 +177,9 @@ class TestFind:
         resp = await client.get(url)
 
         assert resp.status == HTTPStatus.OK
-        assert await resp.json() == snapshot
+        assert await resp.json() == snapshot(
+            matcher=path_type({".*name_on_disk": (str,)}, regex=True),
+        )
 
 
 async def test_get(

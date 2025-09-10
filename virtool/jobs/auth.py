@@ -5,6 +5,8 @@ from aiohttp.web import Request
 
 from virtool.api.client import JobClient
 from virtool.api.errors import APIUnauthorized
+from virtool.jobs.models import TERMINAL_JOB_STATES
+from virtool.jobs.utils import get_latest_status
 from virtool.mongo.utils import get_mongo_from_req
 from virtool.types import RouteHandler
 from virtool.utils import hash_key
@@ -54,6 +56,14 @@ async def middleware(request: Request, handler: RouteHandler):
     if not job:
         raise APIUnauthorized(
             "Invalid authorization header",
+            error_id="malformed_authorization_header",
+        )
+
+    # Check if job is in a terminal state
+    latest_status = get_latest_status(job)
+    if latest_status and latest_status.state in TERMINAL_JOB_STATES:
+        raise APIUnauthorized(
+            "Job is no longer active",
             error_id="malformed_authorization_header",
         )
 

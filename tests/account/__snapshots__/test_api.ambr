@@ -1,12 +1,15 @@
 # serializer version: 1
-# name: TestCreateAPIKey.test[False-False]
+# name: TestUpdate.test_all_valid[response]
   dict({
-    'created_at': '2015-10-06T20:00:00Z',
+    'active': True,
+    'administrator_role': None,
+    'email': 'virtool.devs@gmail.com',
+    'force_reset': False,
     'groups': list([
     ]),
-    'id': 'foobar_0',
-    'key': 'raw_key',
-    'name': 'Foobar',
+    'handle': 'leeashley',
+    'id': 1,
+    'last_password_change': 'approximately_now_isoformat',
     'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
@@ -17,21 +20,26 @@
       'remove_job': False,
       'upload_file': False,
     }),
+    'primary_group': None,
+    'settings': dict({
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    }),
   })
 # ---
-# name: TestCreateAPIKey.test[False-True]
+# name: TestUpdate.test_empty_update[response]
   dict({
-    'created_at': '2015-10-06T20:00:00Z',
+    'active': True,
+    'administrator_role': None,
+    'email': '',
+    'force_reset': False,
     'groups': list([
-      dict({
-        'id': 1,
-        'legacy_id': None,
-        'name': 'musicians',
-      }),
     ]),
-    'id': 'foobar_0',
-    'key': 'raw_key',
-    'name': 'Foobar',
+    'handle': 'leeashley',
+    'id': 1,
+    'last_password_change': 'approximately_now_isoformat',
     'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
@@ -42,16 +50,26 @@
       'remove_job': False,
       'upload_file': False,
     }),
+    'primary_group': None,
+    'settings': dict({
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    }),
   })
 # ---
-# name: TestCreateAPIKey.test[True-False]
+# name: TestUpdate.test_good_email[response]
   dict({
-    'created_at': '2015-10-06T20:00:00Z',
+    'active': True,
+    'administrator_role': None,
+    'email': 'virtool.devs@gmail.com',
+    'force_reset': False,
     'groups': list([
     ]),
-    'id': 'foobar_0',
-    'key': 'raw_key',
-    'name': 'Foobar',
+    'handle': 'leeashley',
+    'id': 1,
+    'last_password_change': 'approximately_now_isoformat',
     'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
@@ -62,41 +80,102 @@
       'remove_job': False,
       'upload_file': False,
     }),
-  })
-# ---
-# name: TestCreateAPIKey.test[True-True]
-  dict({
-    'created_at': '2015-10-06T20:00:00Z',
-    'groups': list([
-      dict({
-        'id': 1,
-        'legacy_id': None,
-        'name': 'musicians',
-      }),
-    ]),
-    'id': 'foobar_0',
-    'key': 'raw_key',
-    'name': 'Foobar',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': True,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
+    'primary_group': None,
+    'settings': dict({
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
     }),
   })
 # ---
-# name: TestCreateAPIKey.test_naming
+# name: TestUpdate.test_invalid_credentials[response]
   dict({
-    'created_at': '2015-10-06T20:00:00Z',
+    'id': 'bad_request',
+    'message': 'Invalid credentials',
+  })
+# ---
+# name: TestUpdate.test_invalid_email[response]
+  list([
+    dict({
+      'in': 'body',
+      'loc': list([
+        'email',
+      ]),
+      'msg': 'The format of the email is invalid',
+      'type': 'value_error',
+    }),
+  ])
+# ---
+# name: TestUpdate.test_missing_old_password[response]
+  list([
+    dict({
+      'in': 'body',
+      'loc': list([
+        '__root__',
+      ]),
+      'msg': 'The old password needs to be given in order for the password to be changed',
+      'type': 'value_error',
+    }),
+  ])
+# ---
+# name: TestUpdate.test_missing_password[response]
+  list([
+    dict({
+      'in': 'body',
+      'loc': list([
+        '__root__',
+      ]),
+      'msg': 'The new password needs to be given in order for the password to be changed',
+      'type': 'value_error',
+    }),
+  ])
+# ---
+# name: TestUpdate.test_none_all[response]
+  list([
+    dict({
+      'in': 'body',
+      'loc': list([
+        'email',
+      ]),
+      'msg': 'Value may not be null',
+      'type': 'value_error',
+    }),
+    dict({
+      'in': 'body',
+      'loc': list([
+        'old_password',
+      ]),
+      'msg': 'Value may not be null',
+      'type': 'value_error',
+    }),
+    dict({
+      'in': 'body',
+      'loc': list([
+        'password',
+      ]),
+      'msg': 'Value may not be null',
+      'type': 'value_error',
+    }),
+  ])
+# ---
+# name: TestUpdate.test_short_password[response]
+  dict({
+    'id': 'bad_request',
+    'message': 'Password does not meet minimum length requirement (8)',
+  })
+# ---
+# name: TestUpdate.test_valid_password[response]
+  dict({
+    'active': True,
+    'administrator_role': None,
+    'email': '',
+    'force_reset': False,
     'groups': list([
     ]),
-    'id': 'foobar_1',
-    'key': 'raw_key',
-    'name': 'Foobar',
+    'handle': 'leeashley',
+    'id': 1,
+    'last_password_change': 'approximately_now_isoformat',
     'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
@@ -107,20 +186,12 @@
       'remove_job': False,
       'upload_file': False,
     }),
-  })
-# ---
-# name: TestCreateAPIKey.test_naming.1
-  dict({
-    '_id': 'hashed_key',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': list([
-    ]),
-    'id': 'foobar_1',
-    'name': 'Foobar',
-    'permissions': dict({
-    }),
-    'user': dict({
-      'id': 'bf1b993c',
+    'primary_group': None,
+    'settings': dict({
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
     }),
   })
 # ---
@@ -163,7 +234,7 @@
       'upload_file': False,
     }),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
   })
 # ---
@@ -206,7 +277,7 @@
       'upload_file': False,
     }),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
   })
 # ---
@@ -249,7 +320,7 @@
       'upload_file': False,
     }),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
   })
 # ---
@@ -292,7 +363,7 @@
       'upload_file': False,
     }),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
   })
 # ---
@@ -335,7 +406,7 @@
       'upload_file': False,
     }),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
   })
 # ---
@@ -378,7 +449,7 @@
       'upload_file': False,
     }),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
   })
 # ---
@@ -388,352 +459,7 @@
     'message': 'Not found',
   })
 # ---
-# name: test_get
-  dict({
-    'active': True,
-    'administrator_role': None,
-    'email': None,
-    'force_reset': False,
-    'groups': list([
-    ]),
-    'handle': 'bob',
-    'id': 'bf1b993c',
-    'last_password_change': '2015-10-06T20:00:00Z',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-    'primary_group': None,
-    'settings': dict({
-      'quick_analyze_workflow': 'nuvs',
-      'show_ids': False,
-      'show_versions': False,
-      'skip_quick_analyze_dialog': False,
-    }),
-  })
-# ---
-# name: test_get_api_keys
-  list([
-    dict({
-      'created_at': '2015-10-06T20:00:00Z',
-      'groups': list([
-        dict({
-          'id': 1,
-          'legacy_id': None,
-          'name': 'musicians',
-        }),
-      ]),
-      'id': 'foobar_0',
-      'name': 'Foobar',
-      'permissions': dict({
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      }),
-    }),
-    dict({
-      'created_at': '2015-10-06T20:00:00Z',
-      'groups': list([
-      ]),
-      'id': 'baz_1',
-      'name': 'Baz',
-      'permissions': dict({
-        'cancel_job': False,
-        'create_ref': False,
-        'create_sample': False,
-        'modify_hmm': False,
-        'modify_subtraction': False,
-        'remove_file': False,
-        'remove_job': False,
-        'upload_file': False,
-      }),
-    }),
-  ])
-# ---
-# name: test_login[all_valid]
-  dict({
-    'reset': False,
-  })
-# ---
-# name: test_login[missing_remember]
-  dict({
-    'reset': False,
-  })
-# ---
-# name: test_login[remember_is_none]
-  list([
-    dict({
-      'in': 'body',
-      'loc': list([
-        'remember',
-      ]),
-      'msg': 'Value may not be null',
-      'type': 'value_error',
-    }),
-  ])
-# ---
-# name: test_login[wrong_handle]
-  dict({
-    'id': 'bad_request',
-    'message': 'Invalid username or password',
-  })
-# ---
-# name: test_login[wrong_password]
-  dict({
-    'id': 'bad_request',
-    'message': 'Invalid username or password',
-  })
-# ---
-# name: test_login_reset[account/keys-True]
-  dict({
-    'id': 'unauthorized',
-    'message': 'Requires authorization',
-  })
-# ---
-# name: test_login_reset[account/keys-True].1
-  dict({
-    'id': 'unauthorized',
-    'message': 'Requires authorization',
-  })
-# ---
-# name: test_login_reset[account/reset-False]
-  dict({
-    'id': 'bad_request',
-    'message': 'Password does not meet minimum length requirement (8)',
-  })
-# ---
-# name: test_login_reset[account/reset-False].1
-  dict({
-    'id': 'bad_request',
-    'message': 'Invalid session',
-  })
-# ---
-# name: test_login_reset[account/reset-True]
-  dict({
-    'id': 'bad_request',
-    'message': 'Password does not meet minimum length requirement (8)',
-  })
-# ---
-# name: test_login_reset[account/reset-True].1
-  dict({
-    'login': False,
-    'reset': False,
-  })
-# ---
-# name: test_remove_api_key[404]
-  dict({
-    'id': 'not_found',
-    'message': 'Not found',
-  })
-# ---
-# name: test_update[all_valid][response]
-  dict({
-    'active': True,
-    'administrator_role': None,
-    'email': None,
-    'force_reset': False,
-    'groups': list([
-    ]),
-    'handle': 'bob',
-    'id': 'bf1b993c',
-    'last_password_change': '2015-10-06T20:00:00Z',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-    'primary_group': None,
-    'settings': dict({
-      'quick_analyze_workflow': 'nuvs',
-      'show_ids': False,
-      'show_versions': False,
-      'skip_quick_analyze_dialog': False,
-    }),
-  })
-# ---
-# name: test_update[good_email][response]
-  dict({
-    'active': True,
-    'administrator_role': None,
-    'email': None,
-    'force_reset': False,
-    'groups': list([
-    ]),
-    'handle': 'bob',
-    'id': 'bf1b993c',
-    'last_password_change': '2015-10-06T20:00:00Z',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-    'primary_group': None,
-    'settings': dict({
-      'quick_analyze_workflow': 'nuvs',
-      'show_ids': False,
-      'show_versions': False,
-      'skip_quick_analyze_dialog': False,
-    }),
-  })
-# ---
-# name: test_update[invalid_credentials][response]
-  dict({
-    'id': 'bad_request',
-    'message': 'Invalid credentials',
-  })
-# ---
-# name: test_update[invalid_email][response]
-  list([
-    dict({
-      'in': 'body',
-      'loc': list([
-        'email',
-      ]),
-      'msg': 'The format of the email is invalid',
-      'type': 'value_error',
-    }),
-  ])
-# ---
-# name: test_update[missing_all][response]
-  dict({
-    'active': True,
-    'administrator_role': None,
-    'email': None,
-    'force_reset': False,
-    'groups': list([
-    ]),
-    'handle': 'bob',
-    'id': 'bf1b993c',
-    'last_password_change': '2015-10-06T20:00:00Z',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-    'primary_group': None,
-    'settings': dict({
-      'quick_analyze_workflow': 'nuvs',
-      'show_ids': False,
-      'show_versions': False,
-      'skip_quick_analyze_dialog': False,
-    }),
-  })
-# ---
-# name: test_update[missing_email][response]
-  dict({
-    'active': True,
-    'administrator_role': None,
-    'email': None,
-    'force_reset': False,
-    'groups': list([
-    ]),
-    'handle': 'bob',
-    'id': 'bf1b993c',
-    'last_password_change': '2015-10-06T20:00:00Z',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-    'primary_group': None,
-    'settings': dict({
-      'quick_analyze_workflow': 'nuvs',
-      'show_ids': False,
-      'show_versions': False,
-      'skip_quick_analyze_dialog': False,
-    }),
-  })
-# ---
-# name: test_update[missing_old_password][response]
-  list([
-    dict({
-      'in': 'body',
-      'loc': list([
-        '__root__',
-      ]),
-      'msg': 'The old password needs to be given in order for the password to be changed',
-      'type': 'value_error',
-    }),
-  ])
-# ---
-# name: test_update[missing_password][response]
-  list([
-    dict({
-      'in': 'body',
-      'loc': list([
-        '__root__',
-      ]),
-      'msg': 'The new password needs to be given in order for the password to be changed',
-      'type': 'value_error',
-    }),
-  ])
-# ---
-# name: test_update[none_all][response]
-  list([
-    dict({
-      'in': 'body',
-      'loc': list([
-        'email',
-      ]),
-      'msg': 'Value may not be null',
-      'type': 'value_error',
-    }),
-    dict({
-      'in': 'body',
-      'loc': list([
-        'old_password',
-      ]),
-      'msg': 'Value may not be null',
-      'type': 'value_error',
-    }),
-    dict({
-      'in': 'body',
-      'loc': list([
-        'password',
-      ]),
-      'msg': 'Value may not be null',
-      'type': 'value_error',
-    }),
-  ])
-# ---
-# name: test_update[short_password][response]
-  dict({
-    'id': 'bad_request',
-    'message': 'Password does not meet minimum length requirement (8)',
-  })
-# ---
-# name: test_update_settings[invalid_input][response]
+# name: TestUpdateSettings.test_invalid_input[response]
   list([
     dict({
       'in': 'body',
@@ -745,7 +471,7 @@
     }),
   ])
 # ---
-# name: test_update_settings[null_values][response]
+# name: TestUpdateSettings.test_null_values[response]
   list([
     dict({
       'in': 'body',
@@ -781,11 +507,79 @@
     }),
   ])
 # ---
-# name: test_update_settings[valid_input][response]
+# name: TestUpdateSettings.test_ok[response]
   dict({
     'quick_analyze_workflow': 'pathoscope_bowtie',
     'show_ids': False,
     'show_versions': True,
     'skip_quick_analyze_dialog': True,
   })
+# ---
+# name: test_get
+  dict({
+    'active': True,
+    'administrator_role': None,
+    'email': '',
+    'force_reset': False,
+    'groups': list([
+    ]),
+    'handle': 'leeashley',
+    'id': 1,
+    'last_password_change': 'approximately_now_isoformat',
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    }),
+    'primary_group': None,
+    'settings': dict({
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    }),
+  })
+# ---
+# name: test_get_api_keys
+  list([
+    dict({
+      'created_at': 'approximately_now_isoformat',
+      'groups': list([
+      ]),
+      'id': 'foobar_0',
+      'name': 'Foobar',
+      'permissions': dict({
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      }),
+    }),
+    dict({
+      'created_at': 'approximately_now_isoformat',
+      'groups': list([
+      ]),
+      'id': 'baz_0',
+      'name': 'Baz',
+      'permissions': dict({
+        'cancel_job': False,
+        'create_ref': False,
+        'create_sample': False,
+        'modify_hmm': False,
+        'modify_subtraction': False,
+        'remove_file': False,
+        'remove_job': False,
+        'upload_file': False,
+      }),
+    }),
+  ])
 # ---

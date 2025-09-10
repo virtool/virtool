@@ -42,9 +42,14 @@ class JobsClient:
         :param workflow: the workflow name
         :param job_id: the job ID
         """
-        await self._redis.rpush(f"jobs_{workflow}", job_id)
+        list_length = await self._redis.rpush(f"jobs_{workflow}", job_id)
 
-        logger.info("enqueued job in redis", id=job_id, workflow=workflow)
+        logger.info(
+            "enqueued job in redis",
+            list_length=list_length,
+            id=job_id,
+            workflow=workflow,
+        )
 
         return QueuedJobID(job_id, workflow)
 

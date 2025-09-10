@@ -39,6 +39,15 @@ class JobState(Enum):
     WAITING = "waiting"
 
 
+TERMINAL_JOB_STATES = (
+    JobState.COMPLETE,
+    JobState.ERROR,
+    JobState.CANCELLED,
+    JobState.TERMINATED,
+    JobState.TIMEOUT,
+)
+
+
 class JobStatus(BaseModel):
     """A model for a job status record."""
 

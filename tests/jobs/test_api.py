@@ -140,6 +140,35 @@ class TestFind:
         assert await resp.json() == snapshot
 
 
+class TestGetCounts:
+    async def test_ok(self, fake: DataFaker, spawn_client: ClientSpawner):
+        client = await spawn_client(authenticated=True)
+
+        user = await fake.users.create()
+
+        await fake.jobs.create(user=user, state=JobState.WAITING, workflow="nuvs")
+        await fake.jobs.create(user=user, state=JobState.WAITING, workflow="nuvs")
+        await fake.jobs.create(user=user, state=JobState.RUNNING, workflow="pathoscope")
+        await fake.jobs.create(user=user, state=JobState.COMPLETE, workflow="nuvs")
+
+        resp = await client.get("/jobs/counts")
+
+        assert resp.status == HTTPStatus.OK
+        assert await resp.json() == {
+            "waiting": {"nuvs": 2},
+            "running": {"pathoscope": 1},
+            "complete": {"nuvs": 1},
+        }
+
+    async def test_empty(self, spawn_client: ClientSpawner):
+        client = await spawn_client(authenticated=True)
+
+        resp = await client.get("/jobs/counts")
+
+        assert resp.status == HTTPStatus.OK
+        assert await resp.json() == {}
+
+
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(error, fake: DataFaker, snapshot, spawn_client):
     client = await spawn_client(authenticated=True)
@@ -220,6 +249,32 @@ class TestAcquire:
             "id": "not_found",
             "message": "Not found",
         }
+
+    @pytest.mark.parametrize(
+        "state",
+        [
+            JobState.COMPLETE,
+            JobState.ERROR,
+            JobState.CANCELLED,
+            JobState.TERMINATED,
+            JobState.TIMEOUT,
+        ],
+    )
+    async def test_status_conflict(
+        self,
+        state: JobState,
+        fake: DataFaker,
+        spawn_job_client,
+    ):
+        """Test that a 409 is returned when trying to acquire a job in a terminal state."""
+        client = await spawn_job_client(authenticated=True)
+
+        user = await fake.users.create()
+        job = await fake.jobs.create(user, state=state)
+
+        resp = await client.patch(f"/jobs/{job.id}", json={"acquired": True})
+
+        assert resp.status == 409
 
 
 class TestPing:

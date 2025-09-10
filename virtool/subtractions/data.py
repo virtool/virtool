@@ -155,7 +155,8 @@ class SubtractionsData(DataLayerDomain):
 
         data["documents"] = await apply_transforms(
             [base_processor(d) for d in data["documents"]],
-            [AttachJobTransform(self._mongo), AttachUserTransform(self._mongo)],
+            [AttachJobTransform(self._mongo, self._pg), AttachUserTransform(self._pg)],
+            self._pg,
         )
 
         return SubtractionSearchResult(
@@ -255,9 +256,10 @@ class SubtractionsData(DataLayerDomain):
             document = await apply_transforms(
                 base_processor(document),
                 [
-                    AttachUserTransform(self._mongo, ignore_errors=True),
-                    AttachJobTransform(self._mongo),
+                    AttachUserTransform(self._pg, ignore_errors=True),
+                    AttachJobTransform(self._mongo, self._pg),
                 ],
+                self._pg,
             )
 
             return Subtraction(**document)

@@ -1,14 +1,13 @@
-from sqlalchemy import update
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy import cast, select, update
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
+import virtool.users.utils
 import virtool.utils
 from virtool.account.models import Account, AccountSettings, APIKey
-from virtool.account.mongo import (
-    compose_password_update,
-)
 from virtool.account.oas import (
-    CreateKeysRequest,
+    CreateKeyRequest,
     CreateLoginRequest,
     ResetPasswordRequest,
     UpdateAccountRequest,
@@ -19,28 +18,15 @@ from virtool.administrators.oas import UpdateUserRequest
 from virtool.authorization.client import AuthorizationClient
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceError, ResourceNotFoundError
-from virtool.data.topg import both_transactions
+from virtool.data.topg import get_user_id_single_variants
 from virtool.data.transforms import apply_transforms
 from virtool.groups.transforms import AttachGroupsTransform
 from virtool.models.sessions import Session
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
-from virtool.users.mongo import validate_credentials
 from virtool.users.pg import SQLUser
 from virtool.users.utils import limit_permissions
 from virtool.utils import base_processor, hash_key
-
-PROJECTION = (
-    "_id",
-    "email",
-    "handle",
-    "groups",
-    "last_password_change",
-    "permissions",
-    "primary_group",
-    "settings",
-    "force_reset",
-)
 
 logger = get_logger(layer="data", domain="account")
 
@@ -58,158 +44,180 @@ class AccountData(DataLayerDomain):
         self._mongo = mongo
         self._pg = pg
 
-    async def get(self, user_id: str) -> Account:
+    async def get(self, user_id: int) -> Account:
         """Get the account for the given ``user_id``.
 
         :param user_id: the user ID
         :return: the user account
         """
-        user = await self.data.users.get(user_id)
+        if user := await self.data.users.get(user_id):
+            async with AsyncSession(self._pg) as session:
+                result = await session.execute(
+                    select(SQLUser.email, SQLUser.settings).where(SQLUser.id == user_id)
+                )
+                row = result.one_or_none()
 
-        if user:
+                if row is None:
+                    raise ResourceNotFoundError
+
+                email, settings = row
+
             return Account(
                 **{
                     **user.dict(),
-                    "settings": {
-                        "quick_analyze_workflow": "nuvs",
-                        "show_ids": False,
-                        "show_versions": False,
-                        "skip_quick_analyze_dialog": False,
-                    },
+                    "email": email,
+                    "settings": settings,
                 },
             )
 
-        raise ResourceNotFoundError("User not found")
+        raise ResourceNotFoundError
 
-    async def update(self, user_id: str, data: UpdateAccountRequest) -> Account:
+    async def update(
+        self, user_id: int, data: UpdateAccountRequest, ip: str | None = None
+    ) -> tuple[Account, Session | None, str | None]:
         """Update the user account.
 
         :param user_id: the user ID
         :param data: the update to the account
-        :return: the user account
+        :param ip: the client IP address (required for password changes)
+        :return: the user account, new session (if password changed), and session token (if password changed)
         """
-        updates = {}
+        values = {}
+        password_changed = False
 
         data_dict = data.dict(exclude_unset=True)
 
         if "password" in data_dict:
-            if not await validate_credentials(
-                self._mongo,
-                user_id,
-                data_dict["old_password"] or "",
+            if not await self.data.users.validate_password(
+                user_id, data_dict["old_password"] or ""
             ):
                 raise ResourceError("Invalid credentials")
 
-            updates.update(compose_password_update(data_dict["password"]))
+            values.update(
+                {
+                    "password": virtool.users.utils.hash_password(
+                        data_dict["password"]
+                    ),
+                    "last_password_change": virtool.utils.timestamp(),
+                    "force_reset": False,
+                }
+            )
+            password_changed = True
 
         if "email" in data_dict:
-            updates["email"] = data_dict["email"]
+            values["email"] = data_dict["email"]
 
-        if updates:
-            async with both_transactions(self._mongo, self._pg) as (
-                mongo_session,
-                pg_session,
-            ):
-                result = await self._mongo.users.update_one(
-                    {"_id": user_id},
-                    {"$set": updates},
-                    session=mongo_session,
-                )
-
-                if result.modified_count == 0:
-                    raise ResourceNotFoundError("User not found")
-
-                result = await pg_session.execute(
-                    update(SQLUser).where(SQLUser.legacy_id == user_id).values(updates),
+        if values:
+            async with AsyncSession(self._pg) as session:
+                result = await session.execute(
+                    update(SQLUser).where(SQLUser.id == user_id).values(values),
                 )
 
                 if result.rowcount == 0:
-                    logger.info("user not found in postgres", method="account.update")
+                    raise ResourceNotFoundError
 
-        return await self.get(user_id)
+                await session.commit()
 
-    async def get_settings(self, user_id: str) -> AccountSettings:
-        """Gets account settings.
+        # If password was changed, invalidate all existing sessions and create a new one
+        if password_changed:
+            if ip is None:
+                raise ValueError("IP address is required when changing password")
+
+            # Delete all existing sessions for the user
+            await self.data.sessions.delete_by_user(user_id)
+
+            # Create a new authenticated session
+            new_session, token = await self.data.sessions.create_authenticated(
+                ip, user_id, remember=False
+            )
+
+            account = await self.get(user_id)
+            return account, new_session, token
+
+        account = await self.get(user_id)
+        return account, None, None
+
+    async def get_settings(self, user_id: int) -> AccountSettings:
+        """Get account settings.
 
         :param user_id: the user ID
         :return: the account settings
         """
-        settings = await get_one_field(self._mongo.users, "settings", user_id)
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLUser.settings).where(SQLUser.id == user_id)
+            )
 
-        return AccountSettings(**settings)
+            settings = result.scalar_one_or_none()
+
+            if settings is None:
+                raise ResourceNotFoundError
+
+            return AccountSettings(**settings)
 
     async def update_settings(
         self,
         data: UpdateSettingsRequest,
-        user_id: str,
+        user_id: int,
     ) -> AccountSettings:
-        """Updates account settings.
+        """Update account settings.
 
         :param data: the update to the account settings
         :param user_id: the user ID
         :return: the account settings
         """
-        settings_from_mongo = await get_one_field(
-            self._mongo.users,
-            "settings",
-            user_id,
-        )
+        update_data = data.dict(exclude_unset=True)
 
-        settings = {
-            **settings_from_mongo,
-            **data.dict(exclude_unset=True),
-        }
-
-        if settings != settings_from_mongo:
-            async with both_transactions(self._mongo, self._pg) as (
-                mongo_session,
-                pg_session,
-            ):
-                result = await self._mongo.users.update_one(
-                    {"_id": user_id},
-                    {"$set": {"settings": settings}},
-                    session=mongo_session,
+        if update_data:
+            async with AsyncSession(self._pg) as session:
+                result = await session.execute(
+                    update(SQLUser)
+                    .where(SQLUser.id == user_id)
+                    .values(
+                        settings=SQLUser.settings.op("||")(cast(update_data, JSONB))
+                    )
+                    .returning(SQLUser.settings)
                 )
 
-                if result.modified_count == 0:
+                updated_settings = result.scalar_one_or_none()
+
+                if updated_settings is None:
                     raise ResourceNotFoundError("User not found")
 
-                result = await pg_session.execute(
-                    update(SQLUser)
-                    .where(SQLUser.legacy_id == user_id)
-                    .values({"settings": settings}),
-                )
+                await session.commit()
 
-                if result.rowcount == 0:
-                    logger.info(
-                        "user not found in postgres",
-                        method="account.update_settings",
-                    )
+                return AccountSettings(**updated_settings)
 
-        return AccountSettings(**settings)
+        return await self.get_settings(user_id)
 
-    async def get_keys(self, user_id: str) -> list[APIKey]:
-        """Gets API keys associated with the authenticated user account.
+    async def get_keys(self, user_id: int) -> list[APIKey]:
+        """Get API keys associated with the authenticated user account.
+
+        TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings.
 
         :param user_id: the user ID
         :return: the api keys
         """
+        # Get all ID variants to handle legacy string IDs in MongoDB
+        user_id_variants = await get_user_id_single_variants(self._pg, user_id)
+
         keys = await apply_transforms(
             [
                 base_processor(key)
                 async for key in self._mongo.keys.find(
-                    {"user.id": user_id},
+                    {"user.id": {"$in": user_id_variants}},
                     {"_id": False, "user": False},
                 )
             ],
             [
                 AttachGroupsTransform(self._pg),
             ],
+            self._pg,
         )
 
-        return [APIKey(**key) for key in keys]
+        return [APIKey.parse_obj(key) for key in keys]
 
-    async def get_key(self, user_id: str, key_id: str) -> APIKey:
+    async def get_key(self, user_id: int, key_id: str) -> APIKey:
         """Get the complete representation of the API key identified by the `key_id`.
 
         The internal key ID and secret key value itself are not returned in the
@@ -237,12 +245,16 @@ class AccountData(DataLayerDomain):
             [
                 AttachGroupsTransform(self._pg),
             ],
+            self._pg,
         )
 
-        document["permissions"] = limit_permissions(
-            document["permissions"],
-            user.permissions.dict(),
-        )
+        if user.administrator_role:
+            document["permissions"] = document["permissions"]
+        else:
+            document["permissions"] = limit_permissions(
+                document["permissions"],
+                user.permissions.dict(),
+            )
 
         return APIKey(
             **{
@@ -251,40 +263,44 @@ class AccountData(DataLayerDomain):
             },
         )
 
-    async def get_key_by_secret(self, user_id: str, key: str) -> APIKey:
+    async def get_key_by_secret(self, user_id: int, key: str) -> APIKey:
         """Get the complete representation of the API key with secret value ``key``.
 
         The secret key is not returned in the result.
+
+        TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings.
 
         :param user_id: the user id
         :param key: the raw API key
         :return: the API key
         """
+        user_id_variants = await get_user_id_single_variants(self._pg, user_id)
+
         document = await self._mongo.keys.find_one(
-            {"_id": hash_key(key), "user.id": user_id},
+            {"_id": hash_key(key), "user.id": {"$in": user_id_variants}},
             {
                 "_id": False,
                 "user": False,
             },
         )
 
-        user = await self.data.users.get(user_id)
-
         if not document:
             raise ResourceNotFoundError
 
-        return APIKey(
-            **{
-                **document,
-                "groups": user.groups,
-                "permissions": {**document["permissions"], **user.permissions.dict()},
-            },
+        document = await apply_transforms(
+            base_processor(document),
+            [
+                AttachGroupsTransform(self._pg),
+            ],
+            self._pg,
         )
+
+        return APIKey(**document)
 
     async def create_key(
         self,
-        data: CreateKeysRequest,
-        user_id: str,
+        data: CreateKeyRequest,
+        user_id: int,
     ) -> tuple[str, APIKey]:
         """Create a new API key.
 
@@ -296,7 +312,7 @@ class AccountData(DataLayerDomain):
 
         raw, hashed = virtool.utils.generate_key()
 
-        id_ = await virtool.account.mongo.get_alternate_id(self._mongo, data.name)
+        id_ = await _get_alternate_id(self._mongo, data.name)
 
         await self._mongo.keys.insert_one(
             {
@@ -314,20 +330,26 @@ class AccountData(DataLayerDomain):
 
         return raw, await self.get_key(user_id, id_)
 
-    async def delete_keys(self, user_id: str) -> None:
+    async def delete_keys(self, user_id: int) -> None:
         """Delete all API keys for the account associated with the requesting session.
+
+        TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings.
 
         :param user_id: the user ID
         """
-        await self._mongo.keys.delete_many({"user.id": user_id})
+        # Get all ID variants to handle legacy string IDs in MongoDB
+        user_id_variants = await get_user_id_single_variants(self._pg, user_id)
+        await self._mongo.keys.delete_many({"user.id": {"$in": user_id_variants}})
 
     async def update_key(
         self,
-        user_id: str,
+        user_id: int,
         key_id: str,
         data: UpdateKeyRequest,
     ) -> APIKey:
         """Change the permissions for an existing API key.
+
+        TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings.
 
         :param user_id: the user ID
         :param key_id: the ID of the API key to update
@@ -342,12 +364,15 @@ class AccountData(DataLayerDomain):
         if not await self._mongo.keys.count_documents({"id": key_id}):
             raise ResourceNotFoundError()
 
+        # Get all ID variants to handle legacy string IDs in MongoDB
+        user_id_variants = await get_user_id_single_variants(self._pg, user_id)
+
         new_permissions = {
             **(
                 await get_one_field(
                     self._mongo.keys,
                     "permissions",
-                    {"id": key_id, "user.id": user_id},
+                    {"id": key_id, "user.id": {"$in": user_id_variants}},
                 )
             ),
             **update,
@@ -360,24 +385,28 @@ class AccountData(DataLayerDomain):
 
         return await self.get_key(user_id, key_id)
 
-    async def delete_key(self, user_id: str, key_id: str) -> None:
+    async def delete_key(self, user_id: int, key_id: str) -> None:
         """Delete an API key by its id.
+
+        TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings.
 
         :param user_id: the user ID
         :param key_id: the ID of the API key to delete
         """
+        # Get all ID variants to handle legacy string IDs in MongoDB
+        user_id_variants = await get_user_id_single_variants(self._pg, user_id)
         delete_result = await self._mongo.keys.delete_one(
-            {"id": key_id, "user.id": user_id},
+            {"id": key_id, "user.id": {"$in": user_id_variants}},
         )
 
         if delete_result.deleted_count == 0:
             raise ResourceNotFoundError()
 
-    async def login(self, data: CreateLoginRequest) -> str:
+    async def login(self, data: CreateLoginRequest) -> int:
         """Create a new session for the user with `username`.
 
         :param data: the login data
-        :return: string representation of user_id
+        :return: user_id
         """
         # When `remember` is set, the session will last for 1 month instead of the
         # 1-hour default
@@ -385,21 +414,20 @@ class AccountData(DataLayerDomain):
         # Re-render the login page with an error message if the username doesn't
         # correlate to a user_id value in
         # the database and/or password are invalid.
-        document = await self._mongo.users.find_one({"handle": data.username})
-
-        if not document or not await validate_credentials(
-            self._mongo,
-            document["_id"],
-            data.password,
-        ):
+        try:
+            user = await self.data.users.get_by_handle(data.handle)
+        except ResourceNotFoundError:
             raise ResourceError()
 
-        return document["_id"]
+        if not await self.data.users.validate_password(user.id, data.password):
+            raise ResourceError()
+
+        return user.id
 
     async def get_reset_session(
         self,
         ip: str,
-        user_id: str,
+        user_id: int,
         session_id: str,
         remember: bool,
     ) -> tuple[Session, str]:
@@ -411,7 +439,13 @@ class AccountData(DataLayerDomain):
         :param session_id: the id of the session getting the reset code
         :param remember: boolean indicating whether the sessions should be remembered
         """
-        if await get_one_field(self._mongo.users, "force_reset", user_id):
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLUser.force_reset).where(SQLUser.id == user_id)
+            )
+            force_reset = result.scalar_one_or_none()
+
+        if force_reset:
             await self.data.sessions.delete(session_id)
             return await self.data.sessions.create_reset(ip, user_id, remember)
 
@@ -441,15 +475,45 @@ class AccountData(DataLayerDomain):
         """
         session = await self.data.sessions.get_reset(session_id, data.reset_code)
 
-        await self.data.sessions.delete(session_id)
+        # TODO: Remove this compatibility layer after sessions are migrated to PostgreSQL
+        resolved_user_id = await self.data.users.resolve_legacy_id(
+            session.reset.user_id
+        )
+
+        if await self.data.users.validate_password(resolved_user_id, data.password):
+            raise ResourceError("Cannot reuse current password")
+
+        await self.data.sessions.delete_by_user(resolved_user_id)
 
         await self.data.users.update(
-            session.reset.user_id,
+            resolved_user_id,
             UpdateUserRequest(force_reset=False, password=data.password),
         )
 
         return await self.data.sessions.create_authenticated(
             ip,
-            session.reset.user_id,
+            resolved_user_id,
             remember=session.reset.remember,
         )
+
+
+async def _get_alternate_id(mongo: Mongo, name: str) -> str:
+    """Get an alternate id for an API key whose provided `name` is not unique. Appends
+    an integer suffix to the end of the `name`.
+
+    :param mongo: the application mongodb client
+    :param name: the API key name
+    :return: an alternate unique id for the key
+
+    """
+    existing_alt_ids = await mongo.keys.distinct("id")
+
+    suffix = 0
+
+    while True:
+        candidate = f"{name.lower()}_{suffix}"
+
+        if candidate not in existing_alt_ids:
+            return candidate
+
+        suffix += 1

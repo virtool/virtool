@@ -6,8 +6,8 @@
     'force_reset': False,
     'groups': list([
     ]),
-    'handle': 'leeashley',
-    'id': 'fb085f7f',
+    'handle': 'myersmitchell',
+    'id': 2,
     'last_password_change': str,
     'permissions': dict({
       'cancel_job': False,
@@ -29,8 +29,8 @@
     'force_reset': False,
     'groups': list([
     ]),
-    'handle': 'leeashley',
-    'id': 'fb085f7f',
+    'handle': 'myersmitchell',
+    'id': 2,
     'last_password_change': str,
     'permissions': dict({
       'cancel_job': False,
@@ -52,8 +52,8 @@
     'force_reset': False,
     'groups': list([
     ]),
-    'handle': 'leeashley',
-    'id': 'fb085f7f',
+    'handle': 'myersmitchell',
+    'id': 2,
     'last_password_change': str,
     'permissions': dict({
       'cancel_job': False,
@@ -75,8 +75,8 @@
     'force_reset': False,
     'groups': list([
     ]),
-    'handle': 'leeashley',
-    'id': 'fb085f7f',
+    'handle': 'myersmitchell',
+    'id': 2,
     'last_password_change': str,
     'permissions': dict({
       'cancel_job': False,
@@ -98,8 +98,8 @@
     'force_reset': True,
     'groups': list([
     ]),
-    'handle': 'leeashley',
-    'id': 'fb085f7f',
+    'handle': 'myersmitchell',
+    'id': 2,
     'last_password_change': str,
     'permissions': dict({
       'cancel_job': False,
@@ -123,7 +123,7 @@
       dict({
         'id': 2,
         'legacy_id': None,
-        'name': 'architects',
+        'name': 'gaffers',
       }),
       dict({
         'id': 1,
@@ -131,8 +131,8 @@
         'name': 'musicians',
       }),
     ]),
-    'handle': 'lindawest',
-    'id': 'fb085f7f',
+    'handle': 'myersmitchell',
+    'id': 2,
     'last_password_change': str,
     'permissions': dict({
       'cancel_job': False,
@@ -156,11 +156,11 @@
       dict({
         'id': 2,
         'legacy_id': None,
-        'name': 'architects',
+        'name': 'gaffers',
       }),
     ]),
-    'handle': 'lindawest',
-    'id': 'fb085f7f',
+    'handle': 'myersmitchell',
+    'id': 2,
     'last_password_change': str,
     'permissions': dict({
       'cancel_job': False,
@@ -182,8 +182,8 @@
     'force_reset': False,
     'groups': list([
     ]),
-    'handle': 'lindawest',
-    'id': 'fb085f7f',
+    'handle': 'myersmitchell',
+    'id': 2,
     'last_password_change': str,
     'permissions': dict({
       'cancel_job': False,
@@ -205,8 +205,8 @@
     'force_reset': False,
     'groups': list([
     ]),
-    'handle': 'leeashley',
-    'id': 'fb085f7f',
+    'handle': 'myersmitchell',
+    'id': 2,
     'last_password_change': str,
     'permissions': dict({
       'cancel_job': False,
@@ -230,7 +230,7 @@
 # name: TestUpdateUser.test_primary_group[False]
   dict({
     'id': 'bad_request',
-    'message': 'User is not member of primary group',
+    'message': 'User is not a member of group',
   })
 # ---
 # name: TestUpdateUser.test_primary_group[True]
@@ -245,8 +245,8 @@
         'name': 'musicians',
       }),
     ]),
-    'handle': 'leeashley',
-    'id': 'fb085f7f',
+    'handle': 'brandonberry',
+    'id': 2,
     'last_password_change': str,
     'permissions': dict({
       'cancel_job': False,
@@ -273,7 +273,7 @@
     'groups': list([
     ]),
     'handle': 'fred',
-    'id': '7cf872dc',
+    'id': 3,
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': dict({
       'cancel_job': False,
@@ -296,7 +296,7 @@
     'groups': list([
     ]),
     'handle': 'fred',
-    'id': '7cf872dc',
+    'id': 3,
     'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
     'permissions': dict({
       'cancel_job': False,
@@ -311,27 +311,8 @@
     'primary_group': None,
   })
 # ---
-# name: test_create[None][db]
-  dict({
-    '_id': '7cf872dc',
-    'active': True,
-    'force_reset': False,
-    'groups': list([
-    ]),
-    'handle': 'fred',
-    'invalidate_sessions': False,
-    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-    'primary_group': None,
-    'settings': dict({
-      'quick_analyze_workflow': 'pathoscope_bowtie',
-      'show_ids': True,
-      'show_versions': True,
-      'skip_quick_analyze_dialog': True,
-    }),
-  })
-# ---
 # name: test_create[None][location]
-  '/admin/users/7cf872dc'
+  '/admin/users/3'
 # ---
 # name: test_get_roles
   list([
@@ -371,12 +352,12 @@
 # name: test_get_user
   dict({
     'active': True,
-    'administrator_role': 'base',
+    'administrator_role': None,
     'force_reset': False,
     'groups': list([
     ]),
-    'handle': 'leeashley',
-    'id': 'fb085f7f',
+    'handle': 'myersmitchell',
+    'id': 2,
     'last_password_change': str,
     'permissions': dict({
       'cancel_job': False,
@@ -401,29 +382,8 @@
         'force_reset': False,
         'groups': list([
         ]),
-        'handle': 'bob',
-        'id': 'bf1b993c',
-        'last_password_change': str,
-        'permissions': dict({
-          'cancel_job': False,
-          'create_ref': False,
-          'create_sample': False,
-          'modify_hmm': False,
-          'modify_subtraction': False,
-          'remove_file': False,
-          'remove_job': False,
-          'upload_file': False,
-        }),
-        'primary_group': None,
-      }),
-      dict({
-        'active': True,
-        'administrator_role': 'base',
-        'force_reset': False,
-        'groups': list([
-        ]),
         'handle': 'leeashley',
-        'id': 'fb085f7f',
+        'id': 1,
         'last_password_change': str,
         'permissions': dict({
           'cancel_job': False,
@@ -439,12 +399,33 @@
       }),
       dict({
         'active': True,
-        'administrator_role': 'full',
+        'administrator_role': None,
         'force_reset': False,
         'groups': list([
         ]),
-        'handle': 'zclark',
-        'id': '7cf872dc',
+        'handle': 'modonnell',
+        'id': 3,
+        'last_password_change': str,
+        'permissions': dict({
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        }),
+        'primary_group': None,
+      }),
+      dict({
+        'active': True,
+        'administrator_role': None,
+        'force_reset': False,
+        'groups': list([
+        ]),
+        'handle': 'myersmitchell',
+        'id': 2,
         'last_password_change': str,
         'permissions': dict({
           'cancel_job': False,
@@ -472,8 +453,8 @@
     'force_reset': False,
     'groups': list([
     ]),
-    'handle': 'leeashley',
-    'id': 'fb085f7f',
+    'handle': 'myersmitchell',
+    'id': 2,
     'last_password_change': str,
     'permissions': dict({
       'cancel_job': False,
@@ -495,8 +476,8 @@
     'force_reset': False,
     'groups': list([
     ]),
-    'handle': 'leeashley',
-    'id': 'fb085f7f',
+    'handle': 'myersmitchell',
+    'id': 2,
     'last_password_change': str,
     'permissions': dict({
       'cancel_job': False,
@@ -518,8 +499,8 @@
     'force_reset': False,
     'groups': list([
     ]),
-    'handle': 'leeashley',
-    'id': 'fb085f7f',
+    'handle': 'myersmitchell',
+    'id': 2,
     'last_password_change': str,
     'permissions': dict({
       'cancel_job': False,

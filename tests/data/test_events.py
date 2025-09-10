@@ -1,6 +1,6 @@
 import asyncio
 
-from redis import Redis
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool.data.domain import DataLayerDomain
 from virtool.data.events import (
@@ -10,18 +10,21 @@ from virtool.data.events import (
     dangerously_get_event,
     emit,
     emits,
-    listen_for_events,
+    listen_for_client_events,
 )
 from virtool.models.base import BaseModel
 
 
 class Emitted(BaseModel):
+    id: str = "test-id"
     name: str
     age: int
 
 
 async def test_emits():
-    """Test that the ``@emits`` decorator can derive the event name from the method name."""
+    """Test that the ``@emits`` decorator can derive the event name from the method
+    name.
+    """
 
     class Example(DataLayerDomain):
         name = "example"
@@ -66,21 +69,42 @@ async def test_emits_named():
     assert event.operation == Operation.UPDATE
 
 
-async def test_publish_and_listen(redis: Redis):
-    """Test that an event published with ``emit()`` can be received by an
-    ``EventListener``.
+async def test_publish_and_listen(
+    pg: AsyncEngine,
+    pg_connection_string: str,
+):
+    """Test that an event published with ``emit()`` can be received via Postgres
+    NOTIFY/LISTEN.
     """
-    task = asyncio.create_task(EventPublisher(redis).run())
+    dangerously_clear_events()
+
+    received_event = None
+
+    async def listen():
+        nonlocal received_event
+        async for event in listen_for_client_events(pg_connection_string):
+            received_event = event
+            break
+
+    listen_task = asyncio.create_task(listen())
+
+    # Give the listener time to connect and start listening before publishing.
+    await asyncio.sleep(0.1)
+
+    publisher_task = asyncio.create_task(EventPublisher(pg).run())
 
     emit(Emitted(name="Wilfred", age=72), "example", "publish", Operation.CREATE)
 
-    async for event in listen_for_events(redis):
-        assert event.data == Emitted(name="Wilfred", age=72)
-        assert event.domain == "example"
-        assert event.name == "publish"
-        assert event.operation == Operation.CREATE
+    await asyncio.wait_for(listen_task, timeout=5.0)
 
-        break
+    assert received_event is not None
+    assert received_event.domain == "example"
+    assert received_event.resource_id == "test-id"
+    assert received_event.operation == "create"
 
-    task.cancel()
-    await task
+    publisher_task.cancel()
+
+    try:
+        await publisher_task
+    except asyncio.CancelledError:
+        pass

@@ -4,7 +4,7 @@ import asyncio
 from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.transforms import AbstractTransform
 from virtool.mongo.core import Mongo
@@ -34,7 +34,7 @@ class AttachSubtractionsTransform(AbstractTransform):
     async def attach_one(self, document: Document, prepared: Any) -> Document:
         return {**document, "subtractions": sorted(prepared, key=lambda x: x["name"])}
 
-    async def prepare_one(self, document: Document) -> Any:
+    async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
         return [
             {
                 "id": subtraction_id,
@@ -47,7 +47,9 @@ class AttachSubtractionsTransform(AbstractTransform):
             for subtraction_id in document["subtractions"]
         ]
 
-    async def prepare_many(self, documents: list[Document]) -> dict[str, list[dict]]:
+    async def prepare_many(
+        self, documents: list[Document], session: AsyncSession
+    ) -> dict[str, list[dict]]:
         subtraction_ids = {s for d in documents for s in d["subtractions"]}
 
         subtraction_lookup = {

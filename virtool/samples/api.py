@@ -40,8 +40,9 @@ from virtool.data.errors import (
 from virtool.data.utils import get_data_from_req
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
+from virtool.jobs.models import JobState
 from virtool.models.roles import AdministratorRole
-from virtool.mongo.utils import get_mongo_from_req, get_one_field
+from virtool.mongo.utils import get_mongo_from_req
 from virtool.pg.utils import delete_row, get_rows
 from virtool.samples.db import (
     SAMPLE_RIGHTS_PROJECTION,
@@ -68,15 +69,26 @@ from virtool.uploads.utils import (
     multipart_file_chunker,
     naive_validator,
 )
-from virtool.utils import file_stats
+from virtool.utils import file_stats, get_safely
 
 logger = get_logger("samples")
 
 routes = Routes()
 
+DELETABLE_JOB_STATES = {
+    JobState.ERROR,
+    JobState.TIMEOUT,
+    JobState.CANCELLED,
+    JobState.TERMINATED,
+}
+"""Job states that allow sample deletion.
+
+Samples with jobs in these states can be deleted because the jobs are no longer
+active and will not be resumed.
+"""
+
 
 @routes.view("/samples")
-@routes.view("/spaces/{space_id}/samples")
 class SamplesView(PydanticView):
     async def get(
         self,
@@ -140,7 +152,6 @@ class SamplesView(PydanticView):
         )
 
 
-@routes.view("/spaces/{space_id}/samples/{sample_id}")
 @routes.view("/samples/{sample_id}")
 class SampleView(PydanticView):
     async def get(self, sample_id: str, /) -> r200[Sample] | r403 | r404:
@@ -210,6 +221,7 @@ class SampleView(PydanticView):
 
         Status Codes:
             204: Operation successful
+            400: Sample with active job cannot be deleted
             403: Insufficient rights
             404: Not found
         """
@@ -220,15 +232,36 @@ class SampleView(PydanticView):
         ):
             raise APIInsufficientRights()
 
-        if (
-            await get_one_field(
-                get_mongo_from_req(self.request).samples,
-                "ready",
-                sample_id,
+        mongo = get_mongo_from_req(self.request)
+
+        sample_document = await mongo.samples.find_one(
+            {"_id": sample_id},
+            {"ready": 1, "job": 1},
+        )
+
+        if not sample_document:
+            raise APINotFound()
+
+        if sample_document.get("ready") is False:
+            job_id = get_safely(sample_document, "job", "id")
+
+            if not job_id:
+                raise APIBadRequest(
+                    "Unfinalized samples without jobs cannot be deleted"
+                )
+
+            job_document = await mongo.jobs.find_one(
+                {"_id": job_id},
+                {"status": 1},
             )
-            is False
-        ):
-            raise APIBadRequest("Only unfinalized samples can be deleted")
+
+            if job_document:
+                current_state = JobState(job_document["status"][-1]["state"])
+
+                if current_state not in DELETABLE_JOB_STATES:
+                    raise APIBadRequest(
+                        f"Cannot delete sample with active job (current state: {current_state.value})"
+                    )
 
         try:
             await get_data_from_req(self.request).samples.delete(sample_id)
@@ -345,11 +378,36 @@ async def job_remove(req):
 
     """
     pg = req.app["pg"]
+    mongo = get_mongo_from_req(req)
 
     sample_id = req.match_info["sample_id"]
 
-    if await get_one_field(get_mongo_from_req(req).samples, "ready", sample_id):
+    sample_document = await mongo.samples.find_one(
+        {"_id": sample_id},
+        {"ready": 1, "job": 1},
+    )
+
+    if not sample_document:
+        raise APINotFound()
+
+    if sample_document.get("ready") is not False:
         raise APIBadRequest("Only unfinalized samples can be deleted")
+
+    job_id = get_safely(sample_document, "job", "id")
+
+    if job_id:
+        job_document = await mongo.jobs.find_one(
+            {"_id": job_id},
+            {"status": 1},
+        )
+
+        if job_document:
+            current_state = JobState(job_document["status"][-1]["state"])
+
+            if current_state not in DELETABLE_JOB_STATES:
+                raise APIBadRequest(
+                    f"Cannot delete sample with active job (current state: {current_state.value})"
+                )
 
     reads_files = await get_rows(pg, SQLSampleReads, "sample", sample_id)
     upload_ids = [upload for reads in reads_files if (upload := reads.upload)]

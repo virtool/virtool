@@ -52,9 +52,9 @@ async def authenticate_with_api_key(
         log.info("specified user not active while authenticating with api key")
         APIUnauthorized.raise_invalid_authorization_header()
 
-    key = await get_data_from_req(req).account.get_key_by_secret(user.id, key)
-
-    if not key:
+    try:
+        key = await get_data_from_req(req).account.get_key_by_secret(user.id, key)
+    except ResourceNotFoundError:
         log.info("invalid key while authenticating with api key")
         APIUnauthorized.raise_invalid_authorization_header()
 
@@ -77,7 +77,11 @@ async def authenticate_with_session(req: Request, handler: Callable) -> Response
     if not session.authentication:
         raise APIUnauthorized("Requires authorization")
 
-    user = await get_data_from_req(req).users.get(session.authentication.user_id)
+    # TODO: Remove this compatibility layer after sessions are migrated to PostgreSQL
+    resolved_user_id = await get_data_from_req(req).users.resolve_legacy_id(
+        session.authentication.user_id
+    )
+    user = await get_data_from_req(req).users.get(resolved_user_id)
 
     if not user.active:
         raise APIUnauthorized("User is deactivated", error_id="deactivated_user")
@@ -92,9 +96,7 @@ async def authenticate_with_session(req: Request, handler: Callable) -> Response
         session_id=session.id,
     )
 
-    resp = await handler(req)
-
-    return resp
+    return await handler(req)
 
 
 @web.middleware

@@ -14,6 +14,9 @@ env:
   IMAGE_NAME: virtool/virtool
   REGISTRY: ghcr.io
 
+permissions:
+  contents: read
+
 jobs:
   # Build the Docker image so we now it is successful before we create a release and try
   # to push a production image to the registry.
@@ -22,11 +25,11 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
 
@@ -36,11 +39,11 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install mise
-        uses: jdx/mise-action@v2
+        uses: jdx/mise-action@v3
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
       - name: Set up Python
@@ -56,11 +59,11 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install mise
-        uses: jdx/mise-action@v2
+        uses: jdx/mise-action@v3
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
       - name: Set up Python
@@ -70,7 +73,7 @@ jobs:
       - name: Generate OAS
         run: mise run oas
       - name: Upload OAS
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: openapi.json
           path: virtool/spec/openapi.json
@@ -81,9 +84,9 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install mise
-        uses: jdx/mise-action@v2
+        uses: jdx/mise-action@v3
       - name: Build test environment
         run: mise run test:build
       - name: Run tests
@@ -103,14 +106,14 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Download OAS
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: openapi.json
           path: virtool/spec/openapi.json
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 20
       - name: Install semantic-release
@@ -125,9 +128,11 @@ jobs:
     runs-on: ubuntu-24.04
     if: github.repository_owner == 'Virtool' && github.event_name == 'push' && needs.release.outputs.git-tag != ''
     needs: [release]
+    permissions:
+      packages: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ needs.release.outputs.git-tag }}
       - name: Login to Registry
@@ -144,7 +149,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
       - name: Build and Push
         id: push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true

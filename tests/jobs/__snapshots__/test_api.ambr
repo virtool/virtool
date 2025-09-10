@@ -11,7 +11,7 @@
       'third': 'SUEXExIZVPeFzGRmMglP',
     }),
     'created_at': str,
-    'id': 'fb085f7f',
+    'id': 'bf1b993c',
     'key': str,
     'ping': dict({
       'pinged_at': str,
@@ -42,7 +42,7 @@
     ]),
     'user': dict({
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'workflow': 'pathoscope_bowtie',
   })
@@ -50,93 +50,93 @@
 # name: TestFind.test_basic
   dict({
     'counts': dict({
-      'cancelled': dict({
-        'pathoscope_bowtie': 1,
-      }),
       'complete': dict({
+        'build_index': 2,
         'pathoscope_bowtie': 1,
       }),
       'preparing': dict({
-        'aodp': 1,
-        'create_sample': 3,
+        'build_index': 1,
         'pathoscope_bowtie': 1,
       }),
       'running': dict({
-        'build_index': 1,
         'create_subtraction': 1,
       }),
       'terminated': dict({
+        'create_sample': 1,
         'nuvs': 1,
       }),
       'timeout': dict({
-        'aodp': 1,
+        'aodp': 2,
+      }),
+      'waiting': dict({
+        'pathoscope_bowtie': 1,
       }),
     }),
     'documents': list([
       dict({
         'created_at': str,
-        'id': '9c61c0ca',
-        'progress': 3,
-        'retries': 0,
-        'stage': None,
-        'state': 'preparing',
-        'user': dict({
-          'handle': 'zclark',
-          'id': '7cf872dc',
-        }),
-        'workflow': 'create_sample',
-      }),
-      dict({
-        'created_at': str,
-        'id': '7cce8f87',
-        'progress': 40,
-        'retries': 0,
-        'stage': 'BhtMCmVtuypvvfYhEGZT',
-        'state': 'cancelled',
-        'user': dict({
-          'handle': 'zclark',
-          'id': '7cf872dc',
-        }),
-        'workflow': 'pathoscope_bowtie',
-      }),
-      dict({
-        'created_at': str,
-        'id': '83e4c4f6',
-        'progress': 3,
-        'retries': 0,
-        'stage': None,
-        'state': 'preparing',
-        'user': dict({
-          'handle': 'zclark',
-          'id': '7cf872dc',
-        }),
-        'workflow': 'pathoscope_bowtie',
-      }),
-      dict({
-        'created_at': str,
         'id': '606cd773',
-        'progress': 10,
+        'progress': 3,
         'retries': 0,
-        'stage': 'kuwHIKQEsDDoQuVheSsd',
-        'state': 'running',
+        'stage': None,
+        'state': 'preparing',
         'user': dict({
-          'handle': 'zclark',
-          'id': '7cf872dc',
+          'handle': 'modonnell',
+          'id': 3,
         }),
         'workflow': 'build_index',
       }),
       dict({
         'created_at': str,
         'id': '031ff6cb',
-        'progress': 3,
+        'progress': 20,
         'retries': 0,
-        'stage': None,
-        'state': 'preparing',
+        'stage': 'LrgYSvSUrArKVZMpTZsX',
+        'state': 'timeout',
         'user': dict({
-          'handle': 'zclark',
-          'id': '7cf872dc',
+          'handle': 'modonnell',
+          'id': 3,
+        }),
+        'workflow': 'aodp',
+      }),
+      dict({
+        'created_at': str,
+        'id': '7aa59bf4',
+        'progress': 20,
+        'retries': 0,
+        'stage': 'cmoimlTyThDaWauPZbQA',
+        'state': 'terminated',
+        'user': dict({
+          'handle': 'modonnell',
+          'id': 3,
         }),
         'workflow': 'create_sample',
+      }),
+      dict({
+        'created_at': str,
+        'id': '153ff459',
+        'progress': 10,
+        'retries': 0,
+        'stage': 'rKOAxVNxhGjAUqXkPFQB',
+        'state': 'running',
+        'user': dict({
+          'handle': 'modonnell',
+          'id': 3,
+        }),
+        'workflow': 'create_subtraction',
+      }),
+      dict({
+        'created_at': str,
+        'id': 'f60bae36',
+        'progress': 100,
+        'retries': 0,
+        'stage': 'oRBdHEWGCuwqaOQonBqr',
+        'state': 'complete',
+        'user': dict({
+          'handle': 'modonnell',
+          'id': 3,
+        }),
+        'workflow': 'build_index',
       }),
     ]),
     'found_count': 11,
@@ -823,8 +823,8 @@
       }),
     ]),
     'user': dict({
-      'handle': 'leeashley',
-      'id': 'fb085f7f',
+      'handle': 'myersmitchell',
+      'id': 2,
     }),
     'workflow': 'build_index',
   })
@@ -833,15 +833,14 @@
   dict({
     'acquired': True,
     'args': dict({
-      'fact': 'LdJCGRddpwdyFKunVyUD',
-      'nearly': 951.93581531826,
-      'network': 'fhKcDVBJbHFDutYbbXjg',
-      'season': 6981,
-      'task': 'RrnFxjyvDAqsRnDaMrco',
-      'third': 'SUEXExIZVPeFzGRmMglP',
+      'buy': 'aJUTVHuIhJxeMChNzFJE',
+      'letter': 'TzqyQTQjZGeLZuJqlLaQ',
+      'picture': 4.11362983803781,
+      'reduce': 24963.910062293,
+      'will': 'EKilxKJTbTDOKidKxUVF',
     }),
     'created_at': str,
-    'id': '7cf872dc',
+    'id': 'bf1b993c',
     'ping': dict({
       'pinged_at': str,
     }),
@@ -870,9 +869,9 @@
       }),
     ]),
     'user': dict({
-      'handle': 'leeashley',
-      'id': 'fb085f7f',
+      'handle': 'myersmitchell',
+      'id': 2,
     }),
-    'workflow': 'pathoscope_bowtie',
+    'workflow': 'nuvs',
   })
 # ---

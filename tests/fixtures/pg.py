@@ -1,14 +1,12 @@
 """Fixtures for working with the Postgres testing instance."""
 
-import asyncio
-
 import orjson
 import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
 from virtool.api.custom_json import dump_string
-from virtool.pg.utils import Base
+from virtool.pg.utils import Base, get_sqlalchemy_url
 
 
 @pytest.fixture(scope="session")
@@ -18,10 +16,10 @@ def pg_base_connection_string(request, pg_db_name: str):
     This is used to manage databases in the Postgres instance. It is used by
     migration-specific fixtures like :func:`migration_pg` to create and drop databases.
 
-    eg. ``postgresql+asyncpg://virtool:virtool@localhost``
+    eg. ``postgresql://virtool:virtool@localhost``
 
     """
-    return "postgresql+asyncpg://virtool:virtool@postgres:5432"
+    return "postgresql://virtool:virtool@postgres:5432"
 
 
 @pytest.fixture(scope="session")
@@ -39,19 +37,10 @@ def pg_connection_string(pg_base_connection_string: str, pg_db_name: str):
     """A full Postgres connection string with the auto-generated test database name
     appended.
 
-     eg. postgresql+asyncpg://virtool:virtool@localhost/test_2
+     eg. postgresql://virtool:virtool@localhost/test_2
 
     """
     return f"{pg_base_connection_string}/{pg_db_name}"
-
-
-@pytest.fixture(scope="session")
-def event_loop():
-    """Overrides pytest default function scoped event loop"""
-    policy = asyncio.get_event_loop_policy()
-    loop = policy.new_event_loop()
-    yield loop
-    loop.close()
 
 
 @pytest.fixture(scope="session")
@@ -66,7 +55,7 @@ async def engine(
 
     """
     engine_without_db = create_async_engine(
-        pg_base_connection_string,
+        get_sqlalchemy_url(pg_base_connection_string),
         isolation_level="AUTOCOMMIT",
     )
 
@@ -95,7 +84,7 @@ async def engine(
     await engine_without_db.dispose()
 
     engine = create_async_engine(
-        pg_connection_string,
+        get_sqlalchemy_url(pg_connection_string),
         echo=False,
         json_serializer=dump_string,
         json_deserializer=orjson.loads,
@@ -111,7 +100,7 @@ async def engine(
 
     # Force close all connections to the database before dropping it
     engine_without_db = create_async_engine(
-        pg_base_connection_string,
+        get_sqlalchemy_url(pg_base_connection_string),
         isolation_level="AUTOCOMMIT",
     )
 

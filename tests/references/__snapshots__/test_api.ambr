@@ -1,6 +1,6 @@
 # serializer version: 1
 # name: TestCreate.test_clone[location]
-  '/references/v1/3cbb22cc'
+  '/references/v1/bf1b993c'
 # ---
 # name: TestCreate.test_clone[resp]
   dict({
@@ -15,7 +15,7 @@
     'description': '',
     'groups': list([
     ]),
-    'id': '3cbb22cc',
+    'id': 'bf1b993c',
     'imported_from': None,
     'installed': None,
     'internal_control': None,
@@ -43,15 +43,15 @@
     'unbuilt_change_count': 0,
     'updating': None,
     'user': dict({
-      'handle': 'bob',
-      'id': 'bf1b993c',
+      'handle': 'leeashley',
+      'id': 1,
     }),
     'users': list([
       dict({
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
-        'handle': 'bob',
-        'id': 'bf1b993c',
+        'handle': 'leeashley',
+        'id': 1,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -74,7 +74,7 @@
       'created_at': '2015-10-06T20:00:00Z',
       'id': 1,
       'name': 'reference.json.gz',
-      'name_on_disk': '1-reference.json.gz',
+      'name_on_disk': str,
       'ready': True,
       'removed': False,
       'removed_at': None,
@@ -83,8 +83,8 @@
       'type': 'reference',
       'uploaded_at': '2015-10-06T20:00:00Z',
       'user': dict({
-        'handle': 'bob',
-        'id': 'bf1b993c',
+        'handle': 'leeashley',
+        'id': 1,
       }),
     }),
     'installed': None,
@@ -113,15 +113,15 @@
     'unbuilt_change_count': 0,
     'updating': None,
     'user': dict({
-      'handle': 'bob',
-      'id': 'bf1b993c',
+      'handle': 'leeashley',
+      'id': 1,
     }),
     'users': list([
       dict({
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
-        'handle': 'bob',
-        'id': 'bf1b993c',
+        'handle': 'leeashley',
+        'id': 1,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -137,7 +137,7 @@
     'cloned_from': None,
     'contributors': list([
     ]),
-    'created_at': '2015-10-06T20:00:00Z',
+    'created_at': 'approximately_now_isoformat',
     'data_type': 'barcode',
     'description': 'A bunch of viruses used for testing',
     'groups': list([
@@ -163,15 +163,15 @@
     'unbuilt_change_count': 0,
     'updating': None,
     'user': dict({
-      'handle': 'bob',
-      'id': 'bf1b993c',
+      'handle': 'leeashley',
+      'id': 1,
     }),
     'users': list([
       dict({
         'build': True,
-        'created_at': '2015-10-06T20:00:00Z',
-        'handle': 'bob',
-        'id': 'bf1b993c',
+        'created_at': 'approximately_now_isoformat',
+        'handle': 'leeashley',
+        'id': 1,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -187,7 +187,7 @@
     'cloned_from': None,
     'contributors': list([
     ]),
-    'created_at': '2015-10-06T20:00:00Z',
+    'created_at': 'approximately_now_isoformat',
     'data_type': 'genome',
     'description': 'A bunch of viruses used for testing',
     'groups': list([
@@ -212,15 +212,15 @@
     'unbuilt_change_count': 0,
     'updating': None,
     'user': dict({
-      'handle': 'bob',
-      'id': 'bf1b993c',
+      'handle': 'leeashley',
+      'id': 1,
     }),
     'users': list([
       dict({
         'build': True,
-        'created_at': '2015-10-06T20:00:00Z',
-        'handle': 'bob',
-        'id': 'bf1b993c',
+        'created_at': 'approximately_now_isoformat',
+        'handle': 'leeashley',
+        'id': 1,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -258,8 +258,8 @@
       'ready': False,
       'size': 3695872,
       'user': dict({
-        'handle': 'bob',
-        'id': 'bf1b993c',
+        'handle': 'leeashley',
+        'id': 1,
       }),
     }),
     'internal_control': None,
@@ -306,15 +306,15 @@
     'unbuilt_change_count': 0,
     'updating': None,
     'user': dict({
-      'handle': 'bob',
-      'id': 'bf1b993c',
+      'handle': 'leeashley',
+      'id': 1,
     }),
     'users': list([
       dict({
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
-        'handle': 'bob',
-        'id': 'bf1b993c',
+        'handle': 'leeashley',
+        'id': 1,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -359,8 +359,8 @@
       'name': 'Foo',
     }),
     'user': dict({
-      'handle': 'bob',
-      'id': 'bf1b993c',
+      'handle': 'leeashley',
+      'id': 1,
     }),
   })
 # ---
@@ -383,8 +383,8 @@
       'id': 'bf1b993c.0',
       'method_name': <HistoryMethod.create: 'create'>,
       'user': dict({
-        'handle': 'bob',
-        'id': 'bf1b993c',
+        'handle': 'leeashley',
+        'id': 1,
       }),
     }),
     'name': 'Tobacco mosaic virus',
@@ -419,8 +419,8 @@
       'id': 'bf1b993c.0',
       'method_name': 'create',
       'user': dict({
-        'handle': 'bob',
-        'id': 'bf1b993c',
+        'handle': 'leeashley',
+        'id': 1,
       }),
     }),
     'name': 'Tobacco mosaic virus',
@@ -473,8 +473,8 @@
       'name': 'Foo',
     }),
     'user': dict({
-      'handle': 'bob',
-      'id': 'bf1b993c',
+      'handle': 'leeashley',
+      'id': 1,
     }),
   })
 # ---
@@ -497,8 +497,8 @@
       'id': 'bf1b993c.0',
       'method_name': <HistoryMethod.create: 'create'>,
       'user': dict({
-        'handle': 'bob',
-        'id': 'bf1b993c',
+        'handle': 'leeashley',
+        'id': 1,
       }),
     }),
     'name': 'Tobacco mosaic virus',
@@ -533,8 +533,8 @@
       'id': 'bf1b993c.0',
       'method_name': 'create',
       'user': dict({
-        'handle': 'bob',
-        'id': 'bf1b993c',
+        'handle': 'leeashley',
+        'id': 1,
       }),
     }),
     'name': 'Tobacco mosaic virus',
@@ -587,8 +587,8 @@
       'name': 'Foo',
     }),
     'user': dict({
-      'handle': 'bob',
-      'id': 'bf1b993c',
+      'handle': 'leeashley',
+      'id': 1,
     }),
   })
 # ---
@@ -611,8 +611,8 @@
       'id': 'bf1b993c.0',
       'method_name': <HistoryMethod.create: 'create'>,
       'user': dict({
-        'handle': 'bob',
-        'id': 'bf1b993c',
+        'handle': 'leeashley',
+        'id': 1,
       }),
     }),
     'name': 'Tobacco mosaic virus',
@@ -647,8 +647,8 @@
       'id': 'bf1b993c.0',
       'method_name': 'create',
       'user': dict({
-        'handle': 'bob',
-        'id': 'bf1b993c',
+        'handle': 'leeashley',
+        'id': 1,
       }),
     }),
     'name': 'Tobacco mosaic virus',
@@ -664,6 +664,267 @@
     'version': 0,
   })
 # ---
+# name: TestDeleteUser.test_ok
+  dict({
+    '_id': 'foo',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'groups': list([
+    ]),
+    'name': 'Test',
+    'organism': 'virus',
+    'restrict_source_types': False,
+    'source_types': list([
+    ]),
+    'user': dict({
+      'id': 1,
+    }),
+    'users': list([
+      dict({
+        'build': True,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'id': 1,
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      }),
+    ]),
+  })
+# ---
+# name: TestFindHistory.test_ok
+  dict({
+    'documents': list([
+      dict({
+        'created_at': 'approximately_now_isoformat',
+        'description': 'Created new sequence NC_001367 in Isolate strain_1',
+        'id': 'fb085f7f.2',
+        'index': dict({
+          'id': 'unbuilt',
+          'version': 'unbuilt',
+        }),
+        'method_name': 'create_sequence',
+        'otu': dict({
+          'id': 'fb085f7f',
+          'name': 'Tobacco mosaic virus',
+          'version': 2,
+        }),
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'bf1b993c',
+          'name': 'Test Reference',
+        }),
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 1,
+        }),
+      }),
+      dict({
+        'created_at': 'approximately_now_isoformat',
+        'description': 'Added Isolate strain_1 as default',
+        'id': 'fb085f7f.1',
+        'index': dict({
+          'id': 'unbuilt',
+          'version': 'unbuilt',
+        }),
+        'method_name': 'add_isolate',
+        'otu': dict({
+          'id': 'fb085f7f',
+          'name': 'Tobacco mosaic virus',
+          'version': 1,
+        }),
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'bf1b993c',
+          'name': 'Test Reference',
+        }),
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 1,
+        }),
+      }),
+      dict({
+        'created_at': 'approximately_now_isoformat',
+        'description': 'Created Tobacco mosaic virus (TMV)',
+        'id': 'fb085f7f.0',
+        'index': dict({
+          'id': 'unbuilt',
+          'version': 'unbuilt',
+        }),
+        'method_name': 'create',
+        'otu': dict({
+          'id': 'fb085f7f',
+          'name': 'Tobacco mosaic virus',
+          'version': 0,
+        }),
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'bf1b993c',
+          'name': 'Test Reference',
+        }),
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 1,
+        }),
+      }),
+      dict({
+        'created_at': 'approximately_now_isoformat',
+        'description': 'Created Potato virus X (PVX)',
+        'id': '7cf872dc.0',
+        'index': dict({
+          'id': 'unbuilt',
+          'version': 'unbuilt',
+        }),
+        'method_name': 'create',
+        'otu': dict({
+          'id': '7cf872dc',
+          'name': 'Potato virus X',
+          'version': 0,
+        }),
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'bf1b993c',
+          'name': 'Test Reference',
+        }),
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 1,
+        }),
+      }),
+      dict({
+        'created_at': 'approximately_now_isoformat',
+        'description': 'Created Cucumber mosaic virus',
+        'id': '3cbb22cc.0',
+        'index': dict({
+          'id': 'unbuilt',
+          'version': 'unbuilt',
+        }),
+        'method_name': 'create',
+        'otu': dict({
+          'id': '3cbb22cc',
+          'name': 'Cucumber mosaic virus',
+          'version': 0,
+        }),
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'bf1b993c',
+          'name': 'Test Reference',
+        }),
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 1,
+        }),
+      }),
+    ]),
+    'found_count': 5,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 5,
+  })
+# ---
+# name: TestGet.test_ok
+  dict({
+    'cloned_from': None,
+    'contributors': list([
+    ]),
+    'created_at': '2015-10-06T20:00:00Z',
+    'data_type': 'genome',
+    'description': '',
+    'groups': list([
+    ]),
+    'id': 'bf1b993c',
+    'imported_from': None,
+    'installed': None,
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Bar',
+    'organism': 'virus',
+    'otu_count': 0,
+    'release': None,
+    'remotes_from': None,
+    'restrict_source_types': False,
+    'source_types': list([
+      'isolate',
+      'strain',
+    ]),
+    'targets': None,
+    'task': None,
+    'unbuilt_change_count': 0,
+    'updating': None,
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 1,
+    }),
+    'users': list([
+      dict({
+        'build': True,
+        'created_at': '2015-10-06T20:00:00Z',
+        'handle': 'leeashley',
+        'id': 1,
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      }),
+      dict({
+        'build': False,
+        'created_at': '2015-10-06T20:00:00Z',
+        'handle': 'myersmitchell',
+        'id': 2,
+        'modify': False,
+        'modify_otu': False,
+        'remove': False,
+      }),
+    ]),
+  })
+# ---
+# name: TestUpdateUser.test_ok
+  dict({
+    'build': False,
+    'created_at': '2015-10-06T20:00:00Z',
+    'handle': 'myersmitchell',
+    'id': 2,
+    'modify': True,
+    'modify_otu': True,
+    'remove': False,
+  })
+# ---
+# name: TestUpdateUser.test_ok.1
+  dict({
+    '_id': 'foo',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'groups': list([
+    ]),
+    'name': 'Test',
+    'organism': 'virus',
+    'restrict_source_types': False,
+    'source_types': list([
+    ]),
+    'user': dict({
+      'id': 1,
+    }),
+    'users': list([
+      dict({
+        'build': True,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'id': 1,
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      }),
+      dict({
+        'build': False,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'id': 2,
+        'modify': True,
+        'modify_otu': True,
+        'remove': False,
+      }),
+    ]),
+  })
+# ---
 # name: test_create_group[None]
   dict({
     'build': False,
@@ -672,7 +933,7 @@
     'legacy_id': None,
     'modify': True,
     'modify_otu': False,
-    'name': 'architects',
+    'name': 'gaffers',
     'remove': False,
   })
 # ---
@@ -707,7 +968,7 @@
     'source_types': list([
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'users': list([
     ]),
@@ -719,25 +980,25 @@
     'contributors': list([
       dict({
         'count': 1,
-        'handle': 'leeashley',
-        'id': 'fb085f7f',
+        'handle': 'myersmitchell',
+        'id': 2,
       }),
     ]),
     'created_at': '2015-10-06T20:00:00Z',
     'files': list([
     ]),
     'has_files': True,
-    'id': '3cbb22cc',
+    'id': 'fb085f7f',
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
-      'id': '7cf872dc',
+      'id': 'bf1b993c',
       'progress': 0,
       'retries': 0,
       'stage': None,
       'state': 'waiting',
       'user': dict({
-        'handle': 'bob',
-        'id': 'bf1b993c',
+        'handle': 'leeashley',
+        'id': 1,
       }),
       'workflow': 'build_index',
     }),
@@ -755,20 +1016,20 @@
       'name': 'Foo',
     }),
     'user': dict({
-      'handle': 'bob',
-      'id': 'bf1b993c',
+      'handle': 'leeashley',
+      'id': 1,
     }),
     'version': 0,
   })
 # ---
 # name: test_create_index[True].1
   dict({
-    '_id': '3cbb22cc',
+    '_id': 'fb085f7f',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'has_files': True,
     'has_json': False,
     'job': dict({
-      'id': '7cf872dc',
+      'id': 'bf1b993c',
     }),
     'manifest': dict({
       'bar': 5,
@@ -779,7 +1040,7 @@
       'id': 'foo',
     }),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'version': 0,
   })
@@ -798,13 +1059,13 @@
     'source_types': list([
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'users': list([
       dict({
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 'bf1b993c',
+        'id': 1,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -812,7 +1073,7 @@
       dict({
         'build': False,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 'fb085f7f',
+        'id': 2,
         'modify': True,
         'modify_otu': False,
         'remove': False,
@@ -824,8 +1085,8 @@
   dict({
     'build': False,
     'created_at': '2015-10-06T20:00:00Z',
-    'handle': 'leeashley',
-    'id': 'fb085f7f',
+    'handle': 'myersmitchell',
+    'id': 2,
     'modify': True,
     'modify_otu': False,
     'remove': False,
@@ -845,41 +1106,13 @@
     'source_types': list([
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'users': list([
       dict({
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 'bf1b993c',
-        'modify': True,
-        'modify_otu': True,
-        'remove': True,
-      }),
-    ]),
-  })
-# ---
-# name: test_delete_user[None][mongo]
-  dict({
-    '_id': 'foo',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'name': 'Test',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 'bf1b993c',
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 'bf1b993c',
+        'id': 1,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -935,13 +1168,13 @@
       }),
     ]),
     'user': dict({
-      'id': 'fb085f7f',
+      'id': 2,
     }),
     'users': list([
       dict({
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': '7cf872dc',
+        'id': 3,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -949,7 +1182,7 @@
       dict({
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': '3cbb22cc',
+        'id': 4,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -993,15 +1226,15 @@
     'unbuilt_change_count': 0,
     'updating': None,
     'user': dict({
-      'handle': 'leeashley',
-      'id': 'fb085f7f',
+      'handle': 'myersmitchell',
+      'id': 2,
     }),
     'users': list([
       dict({
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
-        'handle': 'zclark',
-        'id': '7cf872dc',
+        'handle': 'modonnell',
+        'id': 3,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -1009,8 +1242,8 @@
       dict({
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
-        'handle': 'olopez',
-        'id': '3cbb22cc',
+        'handle': 'garciaregina',
+        'id': 4,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -1035,13 +1268,13 @@
       'strain',
     ]),
     'user': dict({
-      'id': 'fb085f7f',
+      'id': 2,
     }),
     'users': list([
       dict({
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': '7cf872dc',
+        'id': 3,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -1049,7 +1282,7 @@
       dict({
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': '3cbb22cc',
+        'id': 4,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -1087,15 +1320,15 @@
     'unbuilt_change_count': 0,
     'updating': None,
     'user': dict({
-      'handle': 'leeashley',
-      'id': 'fb085f7f',
+      'handle': 'myersmitchell',
+      'id': 2,
     }),
     'users': list([
       dict({
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
-        'handle': 'zclark',
-        'id': '7cf872dc',
+        'handle': 'modonnell',
+        'id': 3,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -1103,8 +1336,8 @@
       dict({
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
-        'handle': 'olopez',
-        'id': '3cbb22cc',
+        'handle': 'garciaregina',
+        'id': 4,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -1141,8 +1374,8 @@
         'unbuilt_change_count': 0,
         'updating': None,
         'user': dict({
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
+          'handle': 'brandonberry',
+          'id': 2,
         }),
       }),
       dict({
@@ -1171,8 +1404,8 @@
         'unbuilt_change_count': 0,
         'updating': None,
         'user': dict({
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
+          'handle': 'brandonberry',
+          'id': 2,
         }),
       }),
       dict({
@@ -1201,8 +1434,8 @@
         'unbuilt_change_count': 0,
         'updating': None,
         'user': dict({
-          'handle': 'bob',
-          'id': 'bf1b993c',
+          'handle': 'leeashley',
+          'id': 1,
         }),
       }),
     ]),
@@ -1562,60 +1795,6 @@
     'total_count': 2,
   })
 # ---
-# name: test_get[None]
-  dict({
-    'cloned_from': None,
-    'contributors': list([
-    ]),
-    'created_at': '2015-10-06T20:00:00Z',
-    'data_type': 'genome',
-    'description': 'plant pathogen',
-    'groups': list([
-    ]),
-    'id': 'bar',
-    'imported_from': None,
-    'installed': None,
-    'internal_control': None,
-    'latest_build': None,
-    'name': 'Bar',
-    'organism': 'virus',
-    'otu_count': 0,
-    'release': None,
-    'remotes_from': None,
-    'restrict_source_types': False,
-    'source_types': list([
-      'isolate',
-      'strain',
-    ]),
-    'targets': None,
-    'task': dict({
-      'complete': True,
-      'created_at': '2015-10-06T20:00:00Z',
-      'error': None,
-      'id': 1,
-      'progress': 100,
-      'step': 'download',
-      'type': 'clone_reference',
-    }),
-    'unbuilt_change_count': 0,
-    'updating': None,
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 'fb085f7f',
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': '2015-10-06T20:00:00Z',
-        'handle': 'zclark',
-        'id': '7cf872dc',
-        'modify': True,
-        'modify_otu': True,
-        'remove': True,
-      }),
-    ]),
-  })
-# ---
 # name: test_get_release[None]
   dict({
     'body': '''
@@ -1651,8 +1830,8 @@
       'ready': True,
       'size': 3695872,
       'user': dict({
-        'handle': 'igboyes',
-        'id': 'igboyes',
+        'handle': 'myersmitchell',
+        'id': 2,
       }),
     }),
   ])
@@ -1698,13 +1877,13 @@
     'source_types': list([
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'users': list([
       dict({
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 'bf1b993c',
+        'id': 1,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -1722,52 +1901,5 @@
     'modify_otu': True,
     'name': 'musicians',
     'remove': False,
-  })
-# ---
-# name: test_update_user[None]
-  dict({
-    'build': False,
-    'created_at': '2015-10-06T20:00:00Z',
-    'handle': 'leeashley',
-    'id': 'fb085f7f',
-    'modify': True,
-    'modify_otu': True,
-    'remove': False,
-  })
-# ---
-# name: test_update_user[None].1
-  dict({
-    '_id': 'foo',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'name': 'Test',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 'bf1b993c',
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 'bf1b993c',
-        'modify': True,
-        'modify_otu': True,
-        'remove': True,
-      }),
-      dict({
-        'build': False,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 'fb085f7f',
-        'modify': True,
-        'modify_otu': True,
-        'remove': False,
-      }),
-    ]),
   })
 # ---

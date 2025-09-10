@@ -1,145 +1,140 @@
 # serializer version: 1
-# name: test_add
-  dict({
-    'complete': False,
-    'context': dict({
-    }),
-    'count': 0,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'error': None,
-    'file_size': None,
-    'id': 1,
-    'progress': 0,
-    'step': 'timeout_jobs',
-    'type': 'timeout_jobs',
-  })
-# ---
-# name: test_find
-  list([
-    Task(id=1, complete=True, created_at=datetime.datetime(2015, 10, 6, 20, 0), error=None, progress=100, step='download', type='clone_reference', context={'user_id': 'test_1'}, count=40, file_size=1024),
-    Task(id=2, complete=False, created_at=datetime.datetime(2015, 10, 6, 20, 0), error=None, progress=80, step='download', type='import_reference', context={'user_id': 'test_2'}, count=30, file_size=14754),
-  ])
-# ---
-# name: test_get
+# name: TestComplete.test_ok
   dict({
     'complete': True,
     'context': dict({
       'user_id': 'test_1',
     }),
-    'count': 40,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'count': 0,
+    'created_at': 'approximately_now_datetime',
     'error': None,
-    'file_size': 1024,
+    'file_size': None,
     'id': 1,
     'progress': 100,
-    'step': 'download',
+    'step': 'dummy_task',
+    'type': 'dummy_task',
+  })
+# ---
+# name: TestGet.test_ok
+  dict({
+    'complete': False,
+    'context': dict({
+      'user_id': 'test_1',
+    }),
+    'count': 0,
+    'created_at': 'approximately_now_datetime',
+    'error': None,
+    'file_size': None,
+    'id': 1,
+    'progress': 0,
+    'step': 'clone_reference',
     'type': 'clone_reference',
   })
 # ---
-# name: test_update[error][pg]
+# name: TestUpdate.test_ok[error][pg]
   dict({
     'complete': False,
     'context': dict({
       'user_id': 'test_1',
     }),
     'count': 0,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'created_at': 'approximately_now_datetime',
     'error': 'failed_task',
     'file_size': None,
     'id': 1,
-    'progress': 22,
-    'step': 'one',
+    'progress': 0,
+    'step': 'dummy_task',
     'type': 'dummy_task',
   })
 # ---
-# name: test_update[error][return_value]
+# name: TestUpdate.test_ok[error][return_value]
   dict({
     'complete': False,
     'context': dict({
       'user_id': 'test_1',
     }),
     'count': 0,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'created_at': 'approximately_now_datetime',
     'error': 'failed_task',
     'file_size': None,
     'id': 1,
-    'progress': 22,
-    'step': 'one',
+    'progress': 0,
+    'step': 'dummy_task',
     'type': 'dummy_task',
   })
 # ---
-# name: test_update[progress][pg]
+# name: TestUpdate.test_ok[progress][pg]
   dict({
     'complete': False,
     'context': dict({
       'user_id': 'test_1',
     }),
     'count': 0,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'created_at': 'approximately_now_datetime',
     'error': None,
     'file_size': None,
     'id': 1,
     'progress': 55,
-    'step': 'one',
+    'step': 'dummy_task',
     'type': 'dummy_task',
   })
 # ---
-# name: test_update[progress][return_value]
+# name: TestUpdate.test_ok[progress][return_value]
   dict({
     'complete': False,
     'context': dict({
       'user_id': 'test_1',
     }),
     'count': 0,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'created_at': 'approximately_now_datetime',
     'error': None,
     'file_size': None,
     'id': 1,
     'progress': 55,
-    'step': 'one',
+    'step': 'dummy_task',
     'type': 'dummy_task',
   })
 # ---
-# name: test_update[step][pg]
+# name: TestUpdate.test_ok[step][pg]
   dict({
     'complete': False,
     'context': dict({
       'user_id': 'test_1',
     }),
     'count': 0,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'created_at': 'approximately_now_datetime',
     'error': None,
     'file_size': None,
     'id': 1,
-    'progress': 22,
+    'progress': 0,
     'step': 'two',
     'type': 'dummy_task',
   })
 # ---
-# name: test_update[step][return_value]
+# name: TestUpdate.test_ok[step][return_value]
   dict({
     'complete': False,
     'context': dict({
       'user_id': 'test_1',
     }),
     'count': 0,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'created_at': 'approximately_now_datetime',
     'error': None,
     'file_size': None,
     'id': 1,
-    'progress': 22,
+    'progress': 0,
     'step': 'two',
     'type': 'dummy_task',
   })
 # ---
-# name: test_update[step_progress][pg]
+# name: TestUpdate.test_ok[step_progress][pg]
   dict({
     'complete': False,
     'context': dict({
       'user_id': 'test_1',
     }),
     'count': 0,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'created_at': 'approximately_now_datetime',
     'error': None,
     'file_size': None,
     'id': 1,
@@ -148,14 +143,14 @@
     'type': 'dummy_task',
   })
 # ---
-# name: test_update[step_progress][return_value]
+# name: TestUpdate.test_ok[step_progress][return_value]
   dict({
     'complete': False,
     'context': dict({
       'user_id': 'test_1',
     }),
     'count': 0,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'created_at': 'approximately_now_datetime',
     'error': None,
     'file_size': None,
     'id': 1,

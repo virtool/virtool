@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING
 
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.types import Document
 from virtool.users.transforms import AttachUserTransform
@@ -12,13 +14,16 @@ ATTACHED_JOB_PROJECTION = ["status", "user", "workflow"]
 
 
 class AttachJobTransform(AbstractTransform):
-    def __init__(self, mongo: "Mongo"):
+    def __init__(self, mongo: "Mongo", pg: AsyncEngine):
         self._mongo = mongo
+        self._pg = pg
 
     async def attach_one(self, document: Document, prepared: Document) -> Document:
         return {**document, "job": prepared}
 
-    async def prepare_one(self, document: Document) -> Document | None:
+    async def prepare_one(
+        self, document: Document, session: AsyncSession
+    ) -> Document | None:
         job_id = get_safely(document, "job", "id")
 
         if job_id is None:
@@ -41,12 +46,14 @@ class AttachJobTransform(AbstractTransform):
                     "stage": last_status["stage"],
                 },
             ),
-            [AttachUserTransform(self._mongo)],
+            [AttachUserTransform(self._pg)],
+            self._pg,
         )
 
     async def prepare_many(
         self,
         documents: list[Document],
+        session: AsyncSession,
     ) -> dict[str, Document | None]:
         job_ids = {get_safely(d, "job", "id") for d in documents}
 
@@ -58,7 +65,7 @@ class AttachJobTransform(AbstractTransform):
             )
         ]
 
-        jobs = await apply_transforms(jobs, [AttachUserTransform(self._mongo)])
+        jobs = await apply_transforms(jobs, [AttachUserTransform(self._pg)], self._pg)
 
         jobs_lookup: dict[str | None, dict | None] = {
             job["id"]: {

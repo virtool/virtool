@@ -96,10 +96,13 @@ class HmmsData(DataLayerDomain):
         if installed := document.get("installed"):
             document["installed"] = await apply_transforms(
                 installed,
-                [AttachUserTransform(self._mongo)],
+                [AttachUserTransform(self._pg)],
+                self._pg,
             )
 
-        document = await apply_transforms(document, [AttachTaskTransform(self._pg)])
+        document = await apply_transforms(
+            document, [AttachTaskTransform(self._pg)], self._pg
+        )
 
         return HMMStatus(**document)
 
@@ -136,7 +139,8 @@ class HmmsData(DataLayerDomain):
 
         installed = await apply_transforms(
             {**release, **update},
-            [AttachUserTransform(self._mongo)],
+            [AttachUserTransform(self._pg)],
+            self._pg,
         )
 
         return HMMInstalled(**installed)

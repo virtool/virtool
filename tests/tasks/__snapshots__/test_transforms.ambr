@@ -4,6 +4,7 @@
     dict({
       'id': 1,
       'task': dict({
+        'acquired_at': None,
         'complete': False,
         'context': dict({
         }),
@@ -13,6 +14,7 @@
         'file_size': None,
         'id': 3,
         'progress': 0,
+        'runner_id': None,
         'step': 'refresh_reference_releases',
         'type': 'refresh_reference_releases',
       }),
@@ -20,6 +22,7 @@
     dict({
       'id': 2,
       'task': dict({
+        'acquired_at': None,
         'complete': False,
         'context': dict({
         }),
@@ -29,6 +32,7 @@
         'file_size': None,
         'id': 4,
         'progress': 0,
+        'runner_id': None,
         'step': 'clone_reference',
         'type': 'clone_reference',
       }),
@@ -48,6 +52,7 @@
     dict({
       'id': 1,
       'task': dict({
+        'acquired_at': None,
         'complete': False,
         'context': dict({
         }),
@@ -57,6 +62,7 @@
         'file_size': None,
         'id': 2,
         'progress': 0,
+        'runner_id': None,
         'step': 'clean_references',
         'type': 'clean_references',
       }),

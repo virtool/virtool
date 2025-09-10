@@ -46,7 +46,6 @@ async def get(req):
             "references": {"url": "/references", "doc": f"{API_URL_ROOT}/refs"},
             "samples": {"url": "/samples", "doc": f"{API_URL_ROOT}/samples"},
             "settings": {"url": "/settings", "doc": f"{API_URL_ROOT}/settings"},
-            "spaces": {"url": "/spaces", "doc": f"{API_URL_ROOT}/spaces"},
             "subtraction": {
                 "url": "/subtraction",
                 "doc": f"{API_URL_ROOT}/subtraction",

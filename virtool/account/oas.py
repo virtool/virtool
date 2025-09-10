@@ -1,9 +1,8 @@
-from __future__ import annotations
-
 from pydantic import BaseModel, Field, constr, root_validator, validator
 
 from virtool.account.models import APIKey, check_email
 from virtool.groups.oas import PermissionsUpdate
+from virtool.logs import log_deprecated_field
 from virtool.models.enums import QuickAnalyzeWorkflow
 from virtool.models.validators import prevent_none
 
@@ -16,7 +15,7 @@ class UpdateAccountRequest(BaseModel):
     password: str | None = Field(description="the new password")
 
     @root_validator
-    def check_password(cls, values: str | constr):
+    def check_password(cls, values: dict):
         """Checks if old_password has also been input if a new password
         is provided.
         """
@@ -34,8 +33,8 @@ class UpdateAccountRequest(BaseModel):
 
         return values
 
-    _email_validator = validator("email", allow_reuse=True)(check_email)
     _prevent_none = prevent_none("*")
+    _email_validator = validator("email", allow_reuse=True)(check_email)
 
     class Config:
         schema_extra = {
@@ -69,7 +68,7 @@ class UpdateSettingsRequest(BaseModel):
     _prevent_none = prevent_none("*")
 
 
-class CreateKeysRequest(BaseModel):
+class CreateKeyRequest(BaseModel):
     name: constr(strip_whitespace=True, min_length=1) = Field(
         description="a non-unique name for the API key"
     )
@@ -125,7 +124,7 @@ class UpdateKeyRequest(BaseModel):
 
 
 class CreateLoginRequest(BaseModel):
-    username: constr(min_length=1) = Field(description="account username")
+    handle: constr(min_length=1) = Field(description="account handle")
     password: constr(min_length=1) = Field(description="account password")
     remember: bool | None = Field(
         default=False,
@@ -133,10 +132,31 @@ class CreateLoginRequest(BaseModel):
         "1 hour",
     )
 
+    @root_validator(pre=True)
+    def convert_username_to_handle(cls, values):
+        """Convert username to handle for backward compatibility.
+
+        TODO: Remove this validator once username support is deprecated.
+        """
+        handle = values.get("handle")
+        username = values.get("username")
+
+        if username:
+            log_deprecated_field("username", cls)
+
+        if handle and username:
+            # If both provided, ignore username
+            values.pop("username", None)
+        elif username and not handle:
+            # If only username provided, convert to handle
+            values["handle"] = values.pop("username")
+
+        return values
+
     class Config:
         schema_extra = {
             "example": {
-                "username": "foobar",
+                "handle": "foobar",
                 "password": "p@ssword123",
                 "remember": False,
             }

@@ -25,7 +25,9 @@ class TestAttachSubtractions:
         ]
 
         documents = {"id": "sub_1", "subtractions": subtraction_ids}
-        result = await apply_transforms(documents, [AttachSubtractionsTransform(mongo)])
+        result = await apply_transforms(
+            documents, [AttachSubtractionsTransform(mongo)], None
+        )
         assert result == snapshot
 
     async def test_multiple(self, fake: DataFaker, mongo, snapshot):
@@ -48,7 +50,9 @@ class TestAttachSubtractions:
             {"id": "sub_2", "subtractions": [subtraction_ids[0]]},
             {"id": "sub_3", "subtractions": []},
         ]
-        result = await apply_transforms(documents, [AttachSubtractionsTransform(mongo)])
+        result = await apply_transforms(
+            documents, [AttachSubtractionsTransform(mongo)], None
+        )
         assert result == snapshot
 
 

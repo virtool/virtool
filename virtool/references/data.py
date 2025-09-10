@@ -23,6 +23,10 @@ from virtool.data.errors import (
     ResourceRemoteError,
 )
 from virtool.data.events import Operation, emit, emits
+from virtool.data.topg import (
+    compose_legacy_id_single_expression,
+    get_user_id_single_variants,
+)
 from virtool.data.transforms import apply_transforms
 from virtool.errors import GitHubError
 from virtool.github import create_update_subdocument, format_release
@@ -32,7 +36,7 @@ from virtool.history.models import HistorySearchResult
 from virtool.indexes.models import IndexMinimal, IndexSearchResult
 from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_mongo_from_app, get_new_id, get_one_field, id_exists
+from virtool.mongo.utils import get_mongo_from_app, get_new_id, get_one_field
 from virtool.otus.models import OTU, OTUSearchResult
 from virtool.otus.oas import CreateOTURequest
 from virtool.pg.utils import get_row
@@ -82,7 +86,7 @@ from virtool.tasks.progress import (
 from virtool.tasks.transforms import AttachTaskTransform
 from virtool.types import Document
 from virtool.uploads.sql import SQLUpload
-from virtool.users.mongo import extend_user
+from virtool.users.pg import SQLUser
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import get_http_session_from_app, get_safely
 
@@ -102,6 +106,30 @@ class ReferencesData(DataLayerDomain):
         self._config = config
         self._client = client
 
+    async def _extend_user(self, user: Document) -> Document:
+        """Extend a user document with additional data from PostgreSQL.
+
+        :param user: the user document to extend
+        :return: the extended user document
+        """
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLUser.id, SQLUser.handle, SQLUser.legacy_id).where(
+                    compose_legacy_id_single_expression(SQLUser, user["id"]),
+                ),
+            )
+
+            user_row = result.first()
+
+            if user_row is None:
+                raise KeyError(f"User {user['id']} not found")
+
+            return {
+                **user,
+                "id": user_row.id,
+                "handle": user_row.handle,
+            }
+
     async def find(
         self,
         find: str,
@@ -116,7 +144,9 @@ class ReferencesData(DataLayerDomain):
         if find:
             mongo_query = compose_regex_query(find, ["name", "data_type"])
 
-        base_query = compose_base_find_query(user_id, administrator, groups)
+        # TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings
+        user_id_variants = await get_user_id_single_variants(self._pg, user_id)
+        base_query = compose_base_find_query(user_id_variants, administrator, groups)
 
         data = await paginate(
             self._mongo.references,
@@ -127,17 +157,19 @@ class ReferencesData(DataLayerDomain):
         )
 
         documents = [
-            await processor(self._mongo, document) for document in data["documents"]
+            await processor(self._mongo, self._pg, document)
+            for document in data["documents"]
         ]
 
         documents, remote_slug_count = await asyncio.gather(
             apply_transforms(
                 documents,
                 [
-                    AttachUserTransform(self._mongo),
+                    AttachUserTransform(self._pg),
                     AttachImportedFromTransform(self._mongo, self._pg),
                     AttachTaskTransform(self._pg),
                 ],
+                self._pg,
             ),
             self._mongo.references.count_documents(
                 {"remotes_from.slug": "virtool/ref-plant-viruses"},
@@ -294,12 +326,12 @@ class ReferencesData(DataLayerDomain):
             users,
             unbuilt_count,
         ) = await asyncio.gather(
-            get_contributors(self._mongo, ref_id),
+            get_contributors(self._mongo, self._pg, ref_id),
             get_internal_control(self._mongo, internal_control_id, ref_id),
-            get_latest_build(self._mongo, ref_id),
+            get_latest_build(self._mongo, self._pg, ref_id),
             get_otu_count(self._mongo, ref_id),
             get_reference_groups(self._pg, document),
-            get_reference_users(self._mongo, document),
+            get_reference_users(self._mongo, self._pg, document),
             get_unbuilt_count(self._mongo, ref_id),
         )
 
@@ -317,7 +349,8 @@ class ReferencesData(DataLayerDomain):
 
         document = await apply_transforms(
             document,
-            [AttachUserTransform(self._mongo), AttachTaskTransform(self._pg)],
+            [AttachUserTransform(self._pg), AttachTaskTransform(self._pg)],
+            self._pg,
         )
 
         try:
@@ -328,7 +361,8 @@ class ReferencesData(DataLayerDomain):
         if installed:
             installed = await apply_transforms(
                 installed,
-                [AttachUserTransform(self._mongo)],
+                [AttachUserTransform(self._pg)],
+                self._pg,
             )
 
         document["installed"] = installed
@@ -338,7 +372,8 @@ class ReferencesData(DataLayerDomain):
         if imported_from:
             imported_from = await apply_transforms(
                 imported_from,
-                [AttachUserTransform(self._mongo)],
+                [AttachUserTransform(self._pg)],
+                self._pg,
             )
 
         document["imported_from"] = imported_from
@@ -501,7 +536,7 @@ class ReferencesData(DataLayerDomain):
     async def find_history(
         self,
         ref_id: str,
-        unbuilt: str,
+        unbuilt: bool | None,
         query,
     ) -> HistorySearchResult:
         if not await self._mongo.references.count_documents({"_id": ref_id}):
@@ -509,13 +544,15 @@ class ReferencesData(DataLayerDomain):
 
         base_query = {"reference.id": ref_id}
 
-        if unbuilt == "true":
-            base_query["index.id"] = "unbuilt"
+        search_query = {}
+        if unbuilt is True:
+            search_query["index.id"] = "unbuilt"
+        elif unbuilt is False:
+            search_query["index.id"] = {"$ne": "unbuilt"}
 
-        elif unbuilt == "false":
-            base_query["index.id"] = {"$ne": "unbuilt"}
-
-        data = await virtool.history.db.find(self._mongo, query, base_query)
+        data = await virtool.history.db.find(
+            self._mongo, self._pg, search_query, query, base_query
+        )
 
         return HistorySearchResult(**data)
 
@@ -523,7 +560,9 @@ class ReferencesData(DataLayerDomain):
         if not await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
             raise ResourceNotFoundError()
 
-        data = await virtool.indexes.db.find(self._mongo, query, ref_id=ref_id)
+        data = await virtool.indexes.db.find(
+            self._mongo, self._pg, query, ref_id=ref_id
+        )
 
         return IndexSearchResult(**data)
 
@@ -753,14 +792,28 @@ class ReferencesData(DataLayerDomain):
         if not document:
             raise ResourceNotFoundError()
 
-        if not await id_exists(self._mongo.users, data.user_id):
-            raise ResourceConflictError("User does not exist")
+        async with AsyncSession(self._pg) as session:
+            from virtool.data.topg import compose_legacy_id_single_expression
 
-        if data.user_id in {u["id"] for u in document["users"]}:
-            raise ResourceConflictError("User already exists")
+            result = await session.execute(
+                select(SQLUser.id, SQLUser.handle, SQLUser.legacy_id).where(
+                    compose_legacy_id_single_expression(SQLUser, data.user_id)
+                )
+            )
+            user_row = result.first()
+
+            if user_row is None:
+                raise ResourceConflictError("User does not exist")
+
+            existing_user_ids = {u["id"] for u in document["users"]}
+            if (
+                user_row.id in existing_user_ids
+                or user_row.legacy_id in existing_user_ids
+            ):
+                raise ResourceConflictError("User already exists")
 
         reference_user = {
-            "id": data.user_id,
+            "id": user_row.id,
             "build": data.build or False,
             "created_at": virtool.utils.timestamp(),
             "modify": data.modify or False,
@@ -775,7 +828,7 @@ class ReferencesData(DataLayerDomain):
 
         emit(await self.get(ref_id), "references", "create_user", Operation.UPDATE)
 
-        return ReferenceUser(**await extend_user(self._mongo, reference_user))
+        return ReferenceUser(**await self._extend_user(reference_user))
 
     async def update_user(
         self,
@@ -783,10 +836,21 @@ class ReferencesData(DataLayerDomain):
         user_id: str,
         data: ReferenceRightsRequest,
     ) -> ReferenceUser:
-        document = await self._mongo.references.find_one(
-            {"_id": ref_id, "users.id": user_id},
-            ["users"],
-        )
+        """Update a reference user.
+
+        TODO: Update this once we have fixed the nested user IDs in a migration
+        to only match against integer user IDs.
+        """
+        # Handle both string and integer user IDs during migration
+        query = {"_id": ref_id, "$or": [{"users.id": user_id}]}
+        try:
+            # Also try matching as integer if user_id is a valid integer string
+            int_user_id = int(user_id)
+            query["$or"].append({"users.id": int_user_id})
+        except ValueError:
+            pass
+
+        document = await self._mongo.references.find_one(query, ["users"])
 
         if document is None:
             raise ResourceNotFoundError()
@@ -794,7 +858,10 @@ class ReferencesData(DataLayerDomain):
         data = data.dict(exclude_unset=True)
 
         for user in document["users"]:
-            if user["id"] == user_id:
+            # Handle both string and integer user IDs during migration
+            if user["id"] == user_id or (
+                isinstance(user["id"], int) and str(user["id"]) == user_id
+            ):
                 user.update({key: data.get(key, user[key]) for key in RIGHTS})
 
                 await self._mongo.references.update_one(
@@ -809,29 +876,47 @@ class ReferencesData(DataLayerDomain):
                     Operation.UPDATE,
                 )
 
-                return ReferenceUser(**await extend_user(self._mongo, user))
+                return ReferenceUser(**await self._extend_user(user))
 
         raise ResourceNotFoundError()
 
     async def delete_user(self, ref_id: str, user_id: str) -> None:
         """Delete a reference user.
 
+        TODO: Update this once we have fixed the nested user IDs in a migration
+        to only match against integer user IDs.
+
         :param ref_id: the id of the reference
         :param user_id: the id of the user to delete
 
         """
-        document = await self._mongo.references.find_one(
-            {"_id": ref_id, "users.id": user_id},
-            ["groups", "users"],
-        )
+        # Handle both string and integer user IDs during migration
+        query = {"_id": ref_id, "$or": [{"users.id": user_id}]}
+        try:
+            # Also try matching as integer if user_id is a valid integer string
+            int_user_id = int(user_id)
+            query["$or"].append({"users.id": int_user_id})
+        except ValueError:
+            pass
+
+        document = await self._mongo.references.find_one(query, ["groups", "users"])
 
         if document is None:
             raise ResourceNotFoundError
 
         # Retain only the users that don't match the passed user_id.
+        # Handle both string and integer user IDs during migration
+        filtered_users = []
+        for user in document["users"]:
+            if not (
+                user["id"] == user_id
+                or (isinstance(user["id"], int) and str(user["id"]) == user_id)
+            ):
+                filtered_users.append(user)
+
         await self._mongo.references.update_one(
             {"_id": ref_id},
-            {"$set": {"users": [u for u in document["users"] if u["id"] != user_id]}},
+            {"$set": {"users": filtered_users}},
         )
 
         emit(await self.get(ref_id), "references", "delete_user", Operation.UPDATE)
@@ -1146,12 +1231,12 @@ class ReferencesData(DataLayerDomain):
                     {"$pop": {"updates": -1}, "$set": {"updating": False}},
                 )
 
-            emit(
-                await self.get(reference["_id"]),
-                "references",
-                "clean_all",
-                Operation.UPDATE,
-            )
+                emit(
+                    await self.get(reference["_id"]),
+                    "references",
+                    "clean_all",
+                    Operation.UPDATE,
+                )
 
     async def fetch_and_update_reference_releases(self) -> None:
         for ref_id in await self._mongo.references.distinct(

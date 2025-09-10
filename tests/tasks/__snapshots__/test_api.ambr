@@ -1,49 +1,58 @@
 # serializer version: 1
+# name: TestGet.test_ok
+  dict({
+    'complete': False,
+    'context': dict({
+    }),
+    'count': 0,
+    'created_at': 'approximately_now_isoformat',
+    'error': None,
+    'file_size': None,
+    'progress': 0,
+    'step': 'refresh_reference_releases',
+    'type': 'refresh_reference_releases',
+  })
+# ---
 # name: test_find
   list([
     dict({
-      'complete': True,
+      'complete': False,
       'context': dict({
-        'user_id': 'test_1',
       }),
-      'count': 40,
-      'created_at': '2015-10-06T20:00:00Z',
+      'count': 0,
+      'created_at': 'approximately_now_isoformat',
       'error': None,
-      'file_size': 1024,
-      'id': 1,
-      'progress': 100,
-      'step': 'download',
+      'file_size': None,
+      'id': 3,
+      'progress': 0,
+      'step': 'clone_reference',
       'type': 'clone_reference',
     }),
     dict({
       'complete': False,
       'context': dict({
-        'user_id': 'test_2',
       }),
-      'count': 30,
-      'created_at': '2015-10-06T20:00:00Z',
+      'count': 0,
+      'created_at': 'approximately_now_isoformat',
       'error': None,
-      'file_size': 14754,
+      'file_size': None,
       'id': 2,
-      'progress': 80,
-      'step': 'download',
-      'type': 'import_reference',
+      'progress': 0,
+      'step': 'clean_references',
+      'type': 'clean_references',
+    }),
+    dict({
+      'complete': False,
+      'context': dict({
+      }),
+      'count': 0,
+      'created_at': 'approximately_now_isoformat',
+      'error': None,
+      'file_size': None,
+      'id': 1,
+      'progress': 0,
+      'step': 'refresh_reference_releases',
+      'type': 'refresh_reference_releases',
     }),
   ])
-# ---
-# name: test_get[None]
-  dict({
-    'complete': True,
-    'context': dict({
-      'user_id': 'test_1',
-    }),
-    'count': 40,
-    'created_at': '2015-10-06T20:00:00Z',
-    'error': None,
-    'file_size': 1024,
-    'id': 1,
-    'progress': 100,
-    'step': 'download',
-    'type': 'clone_reference',
-  })
 # ---

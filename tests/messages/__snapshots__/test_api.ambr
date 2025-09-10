@@ -8,8 +8,8 @@
     'message': 'Change test message content',
     'updated_at': '2015-10-06T20:00:00Z',
     'user': dict({
-      'handle': 'leeashley',
-      'id': 'fb085f7f',
+      'handle': 'myersmitchell',
+      'id': 2,
     }),
   })
 # ---
@@ -22,8 +22,8 @@
     'message': 'Change message',
     'updated_at': '2015-10-06T20:00:00Z',
     'user': dict({
-      'handle': 'leeashley',
-      'id': 'fb085f7f',
+      'handle': 'myersmitchell',
+      'id': 2,
     }),
   })
 # ---
@@ -36,8 +36,8 @@
     'message': 'This is a new message',
     'updated_at': '2015-10-06T20:00:00Z',
     'user': dict({
-      'handle': 'bob',
-      'id': 'bf1b993c',
+      'handle': 'leeashley',
+      'id': 1,
     }),
   })
 # ---
@@ -50,8 +50,8 @@
     'message': 'This is a test message',
     'updated_at': '2015-10-06T20:00:00Z',
     'user': dict({
-      'handle': 'leeashley',
-      'id': 'fb085f7f',
+      'handle': 'myersmitchell',
+      'id': 2,
     }),
   })
 # ---

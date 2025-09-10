@@ -228,7 +228,7 @@ def test_read_diff_file(
     m.assert_called_with("foo", "bar", "baz")
 
 
-async def test_remove_diff_files(loop, tmp_path, config):
+async def test_remove_diff_files(tmp_path, config):
     """Test that diff files are removed correctly and the function can handle a
     non-existent diff file.
     """

@@ -7,14 +7,12 @@ from virtool.data.transforms import apply_transforms
 from virtool.messages.models import InstanceMessage
 from virtool.messages.oas import CreateMessageRequest, UpdateMessageRequest
 from virtool.messages.sql import SQLInstanceMessage
-from virtool.mongo.core import Mongo
 from virtool.users.transforms import AttachUserTransform
 
 
 class MessagesData:
-    def __init__(self, pg: AsyncEngine, mongo: Mongo):
+    def __init__(self, pg: AsyncEngine):
         self._pg = pg
-        self._mongo = mongo
 
     async def get(self) -> InstanceMessage:
         """Get the active administrative instance message."""
@@ -33,7 +31,7 @@ class MessagesData:
         if instance_message.active:
             document = instance_message.to_dict()
             document = await apply_transforms(
-                document, [AttachUserTransform(self._mongo)]
+                document, [AttachUserTransform(self._pg)], self._pg
             )
             return InstanceMessage(**document)
 
@@ -46,7 +44,7 @@ class MessagesData:
             message=data.message,
             created_at=virtool.utils.timestamp(),
             updated_at=virtool.utils.timestamp(),
-            user=user_id,
+            user=str(user_id),
         )
 
         async with AsyncSession(self._pg) as session:
@@ -55,7 +53,9 @@ class MessagesData:
             document = instance_message.to_dict()
             await session.commit()
 
-        document = await apply_transforms(document, [AttachUserTransform(self._mongo)])
+        document = await apply_transforms(
+            document, [AttachUserTransform(self._pg)], self._pg
+        )
 
         return InstanceMessage(**document)
 
@@ -92,6 +92,8 @@ class MessagesData:
 
             await session.commit()
 
-        document = await apply_transforms(document, [AttachUserTransform(self._mongo)])
+        document = await apply_transforms(
+            document, [AttachUserTransform(self._pg)], self._pg
+        )
 
         return InstanceMessage(**document)

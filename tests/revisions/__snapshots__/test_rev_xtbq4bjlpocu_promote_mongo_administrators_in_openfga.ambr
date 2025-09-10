@@ -23,15 +23,15 @@
   list([
     tuple(
       'full_admin_1',
-      'full',
+      <AdministratorRole.FULL: 'full'>,
     ),
     tuple(
       'full_admin_2',
-      'full',
+      <AdministratorRole.FULL: 'full'>,
     ),
     tuple(
       'spaces_admin_1',
-      'spaces',
+      <AdministratorRole.SPACES: 'spaces'>,
     ),
   ])
 # ---

@@ -15,10 +15,6 @@ from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.models.roles import AdministratorRole
-from virtool.mongo.core import Mongo
-from virtool.settings.oas import UpdateSettingsRequest
-from virtool.users.mongo import validate_credentials
-from virtool.users.utils import check_password
 
 _last_password_change_matcher = path_type({"last_password_change": (str,)})
 """
@@ -95,22 +91,15 @@ async def test_create(
     error: str | None,
     data_layer: DataLayer,
     fake: DataFaker,
-    mongo: Mongo,
     resp_is,
     snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
     static_time,
 ):
     """Test that a valid request results in a user document being properly inserted."""
-    await mongo.users.create_index("handle", unique=True, sparse=True)
-
     client = await spawn_client(administrator=True, authenticated=True)
 
     user = await fake.users.create()
-
-    await get_data_from_app(client.app).settings.update(
-        UpdateSettingsRequest(minimum_password_length=8),
-    )
 
     data = {"handle": "fred", "password": "hello_world", "force_reset": False}
 
@@ -147,12 +136,8 @@ async def test_create(
     assert resp_json == snapshot
     assert resp.headers["Location"] == snapshot(name="location")
 
-    document = await mongo.users.find_one(resp_json["id"])
-    password = document.pop("password")
-
-    assert document == snapshot(name="db")
-    assert check_password("hello_world", password)
     assert await data_layer.users.get(resp_json["id"]) == snapshot(name="data_layer")
+    assert await data_layer.users.validate_password(resp_json["id"], "hello_world")
 
 
 @pytest.mark.parametrize(
@@ -249,7 +234,6 @@ class TestUpdateUser:
     )
     async def test_password(
         self,
-        mongo: Mongo,
         fake: DataFaker,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
@@ -286,7 +270,8 @@ class TestUpdateUser:
             seconds=1,
         )
 
-        assert await validate_credentials(mongo, user.id, "a_whole_new_password")
+        data_layer = get_data_from_app(client.app)
+        assert await data_layer.users.validate_password(user.id, "a_whole_new_password")
 
     @pytest.mark.parametrize("is_member", [True, False])
     async def test_primary_group(

@@ -1,12 +1,12 @@
 # serializer version: 1
 # name: TestCreate.test[True][index]
   dict({
-    '_id': '3cbb22cc',
+    '_id': 'fb085f7f',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'has_files': True,
     'has_json': False,
     'job': dict({
-      'id': '7cf872dc',
+      'id': 'bf1b993c',
     }),
     'manifest': dict({
       'bar': 2,
@@ -17,24 +17,24 @@
       'id': 'foo',
     }),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'version': 0,
   })
 # ---
 # name: TestCreate.test[True][job]
   dict({
-    '_id': '7cf872dc',
+    '_id': 'bf1b993c',
     'acquired': False,
     'args': dict({
-      'index_id': '3cbb22cc',
+      'index_id': 'fb085f7f',
       'index_version': 0,
       'manifest': dict({
         'bar': 2,
         'foo': 1,
       }),
       'ref_id': 'foo',
-      'user_id': 'bf1b993c',
+      'user_id': 1,
     }),
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'key': None,
@@ -57,7 +57,7 @@
       }),
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'workflow': 'build_index',
   })
@@ -68,25 +68,25 @@
     'contributors': list([
       dict({
         'count': 1,
-        'handle': 'leeashley',
-        'id': 'fb085f7f',
+        'handle': 'myersmitchell',
+        'id': 2,
       }),
     ]),
     'created_at': '2015-10-06T20:00:00Z',
     'files': list([
     ]),
     'has_files': True,
-    'id': '3cbb22cc',
+    'id': 'fb085f7f',
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
-      'id': '7cf872dc',
+      'id': 'bf1b993c',
       'progress': 0,
       'retries': 0,
       'stage': None,
       'state': 'waiting',
       'user': dict({
-        'handle': 'bob',
-        'id': 'bf1b993c',
+        'handle': 'leeashley',
+        'id': 1,
       }),
       'workflow': 'build_index',
     }),
@@ -104,14 +104,14 @@
       'name': 'Foo',
     }),
     'user': dict({
-      'handle': 'bob',
-      'id': 'bf1b993c',
+      'handle': 'leeashley',
+      'id': 1,
     }),
     'version': 0,
   })
 # ---
 # name: TestCreate.test[True][location]
-  'https://virtool.example.com/indexes/3cbb22cc'
+  'https://virtool.example.com/indexes/fb085f7f'
 # ---
 # name: TestFind.test
   dict({
@@ -124,14 +124,14 @@
         'id': 'bar',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
-          'id': '7cf872dc',
-          'progress': 3,
+          'id': 'bf1b993c',
+          'progress': 60,
           'retries': 0,
-          'stage': None,
-          'state': 'preparing',
+          'stage': 'ZbutjsGXUcnbBDTlOUGA',
+          'state': 'cancelled',
           'user': dict({
-            'handle': 'leeashley',
-            'id': 'fb085f7f',
+            'handle': 'myersmitchell',
+            'id': 2,
           }),
           'workflow': 'build_index',
         }),
@@ -143,8 +143,8 @@
           'name': 'Bar',
         }),
         'user': dict({
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
+          'handle': 'myersmitchell',
+          'id': 2,
         }),
         'version': 1,
       }),
@@ -155,14 +155,14 @@
         'id': 'foo',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
-          'id': '3cbb22cc',
-          'progress': 10,
+          'id': 'fb085f7f',
+          'progress': 0,
           'retries': 0,
-          'stage': 'sZgfLWqSLpRpfDzrPQgg',
-          'state': 'running',
+          'stage': None,
+          'state': 'waiting',
           'user': dict({
-            'handle': 'leeashley',
-            'id': 'fb085f7f',
+            'handle': 'myersmitchell',
+            'id': 2,
           }),
           'workflow': 'build_index',
         }),
@@ -174,8 +174,8 @@
           'name': 'Foo',
         }),
         'user': dict({
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
+          'handle': 'myersmitchell',
+          'id': 2,
         }),
         'version': 0,
       }),
@@ -198,16 +198,16 @@
       'id': 'daz',
       'job': dict({
         'created_at': '2015-10-06T20:00:00Z',
-        'id': '7cf872dc',
+        'id': 'bf1b993c',
         'progress': 3,
         'retries': 0,
         'stage': None,
         'state': 'preparing',
         'user': dict({
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
+          'handle': 'myersmitchell',
+          'id': 2,
         }),
-        'workflow': 'pathoscope_bowtie',
+        'workflow': 'nuvs',
       }),
       'modified_otu_count': 0,
       'ready': True,
@@ -217,8 +217,8 @@
         'name': 'Foo',
       }),
       'user': dict({
-        'handle': 'leeashley',
-        'id': 'fb085f7f',
+        'handle': 'myersmitchell',
+        'id': 2,
       }),
       'version': 0,
     }),
@@ -229,16 +229,16 @@
       'id': 'bot',
       'job': dict({
         'created_at': '2015-10-06T20:00:00Z',
-        'id': '7cf872dc',
+        'id': 'bf1b993c',
         'progress': 3,
         'retries': 0,
         'stage': None,
         'state': 'preparing',
         'user': dict({
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
+          'handle': 'myersmitchell',
+          'id': 2,
         }),
-        'workflow': 'pathoscope_bowtie',
+        'workflow': 'nuvs',
       }),
       'modified_otu_count': 0,
       'ready': True,
@@ -248,8 +248,8 @@
         'name': 'Bar',
       }),
       'user': dict({
-        'handle': 'leeashley',
-        'id': 'fb085f7f',
+        'handle': 'myersmitchell',
+        'id': 2,
       }),
       'version': 1,
     }),
@@ -349,14 +349,14 @@
     'id': 'test_index',
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
-      'id': 'fb085f7f',
+      'id': 'bf1b993c',
       'progress': 3,
       'retries': 0,
       'stage': None,
       'state': 'preparing',
       'user': dict({
         'handle': 'leeashley',
-        'id': 'bf1b993c',
+        'id': 1,
       }),
       'workflow': 'build_index',
     }),
@@ -374,7 +374,7 @@
     }),
     'user': dict({
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'version': 2,
   })
@@ -427,8 +427,8 @@
           'name': 'Foo',
         }),
         'user': dict({
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
+          'handle': 'myersmitchell',
+          'id': 2,
         }),
       }),
       dict({
@@ -451,8 +451,8 @@
           'name': 'Foo',
         }),
         'user': dict({
-          'handle': 'zclark',
-          'id': '7cf872dc',
+          'handle': 'modonnell',
+          'id': 3,
         }),
       }),
       dict({
@@ -475,8 +475,8 @@
           'name': 'Foo',
         }),
         'user': dict({
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
+          'handle': 'myersmitchell',
+          'id': 2,
         }),
       }),
       dict({
@@ -499,8 +499,8 @@
           'name': 'Foo',
         }),
         'user': dict({
-          'handle': 'leeashley',
-          'id': 'fb085f7f',
+          'handle': 'myersmitchell',
+          'id': 2,
         }),
       }),
     ]),
@@ -518,12 +518,12 @@
       dict({
         'count': 1,
         'handle': 'fred',
-        'id': 'fred',
+        'id': 1,
       }),
       dict({
         'count': 3,
         'handle': 'ian',
-        'id': 'igboyes',
+        'id': 2,
       }),
     ]),
     'created_at': '2015-10-06T20:00:00Z',
@@ -533,14 +533,14 @@
     'id': 'foobar',
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
-      'id': '7cf872dc',
-      'progress': 3,
+      'id': 'bf1b993c',
+      'progress': 60,
       'retries': 0,
-      'stage': None,
-      'state': 'preparing',
+      'stage': 'ZbutjsGXUcnbBDTlOUGA',
+      'state': 'cancelled',
       'user': dict({
-        'handle': 'leeashley',
-        'id': 'fb085f7f',
+        'handle': 'myersmitchell',
+        'id': 2,
       }),
       'workflow': 'build_index',
     }),
@@ -567,8 +567,8 @@
       'name': 'Bar',
     }),
     'user': dict({
-      'handle': 'leeashley',
-      'id': 'fb085f7f',
+      'handle': 'myersmitchell',
+      'id': 2,
     }),
     'version': 0,
   })
@@ -590,7 +590,7 @@
       'id': 'bar',
     }),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
   })
 # ---

@@ -66,6 +66,19 @@ class JobsView(PydanticView):
         return json_response(data=errors, status=400)
 
 
+@routes.view("/jobs/counts")
+class JobsCountsView(PydanticView):
+    async def get(self) -> r200[dict[str, dict[str, int]]]:
+        """Get job counts.
+
+        Returns job counts grouped by state and workflow.
+
+        Status Codes:
+            200: Successful operation
+        """
+        return json_response(await get_data_from_req(self.request).jobs.get_counts())
+
+
 @routes.view("/jobs/{job_id}")
 class JobView(PydanticView):
     async def get(self, job_id: str, /) -> r200[Job] | r404:
@@ -113,7 +126,9 @@ async def acquire(req):
         document = await get_data_from_req(req).jobs.acquire(req.match_info["job_id"])
     except ResourceNotFoundError:
         raise APINotFound()
-    except ResourceConflictError:
+    except ResourceConflictError as e:
+        if "terminal state" in str(e):
+            raise APIConflict(str(e))
         raise APIBadRequest("Job already acquired")
 
     return json_response(document)

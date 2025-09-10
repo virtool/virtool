@@ -1,3 +1,5 @@
+"""Policies for protecting API endpoints."""
+
 from collections.abc import Callable
 from inspect import isclass
 from typing import Any
@@ -8,11 +10,10 @@ from aiohttp_pydantic import PydanticView
 
 from virtool.api.client import UserClient
 from virtool.api.errors import APIForbidden, APIUnauthorized
-from virtool.authorization.client import get_authorization_client_from_req
 from virtool.authorization.permissions import (
     LegacyPermission,
-    ResourceType,
 )
+from virtool.data.utils import get_data_from_req
 from virtool.errors import PolicyError
 from virtool.models.roles import AdministratorRole
 
@@ -52,8 +53,8 @@ class AdministratorRoutePolicy(DefaultRoutePolicy):
         self.role = role
 
     async def check(self, req, handler, client: UserClient) -> None:
-        if not await get_authorization_client_from_req(req).check(
-            client.user_id, self.role, ResourceType.APP, "virtool"
+        if not await get_data_from_req(req).users.check_administrator_role(
+            client.user_id, self.role
         ):
             raise APIForbidden("Requires administrative privilege")
 
@@ -62,8 +63,8 @@ class PermissionRoutePolicy(DefaultRoutePolicy):
     def __init__(self, permission: LegacyPermission):
         self.permission = permission
 
-    async def check(self, req: Request, handler: Callable, client: UserClient) -> None:
-        """Checks if the client has the required permission for the object.
+    async def check(self, _: Request, __: Callable, client: UserClient) -> None:
+        """Check if the client has the required permission for the object.
 
         Raises ``HTTPForbidden`` if the client does not have the required permission.
 
@@ -84,13 +85,13 @@ class PublicRoutePolicy(DefaultRoutePolicy):
 
 
 class WebSocketRoutePolicy(DefaultRoutePolicy):
-    """Only for use with websocket, accessible by any client"""
+    """Only for use with websocket, accessible by any client."""
 
     allow_unauthenticated = True
 
 
 def policy(route_policy: DefaultRoutePolicy | type[DefaultRoutePolicy]):
-    """Applies the provided route policy to the decorated request handler."""
+    """Apply the provided route policy to the decorated request handler."""
 
     def decorator(func):
         existing_policy = getattr(func, "policy", None)

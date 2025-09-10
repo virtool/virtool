@@ -3,6 +3,7 @@
 import asyncio
 import math
 from asyncio import gather, to_thread
+from contextlib import suppress
 from typing import Any
 
 from pymongo.results import UpdateResult
@@ -16,7 +17,10 @@ from virtool.config.cls import Config
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emits
-from virtool.data.topg import compose_legacy_id_expression
+from virtool.data.topg import (
+    compose_legacy_id_multi_expression,
+    get_user_id_single_variants,
+)
 from virtool.data.transforms import apply_transforms
 from virtool.groups.models import GroupMinimal
 from virtool.groups.pg import SQLGroup
@@ -90,18 +94,21 @@ class SamplesData(DataLayerDomain):
         if queries:
             query["$and"] = queries
 
+        # TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings
+        user_id_variants = await get_user_id_single_variants(self._pg, client.user_id)
+
         rights_filter = [
-            # The requesting user is the sample owner
-            {"user.id": client.user_id},
-            # The sample rights allow all users to view the sample.
             {"all_read": True},
         ]
+
+        for user_id_variant in user_id_variants:
+            rights_filter.append({"user.id": user_id_variant})
 
         if client.groups:
             async with AsyncSession(self._pg) as session:
                 result = await session.execute(
                     select(SQLGroup).where(
-                        compose_legacy_id_expression(SQLGroup, client.groups),
+                        compose_legacy_id_multi_expression(SQLGroup, client.groups),
                     ),
                 )
 
@@ -184,9 +191,10 @@ class SamplesData(DataLayerDomain):
             [base_processor(d) for d in data],
             [
                 AttachLabelsTransform(self._pg),
-                AttachUserTransform(self._mongo),
-                AttachJobTransform(self._mongo),
+                AttachUserTransform(self._pg),
+                AttachJobTransform(self._mongo, self._pg),
             ],
+            self._pg,
         )
 
         return SampleSearchResult(
@@ -214,11 +222,12 @@ class SamplesData(DataLayerDomain):
             base_processor(document),
             [
                 AttachArtifactsAndReadsTransform(self._pg),
-                AttachJobTransform(self._mongo),
+                AttachJobTransform(self._mongo, self._pg),
                 AttachLabelsTransform(self._pg),
                 AttachSubtractionsTransform(self._mongo),
-                AttachUserTransform(self._mongo),
+                AttachUserTransform(self._pg),
             ],
+            self._pg,
         )
 
         group = None
@@ -230,7 +239,9 @@ class SamplesData(DataLayerDomain):
             async with AsyncSession(self._pg) as session:
                 result = await session.execute(
                     select(SQLGroup).where(
-                        compose_legacy_id_expression(SQLGroup, [document["group"]]),
+                        compose_legacy_id_multi_expression(
+                            SQLGroup, [document["group"]]
+                        ),
                     ),
                 )
 
@@ -372,7 +383,7 @@ class SamplesData(DataLayerDomain):
 
     @emits(Operation.DELETE)
     async def delete(self, sample_id: str) -> Sample:
-        """Deletes the sample identified by ``sample_id`` and all its analyses.
+        """Delete the sample identified by ``sample_id`` and all its analyses.
 
         :param sample_id: the id of the sample to delete
         :return: the mongodb deletion result
@@ -381,23 +392,21 @@ class SamplesData(DataLayerDomain):
         sample = await self.get(sample_id)
 
         async with self._mongo.create_session() as session:
-            result, _ = await asyncio.gather(
-                self._mongo.samples.delete_many({"_id": sample_id}, session=session),
-                self._mongo.analyses.delete_many(
-                    {"sample.id": sample_id},
-                    session=session,
-                ),
+            result = await self._mongo.samples.delete_one(
+                {"_id": sample_id}, session=session
+            )
+            await self._mongo.analyses.delete_many(
+                {"sample.id": sample_id},
+                session=session,
             )
 
         if result.deleted_count:
-            try:
+            with suppress(FileNotFoundError):
                 await to_thread(
                     virtool.utils.rm,
                     join_sample_path(self._config, sample_id),
                     recursive=True,
                 )
-            except FileNotFoundError:
-                pass
 
             return sample
 
@@ -409,12 +418,11 @@ class SamplesData(DataLayerDomain):
         sample_id: str,
         quality: dict[str, Any],
     ) -> Sample:
-        """Finalize a sample by setting a ``quality`` field and ``ready`` to ``True``
+        """Finalize a sample by setting a ``quality`` field and ``ready`` to ``True``.
 
         :param sample_id: the id of the sample
         :param quality: a dict containing quality data
         :return: the sample after finalizing
-
         """
         if await get_one_field(self._mongo.samples, "ready", sample_id):
             raise ResourceConflictError("Sample already finalized")
@@ -426,6 +434,8 @@ class SamplesData(DataLayerDomain):
 
         if not result.modified_count:
             raise ResourceNotFoundError
+
+        files_to_delete = []
 
         async with AsyncSession(self._pg) as session:
             rows = (
@@ -441,22 +451,24 @@ class SamplesData(DataLayerDomain):
             )
 
             for row in rows:
+                files_to_delete.append(
+                    self._config.data_path / "files" / row.name_on_disk
+                )
+
                 if row.reads is not None:
                     row.reads.clear()
+
                 row.removed = True
                 row.removed_at = virtool.utils.timestamp()
-
-                try:
-                    await to_thread(
-                        virtool.utils.rm,
-                        self._config.data_path / "files" / row.name_on_disk,
-                    )
-                except FileNotFoundError:
-                    pass
-
                 session.add(row)
 
             await session.commit()
+
+        async def delete_file(path):
+            with suppress(FileNotFoundError):
+                await to_thread(virtool.utils.rm, path)
+
+        await gather(*[delete_file(path) for path in files_to_delete])
 
         return await self.get(sample_id)
 
@@ -500,7 +512,7 @@ class SamplesData(DataLayerDomain):
     ) -> bool:
         document = await self._mongo.samples.find_one(
             {"_id": sample_id},
-            ["all_read", "all_write", "group", "group_read", "user"],
+            ["all_read", "all_write", "group", "group_read", "group_write", "user"],
         )
 
         if document is None:
