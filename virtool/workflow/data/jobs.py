@@ -35,7 +35,7 @@ async def push_status(
             "details": [str(arg) for arg in _error.args],
         }
 
-        logger.critical("reporting error to api", error=_error)
+        logger.info("reporting error to api", error=_error)
 
     if _state in (JobState.WAITING, JobState.PREPARING):
         progress = 0
