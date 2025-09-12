@@ -1,6 +1,7 @@
 """The sample data layer domain."""
 
 import asyncio
+from contextlib import suppress
 import math
 from asyncio import gather, to_thread
 from typing import Any
@@ -372,7 +373,7 @@ class SamplesData(DataLayerDomain):
 
     @emits(Operation.DELETE)
     async def delete(self, sample_id: str) -> Sample:
-        """Deletes the sample identified by ``sample_id`` and all its analyses.
+        """Delete the sample identified by ``sample_id`` and all its analyses.
 
         :param sample_id: the id of the sample to delete
         :return: the mongodb deletion result
@@ -381,23 +382,21 @@ class SamplesData(DataLayerDomain):
         sample = await self.get(sample_id)
 
         async with self._mongo.create_session() as session:
-            result, _ = await asyncio.gather(
-                self._mongo.samples.delete_many({"_id": sample_id}, session=session),
-                self._mongo.analyses.delete_many(
-                    {"sample.id": sample_id},
-                    session=session,
-                ),
+            result = await self._mongo.samples.delete_one(
+                {"_id": sample_id}, session=session
+            )
+            await self._mongo.analyses.delete_many(
+                {"sample.id": sample_id},
+                session=session,
             )
 
         if result.deleted_count:
-            try:
+            with suppress(FileNotFoundError):
                 await to_thread(
                     virtool.utils.rm,
                     join_sample_path(self._config, sample_id),
                     recursive=True,
                 )
-            except FileNotFoundError:
-                pass
 
             return sample
 
@@ -409,12 +408,11 @@ class SamplesData(DataLayerDomain):
         sample_id: str,
         quality: dict[str, Any],
     ) -> Sample:
-        """Finalize a sample by setting a ``quality`` field and ``ready`` to ``True``
+        """Finalize a sample by setting a ``quality`` field and ``ready`` to ``True``.
 
         :param sample_id: the id of the sample
         :param quality: a dict containing quality data
         :return: the sample after finalizing
-
         """
         if await get_one_field(self._mongo.samples, "ready", sample_id):
             raise ResourceConflictError("Sample already finalized")
