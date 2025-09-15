@@ -21,7 +21,8 @@ from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from virtool.api.custom_json import dump_string
-from virtool.authorization.openfga import OpenfgaScheme
+from virtool.authorization.openfga import OpenfgaScheme, delete_openfga_tuples
+from virtool.authorization.permissions import ResourceType
 from virtool.config.cls import MigrationConfig
 from virtool.migration.ctx import MigrationContext, create_migration_context
 from virtool.migration.pg import SQLRevision
@@ -129,6 +130,7 @@ async def ctx(
 ) -> MigrationContext:
     """A migration context for testing backed by test instances of backing services."""
     ctx = await create_migration_context(migration_config)
+    await delete_openfga_tuples(ctx.authorization.openfga, ResourceType.APP, "virtool")
     yield ctx
     await ctx.mongo.client.drop_database(
         ctx.mongo.client.get_database(migration_mongo_name)
