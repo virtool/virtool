@@ -1,9 +1,9 @@
 """The sample data layer domain."""
 
 import asyncio
-from contextlib import suppress
 import math
 from asyncio import gather, to_thread
+from contextlib import suppress
 from typing import Any
 
 from pymongo.results import UpdateResult

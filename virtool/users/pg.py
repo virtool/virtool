@@ -1,11 +1,12 @@
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, Index
+from sqlalchemy import Enum, ForeignKey, Index
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from virtool.groups.pg import SQLGroup
+from virtool.models.roles import AdministratorRole
 from virtool.pg.base import Base
 
 
@@ -41,6 +42,9 @@ class SQLUser(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     active: Mapped[bool] = mapped_column(default=True)
+    administrator_role: Mapped[AdministratorRole | None] = mapped_column(
+        Enum(AdministratorRole), nullable=True
+    )
     b2c_display_name: Mapped[str] = mapped_column(default="")
     b2c_given_name: Mapped[str] = mapped_column(default="")
     b2c_family_name: Mapped[str] = mapped_column(default="")

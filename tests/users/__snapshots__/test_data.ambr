@@ -43,6 +43,7 @@
 # name: TestCreate.test_first[pg]
   dict({
     'active': True,
+    'administrator_role': 'full',
     'b2c_display_name': '',
     'b2c_family_name': '',
     'b2c_given_name': '',
@@ -109,6 +110,7 @@
 # name: TestCreate.test_force_reset[false][pg]
   dict({
     'active': True,
+    'administrator_role': None,
     'b2c_display_name': '',
     'b2c_family_name': '',
     'b2c_given_name': '',
@@ -175,6 +177,7 @@
 # name: TestCreate.test_force_reset[not_specified][pg]
   dict({
     'active': True,
+    'administrator_role': None,
     'b2c_display_name': '',
     'b2c_family_name': '',
     'b2c_given_name': '',
@@ -241,6 +244,7 @@
 # name: TestCreate.test_force_reset[true][pg]
   dict({
     'active': True,
+    'administrator_role': None,
     'b2c_display_name': '',
     'b2c_family_name': '',
     'b2c_given_name': '',
@@ -554,6 +558,7 @@
 # name: TestUpdate.test_force_reset[pg_1]
   dict({
     'active': True,
+    'administrator_role': None,
     'b2c_display_name': '',
     'b2c_family_name': '',
     'b2c_given_name': '',
@@ -579,6 +584,7 @@
 # name: TestUpdate.test_force_reset[pg_2]
   dict({
     'active': True,
+    'administrator_role': None,
     'b2c_display_name': '',
     'b2c_family_name': '',
     'b2c_given_name': '',
@@ -604,6 +610,7 @@
 # name: TestUpdate.test_force_reset[pg_3]
   dict({
     'active': True,
+    'administrator_role': None,
     'b2c_display_name': '',
     'b2c_family_name': '',
     'b2c_given_name': '',
@@ -777,14 +784,15 @@
   })
 # ---
 # name: TestUpdate.test_groups[pg_1]
-  <SQLUser(id='1', active='True', b2c_display_name='', b2c_given_name='', b2c_family_name='', b2c_oid='None', email='', force_reset='False', handle='leeashley', invalidate_sessions='False', last_password_change='datetime', legacy_id='bf1b993c', settings='{'show_ids': True, 'show_versions': True, 'quick_analyze_workflow': 'pathoscope_bowtie', 'skip_quick_analyze_dialog': True}', groups='[<SQLGroup(id=1, legacy_id=None, name=haematologists, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>, <SQLGroup(id=3, legacy_id=None, name=meteorologists, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>]', primary_group='None')>
+  <SQLUser(id='1', active='True', administrator_role='None', b2c_display_name='', b2c_given_name='', b2c_family_name='', b2c_oid='None', email='', force_reset='False', handle='leeashley', invalidate_sessions='False', last_password_change='datetime', legacy_id='bf1b993c', settings='{'show_ids': True, 'show_versions': True, 'quick_analyze_workflow': 'pathoscope_bowtie', 'skip_quick_analyze_dialog': True}', groups='[<SQLGroup(id=1, legacy_id=None, name=haematologists, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>, <SQLGroup(id=3, legacy_id=None, name=meteorologists, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>]', primary_group='None')>
 # ---
 # name: TestUpdate.test_groups[pg_2]
-  <SQLUser(id='1', active='True', b2c_display_name='', b2c_given_name='', b2c_family_name='', b2c_oid='None', email='', force_reset='False', handle='leeashley', invalidate_sessions='False', last_password_change='datetime', legacy_id='bf1b993c', settings='{'show_ids': True, 'show_versions': True, 'quick_analyze_workflow': 'pathoscope_bowtie', 'skip_quick_analyze_dialog': True}', groups='[<SQLGroup(id=2, legacy_id=None, name=geoscientists, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>, <SQLGroup(id=1, legacy_id=None, name=haematologists, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>]', primary_group='None')>
+  <SQLUser(id='1', active='True', administrator_role='None', b2c_display_name='', b2c_given_name='', b2c_family_name='', b2c_oid='None', email='', force_reset='False', handle='leeashley', invalidate_sessions='False', last_password_change='datetime', legacy_id='bf1b993c', settings='{'show_ids': True, 'show_versions': True, 'quick_analyze_workflow': 'pathoscope_bowtie', 'skip_quick_analyze_dialog': True}', groups='[<SQLGroup(id=2, legacy_id=None, name=geoscientists, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>, <SQLGroup(id=1, legacy_id=None, name=haematologists, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>]', primary_group='None')>
 # ---
 # name: TestUpdate.test_groups[pg_3]
   dict({
     'active': True,
+    'administrator_role': None,
     'b2c_display_name': '',
     'b2c_family_name': '',
     'b2c_given_name': '',
@@ -852,6 +860,7 @@
 # name: TestUpdate.test_groups_unset_primary[pg]
   dict({
     'active': True,
+    'administrator_role': None,
     'b2c_display_name': '',
     'b2c_family_name': '',
     'b2c_given_name': '',
@@ -925,6 +934,7 @@
 # name: TestUpdate.test_password[pg]
   dict({
     'active': True,
+    'administrator_role': None,
     'b2c_display_name': '',
     'b2c_family_name': '',
     'b2c_given_name': '',
@@ -1003,6 +1013,7 @@
 # name: TestUpdate.test_primary_group_when_member[pg]
   dict({
     'active': True,
+    'administrator_role': None,
     'b2c_display_name': '',
     'b2c_family_name': '',
     'b2c_given_name': '',
