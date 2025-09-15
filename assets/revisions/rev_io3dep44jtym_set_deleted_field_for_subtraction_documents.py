@@ -22,7 +22,7 @@ required_alembic_revision = None
 
 
 async def upgrade(ctx: MigrationContext) -> None:
-    ctx.mongo.subtraction.update_many(
+    await ctx.mongo.subtraction.update_many(
         {"deleted": {"$exists": False}},
         {"$set": {"deleted": False}},
     )

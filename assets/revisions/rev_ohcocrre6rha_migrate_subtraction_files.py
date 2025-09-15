@@ -83,22 +83,21 @@ async def upgrade(ctx: MigrationContext) -> None:
         if not glob(f"{path}/*.fa.gz"):
             await generate_fasta_file(ctx.data_path, subtraction_id)
 
+        # Get all existing files for this subtraction in one query
+        async with AsyncSession(ctx.pg) as session:
+            result = await session.execute(
+                text(
+                    "SELECT name FROM subtraction_files WHERE subtraction = :subtraction"
+                ),
+                {"subtraction": subtraction_id},
+            )
+            existing_files = {row[0] for row in result.fetchall()}
+
+        # Find files that don't exist in the database yet
         subtraction_files = []
-
         for filename in sorted(await asyncio.to_thread(os.listdir, path)):
-            if filename in FILES:
-                async with AsyncSession(ctx.pg) as session:
-                    result = await session.execute(
-                        text("""
-                            SELECT id FROM subtraction_files 
-                            WHERE subtraction = :subtraction AND name = :name
-                        """),
-                        {"subtraction": subtraction_id, "name": filename},
-                    )
-                    exists = result.scalar()
-
-                if not exists:
-                    subtraction_files.append(filename)
+            if filename in FILES and filename not in existing_files:
+                subtraction_files.append(filename)
 
         await create_subtraction_files(
             ctx.pg,

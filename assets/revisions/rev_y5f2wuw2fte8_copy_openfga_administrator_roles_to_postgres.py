@@ -1,5 +1,4 @@
-"""
-copy openfga administrator roles to postgres
+"""copy openfga administrator roles to postgres
 
 Revision ID: y5f2wuw2fte8
 Date: 2025-09-15 21:35:21.415101
@@ -7,7 +6,7 @@ Date: 2025-09-15 21:35:21.415101
 """
 
 import arrow
-from sqlalchemy import select, text, update
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.migration import MigrationContext
