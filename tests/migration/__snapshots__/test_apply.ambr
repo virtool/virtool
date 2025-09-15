@@ -344,5 +344,12 @@
       'name': 'add job created_at field',
       'revision': 'xi5y0imlpcq9',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 50,
+      'name': 'add administrator_role to users',
+      'revision': 'c4d8f879657f',
+    }),
   ])
 # ---

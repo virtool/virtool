@@ -454,16 +454,26 @@ async def test_set_administrator_role(
     authorization_client: AuthorizationClient,
     data_layer: DataLayer,
     fake: DataFaker,
+    pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     static_time: StaticTime,
 ):
     """Test changing the administrator role of a user."""
     user = await fake.users.create()
 
-    assert await data_layer.users.set_administrator_role(user.id, role) == snapshot(
-        name="obj",
-    )
+    updated_user = await data_layer.users.set_administrator_role(user.id, role)
 
+    assert updated_user == snapshot(name="obj")
+
+    # Verify role is stored in OpenFGA
     assert await authorization_client.list_administrators() == (
         [(user.id, role)] if role is not None else []
     )
+
+    # Verify role is stored in PostgreSQL
+    pg_user = await get_row_by_id(pg, SQLUser, 1)
+    assert pg_user.administrator_role == role
+
+    # Verify get() method retrieves role from PostgreSQL
+    retrieved_user = await data_layer.users.get(user.id)
+    assert retrieved_user.administrator_role == role

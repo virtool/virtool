@@ -2,7 +2,7 @@ import asyncio
 import math
 
 from sqlalchemy import delete, insert, select, update
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
 import virtool.users.utils
@@ -277,6 +277,7 @@ class UsersData(DataLayerDomain):
 
         return await self.get(document.id)
 
+    @emits(Operation.UPDATE)
     async def set_administrator_role(
         self,
         user_id: str,
@@ -291,11 +292,23 @@ class UsersData(DataLayerDomain):
         :param role: the administrator role
         :return: the administrator
         """
-        if not await id_exists(self._mongo.users, user_id):
-            raise ResourceNotFoundError("User does not exist")
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLUser).where(SQLUser.legacy_id == user_id),
+            )
+            user = result.unique().scalar_one_or_none()
+
+            if not user:
+                raise ResourceNotFoundError("User does not exist")
+
+            await session.execute(
+                update(SQLUser)
+                .where(SQLUser.id == user.id)
+                .values(administrator_role=role),
+            )
+            await session.commit()
 
         if role is None:
-            # Clear the user's administrator role.
             admin_tuple = await self._authorization_client.get_administrator(user_id)
 
             if admin_tuple[1] is not None:
