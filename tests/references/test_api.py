@@ -1,7 +1,7 @@
 import asyncio
 from http import HTTPStatus
 from pathlib import Path
-from unittest.mock import ANY, call
+from unittest.mock import ANY
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
@@ -13,7 +13,6 @@ import virtool.utils
 from tests.fixtures.client import ClientSpawner
 from tests.fixtures.response import RespIs
 from virtool.data.layer import DataLayer
-from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
@@ -655,12 +654,10 @@ async def test_list_updates(
 async def test_update(
     error: str | None,
     check_ref_right,
-    mocker,
-    resp_is,
-    snapshot,
+    resp_is: RespIs,
     mongo: Mongo,
+    snapshot_recent: SnapshotAssertion,
     spawn_client: ClientSpawner,
-    static_time,
 ):
     client = await spawn_client(authenticated=True)
 
@@ -688,11 +685,6 @@ async def test_update(
 
         await mongo.references.insert_one(reference)
 
-        m_enqueue = mocker.patch.object(
-            get_data_from_app(client.app).tasks._tasks_client,
-            "enqueue",
-        )
-
     resp = await client.post("/references/v1/foo/updates", {})
 
     if not check_ref_right:
@@ -703,11 +695,10 @@ async def test_update(
         await resp_is.not_found(resp)
     else:
         assert resp.status == 201
-        assert await resp.json() == snapshot(
+        assert await resp.json() == snapshot_recent(
             name="json",
             matcher=path_type({".*etag": (str,)}, regex=True),
         )
-        assert m_enqueue.call_args == call("update_remote_reference", 1)
         assert await get_one_field(mongo.references, "task", "foo") == {"id": 1}
 
 

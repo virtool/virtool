@@ -28,6 +28,7 @@ from virtool.startup import (
     startup_events,
     startup_executors,
     startup_http_client_session,
+    startup_periodic_tasks,
     startup_routes,
     startup_sentry,
     startup_settings,
@@ -98,6 +99,7 @@ def create_app(config: Config):
             startup_settings,
             startup_sentry,
             startup_check_db,
+            startup_periodic_tasks,
         ]
     )
 

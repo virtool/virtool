@@ -9,8 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from virtool.authorization.client import AuthorizationClient
 from virtool.data.layer import DataLayer, create_data_layer
 from virtool.mongo.core import Mongo
-from virtool.tasks.client import TasksClient
-from virtool.tasks.data import TasksData
 
 
 @pytest.fixture
@@ -41,8 +39,3 @@ def data_layer(
         mocker.Mock(spec=ClientSession),
         redis,
     )
-
-
-@pytest.fixture
-async def tasks_data(pg: AsyncEngine, redis: Redis) -> TasksData:
-    return TasksData(pg, TasksClient(redis))
