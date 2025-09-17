@@ -1,4 +1,6 @@
 import asyncio
+import os
+import socket
 from asyncio import CancelledError
 from asyncio import Task as AsyncioTask
 
@@ -6,48 +8,46 @@ from structlog import get_logger
 
 from virtool.data.errors import ResourceError
 from virtool.data.layer import DataLayer
-from virtool.tasks.client import AbstractTasksClient
 from virtool.tasks.models import Task
-from virtool.tasks.task import BaseTask, get_task_from_name
+from virtool.tasks.task import BaseTask, get_available_task_names, get_task_from_name
 
 logger = get_logger("tasks")
 
 
 class TaskRunner:
-    def __init__(self, data: DataLayer, tasks_client: AbstractTasksClient):
+    def __init__(self, data: DataLayer):
         self._data = data
-        self._tasks_client = tasks_client
+        self._runner_id = f"{socket.gethostname()}-{os.getpid()}"
+        self._supported_task_types = get_available_task_names()
 
         self.current_task: BaseTask | None = None
-        """
-        The current Virtool task.
-
-        This is set to `None` when no task is running.
-        """
+        """The current Virtool task. This is set to `None` when no task is running."""
 
         self.asyncio_task: AsyncioTask | None = None
-        """
-        The asyncio task running the current Virtool task.
-
-        This is set to `None` when no task is running.
-        """
+        """The asyncio task running the current Virtool task. This is set to `None` when no task is running."""
 
     async def run(self) -> None:
         """Start the task runner.
 
-        The task runner pulls task IDs from the tasks client, fetches them from the
-        databases, and runs them.
-
+        The task runner polls PostgreSQL for available tasks and runs them.
         The runner will run until a stop signal is received. When a stop signal is
         received, the runner will wait for the current task to finish before exiting.
-
         """
-        logger.info("started task runner")
+        logger.info(
+            "started task runner",
+            runner_id=self._runner_id,
+            supported_task_types=self._supported_task_types,
+        )
 
         try:
             while True:
-                logger.info("waiting for next task")
-                await self._run_task(await self._tasks_client.pop())
+                task = await self._data.tasks.acquire(
+                    self._runner_id, self._supported_task_types
+                )
+                if task is not None:
+                    await self._run_task(task.id)
+                else:
+                    await asyncio.sleep(2)
         except CancelledError:
             await self._shutdown()
 

@@ -3,22 +3,18 @@ from asyncio import to_thread
 from datetime import timedelta
 from math import isclose
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING
 
 import arrow
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from virtool.data.layer import DataLayer
 from virtool.pg.utils import get_row_by_id
-from virtool.tasks.data import TasksData
 from virtool.tasks.spawner import PeriodicTask, TaskSpawnerService
 from virtool.tasks.sql import SQLTask
 from virtool.tasks.task import BaseTask
 from virtool.utils import get_temp_dir
-
-if TYPE_CHECKING:
-    from virtool.data.layer import DataLayer
 
 
 class DummyBaseTask(BaseTask):
@@ -57,7 +53,7 @@ class DummyTask(BaseTask):
 
 
 @pytest.fixture
-async def task(data_layer, pg: AsyncEngine, static_time) -> DummyTask:
+async def task(data_layer: DataLayer, pg: AsyncEngine, static_time) -> DummyTask:
     task = SQLTask(
         id=1,
         complete=False,
@@ -96,8 +92,9 @@ async def test_base_task(data_layer, pg, static_time):
 
     await task.run()
 
-    row: SQLTask = await get_row_by_id(pg, SQLTask, 1)
+    row = await get_row_by_id(pg, SQLTask, 1)
 
+    assert isinstance(row, SQLTask)
     assert row.id == 1
     assert row.complete is True
     assert row.progress == 100
@@ -148,14 +145,14 @@ async def test_progress_handler_set_error(task: BaseTask, pg: AsyncEngine):
     assert (await get_row_by_id(pg, SQLTask, 1)).error == "GenericError"
 
 
-async def test_register(pg: AsyncEngine, tasks_data: TasksData):
-    await tasks_data.create(DummyBaseTask)
-    await tasks_data.create(DummyTask)
-    await tasks_data.create(DummyBaseTask)
+async def test_register(pg: AsyncEngine, data_layer: DataLayer):
+    await data_layer.tasks.create(DummyBaseTask)
+    await data_layer.tasks.create(DummyTask)
+    await data_layer.tasks.create(DummyBaseTask)
 
-    last_run_task = (await tasks_data.find())[0]
+    last_run_task = (await data_layer.tasks.find())[0]
 
-    task_spawner_service = TaskSpawnerService(pg, tasks_data)
+    task_spawner_service = TaskSpawnerService(pg, data_layer)
 
     tasks = [(DummyBaseTask, 10), (DummyTask, 15)]
 
@@ -173,9 +170,9 @@ async def test_register(pg: AsyncEngine, tasks_data: TasksData):
     )
 
 
-async def test_check_or_spawn_task(pg: AsyncEngine, tasks_data: TasksData):
+async def test_check_or_spawn_task(pg: AsyncEngine, data_layer: DataLayer):
     """First case workflow that the task has spawned, second case ensures that it does not"""
-    task_spawner_service = TaskSpawnerService(pg, tasks_data)
+    task_spawner_service = TaskSpawnerService(pg, data_layer.tasks)
 
     # This time should trigger a spawn as it is greater than the interval.
     long_last_triggered = (arrow.utcnow() - timedelta(seconds=180)).naive
