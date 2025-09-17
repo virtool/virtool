@@ -5,6 +5,7 @@ from collections.abc import AsyncGenerator, Awaitable, Callable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
+from typing import ParamSpec, TypeVar
 
 from structlog import get_logger
 
@@ -14,6 +15,9 @@ from virtool.redis import Redis
 from virtool.utils import get_model_by_name, timestamp
 
 logger = get_logger("events")
+
+P = ParamSpec("P")
+R = TypeVar("R", bound=BaseModel)
 
 
 class Operation(str, Enum):
@@ -114,11 +118,11 @@ def emits(operation: Operation, domain: str | None = None, name: str | None = No
 
     """
 
-    def decorator(func: Callable[..., Awaitable[BaseModel]]):
+    def decorator(func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
         emitted_name = name or func.__name__
 
         @functools.wraps(func)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             # This is the DataLayerDomain object the method is bound to.
             obj = args[0]
 

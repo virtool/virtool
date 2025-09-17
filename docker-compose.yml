@@ -13,7 +13,7 @@ services:
     command: sleep infinity
     depends_on:
       mongo:
-        condition: service_started
+        condition: service_healthy
       postgres:
         condition: service_healthy
       redis:
@@ -28,27 +28,36 @@ services:
       UV_PROJECT_ENVIRONMENT: /opt/venv
 
   mongo:
-    image: bitnami/mongodb:6.0.6
-    environment:
-      MONGODB_ADVERTISED_HOSTNAME: mongo
-      MONGODB_REPLICA_SET_KEY: virtool
-      MONGODB_REPLICA_SET_MODE: primary
-      MONGODB_ROOT_PASSWORD: virtool
+    image: mongo:6.0.6
+    command: ["mongod", "--replSet", "virtool", "--bind_ip_all"]
+    volumes:
+      - ./tests/setup_mongo.sh:/docker-entrypoint-initdb.d/setup_mongo.sh
+    tmpfs:
+      - /data/db:size=1g
+    extra_hosts:
+      - "mongo:127.0.0.1"
+    healthcheck:
+      test: mongosh --quiet --eval "rs.isMaster().ismaster" | grep -q true || exit 1
+      interval: 5s
+      retries: 20
+      start_period: 10s
 
   postgres:
     environment:
-      POSTGRESQL_FSYNC: off
-      POSTGRESQL_PASSWORD: virtool
-      POSTGRESQL_POSTGRES_PASSWORD: virtool
-      POSTGRESQL_USERNAME: virtool
-    image: bitnami/postgresql:14
+      POSTGRES_USER: virtool
+      POSTGRES_PASSWORD: virtool
+      POSTGRES_DB: virtool
+    image: postgres:14
     volumes:
       - ./tests/setup_postgres.sh:/docker-entrypoint-initdb.d/setup_postgres.sh
+    tmpfs:
+      - /var/lib/postgresql/data:size=1g
     healthcheck:
-      test: pg_isready -U openfga -d openfga
+      test: pg_isready -U virtool -d virtool
       interval: 2s
       retries: 10
       start_period: 2s
+    command: postgres -c fsync=off
 
   redis:
     image: redis:6.0

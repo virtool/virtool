@@ -94,6 +94,13 @@ no_revision_check_option = click.option(
     is_flag=True,
 )
 
+no_periodic_tasks_option = click.option(
+    "--no-periodic-tasks",
+    default=get_from_environment("no_periodic_tasks", False),
+    help="Don't spawn periodic tasks",
+    is_flag=True,
+)
+
 real_ip_header_option = click.option(
     "--real-ip-header",
     default=get_from_environment("real_ip_header", ""),

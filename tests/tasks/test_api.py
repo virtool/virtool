@@ -1,84 +1,54 @@
 from http import HTTPStatus
 
-import pytest
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from syrupy.assertion import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner
-from virtool.tasks.sql import SQLTask
+from virtool.fake.next import DataFaker
 
 
-async def test_find(spawn_client, pg: AsyncEngine, snapshot, static_time):
+async def test_find(
+    fake: DataFaker,
+    snapshot_recent: SnapshotAssertion,
+    spawn_client: ClientSpawner,
+):
     """Test that a ``GET /tasks`` return a complete list of tasks."""
     client = await spawn_client(authenticated=True)
 
-    async with AsyncSession(pg) as session:
-        session.add_all(
-            [
-                SQLTask(
-                    id=1,
-                    complete=True,
-                    context={"user_id": "test_1"},
-                    count=40,
-                    created_at=static_time.datetime,
-                    file_size=1024,
-                    progress=100,
-                    step="download",
-                    type="clone_reference",
-                ),
-                SQLTask(
-                    id=2,
-                    complete=False,
-                    context={"user_id": "test_2"},
-                    count=30,
-                    created_at=static_time.datetime,
-                    file_size=14754,
-                    progress=80,
-                    step="download",
-                    type="import_reference",
-                ),
-            ],
-        )
-        await session.commit()
+    await fake.tasks.create()
+    await fake.tasks.create()
+    await fake.tasks.create()
 
     resp = await client.get("/tasks")
 
     assert resp.status == HTTPStatus.OK
-    assert await resp.json() == snapshot
+    assert await resp.json() == snapshot_recent
 
 
-@pytest.mark.parametrize("error", [None, "404"])
-async def test_get(
-    error: str | None,
-    pg: AsyncEngine,
-    resp_is,
-    spawn_client: ClientSpawner,
-    snapshot,
-    static_time,
-):
-    """Test that a ``GET /tasks/:task_id`` return the correct task document."""
-    client = await spawn_client(authenticated=True)
+class TestGet:
+    async def test_ok(
+        self,
+        fake: DataFaker,
+        snapshot_recent: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that a ``GET /tasks/:task_id`` return the correct task document."""
+        client = await spawn_client(authenticated=True)
 
-    if not error:
-        async with AsyncSession(pg) as session:
-            session.add(
-                SQLTask(
-                    id=1,
-                    complete=True,
-                    context={"user_id": "test_1"},
-                    count=40,
-                    created_at=static_time.datetime,
-                    file_size=1024,
-                    progress=100,
-                    step="download",
-                    type="clone_reference",
-                ),
-            )
-            await session.commit()
+        task = await fake.tasks.create()
 
-    resp = await client.get("/tasks/1")
+        resp = await client.get(f"/tasks/{task.id}")
 
-    if error:
-        await resp_is.not_found(resp)
-    else:
         assert resp.status == HTTPStatus.OK
-        assert await resp.json() == snapshot
+
+        body = await resp.json()
+
+        assert body.pop("id") == task.id
+        assert body == snapshot_recent
+
+    async def test_not_found(self, spawn_client: ClientSpawner):
+        """Test that fetching a non-existent task returns a 404."""
+        client = await spawn_client(authenticated=True)
+
+        resp = await client.get("/tasks/99")
+
+        assert resp.status == HTTPStatus.NOT_FOUND

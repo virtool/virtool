@@ -1,6 +1,7 @@
 import aiohttp
 import aiohttp.web
 from aiohttp.web import Application
+from structlog import get_logger
 
 from virtool.api.accept import accept_middleware
 from virtool.api.errors import error_middleware
@@ -73,6 +74,12 @@ def run_task_spawner(config: TaskSpawnerConfig) -> None:
 
     :param config: the task spawner configuration object
     """
+    logger = get_logger("spawner")
+    logger.warning(
+        "Task spawner is deprecated. Task spawning has moved to API servers. "
+        "This standalone spawner will be removed in a future version."
+    )
+
     app = Application(middlewares=[accept_middleware, error_middleware])
 
     app["config"] = config
