@@ -172,6 +172,8 @@ class TasksData:
                             SELECT id FROM tasks
                             WHERE acquired_at IS NULL
                               AND complete = FALSE
+                              AND error IS NULL
+                              AND progress = 0
                               AND type = ANY(:allowed_types)
                             ORDER BY created_at
                             LIMIT 1
@@ -194,6 +196,8 @@ class TasksData:
                             SELECT id FROM tasks
                             WHERE acquired_at IS NULL
                               AND complete = FALSE
+                              AND error IS NULL
+                              AND progress = 0
                             ORDER BY created_at
                             LIMIT 1
                             FOR UPDATE SKIP LOCKED
