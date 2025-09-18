@@ -2,5 +2,5 @@ from virtool.models import BaseModel
 
 
 class UserNested(BaseModel):
-    id: str
+    id: int
     handle: str

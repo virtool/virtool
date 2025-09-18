@@ -193,7 +193,7 @@ class UserView(PydanticView):
     """A view for retrieving and updating users."""
 
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
-    async def get(self, user_id: str, /) -> r200[User] | r403 | r404:
+    async def get(self, user_id: int, /) -> r200[User] | r403 | r404:
         """Retrieve a user.
 
         Fetches the details for a user.
@@ -213,7 +213,7 @@ class UserView(PydanticView):
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def patch(
         self,
-        user_id: str,
+        user_id: int,
         /,
         data: UpdateUserRequest,
     ) -> r200[User] | r400 | r403 | r404 | r409:

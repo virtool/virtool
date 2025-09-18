@@ -75,30 +75,38 @@ async def test_find(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.parametrize("status", [200, 404])
-async def test_get(
-    status: int,
-    fake: DataFaker,
-    snapshot: SnapshotAssertion,
-    spawn_client: ClientSpawner,
-    static_time,
-):
-    """Test that a ``GET /users`` returns a list of users."""
-    client = await spawn_client(administrator=True, authenticated=True)
+class TestGet:
+    async def test_get(
+        self,
+        fake: DataFaker,
+        snapshot: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+        static_time,
+    ):
+        """Test that a ``GET /users`` returns a list of users."""
+        client = await spawn_client(administrator=True, authenticated=True)
 
-    group = await fake.groups.create()
+        group = await fake.groups.create()
 
-    user = await fake.users.create(
-        groups=[group, await fake.groups.create()],
-        primary_group=group,
-    )
+        user = await fake.users.create(
+            groups=[group, await fake.groups.create()],
+            primary_group=group,
+        )
 
-    await fake.users.create()
+        await fake.users.create()
 
-    resp = await client.get(f"/users/{'foo' if status == 404 else user.id}")
+        resp = await client.get(f"/users/{user.id}")
 
-    assert resp.status == status
-    assert await resp.json() == snapshot
+        assert resp.status == HTTPStatus.OK
+        assert await resp.json() == snapshot
+
+    async def test_not_found(self, spawn_client: ClientSpawner):
+        """Test that a 404 is returned when the user does not exist."""
+        client = await spawn_client(administrator=True, authenticated=True)
+
+        resp = await client.get("/users/99")
+
+        assert resp.status == HTTPStatus.NOT_FOUND
 
 
 @pytest.mark.parametrize("error", [None, "400_exists", "400_password", "400_reserved"])

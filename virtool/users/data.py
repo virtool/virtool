@@ -1,4 +1,3 @@
-import asyncio
 import math
 
 from sqlalchemy import delete, insert, select, update
@@ -19,18 +18,12 @@ from virtool.data.errors import (
 from virtool.data.events import Operation, emits
 from virtool.data.topg import both_transactions
 from virtool.data.transforms import apply_transforms
+from virtool.groups.pg import merge_group_permissions
 from virtool.groups.transforms import AttachGroupsTransform, AttachPrimaryGroupTransform
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field, id_exists
-from virtool.users.db import (
-    compose_groups_update,
-)
 from virtool.users.models import User, UserSearchResult
-from virtool.users.mongo import (
-    compose_primary_group_update,
-    create_user,
-)
 from virtool.users.oas import UpdateUserRequest
 from virtool.users.pg import SQLUser, SQLUserGroup
 from virtool.users.settings import DEFAULT_USER_SETTINGS
@@ -176,34 +169,22 @@ class UsersData(DataLayerDomain):
                 total_count=total_count,
             )
 
-    async def get(self, user_id: str) -> User:
+    async def get(self, user_id: int) -> User:
         """Get a user by their ``user_id``.
 
         :param user_id: the user's ID
         :return: the user
         """
-        user, (user_id, role) = await asyncio.gather(
-            self._mongo.users.find_one(
-                {"_id": user_id},
-            ),
-            self._authorization_client.get_administrator(user_id),
-        )
+        async with AsyncSession(self._pg) as session:
+            sql_user = await session.get(SQLUser, user_id)
 
-        if not user:
-            raise ResourceNotFoundError("User does not exist")
+            if sql_user is None:
+                raise ResourceNotFoundError
 
-        return User(
-            **(
-                await apply_transforms(
-                    base_processor(user),
-                    [
-                        AttachGroupsTransform(self._pg),
-                        AttachPermissionsTransform(self._pg),
-                        AttachPrimaryGroupTransform(self._pg),
-                    ],
-                )
-            ),
-            administrator_role=role,
+            user_dict = sql_user.to_dict()
+
+        return User.parse_obj(
+            {**user_dict, "permissions": merge_group_permissions(user_dict["groups"])}
         )
 
     async def get_by_handle(self, handle: str) -> User:
@@ -212,10 +193,15 @@ class UsersData(DataLayerDomain):
         :param handle: the user's unique handle
         :return: the user
         """
-        user_id = await get_one_field(self._mongo.users, "_id", {"handle": handle})
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLUser.id).where(SQLUser.handle == handle)
+            )
 
-        if not user_id:
-            raise ResourceError(f"No user found with handle '{handle}'")
+            user_id = result.scalar_one_or_none()
+
+            if user_id is None:
+                raise ResourceError(f"No user found with handle '{handle}'")
 
         return await self.get(user_id)
 
@@ -233,30 +219,24 @@ class UsersData(DataLayerDomain):
         :param force_reset: force the user to reset password on next login
         :return: the user document
         """
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
-            document = await create_user(
-                self._mongo,
-                handle,
-                password,
-                force_reset,
-                session=mongo_session,
+        async with AsyncSession(self._pg) as session:
+            password = virtool.users.utils.hash_password(password)
+
+            user = SQLUser(
+                force_reset=force_reset,
+                handle=handle,
+                last_password_change=virtool.utils.timestamp(),
+                legacy_id=None,
+                password=password,
+                settings=DEFAULT_USER_SETTINGS,
             )
 
-            pg_session.add(
-                SQLUser(
-                    force_reset=force_reset,
-                    handle=handle,
-                    last_password_change=virtool.utils.timestamp(),
-                    legacy_id=document["_id"],
-                    password=document["password"],
-                    settings=DEFAULT_USER_SETTINGS,
-                ),
-            )
+            session.add(user)
+            await session.flush()
+            user_id = user.id
+            await session.commit()
 
-        return await self.get(document["_id"])
+        return await self.get(user_id)
 
     async def create_first(self, handle: str, password: str) -> User:
         """Create the first instance user.
@@ -280,7 +260,7 @@ class UsersData(DataLayerDomain):
     @emits(Operation.UPDATE)
     async def set_administrator_role(
         self,
-        user_id: int | str,
+        user_id: int,
         role: AdministratorRole,
     ) -> User:
         """Set a user's administrator role.
@@ -294,8 +274,9 @@ class UsersData(DataLayerDomain):
         """
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
-                select(SQLUser).where(SQLUser.legacy_id == user_id),
+                select(SQLUser).where(SQLUser.id == user_id),
             )
+
             user = result.unique().scalar_one_or_none()
 
             if not user:
@@ -326,7 +307,7 @@ class UsersData(DataLayerDomain):
         return await self.get(user_id)
 
     @emits(Operation.UPDATE)
-    async def update(self, user_id: str, data: UpdateUserRequest) -> User:
+    async def update(self, user_id: int, data: UpdateUserRequest) -> User:
         """Update a user.
 
         Sessions and API keys are updated as well.
@@ -335,134 +316,82 @@ class UsersData(DataLayerDomain):
         :param data: the update data object
         :return: the updated user
         """
-        if not await id_exists(self._mongo.users, user_id):
-            raise ResourceNotFoundError("User does not exist")
 
         data = data.dict(exclude_unset=True)
 
-        mongo_update = {}
         pg_update = {}
 
         if "active" in data:
-            for u in (mongo_update, pg_update):
-                u.update({"active": data["active"], "invalidate_sessions": True})
+            pg_update.update({"active": data["active"], "invalidate_sessions": True})
 
         if "force_reset" in data:
-            for u in (mongo_update, pg_update):
-                u.update(
-                    {"force_reset": data["force_reset"], "invalidate_sessions": True},
-                )
+            pg_update.update(
+                {"force_reset": data["force_reset"], "invalidate_sessions": True},
+            )
 
         if "password" in data:
-            for u in (mongo_update, pg_update):
-                u.update(
-                    {
-                        "password": virtool.users.utils.hash_password(data["password"]),
-                        "last_password_change": virtool.utils.timestamp(),
-                        "invalidate_sessions": True,
-                    },
-                )
-
-        if "groups" in data:
-            current_primary_group = await get_one_field(
-                self._mongo.users,
-                "primary_group",
-                user_id,
+            pg_update.update(
+                {
+                    "password": virtool.users.utils.hash_password(data["password"]),
+                    "last_password_change": virtool.utils.timestamp(),
+                    "invalidate_sessions": True,
+                },
             )
 
-            mongo_update.update(
-                await compose_groups_update(
-                    self._pg,
-                    data["groups"],
-                    current_primary_group,
-                ),
-            )
-
-        if "primary_group" in data:
-            mongo_update.update(
-                await compose_primary_group_update(
-                    self._mongo,
-                    self._pg,
-                    data.get("groups"),
-                    data["primary_group"],
-                    user_id,
-                ),
-            )
-
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
-            if mongo_update:
-                result = await self._mongo.users.update_one(
-                    {"_id": user_id},
-                    {"$set": mongo_update},
-                    session=mongo_session,
-                )
-
-                if not result.modified_count:
-                    raise ResourceNotFoundError("User not found")
-
-            result = await pg_session.execute(
-                select(SQLUser).where(SQLUser.legacy_id == user_id),
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLUser).where(SQLUser.id == user_id),
             )
 
             user = result.unique().scalar_one_or_none()
 
-            if user:
-                if pg_update:
-                    result = await pg_session.execute(
-                        update(SQLUser)
-                        .where(SQLUser.id == user.id)
-                        .values(**pg_update),
-                    )
+            if not user:
+                raise ResourceNotFoundError
 
-                    if not result.rowcount:
-                        logger.info(
-                            "user not found during update",
-                            method="users.update",
-                            user_id=user_id,
-                        )
-
-                if "groups" in data:
-                    await pg_session.execute(
-                        delete(SQLUserGroup).where(SQLUserGroup.user_id == user.id),
-                    )
-
-                    if data["groups"]:
-                        # Don't do this if the new groups list is not empty.
-                        await pg_session.execute(
-                            insert(SQLUserGroup).values(
-                                [
-                                    {"user_id": user.id, "group_id": group_id}
-                                    for group_id in data["groups"]
-                                ],
-                            ),
-                        )
-
-                if "primary_group" in data:
-                    await pg_session.execute(
-                        update(SQLUserGroup)
-                        .where(SQLUserGroup.user_id == user.id)
-                        .values(primary=False),
-                    )
-
-                    result = await pg_session.execute(
-                        update(SQLUserGroup)
-                        .where(SQLUserGroup.user_id == user.id)
-                        .where(SQLUserGroup.group_id == data["primary_group"])
-                        .values(primary=True),
-                    )
-
-                    if not result.rowcount:
-                        raise ResourceConflictError("User is not a member of group")
-
-            else:
-                logger.info(
-                    "user not found in postgres",
-                    method="users.update",
-                    user_id=user_id,
+            if pg_update:
+                result = await session.execute(
+                    update(SQLUser).where(SQLUser.id == user.id).values(**pg_update),
                 )
+
+                if not result.rowcount:
+                    logger.info(
+                        "user not found during update",
+                        method="users.update",
+                        user_id=user_id,
+                    )
+
+            if "groups" in data:
+                await session.execute(
+                    delete(SQLUserGroup).where(SQLUserGroup.user_id == user.id),
+                )
+
+                if data["groups"]:
+                    # Don't do this if the new groups list is not empty.
+                    await session.execute(
+                        insert(SQLUserGroup).values(
+                            [
+                                {"user_id": user.id, "group_id": group_id}
+                                for group_id in data["groups"]
+                            ],
+                        ),
+                    )
+
+            if "primary_group" in data:
+                await session.execute(
+                    update(SQLUserGroup)
+                    .where(SQLUserGroup.user_id == user.id)
+                    .values(primary=False),
+                )
+
+                result = await session.execute(
+                    update(SQLUserGroup)
+                    .where(SQLUserGroup.user_id == user.id)
+                    .where(SQLUserGroup.group_id == data["primary_group"])
+                    .values(primary=True),
+                )
+
+                if not result.rowcount:
+                    raise ResourceConflictError("User is not a member of group")
 
         return await self.get(user_id)
 
@@ -471,4 +400,8 @@ class UsersData(DataLayerDomain):
 
         :returns: True if users exist otherwise False
         """
-        return await self._mongo.users.count_documents({}, limit=1) > 0
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(1).select_from(SQLUser).limit(1),
+            )
+            return result.scalar() is not None
