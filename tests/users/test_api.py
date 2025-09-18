@@ -3,19 +3,16 @@ from http import HTTPStatus
 import pytest
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncEngine
-from syrupy import SnapshotAssertion
+from syrupy.assertion import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner
 from tests.fixtures.response import RespIs
-from virtool.authorization.client import AuthorizationClient
-from virtool.authorization.relationships import UserRoleAssignment
 from virtool.data.layer import DataLayer
 from virtool.data.topg import both_transactions
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.groups.oas import PermissionsUpdate, UpdateGroupRequest
 from virtool.models.enums import Permission
-from virtool.models.roles import SpaceReferenceRole, SpaceSampleRole
 from virtool.mongo.core import Mongo
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.users.pg import SQLUser
@@ -269,82 +266,6 @@ class TestUpdate:
 
         assert resp.status == 404
         assert await resp.json() == snapshot
-
-
-@pytest.mark.parametrize("user", ["test", "bob"])
-async def test_list_permissions(
-    authorization_client: AuthorizationClient,
-    spawn_client: ClientSpawner,
-    user,
-    snapshot: SnapshotAssertion,
-):
-    client = await spawn_client(
-        authenticated=True,
-        permissions=[Permission.create_sample, Permission.create_ref],
-    )
-
-    authorization_client = client.app["authorization"]
-
-    await authorization_client.add(
-        UserRoleAssignment("test", 0, SpaceSampleRole.EDITOR),
-        UserRoleAssignment("test", 0, SpaceReferenceRole.BUILDER),
-    )
-
-    resp = await client.get(
-        f"/users/{user}/permissions",
-    )
-
-    assert resp.status == HTTPStatus.OK
-    assert await resp.json() == snapshot
-
-
-@pytest.mark.parametrize(
-    "role, status",
-    [
-        (SpaceSampleRole.MANAGER, 200),
-        (None, 400),
-    ],
-    ids=["valid_permission", "invalid_permission"],
-)
-async def test_add_permission(
-    role: SpaceSampleRole,
-    status: int,
-    snapshot: SnapshotAssertion,
-    spawn_client: ClientSpawner,
-):
-    client = await spawn_client(administrator=True, authenticated=True)
-    if role is None:
-        resp = await client.put("/users/test/permissions/invalid", {})
-    else:
-        resp = await client.put(f"/users/test/permissions/{role.value}", {})
-
-    assert resp.status == status
-    assert await resp.json() == snapshot()
-
-
-@pytest.mark.parametrize(
-    "role, status",
-    [
-        (SpaceSampleRole.MANAGER, 200),
-        (None, 400),
-    ],
-    ids=["valid_permission", "invalid_permission"],
-)
-async def test_remove_permission(
-    role: SpaceSampleRole,
-    status: int,
-    snapshot: SnapshotAssertion,
-    spawn_client: ClientSpawner,
-):
-    client = await spawn_client(administrator=True, authenticated=True)
-
-    if role is None:
-        resp = await client.put("/users/test/permissions/invalid", {})
-    else:
-        resp = await client.put(f"/users/test/permissions/{role.value}", {})
-
-    assert resp.status == status
-    assert await resp.json() == snapshot()
 
 
 @pytest.mark.parametrize("first_user_exists, status", [(True, 409), (False, 201)])

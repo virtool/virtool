@@ -311,6 +311,12 @@
     'message': 'Sample name is already in use',
   })
 # ---
+# name: TestCreate.test_name_exists[json]
+  dict({
+    'id': 'bad_request',
+    'message': 'Sample name is already in use',
+  })
+# ---
 # name: TestCreate.test_ok[force_choice][resp]
   dict({
     'all_read': True,
@@ -1354,6 +1360,125 @@
     'total_count': 3,
   })
 # ---
+# name: TestFind.test_term[None]
+  dict({
+    'documents': list([
+      dict({
+        'created_at': '2015-10-06T22:00:00Z',
+        'host': '',
+        'id': 'cb400e6d',
+        'isolate': '',
+        'job': None,
+        'labels': list([
+          dict({
+            'color': '#47e7f6',
+            'description': 'Drive well good explain.',
+            'id': 3,
+            'name': 'Off',
+          }),
+        ]),
+        'library_type': 'amplicon',
+        'name': '16SPP044',
+        'notes': '',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': dict({
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        }),
+        'workflows': dict({
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        }),
+      }),
+      dict({
+        'created_at': '2015-10-06T21:00:00Z',
+        'host': '',
+        'id': 'beb1eb10',
+        'isolate': 'Thing',
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'retries': 0,
+          'stage': 'HTCWaKMqqBTFitpKyPAV',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
+        'labels': list([
+          dict({
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          }),
+          dict({
+            'color': '#8f837f',
+            'description': 'Leader bad school.',
+            'id': 2,
+            'name': 'Class',
+          }),
+        ]),
+        'library_type': 'normal',
+        'name': '16GVP042',
+        'notes': '',
+        'nuvs': True,
+        'pathoscope': True,
+        'ready': True,
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        }),
+        'workflows': dict({
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        }),
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': '72bb8b31',
+        'isolate': 'Test',
+        'job': None,
+        'labels': list([
+          dict({
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          }),
+        ]),
+        'library_type': 'srna',
+        'name': '16GVP043',
+        'notes': 'This is a good sample.',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': dict({
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        }),
+        'workflows': dict({
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        }),
+      }),
+    ]),
+    'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  })
+# ---
 # name: TestFind.test_term[gv-/samples]
   dict({
     'documents': list([
@@ -1532,6 +1657,95 @@
     'total_count': 3,
   })
 # ---
+# name: TestFind.test_term[gv]
+  dict({
+    'documents': list([
+      dict({
+        'created_at': '2015-10-06T21:00:00Z',
+        'host': '',
+        'id': 'beb1eb10',
+        'isolate': 'Thing',
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': '7cf872dc',
+          'progress': 30,
+          'retries': 0,
+          'stage': 'HTCWaKMqqBTFitpKyPAV',
+          'state': 'terminated',
+          'user': dict({
+            'handle': 'leeashley',
+            'id': 'bf1b993c',
+          }),
+          'workflow': 'create_sample',
+        }),
+        'labels': list([
+          dict({
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          }),
+          dict({
+            'color': '#8f837f',
+            'description': 'Leader bad school.',
+            'id': 2,
+            'name': 'Class',
+          }),
+        ]),
+        'library_type': 'normal',
+        'name': '16GVP042',
+        'notes': '',
+        'nuvs': True,
+        'pathoscope': True,
+        'ready': True,
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 'bf1b993c',
+        }),
+        'workflows': dict({
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        }),
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': '72bb8b31',
+        'isolate': 'Test',
+        'job': None,
+        'labels': list([
+          dict({
+            'color': '#ae686a',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Market',
+          }),
+        ]),
+        'library_type': 'srna',
+        'name': '16GVP043',
+        'notes': 'This is a good sample.',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': dict({
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        }),
+        'workflows': dict({
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        }),
+      }),
+    ]),
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  })
+# ---
 # name: TestFind.test_term[sp-/samples]
   dict({
     'documents': list([
@@ -1574,6 +1788,47 @@
   })
 # ---
 # name: TestFind.test_term[sp-/spaces/0/samples]
+  dict({
+    'documents': list([
+      dict({
+        'created_at': '2015-10-06T22:00:00Z',
+        'host': '',
+        'id': 'cb400e6d',
+        'isolate': '',
+        'job': None,
+        'labels': list([
+          dict({
+            'color': '#47e7f6',
+            'description': 'Drive well good explain.',
+            'id': 3,
+            'name': 'Off',
+          }),
+        ]),
+        'library_type': 'amplicon',
+        'name': '16SPP044',
+        'notes': '',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'user': dict({
+          'handle': 'zclark',
+          'id': 'fb085f7f',
+        }),
+        'workflows': dict({
+          'aodp': 'none',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        }),
+      }),
+    ]),
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  })
+# ---
+# name: TestFind.test_term[sp]
   dict({
     'documents': list([
       dict({

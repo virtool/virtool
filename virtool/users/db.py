@@ -3,8 +3,6 @@
 TODO: Drop legacy group id support when we fully migrate to integer ids.
 """
 
-from dataclasses import dataclass
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -13,16 +11,6 @@ from virtool.data.topg import compose_legacy_id_expression
 from virtool.groups.pg import SQLGroup
 
 ATTACH_PROJECTION = ("_id", "handle")
-
-
-@dataclass
-class B2CUserAttributes:
-    """Class to store ID token claims from Azure AD B2C"""
-
-    display_name: str
-    family_name: str
-    given_name: str
-    oid: str
 
 
 async def compose_groups_update(

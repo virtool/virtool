@@ -280,9 +280,9 @@ def spawn_client(
 
     .. code-block:: python
 
-        client = await spawn_client(flags=[FlagName.ML_MODELS, FlagName.SPACES])
+        client = await spawn_client(flags=[FlagName.ML_MODELS])
 
-    This will enable the ``ML_MODELS`` and ``SPACES`` feature flags on the test server
+    This will enable the ``ML_MODELS`` feature flags on the test server
     so that features that are not generally available can still be tested.
 
     Server Configuration

@@ -253,15 +253,15 @@ async def find_samples_client(
 
 
 class TestFind:
-    @pytest.mark.parametrize("path", ["/samples", "/spaces/0/samples"])
     @pytest.mark.parametrize("find", [None, "gv", "sp"])
     async def test_term(
         self,
-        find,
-        path,
-        snapshot,
+        find: str | None,
+        snapshot: SnapshotAssertion,
         find_samples_client: VirtoolTestClient,
     ):
+        path = "/samples"
+
         if find is not None:
             path += f"?find={find}"
 
@@ -269,7 +269,7 @@ class TestFind:
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
-    @pytest.mark.parametrize("per_page,page", [(None, None), (2, 1), (2, 2)])
+    @pytest.mark.parametrize(("per_page", "page"), [(None, None), (2, 1), (2, 2)])
     async def test_page_per_page(
         self,
         page: int | None,
@@ -295,8 +295,8 @@ class TestFind:
     @pytest.mark.parametrize("labels", [None, [3], [2, 3], [0]])
     async def test_labels(
         self,
-        labels,
-        snapshot,
+        labels: list[int] | None,
+        snapshot: SnapshotAssertion,
         find_samples_client: VirtoolTestClient,
     ):
         path = "/samples"
@@ -320,8 +320,8 @@ class TestFind:
     )
     async def test_workflows(
         self,
-        workflows,
-        snapshot,
+        workflows: list[str] | None,
+        snapshot: SnapshotAssertion,
         find_samples_client: VirtoolTestClient,
     ):
         path = "/samples"
@@ -511,10 +511,8 @@ class TestCreate:
         assert resp.status == 201
         assert await resp.json() == snapshot_recent(name="resp")
 
-    @pytest.mark.parametrize("path", ["/samples", "/spaces/0/samples"])
     async def test_name_exists(
         self,
-        path: str,
         fake: DataFaker,
         snapshot,
         mongo: Mongo,
@@ -544,7 +542,7 @@ class TestCreate:
         )
 
         resp = await client.post(
-            path,
+            "/samples",
             {"name": "Foobar", "files": [upload.id], "subtractions": ["apple"]},
         )
 

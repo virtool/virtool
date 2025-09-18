@@ -76,7 +76,6 @@ routes = Routes()
 
 
 @routes.view("/samples")
-@routes.view("/spaces/{space_id}/samples")
 class SamplesView(PydanticView):
     async def get(
         self,
@@ -140,7 +139,6 @@ class SamplesView(PydanticView):
         )
 
 
-@routes.view("/spaces/{space_id}/samples/{sample_id}")
 @routes.view("/samples/{sample_id}")
 class SampleView(PydanticView):
     async def get(self, sample_id: str, /) -> r200[Sample] | r403 | r404:
