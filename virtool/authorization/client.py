@@ -25,8 +25,6 @@ from virtool.authorization.results import (
 )
 from virtool.models.roles import (
     AdministratorRole,
-    ReferenceRole,
-    SpaceRole,
     SpaceRoleType,
 )
 from virtool.types import App
@@ -68,22 +66,6 @@ class AuthorizationClient:
 
         return response.allowed
 
-    async def get_space_roles(self, space_id: int) -> list[str]:
-        """Return a list of base roles for a space.
-
-        :param space_id: the id of the space
-        :return: a list of roles
-        """
-        response = await self.openfga.read(
-            ReadRequest(
-                tuple_key=TupleKey(
-                    user=f"space:{space_id}#member", object=f"space:{space_id}"
-                )
-            )
-        )
-
-        return sorted([relation.key.relation for relation in response.tuples])
-
     async def get_administrator(
         self, user_id: str
     ) -> tuple[str, AdministratorRole | None]:
@@ -119,34 +101,6 @@ class AuthorizationClient:
             ]
         )
 
-    async def list_user_spaces(self, user_id: str) -> list[int]:
-        """Return a list of ids of spaces the user is a member of.
-
-        :param user_id: the id of the user
-        :return: a list of space ids
-        """
-        response = await self.openfga.read(
-            ReadRequest(
-                tuple_key=TupleKey(
-                    user=f"user:{user_id}", relation="member", object="space:"
-                ),
-            )
-        )
-
-        test = [int(relation.key.object.split(":")[1]) for relation in response.tuples]
-
-        response = await self.openfga.read(
-            ReadRequest(
-                tuple_key=TupleKey(
-                    user=f"user:{user_id}", relation="owner", object="space:"
-                ),
-            )
-        )
-
-        test2 = [int(relation.key.object.split(":")[1]) for relation in response.tuples]
-
-        return sorted([*test, *test2])
-
     async def list_user_roles(self, user_id: str, space_id: int) -> list[SpaceRoleType]:
         response = await self.openfga.read(
             ReadRequest(
@@ -155,62 +109,6 @@ class AuthorizationClient:
         )
 
         return sorted([relation.key.relation for relation in response.tuples])
-
-    async def list_reference_users(
-        self, ref_id: str
-    ) -> list[tuple[str, ReferenceRole]]:
-        """List users and their roles on a reference.
-
-        The returned list only includes users that have an explicit role defined on the
-        reference. Space members that have access to the reference through the space
-        base role are not included.
-
-        :param ref_id: the id of the reference
-        :return: a list of user ids and their roles
-        """
-        response = await self.openfga.read(
-            ReadRequest(
-                tuple_key=TupleKey(object=f"reference:{ref_id}"),
-            )
-        )
-
-        return sorted(
-            [
-                (relation.key.user.split(":")[1], relation.key.relation)
-                for relation in response.tuples
-            ]
-        )
-
-    async def list_space_users(
-        self, space_id: int
-    ) -> list[tuple[str, list[SpaceRole]]]:
-        """List members of a space"""
-        response = await self.openfga.read(
-            ReadRequest(
-                tuple_key=TupleKey(object=f"space:{space_id}"),
-            )
-        )
-
-        relations = {}
-
-        for relation in response.tuples:
-            user_id = relation.key.user.split(":")[1]
-
-            if user_id not in relations:
-                relations[user_id] = [relation.key.relation]
-
-            else:
-                relations[user_id].append(relation.key.relation)
-
-        relations = list(relations.items())
-
-        return sorted(
-            [
-                relation
-                for relation in relations
-                if "member" in relation[1] or "owner" in relation[1]
-            ]
-        )
 
     async def add(self, *relationships: AbstractRelationship):
         """Add one or more authorization relationships.

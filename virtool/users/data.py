@@ -271,16 +271,16 @@ class UsersData(DataLayerDomain):
         if handle == "virtool":
             raise ResourceConflictError("Reserved user name: virtool")
 
-        document = await self.create(handle, password)
+        user = await self.create(handle, password)
 
-        await self.set_administrator_role(document.id, AdministratorRole.FULL)
+        await self.set_administrator_role(user.id, AdministratorRole.FULL)
 
-        return await self.get(document.id)
+        return await self.get(user.id)
 
     @emits(Operation.UPDATE)
     async def set_administrator_role(
         self,
-        user_id: str,
+        user_id: int | str,
         role: AdministratorRole,
     ) -> User:
         """Set a user's administrator role.

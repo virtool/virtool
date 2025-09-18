@@ -71,10 +71,6 @@
         'doc': 'https://www.virtool.ca/docs/api/settings',
         'url': '/settings',
       }),
-      'spaces': dict({
-        'doc': 'https://www.virtool.ca/docs/api/spaces',
-        'url': '/spaces',
-      }),
       'subtraction': dict({
         'doc': 'https://www.virtool.ca/docs/api/subtraction',
         'url': '/subtraction',
@@ -167,10 +163,6 @@
       'settings': dict({
         'doc': 'https://www.virtool.ca/docs/api/settings',
         'url': '/settings',
-      }),
-      'spaces': dict({
-        'doc': 'https://www.virtool.ca/docs/api/spaces',
-        'url': '/spaces',
       }),
       'subtraction': dict({
         'doc': 'https://www.virtool.ca/docs/api/subtraction',
@@ -265,10 +257,6 @@
         'doc': 'https://www.virtool.ca/docs/api/settings',
         'url': '/settings',
       }),
-      'spaces': dict({
-        'doc': 'https://www.virtool.ca/docs/api/spaces',
-        'url': '/spaces',
-      }),
       'subtraction': dict({
         'doc': 'https://www.virtool.ca/docs/api/subtraction',
         'url': '/subtraction',
@@ -361,10 +349,6 @@
       'settings': dict({
         'doc': 'https://www.virtool.ca/docs/api/settings',
         'url': '/settings',
-      }),
-      'spaces': dict({
-        'doc': 'https://www.virtool.ca/docs/api/spaces',
-        'url': '/spaces',
       }),
       'subtraction': dict({
         'doc': 'https://www.virtool.ca/docs/api/subtraction',

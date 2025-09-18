@@ -18,20 +18,16 @@ from virtool.api.utils import (
     set_session_id_cookie,
     set_session_token_cookie,
 )
-from virtool.authorization.client import get_authorization_client_from_req
-from virtool.authorization.relationships import UserRoleAssignment
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.transforms import apply_transforms
 from virtool.data.utils import get_data_from_req
-from virtool.models.roles import AdministratorRole, SpaceRoleType
+from virtool.models.roles import AdministratorRole
 from virtool.mongo.utils import get_mongo_from_req
 from virtool.users.checks import check_password_length
 from virtool.users.models import User
 from virtool.users.oas import (
     CreateFirstUserRequest,
     CreateUserRequest,
-    PermissionResponse,
-    PermissionsResponse,
     UpdateUserRequest,
 )
 from virtool.users.transforms import AttachPermissionsTransform
@@ -249,63 +245,3 @@ class UserView(PydanticView):
             raise APINotFound("User does not exist")
 
         return json_response(user)
-
-
-@routes.view("/users/{user_id}/permissions")
-class PermissionsView(PydanticView):
-    async def get(self, user_id: str, /) -> r200[PermissionsResponse]:
-        """List user roles.
-
-        Lists all roles that a user has on the space.
-
-        Status Codes:
-            200: Successful operation
-        """
-        permissions = await get_authorization_client_from_req(
-            self.request,
-        ).list_user_roles(user_id, 0)
-
-        return json_response([{"id": permission} for permission in permissions])
-
-
-@routes.view("/users/{user_id}/permissions/{role}")
-class PermissionView(PydanticView):
-    @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
-    async def put(
-        self,
-        user_id: str,
-        role: SpaceRoleType,
-        /,
-    ) -> r200[PermissionResponse]:
-        """Add user role.
-
-        Adds a role for a user.
-
-        Status Codes:
-            200: Successful operation
-        """
-        await get_authorization_client_from_req(self.request).add(
-            UserRoleAssignment(user_id, 0, role),
-        )
-
-        return json_response(True)
-
-    @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
-    async def delete(
-        self,
-        user_id: str,
-        role: SpaceRoleType,
-        /,
-    ) -> r200[PermissionResponse]:
-        """Delete user permission.
-
-        Removes a permission for a user.
-
-        Status Codes:
-            200: Successful operation
-        """
-        await get_authorization_client_from_req(self.request).remove(
-            UserRoleAssignment(user_id, 0, role),
-        )
-
-        return json_response(True)

@@ -19,7 +19,6 @@ from virtool.uploads.utils import get_upload_path, multipart_file_chunker
 routes = Routes()
 
 
-@routes.view("/spaces/{space_id}/uploads")
 @routes.view("/uploads")
 class UploadsView(PydanticView):
     async def get(
@@ -76,7 +75,6 @@ class UploadsView(PydanticView):
         )
 
 
-@routes.view("/spaces/{space_id}/uploads/{upload_id}")
 @routes.view("/uploads/{upload_id}")
 class UploadView(PydanticView):
     async def get(self, upload_id: int, /) -> r200[FileResponse] | r404:
