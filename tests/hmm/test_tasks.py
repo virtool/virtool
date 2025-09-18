@@ -1,9 +1,7 @@
 import json
-import os
 import tarfile
 from pathlib import Path
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.hmm.tasks import HMMInstallTask
@@ -72,8 +70,6 @@ async def test_hmm_install_task(
 
     await task.run()
 
-    async with AsyncSession(pg) as session:
-        assert (await session.execute(select(SQLTask))).scalars().all() == snapshot
-
-    assert await mongo.hmm.find().to_list(1) == snapshot
-    assert os.listdir(tmp_path / "hmm") == ["profiles.hmm"]
+    assert await mongo.hmm.find().to_list(1) == snapshot(name="mongo_hmms")
+    assert await data_layer.tasks.get(1) == snapshot(name="data_layer_task")
+    assert {p.name for p in (tmp_path / "hmm").iterdir()} == {"profiles.hmm"}

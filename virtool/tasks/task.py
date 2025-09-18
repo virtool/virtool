@@ -175,3 +175,11 @@ def get_task_from_name(task_name: str) -> type[BaseTask]:
         raise ResourceError("Invalid task name")
 
     return matching_task[0]
+
+
+def get_available_task_names() -> list[str]:
+    """Get the names of all available task classes.
+
+    :return: a list of task names that this runner can handle
+    """
+    return [cls.name for cls in BaseTask.__subclasses__()]

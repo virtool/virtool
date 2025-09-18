@@ -351,5 +351,19 @@
       'name': 'add administrator_role to users',
       'revision': 'c4d8f879657f',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 51,
+      'name': 'copy openfga administrator roles to postgres',
+      'revision': 'y5f2wuw2fte8',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 52,
+      'name': 'add task acquisition columns',
+      'revision': '189732b1ff59',
+    }),
   ])
 # ---

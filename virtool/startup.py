@@ -13,15 +13,20 @@ from virtool.config import get_config_from_app
 from virtool.data.events import EventPublisher
 from virtool.data.layer import create_data_layer
 from virtool.data.utils import get_data_from_app
+from virtool.hmm.tasks import HMMRefreshTask
+from virtool.jobs.tasks import JobsTimeoutTask
 from virtool.migration.pg import check_data_revision_version
+from virtool.ml.tasks import MLModelsSyncTask
 from virtool.mongo.connect import connect_mongo
 from virtool.mongo.migrate import migrate_status
 from virtool.mongo.utils import get_mongo_from_app
 from virtool.pg.utils import connect_pg
 from virtool.redis import Redis
+from virtool.references.tasks import ReferenceReleasesRefreshTask, ReferencesCleanTask
 from virtool.routes import setup_routes
+from virtool.samples.tasks import SampleWorkflowsUpdateTask
 from virtool.sentry import configure_sentry
-from virtool.tasks.client import TasksClient
+from virtool.tasks.periodic import PeriodicTaskSpawner
 from virtool.tasks.runner import TaskRunner
 from virtool.types import App
 from virtool.utils import get_http_session_from_app
@@ -181,12 +186,35 @@ async def startup_task_runner(app: App) -> None:
     :class:`virtool.tasks.runner.TaskRunner` object and puts it in app state.
 
     :param app: the app object
-
     """
-    tasks_client = TasksClient(app["redis"])
+    task = asyncio.create_task(TaskRunner(app["data"]).run())
+    app.setdefault("background_tasks", []).append(task)
 
-    # Create background task for task runner
-    task = asyncio.create_task(TaskRunner(app["data"], tasks_client).run())
+
+async def startup_periodic_tasks(app: App) -> None:
+    """Start the periodic task spawner for API servers.
+
+    :param app: the app object
+    """
+    config = get_config_from_app(app)
+
+    if config.no_periodic_tasks:
+        logger.info("periodic tasks are disabled")
+        return
+
+    logger.info("periodic tasks are enabled")
+
+    periodic_tasks = [
+        (HMMRefreshTask, 600),
+        (JobsTimeoutTask, 600),
+        (MLModelsSyncTask, 600),
+        (ReferenceReleasesRefreshTask, 600),
+        (ReferencesCleanTask, 3600),
+        (SampleWorkflowsUpdateTask, 3600),
+    ]
+
+    spawner = PeriodicTaskSpawner(app["pg"], app["data"].tasks)
+    task = asyncio.create_task(spawner.run(periodic_tasks))
     app.setdefault("background_tasks", []).append(task)
 
 

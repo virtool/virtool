@@ -1,24 +1,25 @@
 """The data layer piece for tasks."""
 
-from sqlalchemy import desc, select
+from sqlalchemy import desc, select, text, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from structlog import get_logger
 
 import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emits
-from virtool.tasks.client import AbstractTasksClient
 from virtool.tasks.models import Task
 from virtool.tasks.oas import UpdateTaskRequest
 from virtool.tasks.sql import SQLTask
 from virtool.tasks.task import BaseTask
 
+logger = get_logger("tasks.data")
+
 
 class TasksData:
     name = "tasks"
 
-    def __init__(self, pg: AsyncEngine, tasks_client: AbstractTasksClient):
+    def __init__(self, pg: AsyncEngine):
         self._pg = pg
-        self._tasks_client = tasks_client
 
     async def find(self) -> list[Task]:
         """Get a list of all tasks.
@@ -64,25 +65,25 @@ class TasksData:
         :return: the task record
         """
         async with AsyncSession(self._pg) as session:
-            result = await session.execute(select(SQLTask).filter_by(id=task_id))
-            task = result.scalar()
-
             data = task_update.dict(exclude_unset=True)
 
-            if "progress" in data:
-                task.progress = data["progress"]
+            result = await session.execute(
+                update(SQLTask)
+                .where(SQLTask.id == task_id)
+                .values(**data)
+                .returning(SQLTask)
+            )
 
-            if "error" in data:
-                task.error = data["error"]
+            updated_task = result.scalar()
 
-            if "step" in data:
-                task.step = data["step"]
+            if updated_task is None:
+                raise ResourceNotFoundError
 
-            task = Task(**task.to_dict())
-
+            # Convert to dict before committing to avoid lazy loading issues
+            task_dict = updated_task.to_dict()
             await session.commit()
 
-        return task
+            return Task(**task_dict)
 
     @emits(Operation.UPDATE)
     async def complete(self, task_id: int) -> Task:
@@ -94,20 +95,30 @@ class TasksData:
 
         """
         async with AsyncSession(self._pg) as session:
-            result = await session.execute(select(SQLTask).filter_by(id=task_id))
-            task = result.scalar()
+            result = await session.execute(
+                update(SQLTask)
+                .where(SQLTask.id == task_id, SQLTask.complete == False)
+                .values(complete=True, progress=100)
+                .returning(SQLTask)
+            )
 
-            if task.complete:
+            row = result.scalar()
+
+            if row:
+                # Convert to dict before committing to avoid lazy loading issues
+                task_dict = row.to_dict()
+                await session.commit()
+                return Task(**task_dict)
+
+            # Check if task exists but is already complete
+            result = await session.execute(
+                select(SQLTask.complete).filter_by(id=task_id)
+            )
+
+            if result and result.scalar() is True:
                 raise ResourceConflictError("Task is already complete")
 
-            task.complete = True
-            task.progress = 100
-
-            task = Task(**task.to_dict())
-
-            await session.commit()
-
-        return task
+            raise ResourceNotFoundError
 
     @emits(Operation.CREATE)
     async def create(
@@ -138,6 +149,68 @@ class TasksData:
             task = Task(**sql_task.to_dict())
             await session.commit()
 
-        await self._tasks_client.enqueue(task.type, task.id)
-
         return task
+
+    async def acquire(
+        self, runner_id: str, allowed_types: list[str] | None = None
+    ) -> Task | None:
+        """Atomically acquire and return the next available task.
+
+        :param runner_id: Unique identifier for the task runner
+        :param allowed_types: List of task types this runner can handle, None for all types
+        :return: Task object if acquired, None if no tasks available
+        """
+        acquired_at = virtool.utils.timestamp()
+
+        async with AsyncSession(self._pg) as session:
+            if allowed_types:
+                result = await session.execute(
+                    text("""
+                        UPDATE tasks
+                        SET acquired_at = :acquired_at, runner_id = :runner_id
+                        WHERE id = (
+                            SELECT id FROM tasks
+                            WHERE acquired_at IS NULL
+                              AND complete = FALSE
+                              AND error IS NULL
+                              AND progress = 0
+                              AND type = ANY(:allowed_types)
+                            ORDER BY created_at
+                            LIMIT 1
+                            FOR UPDATE SKIP LOCKED
+                        )
+                        RETURNING id
+                    """),
+                    {
+                        "runner_id": runner_id,
+                        "acquired_at": acquired_at,
+                        "allowed_types": allowed_types,
+                    },
+                )
+            else:
+                result = await session.execute(
+                    text("""
+                        UPDATE tasks
+                        SET acquired_at = :acquired_at, runner_id = :runner_id
+                        WHERE id = (
+                            SELECT id FROM tasks
+                            WHERE acquired_at IS NULL
+                              AND complete = FALSE
+                              AND error IS NULL
+                              AND progress = 0
+                            ORDER BY created_at
+                            LIMIT 1
+                            FOR UPDATE SKIP LOCKED
+                        )
+                        RETURNING id
+                    """),
+                    {"runner_id": runner_id, "acquired_at": acquired_at},
+                )
+
+            row = result.fetchone()
+            if row:
+                await session.commit()
+                logger.info("acquired task", task_id=row[0], runner_id=runner_id)
+                return await self.get(row[0])
+
+            return None
