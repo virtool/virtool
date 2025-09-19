@@ -30,30 +30,27 @@ def hash_password(password: str) -> bytes:
 
 
 def upgrade() -> None:
-    """Generate random passwords for users with null passwords and make password column non-nullable."""
-    # Get a database connection
+    """Make password column non-nullable.
+
+    For users with a null password column, generate a random password the can be reset
+    by an administrator.
+    """
     connection = op.get_bind()
 
-    # Find all users with null passwords
     result = connection.execute(text("SELECT id FROM users WHERE password IS NULL"))
 
     null_password_user_ids = result.fetchall()
 
-    # Generate secure random passwords for users with null passwords
     for (user_id,) in null_password_user_ids:
-        # Generate a 32-character hex string as the random password
         random_password = secrets.token_hex(32)
 
-        # Hash the password using bcrypt
         hashed_password = hash_password(random_password)
 
-        # Update the user with the new hashed password
         connection.execute(
             text("UPDATE users SET password = :password WHERE id = :user_id"),
             {"password": hashed_password, "user_id": user_id},
         )
 
-    # Now make the password column non-nullable
     op.alter_column("users", "password", nullable=False)
 
 
