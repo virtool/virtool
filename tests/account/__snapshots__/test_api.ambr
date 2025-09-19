@@ -124,6 +124,202 @@
     }),
   })
 # ---
+# name: TestUpdate.test_all_valid[response]
+  dict({
+    'active': True,
+    'administrator_role': None,
+    'email': 'virtool.devs@gmail.com',
+    'force_reset': False,
+    'groups': list([
+    ]),
+    'handle': 'bob',
+    'id': 1,
+    'last_password_change': 'approximately_now_isoformat',
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    }),
+    'primary_group': None,
+    'settings': dict({
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    }),
+  })
+# ---
+# name: TestUpdate.test_empty_update[response]
+  dict({
+    'active': True,
+    'administrator_role': None,
+    'email': '',
+    'force_reset': False,
+    'groups': list([
+    ]),
+    'handle': 'bob',
+    'id': 1,
+    'last_password_change': 'approximately_now_isoformat',
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    }),
+    'primary_group': None,
+    'settings': dict({
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    }),
+  })
+# ---
+# name: TestUpdate.test_good_email[response]
+  dict({
+    'active': True,
+    'administrator_role': None,
+    'email': 'virtool.devs@gmail.com',
+    'force_reset': False,
+    'groups': list([
+    ]),
+    'handle': 'bob',
+    'id': 1,
+    'last_password_change': 'approximately_now_isoformat',
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    }),
+    'primary_group': None,
+    'settings': dict({
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    }),
+  })
+# ---
+# name: TestUpdate.test_invalid_credentials[response]
+  dict({
+    'id': 'bad_request',
+    'message': 'Invalid credentials',
+  })
+# ---
+# name: TestUpdate.test_invalid_email[response]
+  list([
+    dict({
+      'in': 'body',
+      'loc': list([
+        'email',
+      ]),
+      'msg': 'The format of the email is invalid',
+      'type': 'value_error',
+    }),
+  ])
+# ---
+# name: TestUpdate.test_missing_old_password[response]
+  list([
+    dict({
+      'in': 'body',
+      'loc': list([
+        '__root__',
+      ]),
+      'msg': 'The old password needs to be given in order for the password to be changed',
+      'type': 'value_error',
+    }),
+  ])
+# ---
+# name: TestUpdate.test_missing_password[response]
+  list([
+    dict({
+      'in': 'body',
+      'loc': list([
+        '__root__',
+      ]),
+      'msg': 'The new password needs to be given in order for the password to be changed',
+      'type': 'value_error',
+    }),
+  ])
+# ---
+# name: TestUpdate.test_none_all[response]
+  list([
+    dict({
+      'in': 'body',
+      'loc': list([
+        'email',
+      ]),
+      'msg': 'Value may not be null',
+      'type': 'value_error',
+    }),
+    dict({
+      'in': 'body',
+      'loc': list([
+        'old_password',
+      ]),
+      'msg': 'Value may not be null',
+      'type': 'value_error',
+    }),
+    dict({
+      'in': 'body',
+      'loc': list([
+        'password',
+      ]),
+      'msg': 'Value may not be null',
+      'type': 'value_error',
+    }),
+  ])
+# ---
+# name: TestUpdate.test_short_password[response]
+  dict({
+    'id': 'bad_request',
+    'message': 'Password does not meet minimum length requirement (8)',
+  })
+# ---
+# name: TestUpdate.test_valid_password[response]
+  dict({
+    'active': True,
+    'administrator_role': None,
+    'email': '',
+    'force_reset': False,
+    'groups': list([
+    ]),
+    'handle': 'bob',
+    'id': 1,
+    'last_password_change': 'approximately_now_isoformat',
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    }),
+    'primary_group': None,
+    'settings': dict({
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
+    }),
+  })
+# ---
 # name: TestUpdateAPIKey.test[False-False]
   dict({
     'created_at': '2015-10-06T20:00:00Z',
@@ -448,7 +644,7 @@
   dict({
     'active': True,
     'administrator_role': None,
-    'email': None,
+    'email': '',
     'force_reset': False,
     'groups': list([
     ]),
@@ -467,10 +663,10 @@
     }),
     'primary_group': None,
     'settings': dict({
-      'quick_analyze_workflow': 'nuvs',
-      'show_ids': False,
-      'show_versions': False,
-      'skip_quick_analyze_dialog': False,
+      'quick_analyze_workflow': 'pathoscope_bowtie',
+      'show_ids': True,
+      'show_versions': True,
+      'skip_quick_analyze_dialog': True,
     }),
   })
 # ---

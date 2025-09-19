@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Enum, ForeignKey, Index, and_
+from sqlalchemy import Enum, ForeignKey, Index
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.orm import Mapped, mapped_column, relationship

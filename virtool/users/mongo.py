@@ -1,6 +1,5 @@
 """Utilities for working with users in the database."""
 
-import virtool.utils
 from virtool.mongo.core import Mongo
 from virtool.types import Document
 from virtool.users.db import ATTACH_PROJECTION

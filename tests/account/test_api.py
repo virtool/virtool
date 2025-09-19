@@ -1,9 +1,10 @@
 from http import HTTPStatus
 
+import arrow
 import pytest
 from syrupy import SnapshotAssertion
 
-from tests.fixtures.client import ClientSpawner
+from tests.fixtures.client import ClientSpawner, VirtoolTestClient
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
@@ -27,60 +28,179 @@ async def test_get(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.parametrize(
-    ("body", "status"),
-    [
-        (
+class TestUpdate:
+    """Test account updates at PATCH /account."""
+
+    client: VirtoolTestClient
+
+    @pytest.fixture(autouse=True)
+    async def setup(self, spawn_client: ClientSpawner):
+        self.client = await spawn_client(authenticated=True)
+
+        await get_data_from_app(self.client.app).settings.update(
+            UpdateSettingsRequest(minimum_password_length=8),
+        )
+
+    async def test_all_valid(
+        self,
+        snapshot_recent: SnapshotAssertion,
+    ):
+        """Test updating both email and password with valid credentials."""
+        initial_resp = await self.client.get("/account")
+        initial_data = await initial_resp.json()
+        initial_last_password_change = arrow.get(initial_data["last_password_change"])
+
+        resp = await self.client.patch(
+            "/account",
             {
                 "email": "virtool.devs@gmail.com",
                 "password": "foo_bar_1",
                 "old_password": "bob_is_testing",
             },
-            200,
-        ),
-        ({"email": "virtool.devs@gmail.com"}, 200),
-        ({"email": "invalid_email@"}, 400),
-        ({"password": "foo", "old_password": "hello_world"}, 400),
-        ({"password": "foo_bar_1"}, 400),
-        ({"password": "foo_bar_1", "old_password": "not_right"}, 400),
-        ({"old_password": "hello_world"}, 400),
-        ({"password": "foo_bar_1", "old_password": "bob_is_testing"}, 200),
-        ({}, 200),
-        ({"email": None, "old_password": None, "password": None}, 400),
-    ],
-    ids=[
-        "all_valid",
-        "good_email",
-        "invalid_email",
-        "short_password",
-        "missing_old_password",
-        "invalid_credentials",
-        "missing_password",
-        "missing_email",
-        "missing_all",
-        "none_all",
-    ],
-)
-async def test_update(
-    body: dict,
-    status: int,
-    snapshot: SnapshotAssertion,
-    spawn_client: ClientSpawner,
-    static_time,
-):
-    client = await spawn_client(authenticated=True)
+        )
 
-    await get_data_from_app(client.app).settings.update(
-        UpdateSettingsRequest(minimum_password_length=8),
-    )
+        assert resp.status == HTTPStatus.OK
 
-    resp = await client.patch("/account", body)
+        body = await resp.json()
 
-    assert resp.status == status
-    assert await resp.json() == snapshot(name="response")
+        assert body["email"] == "virtool.devs@gmail.com"
+
+        new_last_password_change = arrow.get(body["last_password_change"])
+
+        # Ensure the change happened recently (within last minute)
+        delta = (
+            new_last_password_change - initial_last_password_change
+        ).total_seconds()
+
+        assert delta > 0
+        assert delta < 60
+
+        assert body == snapshot_recent(name="response")
+
+    async def test_good_email(
+        self,
+        snapshot_recent: SnapshotAssertion,
+    ):
+        """Test updating only email with valid format."""
+        resp = await self.client.patch("/account", {"email": "virtool.devs@gmail.com"})
+
+        assert resp.status == HTTPStatus.OK
+
+        body = await resp.json()
+
+        assert body["email"] == "virtool.devs@gmail.com"
+        assert body == snapshot_recent(name="response")
+
+    async def test_invalid_email(
+        self,
+        snapshot_recent: SnapshotAssertion,
+    ):
+        """Test that invalid email format returns 400."""
+        resp = await self.client.patch("/account", {"email": "invalid_email@"})
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
+        assert await resp.json() == snapshot_recent(name="response")
+
+    async def test_short_password(
+        self,
+        snapshot_recent: SnapshotAssertion,
+    ):
+        """Test that short password returns 400."""
+        resp = await self.client.patch(
+            "/account",
+            {"password": "foo", "old_password": "hello_world"},
+        )
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
+        assert await resp.json() == snapshot_recent(name="response")
+
+    async def test_missing_old_password(
+        self,
+        snapshot_recent: SnapshotAssertion,
+    ):
+        """Test that missing old_password when updating password returns 400."""
+        resp = await self.client.patch("/account", {"password": "foo_bar_1"})
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
+        assert await resp.json() == snapshot_recent(name="response")
+
+    async def test_invalid_credentials(
+        self,
+        snapshot_recent: SnapshotAssertion,
+    ):
+        """Test that wrong old_password returns 400."""
+        resp = await self.client.patch(
+            "/account",
+            {"password": "foo_bar_1", "old_password": "not_right"},
+        )
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
+        assert await resp.json() == snapshot_recent(name="response")
+
+    async def test_missing_password(
+        self,
+        snapshot_recent: SnapshotAssertion,
+    ):
+        """Test that providing old_password without new password returns 400."""
+        resp = await self.client.patch("/account", {"old_password": "hello_world"})
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
+        assert await resp.json() == snapshot_recent(name="response")
+
+    async def test_valid_password(
+        self,
+        snapshot_recent: SnapshotAssertion,
+    ):
+        """Test updating password with correct old password."""
+        # Get initial account state
+        initial_resp = await self.client.get("/account")
+        initial_data = await initial_resp.json()
+        initial_last_password_change = arrow.get(initial_data["last_password_change"])
+
+        resp = await self.client.patch(
+            "/account",
+            {"password": "foo_bar_1", "old_password": "bob_is_testing"},
+        )
+
+        assert resp.status == HTTPStatus.OK
+
+        body = await resp.json()
+
+        # Verify password change timestamp was updated
+        new_last_password_change = arrow.get(body["last_password_change"])
+        delta = (
+            new_last_password_change - initial_last_password_change
+        ).total_seconds()
+        assert delta > 0
+        assert delta < 60
+
+        assert body == snapshot_recent(name="response")
+
+    async def test_empty_update(
+        self,
+        snapshot_recent: SnapshotAssertion,
+    ):
+        """Test that empty update returns 200 with unchanged account."""
+        resp = await self.client.patch("/account", {})
+
+        assert resp.status == HTTPStatus.OK
+        assert await resp.json() == snapshot_recent(name="response")
+
+    async def test_none_all(
+        self,
+        snapshot_recent: SnapshotAssertion,
+    ):
+        """Test that None values for all fields returns 400."""
+        resp = await self.client.patch(
+            "/account",
+            {"email": None, "old_password": None, "password": None},
+        )
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
+        assert await resp.json() == snapshot_recent(name="response")
 
 
-async def test_get_settings(spawn_client):
+async def test_get_settings(spawn_client: ClientSpawner):
     """Test that a ``GET /account/settings`` returns the settings for the session user."""
     client = await spawn_client(authenticated=True)
 
@@ -101,8 +221,8 @@ class TestUpdateSettings:
 
     async def test_ok(
         self,
-        spawn_client: ClientSpawner,
         snapshot_recent: SnapshotAssertion,
+        spawn_client: ClientSpawner,
     ):
         """Test that valid settings updates work correctly."""
         client = await spawn_client(authenticated=True)
@@ -140,8 +260,8 @@ class TestUpdateSettings:
 
     async def test_null_values(
         self,
-        spawn_client: ClientSpawner,
         snapshot_recent: SnapshotAssertion,
+        spawn_client: ClientSpawner,
     ):
         """Test that null values for settings fields return 400."""
         client = await spawn_client(authenticated=True)
@@ -163,8 +283,8 @@ class TestUpdateSettings:
 async def test_get_api_keys(
     fake: DataFaker,
     mongo: Mongo,
-    spawn_client: ClientSpawner,
     snapshot: SnapshotAssertion,
+    spawn_client: ClientSpawner,
     static_time,
 ):
     client = await spawn_client(authenticated=True)

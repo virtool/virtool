@@ -34,8 +34,8 @@ class UpdateAccountRequest(BaseModel):
 
         return values
 
-    _email_validator = validator("email", allow_reuse=True)(check_email)
     _prevent_none = prevent_none("*")
+    _email_validator = validator("email", allow_reuse=True)(check_email)
 
     class Config:
         schema_extra = {

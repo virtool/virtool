@@ -11,8 +11,8 @@ from virtool.users.models import User
 
 def check_email(email: str | None) -> str | None:
     """Checks if the given email is valid."""
-    if email is None:
-        return None
+    if email is None or email == "":
+        return email
 
     try:
         validate_email(email)
@@ -45,9 +45,13 @@ class ConstrainedEmail(ConstrainedStr):
 
 class Account(User):
     settings: AccountSettings
-    email: ConstrainedEmail | None
+    email: ConstrainedEmail
 
-    _email_validation = validator("email", allow_reuse=True)(check_email)
+    @validator("email", allow_reuse=True, pre=True)
+    def validate_email(cls, v):
+        if v is None:
+            return ""
+        return check_email(v) or ""
 
     class Config:
         schema_extra = {

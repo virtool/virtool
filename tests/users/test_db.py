@@ -1,14 +1,8 @@
 import hashlib
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.data.errors import ResourceConflictError
-from virtool.groups.pg import SQLGroup
 from virtool.mongo.core import Mongo
-from virtool.users.db import (
-    compose_groups_update,
-)
 from virtool.users.mongo import (
     validate_credentials,
 )

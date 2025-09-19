@@ -9,7 +9,6 @@ import virtool.users.utils
 import virtool.utils
 from virtool.api.utils import compose_regex_query
 from virtool.authorization.client import AuthorizationClient
-from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import (
     ResourceConflictError,
@@ -17,13 +16,11 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.events import Operation, emits
-from virtool.data.topg import both_transactions
 from virtool.data.transforms import apply_transforms
-from virtool.groups.pg import SQLGroup, merge_group_permissions
+from virtool.groups.pg import merge_group_permissions
 from virtool.groups.transforms import AttachGroupsTransform, AttachPrimaryGroupTransform
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_one_field, id_exists
 from virtool.users.models import User, UserSearchResult
 from virtool.users.oas import UpdateUserRequest
 from virtool.users.pg import SQLUser, SQLUserGroup
@@ -320,7 +317,6 @@ class UsersData(DataLayerDomain):
         :param data: the update data object
         :return: the updated user
         """
-
         data = data.dict(exclude_unset=True)
 
         pg_update = {}

@@ -20,7 +20,6 @@ from virtool.administrators.oas import UpdateUserRequest
 from virtool.authorization.client import AuthorizationClient
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceError, ResourceNotFoundError
-from virtool.data.topg import both_transactions
 from virtool.data.transforms import apply_transforms
 from virtool.groups.transforms import AttachGroupsTransform
 from virtool.models.sessions import Session
@@ -65,15 +64,23 @@ class AccountData(DataLayerDomain):
         :return: the user account
         """
         if user := await self.data.users.get(user_id):
+            # Get email and settings from PostgreSQL
+            async with AsyncSession(self._pg) as session:
+                result = await session.execute(
+                    select(SQLUser.email, SQLUser.settings).where(SQLUser.id == user_id)
+                )
+                row = result.one_or_none()
+
+                if row is None:
+                    raise ResourceNotFoundError
+
+                email, settings = row
+
             return Account(
                 **{
                     **user.dict(),
-                    "settings": {
-                        "quick_analyze_workflow": "nuvs",
-                        "show_ids": False,
-                        "show_versions": False,
-                        "skip_quick_analyze_dialog": False,
-                    },
+                    "email": email,
+                    "settings": settings,
                 },
             )
 
@@ -109,6 +116,8 @@ class AccountData(DataLayerDomain):
 
                 if result.rowcount == 0:
                     raise ResourceNotFoundError
+
+                await session.commit()
 
         return await self.get(user_id)
 
