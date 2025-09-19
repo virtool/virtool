@@ -29,18 +29,6 @@ from virtool.users.pg import SQLUser
 from virtool.users.utils import limit_permissions
 from virtool.utils import base_processor, hash_key
 
-PROJECTION = (
-    "_id",
-    "email",
-    "handle",
-    "groups",
-    "last_password_change",
-    "permissions",
-    "primary_group",
-    "settings",
-    "force_reset",
-)
-
 logger = get_logger(layer="data", domain="account")
 
 
@@ -144,7 +132,7 @@ class AccountData(DataLayerDomain):
         data: UpdateSettingsRequest,
         user_id: int,
     ) -> AccountSettings:
-        """Updates account settings.
+        """Update account settings.
 
         :param data: the update to the account settings
         :param user_id: the user ID
@@ -172,11 +160,10 @@ class AccountData(DataLayerDomain):
 
                 return AccountSettings(**updated_settings)
 
-        # If no updates, just return current settings
         return await self.get_settings(user_id)
 
     async def get_keys(self, user_id: str) -> list[APIKey]:
-        """Gets API keys associated with the authenticated user account.
+        """Get API keys associated with the authenticated user account.
 
         :param user_id: the user ID
         :return: the api keys
@@ -196,7 +183,7 @@ class AccountData(DataLayerDomain):
 
         return [APIKey(**key) for key in keys]
 
-    async def get_key(self, user_id: str, key_id: str) -> APIKey:
+    async def get_key(self, user_id: int, key_id: str) -> APIKey:
         """Get the complete representation of the API key identified by the `key_id`.
 
         The internal key ID and secret key value itself are not returned in the
@@ -238,7 +225,7 @@ class AccountData(DataLayerDomain):
             },
         )
 
-    async def get_key_by_secret(self, user_id: str, key: str) -> APIKey:
+    async def get_key_by_secret(self, user_id: int, key: str) -> APIKey:
         """Get the complete representation of the API key with secret value ``key``.
 
         The secret key is not returned in the result.

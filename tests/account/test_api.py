@@ -2,7 +2,7 @@ from http import HTTPStatus
 
 import arrow
 import pytest
-from syrupy import SnapshotAssertion
+from syrupy.assertion import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, VirtoolTestClient
 from virtool.data.layer import DataLayer
@@ -11,6 +11,7 @@ from virtool.fake.next import DataFaker
 from virtool.groups.oas import PermissionsUpdate
 from virtool.mongo.core import Mongo
 from virtool.settings.oas import UpdateSettingsRequest
+from virtool.users.models import User
 from virtool.users.oas import UpdateUserRequest
 from virtool.users.utils import Permission, hash_password
 
@@ -283,8 +284,8 @@ class TestUpdateSettings:
 async def test_get_api_keys(
     fake: DataFaker,
     mongo: Mongo,
-    snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
+    snapshot: SnapshotAssertion,
     static_time,
 ):
     client = await spawn_client(authenticated=True)
@@ -638,44 +639,106 @@ async def test_is_valid_email(value, spawn_client, resp_is):
         ]
 
 
-@pytest.mark.parametrize(
-    "body,status",
-    [
-        ({"username": "foobar", "password": "p@ssword123", "remember": False}, 201),
-        ({"username": "oops", "password": "p@ssword123", "remember": False}, 400),
-        ({"username": "foobar", "password": "wr0ngp@ssword", "remember": False}, 400),
-        ({"username": "foobar", "password": "p@ssword123"}, 201),
-        ({"username": "foobar", "password": "p@ssword123", "remember": None}, 400),
-    ],
-    ids=[
-        "all_valid",
-        "wrong_handle",
-        "wrong_password",
-        "missing_remember",
-        "remember_is_none",
-    ],
-)
-async def test_login(
-    mongo: Mongo,
-    spawn_client: ClientSpawner,
-    body,
-    status,
-    snapshot,
-):
-    client = await spawn_client()
+class TestLogin:
+    client: VirtoolTestClient
+    user: User
 
-    await mongo.users.insert_one(
-        {
-            "user_id": "abc123",
-            "handle": "foobar",
-            "password": hash_password("p@ssword123"),
-        },
-    )
+    @pytest.fixture(autouse=True)
+    async def setup(self, fake: DataFaker, spawn_client: ClientSpawner):
+        self.client = await spawn_client()
+        self.user = await fake.users.create(password="dummy_password")
 
-    resp = await client.post("/account/login", body)
+    async def test_ok(self):
+        """Test that login works with valid credentials."""
+        resp = await self.client.post(
+            "/account/login",
+            {"username": self.user.handle, "password": "dummy_password"},
+        )
 
-    assert resp.status == status
-    assert await resp.json() == snapshot
+        assert resp.status == HTTPStatus.CREATED
+
+        set_cookie = resp.headers.get("Set-Cookie", "")
+        assert "session_id=" in set_cookie
+
+        # Test if we can access authenticated endpoints after login
+        account_resp = await self.client.get("/account")
+        assert account_resp.status == HTTPStatus.OK
+
+    async def test_wrong_handle(self):
+        """Test that login fails with wrong handle."""
+        resp = await self.client.post(
+            "/account/login",
+            {"username": "nonexistent", "password": "dummy_password"},
+        )
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "Invalid handle or password.",
+        }
+
+        set_cookie = resp.headers.get("Set-Cookie", "")
+        assert set_cookie == ""
+
+        # Verify we cannot access authenticated endpoints
+        account_resp = await self.client.get("/account")
+        assert account_resp.status == HTTPStatus.UNAUTHORIZED
+
+    async def test_wrong_password(self):
+        """Test that login fails with wrong password."""
+        resp = await self.client.post(
+            "/account/login",
+            {"username": self.user.handle, "password": "wrong_password"},
+        )
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "Invalid handle or password.",
+        }
+
+        set_cookie = resp.headers.get("Set-Cookie", "")
+        assert set_cookie == ""
+
+        # Verify we cannot access authenticated endpoints
+        account_resp = await self.client.get("/account")
+        assert account_resp.status == HTTPStatus.UNAUTHORIZED
+
+    async def test_missing_remember(self):
+        """Test that login works when remember field is missing."""
+        resp = await self.client.post(
+            "/account/login",
+            {"username": self.user.handle, "password": "dummy_password"},
+        )
+
+        assert resp.status == HTTPStatus.CREATED
+
+        set_cookie = resp.headers.get("Set-Cookie", "")
+        assert "session_id=" in set_cookie
+
+    async def test_remember_is_none(self):
+        """Test that login fails when remember field is None."""
+        resp = await self.client.post(
+            "/account/login",
+            {
+                "username": self.user.handle,
+                "password": "dummy_password",
+                "remember": None,
+            },
+        )
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
+        assert await resp.json() == [
+            {
+                "in": "body",
+                "loc": ["remember"],
+                "msg": "Value may not be null",
+                "type": "value_error",
+            }
+        ]
+
+        set_cookie = resp.headers.get("Set-Cookie", "")
+        assert "session_id=" in set_cookie
 
 
 @pytest.mark.parametrize(
