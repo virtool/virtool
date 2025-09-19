@@ -25,7 +25,6 @@ from virtool.groups.transforms import AttachGroupsTransform
 from virtool.models.sessions import Session
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
-from virtool.users.mongo import validate_credentials
 from virtool.users.pg import SQLUser
 from virtool.users.utils import limit_permissions
 from virtool.utils import base_processor, hash_key
@@ -91,10 +90,8 @@ class AccountData(DataLayerDomain):
         data_dict = data.dict(exclude_unset=True)
 
         if "password" in data_dict:
-            if not await validate_credentials(
-                self._mongo,
-                user_id,
-                data_dict["old_password"] or "",
+            if not await self.data.users.validate_password(
+                user_id, data_dict["old_password"] or ""
             ):
                 raise ResourceError("Invalid credentials")
 
@@ -383,16 +380,15 @@ class AccountData(DataLayerDomain):
         # Re-render the login page with an error message if the username doesn't
         # correlate to a user_id value in
         # the database and/or password are invalid.
-        document = await self._mongo.users.find_one({"handle": data.username})
-
-        if not document or not await validate_credentials(
-            self._mongo,
-            document["_id"],
-            data.password,
-        ):
+        try:
+            user = await self.data.users.get_by_handle(data.username)
+        except ResourceError:
             raise ResourceError()
 
-        return document["_id"]
+        if not await self.data.users.validate_password(user.id, data.password):
+            raise ResourceError()
+
+        return str(user.id)
 
     async def get_reset_session(
         self,

@@ -434,3 +434,21 @@ class UsersData(DataLayerDomain):
                 select(1).select_from(SQLUser).limit(1),
             )
             return result.scalar() is not None
+
+    async def validate_password(self, user_id: int, password: str) -> bool:
+        """Validate a user's password.
+
+        :param user_id: the Postgres user ID
+        :param password: the password to validate
+        :return: True if valid, False otherwise
+        """
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLUser.password).where(SQLUser.id == user_id)
+            )
+            hashed = result.scalar_one_or_none()
+
+            if not hashed:
+                return False
+
+            return virtool.users.utils.check_password(password, hashed)
