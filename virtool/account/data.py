@@ -1,5 +1,6 @@
-from sqlalchemy import update
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy import cast, select, update
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
 import virtool.utils
@@ -85,7 +86,7 @@ class AccountData(DataLayerDomain):
         :param data: the update to the account
         :return: the user account
         """
-        updates = {}
+        values = {}
 
         data_dict = data.dict(exclude_unset=True)
 
@@ -95,48 +96,44 @@ class AccountData(DataLayerDomain):
             ):
                 raise ResourceError("Invalid credentials")
 
-            updates.update(compose_password_update(data_dict["password"]))
+            values.update(compose_password_update(data_dict["password"]))
 
         if "email" in data_dict:
-            updates["email"] = data_dict["email"]
+            values["email"] = data_dict["email"]
 
-        if updates:
-            async with both_transactions(self._mongo, self._pg) as (
-                mongo_session,
-                pg_session,
-            ):
-                result = await self._mongo.users.update_one(
-                    {"_id": user_id},
-                    {"$set": updates},
-                    session=mongo_session,
-                )
-
-                if result.modified_count == 0:
-                    raise ResourceNotFoundError("User not found")
-
-                result = await pg_session.execute(
-                    update(SQLUser).where(SQLUser.legacy_id == user_id).values(updates),
+        if values:
+            async with AsyncSession(self._pg) as session:
+                result = await session.execute(
+                    update(SQLUser).where(SQLUser.id == user_id).values(values),
                 )
 
                 if result.rowcount == 0:
-                    logger.info("user not found in postgres", method="account.update")
+                    raise ResourceNotFoundError
 
         return await self.get(user_id)
 
-    async def get_settings(self, user_id: str) -> AccountSettings:
-        """Gets account settings.
+    async def get_settings(self, user_id: int) -> AccountSettings:
+        """Get account settings.
 
         :param user_id: the user ID
         :return: the account settings
         """
-        settings = await get_one_field(self._mongo.users, "settings", user_id)
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLUser.settings).where(SQLUser.id == user_id)
+            )
 
-        return AccountSettings(**settings)
+            settings = result.scalar_one_or_none()
+
+            if settings is None:
+                raise ResourceNotFoundError
+
+            return AccountSettings(**settings)
 
     async def update_settings(
         self,
         data: UpdateSettingsRequest,
-        user_id: str,
+        user_id: int,
     ) -> AccountSettings:
         """Updates account settings.
 
@@ -144,44 +141,30 @@ class AccountData(DataLayerDomain):
         :param user_id: the user ID
         :return: the account settings
         """
-        settings_from_mongo = await get_one_field(
-            self._mongo.users,
-            "settings",
-            user_id,
-        )
+        update_data = data.dict(exclude_unset=True)
 
-        settings = {
-            **settings_from_mongo,
-            **data.dict(exclude_unset=True),
-        }
-
-        if settings != settings_from_mongo:
-            async with both_transactions(self._mongo, self._pg) as (
-                mongo_session,
-                pg_session,
-            ):
-                result = await self._mongo.users.update_one(
-                    {"_id": user_id},
-                    {"$set": {"settings": settings}},
-                    session=mongo_session,
+        if update_data:
+            async with AsyncSession(self._pg) as session:
+                result = await session.execute(
+                    update(SQLUser)
+                    .where(SQLUser.id == user_id)
+                    .values(
+                        settings=SQLUser.settings.op("||")(cast(update_data, JSONB))
+                    )
+                    .returning(SQLUser.settings)
                 )
 
-                if result.modified_count == 0:
+                updated_settings = result.scalar_one_or_none()
+
+                if updated_settings is None:
                     raise ResourceNotFoundError("User not found")
 
-                result = await pg_session.execute(
-                    update(SQLUser)
-                    .where(SQLUser.legacy_id == user_id)
-                    .values({"settings": settings}),
-                )
+                await session.commit()
 
-                if result.rowcount == 0:
-                    logger.info(
-                        "user not found in postgres",
-                        method="account.update_settings",
-                    )
+                return AccountSettings(**updated_settings)
 
-        return AccountSettings(**settings)
+        # If no updates, just return current settings
+        return await self.get_settings(user_id)
 
     async def get_keys(self, user_id: str) -> list[APIKey]:
         """Gets API keys associated with the authenticated user account.

@@ -388,6 +388,62 @@
     'message': 'Not found',
   })
 # ---
+# name: TestUpdateSettings.test_invalid_input[response]
+  list([
+    dict({
+      'in': 'body',
+      'loc': list([
+        'show_ids',
+      ]),
+      'msg': 'value could not be parsed to a boolean',
+      'type': 'type_error.bool',
+    }),
+  ])
+# ---
+# name: TestUpdateSettings.test_null_values[response]
+  list([
+    dict({
+      'in': 'body',
+      'loc': list([
+        'quick_analyze_workflow',
+      ]),
+      'msg': 'Value may not be null',
+      'type': 'value_error',
+    }),
+    dict({
+      'in': 'body',
+      'loc': list([
+        'show_ids',
+      ]),
+      'msg': 'Value may not be null',
+      'type': 'value_error',
+    }),
+    dict({
+      'in': 'body',
+      'loc': list([
+        'show_versions',
+      ]),
+      'msg': 'Value may not be null',
+      'type': 'value_error',
+    }),
+    dict({
+      'in': 'body',
+      'loc': list([
+        'skip_quick_analyze_dialog',
+      ]),
+      'msg': 'Value may not be null',
+      'type': 'value_error',
+    }),
+  ])
+# ---
+# name: TestUpdateSettings.test_ok[response]
+  dict({
+    'quick_analyze_workflow': 'pathoscope_bowtie',
+    'show_ids': False,
+    'show_versions': True,
+    'skip_quick_analyze_dialog': True,
+  })
+# ---
 # name: test_get
   dict({
     'active': True,
@@ -397,7 +453,7 @@
     'groups': list([
     ]),
     'handle': 'bob',
-    'id': 'bf1b993c',
+    'id': 1,
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': dict({
       'cancel_job': False,
@@ -546,7 +602,7 @@
     'groups': list([
     ]),
     'handle': 'bob',
-    'id': 'bf1b993c',
+    'id': 1,
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': dict({
       'cancel_job': False,
@@ -576,7 +632,7 @@
     'groups': list([
     ]),
     'handle': 'bob',
-    'id': 'bf1b993c',
+    'id': 1,
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': dict({
       'cancel_job': False,
@@ -624,7 +680,7 @@
     'groups': list([
     ]),
     'handle': 'bob',
-    'id': 'bf1b993c',
+    'id': 1,
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': dict({
       'cancel_job': False,
@@ -654,7 +710,7 @@
     'groups': list([
     ]),
     'handle': 'bob',
-    'id': 'bf1b993c',
+    'id': 1,
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': dict({
       'cancel_job': False,

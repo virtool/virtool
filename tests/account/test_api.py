@@ -28,7 +28,7 @@ async def test_get(
 
 
 @pytest.mark.parametrize(
-    "body,status",
+    ("body", "status"),
     [
         (
             {
@@ -96,44 +96,75 @@ async def test_get_settings(spawn_client):
     }
 
 
-@pytest.mark.parametrize(
-    "data,status",
-    [
-        (
-            {"show_ids": False},
-            200,
-        ),
-        ({"foo_bar": True, "show_ids": "foo"}, 400),
-        (
+class TestUpdateSettings:
+    """Test account settings updates at PATCH /account/settings."""
+
+    async def test_ok(
+        self,
+        spawn_client: ClientSpawner,
+        snapshot_recent: SnapshotAssertion,
+    ):
+        """Test that valid settings updates work correctly."""
+        client = await spawn_client(authenticated=True)
+
+        resp = await client.patch("/account/settings", {"show_ids": False})
+
+        assert resp.status == HTTPStatus.OK
+
+        body = await resp.json()
+        assert body == snapshot_recent(name="response")
+
+        # Verify the updated value is returned
+        assert body["show_ids"] is False
+
+        # Verify other settings remain unchanged
+        assert body["show_versions"] is True
+        assert body["skip_quick_analyze_dialog"] is True
+        assert body["quick_analyze_workflow"] == "pathoscope_bowtie"
+
+    async def test_invalid_input(
+        self,
+        snapshot_recent: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that invalid field names and types return 400."""
+        client = await spawn_client(authenticated=True)
+
+        resp = await client.patch(
+            "/account/settings",
+            {"foo_bar": True, "show_ids": "foo"},
+        )
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
+        assert await resp.json() == snapshot_recent(name="response")
+
+    async def test_null_values(
+        self,
+        spawn_client: ClientSpawner,
+        snapshot_recent: SnapshotAssertion,
+    ):
+        """Test that null values for settings fields return 400."""
+        client = await spawn_client(authenticated=True)
+
+        resp = await client.patch(
+            "/account/settings",
             {
                 "show_ids": None,
                 "show_versions": None,
                 "skip_quick_analyze_dialog": None,
                 "quick_analyze_workflow": None,
             },
-            400,
-        ),
-    ],
-    ids=["valid_input", "invalid_input", "null_values"],
-)
-async def test_update_settings(data, status, spawn_client, resp_is, snapshot):
-    """Test that account settings can be updated at ``POST /account/settings`` and that requests to
-    ``POST /account/settings`` return 422 for invalid JSON fields.
+        )
 
-    """
-    client = await spawn_client(authenticated=True)
-
-    resp = await client.patch("/account/settings", data)
-
-    assert resp.status == status
-    assert await resp.json() == snapshot(name="response")
+        assert resp.status == HTTPStatus.BAD_REQUEST
+        assert await resp.json() == snapshot_recent(name="response")
 
 
 async def test_get_api_keys(
     fake: DataFaker,
     mongo: Mongo,
     spawn_client: ClientSpawner,
-    snapshot,
+    snapshot: SnapshotAssertion,
     static_time,
 ):
     client = await spawn_client(authenticated=True)
