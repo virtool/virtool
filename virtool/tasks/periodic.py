@@ -54,7 +54,7 @@ class PeriodicTaskSpawner:
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
                 select(SQLTask)
-                .filter_by(type=task_class.name, complete=False)
+                .filter_by(type=task_class.name)
                 .filter(SQLTask.created_at > cutoff_time)
             )
 
