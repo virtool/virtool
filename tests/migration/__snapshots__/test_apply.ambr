@@ -365,5 +365,12 @@
       'name': 'add task acquisition columns',
       'revision': '189732b1ff59',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 53,
+      'name': 'make user password non-nullable',
+      'revision': 'd34e5f8a1b2c',
+    }),
   ])
 # ---

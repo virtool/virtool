@@ -55,7 +55,7 @@ class SQLUser(Base):
     invalidate_sessions: Mapped[bool] = mapped_column(default=False)
     last_password_change: Mapped[datetime]
     legacy_id: Mapped[str | None] = mapped_column(unique=True)
-    password: Mapped[bytes | None]
+    password: Mapped[bytes]
     settings: Mapped[dict] = mapped_column(JSONB)
 
     user_group_associations: Mapped[list[SQLUserGroup]] = relationship(
