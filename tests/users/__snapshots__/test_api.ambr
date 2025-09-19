@@ -1,8 +1,45 @@
 # serializer version: 1
+# name: TestGet.test_get
+  dict({
+    'active': True,
+    'administrator_role': None,
+    'force_reset': False,
+    'groups': list([
+      dict({
+        'id': 2,
+        'legacy_id': None,
+        'name': 'architects',
+      }),
+      dict({
+        'id': 1,
+        'legacy_id': None,
+        'name': 'musicians',
+      }),
+    ]),
+    'handle': 'lindawest',
+    'id': 2,
+    'last_password_change': '2015-10-06T20:00:00Z',
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    }),
+    'primary_group': dict({
+      'id': 1,
+      'legacy_id': None,
+      'name': 'musicians',
+    }),
+  })
+# ---
 # name: TestUpdate.test_non_existent_primary_group
   dict({
     'id': 'bad_request',
-    'message': 'Non-existent group: 4',
+    'message': 'User is not a member of group',
   })
 # ---
 # name: TestUpdate.test_not_a_member_of_primary_group

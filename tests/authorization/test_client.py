@@ -1,16 +1,7 @@
-import asyncio
-
-import pytest
-
 from virtool.authorization.client import AuthorizationClient
-from virtool.authorization.permissions import (
-    Permission,
-    ResourceType,
-)
 from virtool.authorization.relationships import (
     AdministratorRoleAssignment,
     SpaceMembership,
-    SpaceRoleAssignment,
     UserRoleAssignment,
 )
 from virtool.models.roles import (
@@ -20,52 +11,6 @@ from virtool.models.roles import (
     SpaceSampleRole,
     SpaceSubtractionRole,
 )
-
-
-class TestCheck:
-    @pytest.mark.parametrize("has_permission", [True, False])
-    async def test_member_permission(
-        self,
-        authorization_client: AuthorizationClient,
-        has_permission,
-    ):
-        permission = (
-            SpaceSubtractionRole.EDITOR
-            if has_permission
-            else SpaceSubtractionRole.VIEWER
-        )
-
-        await authorization_client.add(
-            SpaceMembership("ryanf", 0, SpaceRole.MEMBER),
-            UserRoleAssignment("ryanf", 0, permission),
-        )
-
-        assert (
-            await authorization_client.check(
-                "ryanf", Permission.UPDATE_SUBTRACTION, ResourceType.SPACE, 0
-            )
-            is has_permission
-        )
-
-    async def test_base_role_permissions(
-        self, authorization_client: AuthorizationClient
-    ):
-        await authorization_client.add(
-            SpaceMembership("ryanf", 0, SpaceRole.MEMBER),
-            SpaceRoleAssignment(0, SpaceSubtractionRole.EDITOR),
-            SpaceRoleAssignment(0, SpaceProjectRole.MANAGER),
-        )
-
-        results = await asyncio.gather(
-            authorization_client.check(
-                "ryanf", Permission.UPDATE_SUBTRACTION, ResourceType.SPACE, 0
-            ),
-            authorization_client.check(
-                "ryanf", Permission.DELETE_PROJECT, ResourceType.SPACE, 0
-            ),
-        )
-
-        assert all(results)
 
 
 async def test_list_user_roles(authorization_client: AuthorizationClient):

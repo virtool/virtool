@@ -1,7 +1,8 @@
 import math
 
-from sqlalchemy import delete, insert, select, update
+from sqlalchemy import case, delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from sqlalchemy.orm import selectinload
 from structlog import get_logger
 
 import virtool.users.utils
@@ -18,7 +19,7 @@ from virtool.data.errors import (
 from virtool.data.events import Operation, emits
 from virtool.data.topg import both_transactions
 from virtool.data.transforms import apply_transforms
-from virtool.groups.pg import merge_group_permissions
+from virtool.groups.pg import SQLGroup, merge_group_permissions
 from virtool.groups.transforms import AttachGroupsTransform, AttachPrimaryGroupTransform
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
@@ -176,15 +177,33 @@ class UsersData(DataLayerDomain):
         :return: the user
         """
         async with AsyncSession(self._pg) as session:
-            sql_user = await session.get(SQLUser, user_id)
+            result = await session.execute(
+                select(SQLUser)
+                .options(
+                    selectinload(SQLUser.user_group_associations).selectinload(
+                        SQLUserGroup.group
+                    )
+                )
+                .where(SQLUser.id == user_id)
+            )
+            sql_user = result.unique().scalar_one_or_none()
 
             if sql_user is None:
                 raise ResourceNotFoundError
 
             user_dict = sql_user.to_dict()
+            # Convert SQLGroup objects to dictionaries for merge_group_permissions
+            groups_dicts = [group.to_dict() for group in user_dict["groups"]]
 
         return User.parse_obj(
-            {**user_dict, "permissions": merge_group_permissions(user_dict["groups"])}
+            {
+                **user_dict,
+                "groups": groups_dicts,
+                "primary_group": user_dict["primary_group"].to_dict()
+                if user_dict["primary_group"]
+                else None,
+                "permissions": merge_group_permissions(groups_dicts),
+            }
         )
 
     async def get_by_handle(self, handle: str) -> User:
@@ -289,21 +308,6 @@ class UsersData(DataLayerDomain):
             )
             await session.commit()
 
-        if role is None:
-            admin_tuple = await self._authorization_client.get_administrator(user_id)
-
-            if admin_tuple[1] is not None:
-                await self._authorization_client.remove(
-                    AdministratorRoleAssignment(
-                        user_id,
-                        AdministratorRole(admin_tuple[1]),
-                    ),
-                )
-        else:
-            await self._authorization_client.add(
-                AdministratorRoleAssignment(user_id, AdministratorRole(role)),
-            )
-
         return await self.get(user_id)
 
     @emits(Operation.UPDATE)
@@ -349,16 +353,9 @@ class UsersData(DataLayerDomain):
                 raise ResourceNotFoundError
 
             if pg_update:
-                result = await session.execute(
+                await session.execute(
                     update(SQLUser).where(SQLUser.id == user.id).values(**pg_update),
                 )
-
-                if not result.rowcount:
-                    logger.info(
-                        "user not found during update",
-                        method="users.update",
-                        user_id=user_id,
-                    )
 
             if "groups" in data:
                 await session.execute(
@@ -377,23 +374,55 @@ class UsersData(DataLayerDomain):
                     )
 
             if "primary_group" in data:
-                await session.execute(
-                    update(SQLUserGroup)
-                    .where(SQLUserGroup.user_id == user.id)
-                    .values(primary=False),
-                )
-
                 result = await session.execute(
                     update(SQLUserGroup)
                     .where(SQLUserGroup.user_id == user.id)
-                    .where(SQLUserGroup.group_id == data["primary_group"])
-                    .values(primary=True),
+                    .values(
+                        primary=case(
+                            (SQLUserGroup.group_id == data["primary_group"], True),
+                            else_=False,
+                        )
+                    )
                 )
 
                 if not result.rowcount:
                     raise ResourceConflictError("User is not a member of group")
 
+            await session.commit()
+
         return await self.get(user_id)
+
+    async def check_administrator_role(
+        self, user_id: int, required_role: AdministratorRole
+    ) -> bool:
+        """Check if a user has the required administrator role or higher.
+
+        :param user_id: the user's ID
+        :param required_role: the minimum administrator role required
+        :return: True if the user has the required role or higher, False otherwise
+        """
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLUser.administrator_role).where(SQLUser.id == user_id),
+            )
+            user_role = result.scalar_one_or_none()
+
+            if user_role is None:
+                return False
+
+            # Define role hierarchy: FULL has highest privileges
+            role_hierarchy = {
+                AdministratorRole.BASE: 1,
+                AdministratorRole.USERS: 2,
+                AdministratorRole.SETTINGS: 2,
+                AdministratorRole.SPACES: 2,
+                AdministratorRole.FULL: 3,
+            }
+
+            user_level = role_hierarchy.get(user_role, 0)
+            required_level = role_hierarchy.get(required_role, 0)
+
+            return user_level >= required_level
 
     async def check_users_exist(self) -> bool:
         """Checks that users exist.

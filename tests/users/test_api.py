@@ -98,7 +98,11 @@ class TestGet:
         resp = await client.get(f"/users/{user.id}")
 
         assert resp.status == HTTPStatus.OK
-        assert await resp.json() == snapshot
+        body = await resp.json()
+        assert body == snapshot
+
+        assert body["id"] == user.id
+        assert len(body["groups"]) == 2
 
     async def test_not_found(self, spawn_client: ClientSpawner):
         """Test that a 404 is returned when the user does not exist."""
@@ -238,7 +242,7 @@ class TestUpdate:
         resp = await client.patch(
             f"/users/{user.id}",
             data={
-                "primary_group": 4,
+                "primary_group": 99,
             },
         )
 

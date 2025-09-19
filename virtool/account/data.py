@@ -58,15 +58,13 @@ class AccountData(DataLayerDomain):
         self._mongo = mongo
         self._pg = pg
 
-    async def get(self, user_id: str) -> Account:
+    async def get(self, user_id: int) -> Account:
         """Get the account for the given ``user_id``.
 
         :param user_id: the user ID
         :return: the user account
         """
-        user = await self.data.users.get(user_id)
-
-        if user:
+        if user := await self.data.users.get(user_id):
             return Account(
                 **{
                     **user.dict(),
@@ -79,9 +77,9 @@ class AccountData(DataLayerDomain):
                 },
             )
 
-        raise ResourceNotFoundError("User not found")
+        raise ResourceNotFoundError
 
-    async def update(self, user_id: str, data: UpdateAccountRequest) -> Account:
+    async def update(self, user_id: int, data: UpdateAccountRequest) -> Account:
         """Update the user account.
 
         :param user_id: the user ID

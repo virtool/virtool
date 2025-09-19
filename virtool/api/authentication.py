@@ -92,9 +92,7 @@ async def authenticate_with_session(req: Request, handler: Callable) -> Response
         session_id=session.id,
     )
 
-    resp = await handler(req)
-
-    return resp
+    return await handler(req)
 
 
 @web.middleware
