@@ -9,7 +9,7 @@ from virtool.account.mongo import (
     compose_password_update,
 )
 from virtool.account.oas import (
-    CreateKeysRequest,
+    CreateKeyRequest,
     CreateLoginRequest,
     ResetPasswordRequest,
     UpdateAccountRequest,
@@ -213,10 +213,13 @@ class AccountData(DataLayerDomain):
             ],
         )
 
-        document["permissions"] = limit_permissions(
-            document["permissions"],
-            user.permissions.dict(),
-        )
+        if user.administrator_role:
+            document["permissions"] = document["permissions"]
+        else:
+            document["permissions"] = limit_permissions(
+                document["permissions"],
+                user.permissions.dict(),
+            )
 
         return APIKey(
             **{
@@ -257,8 +260,8 @@ class AccountData(DataLayerDomain):
 
     async def create_key(
         self,
-        data: CreateKeysRequest,
-        user_id: str,
+        data: CreateKeyRequest,
+        user_id: int,
     ) -> tuple[str, APIKey]:
         """Create a new API key.
 
@@ -360,7 +363,7 @@ class AccountData(DataLayerDomain):
         # correlate to a user_id value in
         # the database and/or password are invalid.
         try:
-            user = await self.data.users.get_by_handle(data.username)
+            user = await self.data.users.get_by_handle(data.handle)
         except ResourceError:
             raise ResourceError()
 
@@ -384,7 +387,13 @@ class AccountData(DataLayerDomain):
         :param session_id: the id of the session getting the reset code
         :param remember: boolean indicating whether the sessions should be remembered
         """
-        if await get_one_field(self._mongo.users, "force_reset", user_id):
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLUser.force_reset).where(SQLUser.id == int(user_id))
+            )
+            force_reset = result.scalar_one_or_none()
+
+        if force_reset:
             await self.data.sessions.delete(session_id)
             return await self.data.sessions.create_reset(ip, user_id, remember)
 

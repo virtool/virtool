@@ -76,13 +76,13 @@ class VirtoolTestClientUser:
 class VirtoolTestClient:
     """The test client provided by the :fixture:`spawn_client` fixture."""
 
-    def __init__(self, test_client, test_client_user: VirtoolTestClientUser):
+    def __init__(self, test_client, test_client_user: VirtoolTestClientUser | None):
         self._test_client = test_client
 
         self.app = self._test_client.server.app
         """The test server's application object."""
 
-        self.user: VirtoolTestClientUser = test_client_user
+        self.user: VirtoolTestClientUser | None = test_client_user
         """
         The user associated with the client.
         
@@ -107,30 +107,59 @@ class VirtoolTestClient:
     async def get(
         self,
         url: str,
+        cookies: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         params: dict[str, Any] | None = None,
     ) -> ClientResponse:
-        return await self._test_client.get(url, headers=headers, params=params)
+        return await self._test_client.get(
+            url, cookies=cookies, headers=headers, params=params
+        )
 
-    async def post(self, url: str, data: dict | None) -> ClientResponse:
+    async def post(
+        self,
+        url: str,
+        data: dict | None = None,
+        cookies: dict[str, str] | None = None,
+    ) -> ClientResponse:
         payload = None
 
         if data:
             payload = dump_string(data)
 
-        return await self._test_client.post(url, data=payload)
+        return await self._test_client.post(url, data=payload, cookies=cookies)
 
-    async def post_form(self, url: str, data) -> ClientResponse:
-        return await self._test_client.post(url, data=data)
+    async def post_form(
+        self,
+        url: str,
+        data,
+        cookies: dict[str, str] | None = None,
+    ) -> ClientResponse:
+        return await self._test_client.post(url, data=data, cookies=cookies)
 
-    async def patch(self, url: str, data) -> ClientResponse:
-        return await self._test_client.patch(url, data=json.dumps(data))
+    async def patch(
+        self,
+        url: str,
+        data,
+        cookies: dict[str, str] | None = None,
+    ) -> ClientResponse:
+        return await self._test_client.patch(
+            url, data=json.dumps(data), cookies=cookies
+        )
 
-    async def put(self, url: str, data) -> ClientResponse:
-        return await self._test_client.put(url, data=json.dumps(data))
+    async def put(
+        self,
+        url: str,
+        data,
+        cookies: dict[str, str] | None = None,
+    ) -> ClientResponse:
+        return await self._test_client.put(url, data=json.dumps(data), cookies=cookies)
 
-    async def delete(self, url: str) -> ClientResponse:
-        return await self._test_client.delete(url)
+    async def delete(
+        self,
+        url: str,
+        cookies: dict[str, str] | None = None,
+    ) -> ClientResponse:
+        return await self._test_client.delete(url, cookies=cookies)
 
 
 class JobClientSpawner(Protocol):
@@ -379,12 +408,13 @@ def spawn_client(
                 ),
             ]
 
-        test_client_user = await fake.users.create(
-            administrator_role=AdministratorRole.FULL if administrator else None,
-            groups=groups,
-            handle="bob",
-            password="bob_is_testing",
-        )
+        test_client_user = None
+        if authenticated:
+            test_client_user = await fake.users.create(
+                administrator_role=AdministratorRole.FULL if administrator else None,
+                groups=groups,
+                password="bob_is_testing",
+            )
 
         if authenticated:
             session_id = "foobar"

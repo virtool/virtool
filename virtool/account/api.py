@@ -6,6 +6,7 @@ session or API key making the requests.
 """
 
 from contextlib import suppress
+
 from aiohttp.web import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r404
@@ -16,7 +17,7 @@ from virtool.account.models import Account, AccountSettings, APIKey
 from virtool.account.oas import (
     AccountResetPasswordResponse,
     CreateAPIKeyResponse,
-    CreateKeysRequest,
+    CreateKeyRequest,
     CreateLoginRequest,
     LoginResponse,
     ResetPasswordRequest,
@@ -143,7 +144,7 @@ class KeysView(PydanticView):
         return json_response(keys, status=200)
 
     async def post(
-        self, data: CreateKeysRequest
+        self, data: CreateKeyRequest
     ) -> r201[CreateAPIKeyResponse] | r400 | r401:
         """Create an API key.
 

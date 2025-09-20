@@ -1,3 +1,4 @@
+import asyncio
 from http import HTTPStatus
 
 import arrow
@@ -5,6 +6,7 @@ import pytest
 from syrupy.assertion import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, VirtoolTestClient
+from virtool.account.oas import CreateKeyRequest, UpdateAccountRequest
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
@@ -13,20 +15,28 @@ from virtool.mongo.core import Mongo
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.users.models import User
 from virtool.users.oas import UpdateUserRequest
-from virtool.users.utils import Permission, hash_password
+from virtool.users.utils import Permission, generate_base_permissions
+from virtool.workflow.pytest_plugin import StaticTime
+
+
+async def _create_fake_user_with_permissions(fake: DataFaker, *permissions):
+    """Helper to create user with specific permissions."""
+    group = await fake.groups.create(
+        PermissionsUpdate(**{p: True for p in permissions})
+    )
+    return await fake.users.create(groups=[group])
 
 
 async def test_get(
-    snapshot: SnapshotAssertion,
+    snapshot_recent: SnapshotAssertion,
     spawn_client: ClientSpawner,
-    static_time,
 ):
     client = await spawn_client(authenticated=True)
 
     resp = await client.get("/account")
 
     assert resp.status == HTTPStatus.OK
-    assert await resp.json() == snapshot
+    assert await resp.json() == snapshot_recent
 
 
 class TestUpdate:
@@ -35,7 +45,7 @@ class TestUpdate:
     client: VirtoolTestClient
 
     @pytest.fixture(autouse=True)
-    async def setup(self, spawn_client: ClientSpawner):
+    async def setup(self, spawn_client: ClientSpawner) -> None:
         self.client = await spawn_client(authenticated=True)
 
         await get_data_from_app(self.client.app).settings.update(
@@ -201,7 +211,7 @@ class TestUpdate:
         assert await resp.json() == snapshot_recent(name="response")
 
 
-async def test_get_settings(spawn_client: ClientSpawner):
+async def test_get_settings(spawn_client: ClientSpawner) -> None:
     """Test that a ``GET /account/settings`` returns the settings for the session user."""
     client = await spawn_client(authenticated=True)
 
@@ -282,45 +292,65 @@ class TestUpdateSettings:
 
 
 async def test_get_api_keys(
-    fake: DataFaker,
-    mongo: Mongo,
+    data_layer: DataLayer,
+    snapshot_recent: SnapshotAssertion,
     spawn_client: ClientSpawner,
-    snapshot: SnapshotAssertion,
-    static_time,
-):
+) -> None:
     client = await spawn_client(authenticated=True)
 
-    group = await fake.groups.create()
+    await data_layer.account.create_key(
+        CreateKeyRequest(
+            name="Foobar",
+            permissions={},
+        ),
+        client.user.id,
+    )
 
-    await mongo.keys.insert_many(
-        [
-            {
-                "_id": "abc123",
-                "id": "foobar_0",
-                "name": "Foobar",
-                "user": {"id": client.user.id},
-                "created_at": static_time.datetime,
-                "administrator": True,
-                "groups": [group.id],
-                "permissions": {},
-            },
-            {
-                "_id": "xyz321",
-                "id": "baz_1",
-                "name": "Baz",
-                "user": {"id": client.user.id},
-                "created_at": static_time.datetime,
-                "administrator": False,
-                "groups": [],
-                "permissions": {},
-            },
-        ],
-        session=None,
+    await data_layer.account.create_key(
+        CreateKeyRequest(
+            name="Baz",
+            permissions={},
+        ),
+        client.user.id,
     )
 
     resp = await client.get("/account/keys")
 
-    assert await resp.json() == snapshot
+    assert await resp.json() == snapshot_recent
+
+
+async def test_cannot_list_other_users_keys(
+    data_layer: DataLayer,
+    fake: DataFaker,
+    spawn_client: ClientSpawner,
+) -> None:
+    """Test that users can only see their own API keys."""
+    # Create authenticated client (this creates user1)
+    client = await spawn_client(authenticated=True)
+    user1 = client.user
+
+    # Create another user
+    user2 = await fake.users.create()
+
+    # Create API keys for both users
+    await data_layer.account.create_key(
+        CreateKeyRequest(name="User1 Key", permissions={}),
+        user1.id,
+    )
+
+    await data_layer.account.create_key(
+        CreateKeyRequest(name="User2 Key", permissions={}),
+        user2.id,
+    )
+
+    resp = await client.get("/account/keys")
+
+    assert resp.status == HTTPStatus.OK
+    keys = await resp.json()
+
+    # Should only see user1's key, not user2's
+    assert len(keys) == 1
+    assert keys[0]["name"] == "User1 Key"
 
 
 class TestCreateAPIKey:
@@ -328,15 +358,15 @@ class TestCreateAPIKey:
     @pytest.mark.parametrize("req_perm", [True, False])
     async def test(
         self,
-        has_perm,
-        req_perm,
+        has_perm: bool,
+        req_perm: bool,
         data_layer: DataLayer,
         fake: DataFaker,
         mocker,
-        snapshot,
+        snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
-        static_time,
-    ):
+        static_time: StaticTime,
+    ) -> None:
         """Test that creation of an API key functions properly. Check that different permission inputs work."""
         mocker.patch(
             "virtool.utils.generate_key",
@@ -368,11 +398,11 @@ class TestCreateAPIKey:
     async def test_naming(
         self,
         mocker,
-        snapshot,
+        snapshot: SnapshotAssertion,
         mongo: Mongo,
         spawn_client: ClientSpawner,
-        static_time,
-    ):
+        static_time: StaticTime,
+    ) -> None:
         """Test that uniqueness is ensured on the ``id`` field."""
         mocker.patch(
             "virtool.utils.generate_key",
@@ -393,6 +423,82 @@ class TestCreateAPIKey:
         assert await resp.json() == snapshot
         assert await mongo.keys.find_one({"id": "foobar_1"}) == snapshot
 
+    async def test_permission_exceeds_user_create(
+        self,
+        fake: DataFaker,
+        spawn_client: ClientSpawner,
+    ) -> None:
+        """Test that API key permissions are limited to user's actual permissions on retrieval."""
+        client = await spawn_client(
+            authenticated=True, permissions=[Permission.create_sample]
+        )
+
+        resp = await client.post(
+            "/account/keys",
+            {
+                "name": "Test Key",
+                "permissions": {
+                    Permission.create_sample.value: True,
+                    Permission.modify_subtraction.value: True,  # User doesn't have this
+                },
+            },
+        )
+
+        assert resp.status == 201
+        body = await resp.json()
+
+        assert body["permissions"][Permission.create_sample.value] is True
+        assert body["permissions"][Permission.modify_subtraction.value] is False
+
+    async def test_permission_inheritance_multiple_groups(
+        self,
+        fake: DataFaker,
+        spawn_client: ClientSpawner,
+    ) -> None:
+        """Test that API keys inherit the union of group permissions."""
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_sample, Permission.modify_subtraction],
+        )
+
+        resp = await client.post(
+            "/account/keys",
+            {
+                "name": "Test Key",
+                "permissions": {
+                    Permission.create_sample.value: True,
+                    Permission.modify_subtraction.value: True,
+                },
+            },
+        )
+
+        assert resp.status == 201
+        body = await resp.json()
+
+        assert body["permissions"][Permission.create_sample.value] is True
+        assert body["permissions"][Permission.modify_subtraction.value] is True
+
+    async def test_admin_can_grant_any_permission(
+        self,
+        fake: DataFaker,
+        spawn_client: ClientSpawner,
+        data_layer: DataLayer,
+    ) -> None:
+        """Test that admin users can grant any permission to their own keys."""
+        client = await spawn_client(authenticated=True, administrator=True)
+
+        all_permissions = {k: True for k in generate_base_permissions()}
+
+        resp = await client.post(
+            "/account/keys", {"name": "Admin Key", "permissions": all_permissions}
+        )
+
+        assert resp.status == 201
+        body = await resp.json()
+
+        for perm in Permission:
+            assert body["permissions"][perm.value] is True
+
 
 class TestUpdateAPIKey:
     @pytest.mark.parametrize("has_admin", [True, False])
@@ -404,10 +510,10 @@ class TestUpdateAPIKey:
         data_layer: DataLayer,
         fake: DataFaker,
         mongo: Mongo,
-        snapshot,
+        snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
-        static_time,
-    ):
+        static_time: StaticTime,
+    ) -> None:
         client = await spawn_client(authenticated=True)
 
         group = await fake.groups.create(
@@ -454,7 +560,9 @@ class TestUpdateAPIKey:
         assert await resp.json() == snapshot
         assert await mongo.keys.find_one() == snapshot
 
-    async def test_not_found(self, snapshot, spawn_client: ClientSpawner):
+    async def test_not_found(
+        self, snapshot: SnapshotAssertion, spawn_client: ClientSpawner
+    ) -> None:
         """Test that a 404 is returned when the key is not found."""
         client = await spawn_client(authenticated=True)
 
@@ -466,86 +574,353 @@ class TestUpdateAPIKey:
         assert resp.status == 404
         assert await resp.json() == snapshot
 
-
-@pytest.mark.parametrize("error", [None, "404"])
-async def test_remove_api_key(
-    error,
-    mongo: Mongo,
-    spawn_client: ClientSpawner,
-    snapshot,
-):
-    client = await spawn_client(authenticated=True)
-
-    if error is None:
-        await mongo.keys.insert_one(
-            {
-                "_id": "foobar",
-                "id": "foobar_0",
-                "name": "Foobar",
-                "user": {"id": client.user.id},
-            },
+    async def test_permission_update_cannot_escalate(
+        self,
+        fake: DataFaker,
+        spawn_client: ClientSpawner,
+        mongo: Mongo,
+    ) -> None:
+        """Test that users cannot escalate key permissions beyond their own."""
+        client = await spawn_client(
+            authenticated=True, permissions=[Permission.create_sample]
         )
 
-    resp = await client.delete("/account/keys/foobar_0")
+        resp = await client.post(
+            "/account/keys", {"name": "Test Key", "permissions": {}}
+        )
+        key_id = (await resp.json())["id"]
 
-    if error is None:
-        assert resp.status == 204
-        assert await mongo.keys.count_documents({}) == 0
+        resp = await client.patch(
+            f"/account/keys/{key_id}",
+            {"permissions": {Permission.modify_subtraction.value: True}},
+        )
 
-    else:
-        assert resp.status == 404
-        assert await resp.json() == snapshot
+        assert resp.status == 200
+        body = await resp.json()
 
+        assert body["permissions"][Permission.modify_subtraction.value] is False
 
-async def test_remove_all_api_keys(
-    fake: DataFaker,
-    mongo: Mongo,
-    spawn_client: ClientSpawner,
-):
-    client = await spawn_client(authenticated=True)
+    async def test_cannot_modify_other_users_key(
+        self,
+        fake: DataFaker,
+        spawn_client: ClientSpawner,
+        data_layer: DataLayer,
+    ) -> None:
+        """Test that users cannot modify another user's API key."""
+        other_user = await fake.users.create()
 
-    user = await fake.users.create()
+        _, other_key = await data_layer.account.create_key(
+            CreateKeyRequest(name="Other User Key", permissions=PermissionsUpdate()),
+            other_user.id,
+        )
 
-    await mongo.keys.insert_many(
-        [
+        client = await spawn_client(authenticated=True)
+
+        resp = await client.patch(
+            f"/account/keys/{other_key.id}",
+            {"permissions": {Permission.create_sample.value: True}},
+        )
+
+        assert resp.status == 500
+
+    async def test_permission_revocation(
+        self,
+        fake: DataFaker,
+        spawn_client: ClientSpawner,
+    ) -> None:
+        """Test that permissions can be revoked from a key."""
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_sample, Permission.modify_subtraction],
+        )
+
+        resp = await client.post(
+            "/account/keys",
             {
-                "_id": "hello_world",
-                "id": "hello_world_0",
-                "user": {"id": client.user.id},
+                "name": "Test Key",
+                "permissions": {
+                    Permission.create_sample.value: True,
+                    Permission.modify_subtraction.value: True,
+                },
             },
-            {"_id": "foobar", "id": "foobar_0", "user": {"id": client.user.id}},
+        )
+        key_id = (await resp.json())["id"]
+
+        resp = await client.patch(
+            f"/account/keys/{key_id}",
+            {"permissions": {Permission.modify_subtraction.value: False}},
+        )
+
+        assert resp.status == 200
+        body = await resp.json()
+
+        assert body["permissions"][Permission.create_sample.value] is True
+        assert body["permissions"][Permission.modify_subtraction.value] is False
+
+    async def test_cannot_update_key_without_owning_permission(
+        self,
+        fake: DataFaker,
+        spawn_client: ClientSpawner,
+        data_layer: DataLayer,
+    ) -> None:
+        """Test that users cannot grant permissions they no longer have to their keys."""
+        # Create a group with specific permissions
+        group = await fake.groups.create(
+            PermissionsUpdate(create_sample=True, modify_subtraction=True)
+        )
+
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_sample, Permission.modify_subtraction],
+        )
+
+        # Create an API key with initial permissions
+        resp = await client.post(
+            "/account/keys",
+            {
+                "name": "Test Key",
+                "permissions": {Permission.create_sample.value: True},
+            },
+        )
+        key_id = (await resp.json())["id"]
+
+        # Remove modify_subtraction permission from user by updating their groups
+        empty_group = await fake.groups.create(PermissionsUpdate(create_sample=True))
+        await data_layer.users.update(
+            client.user.id,
+            UpdateUserRequest(groups=[empty_group.id]),
+        )
+
+        # Try to grant modify_subtraction permission to the key
+        resp = await client.patch(
+            f"/account/keys/{key_id}",
+            {"permissions": {Permission.modify_subtraction.value: True}},
+        )
+
+        assert resp.status == 200
+        body = await resp.json()
+
+        # The permission should remain False since user no longer has it
+        assert body["permissions"][Permission.modify_subtraction.value] is False
+
+
+class TestLogout:
+    client: VirtoolTestClient
+    user: User
+
+    @pytest.fixture(autouse=True)
+    async def setup(self, fake: DataFaker, spawn_client: ClientSpawner) -> None:
+        self.client = await spawn_client()
+        self.user = await fake.users.create(password="test_password")
+
+    async def test_double_logout(self) -> None:
+        """Test that calling logout twice doesn't cause errors or unexpected behavior."""
+        login_resp = await self.client.post(
+            "/account/login",
+            {"handle": self.user.handle, "password": "test_password"},
+        )
+        assert login_resp.status == HTTPStatus.CREATED
+
+        resp = await self.client.get("/account")
+        assert resp.status == HTTPStatus.OK
+
+        logout_resp = await self.client.get("/account/logout")
+        assert logout_resp.status == HTTPStatus.OK
+
+        resp = await self.client.get("/account")
+        assert resp.status == HTTPStatus.UNAUTHORIZED
+
+        second_logout_resp = await self.client.get("/account/logout")
+        assert second_logout_resp.status == HTTPStatus.OK
+
+        resp = await self.client.get("/account")
+        assert resp.status == HTTPStatus.UNAUTHORIZED
+
+    async def test_cross_session(
+        self, spawn_client: ClientSpawner, fake: DataFaker
+    ) -> None:
+        """Test that logging out one session doesn't affect other active sessions."""
+        user_1 = await fake.users.create(password="test_password_1", handle="user_1")
+        user_2 = await fake.users.create(password="test_password_2", handle="user_2")
+
+        client_1 = await spawn_client()
+        client_2 = await spawn_client()
+
+        login_resp_1 = await client_1.post(
+            "/account/login",
+            {"handle": user_1.handle, "password": "test_password_1"},
+        )
+        assert login_resp_1.status == HTTPStatus.CREATED
+
+        login_resp_2 = await client_2.post(
+            "/account/login",
+            {"handle": user_2.handle, "password": "test_password_2"},
+        )
+        assert login_resp_2.status == HTTPStatus.CREATED
+
+        resp_1 = await client_1.get("/account")
+        assert resp_1.status == HTTPStatus.OK
+
+        resp_2 = await client_2.get("/account")
+        assert resp_2.status == HTTPStatus.OK
+
+        logout_resp_1 = await client_1.get("/account/logout")
+        assert logout_resp_1.status == HTTPStatus.OK
+
+        resp_1 = await client_1.get("/account")
+        assert resp_1.status == HTTPStatus.UNAUTHORIZED
+
+        resp_2 = await client_2.get("/account")
+        assert resp_2.status == HTTPStatus.OK
+
+    async def test_concurrent_logout(self) -> None:
+        """Test logout behavior under concurrent requests."""
+        login_resp = await self.client.post(
+            "/account/login",
+            {"handle": self.user.handle, "password": "test_password"},
+        )
+        assert login_resp.status == HTTPStatus.CREATED
+
+        resp = await self.client.get("/account")
+        assert resp.status == HTTPStatus.OK
+
+        logout_task = self.client.get("/account/logout")
+        account_task = self.client.get("/account")
+
+        logout_resp, account_resp = await asyncio.gather(logout_task, account_task)
+
+        assert logout_resp.status == HTTPStatus.OK
+        assert account_resp.status in [HTTPStatus.OK, HTTPStatus.UNAUTHORIZED]
+
+        final_resp = await self.client.get("/account")
+        assert final_resp.status == HTTPStatus.UNAUTHORIZED
+
+    async def test_api_keys_remain_valid_after_logout(
+        self,
+        data_layer: DataLayer,
+        spawn_client: ClientSpawner,
+    ) -> None:
+        """Test that API keys remain valid after user logs out."""
+        # Login
+        login_resp = await self.client.post(
+            "/account/login",
+            {"handle": self.user.handle, "password": "test_password"},
+        )
+        assert login_resp.status == HTTPStatus.CREATED
+
+        # Create an API key while logged in
+        raw_key, api_key = await data_layer.account.create_key(
+            CreateKeyRequest(name="Test Key", permissions={}),
+            self.user.id,
+        )
+
+        # Logout
+        logout_resp = await self.client.get("/account/logout")
+        assert logout_resp.status == HTTPStatus.OK
+
+        # Verify session is logged out
+        resp = await self.client.get("/account")
+        assert resp.status == HTTPStatus.UNAUTHORIZED
+
+        # Create a new client with API key authentication
+        api_client = await spawn_client()
+        api_client.headers["Authorization"] = f"Bearer {raw_key}"
+
+        # API key should still work
+        resp = await api_client.get("/account")
+        assert resp.status == HTTPStatus.OK
+
+
+class TestDelete:
+    """Test API key deletion functionality."""
+
+    @pytest.mark.parametrize("error", [None, "404"])
+    async def test_remove_single_key(
+        self,
+        error: str | None,
+        mongo: Mongo,
+        spawn_client: ClientSpawner,
+        snapshot: SnapshotAssertion,
+    ) -> None:
+        """Test deleting a single API key."""
+        client = await spawn_client(authenticated=True)
+
+        if error is None:
+            await mongo.keys.insert_one(
+                {
+                    "_id": "foobar",
+                    "id": "foobar_0",
+                    "name": "Foobar",
+                    "user": {"id": client.user.id},
+                },
+            )
+
+        resp = await client.delete("/account/keys/foobar_0")
+
+        if error is None:
+            assert resp.status == 204
+            assert await mongo.keys.count_documents({}) == 0
+
+        else:
+            assert resp.status == 404
+            assert await resp.json() == snapshot
+
+    async def test_remove_all_keys(
+        self,
+        fake: DataFaker,
+        mongo: Mongo,
+        spawn_client: ClientSpawner,
+    ) -> None:
+        """Test deleting all API keys for a user."""
+        client = await spawn_client(authenticated=True)
+
+        user = await fake.users.create()
+
+        await mongo.keys.insert_many(
+            [
+                {
+                    "_id": "hello_world",
+                    "id": "hello_world_0",
+                    "user": {"id": client.user.id},
+                },
+                {"_id": "foobar", "id": "foobar_0", "user": {"id": client.user.id}},
+                {"_id": "baz", "id": "baz_0", "user": {"id": user.id}},
+            ],
+            session=None,
+        )
+
+        resp = await client.delete("/account/keys")
+
+        assert resp.status == 204
+
+        assert await mongo.keys.find().to_list(None) == [
             {"_id": "baz", "id": "baz_0", "user": {"id": user.id}},
-        ],
-        session=None,
-    )
+        ]
 
-    resp = await client.delete("/account/keys")
+    async def test_cannot_delete_other_users_key(
+        self,
+        fake: DataFaker,
+        spawn_client: ClientSpawner,
+        data_layer: DataLayer,
+    ) -> None:
+        """Test that users cannot delete another user's API key."""
+        # Create authenticated client (this creates user1)
+        client = await spawn_client(authenticated=True)
 
-    assert resp.status == 204
+        # Create another user
+        user2 = await fake.users.create()
 
-    assert await mongo.keys.find().to_list(None) == [
-        {"_id": "baz", "id": "baz_0", "user": {"id": user.id}},
-    ]
+        # Create an API key for user2
+        _, user2_key = await data_layer.account.create_key(
+            CreateKeyRequest(name="User2 Key", permissions={}),
+            user2.id,
+        )
 
+        # Try to delete user2's key
+        resp = await client.delete(f"/account/keys/{user2_key.id}")
 
-async def test_logout(spawn_client):
-    """Test that calling the logout endpoint results in the current session being removed and the user being logged
-    out.
-
-    """
-    client = await spawn_client(authenticated=True)
-
-    # Make sure the session is authorized
-    resp = await client.get("/account")
-    assert resp.status == HTTPStatus.OK
-
-    # Logout
-    resp = await client.get("/account/logout")
-    assert resp.status == HTTPStatus.OK
-
-    # Make sure that the session is no longer authorized
-    resp = await client.get("/account")
-    assert resp.status == 401
+        # Should return 404 (not 403) to avoid information leakage
+        assert resp.status == HTTPStatus.NOT_FOUND
 
 
 @pytest.mark.parametrize(
@@ -563,7 +938,9 @@ async def test_logout(spawn_client):
         ("DELETE", "/account/keys"),
     ],
 )
-async def test_requires_authorization(method: str, path: str, spawn_client):
+async def test_requires_authorization(
+    method: str, path: str, spawn_client: ClientSpawner
+) -> None:
     """Test that a '401 Requires authorization' response is sent when the session is not
     authenticated.
 
@@ -588,7 +965,9 @@ async def test_requires_authorization(method: str, path: str, spawn_client):
 
 
 @pytest.mark.parametrize("value", ["valid_permissions", "invalid_permissions"])
-async def test_is_permission_dict(value, spawn_client, resp_is):
+async def test_is_permission_dict(
+    value: str, spawn_client: ClientSpawner, resp_is
+) -> None:
     """Tests that when an invalid permission is used, validators.is_permission_dict raises a 422 error."""
     client = await spawn_client(authenticated=True)
 
@@ -613,7 +992,7 @@ async def test_is_permission_dict(value, spawn_client, resp_is):
 
 
 @pytest.mark.parametrize("value", ["valid_email", "invalid_email"])
-async def test_is_valid_email(value, spawn_client, resp_is):
+async def test_is_valid_email(value: str, spawn_client: ClientSpawner, resp_is) -> None:
     """Tests that when an invalid email is used, validators.is_valid_email raises a 422 error."""
     client = await spawn_client(authenticated=True)
 
@@ -644,68 +1023,30 @@ class TestLogin:
     user: User
 
     @pytest.fixture(autouse=True)
-    async def setup(self, fake: DataFaker, spawn_client: ClientSpawner):
+    async def setup(self, fake: DataFaker, spawn_client: ClientSpawner) -> None:
         self.client = await spawn_client()
         self.user = await fake.users.create(password="dummy_password")
 
-    async def test_ok(self):
+    async def test_ok(self) -> None:
         """Test that login works with valid credentials."""
         resp = await self.client.post(
             "/account/login",
-            {"username": self.user.handle, "password": "dummy_password"},
+            {"handle": self.user.handle, "password": "dummy_password"},
         )
 
         assert resp.status == HTTPStatus.CREATED
 
-        set_cookie = resp.headers.get("Set-Cookie", "")
-        assert "session_id=" in set_cookie
+        assert "session_id" in resp.cookies
 
         # Test if we can access authenticated endpoints after login
         account_resp = await self.client.get("/account")
         assert account_resp.status == HTTPStatus.OK
 
-    async def test_wrong_handle(self):
-        """Test that login fails with wrong handle."""
-        resp = await self.client.post(
-            "/account/login",
-            {"username": "nonexistent", "password": "dummy_password"},
-        )
+    async def test_username_backward_compatibility(self) -> None:
+        """Test that login works with username field for backward compatibility.
 
-        assert resp.status == HTTPStatus.BAD_REQUEST
-        assert await resp.json() == {
-            "id": "bad_request",
-            "message": "Invalid handle or password.",
-        }
-
-        set_cookie = resp.headers.get("Set-Cookie", "")
-        assert set_cookie == ""
-
-        # Verify we cannot access authenticated endpoints
-        account_resp = await self.client.get("/account")
-        assert account_resp.status == HTTPStatus.UNAUTHORIZED
-
-    async def test_wrong_password(self):
-        """Test that login fails with wrong password."""
-        resp = await self.client.post(
-            "/account/login",
-            {"username": self.user.handle, "password": "wrong_password"},
-        )
-
-        assert resp.status == HTTPStatus.BAD_REQUEST
-        assert await resp.json() == {
-            "id": "bad_request",
-            "message": "Invalid handle or password.",
-        }
-
-        set_cookie = resp.headers.get("Set-Cookie", "")
-        assert set_cookie == ""
-
-        # Verify we cannot access authenticated endpoints
-        account_resp = await self.client.get("/account")
-        assert account_resp.status == HTTPStatus.UNAUTHORIZED
-
-    async def test_missing_remember(self):
-        """Test that login works when remember field is missing."""
+        TODO: Remove this test once username support is deprecated.
+        """
         resp = await self.client.post(
             "/account/login",
             {"username": self.user.handle, "password": "dummy_password"},
@@ -713,15 +1054,67 @@ class TestLogin:
 
         assert resp.status == HTTPStatus.CREATED
 
-        set_cookie = resp.headers.get("Set-Cookie", "")
-        assert "session_id=" in set_cookie
+        assert "session_id" in resp.cookies
 
-    async def test_remember_is_none(self):
+        # Test if we can access authenticated endpoints after login
+        account_resp = await self.client.get("/account")
+        assert account_resp.status == HTTPStatus.OK
+
+    async def test_wrong_handle(self) -> None:
+        """Test that login fails with wrong handle."""
+        resp = await self.client.post(
+            "/account/login",
+            {"handle": "nonexistent", "password": "dummy_password"},
+        )
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "Invalid handle or password.",
+        }
+
+        assert "session_id" not in resp.cookies
+
+        # Verify we cannot access authenticated endpoints
+        account_resp = await self.client.get("/account")
+        assert account_resp.status == HTTPStatus.UNAUTHORIZED
+
+    async def test_wrong_password(self) -> None:
+        """Test that login fails with wrong password."""
+        resp = await self.client.post(
+            "/account/login",
+            {"handle": self.user.handle, "password": "wrong_password"},
+        )
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "Invalid handle or password.",
+        }
+
+        assert "session_id" not in resp.cookies
+
+        # Verify we cannot access authenticated endpoints
+        account_resp = await self.client.get("/account")
+        assert account_resp.status == HTTPStatus.UNAUTHORIZED
+
+    async def test_missing_remember(self) -> None:
+        """Test that login works when remember field is missing."""
+        resp = await self.client.post(
+            "/account/login",
+            {"handle": self.user.handle, "password": "dummy_password"},
+        )
+
+        assert resp.status == HTTPStatus.CREATED
+
+        assert "session_id" in resp.cookies
+
+    async def test_remember_is_none(self) -> None:
         """Test that login fails when remember field is None."""
         resp = await self.client.post(
             "/account/login",
             {
-                "username": self.user.handle,
+                "handle": self.user.handle,
                 "password": "dummy_password",
                 "remember": None,
             },
@@ -737,54 +1130,194 @@ class TestLogin:
             }
         ]
 
-        set_cookie = resp.headers.get("Set-Cookie", "")
-        assert "session_id=" in set_cookie
+        assert "session_id" in resp.cookies
 
 
-@pytest.mark.parametrize(
-    "request_path,correct_code",
-    [
-        ("account/keys", True),
-        ("account/reset", True),
-        ("account/reset", False),
-    ],
-)
-async def test_login_reset(
-    spawn_client,
-    snapshot,
-    fake: DataFaker,
-    request_path,
-    correct_code,
-    data_layer: DataLayer,
-) -> None:
-    client = await spawn_client(authenticated=False)
+async def test_logout(spawn_client: ClientSpawner, fake: DataFaker) -> None:
+    """Test that calling the logout endpoint results in the current session being removed and the user being logged
+    out.
 
-    data = {
-        "username": "foobar",
-        "handle": "foobar",
-        "password": "hello_world",
-        "force_reset": True,
+    """
+    # Create a new user with a known password
+    user = await fake.users.create(password="test_password")
+
+    # Spawn an unauthenticated client
+    client = await spawn_client()
+
+    # Login
+    login_resp = await client.post(
+        "/account/login",
+        {"handle": user.handle, "password": "test_password"},
+    )
+    assert login_resp.status == HTTPStatus.CREATED
+
+    # Get both session cookies from login
+    assert "session_id" in login_resp.cookies
+    assert "session_token" in login_resp.cookies
+    login_session_id = login_resp.cookies["session_id"].value
+    login_session_token = login_resp.cookies["session_token"].value
+    assert login_session_token != ""  # Should have a real token value
+
+    # Make sure the session is authorized
+    resp = await client.get("/account")
+    assert resp.status == HTTPStatus.OK
+
+    # Logout
+    logout_resp = await client.get("/account/logout")
+    assert logout_resp.status == HTTPStatus.OK
+
+    # Check logout cookies
+    assert "session_id" in logout_resp.cookies
+    assert "session_token" in logout_resp.cookies
+    assert logout_resp.cookies["session_token"].value == ""
+
+    # Verify session_id changed after logout
+    logout_session_id = logout_resp.cookies["session_id"].value
+    assert login_session_id != logout_session_id
+
+    # Make sure that the session is no longer authorized
+    resp = await client.get("/account")
+    assert resp.status == HTTPStatus.UNAUTHORIZED
+
+    # Verify that the old session token is truly invalidated
+    # Try using the old session credentials manually
+    old_cookies = {
+        "session_id": login_session_id,
+        "session_token": login_session_token,
     }
-    await data_layer.users.create("foobar", "hello_world", True)
-    resp = await client.post("/account/login", data)
-    reset_json_data = await resp.json()
+    invalid_resp = await client.get("/account", cookies=old_cookies)
+    assert invalid_resp.status == HTTPStatus.UNAUTHORIZED
 
-    assert "session_id=session" in resp.headers.get("Set-Cookie")
-    assert reset_json_data.get("reset_code") is not None
-    assert reset_json_data.get("reset") is True
 
-    reset_data = {
-        "password": "invalid",
-        "reset_code": reset_json_data.get("reset_code")
-        if correct_code
-        else "wrong_code",
-    }
+class TestLoginReset:
+    """Test password reset flow after forced login."""
 
-    resp = await client.post(request_path, reset_data)
-    assert await resp.json() == snapshot
+    client: VirtoolTestClient
+    user: User
+    reset_code: str
 
-    reset_data["password"] = "hello_world"
+    @pytest.fixture(autouse=True)
+    async def setup(self, data_layer: DataLayer, spawn_client: ClientSpawner) -> None:
+        self.client = await spawn_client()
+        self.user = await data_layer.users.create(
+            "testuser", "hello_world", force_reset=True
+        )
 
-    resp = await client.post(request_path, reset_data)
+        # Perform login that triggers reset
+        resp = await self.client.post(
+            "/account/login",
+            {
+                "handle": self.user.handle,
+                "password": "hello_world",
+            },
+        )
 
-    assert await resp.json() == snapshot
+        reset_json_data = await resp.json()
+        self.reset_code = reset_json_data.get("reset_code")
+
+        assert "session_id" in resp.cookies
+        assert self.reset_code is not None
+        assert reset_json_data.get("reset") is True
+
+    async def test_ok(self) -> None:
+        """Test successful password reset with correct reset code."""
+        resp = await self.client.post(
+            "/account/reset",
+            {"password": "new_password123", "reset_code": self.reset_code},
+        )
+
+        assert resp.status == HTTPStatus.OK
+
+        body = await resp.json()
+        assert body == {"login": False, "reset": False}
+
+    async def test_wrong_reset_code(self) -> None:
+        """Test that reset fails with incorrect reset code."""
+        resp = await self.client.post(
+            "/account/reset",
+            {"password": "new_password123", "reset_code": "wrong_code"},
+        )
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "Invalid session",
+        }
+
+    async def test_short_password(self) -> None:
+        """Test that reset fails when new password is too short."""
+        resp = await self.client.post(
+            "/account/reset",
+            {"password": "invalid", "reset_code": self.reset_code},
+        )
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "Password does not meet minimum length requirement (8)",
+        }
+
+    async def test_protected_endpoint_access(self) -> None:
+        """Test that protected endpoints cannot be accessed until reset is complete."""
+        resp = await self.client.post(
+            "/account/keys",
+            {"password": "invalid", "reset_code": self.reset_code},
+        )
+
+        assert resp.status == HTTPStatus.UNAUTHORIZED
+        assert await resp.json() == {
+            "id": "unauthorized",
+            "message": "Requires authorization",
+        }
+
+    async def test_missing_reset_code(self) -> None:
+        """Test that reset fails when reset_code is not provided."""
+        resp = await self.client.post(
+            "/account/reset",
+            {"password": "new_password123"},
+        )
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
+
+    async def test_empty_password(self) -> None:
+        """Test that reset fails when password is empty."""
+        resp = await self.client.post(
+            "/account/reset",
+            {"password": "", "reset_code": self.reset_code},
+        )
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
+
+    async def test_force_reset_prevents_normal_operations(self) -> None:
+        """Test that protected endpoints cannot be accessed until reset is complete."""
+        resp = await self.client.get("/account/keys")
+
+        assert resp.status == HTTPStatus.UNAUTHORIZED
+        assert await resp.json() == {
+            "id": "unauthorized",
+            "message": "Requires authorization",
+        }
+
+    async def test_reset_code_single_use(self) -> None:
+        """Test that reset code cannot be reused after successful reset."""
+        # First reset - should succeed
+        resp = await self.client.post(
+            "/account/reset",
+            {"password": "first_password123", "reset_code": self.reset_code},
+        )
+
+        assert resp.status == HTTPStatus.OK
+        body = await resp.json()
+        assert body == {"login": False, "reset": False}
+
+        # Try to use the same reset code again - should fail
+        resp = await self.client.post(
+            "/account/reset",
+            {"password": "second_password123", "reset_code": self.reset_code},
+        )
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "Invalid session",
+        }
