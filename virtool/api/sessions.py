@@ -43,10 +43,9 @@ async def get_session(req: Request) -> Session | None:
 
             if req.path == "/account/reset":
                 body = await req.json()
+                reset_code = get_safely(body, "reset_code")
 
-                return await sessions_data.get_reset(
-                    session_id, get_safely(body, "reset_code")
-                )
+                return await sessions_data.get_reset(session_id, reset_code)
 
             return await sessions_data.get_anonymous(session_id)
     except ResourceNotFoundError:

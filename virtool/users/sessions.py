@@ -44,6 +44,8 @@ import secrets
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
+from structlog import get_logger
+
 import virtool.utils
 from virtool.api.custom_json import dump_string, isoformat_to_datetime
 from virtool.data.domain import DataLayerDomain
@@ -56,6 +58,8 @@ from virtool.redis import Redis
 if TYPE_CHECKING:
     from virtool.types import Document
 from virtool.utils import get_safely, hash_key
+
+logger = get_logger("sessions")
 
 
 class SessionData(DataLayerDomain):
@@ -245,6 +249,28 @@ class SessionData(DataLayerDomain):
         :param session_id: the id of the session to remove
         """
         await self._redis.delete(session_id)
+
+    async def delete_by_user(self, user_id: int) -> None:
+        """Delete all authenticated sessions for a user.
+
+        :param user_id: the user ID whose sessions should be deleted
+        """
+        session_keys = await self._redis._client.keys("session_*")
+
+        for session_key in session_keys:
+            try:
+                session_data = await self._redis.get(session_key.decode())
+                if (
+                    session_data
+                    and session_data.get("authentication")
+                    and session_data["authentication"]["user_id"] == str(user_id)
+                ):
+                    await self._redis.delete(session_key.decode())
+            except Exception as e:
+                logger.warning(
+                    "failed to process session key", key=session_key, error=str(e)
+                )
+                continue
 
     async def _create_session_id(self) -> str:
         """Create a unique session id.

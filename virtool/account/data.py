@@ -20,6 +20,7 @@ from virtool.administrators.oas import UpdateUserRequest
 from virtool.authorization.client import AuthorizationClient
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceError, ResourceNotFoundError
+from virtool.users.utils import check_password
 from virtool.data.transforms import apply_transforms
 from virtool.groups.transforms import AttachGroupsTransform
 from virtool.models.sessions import Session
@@ -423,7 +424,12 @@ class AccountData(DataLayerDomain):
         """
         session = await self.data.sessions.get_reset(session_id, data.reset_code)
 
-        await self.data.sessions.delete(session_id)
+        if await self.data.users.validate_password(
+            session.reset.user_id, data.password
+        ):
+            raise ResourceError("Cannot reuse current password")
+
+        await self.data.sessions.delete_by_user(session.reset.user_id)
 
         await self.data.users.update(
             session.reset.user_id,

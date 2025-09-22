@@ -1231,6 +1231,42 @@ class TestLoginReset:
         body = await resp.json()
         assert body == {"login": False, "reset": False}
 
+    async def test_old_password_cannot_be_reused_for_reset(self) -> None:
+        """Test that users cannot reset to their current password."""
+        resp = await self.client.post(
+            "/account/reset",
+            {"password": "hello_world", "reset_code": self.reset_code},
+        )
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
+
+    async def test_reset_invalidates_old_sessions(self) -> None:
+        """Test that password reset invalidates existing sessions."""
+        from virtool.data.utils import get_data_from_app
+
+        data_layer = get_data_from_app(self.client.app)
+
+        # Create another session for the same user
+        old_session, old_token = await data_layer.sessions.create_authenticated(
+            "127.0.0.1", str(self.user.id), False
+        )
+
+        # Reset password
+        resp = await self.client.post(
+            "/account/reset",
+            {"password": "new_password123", "reset_code": self.reset_code},
+        )
+        assert resp.status == HTTPStatus.OK
+
+        # Old session should be invalidated
+        from virtool.data.errors import ResourceNotFoundError
+
+        try:
+            await data_layer.sessions.get_authenticated(old_session.id, old_token)
+            assert False, "Old session should have been invalidated"
+        except ResourceNotFoundError:
+            pass
+
     async def test_wrong_reset_code(self) -> None:
         """Test that reset fails with incorrect reset code."""
         resp = await self.client.post(

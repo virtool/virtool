@@ -361,6 +361,8 @@ class ResetView(PydanticView):
             )
         except ResourceNotFoundError:
             raise APIBadRequest("Invalid session")
+        except ResourceError as e:
+            raise APIBadRequest(str(e))
 
         try:
             self.request["client"].authorize(session, is_api=False)
