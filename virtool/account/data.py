@@ -20,7 +20,6 @@ from virtool.administrators.oas import UpdateUserRequest
 from virtool.authorization.client import AuthorizationClient
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceError, ResourceNotFoundError
-from virtool.users.utils import check_password
 from virtool.data.transforms import apply_transforms
 from virtool.groups.transforms import AttachGroupsTransform
 from virtool.models.sessions import Session
@@ -53,7 +52,6 @@ class AccountData(DataLayerDomain):
         :return: the user account
         """
         if user := await self.data.users.get(user_id):
-            # Get email and settings from PostgreSQL
             async with AsyncSession(self._pg) as session:
                 result = await session.execute(
                     select(SQLUser.email, SQLUser.settings).where(SQLUser.id == user_id)
@@ -182,7 +180,7 @@ class AccountData(DataLayerDomain):
             ],
         )
 
-        return [APIKey(**key) for key in keys]
+        return [APIKey.parse_obj(key) for key in keys]
 
     async def get_key(self, user_id: int, key_id: str) -> APIKey:
         """Get the complete representation of the API key identified by the `key_id`.

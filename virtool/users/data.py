@@ -189,7 +189,7 @@ class UsersData(DataLayerDomain):
                 raise ResourceNotFoundError
 
             user_dict = sql_user.to_dict()
-            # Convert SQLGroup objects to dictionaries for merge_group_permissions
+
             groups_dicts = [group.to_dict() for group in user_dict["groups"]]
 
         return User.parse_obj(
@@ -319,18 +319,18 @@ class UsersData(DataLayerDomain):
         """
         data = data.dict(exclude_unset=True)
 
-        pg_update = {}
+        values = {}
 
         if "active" in data:
-            pg_update.update({"active": data["active"], "invalidate_sessions": True})
+            values.update({"active": data["active"], "invalidate_sessions": True})
 
         if "force_reset" in data:
-            pg_update.update(
+            values.update(
                 {"force_reset": data["force_reset"], "invalidate_sessions": True},
             )
 
         if "password" in data:
-            pg_update.update(
+            values.update(
                 {
                     "password": virtool.users.utils.hash_password(data["password"]),
                     "last_password_change": virtool.utils.timestamp(),
@@ -348,9 +348,9 @@ class UsersData(DataLayerDomain):
             if not user:
                 raise ResourceNotFoundError
 
-            if pg_update:
+            if values:
                 await session.execute(
-                    update(SQLUser).where(SQLUser.id == user.id).values(**pg_update),
+                    update(SQLUser).where(SQLUser.id == user.id).values(**values),
                 )
 
             if "groups" in data:
@@ -421,7 +421,7 @@ class UsersData(DataLayerDomain):
             return user_level >= required_level
 
     async def check_users_exist(self) -> bool:
-        """Checks that users exist.
+        """Check that users exist.
 
         :returns: True if users exist otherwise False
         """
