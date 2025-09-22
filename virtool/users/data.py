@@ -1,6 +1,6 @@
 import math
 
-from sqlalchemy import case, delete, func, insert, select, update
+from sqlalchemy import delete, func, insert, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.orm import selectinload
@@ -154,6 +154,32 @@ class UsersData(DataLayerDomain):
                 "permissions": merge_group_permissions(groups_dicts),
             }
         )
+
+    async def resolve_legacy_id(self, user_id: int | str) -> int:
+        """Convert a legacy string user ID to the current integer user ID.
+
+        This method provides compatibility for sessions that may contain string legacy IDs
+        from before the migration to PostgreSQL.
+
+        TODO: Remove this method after sessions are migrated to PostgreSQL.
+
+        :param user_id: the user's ID (int) or legacy ID (string)
+        :return: the current integer user ID
+        """
+        if isinstance(user_id, int):
+            return user_id
+
+        # Look up the current ID from the legacy ID
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLUser.id).where(SQLUser.legacy_id == user_id)
+            )
+            current_id = result.scalar_one_or_none()
+
+            if current_id is None:
+                raise ResourceNotFoundError
+
+            return current_id
 
     async def get_by_handle(self, handle: str) -> User:
         """Get a user by their ``handle``.

@@ -1,23 +1,20 @@
 import asyncio
 
 import pytest
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.filters import props
 
-from virtool.authorization.client import AuthorizationClient
-from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.groups.models import GroupMinimal
 from virtool.models.roles import AdministratorRole
-from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.users.models import UserSearchResult
 from virtool.users.oas import UpdateUserRequest
 from virtool.users.pg import SQLUser
-from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
 class TestFind:
@@ -26,7 +23,6 @@ class TestFind:
     @pytest.fixture(autouse=True)
     async def _setup(
         self,
-        authorization_client: AuthorizationClient,
         data_layer: DataLayer,
         fake: DataFaker,
     ):
@@ -51,10 +47,8 @@ class TestFind:
 
         await data_layer.users.update(user_5.id, UpdateUserRequest(active=False))
 
-        await authorization_client.add(
-            AdministratorRoleAssignment(user_1.id, AdministratorRole.BASE),
-            AdministratorRoleAssignment(user_2.id, AdministratorRole.FULL),
-        )
+        await data_layer.users.set_administrator_role(user_1.id, AdministratorRole.BASE)
+        await data_layer.users.set_administrator_role(user_2.id, AdministratorRole.FULL)
 
     async def test_active(
         self,
@@ -143,34 +137,12 @@ class TestCreate:
 
         assert "User already exists" in str(err.value)
 
-    async def test_first(
-        self,
-        data_layer: DataLayer,
-        pg: AsyncEngine,
-        snapshot_recent: SnapshotAssertion,
-    ):
-        user = await data_layer.users.create_first(
-            password="hello_world",
-            handle="bill",
-        )
-
-        row = await get_row_by_id(pg, SQLUser, 1)
-
-        assert user == snapshot_recent(
-            exclude=props(
-                "id",
-            ),
-        )
-
-        assert row.to_dict() == snapshot_recent(name="pg", exclude=props("password"))
-
 
 class TestUpdate:
     async def test_groups(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         snapshot_recent: SnapshotAssertion,
     ):
@@ -187,13 +159,9 @@ class TestUpdate:
             UpdateUserRequest(groups=[group_1.id, group_3.id]),
         )
 
-        doc, row = await asyncio.gather(
-            mongo.users.find_one({"_id": user.id}),
-            get_row_by_id(pg, SQLUser, 1),
-        )
+        row = await get_row_by_id(pg, SQLUser, 1)
 
         assert obj == snapshot_recent(name="obj_1")
-        assert doc == snapshot_recent(name="mongo_1", exclude=props("password"))
         assert row == snapshot_recent(name="pg_1", exclude=props("password"))
 
         # Update groups, removing one and adding another.
@@ -202,32 +170,23 @@ class TestUpdate:
             UpdateUserRequest(groups=[group_2.id, group_1.id]),
         )
 
-        doc, row = await asyncio.gather(
-            mongo.users.find_one({"_id": user.id}),
-            get_row_by_id(pg, SQLUser, 1),
-        )
+        row = await get_row_by_id(pg, SQLUser, 1)
 
         assert obj == snapshot_recent(name="obj_2")
-        assert doc == snapshot_recent(name="mongo_2", exclude=props("password"))
         assert row == snapshot_recent(name="pg_2", exclude=props("password"))
 
         # Remove all groups.
         obj = await data_layer.users.update(user.id, UpdateUserRequest(groups=[]))
 
-        doc, row = await asyncio.gather(
-            mongo.users.find_one({"_id": user.id}),
-            get_row_by_id(pg, SQLUser, 1),
-        )
+        row = await get_row_by_id(pg, SQLUser, 1)
 
         assert obj == snapshot_recent(name="obj_3")
-        assert doc == snapshot_recent(name="mongo_3", exclude=props("password"))
         assert row.to_dict() == snapshot_recent(name="pg_3", exclude=props("password"))
 
     async def test_groups_unset_primary(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         snapshot_recent: SnapshotAssertion,
     ):
@@ -244,13 +203,9 @@ class TestUpdate:
 
         assert obj.primary_group is None
 
-        doc, row = await asyncio.gather(
-            mongo.users.find_one({"_id": user.id}),
-            get_row_by_id(pg, SQLUser, 1),
-        )
+        row = await get_row_by_id(pg, SQLUser, 1)
 
         assert obj == snapshot_recent(name="obj")
-        assert doc == snapshot_recent(name="mongo", exclude=props("password"))
         assert row.to_dict() == snapshot_recent(name="pg", exclude=props("password"))
 
     async def test_primary_group_when_member(
@@ -258,7 +213,6 @@ class TestUpdate:
         data_layer: DataLayer,
         fake: DataFaker,
         pg: AsyncEngine,
-        mongo: Mongo,
         snapshot_recent: SnapshotAssertion,
     ):
         """Test that the primary group is updated when the user is already member of the group."""
@@ -270,23 +224,16 @@ class TestUpdate:
             UpdateUserRequest(primary_group=group.id),
         )
 
-        doc, row = await asyncio.gather(
-            mongo.users.find_one({"_id": user.id}),
-            get_row_by_id(pg, SQLUser, 1),
-        )
+        row = await get_row_by_id(pg, SQLUser, 1)
 
         assert obj == snapshot_recent(name="obj")
         assert obj.primary_group == GroupMinimal.parse_obj(group)
-        assert doc == snapshot_recent(name="mongo", exclude=props("password"))
         assert row.to_dict() == snapshot_recent(name="pg", exclude=props("password"))
 
     async def test_primary_group_when_not_member(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        pg: AsyncEngine,
-        mongo: Mongo,
-        snapshot_recent: SnapshotAssertion,
     ):
         """Test that the call fails when the user is not a member of the primary group in
         the update.
@@ -318,11 +265,66 @@ class TestUpdate:
 
         assert str(err.value) == "User is not a member of group"
 
+    async def test_primary_group_switching_between_groups(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        snapshot_recent: SnapshotAssertion,
+    ):
+        """Test switching primary group from one valid group to another."""
+        group_1 = await fake.groups.create()
+        group_2 = await fake.groups.create()
+        user = await fake.users.create(groups=[group_1, group_2], primary_group=group_1)
+
+        # Verify initial state
+        assert user.primary_group.id == group_1.id
+
+        # Switch primary group to group_2
+        obj = await data_layer.users.update(
+            user.id,
+            UpdateUserRequest(primary_group=group_2.id),
+        )
+
+        assert obj == snapshot_recent
+        assert obj.primary_group.id == group_2.id
+
+    async def test_update_multiple_fields_together(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        snapshot_recent: SnapshotAssertion,
+    ):
+        """Test updating password, groups, and primary_group in same request."""
+        group_1 = await fake.groups.create()
+        group_2 = await fake.groups.create()
+        group_3 = await fake.groups.create()
+        user = await fake.users.create(groups=[group_1])
+
+        # Update multiple fields at once
+        obj = await data_layer.users.update(
+            user.id,
+            UpdateUserRequest(
+                password="new_password123",
+                groups=[group_2.id, group_3.id],
+                primary_group=group_2.id,
+                force_reset=True,
+                active=False,
+            ),
+        )
+
+        assert obj == snapshot_recent
+        assert obj.primary_group.id == group_2.id
+        assert obj.force_reset is True
+        assert obj.active is False
+        assert len(obj.groups) == 2
+
+        # Verify the new password works
+        assert await data_layer.users.validate_password(user.id, "new_password123")
+
     async def test_password(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         snapshot_recent: SnapshotAssertion,
     ):
@@ -334,11 +336,6 @@ class TestUpdate:
             user.id,
             UpdateUserRequest(password="hello_world"),
         ) == snapshot_recent(name="obj")
-
-        assert await mongo.users.find_one() == snapshot_recent(
-            name="db",
-            exclude=props("password"),
-        )
 
         async with AsyncSession(pg) as session:
             row = await session.get(SQLUser, 1)
@@ -398,3 +395,37 @@ class TestSetAdministratorRole:
         """Test that set_administrator_role raises error for non-existent user."""
         with pytest.raises(ResourceNotFoundError):
             await data_layer.users.set_administrator_role(99999, AdministratorRole.BASE)
+
+
+class TestResolveLegacyId:
+    """Tests for the resolve_legacy_id method."""
+
+    async def test_int_user_id(self, data_layer: DataLayer, fake: DataFaker):
+        """Test that integer user IDs are returned as-is."""
+        user = await fake.users.create()
+        resolved_id = await data_layer.users.resolve_legacy_id(user.id)
+        assert resolved_id == user.id
+
+    async def test_legacy_string_id(
+        self, data_layer: DataLayer, fake: DataFaker, pg: AsyncEngine
+    ):
+        """Test that legacy string IDs are resolved to current integer IDs."""
+        # Create a user with a legacy ID
+        user = await fake.users.create()
+        legacy_id = "legacy_test_user_123"
+
+        # Manually set the legacy_id in the database
+        async with AsyncSession(pg) as session:
+            await session.execute(
+                update(SQLUser).where(SQLUser.id == user.id).values(legacy_id=legacy_id)
+            )
+            await session.commit()
+
+        # Test that resolve_legacy_id returns the current integer ID
+        resolved_id = await data_layer.users.resolve_legacy_id(legacy_id)
+        assert resolved_id == user.id
+
+    async def test_nonexistent_legacy_id(self, data_layer: DataLayer):
+        """Test that resolve_legacy_id raises ResourceNotFoundError for nonexistent legacy ID."""
+        with pytest.raises(ResourceNotFoundError):
+            await data_layer.users.resolve_legacy_id("nonexistent_legacy_id")

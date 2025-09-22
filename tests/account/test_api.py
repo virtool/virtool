@@ -6,7 +6,7 @@ import pytest
 from syrupy.assertion import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, VirtoolTestClient
-from virtool.account.oas import CreateKeyRequest, UpdateAccountRequest
+from virtool.account.oas import CreateKeyRequest
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
@@ -22,7 +22,7 @@ from virtool.workflow.pytest_plugin import StaticTime
 async def _create_fake_user_with_permissions(fake: DataFaker, *permissions):
     """Helper to create user with specific permissions."""
     group = await fake.groups.create(
-        PermissionsUpdate(**{p: True for p in permissions})
+        PermissionsUpdate(**dict.fromkeys(permissions, True))
     )
     return await fake.users.create(groups=[group])
 
@@ -487,7 +487,7 @@ class TestCreateAPIKey:
         """Test that admin users can grant any permission to their own keys."""
         client = await spawn_client(authenticated=True, administrator=True)
 
-        all_permissions = {k: True for k in generate_base_permissions()}
+        all_permissions = dict.fromkeys(generate_base_permissions(), True)
 
         resp = await client.post(
             "/account/keys", {"name": "Admin Key", "permissions": all_permissions}

@@ -422,20 +422,23 @@ class AccountData(DataLayerDomain):
         """
         session = await self.data.sessions.get_reset(session_id, data.reset_code)
 
-        if await self.data.users.validate_password(
-            session.reset.user_id, data.password
-        ):
+        # TODO: Remove this compatibility layer after sessions are migrated to PostgreSQL
+        resolved_user_id = await self.data.users.resolve_legacy_id(
+            session.reset.user_id
+        )
+
+        if await self.data.users.validate_password(resolved_user_id, data.password):
             raise ResourceError("Cannot reuse current password")
 
-        await self.data.sessions.delete_by_user(session.reset.user_id)
+        await self.data.sessions.delete_by_user(resolved_user_id)
 
         await self.data.users.update(
-            session.reset.user_id,
+            resolved_user_id,
             UpdateUserRequest(force_reset=False, password=data.password),
         )
 
         return await self.data.sessions.create_authenticated(
             ip,
-            session.reset.user_id,
+            resolved_user_id,
             remember=session.reset.remember,
         )

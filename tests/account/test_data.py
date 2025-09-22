@@ -1,20 +1,13 @@
-import asyncio
-
 import pytest
 from aiohttp.test_utils import make_mocked_coro
-from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
-from syrupy.filters import props
 
-from virtool.account.oas import CreateKeyRequest, UpdateAccountRequest
-from virtool.data.errors import ResourceNotFoundError
+from virtool.account.oas import CreateKeyRequest
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.groups.oas import PermissionsUpdate
 from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
-from virtool.pg.utils import get_row_by_id
-from virtool.users.pg import SQLUser
 
 
 @pytest.mark.parametrize(

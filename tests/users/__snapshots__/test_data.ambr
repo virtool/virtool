@@ -1,208 +1,4 @@
 # serializer version: 1
-# name: TestCreate.test_first
-  dict({
-    'active': True,
-    'administrator_role': <AdministratorRole.FULL: 'full'>,
-    'force_reset': False,
-    'groups': list([
-    ]),
-    'handle': 'bill',
-    'last_password_change': 'approximately_now_datetime',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-    'primary_group': None,
-  })
-# ---
-# name: TestCreate.test_first[mongo]
-  None
-# ---
-# name: TestCreate.test_first[pg]
-  dict({
-    'active': True,
-    'administrator_role': 'full',
-    'b2c_display_name': '',
-    'b2c_family_name': '',
-    'b2c_given_name': '',
-    'b2c_oid': None,
-    'email': '',
-    'force_reset': False,
-    'groups': list([
-    ]),
-    'handle': 'bill',
-    'id': 1,
-    'invalidate_sessions': False,
-    'last_password_change': 'approximately_now_datetime',
-    'legacy_id': None,
-    'primary_group': None,
-    'settings': dict({
-      'quick_analyze_workflow': 'pathoscope_bowtie',
-      'show_ids': True,
-      'show_versions': True,
-      'skip_quick_analyze_dialog': True,
-    }),
-  })
-# ---
-# name: TestCreate.test_force_reset[false][mongo]
-  None
-# ---
-# name: TestCreate.test_force_reset[false][obj]
-  dict({
-    'active': True,
-    'administrator_role': None,
-    'force_reset': False,
-    'groups': list([
-    ]),
-    'handle': 'bill',
-    'last_password_change': 'approximately_now_datetime',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-    'primary_group': None,
-  })
-# ---
-# name: TestCreate.test_force_reset[false][pg]
-  dict({
-    'active': True,
-    'administrator_role': None,
-    'b2c_display_name': '',
-    'b2c_family_name': '',
-    'b2c_given_name': '',
-    'b2c_oid': None,
-    'email': '',
-    'force_reset': False,
-    'groups': list([
-    ]),
-    'handle': 'bill',
-    'id': 1,
-    'invalidate_sessions': False,
-    'last_password_change': 'approximately_now_datetime',
-    'legacy_id': None,
-    'primary_group': None,
-    'settings': dict({
-      'quick_analyze_workflow': 'pathoscope_bowtie',
-      'show_ids': True,
-      'show_versions': True,
-      'skip_quick_analyze_dialog': True,
-    }),
-  })
-# ---
-# name: TestCreate.test_force_reset[not_specified][mongo]
-  None
-# ---
-# name: TestCreate.test_force_reset[not_specified][obj]
-  dict({
-    'active': True,
-    'administrator_role': None,
-    'force_reset': False,
-    'groups': list([
-    ]),
-    'handle': 'bill',
-    'last_password_change': 'approximately_now_datetime',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-    'primary_group': None,
-  })
-# ---
-# name: TestCreate.test_force_reset[not_specified][pg]
-  dict({
-    'active': True,
-    'administrator_role': None,
-    'b2c_display_name': '',
-    'b2c_family_name': '',
-    'b2c_given_name': '',
-    'b2c_oid': None,
-    'email': '',
-    'force_reset': False,
-    'groups': list([
-    ]),
-    'handle': 'bill',
-    'id': 1,
-    'invalidate_sessions': False,
-    'last_password_change': 'approximately_now_datetime',
-    'legacy_id': None,
-    'primary_group': None,
-    'settings': dict({
-      'quick_analyze_workflow': 'pathoscope_bowtie',
-      'show_ids': True,
-      'show_versions': True,
-      'skip_quick_analyze_dialog': True,
-    }),
-  })
-# ---
-# name: TestCreate.test_force_reset[true][mongo]
-  None
-# ---
-# name: TestCreate.test_force_reset[true][obj]
-  dict({
-    'active': True,
-    'administrator_role': None,
-    'force_reset': True,
-    'groups': list([
-    ]),
-    'handle': 'bill',
-    'last_password_change': 'approximately_now_datetime',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-    'primary_group': None,
-  })
-# ---
-# name: TestCreate.test_force_reset[true][pg]
-  dict({
-    'active': True,
-    'administrator_role': None,
-    'b2c_display_name': '',
-    'b2c_family_name': '',
-    'b2c_given_name': '',
-    'b2c_oid': None,
-    'email': '',
-    'force_reset': True,
-    'groups': list([
-    ]),
-    'handle': 'bill',
-    'id': 1,
-    'invalidate_sessions': False,
-    'last_password_change': 'approximately_now_datetime',
-    'legacy_id': None,
-    'primary_group': None,
-    'settings': dict({
-      'quick_analyze_workflow': 'pathoscope_bowtie',
-      'show_ids': True,
-      'show_versions': True,
-      'skip_quick_analyze_dialog': True,
-    }),
-  })
-# ---
 # name: TestCreate.test_ok
   dict({
     'active': True,
@@ -284,7 +80,7 @@
       }),
       dict({
         'active': True,
-        'administrator_role': None,
+        'administrator_role': <AdministratorRole.BASE: 'base'>,
         'force_reset': False,
         'groups': list([
           dict({
@@ -340,7 +136,7 @@
       }),
       dict({
         'active': True,
-        'administrator_role': None,
+        'administrator_role': <AdministratorRole.FULL: 'full'>,
         'force_reset': False,
         'groups': list([
         ]),
@@ -404,7 +200,7 @@
     'items': list([
       dict({
         'active': True,
-        'administrator_role': None,
+        'administrator_role': <AdministratorRole.BASE: 'base'>,
         'force_reset': False,
         'groups': list([
           dict({
@@ -684,6 +480,43 @@
     }),
   })
 # ---
+# name: TestUpdate.test_primary_group_switching_between_groups
+  dict({
+    'active': True,
+    'administrator_role': None,
+    'force_reset': False,
+    'groups': list([
+      dict({
+        'id': 2,
+        'legacy_id': None,
+        'name': 'architects',
+      }),
+      dict({
+        'id': 1,
+        'legacy_id': None,
+        'name': 'musicians',
+      }),
+    ]),
+    'handle': 'lindawest',
+    'id': 1,
+    'last_password_change': 'approximately_now_datetime',
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    }),
+    'primary_group': dict({
+      'id': 2,
+      'legacy_id': None,
+      'name': 'architects',
+    }),
+  })
+# ---
 # name: TestUpdate.test_primary_group_when_member[mongo]
   None
 # ---
@@ -746,16 +579,26 @@
     }),
   })
 # ---
-# name: test_set_administrator_role[None][obj]
+# name: TestUpdate.test_update_multiple_fields_together
   dict({
-    'active': True,
+    'active': False,
     'administrator_role': None,
-    'force_reset': False,
+    'force_reset': True,
     'groups': list([
+      dict({
+        'id': 2,
+        'legacy_id': None,
+        'name': 'architects',
+      }),
+      dict({
+        'id': 3,
+        'legacy_id': None,
+        'name': 'ophthalmologists',
+      }),
     ]),
-    'handle': 'leeashley',
+    'handle': 'andrea18',
     'id': 1,
-    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+    'last_password_change': 'approximately_now_datetime',
     'permissions': dict({
       'cancel_job': False,
       'create_ref': False,
@@ -766,52 +609,10 @@
       'remove_job': False,
       'upload_file': False,
     }),
-    'primary_group': None,
-  })
-# ---
-# name: test_set_administrator_role[base][obj]
-  dict({
-    'active': True,
-    'administrator_role': <AdministratorRole.BASE: 'base'>,
-    'force_reset': False,
-    'groups': list([
-    ]),
-    'handle': 'leeashley',
-    'id': 1,
-    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
+    'primary_group': dict({
+      'id': 2,
+      'legacy_id': None,
+      'name': 'architects',
     }),
-    'primary_group': None,
-  })
-# ---
-# name: test_set_administrator_role[full][obj]
-  dict({
-    'active': True,
-    'administrator_role': <AdministratorRole.FULL: 'full'>,
-    'force_reset': False,
-    'groups': list([
-    ]),
-    'handle': 'leeashley',
-    'id': 1,
-    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-    'primary_group': None,
   })
 # ---

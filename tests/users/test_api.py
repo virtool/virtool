@@ -1,23 +1,17 @@
 from http import HTTPStatus
 
 import pytest
-from sqlalchemy import delete
-from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy.assertion import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner
 from tests.fixtures.response import RespIs
 from virtool.data.layer import DataLayer
-from virtool.data.topg import both_transactions
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.groups.oas import PermissionsUpdate, UpdateGroupRequest
 from virtool.models.enums import Permission
-from virtool.mongo.core import Mongo
+from virtool.models.roles import AdministratorRole
 from virtool.settings.oas import UpdateSettingsRequest
-from virtool.users.pg import SQLUser
-from virtool.users.utils import check_password
-from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
 @pytest.fixture
@@ -50,9 +44,8 @@ async def setup_update_user(
 async def test_find(
     find: str | None,
     fake: DataFaker,
-    snapshot: SnapshotAssertion,
+    snapshot_recent: SnapshotAssertion,
     spawn_client: ClientSpawner,
-    static_time,
 ):
     """Test that a ``GET /users`` returns a list of users."""
     client = await spawn_client(
@@ -72,16 +65,15 @@ async def test_find(
     resp = await client.get(url)
 
     assert resp.status == HTTPStatus.OK
-    assert await resp.json() == snapshot
+    assert await resp.json() == snapshot_recent
 
 
 class TestGet:
     async def test_get(
         self,
         fake: DataFaker,
-        snapshot: SnapshotAssertion,
+        snapshot_recent: SnapshotAssertion,
         spawn_client: ClientSpawner,
-        static_time,
     ):
         """Test that a ``GET /users`` returns a list of users."""
         client = await spawn_client(administrator=True, authenticated=True)
@@ -96,13 +88,12 @@ class TestGet:
         await fake.users.create()
 
         resp = await client.get(f"/users/{user.id}")
+        body = await resp.json()
 
         assert resp.status == HTTPStatus.OK
-        body = await resp.json()
-        assert body == snapshot
-
         assert body["id"] == user.id
         assert len(body["groups"]) == 2
+        assert body == snapshot_recent
 
     async def test_not_found(self, spawn_client: ClientSpawner):
         """Test that a 404 is returned when the user does not exist."""
@@ -196,8 +187,7 @@ class TestUpdate:
     async def test_ok(
         self,
         setup_update_user,
-        snapshot: SnapshotAssertion,
-        static_time,
+        snapshot_recent: SnapshotAssertion,
     ):
         client, group_1, _, user = setup_update_user
 
@@ -211,13 +201,12 @@ class TestUpdate:
         )
 
         assert resp.status == HTTPStatus.OK
-        assert await resp.json() == snapshot
+        assert await resp.json() == snapshot_recent
 
     async def test_with_groups(
         self,
         setup_update_user,
-        snapshot: SnapshotAssertion,
-        static_time,
+        snapshot_recent: SnapshotAssertion,
     ):
         client, group_1, group_2, user = setup_update_user
 
@@ -231,7 +220,7 @@ class TestUpdate:
         )
 
         assert resp.status == HTTPStatus.OK
-        assert await resp.json() == snapshot
+        assert await resp.json() == snapshot_recent
 
     async def test_short_password(self, setup_update_user, snapshot: SnapshotAssertion):
         client, _, _, user = setup_update_user
@@ -294,28 +283,46 @@ class TestUpdate:
         assert await resp.json() == snapshot
 
 
-@pytest.mark.parametrize("first_user_exists, status", [(True, 409), (False, 201)])
-async def test_create_first_user(
-    first_user_exists: bool,
-    status: int,
-    mongo: Mongo,
-    pg: AsyncEngine,
-    snapshot: SnapshotAssertion,
-    spawn_client: ClientSpawner,
-    static_time,
-):
-    """Checks response when first user exists and does not exist."""
-    client = await spawn_client()
+class TestCreateFirstUser:
+    async def test_ok(
+        self,
+        snapshot_recent: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+    ):
+        """Test creating the first user when no users exist."""
+        client = await spawn_client()
 
-    if not first_user_exists:
-        async with both_transactions(mongo, pg) as (mongo_session, pg_session):
-            await pg_session.execute(delete(SQLUser))
-            await mongo.users.delete_many({}, session=mongo_session)
+        response = await client.put(
+            "/users/first",
+            {"handle": "fred", "password": "hello_world"},
+        )
+        body = await response.json()
 
-    resp = await client.put(
-        "/users/first",
-        {"handle": "fred", "password": "hello_world"},
-    )
+        assert response.status == HTTPStatus.CREATED
+        assert body["administrator_role"] == AdministratorRole.FULL
+        assert body["handle"] == "fred"
+        assert body == snapshot_recent
 
-    assert resp.status == status
-    assert await resp.json() == snapshot
+        response = await client.post(
+            "/account/login", {"handle": "fred", "password": "hello_world"}
+        )
+
+        assert response.status == HTTPStatus.CREATED
+
+    async def test_user_already_exists(
+        self,
+        fake: DataFaker,
+        snapshot_recent: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that creating first user fails when users already exist."""
+        client = await spawn_client()
+        await fake.users.create()
+
+        resp = await client.put(
+            "/users/first",
+            {"handle": "fred", "password": "hello_world"},
+        )
+
+        assert resp.status == HTTPStatus.CONFLICT
+        assert await resp.json() == snapshot_recent

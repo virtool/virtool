@@ -13,16 +13,12 @@ from virtool.api.policy import (
 )
 from virtool.api.routes import Routes
 from virtool.api.utils import (
-    compose_regex_query,
-    paginate,
     set_session_id_cookie,
     set_session_token_cookie,
 )
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
-from virtool.data.transforms import apply_transforms
 from virtool.data.utils import get_data_from_req
 from virtool.models.roles import AdministratorRole
-from virtool.mongo.utils import get_mongo_from_req
 from virtool.users.checks import check_password_length
 from virtool.users.models import User
 from virtool.users.oas import (
@@ -30,8 +26,6 @@ from virtool.users.oas import (
     CreateUserRequest,
     UpdateUserRequest,
 )
-from virtool.users.transforms import AttachPermissionsTransform
-from virtool.utils import base_processor
 
 routes = Routes()
 
@@ -65,35 +59,27 @@ class UsersView(PydanticView):
         Status Codes:
             200: Successful operation
         """
-        mongo = get_mongo_from_req(self.request)
-        pg = self.request.app["pg"]
+        page = int(self.request.query.get("page", 1))
+        per_page = int(self.request.query.get("per_page", 25))
 
-        mongo_query = {"active": active}
-
-        if find:
-            mongo_query.update(compose_regex_query(find, ["handle"]))
-
-        data = await paginate(
-            mongo.users,
-            mongo_query,
-            self.request.query,
-            sort="handle",
-            projection=(
-                "_id",
-                "force_reset",
-                "handle",
-                "groups",
-                "last_password_change",
-                "primary_group",
-            ),
+        result = await get_data_from_req(self.request).users.find(
+            page=page,
+            per_page=per_page,
+            active=active,
+            administrator=None,
+            term=find or "",
         )
 
-        data["documents"] = await apply_transforms(
-            [base_processor(d) for d in data["documents"]],
-            [AttachPermissionsTransform(pg)],
+        return json_response(
+            {
+                "documents": [user.dict() for user in result.items],
+                "found_count": result.found_count,
+                "page": result.page,
+                "page_count": result.page_count,
+                "per_page": result.per_page,
+                "total_count": result.total_count,
+            }
         )
-
-        return json_response(data)
 
     @policy(AdministratorRoutePolicy(AdministratorRole.USERS))
     async def post(
