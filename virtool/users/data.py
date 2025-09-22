@@ -1,14 +1,13 @@
 import math
 
-from sqlalchemy import case, delete, insert, select, update
+from sqlalchemy import case, delete, func, insert, select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.orm import selectinload
 from structlog import get_logger
 
 import virtool.users.utils
 import virtool.utils
-from virtool.api.utils import compose_regex_query
-from virtool.authorization.client import AuthorizationClient
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import (
     ResourceConflictError,
@@ -16,28 +15,12 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.events import Operation, emits
-from virtool.data.transforms import apply_transforms
 from virtool.groups.pg import merge_group_permissions
-from virtool.groups.transforms import AttachGroupsTransform, AttachPrimaryGroupTransform
 from virtool.models.roles import AdministratorRole
-from virtool.mongo.core import Mongo
 from virtool.users.models import User, UserSearchResult
 from virtool.users.oas import UpdateUserRequest
 from virtool.users.pg import SQLUser, SQLUserGroup
 from virtool.users.settings import DEFAULT_USER_SETTINGS
-from virtool.users.transforms import AttachPermissionsTransform
-from virtool.utils import base_processor
-
-PROJECTION = [
-    "_id",
-    "active",
-    "handle",
-    "force_reset",
-    "groups",
-    "last_password_change",
-    "permissions",
-    "primary_group",
-]
 
 logger = get_logger("data.users")
 
@@ -47,12 +30,8 @@ class UsersData(DataLayerDomain):
 
     def __init__(
         self,
-        authorization_client: AuthorizationClient,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
-        self._authorization_client = authorization_client
-        self._mongo = mongo
         self._pg = pg
 
     async def find(
@@ -74,95 +53,68 @@ class UsersData(DataLayerDomain):
         :param administrator: whether to filter by administrator status
         :param term: a search term to filter by user handle
         """
-        administrator_roles = dict(
-            await self._authorization_client.list_administrators(),
-        )
-
-        query = {"active": active}
-
-        if administrator is not None:
-            operator = "$in" if administrator else "$nin"
-            query["_id"] = {operator: list(administrator_roles.keys())}
-
-        if term:
-            query.update(compose_regex_query(term, ["handle"]))
-
-        projection = dict.fromkeys(PROJECTION, True)
-
-        skip_count = 0
-
-        if page > 1:
-            skip_count = (page - 1) * per_page
-
-        async for paginate_dict in self._mongo.users.aggregate(
-            [
-                {"$match": {}},
-                {
-                    "$facet": {
-                        "total_count": [
-                            {"$count": "total_count"},
-                        ],
-                        "found_count": [
-                            {"$match": query},
-                            {"$count": "found_count"},
-                        ],
-                        "data": [
-                            {
-                                "$match": query,
-                            },
-                            {
-                                "$project": {
-                                    **projection,
-                                    "lower_handle": {"$toLower": "$handle"},
-                                },
-                            },
-                            {"$sort": {"lower_handle": 1}},
-                            {
-                                "$project": {
-                                    "lower_handle": False,
-                                },
-                            },
-                            {"$skip": skip_count},
-                            {"$limit": per_page},
-                        ],
-                    },
-                },
-                {
-                    "$project": {
-                        "data": projection,
-                        "total_count": {
-                            "$arrayElemAt": ["$total_count.total_count", 0],
-                        },
-                        "found_count": {
-                            "$arrayElemAt": ["$found_count.found_count", 0],
-                        },
-                    },
-                },
-            ],
-        ):
-            data = paginate_dict["data"]
-            total_count = paginate_dict.get("total_count", 0)
-            found_count = paginate_dict.get("found_count", 0)
-
-            items = await apply_transforms(
-                [base_processor(item) for item in data],
-                [
-                    AttachPermissionsTransform(self._pg),
-                    AttachPrimaryGroupTransform(self._pg),
-                    AttachGroupsTransform(self._pg),
-                ],
+        async with AsyncSession(self._pg) as session:
+            # Build base query with eager loading
+            query = (
+                select(SQLUser)
+                .options(
+                    selectinload(SQLUser.user_group_associations).selectinload(
+                        SQLUserGroup.group
+                    )
+                )
+                .where(SQLUser.active == active)
             )
 
-            items = [
-                User(**user, administrator_role=administrator_roles.get(user["id"]))
-                for user in items
-            ]
+            if administrator is not None:
+                if administrator:
+                    query = query.where(SQLUser.administrator_role.isnot(None))
+                else:
+                    query = query.where(SQLUser.administrator_role.is_(None))
+
+            if term:
+                query = query.where(SQLUser.handle.ilike(f"%{term}%"))
+
+            query = query.order_by(func.lower(SQLUser.handle))
+
+            total_count = await session.scalar(
+                select(func.count()).select_from(SQLUser)
+            )
+
+            filtered_count = await session.scalar(
+                select(func.count()).select_from(query.subquery())
+            )
+
+            offset = (page - 1) * per_page if page > 1 else 0
+            paginated_query = query.offset(offset).limit(per_page)
+
+            result = await session.execute(paginated_query)
+            sql_users = result.unique().scalars().all()
+
+            items = []
+            for sql_user in sql_users:
+                user_dict = sql_user.to_dict()
+                groups_dicts = [group.to_dict() for group in user_dict["groups"]]
+
+                items.append(
+                    User(
+                        **{
+                            k: v
+                            for k, v in user_dict.items()
+                            if k not in ["groups", "primary_group"]
+                        },
+                        groups=groups_dicts,
+                        primary_group=user_dict["primary_group"].to_dict()
+                        if user_dict["primary_group"]
+                        else None,
+                        permissions=merge_group_permissions(groups_dicts),
+                    )
+                )
 
             return UserSearchResult(
                 items=items,
-                found_count=found_count,
+                found_count=filtered_count,
                 page=page,
-                page_count=math.ceil(found_count / per_page),
+                page_count=math.ceil(filtered_count / per_page),
                 per_page=per_page,
                 total_count=total_count,
             )
@@ -235,22 +187,27 @@ class UsersData(DataLayerDomain):
         :param force_reset: force the user to reset password on next login
         :return: the user document
         """
-        async with AsyncSession(self._pg) as session:
-            password = virtool.users.utils.hash_password(password)
+        password = virtool.users.utils.hash_password(password)
 
-            user = SQLUser(
-                force_reset=force_reset,
-                handle=handle,
-                last_password_change=virtool.utils.timestamp(),
-                legacy_id=None,
-                password=password,
-                settings=DEFAULT_USER_SETTINGS,
-            )
+        try:
+            async with AsyncSession(self._pg) as session:
+                user = SQLUser(
+                    force_reset=force_reset,
+                    handle=handle,
+                    last_password_change=virtool.utils.timestamp(),
+                    legacy_id=None,
+                    password=password,
+                    settings=DEFAULT_USER_SETTINGS,
+                )
 
-            session.add(user)
-            await session.flush()
-            user_id = user.id
-            await session.commit()
+                session.add(user)
+                await session.flush()
+                user_id = user.id
+                await session.commit()
+        except IntegrityError as e:
+            if "users_handle_key" in str(e):
+                raise ResourceConflictError("User already exists")
+            raise
 
         return await self.get(user_id)
 
@@ -370,18 +327,27 @@ class UsersData(DataLayerDomain):
                     )
 
             if "primary_group" in data:
+                # Try to set the specific group as primary (only if relationship exists)
                 result = await session.execute(
                     update(SQLUserGroup)
-                    .where(SQLUserGroup.user_id == user.id)
-                    .values(
-                        primary=case(
-                            (SQLUserGroup.group_id == data["primary_group"], True),
-                            else_=False,
-                        )
+                    .where(
+                        (SQLUserGroup.user_id == user.id)
+                        & (SQLUserGroup.group_id == data["primary_group"])
                     )
+                    .values(primary=True)
                 )
 
-                if not result.rowcount:
+                if result.rowcount:
+                    # Successfully set as primary, now clear others
+                    await session.execute(
+                        update(SQLUserGroup)
+                        .where(
+                            (SQLUserGroup.user_id == user.id)
+                            & (SQLUserGroup.group_id != data["primary_group"])
+                        )
+                        .values(primary=False)
+                    )
+                else:
                     raise ResourceConflictError("User is not a member of group")
 
             await session.commit()

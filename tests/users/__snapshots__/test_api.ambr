@@ -1,4 +1,53 @@
 # serializer version: 1
+# name: TestCreate.test_ok
+  dict({
+    'active': True,
+    'administrator_role': None,
+    'force_reset': False,
+    'groups': list([
+    ]),
+    'handle': 'fred',
+    'id': 3,
+    'last_password_change': 'approximately_now_isoformat',
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    }),
+    'primary_group': None,
+  })
+# ---
+# name: TestCreate.test_ok[data_layer]
+  dict({
+    'active': True,
+    'administrator_role': None,
+    'force_reset': False,
+    'groups': list([
+    ]),
+    'handle': 'fred',
+    'id': 3,
+    'last_password_change': datetime.datetime(2015, 10, 6, 20, 0),
+    'permissions': dict({
+      'cancel_job': False,
+      'create_ref': False,
+      'create_sample': False,
+      'modify_hmm': False,
+      'modify_subtraction': False,
+      'remove_file': False,
+      'remove_job': False,
+      'upload_file': False,
+    }),
+    'primary_group': None,
+  })
+# ---
+# name: TestCreate.test_ok[location]
+  '/users/3'
+# ---
 # name: TestGet.test_get
   dict({
     'active': True,
@@ -45,7 +94,7 @@
 # name: TestUpdate.test_not_a_member_of_primary_group
   dict({
     'id': 'bad_request',
-    'message': 'User is not member of primary group',
+    'message': 'User is not a member of group',
   })
 # ---
 # name: TestUpdate.test_not_found
@@ -66,8 +115,8 @@
         'name': 'musicians',
       }),
     ]),
-    'handle': 'lindawest',
-    'id': 'fb085f7f',
+    'handle': 'johnsoncynthia',
+    'id': 2,
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': dict({
       'cancel_job': False,
@@ -101,7 +150,7 @@
       dict({
         'id': 2,
         'legacy_id': None,
-        'name': 'architects',
+        'name': 'gaffers',
       }),
       dict({
         'id': 1,
@@ -109,8 +158,8 @@
         'name': 'musicians',
       }),
     ]),
-    'handle': 'lindawest',
-    'id': 'fb085f7f',
+    'handle': 'johnsoncynthia',
+    'id': 2,
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': dict({
       'cancel_job': False,
@@ -244,7 +293,7 @@
     'groups': list([
     ]),
     'handle': 'fred',
-    'id': '7cf872dc',
+    'id': 3,
     'last_password_change': '2015-10-06T20:00:00Z',
     'permissions': dict({
       'cancel_job': False,
@@ -302,7 +351,7 @@
   })
 # ---
 # name: test_create[None][location]
-  '/users/7cf872dc'
+  '/users/3'
 # ---
 # name: test_create_first_user[False-201]
   dict({

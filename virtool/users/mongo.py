@@ -2,7 +2,7 @@
 
 from virtool.mongo.core import Mongo
 from virtool.types import Document
-from virtool.users.db import ATTACH_PROJECTION
+from virtool.users.transforms import ATTACH_PROJECTION
 from virtool.utils import base_processor
 
 

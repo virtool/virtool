@@ -12,9 +12,10 @@ from virtool.data.topg import compose_legacy_id_expression
 from virtool.data.transforms import AbstractTransform
 from virtool.groups.pg import SQLGroup, merge_group_permissions
 from virtool.types import Document
-from virtool.users.db import ATTACH_PROJECTION
 from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor, get_safely
+
+ATTACH_PROJECTION = ("_id", "handle")
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo

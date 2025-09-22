@@ -17,7 +17,6 @@ from virtool.fake.next import DataFaker
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.settings.oas import UpdateSettingsRequest
-from virtool.users.mongo import validate_credentials
 from virtool.users.utils import check_password
 
 _last_password_change_matcher = path_type({"last_password_change": (str,)})
@@ -286,7 +285,8 @@ class TestUpdateUser:
             seconds=1,
         )
 
-        assert await validate_credentials(mongo, user.id, "a_whole_new_password")
+        data_layer = get_data_from_app(spawner.app)
+        assert await data_layer.users.validate_password(user.id, "a_whole_new_password")
 
     @pytest.mark.parametrize("is_member", [True, False])
     async def test_primary_group(

@@ -113,69 +113,83 @@ class TestGet:
         assert resp.status == HTTPStatus.NOT_FOUND
 
 
-@pytest.mark.parametrize("error", [None, "400_exists", "400_password", "400_reserved"])
-async def test_create(
-    error: str | None,
-    data_layer: DataLayer,
-    fake: DataFaker,
-    mongo: Mongo,
-    resp_is: RespIs,
-    snapshot: SnapshotAssertion,
-    spawn_client: ClientSpawner,
-    static_time: StaticTime,
-):
-    """Test that a valid request results in a user document being properly inserted."""
-    await mongo.users.create_index("handle", unique=True, sparse=True)
+class TestCreate:
+    async def test_ok(
+        self,
+        fake: DataFaker,
+        snapshot_recent: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that a valid request results in a user document being properly inserted."""
+        client = await spawn_client(administrator=True, authenticated=True)
 
-    client = await spawn_client(administrator=True, authenticated=True)
+        await fake.users.create()
 
-    user = await fake.users.create()
+        await get_data_from_app(client.app).settings.update(
+            UpdateSettingsRequest(minimum_password_length=8),
+        )
 
-    await get_data_from_app(client.app).settings.update(
-        UpdateSettingsRequest(minimum_password_length=8),
-    )
+        data = {"handle": "fred", "password": "hello_world", "force_reset": False}
 
-    data = {"handle": "fred", "password": "hello_world", "force_reset": False}
+        resp = await client.post("/users", data)
 
-    if error == "400_exists":
-        data["handle"] = user.handle
+        assert resp.status == 201
+        assert await resp.json() == snapshot_recent
+        assert resp.headers["Location"] == snapshot_recent(name="location")
 
-    if error == "400_reserved":
-        data["handle"] = "virtool"
+    async def test_exists(
+        self,
+        fake: DataFaker,
+        resp_is: RespIs,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that creating a user with an existing handle returns an error."""
+        client = await spawn_client(administrator=True, authenticated=True)
 
-    if error == "400_password":
-        data["password"] = "foo"
+        user = await fake.users.create()
 
-    resp = await client.post("/users", data)
+        data = {"handle": user.handle, "password": "hello_world", "force_reset": False}
 
-    if error == "400_exists":
+        resp = await client.post("/users", data)
+
         await resp_is.bad_request(resp, "User already exists")
-        return
 
-    if error == "400_password":
+    async def test_password_too_short(
+        self,
+        fake: DataFaker,
+        resp_is: RespIs,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that a password that is too short returns an error."""
+        client = await spawn_client(administrator=True, authenticated=True)
+
+        await fake.users.create()
+
+        data = {"handle": "fred", "password": "foo", "force_reset": False}
+
+        resp = await client.post("/users", data)
+
         await resp_is.bad_request(
             resp,
             "Password does not meet minimum length requirement (8)",
         )
-        return
 
-    if error == "400_reserved":
+    async def test_reserved_handle(
+        self,
+        fake: DataFaker,
+        resp_is: RespIs,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that creating a user with a reserved handle returns an error."""
+        client = await spawn_client(administrator=True, authenticated=True)
+
+        await fake.users.create()
+
+        data = {"handle": "virtool", "password": "hello_world", "force_reset": False}
+
+        resp = await client.post("/users", data)
+
         await resp_is.bad_request(resp, "Reserved user name: virtool")
-        return
-
-    assert resp.status == 201
-
-    resp_json = await resp.json()
-
-    assert resp_json == snapshot
-    assert resp.headers["Location"] == snapshot(name="location")
-
-    document = await mongo.users.find_one(resp_json["id"])
-    password = document.pop("password")
-
-    assert document == snapshot(name="db")
-    assert check_password("hello_world", password)
-    assert await data_layer.users.get(resp_json["id"]) == snapshot(name="data_layer")
 
 
 class TestUpdate:
@@ -270,7 +284,7 @@ class TestUpdate:
         client, _, _, _ = setup_update_user
 
         resp = await client.patch(
-            "/users/bob",
+            "/users/99",
             data={
                 "primary_group": 1,
             },

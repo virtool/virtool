@@ -109,5 +109,5 @@ def create_data_layer(
         SettingsData(mongo),
         TasksData(pg),
         UploadsData(config, mongo, pg),
-        UsersData(authorization_client, mongo, pg),
+        UsersData(pg),
     )

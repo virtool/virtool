@@ -25,7 +25,7 @@ from virtool.history.utils import (
 from virtool.models.enums import HistoryMethod
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
-from virtool.users.db import ATTACH_PROJECTION
+from virtool.users.transforms import ATTACH_PROJECTION
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 

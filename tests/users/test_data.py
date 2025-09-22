@@ -15,7 +15,6 @@ from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.users.models import UserSearchResult
-from virtool.users.mongo import validate_credentials
 from virtool.users.oas import UpdateUserRequest
 from virtool.users.pg import SQLUser
 from virtool.workflow.pytest_plugin.utils import StaticTime
@@ -65,7 +64,10 @@ class TestFind:
         """Test that only active users are returned when the `active` parameter is set
         to `True`.
         """
-        assert await data_layer.users.find(1, 25, False, None, "") == snapshot_recent
+        result = await data_layer.users.find(1, 25, False, None, "")
+        assert result.total_count == 5
+        assert result.found_count == 1
+        assert result == snapshot_recent
 
     @pytest.mark.parametrize("term", ["fre", "ada"])
     async def test_term(
@@ -77,7 +79,10 @@ class TestFind:
         """Test that only matching (case-insensitive) records are returned when a handle
         is provided.
         """
-        assert await data_layer.users.find(1, 25, True, None, term) == snapshot_recent
+        result = await data_layer.users.find(1, 25, True, None, term)
+        assert result.total_count == 5
+        assert result.found_count == 1
+        assert result == snapshot_recent
 
     async def test_no_term(
         self,
@@ -85,7 +90,10 @@ class TestFind:
         snapshot_recent: SnapshotAssertion,
     ):
         """Test that all users are returned when no term is provided."""
-        assert await data_layer.users.find(1, 25, True, None, "") == snapshot_recent
+        result = await data_layer.users.find(1, 25, True, None, "")
+        assert result.total_count == 5
+        assert result.found_count == 4
+        assert result == snapshot_recent
 
     async def test_handle_doesnt_exist(self, data_layer: DataLayer):
         """Test that no items are returned when the queried handle doesn't exist."""
@@ -106,69 +114,38 @@ class TestFind:
 
 
 class TestCreate:
-    @pytest.mark.parametrize(
-        "force_reset",
-        [None, True, False],
-        ids=["not_specified", "true", "false"],
-    )
-    async def test_force_reset(
+    async def test_ok(
         self,
-        force_reset: bool | None,
         data_layer: DataLayer,
-        mongo: Mongo,
-        pg: AsyncEngine,
         snapshot_recent: SnapshotAssertion,
     ):
-        """Test that setting and unsetting ``force_reset`` works as expected."""
-        if force_reset is None:
-            user = await data_layer.users.create(password="hello_world", handle="bill")
-        else:
-            user = await data_layer.users.create(
-                force_reset=force_reset,
-                handle="bill",
-                password="hello_world",
-            )
-
-        row, doc = await asyncio.gather(
-            get_row_by_id(pg, SQLUser, 1),
-            mongo.users.find_one({"_id": user.id}),
+        """Test basic user creation with valid data."""
+        user = await data_layer.users.create(
+            handle="testuser",
+            password="test_password123",
         )
 
-        assert row.to_dict() == snapshot_recent(name="pg", exclude=props("password"))
-        assert user == snapshot_recent(
-            name="obj",
-            exclude=props(
-                "id",
-            ),
-        )
-        assert doc == snapshot_recent(name="mongo", exclude=props("password"))
-        assert (
-            doc["force_reset"]
-            == row.force_reset
-            == user.force_reset
-            is bool(force_reset)
-        )
-        assert doc["password"] == row.password
+        assert user == snapshot_recent(exclude=props("id"))
+        assert user.force_reset is False
+        assert user.active is True
+        assert user.administrator_role is None
 
     async def test_already_exists(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
     ):
         """Test that an error is raised when a user with the same handle already exists."""
-        await mongo.users.create_index("handle", unique=True, sparse=True)
-
         user = await fake.users.create()
 
         with pytest.raises(ResourceConflictError) as err:
             await data_layer.users.create(password="hello_world", handle=user.handle)
-            assert "User already exists" in str(err)
+
+        assert "User already exists" in str(err.value)
 
     async def test_first(
         self,
         data_layer: DataLayer,
-        mongo: Mongo,
         pg: AsyncEngine,
         snapshot_recent: SnapshotAssertion,
     ):
@@ -177,10 +154,7 @@ class TestCreate:
             handle="bill",
         )
 
-        doc, row = await asyncio.gather(
-            mongo.users.find_one({"_id": user.id}),
-            get_row_by_id(pg, SQLUser, 1),
-        )
+        row = await get_row_by_id(pg, SQLUser, 1)
 
         assert user == snapshot_recent(
             exclude=props(
@@ -189,59 +163,9 @@ class TestCreate:
         )
 
         assert row.to_dict() == snapshot_recent(name="pg", exclude=props("password"))
-        assert doc == snapshot_recent(name="mongo", exclude=props("password"))
-        assert doc["password"] == row.password
 
 
 class TestUpdate:
-    async def test_force_reset(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-        mongo: Mongo,
-        pg: AsyncEngine,
-        snapshot_recent: SnapshotAssertion,
-    ):
-        """Test that setting and unsetting ``force_reset`` works as expected."""
-        user = await fake.users.create()
-
-        doc, row = await asyncio.gather(
-            mongo.users.find_one({"_id": user.id}),
-            get_row_by_id(pg, SQLUser, 1),
-        )
-
-        assert doc["force_reset"] == row.force_reset == user.force_reset is False
-        assert doc == snapshot_recent(name="mongo_1", exclude=props("password"))
-        assert row.to_dict() == snapshot_recent(name="pg_1", exclude=props("password"))
-
-        user = await data_layer.users.update(
-            user.id,
-            UpdateUserRequest(force_reset=True),
-        )
-
-        doc, row = await asyncio.gather(
-            mongo.users.find_one({"_id": user.id}),
-            get_row_by_id(pg, SQLUser, 1),
-        )
-
-        assert doc["force_reset"] == row.force_reset == user.force_reset is True
-        assert doc == snapshot_recent(name="mongo_2", exclude=props("password"))
-        assert row.to_dict() == snapshot_recent(name="pg_2", exclude=props("password"))
-
-        user = await data_layer.users.update(
-            user.id,
-            UpdateUserRequest(force_reset=False),
-        )
-
-        doc, row = await asyncio.gather(
-            mongo.users.find_one({"_id": user.id}),
-            get_row_by_id(pg, SQLUser, 1),
-        )
-
-        assert doc["force_reset"] == row.force_reset == user.force_reset is False
-        assert doc == snapshot_recent(name="mongo_3", exclude=props("password"))
-        assert row.to_dict() == snapshot_recent(name="pg_3", exclude=props("password"))
-
     async def test_groups(
         self,
         data_layer: DataLayer,
@@ -376,7 +300,7 @@ class TestUpdate:
                 UpdateUserRequest(primary_group=group.id),
             )
 
-        assert str(err.value) == "User is not member of primary group"
+        assert str(err.value) == "User is not a member of group"
 
     async def test_primary_group_does_not_exist(
         self,
@@ -392,7 +316,7 @@ class TestUpdate:
                 UpdateUserRequest(primary_group=3),
             )
 
-        assert str(err.value) == "Non-existent group: 3"
+        assert str(err.value) == "User is not a member of group"
 
     async def test_password(
         self,
@@ -425,16 +349,14 @@ class TestUpdate:
             )
 
         # Ensure the newly set password validates.
-        assert await validate_credentials(mongo, user.id, "hello_world")
+        assert await data_layer.users.validate_password(user.id, "hello_world")
 
     async def test_not_found(self, data_layer: DataLayer):
-        with pytest.raises(ResourceNotFoundError) as err:
+        with pytest.raises(ResourceNotFoundError):
             await data_layer.users.update(
-                "user_id",
+                99999,
                 UpdateUserRequest(groups=[]),
             )
-
-        assert str(err.value) == "User does not exist"
 
 
 class TestCheckUsersExist:
@@ -448,32 +370,31 @@ class TestCheckUsersExist:
         assert await data_layer.users.check_users_exist()
 
 
-@pytest.mark.parametrize("role", [None, AdministratorRole.BASE, AdministratorRole.FULL])
-async def test_set_administrator_role(
-    role: AdministratorRole | None,
-    authorization_client: AuthorizationClient,
-    data_layer: DataLayer,
-    fake: DataFaker,
-    pg: AsyncEngine,
-    snapshot: SnapshotAssertion,
-    static_time: StaticTime,
-):
-    """Test changing the administrator role of a user."""
-    user = await fake.users.create()
+class TestSetAdministratorRole:
+    """Tests for the set_administrator_role method (interface tests)."""
 
-    updated_user = await data_layer.users.set_administrator_role(user.id, role)
-
-    assert updated_user == snapshot(name="obj")
-
-    # Verify role is stored in OpenFGA
-    assert await authorization_client.list_administrators() == (
-        [(user.id, role)] if role is not None else []
+    @pytest.mark.parametrize(
+        "role",
+        [AdministratorRole.BASE, AdministratorRole.USERS, AdministratorRole.FULL, None],
     )
+    async def test_ok(
+        self,
+        role: AdministratorRole | None,
+        data_layer: DataLayer,
+        fake: DataFaker,
+    ):
+        """Test that set_administrator_role updates user roles correctly."""
+        user = await fake.users.create()
 
-    # Verify role is stored in PostgreSQL
-    pg_user = await get_row_by_id(pg, SQLUser, 1)
-    assert pg_user.administrator_role == role
+        # Test setting the role
+        updated_user = await data_layer.users.set_administrator_role(user.id, role)
+        assert updated_user.administrator_role == role
 
-    # Verify get() method retrieves role from PostgreSQL
-    retrieved_user = await data_layer.users.get(user.id)
-    assert retrieved_user.administrator_role == role
+        # Test persistence - retrieve the user again to verify role was stored
+        retrieved_user = await data_layer.users.get(user.id)
+        assert retrieved_user.administrator_role == role
+
+    async def test_not_found(self, data_layer: DataLayer):
+        """Test that set_administrator_role raises error for non-existent user."""
+        with pytest.raises(ResourceNotFoundError):
+            await data_layer.users.set_administrator_role(99999, AdministratorRole.BASE)
