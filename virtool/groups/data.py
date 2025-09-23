@@ -3,19 +3,18 @@ import math
 from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from sqlalchemy.orm import selectinload
 
 from virtool.authorization.client import AuthorizationClient
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
 from virtool.data.topg import both_transactions
 from virtool.groups.models import Group, GroupMinimal, GroupSearchResult
-from virtool.groups.mongo import (
-    update_member_users_and_api_keys,
-)
 from virtool.groups.oas import UpdateGroupRequest
 from virtool.groups.pg import SQLGroup
 from virtool.mongo.core import Mongo
 from virtool.users.models_base import UserNested
+from virtool.users.pg import SQLUser, SQLUserGroup
 from virtool.users.utils import generate_base_permissions
 from virtool.utils import base_processor
 
@@ -98,12 +97,16 @@ class GroupsData:
             group: SQLGroup | None = await session.get(SQLGroup, group_id)
 
             if group:
+                # Fetch users that belong to this group using JOIN
+                result = await session.execute(
+                    select(SQLUser.id, SQLUser.handle)
+                    .join(SQLUserGroup)
+                    .where(SQLUserGroup.group_id == group_id)
+                    .order_by(SQLUser.handle)
+                )
+
                 users = [
-                    UserNested(**base_processor(user))
-                    async for user in self._mongo.users.find({"groups": group_id}).sort(
-                        "handle",
-                        1,
-                    )
+                    UserNested(id=user_id, handle=handle) for user_id, handle in result
                 ]
 
                 return Group(
@@ -174,12 +177,6 @@ class GroupsData:
 
             if db_update:
                 group.update(db_update)
-                await update_member_users_and_api_keys(
-                    self._mongo,
-                    mongo_session,
-                    pg_session,
-                    group.id,
-                )
 
         return await self.get(group_id)
 
@@ -205,12 +202,5 @@ class GroupsData:
 
             if not result.rowcount:
                 raise ResourceNotFoundError
-
-            await update_member_users_and_api_keys(
-                self._mongo,
-                mongo_session,
-                pg_session,
-                group_id,
-            )
 
         emit(group, "groups", "delete", Operation.DELETE)

@@ -22,8 +22,8 @@
           'name': 'Reference A',
         }),
         'user': dict({
-          'handle': 'bob',
-          'id': 'bf1b993c',
+          'handle': 'leeashley',
+          'id': 1,
         }),
       }),
       dict({
@@ -46,8 +46,8 @@
           'name': 'Reference A',
         }),
         'user': dict({
-          'handle': 'bob',
-          'id': 'bf1b993c',
+          'handle': 'leeashley',
+          'id': 1,
         }),
       }),
       dict({
@@ -70,8 +70,8 @@
           'name': 'Reference A',
         }),
         'user': dict({
-          'handle': 'bob',
-          'id': 'bf1b993c',
+          'handle': 'leeashley',
+          'id': 1,
         }),
       }),
     ]),
@@ -129,8 +129,8 @@
       'name': 'Reference A',
     }),
     'user': dict({
-      'handle': 'bob',
-      'id': 'bf1b993c',
+      'handle': 'leeashley',
+      'id': 1,
     }),
   })
 # ---

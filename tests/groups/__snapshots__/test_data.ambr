@@ -147,11 +147,11 @@
     'users': list([
       dict({
         'handle': 'leeashley',
-        'id': 'bf1b993c',
+        'id': 1,
       }),
       dict({
         'handle': 'zclark',
-        'id': 'fb085f7f',
+        'id': 2,
       }),
     ]),
   })

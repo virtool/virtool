@@ -198,15 +198,15 @@
     'users': list([
       dict({
         'handle': 'garciaregina',
-        'id': 'da42dca3',
+        'id': 4,
       }),
       dict({
-        'handle': 'jacobsjames',
-        'id': '7cf872dc',
+        'handle': 'gschmitt',
+        'id': 5,
       }),
       dict({
         'handle': 'modonnell',
-        'id': '3cbb22cc',
+        'id': 3,
       }),
     ]),
   })
@@ -234,8 +234,8 @@
     }),
     'users': list([
       dict({
-        'handle': 'lindawest',
-        'id': 'fb085f7f',
+        'handle': 'johnsoncynthia',
+        'id': 2,
       }),
     ]),
   })

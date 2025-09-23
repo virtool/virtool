@@ -147,7 +147,9 @@ def prepare_add(
     )
 
 
-async def find(mongo: "Mongo", req_query, base_query: Document | None = None):
+async def find(
+    mongo: "Mongo", pg: "AsyncEngine", req_query, base_query: Document | None = None
+):
     data = await paginate(
         mongo.history,
         {},
@@ -162,7 +164,7 @@ async def find(mongo: "Mongo", req_query, base_query: Document | None = None):
         **data,
         "documents": await apply_transforms(
             [base_processor(d) for d in data["documents"]],
-            [AttachReferenceTransform(mongo), AttachUserTransform(mongo)],
+            [AttachReferenceTransform(mongo), AttachUserTransform(pg)],
         ),
     }
 
