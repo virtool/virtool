@@ -118,7 +118,9 @@ class IndexData:
         document = result[0]
 
         contributors, otus = await asyncio.gather(
-            virtool.history.db.get_contributors(self._mongo, {"index.id": index_id}),
+            virtool.history.db.get_contributors(
+                self._mongo, self._pg, {"index.id": index_id}
+            ),
             virtool.indexes.db.get_otus(self._mongo, index_id),
         )
 

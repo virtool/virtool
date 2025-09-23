@@ -42,7 +42,7 @@ class MessagesData:
             message=data.message,
             created_at=virtool.utils.timestamp(),
             updated_at=virtool.utils.timestamp(),
-            user=user_id,
+            user=str(user_id),
         )
 
         async with AsyncSession(self._pg) as session:

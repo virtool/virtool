@@ -67,14 +67,14 @@
     'id': 'foo',
     'job': dict({
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'id': 'fb085f7f',
+      'id': 'bf1b993c',
       'progress': 3,
       'retries': 0,
       'stage': None,
       'state': <JobState.PREPARING: 'preparing'>,
       'user': dict({
         'handle': 'leeashley',
-        'id': 'bf1b993c',
+        'id': 1,
       }),
       'workflow': 'pathoscope_bowtie',
     }),
@@ -91,7 +91,7 @@
     }),
     'user': dict({
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'version': 2,
   })
@@ -102,7 +102,7 @@
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'has_files': True,
     'job': dict({
-      'id': 'fb085f7f',
+      'id': 'bf1b993c',
     }),
     'manifest': dict({
     }),
@@ -111,7 +111,7 @@
       'id': 'bar',
     }),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'version': 2,
   })

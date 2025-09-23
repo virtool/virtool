@@ -320,7 +320,7 @@ class ReferencesData(DataLayerDomain):
             users,
             unbuilt_count,
         ) = await asyncio.gather(
-            get_contributors(self._mongo, ref_id),
+            get_contributors(self._mongo, self._pg, ref_id),
             get_internal_control(self._mongo, internal_control_id, ref_id),
             get_latest_build(self._mongo, self._pg, ref_id),
             get_otu_count(self._mongo, ref_id),

@@ -326,15 +326,18 @@ async def fetch_and_update_release(
     return release
 
 
-async def get_contributors(mongo: "Mongo", ref_id: str) -> list[Document] | None:
+async def get_contributors(mongo: "Mongo", pg, ref_id: str) -> list[Document] | None:
     """Return a list of contributors and their contribution count for a specific ref.
 
     :param mongo: the application database client
+    :param pg: the PostgreSQL engine
     :param ref_id: the id of the ref to get contributors for
     :return: a list of contributors to the ref
 
     """
-    return await virtool.history.db.get_contributors(mongo, {"reference.id": ref_id})
+    return await virtool.history.db.get_contributors(
+        mongo, pg, {"reference.id": ref_id}
+    )
 
 
 async def get_internal_control(
