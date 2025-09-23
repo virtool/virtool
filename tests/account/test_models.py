@@ -4,7 +4,7 @@ from pydantic import ValidationError
 from virtool.account.models import Account, check_email
 
 BASE_ACCOUNT_DATA = {
-    "id": "test_user",
+    "id": 123,
     "handle": "testuser",
     "active": True,
     "administrator_role": None,
@@ -31,7 +31,7 @@ BASE_ACCOUNT_DATA = {
 }
 
 
-def create_account_data(email=None):
+def create_account_data(email: str | None = None):
     """Create account data with specified email value."""
     return {**BASE_ACCOUNT_DATA, "email": email}
 
@@ -65,16 +65,16 @@ class TestCheckEmail:
                 check_email(email)
 
     def test_none(self):
-        """Test that None values are handled correctly."""
-        assert check_email(None) is None
+        """Test that None values raise ValueError."""
+        with pytest.raises(ValueError, match="Value may not be null"):
+            check_email(None)
 
     def test_empty_string(self):
-        """Test that empty strings raise ValueError."""
-        with pytest.raises(ValueError, match="The format of the email is invalid"):
-            check_email("")
+        """Test that empty strings are allowed."""
+        assert check_email("") == ""
 
     def test_whitespace_only(self):
-        """Test that whitespace-only strings raise ValueError."""
+        """Test that unstripped whitespace-only strings raise ValueError."""
         with pytest.raises(ValueError, match="The format of the email is invalid"):
             check_email("   ")
 
@@ -84,28 +84,23 @@ class TestAccountModel:
 
     def test_account_with_valid_email(self):
         """Test creating Account with valid email."""
-        account = Account(**create_account_data("test@gmail.com"))
+        account = Account.parse_obj(create_account_data("test@gmail.com"))
         assert account.email == "test@gmail.com"
 
     def test_account_with_none_email(self):
         """Test creating Account with None email."""
-        account = Account(**create_account_data(None))
-        assert account.email is None
+        account = Account.parse_obj(create_account_data(None))
+        assert account.email == ""
 
     def test_account_with_empty_string_email(self):
         """Test creating Account with empty string email fails."""
-        with pytest.raises(ValidationError) as exc_info:
-            Account(**create_account_data(""))
-
-        errors = exc_info.value.errors()
-        assert len(errors) == 1
-        assert errors[0]["loc"] == ("email",)
-        assert "The format of the email is invalid" in str(errors[0]["msg"])
+        account = Account.parse_obj(create_account_data(""))
+        assert account.email == ""
 
     def test_account_with_invalid_email(self):
         """Test creating Account with invalid email fails."""
         with pytest.raises(ValidationError) as exc_info:
-            Account(**create_account_data("invalid-email"))
+            Account.parse_obj(create_account_data("invalid-email"))
 
         errors = exc_info.value.errors()
         assert len(errors) == 1
@@ -114,5 +109,5 @@ class TestAccountModel:
 
     def test_account_email_whitespace_stripped(self):
         """Test that email whitespace is stripped by ConstrainedEmail."""
-        account = Account(**create_account_data("  test@gmail.com  "))
+        account = Account.parse_obj(create_account_data("  test@gmail.com  "))
         assert account.email == "test@gmail.com"

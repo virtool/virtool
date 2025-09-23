@@ -9,9 +9,12 @@ from virtool.models.enums import AnalysisWorkflow
 from virtool.users.models import User
 
 
-def check_email(email: str | None) -> str | None:
+def check_email(email: str | None) -> str:
     """Checks if the given email is valid."""
-    if email is None or email == "":
+    if email is None:
+        raise ValueError("Value may not be null")
+
+    if email == "":
         return email
 
     try:
@@ -51,7 +54,14 @@ class Account(User):
     def validate_email(cls, v):
         if v is None:
             return ""
-        return check_email(v) or ""
+
+        if isinstance(v, str):
+            v = v.strip()
+
+        if v == "":
+            return ""
+
+        return check_email(v)
 
     class Config:
         schema_extra = {
