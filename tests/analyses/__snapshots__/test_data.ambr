@@ -1,7 +1,7 @@
 # serializer version: 1
 # name: test_create[mongo]
   dict({
-    '_id': 'fb085f7f',
+    '_id': 'bf1b993c',
     'files': list([
     ]),
     'index': dict({
@@ -9,7 +9,7 @@
       'version': 11,
     }),
     'job': dict({
-      'id': '7cf872dc',
+      'id': 'fb085f7f',
     }),
     'ml': None,
     'ready': False,
@@ -28,7 +28,7 @@
       'subtraction_2',
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'workflow': 'nuvs',
   })
@@ -37,20 +37,20 @@
   dict({
     'files': list([
     ]),
-    'id': 'fb085f7f',
+    'id': 'bf1b993c',
     'index': dict({
       'id': 'test_index',
       'version': 11,
     }),
     'job': dict({
-      'id': '7cf872dc',
+      'id': 'fb085f7f',
       'progress': 0,
       'retries': 0,
       'stage': None,
       'state': <JobState.WAITING: 'waiting'>,
       'user': dict({
         'handle': 'leeashley',
-        'id': 'bf1b993c',
+        'id': 1,
       }),
       'workflow': 'nuvs',
     }),
@@ -77,14 +77,14 @@
     ]),
     'user': dict({
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'workflow': 'nuvs',
   })
 # ---
 # name: test_create_analysis_id[mongo]
   dict({
-    '_id': 'fb085f7f',
+    '_id': 'bf1b993c',
     'files': list([
     ]),
     'index': dict({
@@ -92,7 +92,7 @@
       'version': 11,
     }),
     'job': dict({
-      'id': '7cf872dc',
+      'id': 'fb085f7f',
     }),
     'ml': None,
     'ready': False,
@@ -111,7 +111,7 @@
       'subtraction_2',
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'workflow': 'nuvs',
   })
@@ -120,20 +120,20 @@
   dict({
     'files': list([
     ]),
-    'id': 'fb085f7f',
+    'id': 'bf1b993c',
     'index': dict({
       'id': 'test_index',
       'version': 11,
     }),
     'job': dict({
-      'id': '7cf872dc',
+      'id': 'fb085f7f',
       'progress': 0,
       'retries': 0,
       'stage': None,
       'state': <JobState.WAITING: 'waiting'>,
       'user': dict({
         'handle': 'leeashley',
-        'id': 'bf1b993c',
+        'id': 1,
       }),
       'workflow': 'nuvs',
     }),
@@ -160,7 +160,7 @@
     ]),
     'user': dict({
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'workflow': 'nuvs',
   })
@@ -181,21 +181,21 @@
     'documents': list([
       dict({
         'created_at': 'approximately_now_datetime',
-        'id': '3cbb22cc',
+        'id': '7cf872dc',
         'index': dict({
           'id': 'test_index',
           'version': 11,
         }),
         'job': dict({
           'created_at': 'approximately_now_datetime',
-          'id': 'da42dca3',
+          'id': '3cbb22cc',
           'progress': 0,
           'retries': 0,
           'stage': None,
           'state': <JobState.WAITING: 'waiting'>,
           'user': dict({
             'handle': 'leeashley',
-            'id': 'bf1b993c',
+            'id': 1,
           }),
           'workflow': 'nuvs',
         }),
@@ -222,7 +222,7 @@
         'updated_at': 'approximately_now_datetime',
         'user': dict({
           'handle': 'leeashley',
-          'id': 'bf1b993c',
+          'id': 1,
         }),
         'workflow': 'nuvs',
       }),
@@ -239,21 +239,21 @@
     'documents': list([
       dict({
         'created_at': 'approximately_now_datetime',
-        'id': '09d01419',
+        'id': 'da42dca3',
         'index': dict({
           'id': 'test_index',
           'version': 11,
         }),
         'job': dict({
           'created_at': 'approximately_now_datetime',
-          'id': 'f60bae36',
+          'id': '09d01419',
           'progress': 0,
           'retries': 0,
           'stage': None,
           'state': <JobState.WAITING: 'waiting'>,
           'user': dict({
             'handle': 'leeashley',
-            'id': 'bf1b993c',
+            'id': 1,
           }),
           'workflow': 'nuvs',
         }),
@@ -280,27 +280,27 @@
         'updated_at': 'approximately_now_datetime',
         'user': dict({
           'handle': 'leeashley',
-          'id': 'bf1b993c',
+          'id': 1,
         }),
         'workflow': 'nuvs',
       }),
       dict({
         'created_at': 'approximately_now_datetime',
-        'id': '3cbb22cc',
+        'id': '7cf872dc',
         'index': dict({
           'id': 'test_index',
           'version': 11,
         }),
         'job': dict({
           'created_at': 'approximately_now_datetime',
-          'id': 'da42dca3',
+          'id': '3cbb22cc',
           'progress': 0,
           'retries': 0,
           'stage': None,
           'state': <JobState.WAITING: 'waiting'>,
           'user': dict({
             'handle': 'leeashley',
-            'id': 'bf1b993c',
+            'id': 1,
           }),
           'workflow': 'nuvs',
         }),
@@ -327,7 +327,7 @@
         'updated_at': 'approximately_now_datetime',
         'user': dict({
           'handle': 'leeashley',
-          'id': 'bf1b993c',
+          'id': 1,
         }),
         'workflow': 'nuvs',
       }),
@@ -341,7 +341,7 @@
 # ---
 # name: test_upload_file
   dict({
-    'analysis': 'fb085f7f',
+    'analysis': 'bf1b993c',
     'description': None,
     'format': 'fasta',
     'id': 1,
