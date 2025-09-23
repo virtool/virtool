@@ -10,16 +10,12 @@ from virtool.mongo.core import Mongo
 def compose_password_update(password: str) -> dict[str, Any]:
     """Compose an update dict for self-changing a users account password.
 
-    This will disable forced reset and won't invalidate current sessions, unlike a
-    password change by an administrator.
-
     :param password: the new password
     :return: a password update
 
     """
     return {
         "password": virtool.users.utils.hash_password(password),
-        "invalidate_sessions": False,
         "last_password_change": virtool.utils.timestamp(),
         "force_reset": False,
     }

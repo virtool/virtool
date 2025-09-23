@@ -8,6 +8,7 @@ from syrupy.assertion import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, VirtoolTestClient
 from virtool.account.oas import CreateKeyRequest
+from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
@@ -187,6 +188,55 @@ class TestUpdate:
         assert delta < 60
 
         assert body == snapshot_recent(name="response")
+
+    async def test_password_change_invalidates_sessions(self) -> None:
+        """Test that changing password invalidates old sessions and creates new one."""
+        from virtool.data.utils import get_data_from_app
+
+        data_layer = get_data_from_app(self.client.app)
+
+        # Get the current user ID from the authenticated client
+        user_id = self.client.user.id
+
+        # Create another session for the same user to verify it gets invalidated
+        old_session, old_token = await data_layer.sessions.create_authenticated(
+            "127.0.0.1", user_id, False
+        )
+
+        # Verify the old session exists and is valid
+        retrieved_session = await data_layer.sessions.get_authenticated(
+            old_session.id, old_token
+        )
+        assert retrieved_session.id == old_session.id
+
+        # Change password
+        resp = await self.client.patch(
+            "/account",
+            {"password": "new_password_123", "old_password": "bob_is_testing"},
+        )
+        assert resp.status == HTTPStatus.OK
+
+        # Verify new session cookies were set in response
+        assert "session_id" in resp.cookies
+        assert "session_token" in resp.cookies
+        new_session_id = resp.cookies["session_id"].value
+        new_session_token = resp.cookies["session_token"].value
+
+        # Verify the old additional session is now invalid
+        try:
+            await data_layer.sessions.get_authenticated(old_session.id, old_token)
+            # If we get here, the session was not invalidated
+            assert False, "Session should have been invalidated but was still valid"
+        except ResourceNotFoundError:
+            # This is expected - session should be invalidated
+            pass
+
+        # Verify the new session is valid
+        new_session = await data_layer.sessions.get_authenticated(
+            new_session_id, new_session_token
+        )
+        assert new_session.id == new_session_id
+        assert new_session.authentication.user_id == user_id
 
     async def test_empty_update(
         self,

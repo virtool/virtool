@@ -73,14 +73,18 @@ class AccountData(DataLayerDomain):
 
         raise ResourceNotFoundError
 
-    async def update(self, user_id: int, data: UpdateAccountRequest) -> Account:
+    async def update(
+        self, user_id: int, data: UpdateAccountRequest, ip: str | None = None
+    ) -> tuple[Account, Session | None, str | None]:
         """Update the user account.
 
         :param user_id: the user ID
         :param data: the update to the account
-        :return: the user account
+        :param ip: the client IP address (required for password changes)
+        :return: the user account, new session (if password changed), and session token (if password changed)
         """
         values = {}
+        password_changed = False
 
         data_dict = data.dict(exclude_unset=True)
 
@@ -91,6 +95,7 @@ class AccountData(DataLayerDomain):
                 raise ResourceError("Invalid credentials")
 
             values.update(compose_password_update(data_dict["password"]))
+            password_changed = True
 
         if "email" in data_dict:
             values["email"] = data_dict["email"]
@@ -106,7 +111,24 @@ class AccountData(DataLayerDomain):
 
                 await session.commit()
 
-        return await self.get(user_id)
+        # If password was changed, invalidate all existing sessions and create a new one
+        if password_changed:
+            if ip is None:
+                raise ValueError("IP address is required when changing password")
+
+            # Delete all existing sessions for the user
+            await self.data.sessions.delete_by_user(user_id)
+
+            # Create a new authenticated session
+            new_session, token = await self.data.sessions.create_authenticated(
+                ip, user_id, remember=False
+            )
+
+            account = await self.get(user_id)
+            return account, new_session, token
+
+        account = await self.get(user_id)
+        return account, None, None
 
     async def get_settings(self, user_id: int) -> AccountSettings:
         """Get account settings.

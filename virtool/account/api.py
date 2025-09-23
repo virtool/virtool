@@ -81,13 +81,24 @@ class AccountView(PydanticView):
                 raise APIBadRequest(error)
 
         try:
-            account = await get_data_from_req(self.request).account.update(
-                self.request["client"].user_id, data
+            account, new_session, token = await get_data_from_req(
+                self.request
+            ).account.update(
+                self.request["client"].user_id,
+                data,
+                virtool.api.authentication.get_ip(self.request),
             )
         except ResourceError:
             raise APIBadRequest("Invalid credentials")
 
-        return json_response(account)
+        resp = json_response(account)
+
+        # If password was changed, set new session cookies
+        if new_session and token:
+            set_session_id_cookie(resp, new_session.id)
+            set_session_token_cookie(resp, token)
+
+        return resp
 
 
 @routes.view("/account/settings")
