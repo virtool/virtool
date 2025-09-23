@@ -40,7 +40,7 @@ class MessagesView(PydanticView):
         Status Codes:
             200: Successful operation
         """
-        user_id = self.request["client"].user_id
+        user_id = str(self.request["client"].user_id)
 
         instance_message = await get_data_from_req(self.request).messages.create(
             data, user_id

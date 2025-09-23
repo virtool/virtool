@@ -48,7 +48,7 @@ class HistoryData:
                 [
                     AttachDiffTransform(self._data_path, self._pg),
                     AttachReferenceTransform(self._mongo),
-                    AttachUserTransform(self._mongo),
+                    AttachUserTransform(self._pg),
                 ],
             )
             return History(**document)

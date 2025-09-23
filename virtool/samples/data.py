@@ -17,7 +17,7 @@ from virtool.config.cls import Config
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emits
-from virtool.data.topg import compose_legacy_id_expression
+from virtool.data.topg import compose_legacy_id_multi_expression
 from virtool.data.transforms import apply_transforms
 from virtool.groups.models import GroupMinimal
 from virtool.groups.pg import SQLGroup
@@ -102,7 +102,7 @@ class SamplesData(DataLayerDomain):
             async with AsyncSession(self._pg) as session:
                 result = await session.execute(
                     select(SQLGroup).where(
-                        compose_legacy_id_expression(SQLGroup, client.groups),
+                        compose_legacy_id_multi_expression(SQLGroup, client.groups),
                     ),
                 )
 
@@ -185,8 +185,8 @@ class SamplesData(DataLayerDomain):
             [base_processor(d) for d in data],
             [
                 AttachLabelsTransform(self._pg),
-                AttachUserTransform(self._mongo),
-                AttachJobTransform(self._mongo),
+                AttachUserTransform(self._pg),
+                AttachJobTransform(self._mongo, self._pg),
             ],
         )
 
@@ -215,10 +215,10 @@ class SamplesData(DataLayerDomain):
             base_processor(document),
             [
                 AttachArtifactsAndReadsTransform(self._pg),
-                AttachJobTransform(self._mongo),
+                AttachJobTransform(self._mongo, self._pg),
                 AttachLabelsTransform(self._pg),
                 AttachSubtractionsTransform(self._mongo),
-                AttachUserTransform(self._mongo),
+                AttachUserTransform(self._pg),
             ],
         )
 
@@ -231,7 +231,9 @@ class SamplesData(DataLayerDomain):
             async with AsyncSession(self._pg) as session:
                 result = await session.execute(
                     select(SQLGroup).where(
-                        compose_legacy_id_expression(SQLGroup, [document["group"]]),
+                        compose_legacy_id_multi_expression(
+                            SQLGroup, [document["group"]]
+                        ),
                     ),
                 )
 

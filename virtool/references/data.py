@@ -22,6 +22,7 @@ from virtool.data.errors import (
     ResourceNotFoundError,
     ResourceRemoteError,
 )
+from virtool.data.topg import compose_legacy_id_single_expression
 from virtool.data.events import Operation, emit, emits
 from virtool.data.transforms import apply_transforms
 from virtool.errors import GitHubError
@@ -82,7 +83,7 @@ from virtool.tasks.progress import (
 from virtool.tasks.transforms import AttachTaskTransform
 from virtool.types import Document
 from virtool.uploads.sql import SQLUpload
-from virtool.users.mongo import extend_user
+from virtool.users.pg import SQLUser
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import get_http_session_from_app, get_safely
 
@@ -101,6 +102,30 @@ class ReferencesData(DataLayerDomain):
         self._pg = pg
         self._config = config
         self._client = client
+
+    async def _extend_user(self, user: Document) -> Document:
+        """Extend a user document with additional data from PostgreSQL.
+
+        :param user: the user document to extend
+        :return: the extended user document
+        """
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLUser.id, SQLUser.handle, SQLUser.legacy_id).where(
+                    compose_legacy_id_single_expression(SQLUser, user["id"]),
+                ),
+            )
+
+            user_row = result.first()
+
+            if user_row is None:
+                raise KeyError(f"User {user['id']} not found")
+
+            return {
+                **user,
+                "id": user_row.id,
+                "handle": user_row.handle,
+            }
 
     async def find(
         self,
@@ -127,14 +152,15 @@ class ReferencesData(DataLayerDomain):
         )
 
         documents = [
-            await processor(self._mongo, document) for document in data["documents"]
+            await processor(self._mongo, self._pg, document)
+            for document in data["documents"]
         ]
 
         documents, remote_slug_count = await asyncio.gather(
             apply_transforms(
                 documents,
                 [
-                    AttachUserTransform(self._mongo),
+                    AttachUserTransform(self._pg),
                     AttachImportedFromTransform(self._mongo, self._pg),
                     AttachTaskTransform(self._pg),
                 ],
@@ -296,10 +322,10 @@ class ReferencesData(DataLayerDomain):
         ) = await asyncio.gather(
             get_contributors(self._mongo, ref_id),
             get_internal_control(self._mongo, internal_control_id, ref_id),
-            get_latest_build(self._mongo, ref_id),
+            get_latest_build(self._mongo, self._pg, ref_id),
             get_otu_count(self._mongo, ref_id),
             get_reference_groups(self._pg, document),
-            get_reference_users(self._mongo, document),
+            get_reference_users(self._mongo, self._pg, document),
             get_unbuilt_count(self._mongo, ref_id),
         )
 
@@ -317,7 +343,7 @@ class ReferencesData(DataLayerDomain):
 
         document = await apply_transforms(
             document,
-            [AttachUserTransform(self._mongo), AttachTaskTransform(self._pg)],
+            [AttachUserTransform(self._pg), AttachTaskTransform(self._pg)],
         )
 
         try:
@@ -328,7 +354,7 @@ class ReferencesData(DataLayerDomain):
         if installed:
             installed = await apply_transforms(
                 installed,
-                [AttachUserTransform(self._mongo)],
+                [AttachUserTransform(self._pg)],
             )
 
         document["installed"] = installed
@@ -338,7 +364,7 @@ class ReferencesData(DataLayerDomain):
         if imported_from:
             imported_from = await apply_transforms(
                 imported_from,
-                [AttachUserTransform(self._mongo)],
+                [AttachUserTransform(self._pg)],
             )
 
         document["imported_from"] = imported_from
@@ -523,7 +549,9 @@ class ReferencesData(DataLayerDomain):
         if not await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
             raise ResourceNotFoundError()
 
-        data = await virtool.indexes.db.find(self._mongo, query, ref_id=ref_id)
+        data = await virtool.indexes.db.find(
+            self._mongo, self._pg, query, ref_id=ref_id
+        )
 
         return IndexSearchResult(**data)
 
@@ -775,7 +803,7 @@ class ReferencesData(DataLayerDomain):
 
         emit(await self.get(ref_id), "references", "create_user", Operation.UPDATE)
 
-        return ReferenceUser(**await extend_user(self._mongo, reference_user))
+        return ReferenceUser(**await self._extend_user(reference_user))
 
     async def update_user(
         self,
@@ -809,7 +837,7 @@ class ReferencesData(DataLayerDomain):
                     Operation.UPDATE,
                 )
 
-                return ReferenceUser(**await extend_user(self._mongo, user))
+                return ReferenceUser(**await self._extend_user(user))
 
         raise ResourceNotFoundError()
 

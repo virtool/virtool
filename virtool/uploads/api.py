@@ -65,7 +65,7 @@ class UploadsView(PydanticView):
             multipart_file_chunker(await self.request.multipart()),
             name,
             upload_type,
-            user=self.request["client"].user_id,
+            user=str(self.request["client"].user_id),
         )
 
         return json_response(

@@ -25,7 +25,7 @@ from virtool.history.utils import (
 from virtool.models.enums import HistoryMethod
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
-from virtool.users.transforms import ATTACH_PROJECTION, AttachUserTransform
+from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
 if TYPE_CHECKING:
@@ -184,7 +184,7 @@ async def get_contributors(mongo: "Mongo", query: dict) -> list[dict]:
 
     users = await mongo.users.find(
         {"_id": {"$in": [c["id"] for c in contributors]}},
-        projection=ATTACH_PROJECTION,
+        projection=("_id", "handle"),
     ).to_list(None)
 
     users = {u.pop("_id"): u for u in users}

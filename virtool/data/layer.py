@@ -99,7 +99,7 @@ def create_data_layer(
         IndexData(mongo, config, pg),
         JobsData(jobs_client, mongo, pg),
         LabelsData(mongo, pg),
-        MessagesData(pg, mongo),
+        MessagesData(pg),
         MLData(config, http_client, pg),
         OTUData(config.data_path, mongo, pg),
         ReferencesData(mongo, pg, config, client),

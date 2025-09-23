@@ -10,7 +10,7 @@ from virtool.mongo.core import Mongo
 
 @pytest.fixture
 async def messages_data(pg: AsyncEngine, mongo: Mongo) -> MessagesData:
-    return MessagesData(pg, mongo)
+    return MessagesData(pg)
 
 
 class TestGet:

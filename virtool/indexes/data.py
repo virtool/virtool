@@ -63,7 +63,7 @@ class IndexData:
         :return: a list of all index documents
         """
         if not ready:
-            data = await virtool.indexes.db.find(self._mongo, query)
+            data = await virtool.indexes.db.find(self._mongo, self._pg, query)
             return IndexSearchResult(**data)
 
         items = [
@@ -88,7 +88,10 @@ class IndexData:
 
         items = await apply_transforms(
             items,
-            [AttachJobTransform(self._mongo), AttachUserTransform(self._mongo)],
+            [
+                AttachJobTransform(self._mongo, self._pg),
+                AttachUserTransform(self._pg),
+            ],
         )
 
         return [IndexMinimal(**item) for item in items]
@@ -130,8 +133,8 @@ class IndexData:
         document = await apply_transforms(
             base_processor(document),
             [
-                AttachJobTransform(self._mongo),
-                AttachUserTransform(self._mongo),
+                AttachJobTransform(self._mongo, self._pg),
+                AttachUserTransform(self._pg),
             ],
         )
 
@@ -311,7 +314,7 @@ class IndexData:
 
         data["documents"] = await apply_transforms(
             [base_processor(d) for d in data["documents"]],
-            [AttachReferenceTransform(self._mongo), AttachUserTransform(self._mongo)],
+            [AttachReferenceTransform(self._mongo), AttachUserTransform(self._pg)],
         )
 
         return HistorySearchResult(**data)

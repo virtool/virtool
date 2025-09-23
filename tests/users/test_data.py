@@ -1,5 +1,3 @@
-import asyncio
-
 import pytest
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession

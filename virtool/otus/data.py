@@ -85,7 +85,7 @@ class OTUData:
                 **document,
                 "most_recent_change": await apply_transforms(
                     most_recent_change,
-                    [AttachUserTransform(self._mongo)],
+                    [AttachUserTransform(self._pg)],
                 ),
             },
         )
