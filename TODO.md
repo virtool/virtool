@@ -65,3 +65,36 @@
 
 Each test should focus on **business rules** not input validation, using valid Pydantic data but testing application-level constraints.
 
+# TODO: Convert test_delete_user to Class-Based Test
+
+## Background
+Similar to the `test_update_user` conversion, `test_delete_user` in `tests/references/test_api.py` needs to be converted from a parametrized test to a class-based test.
+
+## Current Issues
+1. The `test_delete_user` function is currently parametrized with error cases
+2. The underlying `delete_user()` function in `virtool/references/data.py:856` has the same user ID type mismatch issue that was fixed in `update_user()`
+3. The function needs to handle both string and integer user IDs during the MongoDB/PostgreSQL migration
+
+## Tasks Required
+1. **Fix the data layer function**: Update `delete_user()` in `virtool/references/data.py:856` to handle mixed user ID types:
+   - Use `$or` query to match both string and integer user IDs
+   - Add TODO comment about removing this once migration is complete
+   - Handle comparison logic in the loop
+
+2. **Convert test to class-based**: Follow the same pattern as `TestUpdateUser`:
+   - Create `TestDeleteUser` class
+   - Add `setup()` autouse fixture to create test environment
+   - Create individual test methods: `test_ok`, `test_ref_not_found`, `test_user_not_found`
+   - Use different URLs to test error behaviors
+
+3. **Update snapshots**: Run tests with `--snapshot-update` to generate new snapshots
+
+## Reference
+- See `TestUpdateUser` class for the pattern to follow
+- See the fixes made to `update_user()` function for the data layer changes needed
+- The `delete_user()` function at line 856 has the same MongoDB query pattern that needs fixing
+
+## Files to Modify
+- `virtool/references/data.py` (fix `delete_user()` function)
+- `tests/references/test_api.py` (convert test to class-based)
+

@@ -61,7 +61,7 @@ async def add(
     method_name: HistoryMethod,
     old: dict | None,
     new: dict | None,
-    user_id: str,
+    user_id: int,
     mongo_session: AsyncIOMotorClientSession | None = None,
 ) -> dict:
     """Add a change document to the history collection.
@@ -97,7 +97,7 @@ def prepare_add(
     method_name: HistoryMethod,
     old: dict | None,
     new: dict | None,
-    user_id: str,
+    user_id: int,
     description: str = "",
 ) -> PreparedChange:
     """Add a change document to the history collection.

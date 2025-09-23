@@ -150,10 +150,44 @@ async def get_reference_users(
     :return: a list of user data dictionaries
 
     """
-    if users := document.get("users"):
-        return await apply_transforms(users, [AttachUserTransform(pg)])
+    if not (users := document.get("users")):
+        return []
 
-    return []
+    from virtool.users.pg import SQLUser
+
+    user_ids = [user["id"] for user in users]
+
+    if not user_ids:
+        return []
+
+    async with AsyncSession(pg) as session:
+        result = await session.execute(
+            select(SQLUser.id, SQLUser.handle, SQLUser.legacy_id).where(
+                compose_legacy_id_multi_expression(SQLUser, user_ids)
+            )
+        )
+
+        user_rows = result.all()
+
+    user_map = {}
+    for row in user_rows:
+        user_data = {"id": row.id, "handle": row.handle}
+        user_map[row.id] = user_data
+        if row.legacy_id:
+            user_map[row.legacy_id] = user_data
+
+    result = []
+    for user in users:
+        user_id = user["id"]
+        if user_data := user_map.get(user_id):
+            result.append(
+                {
+                    **user,
+                    **user_data,
+                }
+            )
+
+    return result
 
 
 async def check_right(req: Request, ref_id: str, right: str) -> bool:

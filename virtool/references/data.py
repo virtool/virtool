@@ -341,6 +341,8 @@ class ReferencesData(DataLayerDomain):
             },
         )
 
+        print(document)
+
         document = await apply_transforms(
             document,
             [AttachUserTransform(self._pg), AttachTaskTransform(self._pg)],
@@ -781,14 +783,28 @@ class ReferencesData(DataLayerDomain):
         if not document:
             raise ResourceNotFoundError()
 
-        if not await id_exists(self._mongo.users, data.user_id):
-            raise ResourceConflictError("User does not exist")
+        async with AsyncSession(self._pg) as session:
+            from virtool.data.topg import compose_legacy_id_single_expression
 
-        if data.user_id in {u["id"] for u in document["users"]}:
-            raise ResourceConflictError("User already exists")
+            result = await session.execute(
+                select(SQLUser.id, SQLUser.handle, SQLUser.legacy_id).where(
+                    compose_legacy_id_single_expression(SQLUser, data.user_id)
+                )
+            )
+            user_row = result.first()
+
+            if user_row is None:
+                raise ResourceConflictError("User does not exist")
+
+            existing_user_ids = {u["id"] for u in document["users"]}
+            if (
+                user_row.id in existing_user_ids
+                or user_row.legacy_id in existing_user_ids
+            ):
+                raise ResourceConflictError("User already exists")
 
         reference_user = {
-            "id": data.user_id,
+            "id": user_row.id,
             "build": data.build or False,
             "created_at": virtool.utils.timestamp(),
             "modify": data.modify or False,
@@ -811,10 +827,21 @@ class ReferencesData(DataLayerDomain):
         user_id: str,
         data: ReferenceRightsRequest,
     ) -> ReferenceUser:
-        document = await self._mongo.references.find_one(
-            {"_id": ref_id, "users.id": user_id},
-            ["users"],
-        )
+        """Update a reference user.
+
+        TODO: Update this once we have fixed the nested user IDs in a migration
+        to only match against integer user IDs.
+        """
+        # Handle both string and integer user IDs during migration
+        query = {"_id": ref_id, "$or": [{"users.id": user_id}]}
+        try:
+            # Also try matching as integer if user_id is a valid integer string
+            int_user_id = int(user_id)
+            query["$or"].append({"users.id": int_user_id})
+        except ValueError:
+            pass
+
+        document = await self._mongo.references.find_one(query, ["users"])
 
         if document is None:
             raise ResourceNotFoundError()
@@ -822,7 +849,10 @@ class ReferencesData(DataLayerDomain):
         data = data.dict(exclude_unset=True)
 
         for user in document["users"]:
-            if user["id"] == user_id:
+            # Handle both string and integer user IDs during migration
+            if user["id"] == user_id or (
+                isinstance(user["id"], int) and str(user["id"]) == user_id
+            ):
                 user.update({key: data.get(key, user[key]) for key in RIGHTS})
 
                 await self._mongo.references.update_one(
@@ -844,22 +874,40 @@ class ReferencesData(DataLayerDomain):
     async def delete_user(self, ref_id: str, user_id: str) -> None:
         """Delete a reference user.
 
+        TODO: Update this once we have fixed the nested user IDs in a migration
+        to only match against integer user IDs.
+
         :param ref_id: the id of the reference
         :param user_id: the id of the user to delete
 
         """
-        document = await self._mongo.references.find_one(
-            {"_id": ref_id, "users.id": user_id},
-            ["groups", "users"],
-        )
+        # Handle both string and integer user IDs during migration
+        query = {"_id": ref_id, "$or": [{"users.id": user_id}]}
+        try:
+            # Also try matching as integer if user_id is a valid integer string
+            int_user_id = int(user_id)
+            query["$or"].append({"users.id": int_user_id})
+        except ValueError:
+            pass
+
+        document = await self._mongo.references.find_one(query, ["groups", "users"])
 
         if document is None:
             raise ResourceNotFoundError
 
         # Retain only the users that don't match the passed user_id.
+        # Handle both string and integer user IDs during migration
+        filtered_users = []
+        for user in document["users"]:
+            if not (
+                user["id"] == user_id
+                or (isinstance(user["id"], int) and str(user["id"]) == user_id)
+            ):
+                filtered_users.append(user)
+
         await self._mongo.references.update_one(
             {"_id": ref_id},
-            {"$set": {"users": [u for u in document["users"] if u["id"] != user_id]}},
+            {"$set": {"users": filtered_users}},
         )
 
         emit(await self.get(ref_id), "references", "delete_user", Operation.UPDATE)

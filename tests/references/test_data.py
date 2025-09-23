@@ -4,9 +4,11 @@ from aiohttp.test_utils import make_mocked_coro
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.ml import data
 from virtool.mongo.core import Mongo
 from virtool.references.oas import (
     CreateReferenceGroupRequest,
+    CreateReferenceRequest,
     CreateReferenceUserRequest,
     ReferenceRightsRequest,
     UpdateReferenceRequest,
@@ -89,32 +91,24 @@ class TestCreateUser:
         user_1 = await fake.users.create()
         user_2 = await fake.users.create()
 
-        await mongo.references.insert_one(
-            {
-                "_id": "foo",
-                "created_at": static_time.datetime,
-                "data_type": "genome",
-                "description": "This is a test reference.",
-                "groups": [],
-                "internal_control": None,
-                "name": "Foo",
-                "organism": "virus",
-                "restrict_source_types": False,
-                "source_types": [],
-                "user": {"id": user_1.id},
-                "users": [],
-            },
+        reference = await data_layer.references.create(
+            CreateReferenceRequest(name="Example"), user_1.id
         )
 
-        assert await data_layer.references.create_user(
-            "foo",
+        user = await data_layer.references.create_user(
+            reference.id,
             CreateReferenceUserRequest(
                 build=True,
                 modify_otu=True,
                 user_id=user_2.id,
             ),
-        ) == snapshot(name="obj")
-        assert await mongo.references.find_one() == snapshot(name="mongo")
+        )
+
+        assert user.id == user_2.id
+        assert user == snapshot(name="user_obj")
+        assert await data_layer.references.get(reference.id) == snapshot(
+            name="reference"
+        )
 
     async def test_duplicate(
         self,
@@ -156,21 +150,28 @@ class TestCreateUser:
 
         assert "User already exists" in str(err)
 
-    async def test_not_found(self, data_layer: DataLayer):
+    async def test_not_found(self, data_layer: DataLayer, fake: DataFaker):
         """Test that a `NotFound` error is raised when the reference does not exist."""
+        user = await fake.users.create()
+
         with pytest.raises(ResourceNotFoundError):
             await data_layer.references.create_user(
                 "foo",
-                CreateReferenceUserRequest(build=True, modify_otu=True, user_id="foo"),
+                CreateReferenceUserRequest(
+                    build=True, modify_otu=True, user_id=user.id
+                ),
             )
 
     async def test_user_does_not_exist(
         self,
         data_layer: DataLayer,
+        fake: DataFaker,
         mongo: Mongo,
         static_time,
     ):
         """Test that a `NotFound` error is raised when the user does not exist."""
+        user = await fake.users.create()
+
         await mongo.references.insert_one(
             {
                 "_id": "foo",
@@ -183,7 +184,7 @@ class TestCreateUser:
                 "organism": "virus",
                 "restrict_source_types": False,
                 "source_types": [],
-                "user": {"id": "bar"},
+                "user": {"id": user.id},
                 "users": [],
             },
         )
@@ -191,11 +192,7 @@ class TestCreateUser:
         with pytest.raises(ResourceConflictError) as err:
             await data_layer.references.create_user(
                 "foo",
-                CreateReferenceUserRequest(
-                    build=True,
-                    modify_otu=True,
-                    user_id="not_exists",
-                ),
+                CreateReferenceUserRequest(build=True, modify_otu=True, user_id=99),
             )
 
         assert "User does not exist" in str(err)
