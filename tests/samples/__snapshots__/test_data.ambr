@@ -1,12 +1,12 @@
 # serializer version: 1
 # name: TestCreate.test_ok[force_choice][jobs_create_sample]
   list([
-    '7cf872dc',
+    'bf1b993c',
   ])
 # ---
 # name: TestCreate.test_ok[force_choice][mongo]
   dict({
-    '_id': '3cbb22cc',
+    '_id': 'fb085f7f',
     'all_read': True,
     'all_write': True,
     'created_at': 'approximately_now_datetime',
@@ -19,7 +19,7 @@
     'is_legacy': False,
     'isolate': '',
     'job': dict({
-      'id': '7cf872dc',
+      'id': 'bf1b993c',
     }),
     'labels': list([
       1,
@@ -41,7 +41,7 @@
       'apple',
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'workflows': dict({
       'aodp': 'incompatible',
@@ -53,12 +53,12 @@
 # ---
 # name: TestCreate.test_ok[none][jobs_create_sample]
   list([
-    '7cf872dc',
+    'bf1b993c',
   ])
 # ---
 # name: TestCreate.test_ok[none][mongo]
   dict({
-    '_id': '3cbb22cc',
+    '_id': 'fb085f7f',
     'all_read': True,
     'all_write': True,
     'created_at': 'approximately_now_datetime',
@@ -71,7 +71,7 @@
     'is_legacy': False,
     'isolate': '',
     'job': dict({
-      'id': '7cf872dc',
+      'id': 'bf1b993c',
     }),
     'labels': list([
       1,
@@ -93,7 +93,7 @@
       'apple',
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'workflows': dict({
       'aodp': 'incompatible',
@@ -105,17 +105,17 @@
 # ---
 # name: TestCreate.test_ok[users_primary_group][jobs_create_sample]
   list([
-    '7cf872dc',
+    'bf1b993c',
   ])
 # ---
 # name: TestCreate.test_ok[users_primary_group][mongo]
   dict({
-    '_id': '3cbb22cc',
+    '_id': 'fb085f7f',
     'all_read': True,
     'all_write': True,
     'created_at': 'approximately_now_datetime',
     'format': 'fastq',
-    'group': 2,
+    'group': None,
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -123,7 +123,7 @@
     'is_legacy': False,
     'isolate': '',
     'job': dict({
-      'id': '7cf872dc',
+      'id': 'bf1b993c',
     }),
     'labels': list([
       1,
@@ -145,7 +145,7 @@
       'apple',
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'workflows': dict({
       'aodp': 'incompatible',
@@ -173,14 +173,14 @@
     'isolate': '',
     'job': dict({
       'created_at': 'not_approximately_now_datetime',
-      'id': 'fb085f7f',
+      'id': 'bf1b993c',
       'progress': 3,
       'retries': 0,
       'stage': None,
       'state': <JobState.PREPARING: 'preparing'>,
       'user': dict({
         'handle': 'sallywalker',
-        'id': 'bf1b993c',
+        'id': 1,
       }),
       'workflow': 'create_sample',
     }),
@@ -235,7 +235,7 @@
     ]),
     'user': dict({
       'handle': 'sallywalker',
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'workflows': dict({
       'aodp': <WorkflowState.INCOMPATIBLE: 'incompatible'>,

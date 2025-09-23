@@ -3,6 +3,7 @@ from http import HTTPStatus
 
 import arrow
 import pytest
+from aiohttp import BasicAuth
 from syrupy.assertion import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, VirtoolTestClient
@@ -798,7 +799,6 @@ class TestLogout:
     async def test_api_keys_remain_valid_after_logout(
         self,
         data_layer: DataLayer,
-        spawn_client: ClientSpawner,
     ) -> None:
         """Test that API keys remain valid after user logs out."""
         # Login
@@ -822,12 +822,9 @@ class TestLogout:
         resp = await self.client.get("/account")
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
-        # Create a new client with API key authentication
-        api_client = await spawn_client()
-        api_client.headers["Authorization"] = f"Bearer {raw_key}"
-
-        # API key should still work
-        resp = await api_client.get("/account")
+        # API key should still work even after logout
+        auth_header = BasicAuth(self.user.handle, raw_key).encode()
+        resp = await self.client.get("/account", headers={"Authorization": auth_header})
         assert resp.status == HTTPStatus.OK
 
 
@@ -863,7 +860,7 @@ class TestDelete:
 
         else:
             assert resp.status == 404
-            assert await resp.json() == snapshot
+            assert await resp.json() == {"id": "not_found", "message": "Not found"}
 
     async def test_remove_all_keys(
         self,
