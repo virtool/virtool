@@ -23,7 +23,10 @@ from virtool.data.errors import (
     ResourceRemoteError,
 )
 from virtool.data.events import Operation, emit, emits
-from virtool.data.topg import compose_legacy_id_single_expression
+from virtool.data.topg import (
+    compose_legacy_id_single_expression,
+    get_user_id_single_variants,
+)
 from virtool.data.transforms import apply_transforms
 from virtool.errors import GitHubError
 from virtool.github import create_update_subdocument, format_release
@@ -141,7 +144,9 @@ class ReferencesData(DataLayerDomain):
         if find:
             mongo_query = compose_regex_query(find, ["name", "data_type"])
 
-        base_query = compose_base_find_query(user_id, administrator, groups)
+        # TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings
+        user_id_variants = await get_user_id_single_variants(self._pg, user_id)
+        base_query = compose_base_find_query(user_id_variants, administrator, groups)
 
         data = await paginate(
             self._mongo.references,

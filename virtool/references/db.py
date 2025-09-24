@@ -249,13 +249,15 @@ async def check_source_type(mongo: "Mongo", ref_id: str, source_type: str) -> bo
 
 
 def compose_base_find_query(
-    user_id: str,
+    user_id_variants: list[int | str],
     administrator: bool,
     groups: list[int | str],
 ) -> dict:
     """Compose a query for filtering reference search results based on user read rights.
 
-    :param user_id: the id of the user requesting the search
+    TODO: Revert to single user_id parameter when all user IDs are migrated away from MongoDB strings.
+
+    :param user_id_variants: all ID variants (modern and legacy) for the requesting user
     :param administrator: the administrator flag of the user requesting the search
     :param groups: the id group membership of the user requesting the search
     :return: a valid MongoDB query
@@ -264,11 +266,19 @@ def compose_base_find_query(
     if administrator:
         return {}
 
+    user_queries = []
+    for id_variant in user_id_variants:
+        user_queries.extend(
+            [
+                {"users.id": id_variant},
+                {"user.id": id_variant},
+            ]
+        )
+
     return {
         "$or": [
             {"groups.id": {"$in": groups}},
-            {"users.id": user_id},
-            {"user.id": user_id},
+            *user_queries,
         ],
     }
 

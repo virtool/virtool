@@ -17,7 +17,10 @@ from virtool.config.cls import Config
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emits
-from virtool.data.topg import compose_legacy_id_multi_expression
+from virtool.data.topg import (
+    compose_legacy_id_multi_expression,
+    get_user_id_single_variants,
+)
 from virtool.data.transforms import apply_transforms
 from virtool.groups.models import GroupMinimal
 from virtool.groups.pg import SQLGroup
@@ -91,12 +94,15 @@ class SamplesData(DataLayerDomain):
         if queries:
             query["$and"] = queries
 
+        # TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings
+        user_id_variants = await get_user_id_single_variants(self._pg, client.user_id)
+
         rights_filter = [
-            # The requesting user is the sample owner
-            {"user.id": client.user_id},
-            # The sample rights allow all users to view the sample.
             {"all_read": True},
         ]
+
+        for user_id_variant in user_id_variants:
+            rights_filter.append({"user.id": user_id_variant})
 
         if client.groups:
             async with AsyncSession(self._pg) as session:
