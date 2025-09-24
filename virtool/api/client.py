@@ -28,7 +28,7 @@ class AbstractClient(ABC):
 
     @property
     @abstractmethod
-    def user_id(self) -> str | None: ...
+    def user_id(self) -> int | None: ...
 
 
 class JobClient(AbstractClient):
@@ -62,7 +62,7 @@ class JobClient(AbstractClient):
         return True
 
     @property
-    def user_id(self) -> str | None:
+    def user_id(self) -> int | None:
         return None
 
 
