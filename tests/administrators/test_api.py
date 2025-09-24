@@ -15,7 +15,6 @@ from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.models.roles import AdministratorRole
-from virtool.settings.oas import UpdateSettingsRequest
 
 _last_password_change_matcher = path_type({"last_password_change": (str,)})
 """

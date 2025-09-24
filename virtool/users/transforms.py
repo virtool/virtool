@@ -175,8 +175,12 @@ class AttachUserTransform(AbstractTransform):
                     "handle": user_row.handle,
                 }
                 user_map[user_row.id] = user_data
+                user_map[str(user_row.id)] = user_data  # String version of Postgres ID
                 if user_row.legacy_id:
                     user_map[user_row.legacy_id] = user_data
+                    user_map[str(user_row.legacy_id)] = (
+                        user_data  # String version of legacy ID
+                    )
 
         if len(user_rows) != len(user_ids):
             found_ids = set()
@@ -184,6 +188,10 @@ class AttachUserTransform(AbstractTransform):
                 found_ids.add(user_row.id)
                 if user_row.legacy_id:
                     found_ids.add(user_row.legacy_id)
+                # Also add string versions for comparison
+                found_ids.add(str(user_row.id))
+                if user_row.legacy_id:
+                    found_ids.add(str(user_row.legacy_id))
             non_existent_user_ids = user_ids - found_ids
             raise KeyError(
                 f"Document contains non-existent user(s): {non_existent_user_ids}",

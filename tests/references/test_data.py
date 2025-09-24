@@ -4,7 +4,6 @@ from aiohttp.test_utils import make_mocked_coro
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
-from virtool.ml import data
 from virtool.mongo.core import Mongo
 from virtool.references.oas import (
     CreateReferenceGroupRequest,

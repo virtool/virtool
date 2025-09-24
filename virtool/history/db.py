@@ -180,8 +180,9 @@ async def get_contributors(mongo: "Mongo", pg: AsyncEngine, query: dict) -> list
 
     """
     from sqlalchemy import select
-    from virtool.users.pg import SQLUser
+
     from virtool.data.topg import compose_legacy_id_multi_expression
+    from virtool.users.pg import SQLUser
 
     cursor = mongo.history.aggregate(
         [{"$match": query}, {"$group": {"_id": "$user.id", "count": {"$sum": 1}}}],

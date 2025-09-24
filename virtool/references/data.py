@@ -22,8 +22,8 @@ from virtool.data.errors import (
     ResourceNotFoundError,
     ResourceRemoteError,
 )
-from virtool.data.topg import compose_legacy_id_single_expression
 from virtool.data.events import Operation, emit, emits
+from virtool.data.topg import compose_legacy_id_single_expression
 from virtool.data.transforms import apply_transforms
 from virtool.errors import GitHubError
 from virtool.github import create_update_subdocument, format_release
@@ -33,7 +33,7 @@ from virtool.history.models import HistorySearchResult
 from virtool.indexes.models import IndexMinimal, IndexSearchResult
 from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_mongo_from_app, get_new_id, get_one_field, id_exists
+from virtool.mongo.utils import get_mongo_from_app, get_new_id, get_one_field
 from virtool.otus.models import OTU, OTUSearchResult
 from virtool.otus.oas import CreateOTURequest
 from virtool.pg.utils import get_row

@@ -3,11 +3,9 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
+import virtool.users.utils
 import virtool.utils
 from virtool.account.models import Account, AccountSettings, APIKey
-from virtool.account.mongo import (
-    compose_password_update,
-)
 from virtool.account.oas import (
     CreateKeyRequest,
     CreateLoginRequest,
@@ -94,7 +92,15 @@ class AccountData(DataLayerDomain):
             ):
                 raise ResourceError("Invalid credentials")
 
-            values.update(compose_password_update(data_dict["password"]))
+            values.update(
+                {
+                    "password": virtool.users.utils.hash_password(
+                        data_dict["password"]
+                    ),
+                    "last_password_change": virtool.utils.timestamp(),
+                    "force_reset": False,
+                }
+            )
             password_changed = True
 
         if "email" in data_dict:
@@ -294,7 +300,7 @@ class AccountData(DataLayerDomain):
 
         raw, hashed = virtool.utils.generate_key()
 
-        id_ = await virtool.account.mongo.get_alternate_id(self._mongo, data.name)
+        id_ = await _get_alternate_id(self._mongo, data.name)
 
         await self._mongo.keys.insert_one(
             {
@@ -464,3 +470,25 @@ class AccountData(DataLayerDomain):
             resolved_user_id,
             remember=session.reset.remember,
         )
+
+
+async def _get_alternate_id(mongo: Mongo, name: str) -> str:
+    """Get an alternate id for an API key whose provided `name` is not unique. Appends
+    an integer suffix to the end of the `name`.
+
+    :param mongo: the application mongodb client
+    :param name: the API key name
+    :return: an alternate unique id for the key
+
+    """
+    existing_alt_ids = await mongo.keys.distinct("id")
+
+    suffix = 0
+
+    while True:
+        candidate = f"{name.lower()}_{suffix}"
+
+        if candidate not in existing_alt_ids:
+            return candidate
+
+        suffix += 1

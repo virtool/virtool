@@ -3,7 +3,6 @@ import math
 from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from sqlalchemy.orm import selectinload
 
 from virtool.authorization.client import AuthorizationClient
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
@@ -16,7 +15,6 @@ from virtool.mongo.core import Mongo
 from virtool.users.models_base import UserNested
 from virtool.users.pg import SQLUser, SQLUserGroup
 from virtool.users.utils import generate_base_permissions
-from virtool.utils import base_processor
 
 
 class GroupsData:

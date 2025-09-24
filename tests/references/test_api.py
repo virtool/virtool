@@ -9,9 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
 
-from virtool.ml import data
-from virtool.references.models import ReferenceDataType
-from virtool.references.oas import CreateReferenceRequest, CreateReferenceUserRequest
 import virtool.utils
 from tests.fixtures.client import ClientSpawner
 from tests.fixtures.response import RespIs
@@ -20,6 +17,8 @@ from virtool.fake.next import DataFaker
 from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app, get_one_field
+from virtool.references.models import ReferenceDataType
+from virtool.references.oas import CreateReferenceRequest, CreateReferenceUserRequest
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.tasks.sql import SQLTask
 from virtool.users.oas import UpdateUserRequest

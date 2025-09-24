@@ -27,7 +27,7 @@ async def test_create_api_key(
     """Test that an API key is created correctly with varying key owner administrator
     status and permissions.
     """
-    mocker.patch("virtool.account.mongo.get_alternate_id", make_mocked_coro("foo_0"))
+    mocker.patch("virtool.account.data._get_alternate_id", make_mocked_coro("foo_0"))
     mocker.patch("virtool.utils.generate_key", return_value=("bar", "baz"))
 
     group_1 = await fake.groups.create()

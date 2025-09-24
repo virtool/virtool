@@ -262,9 +262,10 @@ class SessionData(DataLayerDomain):
         legacy_user_id = None
         try:
             if hasattr(self, "data") and hasattr(self.data, "users"):
-                from virtool.users.pg import SQLUser
-                from sqlalchemy.ext.asyncio import AsyncSession
                 from sqlalchemy import select
+                from sqlalchemy.ext.asyncio import AsyncSession
+
+                from virtool.users.pg import SQLUser
 
                 async with AsyncSession(self.data.users._pg) as session:
                     result = await session.execute(
