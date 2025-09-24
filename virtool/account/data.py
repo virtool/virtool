@@ -396,11 +396,11 @@ class AccountData(DataLayerDomain):
         if delete_result.deleted_count == 0:
             raise ResourceNotFoundError()
 
-    async def login(self, data: CreateLoginRequest) -> str:
+    async def login(self, data: CreateLoginRequest) -> int:
         """Create a new session for the user with `username`.
 
         :param data: the login data
-        :return: string representation of user_id
+        :return: user_id
         """
         # When `remember` is set, the session will last for 1 month instead of the
         # 1-hour default
@@ -416,7 +416,7 @@ class AccountData(DataLayerDomain):
         if not await self.data.users.validate_password(user.id, data.password):
             raise ResourceError()
 
-        return str(user.id)
+        return user.id
 
     async def get_reset_session(
         self,
