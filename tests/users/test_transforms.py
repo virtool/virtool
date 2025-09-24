@@ -1,11 +1,10 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from syrupy import SnapshotAssertion
+from syrupy.assertion import SnapshotAssertion
 
 from virtool.data.transforms import apply_transforms
 from virtool.fake.next import DataFaker
 from virtool.groups.pg import SQLGroup
-from virtool.mongo.core import Mongo
 from virtool.users.transforms import AttachPermissionsTransform, AttachUserTransform
 
 
@@ -78,7 +77,7 @@ async def test_permission_transform(
 async def test_attach_user_transform(
     multiple: bool,
     fake: DataFaker,
-    mongo: Mongo,
+    pg: AsyncEngine,
     snapshot: SnapshotAssertion,
 ):
     user_1 = await fake.users.create()
@@ -93,4 +92,4 @@ async def test_attach_user_transform(
             {"id": "baz", "user": {"id": user_1.id}},
         ]
 
-    assert await apply_transforms(documents, [AttachUserTransform(mongo)]) == snapshot
+    assert await apply_transforms(documents, [AttachUserTransform(pg)]) == snapshot

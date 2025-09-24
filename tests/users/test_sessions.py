@@ -45,12 +45,15 @@ class TestAuthenticated:
     async def test_get_and_create(
         self,
         data_layer: DataLayer,
+        fake: DataFaker,
         snapshot,
     ):
         """Test that an authenticated session can be created and then retrieved."""
+        user = await fake.users.create()
+
         session, token = await data_layer.sessions.create_authenticated(
             "1.1.1.1",
-            "user_id",
+            user.id,
             False,
         )
 
@@ -61,11 +64,15 @@ class TestAuthenticated:
             matcher=path_type({"id": (str,), "created_at": (datetime,)}),
         )
 
-    async def test_invalid_token(self, data_layer: DataLayer, snapshot):
+    async def test_invalid_token(
+        self, data_layer: DataLayer, fake: DataFaker, snapshot
+    ):
         """Test that a ``ResourceNotFound`` error is raised when the token is invalid."""
+        user = await fake.users.create()
+
         session, _ = await data_layer.sessions.create_authenticated(
             "1.1.1.1",
-            "user_id",
+            user.id,
             False,
         )
 
@@ -87,11 +94,13 @@ class TestAuthenticated:
             await data_layer.sessions.get_authenticated(session.id, "invalid_token")
             assert str(err) == "Session not found"
 
-    async def test_reset_session(self, data_layer, snapshot):
+    async def test_reset_session(self, data_layer, fake: DataFaker, snapshot):
         """Test that a reset session cannot be retrieved using get_authenticated."""
+        user = await fake.users.create()
+
         session, code = await data_layer.sessions.create_reset(
             "1.1.1.1",
-            "user_id",
+            user.id,
             False,
         )
 
@@ -119,24 +128,29 @@ class TestAnonymous:
             await data_layer.sessions.get_anonymous("invalid_session")
             assert str(err) == "Session not found"
 
-    async def test_authenticated_session(self, data_layer, snapshot):
+    async def test_authenticated_session(self, data_layer, fake: DataFaker, snapshot):
         """Test that an exception is raised when we attempt to get a session that is
         actually authenticated instead of anonymous.
         """
+        user = await fake.users.create()
+
         session, _ = await data_layer.sessions.create_authenticated(
             "1.1.1.1",
-            "user_id",
+            user.id,
+            False,
         )
 
         with pytest.raises(ResourceNotFoundError) as err:
             await data_layer.sessions.get_anonymous(session.id)
             assert str(err) == "Session not found"
 
-    async def test_reset_session(self, data_layer, snapshot):
+    async def test_reset_session(self, data_layer, fake: DataFaker, snapshot):
         """Test that an exception is raised when and we attempt to get a session that is
         actually a reset session instead of an anonymous one.
         """
-        session, _ = await data_layer.sessions.create_reset("1.1.1.1", "user_id", False)
+        user = await fake.users.create()
+
+        session, _ = await data_layer.sessions.create_reset("1.1.1.1", user.id, False)
 
         with pytest.raises(ResourceNotFoundError) as err:
             await data_layer.sessions.get_anonymous(session.id)

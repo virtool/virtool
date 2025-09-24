@@ -15,17 +15,18 @@ from virtool.models.enums import HistoryMethod, Molecule
 from virtool.mongo.core import Mongo
 from virtool.otus.models import OTU, OTUIsolate, OTUSegment, OTUSequence
 from virtool.otus.oas import CreateOTURequest
+from virtool.references.oas import CreateReferenceRequest
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
 class TestGet:
     async def test_ok(
         self,
+        data_layer: DataLayer,
         fake: DataFaker,
         mongo: Mongo,
-        snapshot: SnapshotAssertion,
+        snapshot_recent: SnapshotAssertion,
         spawn_client: ClientSpawner,
-        static_time: StaticTime,
         test_ref: dict,
     ):
         """Test that a valid request returns the expected history item."""
@@ -36,12 +37,14 @@ class TestGet:
             mongo.references.insert_one({**test_ref}),
         )
 
-        otu = await fake.otus.create(test_ref["_id"], client.user)
+        user = await data_layer.users.get(client.user.id)
 
-        resp = await client.get(f"/otus/{otu.id}")
+        otu = await fake.otus.create(test_ref["_id"], user=user)
 
-        assert resp.status == HTTPStatus.OK
-        assert await resp.json() == snapshot
+        response = await client.get(f"/otus/{otu.id}")
+
+        assert response.status == HTTPStatus.OK
+        assert await response.json() == snapshot_recent
 
     async def test_not_found(self, spawn_client, resp_is):
         """Test that a request for a non-existent change document results in a ``404``."""
@@ -395,13 +398,11 @@ class TestAddIsolate:
         check_ref_right,
         fake: DataFaker,
         mongo: Mongo,
-        snapshot: SnapshotAssertion,
-        spawn_client: ClientSpawner,
         resp_is: RespIs,
-        test_change: dict,
-        test_otu: dict,
-        test_ref: dict,
-        test_sequence: dict,
+        snapshot: SnapshotAssertion,
+        snapshot_recent: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+        static_time: StaticTime,
     ):
         """Test that a new default isolate can be added, setting ``default`` to ``False``
         on all other isolates in the process.
@@ -413,10 +414,12 @@ class TestAddIsolate:
 
         user = await fake.users.create()
 
-        await mongo.references.insert_one(test_ref)
+        reference = await data_layer.references.create(
+            CreateReferenceRequest(name="Example"), user_id=user.id
+        )
 
         otu = await data_layer.otus.create(
-            "hxn167",
+            reference.id,
             CreateOTURequest(
                 abbreviation="PVF",
                 name="Prunus virus F",
@@ -452,11 +455,11 @@ class TestAddIsolate:
         assert resp.headers["Location"] == snapshot(name="location")
         assert await resp.json() == snapshot(name="json")
 
-        assert await data_layer.otus.get(otu.id) == snapshot(name="otu")
+        assert await data_layer.otus.get(otu.id) == snapshot_recent(name="otu")
 
         assert [
             await data_layer.history.get(f"{otu.id}.{version}") for version in (0, 1, 2)
-        ] == snapshot(name="history")
+        ] == snapshot_recent(name="history")
 
     async def test_first(
         self,

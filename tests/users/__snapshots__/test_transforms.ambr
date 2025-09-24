@@ -4,7 +4,7 @@
     'id': 'bar',
     'user': dict({
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 1,
     }),
   })
 # ---
@@ -14,21 +14,21 @@
       'id': 'bar',
       'user': dict({
         'handle': 'leeashley',
-        'id': 'bf1b993c',
+        'id': 1,
       }),
     }),
     dict({
       'id': 'foo',
       'user': dict({
         'handle': 'zclark',
-        'id': 'fb085f7f',
+        'id': 2,
       }),
     }),
     dict({
       'id': 'baz',
       'user': dict({
         'handle': 'leeashley',
-        'id': 'bf1b993c',
+        'id': 1,
       }),
     }),
   ])

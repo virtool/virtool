@@ -85,7 +85,7 @@ class OTUData:
                 **document,
                 "most_recent_change": await apply_transforms(
                     most_recent_change,
-                    [AttachUserTransform(self._mongo)],
+                    [AttachUserTransform(self._pg)],
                 ),
             },
         )
@@ -225,7 +225,7 @@ class OTUData:
             fasta,
         )
 
-    async def create(self, ref_id: str, data: CreateOTURequest, user_id: str) -> OTU:
+    async def create(self, ref_id: str, data: CreateOTURequest, user_id: int) -> OTU:
         """Create an OTU and it's first history record.
 
         :param ref_id: the ID of the parent reference
@@ -267,7 +267,7 @@ class OTUData:
 
         return await self.get(document["_id"])
 
-    async def update(self, otu_id: str, data: UpdateOTURequest, user_id: str) -> OTU:
+    async def update(self, otu_id: str, data: UpdateOTURequest, user_id: int) -> OTU:
         """Update an OTU.
 
         Modifiable fields are `name`, `abbreviation`, and `schema`. Method creates a
@@ -341,7 +341,7 @@ class OTUData:
 
         return await self.get(otu_id)
 
-    async def remove(self, otu_id: str, user_id: str) -> DeleteResult | None:
+    async def remove(self, otu_id: str, user_id: int) -> DeleteResult | None:
         """Remove an OTU.
 
         Create a history document to record the change.
@@ -393,7 +393,7 @@ class OTUData:
         otu_id: str,
         source_type: str,
         source_name: str,
-        user_id: str,
+        user_id: int,
         default: bool = False,
     ) -> OTUIsolate:
         async def func(session: AsyncIOMotorClientSession) -> OTUIsolate:
@@ -486,7 +486,7 @@ class OTUData:
         self,
         otu_id: str,
         isolate_id: str,
-        user_id: str,
+        user_id: int,
         source_type: str | None = None,
         source_name: str | None = None,
     ):
@@ -558,7 +558,7 @@ class OTUData:
         self,
         otu_id: str,
         isolate_id: str,
-        user_id: str,
+        user_id: int,
     ) -> Document:
         """Set a new default isolate.
 
@@ -629,7 +629,7 @@ class OTUData:
 
         return await self._mongo.with_transaction(func)
 
-    async def remove_isolate(self, otu_id: str, isolate_id: str, user_id: str) -> None:
+    async def remove_isolate(self, otu_id: str, isolate_id: str, user_id: int) -> None:
         """Remove an isolate.
 
         :param otu_id: the ID of the parent OTU
@@ -716,7 +716,7 @@ class OTUData:
         accession: str,
         definition: str,
         sequence: str,
-        user_id: str,
+        user_id: int,
         host: str = "",
         segment: str | None = None,
         sequence_id: str | None = None,
@@ -809,7 +809,7 @@ class OTUData:
         otu_id: str,
         isolate_id: str,
         sequence_id: str,
-        user_id: str,
+        user_id: int,
         data: UpdateSequenceRequest,
     ):
         data = data.dict(exclude_unset=True)
@@ -862,7 +862,7 @@ class OTUData:
         otu_id: str,
         isolate_id: str,
         sequence_id: str,
-        user_id: str,
+        user_id: int,
     ) -> None:
         """Remove a sequence.
 

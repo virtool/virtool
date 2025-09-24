@@ -36,7 +36,7 @@
         'size': 85904451,
         'user': dict({
           'handle': 'leeashley',
-          'id': 'bf1b993c',
+          'id': 1,
         }),
       }),
       'release': dict({
@@ -139,7 +139,7 @@
       'size': 85904451,
       'user': dict({
         'handle': 'leeashley',
-        'id': 'bf1b993c',
+        'id': 1,
       }),
     }),
     'release': dict({

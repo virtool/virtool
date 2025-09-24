@@ -27,7 +27,7 @@
     ]),
     'user': dict({
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'workflow': 'build_index',
   })
@@ -59,7 +59,7 @@
       }),
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'workflow': 'build_index',
   })
@@ -89,7 +89,7 @@
     ]),
     'user': dict({
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'workflow': 'build_index',
   })
@@ -114,7 +114,7 @@
       }),
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'workflow': 'build_index',
   })
@@ -126,7 +126,7 @@
       'sample_id': 'foo',
     }),
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'id': 'fb085f7f',
+    'id': 'bf1b993c',
     'ping': None,
     'progress': 0,
     'retries': 0,
@@ -145,14 +145,14 @@
     ]),
     'user': dict({
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'workflow': 'create_sample',
   })
 # ---
 # name: test_create[None].1
   dict({
-    '_id': 'fb085f7f',
+    '_id': 'bf1b993c',
     'acquired': False,
     'args': dict({
       'sample_id': 'foo',
@@ -178,7 +178,7 @@
       }),
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'workflow': 'create_sample',
   })
@@ -209,7 +209,7 @@
     ]),
     'user': dict({
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'workflow': 'create_sample',
   })
@@ -242,7 +242,7 @@
       }),
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'workflow': 'create_sample',
   })

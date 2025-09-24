@@ -142,6 +142,7 @@ async def create(
 
 async def find(
     mongo: "Mongo",
+    pg: AsyncEngine,
     req_query: Mapping,
     ref_id: str | None = None,
 ) -> dict:
@@ -188,9 +189,9 @@ async def find(
         "documents": await apply_transforms(
             [base_processor(d) for d in data["documents"]],
             [
-                AttachJobTransform(mongo),
+                AttachJobTransform(mongo, pg),
                 AttachReferenceTransform(mongo),
-                AttachUserTransform(mongo),
+                AttachUserTransform(pg),
                 IndexCountsTransform(mongo),
             ],
         ),

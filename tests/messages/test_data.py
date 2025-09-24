@@ -10,7 +10,7 @@ from virtool.mongo.core import Mongo
 
 @pytest.fixture
 async def messages_data(pg: AsyncEngine, mongo: Mongo) -> MessagesData:
-    return MessagesData(pg, mongo)
+    return MessagesData(pg)
 
 
 class TestGet:
@@ -26,7 +26,7 @@ class TestGet:
                         message="This is test message 1",
                         created_at=static_time.datetime,
                         updated_at=static_time.datetime,
-                        user=user.id,
+                        user=str(user.id),
                     ),
                     SQLInstanceMessage(
                         id=2,
@@ -34,7 +34,7 @@ class TestGet:
                         message="This is test message 2",
                         created_at=static_time.datetime,
                         updated_at=static_time.datetime,
-                        user=user.id,
+                        user=str(user.id),
                     ),
                 ],
             )
@@ -85,7 +85,7 @@ async def test_update(snapshot, pg, static_time, messages_data, fake):
                 message="This is a test message",
                 created_at=static_time.datetime,
                 updated_at=static_time.datetime,
-                user=user.id,
+                user=str(user.id),
             ),
         )
         await session.commit()

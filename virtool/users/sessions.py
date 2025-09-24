@@ -44,6 +44,8 @@ import secrets
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
+from structlog import get_logger
+
 import virtool.utils
 from virtool.api.custom_json import dump_string, isoformat_to_datetime
 from virtool.data.domain import DataLayerDomain
@@ -56,6 +58,8 @@ from virtool.redis import Redis
 if TYPE_CHECKING:
     from virtool.types import Document
 from virtool.utils import get_safely, hash_key
+
+logger = get_logger("sessions")
 
 
 class SessionData(DataLayerDomain):
@@ -89,7 +93,7 @@ class SessionData(DataLayerDomain):
     async def create_authenticated(
         self,
         ip: str,
-        user_id: str,
+        user_id: int,
         remember: bool = False,
     ) -> tuple[Session, str]:
         """Creates a new authenticated session with the given ``ip`` and ``user_id``.
@@ -129,7 +133,7 @@ class SessionData(DataLayerDomain):
     async def create_reset(
         self,
         ip: str,
-        user_id: str,
+        user_id: int,
         remember: bool,
     ) -> tuple[Session, str]:
         """Creates a new reset session.
@@ -245,6 +249,49 @@ class SessionData(DataLayerDomain):
         :param session_id: the id of the session to remove
         """
         await self._redis.delete(session_id)
+
+    async def delete_by_user(self, user_id: int) -> None:
+        """Delete all authenticated sessions for a user.
+
+        TODO: Clean up this method once we migrate sessions to use only integer user IDs
+
+        :param user_id: the user ID whose sessions should be deleted
+        """
+        session_keys = await self._redis._client.keys("session_*")
+
+        legacy_user_id = None
+        try:
+            if hasattr(self, "data") and hasattr(self.data, "users"):
+                from sqlalchemy import select
+                from sqlalchemy.ext.asyncio import AsyncSession
+
+                from virtool.users.pg import SQLUser
+
+                async with AsyncSession(self.data.users._pg) as session:
+                    result = await session.execute(
+                        select(SQLUser.legacy_id).where(SQLUser.id == user_id)
+                    )
+                    legacy_user_id = result.scalar_one_or_none()
+        except Exception:
+            pass
+
+        for session_key in session_keys:
+            try:
+                session_data = await self._redis.get(session_key.decode())
+                if session_data and session_data.get("authentication"):
+                    stored_user_id = session_data["authentication"]["user_id"]
+
+                    if (
+                        stored_user_id == user_id
+                        or stored_user_id == str(user_id)
+                        or (legacy_user_id and stored_user_id == legacy_user_id)
+                    ):
+                        await self._redis.delete(session_key.decode())
+            except Exception as e:
+                logger.warning(
+                    "failed to process session key", key=session_key, error=str(e)
+                )
+                continue
 
     async def _create_session_id(self) -> str:
         """Create a unique session id.

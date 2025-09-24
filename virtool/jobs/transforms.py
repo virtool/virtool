@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING
 
+from sqlalchemy.ext.asyncio import AsyncEngine
+
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.types import Document
 from virtool.users.transforms import AttachUserTransform
@@ -12,8 +14,9 @@ ATTACHED_JOB_PROJECTION = ["status", "user", "workflow"]
 
 
 class AttachJobTransform(AbstractTransform):
-    def __init__(self, mongo: "Mongo"):
+    def __init__(self, mongo: "Mongo", pg: AsyncEngine):
         self._mongo = mongo
+        self._pg = pg
 
     async def attach_one(self, document: Document, prepared: Document) -> Document:
         return {**document, "job": prepared}
@@ -41,7 +44,7 @@ class AttachJobTransform(AbstractTransform):
                     "stage": last_status["stage"],
                 },
             ),
-            [AttachUserTransform(self._mongo)],
+            [AttachUserTransform(self._pg)],
         )
 
     async def prepare_many(
@@ -58,7 +61,7 @@ class AttachJobTransform(AbstractTransform):
             )
         ]
 
-        jobs = await apply_transforms(jobs, [AttachUserTransform(self._mongo)])
+        jobs = await apply_transforms(jobs, [AttachUserTransform(self._pg)])
 
         jobs_lookup: dict[str | None, dict | None] = {
             job["id"]: {

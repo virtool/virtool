@@ -30,7 +30,7 @@ class HistoryData:
         :param req_query: the request query
         :return: a list of all documents
         """
-        documents = await virtool.history.db.find(self._mongo, req_query)
+        documents = await virtool.history.db.find(self._mongo, self._pg, req_query)
 
         return HistorySearchResult(**documents)
 
@@ -48,7 +48,7 @@ class HistoryData:
                 [
                     AttachDiffTransform(self._data_path, self._pg),
                     AttachReferenceTransform(self._mongo),
-                    AttachUserTransform(self._mongo),
+                    AttachUserTransform(self._pg),
                 ],
             )
             return History(**document)

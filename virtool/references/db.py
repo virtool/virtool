@@ -19,7 +19,7 @@ import virtool.history.db
 import virtool.mongo.utils
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
-from virtool.data.topg import compose_legacy_id_expression
+from virtool.data.topg import compose_legacy_id_multi_expression
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
@@ -48,7 +48,6 @@ from virtool.releases import (
 from virtool.settings.models import Settings
 from virtool.types import Document
 from virtool.uploads.sql import SQLUpload
-from virtool.users.mongo import extend_user
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
@@ -57,12 +56,13 @@ if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
 
 
-async def processor(mongo: "Mongo", document: Document) -> Document:
+async def processor(mongo: "Mongo", pg: AsyncEngine, document: Document) -> Document:
     """Process a reference document to a form that can be expressed in a list.
 
     Used ``attach_computed`` for complete representations of the reference.
 
     :param mongo: the application Mongo client
+    :param pg: the application PostgreSQL engine
     :param document: the document to process
     :return: the processed document
     """
@@ -71,7 +71,7 @@ async def processor(mongo: "Mongo", document: Document) -> Document:
     ref_id = document["id"]
 
     latest_build, otu_count, unbuilt_count = await asyncio.gather(
-        get_latest_build(mongo, ref_id),
+        get_latest_build(mongo, pg, ref_id),
         get_otu_count(mongo, ref_id),
         get_unbuilt_count(mongo, ref_id),
     )
@@ -90,7 +90,7 @@ async def processor(mongo: "Mongo", document: Document) -> Document:
         installed = None
 
     if installed:
-        installed = await apply_transforms(installed, [AttachUserTransform(mongo)])
+        installed = await apply_transforms(installed, [AttachUserTransform(pg)])
 
     document["id"] = ref_id
     document["installed"] = installed
@@ -114,7 +114,7 @@ async def get_reference_groups(pg: AsyncEngine, document: Document) -> list[Docu
     async with AsyncSession(pg) as session:
         result = await session.execute(
             select(SQLGroup).where(
-                compose_legacy_id_expression(
+                compose_legacy_id_multi_expression(
                     SQLGroup,
                     [g["id"] for g in document_groups],
                 ),
@@ -139,18 +139,55 @@ async def get_reference_groups(pg: AsyncEngine, document: Document) -> list[Docu
     ]
 
 
-async def get_reference_users(mongo: "Mongo", document: Document) -> list[Document]:
+async def get_reference_users(
+    mongo: "Mongo", pg: AsyncEngine, document: Document
+) -> list[Document]:
     """Get a detailed list of users that have access to the specified reference.
 
     :param mongo: the application database client
+    :param pg: the application PostgreSQL engine
     :param document: the reference document
     :return: a list of user data dictionaries
 
     """
-    if users := document.get("users"):
-        return list(await asyncio.gather(*[extend_user(mongo, user) for user in users]))
+    if not (users := document.get("users")):
+        return []
 
-    return []
+    from virtool.users.pg import SQLUser
+
+    user_ids = [user["id"] for user in users]
+
+    if not user_ids:
+        return []
+
+    async with AsyncSession(pg) as session:
+        result = await session.execute(
+            select(SQLUser.id, SQLUser.handle, SQLUser.legacy_id).where(
+                compose_legacy_id_multi_expression(SQLUser, user_ids)
+            )
+        )
+
+        user_rows = result.all()
+
+    user_map = {}
+    for row in user_rows:
+        user_data = {"id": row.id, "handle": row.handle}
+        user_map[row.id] = user_data
+        if row.legacy_id:
+            user_map[row.legacy_id] = user_data
+
+    result = []
+    for user in users:
+        user_id = user["id"]
+        if user_data := user_map.get(user_id):
+            result.append(
+                {
+                    **user,
+                    **user_data,
+                }
+            )
+
+    return result
 
 
 async def check_right(req: Request, ref_id: str, right: str) -> bool:
@@ -323,15 +360,18 @@ async def fetch_and_update_release(
     return release
 
 
-async def get_contributors(mongo: "Mongo", ref_id: str) -> list[Document] | None:
+async def get_contributors(mongo: "Mongo", pg, ref_id: str) -> list[Document] | None:
     """Return a list of contributors and their contribution count for a specific ref.
 
     :param mongo: the application database client
+    :param pg: the PostgreSQL engine
     :param ref_id: the id of the ref to get contributors for
     :return: a list of contributors to the ref
 
     """
-    return await virtool.history.db.get_contributors(mongo, {"reference.id": ref_id})
+    return await virtool.history.db.get_contributors(
+        mongo, pg, {"reference.id": ref_id}
+    )
 
 
 async def get_internal_control(
@@ -362,10 +402,13 @@ async def get_internal_control(
     return {"id": internal_control_id, "name": name}
 
 
-async def get_latest_build(mongo: "Mongo", ref_id: str) -> Document | None:
+async def get_latest_build(
+    mongo: "Mongo", pg: AsyncEngine, ref_id: str
+) -> Document | None:
     """Return the latest index build for the ref.
 
     :param mongo: the application database client
+    :param pg: the application PostgreSQL engine
     :param ref_id: the id of the ref to get the latest build for
     :return: a subset of fields for the latest build
 
@@ -379,7 +422,7 @@ async def get_latest_build(mongo: "Mongo", ref_id: str) -> Document | None:
     if latest_build:
         return await apply_transforms(
             base_processor(latest_build),
-            [AttachUserTransform(mongo)],
+            [AttachUserTransform(pg)],
         )
 
 

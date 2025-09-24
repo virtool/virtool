@@ -5,6 +5,8 @@ session or API key making the requests.
 
 """
 
+from contextlib import suppress
+
 from aiohttp.web import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r404
@@ -15,7 +17,7 @@ from virtool.account.models import Account, AccountSettings, APIKey
 from virtool.account.oas import (
     AccountResetPasswordResponse,
     CreateAPIKeyResponse,
-    CreateKeysRequest,
+    CreateKeyRequest,
     CreateLoginRequest,
     LoginResponse,
     ResetPasswordRequest,
@@ -79,13 +81,24 @@ class AccountView(PydanticView):
                 raise APIBadRequest(error)
 
         try:
-            account = await get_data_from_req(self.request).account.update(
-                self.request["client"].user_id, data
+            account, new_session, token = await get_data_from_req(
+                self.request
+            ).account.update(
+                self.request["client"].user_id,
+                data,
+                virtool.api.authentication.get_ip(self.request),
             )
         except ResourceError:
             raise APIBadRequest("Invalid credentials")
 
-        return json_response(account)
+        resp = json_response(account)
+
+        # If password was changed, set new session cookies
+        if new_session and token:
+            set_session_id_cookie(resp, new_session.id)
+            set_session_token_cookie(resp, token)
+
+        return resp
 
 
 @routes.view("/account/settings")
@@ -142,7 +155,7 @@ class KeysView(PydanticView):
         return json_response(keys, status=200)
 
     async def post(
-        self, data: CreateKeysRequest
+        self, data: CreateKeyRequest
     ) -> r201[CreateAPIKeyResponse] | r400 | r401:
         """Create an API key.
 
@@ -269,16 +282,15 @@ class LoginView(PydanticView):
         try:
             user_id = await get_data_from_req(self.request).account.login(data)
         except ResourceError:
-            raise APIBadRequest("Invalid username or password")
+            raise APIBadRequest("Invalid handle or password.")
 
         session = None
         reset_code = None
-        try:
+
+        with suppress(ResourceError):
             session, reset_code = await get_data_from_req(
                 self.request
             ).account.get_reset_session(ip, user_id, session_id, data.remember)
-        except ResourceError:
-            pass
 
         if reset_code:
             resp = json_response(
@@ -303,6 +315,7 @@ class LoginView(PydanticView):
         )
 
         resp = json_response({"reset": False}, status=201)
+
         set_session_id_cookie(resp, session.id)
         set_session_token_cookie(resp, token)
 
@@ -359,6 +372,8 @@ class ResetView(PydanticView):
             )
         except ResourceNotFoundError:
             raise APIBadRequest("Invalid session")
+        except ResourceError as e:
+            raise APIBadRequest(str(e))
 
         try:
             self.request["client"].authorize(session, is_api=False)

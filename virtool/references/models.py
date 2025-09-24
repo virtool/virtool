@@ -49,7 +49,7 @@ class ReferenceGroup(ReferenceRights):
 class ReferenceUser(ReferenceRights):
     created_at: datetime
     handle: str
-    id: str
+    id: int
 
 
 class ReferenceContributor(UserNested):

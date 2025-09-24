@@ -32,6 +32,20 @@ def normalize_log_level(
     return event_dict
 
 
+def log_deprecated_field(field_name: str, model) -> None:
+    """Log a deprecation warning for a field.
+
+    :param field_name: the name of the deprecated field
+    :param model: the model class containing the field
+
+    """
+    structlog.get_logger("deprecated").warning(
+        "use of deprecated field",
+        field=field_name,
+        model=model.__name__,
+    )
+
+
 def configure_logging(use_sentry: bool) -> None:
     """Configure logging for Virtool.
 

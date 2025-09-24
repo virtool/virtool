@@ -8,7 +8,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.data.topg import compose_legacy_id_expression
+from virtool.data.topg import compose_legacy_id_multi_expression
 from virtool.data.transforms import AbstractTransform
 from virtool.groups.pg import SQLGroup
 from virtool.types import Document
@@ -57,7 +57,7 @@ class AttachPrimaryGroupTransform(AbstractTransform):
             return {document["id"]: None for document in documents}
 
         async with AsyncSession(self._pg) as session:
-            expr = compose_legacy_id_expression(SQLGroup, group_ids)
+            expr = compose_legacy_id_multi_expression(SQLGroup, group_ids)
 
             groups = (
                 (await session.execute(select(SQLGroup).where(expr))).scalars().all()
@@ -89,7 +89,7 @@ class AttachGroupsTransform(AbstractTransform):
 
         async with AsyncSession(self._pg) as session:
             query = select(SQLGroup).where(
-                compose_legacy_id_expression(SQLGroup, document["groups"])
+                compose_legacy_id_multi_expression(SQLGroup, document["groups"])
             )
 
             return [
@@ -105,7 +105,7 @@ class AttachGroupsTransform(AbstractTransform):
 
         async with AsyncSession(self._pg) as session:
             query = select(SQLGroup).where(
-                compose_legacy_id_expression(SQLGroup, group_ids)
+                compose_legacy_id_multi_expression(SQLGroup, group_ids)
             )
 
             groups = [

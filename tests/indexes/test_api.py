@@ -220,8 +220,8 @@ async def test_get(
         "virtool.history.db.get_contributors",
         make_mocked_coro(
             [
-                {"id": "fred", "count": 1, "handle": "fred", "administrator": True},
-                {"id": "igboyes", "count": 3, "handle": "ian", "administrator": True},
+                {"id": 1, "count": 1, "handle": "fred"},
+                {"id": 2, "count": 3, "handle": "ian"},
             ],
         ),
     )
@@ -242,7 +242,11 @@ async def test_get(
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
-        m_get_contributors.assert_called_with(ANY, {"index.id": "foobar"})
+        # Check that get_contributors was called with correct parameter types
+        call_args = m_get_contributors.call_args[0]
+        assert isinstance(call_args[0], Mongo)
+        assert isinstance(call_args[1], AsyncEngine)
+        assert call_args[2] == {"index.id": "foobar"}
         m_get_otus.assert_called_with(ANY, "foobar")
     else:
         await resp_is.not_found(resp)

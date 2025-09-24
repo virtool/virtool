@@ -23,7 +23,7 @@
     'source_types': list([
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'users': list([
     ]),
@@ -41,28 +41,54 @@
     'remove': False,
   })
 # ---
-# name: TestCreateUser.test_ok[mongo]
+# name: TestCreateUser.test_ok[reference]
   dict({
-    '_id': 'foo',
+    'cloned_from': None,
+    'contributors': list([
+    ]),
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
+    'data_type': <ReferenceDataType.genome: 'genome'>,
+    'description': '',
     'groups': list([
     ]),
+    'id': 'bf1b993c',
+    'imported_from': None,
+    'installed': None,
     'internal_control': None,
-    'name': 'Foo',
-    'organism': 'virus',
+    'latest_build': None,
+    'name': 'Example',
+    'organism': '',
+    'otu_count': 0,
+    'release': None,
+    'remotes_from': None,
     'restrict_source_types': False,
     'source_types': list([
+      'isolate',
+      'strain',
     ]),
+    'targets': None,
+    'task': None,
+    'unbuilt_change_count': 0,
+    'updating': None,
     'user': dict({
-      'id': 'bf1b993c',
+      'handle': 'leeashley',
+      'id': 1,
     }),
     'users': list([
       dict({
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 'fb085f7f',
+        'handle': 'leeashley',
+        'id': 1,
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      }),
+      dict({
+        'build': True,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'handle': 'zclark',
+        'id': 2,
         'modify': False,
         'modify_otu': True,
         'remove': False,
@@ -70,12 +96,12 @@
     ]),
   })
 # ---
-# name: TestCreateUser.test_ok[obj]
+# name: TestCreateUser.test_ok[user_obj]
   dict({
     'build': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'handle': 'zclark',
-    'id': 'fb085f7f',
+    'id': 2,
     'modify': False,
     'modify_otu': True,
     'remove': False,
@@ -96,7 +122,7 @@
     'source_types': list([
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'users': list([
     ]),
@@ -117,7 +143,7 @@
     'source_types': list([
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'users': list([
     ]),
@@ -152,14 +178,14 @@
     'updating': None,
     'user': dict({
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'users': list([
       dict({
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'handle': 'zclark',
-        'id': 'fb085f7f',
+        'id': 2,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -182,12 +208,12 @@
     'source_types': list([
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'users': list([
       dict({
         'build': True,
-        'id': 'fb085f7f',
+        'id': 2,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -224,14 +250,14 @@
     'updating': None,
     'user': dict({
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'users': list([
       dict({
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'handle': 'zclark',
-        'id': 'fb085f7f',
+        'id': 2,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -254,12 +280,12 @@
     'source_types': list([
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'users': list([
       dict({
         'build': True,
-        'id': 'fb085f7f',
+        'id': 2,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -296,14 +322,14 @@
     'updating': None,
     'user': dict({
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'users': list([
       dict({
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'handle': 'zclark',
-        'id': 'fb085f7f',
+        'id': 2,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -326,12 +352,12 @@
     'source_types': list([
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'users': list([
       dict({
         'build': True,
-        'id': 'fb085f7f',
+        'id': 2,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -368,14 +394,14 @@
     'updating': None,
     'user': dict({
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'users': list([
       dict({
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'handle': 'zclark',
-        'id': 'fb085f7f',
+        'id': 2,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -398,12 +424,12 @@
     'source_types': list([
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'users': list([
       dict({
         'build': True,
-        'id': 'fb085f7f',
+        'id': 2,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -440,14 +466,14 @@
     'updating': None,
     'user': dict({
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'users': list([
       dict({
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'handle': 'zclark',
-        'id': 'fb085f7f',
+        'id': 2,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -470,12 +496,12 @@
     'source_types': list([
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'users': list([
       dict({
         'build': True,
-        'id': 'fb085f7f',
+        'id': 2,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -512,14 +538,14 @@
     'updating': None,
     'user': dict({
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'users': list([
       dict({
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
         'handle': 'zclark',
-        'id': 'fb085f7f',
+        'id': 2,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -542,12 +568,12 @@
     'source_types': list([
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'users': list([
       dict({
         'build': True,
-        'id': 'fb085f7f',
+        'id': 2,
         'modify': True,
         'modify_otu': True,
         'remove': True,
@@ -578,7 +604,7 @@
     'source_types': list([
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'users': list([
     ]),
@@ -611,13 +637,13 @@
     'source_types': list([
     ]),
     'user': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'users': list([
       dict({
         'build': True,
         'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 'fb085f7f',
+        'id': 2,
         'modify': True,
         'modify_otu': True,
         'remove': False,
@@ -630,7 +656,7 @@
     'build': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'handle': 'zclark',
-    'id': 'fb085f7f',
+    'id': 2,
     'modify': False,
     'modify_otu': False,
     'remove': False,
@@ -641,7 +667,7 @@
     'build': True,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'handle': 'zclark',
-    'id': 'fb085f7f',
+    'id': 2,
     'modify': True,
     'modify_otu': True,
     'remove': False,

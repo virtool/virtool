@@ -11,7 +11,7 @@
 # name: TestAuthenticated.test_get_and_create[snapshot]
   dict({
     'authentication': dict({
-      'user_id': 'user_id',
+      'user_id': 1,
     }),
     'created_at': datetime,
     'id': str,
@@ -27,7 +27,7 @@
     'ip': '1.1.1.1',
     'reset': dict({
       'remember': True,
-      'user_id': 'bf1b993c',
+      'user_id': 1,
     }),
   })
 # ---

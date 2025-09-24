@@ -76,16 +76,19 @@ class VirtoolTestClientUser:
 class VirtoolTestClient:
     """The test client provided by the :fixture:`spawn_client` fixture."""
 
-    def __init__(self, test_client, test_client_user: VirtoolTestClientUser):
+    def __init__(self, test_client, test_client_user: VirtoolTestClientUser | None):
         self._test_client = test_client
 
         self.app = self._test_client.server.app
         """The test server's application object."""
 
-        self.user: VirtoolTestClientUser = test_client_user
+        self.cookie_jar = self._test_client.session.cookie_jar
+        """The cookie jar for the test client session."""
+
+        self.user: VirtoolTestClientUser | None = test_client_user
         """
         The user associated with the client.
-        
+
         This attribute will be ``None`` if the client is not authenticated.
         """
 
@@ -107,30 +110,101 @@ class VirtoolTestClient:
     async def get(
         self,
         url: str,
+        cookies: dict[str, str] | None = None,
         headers: dict[str, str] | None = None,
         params: dict[str, Any] | None = None,
     ) -> ClientResponse:
-        return await self._test_client.get(url, headers=headers, params=params)
+        merged_cookies = {}
+        for cookie in self.cookie_jar:
+            merged_cookies[cookie.key] = cookie.value
+        if cookies:
+            merged_cookies.update(cookies)
 
-    async def post(self, url: str, data: dict | None) -> ClientResponse:
+        return await self._test_client.get(
+            url, cookies=merged_cookies or None, headers=headers, params=params
+        )
+
+    async def post(
+        self,
+        url: str,
+        data: dict | None = None,
+        cookies: dict[str, str] | None = None,
+    ) -> ClientResponse:
         payload = None
 
         if data:
             payload = dump_string(data)
 
-        return await self._test_client.post(url, data=payload)
+        merged_cookies = {}
+        for cookie in self.cookie_jar:
+            merged_cookies[cookie.key] = cookie.value
+        if cookies:
+            merged_cookies.update(cookies)
 
-    async def post_form(self, url: str, data) -> ClientResponse:
-        return await self._test_client.post(url, data=data)
+        return await self._test_client.post(
+            url, data=payload, cookies=merged_cookies or None
+        )
 
-    async def patch(self, url: str, data) -> ClientResponse:
-        return await self._test_client.patch(url, data=json.dumps(data))
+    async def post_form(
+        self,
+        url: str,
+        data,
+        cookies: dict[str, str] | None = None,
+    ) -> ClientResponse:
+        merged_cookies = {}
+        for cookie in self.cookie_jar:
+            merged_cookies[cookie.key] = cookie.value
+        if cookies:
+            merged_cookies.update(cookies)
 
-    async def put(self, url: str, data) -> ClientResponse:
-        return await self._test_client.put(url, data=json.dumps(data))
+        return await self._test_client.post(
+            url, data=data, cookies=merged_cookies or None
+        )
 
-    async def delete(self, url: str) -> ClientResponse:
-        return await self._test_client.delete(url)
+    async def patch(
+        self,
+        url: str,
+        data,
+        cookies: dict[str, str] | None = None,
+    ) -> ClientResponse:
+        merged_cookies = {}
+        for cookie in self.cookie_jar:
+            merged_cookies[cookie.key] = cookie.value
+        if cookies:
+            merged_cookies.update(cookies)
+
+        return await self._test_client.patch(
+            url, data=json.dumps(data), cookies=merged_cookies or None
+        )
+
+    async def put(
+        self,
+        url: str,
+        data,
+        cookies: dict[str, str] | None = None,
+    ) -> ClientResponse:
+        merged_cookies = {}
+        for cookie in self.cookie_jar:
+            merged_cookies[cookie.key] = cookie.value
+        if cookies:
+            merged_cookies.update(cookies)
+
+        return await self._test_client.put(
+            url, data=json.dumps(data), cookies=merged_cookies or None
+        )
+
+    async def delete(
+        self,
+        url: str,
+        cookies: dict[str, str] | None = None,
+    ) -> ClientResponse:
+        merged_cookies = {}
+        for cookie in self.cookie_jar:
+            merged_cookies[cookie.key] = cookie.value
+        if cookies:
+            merged_cookies.update(cookies)
+
+        return await self._test_client.delete(url, cookies=merged_cookies or None)
 
 
 class JobClientSpawner(Protocol):
@@ -379,12 +453,13 @@ def spawn_client(
                 ),
             ]
 
-        test_client_user = await fake.users.create(
-            administrator_role=AdministratorRole.FULL if administrator else None,
-            groups=groups,
-            handle="bob",
-            password="bob_is_testing",
-        )
+        test_client_user = None
+        if authenticated:
+            test_client_user = await fake.users.create(
+                administrator_role=AdministratorRole.FULL if administrator else None,
+                groups=groups,
+                password="bob_is_testing",
+            )
 
         if authenticated:
             session_id = "foobar"
@@ -409,7 +484,7 @@ def spawn_client(
             cookies = {"session_id": session_id, "session_token": session_token}
 
         else:
-            cookies = {"session_id": "dne"}
+            cookies = {}
 
         test_client = await aiohttp_client(
             app,

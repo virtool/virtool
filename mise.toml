@@ -26,6 +26,13 @@ run = [
 description = "Stop test environment."
 run = "docker compose down --remove-orphans"
 
+[tasks.format]
+description = "Format code with ruff and fix linting issues."
+run = [
+  "uv run ruff format",
+  "uv run ruff check --fix --silent --exit-zero"
+]
+
 [tasks."format:check"]
 description = "Check code formatting with ruff."
 run = "uv run ruff format --check"

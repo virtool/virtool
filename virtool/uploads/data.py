@@ -47,7 +47,7 @@ class UploadsData(DataLayerDomain):
         filters = []
 
         if user:
-            filters.append(SQLUpload.user == user)  # skipcq: PTC-W0068,PYL-R1714
+            filters.append(SQLUpload.user == str(user))  # skipcq: PTC-W0068,PYL-R1714
 
         if upload_type:
             filters.append(SQLUpload.type == upload_type)  # skipcq: PTC-W0068,PYL-R1714
@@ -90,7 +90,7 @@ class UploadsData(DataLayerDomain):
                 for row in (await session.execute(query)).unique().scalars()
             ]
 
-        uploads = await apply_transforms(uploads, [AttachUserTransform(self._mongo)])
+        uploads = await apply_transforms(uploads, [AttachUserTransform(self._pg)])
 
         return UploadSearchResult(
             items=uploads,
@@ -107,7 +107,7 @@ class UploadsData(DataLayerDomain):
         chunker,
         name: str,
         upload_type: UploadType,
-        user: str | None = None,
+        user: int | None = None,
     ) -> Upload:
         """Create an upload."""
         uploads_path = self._config.data_path / "files"
@@ -123,7 +123,7 @@ class UploadsData(DataLayerDomain):
                 reserved=False,
                 type=upload_type,
                 uploaded_at=virtool.utils.timestamp(),
-                user=user,
+                user=str(user) if user is not None else None,
             )
 
             session.add(upload)
@@ -140,7 +140,7 @@ class UploadsData(DataLayerDomain):
             await session.commit()
 
         return Upload(
-            **await apply_transforms(upload_dict, [AttachUserTransform(self._mongo)]),
+            **await apply_transforms(upload_dict, [AttachUserTransform(self._pg)]),
         )
 
     async def get(self, upload_id: int) -> Upload:
@@ -162,7 +162,7 @@ class UploadsData(DataLayerDomain):
         return Upload(
             **await apply_transforms(
                 upload.to_dict(),
-                [AttachUserTransform(self._mongo)],
+                [AttachUserTransform(self._pg)],
             ),
         )
 
@@ -193,7 +193,7 @@ class UploadsData(DataLayerDomain):
             await session.commit()
 
         upload = Upload(
-            **await apply_transforms(upload, [AttachUserTransform(self._mongo)]),
+            **await apply_transforms(upload, [AttachUserTransform(self._pg)]),
         )
 
         with suppress(FileNotFoundError):

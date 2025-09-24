@@ -154,7 +154,7 @@ class JobsData:
 
         documents = await apply_transforms(
             [base_processor(d) for d in data],
-            [AttachUserTransform(self._mongo)],
+            [AttachUserTransform(self._pg)],
         )
 
         for document in documents:
@@ -245,7 +245,7 @@ class JobsData:
                 "stage": last_update["stage"],
                 "progress": status[-1]["progress"],
             },
-            [AttachUserTransform(self._mongo)],
+            [AttachUserTransform(self._pg)],
         )
 
         return Job(**document)

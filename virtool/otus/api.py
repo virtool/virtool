@@ -1,6 +1,7 @@
 from aiohttp import web
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r403, r404
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 import virtool.otus.db
 import virtool.references.db
@@ -598,6 +599,7 @@ async def list_history(req):
     Lists an OTU's history.
     """
     mongo = get_mongo_from_req(req)
+    pg: AsyncEngine = req.app["pg"]
 
     otu_id = req.match_info["otu_id"]
 
@@ -612,7 +614,7 @@ async def list_history(req):
     return json_response(
         await apply_transforms(
             [base_processor(d) for d in documents],
-            [AttachUserTransform(mongo, ignore_errors=True)],
+            [AttachUserTransform(pg, ignore_errors=True)],
         ),
     )
 

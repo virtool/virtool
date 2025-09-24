@@ -180,7 +180,7 @@ class CreateReferenceGroupRequest(ReferenceRightsRequest):
 
 
 class CreateReferenceUserRequest(ReferenceRightsRequest):
-    user_id: str = Field(description="the id of the user to add")
+    user_id: int = Field(description="the id of the user to add")
 
     class Config:
         schema_extra = {"example": {"user_id": "sidney", "modify_otu": True}}

@@ -25,7 +25,6 @@ from virtool.history.utils import (
 from virtool.models.enums import HistoryMethod
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
-from virtool.users.db import ATTACH_PROJECTION
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
@@ -62,7 +61,7 @@ async def add(
     method_name: HistoryMethod,
     old: dict | None,
     new: dict | None,
-    user_id: str,
+    user_id: int,
     mongo_session: AsyncIOMotorClientSession | None = None,
 ) -> dict:
     """Add a change document to the history collection.
@@ -98,7 +97,7 @@ def prepare_add(
     method_name: HistoryMethod,
     old: dict | None,
     new: dict | None,
-    user_id: str,
+    user_id: int,
     description: str = "",
 ) -> PreparedChange:
     """Add a change document to the history collection.
@@ -148,7 +147,9 @@ def prepare_add(
     )
 
 
-async def find(mongo: "Mongo", req_query, base_query: Document | None = None):
+async def find(
+    mongo: "Mongo", pg: "AsyncEngine", req_query, base_query: Document | None = None
+):
     data = await paginate(
         mongo.history,
         {},
@@ -163,34 +164,69 @@ async def find(mongo: "Mongo", req_query, base_query: Document | None = None):
         **data,
         "documents": await apply_transforms(
             [base_processor(d) for d in data["documents"]],
-            [AttachReferenceTransform(mongo), AttachUserTransform(mongo)],
+            [AttachReferenceTransform(mongo), AttachUserTransform(pg)],
         ),
     }
 
 
-async def get_contributors(mongo: "Mongo", query: dict) -> list[dict]:
+async def get_contributors(mongo: "Mongo", pg: AsyncEngine, query: dict) -> list[dict]:
     """Return list of contributors and their contribution count for a specific set of
     history.
 
     :param mongo: the application database client
+    :param pg: the PostgreSQL engine for user lookups
     :param query: a query to filter scanned history by
     :return: a list of contributors to the scanned history changes
 
     """
+    from sqlalchemy import select
+
+    from virtool.data.topg import compose_legacy_id_multi_expression
+    from virtool.users.pg import SQLUser
+
     cursor = mongo.history.aggregate(
         [{"$match": query}, {"$group": {"_id": "$user.id", "count": {"$sum": 1}}}],
     )
 
     contributors = [{"id": c["_id"], "count": c["count"]} async for c in cursor]
 
-    users = await mongo.users.find(
-        {"_id": {"$in": [c["id"] for c in contributors]}},
-        projection=ATTACH_PROJECTION,
-    ).to_list(None)
+    if not contributors:
+        return []
 
-    users = {u.pop("_id"): u for u in users}
+    # Look up users from PostgreSQL
+    user_ids = [c["id"] for c in contributors]
 
-    return [{**u, **users[u["id"]]} for u in contributors]
+    async with AsyncSession(pg) as session:
+        result = await session.execute(
+            select(SQLUser.id, SQLUser.handle, SQLUser.legacy_id).where(
+                compose_legacy_id_multi_expression(SQLUser, user_ids)
+            )
+        )
+
+        user_rows = result.all()
+
+    # Create a mapping from original IDs to user data
+    users = {}
+    for row in user_rows:
+        # Map both the modern ID and legacy ID to the user data
+        user_data = {"id": row.id, "handle": row.handle}
+        users[row.id] = user_data
+        if row.legacy_id:
+            users[row.legacy_id] = user_data
+
+    # Build result with PostgreSQL user IDs
+    result = []
+    for contributor in contributors:
+        user_data = users.get(contributor["id"], {"id": -1, "handle": "Unknown User"})
+        result.append(
+            {
+                "id": user_data["id"],
+                "handle": user_data["handle"],
+                "count": contributor["count"],
+            }
+        )
+
+    return result
 
 
 async def get_most_recent_change(

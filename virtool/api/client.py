@@ -74,7 +74,7 @@ class UserClient(AbstractClient):
         force_reset: bool,
         groups: list[int | str],
         permissions: dict[str, bool],
-        user_id: str | None,
+        user_id: int | None,
         session_id: str | None = None,
     ):
         self._administrator_role = administrator_role
@@ -110,5 +110,5 @@ class UserClient(AbstractClient):
         return False
 
     @property
-    def user_id(self) -> str | None:
+    def user_id(self) -> int | None:
         return self._user_id

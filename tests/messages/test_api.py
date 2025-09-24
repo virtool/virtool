@@ -22,7 +22,7 @@ async def insert_test_message(fake: DataFaker, pg, static_time):
                     message="This is a test message",
                     created_at=static_time.datetime,
                     updated_at=static_time.datetime,
-                    user=user.id,
+                    user=str(user.id),
                 ),
             )
             await session.commit()

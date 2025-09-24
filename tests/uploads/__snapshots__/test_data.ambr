@@ -14,7 +14,7 @@
     'uploaded_at': datetime,
     'user': dict({
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 1,
     }),
   })
 # ---
@@ -32,7 +32,7 @@
     'space': None,
     'type': 'reads',
     'uploaded_at': datetime,
-    'user': 'bf1b993c',
+    'user': '1',
   })
 # ---
 # name: test_delete[after]
@@ -50,7 +50,7 @@
     'uploaded_at': 'approximately_now_datetime',
     'user': dict({
       'handle': 'leeashley',
-      'id': 'bf1b993c',
+      'id': 1,
     }),
   })
 # ---

@@ -45,7 +45,7 @@ async def both_transactions(mongo: "Mongo", pg: AsyncEngine):
         await pg_session.commit()
 
 
-def compose_legacy_id_expression(
+def compose_legacy_id_multi_expression(
     model: HasLegacyAndModernIDs,
     id_list: list[int | str] | set[int | str] | tuple[int | str],
 ) -> ColumnExpressionArgument[bool]:
@@ -66,6 +66,8 @@ def compose_legacy_id_expression(
     for id_ in set(id_list):
         if isinstance(id_, int):
             modern_ids.append(id_)
+        elif isinstance(id_, str) and id_.isdigit():
+            modern_ids.append(int(id_))
         else:
             legacy_ids.append(id_)
 
@@ -76,3 +78,24 @@ def compose_legacy_id_expression(
         return model.id.in_(modern_ids)
 
     return model.legacy_id.in_(legacy_ids)
+
+
+def compose_legacy_id_single_expression(
+    model: HasLegacyAndModernIDs,
+    id_: int | str,
+) -> ColumnExpressionArgument[bool]:
+    """Compose a query that will match a single legacy (str) or modern (int) resource id.
+
+    :param model: the SQLAlchemy model to query
+    :param id_: a single legacy or modern id
+    :return: a column expression for the query
+
+    """
+    if isinstance(id_, int):
+        return model.id == id_
+
+    # Check if string ID is actually a stringified integer
+    if isinstance(id_, str) and id_.isdigit():
+        return model.id == int(id_)
+
+    return model.legacy_id == id_

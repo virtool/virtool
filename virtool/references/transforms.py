@@ -72,7 +72,7 @@ class AttachImportedFromTransform(AbstractTransform):
 
         row = await get_row_by_id(self._pg, SQLUpload, upload_id)
 
-        return await apply_transforms(row.to_dict(), [AttachUserTransform(self._mongo)])
+        return await apply_transforms(row.to_dict(), [AttachUserTransform(self._pg)])
 
     async def attach_one(
         self,
