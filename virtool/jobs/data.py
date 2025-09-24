@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
+from virtool.data.topg import get_user_id_multi_variants
 from virtool.data.transforms import apply_transforms
 from virtool.jobs.client import JobCancellationResult, JobsClient
 from virtool.jobs.models import (
@@ -80,7 +81,12 @@ class JobsData:
         if page > 1:
             skip_count = (page - 1) * per_page
 
-        match_query = {"user.id": {"$in": users}} if users else {}
+        # TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings
+        if users:
+            user_id_variants = await get_user_id_multi_variants(self._pg, users)
+            match_query = {"user.id": {"$in": user_id_variants}}
+        else:
+            match_query = {}
 
         match_state = (
             {"state": {"$in": [state.value for state in states]}} if states else {}

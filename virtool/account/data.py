@@ -18,6 +18,7 @@ from virtool.administrators.oas import UpdateUserRequest
 from virtool.authorization.client import AuthorizationClient
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceError, ResourceNotFoundError
+from virtool.data.topg import get_user_id_single_variants
 from virtool.data.transforms import apply_transforms
 from virtool.groups.transforms import AttachGroupsTransform
 from virtool.models.sessions import Session
@@ -189,17 +190,22 @@ class AccountData(DataLayerDomain):
 
         return await self.get_settings(user_id)
 
-    async def get_keys(self, user_id: str) -> list[APIKey]:
+    async def get_keys(self, user_id: int) -> list[APIKey]:
         """Get API keys associated with the authenticated user account.
+
+        TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings.
 
         :param user_id: the user ID
         :return: the api keys
         """
+        # Get all ID variants to handle legacy string IDs in MongoDB
+        user_id_variants = await get_user_id_single_variants(self._pg, user_id)
+
         keys = await apply_transforms(
             [
                 base_processor(key)
                 async for key in self._mongo.keys.find(
-                    {"user.id": user_id},
+                    {"user.id": {"$in": user_id_variants}},
                     {"_id": False, "user": False},
                 )
             ],
@@ -318,20 +324,26 @@ class AccountData(DataLayerDomain):
 
         return raw, await self.get_key(user_id, id_)
 
-    async def delete_keys(self, user_id: str) -> None:
+    async def delete_keys(self, user_id: int) -> None:
         """Delete all API keys for the account associated with the requesting session.
+
+        TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings.
 
         :param user_id: the user ID
         """
-        await self._mongo.keys.delete_many({"user.id": user_id})
+        # Get all ID variants to handle legacy string IDs in MongoDB
+        user_id_variants = await get_user_id_single_variants(self._pg, user_id)
+        await self._mongo.keys.delete_many({"user.id": {"$in": user_id_variants}})
 
     async def update_key(
         self,
-        user_id: str,
+        user_id: int,
         key_id: str,
         data: UpdateKeyRequest,
     ) -> APIKey:
         """Change the permissions for an existing API key.
+
+        TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings.
 
         :param user_id: the user ID
         :param key_id: the ID of the API key to update
@@ -346,12 +358,15 @@ class AccountData(DataLayerDomain):
         if not await self._mongo.keys.count_documents({"id": key_id}):
             raise ResourceNotFoundError()
 
+        # Get all ID variants to handle legacy string IDs in MongoDB
+        user_id_variants = await get_user_id_single_variants(self._pg, user_id)
+
         new_permissions = {
             **(
                 await get_one_field(
                     self._mongo.keys,
                     "permissions",
-                    {"id": key_id, "user.id": user_id},
+                    {"id": key_id, "user.id": {"$in": user_id_variants}},
                 )
             ),
             **update,
@@ -364,14 +379,18 @@ class AccountData(DataLayerDomain):
 
         return await self.get_key(user_id, key_id)
 
-    async def delete_key(self, user_id: str, key_id: str) -> None:
+    async def delete_key(self, user_id: int, key_id: str) -> None:
         """Delete an API key by its id.
+
+        TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings.
 
         :param user_id: the user ID
         :param key_id: the ID of the API key to delete
         """
+        # Get all ID variants to handle legacy string IDs in MongoDB
+        user_id_variants = await get_user_id_single_variants(self._pg, user_id)
         delete_result = await self._mongo.keys.delete_one(
-            {"id": key_id, "user.id": user_id},
+            {"id": key_id, "user.id": {"$in": user_id_variants}},
         )
 
         if delete_result.deleted_count == 0:
@@ -402,7 +421,7 @@ class AccountData(DataLayerDomain):
     async def get_reset_session(
         self,
         ip: str,
-        user_id: str,
+        user_id: int,
         session_id: str,
         remember: bool,
     ) -> tuple[Session, str]:
@@ -416,7 +435,7 @@ class AccountData(DataLayerDomain):
         """
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
-                select(SQLUser.force_reset).where(SQLUser.id == int(user_id))
+                select(SQLUser.force_reset).where(SQLUser.id == user_id)
             )
             force_reset = result.scalar_one_or_none()
 
