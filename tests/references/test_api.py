@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
 
+from virtool.otus.models import OTU
 import virtool.utils
 from tests.fixtures.client import ClientSpawner, VirtoolTestClient
 from tests.fixtures.response import RespIs
@@ -1362,12 +1363,9 @@ class TestFindHistory:
 
     client: VirtoolTestClient
     reference_id: str
-    otu_1_id: str
-    otu_2_id: str
-    otu_3_id: str
 
     @pytest.fixture(autouse=True)
-    async def setup_data(
+    async def setup(
         self,
         data_layer: DataLayer,
         spawn_client: ClientSpawner,
@@ -1391,31 +1389,28 @@ class TestFindHistory:
             CreateOTURequest(name="Tobacco mosaic virus", abbreviation="TMV"),
             self.client.user.id,
         )
-        self.otu_1_id = otu_1.id
 
         otu_2 = await data_layer.otus.create(
             self.reference_id,
             CreateOTURequest(name="Potato virus X", abbreviation="PVX"),
             self.client.user.id,
         )
-        self.otu_2_id = otu_2.id
 
         otu_3 = await data_layer.otus.create(
             self.reference_id,
             CreateOTURequest(name="Cucumber mosaic virus"),
             self.client.user.id,
         )
-        self.otu_3_id = otu_3.id
 
         isolate = await data_layer.otus.add_isolate(
-            self.otu_1_id,
+            otu_1.id,
             "isolate",
             "strain_1",
             self.client.user.id,
         )
 
         await data_layer.otus.create_sequence(
-            self.otu_1_id,
+            otu_1.id,
             isolate.id,
             "NC_001367",
             "Tobacco mosaic virus complete genome",
