@@ -7,7 +7,6 @@ from sqlalchemy import ColumnExpressionArgument, or_, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.pg.base import HasLegacyAndModernIDs
-
 from virtool.users.pg import SQLUser
 
 if TYPE_CHECKING:
