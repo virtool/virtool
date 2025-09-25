@@ -148,11 +148,15 @@ def prepare_add(
 
 
 async def find(
-    mongo: "Mongo", pg: "AsyncEngine", req_query, base_query: Document | None = None
+    mongo: "Mongo",
+    pg: "AsyncEngine",
+    mongo_query: Document,
+    req_query,
+    base_query: Document | None = None,
 ):
     data = await paginate(
         mongo.history,
-        {},
+        mongo_query,
         req_query,
         base_query=base_query,
         sort="otu.version",

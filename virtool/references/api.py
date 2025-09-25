@@ -6,6 +6,7 @@ TODO: Drop support for string group ids when we fully migrate to SQL.
 from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r202, r204, r400, r403, r404, r502
+from pydantic import Field
 
 import virtool.references.db
 from virtool.api.custom_json import json_response
@@ -344,9 +345,12 @@ class ReferenceOTUsView(PydanticView):
 class ReferenceHistoryView(PydanticView):
     async def get(
         self,
-        unbuilt: str | None,
         ref_id: str,
         /,
+        unbuilt: bool | None = Field(
+            default=None,
+            description="Filter by build status",
+        ),
     ) -> r200[HistorySearchResult] | r404:
         """List history.
 

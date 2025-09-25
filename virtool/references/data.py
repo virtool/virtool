@@ -534,7 +534,7 @@ class ReferencesData(DataLayerDomain):
     async def find_history(
         self,
         ref_id: str,
-        unbuilt: str,
+        unbuilt: bool | None,
         query,
     ) -> HistorySearchResult:
         if not await self._mongo.references.count_documents({"_id": ref_id}):
@@ -542,13 +542,15 @@ class ReferencesData(DataLayerDomain):
 
         base_query = {"reference.id": ref_id}
 
-        if unbuilt == "true":
-            base_query["index.id"] = "unbuilt"
+        search_query = {}
+        if unbuilt is True:
+            search_query["index.id"] = "unbuilt"
+        elif unbuilt is False:
+            search_query["index.id"] = {"$ne": "unbuilt"}
 
-        elif unbuilt == "false":
-            base_query["index.id"] = {"$ne": "unbuilt"}
-
-        data = await virtool.history.db.find(self._mongo, query, base_query)
+        data = await virtool.history.db.find(
+            self._mongo, self._pg, search_query, query, base_query
+        )
 
         return HistorySearchResult(**data)
 
