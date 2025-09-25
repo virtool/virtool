@@ -13,6 +13,7 @@ from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.groups.oas import PermissionsUpdate
+from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.users.models import User
@@ -1178,6 +1179,30 @@ class TestLogin:
         ]
 
         assert "session_id" in resp.cookies
+
+    async def test_administrator_login(self, fake: DataFaker) -> None:
+        """Test that login works with administrator user and can access admin endpoints."""
+        admin_user = await fake.users.create(
+            administrator_role=AdministratorRole.FULL, password="admin_password"
+        )
+
+        resp = await self.client.post(
+            "/account/login",
+            {"handle": admin_user.handle, "password": "admin_password"},
+        )
+
+        assert resp.status == HTTPStatus.CREATED
+
+        assert "session_id" in resp.cookies
+        assert "session_token" in resp.cookies
+
+        # Test if we can access authenticated endpoints after login
+        account_resp = await self.client.get("/account")
+        assert account_resp.status == HTTPStatus.OK
+
+        # Test if we can access admin-only endpoints
+        admin_resp = await self.client.get("/admin/roles")
+        assert admin_resp.status == HTTPStatus.OK
 
 
 async def test_logout(spawn_client: ClientSpawner, fake: DataFaker) -> None:
