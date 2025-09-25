@@ -1,39 +1,5 @@
 # serializer version: 1
-# name: test_attach_user_transform[False]
-  dict({
-    'id': 'bar',
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 1,
-    }),
-  })
-# ---
-# name: test_attach_user_transform[True]
-  list([
-    dict({
-      'id': 'bar',
-      'user': dict({
-        'handle': 'leeashley',
-        'id': 1,
-      }),
-    }),
-    dict({
-      'id': 'foo',
-      'user': dict({
-        'handle': 'zclark',
-        'id': 2,
-      }),
-    }),
-    dict({
-      'id': 'baz',
-      'user': dict({
-        'handle': 'leeashley',
-        'id': 1,
-      }),
-    }),
-  ])
-# ---
-# name: test_permission_transform[multi]
+# name: TestAttachPermissionsTransform.test_ok[multi]
   list([
     dict({
       'groups': list([
@@ -102,7 +68,7 @@
     }),
   ])
 # ---
-# name: test_permission_transform[single]
+# name: TestAttachPermissionsTransform.test_ok[single]
   dict({
     'groups': list([
       1,
@@ -120,4 +86,70 @@
       'upload_file': True,
     }),
   })
+# ---
+# name: TestAttachUserTransform.test_mixed_id_formats
+  list([
+    dict({
+      'id': 'doc1',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+    }),
+    dict({
+      'id': 'doc2',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+    }),
+    dict({
+      'id': 'doc3',
+      'user': dict({
+        'handle': 'zclark',
+        'id': 2,
+      }),
+    }),
+    dict({
+      'id': 'doc4',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+    }),
+  ])
+# ---
+# name: TestAttachUserTransform.test_ok[False]
+  dict({
+    'id': 'bar',
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 1,
+    }),
+  })
+# ---
+# name: TestAttachUserTransform.test_ok[True]
+  list([
+    dict({
+      'id': 'bar',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+    }),
+    dict({
+      'id': 'foo',
+      'user': dict({
+        'handle': 'zclark',
+        'id': 2,
+      }),
+    }),
+    dict({
+      'id': 'baz',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+    }),
+  ])
 # ---
