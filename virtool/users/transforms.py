@@ -182,17 +182,18 @@ class AttachUserTransform(AbstractTransform):
                         user_data  # String version of legacy ID
                     )
 
-        if len(user_rows) != len(user_ids):
-            found_ids = set()
-            for user_row in user_rows:
-                found_ids.add(user_row.id)
-                if user_row.legacy_id:
-                    found_ids.add(user_row.legacy_id)
-                # Also add string versions for comparison
-                found_ids.add(str(user_row.id))
-                if user_row.legacy_id:
-                    found_ids.add(str(user_row.legacy_id))
-            non_existent_user_ids = user_ids - found_ids
+        found_ids = set()
+        for user_row in user_rows:
+            found_ids.add(user_row.id)
+            if user_row.legacy_id:
+                found_ids.add(user_row.legacy_id)
+            # Also add string versions for comparison
+            found_ids.add(str(user_row.id))
+            if user_row.legacy_id:
+                found_ids.add(str(user_row.legacy_id))
+
+        non_existent_user_ids = user_ids - found_ids
+        if non_existent_user_ids:
             raise KeyError(
                 f"Document contains non-existent user(s): {non_existent_user_ids}",
             )
