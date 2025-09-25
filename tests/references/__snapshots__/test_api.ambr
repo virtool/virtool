@@ -692,6 +692,137 @@
     ]),
   })
 # ---
+# name: TestFindHistory.test_ok
+  dict({
+    'documents': list([
+      dict({
+        'created_at': 'approximately_now_isoformat',
+        'description': 'Created new sequence NC_001367 in Isolate strain_1',
+        'id': 'fb085f7f.2',
+        'index': dict({
+          'id': 'unbuilt',
+          'version': 'unbuilt',
+        }),
+        'method_name': 'create_sequence',
+        'otu': dict({
+          'id': 'fb085f7f',
+          'name': 'Tobacco mosaic virus',
+          'version': 2,
+        }),
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'bf1b993c',
+          'name': 'Test Reference',
+        }),
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 1,
+        }),
+      }),
+      dict({
+        'created_at': 'approximately_now_isoformat',
+        'description': 'Added Isolate strain_1 as default',
+        'id': 'fb085f7f.1',
+        'index': dict({
+          'id': 'unbuilt',
+          'version': 'unbuilt',
+        }),
+        'method_name': 'add_isolate',
+        'otu': dict({
+          'id': 'fb085f7f',
+          'name': 'Tobacco mosaic virus',
+          'version': 1,
+        }),
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'bf1b993c',
+          'name': 'Test Reference',
+        }),
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 1,
+        }),
+      }),
+      dict({
+        'created_at': 'approximately_now_isoformat',
+        'description': 'Created Tobacco mosaic virus (TMV)',
+        'id': 'fb085f7f.0',
+        'index': dict({
+          'id': 'unbuilt',
+          'version': 'unbuilt',
+        }),
+        'method_name': 'create',
+        'otu': dict({
+          'id': 'fb085f7f',
+          'name': 'Tobacco mosaic virus',
+          'version': 0,
+        }),
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'bf1b993c',
+          'name': 'Test Reference',
+        }),
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 1,
+        }),
+      }),
+      dict({
+        'created_at': 'approximately_now_isoformat',
+        'description': 'Created Potato virus X (PVX)',
+        'id': '7cf872dc.0',
+        'index': dict({
+          'id': 'unbuilt',
+          'version': 'unbuilt',
+        }),
+        'method_name': 'create',
+        'otu': dict({
+          'id': '7cf872dc',
+          'name': 'Potato virus X',
+          'version': 0,
+        }),
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'bf1b993c',
+          'name': 'Test Reference',
+        }),
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 1,
+        }),
+      }),
+      dict({
+        'created_at': 'approximately_now_isoformat',
+        'description': 'Created Cucumber mosaic virus',
+        'id': '3cbb22cc.0',
+        'index': dict({
+          'id': 'unbuilt',
+          'version': 'unbuilt',
+        }),
+        'method_name': 'create',
+        'otu': dict({
+          'id': '3cbb22cc',
+          'name': 'Cucumber mosaic virus',
+          'version': 0,
+        }),
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'bf1b993c',
+          'name': 'Test Reference',
+        }),
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 1,
+        }),
+      }),
+    ]),
+    'found_count': 5,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 5,
+  })
+# ---
 # name: TestGet.test_ok
   dict({
     'cloned_from': None,

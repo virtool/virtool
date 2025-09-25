@@ -9,14 +9,18 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
 
+from virtool.otus.models import OTU
 import virtool.utils
-from tests.fixtures.client import ClientSpawner
+from tests.fixtures.client import ClientSpawner, VirtoolTestClient
 from tests.fixtures.response import RespIs
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app, get_one_field
+from virtool.otus.oas import (
+    CreateOTURequest,
+)
 from virtool.references.models import ReferenceDataType
 from virtool.references.oas import CreateReferenceRequest, CreateReferenceUserRequest
 from virtool.settings.oas import UpdateSettingsRequest
@@ -1352,3 +1356,104 @@ async def test_find_otus(
 
     assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot
+
+
+class TestFindHistory:
+    """Test the reference history endpoint."""
+
+    client: VirtoolTestClient
+    reference_id: str
+
+    @pytest.fixture(autouse=True)
+    async def setup(
+        self,
+        data_layer: DataLayer,
+        spawn_client: ClientSpawner,
+    ):
+        """Set up test data with reference, OTUs, isolates, and sequences."""
+        self.client = await spawn_client(authenticated=True)
+
+        reference = await data_layer.references.create(
+            CreateReferenceRequest(
+                name="Test Reference",
+                organism="virus",
+                data_type=ReferenceDataType.genome,
+            ),
+            self.client.user.id,
+        )
+
+        self.reference_id = reference.id
+
+        otu_1 = await data_layer.otus.create(
+            self.reference_id,
+            CreateOTURequest(name="Tobacco mosaic virus", abbreviation="TMV"),
+            self.client.user.id,
+        )
+
+        otu_2 = await data_layer.otus.create(
+            self.reference_id,
+            CreateOTURequest(name="Potato virus X", abbreviation="PVX"),
+            self.client.user.id,
+        )
+
+        otu_3 = await data_layer.otus.create(
+            self.reference_id,
+            CreateOTURequest(name="Cucumber mosaic virus"),
+            self.client.user.id,
+        )
+
+        isolate = await data_layer.otus.add_isolate(
+            otu_1.id,
+            "isolate",
+            "strain_1",
+            self.client.user.id,
+        )
+
+        await data_layer.otus.create_sequence(
+            otu_1.id,
+            isolate.id,
+            "NC_001367",
+            "Tobacco mosaic virus complete genome",
+            "ATGCGTACGTACGTACGTACGTACGTACGTACG",
+            self.client.user.id,
+        )
+
+    async def test_ok(self, snapshot_recent: SnapshotAssertion):
+        """Test successful history retrieval."""
+        resp = await self.client.get(f"/references/v1/{self.reference_id}/history")
+
+        assert resp.status == HTTPStatus.OK
+        body = await resp.json()
+
+        assert len(body["documents"]) == body["found_count"] == body["total_count"] == 5
+        assert body["page_count"] == 1
+
+        assert body == snapshot_recent
+
+    async def test_unbuilt_filter(self):
+        """Test history with unbuilt filter."""
+        resp = await self.client.get(
+            f"/references/v1/{self.reference_id}/history?unbuilt=true"
+        )
+
+        assert resp.status == HTTPStatus.OK
+        body = await resp.json()
+        assert len(body["documents"]) == body["found_count"] == 5
+        assert body["total_count"] == 5
+
+    async def test_built_filter(self):
+        """Test history with built filter."""
+        resp = await self.client.get(
+            f"/references/v1/{self.reference_id}/history?unbuilt=false"
+        )
+
+        assert resp.status == HTTPStatus.OK
+        body = await resp.json()
+        assert len(body["documents"]) == body["found_count"] == 0
+        assert body["total_count"] == 5
+
+    async def test_not_found(self):
+        """Test 404 for non-existent reference."""
+        resp = await self.client.get("/references/v1/nonexistent/history")
+
+        assert resp.status == HTTPStatus.NOT_FOUND
