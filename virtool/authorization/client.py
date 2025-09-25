@@ -23,10 +23,7 @@ from virtool.authorization.results import (
     AddRelationshipResult,
     RemoveRelationshipResult,
 )
-from virtool.models.roles import (
-    AdministratorRole,
-    SpaceRoleType,
-)
+from virtool.models.roles import AdministratorRole
 from virtool.types import App
 
 
@@ -96,19 +93,13 @@ class AuthorizationClient:
 
         return sorted(
             [
-                (relation.key.user.split(":")[1], relation.key.relation)
+                (
+                    relation.key.user.split(":")[1],
+                    AdministratorRole(relation.key.relation),
+                )
                 for relation in response.tuples
             ]
         )
-
-    async def list_user_roles(self, user_id: str, space_id: int) -> list[SpaceRoleType]:
-        response = await self.openfga.read(
-            ReadRequest(
-                tuple_key=TupleKey(user=f"user:{user_id}", object=f"space:{space_id}")
-            )
-        )
-
-        return sorted([relation.key.relation for relation in response.tuples])
 
     async def add(self, *relationships: AbstractRelationship):
         """Add one or more authorization relationships.

@@ -43,7 +43,8 @@ class SQLUser(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     active: Mapped[bool] = mapped_column(default=True)
     administrator_role: Mapped[AdministratorRole | None] = mapped_column(
-        Enum(AdministratorRole), nullable=True
+        Enum(AdministratorRole, values_callable=lambda obj: [e.value for e in obj]),
+        nullable=True,
     )
     b2c_display_name: Mapped[str] = mapped_column(default="")
     b2c_given_name: Mapped[str] = mapped_column(default="")
