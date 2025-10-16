@@ -327,3 +327,45 @@ class TestMakeDirectory:
 
         assert base_path.is_dir() is True
         assert next_path.is_dir() is True
+
+
+class TestRm:
+    def test_remove_file(self, tmp_path: Path):
+        """Test removing a simple file."""
+        file_path = tmp_path / "test.txt"
+        file_path.write_text("test content")
+
+        assert file_path.exists()
+        assert virtool.utils.rm(file_path) is True
+        assert not file_path.exists()
+
+    def test_remove_empty_directory_recursive(self, tmp_path: Path):
+        """Test removing an empty directory with recursive=True."""
+        dir_path = tmp_path / "empty_dir"
+        dir_path.mkdir()
+
+        assert dir_path.exists()
+        assert virtool.utils.rm(dir_path, recursive=True) is True
+        assert not dir_path.exists()
+
+    def test_remove_non_empty_directory_recursive(self, tmp_path: Path):
+        """Test removing a non-empty directory with recursive=True."""
+        dir_path = tmp_path / "non_empty_dir"
+        dir_path.mkdir()
+        (dir_path / "file1.txt").write_text("content 1")
+        (dir_path / "file2.txt").write_text("content 2")
+        subdir = dir_path / "subdir"
+        subdir.mkdir()
+        (subdir / "file3.txt").write_text("content 3")
+
+        assert dir_path.exists()
+        assert virtool.utils.rm(dir_path, recursive=True) is True
+        assert not dir_path.exists()
+
+    def test_remove_directory_without_recursive_raises(self, tmp_path: Path):
+        """Test that removing a directory without recursive=True raises IsADirectoryError."""
+        dir_path = tmp_path / "dir"
+        dir_path.mkdir()
+
+        with pytest.raises(IsADirectoryError):
+            virtool.utils.rm(dir_path, recursive=False)
