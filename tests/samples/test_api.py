@@ -15,6 +15,7 @@ from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
+from virtool.jobs.models import JobState
 from virtool.models.enums import LibraryType, Permission
 from virtool.mongo.core import Mongo
 from virtool.samples.fake import create_fake_sample
@@ -877,26 +878,180 @@ async def test_finalize(
 
 
 class TestDelete:
-    @pytest.mark.parametrize("finalized", [True, False])
-    async def test_ok(
+    async def setup_unfinalized_sample_with_job(
         self,
+        job_state: JobState,
         data_path: Path,
-        finalized: bool,
         fake: DataFaker,
+        mongo: Mongo,
         spawn_client: ClientSpawner,
-        tmp_path: Path,
-    ):
+        static_time,
+    ) -> VirtoolTestClient:
+        """Helper to create an unfinalized sample with a job in a specific state."""
         client = await spawn_client(authenticated=True)
 
         (data_path / "samples/test").mkdir(parents=True)
 
         user = await fake.users.create()
 
-        await create_fake_sample(client.app, "test", user.id, finalized=finalized)
+        await create_fake_sample(client.app, "test", user.id, finalized=False)
+
+        job = await fake.jobs.create(user, workflow="create_sample")
+
+        await mongo.jobs.update_one(
+            {"_id": job.id},
+            {
+                "$set": {
+                    "status": [
+                        {
+                            "error": None,
+                            "progress": 0,
+                            "stage": None,
+                            "state": job_state.value,
+                            "step_description": None,
+                            "step_name": None,
+                            "timestamp": static_time.datetime,
+                        },
+                    ],
+                },
+            },
+        )
+
+        await mongo.samples.update_one(
+            {"_id": "test"},
+            {"$set": {"job": {"id": job.id}}},
+        )
+
+        return client
+
+    async def test_finalized(
+        self,
+        data_path: Path,
+        fake: DataFaker,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that finalized samples can be deleted."""
+        client = await spawn_client(authenticated=True)
+
+        (data_path / "samples/test").mkdir(parents=True)
+
+        user = await fake.users.create()
+
+        await create_fake_sample(client.app, "test", user.id, finalized=True)
 
         resp = await client.delete("/samples/test")
 
-        assert resp.status == 204 if finalized else 400
+        assert resp.status == 204
+
+    async def test_unfinalized_with_error_job(
+        self,
+        data_path: Path,
+        fake: DataFaker,
+        mongo: Mongo,
+        spawn_client: ClientSpawner,
+        static_time,
+    ):
+        """Test that unfinalized samples with errored jobs can be deleted."""
+        client = await self.setup_unfinalized_sample_with_job(
+            JobState.ERROR,
+            data_path,
+            fake,
+            mongo,
+            spawn_client,
+            static_time,
+        )
+
+        resp = await client.delete("/samples/test")
+
+        assert resp.status == 204
+
+    async def test_unfinalized_with_timeout_job(
+        self,
+        data_path: Path,
+        fake: DataFaker,
+        mongo: Mongo,
+        spawn_client: ClientSpawner,
+        static_time,
+    ):
+        """Test that unfinalized samples with timed out jobs can be deleted."""
+        client = await self.setup_unfinalized_sample_with_job(
+            JobState.TIMEOUT,
+            data_path,
+            fake,
+            mongo,
+            spawn_client,
+            static_time,
+        )
+
+        resp = await client.delete("/samples/test")
+
+        assert resp.status == 204
+
+    async def test_unfinalized_with_cancelled_job(
+        self,
+        data_path: Path,
+        fake: DataFaker,
+        mongo: Mongo,
+        spawn_client: ClientSpawner,
+        static_time,
+    ):
+        """Test that unfinalized samples with cancelled jobs can be deleted."""
+        client = await self.setup_unfinalized_sample_with_job(
+            JobState.CANCELLED,
+            data_path,
+            fake,
+            mongo,
+            spawn_client,
+            static_time,
+        )
+
+        resp = await client.delete("/samples/test")
+
+        assert resp.status == 204
+
+    async def test_unfinalized_with_terminated_job(
+        self,
+        data_path: Path,
+        fake: DataFaker,
+        mongo: Mongo,
+        spawn_client: ClientSpawner,
+        static_time,
+    ):
+        """Test that unfinalized samples with terminated jobs can be deleted."""
+        client = await self.setup_unfinalized_sample_with_job(
+            JobState.TERMINATED,
+            data_path,
+            fake,
+            mongo,
+            spawn_client,
+            static_time,
+        )
+
+        resp = await client.delete("/samples/test")
+
+        assert resp.status == 204
+
+    async def test_unfinalized_with_running_job(
+        self,
+        data_path: Path,
+        fake: DataFaker,
+        mongo: Mongo,
+        spawn_client: ClientSpawner,
+        static_time,
+    ):
+        """Test that unfinalized samples with running jobs cannot be deleted."""
+        client = await self.setup_unfinalized_sample_with_job(
+            JobState.RUNNING,
+            data_path,
+            fake,
+            mongo,
+            spawn_client,
+            static_time,
+        )
+
+        resp = await client.delete("/samples/test")
+
+        assert resp.status == 400
 
     @pytest.mark.parametrize("finalized", [True, False])
     async def test_from_job(
