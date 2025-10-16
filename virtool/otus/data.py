@@ -73,6 +73,7 @@ class OTUData:
             apply_transforms(
                 document,
                 [AttachReferenceTransform(self._mongo)],
+                self._pg,
             ),
             virtool.history.db.get_most_recent_change(
                 self._mongo,
@@ -86,6 +87,7 @@ class OTUData:
                 "most_recent_change": await apply_transforms(
                     most_recent_change,
                     [AttachUserTransform(self._pg)],
+                    self._pg,
                 ),
             },
         )
@@ -799,6 +801,7 @@ class OTUData:
             document = await apply_transforms(
                 base_processor(document),
                 [AttachReferenceTransform(self._mongo)],
+                self._pg,
             )
             return Sequence(**document)
 

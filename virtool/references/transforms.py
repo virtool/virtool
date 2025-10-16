@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.pg.utils import get_row_by_id
@@ -25,7 +25,9 @@ class AttachReferenceTransform(AbstractTransform):
     async def attach_one(self, document: Document, prepared: Any) -> Document | None:
         return {**document, "reference": prepared}
 
-    async def prepare_one(self, document: Document) -> Document | None:
+    async def prepare_one(
+        self, document: Document, session: AsyncSession
+    ) -> Document | None:
         reference_id = get_safely(document, "reference", "id")
 
         if reference_id:
@@ -41,6 +43,7 @@ class AttachReferenceTransform(AbstractTransform):
     async def prepare_many(
         self,
         documents: list[Document],
+        session: AsyncSession,
     ) -> dict[str, Document | None]:
         reference_ids = {get_safely(d, "reference", "id") for d in documents}
 
@@ -64,7 +67,9 @@ class AttachImportedFromTransform(AbstractTransform):
         self._mongo = mongo
         self._pg = pg
 
-    async def prepare_one(self, document: Document) -> Document | None:
+    async def prepare_one(
+        self, document: Document, session: AsyncSession
+    ) -> Document | None:
         try:
             upload_id = document["imported_from"]["id"]
         except KeyError:
@@ -72,7 +77,9 @@ class AttachImportedFromTransform(AbstractTransform):
 
         row = await get_row_by_id(self._pg, SQLUpload, upload_id)
 
-        return await apply_transforms(row.to_dict(), [AttachUserTransform(self._pg)])
+        return await apply_transforms(
+            row.to_dict(), [AttachUserTransform(self._pg)], self._pg
+        )
 
     async def attach_one(
         self,

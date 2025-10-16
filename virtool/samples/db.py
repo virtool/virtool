@@ -44,46 +44,45 @@ class AttachArtifactsAndReadsTransform(AbstractTransform):
     async def attach_one(self, document: Document, prepared: Any) -> Document:
         return {**document, **prepared}
 
-    async def prepare_one(self, document: Document) -> Any:
+    async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
         sample_id = document["id"]
 
-        async with AsyncSession(self._pg) as session:
-            artifacts = (
-                await session.execute(
-                    select(SQLSampleArtifact).filter_by(sample=sample_id),
-                )
-            ).scalars()
+        artifacts = (
+            await session.execute(
+                select(SQLSampleArtifact).filter_by(sample=sample_id),
+            )
+        ).scalars()
 
-            reads_files = (
-                await session.execute(
-                    select(SQLSampleReads).filter_by(sample=sample_id),
-                )
-            ).scalars()
+        reads_files = (
+            await session.execute(
+                select(SQLSampleReads).filter_by(sample=sample_id),
+            )
+        ).scalars()
 
-            artifacts = [artifact.to_dict() for artifact in artifacts]
-            reads = [reads_file.to_dict() for reads_file in reads_files]
+        artifacts = [artifact.to_dict() for artifact in artifacts]
+        reads = [reads_file.to_dict() for reads_file in reads_files]
+
+        if document["ready"]:
+            for artifact in artifacts:
+                name_on_disk = artifact["name_on_disk"]
+                artifact["download_url"] = (
+                    f"/samples/{sample_id}/artifacts/{name_on_disk}"
+                )
+
+        for reads_file in reads:
+            if upload := reads_file.get("upload"):
+                reads_file["upload"] = (
+                    (
+                        await session.execute(
+                            select(SQLUpload).filter_by(id=upload),
+                        )
+                    ).scalar()
+                ).to_dict()
 
             if document["ready"]:
-                for artifact in artifacts:
-                    name_on_disk = artifact["name_on_disk"]
-                    artifact["download_url"] = (
-                        f"/samples/{sample_id}/artifacts/{name_on_disk}"
-                    )
-
-            for reads_file in reads:
-                if upload := reads_file.get("upload"):
-                    reads_file["upload"] = (
-                        (
-                            await session.execute(
-                                select(SQLUpload).filter_by(id=upload),
-                            )
-                        ).scalar()
-                    ).to_dict()
-
-                if document["ready"]:
-                    reads_file["download_url"] = (
-                        f"/samples/{sample_id}/reads/{reads_file['name']}"
-                    )
+                reads_file["download_url"] = (
+                    f"/samples/{sample_id}/reads/{reads_file['name']}"
+                )
 
         return {"artifacts": artifacts, "reads": reads}
 

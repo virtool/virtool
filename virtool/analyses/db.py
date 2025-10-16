@@ -19,17 +19,16 @@ class AttachAnalysisFileTransform(AbstractTransform):
     async def attach_one(self, document: Document, prepared: Any) -> Document:
         return {**document, "files": prepared}
 
-    async def prepare_one(self, document: Document) -> Any:
-        async with AsyncSession(self._pg) as session:
-            results = (
-                (
-                    await session.execute(
-                        select(SQLAnalysisFile).filter_by(analysis=document["id"]),
-                    )
+    async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
+        results = (
+            (
+                await session.execute(
+                    select(SQLAnalysisFile).filter_by(analysis=document["id"]),
                 )
-                .scalars()
-                .all()
             )
+            .scalars()
+            .all()
+        )
 
         return [result.to_dict() for result in results]
 

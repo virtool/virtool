@@ -30,7 +30,9 @@ class MessagesData:
 
         if instance_message.active:
             document = instance_message.to_dict()
-            document = await apply_transforms(document, [AttachUserTransform(self._pg)])
+            document = await apply_transforms(
+                document, [AttachUserTransform(self._pg)], self._pg
+            )
             return InstanceMessage(**document)
 
         raise ResourceConflictError
@@ -51,7 +53,9 @@ class MessagesData:
             document = instance_message.to_dict()
             await session.commit()
 
-        document = await apply_transforms(document, [AttachUserTransform(self._pg)])
+        document = await apply_transforms(
+            document, [AttachUserTransform(self._pg)], self._pg
+        )
 
         return InstanceMessage(**document)
 
@@ -88,6 +92,8 @@ class MessagesData:
 
             await session.commit()
 
-        document = await apply_transforms(document, [AttachUserTransform(self._pg)])
+        document = await apply_transforms(
+            document, [AttachUserTransform(self._pg)], self._pg
+        )
 
         return InstanceMessage(**document)

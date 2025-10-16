@@ -50,6 +50,7 @@ class HistoryData:
                     AttachReferenceTransform(self._mongo),
                     AttachUserTransform(self._pg),
                 ],
+                self._pg,
             )
             return History(**document)
 

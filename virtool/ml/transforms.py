@@ -22,30 +22,30 @@ class AttachMLTransform(AbstractTransform):
     ) -> Document:
         return {**document, "ml": prepared}
 
-    async def prepare_one(self, document: Document) -> Document | None:
+    async def prepare_one(
+        self, document: Document, session: AsyncSession
+    ) -> Document | None:
         if ml_release_id := document.get("ml"):
-            async with AsyncSession(self._pg) as session:
-                ml_release = await session.get(SQLMLModelRelease, ml_release_id)
+            ml_release = await session.get(SQLMLModelRelease, ml_release_id)
 
-                if ml_release:
-                    return {**ml_release.to_dict(), "model": ml_release.model.to_dict()}
+            if ml_release:
+                return {**ml_release.to_dict(), "model": ml_release.model.to_dict()}
 
         return None
 
     async def prepare_many(
-        self, documents: list[Document]
+        self, documents: list[Document], session: AsyncSession
     ) -> dict[str, list[Document | None]]:
         ml_model_release_ids = {d.get("ml") for d in documents}
         ml_model_release_ids.discard(None)
 
-        async with AsyncSession(self._pg) as session:
-            model_releases = await session.execute(select(SQLMLModelRelease))
+        model_releases = await session.execute(select(SQLMLModelRelease))
 
-            lookup: dict[int | None, Document | None] = {
-                ml.id: {**ml.to_dict(), "model": ml.model.to_dict()}
-                for ml in model_releases.scalars().all()
-            }
+        lookup: dict[int | None, Document | None] = {
+            ml.id: {**ml.to_dict(), "model": ml.model.to_dict()}
+            for ml in model_releases.scalars().all()
+        }
 
-            lookup[None] = None
+        lookup[None] = None
 
         return {d["id"]: lookup[d.get("ml")] for d in documents}

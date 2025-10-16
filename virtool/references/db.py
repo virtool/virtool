@@ -90,7 +90,7 @@ async def processor(mongo: "Mongo", pg: AsyncEngine, document: Document) -> Docu
         installed = None
 
     if installed:
-        installed = await apply_transforms(installed, [AttachUserTransform(pg)])
+        installed = await apply_transforms(installed, [AttachUserTransform(pg)], pg)
 
     document["id"] = ref_id
     document["installed"] = installed
@@ -433,6 +433,7 @@ async def get_latest_build(
         return await apply_transforms(
             base_processor(latest_build),
             [AttachUserTransform(pg)],
+            pg,
         )
 
 

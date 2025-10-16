@@ -26,17 +26,18 @@ class AttachUploadTransform(AbstractTransform):
 
         return await get_row_by_id(self._pg, SQLUpload, upload_id)
 
-    async def prepare_many(self, documents: list[Document]) -> dict[int, dict]:
-        async with AsyncSession(self._pg) as session:
-            result = await session.execute(
-                select(SQLUpload).where(
-                    SQLUpload.id.in_(
-                        list({document["upload"] for document in documents}),
-                    ),
+    async def prepare_many(
+        self, documents: list[Document], session: AsyncSession
+    ) -> dict[int, dict]:
+        result = await session.execute(
+            select(SQLUpload).where(
+                SQLUpload.id.in_(
+                    list({document["upload"] for document in documents}),
                 ),
-            )
+            ),
+        )
 
-            uploads = {upload.id: dict(upload) for upload in result.scalars()}
+        uploads = {upload.id: dict(upload) for upload in result.scalars()}
 
         return {
             document["_id"]: uploads.get(document["upload"]) for document in documents

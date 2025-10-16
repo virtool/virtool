@@ -53,6 +53,7 @@ from asyncio import gather
 from typing import Any
 
 import sentry_sdk
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.types import Document
 
@@ -97,17 +98,21 @@ class AbstractTransform(ABC):
         ]
 
     @abstractmethod
-    async def prepare_one(self, document: Document) -> Any: ...
+    async def prepare_one(self, document: Document, session: AsyncSession) -> Any: ...
 
-    async def prepare_many(self, documents: list[Document]) -> Any:
+    async def prepare_many(
+        self, documents: list[Document], session: AsyncSession
+    ) -> Any:
         return {
-            document["id"]: await self.prepare_one(document) for document in documents
+            document["id"]: await self.prepare_one(document, session)
+            for document in documents
         }
 
 
 async def apply_transforms(
     documents: Document | list[Document],
     pipeline: list[AbstractTransform],
+    pg: AsyncEngine,
 ) -> Document | list[Document]:
     """Apply a list of transforms to one or more documents.
 
@@ -120,39 +125,43 @@ async def apply_transforms(
 
     :param documents: a single document or list of documents
     :param pipeline: a list of transforms to apply
+    :param pg: the application AsyncEngine object
     :return: one transformed document or a list of transformed documents
     """
     with sentry_sdk.start_span(
         op="apply_transforms",
         name=", ".join([p.__class__.__name__ for p in pipeline]),
     ):
-        if isinstance(documents, list):
-            all_prepared = await gather(
+        async with AsyncSession(pg) as session:
+            if isinstance(documents, list):
+                all_prepared = await gather(
+                    *[
+                        transform.prepare_many(
+                            [transform.preprocess(d) for d in documents], session
+                        )
+                        for transform in pipeline
+                    ],
+                )
+
+                for prepared, transform in zip(all_prepared, pipeline, strict=False):
+                    documents = await transform.attach_many(
+                        [transform.preprocess(d) for d in documents],
+                        prepared,
+                    )
+
+                return documents
+
+            document = documents
+
+            # In this case, we are dealing with a single document.
+            prepared = await asyncio.gather(
                 *[
-                    transform.prepare_many([transform.preprocess(d) for d in documents])
+                    transform.prepare_one(transform.preprocess(document), session)
                     for transform in pipeline
                 ],
             )
 
-            for prepared, transform in zip(all_prepared, pipeline, strict=False):
-                documents = await transform.attach_many(
-                    [transform.preprocess(d) for d in documents],
-                    prepared,
-                )
+            for p, transform in zip(prepared, pipeline, strict=False):
+                document = await transform.attach_one(transform.preprocess(document), p)
 
-            return documents
-
-        document = documents
-
-        # In this case, we are dealing with a single document.
-        prepared = await asyncio.gather(
-            *[
-                transform.prepare_one(transform.preprocess(document))
-                for transform in pipeline
-            ],
-        )
-
-        for p, transform in zip(prepared, pipeline, strict=False):
-            document = await transform.attach_one(transform.preprocess(document), p)
-
-        return document
+            return document

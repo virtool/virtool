@@ -97,6 +97,7 @@ async def find(
     data["documents"] = await apply_transforms(
         [base_processor(d) for d in data["documents"]],
         [AttachReferenceTransform(mongo)],
+        None,  # pg parameter - not needed for AttachReferenceTransform
     )
 
     history_query = {"index.id": "unbuilt"}

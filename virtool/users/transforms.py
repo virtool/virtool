@@ -36,40 +36,42 @@ class AttachPermissionsTransform(AbstractTransform):
             "permissions": prepared,
         }
 
-    async def prepare_one(self, document: Document) -> dict[str, bool]:
+    async def prepare_one(
+        self, document: Document, session: AsyncSession
+    ) -> dict[str, bool]:
         if not document["groups"]:
             return generate_base_permissions()
 
-        async with AsyncSession(self._pg) as session:
-            result = await session.execute(
-                select(SQLGroup).where(
-                    compose_legacy_id_multi_expression(SQLGroup, document["groups"]),
-                ),
-            )
+        result = await session.execute(
+            select(SQLGroup).where(
+                compose_legacy_id_multi_expression(SQLGroup, document["groups"]),
+            ),
+        )
 
-            return merge_group_permissions(
-                [group.to_dict() for group in result.scalars().all()],
-            )
+        return merge_group_permissions(
+            [group.to_dict() for group in result.scalars().all()],
+        )
 
-    async def prepare_many(self, documents: list[Document]) -> dict[int | str, Any]:
+    async def prepare_many(
+        self, documents: list[Document], session: AsyncSession
+    ) -> dict[int | str, Any]:
         all_group_ids: set[int | str] = {
             group_id for document in documents for group_id in document["groups"]
         }
 
         if all_group_ids:
-            async with AsyncSession(self._pg) as session:
-                result = await session.execute(
-                    select(SQLGroup).where(
-                        compose_legacy_id_multi_expression(SQLGroup, all_group_ids),
-                    ),
-                )
+            result = await session.execute(
+                select(SQLGroup).where(
+                    compose_legacy_id_multi_expression(SQLGroup, all_group_ids),
+                ),
+            )
 
-                groups = [group.to_dict() for group in result.scalars().all()]
+            groups = [group.to_dict() for group in result.scalars().all()]
 
-                all_groups_map = {
-                    **{group["id"]: group for group in groups},
-                    **{group["legacy_id"]: group for group in groups},
-                }
+            all_groups_map = {
+                **{group["id"]: group for group in groups},
+                **{group["legacy_id"]: group for group in groups},
+            }
 
             return {
                 document["id"]: merge_group_permissions(
@@ -128,59 +130,59 @@ class AttachUserTransform(AbstractTransform):
             },
         }
 
-    async def prepare_one(self, document: Document) -> Document:
+    async def prepare_one(self, document: Document, session: AsyncSession) -> Document:
         if not isinstance(document, dict):
             raise TypeError("Document must be a dictionary")
 
         user_id = get_safely(document, "user", "id")
 
-        async with AsyncSession(self._pg) as session:
-            result = await session.execute(
-                select(SQLUser.id, SQLUser.handle, SQLUser.legacy_id).where(
-                    compose_legacy_id_single_expression(SQLUser, user_id),
-                ),
-            )
+        result = await session.execute(
+            select(SQLUser.id, SQLUser.handle, SQLUser.legacy_id).where(
+                compose_legacy_id_single_expression(SQLUser, user_id),
+            ),
+        )
 
-            user_row = result.first()
+        user_row = result.first()
 
-            if user_row is None:
-                raise KeyError(f"Document contains non-existent user: {user_id}.")
+        if user_row is None:
+            raise KeyError(f"Document contains non-existent user: {user_id}.")
 
-            return {
-                "id": user_row.id,
-                "handle": user_row.handle,
-            }
+        return {
+            "id": user_row.id,
+            "handle": user_row.handle,
+        }
 
-    async def prepare_many(self, documents: list[Document]) -> dict[str, Any]:
+    async def prepare_many(
+        self, documents: list[Document], session: AsyncSession
+    ) -> dict[str, Any]:
         user_ids = {get_safely(d, "user", "id") for d in documents}
         user_ids.discard(None)
 
         if not user_ids:
             return {d["id"]: None for d in documents}
 
-        async with AsyncSession(self._pg) as session:
-            result = await session.execute(
-                select(SQLUser.id, SQLUser.handle, SQLUser.legacy_id).where(
-                    compose_legacy_id_multi_expression(SQLUser, user_ids),
-                ),
-            )
+        result = await session.execute(
+            select(SQLUser.id, SQLUser.handle, SQLUser.legacy_id).where(
+                compose_legacy_id_multi_expression(SQLUser, user_ids),
+            ),
+        )
 
-            user_rows = result.all()
+        user_rows = result.all()
 
-            # Create mapping for both id and legacy_id lookups
-            user_map = {}
-            for user_row in user_rows:
-                user_data = {
-                    "id": user_row.id,
-                    "handle": user_row.handle,
-                }
-                user_map[user_row.id] = user_data
-                user_map[str(user_row.id)] = user_data  # String version of Postgres ID
-                if user_row.legacy_id:
-                    user_map[user_row.legacy_id] = user_data
-                    user_map[str(user_row.legacy_id)] = (
-                        user_data  # String version of legacy ID
-                    )
+        # Create mapping for both id and legacy_id lookups
+        user_map = {}
+        for user_row in user_rows:
+            user_data = {
+                "id": user_row.id,
+                "handle": user_row.handle,
+            }
+            user_map[user_row.id] = user_data
+            user_map[str(user_row.id)] = user_data  # String version of Postgres ID
+            if user_row.legacy_id:
+                user_map[user_row.legacy_id] = user_data
+                user_map[str(user_row.legacy_id)] = (
+                    user_data  # String version of legacy ID
+                )
 
         found_ids = set()
         for user_row in user_rows:

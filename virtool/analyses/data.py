@@ -152,6 +152,7 @@ class AnalysisData(DataLayerDomain):
                 AttachSubtractionsTransform(self._mongo),
                 AttachUserTransform(self._pg),
             ],
+            self._pg,
         )
 
         return AnalysisSearchResult.parse_obj(
@@ -218,7 +219,9 @@ class AnalysisData(DataLayerDomain):
         if document["workflow"] == "nuvs":
             transforms.append(AttachNuVsBLAST(self._pg))
 
-        document = await apply_transforms(base_processor(document), transforms)
+        document = await apply_transforms(
+            base_processor(document), transforms, self._pg
+        )
 
         return Analysis.parse_obj(
             {**document, "job": document["job"] if document["job"] else None},

@@ -27,6 +27,7 @@ class TestAttachSampleCounts:
                     "description": "This is a bug",
                 },
                 [AttachSampleCountsTransform(mongo)],
+                None,
             )
             == snapshot
         )
@@ -58,6 +59,7 @@ class TestAttachSampleCounts:
                     },
                 ],
                 [AttachSampleCountsTransform(mongo)],
+                None,
             )
             == snapshot
         )
@@ -85,6 +87,7 @@ class TestAttachLabels:
             await apply_transforms(
                 {"id": "foo", "name": "Foo", "labels": [1, 2]},
                 [AttachLabelsTransform(pg)],
+                pg,
             )
             == snapshot
         )
@@ -114,6 +117,7 @@ class TestAttachLabels:
                     {"id": "baz", "name": "Baz", "labels": []},
                 ],
                 [AttachLabelsTransform(pg)],
+                pg,
             )
             == snapshot
         )
