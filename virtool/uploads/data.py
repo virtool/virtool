@@ -90,7 +90,9 @@ class UploadsData(DataLayerDomain):
                 for row in (await session.execute(query)).unique().scalars()
             ]
 
-        uploads = await apply_transforms(uploads, [AttachUserTransform(self._pg)])
+        uploads = await apply_transforms(
+            uploads, [AttachUserTransform(self._pg)], self._pg
+        )
 
         return UploadSearchResult(
             items=uploads,
@@ -140,7 +142,9 @@ class UploadsData(DataLayerDomain):
             await session.commit()
 
         return Upload(
-            **await apply_transforms(upload_dict, [AttachUserTransform(self._pg)]),
+            **await apply_transforms(
+                upload_dict, [AttachUserTransform(self._pg)], self._pg
+            ),
         )
 
     async def get(self, upload_id: int) -> Upload:
@@ -163,6 +167,7 @@ class UploadsData(DataLayerDomain):
             **await apply_transforms(
                 upload.to_dict(),
                 [AttachUserTransform(self._pg)],
+                self._pg,
             ),
         )
 
@@ -193,7 +198,7 @@ class UploadsData(DataLayerDomain):
             await session.commit()
 
         upload = Upload(
-            **await apply_transforms(upload, [AttachUserTransform(self._pg)]),
+            **await apply_transforms(upload, [AttachUserTransform(self._pg)], self._pg),
         )
 
         with suppress(FileNotFoundError):

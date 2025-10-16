@@ -161,6 +161,7 @@ class JobsData:
         documents = await apply_transforms(
             [base_processor(d) for d in data],
             [AttachUserTransform(self._pg)],
+            self._pg,
         )
 
         for document in documents:
@@ -252,6 +253,7 @@ class JobsData:
                 "progress": status[-1]["progress"],
             },
             [AttachUserTransform(self._pg)],
+            self._pg,
         )
 
         return Job(**document)

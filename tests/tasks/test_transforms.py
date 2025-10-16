@@ -24,7 +24,7 @@ async def test_attach_task_transform(fake: DataFaker, pg: AsyncEngine, snapshot)
         },
     ]
 
-    transformed = await apply_transforms(documents, [AttachTaskTransform(pg)])
+    transformed = await apply_transforms(documents, [AttachTaskTransform(pg)], pg)
 
     assert transformed == snapshot(
         matcher=path_type({".*created_at": (datetime,)}, regex=True),
@@ -39,6 +39,7 @@ async def test_attach_task_transform_single(fake: DataFaker, pg: AsyncEngine, sn
         apply_transforms(
             {"id": 1, "task": {"id": task.id}},
             [AttachTaskTransform(pg)],
+            pg,
         ),
-        apply_transforms({"id": 2, "task": None}, [AttachTaskTransform(pg)]),
+        apply_transforms({"id": 2, "task": None}, [AttachTaskTransform(pg)], pg),
     ) == snapshot(matcher=path_type({".*created_at": (datetime,)}, regex=True))

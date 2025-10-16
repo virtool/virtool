@@ -17,6 +17,7 @@ class TestAttachPrimaryGroup:
                 "primary_group": "none",
             },
             [AttachPrimaryGroupTransform(pg)],
+            pg,
         )
 
         assert result == snapshot(
@@ -45,6 +46,7 @@ class TestAttachPrimaryGroup:
                 "primary_group": "group_1" if legacy else 1,
             },
             [AttachPrimaryGroupTransform(pg)],
+            pg,
         )
 
         assert result == snapshot(
@@ -78,6 +80,7 @@ class TestAttachPrimaryGroup:
                 {"id": "jim", "primary_group": 1},
             ],
             [AttachPrimaryGroupTransform(pg)],
+            pg,
         )
 
         assert result == snapshot(
@@ -122,6 +125,7 @@ class TestAttachGroups:
         result = await apply_transforms(
             {"id": "bob", "groups": [] if no_groups else ["group_1", 2]},
             [AttachGroupsTransform(pg)],
+            pg,
         )
 
         assert result == snapshot(
@@ -171,6 +175,7 @@ class TestAttachGroups:
                 {"id": "ned", "groups": ["group_2", "group_1"]},
             ],
             [AttachGroupsTransform(pg)],
+            pg,
         )
 
         assert result == snapshot(

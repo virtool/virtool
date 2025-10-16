@@ -92,6 +92,7 @@ class IndexData:
                 AttachJobTransform(self._mongo, self._pg),
                 AttachUserTransform(self._pg),
             ],
+            self._pg,
         )
 
         return [IndexMinimal(**item) for item in items]
@@ -138,6 +139,7 @@ class IndexData:
                 AttachJobTransform(self._mongo, self._pg),
                 AttachUserTransform(self._pg),
             ],
+            self._pg,
         )
 
         return Index(**document)
@@ -317,6 +319,7 @@ class IndexData:
         data["documents"] = await apply_transforms(
             [base_processor(d) for d in data["documents"]],
             [AttachReferenceTransform(self._mongo), AttachUserTransform(self._pg)],
+            self._pg,
         )
 
         return HistorySearchResult(**data)

@@ -169,6 +169,7 @@ class ReferencesData(DataLayerDomain):
                     AttachImportedFromTransform(self._mongo, self._pg),
                     AttachTaskTransform(self._pg),
                 ],
+                self._pg,
             ),
             self._mongo.references.count_documents(
                 {"remotes_from.slug": "virtool/ref-plant-viruses"},
@@ -346,11 +347,10 @@ class ReferencesData(DataLayerDomain):
             },
         )
 
-        print(document)
-
         document = await apply_transforms(
             document,
             [AttachUserTransform(self._pg), AttachTaskTransform(self._pg)],
+            self._pg,
         )
 
         try:
@@ -362,6 +362,7 @@ class ReferencesData(DataLayerDomain):
             installed = await apply_transforms(
                 installed,
                 [AttachUserTransform(self._pg)],
+                self._pg,
             )
 
         document["installed"] = installed
@@ -372,6 +373,7 @@ class ReferencesData(DataLayerDomain):
             imported_from = await apply_transforms(
                 imported_from,
                 [AttachUserTransform(self._pg)],
+                self._pg,
             )
 
         document["imported_from"] = imported_from

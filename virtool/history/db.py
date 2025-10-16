@@ -169,6 +169,7 @@ async def find(
         "documents": await apply_transforms(
             [base_processor(d) for d in data["documents"]],
             [AttachReferenceTransform(mongo), AttachUserTransform(pg)],
+            pg,
         ),
     }
 

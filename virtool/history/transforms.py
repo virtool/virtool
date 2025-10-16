@@ -19,7 +19,7 @@ class AttachDiffTransform(AbstractTransform):
     async def attach_one(self, document: Document, prepared: Any) -> Document:
         return {**document, "diff": prepared}
 
-    async def prepare_one(self, document: Document) -> Any:
+    async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
         if document["diff"] == "file":
             otu_id, otu_version = document["id"].split(".")
 
@@ -31,13 +31,12 @@ class AttachDiffTransform(AbstractTransform):
             )
 
         if document["diff"] == "postgres":
-            async with AsyncSession(self._pg) as session:
-                result = await session.execute(
-                    select(SQLHistoryDiff.diff).where(
-                        SQLHistoryDiff.change_id == document["id"],
-                    ),
-                )
+            result = await session.execute(
+                select(SQLHistoryDiff.diff).where(
+                    SQLHistoryDiff.change_id == document["id"],
+                ),
+            )
 
-                return result.scalar_one()
+            return result.scalar_one()
 
         return document["diff"]

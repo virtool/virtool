@@ -615,6 +615,7 @@ async def list_history(req):
         await apply_transforms(
             [base_processor(d) for d in documents],
             [AttachUserTransform(pg, ignore_errors=True)],
+            pg,
         ),
     )
 

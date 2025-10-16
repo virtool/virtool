@@ -50,11 +50,11 @@ class TestAttachMLTransform:
             await session.commit()
 
         assert await apply_transforms(
-            {"id": 1, "ml": 2}, [AttachMLTransform(pg)]
+            {"id": 1, "ml": 2}, [AttachMLTransform(pg)], pg
         ) == snapshot(name="not_none")
 
         assert await apply_transforms(
-            {"id": 1, "ml": None}, [AttachMLTransform(pg)]
+            {"id": 1, "ml": None}, [AttachMLTransform(pg)], pg
         ) == snapshot(name="none")
 
     async def test_multi(
@@ -120,4 +120,6 @@ class TestAttachMLTransform:
             {"id": 3, "ml": 3},
         ]
 
-        assert await apply_transforms(documents, [AttachMLTransform(pg)]) == snapshot
+        assert (
+            await apply_transforms(documents, [AttachMLTransform(pg)], pg) == snapshot
+        )

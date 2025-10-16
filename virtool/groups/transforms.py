@@ -25,26 +25,29 @@ class AttachPrimaryGroupTransform(AbstractTransform):
     async def attach_one(self, document: Document, prepared: Any):
         return {**document, "primary_group": prepared}
 
-    async def prepare_one(self, document: Document) -> Document | None:
+    async def prepare_one(
+        self, document: Document, session: AsyncSession
+    ) -> Document | None:
         group_id = document.get("primary_group")
 
         if group_id is None:
             return None
 
-        async with AsyncSession(self._pg) as session:
-            if isinstance(group_id, int):
-                query = select(SQLGroup).where(SQLGroup.id == group_id)
-            else:
-                query = select(SQLGroup).where(SQLGroup.legacy_id == group_id)
+        if isinstance(group_id, int):
+            query = select(SQLGroup).where(SQLGroup.id == group_id)
+        else:
+            query = select(SQLGroup).where(SQLGroup.legacy_id == group_id)
 
-            group = (await session.execute(query)).scalars().one_or_none()
+        group = (await session.execute(query)).scalars().one_or_none()
 
-            if group:
-                return group.to_dict()
+        if group:
+            return group.to_dict()
 
         return None
 
-    async def prepare_many(self, documents: list[Document]) -> Document:
+    async def prepare_many(
+        self, documents: list[Document], session: AsyncSession
+    ) -> Document:
         group_ids: list[int | str] = list(
             {
                 document.get("primary_group")
@@ -56,17 +59,14 @@ class AttachPrimaryGroupTransform(AbstractTransform):
         if not group_ids:
             return {document["id"]: None for document in documents}
 
-        async with AsyncSession(self._pg) as session:
-            expr = compose_legacy_id_multi_expression(SQLGroup, group_ids)
+        expr = compose_legacy_id_multi_expression(SQLGroup, group_ids)
 
-            groups = (
-                (await session.execute(select(SQLGroup).where(expr))).scalars().all()
-            )
+        groups = (await session.execute(select(SQLGroup).where(expr))).scalars().all()
 
-            group_id_map = {
-                **{group.id: group.to_dict() for group in groups},
-                **{group.legacy_id: group.to_dict() for group in groups},
-            }
+        group_id_map = {
+            **{group.id: group.to_dict() for group in groups},
+            **{group.legacy_id: group.to_dict() for group in groups},
+        }
 
         return {
             document["id"]: group_id_map.get(document.get("primary_group"))
@@ -83,39 +83,38 @@ class AttachGroupsTransform(AbstractTransform):
     async def attach_one(self, document: Document, prepared: Any):
         return {**document, "groups": sorted(prepared, key=lambda d: d["name"])}
 
-    async def prepare_one(self, document: Document) -> list[Document]:
+    async def prepare_one(
+        self, document: Document, session: AsyncSession
+    ) -> list[Document]:
         if not document["groups"]:
             return []
 
-        async with AsyncSession(self._pg) as session:
-            query = select(SQLGroup).where(
-                compose_legacy_id_multi_expression(SQLGroup, document["groups"])
-            )
+        query = select(SQLGroup).where(
+            compose_legacy_id_multi_expression(SQLGroup, document["groups"])
+        )
 
-            return [
-                group.to_dict()
-                for group in (await session.execute(query)).scalars().all()
-            ]
+        return [
+            group.to_dict() for group in (await session.execute(query)).scalars().all()
+        ]
 
-    async def prepare_many(self, documents: list[Document]) -> dict[int | str, Any]:
+    async def prepare_many(
+        self, documents: list[Document], session: AsyncSession
+    ) -> dict[int | str, Any]:
         group_ids = {group for document in documents for group in document["groups"]}
 
         if not group_ids:
             return {document["id"]: [] for document in documents}
 
-        async with AsyncSession(self._pg) as session:
-            query = select(SQLGroup).where(
-                compose_legacy_id_multi_expression(SQLGroup, group_ids)
-            )
+        query = select(SQLGroup).where(
+            compose_legacy_id_multi_expression(SQLGroup, group_ids)
+        )
 
-            groups = [
-                g.to_dict() for g in (await session.execute(query)).scalars().all()
-            ]
+        groups = [g.to_dict() for g in (await session.execute(query)).scalars().all()]
 
-            groups_map = {
-                **{group["id"]: group for group in groups},
-                **{group["legacy_id"]: group for group in groups},
-            }
+        groups_map = {
+            **{group["id"]: group for group in groups},
+            **{group["legacy_id"]: group for group in groups},
+        }
 
         return {
             document["id"]: [groups_map[group_id] for group_id in document["groups"]]

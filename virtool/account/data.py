@@ -212,6 +212,7 @@ class AccountData(DataLayerDomain):
             [
                 AttachGroupsTransform(self._pg),
             ],
+            self._pg,
         )
 
         return [APIKey.parse_obj(key) for key in keys]
@@ -244,6 +245,7 @@ class AccountData(DataLayerDomain):
             [
                 AttachGroupsTransform(self._pg),
             ],
+            self._pg,
         )
 
         if user.administrator_role:

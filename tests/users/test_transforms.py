@@ -63,6 +63,7 @@ class TestAttachPermissionsTransform:
         assert await apply_transforms(
             {"id": "bob", "groups": [1, "group_5"]},
             [AttachPermissionsTransform(pg)],
+            pg,
         ) == snapshot(name="single")
 
         assert await apply_transforms(
@@ -73,6 +74,7 @@ class TestAttachPermissionsTransform:
                 {"id": "pam", "groups": ["group_2"]},
             ],
             [AttachPermissionsTransform(pg)],
+            pg,
         ) == snapshot(name="multi")
 
 
@@ -97,7 +99,9 @@ class TestAttachUserTransform:
                 {"id": "baz", "user": {"id": user_1.id}},
             ]
 
-        assert await apply_transforms(documents, [AttachUserTransform(pg)]) == snapshot
+        assert (
+            await apply_transforms(documents, [AttachUserTransform(pg)], pg) == snapshot
+        )
 
     async def test_mixed_id_formats(
         self,
@@ -126,4 +130,6 @@ class TestAttachUserTransform:
             },  # String modern ID
         ]
 
-        assert await apply_transforms(documents, [AttachUserTransform(pg)]) == snapshot
+        assert (
+            await apply_transforms(documents, [AttachUserTransform(pg)], pg) == snapshot
+        )

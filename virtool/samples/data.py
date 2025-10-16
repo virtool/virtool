@@ -194,6 +194,7 @@ class SamplesData(DataLayerDomain):
                 AttachUserTransform(self._pg),
                 AttachJobTransform(self._mongo, self._pg),
             ],
+            self._pg,
         )
 
         return SampleSearchResult(
@@ -226,6 +227,7 @@ class SamplesData(DataLayerDomain):
                 AttachSubtractionsTransform(self._mongo),
                 AttachUserTransform(self._pg),
             ],
+            self._pg,
         )
 
         group = None

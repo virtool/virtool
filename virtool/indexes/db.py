@@ -7,7 +7,7 @@ from typing import Any
 
 import pymongo
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.history.db
 import virtool.pg.utils
@@ -44,7 +44,7 @@ class IndexFilesTransform(AbstractTransform):
     async def attach_one(self, document: Document, prepared: Any) -> Document:
         return {**document, "files": prepared}
 
-    async def prepare_one(self, document: Document) -> Any:
+    async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
         index_id = document["id"]
 
         rows = await virtool.pg.utils.get_rows(
@@ -80,7 +80,7 @@ class IndexCountsTransform(AbstractTransform):
     async def attach_one(self, document: Document, prepared: Any) -> Document:
         return {**document, **prepared}
 
-    async def prepare_one(self, document: Document) -> Any:
+    async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
         query = {"index.id": document["id"]}
 
         change_count, otu_ids = await asyncio.gather(
@@ -194,6 +194,7 @@ async def find(
                 AttachUserTransform(pg),
                 IndexCountsTransform(mongo),
             ],
+            pg,
         ),
     }
 
