@@ -47,7 +47,6 @@ collection once for each unique user ID.
 
 """
 
-import asyncio
 from abc import ABC, abstractmethod
 from asyncio import gather
 from typing import Any
@@ -153,15 +152,13 @@ async def apply_transforms(
 
             document = documents
 
-            # In this case, we are dealing with a single document.
-            prepared = await asyncio.gather(
-                *[
-                    transform.prepare_one(transform.preprocess(document), session)
-                    for transform in pipeline
-                ],
-            )
-
-            for p, transform in zip(prepared, pipeline, strict=False):
-                document = await transform.attach_one(transform.preprocess(document), p)
+            # Process transforms sequentially to avoid concurrent session access.
+            for transform in pipeline:
+                prepared = await transform.prepare_one(
+                    transform.preprocess(document), session
+                )
+                document = await transform.attach_one(
+                    transform.preprocess(document), prepared
+                )
 
             return document
