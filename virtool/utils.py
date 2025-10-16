@@ -240,7 +240,7 @@ def rm(path: Path, recursive: bool = False) -> bool:
         return True
     except IsADirectoryError:
         if recursive:
-            shutil.rmtree(path)
+            shutil.rmtree(path, ignore_errors=True)
             return True
         raise
 
