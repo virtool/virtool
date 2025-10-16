@@ -1231,12 +1231,12 @@ class ReferencesData(DataLayerDomain):
                     {"$pop": {"updates": -1}, "$set": {"updating": False}},
                 )
 
-            emit(
-                await self.get(reference["_id"]),
-                "references",
-                "clean_all",
-                Operation.UPDATE,
-            )
+                emit(
+                    await self.get(reference["_id"]),
+                    "references",
+                    "clean_all",
+                    Operation.UPDATE,
+                )
 
     async def fetch_and_update_reference_releases(self) -> None:
         for ref_id in await self._mongo.references.distinct(
