@@ -52,9 +52,9 @@ async def authenticate_with_api_key(
         log.info("specified user not active while authenticating with api key")
         APIUnauthorized.raise_invalid_authorization_header()
 
-    key = await get_data_from_req(req).account.get_key_by_secret(user.id, key)
-
-    if not key:
+    try:
+        key = await get_data_from_req(req).account.get_key_by_secret(user.id, key)
+    except ResourceNotFoundError:
         log.info("invalid key while authenticating with api key")
         APIUnauthorized.raise_invalid_authorization_header()
 

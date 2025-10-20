@@ -11,7 +11,6 @@ import virtool.utils
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import (
     ResourceConflictError,
-    ResourceError,
     ResourceNotFoundError,
 )
 from virtool.data.events import Operation, emits
@@ -195,7 +194,7 @@ class UsersData(DataLayerDomain):
             user_id = result.scalar_one_or_none()
 
             if user_id is None:
-                raise ResourceError(f"No user found with handle '{handle}'")
+                raise ResourceNotFoundError
 
         return await self.get(user_id)
 

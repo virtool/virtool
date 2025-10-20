@@ -284,18 +284,18 @@ class AccountData(DataLayerDomain):
             },
         )
 
-        user = await self.data.users.get(user_id)
-
         if not document:
             raise ResourceNotFoundError
 
-        return APIKey(
-            **{
-                **document,
-                "groups": user.groups,
-                "permissions": {**document["permissions"], **user.permissions.dict()},
-            },
+        document = await apply_transforms(
+            base_processor(document),
+            [
+                AttachGroupsTransform(self._pg),
+            ],
+            self._pg,
         )
+
+        return APIKey(**document)
 
     async def create_key(
         self,
@@ -416,7 +416,7 @@ class AccountData(DataLayerDomain):
         # the database and/or password are invalid.
         try:
             user = await self.data.users.get_by_handle(data.handle)
-        except ResourceError:
+        except ResourceNotFoundError:
             raise ResourceError()
 
         if not await self.data.users.validate_password(user.id, data.password):
