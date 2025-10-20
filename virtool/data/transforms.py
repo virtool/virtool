@@ -133,16 +133,10 @@ async def apply_transforms(
     ):
         async with AsyncSession(pg) as session:
             if isinstance(documents, list):
-                all_prepared = await gather(
-                    *[
-                        transform.prepare_many(
-                            [transform.preprocess(d) for d in documents], session
-                        )
-                        for transform in pipeline
-                    ],
-                )
-
-                for prepared, transform in zip(all_prepared, pipeline, strict=False):
+                for transform in pipeline:
+                    prepared = await transform.prepare_many(
+                        [transform.preprocess(d) for d in documents], session
+                    )
                     documents = await transform.attach_many(
                         [transform.preprocess(d) for d in documents],
                         prepared,
@@ -152,7 +146,6 @@ async def apply_transforms(
 
             document = documents
 
-            # Process transforms sequentially to avoid concurrent session access.
             for transform in pipeline:
                 prepared = await transform.prepare_one(
                     transform.preprocess(document), session
