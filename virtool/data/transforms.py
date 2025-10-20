@@ -48,7 +48,6 @@ collection once for each unique user ID.
 """
 
 from abc import ABC, abstractmethod
-from asyncio import gather
 from typing import Any
 
 import sentry_sdk

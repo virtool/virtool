@@ -268,12 +268,16 @@ class AccountData(DataLayerDomain):
 
         The secret key is not returned in the result.
 
+        TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings.
+
         :param user_id: the user id
         :param key: the raw API key
         :return: the API key
         """
+        user_id_variants = await get_user_id_single_variants(self._pg, user_id)
+
         document = await self._mongo.keys.find_one(
-            {"_id": hash_key(key), "user.id": user_id},
+            {"_id": hash_key(key), "user.id": {"$in": user_id_variants}},
             {
                 "_id": False,
                 "user": False,
