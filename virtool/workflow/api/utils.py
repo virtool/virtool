@@ -52,6 +52,7 @@ def retry(
                 except (
                     ClientError,
                     ConnectionError,
+                    TimeoutError,
                 ) as e:
                     last_exception = e
 

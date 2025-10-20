@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 import aiofiles
-from aiohttp import BasicAuth, ClientSession
+from aiohttp import BasicAuth, ClientSession, ClientTimeout
 from structlog import get_logger
 
 from virtool.workflow.api.utils import (
@@ -143,7 +143,9 @@ async def api_client(
     key: str,
 ) -> AsyncIterator[WorkflowAPIClient]:
     """Create an authenticated :class:``APIClient`` to make API request."""
+    timeout = ClientTimeout(total=600, sock_read=60, sock_connect=30)
     async with ClientSession(
         auth=BasicAuth(login=f"job-{job_id}", password=key),
+        timeout=timeout,
     ) as http:
         yield WorkflowAPIClient(http, jobs_api_connection_string)
