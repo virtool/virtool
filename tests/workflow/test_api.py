@@ -127,6 +127,7 @@ class TestRetryWithParameters:
             ConnectionError,
             ConnectionResetError,
             ServerTimeoutError,
+            TimeoutError,
         ],
     )
     async def test_handles_various_exceptions(self, exception_type: type[Exception]):
