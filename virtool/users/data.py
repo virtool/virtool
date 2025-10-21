@@ -230,7 +230,7 @@ class UsersData(DataLayerDomain):
                 user_id = user.id
                 await session.commit()
         except IntegrityError as e:
-            if "users_handle_key" in str(e):
+            if "users_handle_lower_unique" in str(e):
                 raise ResourceConflictError("User already exists")
             raise
 
