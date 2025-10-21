@@ -188,7 +188,7 @@ class UsersData(DataLayerDomain):
         """
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
-                select(SQLUser.id).where(SQLUser.handle == handle)
+                select(SQLUser.id).where(func.lower(SQLUser.handle) == handle.lower())
             )
 
             user_id = result.scalar_one_or_none()
@@ -230,7 +230,7 @@ class UsersData(DataLayerDomain):
                 user_id = user.id
                 await session.commit()
         except IntegrityError as e:
-            if "users_handle_key" in str(e):
+            if "users_handle_lower_unique" in str(e):
                 raise ResourceConflictError("User already exists")
             raise
 

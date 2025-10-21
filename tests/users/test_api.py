@@ -128,8 +128,10 @@ class TestCreate:
         assert await resp.json() == snapshot_recent
         assert resp.headers["Location"] == snapshot_recent(name="location")
 
+    @pytest.mark.parametrize("handle", ["testuser", "TestUser"])
     async def test_exists(
         self,
+        handle: str,
         fake: DataFaker,
         resp_is: RespIs,
         spawn_client: ClientSpawner,
@@ -137,11 +139,12 @@ class TestCreate:
         """Test that creating a user with an existing handle returns an error."""
         client = await spawn_client(administrator=True, authenticated=True)
 
-        user = await fake.users.create()
+        await fake.users.create(handle=handle)
 
-        data = {"handle": user.handle, "password": "hello_world", "force_reset": False}
-
-        resp = await client.post("/users", data)
+        resp = await client.post(
+            "/users",
+            {"handle": handle.lower(), "password": "hello_world", "force_reset": False},
+        )
 
         await resp_is.bad_request(resp, "User already exists")
 

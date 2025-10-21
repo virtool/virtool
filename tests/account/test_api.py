@@ -1090,6 +1090,27 @@ class TestLogin:
         account_resp = await self.client.get("/account")
         assert account_resp.status == HTTPStatus.OK
 
+    async def test_case_insensitive(self) -> None:
+        """Test that login works with handle in different case."""
+        resp = await self.client.post(
+            "/account/login",
+            {"handle": self.user.handle.upper(), "password": "dummy_password"},
+        )
+
+        assert resp.status == HTTPStatus.CREATED
+        assert "session_id" in resp.cookies
+
+        account_resp = await self.client.get("/account")
+        assert account_resp.status == HTTPStatus.OK
+
+        resp_lower = await self.client.post(
+            "/account/login",
+            {"handle": self.user.handle.lower(), "password": "dummy_password"},
+        )
+
+        assert resp_lower.status == HTTPStatus.CREATED
+        assert "session_id" in resp_lower.cookies
+
     async def test_username_backward_compatibility(self) -> None:
         """Test that login works with username field for backward compatibility.
 

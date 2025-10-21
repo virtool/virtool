@@ -372,5 +372,12 @@
       'name': 'make user password non-nullable',
       'revision': 'd34e5f8a1b2c',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 54,
+      'name': 'add case insensitive unique index on user handle',
+      'revision': 'a23d6af751b3',
+    }),
   ])
 # ---

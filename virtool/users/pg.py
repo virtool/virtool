@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Enum, ForeignKey, Index
+from sqlalchemy import Enum, ForeignKey, Index, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -52,12 +52,16 @@ class SQLUser(Base):
     b2c_oid: Mapped[str | None]
     email: Mapped[str] = mapped_column(default="", nullable=False)
     force_reset: Mapped[bool] = mapped_column(default=False)
-    handle: Mapped[str] = mapped_column(unique=True)
+    handle: Mapped[str]
     invalidate_sessions: Mapped[bool] = mapped_column(default=False)
     last_password_change: Mapped[datetime]
     legacy_id: Mapped[str | None] = mapped_column(unique=True)
     password: Mapped[bytes]
     settings: Mapped[dict] = mapped_column(JSONB)
+
+    __table_args__ = (
+        Index("users_handle_lower_unique", text("lower(handle)"), unique=True),
+    )
 
     user_group_associations: Mapped[list[SQLUserGroup]] = relationship(
         back_populates="user",
