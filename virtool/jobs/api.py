@@ -113,7 +113,9 @@ async def acquire(req):
         document = await get_data_from_req(req).jobs.acquire(req.match_info["job_id"])
     except ResourceNotFoundError:
         raise APINotFound()
-    except ResourceConflictError:
+    except ResourceConflictError as e:
+        if "terminal state" in str(e):
+            raise APIConflict(str(e))
         raise APIBadRequest("Job already acquired")
 
     return json_response(document)

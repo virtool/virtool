@@ -20,15 +20,21 @@ from virtool.data.topg import get_user_id_multi_variants
 from virtool.data.transforms import apply_transforms
 from virtool.jobs.client import JobCancellationResult, JobsClient
 from virtool.jobs.models import (
+    TERMINAL_JOB_STATES,
     Job,
     JobAcquired,
     JobMinimal,
     JobPing,
     JobSearchResult,
     JobState,
+    JobStatus,
     QueuedJobID,
 )
-from virtool.jobs.utils import check_job_is_running_or_waiting, compose_status
+from virtool.jobs.utils import (
+    check_job_is_running_or_waiting,
+    compose_status,
+    get_latest_status,
+)
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.types import Document
@@ -240,17 +246,15 @@ class JobsData:
         if document is None:
             raise ResourceNotFoundError()
 
-        status = document["status"]
-
-        last_update = status[-1]
+        last_update = get_latest_status(document)
 
         document = await apply_transforms(
             {
                 **document,
                 "id": document["_id"],
-                "state": last_update["state"],
-                "stage": last_update["stage"],
-                "progress": status[-1]["progress"],
+                "state": last_update.state,
+                "stage": last_update.stage,
+                "progress": last_update.progress,
             },
             [AttachUserTransform(self._pg)],
             self._pg,
@@ -266,12 +270,17 @@ class JobsData:
         :return: the complete job document
 
         """
-        acquired = await get_one_field(self._mongo.jobs, "acquired", job_id)
+        job_doc = await self._mongo.jobs.find_one({"_id": job_id})
 
-        if acquired is None:
+        if job_doc is None:
             raise ResourceNotFoundError("Job not found")
 
-        if acquired is True:
+        # Check if job is in a terminal state (more specific than already acquired)
+        latest_status = get_latest_status(job_doc)
+        if latest_status and latest_status.state in TERMINAL_JOB_STATES:
+            raise ResourceConflictError("Cannot acquire job in terminal state")
+
+        if job_doc.get("acquired") is True:
             raise ResourceConflictError("Job already acquired")
 
         key, hashed = virtool.utils.generate_key()
@@ -373,13 +382,8 @@ class JobsData:
         if status is None:
             raise ResourceNotFoundError
 
-        if JobState(status[-1]["state"]) in (
-            JobState.CANCELLED,
-            JobState.COMPLETE,
-            JobState.ERROR,
-            JobState.TERMINATED,
-            JobState.TIMEOUT,
-        ):
+        latest_status = JobStatus(**status[-1])
+        if latest_status.state in TERMINAL_JOB_STATES:
             raise ResourceConflictError("Job is finished")
 
         status_update = compose_status(
@@ -452,7 +456,7 @@ class JobsData:
         # Find all stalled jobs and timeout each one
         async for document in self._mongo.jobs.find(query, ["_id", "status"]):
             try:
-                latest_status = document["status"][-1]
+                latest_status = get_latest_status(document)
 
                 result = await self._mongo.jobs.update_one(
                     {
@@ -466,11 +470,11 @@ class JobsData:
                         "$push": {
                             "status": compose_status(
                                 JobState.TIMEOUT,
-                                latest_status.get("stage"),
-                                latest_status.get("step_name"),
-                                latest_status.get("step_description"),
+                                latest_status.stage,
+                                latest_status.step_name,
+                                latest_status.step_description,
                                 None,
-                                latest_status.get("progress"),
+                                latest_status.progress,
                             ),
                         },
                         "$set": {"state": JobState.TIMEOUT.value},

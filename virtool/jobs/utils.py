@@ -1,5 +1,5 @@
 import virtool.utils
-from virtool.jobs.models import JobState
+from virtool.jobs.models import JobState, JobStatus
 from virtool.types import Document
 
 WORKFLOW_NAMES = (
@@ -40,6 +40,16 @@ def compose_status(
         "step_description": step_description,
         "timestamp": virtool.utils.timestamp(),
     }
+
+
+def get_latest_status(document: Document) -> JobStatus | None:
+    """Get the latest status from a job document.
+
+    :param document: the job document
+    :return: the latest status or None if no status exists
+    """
+    status = document.get("status", [])
+    return JobStatus(**status[-1]) if status else None
 
 
 def check_job_is_running_or_waiting(document: Document) -> bool:
