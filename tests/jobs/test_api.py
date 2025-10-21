@@ -221,6 +221,32 @@ class TestAcquire:
             "message": "Not found",
         }
 
+    @pytest.mark.parametrize(
+        "state",
+        [
+            JobState.COMPLETE,
+            JobState.ERROR,
+            JobState.CANCELLED,
+            JobState.TERMINATED,
+            JobState.TIMEOUT,
+        ],
+    )
+    async def test_status_conflict(
+        self,
+        state: JobState,
+        fake: DataFaker,
+        spawn_job_client,
+    ):
+        """Test that a 409 is returned when trying to acquire a job in a terminal state."""
+        client = await spawn_job_client(authenticated=True)
+
+        user = await fake.users.create()
+        job = await fake.jobs.create(user, state=state)
+
+        resp = await client.patch(f"/jobs/{job.id}", json={"acquired": True})
+
+        assert resp.status == 409
+
 
 class TestPing:
     async def test_ok(self, fake: DataFaker, spawn_job_client):
