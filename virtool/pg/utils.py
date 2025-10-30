@@ -42,6 +42,10 @@ async def connect_pg(postgres_connection_string: str) -> AsyncEngine:
             json_serializer=dump_string,
             json_deserializer=orjson.loads,
             pool_recycle=1800,
+            pool_size=50,
+            max_overflow=50,
+            pool_timeout=60,
+            pool_pre_ping=True,
         )
 
         await check_version(pg)
