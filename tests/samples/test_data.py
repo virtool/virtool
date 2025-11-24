@@ -5,15 +5,18 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner
+from virtool.api.client import UserClient
 from virtool.data.errors import ResourceConflictError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.models.enums import LibraryType, Permission
+from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.redis import Redis
 from virtool.samples.models import WorkflowState
 from virtool.samples.oas import CreateSampleRequest
+from virtool.samples.utils import SampleRight
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.uploads.sql import SQLUpload
 from virtool.users.oas import UpdateUserRequest
@@ -192,3 +195,199 @@ async def test_finalized_already(get_sample_ready_false, data_layer):
 
     with pytest.raises(ResourceConflictError, match=r"Sample already finalized"):
         await data_layer.samples.finalize("test", quality)
+
+
+class TestHasRight:
+    async def test_ok(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+    ):
+        """Test group member can write when group_write is True."""
+        group = await fake.groups.create()
+        user = await fake.users.create(groups=[group])
+        sample_owner = await fake.users.create()
+
+        client = UserClient(
+            administrator_role=user.administrator_role,
+            authenticated=True,
+            force_reset=False,
+            groups=[group.id for group in user.groups],
+            permissions=user.permissions.dict(),
+            user_id=user.id,
+        )
+
+        await mongo.samples.insert_one(
+            {
+                "_id": "sample_1",
+                "all_read": False,
+                "all_write": False,
+                "group": group.id,
+                "group_read": True,
+                "group_write": True,
+                "user": {"id": sample_owner.id},
+            }
+        )
+
+        assert await data_layer.samples.has_right("sample_1", client, SampleRight.write)
+
+    async def test_read_permission(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+    ):
+        """Test group member can read when group_read is True."""
+        group = await fake.groups.create()
+        user = await fake.users.create(groups=[group])
+        sample_owner = await fake.users.create()
+
+        client = UserClient(
+            administrator_role=user.administrator_role,
+            authenticated=True,
+            force_reset=False,
+            groups=[group.id for group in user.groups],
+            permissions=user.permissions.dict(),
+            user_id=user.id,
+        )
+
+        await mongo.samples.insert_one(
+            {
+                "_id": "sample_2",
+                "all_read": False,
+                "all_write": False,
+                "group": group.id,
+                "group_read": True,
+                "group_write": False,
+                "user": {"id": sample_owner.id},
+            }
+        )
+
+        assert await data_layer.samples.has_right("sample_2", client, SampleRight.read)
+
+    async def test_missing_sample(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+    ):
+        """Test returns True when sample doesn't exist."""
+        user = await fake.users.create()
+
+        client = UserClient(
+            administrator_role=user.administrator_role,
+            authenticated=True,
+            force_reset=False,
+            groups=[group.id for group in user.groups],
+            permissions=user.permissions.dict(),
+            user_id=user.id,
+        )
+
+        assert await data_layer.samples.has_right(
+            "nonexistent",
+            client,
+            SampleRight.write,
+        )
+
+    async def test_admin_full_access(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+    ):
+        """Test full administrator has access regardless of permissions."""
+        user = await fake.users.create(administrator_role=AdministratorRole.FULL)
+        sample_owner = await fake.users.create()
+
+        client = UserClient(
+            administrator_role=AdministratorRole.FULL,
+            authenticated=True,
+            force_reset=False,
+            groups=[group.id for group in user.groups],
+            permissions=user.permissions.dict(),
+            user_id=user.id,
+        )
+
+        await mongo.samples.insert_one(
+            {
+                "_id": "sample_3",
+                "all_read": False,
+                "all_write": False,
+                "group": "none",
+                "group_read": False,
+                "group_write": False,
+                "user": {"id": sample_owner.id},
+            }
+        )
+
+        assert await data_layer.samples.has_right("sample_3", client, SampleRight.write)
+
+    async def test_owner_full_access(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+    ):
+        """Test sample owner has full access."""
+        user = await fake.users.create()
+
+        client = UserClient(
+            administrator_role=user.administrator_role,
+            authenticated=True,
+            force_reset=False,
+            groups=[group.id for group in user.groups],
+            permissions=user.permissions.dict(),
+            user_id=user.id,
+        )
+
+        await mongo.samples.insert_one(
+            {
+                "_id": "sample_4",
+                "all_read": False,
+                "all_write": False,
+                "group": "none",
+                "group_read": False,
+                "group_write": False,
+                "user": {"id": user.id},
+            }
+        )
+
+        assert await data_layer.samples.has_right("sample_4", client, SampleRight.write)
+
+    async def test_non_group_member_denied(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+    ):
+        """Test non-group member is denied when all_write is False."""
+        group = await fake.groups.create()
+        user = await fake.users.create()
+        sample_owner = await fake.users.create()
+
+        client = UserClient(
+            administrator_role=user.administrator_role,
+            authenticated=True,
+            force_reset=False,
+            groups=[group.id for group in user.groups],
+            permissions=user.permissions.dict(),
+            user_id=user.id,
+        )
+
+        await mongo.samples.insert_one(
+            {
+                "_id": "sample_5",
+                "all_read": False,
+                "all_write": False,
+                "group": group.id,
+                "group_read": False,
+                "group_write": True,
+                "user": {"id": sample_owner.id},
+            }
+        )
+
+        assert not await data_layer.samples.has_right(
+            "sample_5",
+            client,
+            SampleRight.write,
+        )
