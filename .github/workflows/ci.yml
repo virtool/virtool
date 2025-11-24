@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Build
@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install mise
         uses: jdx/mise-action@v3
       - name: Install uv
@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install mise
         uses: jdx/mise-action@v3
       - name: Install uv
@@ -84,7 +84,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install mise
         uses: jdx/mise-action@v3
       - name: Build test environment
@@ -106,7 +106,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Download OAS
         uses: actions/download-artifact@v4
         with:
@@ -132,7 +132,7 @@ jobs:
       packages: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ needs.release.outputs.git-tag }}
       - name: Login to Registry
