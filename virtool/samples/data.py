@@ -508,7 +508,7 @@ class SamplesData(DataLayerDomain):
     ) -> bool:
         document = await self._mongo.samples.find_one(
             {"_id": sample_id},
-            ["all_read", "all_write", "group", "group_read", "user"],
+            ["all_read", "all_write", "group", "group_read", "group_write", "user"],
         )
 
         if document is None:
