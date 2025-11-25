@@ -7,6 +7,7 @@ from typing import Any
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from yarl import URL
 
 import virtool.errors
 import virtool.mongo.utils
@@ -62,12 +63,10 @@ class AttachArtifactsAndReadsTransform(AbstractTransform):
         artifacts = [artifact.to_dict() for artifact in artifacts]
         reads = [reads_file.to_dict() for reads_file in reads_files]
 
-        if document["ready"]:
-            for artifact in artifacts:
-                name_on_disk = artifact["name_on_disk"]
-                artifact["download_url"] = (
-                    f"/samples/{sample_id}/artifacts/{name_on_disk}"
-                )
+        for artifact in artifacts:
+            artifact["download_url"] = str(
+                URL("/samples") / sample_id / "artifacts" / artifact["name_on_disk"]
+            )
 
         for reads_file in reads:
             if upload := reads_file.get("upload"):
@@ -79,10 +78,9 @@ class AttachArtifactsAndReadsTransform(AbstractTransform):
                     ).scalar()
                 ).to_dict()
 
-            if document["ready"]:
-                reads_file["download_url"] = (
-                    f"/samples/{sample_id}/reads/{reads_file['name']}"
-                )
+            reads_file["download_url"] = str(
+                URL("/samples") / sample_id / "reads" / reads_file["name"]
+            )
 
         return {"artifacts": artifacts, "reads": reads}
 
