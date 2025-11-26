@@ -30,7 +30,6 @@ from virtool.migration.pg import SQLRevision
 
 @pytest.fixture
 async def migration_pg_connection_string(
-    loop,
     pg_base_connection_string: str,
     worker_id: str,
 ) -> str:

@@ -1,7 +1,5 @@
 """Fixtures for working with the Postgres testing instance."""
 
-import asyncio
-
 import orjson
 import pytest
 from sqlalchemy import text
@@ -43,15 +41,6 @@ def pg_connection_string(pg_base_connection_string: str, pg_db_name: str):
 
     """
     return f"{pg_base_connection_string}/{pg_db_name}"
-
-
-@pytest.fixture(scope="session")
-def event_loop():
-    """Overrides pytest default function scoped event loop"""
-    policy = asyncio.get_event_loop_policy()
-    loop = policy.new_event_loop()
-    yield loop
-    loop.close()
 
 
 @pytest.fixture(scope="session")
