@@ -625,14 +625,14 @@ wheels = [
 
 [[package]]
 name = "faker"
-version = "12.3.3"
+version = "38.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "python-dateutil" },
+    { name = "tzdata" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/20/fc/b33cf178c03309efb4240c9979f638b180a14fe3902f96fd77e4094548ec/Faker-12.3.3.tar.gz", hash = "sha256:dc46ddaf9bd33998c49c69dc68273bb5b11e41820b38f05296d3241c7d681597", size = 1450680, upload-time = "2022-02-14T17:25:55.825Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/64/27/022d4dbd4c20567b4c294f79a133cc2f05240ea61e0d515ead18c995c249/faker-38.2.0.tar.gz", hash = "sha256:20672803db9c7cb97f9b56c18c54b915b6f1d8991f63d1d673642dc43f5ce7ab", size = 1941469, upload-time = "2025-11-19T16:37:31.892Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/61/25/9299f42a66e0bcc8903c1f93ae70a0ab74f6b37cf93ab00034bce16da660/Faker-12.3.3-py3-none-any.whl", hash = "sha256:a7244b7f25503811072122d98918f445df276ea80c5e38448f51a3b765665ece", size = 1485089, upload-time = "2022-02-14T17:25:50.183Z" },
+    { url = "https://files.pythonhosted.org/packages/17/93/00c94d45f55c336434a15f98d906387e87ce28f9918e4444829a8fda432d/faker-38.2.0-py3-none-any.whl", hash = "sha256:35fe4a0a79dee0dc4103a6083ee9224941e7d3594811a50e3969e547b0d2ee65", size = 1980505, upload-time = "2025-11-19T16:37:30.208Z" },
 ]
 
 [[package]]
@@ -2005,7 +2005,7 @@ requires-dist = [
     { name = "dictdiffer", specifier = ">=0.9.0,<1.0.0" },
     { name = "email-validator", specifier = ">=2.0.0,<3.0.0" },
     { name = "enum-tools", specifier = ">=0.13.0,<1.0.0" },
-    { name = "faker", specifier = ">=12.3.3,<38.0.0" },
+    { name = "faker", specifier = ">=38.2.0" },
     { name = "motor", specifier = ">=3.7.1,<4.0.0" },
     { name = "openfga-sdk", specifier = "==0.1.1" },
     { name = "openpyxl", specifier = ">=3.1.5,<4.0.0" },

@@ -6,7 +6,7 @@
     'force_reset': False,
     'groups': list([
     ]),
-    'handle': 'laura56',
+    'handle': 'myersmitchell',
     'id': 2,
     'last_password_change': str,
     'permissions': dict({
@@ -29,7 +29,7 @@
     'force_reset': False,
     'groups': list([
     ]),
-    'handle': 'laura56',
+    'handle': 'myersmitchell',
     'id': 2,
     'last_password_change': str,
     'permissions': dict({
@@ -52,7 +52,7 @@
     'force_reset': False,
     'groups': list([
     ]),
-    'handle': 'laura56',
+    'handle': 'myersmitchell',
     'id': 2,
     'last_password_change': str,
     'permissions': dict({
@@ -75,7 +75,7 @@
     'force_reset': False,
     'groups': list([
     ]),
-    'handle': 'laura56',
+    'handle': 'myersmitchell',
     'id': 2,
     'last_password_change': str,
     'permissions': dict({
@@ -98,7 +98,7 @@
     'force_reset': True,
     'groups': list([
     ]),
-    'handle': 'laura56',
+    'handle': 'myersmitchell',
     'id': 2,
     'last_password_change': str,
     'permissions': dict({
@@ -131,7 +131,7 @@
         'name': 'musicians',
       }),
     ]),
-    'handle': 'johnsoncynthia',
+    'handle': 'myersmitchell',
     'id': 2,
     'last_password_change': str,
     'permissions': dict({
@@ -159,7 +159,7 @@
         'name': 'gaffers',
       }),
     ]),
-    'handle': 'johnsoncynthia',
+    'handle': 'myersmitchell',
     'id': 2,
     'last_password_change': str,
     'permissions': dict({
@@ -182,7 +182,7 @@
     'force_reset': False,
     'groups': list([
     ]),
-    'handle': 'johnsoncynthia',
+    'handle': 'myersmitchell',
     'id': 2,
     'last_password_change': str,
     'permissions': dict({
@@ -205,7 +205,7 @@
     'force_reset': False,
     'groups': list([
     ]),
-    'handle': 'laura56',
+    'handle': 'myersmitchell',
     'id': 2,
     'last_password_change': str,
     'permissions': dict({
@@ -356,7 +356,7 @@
     'force_reset': False,
     'groups': list([
     ]),
-    'handle': 'laura56',
+    'handle': 'myersmitchell',
     'id': 2,
     'last_password_change': str,
     'permissions': dict({
@@ -376,27 +376,6 @@
   dict({
     'found_count': 3,
     'items': list([
-      dict({
-        'active': True,
-        'administrator_role': None,
-        'force_reset': False,
-        'groups': list([
-        ]),
-        'handle': 'laura56',
-        'id': 2,
-        'last_password_change': str,
-        'permissions': dict({
-          'cancel_job': False,
-          'create_ref': False,
-          'create_sample': False,
-          'modify_hmm': False,
-          'modify_subtraction': False,
-          'remove_file': False,
-          'remove_job': False,
-          'upload_file': False,
-        }),
-        'primary_group': None,
-      }),
       dict({
         'active': True,
         'administrator_role': 'full',
@@ -424,8 +403,29 @@
         'force_reset': False,
         'groups': list([
         ]),
-        'handle': 'sjohnson',
+        'handle': 'modonnell',
         'id': 3,
+        'last_password_change': str,
+        'permissions': dict({
+          'cancel_job': False,
+          'create_ref': False,
+          'create_sample': False,
+          'modify_hmm': False,
+          'modify_subtraction': False,
+          'remove_file': False,
+          'remove_job': False,
+          'upload_file': False,
+        }),
+        'primary_group': None,
+      }),
+      dict({
+        'active': True,
+        'administrator_role': None,
+        'force_reset': False,
+        'groups': list([
+        ]),
+        'handle': 'myersmitchell',
+        'id': 2,
         'last_password_change': str,
         'permissions': dict({
           'cancel_job': False,
@@ -453,7 +453,7 @@
     'force_reset': False,
     'groups': list([
     ]),
-    'handle': 'laura56',
+    'handle': 'myersmitchell',
     'id': 2,
     'last_password_change': str,
     'permissions': dict({
@@ -476,7 +476,7 @@
     'force_reset': False,
     'groups': list([
     ]),
-    'handle': 'laura56',
+    'handle': 'myersmitchell',
     'id': 2,
     'last_password_change': str,
     'permissions': dict({
@@ -499,7 +499,7 @@
     'force_reset': False,
     'groups': list([
     ]),
-    'handle': 'laura56',
+    'handle': 'myersmitchell',
     'id': 2,
     'last_password_change': str,
     'permissions': dict({

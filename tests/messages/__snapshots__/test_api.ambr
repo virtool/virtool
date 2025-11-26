@@ -8,7 +8,7 @@
     'message': 'Change test message content',
     'updated_at': '2015-10-06T20:00:00Z',
     'user': dict({
-      'handle': 'laura56',
+      'handle': 'myersmitchell',
       'id': 2,
     }),
   })
@@ -22,7 +22,7 @@
     'message': 'Change message',
     'updated_at': '2015-10-06T20:00:00Z',
     'user': dict({
-      'handle': 'laura56',
+      'handle': 'myersmitchell',
       'id': 2,
     }),
   })
@@ -50,7 +50,7 @@
     'message': 'This is a test message',
     'updated_at': '2015-10-06T20:00:00Z',
     'user': dict({
-      'handle': 'laura56',
+      'handle': 'myersmitchell',
       'id': 2,
     }),
   })

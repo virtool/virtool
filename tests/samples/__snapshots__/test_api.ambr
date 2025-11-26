@@ -552,7 +552,7 @@
       'stage': None,
       'state': 'preparing',
       'user': dict({
-        'handle': 'sallywalker',
+        'handle': 'leeashley',
         'id': 1,
       }),
       'workflow': 'create_sample',
@@ -593,7 +593,7 @@
       }),
     ]),
     'user': dict({
-      'handle': 'sallywalker',
+      'handle': 'leeashley',
       'id': 1,
     }),
     'workflows': dict({
@@ -662,10 +662,10 @@
         }),
         'labels': list([
           dict({
-            'color': '#ae686a',
+            'color': '#78bc72',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
-            'name': 'Market',
+            'name': 'Add',
           }),
           dict({
             'color': '#8f837f',
@@ -698,10 +698,10 @@
         'job': None,
         'labels': list([
           dict({
-            'color': '#ae686a',
+            'color': '#78bc72',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
-            'name': 'Market',
+            'name': 'Add',
           }),
         ]),
         'library_type': 'srna',
@@ -822,10 +822,10 @@
         }),
         'labels': list([
           dict({
-            'color': '#ae686a',
+            'color': '#78bc72',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
-            'name': 'Market',
+            'name': 'Add',
           }),
           dict({
             'color': '#8f837f',
@@ -922,10 +922,10 @@
         }),
         'labels': list([
           dict({
-            'color': '#ae686a',
+            'color': '#78bc72',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
-            'name': 'Market',
+            'name': 'Add',
           }),
           dict({
             'color': '#8f837f',
@@ -969,10 +969,10 @@
         'job': None,
         'labels': list([
           dict({
-            'color': '#ae686a',
+            'color': '#78bc72',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
-            'name': 'Market',
+            'name': 'Add',
           }),
         ]),
         'library_type': 'srna',
@@ -1052,10 +1052,10 @@
         }),
         'labels': list([
           dict({
-            'color': '#ae686a',
+            'color': '#78bc72',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
-            'name': 'Market',
+            'name': 'Add',
           }),
           dict({
             'color': '#8f837f',
@@ -1088,10 +1088,10 @@
         'job': None,
         'labels': list([
           dict({
-            'color': '#ae686a',
+            'color': '#78bc72',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
-            'name': 'Market',
+            'name': 'Add',
           }),
         ]),
         'library_type': 'srna',
@@ -1409,10 +1409,10 @@
         }),
         'labels': list([
           dict({
-            'color': '#ae686a',
+            'color': '#78bc72',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
-            'name': 'Market',
+            'name': 'Add',
           }),
           dict({
             'color': '#8f837f',
@@ -1445,10 +1445,10 @@
         'job': None,
         'labels': list([
           dict({
-            'color': '#ae686a',
+            'color': '#78bc72',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
-            'name': 'Market',
+            'name': 'Add',
           }),
         ]),
         'library_type': 'srna',
@@ -1676,10 +1676,10 @@
         }),
         'labels': list([
           dict({
-            'color': '#ae686a',
+            'color': '#78bc72',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
-            'name': 'Market',
+            'name': 'Add',
           }),
           dict({
             'color': '#8f837f',
@@ -1712,10 +1712,10 @@
         'job': None,
         'labels': list([
           dict({
-            'color': '#ae686a',
+            'color': '#78bc72',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
-            'name': 'Market',
+            'name': 'Add',
           }),
         ]),
         'library_type': 'srna',
@@ -1918,10 +1918,10 @@
         }),
         'labels': list([
           dict({
-            'color': '#ae686a',
+            'color': '#78bc72',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
-            'name': 'Market',
+            'name': 'Add',
           }),
           dict({
             'color': '#8f837f',
@@ -1954,10 +1954,10 @@
         'job': None,
         'labels': list([
           dict({
-            'color': '#ae686a',
+            'color': '#78bc72',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
-            'name': 'Market',
+            'name': 'Add',
           }),
         ]),
         'library_type': 'srna',
@@ -2007,10 +2007,10 @@
         }),
         'labels': list([
           dict({
-            'color': '#ae686a',
+            'color': '#78bc72',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
-            'name': 'Market',
+            'name': 'Add',
           }),
           dict({
             'color': '#8f837f',
@@ -2096,10 +2096,10 @@
         }),
         'labels': list([
           dict({
-            'color': '#ae686a',
+            'color': '#78bc72',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
-            'name': 'Market',
+            'name': 'Add',
           }),
           dict({
             'color': '#8f837f',
@@ -2132,10 +2132,10 @@
         'job': None,
         'labels': list([
           dict({
-            'color': '#ae686a',
+            'color': '#78bc72',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
-            'name': 'Market',
+            'name': 'Add',
           }),
         ]),
         'library_type': 'srna',
@@ -2203,10 +2203,10 @@
         'job': None,
         'labels': list([
           dict({
-            'color': '#ae686a',
+            'color': '#78bc72',
             'description': 'Tonight themselves true power home price.',
             'id': 1,
-            'name': 'Market',
+            'name': 'Add',
           }),
         ]),
         'library_type': 'srna',
@@ -2263,7 +2263,7 @@
       'stage': None,
       'state': 'preparing',
       'user': dict({
-        'handle': 'sallywalker',
+        'handle': 'leeashley',
         'id': 1,
       }),
       'workflow': 'create_sample',
@@ -2308,7 +2308,7 @@
       }),
     ]),
     'user': dict({
-      'handle': 'sallywalker',
+      'handle': 'leeashley',
       'id': 1,
     }),
     'workflows': dict({
@@ -2348,7 +2348,7 @@
       'stage': None,
       'state': 'preparing',
       'user': dict({
-        'handle': 'sallywalker',
+        'handle': 'leeashley',
         'id': 1,
       }),
       'workflow': 'create_sample',
@@ -2443,7 +2443,7 @@
       'stage': None,
       'state': 'preparing',
       'user': dict({
-        'handle': 'sallywalker',
+        'handle': 'leeashley',
         'id': 1,
       }),
       'workflow': 'create_sample',
@@ -2488,7 +2488,7 @@
       }),
     ]),
     'user': dict({
-      'handle': 'garciaregina',
+      'handle': 'kellywoods',
       'id': 3,
     }),
     'workflows': dict({
@@ -2528,7 +2528,7 @@
       'stage': None,
       'state': 'preparing',
       'user': dict({
-        'handle': 'sallywalker',
+        'handle': 'leeashley',
         'id': 1,
       }),
       'workflow': 'create_sample',
@@ -2667,7 +2667,7 @@
       'stage': None,
       'state': 'preparing',
       'user': dict({
-        'handle': 'sallywalker',
+        'handle': 'leeashley',
         'id': 1,
       }),
       'workflow': 'create_sample',
@@ -2722,7 +2722,7 @@
       }),
     ]),
     'user': dict({
-      'handle': 'sallywalker',
+      'handle': 'leeashley',
       'id': 1,
     }),
     'workflows': dict({
@@ -2745,15 +2745,15 @@
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': 'bf1b993c',
-          'progress': 3,
+          'progress': 0,
           'retries': 0,
           'stage': None,
-          'state': 'preparing',
+          'state': 'waiting',
           'user': dict({
-            'handle': 'laura56',
+            'handle': 'myersmitchell',
             'id': 2,
           }),
-          'workflow': 'aodp',
+          'workflow': 'pathoscope_bowtie',
         }),
         'ml': None,
         'ready': True,
@@ -2769,7 +2769,7 @@
         ]),
         'updated_at': '2015-10-06T20:00:00Z',
         'user': dict({
-          'handle': 'laura56',
+          'handle': 'myersmitchell',
           'id': 2,
         }),
         'workflow': 'pathoscope_bowtie',
@@ -2800,7 +2800,7 @@
         ]),
         'updated_at': '2015-10-06T20:00:00Z',
         'user': dict({
-          'handle': 'laura56',
+          'handle': 'myersmitchell',
           'id': 2,
         }),
         'workflow': 'pathoscope_bowtie',
@@ -2831,7 +2831,7 @@
         ]),
         'updated_at': '2015-10-06T20:00:00Z',
         'user': dict({
-          'handle': 'sjohnson',
+          'handle': 'modonnell',
           'id': 3,
         }),
         'workflow': 'pathoscope_bowtie',

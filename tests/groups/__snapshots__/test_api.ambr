@@ -234,7 +234,7 @@
     }),
     'users': list([
       dict({
-        'handle': 'johnsoncynthia',
+        'handle': 'myersmitchell',
         'id': 2,
       }),
     ]),
