@@ -869,7 +869,7 @@
       dict({
         'build': False,
         'created_at': '2015-10-06T20:00:00Z',
-        'handle': 'laura56',
+        'handle': 'myersmitchell',
         'id': 2,
         'modify': False,
         'modify_otu': False,
@@ -882,7 +882,7 @@
   dict({
     'build': False,
     'created_at': '2015-10-06T20:00:00Z',
-    'handle': 'laura56',
+    'handle': 'myersmitchell',
     'id': 2,
     'modify': True,
     'modify_otu': True,
@@ -980,7 +980,7 @@
     'contributors': list([
       dict({
         'count': 1,
-        'handle': 'laura56',
+        'handle': 'myersmitchell',
         'id': 2,
       }),
     ]),
@@ -1085,7 +1085,7 @@
   dict({
     'build': False,
     'created_at': '2015-10-06T20:00:00Z',
-    'handle': 'laura56',
+    'handle': 'myersmitchell',
     'id': 2,
     'modify': True,
     'modify_otu': False,
@@ -1226,14 +1226,14 @@
     'unbuilt_change_count': 0,
     'updating': None,
     'user': dict({
-      'handle': 'laura56',
+      'handle': 'myersmitchell',
       'id': 2,
     }),
     'users': list([
       dict({
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
-        'handle': 'sjohnson',
+        'handle': 'modonnell',
         'id': 3,
         'modify': True,
         'modify_otu': True,
@@ -1320,14 +1320,14 @@
     'unbuilt_change_count': 0,
     'updating': None,
     'user': dict({
-      'handle': 'laura56',
+      'handle': 'myersmitchell',
       'id': 2,
     }),
     'users': list([
       dict({
         'build': True,
         'created_at': '2015-10-06T20:00:00Z',
-        'handle': 'sjohnson',
+        'handle': 'modonnell',
         'id': 3,
         'modify': True,
         'modify_otu': True,
@@ -1830,7 +1830,7 @@
       'ready': True,
       'size': 3695872,
       'user': dict({
-        'handle': 'laura56',
+        'handle': 'myersmitchell',
         'id': 2,
       }),
     }),

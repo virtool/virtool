@@ -179,7 +179,7 @@
       'stage': None,
       'state': <JobState.PREPARING: 'preparing'>,
       'user': dict({
-        'handle': 'sallywalker',
+        'handle': 'leeashley',
         'id': 1,
       }),
       'workflow': 'create_sample',
@@ -234,7 +234,7 @@
       }),
     ]),
     'user': dict({
-      'handle': 'sallywalker',
+      'handle': 'leeashley',
       'id': 1,
     }),
     'workflows': dict({

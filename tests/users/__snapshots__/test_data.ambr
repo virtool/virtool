@@ -31,7 +31,7 @@
         'force_reset': False,
         'groups': list([
         ]),
-        'handle': 'bburton',
+        'handle': 'leecharlene',
         'id': 5,
         'last_password_change': 'approximately_now_datetime',
         'permissions': dict({
@@ -119,7 +119,7 @@
         'force_reset': False,
         'groups': list([
         ]),
-        'handle': 'lucasmichael',
+        'handle': 'huffchad',
         'id': 3,
         'last_password_change': 'approximately_now_datetime',
         'permissions': dict({
@@ -596,7 +596,7 @@
         'name': 'ophthalmologists',
       }),
     ]),
-    'handle': 'andrea18',
+    'handle': 'sallywalker',
     'id': 1,
     'last_password_change': 'approximately_now_datetime',
     'permissions': dict({
