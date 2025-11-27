@@ -156,23 +156,32 @@ class BLASTData(DataLayerDomain):
             if blast_row is None:
                 raise ResourceNotFoundError
 
-            ready = await check_rid(self._client, blast_row.rid)
+            rid = blast_row.rid
+
+        ready = await check_rid(self._client, rid)
+
+        result = None
+        error = None
+
+        if ready:
+            try:
+                result_json = await fetch_nuvs_blast_result(self._client, rid)
+                result = format_blast_content(result_json)
+            except BadZipFile:
+                error = "Unable to interpret NCBI result"
+
+        async with AsyncSession(self._pg) as session:
+            blast_row = await get_nuvs_blast(session, analysis_id, sequence_index)
 
             blast_row.last_checked_at = updated_at
             blast_row.updated_at = updated_at
 
             if ready:
-                try:
-                    result_json = await fetch_nuvs_blast_result(
-                        self._client, blast_row.rid
-                    )
-
-                    blast_row.result = format_blast_content(result_json)
+                if error:
+                    blast_row.error = error
+                else:
+                    blast_row.result = result
                     blast_row.ready = True
-                except BadZipFile:
-                    blast_row.error = "Unable to interpret NCBI result"
-
-                await session.flush()
 
             await session.commit()
 

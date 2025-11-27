@@ -74,7 +74,7 @@
       'created_at': '2015-10-06T20:00:00Z',
       'id': 1,
       'name': 'reference.json.gz',
-      'name_on_disk': '1-reference.json.gz',
+      'name_on_disk': str,
       'ready': True,
       'removed': False,
       'removed_at': None,

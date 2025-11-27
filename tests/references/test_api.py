@@ -247,7 +247,7 @@ class TestCreate:
 
         assert resp.status == 201
         assert body == snapshot(
-            matcher=path_type({"id": (str,)}),
+            matcher=path_type({"id": (str,), ".*name_on_disk": (str,)}, regex=True),
         )
 
     async def test_clone(

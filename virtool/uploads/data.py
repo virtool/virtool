@@ -1,5 +1,6 @@
 import asyncio
 import math
+import uuid
 from asyncio import to_thread
 from contextlib import suppress
 from typing import TYPE_CHECKING
@@ -116,30 +117,30 @@ class UploadsData(DataLayerDomain):
 
         await asyncio.to_thread(uploads_path.mkdir, parents=True, exist_ok=True)
 
+        created_at = virtool.utils.timestamp()
+        name_on_disk = f"{uuid.uuid4()}-{name}"
+
+        size = await naive_writer(chunker, uploads_path / name_on_disk)
+
         async with AsyncSession(self._pg) as session:
             upload = SQLUpload(
-                created_at=virtool.utils.timestamp(),
+                created_at=created_at,
                 name=name,
+                name_on_disk=name_on_disk,
                 ready=True,
                 removed=False,
                 reserved=False,
+                size=size,
                 type=upload_type,
                 uploaded_at=virtool.utils.timestamp(),
                 user=str(user) if user is not None else None,
             )
 
             session.add(upload)
-
-            await session.flush()
-
-            upload.name_on_disk = f"{upload.id}-{upload.name}"
-
-            size = await naive_writer(chunker, uploads_path / upload.name_on_disk)
-
-            upload.size = size
-            upload_dict = upload.to_dict()
-
             await session.commit()
+            await session.refresh(upload)
+
+            upload_dict = upload.to_dict()
 
         return Upload(
             **await apply_transforms(

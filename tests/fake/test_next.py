@@ -57,6 +57,7 @@ async def test_uploads(fake: DataFaker, snapshot):
     matcher = path_type(
         {
             "created_at": (datetime,),
+            "name_on_disk": (str,),
             "uploaded_at": (datetime,),
             ".*timestamp": (datetime,),
         },
