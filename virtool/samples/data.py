@@ -435,6 +435,8 @@ class SamplesData(DataLayerDomain):
         if not result.modified_count:
             raise ResourceNotFoundError
 
+        files_to_delete = []
+
         async with AsyncSession(self._pg) as session:
             rows = (
                 (
@@ -449,22 +451,24 @@ class SamplesData(DataLayerDomain):
             )
 
             for row in rows:
+                files_to_delete.append(
+                    self._config.data_path / "files" / row.name_on_disk
+                )
+
                 if row.reads is not None:
                     row.reads.clear()
+
                 row.removed = True
                 row.removed_at = virtool.utils.timestamp()
-
-                try:
-                    await to_thread(
-                        virtool.utils.rm,
-                        self._config.data_path / "files" / row.name_on_disk,
-                    )
-                except FileNotFoundError:
-                    pass
-
                 session.add(row)
 
             await session.commit()
+
+        async def delete_file(path):
+            with suppress(FileNotFoundError):
+                await to_thread(virtool.utils.rm, path)
+
+        await gather(*[delete_file(path) for path in files_to_delete])
 
         return await self.get(sample_id)
 
