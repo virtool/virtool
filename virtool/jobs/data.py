@@ -55,7 +55,7 @@ class JobsData:
         self._mongo = mongo
         self._pg = pg
 
-    async def _get_counts(self) -> dict[str, dict[str, int]]:
+    async def get_counts(self) -> dict[str, dict[str, int]]:
         counts = defaultdict(dict)
 
         async for a in self._mongo.jobs.aggregate(
@@ -174,7 +174,7 @@ class JobsData:
             document["user"] = UserNested(**document["user"])
 
         return JobSearchResult(
-            counts=await self._get_counts(),
+            counts=await self.get_counts(),
             documents=[JobMinimal(**document) for document in documents],
             total_count=total_count,
             found_count=found_count,
