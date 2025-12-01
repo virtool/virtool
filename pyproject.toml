@@ -127,7 +127,7 @@ dev = [
   "sphinx-autobuild<2026,>=2025",
   "sphinx-autofixture<1.0.0,>=0.4.0",
   "sphinx-toolbox<5.0.0,>=4.0.0",
-  "syrupy<5.0.0,>=4.5.0",
+  "syrupy>=4.5.0,<6.0.0",
 ]
 
 [virtualenvs]

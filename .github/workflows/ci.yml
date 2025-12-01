@@ -43,7 +43,7 @@ jobs:
       - name: Install mise
         uses: jdx/mise-action@v3
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
       - name: Set up Python
@@ -63,7 +63,7 @@ jobs:
       - name: Install mise
         uses: jdx/mise-action@v3
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
       - name: Set up Python
@@ -108,7 +108,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
       - name: Download OAS
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: openapi.json
           path: virtool/spec/openapi.json
