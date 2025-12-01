@@ -82,7 +82,7 @@ class WSServer:
     async def _fetch_resource(
         self,
         domain: str,
-        resource_id: str,
+        resource_id: str | int,
     ) -> BaseModel | None:
         """Fetch a resource from the data layer by domain and ID."""
         try:
