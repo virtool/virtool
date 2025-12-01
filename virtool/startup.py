@@ -111,9 +111,8 @@ async def startup_databases(app: App) -> None:
 
 async def startup_events(app: App) -> None:
     """Create and run the event publisher."""
-    app["events"] = EventPublisher(app["redis"])
+    app["events"] = EventPublisher(app["pg"])
 
-    # Create background task for event publisher
     task = asyncio.create_task(app["events"].run())
     app.setdefault("background_tasks", []).append(task)
 
@@ -235,12 +234,17 @@ async def startup_ws(app: App) -> None:
     """Start the websocket server."""
     logger.info("starting websocket server")
 
-    ws = WSServer(app["redis"])
+    config = get_config_from_app(app)
 
-    # Create background tasks for websocket server
+    ws = WSServer(
+        config.postgres_connection_string,
+        app["data"],
+        app["redis"],
+    )
+
     ws_task = asyncio.create_task(ws.run())
     cleanup_task = asyncio.create_task(
-        ws.periodically_close_expired_websocket_connections()
+        ws.periodically_close_expired_websocket_connections(),
     )
 
     app.setdefault("background_tasks", []).extend([ws_task, cleanup_task])

@@ -26,6 +26,7 @@ from virtool.authorization.permissions import ResourceType
 from virtool.config.cls import MigrationConfig
 from virtool.migration.ctx import MigrationContext, create_migration_context
 from virtool.migration.pg import SQLRevision
+from virtool.pg.utils import get_sqlalchemy_url
 
 
 @pytest.fixture
@@ -41,7 +42,7 @@ async def migration_pg_connection_string(
     database = f"test_migration_{worker_id}"
 
     engine = create_async_engine(
-        pg_base_connection_string,
+        get_sqlalchemy_url(pg_base_connection_string),
         isolation_level="AUTOCOMMIT",
         json_serializer=dump_string,
         json_deserializer=orjson.loads,
@@ -62,7 +63,7 @@ async def migration_pg_connection_string(
     connection_string = f"{pg_base_connection_string}/{database}"
 
     engine = create_async_engine(
-        connection_string,
+        get_sqlalchemy_url(connection_string),
         json_serializer=dump_string,
         json_deserializer=orjson.loads,
         pool_recycle=1800,
@@ -79,7 +80,7 @@ async def migration_pg_connection_string(
 def migration_pg(migration_pg_connection_string: str):
     """A :class:`AsyncEngine` instance for a Postgres database for testing migrations."""
     return create_async_engine(
-        migration_pg_connection_string,
+        get_sqlalchemy_url(migration_pg_connection_string),
         json_serializer=dump_string,
         json_deserializer=orjson.loads,
     )
@@ -138,7 +139,7 @@ async def ctx(
 
 @pytest.fixture
 def apply_alembic(migration_pg_connection_string: str):
-    os.environ["SQLALCHEMY_URL"] = migration_pg_connection_string
+    os.environ["SQLALCHEMY_URL"] = get_sqlalchemy_url(migration_pg_connection_string)
 
     def func(revision: str = "head"):
         alembic.command.upgrade(
