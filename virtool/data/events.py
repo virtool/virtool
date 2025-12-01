@@ -46,7 +46,7 @@ class ClientEvent:
     """A notification received from Postgres LISTEN."""
 
     domain: str
-    resource_id: str
+    resource_id: str | int
     operation: str
 
 
@@ -170,7 +170,7 @@ class EventPublisher:
                     payload = dump_string(
                         {
                             "domain": event.domain,
-                            "resource_id": str(event.data.id),
+                            "resource_id": event.data.id,
                             "operation": event.operation.value,
                         }
                     )
