@@ -19,6 +19,7 @@ from virtool.api.custom_json import dump_string
 from virtool.authorization.client import AuthorizationClient
 from virtool.authorization.connect import connect_openfga
 from virtool.config.cls import MigrationConfig
+from virtool.pg.utils import get_sqlalchemy_url
 
 logger = get_logger("migration")
 
@@ -74,15 +75,11 @@ async def create_migration_context(config: MigrationConfig) -> MigrationContext:
     :return: the migration context
 
     """
-    if not config.postgres_connection_string.startswith("postgresql+asyncpg://"):
-        logger.critical("Invalid PostgreSQL connection string")
-        sys.exit(1)
-
     logger.info("connecting to postgres")
 
     try:
         pg = create_async_engine(
-            config.postgres_connection_string,
+            get_sqlalchemy_url(config.postgres_connection_string),
             json_serializer=dump_string,
             json_deserializer=orjson.loads,
             pool_recycle=1800,

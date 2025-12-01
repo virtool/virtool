@@ -23,7 +23,7 @@ services:
     environment:
       VT_MONGO_URI: mongodb://root:virtool@mongo:9001
       VT_REDIS_URI: redis://:virtool@redis:6379
-      VT_POSTGRES_URI: postgresql+asyncpg://virtool:virtool@postgres:5432
+      VT_POSTGRES_URI: postgresql://virtool:virtool@postgres:5432
       VT_OPENFGA_HOST: openfga:8080
       UV_PROJECT_ENVIRONMENT: /opt/venv
 

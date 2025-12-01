@@ -24,13 +24,12 @@ class SQLEnum(Enum):
 
 
 async def connect_pg(postgres_connection_string: str) -> AsyncEngine:
-    """Create a connection of Postgres.
+    """Create a connection to Postgres.
 
-    :param postgres_connection_string: the postgres connection string
+    :param postgres_connection_string: a standard postgres DSN (postgresql://...)
     :return: an AsyncEngine object
-
     """
-    if not postgres_connection_string.startswith("postgresql+asyncpg://"):
+    if not postgres_connection_string.startswith("postgresql://"):
         logger.critical("invalid postgres connection string")
         sys.exit(1)
 
@@ -38,7 +37,7 @@ async def connect_pg(postgres_connection_string: str) -> AsyncEngine:
 
     try:
         pg = create_async_engine(
-            postgres_connection_string,
+            get_sqlalchemy_url(postgres_connection_string),
             json_serializer=dump_string,
             json_deserializer=orjson.loads,
             pool_recycle=1800,
@@ -54,6 +53,14 @@ async def connect_pg(postgres_connection_string: str) -> AsyncEngine:
     except ConnectionRefusedError:
         logger.critical("could not connect to postgres", reason="connection refused")
         sys.exit(1)
+
+
+def get_sqlalchemy_url(dsn: str) -> str:
+    """Convert a standard Postgres DSN to SQLAlchemy format.
+
+    SQLAlchemy requires the driver to be specified (e.g., postgresql+asyncpg://).
+    """
+    return dsn.replace("postgresql://", "postgresql+asyncpg://")
 
 
 async def check_version(engine: AsyncEngine) -> None:
