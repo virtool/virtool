@@ -578,6 +578,82 @@ class TestCreateAPIKey:
         for perm in Permission:
             assert body["permissions"][perm.value] is True
 
+    async def test_permission_exceeds_user_create(
+        self,
+        fake: DataFaker,
+        spawn_client: ClientSpawner,
+    ) -> None:
+        """Test that API key permissions are limited to user's actual permissions on retrieval."""
+        client = await spawn_client(
+            authenticated=True, permissions=[Permission.create_sample]
+        )
+
+        resp = await client.post(
+            "/account/keys",
+            {
+                "name": "Test Key",
+                "permissions": {
+                    Permission.create_sample.value: True,
+                    Permission.modify_subtraction.value: True,  # User doesn't have this
+                },
+            },
+        )
+
+        assert resp.status == 201
+        body = await resp.json()
+
+        assert body["permissions"][Permission.create_sample.value] is True
+        assert body["permissions"][Permission.modify_subtraction.value] is False
+
+    async def test_permission_inheritance_multiple_groups(
+        self,
+        fake: DataFaker,
+        spawn_client: ClientSpawner,
+    ) -> None:
+        """Test that API keys inherit the union of group permissions."""
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_sample, Permission.modify_subtraction],
+        )
+
+        resp = await client.post(
+            "/account/keys",
+            {
+                "name": "Test Key",
+                "permissions": {
+                    Permission.create_sample.value: True,
+                    Permission.modify_subtraction.value: True,
+                },
+            },
+        )
+
+        assert resp.status == 201
+        body = await resp.json()
+
+        assert body["permissions"][Permission.create_sample.value] is True
+        assert body["permissions"][Permission.modify_subtraction.value] is True
+
+    async def test_admin_can_grant_any_permission(
+        self,
+        fake: DataFaker,
+        spawn_client: ClientSpawner,
+        data_layer: DataLayer,
+    ) -> None:
+        """Test that admin users can grant any permission to their own keys."""
+        client = await spawn_client(authenticated=True, administrator=True)
+
+        all_permissions = dict.fromkeys(generate_base_permissions(), True)
+
+        resp = await client.post(
+            "/account/keys", {"name": "Admin Key", "permissions": all_permissions}
+        )
+
+        assert resp.status == 201
+        body = await resp.json()
+
+        for perm in Permission:
+            assert body["permissions"][perm.value] is True
+
 
 class TestUpdateAPIKey:
     @pytest.mark.parametrize("has_admin", [True, False])

@@ -502,6 +502,9 @@
     }),
   })
 # ---
+# name: TestUpdate.test_primary_group_when_member[mongo]
+  None
+# ---
 # name: TestUpdate.test_primary_group_when_member[obj]
   dict({
     'active': True,
