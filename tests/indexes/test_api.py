@@ -313,8 +313,6 @@ class TestCreate:
         spawn_client: ClientSpawner,
         static_time: StaticTime,
     ):
-        mocker.patch("virtool.utils.generate_key", return_value=("foo", "bar"))
-
         client = await spawn_client(
             authenticated=True,
             base_url="https://virtool.example.com",

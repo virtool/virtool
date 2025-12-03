@@ -406,74 +406,177 @@ async def test_cannot_list_other_users_keys(
 
 
 class TestCreateAPIKey:
-    @pytest.mark.parametrize("has_perm", [True, False])
-    @pytest.mark.parametrize("req_perm", [True, False])
-    async def test(
+    async def test_with_permission(
         self,
-        has_perm: bool,
-        req_perm: bool,
         data_layer: DataLayer,
         fake: DataFaker,
-        mocker,
-        snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
-        static_time: StaticTime,
     ) -> None:
-        """Test that creation of an API key functions properly. Check that different permission inputs work."""
-        mocker.patch(
-            "virtool.utils.generate_key",
-            return_value=("raw_key", "hashed_key"),
-        )
-
+        """Test creating an API key with a permission the user has."""
         group = await fake.groups.create(
             PermissionsUpdate(**{Permission.create_sample: True}),
         )
 
         client = await spawn_client(authenticated=True)
 
-        if has_perm:
-            await data_layer.users.update(
-                client.user.id,
-                UpdateUserRequest(groups=[group.id]),
-            )
+        await data_layer.users.update(
+            client.user.id,
+            UpdateUserRequest(groups=[group.id]),
+        )
 
-        body = {"name": "Foobar"}
-
-        if req_perm:
-            body["permissions"] = {Permission.create_sample.value: True}
-
-        resp = await client.post("/account/keys", body)
+        resp = await client.post(
+            "/account/keys",
+            {"name": "Foobar", "permissions": {Permission.create_sample.value: True}},
+        )
 
         assert resp.status == 201
-        assert await resp.json() == snapshot
 
-    async def test_naming(
+        response_data = await resp.json()
+        assert "key" in response_data
+        assert "id" in response_data
+        assert response_data["name"] == "Foobar"
+        assert "created_at" in response_data
+        assert response_data["permissions"][Permission.create_sample.value] is True
+
+    async def test_without_permission(
         self,
-        mocker,
-        snapshot: SnapshotAssertion,
-        mongo: Mongo,
+        data_layer: DataLayer,
+        fake: DataFaker,
         spawn_client: ClientSpawner,
-        static_time: StaticTime,
     ) -> None:
-        """Test that uniqueness is ensured on the ``id`` field."""
-        mocker.patch(
-            "virtool.utils.generate_key",
-            return_value=("raw_key", "hashed_key"),
+        """Test creating an API key requesting a permission the user lacks."""
+        group = await fake.groups.create(
+            PermissionsUpdate(**{Permission.create_sample: True}),
         )
 
         client = await spawn_client(authenticated=True)
 
-        await mongo.keys.insert_one(
-            {"_id": "foobar", "id": "foobar_0", "name": "Foobar"},
+        resp = await client.post(
+            "/account/keys",
+            {"name": "Foobar", "permissions": {Permission.create_sample.value: True}},
         )
 
-        body = {"name": "Foobar"}
+        assert resp.status == 201
 
-        resp = await client.post("/account/keys", body)
+        response_data = await resp.json()
+        assert "key" in response_data
+        assert "id" in response_data
+        assert response_data["name"] == "Foobar"
+        assert "created_at" in response_data
+        assert response_data["permissions"][Permission.create_sample.value] is False
+
+    async def test_no_permissions_requested(
+        self,
+        spawn_client: ClientSpawner,
+    ) -> None:
+        """Test creating an API key without requesting any permissions."""
+        client = await spawn_client(authenticated=True)
+
+        resp = await client.post("/account/keys", {"name": "Foobar"})
 
         assert resp.status == 201
-        assert await resp.json() == snapshot
-        assert await mongo.keys.find_one({"id": "foobar_1"}) == snapshot
+
+        response_data = await resp.json()
+        assert "key" in response_data
+        assert "id" in response_data
+        assert response_data["name"] == "Foobar"
+        assert "created_at" in response_data
+        assert all(v is False for v in response_data["permissions"].values())
+
+    async def test_naming(
+        self,
+        spawn_client: ClientSpawner,
+    ) -> None:
+        """Test that uniqueness is ensured on the ``id`` field."""
+        client = await spawn_client(authenticated=True)
+
+        resp_1 = await client.post("/account/keys", {"name": "Foobar"})
+        assert resp_1.status == 201
+        data_1 = await resp_1.json()
+        assert data_1["id"] == "foobar_0"
+        assert data_1["name"] == "Foobar"
+
+        resp_2 = await client.post("/account/keys", {"name": "Foobar"})
+        assert resp_2.status == 201
+        data_2 = await resp_2.json()
+        assert data_2["id"] == "foobar_1"
+        assert data_2["name"] == "Foobar"
+
+    async def test_permission_exceeds_user_create(
+        self,
+        fake: DataFaker,
+        spawn_client: ClientSpawner,
+    ) -> None:
+        """Test that API key permissions are limited to user's actual permissions on retrieval."""
+        client = await spawn_client(
+            authenticated=True, permissions=[Permission.create_sample]
+        )
+
+        resp = await client.post(
+            "/account/keys",
+            {
+                "name": "Test Key",
+                "permissions": {
+                    Permission.create_sample.value: True,
+                    Permission.modify_subtraction.value: True,  # User doesn't have this
+                },
+            },
+        )
+
+        assert resp.status == 201
+        body = await resp.json()
+
+        assert body["permissions"][Permission.create_sample.value] is True
+        assert body["permissions"][Permission.modify_subtraction.value] is False
+
+    async def test_permission_inheritance_multiple_groups(
+        self,
+        fake: DataFaker,
+        spawn_client: ClientSpawner,
+    ) -> None:
+        """Test that API keys inherit the union of group permissions."""
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_sample, Permission.modify_subtraction],
+        )
+
+        resp = await client.post(
+            "/account/keys",
+            {
+                "name": "Test Key",
+                "permissions": {
+                    Permission.create_sample.value: True,
+                    Permission.modify_subtraction.value: True,
+                },
+            },
+        )
+
+        assert resp.status == 201
+        body = await resp.json()
+
+        assert body["permissions"][Permission.create_sample.value] is True
+        assert body["permissions"][Permission.modify_subtraction.value] is True
+
+    async def test_admin_can_grant_any_permission(
+        self,
+        fake: DataFaker,
+        spawn_client: ClientSpawner,
+        data_layer: DataLayer,
+    ) -> None:
+        """Test that admin users can grant any permission to their own keys."""
+        client = await spawn_client(authenticated=True, administrator=True)
+
+        all_permissions = dict.fromkeys(generate_base_permissions(), True)
+
+        resp = await client.post(
+            "/account/keys", {"name": "Admin Key", "permissions": all_permissions}
+        )
+
+        assert resp.status == 201
+        body = await resp.json()
+
+        for perm in Permission:
+            assert body["permissions"][perm.value] is True
 
     async def test_permission_exceeds_user_create(
         self,

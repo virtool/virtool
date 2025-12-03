@@ -12,7 +12,6 @@ from virtool.api.custom_json import dump_string
 from virtool.data.events import listen_for_client_events
 from virtool.models.base import BaseModel
 from virtool.redis import Redis
-from virtool.users.sessions import SessionData
 from virtool.ws.cls import WSDeleteMessage, WSInsertMessage, WSMessage
 
 if TYPE_CHECKING:
@@ -34,6 +33,7 @@ class WSServer:
         self._pg_connection_string = pg_connection_string
         self._data = data
         self._redis = redis
+        self._data = data
 
     async def run(self) -> None:
         """Start the Websocket server."""
@@ -121,13 +121,11 @@ class WSServer:
 
     async def periodically_close_expired_websocket_connections(self) -> None:
         """Periodically check for and close connections with expired sessions."""
-        session_data = SessionData(self._redis)
-
         while True:
             logger.info("closing expired websocket connections")
 
             for connection in self._connections:
-                if not await session_data.check_session_is_authenticated(
+                if not await self._data.sessions.check_session_is_authenticated(
                     connection.session_id,
                 ):
                     await connection.close(1001)

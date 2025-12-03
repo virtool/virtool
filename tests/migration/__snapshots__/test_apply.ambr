@@ -379,5 +379,12 @@
       'name': 'add case insensitive unique index on user handle',
       'revision': 'a23d6af751b3',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 55,
+      'name': 'add sessions table',
+      'revision': '1c57bca78c4c',
+    }),
   ])
 # ---

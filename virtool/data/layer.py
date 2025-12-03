@@ -23,12 +23,12 @@ from virtool.otus.data import OTUData
 from virtool.redis import Redis
 from virtool.references.data import ReferencesData
 from virtool.samples.data import SamplesData
+from virtool.sessions.data import SessionData
 from virtool.settings.data import SettingsData
 from virtool.subtractions.data import SubtractionsData
 from virtool.tasks.data import TasksData
 from virtool.uploads.data import UploadsData
 from virtool.users.data import UsersData
-from virtool.users.sessions import SessionData
 
 
 @dataclass
@@ -105,7 +105,7 @@ def create_data_layer(
         ReferencesData(mongo, pg, config, client),
         SamplesData(config, mongo, pg, jobs_client),
         SubtractionsData(config.base_url, config, mongo, pg),
-        SessionData(redis),
+        SessionData(pg),
         SettingsData(mongo),
         TasksData(pg),
         UploadsData(config, mongo, pg),

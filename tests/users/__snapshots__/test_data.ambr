@@ -240,15 +240,6 @@
     'total_count': 5,
   })
 # ---
-# name: TestUpdate.test_groups[mongo_1]
-  None
-# ---
-# name: TestUpdate.test_groups[mongo_2]
-  None
-# ---
-# name: TestUpdate.test_groups[mongo_3]
-  None
-# ---
 # name: TestUpdate.test_groups[obj_1]
   dict({
     'active': True,
@@ -370,9 +361,6 @@
     }),
   })
 # ---
-# name: TestUpdate.test_groups_unset_primary[mongo]
-  None
-# ---
 # name: TestUpdate.test_groups_unset_primary[obj]
   dict({
     'active': True,
@@ -421,9 +409,6 @@
       'skip_quick_analyze_dialog': True,
     }),
   })
-# ---
-# name: TestUpdate.test_password[db]
-  None
 # ---
 # name: TestUpdate.test_password[obj]
   dict({

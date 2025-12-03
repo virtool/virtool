@@ -14,6 +14,7 @@ from virtool.messages.sql import SQLInstanceMessage
 from virtool.ml.pg import SQLMLModel, SQLMLModelRelease
 from virtool.pg.base import Base
 from virtool.samples.sql import SQLSampleArtifact, SQLSampleReads
+from virtool.sessions.models import SQLSession
 from virtool.spaces.sql import SQLSpace
 from virtool.subtractions.pg import SQLSubtractionFile
 from virtool.uploads.sql import SQLUpload
@@ -43,6 +44,7 @@ __models__ = (
     SQLNuVsBlast,
     SQLSampleArtifact,
     SQLSampleReads,
+    SQLSession,
     SQLSpace,
     SQLSubtractionFile,
     SQLUpload,

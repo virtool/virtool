@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from pydantic import BaseModel, Field, constr, root_validator, validator
 
 from virtool.account.models import APIKey, check_email
@@ -17,7 +15,7 @@ class UpdateAccountRequest(BaseModel):
     password: str | None = Field(description="the new password")
 
     @root_validator
-    def check_password(cls, values: str | constr):
+    def check_password(cls, values: dict):
         """Checks if old_password has also been input if a new password
         is provided.
         """

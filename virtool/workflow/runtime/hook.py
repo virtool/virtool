@@ -1,7 +1,5 @@
 """The :class:`Hook` class is used to hook into the workflow lifecycle."""
 
-from __future__ import annotations
-
 from asyncio import gather
 from collections.abc import Callable
 from typing import Any
@@ -59,7 +57,7 @@ class Hook:
         self.callbacks.append(callback_)
         return callback_
 
-    def _callback_until(self, hook_: Hook):
+    def _callback_until(self, hook_: "Hook"):
         """Add a callback to this hook and remove it when :func:`hook_` is triggered."""
 
         def _temporary_callback(callback_):

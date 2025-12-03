@@ -267,6 +267,7 @@ class ClientSpawner(Protocol):
 def spawn_client(
     aiohttp_client,
     authorization_client: AuthorizationClient,
+    data_layer: DataLayer,
     data_path: Path,
     fake: DataFaker,
     mocker,
@@ -462,26 +463,13 @@ def spawn_client(
             )
 
         if authenticated:
-            session_id = "foobar"
-            session_token = "bar"
-
-            await redis.set(
-                session_id,
-                dump_string(
-                    {
-                        "authentication": {
-                            "token": hash_key(session_token),
-                            "user_id": test_client_user.id,
-                        },
-                        "created_at": virtool.utils.timestamp(),
-                        "id": session_id,
-                        "ip": "127.0.0.1",
-                    },
-                ),
-                expire=3600,
+            session, session_token = await data_layer.sessions.create_authenticated(
+                "127.0.0.1",
+                test_client_user.id,
+                remember=False,
             )
 
-            cookies = {"session_id": session_id, "session_token": session_token}
+            cookies = {"session_id": session.id, "session_token": session_token}
 
         else:
             cookies = {}

@@ -12,6 +12,7 @@ from virtool.references.tasks import ReferenceReleasesRefreshTask, ReferencesCle
 from virtool.samples.tasks import (
     SampleWorkflowsUpdateTask,
 )
+from virtool.sessions.tasks import SessionCleanupTask
 from virtool.tasks.data import TasksData
 from virtool.tasks.spawner import TaskSpawnerService
 
@@ -52,6 +53,7 @@ async def startup_task_spawner(app: Application) -> None:
                 (ReferenceReleasesRefreshTask, 600),
                 (ReferencesCleanTask, 3600),
                 (SampleWorkflowsUpdateTask, 3600),
+                (SessionCleanupTask, 300),
             ]
         )
     )

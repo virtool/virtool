@@ -160,6 +160,7 @@ class FirstUserView(PydanticView):
         ).sessions.create_authenticated(
             virtool.api.authentication.get_ip(self.request),
             user.id,
+            remember=True,
         )
 
         response = json_response(
