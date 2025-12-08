@@ -1350,15 +1350,15 @@ wheels = [
 
 [[package]]
 name = "pytest-structlog"
-version = "1.1"
+version = "1.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pytest" },
     { name = "structlog" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/96/7c/3fb89ed643578c60f5d7192614f7feaf0dbc4a1cb4c786885b12672fed1f/pytest_structlog-1.1.tar.gz", hash = "sha256:440123b0a7f93482383995b3fb796ed8c1b9a37edf405683a34774993ef09543", size = 12642, upload-time = "2024-07-25T02:55:32.001Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/94/71/177ef678fde8257c10ae822080811467c0fc893c17daac4c065e0836cd63/pytest_structlog-1.2.tar.gz", hash = "sha256:11b37487663a990bcd490da2e68e2f96b0ecd6a1704f5e82561d5840bd321a60", size = 13285, upload-time = "2025-09-10T02:32:35.962Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/de/13/6d0e43e1f322f7b965a0e094754b66b76a137a86ab9bb1f2c1498efdc4e3/pytest_structlog-1.1-py3-none-any.whl", hash = "sha256:928475948f886bc027f1550dccb892fb46bfb8bb1ddb0c44ab4fa3c5b3f3079a", size = 8520, upload-time = "2024-07-25T02:55:30.481Z" },
+    { url = "https://files.pythonhosted.org/packages/80/3f/cce51dfeb5f1956a30f480611921e9a899ae5cc5f41bb24858ac99401b17/pytest_structlog-1.2-py3-none-any.whl", hash = "sha256:a5659f6b7d43aa53cf8090075deadad35a6bf1899073ea18118e299232d3d6f0", size = 8636, upload-time = "2025-09-10T02:32:34.952Z" },
 ]
 
 [[package]]
