@@ -779,6 +779,18 @@ wheels = [
 ]
 
 [[package]]
+name = "importlib-metadata"
+version = "8.7.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "zipp" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/76/66/650a33bd90f786193e4de4b3ad86ea60b53c89b669a5c7be931fac31cdb0/importlib_metadata-8.7.0.tar.gz", hash = "sha256:d13b81ad223b890aa16c5471f2ac3056cf76c5f10f82d6f9292f0b415f389000", size = 56641, upload-time = "2025-04-27T15:29:01.736Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/20/b0/36bd937216ec521246249be3bf9855081de4c5e06a0c9b4219dbeda50373/importlib_metadata-8.7.0-py3-none-any.whl", hash = "sha256:e5dd1551894c77868a30651cef00984d50e1002d06942a7101d34870c5f02afd", size = 27656, upload-time = "2025-04-27T15:29:00.214Z" },
+]
+
+[[package]]
 name = "iniconfig"
 version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1018,17 +1030,17 @@ wheels = [
 
 [[package]]
 name = "openfga-sdk"
-version = "0.1.1"
+version = "0.9.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
+    { name = "opentelemetry-api" },
     { name = "python-dateutil" },
-    { name = "six" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0f/85/0ff1e25a78179acd865618fc4727f088fab9f76bb89ec3f05f2c4e606e62/openfga-sdk-0.1.1.tar.gz", hash = "sha256:e2e30afdf4dc48b086af9f46a49159249cd909dcb694218854d0320f51b83cf5", size = 74898, upload-time = "2023-01-17T22:59:59.946Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f0/1d/db68e86b07d5dd461ba2d90c4fc69f57107fd2c35bf19febc2ac1f4e2b5f/openfga_sdk-0.9.9.tar.gz", hash = "sha256:4d0b8bf3f7525b268c5d3cde6e1c62688fbb455216736df6ec51abbe24119114", size = 326407, upload-time = "2025-12-08T18:56:06.176Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/66/3c/94d1d7701f5beaba9d2fcd762bf93200029440c3ee92a12f995067465507/openfga_sdk-0.1.1-py3-none-any.whl", hash = "sha256:86ce66ce446675e912071e8f96630120d6e9503c8f6d04088784731892becd2e", size = 132454, upload-time = "2023-01-17T22:59:58.236Z" },
+    { url = "https://files.pythonhosted.org/packages/12/b8/f69abd2e5752db2f9c92d73accf44871d4ff732c768fff9d89a2047e0773/openfga_sdk-0.9.9-py3-none-any.whl", hash = "sha256:91ef8973ca1159278cc47b6f6a6d409ef0504ced95e7b28b6252d25e4ab18830", size = 259519, upload-time = "2025-12-08T18:56:04.915Z" },
 ]
 
 [[package]]
@@ -1041,6 +1053,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/3d/f9/88d94a75de065ea32619465d2f77b29a0469500e99012523b91cc4141cd1/openpyxl-3.1.5.tar.gz", hash = "sha256:cf0e3cf56142039133628b5acffe8ef0c12bc902d2aadd3e0fe5878dc08d1050", size = 186464, upload-time = "2024-06-28T14:03:44.161Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c0/da/977ded879c29cbd04de313843e76868e6e13408a94ed6b987245dc7c8506/openpyxl-3.1.5-py2.py3-none-any.whl", hash = "sha256:5282c12b107bffeef825f4617dc029afaf41d0ea60823bbb665ef3079dc79de2", size = 250910, upload-time = "2024-06-28T14:03:41.161Z" },
+]
+
+[[package]]
+name = "opentelemetry-api"
+version = "1.39.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "importlib-metadata" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/97/b9/3161be15bb8e3ad01be8be5a968a9237c3027c5be504362ff800fca3e442/opentelemetry_api-1.39.1.tar.gz", hash = "sha256:fbde8c80e1b937a2c61f20347e91c0c18a1940cecf012d62e65a7caf08967c9c", size = 65767, upload-time = "2025-12-11T13:32:39.182Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cf/df/d3f1ddf4bb4cb50ed9b1139cc7b1c54c34a1e7ce8fd1b9a37c0d1551a6bd/opentelemetry_api-1.39.1-py3-none-any.whl", hash = "sha256:2edd8463432a7f8443edce90972169b195e7d6a05500cd29e6d13898187c9950", size = 66356, upload-time = "2025-12-11T13:32:17.304Z" },
 ]
 
 [[package]]
@@ -2018,7 +2043,7 @@ requires-dist = [
     { name = "enum-tools", specifier = ">=0.13.0,<1.0.0" },
     { name = "faker", specifier = ">=38.2.0" },
     { name = "motor", specifier = ">=3.7.1,<4.0.0" },
-    { name = "openfga-sdk", specifier = "==0.1.1" },
+    { name = "openfga-sdk", specifier = "==0.9.9" },
     { name = "openpyxl", specifier = ">=3.1.5,<4.0.0" },
     { name = "orjson", specifier = ">=3.10.18,<4.0.0" },
     { name = "pydantic", specifier = "==1.10.16" },
@@ -2191,4 +2216,13 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/24/fd/725b8e73ac2a50e78a4534ac43c6addf5c1c2d65380dd48a9169cc6739a9/yarl-1.20.1-cp313-cp313t-win32.whl", hash = "sha256:b121ff6a7cbd4abc28985b6028235491941b9fe8fe226e6fdc539c977ea1739d", size = 86591, upload-time = "2025-06-10T00:45:25.793Z" },
     { url = "https://files.pythonhosted.org/packages/94/c3/b2e9f38bc3e11191981d57ea08cab2166e74ea770024a646617c9cddd9f6/yarl-1.20.1-cp313-cp313t-win_amd64.whl", hash = "sha256:541d050a355bbbc27e55d906bc91cb6fe42f96c01413dd0f4ed5a5240513874f", size = 93003, upload-time = "2025-06-10T00:45:27.752Z" },
     { url = "https://files.pythonhosted.org/packages/b4/2d/2345fce04cfd4bee161bf1e7d9cdc702e3e16109021035dbb24db654a622/yarl-1.20.1-py3-none-any.whl", hash = "sha256:83b8eb083fe4683c6115795d9fc1cfaf2cbbefb19b3a1cb68f6527460f483a77", size = 46542, upload-time = "2025-06-10T00:46:07.521Z" },
+]
+
+[[package]]
+name = "zipp"
+version = "3.23.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e3/02/0f2892c661036d50ede074e376733dca2ae7c6eb617489437771209d4180/zipp-3.23.0.tar.gz", hash = "sha256:a07157588a12518c9d4034df3fbbee09c814741a33ff63c05fa29d26a2404166", size = 25547, upload-time = "2025-06-08T17:06:39.4Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2e/54/647ade08bf0db230bfea292f893923872fd20be6ac6f53b2b936ba839d75/zipp-3.23.0-py3-none-any.whl", hash = "sha256:071652d6115ed432f5ce1d34c336c0adfd6a884660d1e9712a256d3d3bd4b14e", size = 10276, upload-time = "2025-06-08T17:06:38.034Z" },
 ]
