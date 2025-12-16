@@ -11,7 +11,8 @@ from virtool.users.models_base import UserNested
 if TYPE_CHECKING:
     from pymongo.results import UpdateResult
 
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
@@ -23,6 +24,7 @@ from virtool.jobs.models import (
     TERMINAL_JOB_STATES,
     Job,
     JobAcquired,
+    JobClaim,
     JobMinimal,
     JobPing,
     JobSearchResult,
@@ -30,6 +32,7 @@ from virtool.jobs.models import (
     JobStatus,
     QueuedJobID,
 )
+from virtool.jobs.pg import SQLJob
 from virtool.jobs.utils import (
     check_job_is_running_or_waiting,
     compose_status,
@@ -305,6 +308,59 @@ class JobsData:
         job = await self.get(job_id)
 
         return JobAcquired(**job.dict(), key=key)
+
+    async def claim(self, job_id: int, body: JobClaim) -> dict:
+        """Claim a job using PostgreSQL storage.
+
+        :param job_id: the ID of the job to claim
+        :param body: claim request body with runner metadata and steps
+        :return: the job with the secret key
+        """
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(select(SQLJob).where(SQLJob.id == job_id))
+            job = result.scalar()
+
+            if job is None:
+                raise ResourceNotFoundError("Job not found")
+
+            if job.state in ("cancelled", "failed", "succeeded"):
+                raise ResourceConflictError("Cannot claim job in terminal state")
+
+            if job.acquired:
+                raise ResourceConflictError("Job already claimed")
+
+            key, hashed = virtool.utils.generate_key()
+            now = virtool.utils.timestamp()
+
+            claim = body.dict(exclude={"steps"})
+            steps = [step.dict() for step in body.steps]
+
+            job.acquired = True
+            job.claim = claim
+            job.claimed_at = now
+            job.key = hashed
+            job.pinged_at = now
+            job.state = "running"
+            job.steps = steps
+
+            created_at = job.created_at
+            user_id = job.user_id
+            workflow = job.workflow
+
+            await session.commit()
+
+        return {
+            "id": job_id,
+            "acquired": True,
+            "claim": claim,
+            "claimed_at": now,
+            "created_at": created_at,
+            "key": key,
+            "state": "running",
+            "steps": steps,
+            "user_id": user_id,
+            "workflow": workflow,
+        }
 
     async def ping(self, job_id: str) -> JobPing:
         """Update the `ping` field on a job to the current time.

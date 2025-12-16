@@ -3,13 +3,16 @@ from http import HTTPStatus
 
 import arrow
 import pytest
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from tests.fixtures.response import RespIs
 from virtool.fake.next import DataFaker
+from virtool.flags import FlagName
 from virtool.jobs.models import JobState
+from virtool.jobs.pg import SQLJob
 from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
 
@@ -550,3 +553,203 @@ class TestPushStatus:
         resp = await client.post(f"/jobs/{test_job.id}/status", body)
 
         await resp_is.conflict(resp, "Job is finished")
+
+
+class TestClaim:
+    """Tests for POST /jobs/{job_id}/claim endpoint."""
+
+    async def test_ok(
+        self,
+        fake: DataFaker,
+        pg: AsyncEngine,
+        spawn_job_client: JobClientSpawner,
+    ):
+        """Test that a job can be claimed successfully."""
+        client = await spawn_job_client(
+            authenticated=False,
+            flags=[FlagName.JOBS_IN_POSTGRES],
+        )
+
+        user = await fake.users.create()
+
+        async with AsyncSession(pg) as session:
+            job = SQLJob(
+                created_at=arrow.utcnow().naive,
+                state="pending",
+                user_id=user.id,
+                workflow="nuvs",
+            )
+            session.add(job)
+            await session.flush()
+            job_id = job.id
+            await session.commit()
+
+        resp = await client.post(
+            f"/jobs/{job_id}/claim",
+            json={
+                "runner_id": "runner-1",
+                "mem": 8.0,
+                "cpu": 4.0,
+                "image": "virtool/workflow:1.0.0",
+                "runtime_version": "1.0.0",
+                "workflow_version": "2.0.0",
+                "steps": [
+                    {"name": "Step 1", "description": "First step"},
+                    {"name": "Step 2", "description": "Second step"},
+                ],
+            },
+        )
+
+        assert resp.status == HTTPStatus.OK
+
+        body = await resp.json()
+
+        assert body["id"] == job_id
+        assert body["acquired"] is True
+        assert body["state"] == "running"
+        assert "key" in body
+        assert body["claim"] == {
+            "runner_id": "runner-1",
+            "mem": 8.0,
+            "cpu": 4.0,
+            "image": "virtool/workflow:1.0.0",
+            "runtime_version": "1.0.0",
+            "workflow_version": "2.0.0",
+        }
+        assert body["steps"] == [
+            {"name": "Step 1", "description": "First step"},
+            {"name": "Step 2", "description": "Second step"},
+        ]
+
+    async def test_not_found(self, spawn_job_client: JobClientSpawner):
+        """Test that 404 is returned when job doesn't exist."""
+        client = await spawn_job_client(
+            authenticated=False,
+            flags=[FlagName.JOBS_IN_POSTGRES],
+        )
+
+        resp = await client.post(
+            "/jobs/99999/claim",
+            json={
+                "runner_id": "runner-1",
+                "mem": 8.0,
+                "cpu": 4.0,
+                "image": "virtool/workflow:1.0.0",
+                "runtime_version": "1.0.0",
+                "workflow_version": "2.0.0",
+                "steps": [],
+            },
+        )
+
+        assert resp.status == HTTPStatus.NOT_FOUND
+
+    async def test_already_claimed(
+        self,
+        fake: DataFaker,
+        pg: AsyncEngine,
+        spawn_job_client: JobClientSpawner,
+    ):
+        """Test that 400 is returned when job is already claimed."""
+        client = await spawn_job_client(
+            authenticated=False,
+            flags=[FlagName.JOBS_IN_POSTGRES],
+        )
+
+        user = await fake.users.create()
+
+        async with AsyncSession(pg) as session:
+            job = SQLJob(
+                acquired=True,
+                created_at=arrow.utcnow().naive,
+                state="running",
+                user_id=user.id,
+                workflow="nuvs",
+            )
+            session.add(job)
+            await session.flush()
+            job_id = job.id
+            await session.commit()
+
+        resp = await client.post(
+            f"/jobs/{job_id}/claim",
+            json={
+                "runner_id": "runner-1",
+                "mem": 8.0,
+                "cpu": 4.0,
+                "image": "virtool/workflow:1.0.0",
+                "runtime_version": "1.0.0",
+                "workflow_version": "2.0.0",
+                "steps": [],
+            },
+        )
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
+        assert await resp.json() == {
+            "id": "bad_request",
+            "message": "Job already claimed",
+        }
+
+    @pytest.mark.parametrize("state", ["cancelled", "failed", "succeeded"])
+    async def test_terminal_state(
+        self,
+        state: str,
+        fake: DataFaker,
+        pg: AsyncEngine,
+        spawn_job_client: JobClientSpawner,
+    ):
+        """Test that 409 is returned when job is in a terminal state."""
+        client = await spawn_job_client(
+            authenticated=False,
+            flags=[FlagName.JOBS_IN_POSTGRES],
+        )
+
+        user = await fake.users.create()
+
+        async with AsyncSession(pg) as session:
+            job = SQLJob(
+                created_at=arrow.utcnow().naive,
+                state=state,
+                user_id=user.id,
+                workflow="nuvs",
+            )
+            session.add(job)
+            await session.flush()
+            job_id = job.id
+            await session.commit()
+
+        resp = await client.post(
+            f"/jobs/{job_id}/claim",
+            json={
+                "runner_id": "runner-1",
+                "mem": 8.0,
+                "cpu": 4.0,
+                "image": "virtool/workflow:1.0.0",
+                "runtime_version": "1.0.0",
+                "workflow_version": "2.0.0",
+                "steps": [],
+            },
+        )
+
+        assert resp.status == HTTPStatus.CONFLICT
+
+    async def test_feature_flag_disabled(
+        self,
+        spawn_job_client: JobClientSpawner,
+    ):
+        """Test that 404 is returned when feature flag is disabled."""
+        client = await spawn_job_client(authenticated=False)
+
+        resp = await client.post(
+            "/jobs/1/claim",
+            json={
+                "runner_id": "runner-1",
+                "mem": 8.0,
+                "cpu": 4.0,
+                "image": "virtool/workflow:1.0.0",
+                "runtime_version": "1.0.0",
+                "workflow_version": "2.0.0",
+                "steps": [],
+            },
+        )
+
+        assert resp.status == HTTPStatus.NOT_FOUND

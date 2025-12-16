@@ -469,3 +469,22 @@ class JobAcquired(Job):
 class JobSearchResult(SearchResult):
     counts: dict
     documents: list[JobMinimal]
+
+
+class JobStep(BaseModel):
+    """A workflow step definition."""
+
+    name: str
+    description: str
+
+
+class JobClaim(BaseModel):
+    """Request body for claiming a job."""
+
+    runner_id: str
+    mem: float
+    cpu: float
+    image: str
+    runtime_version: str
+    workflow_version: str
+    steps: list[JobStep]

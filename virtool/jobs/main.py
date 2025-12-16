@@ -6,6 +6,7 @@ import virtool.api.accept
 import virtool.jobs.auth
 from virtool.api.errors import error_middleware
 from virtool.config.cls import ServerConfig
+from virtool.flags import FeatureFlags, feature_flag_middleware
 from virtool.jobs.routes import startup_routes
 from virtool.startup import (
     startup_data,
@@ -27,12 +28,14 @@ async def create_app(config: ServerConfig):
         middlewares=[
             virtool.api.accept.accept_middleware,
             error_middleware,
+            feature_flag_middleware,
             virtool.jobs.auth.middleware,
             error_middleware,
         ],
     )
 
     app["config"] = config
+    app["flags"] = FeatureFlags(config.flags)
     app["mode"] = "jobs_api_server"
 
     app.on_startup.extend(

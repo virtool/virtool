@@ -386,5 +386,12 @@
       'name': 'add sessions table',
       'revision': '1c57bca78c4c',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 56,
+      'name': 'create job tables',
+      'revision': 'fd093be5e5c3',
+    }),
   ])
 # ---
