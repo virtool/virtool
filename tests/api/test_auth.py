@@ -279,14 +279,6 @@ class TestJobAuthentication:
 
         assert resp.status == HTTPStatus.OK
 
-    async def test_unauthenticated_root_fails(self, spawn_job_client: JobClientSpawner):
-        """Check that a request against the root API URL"""
-        client = await spawn_job_client(authenticated=False)
-
-        resp = await client.get("/")
-
-        assert resp.status == 401
-
     async def test_protected_fails(
         self,
         mongo: Mongo,

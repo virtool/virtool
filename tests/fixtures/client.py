@@ -221,6 +221,7 @@ class JobClientSpawner(Protocol):
         authenticated: bool = False,
         base_url: str = "",
         dev: bool = False,
+        flags: list[FlagName] | None = None,
     ) -> VirtoolTestClient:
         """Spawn a test job client.
 
@@ -516,6 +517,7 @@ def spawn_job_client(
         authenticated: bool = False,
         base_url: str = "",
         dev: bool = False,
+        flags: list[FlagName] | None = None,
     ):
         if authenticated:
             # Create a test job to use for authentication.
@@ -558,6 +560,9 @@ def spawn_job_client(
             app.add_routes(add_route_table)
 
         client = await aiohttp_client(app, auth=auth, auto_decompress=False)
+
+        if flags:
+            client.app["flags"] = FeatureFlags(flags)
 
         return client
 

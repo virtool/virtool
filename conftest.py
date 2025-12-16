@@ -6,6 +6,7 @@ TODO: Remove import of virtool.spaces.sql once feature is fully removed.
 import pytest
 from pytest_mock import MockerFixture
 
+import virtool.jobs.pg
 import virtool.spaces.sql  # noqa: F401
 from virtool.users.utils import hash_password
 

@@ -6,7 +6,7 @@ from pydantic import Field, ValidationError, conint
 
 from virtool.api.custom_json import json_response
 from virtool.api.errors import APIBadRequest, APIConflict, APINotFound
-from virtool.api.policy import PermissionRoutePolicy, policy
+from virtool.api.policy import PermissionRoutePolicy, PublicRoutePolicy, policy
 from virtool.api.routes import Routes
 from virtool.api.schema import schema
 from virtool.authorization.permissions import LegacyPermission
@@ -15,7 +15,8 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.utils import get_data_from_req
-from virtool.jobs.models import Job, JobSearchResult, JobState
+from virtool.flags import FlagName, flag
+from virtool.jobs.models import Job, JobClaim, JobSearchResult, JobState
 
 routes = Routes()
 
@@ -114,6 +115,7 @@ async def get(req):
 
 @routes.jobs_api.patch("/jobs/{job_id}")
 @schema({"acquired": {"type": "boolean", "allowed": [True], "required": True}})
+@policy(PublicRoutePolicy)
 async def acquire(req):
     """Sets the acquired field on the job document.
 
@@ -132,6 +134,36 @@ async def acquire(req):
         raise APIBadRequest("Job already acquired")
 
     return json_response(document)
+
+
+@routes.jobs_api.view("/jobs/{job_id}/claim")
+@flag(FlagName.JOBS_IN_POSTGRES)
+class ClaimJobView(PydanticView):
+    @policy(PublicRoutePolicy)
+    async def post(
+        self, job_id: int, /, body: JobClaim
+    ) -> r200[dict] | r400 | r404 | r409:
+        """Claim a job for a runner.
+
+        Stores runner metadata and workflow steps, returns a secret key for
+        authentication.
+
+        Status Codes:
+            200: Successful operation
+            400: Job already claimed
+            404: Not found
+            409: Job in terminal state
+        """
+        try:
+            document = await get_data_from_req(self.request).jobs.claim(job_id, body)
+        except ResourceNotFoundError:
+            raise APINotFound()
+        except ResourceConflictError as e:
+            if "terminal state" in str(e):
+                raise APIConflict(str(e))
+            raise APIBadRequest("Job already claimed")
+
+        return json_response(document)
 
 
 @routes.view("/jobs/{job_id}/cancel")

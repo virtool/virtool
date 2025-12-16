@@ -1,17 +1,14 @@
-import os
-
 from aiohttp import BasicAuth, web
 from aiohttp.web import Request
 
 from virtool.api.client import JobClient
 from virtool.api.errors import APIUnauthorized
+from virtool.api.policy import PublicRoutePolicy, get_handler_policy
 from virtool.jobs.models import TERMINAL_JOB_STATES
 from virtool.jobs.utils import get_latest_status
 from virtool.mongo.utils import get_mongo_from_req
 from virtool.types import RouteHandler
 from virtool.utils import hash_key
-
-PUBLIC_ROUTES = [("PATCH", "/jobs")]
 
 
 @web.middleware
@@ -27,7 +24,7 @@ async def middleware(request: Request, handler: RouteHandler):
     *401 NOT AUTHORIZED*
         When the `Authorization` header is invalid, or missing.
     """
-    if (request.method, os.path.split(request.path)[0]) in PUBLIC_ROUTES:
+    if isinstance(get_handler_policy(handler, request.method), PublicRoutePolicy):
         return await handler(request)
 
     try:
