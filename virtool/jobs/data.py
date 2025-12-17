@@ -35,6 +35,7 @@ from virtool.jobs.models import (
     JobStateV2,
     JobStatus,
     JobStepStatus,
+    JobV2,
     QueuedJobID,
     WorkflowCounts,
     WorkflowV2,
@@ -442,6 +443,58 @@ class JobsData:
         )
 
         return Job(**document)
+
+    async def get_v2(self, job_id: str) -> JobV2:
+        """Get a job using v2 response format.
+
+        Queries MongoDB and maps v1 fields to v2 format.
+
+        :param job_id: the ID of the job to get.
+        :return: the job in v2 format
+        """
+        v1_to_v2_state = {
+            JobState.CANCELLED.value: JobStateV2.CANCELLED,
+            JobState.COMPLETE.value: JobStateV2.SUCCEEDED,
+            JobState.ERROR.value: JobStateV2.FAILED,
+            JobState.PREPARING.value: JobStateV2.RUNNING,
+            JobState.RUNNING.value: JobStateV2.RUNNING,
+            JobState.TERMINATED.value: JobStateV2.FAILED,
+            JobState.TIMEOUT.value: JobStateV2.FAILED,
+            JobState.WAITING.value: JobStateV2.PENDING,
+        }
+
+        document = await self._mongo.jobs.find_one(job_id)
+
+        if document is None:
+            raise ResourceNotFoundError()
+
+        last_update = get_latest_status(document)
+
+        document = await apply_transforms(
+            {
+                **document,
+                "id": document["_id"],
+            },
+            [AttachUserTransform(self._pg)],
+            self._pg,
+        )
+
+        claimed_at = None
+        if len(document["status"]) > 1:
+            claimed_at = document["status"][1]["timestamp"]
+
+        return JobV2(
+            id=document["id"],
+            claim=None,
+            claimed_at=claimed_at,
+            created_at=document["created_at"],
+            pinged_at=document["ping"]["pinged_at"] if document.get("ping") else None,
+            progress=last_update.progress,
+            state=v1_to_v2_state[last_update.state.value],
+            steps=None,
+            user=UserNested(**document["user"]),
+            workflow=WorkflowV2(document["workflow"]),
+        )
 
     @emits(Operation.UPDATE)
     async def acquire(self, job_id: str) -> JobAcquired:

@@ -18,6 +18,7 @@ from virtool.mongo.core import Mongo
 
 _job_response_matcher = path_type(
     {
+        ".*claimed_at": (str,),
         ".*created_at": (str,),
         ".*key": (str,),
         ".*pinged_at": (str,),
@@ -1064,3 +1065,65 @@ class TestFindV2:
 
         assert body["found_count"] == 0
         assert body["items"] == []
+
+
+class TestGetV2:
+    async def test_ok(
+        self,
+        fake: DataFaker,
+        snapshot: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+    ):
+        client = await spawn_client(authenticated=True)
+
+        user = await fake.users.create()
+        job = await fake.jobs.create(user=user, state=JobState.RUNNING)
+
+        resp = await client.get(f"/jobs/v2/{job.id}")
+
+        assert resp.status == HTTPStatus.OK
+        assert await resp.json() == snapshot(matcher=_job_response_matcher)
+
+    async def test_not_found(self, spawn_client: ClientSpawner):
+        client = await spawn_client(authenticated=True)
+
+        resp = await client.get("/jobs/v2/nonexistent")
+
+        assert resp.status == HTTPStatus.NOT_FOUND
+        assert await resp.json() == {
+            "id": "not_found",
+            "message": "Not found",
+        }
+
+    @pytest.mark.parametrize(
+        ("v1_state", "v2_state"),
+        [
+            (JobState.WAITING, "pending"),
+            (JobState.PREPARING, "running"),
+            (JobState.RUNNING, "running"),
+            (JobState.COMPLETE, "succeeded"),
+            (JobState.ERROR, "failed"),
+            (JobState.CANCELLED, "cancelled"),
+            (JobState.TERMINATED, "failed"),
+            (JobState.TIMEOUT, "failed"),
+        ],
+    )
+    async def test_state_mapping(
+        self,
+        v1_state: JobState,
+        v2_state: str,
+        fake: DataFaker,
+        spawn_client: ClientSpawner,
+    ):
+        client = await spawn_client(authenticated=True)
+
+        user = await fake.users.create()
+        job = await fake.jobs.create(user=user, state=v1_state)
+
+        resp = await client.get(f"/jobs/v2/{job.id}")
+
+        assert resp.status == HTTPStatus.OK
+
+        body = await resp.json()
+
+        assert body["state"] == v2_state

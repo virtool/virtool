@@ -558,3 +558,39 @@ class JobSearchResultV2(SearchResult):
 
     counts: JobCountsV2
     items: list[JobMinimalV2]
+
+
+class JobClaimV2(BaseModel):
+    """Claim metadata for a v2 job."""
+
+    runner_id: str
+    mem: float
+    cpu: float
+    image: str
+    runtime_version: str
+    step_count: int
+    workflow_version: str
+
+
+class JobStepV2(BaseModel):
+    """A workflow step in a v2 job."""
+
+    id: str
+    name: str
+    description: str
+    started_at: datetime | None
+
+
+class JobV2(BaseModel):
+    """A complete representation of a v2 job."""
+
+    id: str
+    claim: JobClaimV2 | None
+    claimed_at: datetime | None
+    created_at: datetime
+    pinged_at: datetime | None
+    progress: int
+    state: JobStateV2
+    steps: list[JobStepV2] | None
+    user: UserNested
+    workflow: WorkflowV2

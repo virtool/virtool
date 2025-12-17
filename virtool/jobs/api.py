@@ -25,6 +25,7 @@ from virtool.jobs.models import (
     JobState,
     JobStateV2,
     JobStepStatus,
+    JobV2,
 )
 
 routes = Routes()
@@ -129,6 +130,25 @@ class JobsV2View(PydanticView):
                 user,
             ),
         )
+
+
+@routes.view("/jobs/v2/{job_id}")
+class JobV2View(PydanticView):
+    async def get(self, job_id: str, /) -> r200[JobV2] | r404:
+        """Get a job.
+
+        Fetches the details for a job using v2 response format.
+
+        Status Codes:
+            200: Successful operation
+            404: Not found
+        """
+        try:
+            job = await get_data_from_req(self.request).jobs.get_v2(job_id)
+        except ResourceNotFoundError:
+            raise APINotFound()
+
+        return json_response(job)
 
 
 @routes.view("/jobs/{job_id}")
