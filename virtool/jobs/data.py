@@ -27,13 +27,17 @@ from virtool.jobs.models import (
     JobClaim,
     JobCountsV2,
     JobMinimal,
+    JobMinimalV2,
     JobPing,
     JobSearchResult,
+    JobSearchResultV2,
     JobState,
+    JobStateV2,
     JobStatus,
     JobStepStatus,
     QueuedJobID,
     WorkflowCounts,
+    WorkflowV2,
 )
 from virtool.jobs.pg import SQLJob
 from virtool.jobs.utils import (
@@ -108,6 +112,148 @@ class JobsData:
             pending=WorkflowCounts(**counts.get("pending", {})),
             running=WorkflowCounts(**counts.get("running", {})),
             succeeded=WorkflowCounts(**counts.get("succeeded", {})),
+        )
+
+    async def find_v2(
+        self,
+        page: int,
+        per_page: int,
+        states: list[JobStateV2],
+        users: list[str],
+    ) -> JobSearchResultV2:
+        """Find jobs using v2 state names.
+
+        Queries MongoDB jobs during the transition period, translating v2 state
+        names to v1 for querying and back to v2 for the response.
+        """
+        v2_to_v1_states = {
+            JobStateV2.CANCELLED: [JobState.CANCELLED],
+            JobStateV2.FAILED: [JobState.ERROR, JobState.TERMINATED, JobState.TIMEOUT],
+            JobStateV2.PENDING: [JobState.WAITING],
+            JobStateV2.RUNNING: [JobState.PREPARING, JobState.RUNNING],
+            JobStateV2.SUCCEEDED: [JobState.COMPLETE],
+        }
+
+        v1_to_v2_state = {
+            JobState.CANCELLED.value: JobStateV2.CANCELLED,
+            JobState.COMPLETE.value: JobStateV2.SUCCEEDED,
+            JobState.ERROR.value: JobStateV2.FAILED,
+            JobState.PREPARING.value: JobStateV2.RUNNING,
+            JobState.RUNNING.value: JobStateV2.RUNNING,
+            JobState.TERMINATED.value: JobStateV2.FAILED,
+            JobState.TIMEOUT.value: JobStateV2.FAILED,
+            JobState.WAITING.value: JobStateV2.PENDING,
+        }
+
+        v1_states = []
+        for state in states:
+            v1_states.extend(v2_to_v1_states[state])
+
+        skip_count = 0
+
+        if page > 1:
+            skip_count = (page - 1) * per_page
+
+        if users:
+            user_id_variants = await get_user_id_multi_variants(self._pg, users)
+            match_query = {"user.id": {"$in": user_id_variants}}
+        else:
+            match_query = {}
+
+        match_state = (
+            {"state": {"$in": [state.value for state in v1_states]}}
+            if v1_states
+            else {}
+        )
+
+        data = {}
+        found_count = 0
+        total_count = 0
+        page_count = 0
+
+        async for paginate_dict in self._mongo.jobs.aggregate(
+            [
+                {
+                    "$facet": {
+                        "total_count": [{"$count": "total_count"}],
+                        "found_count": [
+                            {"$match": match_query},
+                            {"$set": {"last_status": {"$last": "$status"}}},
+                            {"$set": {"state": "$last_status.state"}},
+                            {"$match": match_state},
+                            {"$count": "found_count"},
+                        ],
+                        "data": [
+                            {"$match": match_query},
+                            {
+                                "$set": {
+                                    "last_status": {"$last": "$status"},
+                                    "first_status": {"$first": "$status"},
+                                },
+                            },
+                            {
+                                "$set": {
+                                    "created_at": "$first_status.timestamp",
+                                    "progress": "$last_status.progress",
+                                    "state": "$last_status.state",
+                                },
+                            },
+                            {"$match": match_state},
+                            {"$sort": {"created_at": -1}},
+                            {"$skip": skip_count},
+                            {"$limit": per_page},
+                        ],
+                    },
+                },
+                {
+                    "$project": {
+                        "data": {
+                            "_id": True,
+                            "created_at": True,
+                            "progress": True,
+                            "state": True,
+                            "user": True,
+                            "workflow": True,
+                        },
+                        "total_count": {
+                            "$arrayElemAt": ["$total_count.total_count", 0],
+                        },
+                        "found_count": {
+                            "$arrayElemAt": ["$found_count.found_count", 0],
+                        },
+                    },
+                },
+            ],
+        ):
+            data = paginate_dict["data"]
+            found_count = paginate_dict.get("found_count", 0)
+            total_count = paginate_dict.get("total_count", 0)
+            page_count = int(math.ceil(found_count / per_page)) if found_count else 0
+
+        documents = await apply_transforms(
+            [base_processor(d) for d in data],
+            [AttachUserTransform(self._pg)],
+            self._pg,
+        )
+
+        return JobSearchResultV2(
+            counts=await self.get_counts_v2(),
+            items=[
+                JobMinimalV2(
+                    id=d["id"],
+                    created_at=d["created_at"],
+                    progress=d["progress"],
+                    state=v1_to_v2_state[d["state"]],
+                    user=UserNested(**d["user"]),
+                    workflow=WorkflowV2(d["workflow"]),
+                )
+                for d in documents
+            ],
+            total_count=total_count,
+            found_count=found_count,
+            page_count=page_count,
+            per_page=per_page,
+            page=page,
         )
 
     async def find(

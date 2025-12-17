@@ -21,7 +21,9 @@ from virtool.jobs.models import (
     JobClaim,
     JobCountsV2,
     JobSearchResult,
+    JobSearchResultV2,
     JobState,
+    JobStateV2,
     JobStepStatus,
 )
 
@@ -87,7 +89,7 @@ class JobsCountsView(PydanticView):
         return json_response(await get_data_from_req(self.request).jobs.get_counts())
 
 
-@routes.view("/v2/jobs/counts")
+@routes.view("/jobs/v2/counts")
 class JobsCountsV2View(PydanticView):
     async def get(self) -> r200[JobCountsV2]:
         """Get v2 job counts.
@@ -99,6 +101,33 @@ class JobsCountsV2View(PydanticView):
         """
         return json_response(
             await get_data_from_req(self.request).jobs.get_counts_v2(),
+        )
+
+
+@routes.view("/jobs/v2")
+class JobsV2View(PydanticView):
+    async def get(
+        self,
+        page: conint(ge=1) = 1,
+        per_page: conint(ge=1, le=100) = 25,
+        state: list[JobStateV2] = Field(default_factory=list),
+        user: list[str] = Field(default_factory=list),
+    ) -> r200[JobSearchResultV2] | r400:
+        """Find jobs.
+
+        Lists jobs using v2 state names.
+
+        Status Codes:
+            200: Successful operation
+            400: Invalid query
+        """
+        return json_response(
+            await get_data_from_req(self.request).jobs.find_v2(
+                page,
+                per_page,
+                state,
+                user,
+            ),
         )
 
 

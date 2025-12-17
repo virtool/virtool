@@ -540,3 +540,21 @@ class JobClaim(BaseModel):
     runtime_version: str
     workflow_version: str
     steps: list[JobStep]
+
+
+class JobMinimalV2(BaseModel):
+    """A minimal representation of a job for v2 API responses."""
+
+    id: str
+    created_at: datetime
+    progress: int
+    state: JobStateV2
+    user: UserNested
+    workflow: WorkflowV2
+
+
+class JobSearchResultV2(SearchResult):
+    """Search result for v2 job listings."""
+
+    counts: JobCountsV2
+    items: list[JobMinimalV2]
