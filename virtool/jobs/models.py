@@ -474,8 +474,18 @@ class JobSearchResult(SearchResult):
 class JobStep(BaseModel):
     """A workflow step definition."""
 
+    id: str
     name: str
     description: str
+
+
+class JobStepStatus(BaseModel):
+    """Response model for step status updates."""
+
+    id: str
+    name: str
+    description: str
+    started_at: datetime
 
 
 class JobClaim(BaseModel):
