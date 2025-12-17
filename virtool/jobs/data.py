@@ -30,6 +30,7 @@ from virtool.jobs.models import (
     JobSearchResult,
     JobState,
     JobStatus,
+    JobStepStatus,
     QueuedJobID,
 )
 from virtool.jobs.pg import SQLJob
@@ -361,6 +362,56 @@ class JobsData:
             "user_id": user_id,
             "workflow": workflow,
         }
+
+    async def start_step(self, job_id: int, step_id: str) -> JobStepStatus:
+        """Start a job step.
+
+        Sets the `started_at` timestamp on the step identified by `step_id`.
+
+        :param job_id: the ID of the job
+        :param step_id: the ID of the step to start
+        :return: the step status
+        """
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(select(SQLJob).where(SQLJob.id == job_id))
+            job = result.scalar()
+
+            if job is None:
+                raise ResourceNotFoundError("Job not found")
+
+            if job.state in ("cancelled", "failed", "succeeded"):
+                raise ResourceConflictError("Job is in a terminal state")
+
+            if not job.steps:
+                raise ResourceNotFoundError("Step not found")
+
+            step_index = next(
+                (i for i, s in enumerate(job.steps) if s.get("id") == step_id),
+                None,
+            )
+
+            if step_index is None:
+                raise ResourceNotFoundError("Step not found")
+
+            step = job.steps[step_index]
+
+            if step.get("started_at") is not None:
+                raise ResourceConflictError("Step already started")
+
+            now = virtool.utils.timestamp()
+
+            updated_steps = list(job.steps)
+            updated_steps[step_index] = {**step, "started_at": now}
+            job.steps = updated_steps
+
+            await session.commit()
+
+        return JobStepStatus(
+            id=step["id"],
+            name=step["name"],
+            description=step["description"],
+            started_at=now,
+        )
 
     async def ping(self, job_id: str) -> JobPing:
         """Update the `ping` field on a job to the current time.

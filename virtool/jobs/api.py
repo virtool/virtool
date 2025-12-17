@@ -16,7 +16,7 @@ from virtool.data.errors import (
 )
 from virtool.data.utils import get_data_from_req
 from virtool.flags import FlagName, flag
-from virtool.jobs.models import Job, JobClaim, JobSearchResult, JobState
+from virtool.jobs.models import Job, JobClaim, JobSearchResult, JobState, JobStepStatus
 
 routes = Routes()
 
@@ -164,6 +164,34 @@ class ClaimJobView(PydanticView):
             raise APIBadRequest("Job already claimed")
 
         return json_response(document)
+
+
+@routes.jobs_api.view("/jobs/{job_id}/steps/{step_id}/start")
+@flag(FlagName.JOBS_IN_POSTGRES)
+class StartJobStepView(PydanticView):
+    @policy(PublicRoutePolicy)
+    async def post(
+        self, job_id: int, step_id: str, /
+    ) -> r200[JobStepStatus] | r404 | r409:
+        """Start a job step.
+
+        Records the start time for a workflow step.
+
+        Status Codes:
+            200: Successful operation
+            404: Job or step not found
+            409: Job in terminal state or step already started
+        """
+        try:
+            step_status = await get_data_from_req(self.request).jobs.start_step(
+                job_id, step_id
+            )
+        except ResourceNotFoundError:
+            raise APINotFound()
+        except ResourceConflictError as e:
+            raise APIConflict(str(e))
+
+        return json_response(step_status)
 
 
 @routes.view("/jobs/{job_id}/cancel")
