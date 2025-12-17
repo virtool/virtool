@@ -934,3 +934,42 @@ class TestStartStep:
         resp = await client.post("/jobs/1/steps/step_1/start")
 
         assert resp.status == HTTPStatus.NOT_FOUND
+
+
+class TestGetCountsV2:
+    async def test_ok(self, fake: DataFaker, spawn_client: ClientSpawner):
+        client = await spawn_client(authenticated=True)
+
+        user = await fake.users.create()
+
+        await fake.jobs.create(user=user, state=JobState.WAITING, workflow="nuvs")
+        await fake.jobs.create(user=user, state=JobState.WAITING, workflow="nuvs")
+        await fake.jobs.create(user=user, state=JobState.RUNNING, workflow="pathoscope")
+        await fake.jobs.create(user=user, state=JobState.COMPLETE, workflow="nuvs")
+        await fake.jobs.create(user=user, state=JobState.ERROR, workflow="build_index")
+        await fake.jobs.create(user=user, state=JobState.TIMEOUT, workflow="nuvs")
+
+        resp = await client.get("/v2/jobs/counts")
+
+        assert resp.status == HTTPStatus.OK
+
+        body = await resp.json()
+
+        assert body["pending"]["nuvs"] == 2
+        assert body["running"]["pathoscope"] == 1
+        assert body["succeeded"]["nuvs"] == 1
+        assert body["failed"]["build_index"] == 1
+        assert body["failed"]["nuvs"] == 1
+
+        assert sum(c for counts in body.values() for c in counts.values()) == 6
+
+    async def test_empty(self, spawn_client: ClientSpawner):
+        client = await spawn_client(authenticated=True)
+
+        resp = await client.get("/v2/jobs/counts")
+
+        assert resp.status == HTTPStatus.OK
+        assert (
+            sum(c for counts in (await resp.json()).values() for c in counts.values())
+            == 0
+        )
