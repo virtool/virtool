@@ -20,7 +20,7 @@ def mongo_connection_string(request):
 @pytest.fixture
 def mongo_name(worker_id: str) -> str:
     """The name of the MongoDB database for this test worker."""
-    suffix = "".join(choices(ascii_lowercase, k=3))
+    suffix = "".join(choices(ascii_lowercase, k=8))
     return f"vt-test-{worker_id}-{suffix}"
 
 

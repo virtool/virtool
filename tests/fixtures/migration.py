@@ -94,7 +94,7 @@ def revisions_path(mocker, tmpdir) -> Path:
 
 @pytest.fixture
 def migration_mongo_name(worker_id: str) -> str:
-    suffix = "".join(choices(ascii_lowercase, k=3))
+    suffix = "".join(choices(ascii_lowercase, k=8))
     return f"vt-test-{worker_id}-mig-{suffix}"
 
 
