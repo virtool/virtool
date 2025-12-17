@@ -1,19 +1,12 @@
+import asyncio
+from contextlib import suppress
+
 from aiohttp.web import Application
 from structlog import get_logger
 
-from virtool.authorization.client import get_authorization_client_from_app
 from virtool.utils import get_http_session_from_app
 
 logger = get_logger("shutdown")
-
-
-async def shutdown_authorization_client(app: Application) -> None:
-    """Attempt to close the OpenFGA client session.
-
-    :param app: The application object
-    """
-    logger.info("closing authorization client")
-    await get_authorization_client_from_app(app).close()
 
 
 async def shutdown_executors(app: Application) -> None:
@@ -21,10 +14,8 @@ async def shutdown_executors(app: Application) -> None:
 
     :param app: the application object
     """
-    try:
+    with suppress(KeyError):
         app["process_executor"].shutdown(wait=True)
-    except KeyError:
-        pass
 
 
 async def shutdown_http_client(app: Application) -> None:
@@ -43,10 +34,8 @@ async def shutdown_redis(app: Application) -> None:
     """
     logger.info("closing redis connection")
 
-    try:
+    with suppress(KeyError):
         await app["redis"].close()
-    except KeyError:
-        ...
 
 
 async def shutdown_scheduler(app: Application) -> None:
@@ -61,8 +50,5 @@ async def shutdown_scheduler(app: Application) -> None:
         if not task.done():
             task.cancel()
 
-    # Wait for tasks to complete cancellation
     if background_tasks:
-        import asyncio
-
         await asyncio.gather(*background_tasks, return_exceptions=True)

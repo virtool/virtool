@@ -1,23 +1,20 @@
 """Context for migrations."""
 
-import asyncio
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+import orjson
 from motor.motor_asyncio import (
     AsyncIOMotorClient,
     AsyncIOMotorClientSession,
     AsyncIOMotorDatabase,
 )
-from orjson import orjson
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from structlog import get_logger
 
 import virtool.mongo.connect
 from virtool.api.custom_json import dump_string
-from virtool.authorization.client import AuthorizationClient
-from virtool.authorization.connect import connect_openfga
 from virtool.config.cls import MigrationConfig
 from virtool.pg.utils import get_sqlalchemy_url
 
@@ -35,13 +32,6 @@ class MigrationContextMongo:
 class RevisionContext:
     """A context for a specific revision upgrade or downgrade."""
 
-    authorization: AuthorizationClient
-    """
-    An authorization client instance.
-
-    Use this to affect changes in OpenFGA.
-    """
-
     mongo: MigrationContextMongo
     """
     A Motor database utility class.
@@ -58,15 +48,13 @@ class RevisionContext:
 
 @dataclass
 class MigrationContext:
-    authorization: AuthorizationClient
     mongo: AsyncIOMotorDatabase
     pg: AsyncEngine
     data_path: Path
 
 
 async def create_migration_context(config: MigrationConfig) -> MigrationContext:
-    """Create a migration context that provides access to MongoDB, OpenFGA, and
-    PostgreSQL.
+    """Create a migration context that provides access to MongoDB and PostgreSQL.
 
     Connect to all data services and expose their clients
     in the returned context object.
@@ -88,20 +76,12 @@ async def create_migration_context(config: MigrationConfig) -> MigrationContext:
         logger.critical("Could not connect to PostgreSQL: Connection refused")
         sys.exit(1)
 
-    mongo_database, openfga = await asyncio.gather(
-        virtool.mongo.connect.connect_motor_database(
-            config.mongodb_connection_string,
-            config.mongodb_name,
-        ),
-        connect_openfga(
-            config.openfga_host,
-            config.openfga_scheme,
-            config.openfga_store_name,
-        ),
+    mongo_database = await virtool.mongo.connect.connect_motor_database(
+        config.mongodb_connection_string,
+        config.mongodb_name,
     )
 
     return MigrationContext(
-        authorization=AuthorizationClient(openfga),
         mongo=mongo_database,
         pg=pg,
         data_path=config.data_path,

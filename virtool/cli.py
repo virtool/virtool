@@ -26,7 +26,6 @@ from virtool.config.options import (
     no_check_db_option,
     no_periodic_tasks_option,
     no_revision_check_option,
-    openfga_options,
     postgres_connection_string_option,
     real_ip_header_option,
     redis_connection_string_option,
@@ -77,7 +76,6 @@ def server() -> None:
 @no_check_db_option
 @no_periodic_tasks_option
 @no_revision_check_option
-@openfga_options
 @postgres_connection_string_option
 @real_ip_header_option
 @redis_connection_string_option
@@ -99,7 +97,6 @@ def start_api_server(**kwargs) -> None:
 @no_check_db_option
 @no_periodic_tasks_option
 @no_revision_check_option
-@openfga_options
 @postgres_connection_string_option
 @real_ip_header_option
 @redis_connection_string_option
@@ -132,7 +129,6 @@ def migration() -> None:
 @migration.command("apply")
 @data_path_option
 @mongodb_connection_string_option
-@openfga_options
 @postgres_connection_string_option
 def migration_apply(**kwargs) -> None:
     """Apply all pending migrations."""
@@ -173,7 +169,6 @@ def tasks() -> None:
 @dev_option
 @mongodb_connection_string_option
 @no_revision_check_option
-@openfga_options
 @postgres_connection_string_option
 @redis_connection_string_option
 @sentry_dsn_option

@@ -3,14 +3,10 @@ from http import HTTPStatus
 
 import arrow
 import pytest
-from syrupy import SnapshotAssertion
+from syrupy.assertion import SnapshotAssertion
 from syrupy.matchers import path_type
 
 from tests.fixtures.client import ClientSpawner
-from virtool.authorization.client import (
-    AuthorizationClient,
-)
-from virtool.authorization.relationships import AdministratorRoleAssignment
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
@@ -36,7 +32,6 @@ async def test_get_roles(spawn_client: ClientSpawner, snapshot: SnapshotAssertio
 
 
 async def test_list_users(
-    authorization_client: AuthorizationClient,
     spawn_client: ClientSpawner,
     fake: DataFaker,
     snapshot: SnapshotAssertion,
@@ -46,13 +41,8 @@ async def test_list_users(
         authenticated=True,
     )
 
-    user_1 = await fake.users.create()
-    user_2 = await fake.users.create()
-
-    await authorization_client.add(
-        AdministratorRoleAssignment(user_1.id, AdministratorRole.BASE),
-        AdministratorRoleAssignment(user_2.id, AdministratorRole.FULL),
-    )
+    await fake.users.create(administrator_role=AdministratorRole.BASE)
+    await fake.users.create(administrator_role=AdministratorRole.FULL)
 
     resp = await client.get("/admin/users")
 
@@ -63,7 +53,6 @@ async def test_list_users(
 
 
 async def test_get_user(
-    authorization_client: AuthorizationClient,
     fake: DataFaker,
     spawn_client: ClientSpawner,
     snapshot: SnapshotAssertion,
@@ -74,11 +63,7 @@ async def test_get_user(
         authenticated=True,
     )
 
-    user = await fake.users.create()
-
-    await authorization_client.add(
-        AdministratorRoleAssignment(user.id, AdministratorRole.BASE),
-    )
+    user = await fake.users.create(administrator_role=AdministratorRole.BASE)
 
     resp = await client.get(f"/admin/users/{user.id}")
 

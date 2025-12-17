@@ -1,13 +1,6 @@
 Fixtures
 ========
 
-Authorization
--------------
-
-.. automodule:: tests.fixtures.authorization
-    :members:
-
-
 Client
 ------
 

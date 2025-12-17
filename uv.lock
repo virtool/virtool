@@ -1019,21 +1019,6 @@ wheels = [
 ]
 
 [[package]]
-name = "openfga-sdk"
-version = "0.1.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "aiohttp" },
-    { name = "python-dateutil" },
-    { name = "six" },
-    { name = "urllib3" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/0f/85/0ff1e25a78179acd865618fc4727f088fab9f76bb89ec3f05f2c4e606e62/openfga-sdk-0.1.1.tar.gz", hash = "sha256:e2e30afdf4dc48b086af9f46a49159249cd909dcb694218854d0320f51b83cf5", size = 74898, upload-time = "2023-01-17T22:59:59.946Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/66/3c/94d1d7701f5beaba9d2fcd762bf93200029440c3ee92a12f995067465507/openfga_sdk-0.1.1-py3-none-any.whl", hash = "sha256:86ce66ce446675e912071e8f96630120d6e9503c8f6d04088784731892becd2e", size = 132454, upload-time = "2023-01-17T22:59:58.236Z" },
-]
-
-[[package]]
 name = "openpyxl"
 version = "3.1.5"
 source = { registry = "https://pypi.org/simple" }
@@ -1964,7 +1949,6 @@ dependencies = [
     { name = "enum-tools" },
     { name = "faker" },
     { name = "motor" },
-    { name = "openfga-sdk" },
     { name = "openpyxl" },
     { name = "orjson" },
     { name = "pydantic" },
@@ -2020,7 +2004,6 @@ requires-dist = [
     { name = "enum-tools", specifier = ">=0.13.0,<1.0.0" },
     { name = "faker", specifier = ">=38.2.0" },
     { name = "motor", specifier = ">=3.7.1,<4.0.0" },
-    { name = "openfga-sdk", specifier = "==0.1.1" },
     { name = "openpyxl", specifier = ">=3.1.5,<4.0.0" },
     { name = "orjson", specifier = ">=3.10.18,<4.0.0" },
     { name = "pydantic", specifier = "==1.10.16" },

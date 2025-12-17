@@ -7,7 +7,6 @@ from virtool.api.accept import accept_middleware
 from virtool.api.errors import error_middleware
 from virtool.config.cls import TaskRunnerConfig, TaskSpawnerConfig
 from virtool.shutdown import (
-    shutdown_authorization_client,
     shutdown_executors,
     shutdown_http_client,
     shutdown_redis,
@@ -59,7 +58,6 @@ def run_task_runner(config: TaskRunnerConfig) -> None:
     app.on_shutdown.extend(
         [
             shutdown_scheduler,
-            shutdown_authorization_client,
             shutdown_http_client,
             shutdown_executors,
             shutdown_redis,

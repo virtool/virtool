@@ -6,7 +6,6 @@ See the :ref:`index <workflow:index>` section for more details.
 .. toctree::
    :maxdepth: 2
 
-   authorization
    data
    sessions
    transforms

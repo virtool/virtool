@@ -6,22 +6,20 @@ from pytest_mock import MockerFixture
 from redis import Redis
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from virtool.authorization.client import AuthorizationClient
 from virtool.data.layer import DataLayer, create_data_layer
 from virtool.mongo.core import Mongo
 
 
 @pytest.fixture
 def data_layer(
-    authorization_client: AuthorizationClient,
     config,
     mocker: MockerFixture,
     mongo: Mongo,
     pg: AsyncEngine,
     redis: Redis,
 ) -> DataLayer:
-    """A complete data layer backed by testing instances of MongoDB, PostgreSQL, OpenFGA,
-    and Redis.
+    """A complete data layer backed by testing instances of MongoDB, PostgreSQL, and
+    Redis.
 
     Example:
     -------
@@ -32,7 +30,6 @@ def data_layer(
 
     """
     return create_data_layer(
-        authorization_client,
         mongo,
         pg,
         config,

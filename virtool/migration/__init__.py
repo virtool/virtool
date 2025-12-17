@@ -1,6 +1,6 @@
 """Manage revisions in Alembic and other Virtool data.
 
-* Virtool revisions are performed on PostgreSQL MongoDB, OpenFGA, and data files.
+* Virtool revisions are performed on PostgreSQL MongoDB, and data files.
 * Alembic revisions are for PostgreSQL only.
 
 When should you use Virtool revisions for Postgres? When you need to make mass changes
