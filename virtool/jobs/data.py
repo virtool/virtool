@@ -25,6 +25,7 @@ from virtool.jobs.models import (
     Job,
     JobAcquired,
     JobClaim,
+    JobCountsV2,
     JobMinimal,
     JobPing,
     JobSearchResult,
@@ -32,6 +33,7 @@ from virtool.jobs.models import (
     JobStatus,
     JobStepStatus,
     QueuedJobID,
+    WorkflowCounts,
 )
 from virtool.jobs.pg import SQLJob
 from virtool.jobs.utils import (
@@ -78,6 +80,35 @@ class JobsData:
             counts[state][workflow] = a["count"]
 
         return dict(counts)
+
+    async def get_counts_v2(self) -> JobCountsV2:
+        """Get job counts, translating v1 states to v2 states."""
+        state_map = {
+            "cancelled": "cancelled",
+            "complete": "succeeded",
+            "error": "failed",
+            "preparing": "running",
+            "running": "running",
+            "terminated": "failed",
+            "timeout": "failed",
+            "waiting": "pending",
+        }
+
+        v1_counts = await self.get_counts()
+        counts: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+
+        for v1_state, workflow_counts in v1_counts.items():
+            v2_state = state_map.get(v1_state, v1_state)
+            for workflow, count in workflow_counts.items():
+                counts[v2_state][workflow] += count
+
+        return JobCountsV2(
+            cancelled=WorkflowCounts(**counts.get("cancelled", {})),
+            failed=WorkflowCounts(**counts.get("failed", {})),
+            pending=WorkflowCounts(**counts.get("pending", {})),
+            running=WorkflowCounts(**counts.get("running", {})),
+            succeeded=WorkflowCounts(**counts.get("succeeded", {})),
+        )
 
     async def find(
         self,

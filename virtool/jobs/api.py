@@ -16,7 +16,14 @@ from virtool.data.errors import (
 )
 from virtool.data.utils import get_data_from_req
 from virtool.flags import FlagName, flag
-from virtool.jobs.models import Job, JobClaim, JobSearchResult, JobState, JobStepStatus
+from virtool.jobs.models import (
+    Job,
+    JobClaim,
+    JobCountsV2,
+    JobSearchResult,
+    JobState,
+    JobStepStatus,
+)
 
 routes = Routes()
 
@@ -78,6 +85,21 @@ class JobsCountsView(PydanticView):
             200: Successful operation
         """
         return json_response(await get_data_from_req(self.request).jobs.get_counts())
+
+
+@routes.view("/v2/jobs/counts")
+class JobsCountsV2View(PydanticView):
+    async def get(self) -> r200[JobCountsV2]:
+        """Get v2 job counts.
+
+        Returns job counts grouped by state and workflow using v2 state names.
+
+        Status Codes:
+            200: Successful operation
+        """
+        return json_response(
+            await get_data_from_req(self.request).jobs.get_counts_v2(),
+        )
 
 
 @routes.view("/jobs/{job_id}")

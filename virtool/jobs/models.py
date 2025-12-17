@@ -39,6 +39,48 @@ class JobState(Enum):
     WAITING = "waiting"
 
 
+class JobStateV2(Enum):
+    """V2 job states stored in PostgreSQL."""
+
+    CANCELLED = "cancelled"
+    FAILED = "failed"
+    PENDING = "pending"
+    RUNNING = "running"
+    SUCCEEDED = "succeeded"
+
+
+class WorkflowV2(Enum):
+    """V2 workflow names."""
+
+    AODP = "aodp"
+    BUILD_INDEX = "build_index"
+    CREATE_SAMPLE = "create_sample"
+    CREATE_SUBTRACTION = "create_subtraction"
+    NUVS = "nuvs"
+    PATHOSCOPE = "pathoscope"
+
+
+class WorkflowCounts(BaseModel):
+    """Counts per workflow."""
+
+    aodp: int = 0
+    build_index: int = 0
+    create_sample: int = 0
+    create_subtraction: int = 0
+    nuvs: int = 0
+    pathoscope: int = 0
+
+
+class JobCountsV2(BaseModel):
+    """Job counts grouped by state and workflow for v2 (PostgreSQL) jobs."""
+
+    cancelled: WorkflowCounts = WorkflowCounts()
+    failed: WorkflowCounts = WorkflowCounts()
+    pending: WorkflowCounts = WorkflowCounts()
+    running: WorkflowCounts = WorkflowCounts()
+    succeeded: WorkflowCounts = WorkflowCounts()
+
+
 TERMINAL_JOB_STATES = (
     JobState.COMPLETE,
     JobState.ERROR,
