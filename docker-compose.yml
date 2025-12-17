@@ -51,11 +51,11 @@ services:
       POSTGRES_USER: virtool
       POSTGRES_PASSWORD: virtool
       POSTGRES_DB: virtool
-    image: postgres:14
+    image: postgres:18
     volumes:
       - ./tests/setup_postgres.sh:/docker-entrypoint-initdb.d/setup_postgres.sh
     tmpfs:
-      - /var/lib/postgresql/data:size=1g
+      - /var/lib/postgresql:size=1g
     healthcheck:
       test: pg_isready -U virtool -d virtool
       interval: 2s
