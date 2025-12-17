@@ -12,8 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 import virtool.jobs.main
 from virtool.api.custom_json import dump_string
 from virtool.app import create_app
-from virtool.authorization.client import AuthorizationClient
-from virtool.authorization.openfga import OpenfgaScheme
 from virtool.config.cls import ServerConfig
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
@@ -267,7 +265,6 @@ class ClientSpawner(Protocol):
 @pytest.fixture
 def spawn_client(
     aiohttp_client,
-    authorization_client: AuthorizationClient,
     data_layer: DataLayer,
     data_path: Path,
     fake: DataFaker,
@@ -275,9 +272,6 @@ def spawn_client(
     mongo: Mongo,
     mongo_connection_string: str,
     mongo_name: str,
-    openfga_host: str,
-    openfga_scheme: OpenfgaScheme,
-    openfga_store_name: str,
     pg_connection_string: str,
     pg: AsyncEngine,
     redis: Redis,
@@ -417,9 +411,6 @@ def spawn_client(
             no_check_db=True,
             no_periodic_tasks=True,
             no_revision_check=True,
-            openfga_host=openfga_host,
-            openfga_scheme=openfga_scheme,
-            openfga_store_name=openfga_store_name,
             port=9950,
             postgres_connection_string=pg_connection_string,
             real_ip_header="",
@@ -427,10 +418,6 @@ def spawn_client(
             sentry_dsn="",
         )
 
-        mocker.patch(
-            "virtool.startup.connect_authorization_client",
-            return_value=authorization_client,
-        )
         mocker.patch("virtool.startup.connect_pg", return_value=pg)
         mocker.patch("virtool.startup.connect_mongo", return_value=mongo)
         mocker.patch("virtool.startup._connect_redis", return_value=redis)
@@ -501,8 +488,6 @@ def spawn_job_client(
     mongo: Mongo,
     mongo_connection_string,
     mongo_name: str,
-    openfga_host: str,
-    openfga_store_name: str,
     pg: AsyncEngine,
     pg_connection_string: str,
     redis_connection_string: str,
@@ -545,9 +530,6 @@ def spawn_job_client(
                 no_check_db=True,
                 no_periodic_tasks=True,
                 no_revision_check=True,
-                openfga_host=openfga_host,
-                openfga_scheme="http",
-                openfga_store_name=openfga_store_name,
                 port=9950,
                 postgres_connection_string=pg_connection_string,
                 real_ip_header="",

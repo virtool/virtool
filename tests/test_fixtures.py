@@ -7,7 +7,6 @@ from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner
 from tests.fixtures.snapshot_date import validate_time
-from virtool.authorization.client import AuthorizationClient
 from virtool.mongo.core import Mongo
 from virtool.redis import Redis
 
@@ -60,7 +59,6 @@ def test_nested_timestamps(snapshot_recent):
 
 
 async def test_data_and_client_databases(
-    authorization_client: AuthorizationClient,
     mongo: Mongo,
     pg: AsyncEngine,
     redis: Redis,
@@ -69,7 +67,6 @@ async def test_data_and_client_databases(
     """Test that data layer, database, and client fixtures refer to the same clients."""
     client = await spawn_client()
 
-    assert authorization_client is client.app["authorization"]
     assert mongo is client.app["mongo"]
     assert pg is client.app["pg"]
     assert redis is client.app["redis"]

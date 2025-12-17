@@ -15,7 +15,6 @@ from virtool.config.cls import Config
 from virtool.flags import FeatureFlags, feature_flag_middleware
 from virtool.routes import setup_routes
 from virtool.shutdown import (
-    shutdown_authorization_client,
     shutdown_executors,
     shutdown_http_client,
     shutdown_redis,
@@ -107,7 +106,6 @@ def create_app(config: Config):
 
     app.on_shutdown.extend(
         [
-            shutdown_authorization_client,
             shutdown_http_client,
             shutdown_executors,
             shutdown_scheduler,

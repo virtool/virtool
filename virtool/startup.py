@@ -5,10 +5,6 @@ from aiohttp import ClientSession, ClientTimeout
 from pymongo.errors import CollectionInvalid
 from structlog import get_logger
 
-from virtool.authorization.client import (
-    get_authorization_client_from_app,
-)
-from virtool.authorization.connect import connect_authorization_client
 from virtool.config import get_config_from_app
 from virtool.data.events import EventPublisher
 from virtool.data.layer import create_data_layer
@@ -65,7 +61,6 @@ async def startup_data(app: App) -> None:
     :param app: the application object
     """
     app["data"] = create_data_layer(
-        get_authorization_client_from_app(app),
         get_mongo_from_app(app),
         app["pg"],
         get_config_from_app(app),
@@ -82,12 +77,7 @@ async def startup_databases(app: App) -> None:
     """
     config = get_config_from_app(app)
 
-    authorization_client, mongo, pg, redis = await asyncio.gather(
-        connect_authorization_client(
-            config.openfga_host,
-            config.openfga_scheme,
-            config.openfga_store_name,
-        ),
+    mongo, pg, redis = await asyncio.gather(
         connect_mongo(
             config.mongodb_connection_string,
             config.mongodb_database,
@@ -101,7 +91,6 @@ async def startup_databases(app: App) -> None:
 
     app.update(
         {
-            "authorization": authorization_client,
             "mongo": mongo,
             "pg": pg,
             "redis": redis,

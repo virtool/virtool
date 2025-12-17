@@ -11,7 +11,6 @@ import virtool.spaces.sql  # noqa: F401
 from virtool.users.utils import hash_password
 
 pytest_plugins = (
-    "tests.fixtures.authorization",
     "tests.fixtures.client",
     "tests.fixtures.config",
     "tests.fixtures.core",

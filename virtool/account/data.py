@@ -15,7 +15,6 @@ from virtool.account.oas import (
     UpdateSettingsRequest,
 )
 from virtool.administrators.oas import UpdateUserRequest
-from virtool.authorization.client import AuthorizationClient
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.topg import get_user_id_single_variants
@@ -36,11 +35,9 @@ class AccountData(DataLayerDomain):
 
     def __init__(
         self,
-        authorization_client: AuthorizationClient,
         mongo: Mongo,
         pg: AsyncEngine,
     ):
-        self._authorization_client = authorization_client
         self._mongo = mongo
         self._pg = pg
 

@@ -4,7 +4,6 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.authorization.client import AuthorizationClient
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
 from virtool.data.topg import both_transactions
@@ -22,11 +21,9 @@ class GroupsData:
 
     def __init__(
         self,
-        authorization_client: AuthorizationClient,
         mongo: Mongo,
         pg: AsyncEngine,
     ):
-        self._authorization_client = authorization_client
         self._mongo = mongo
         self._pg = pg
 

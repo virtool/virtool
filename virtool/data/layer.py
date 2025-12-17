@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool.account.data import AccountData
 from virtool.analyses.data import AnalysisData
-from virtool.authorization.client import AuthorizationClient
 from virtool.blast.data import BLASTData
 from virtool.config import Config
 from virtool.data.http import HTTPClient
@@ -69,7 +68,6 @@ class DataLayer:
 
 
 def create_data_layer(
-    authorization_client: AuthorizationClient,
     mongo: "Mongo",
     pg: AsyncEngine,
     config: Config,
@@ -78,7 +76,6 @@ def create_data_layer(
 ) -> DataLayer:
     """Create and return a data layer object.
 
-    :param authorization_client: the authorization client
     :param mongo: the MongoDB client
     :param pg: the Postgres client
     :param config: the application config object
@@ -90,10 +87,10 @@ def create_data_layer(
     http_client = HTTPClient(client)
 
     return DataLayer(
-        AccountData(authorization_client, mongo, pg),
+        AccountData(mongo, pg),
         AnalysisData(mongo, config, pg),
         BLASTData(client, mongo, pg),
-        GroupsData(authorization_client, mongo, pg),
+        GroupsData(mongo, pg),
         HistoryData(config.data_path, mongo, pg),
         HmmsData(client, config, mongo, pg),
         IndexData(mongo, config, pg),

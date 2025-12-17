@@ -109,32 +109,6 @@ real_ip_header_option = click.option(
 )
 
 
-def openfga_options(func):
-    for decorator in [
-        click.option(
-            "--openfga-host",
-            help="The OpenFGA API host",
-            type=str,
-            default=get_from_environment("openfga_host", "localhost:8080"),
-        ),
-        click.option(
-            "--openfga-scheme",
-            default=get_from_environment("openfga_scheme", "https"),
-            help="The OpenFGA API scheme",
-            type=str,
-        ),
-        click.option(
-            "--openfga-store-name",
-            default=get_from_environment("openfga_store_name", "Virtool"),
-            help="The OpenFGA API store",
-            type=str,
-        ),
-    ]:
-        func = decorator(func)
-
-    return func
-
-
 def normalize_postgres_connection_string(
     ctx: click.Context,
     param: click.Parameter,

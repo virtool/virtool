@@ -12,7 +12,6 @@ from pathlib import Path
 from pydantic import BaseModel
 from pymongo.uri_parser import parse_uri
 
-from virtool.authorization.openfga import OpenfgaScheme
 from virtool.flags import FlagName
 
 
@@ -22,9 +21,6 @@ class MigrationConfig:
 
     data_path: Path
     mongodb_connection_string: str
-    openfga_host: str
-    openfga_scheme: OpenfgaScheme
-    openfga_store_name: str
     postgres_connection_string: str
 
     @property
@@ -51,9 +47,6 @@ class ServerConfig:
     no_check_db: bool
     no_periodic_tasks: bool
     no_revision_check: bool
-    openfga_host: str
-    openfga_scheme: str
-    openfga_store_name: str
     port: int
     postgres_connection_string: str
     real_ip_header: str
@@ -77,9 +70,6 @@ class TaskRunnerConfig:
     host: str
     mongodb_connection_string: str
     no_revision_check: bool
-    openfga_host: str
-    openfga_scheme: str
-    openfga_store_name: str
     port: int
     postgres_connection_string: str
     redis_connection_string: str

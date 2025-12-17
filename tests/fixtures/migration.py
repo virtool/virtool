@@ -14,15 +14,13 @@ from string import ascii_lowercase
 
 import alembic.command
 import alembic.config
+import orjson
 import pytest
-from orjson import orjson
 from sqlalchemy import text
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from virtool.api.custom_json import dump_string
-from virtool.authorization.openfga import OpenfgaScheme, delete_openfga_tuples
-from virtool.authorization.permissions import ResourceType
 from virtool.config.cls import MigrationConfig
 from virtool.migration.ctx import MigrationContext, create_migration_context
 from virtool.migration.pg import SQLRevision
@@ -106,9 +104,6 @@ def migration_config(
     migration_pg_connection_string: str,
     mongo_connection_string: str,
     migration_mongo_name: str,
-    openfga_host: str,
-    openfga_scheme: OpenfgaScheme,
-    openfga_store_name: str,
 ) -> MigrationConfig:
     """A :class:`MigrationConfig` instance that plugs into test instances of backing
     services.
@@ -117,9 +112,6 @@ def migration_config(
     return MigrationConfig(
         data_path=data_path,
         mongodb_connection_string=f"{mongo_connection_string}/{migration_mongo_name}?authSource=admin",
-        openfga_host=openfga_host,
-        openfga_scheme=openfga_scheme,
-        openfga_store_name=openfga_store_name,
         postgres_connection_string=migration_pg_connection_string,
     )
 
@@ -130,7 +122,6 @@ async def ctx(
 ) -> MigrationContext:
     """A migration context for testing backed by test instances of backing services."""
     ctx = await create_migration_context(migration_config)
-    await delete_openfga_tuples(ctx.authorization.openfga, ResourceType.APP, "virtool")
     yield ctx
     await ctx.mongo.client.drop_database(
         ctx.mongo.client.get_database(migration_mongo_name)

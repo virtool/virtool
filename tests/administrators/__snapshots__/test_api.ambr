@@ -352,7 +352,7 @@
 # name: test_get_user
   dict({
     'active': True,
-    'administrator_role': None,
+    'administrator_role': 'base',
     'force_reset': False,
     'groups': list([
     ]),
@@ -399,7 +399,7 @@
       }),
       dict({
         'active': True,
-        'administrator_role': None,
+        'administrator_role': 'full',
         'force_reset': False,
         'groups': list([
         ]),
@@ -420,7 +420,7 @@
       }),
       dict({
         'active': True,
-        'administrator_role': None,
+        'administrator_role': 'base',
         'force_reset': False,
         'groups': list([
         ]),

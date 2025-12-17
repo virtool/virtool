@@ -18,13 +18,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-      openfga:
-        condition: service_started
     environment:
       VT_MONGO_URI: mongodb://root:virtool@mongo:9001
       VT_REDIS_URI: redis://:virtool@redis:6379
       VT_POSTGRES_URI: postgresql://virtool:virtool@postgres:5432
-      VT_OPENFGA_HOST: openfga:8080
       UV_PROJECT_ENVIRONMENT: /opt/venv
 
   mongo:
@@ -51,11 +48,9 @@ services:
       POSTGRES_USER: virtool
       POSTGRES_PASSWORD: virtool
       POSTGRES_DB: virtool
-    image: postgres:14
-    volumes:
-      - ./tests/setup_postgres.sh:/docker-entrypoint-initdb.d/setup_postgres.sh
+    image: postgres:18
     tmpfs:
-      - /var/lib/postgresql/data:size=1g
+      - /var/lib/postgresql:size=1g
     healthcheck:
       test: pg_isready -U virtool -d virtool
       interval: 2s
@@ -66,26 +61,6 @@ services:
   redis:
     image: redis:6.0
     command: redis-server --requirepass virtool
-
-  migrate:
-    image: openfga/openfga:v0.2.5
-    depends_on:
-      postgres:
-        condition: service_healthy
-    command: migrate
-    environment:
-      OPENFGA_DATASTORE_ENGINE: postgres
-      OPENFGA_DATASTORE_URI: postgres://openfga:openfga@postgres:5432/openfga
-
-  openfga:
-    image: openfga/openfga:v0.2.5
-    environment:
-      OPENFGA_DATASTORE_ENGINE: postgres
-      OPENFGA_DATASTORE_URI: postgres://openfga:openfga@postgres:5432/openfga
-      OPENFGA_LOG_FORMAT: json
-    command: run
-    depends_on:
-      - migrate
 
 volumes:
   container_venv:

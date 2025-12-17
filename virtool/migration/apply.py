@@ -64,7 +64,19 @@ async def apply(config: MigrationConfig) -> None:
         revision.revision for revision in await list_applied_revisions(ctx.pg)
     }
 
-    start_applying = last_applied_revision is None
+    all_revision_ids = {r.id for r in all_revisions}
+
+    # If the last applied revision no longer exists in the codebase, start from the
+    # beginning and rely on applied_revision_ids to skip already-applied revisions.
+    if last_applied_revision and last_applied_revision.revision not in all_revision_ids:
+        logger.warning(
+            "Last applied revision not found in codebase, "
+            "will skip already-applied revisions",
+            revision=last_applied_revision.revision,
+        )
+        start_applying = True
+    else:
+        start_applying = last_applied_revision is None
 
     for revision in all_revisions:
         if not start_applying:
