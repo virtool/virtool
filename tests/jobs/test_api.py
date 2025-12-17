@@ -949,7 +949,7 @@ class TestGetCountsV2:
         await fake.jobs.create(user=user, state=JobState.ERROR, workflow="build_index")
         await fake.jobs.create(user=user, state=JobState.TIMEOUT, workflow="nuvs")
 
-        resp = await client.get("/v2/jobs/counts")
+        resp = await client.get("/jobs/v2/counts")
 
         assert resp.status == HTTPStatus.OK
 
@@ -966,10 +966,101 @@ class TestGetCountsV2:
     async def test_empty(self, spawn_client: ClientSpawner):
         client = await spawn_client(authenticated=True)
 
-        resp = await client.get("/v2/jobs/counts")
+        resp = await client.get("/jobs/v2/counts")
 
         assert resp.status == HTTPStatus.OK
         assert (
             sum(c for counts in (await resp.json()).values() for c in counts.values())
             == 0
         )
+
+
+class TestFindV2:
+    async def test_ok(self, fake: DataFaker, spawn_client: ClientSpawner):
+        client = await spawn_client(authenticated=True)
+
+        user = await fake.users.create()
+
+        await fake.jobs.create(user=user, state=JobState.WAITING, workflow="nuvs")
+        await fake.jobs.create(user=user, state=JobState.RUNNING, workflow="pathoscope")
+        await fake.jobs.create(user=user, state=JobState.COMPLETE, workflow="nuvs")
+
+        resp = await client.get("/jobs/v2")
+
+        assert resp.status == HTTPStatus.OK
+
+        body = await resp.json()
+
+        assert body["found_count"] == 3
+        assert body["total_count"] == 3
+        assert len(body["items"]) == 3
+
+        states = {item["state"] for item in body["items"]}
+        assert states == {"pending", "running", "succeeded"}
+
+    async def test_state_filter(self, fake: DataFaker, spawn_client: ClientSpawner):
+        client = await spawn_client(authenticated=True)
+
+        user = await fake.users.create()
+
+        await fake.jobs.create(user=user, state=JobState.WAITING, workflow="nuvs")
+        await fake.jobs.create(user=user, state=JobState.WAITING, workflow="nuvs")
+        await fake.jobs.create(user=user, state=JobState.RUNNING, workflow="pathoscope")
+        await fake.jobs.create(user=user, state=JobState.COMPLETE, workflow="nuvs")
+        await fake.jobs.create(user=user, state=JobState.ERROR, workflow="build_index")
+
+        resp = await client.get("/jobs/v2?state=pending")
+        body = await resp.json()
+
+        assert resp.status == HTTPStatus.OK
+        assert body["found_count"] == 2
+        assert all(item["state"] == "pending" for item in body["items"])
+
+    async def test_failed_state_aggregates(
+        self, fake: DataFaker, spawn_client: ClientSpawner
+    ):
+        """Test that failed state includes error, terminated, and timeout jobs."""
+        client = await spawn_client(authenticated=True)
+
+        user = await fake.users.create()
+
+        await fake.jobs.create(user=user, state=JobState.ERROR, workflow="nuvs")
+        await fake.jobs.create(user=user, state=JobState.TERMINATED, workflow="nuvs")
+        await fake.jobs.create(user=user, state=JobState.TIMEOUT, workflow="nuvs")
+        await fake.jobs.create(user=user, state=JobState.COMPLETE, workflow="nuvs")
+
+        resp = await client.get("/jobs/v2?state=failed")
+        body = await resp.json()
+
+        assert resp.status == HTTPStatus.OK
+        assert body["found_count"] == 3
+        assert all(item["state"] == "failed" for item in body["items"])
+
+    async def test_user_filter(self, fake: DataFaker, spawn_client: ClientSpawner):
+        client = await spawn_client(authenticated=True)
+
+        user_1 = await fake.users.create()
+        user_2 = await fake.users.create()
+
+        await fake.jobs.create(user=user_1, workflow="nuvs")
+        await fake.jobs.create(user=user_1, workflow="nuvs")
+        await fake.jobs.create(user=user_2, workflow="nuvs")
+
+        resp = await client.get(f"/jobs/v2?user={user_1.id}")
+        body = await resp.json()
+
+        assert resp.status == HTTPStatus.OK
+        assert body["found_count"] == 2
+        assert all(item["user"]["id"] == user_1.id for item in body["items"])
+
+    async def test_empty(self, spawn_client: ClientSpawner):
+        client = await spawn_client(authenticated=True)
+
+        resp = await client.get("/jobs/v2")
+
+        assert resp.status == HTTPStatus.OK
+
+        body = await resp.json()
+
+        assert body["found_count"] == 0
+        assert body["items"] == []
