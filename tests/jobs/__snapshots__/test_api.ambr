@@ -159,6 +159,23 @@
     }),
   ])
 # ---
+# name: TestGetV2.test_ok
+  dict({
+    'claim': None,
+    'claimed_at': str,
+    'created_at': str,
+    'id': 'bf1b993c',
+    'pinged_at': str,
+    'progress': 10,
+    'state': 'running',
+    'steps': None,
+    'user': dict({
+      'handle': 'myersmitchell',
+      'id': 2,
+    }),
+    'workflow': 'nuvs',
+  })
+# ---
 # name: TestPushStatus.test[None]
   dict({
     'error': None,
