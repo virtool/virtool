@@ -158,11 +158,14 @@ class TestGetCounts:
         resp = await client.get("/jobs/counts")
 
         assert resp.status == HTTPStatus.OK
-        assert await resp.json() == {
-            "waiting": {"nuvs": 2},
-            "running": {"pathoscope": 1},
-            "complete": {"nuvs": 1},
-        }
+
+        body = await resp.json()
+
+        assert body["waiting"]["nuvs"] == 2
+        assert body["running"]["pathoscope"] == 1
+        assert body["complete"]["nuvs"] == 1
+
+        assert sum(c for counts in body.values() for c in counts.values()) == 4
 
     async def test_empty(self, spawn_client: ClientSpawner):
         client = await spawn_client(authenticated=True)
@@ -170,7 +173,10 @@ class TestGetCounts:
         resp = await client.get("/jobs/counts")
 
         assert resp.status == HTTPStatus.OK
-        assert await resp.json() == {}
+
+        body = await resp.json()
+
+        assert sum(c for counts in body.values() for c in counts.values()) == 0
 
 
 @pytest.mark.parametrize("error", [None, "404"])

@@ -71,6 +71,19 @@ class WorkflowCounts(BaseModel):
     pathoscope: int = 0
 
 
+class JobCountsV1(BaseModel):
+    """Job counts grouped by state and workflow for v1 (MongoDB) jobs."""
+
+    cancelled: WorkflowCounts = WorkflowCounts()
+    complete: WorkflowCounts = WorkflowCounts()
+    error: WorkflowCounts = WorkflowCounts()
+    preparing: WorkflowCounts = WorkflowCounts()
+    running: WorkflowCounts = WorkflowCounts()
+    terminated: WorkflowCounts = WorkflowCounts()
+    timeout: WorkflowCounts = WorkflowCounts()
+    waiting: WorkflowCounts = WorkflowCounts()
+
+
 class JobCountsV2(BaseModel):
     """Job counts grouped by state and workflow for v2 (PostgreSQL) jobs."""
 
@@ -509,7 +522,7 @@ class JobAcquired(Job):
 
 
 class JobSearchResult(SearchResult):
-    counts: dict
+    counts: JobCountsV1
     documents: list[JobMinimal]
 
 

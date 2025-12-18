@@ -30,6 +30,7 @@ from virtool.jobs.models import (
     Job,
     JobAcquired,
     JobClaim,
+    JobCountsV1,
     JobCountsV2,
     JobMinimal,
     JobMinimalV2,
@@ -41,8 +42,6 @@ from virtool.jobs.models import (
     JobStatus,
     JobStepStatus,
     JobV2,
-    QueuedJobID,
-    WorkflowCounts,
     WorkflowV2,
 )
 from virtool.jobs.pg import (
@@ -60,7 +59,6 @@ from virtool.jobs.utils import (
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.types import Document
-from virtool.users.pg import SQLUser
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
@@ -77,6 +75,14 @@ V1_TO_V2_STATE = {
     JobState.WAITING: JobStateV2.PENDING,
 }
 
+V2_TO_V1_STATES = {
+    JobStateV2.CANCELLED: [JobState.CANCELLED],
+    JobStateV2.FAILED: [JobState.ERROR, JobState.TERMINATED, JobState.TIMEOUT],
+    JobStateV2.PENDING: [JobState.WAITING],
+    JobStateV2.RUNNING: [JobState.PREPARING, JobState.RUNNING],
+    JobStateV2.SUCCEEDED: [JobState.COMPLETE],
+}
+
 JOB_CLEAN_DOUBLE_CHECK_DELAY = 15
 """Delay before checking for queued jobs again during the clean task."""
 
@@ -89,8 +95,9 @@ class JobsData:
         self._mongo = mongo
         self._pg = pg
 
-    async def get_counts(self) -> dict[str, dict[str, int]]:
-        counts = defaultdict(dict)
+    async def get_counts(self) -> JobCountsV1:
+        """Get the counts for all workflow-state combinations."""
+        counts: dict[str, dict[str, int]] = defaultdict(dict)
 
         async for a in self._mongo.jobs.aggregate(
             [
@@ -103,40 +110,24 @@ class JobsData:
                 },
             ],
         ):
-            workflow = a["_id"]["workflow"]
-            state = a["_id"]["state"]
-            counts[state][workflow] = a["count"]
+            counts[a["_id"]["state"]][a["_id"]["workflow"]] = a["count"]
 
-        return dict(counts)
+        return JobCountsV1.parse_obj(counts)
 
     async def get_counts_v2(self) -> JobCountsV2:
         """Get job counts, translating v1 states to v2 states."""
-        state_map = {
-            "cancelled": "cancelled",
-            "complete": "succeeded",
-            "error": "failed",
-            "preparing": "running",
-            "running": "running",
-            "terminated": "failed",
-            "timeout": "failed",
-            "waiting": "pending",
-        }
-
         v1_counts = await self.get_counts()
         counts: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
 
-        for v1_state, workflow_counts in v1_counts.items():
-            v2_state = state_map.get(v1_state, v1_state)
-            for workflow, count in workflow_counts.items():
-                counts[v2_state][workflow] += count
+        for v1_state in JobState:
+            v2_state = V1_TO_V2_STATE[v1_state].value
+            for workflow in WorkflowV2:
+                counts[v2_state][workflow.value] += getattr(
+                    getattr(v1_counts, v1_state.value),
+                    workflow.value,
+                )
 
-        return JobCountsV2(
-            cancelled=WorkflowCounts(**counts.get("cancelled", {})),
-            failed=WorkflowCounts(**counts.get("failed", {})),
-            pending=WorkflowCounts(**counts.get("pending", {})),
-            running=WorkflowCounts(**counts.get("running", {})),
-            succeeded=WorkflowCounts(**counts.get("succeeded", {})),
-        )
+        return JobCountsV2.parse_obj(counts)
 
     async def find_v2(
         self,
@@ -150,28 +141,9 @@ class JobsData:
         Queries MongoDB jobs during the transition period, translating v2 state
         names to v1 for querying and back to v2 for the response.
         """
-        v2_to_v1_states = {
-            JobStateV2.CANCELLED: [JobState.CANCELLED],
-            JobStateV2.FAILED: [JobState.ERROR, JobState.TERMINATED, JobState.TIMEOUT],
-            JobStateV2.PENDING: [JobState.WAITING],
-            JobStateV2.RUNNING: [JobState.PREPARING, JobState.RUNNING],
-            JobStateV2.SUCCEEDED: [JobState.COMPLETE],
-        }
-
-        v1_to_v2_state = {
-            JobState.CANCELLED.value: JobStateV2.CANCELLED,
-            JobState.COMPLETE.value: JobStateV2.SUCCEEDED,
-            JobState.ERROR.value: JobStateV2.FAILED,
-            JobState.PREPARING.value: JobStateV2.RUNNING,
-            JobState.RUNNING.value: JobStateV2.RUNNING,
-            JobState.TERMINATED.value: JobStateV2.FAILED,
-            JobState.TIMEOUT.value: JobStateV2.FAILED,
-            JobState.WAITING.value: JobStateV2.PENDING,
-        }
-
         v1_states = []
         for state in states:
-            v1_states.extend(v2_to_v1_states[state])
+            v1_states.extend(V2_TO_V1_STATES[state])
 
         skip_count = 0
 
@@ -267,7 +239,7 @@ class JobsData:
                     id=d["id"],
                     created_at=d["created_at"],
                     progress=d["progress"],
-                    state=v1_to_v2_state[d["state"]],
+                    state=V1_TO_V2_STATE[JobState(d["state"])],
                     user=UserNested(**d["user"]),
                     workflow=WorkflowV2(d["workflow"]),
                 )
@@ -287,12 +259,15 @@ class JobsData:
         states: list[JobState],
         users: list[str],
     ) -> JobSearchResult:
+        """Find jobs.
+
+        # TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings
+        """
         skip_count = 0
 
         if page > 1:
             skip_count = (page - 1) * per_page
 
-        # TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings
         if users:
             user_id_variants = await get_user_id_multi_variants(self._pg, users)
             match_query = {"user.id": {"$in": user_id_variants}}
@@ -367,7 +342,7 @@ class JobsData:
             data = paginate_dict["data"]
             found_count = paginate_dict.get("found_count", 0)
             total_count = paginate_dict.get("total_count", 0)
-            page_count = int(math.ceil(found_count / per_page))
+            page_count = math.ceil(found_count / per_page)
 
         documents = await apply_transforms(
             [base_processor(d) for d in data],
@@ -375,25 +350,15 @@ class JobsData:
             self._pg,
         )
 
-        for document in documents:
-            document["user"] = UserNested(**document["user"])
-
         return JobSearchResult(
             counts=await self.get_counts(),
-            documents=[JobMinimal(**document) for document in documents],
+            documents=[JobMinimal.parse_obj(document) for document in documents],
             total_count=total_count,
             found_count=found_count,
             page_count=page_count,
             per_page=per_page,
             page=page,
         )
-
-    async def list_queued_ids(self) -> list[QueuedJobID]:
-        """List all job IDs in Redis.
-
-        :return: a list of job IDs
-        """
-        return await self._client.list()
 
     @emits(Operation.CREATE)
     async def create(
@@ -520,21 +485,10 @@ class JobsData:
         :param job_id: the ID of the job to get.
         :return: the job in v2 format
         """
-        v1_to_v2_state = {
-            JobState.CANCELLED.value: JobStateV2.CANCELLED,
-            JobState.COMPLETE.value: JobStateV2.SUCCEEDED,
-            JobState.ERROR.value: JobStateV2.FAILED,
-            JobState.PREPARING.value: JobStateV2.RUNNING,
-            JobState.RUNNING.value: JobStateV2.RUNNING,
-            JobState.TERMINATED.value: JobStateV2.FAILED,
-            JobState.TIMEOUT.value: JobStateV2.FAILED,
-            JobState.WAITING.value: JobStateV2.PENDING,
-        }
-
         document = await self._mongo.jobs.find_one(job_id)
 
         if document is None:
-            raise ResourceNotFoundError()
+            raise ResourceNotFoundError
 
         last_update = get_latest_status(document)
 
@@ -558,7 +512,7 @@ class JobsData:
             created_at=document["created_at"],
             pinged_at=document["ping"]["pinged_at"] if document.get("ping") else None,
             progress=last_update.progress,
-            state=v1_to_v2_state[last_update.state.value],
+            state=V1_TO_V2_STATE[last_update.state],
             steps=None,
             user=UserNested(**document["user"]),
             workflow=WorkflowV2(document["workflow"]),
