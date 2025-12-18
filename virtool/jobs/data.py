@@ -17,7 +17,12 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
-from virtool.data.topg import get_user_id_multi_variants
+from virtool.data.topg import (
+    both_transactions,
+    compose_legacy_id_single_expression,
+    get_user_id_multi_variants,
+    resolve_user_id,
+)
 from virtool.data.transforms import apply_transforms
 from virtool.jobs.client import JobCancellationResult, JobsClient
 from virtool.jobs.models import (
@@ -40,7 +45,13 @@ from virtool.jobs.models import (
     WorkflowCounts,
     WorkflowV2,
 )
-from virtool.jobs.pg import SQLJob
+from virtool.jobs.pg import (
+    SQLJob,
+    SQLJobAnalysis,
+    SQLJobIndex,
+    SQLJobSample,
+    SQLJobSubtraction,
+)
 from virtool.jobs.utils import (
     check_job_is_running_or_waiting,
     compose_status,
@@ -49,10 +60,22 @@ from virtool.jobs.utils import (
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.types import Document
+from virtool.users.pg import SQLUser
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
 logger = get_logger("jobs")
+
+V1_TO_V2_STATE = {
+    JobState.CANCELLED: JobStateV2.CANCELLED,
+    JobState.COMPLETE: JobStateV2.SUCCEEDED,
+    JobState.ERROR: JobStateV2.FAILED,
+    JobState.PREPARING: JobStateV2.RUNNING,
+    JobState.RUNNING: JobStateV2.RUNNING,
+    JobState.TERMINATED: JobStateV2.FAILED,
+    JobState.TIMEOUT: JobStateV2.FAILED,
+    JobState.WAITING: JobStateV2.PENDING,
+}
 
 JOB_CLEAN_DOUBLE_CHECK_DELAY = 15
 """Delay before checking for queued jobs again during the clean task."""
@@ -411,7 +434,52 @@ class JobsData:
         if job_id:
             document["_id"] = job_id
 
-        document = await self._mongo.jobs.insert_one(document)
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            document = await self._mongo.jobs.insert_one(
+                document,
+                session=mongo_session,
+            )
+
+            pg_user_id = await resolve_user_id(pg_session, user_id)
+
+            sql_job = SQLJob(
+                acquired=False,
+                created_at=document["created_at"],
+                legacy_id=document["_id"],
+                state="pending",
+                user_id=pg_user_id,
+                workflow=workflow,
+            )
+            pg_session.add(sql_job)
+            await pg_session.flush()
+
+            if workflow == "create_sample" and "sample_id" in job_args:
+                pg_session.add(
+                    SQLJobSample(job_id=sql_job.id, sample_id=job_args["sample_id"]),
+                )
+            elif workflow == "build_index" and "index_id" in job_args:
+                pg_session.add(
+                    SQLJobIndex(job_id=sql_job.id, index_id=job_args["index_id"]),
+                )
+            elif workflow == "create_subtraction" and "subtraction_id" in job_args:
+                pg_session.add(
+                    SQLJobSubtraction(
+                        job_id=sql_job.id,
+                        subtraction_id=job_args["subtraction_id"],
+                    ),
+                )
+            elif (
+                workflow in ("aodp", "nuvs", "pathoscope") and "analysis_id" in job_args
+            ):
+                pg_session.add(
+                    SQLJobAnalysis(
+                        job_id=sql_job.id,
+                        analysis_id=job_args["analysis_id"],
+                    ),
+                )
 
         await self._client.enqueue(workflow, document["_id"])
 
@@ -540,57 +608,65 @@ class JobsData:
 
         return JobAcquired(**job.dict(), key=key)
 
-    async def claim(self, job_id: int, body: JobClaim) -> dict:
-        """Claim a job using PostgreSQL storage.
+    async def claim(self, workflow: WorkflowV2, body: JobClaim) -> dict:
+        """Find and claim an available job.
 
-        :param job_id: the ID of the job to claim
+        Finds the oldest unclaimed job for the given workflow and claims it
+        atomically.
+
+        :param workflow: the workflow type to claim a job for
         :param body: claim request body with runner metadata and steps
         :return: the job with the secret key
+        :raises ResourceNotFoundError: if no unclaimed job is available
         """
         async with AsyncSession(self._pg) as session:
-            result = await session.execute(select(SQLJob).where(SQLJob.id == job_id))
+            result = await session.execute(
+                select(SQLJob)
+                .where(
+                    SQLJob.workflow == workflow.value,
+                    SQLJob.acquired == False,  # noqa: E712
+                    SQLJob.state == "pending",
+                )
+                .order_by(SQLJob.created_at)
+                .limit(1)
+                .with_for_update(skip_locked=True),
+            )
             job = result.scalar()
 
             if job is None:
-                raise ResourceNotFoundError("Job not found")
-
-            if job.state in ("cancelled", "failed", "succeeded"):
-                raise ResourceConflictError("Cannot claim job in terminal state")
-
-            if job.acquired:
-                raise ResourceConflictError("Job already claimed")
+                raise ResourceNotFoundError("No job available")
 
             key, hashed = virtool.utils.generate_key()
             now = virtool.utils.timestamp()
 
-            claim = body.dict(exclude={"steps"})
+            claim_data = body.dict(exclude={"steps"})
             steps = [step.dict() for step in body.steps]
 
             job.acquired = True
-            job.claim = claim
+            job.claim = claim_data
             job.claimed_at = now
             job.key = hashed
             job.pinged_at = now
             job.state = "running"
             job.steps = steps
 
+            job_id = job.id
             created_at = job.created_at
             user_id = job.user_id
-            workflow = job.workflow
 
             await session.commit()
 
         return {
             "id": job_id,
             "acquired": True,
-            "claim": claim,
+            "claim": claim_data,
             "claimed_at": now,
             "created_at": created_at,
             "key": key,
             "state": "running",
             "steps": steps,
             "user_id": user_id,
-            "workflow": workflow,
+            "workflow": workflow.value,
         }
 
     async def start_step(self, job_id: int, step_id: str) -> JobStepStatus:
@@ -651,16 +727,31 @@ class JobsData:
         """
         ping = {"pinged_at": virtool.utils.timestamp()}
 
-        document = await self._mongo.jobs.find_one_and_update(
-            {"_id": job_id},
-            {"$set": {"ping": ping}},
-            projection=["ping"],
-        )
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            document = await self._mongo.jobs.find_one_and_update(
+                {"_id": job_id},
+                {"$set": {"ping": ping}},
+                projection=["ping"],
+                session=mongo_session,
+            )
 
-        if document:
-            return JobPing(**ping)
+            if not document:
+                raise ResourceNotFoundError("Job not found")
 
-        raise ResourceNotFoundError("Job not found")
+            pg_result = await pg_session.execute(
+                select(SQLJob).where(
+                    compose_legacy_id_single_expression(SQLJob, job_id),
+                ),
+            )
+            sql_job = pg_result.scalar()
+
+            if sql_job:
+                sql_job.pinged_at = ping["pinged_at"]
+
+        return JobPing(**ping)
 
     @emits(Operation.UPDATE)
     async def cancel(self, job_id: str) -> Job:
@@ -683,24 +774,40 @@ class JobsData:
         if result == JobCancellationResult.REMOVED_FROM_QUEUE:
             latest = document["status"][-1]
 
-            update_result: UpdateResult = await self._mongo.jobs.update_one(
-                {"_id": job_id},
-                {
-                    "$push": {
-                        "status": compose_status(
-                            JobState.CANCELLED,
-                            latest["stage"],
-                            progress=latest["progress"],
-                        ),
+            async with both_transactions(self._mongo, self._pg) as (
+                mongo_session,
+                pg_session,
+            ):
+                update_result: UpdateResult = await self._mongo.jobs.update_one(
+                    {"_id": job_id},
+                    {
+                        "$push": {
+                            "status": compose_status(
+                                JobState.CANCELLED,
+                                latest["stage"],
+                                progress=latest["progress"],
+                            ),
+                        },
+                        "$set": {
+                            "state": JobState.CANCELLED.value,
+                        },
                     },
-                    "$set": {
-                        "state": JobState.CANCELLED.value,
-                    },
-                },
-            )
+                    session=mongo_session,
+                )
 
-            if update_result.modified_count == 0:
-                raise ResourceNotFoundError
+                if update_result.modified_count == 0:
+                    raise ResourceNotFoundError
+
+                pg_result = await pg_session.execute(
+                    select(SQLJob).where(
+                        compose_legacy_id_single_expression(SQLJob, job_id),
+                    ),
+                )
+                sql_job = pg_result.scalar()
+
+                if sql_job:
+                    sql_job.state = JobStateV2.CANCELLED.value
+                    sql_job.finished_at = virtool.utils.timestamp()
 
         return await self.get(job_id)
 
@@ -732,10 +839,33 @@ class JobsData:
             progress,
         )
 
-        await self._mongo.jobs.update_one(
-            {"_id": job_id},
-            {"$set": {"state": state.value}, "$push": {"status": status_update}},
-        )
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            await self._mongo.jobs.update_one(
+                {"_id": job_id},
+                {"$set": {"state": state.value}, "$push": {"status": status_update}},
+                session=mongo_session,
+            )
+
+            result = await pg_session.execute(
+                select(SQLJob).where(
+                    compose_legacy_id_single_expression(SQLJob, job_id),
+                ),
+            )
+            sql_job = result.scalar()
+
+            if sql_job:
+                v2_state = V1_TO_V2_STATE[state]
+                sql_job.state = v2_state.value
+
+                if v2_state in (
+                    JobStateV2.SUCCEEDED,
+                    JobStateV2.FAILED,
+                    JobStateV2.CANCELLED,
+                ):
+                    sql_job.finished_at = status_update["timestamp"]
 
         job = await self.get(job_id)
 
@@ -795,28 +925,51 @@ class JobsData:
             try:
                 latest_status = get_latest_status(document)
 
-                result = await self._mongo.jobs.update_one(
-                    {
-                        "_id": document["_id"],
-                        "state": {
-                            "$in": [JobState.PREPARING.value, JobState.RUNNING.value]
+                async with both_transactions(self._mongo, self._pg) as (
+                    mongo_session,
+                    pg_session,
+                ):
+                    result = await self._mongo.jobs.update_one(
+                        {
+                            "_id": document["_id"],
+                            "state": {
+                                "$in": [
+                                    JobState.PREPARING.value,
+                                    JobState.RUNNING.value,
+                                ],
+                            },
+                            "ping.pinged_at": {"$lt": now.shift(minutes=-5).naive},
                         },
-                        "ping.pinged_at": {"$lt": now.shift(minutes=-5).naive},
-                    },
-                    {
-                        "$push": {
-                            "status": compose_status(
-                                JobState.TIMEOUT,
-                                latest_status.stage,
-                                latest_status.step_name,
-                                latest_status.step_description,
-                                None,
-                                latest_status.progress,
+                        {
+                            "$push": {
+                                "status": compose_status(
+                                    JobState.TIMEOUT,
+                                    latest_status.stage,
+                                    latest_status.step_name,
+                                    latest_status.step_description,
+                                    None,
+                                    latest_status.progress,
+                                ),
+                            },
+                            "$set": {"state": JobState.TIMEOUT.value},
+                        },
+                        session=mongo_session,
+                    )
+
+                    if result.modified_count > 0:
+                        pg_result = await pg_session.execute(
+                            select(SQLJob).where(
+                                compose_legacy_id_single_expression(
+                                    SQLJob,
+                                    document["_id"],
+                                ),
                             ),
-                        },
-                        "$set": {"state": JobState.TIMEOUT.value},
-                    },
-                )
+                        )
+                        sql_job = pg_result.scalar()
+
+                        if sql_job:
+                            sql_job.state = JobStateV2.FAILED.value
+                            sql_job.finished_at = virtool.utils.timestamp()
 
                 if result.modified_count > 0:
                     timeout_count += 1

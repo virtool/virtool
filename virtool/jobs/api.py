@@ -26,6 +26,7 @@ from virtool.jobs.models import (
     JobStateV2,
     JobStepStatus,
     JobV2,
+    WorkflowV2,
 )
 
 routes = Routes()
@@ -207,32 +208,27 @@ async def acquire(req):
     return json_response(document)
 
 
-@routes.jobs_api.view("/jobs/{job_id}/claim")
+@routes.jobs_api.view("/jobs/claim")
 @flag(FlagName.JOBS_IN_POSTGRES)
 class ClaimJobView(PydanticView):
     @policy(PublicRoutePolicy)
-    async def post(
-        self, job_id: int, /, body: JobClaim
-    ) -> r200[dict] | r400 | r404 | r409:
-        """Claim a job for a runner.
+    async def post(self, body: JobClaim, workflow: WorkflowV2) -> r200[dict] | r404:
+        """Claim an available job for a runner.
 
-        Stores runner metadata and workflow steps, returns a secret key for
-        authentication.
+        Finds the oldest unclaimed job for the given workflow, claims it, and
+        returns a secret key for authentication.
 
         Status Codes:
             200: Successful operation
-            400: Job already claimed
-            404: Not found
-            409: Job in terminal state
+            404: No job available
         """
         try:
-            document = await get_data_from_req(self.request).jobs.claim(job_id, body)
+            document = await get_data_from_req(self.request).jobs.claim(
+                workflow,
+                body,
+            )
         except ResourceNotFoundError:
-            raise APINotFound()
-        except ResourceConflictError as e:
-            if "terminal state" in str(e):
-                raise APIConflict(str(e))
-            raise APIBadRequest("Job already claimed")
+            raise APINotFound("No job available")
 
         return json_response(document)
 

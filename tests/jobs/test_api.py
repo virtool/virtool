@@ -557,7 +557,7 @@ class TestPushStatus:
 
 
 class TestClaim:
-    """Tests for POST /jobs/{job_id}/claim endpoint."""
+    """Tests for POST /jobs/claim endpoint."""
 
     async def test_ok(
         self,
@@ -586,7 +586,7 @@ class TestClaim:
             await session.commit()
 
         resp = await client.post(
-            f"/jobs/{job_id}/claim",
+            "/jobs/claim?workflow=nuvs",
             json={
                 "runner_id": "runner-1",
                 "mem": 8.0,
@@ -623,14 +623,14 @@ class TestClaim:
         ]
 
     async def test_not_found(self, spawn_job_client: JobClientSpawner):
-        """Test that 404 is returned when job doesn't exist."""
+        """Test that 404 is returned when no pending job is available."""
         client = await spawn_job_client(
             authenticated=False,
             flags=[FlagName.JOBS_IN_POSTGRES],
         )
 
         resp = await client.post(
-            "/jobs/99999/claim",
+            "/jobs/claim?workflow=nuvs",
             json={
                 "runner_id": "runner-1",
                 "mem": 8.0,
@@ -644,13 +644,13 @@ class TestClaim:
 
         assert resp.status == HTTPStatus.NOT_FOUND
 
-    async def test_already_claimed(
+    async def test_claims_oldest_job(
         self,
         fake: DataFaker,
         pg: AsyncEngine,
         spawn_job_client: JobClientSpawner,
     ):
-        """Test that 400 is returned when job is already claimed."""
+        """Test that the oldest pending job is claimed first."""
         client = await spawn_job_client(
             authenticated=False,
             flags=[FlagName.JOBS_IN_POSTGRES],
@@ -659,67 +659,75 @@ class TestClaim:
         user = await fake.users.create()
 
         async with AsyncSession(pg) as session:
-            job = SQLJob(
-                acquired=True,
+            older_job = SQLJob(
+                created_at=arrow.utcnow().shift(hours=-1).naive,
+                state="pending",
+                user_id=user.id,
+                workflow="nuvs",
+            )
+            newer_job = SQLJob(
                 created_at=arrow.utcnow().naive,
+                state="pending",
+                user_id=user.id,
+                workflow="nuvs",
+            )
+            session.add_all([older_job, newer_job])
+            await session.flush()
+            older_job_id = older_job.id
+            await session.commit()
+
+        resp = await client.post(
+            "/jobs/claim?workflow=nuvs",
+            json={
+                "runner_id": "runner-1",
+                "mem": 8.0,
+                "cpu": 4.0,
+                "image": "virtool/workflow:1.0.0",
+                "runtime_version": "1.0.0",
+                "workflow_version": "2.0.0",
+                "steps": [],
+            },
+        )
+
+        assert resp.status == HTTPStatus.OK
+        body = await resp.json()
+        assert body["id"] == older_job_id
+
+    async def test_skips_already_claimed(
+        self,
+        fake: DataFaker,
+        pg: AsyncEngine,
+        spawn_job_client: JobClientSpawner,
+    ):
+        """Test that already-claimed jobs are skipped."""
+        client = await spawn_job_client(
+            authenticated=False,
+            flags=[FlagName.JOBS_IN_POSTGRES],
+        )
+
+        user = await fake.users.create()
+
+        async with AsyncSession(pg) as session:
+            claimed_job = SQLJob(
+                acquired=True,
+                created_at=arrow.utcnow().shift(hours=-1).naive,
                 state="running",
                 user_id=user.id,
                 workflow="nuvs",
             )
-            session.add(job)
-            await session.flush()
-            job_id = job.id
-            await session.commit()
-
-        resp = await client.post(
-            f"/jobs/{job_id}/claim",
-            json={
-                "runner_id": "runner-1",
-                "mem": 8.0,
-                "cpu": 4.0,
-                "image": "virtool/workflow:1.0.0",
-                "runtime_version": "1.0.0",
-                "workflow_version": "2.0.0",
-                "steps": [],
-            },
-        )
-
-        assert resp.status == HTTPStatus.BAD_REQUEST
-        assert await resp.json() == {
-            "id": "bad_request",
-            "message": "Job already claimed",
-        }
-
-    @pytest.mark.parametrize("state", ["cancelled", "failed", "succeeded"])
-    async def test_terminal_state(
-        self,
-        state: str,
-        fake: DataFaker,
-        pg: AsyncEngine,
-        spawn_job_client: JobClientSpawner,
-    ):
-        """Test that 409 is returned when job is in a terminal state."""
-        client = await spawn_job_client(
-            authenticated=False,
-            flags=[FlagName.JOBS_IN_POSTGRES],
-        )
-
-        user = await fake.users.create()
-
-        async with AsyncSession(pg) as session:
-            job = SQLJob(
+            pending_job = SQLJob(
                 created_at=arrow.utcnow().naive,
-                state=state,
+                state="pending",
                 user_id=user.id,
                 workflow="nuvs",
             )
-            session.add(job)
+            session.add_all([claimed_job, pending_job])
             await session.flush()
-            job_id = job.id
+            pending_job_id = pending_job.id
             await session.commit()
 
         resp = await client.post(
-            f"/jobs/{job_id}/claim",
+            "/jobs/claim?workflow=nuvs",
             json={
                 "runner_id": "runner-1",
                 "mem": 8.0,
@@ -731,7 +739,9 @@ class TestClaim:
             },
         )
 
-        assert resp.status == HTTPStatus.CONFLICT
+        assert resp.status == HTTPStatus.OK
+        body = await resp.json()
+        assert body["id"] == pending_job_id
 
     async def test_feature_flag_disabled(
         self,
@@ -741,7 +751,7 @@ class TestClaim:
         client = await spawn_job_client(authenticated=False)
 
         resp = await client.post(
-            "/jobs/1/claim",
+            "/jobs/claim?workflow=nuvs",
             json={
                 "runner_id": "runner-1",
                 "mem": 8.0,
