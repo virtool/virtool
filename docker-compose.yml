@@ -25,7 +25,7 @@ services:
       UV_PROJECT_ENVIRONMENT: /opt/venv
 
   mongo:
-    image: mongo:6
+    image: mongo:8
     command: ["mongod", "--replSet", "virtool", "--bind_ip_all"]
     volumes:
       - ./tests/setup_mongo.sh:/docker-entrypoint-initdb.d/setup_mongo.sh
