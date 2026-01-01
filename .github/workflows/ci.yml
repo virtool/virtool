@@ -108,7 +108,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
       - name: Download OAS
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: openapi.json
           path: virtool/spec/openapi.json
