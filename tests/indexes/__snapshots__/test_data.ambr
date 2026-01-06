@@ -1,0 +1,118 @@
+# serializer version: 1
+# name: test_finalize
+  dict({
+    'change_count': 0,
+    'contributors': list([
+    ]),
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'files': list([
+      dict({
+        'download_url': 'https://virtool.example.com/api/indexes/foo/files/reference.1.bt2',
+        'id': 1,
+        'index': 'foo',
+        'name': 'reference.1.bt2',
+        'size': 1234567,
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': 'https://virtool.example.com/api/indexes/foo/files/reference.2.bt2',
+        'id': 2,
+        'index': 'foo',
+        'name': 'reference.2.bt2',
+        'size': 1234567,
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': 'https://virtool.example.com/api/indexes/foo/files/reference.3.bt2',
+        'id': 3,
+        'index': 'foo',
+        'name': 'reference.3.bt2',
+        'size': 1234567,
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': 'https://virtool.example.com/api/indexes/foo/files/reference.4.bt2',
+        'id': 4,
+        'index': 'foo',
+        'name': 'reference.4.bt2',
+        'size': 1234567,
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': 'https://virtool.example.com/api/indexes/foo/files/reference.rev.1.bt2',
+        'id': 5,
+        'index': 'foo',
+        'name': 'reference.rev.1.bt2',
+        'size': 1234567,
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': 'https://virtool.example.com/api/indexes/foo/files/reference.rev.2.bt2',
+        'id': 6,
+        'index': 'foo',
+        'name': 'reference.rev.2.bt2',
+        'size': 1234567,
+        'type': 'bowtie2',
+      }),
+      dict({
+        'download_url': 'https://virtool.example.com/api/indexes/foo/files/reference.fa.gz',
+        'id': 7,
+        'index': 'foo',
+        'name': 'reference.fa.gz',
+        'size': 1234567,
+        'type': 'fasta',
+      }),
+    ]),
+    'has_files': True,
+    'id': 'foo',
+    'job': dict({
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'id': 'bf1b993c',
+      'progress': 3,
+      'retries': 0,
+      'stage': None,
+      'state': <JobState.PREPARING: 'preparing'>,
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+      'workflow': 'pathoscope_bowtie',
+    }),
+    'manifest': dict({
+    }),
+    'modified_otu_count': 0,
+    'otus': list([
+    ]),
+    'ready': True,
+    'reference': dict({
+      'data_type': <ReferenceDataType.genome: 'genome'>,
+      'id': 'bar',
+      'name': 'Bar',
+    }),
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 1,
+    }),
+    'version': 2,
+  })
+# ---
+# name: test_finalize.1
+  dict({
+    '_id': 'foo',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'has_files': True,
+    'job': dict({
+      'id': 'bf1b993c',
+    }),
+    'manifest': dict({
+    }),
+    'ready': True,
+    'reference': dict({
+      'id': 'bar',
+    }),
+    'user': dict({
+      'id': 1,
+    }),
+    'version': 2,
+  })
+# ---
