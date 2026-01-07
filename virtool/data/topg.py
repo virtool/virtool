@@ -102,6 +102,29 @@ def compose_legacy_id_single_expression(
     return model.legacy_id == id_
 
 
+async def resolve_user_id(session: AsyncSession, user_id: int | str) -> int:
+    """Resolve a user ID to its Postgres integer ID.
+
+    Use this within an existing session (e.g., inside both_transactions).
+
+    :param session: an async SQLAlchemy session
+    :param user_id: a user ID (modern int or legacy string)
+    :return: the Postgres integer user ID
+    :raises NoResultFound: if no user is found
+    """
+    if isinstance(user_id, int):
+        return user_id
+
+    if isinstance(user_id, str) and user_id.isdigit():
+        return int(user_id)
+
+    result = await session.execute(
+        select(SQLUser.id).where(SQLUser.legacy_id == user_id),
+    )
+
+    return result.scalar_one()
+
+
 async def get_user_id_single_variants(
     pg: AsyncEngine, user_id: int | str
 ) -> list[int | str]:

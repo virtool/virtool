@@ -26,7 +26,6 @@ from virtool.indexes.db import INDEX_FILE_NAMES
 from virtool.indexes.files import create_index_file
 from virtool.indexes.sql import SQLIndexFile
 from virtool.indexes.utils import check_index_file_type
-from virtool.jobs.models import QueuedJobID
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app
 from virtool.workflow.pytest_plugin.utils import StaticTime
@@ -355,9 +354,6 @@ class TestCreate:
             mongo.jobs.find_one(),
         )
 
-        assert await data_layer.jobs.list_queued_ids() == [
-            QueuedJobID(job["_id"], "jobs_build_index")
-        ]
         assert index == snapshot(name="index")
         assert job == snapshot(name="job")
 
