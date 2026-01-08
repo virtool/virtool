@@ -2,11 +2,18 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy.filters import paths
 
 from virtool.indexes.sql import SQLIndexFile
-from virtool.pg.utils import connect_pg, delete_row, get_row, get_row_by_id, get_rows
+from virtool.pg.utils import (
+    PgOptions,
+    connect_pg,
+    delete_row,
+    get_row,
+    get_row_by_id,
+    get_rows,
+)
 
 
-async def test_connect_pg(pg_connection_string: str, engine: AsyncEngine, snapshot):
-    engine = await connect_pg(pg_connection_string)
+async def test_connect_pg(pg_options: PgOptions, engine: AsyncEngine, snapshot):
+    engine = await connect_pg(pg_options)
 
     assert type(engine) is AsyncEngine
     assert engine.url._asdict() == snapshot(exclude=paths("port", "database"))

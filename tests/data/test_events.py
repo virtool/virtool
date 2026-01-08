@@ -13,6 +13,7 @@ from virtool.data.events import (
     listen_for_client_events,
 )
 from virtool.models.base import BaseModel
+from virtool.pg.utils import PgOptions
 
 
 class Emitted(BaseModel):
@@ -71,7 +72,7 @@ async def test_emits_named():
 
 async def test_publish_and_listen(
     pg: AsyncEngine,
-    pg_connection_string: str,
+    pg_options: PgOptions,
 ):
     """Test that an event published with ``emit()`` can be received via Postgres
     NOTIFY/LISTEN.
@@ -82,7 +83,7 @@ async def test_publish_and_listen(
 
     async def listen():
         nonlocal received_event
-        async for event in listen_for_client_events(pg_connection_string):
+        async for event in listen_for_client_events(pg_options):
             received_event = event
             break
 

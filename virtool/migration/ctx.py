@@ -67,7 +67,7 @@ async def create_migration_context(config: MigrationConfig) -> MigrationContext:
 
     try:
         pg = create_async_engine(
-            get_sqlalchemy_url(config.postgres_connection_string),
+            get_sqlalchemy_url(config.postgres_options),
             json_serializer=dump_string,
             json_deserializer=orjson.loads,
             pool_recycle=1800,

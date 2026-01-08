@@ -1,9 +1,10 @@
 import sys
 from enum import Enum
 from typing import TypeVar
+from urllib.parse import parse_qs, urlparse
 
 import orjson
-from sqlalchemy import select, text
+from sqlalchemy import URL, select, text
 from sqlalchemy.engine.result import ScalarResult
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from structlog import get_logger
@@ -23,21 +24,53 @@ class SQLEnum(Enum):
         return [e.value for e in cls]
 
 
-async def connect_pg(postgres_connection_string: str) -> AsyncEngine:
+class PgOptions:
+    database: str
+    host: str
+    password: str
+    port: int
+    ssl: str
+    username: str
+
+    def __init__(self, pg_connection_string: str) -> None:
+        if not pg_connection_string.startswith("postgresql://"):
+            raise sys.exit(1)
+
+        parsed_url = urlparse(pg_connection_string)
+        parsed_query = parse_qs(parsed_url.query)
+
+        self.database = parsed_url.path.lstrip("/")
+        self.host = parsed_url.hostname
+        self.port = parsed_url.port or 5432
+        self.username = parsed_url.username
+        self.ssl = parsed_query["ssl"][0] if "ssl" in parsed_query else "prefer"
+
+        try:
+            self.password = parsed_query["password"][0]
+        except (KeyError, IndexError):
+            self.password = parsed_url.password
+
+        if not (self.host and self.username and self.password):
+            raise sys.exit(1)
+
+    def __repr__(self):
+        return (
+            f"{self.host}, {self.username}, {self.password}, {self.port}, "
+            f"{self.database}, {self.ssl}"
+        )
+
+
+async def connect_pg(postgres_options: PgOptions) -> AsyncEngine:
     """Create a connection to Postgres.
 
     :param postgres_connection_string: a standard postgres DSN (postgresql://...)
     :return: an AsyncEngine object
     """
-    if not postgres_connection_string.startswith("postgresql://"):
-        logger.critical("invalid postgres connection string")
-        sys.exit(1)
-
     logger.info("connecting to postgres")
 
     try:
         pg = create_async_engine(
-            get_sqlalchemy_url(postgres_connection_string),
+            get_sqlalchemy_url(postgres_options),
             json_serializer=dump_string,
             json_deserializer=orjson.loads,
             pool_recycle=1800,
@@ -55,12 +88,23 @@ async def connect_pg(postgres_connection_string: str) -> AsyncEngine:
         sys.exit(1)
 
 
-def get_sqlalchemy_url(dsn: str) -> str:
+def get_sqlalchemy_url(postgres_options: PgOptions) -> URL:
     """Convert a standard Postgres DSN to SQLAlchemy format.
 
     SQLAlchemy requires the driver to be specified (e.g., postgresql+asyncpg://).
     """
-    return dsn.replace("postgresql://", "postgresql+asyncpg://")
+    return URL.create(
+        "postgresql+asyncpg",
+        username=postgres_options.username,
+        password=postgres_options.password,
+        host=postgres_options.host,
+        database=postgres_options.database,
+        query={"ssl": postgres_options.ssl},
+    )
+
+
+def format_sqlalchemy_connection_string(postgres_options: PgOptions):
+    return f"postgresql+asyncpg://{postgres_options.username}:{postgres_options.password}@{postgres_options.host}/{postgres_options.database}?ssl={postgres_options.ssl}"
 
 
 async def check_version(engine: AsyncEngine) -> None:

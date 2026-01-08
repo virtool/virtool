@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from pymongo.uri_parser import parse_uri
 
 from virtool.flags import FlagName
+from virtool.pg.utils import PgOptions
 
 
 @dataclass
@@ -31,6 +32,10 @@ class MigrationConfig:
 
         """
         return parse_uri(self.mongodb_connection_string)["database"]
+
+    @property
+    def postgres_options(self):
+        return PgOptions(self.postgres_connection_string)
 
     def __post_init__(self):
         self.data_path = Path(self.data_path)
@@ -56,6 +61,10 @@ class ServerConfig:
     @property
     def mongodb_database(self) -> str:
         return parse_uri(self.mongodb_connection_string)["database"]
+
+    @property
+    def postgres_options(self) -> PgOptions:
+        return PgOptions(self.postgres_connection_string)
 
     def __post_init__(self):
         self.data_path = Path(self.data_path)
