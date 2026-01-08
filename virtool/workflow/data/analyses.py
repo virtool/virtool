@@ -7,7 +7,7 @@ from pyfixtures import fixture
 
 from virtool.analyses.models import Analysis, AnalysisSample
 from virtool.indexes.models import IndexNested
-from virtool.jobs.models import JobNested
+from virtool.jobs.models import Job
 from virtool.ml.models import MLModelRelease
 from virtool.references.models import ReferenceNested
 from virtool.subtractions.models import SubtractionNested
@@ -82,7 +82,7 @@ class WFAnalysis:
 @fixture
 async def analysis(
     _api: WorkflowAPIClient,
-    job: JobNested,
+    job: Job,
 ) -> WFAnalysis:
     """The analysis associated with the running workflow."""
     id_ = job.args["analysis_id"]

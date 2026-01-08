@@ -204,6 +204,13 @@
 # ---
 # name: TestGetV2.test_ok
   dict({
+    'args': dict({
+      'buy': 'aJUTVHuIhJxeMChNzFJE',
+      'letter': 'TzqyQTQjZGeLZuJqlLaQ',
+      'picture': 4.11362983803781,
+      'reduce': 24963.910062293,
+      'will': 'EKilxKJTbTDOKidKxUVF',
+    }),
     'claim': None,
     'claimed_at': str,
     'created_at': str,

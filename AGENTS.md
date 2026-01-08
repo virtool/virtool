@@ -1,0 +1,3 @@
+- Use `virtool migration create` to write new Virtool migrations.
+- Use uv.
+- Use mise to run tests: mise run test -- <pytest args>
