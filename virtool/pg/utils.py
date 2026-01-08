@@ -80,7 +80,7 @@ async def connect_pg(pg_options: PgOptions) -> AsyncEngine:
     :return: an AsyncEngine object
     """
     logger.info("connecting to postgres")
-    print("sql_alchemy_url", get_sqlalchemy_url(pg_options))
+
     try:
         pg = create_async_engine(
             get_sqlalchemy_url(pg_options),
