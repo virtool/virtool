@@ -52,6 +52,7 @@ class SampleMinimal(SampleNested):
     nuvs: bool | str
     pathoscope: bool | str
     ready: bool
+    uploads: list[UploadMinimal] | None = None
     user: UserNested
     workflows: SampleWorkflows
 

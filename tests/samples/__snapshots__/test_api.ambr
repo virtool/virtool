@@ -305,12 +305,6 @@
     'message': 'Sample name is already in use',
   })
 # ---
-# name: TestCreate.test_name_exists[json]
-  dict({
-    'id': 'bad_request',
-    'message': 'Sample name is already in use',
-  })
-# ---
 # name: TestCreate.test_ok[force_choice][resp]
   dict({
     'all_read': True,
@@ -367,6 +361,25 @@
       dict({
         'id': 'apple',
         'name': 'Apple',
+      }),
+    ]),
+    'uploads': list([
+      dict({
+        'created_at': 'approximately_now_isoformat',
+        'id': 1,
+        'name': 'test.fq.gz',
+        'name_on_disk': 'uuid-test.fq.gz',
+        'ready': True,
+        'removed': False,
+        'removed_at': None,
+        'reserved': True,
+        'size': 723988,
+        'type': 'reads',
+        'uploaded_at': 'approximately_now_isoformat',
+        'user': dict({
+          'handle': 'johnsoncynthia',
+          'id': 2,
+        }),
       }),
     ]),
     'user': dict({
@@ -434,6 +447,25 @@
         'name': 'Apple',
       }),
     ]),
+    'uploads': list([
+      dict({
+        'created_at': 'approximately_now_isoformat',
+        'id': 1,
+        'name': 'test.fq.gz',
+        'name_on_disk': 'uuid-test.fq.gz',
+        'ready': True,
+        'removed': False,
+        'removed_at': None,
+        'reserved': True,
+        'size': 723988,
+        'type': 'reads',
+        'uploaded_at': 'approximately_now_isoformat',
+        'user': dict({
+          'handle': 'johnsoncynthia',
+          'id': 2,
+        }),
+      }),
+    ]),
     'user': dict({
       'handle': 'leeashley',
       'id': 1,
@@ -497,6 +529,25 @@
       dict({
         'id': 'apple',
         'name': 'Apple',
+      }),
+    ]),
+    'uploads': list([
+      dict({
+        'created_at': 'approximately_now_isoformat',
+        'id': 1,
+        'name': 'test.fq.gz',
+        'name_on_disk': 'uuid-test.fq.gz',
+        'ready': True,
+        'removed': False,
+        'removed_at': None,
+        'reserved': True,
+        'size': 723988,
+        'type': 'reads',
+        'uploaded_at': 'approximately_now_isoformat',
+        'user': dict({
+          'handle': 'johnsoncynthia',
+          'id': 2,
+        }),
       }),
     ]),
     'user': dict({
@@ -586,6 +637,7 @@
         'name': 'Peach',
       }),
     ]),
+    'uploads': None,
     'user': dict({
       'handle': 'leeashley',
       'id': 1,
@@ -626,6 +678,7 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -674,6 +727,7 @@
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'leeashley',
           'id': 1,
@@ -704,6 +758,7 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -745,6 +800,7 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -786,6 +842,7 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -834,6 +891,7 @@
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'leeashley',
           'id': 1,
@@ -886,6 +944,7 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -934,6 +993,7 @@
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'leeashley',
           'id': 1,
@@ -975,6 +1035,7 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -1016,6 +1077,7 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -1064,6 +1126,7 @@
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'leeashley',
           'id': 1,
@@ -1094,6 +1157,7 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -1135,6 +1199,7 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -1183,6 +1248,7 @@
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'leeashley',
           'id': 1,
@@ -1213,6 +1279,7 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -1272,6 +1339,7 @@
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'leeashley',
           'id': 1,
@@ -1302,6 +1370,7 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -1343,47 +1412,7 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'user': dict({
-          'handle': 'zclark',
-          'id': 2,
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-    ]),
-    'found_count': 1,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  })
-# ---
-# name: TestFind.test_term[sp]
-  dict({
-    'documents': list([
-      dict({
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          }),
-        ]),
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -1425,6 +1454,7 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -1473,6 +1503,7 @@
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'leeashley',
           'id': 1,
@@ -1503,6 +1534,7 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -1562,6 +1594,7 @@
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'leeashley',
           'id': 1,
@@ -1603,6 +1636,7 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -1651,6 +1685,7 @@
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'leeashley',
           'id': 1,
@@ -1681,6 +1716,7 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -1722,6 +1758,7 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -1752,6 +1789,7 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
+        'uploads': None,
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -1844,6 +1882,7 @@
         'name': 'Pear',
       }),
     ]),
+    'uploads': None,
     'user': dict({
       'handle': 'leeashley',
       'id': 1,
@@ -1929,6 +1968,7 @@
         'name': 'Pear',
       }),
     ]),
+    'uploads': None,
     'user': dict({
       'handle': 'turnermary',
       'id': 3,
@@ -2024,6 +2064,7 @@
         'name': 'Pear',
       }),
     ]),
+    'uploads': None,
     'user': dict({
       'handle': 'kellywoods',
       'id': 3,
@@ -2109,6 +2150,7 @@
         'name': 'Pear',
       }),
     ]),
+    'uploads': None,
     'user': dict({
       'handle': 'zwilliams',
       'id': 2,
@@ -2258,6 +2300,7 @@
         'name': 'Pear',
       }),
     ]),
+    'uploads': None,
     'user': dict({
       'handle': 'leeashley',
       'id': 1,

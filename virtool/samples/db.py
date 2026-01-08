@@ -14,7 +14,7 @@ import virtool.mongo.utils
 import virtool.samples.utils
 import virtool.utils
 from virtool.api.errors import APINotFound
-from virtool.data.transforms import AbstractTransform
+from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
 from virtool.mongo.core import Mongo
@@ -25,6 +25,7 @@ from virtool.samples.utils import PATHOSCOPE_TASK_NAMES
 from virtool.settings.models import Settings
 from virtool.types import Document
 from virtool.uploads.sql import SQLUpload
+from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
 SAMPLE_RIGHTS_PROJECTION = {
@@ -83,6 +84,81 @@ class AttachArtifactsAndReadsTransform(AbstractTransform):
             )
 
         return {"artifacts": artifacts, "reads": reads}
+
+
+class AttachUploadsTransform(AbstractTransform):
+    """Attaches upload details to samples that have an uploads field."""
+
+    def __init__(self, pg: AsyncEngine):
+        self._pg = pg
+
+    async def attach_one(self, document: Document, prepared: Any) -> Document:
+        if prepared is None:
+            return {**document, "uploads": None}
+
+        uploads = [
+            prepared.get(u["id"])
+            for u in document.get("uploads", [])
+            if u["id"] in prepared
+        ]
+
+        return {**document, "uploads": uploads}
+
+    async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
+        uploads = document.get("uploads")
+
+        if not uploads:
+            return None
+
+        upload_ids = [u["id"] for u in uploads]
+
+        result = await session.execute(
+            select(SQLUpload).where(SQLUpload.id.in_(upload_ids)),
+        )
+
+        upload_dicts = [upload.to_dict() for upload in result.scalars()]
+
+        upload_dicts = await apply_transforms(
+            upload_dicts,
+            [AttachUserTransform(self._pg, ignore_errors=True)],
+            self._pg,
+        )
+
+        return {u["id"]: u for u in upload_dicts}
+
+    async def prepare_many(
+        self,
+        documents: list[Document],
+        session: AsyncSession,
+    ) -> dict[str, dict[int, dict] | None]:
+        all_upload_ids = set()
+
+        for document in documents:
+            uploads = document.get("uploads")
+            if uploads:
+                all_upload_ids.update(u["id"] for u in uploads)
+
+        if not all_upload_ids:
+            return {document["id"]: None for document in documents}
+
+        result = await session.execute(
+            select(SQLUpload).where(SQLUpload.id.in_(list(all_upload_ids))),
+        )
+
+        upload_dicts = [upload.to_dict() for upload in result.scalars()]
+
+        upload_dicts = await apply_transforms(
+            upload_dicts,
+            [AttachUserTransform(self._pg, ignore_errors=True)],
+            self._pg,
+        )
+
+        uploads_by_id = {u["id"]: u for u in upload_dicts}
+
+        return {
+            document["id"]: uploads_by_id if document.get("uploads") else None
+            for document in documents
+        }
 
 
 async def check_rights_error_check(

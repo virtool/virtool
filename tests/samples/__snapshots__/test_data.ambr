@@ -40,6 +40,11 @@
     'subtractions': list([
       'apple',
     ]),
+    'uploads': list([
+      dict({
+        'id': 1,
+      }),
+    ]),
     'user': dict({
       'id': 1,
     }),
@@ -92,6 +97,11 @@
     'subtractions': list([
       'apple',
     ]),
+    'uploads': list([
+      dict({
+        'id': 1,
+      }),
+    ]),
     'user': dict({
       'id': 1,
     }),
@@ -143,6 +153,11 @@
     }),
     'subtractions': list([
       'apple',
+    ]),
+    'uploads': list([
+      dict({
+        'id': 1,
+      }),
     ]),
     'user': dict({
       'id': 1,
@@ -233,6 +248,7 @@
         'name': 'Pear',
       }),
     ]),
+    'uploads': None,
     'user': dict({
       'handle': 'leeashley',
       'id': 1,
