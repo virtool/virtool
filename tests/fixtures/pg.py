@@ -57,7 +57,7 @@ def pg_connection_string(pg_base_connection_string: PgOptions, pg_db_name: str):
 
 
 @pytest.fixture(scope="session")
-def pg_options(pg_connection_string: str) -> PgOptions:
+def postgres_options(pg_connection_string: str) -> PgOptions:
     """PgOptions adaptor object for ensuring compatiblity with SQLAlchemy and asyncpg"""
     return PgOptions(pg_connection_string)
 
@@ -66,7 +66,7 @@ def pg_options(pg_connection_string: str) -> PgOptions:
 async def engine(
     pg_db_name: str,
     pg_base_options: PgOptions,
-    pg_options: PgOptions,
+    postgres_options: PgOptions,
 ) -> AsyncEngine:
     """Return a SQLAlchemy :class:`AsyncEngine` object for an auto-generated test database.
 
@@ -103,7 +103,7 @@ async def engine(
     await engine_without_db.dispose()
 
     engine = create_async_engine(
-        get_sqlalchemy_url(pg_options),
+        get_sqlalchemy_url(postgres_options),
         echo=False,
         json_serializer=dump_string,
         json_deserializer=orjson.loads,

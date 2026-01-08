@@ -72,7 +72,7 @@ async def test_emits_named():
 
 async def test_publish_and_listen(
     pg: AsyncEngine,
-    pg_options: PgOptions,
+    postgres_options: PgOptions,
 ):
     """Test that an event published with ``emit()`` can be received via Postgres
     NOTIFY/LISTEN.
@@ -83,7 +83,7 @@ async def test_publish_and_listen(
 
     async def listen():
         nonlocal received_event
-        async for event in listen_for_client_events(pg_options):
+        async for event in listen_for_client_events(postgres_options):
             received_event = event
             break
 

@@ -12,8 +12,8 @@ from virtool.pg.utils import (
 )
 
 
-async def test_connect_pg(pg_options: PgOptions, engine: AsyncEngine, snapshot):
-    engine = await connect_pg(pg_options)
+async def test_connect_pg(postgres_options: PgOptions, engine: AsyncEngine, snapshot):
+    engine = await connect_pg(postgres_options)
 
     assert type(engine) is AsyncEngine
     assert engine.url._asdict() == snapshot(exclude=paths("port", "database"))

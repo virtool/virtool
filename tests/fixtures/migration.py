@@ -79,15 +79,15 @@ async def migration_pg_connection_string(
 
 
 @pytest.fixture
-def migration_pg_options(migration_pg_connection_string: str) -> PgOptions:
+def migration_postgres_options(migration_pg_connection_string: str) -> PgOptions:
     return PgOptions(migration_pg_connection_string)
 
 
 @pytest.fixture
-def migration_pg(migration_pg_options: PgOptions):
+def migration_pg(migration_postgres_options: PgOptions):
     """A :class:`AsyncEngine` instance for a Postgres database for testing migrations."""
     return create_async_engine(
-        get_sqlalchemy_url(migration_pg_options),
+        get_sqlalchemy_url(migration_postgres_options),
         json_serializer=dump_string,
         json_deserializer=orjson.loads,
     )
@@ -138,9 +138,9 @@ async def ctx(
 
 
 @pytest.fixture
-def apply_alembic(migration_pg_options: PgOptions):
+def apply_alembic(migration_postgres_options: PgOptions):
     os.environ["SQLALCHEMY_URL"] = format_sqlalchemy_connection_string(
-        migration_pg_options
+        migration_postgres_options
     )
 
     def func(revision: str = "head"):
