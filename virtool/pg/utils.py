@@ -33,7 +33,10 @@ class PgOptions:
     username: str
 
     def __init__(self, pg_connection_string: str) -> None:
-        if not pg_connection_string.startswith("postgresql://"):
+        if not (
+            pg_connection_string.startswith("postgresql://")
+            or pg_connection_string.startswith("postgresql+asyncpg://")
+        ):
             raise sys.exit(1)
 
         parsed_url = urlparse(pg_connection_string)

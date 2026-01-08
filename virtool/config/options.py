@@ -108,36 +108,12 @@ real_ip_header_option = click.option(
     type=str,
 )
 
-
-def normalize_postgres_connection_string(
-    ctx: click.Context,
-    param: click.Parameter,
-    value: str,
-) -> str:
-    """Normalize the Postgres connection string to the plain postgresql:// format.
-
-    Accepts both postgresql:// and the legacy postgresql+asyncpg:// format for
-    backwards compatibility.
-    """
-    # TODO: Remove postgresql+asyncpg:// support in a future breaking change.
-    if value.startswith("postgresql+asyncpg://"):
-        return value.replace("postgresql+asyncpg://", "postgresql://")
-
-    if value.startswith("postgresql://"):
-        return value
-
-    raise click.BadParameter(
-        "must begin with 'postgresql://' or 'postgresql+asyncpg://'",
-    )
-
-
 postgres_connection_string_option = click.option(
     "--postgres-connection-string",
     default=get_from_environment(
         "postgres_connection_string",
         "postgresql://virtool:virtool@localhost/virtool",
     ),
-    callback=normalize_postgres_connection_string,
     help="The PostgreSQL connection string",
     type=str,
 )
