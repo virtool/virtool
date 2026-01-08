@@ -26,7 +26,6 @@ from virtool.migration.ctx import MigrationContext, create_migration_context
 from virtool.migration.pg import SQLRevision
 from virtool.pg.utils import (
     PgOptions,
-    format_sqlalchemy_connection_string,
     get_sqlalchemy_url,
 )
 
@@ -44,7 +43,7 @@ async def migration_pg_connection_string(
     database = f"test_migration_{worker_id}"
 
     engine = create_async_engine(
-        get_sqlalchemy_url(PgOptions(pg_base_connection_string)),
+        get_sqlalchemy_url(PgOptions.from_connection_string(pg_base_connection_string)),
         isolation_level="AUTOCOMMIT",
         json_serializer=dump_string,
         json_deserializer=orjson.loads,
@@ -65,7 +64,7 @@ async def migration_pg_connection_string(
     connection_string = f"{pg_base_connection_string}/{database}"
 
     engine = create_async_engine(
-        get_sqlalchemy_url(PgOptions(connection_string)),
+        get_sqlalchemy_url(PgOptions.from_connection_string(connection_string)),
         json_serializer=dump_string,
         json_deserializer=orjson.loads,
         pool_recycle=1800,
@@ -80,7 +79,7 @@ async def migration_pg_connection_string(
 
 @pytest.fixture
 def migration_postgres_options(migration_pg_connection_string: str) -> PgOptions:
-    return PgOptions(migration_pg_connection_string)
+    return PgOptions.from_connection_string(migration_pg_connection_string)
 
 
 @pytest.fixture
@@ -139,9 +138,9 @@ async def ctx(
 
 @pytest.fixture
 def apply_alembic(migration_postgres_options: PgOptions):
-    os.environ["SQLALCHEMY_URL"] = format_sqlalchemy_connection_string(
+    os.environ["SQLALCHEMY_URL"] = get_sqlalchemy_url(
         migration_postgres_options
-    )
+    ).render_as_string(hide_password=False)
 
     def func(revision: str = "head"):
         alembic.command.upgrade(

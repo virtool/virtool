@@ -23,7 +23,7 @@ def pg_base_connection_string(request, pg_db_name: str) -> str:
 
 
 @pytest.fixture(scope="session")
-def pg_base_options(pg_base_connection_string) -> PgOptions:
+def pg_base_options(pg_base_connection_string: str) -> PgOptions:
     """A Postgres connection string without the database name at the end.
 
     This is used to manage databases in the Postgres instance. It is used by
@@ -32,7 +32,9 @@ def pg_base_options(pg_base_connection_string) -> PgOptions:
     eg. ``postgresql://virtool:virtool@localhost``
 
     """
-    return PgOptions("postgresql://virtool:virtool@postgres:5432")
+    return PgOptions.from_connection_string(
+        "postgresql://virtool:virtool@postgres:5432"
+    )
 
 
 @pytest.fixture(scope="session")
@@ -46,7 +48,7 @@ def pg_db_name(worker_id: str):
 
 
 @pytest.fixture(scope="session")
-def pg_connection_string(pg_base_connection_string: PgOptions, pg_db_name: str):
+def pg_connection_string(pg_base_connection_string: str, pg_db_name: str):
     """A full Postgres connection string with the auto-generated test database name
     appended.
 
@@ -59,7 +61,7 @@ def pg_connection_string(pg_base_connection_string: PgOptions, pg_db_name: str):
 @pytest.fixture(scope="session")
 def postgres_options(pg_connection_string: str) -> PgOptions:
     """PgOptions adaptor object for ensuring compatiblity with SQLAlchemy and asyncpg"""
-    return PgOptions(pg_connection_string)
+    return PgOptions.from_connection_string(pg_connection_string)
 
 
 @pytest.fixture(scope="session")

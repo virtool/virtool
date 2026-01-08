@@ -82,7 +82,7 @@ async def startup_databases(app: App) -> None:
             config.mongodb_connection_string,
             config.mongodb_database,
         ),
-        connect_pg(config.postgres_options),
+        connect_pg(config.pg_options),
         _connect_redis(config.redis_connection_string),
     )
 
@@ -226,7 +226,7 @@ async def startup_ws(app: App) -> None:
     config = get_config_from_app(app)
 
     ws = WSServer(
-        config.postgres_options,
+        config.pg_options,
         app["data"],
         app["redis"],
     )

@@ -201,7 +201,7 @@ class EventPublisher:
 
 
 async def listen_for_client_events(
-    postgres_options: PgOptions,
+    pg_options: PgOptions,
 ) -> AsyncGenerator[ClientEvent]:
     """Listen for client events via Postgres NOTIFY.
 
@@ -209,11 +209,11 @@ async def listen_for_client_events(
     """
     try:
         conn = await asyncpg.connect(
-            database=postgres_options.database,
-            host=postgres_options.host,
-            user=postgres_options.username,
-            password=postgres_options.password,
-            ssl=postgres_options.ssl,
+            database=pg_options.database,
+            host=pg_options.host,
+            user=pg_options.username,
+            password=pg_options.password,
+            ssl=pg_options.ssl,
         )
         queue: asyncio.Queue[str] = asyncio.Queue()
     except Exception as e:

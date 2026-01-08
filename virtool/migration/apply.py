@@ -18,7 +18,7 @@ from virtool.migration.pg import (
     list_applied_revisions,
 )
 from virtool.migration.show import load_all_revisions
-from virtool.pg.utils import format_sqlalchemy_connection_string
+from virtool.pg.utils import get_sqlalchemy_url
 
 logger = get_logger("migration")
 
@@ -33,9 +33,9 @@ async def apply(config: MigrationConfig) -> None:
 
     :param config: the configuration values for migration
     """
-    os.environ["SQLALCHEMY_URL"] = format_sqlalchemy_connection_string(
-        config.postgres_options
-    )
+    os.environ["SQLALCHEMY_URL"] = get_sqlalchemy_url(
+        config.pg_options
+    ).render_as_string(hide_password=False)
 
     all_revisions = load_all_revisions()
 

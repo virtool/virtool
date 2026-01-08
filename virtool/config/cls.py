@@ -34,8 +34,8 @@ class MigrationConfig:
         return parse_uri(self.mongodb_connection_string)["database"]
 
     @property
-    def postgres_options(self):
-        return PgOptions(self.postgres_connection_string)
+    def pg_options(self):
+        return PgOptions.from_connection_string(self.postgres_connection_string)
 
     def __post_init__(self):
         self.data_path = Path(self.data_path)
@@ -63,8 +63,8 @@ class ServerConfig:
         return parse_uri(self.mongodb_connection_string)["database"]
 
     @property
-    def postgres_options(self) -> PgOptions:
-        return PgOptions(self.postgres_connection_string)
+    def pg_options(self) -> PgOptions:
+        return PgOptions.from_connection_string(self.postgres_connection_string)
 
     def __post_init__(self):
         self.data_path = Path(self.data_path)

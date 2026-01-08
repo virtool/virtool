@@ -26,12 +26,12 @@ class WSServer:
 
     def __init__(
         self,
-        postgres_options: PgOptions,
+        pg_options: PgOptions,
         data: "DataLayer",
         redis: Redis,
     ) -> None:
         self._connections = []
-        self._postgres_options = postgres_options
+        self._pg_options = pg_options
         self._data = data
         self._redis = redis
         self._data = data
@@ -39,7 +39,7 @@ class WSServer:
     async def run(self) -> None:
         """Start the Websocket server."""
         try:
-            async for event in listen_for_client_events(self._postgres_options):
+            async for event in listen_for_client_events(self._pg_options):
                 if event.operation == "delete":
                     message = WSDeleteMessage(
                         interface=event.domain,
