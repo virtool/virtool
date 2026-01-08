@@ -624,8 +624,18 @@ class TestClaim:
             "workflow_version": "2.0.0",
         }
         assert body["steps"] == [
-            {"id": "step_1", "name": "Step 1", "description": "First step"},
-            {"id": "step_2", "name": "Step 2", "description": "Second step"},
+            {
+                "id": "step_1",
+                "name": "Step 1",
+                "description": "First step",
+                "started_at": None,
+            },
+            {
+                "id": "step_2",
+                "name": "Step 2",
+                "description": "Second step",
+                "started_at": None,
+            },
         ]
 
     async def test_not_found(self, spawn_job_client: JobClientSpawner):

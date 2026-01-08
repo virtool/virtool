@@ -49,6 +49,34 @@ class JobStateV2(Enum):
     SUCCEEDED = "succeeded"
 
 
+V1_TO_V2_STATE: dict[JobState, JobStateV2] = {
+    JobState.CANCELLED: JobStateV2.CANCELLED,
+    JobState.COMPLETE: JobStateV2.SUCCEEDED,
+    JobState.ERROR: JobStateV2.FAILED,
+    JobState.PREPARING: JobStateV2.RUNNING,
+    JobState.RUNNING: JobStateV2.RUNNING,
+    JobState.TERMINATED: JobStateV2.FAILED,
+    JobState.TIMEOUT: JobStateV2.FAILED,
+    JobState.WAITING: JobStateV2.PENDING,
+}
+
+V2_TO_V1_STATES: dict[JobStateV2, list[JobState]] = {
+    JobStateV2.CANCELLED: [JobState.CANCELLED],
+    JobStateV2.FAILED: [JobState.ERROR, JobState.TERMINATED, JobState.TIMEOUT],
+    JobStateV2.PENDING: [JobState.WAITING],
+    JobStateV2.RUNNING: [JobState.PREPARING, JobState.RUNNING],
+    JobStateV2.SUCCEEDED: [JobState.COMPLETE],
+}
+
+V2_TO_V1_STATE: dict[JobStateV2, JobState] = {
+    JobStateV2.CANCELLED: JobState.CANCELLED,
+    JobStateV2.FAILED: JobState.ERROR,
+    JobStateV2.PENDING: JobState.WAITING,
+    JobStateV2.RUNNING: JobState.RUNNING,
+    JobStateV2.SUCCEEDED: JobState.COMPLETE,
+}
+
+
 class WorkflowV2(Enum):
     """V2 workflow names."""
 
@@ -115,14 +143,10 @@ class JobStatus(BaseModel):
     timestamp: datetime
 
 
-class JobNested(BaseModel):
-    """A model for a job that is nested within another model."""
+class JobMinimal(BaseModel):
+    """A minimal representation of a job returned in lists."""
 
     id: str
-
-
-class JobMinimal(JobNested):
-    """A minimal representation of a job returned in lists."""
 
     created_at: datetime
     """The time the job was created."""
@@ -526,7 +550,7 @@ class JobSearchResult(SearchResult):
     documents: list[JobMinimal]
 
 
-class JobStep(BaseModel):
+class JobStepDefinition(BaseModel):
     """A workflow step definition."""
 
     id: str
@@ -534,7 +558,7 @@ class JobStep(BaseModel):
     description: str
 
 
-class JobStepStatus(BaseModel):
+class JobStepStarted(BaseModel):
     """Response model for step status updates."""
 
     id: str
@@ -543,7 +567,7 @@ class JobStepStatus(BaseModel):
     started_at: datetime
 
 
-class JobClaim(BaseModel):
+class CreateJobClaimRequest(BaseModel):
     """Request body for claiming a job."""
 
     runner_id: str
@@ -552,7 +576,7 @@ class JobClaim(BaseModel):
     image: str
     runtime_version: str
     workflow_version: str
-    steps: list[JobStep]
+    steps: list[JobStepDefinition]
 
 
 class JobMinimalV2(BaseModel):
@@ -573,7 +597,7 @@ class JobSearchResultV2(SearchResult):
     items: list[JobMinimalV2]
 
 
-class JobClaimV2(BaseModel):
+class JobClaim(BaseModel):
     """Claim metadata for a v2 job."""
 
     runner_id: str
@@ -581,12 +605,11 @@ class JobClaimV2(BaseModel):
     cpu: float
     image: str
     runtime_version: str
-    step_count: int
     workflow_version: str
 
 
-class JobStepV2(BaseModel):
-    """A workflow step in a v2 job."""
+class JobStep(BaseModel):
+    """A workflow step."""
 
     id: str
     name: str
@@ -598,12 +621,31 @@ class JobV2(BaseModel):
     """A complete representation of a v2 job."""
 
     id: str
-    claim: JobClaimV2 | None
+    args: dict[str, Any]
+    claim: JobClaim | None
     claimed_at: datetime | None
     created_at: datetime
     pinged_at: datetime | None
     progress: int
     state: JobStateV2
-    steps: list[JobStepV2] | None
+    steps: list[JobStep] | None
+    user: UserNested
+    workflow: WorkflowV2
+
+
+class JobClaimed(BaseModel):
+    """A job that has been claimed by a runner.
+
+    Includes the secret key that is only returned once at claim time.
+    """
+
+    id: int
+    acquired: bool
+    claim: JobClaim
+    claimed_at: datetime
+    created_at: datetime
+    key: str
+    state: JobStateV2
+    steps: list[JobStep]
     user: UserNested
     workflow: WorkflowV2

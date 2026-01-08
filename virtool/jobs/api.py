@@ -17,14 +17,15 @@ from virtool.data.errors import (
 from virtool.data.utils import get_data_from_req
 from virtool.flags import FlagName, flag
 from virtool.jobs.models import (
+    CreateJobClaimRequest,
     Job,
-    JobClaim,
+    JobClaimed,
     JobCountsV2,
     JobSearchResult,
     JobSearchResultV2,
     JobState,
     JobStateV2,
-    JobStepStatus,
+    JobStepStarted,
     JobV2,
     WorkflowV2,
 )
@@ -212,7 +213,9 @@ async def acquire(req):
 @flag(FlagName.JOBS_IN_POSTGRES)
 class ClaimJobView(PydanticView):
     @policy(PublicRoutePolicy)
-    async def post(self, body: JobClaim, workflow: WorkflowV2) -> r200[dict] | r404:
+    async def post(
+        self, body: CreateJobClaimRequest, workflow: WorkflowV2
+    ) -> r200[JobClaimed] | r404:
         """Claim an available job for a runner.
 
         Finds the oldest unclaimed job for the given workflow, claims it, and
@@ -223,14 +226,14 @@ class ClaimJobView(PydanticView):
             404: No job available
         """
         try:
-            document = await get_data_from_req(self.request).jobs.claim(
+            claimed = await get_data_from_req(self.request).jobs.claim(
                 workflow,
                 body,
             )
         except ResourceNotFoundError:
             raise APINotFound("No job available")
 
-        return json_response(document)
+        return json_response(claimed)
 
 
 @routes.jobs_api.view("/jobs/{job_id}/steps/{step_id}/start")
@@ -239,7 +242,7 @@ class StartJobStepView(PydanticView):
     @policy(PublicRoutePolicy)
     async def post(
         self, job_id: int, step_id: str, /
-    ) -> r200[JobStepStatus] | r404 | r409:
+    ) -> r200[JobStepStarted] | r404 | r409:
         """Start a job step.
 
         Records the start time for a workflow step.

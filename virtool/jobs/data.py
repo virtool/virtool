@@ -27,9 +27,13 @@ from virtool.data.transforms import apply_transforms
 from virtool.jobs.client import JobCancellationResult, JobsClient
 from virtool.jobs.models import (
     TERMINAL_JOB_STATES,
+    V1_TO_V2_STATE,
+    V2_TO_V1_STATES,
+    CreateJobClaimRequest,
     Job,
     JobAcquired,
     JobClaim,
+    JobClaimed,
     JobCountsV1,
     JobCountsV2,
     JobMinimal,
@@ -40,7 +44,8 @@ from virtool.jobs.models import (
     JobState,
     JobStateV2,
     JobStatus,
-    JobStepStatus,
+    JobStep,
+    JobStepStarted,
     JobV2,
     WorkflowV2,
 )
@@ -63,25 +68,6 @@ from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
 logger = get_logger("jobs")
-
-V1_TO_V2_STATE = {
-    JobState.CANCELLED: JobStateV2.CANCELLED,
-    JobState.COMPLETE: JobStateV2.SUCCEEDED,
-    JobState.ERROR: JobStateV2.FAILED,
-    JobState.PREPARING: JobStateV2.RUNNING,
-    JobState.RUNNING: JobStateV2.RUNNING,
-    JobState.TERMINATED: JobStateV2.FAILED,
-    JobState.TIMEOUT: JobStateV2.FAILED,
-    JobState.WAITING: JobStateV2.PENDING,
-}
-
-V2_TO_V1_STATES = {
-    JobStateV2.CANCELLED: [JobState.CANCELLED],
-    JobStateV2.FAILED: [JobState.ERROR, JobState.TERMINATED, JobState.TIMEOUT],
-    JobStateV2.PENDING: [JobState.WAITING],
-    JobStateV2.RUNNING: [JobState.PREPARING, JobState.RUNNING],
-    JobStateV2.SUCCEEDED: [JobState.COMPLETE],
-}
 
 JOB_CLEAN_DOUBLE_CHECK_DELAY = 15
 """Delay before checking for queued jobs again during the clean task."""
@@ -507,6 +493,7 @@ class JobsData:
 
         return JobV2(
             id=document["id"],
+            args=document.get("args", {}),
             claim=None,
             claimed_at=claimed_at,
             created_at=document["created_at"],
@@ -562,7 +549,9 @@ class JobsData:
 
         return JobAcquired(**job.dict(), key=key)
 
-    async def claim(self, workflow: WorkflowV2, body: JobClaim) -> dict:
+    async def claim(
+        self, workflow: WorkflowV2, body: CreateJobClaimRequest
+    ) -> JobClaimed:
         """Find and claim an available job.
 
         Finds the oldest unclaimed job for the given workflow and claims it
@@ -593,16 +582,16 @@ class JobsData:
             key, hashed = virtool.utils.generate_key()
             now = virtool.utils.timestamp()
 
-            claim_data = body.dict(exclude={"steps"})
-            steps = [step.dict() for step in body.steps]
+            claim = JobClaim(**body.dict(exclude={"steps"}))
+            steps = [JobStep(**step.dict(), started_at=None) for step in body.steps]
 
             job.acquired = True
-            job.claim = claim_data
+            job.claim = claim.dict()
             job.claimed_at = now
             job.key = hashed
             job.pinged_at = now
             job.state = "running"
-            job.steps = steps
+            job.steps = [step.dict() for step in steps]
 
             job_id = job.id
             created_at = job.created_at
@@ -610,20 +599,26 @@ class JobsData:
 
             await session.commit()
 
-        return {
-            "id": job_id,
-            "acquired": True,
-            "claim": claim_data,
-            "claimed_at": now,
-            "created_at": created_at,
-            "key": key,
-            "state": "running",
-            "steps": steps,
-            "user_id": user_id,
-            "workflow": workflow.value,
-        }
+        document = await apply_transforms(
+            {"user": {"id": user_id}},
+            [AttachUserTransform(self._pg)],
+            self._pg,
+        )
 
-    async def start_step(self, job_id: int, step_id: str) -> JobStepStatus:
+        return JobClaimed(
+            id=job_id,
+            acquired=True,
+            claim=claim,
+            claimed_at=now,
+            created_at=created_at,
+            key=key,
+            state=JobStateV2.RUNNING,
+            steps=steps,
+            user=UserNested(**document["user"]),
+            workflow=workflow,
+        )
+
+    async def start_step(self, job_id: int, step_id: str) -> JobStepStarted:
         """Start a job step.
 
         Sets the `started_at` timestamp on the step identified by `step_id`.
@@ -666,7 +661,7 @@ class JobsData:
 
             await session.commit()
 
-        return JobStepStatus(
+        return JobStepStarted(
             id=step["id"],
             name=step["name"],
             description=step["description"],
