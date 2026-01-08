@@ -123,6 +123,23 @@
     'name': 'foo',
     'nickname': 'bar',
     'ready': True,
+    'upload': dict({
+      'created_at': 'approximately_now_datetime',
+      'id': 1,
+      'name': 'malus.fa.gz',
+      'name_on_disk': 'uuid-malus.fa.gz',
+      'ready': True,
+      'removed': False,
+      'removed_at': None,
+      'reserved': False,
+      'size': 723988,
+      'type': 'subtraction',
+      'uploaded_at': 'approximately_now_datetime',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+    }),
     'user': dict({
       'handle': 'leeashley',
       'id': 1,

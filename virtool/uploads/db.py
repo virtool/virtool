@@ -2,11 +2,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
-from virtool.data.transforms import AbstractTransform
+from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.pg.base import Base
-from virtool.pg.utils import get_row_by_id
 from virtool.types import Document
 from virtool.uploads.sql import SQLUpload
+from virtool.users.transforms import AttachUserTransform
 
 
 class AttachUploadTransform(AbstractTransform):
@@ -18,29 +18,57 @@ class AttachUploadTransform(AbstractTransform):
     async def attach_one(self, document: Document, prepared: Document):
         return {**document, "upload": prepared}
 
-    async def prepare_one(self, document: Document):
-        try:
-            upload_id = document["upload"]
-        except KeyError:
+    async def prepare_one(self, document: Document, session: AsyncSession):
+        upload_id = document.get("upload")
+
+        if upload_id is None:
             return None
 
-        return await get_row_by_id(self._pg, SQLUpload, upload_id)
+        result = await session.execute(
+            select(SQLUpload).where(SQLUpload.id == upload_id),
+        )
+        upload = result.scalar()
+
+        if not upload:
+            return None
+
+        upload_dicts = await apply_transforms(
+            [upload.to_dict()],
+            [AttachUserTransform(self._pg, ignore_errors=True)],
+            self._pg,
+        )
+
+        return upload_dicts[0]
 
     async def prepare_many(
         self, documents: list[Document], session: AsyncSession
-    ) -> dict[int, dict]:
+    ) -> dict[str, dict | None]:
+        upload_ids = {
+            document.get("upload")
+            for document in documents
+            if document.get("upload") is not None
+        }
+
+        if not upload_ids:
+            return {document["id"]: None for document in documents}
+
         result = await session.execute(
-            select(SQLUpload).where(
-                SQLUpload.id.in_(
-                    list({document["upload"] for document in documents}),
-                ),
-            ),
+            select(SQLUpload).where(SQLUpload.id.in_(list(upload_ids))),
         )
 
-        uploads = {upload.id: dict(upload) for upload in result.scalars()}
+        upload_dicts = [upload.to_dict() for upload in result.scalars()]
+
+        upload_dicts = await apply_transforms(
+            upload_dicts,
+            [AttachUserTransform(self._pg, ignore_errors=True)],
+            self._pg,
+        )
+
+        uploads_by_id = {u["id"]: u for u in upload_dicts}
 
         return {
-            document["_id"]: uploads.get(document["upload"]) for document in documents
+            document["id"]: uploads_by_id.get(document.get("upload"))
+            for document in documents
         }
 
 

@@ -5,6 +5,8 @@ import pytest
 from pyfixtures import FixtureScope
 
 from virtool.jobs.models import Job
+from virtool.uploads.models import UploadMinimal
+from virtool.users.models_base import UserNested
 from virtool.workflow.data.subtractions import WFNewSubtraction, WFSubtraction
 from virtool.workflow.errors import JobsAPIConflictError
 from virtool.workflow.pytest_plugin.data import WorkflowData
@@ -19,6 +21,21 @@ def _new_subtraction_job(workflow_data: WorkflowData):
         "files": [{"id": 3, "name": "subtraction.fa.gz"}],
     }
     workflow_data.job.workflow = "create_subtraction"
+
+    workflow_data.new_subtraction.upload = UploadMinimal(
+        id=3,
+        created_at=workflow_data.new_subtraction.created_at,
+        name="subtraction.fa.gz",
+        name_on_disk="subtraction.fa.gz",
+        ready=True,
+        removed=False,
+        removed_at=None,
+        reserved=False,
+        size=1000,
+        type="subtraction",
+        uploaded_at=workflow_data.new_subtraction.created_at,
+        user=workflow_data.new_subtraction.user or UserNested(id=1, handle="test"),
+    )
 
     return workflow_data
 

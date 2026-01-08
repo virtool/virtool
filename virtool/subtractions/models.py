@@ -4,6 +4,7 @@ from virtool.jobs.models import JobMinimal
 from virtool.models import SearchResult
 from virtool.models.base import BaseModel
 from virtool.samples.models_base import SampleNested
+from virtool.uploads.models import UploadMinimal
 from virtool.users.models_base import UserNested
 
 
@@ -72,6 +73,7 @@ class Subtraction(SubtractionMinimal):
     files: list[SubtractionFile]
     gc: NucleotideComposition | None
     linked_samples: list[SampleNested]
+    upload: UploadMinimal | None = None
 
     class Config:
         schema_extra = {

@@ -27,6 +27,7 @@ from virtool.subtractions.db import (
     attach_computed,
     unlink_default_subtractions,
 )
+from virtool.uploads.db import AttachUploadTransform
 from virtool.subtractions.models import (
     Subtraction,
     SubtractionFile,
@@ -238,6 +239,7 @@ class SubtractionsData(DataLayerDomain):
                         "job": True,
                         "name": True,
                         "nickname": True,
+                        "upload": True,
                         "user": True,
                         "subtraction_id": True,
                     },
@@ -256,8 +258,9 @@ class SubtractionsData(DataLayerDomain):
             document = await apply_transforms(
                 base_processor(document),
                 [
-                    AttachUserTransform(self._pg, ignore_errors=True),
                     AttachJobTransform(self._mongo, self._pg),
+                    AttachUploadTransform(self._pg),
+                    AttachUserTransform(self._pg, ignore_errors=True),
                 ],
                 self._pg,
             )
