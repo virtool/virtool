@@ -1,9 +1,26 @@
 import datetime
+import re
 from types import NoneType
 
 import arrow
 import pytest
 from syrupy.matchers import path_type
+
+UUID_PATTERN = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-(.+)$",
+)
+
+
+def validate_name_on_disk(name_on_disk: str, _=None) -> str:
+    """Validates that name_on_disk has the expected UUID prefix format.
+
+    :param name_on_disk: the name_on_disk value (e.g., "uuid-filename.fq.gz")
+    :return: a normalized string with UUID replaced
+    """
+    match = UUID_PATTERN.match(name_on_disk)
+    if match:
+        return f"uuid-{match.group(1)}"
+    return name_on_disk
 
 
 def validate_time(timestamp: datetime.datetime | str | None, _=None) -> str | None:
@@ -41,20 +58,34 @@ def validate_time(timestamp: datetime.datetime | str | None, _=None) -> str | No
         raise TypeError("Timestamp must be datetime or isoformatted string")
 
 
+def combined_replacer(value, path=None) -> str | None:
+    """Replacer that handles both timestamps and name_on_disk fields."""
+    if isinstance(value, str) and UUID_PATTERN.match(value):
+        return validate_name_on_disk(value)
+
+    try:
+        return validate_time(value)
+    except (TypeError, ValueError):
+        return value
+
+
 path_recent_time = path_type(
     mapping={
-        f".*{key}": (datetime.datetime, str, NoneType)
-        for key in [
-            "created_at",
-            "updated_at",
-            "uploaded_at",
-            "applied_at",
-            "last_password_change",
-            "removed_at",
-        ]
+        **{
+            f".*{key}": (datetime.datetime, str, NoneType)
+            for key in [
+                "created_at",
+                "updated_at",
+                "uploaded_at",
+                "applied_at",
+                "last_password_change",
+                "removed_at",
+            ]
+        },
+        r".*name_on_disk": (str,),
     },
     regex=True,
-    replacer=validate_time,
+    replacer=combined_replacer,
 )
 
 

@@ -31,6 +31,7 @@
     'ready': False,
     'subtractions': list([
     ]),
+    'uploads': None,
     'user': dict({
       'handle': 'myersmitchell',
       'id': 2,
@@ -74,6 +75,7 @@
     'ready': False,
     'subtractions': list([
     ]),
+    'uploads': None,
     'user': dict({
       'handle': 'myersmitchell',
       'id': 2,
@@ -236,6 +238,7 @@
     'ready': True,
     'subtractions': list([
     ]),
+    'uploads': None,
     'user': dict({
       'handle': 'myersmitchell',
       'id': 2,
@@ -408,6 +411,7 @@
     'ready': True,
     'subtractions': list([
     ]),
+    'uploads': None,
     'user': dict({
       'handle': 'myersmitchell',
       'id': 2,
