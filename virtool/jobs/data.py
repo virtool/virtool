@@ -461,6 +461,9 @@ class JobsData:
             self._pg,
         )
 
+        if document.get("ping"):
+            document["ping"]["cancelled"] = False
+
         return Job(**document)
 
     async def get_v2(self, job_id: str) -> JobV2:
@@ -700,7 +703,12 @@ class JobsData:
             if sql_job:
                 sql_job.pinged_at = ping["pinged_at"]
 
-        return JobPing(**ping)
+        return JobPing(
+            cancelled=job_id.isdigit()
+            and sql_job is not None
+            and sql_job.state == "cancelled",
+            **ping,
+        )
 
     @emits(Operation.UPDATE)
     async def cancel(self, job_id: str) -> Job:

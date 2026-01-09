@@ -14,6 +14,7 @@
     'id': 'bf1b993c',
     'key': str,
     'ping': dict({
+      'cancelled': False,
       'pinged_at': str,
     }),
     'progress': 3,
@@ -909,6 +910,7 @@
     'created_at': str,
     'id': 'bf1b993c',
     'ping': dict({
+      'cancelled': False,
       'pinged_at': str,
     }),
     'progress': 3,

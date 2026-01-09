@@ -301,8 +301,7 @@ class TestPing:
         body = await resp.json()
 
         assert resp.status == HTTPStatus.OK
-
-        assert len(body) == 1
+        assert body["cancelled"] is False
         assert arrow.get(body["pinged_at"]) - arrow.utcnow() < datetime.timedelta(
             seconds=1,
         )
@@ -314,6 +313,25 @@ class TestPing:
         resp = await client.put("/jobs/foo/ping", data={})
 
         assert resp.status == 404
+
+    async def test_cancelled_false_for_legacy_job(
+        self,
+        fake: DataFaker,
+        spawn_job_client,
+    ):
+        """Test that cancelled is false for legacy jobs even when cancelled in
+        Postgres, since the job ID is not numeric.
+        """
+        client = await spawn_job_client(authenticated=True)
+        user = await fake.users.create()
+
+        job = await fake.jobs.create(user, state=JobState.CANCELLED)
+
+        resp = await client.put(f"/jobs/{job.id}/ping")
+        body = await resp.json()
+
+        assert resp.status == HTTPStatus.OK
+        assert body["cancelled"] is False
 
 
 @pytest.mark.parametrize(

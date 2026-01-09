@@ -8,6 +8,7 @@
     'id': 'foo',
     'key': 'key',
     'ping': dict({
+      'cancelled': False,
       'pinged_at': datetime.datetime(2015, 10, 6, 20, 0),
     }),
     'progress': 3,
