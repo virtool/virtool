@@ -24,7 +24,10 @@ from virtool.api.custom_json import dump_string
 from virtool.config.cls import MigrationConfig
 from virtool.migration.ctx import MigrationContext, create_migration_context
 from virtool.migration.pg import SQLRevision
-from virtool.pg.utils import get_sqlalchemy_url
+from virtool.pg.utils import (
+    PgOptions,
+    get_sqlalchemy_url,
+)
 
 
 @pytest.fixture
@@ -40,7 +43,7 @@ async def migration_pg_connection_string(
     database = f"test_migration_{worker_id}"
 
     engine = create_async_engine(
-        get_sqlalchemy_url(pg_base_connection_string),
+        get_sqlalchemy_url(PgOptions.from_connection_string(pg_base_connection_string)),
         isolation_level="AUTOCOMMIT",
         json_serializer=dump_string,
         json_deserializer=orjson.loads,
@@ -61,7 +64,7 @@ async def migration_pg_connection_string(
     connection_string = f"{pg_base_connection_string}/{database}"
 
     engine = create_async_engine(
-        get_sqlalchemy_url(connection_string),
+        get_sqlalchemy_url(PgOptions.from_connection_string(connection_string)),
         json_serializer=dump_string,
         json_deserializer=orjson.loads,
         pool_recycle=1800,
@@ -75,10 +78,15 @@ async def migration_pg_connection_string(
 
 
 @pytest.fixture
-def migration_pg(migration_pg_connection_string: str):
+def migration_postgres_options(migration_pg_connection_string: str) -> PgOptions:
+    return PgOptions.from_connection_string(migration_pg_connection_string)
+
+
+@pytest.fixture
+def migration_pg(migration_postgres_options: PgOptions):
     """A :class:`AsyncEngine` instance for a Postgres database for testing migrations."""
     return create_async_engine(
-        get_sqlalchemy_url(migration_pg_connection_string),
+        get_sqlalchemy_url(migration_postgres_options),
         json_serializer=dump_string,
         json_deserializer=orjson.loads,
     )
@@ -129,8 +137,10 @@ async def ctx(
 
 
 @pytest.fixture
-def apply_alembic(migration_pg_connection_string: str):
-    os.environ["SQLALCHEMY_URL"] = get_sqlalchemy_url(migration_pg_connection_string)
+def apply_alembic(migration_postgres_options: PgOptions):
+    os.environ["SQLALCHEMY_URL"] = get_sqlalchemy_url(
+        migration_postgres_options
+    ).render_as_string(hide_password=False)
 
     def func(revision: str = "head"):
         alembic.command.upgrade(

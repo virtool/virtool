@@ -11,6 +11,7 @@ from virtool.api.client import UserClient
 from virtool.api.custom_json import dump_string
 from virtool.data.events import listen_for_client_events
 from virtool.models.base import BaseModel
+from virtool.pg.utils import PgOptions
 from virtool.redis import Redis
 from virtool.ws.cls import WSDeleteMessage, WSInsertMessage, WSMessage
 
@@ -25,12 +26,12 @@ class WSServer:
 
     def __init__(
         self,
-        pg_connection_string: str,
+        pg_options: PgOptions,
         data: "DataLayer",
         redis: Redis,
     ) -> None:
         self._connections = []
-        self._pg_connection_string = pg_connection_string
+        self._pg_options = pg_options
         self._data = data
         self._redis = redis
         self._data = data
@@ -38,7 +39,7 @@ class WSServer:
     async def run(self) -> None:
         """Start the Websocket server."""
         try:
-            async for event in listen_for_client_events(self._pg_connection_string):
+            async for event in listen_for_client_events(self._pg_options):
                 if event.operation == "delete":
                     message = WSDeleteMessage(
                         interface=event.domain,

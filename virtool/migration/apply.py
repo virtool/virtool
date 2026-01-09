@@ -33,7 +33,9 @@ async def apply(config: MigrationConfig) -> None:
 
     :param config: the configuration values for migration
     """
-    os.environ["SQLALCHEMY_URL"] = get_sqlalchemy_url(config.postgres_connection_string)
+    os.environ["SQLALCHEMY_URL"] = get_sqlalchemy_url(
+        config.pg_options
+    ).render_as_string(hide_password=False)
 
     all_revisions = load_all_revisions()
 

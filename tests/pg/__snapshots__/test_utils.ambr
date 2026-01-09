@@ -5,6 +5,7 @@
     'host': 'postgres',
     'password': 'virtool',
     'query': immutabledict({
+      'ssl': 'prefer',
     }),
     'username': 'virtool',
   })
