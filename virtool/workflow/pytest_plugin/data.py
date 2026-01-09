@@ -107,7 +107,7 @@ def workflow_data(
         "resource_id": "foo",
         "test": True,
     }
-    job.ping = JobPing(pinged_at=static_time.datetime)
+    job.ping = JobPing(cancelled=False, pinged_at=static_time.datetime)
 
     """A finalized sample to be used for testing analyses."""
     sample = SampleFactory.build()
