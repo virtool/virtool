@@ -24,6 +24,9 @@ class JobError(BaseModel):
 class JobPing(BaseModel):
     """A model for the ping status a job."""
 
+    cancelled: bool
+    """Whether the job has been cancelled."""
+
     pinged_at: datetime
     """The time the job was last pinged."""
 

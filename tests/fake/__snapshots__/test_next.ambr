@@ -84,6 +84,7 @@
     'created_at': datetime,
     'id': 'bf1b993c',
     'ping': dict({
+      'cancelled': False,
       'pinged_at': datetime,
     }),
     'progress': 100,
@@ -149,6 +150,7 @@
     'created_at': datetime,
     'id': 'bf1b993c',
     'ping': dict({
+      'cancelled': False,
       'pinged_at': datetime,
     }),
     'progress': 3,
