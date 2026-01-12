@@ -99,7 +99,7 @@ ignore-decorators = [
 "tests/**" = ["ANN201", "ANN202", "D205", "S101", "S106"]
 
 [build-system]
-requires = ["uv_build>=0.8.13,<0.9.0"]
+requires = ["uv_build>=0.8.13,<0.10.0"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
