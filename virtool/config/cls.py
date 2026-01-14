@@ -111,6 +111,7 @@ class TaskSpawnerConfig:
     def pg_options(self) -> PgOptions:
         return PgOptions.from_connection_string(self.postgres_connection_string)
 
+
 class WorkflowConfig(BaseModel):
     """The configuration for a workflow run."""
 
