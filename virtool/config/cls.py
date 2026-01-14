@@ -88,6 +88,10 @@ class TaskRunnerConfig:
     def mongodb_database(self) -> str:
         return parse_uri(self.mongodb_connection_string)["database"]
 
+    @property
+    def pg_options(self) -> PgOptions:
+        return PgOptions.from_connection_string(self.postgres_connection_string)
+
     def __post_init__(self):
         self.data_path = Path(self.data_path)
 
@@ -102,6 +106,10 @@ class TaskSpawnerConfig:
     postgres_connection_string: str
     redis_connection_string: str
     sentry_dsn: str
+
+    @property
+    def pg_options(self) -> PgOptions:
+        return PgOptions.from_connection_string(self.postgres_connection_string)
 
 
 class WorkflowConfig(BaseModel):
