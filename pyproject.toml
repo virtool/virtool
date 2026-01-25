@@ -39,7 +39,7 @@ dependencies = [
   "motor<4.0.0,>=3.7.1",
   "openpyxl<4.0.0,>=3.1.5",
   "orjson<4.0.0,>=3.10.18",
-  "pydantic==1.10.16",
+  "pydantic==2.12.5",
   "pyyaml<7.0.0,>=6.0.0",
   "semver>=2.13.0,<4.0.0",
   "sentry-sdk<3.0.0,>=2.30.0",
