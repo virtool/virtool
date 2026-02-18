@@ -90,6 +90,12 @@ class WorkflowV2(Enum):
     NUVS = "nuvs"
     PATHOSCOPE = "pathoscope"
 
+    @classmethod
+    def _missing_(cls, value):
+        if value == "pathoscope_bowtie":
+            return cls.PATHOSCOPE
+        return super()._missing_(value)
+
 
 class WorkflowCounts(BaseModel):
     """Counts per workflow."""
