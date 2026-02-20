@@ -89,6 +89,7 @@ class WorkflowV2(Enum):
     CREATE_SUBTRACTION = "create_subtraction"
     NUVS = "nuvs"
     PATHOSCOPE = "pathoscope"
+    IIMI = "iimi"
 
     @classmethod
     def _missing_(cls, value):
