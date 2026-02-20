@@ -1,8 +1,9 @@
 """Helpers for migrating MongoDB resources to PostgreSQL."""
 
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, AsyncGenerator
 
+from pymongo.errors import OperationFailure
 from sqlalchemy import ColumnExpressionArgument, or_, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -44,6 +45,18 @@ async def both_transactions(mongo: "Mongo", pg: AsyncEngine):
         await pg_session.flush()
 
         await pg_session.commit()
+
+
+async def retry_both_transaction(mongo: "Mongo", pg: AsyncEngine, callback, retries=3):
+    while retries > 0:
+        try:
+            async with both_transactions(mongo, pg) as (mongo_session, pg_Session):
+                await callback(mongo_session, pg_Session)
+                break
+        except OperationFailure as error:
+            if "TransientTransactionError" in error.get("errorLabels"):
+                continue
+            raise error
 
 
 def compose_legacy_id_multi_expression(
