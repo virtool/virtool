@@ -89,6 +89,7 @@ class WorkflowV2(Enum):
     CREATE_SUBTRACTION = "create_subtraction"
     NUVS = "nuvs"
     PATHOSCOPE = "pathoscope"
+    IIMI = "iimi"
 
     @classmethod
     def _missing_(cls, value):
@@ -106,6 +107,7 @@ class WorkflowCounts(BaseModel):
     create_subtraction: int = 0
     nuvs: int = 0
     pathoscope: int = 0
+    iimi: int = 0
 
 
 class JobCountsV1(BaseModel):
