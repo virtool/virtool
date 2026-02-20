@@ -27,7 +27,6 @@ from virtool.subtractions.db import (
     attach_computed,
     unlink_default_subtractions,
 )
-from virtool.uploads.db import AttachUploadTransform
 from virtool.subtractions.models import (
     Subtraction,
     SubtractionFile,
@@ -44,6 +43,7 @@ from virtool.subtractions.utils import (
     check_subtraction_file_type,
     join_subtraction_path,
 )
+from virtool.uploads.db import AttachUploadTransform
 from virtool.uploads.sql import SQLUpload
 from virtool.uploads.utils import naive_writer
 from virtool.users.transforms import AttachUserTransform
