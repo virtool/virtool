@@ -1,8 +1,10 @@
 """Helpers for migrating MongoDB resources to PostgreSQL."""
 
+from collections.abc import Awaitable, Callable
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
+from pymongo.errors import OperationFailure
 from sqlalchemy import ColumnExpressionArgument, or_, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -10,7 +12,11 @@ from virtool.pg.base import HasLegacyAndModernIDs
 from virtool.users.pg import SQLUser
 
 if TYPE_CHECKING:
+    from motor.motor_asyncio import AsyncIOMotorClientSession as ClientSession
+
     from virtool.mongo.core import Mongo
+
+T = TypeVar("T")
 
 
 @asynccontextmanager
@@ -44,6 +50,34 @@ async def both_transactions(mongo: "Mongo", pg: AsyncEngine):
         await pg_session.flush()
 
         await pg_session.commit()
+
+
+async def retry_both_transactions(
+    mongo: "Mongo",
+    pg: AsyncEngine,
+    func: Callable[["ClientSession", AsyncSession], Awaitable[T]],
+    retries: int = 3,
+) -> T:
+    """Execute a function within a transactional context for both MongoDB and
+    PostgreSQL, with retries for transient transaction errors.
+
+    If a transient transaction error occurs, the transaction will be retried up to
+    ``retries`` times.
+
+    :param mongo: the application MongoDB client
+    :param pg: the application PostgreSQL client
+    :param func: the function to execute within the transaction
+    :param retries: the number of times to retry the transaction
+
+    """
+    for i in range(retries):
+        try:
+            async with both_transactions(mongo, pg) as (mongo_session, pg_session):
+                return await func(mongo_session, pg_session)
+        except OperationFailure as error:
+            if error.has_error_label("TransientTransactionError") and i < retries - 1:
+                continue
+            raise
 
 
 def compose_legacy_id_multi_expression(

@@ -22,6 +22,7 @@ from virtool.data.topg import (
     compose_legacy_id_single_expression,
     get_user_id_multi_variants,
     resolve_user_id,
+    retry_both_transactions,
 )
 from virtool.data.transforms import apply_transforms
 from virtool.jobs.client import JobCancellationResult, JobsClient
@@ -796,10 +797,7 @@ class JobsData:
             progress,
         )
 
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
+        async def update_job(mongo_session, pg_session):
             await self._mongo.jobs.update_one(
                 {"_id": job_id},
                 {"$set": {"state": state.value}, "$push": {"status": status_update}},
@@ -823,6 +821,8 @@ class JobsData:
                     JobStateV2.CANCELLED,
                 ):
                     sql_job.finished_at = status_update["timestamp"]
+
+        await retry_both_transactions(self._mongo, self._pg, update_job)
 
         job = await self.get(job_id)
 

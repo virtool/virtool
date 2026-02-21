@@ -18,3 +18,19 @@
 # name: TestBothTransactions.test_pg_only
   <SQLGroup(id=1, legacy_id=None, name=test, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>
 # ---
+# name: TestRetryBothTransactions.test_retry[mongo]
+  dict({
+    '_id': 'test',
+  })
+# ---
+# name: TestRetryBothTransactions.test_retry[pg]
+  <SQLGroup(id=1, legacy_id=None, name=test, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>
+# ---
+# name: TestRetryBothTransactions.test_success[mongo]
+  dict({
+    '_id': 'test',
+  })
+# ---
+# name: TestRetryBothTransactions.test_success[pg]
+  <SQLGroup(id=1, legacy_id=None, name=test, permissions={'cancel_job': False, 'create_ref': False, 'modify_hmm': False, 'remove_job': False, 'remove_file': False, 'upload_file': False, 'create_sample': False, 'modify_subtraction': False})>
+# ---
