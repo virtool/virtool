@@ -73,7 +73,7 @@ jobs:
       - name: Generate OAS
         run: mise run oas
       - name: Upload OAS
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: openapi.json
           path: virtool/spec/openapi.json
