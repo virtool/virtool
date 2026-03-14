@@ -492,6 +492,9 @@ class ReferencesData(DataLayerDomain):
 
         return ReferenceRelease(**{**document["release"], **subdocument})
 
+    async def remove_update(self, ref_id, update_id):
+        pass
+
     async def find_otus(
         self,
         term: str | None,
@@ -1138,7 +1141,7 @@ class ReferencesData(DataLayerDomain):
                 "_id",
                 {
                     "reference.id": ref_id,
-                    "remote.id": {"$nin": list({otu["_id"] for otu in data.otus})},
+                    "remote.id": {"$nin": list({otu.id for otu in data.otus})},
                 },
             )
 
@@ -1155,6 +1158,7 @@ class ReferencesData(DataLayerDomain):
 
             bulk_updater = BulkOTUUpdater(
                 self._mongo,
+                self._pg,
                 ref_id,
                 user_id,
                 created_at,
@@ -1163,7 +1167,7 @@ class ReferencesData(DataLayerDomain):
                 session,
             )
 
-            bulk_updater.bulk_upsert(data.otus)
+            bulk_updater.bulk_upsert([otu.dict(by_alias=True) for otu in data.otus])
 
             for otu_id in to_delete:
                 await bulk_updater.delete(otu_id)

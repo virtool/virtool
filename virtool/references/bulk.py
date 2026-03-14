@@ -5,8 +5,11 @@ from datetime import datetime
 from pathlib import Path
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
+from sqlalchemy.dialects.mysql import insert
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.history.db import prepare_add
+from virtool.history.sql import SQLHistoryDiff
 from virtool.mongo.core import Collection, Mongo
 from virtool.mongo.identifier import AbstractIdProvider
 from virtool.otus.db import bulk_join_ids, bulk_join_query
@@ -161,15 +164,31 @@ class OTUDataBuffer(BaseDataBuffer):
         return cls(func, task_queue)
 
     @classmethod
-    def history_insert_buffer(cls, task_queue: Queue, collection: "Collection"):
+    def history_insert_buffer(
+        cls, task_queue: Queue, collection: "Collection", pg: AsyncEngine
+    ):
         async def func(
             change_buffer: list[BufferData],
             session: AsyncIOMotorClientSession,
         ):
-            await collection.insert_many(
-                [item.data for item in change_buffer],
-                session=session,
-            )
+            async with AsyncSession(pg) as pg_session:
+                await pg_session.execute(
+                    insert(SQLHistoryDiff).values(
+                        [
+                            {"change_id": change.data.id, "diff": change.data.diff}
+                            for change in change_buffer
+                        ],
+                    ),
+                )
+
+                await collection.insert_many(
+                    [item.data.document for item in change_buffer],
+                    session=session,
+                )
+
+                await pg_session.commit()
+
+            print(change_buffer[0].data.dict())
 
         return cls(func, task_queue)
 
@@ -178,6 +197,7 @@ class OTUDataBulkUpdater:
     def __init__(
         self,
         mongo: "Mongo",
+        pg: AsyncEngine,
         user_id: str,
         progress_tracker: AccumulatingProgressHandlerWrapper,
         task_queue: Queue,
@@ -215,6 +235,7 @@ class OTUDataBulkUpdater:
         self.update_history_buffer = OTUDataBuffer.history_insert_buffer(
             task_queue,
             mongo.history,
+            pg,
         )
 
     def update(self, updates: list[OTUUpdate]) -> None:
@@ -378,7 +399,7 @@ class OTUUpdateBuffer(BaseDataBuffer):
             }
 
             inserts = [
-                await prepare_add(
+                prepare_add(
                     otu_data.data.history_method,
                     otu_data.data.old,
                     joined_documents.get(otu_data.data.otu_id),
@@ -396,6 +417,7 @@ class BulkOTUUpdater:
     def __init__(
         self,
         mongo: "Mongo",
+        pg: AsyncEngine,
         ref_id: str,
         user_id: str,
         created_at: datetime,
@@ -413,6 +435,7 @@ class BulkOTUUpdater:
 
         self.update_db = OTUDataBulkUpdater(
             mongo,
+            pg,
             user_id,
             progress_tracker,
             self.task_queue,

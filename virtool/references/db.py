@@ -308,7 +308,7 @@ async def fetch_and_update_release(
 
     document = await mongo.references.find_one(
         ref_id,
-        ["installed", "release", "remotes_from"],
+        ["release", "remotes_from", "updates"],
     )
 
     release = document.get("release")
@@ -322,7 +322,6 @@ async def fetch_and_update_release(
             client,
             ReleaseType.REFERENCES,
         )
-
         if releases:
             latest_release = releases["ref-plant-viruses"][0]
 
@@ -352,12 +351,24 @@ async def fetch_and_update_release(
         release = updated_release
 
     if release:
-        installed = document["installed"]
+        try:
+            installed: dict | None = document.pop("updates")[-1]
+        except (KeyError, IndexError):
+            installed = None
+
+        # installed = document["installed"]
 
         release["newer"] = bool(
-            installed
-            and VersionInfo.parse(release["name"].lstrip("v"))
+            not installed
+            or VersionInfo.parse(release["name"].lstrip("v"))
             > VersionInfo.parse(installed["name"].lstrip("v")),
+        )
+        print(
+            "checking release",
+            release,
+            VersionInfo.parse(release["name"].lstrip("v")),
+            installed,
+            # VersionInfo.parse(installed["name"].lstrip("v")),
         )
 
         release["retrieved_at"] = retrieved_at
