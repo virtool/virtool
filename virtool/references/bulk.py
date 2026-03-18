@@ -241,6 +241,10 @@ class OTUDataBulkUpdater:
             self.update_otu_buffer.add(
                 DBBufferData(update.otu_change, self._otu_changed(update)),
             )
+            for sequence_delete in update.sequences.deletes:
+                self.delete_sequence_buffer.add(
+                    DBBufferData(sequence_delete, self._sequence_updated(update)),
+                )
 
     def insert(self, update: OTUInsert) -> None:
         self.insert_otu_buffer.add(

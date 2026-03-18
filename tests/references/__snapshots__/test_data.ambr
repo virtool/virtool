@@ -149,6 +149,175 @@
     ]),
   })
 # ---
+# name: TestPopulateRemoteReference.test_ok
+  dict({
+    '_id': 'ref_id',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'data_type': 'genome',
+    'description': 'Remote reference description',
+    'groups': list([
+    ]),
+    'installed': None,
+    'name': 'Remote Reference',
+    'organism': 'Updated Organism',
+    'release': dict({
+      'body': 'This is a release.',
+      'content_type': 'application/gzip',
+      'download_url': 'https://github.com/virtool/ref-plant-viruses/releases/download/v1.0.0/reference.json.gz',
+      'etag': 'etag',
+      'filename': 'reference.json.gz',
+      'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0',
+      'id': 1,
+      'name': 'v1.0.0',
+      'newer': True,
+      'published_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'retrieved_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'size': 1024,
+    }),
+    'remotes_from': dict({
+      'errors': list([
+      ]),
+      'slug': 'virtool/ref-plant-viruses',
+    }),
+    'restrict_source_types': False,
+    'source_types': list([
+      'strain',
+      'isolate',
+    ]),
+    'targets': None,
+    'updates': list([
+      dict({
+        'body': 'This is a release.',
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'filename': 'reference.json.gz',
+        'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0',
+        'id': 1,
+        'name': 'v1.0.0',
+        'newer': True,
+        'published_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'ready': True,
+        'size': 1024,
+        'user': dict({
+          'id': 1,
+        }),
+      }),
+    ]),
+    'updating': False,
+    'user': dict({
+      'id': 1,
+    }),
+    'users': list([
+      dict({
+        'build': True,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'id': 1,
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      }),
+    ]),
+  })
+# ---
+# name: TestPopulateRemoteReference.test_ok.1
+  list([
+    dict({
+      '_id': 'otu_id_1',
+      'abbreviation': '',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_id_1',
+          'source_name': 'S3',
+          'source_type': 'strain',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'cherry virus b',
+      'name': 'Cherry virus B',
+      'reference': dict({
+        'id': 'ref_id',
+      }),
+      'remote': dict({
+        'id': 'otu_1',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 0,
+    }),
+  ])
+# ---
+# name: TestPopulateRemoteReference.test_ok.2
+  list([
+    dict({
+      '_id': 'otu_id_1.0',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'description': 'Remoted Cherry virus B',
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': 'otu_id_1',
+              'abbreviation': '',
+              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_id_1',
+                  'source_name': 'S3',
+                  'source_type': 'strain',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'cherry virus b',
+              'name': 'Cherry virus B',
+              'reference': dict({
+                'id': 'ref_id',
+              }),
+              'remote': dict({
+                'id': 'otu_1',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': 'otu_id_1',
+        'name': 'Cherry virus B',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'ref_id',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+  ])
+# ---
 # name: TestUpdate.test_control[-False]
   dict({
     'cloned_from': None,
@@ -708,41 +877,6 @@
       }),
     ]),
   })
-# ---
-# name: TestUpdateRemoteReference.test_ok.1
-  list([
-    dict({
-      '_id': 'fb085f7f',
-      'abbreviation': '',
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'imported': True,
-      'isolates': list([
-        dict({
-          'default': True,
-          'id': 'isolate_1',
-          'source_name': 'S3',
-          'source_type': 'strain',
-        }),
-      ]),
-      'issues': None,
-      'last_indexed_version': None,
-      'lower_name': 'cherry virus b',
-      'name': 'Cherry virus B',
-      'reference': dict({
-        'id': 'bf1b993c',
-      }),
-      'remote': dict({
-        'id': 'otu_1',
-      }),
-      'schema': list([
-      ]),
-      'user': dict({
-        'id': 1,
-      }),
-      'verified': True,
-      'version': 0,
-    }),
-  ])
 # ---
 # name: TestUpdateRemoteReference.test_with_deletion
   dict({

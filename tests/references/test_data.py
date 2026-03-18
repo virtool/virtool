@@ -686,117 +686,310 @@ class TestUpdateRemoteReference:
         static_time,
         mocker,
     ):
-        """Test that a remote reference is updated correctly."""
+        """Test that a remote reference is updated correctly, including OTU and sequence syncing."""
         user = await fake.users.create()
 
-        # Create a reference using the data layer
+        # 1. Setup initial Remote Reference
+        # Mock github to avoid external calls when creating the reference
+        mocker.patch(
+            "virtool.github.get_release",
+            return_value={
+                "id": 1,
+                "name": "v1.0.0",
+                "body": "Initial release",
+                "etag": "etag1",
+                "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0",
+                "published_at": static_time.datetime,
+                "assets": [
+                    {
+                        "id": 1,
+                        "name": "reference.json.gz",
+                        "size": 1024,
+                        "browser_download_url": "https://github.com/virtool/ref-plant-viruses/releases/download/v1.0.0/reference.json.gz",
+                        "content_type": "application/gzip",
+                    }
+                ],
+            },
+        )
+
         reference = await data_layer.references.create(
             CreateReferenceRequest(
                 name="Remote Reference",
                 organism="Original Organism",
-                description="Remote reference description",
+                remote_from="virtool/ref-plant-viruses",
+                release_id="1",
             ),
             user.id,
         )
 
-        # Simulate existing remote reference with a pending update
-        await mongo.references.update_one(
-            {"_id": reference.id},
-            {
-                "$set": {
-                    "remotes_from": {"slug": "virtool/ref-plant-viruses", "errors": []},
-                    "updating": True,
-                    "release": {
-                        "id": 1,
-                        "name": "v1.0.0",
-                        "body": "This is a release.",
-                        "etag": "etag",
-                        "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0",
-                        "download_url": "https://github.com/virtool/ref-plant-viruses/releases/download/v1.0.0/reference.json.gz",
-                        "published_at": static_time.datetime,
-                        "retrieved_at": static_time.datetime,
-                        "filename": "reference.json.gz",
-                        "size": 1024,
-                        "newer": True,
-                        "content_type": "application/gzip",
-                    },
-                    "updates": [
-                        {
-                            "id": 1,
-                            "name": "v1.0.0",
-                            "body": "This is a release.",
-                            "filename": "reference.json.gz",
-                            "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0",
-                            "published_at": static_time.datetime,
-                            "size": 1024,
-                            "ready": False,
-                            "user": {"id": user.id},
-                            "created_at": static_time.datetime,
-                            "newer": True,
-                        }
-                    ],
-                }
-            },
-        )
-
-        # Prepare ReferenceSourceData
-        data = ReferenceSourceData(
+        # Initial data for the reference
+        initial_data = ReferenceSourceData(
             data_type=ReferenceDataType.genome,
-            organism="Updated Organism",
+            organism="Original Organism",
             otus=[
                 ReferenceSourceOTU(
                     _id="otu_1",
                     name="Cherry virus B",
                     isolates=[
                         ReferenceSourceIsolate(
-                            id="isolate_1",
+                            id="iso_1",
                             default=True,
                             source_type="strain",
                             source_name="S3",
                             sequences=[
                                 ReferenceSourceSequence(
                                     _id="seq_1",
-                                    accession="NC_076603.1",
-                                    definition="Cherry virus B S3 genomic RNA, complete genome",
-                                    sequence="GATAAGCACACGATCTATCAACAAACAACCTCACTCGACCCAGACTGAGACTGTTCGCAATGGCCCTATCTTACAGGAGCCCGATAGAAGAAGTACTTAA",
+                                    accession="NC_012345",
+                                    definition="Original definition",
+                                    sequence="ATGC" * 25,
+                                    host="None",
                                 )
                             ],
                         )
                     ],
-                )
+                ),
+                ReferenceSourceOTU(
+                    _id="otu_2",
+                    name="Apple virus A",
+                    isolates=[
+                        ReferenceSourceIsolate(
+                            id="iso_2",
+                            default=True,
+                            source_type="strain",
+                            source_name="Standard",
+                            sequences=[
+                                ReferenceSourceSequence(
+                                    _id="seq_2_1",
+                                    accession="NC_222222",
+                                    definition="Kept sequence",
+                                    sequence="ATGC" * 25,
+                                    host="None",
+                                ),
+                                ReferenceSourceSequence(
+                                    _id="seq_2_2",
+                                    accession="NC_111111",
+                                    definition="To be removed",
+                                    sequence="ATGC" * 25,
+                                    host="None",
+                                ),
+                            ],
+                        )
+                    ],
+                ),
             ],
         )
 
-        release = {
+        initial_release = {
             "id": 1,
             "name": "v1.0.0",
-            "body": "This is a release.",
+            "body": "Initial release",
             "etag": "etag",
             "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0",
-            "published_at": "2022-01-01T00:00:00Z",
+            "download_url": "https://github.com/virtool/ref-plant-viruses/releases/download/v1.0.0/reference.json.gz",
+            "published_at": static_time.datetime,
+            "retrieved_at": static_time.datetime,
             "filename": "reference.json.gz",
             "size": 1024,
             "newer": False,
+            "content_type": "application/gzip",
         }
 
-        # Progress handler
-        progress_handler = mocker.AsyncMock()
+        # Use the built-in populate_remote_reference to set the initial state
+        await data_layer.references.populate_remote_reference(
+            reference.id,
+            initial_data,
+            user.id,
+            initial_release,
+            mocker.AsyncMock(),
+        )
+
+        # 2. Update Logic (The "New" Reference)
+        update_data = ReferenceSourceData(
+            data_type=ReferenceDataType.genome,
+            organism="Updated Organism",
+            otus=[
+                # Update: Existing OTU (otu_1) with modified data
+                ReferenceSourceOTU(
+                    _id="otu_1",
+                    name="Cherry virus B updated",
+                    isolates=[
+                        ReferenceSourceIsolate(
+                            id="iso_1",
+                            default=True,
+                            source_type="strain",
+                            source_name="S3",
+                            sequences=[
+                                # Updated Sequence: definition changed
+                                ReferenceSourceSequence(
+                                    _id="seq_1",
+                                    accession="NC_012345",
+                                    definition="Updated definition",
+                                    sequence="ATGC" * 25,
+                                    host="None",
+                                )
+                            ],
+                        )
+                    ],
+                ),
+                # Sync: Existing OTU (otu_2) with one sequence removed and one added
+                ReferenceSourceOTU(
+                    _id="otu_2",
+                    name="Apple virus A",
+                    isolates=[
+                        ReferenceSourceIsolate(
+                            id="iso_2",
+                            default=True,
+                            source_type="strain",
+                            source_name="Standard",
+                            sequences=[
+                                # Kept Sequence
+                                ReferenceSourceSequence(
+                                    _id="seq_2_1",
+                                    accession="NC_222222",
+                                    definition="Kept sequence",
+                                    sequence="ATGC" * 25,
+                                    host="None",
+                                ),
+                                # Added Sequence (New)
+                                ReferenceSourceSequence(
+                                    _id="seq_2_3",
+                                    accession="NC_333333",
+                                    definition="New sequence",
+                                    sequence="GATC" * 25,
+                                    host="None",
+                                ),
+                            ],
+                        )
+                    ],
+                ),
+                # Creation: Completely new OTU
+                ReferenceSourceOTU(
+                    _id="otu_3",
+                    name="Plum virus C",
+                    isolates=[
+                        ReferenceSourceIsolate(
+                            id="iso_3",
+                            default=True,
+                            source_type="strain",
+                            source_name="P1",
+                            sequences=[
+                                ReferenceSourceSequence(
+                                    _id="seq_3_1",
+                                    accession="NC_444444",
+                                    definition="New OTU sequence",
+                                    sequence="CGTA" * 25,
+                                    host="None",
+                                )
+                            ],
+                        )
+                    ],
+                ),
+            ],
+        )
+
+        update_release = {
+            "id": 2,
+            "name": "v1.1.0",
+            "body": "This is a release.",
+            "etag": "etag2",
+            "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v1.1.0",
+            "download_url": "https://github.com/virtool/ref-plant-viruses/releases/download/v1.1.0/reference.json.gz",
+            "published_at": static_time.datetime,
+            "retrieved_at": static_time.datetime,
+            "filename": "reference.json.gz",
+            "size": 1024,
+            "newer": False,
+            "content_type": "application/gzip",
+        }
+
+        # Simulate that a newer release was found and reference is marked for update
+        await mongo.references.update_one(
+            {"_id": reference.id},
+            {
+                "$set": {"updating": True, "release": update_release},
+                "$push": {
+                    "updates": {
+                        "id": 2,
+                        "name": "v1.1.0",
+                        "body": "This is a release.",
+                        "filename": "reference.json.gz",
+                        "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v1.1.0",
+                        "published_at": static_time.datetime,
+                        "size": 1024,
+                        "ready": False,
+                        "user": {"id": user.id},
+                        "created_at": static_time.datetime,
+                        "newer": True,
+                    }
+                },
+            },
+        )
 
         # Call the function
         await data_layer.references.update_remote_reference(
             reference.id,
-            data,
-            release,
+            update_data,
+            update_release,
             user.id,
-            progress_handler,
+            mocker.AsyncMock(),
         )
 
-        # Assertions
-        assert await mongo.references.find_one({"_id": reference.id}) == snapshot
+        # 3. Assertions
+        # Verify Reference metadata
+        updated_ref = await mongo.references.find_one({"_id": reference.id})
+        assert updated_ref["organism"] == "Updated Organism"
+        assert updated_ref["updating"] is False
+        assert updated_ref["installed"]["name"] == "v1.1.0"
+
+        # Verify OTU count
+        assert await mongo.otus.count_documents({"reference.id": reference.id}) == 3
+
+        # Verify OTU 1 Update
+        updated_otu_1 = await mongo.otus.find_one({"remote.id": "otu_1"})
+        assert updated_otu_1["name"] == "Cherry virus B updated"
+
+        # Verify Sequence 1 Update
+        updated_seq_1 = await mongo.sequences.find_one({"remote.id": "seq_1"})
+        assert updated_seq_1["definition"] == "Updated definition"
+        assert updated_seq_1["accession"] == "NC_012345"
+        assert updated_seq_1["sequence"] == "ATGC" * 25
+        assert updated_seq_1["host"] == "None"
+
+        # Verify OTU 2 Sync
+        updated_otu_2 = await mongo.otus.find_one({"remote.id": "otu_2"})
+        otu_2_sequences = await mongo.sequences.find(
+            {"otu_id": updated_otu_2["_id"]}
+        ).to_list(None)
+
+        # Should have seq_2_1 and seq_2_3, but NOT seq_2_2
+        assert len(otu_2_sequences) == 2
+        remote_ids = {s["remote"]["id"] for s in otu_2_sequences}
+        assert "seq_2_1" in remote_ids
+        assert "seq_2_3" in remote_ids
+        assert "seq_2_2" not in remote_ids
+
+        seq_2_1 = next(s for s in otu_2_sequences if s["remote"]["id"] == "seq_2_1")
+        assert seq_2_1["accession"] == "NC_222222"
+        assert seq_2_1["definition"] == "Kept sequence"
+        assert seq_2_1["sequence"] == "ATGC" * 25
+
+        seq_2_3 = next(s for s in otu_2_sequences if s["remote"]["id"] == "seq_2_3")
+        assert seq_2_3["accession"] == "NC_333333"
+        assert seq_2_3["definition"] == "New sequence"
+        assert seq_2_3["sequence"] == "GATC" * 25
+
+        # Verify OTU 3 Creation
+        updated_otu_3 = await mongo.otus.find_one({"remote.id": "otu_3"})
+        assert updated_otu_3["name"] == "Plum virus C"
         assert (
-            await mongo.otus.find({"reference.id": reference.id}).to_list(None)
-            == snapshot
+            await mongo.sequences.count_documents({"otu_id": updated_otu_3["_id"]}) == 1
         )
+
+        otu_3_seq = await mongo.sequences.find_one({"otu_id": updated_otu_3["_id"]})
+        assert otu_3_seq["remote"]["id"] == "seq_3_1"
+        assert otu_3_seq["accession"] == "NC_444444"
+        assert otu_3_seq["definition"] == "New OTU sequence"
+        assert otu_3_seq["sequence"] == "CGTA" * 25
 
     async def test_with_deletion(
         self,
@@ -929,3 +1122,132 @@ class TestUpdateRemoteReference:
         assert await mongo.otus.find_one({"_id": "otu_to_delete"}) is None
         assert await mongo.otus.count_documents({"reference.id": reference.id}) == 1
         assert await mongo.references.find_one({"_id": reference.id}) == snapshot
+
+
+class TestPopulateRemoteReference:
+    async def test_ok(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        snapshot,
+        static_time,
+        mocker,
+    ):
+        """Test that a remote reference is populated correctly."""
+        user = await fake.users.create()
+
+        release = {
+            "id": 1,
+            "name": "v1.0.0",
+            "body": "This is a release.",
+            "etag": "etag",
+            "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0",
+            "download_url": "https://github.com/virtool/ref-plant-viruses/releases/download/v1.0.0/reference.json.gz",
+            "published_at": static_time.datetime,
+            "retrieved_at": static_time.datetime,
+            "filename": "reference.json.gz",
+            "size": 1024,
+            "newer": True,
+            "content_type": "application/gzip",
+        }
+
+        # Simulate existing remote reference created by create_remote
+        await mongo.references.insert_one(
+            {
+                "_id": "ref_id",
+                "created_at": static_time.datetime,
+                "data_type": "genome",
+                "description": "Remote reference description",
+                "name": "Remote Reference",
+                "organism": "Original Organism",
+                "remotes_from": {"slug": "virtool/ref-plant-viruses", "errors": []},
+                "restrict_source_types": False,
+                "source_types": ["strain", "isolate"],
+                "updating": True,
+                "release": release,
+                "updates": [
+                    {
+                        "id": 1,
+                        "name": "v1.0.0",
+                        "body": "This is a release.",
+                        "filename": "reference.json.gz",
+                        "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0",
+                        "published_at": static_time.datetime,
+                        "size": 1024,
+                        "ready": False,
+                        "user": {"id": user.id},
+                        "created_at": static_time.datetime,
+                        "newer": True,
+                    }
+                ],
+                "installed": None,
+                "user": {"id": user.id},
+                "groups": [],
+                "users": [
+                    {
+                        "id": user.id,
+                        "build": True,
+                        "modify": True,
+                        "modify_otu": True,
+                        "created_at": static_time.datetime,
+                        "remove": True,
+                    }
+                ],
+            }
+        )
+
+        # Prepare ReferenceSourceData
+        data = ReferenceSourceData(
+            data_type=ReferenceDataType.genome,
+            organism="Updated Organism",
+            otus=[
+                ReferenceSourceOTU(
+                    _id="otu_1",
+                    name="Cherry virus B",
+                    isolates=[
+                        ReferenceSourceIsolate(
+                            id="isolate_1",
+                            default=True,
+                            source_type="strain",
+                            source_name="S3",
+                            sequences=[
+                                ReferenceSourceSequence(
+                                    _id="seq_1",
+                                    accession="NC_076603.1",
+                                    definition="Cherry virus B S3 genomic RNA, complete genome",
+                                    sequence="GATAAGCACACGATCTATCAACAAACAACCTCACTCGACCCAGACTGAGACTGTTCGCAATGGCCCTATCTTACAGGAGCCCGATAGAAGAAGTACTTAA",
+                                )
+                            ],
+                        )
+                    ],
+                )
+            ],
+        )
+
+        # Progress handler
+        progress_handler = mocker.AsyncMock()
+
+        mocker.patch(
+            "virtool.references.alot.random_alphanumeric",
+            side_effect=["otu_id_1", "iso_id_1", "seq_id_1"],
+        )
+
+        # Call the function
+        await data_layer.references.populate_remote_reference(
+            "ref_id",
+            data,
+            user.id,
+            release,
+            progress_handler,
+        )
+
+        # Assertions
+        assert await mongo.references.find_one({"_id": "ref_id"}) == snapshot
+        assert (
+            await mongo.otus.find({"reference.id": "ref_id"}).to_list(None) == snapshot
+        )
+        assert (
+            await mongo.history.find({"reference.id": "ref_id"}).to_list(None)
+            == snapshot
+        )
