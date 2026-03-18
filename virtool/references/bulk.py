@@ -188,8 +188,6 @@ class OTUDataBuffer(BaseDataBuffer):
 
                 await pg_session.commit()
 
-            print(change_buffer[0].data.dict())
-
         return cls(func, task_queue)
 
 
@@ -404,7 +402,7 @@ class OTUUpdateBuffer(BaseDataBuffer):
                     otu_data.data.old,
                     joined_documents.get(otu_data.data.otu_id),
                     user_id,
-                    data_path,
+                    str(data_path),
                 )
                 for otu_data in data
             ]

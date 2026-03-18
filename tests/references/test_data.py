@@ -5,12 +5,19 @@ from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
+from virtool.references.models import ReferenceDataType
 from virtool.references.oas import (
     CreateReferenceGroupRequest,
     CreateReferenceRequest,
     CreateReferenceUserRequest,
     ReferenceRightsRequest,
     UpdateReferenceRequest,
+)
+from virtool.references.utils import (
+    ReferenceSourceData,
+    ReferenceSourceIsolate,
+    ReferenceSourceOTU,
+    ReferenceSourceSequence,
 )
 
 
@@ -667,3 +674,258 @@ class TestDeleteGroup:
 
         with pytest.raises(ResourceNotFoundError):
             assert await data_layer.references.delete_group("foo", "bar")
+
+
+class TestUpdateRemoteReference:
+    async def test_ok(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        snapshot,
+        static_time,
+        mocker,
+    ):
+        """Test that a remote reference is updated correctly."""
+        user = await fake.users.create()
+
+        # Create a reference using the data layer
+        reference = await data_layer.references.create(
+            CreateReferenceRequest(
+                name="Remote Reference",
+                organism="Original Organism",
+                description="Remote reference description",
+            ),
+            user.id,
+        )
+
+        # Simulate existing remote reference with a pending update
+        await mongo.references.update_one(
+            {"_id": reference.id},
+            {
+                "$set": {
+                    "remotes_from": {"slug": "virtool/ref-plant-viruses", "errors": []},
+                    "updating": True,
+                    "release": {
+                        "id": 1,
+                        "name": "v1.0.0",
+                        "body": "This is a release.",
+                        "etag": "etag",
+                        "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0",
+                        "download_url": "https://github.com/virtool/ref-plant-viruses/releases/download/v1.0.0/reference.json.gz",
+                        "published_at": static_time.datetime,
+                        "retrieved_at": static_time.datetime,
+                        "filename": "reference.json.gz",
+                        "size": 1024,
+                        "newer": True,
+                        "content_type": "application/gzip",
+                    },
+                    "updates": [
+                        {
+                            "id": 1,
+                            "name": "v1.0.0",
+                            "body": "This is a release.",
+                            "filename": "reference.json.gz",
+                            "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0",
+                            "published_at": static_time.datetime,
+                            "size": 1024,
+                            "ready": False,
+                            "user": {"id": user.id},
+                            "created_at": static_time.datetime,
+                            "newer": True,
+                        }
+                    ],
+                }
+            },
+        )
+
+        # Prepare ReferenceSourceData
+        data = ReferenceSourceData(
+            data_type=ReferenceDataType.genome,
+            organism="Updated Organism",
+            otus=[
+                ReferenceSourceOTU(
+                    _id="otu_1",
+                    name="Cherry virus B",
+                    isolates=[
+                        ReferenceSourceIsolate(
+                            id="isolate_1",
+                            default=True,
+                            source_type="strain",
+                            source_name="S3",
+                            sequences=[
+                                ReferenceSourceSequence(
+                                    _id="seq_1",
+                                    accession="NC_076603.1",
+                                    definition="Cherry virus B S3 genomic RNA, complete genome",
+                                    sequence="GATAAGCACACGATCTATCAACAAACAACCTCACTCGACCCAGACTGAGACTGTTCGCAATGGCCCTATCTTACAGGAGCCCGATAGAAGAAGTACTTAA",
+                                )
+                            ],
+                        )
+                    ],
+                )
+            ],
+        )
+
+        release = {
+            "id": 1,
+            "name": "v1.0.0",
+            "body": "This is a release.",
+            "etag": "etag",
+            "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0",
+            "published_at": "2022-01-01T00:00:00Z",
+            "filename": "reference.json.gz",
+            "size": 1024,
+            "newer": False,
+        }
+
+        # Progress handler
+        progress_handler = mocker.AsyncMock()
+
+        # Call the function
+        await data_layer.references.update_remote_reference(
+            reference.id,
+            data,
+            release,
+            user.id,
+            progress_handler,
+        )
+
+        # Assertions
+        assert await mongo.references.find_one({"_id": reference.id}) == snapshot
+        assert (
+            await mongo.otus.find({"reference.id": reference.id}).to_list(None)
+            == snapshot
+        )
+
+    async def test_with_deletion(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        snapshot,
+        static_time,
+        mocker,
+    ):
+        """Test that an OTU is deleted if it's not in the new data."""
+        user = await fake.users.create()
+
+        # Create a reference using the data layer
+        reference = await data_layer.references.create(
+            CreateReferenceRequest(
+                name="Remote Reference",
+                organism="Original Organism",
+                description="Remote reference description",
+            ),
+            user.id,
+        )
+
+        # Simulate existing remote reference with a pending update
+        await mongo.references.update_one(
+            {"_id": reference.id},
+            {
+                "$set": {
+                    "remotes_from": {"slug": "virtool/ref-plant-viruses", "errors": []},
+                    "updating": True,
+                    "release": {
+                        "id": 1,
+                        "name": "v1.0.0",
+                        "body": "This is a release.",
+                        "etag": "etag",
+                        "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0",
+                        "download_url": "https://github.com/virtool/ref-plant-viruses/releases/download/v1.0.0/reference.json.gz",
+                        "published_at": static_time.datetime,
+                        "retrieved_at": static_time.datetime,
+                        "filename": "reference.json.gz",
+                        "size": 1024,
+                        "newer": True,
+                        "content_type": "application/gzip",
+                    },
+                    "updates": [
+                        {
+                            "id": 1,
+                            "name": "v1.0.0",
+                            "body": "This is a release.",
+                            "filename": "reference.json.gz",
+                            "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0",
+                            "published_at": static_time.datetime,
+                            "size": 1024,
+                            "ready": False,
+                            "user": {"id": user.id},
+                            "created_at": static_time.datetime,
+                            "newer": True,
+                        }
+                    ],
+                }
+            },
+        )
+
+        # Add an OTU that should be deleted
+        await mongo.otus.insert_one(
+            {
+                "_id": "otu_to_delete",
+                "name": "Old OTU",
+                "abbreviation": "OO",
+                "version": 0,
+                "reference": {"id": reference.id},
+                "remote": {"id": "remote_otu_to_delete"},
+                "isolates": [],
+            }
+        )
+
+        # Prepare ReferenceSourceData (without the old OTU)
+        data = ReferenceSourceData(
+            data_type=ReferenceDataType.genome,
+            organism="Updated Organism",
+            otus=[
+                ReferenceSourceOTU(
+                    _id="otu_1",
+                    name="Cherry virus B",
+                    isolates=[
+                        ReferenceSourceIsolate(
+                            id="isolate_1",
+                            default=True,
+                            source_type="strain",
+                            source_name="S3",
+                            sequences=[
+                                ReferenceSourceSequence(
+                                    _id="seq_1",
+                                    accession="NC_076603.1",
+                                    definition="Cherry virus B S3 genomic RNA, complete genome",
+                                    sequence="GATAAGCACACGATCTATCAACAAACAACCTCACTCGACCCAGACTGAGACTGTTCGCAATGGCCCTATCTTACAGGAGCCCGATAGAAGAAGTACTTAA",
+                                )
+                            ],
+                        )
+                    ],
+                )
+            ],
+        )
+
+        release = {
+            "id": 1,
+            "name": "v1.0.0",
+            "body": "This is a release.",
+            "etag": "etag",
+            "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0",
+            "published_at": "2022-01-01T00:00:00Z",
+            "filename": "reference.json.gz",
+            "size": 1024,
+            "newer": False,
+        }
+
+        # Progress handler
+        progress_handler = mocker.AsyncMock()
+
+        # Call the function
+        await data_layer.references.update_remote_reference(
+            reference.id,
+            data,
+            release,
+            user.id,
+            progress_handler,
+        )
+
+        # Assertions
+        assert await mongo.otus.find_one({"_id": "otu_to_delete"}) is None
+        assert await mongo.otus.count_documents({"reference.id": reference.id}) == 1
+        assert await mongo.references.find_one({"_id": reference.id}) == snapshot
