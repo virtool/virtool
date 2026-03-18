@@ -492,9 +492,6 @@ class ReferencesData(DataLayerDomain):
 
         return ReferenceRelease(**{**document["release"], **subdocument})
 
-    async def remove_update(self, ref_id, update_id):
-        pass
-
     async def find_otus(
         self,
         term: str | None,
@@ -1097,6 +1094,7 @@ class ReferencesData(DataLayerDomain):
             {"_id": ref_id, "updates.id": release["id"]},
             {
                 "$set": {
+                    "installed": create_update_subdocument(release, True, user_id),
                     "updates.$.ready": True,
                     "updating": False,
                 },
