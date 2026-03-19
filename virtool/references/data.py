@@ -24,6 +24,7 @@ from virtool.data.errors import (
 )
 from virtool.data.events import Operation, emit, emits
 from virtool.data.topg import (
+    both_transactions,
     compose_legacy_id_single_expression,
     get_user_id_single_variants,
 )
@@ -1127,8 +1128,10 @@ class ReferencesData(DataLayerDomain):
         * Create history.
 
         """
-
-        async def func(session):
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
             created_at: datetime = await get_one_field(
                 self._mongo.references,
                 "created_at",
@@ -1151,18 +1154,18 @@ class ReferencesData(DataLayerDomain):
             await self._mongo.references.update_one(
                 {"_id": ref_id},
                 {"$set": {"organism": data.organism, "targets": data.targets}},
-                session=session,
+                session=mongo_session,
             )
 
             bulk_updater = BulkOTUUpdater(
                 self._mongo,
-                self._pg,
+                pg_session,
                 ref_id,
                 user_id,
                 created_at,
                 self._config.data_path,
                 tracker,
-                session,
+                mongo_session,
             )
 
             bulk_updater.bulk_upsert([otu.dict(by_alias=True) for otu in data.otus])
@@ -1182,10 +1185,8 @@ class ReferencesData(DataLayerDomain):
                         "release.newer": False,
                     },
                 },
-                session=session,
+                session=mongo_session,
             )
-
-        await self._mongo.with_transaction(func)
 
         emit(
             await self.get(ref_id),
