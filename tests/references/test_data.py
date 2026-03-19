@@ -1,5 +1,10 @@
+import datetime
+
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from pytest_mock import MockerFixture
+from syrupy import SnapshotAssertion
+from syrupy.matchers import path_type
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
@@ -676,452 +681,696 @@ class TestDeleteGroup:
             assert await data_layer.references.delete_group("foo", "bar")
 
 
+def _make_otu_r1(
+    name: str = "OTU One",
+    abbreviation: str = "OO",
+    isolates: list | None = None,
+) -> ReferenceSourceOTU:
+    if isolates is None:
+        isolates = [_make_iso_r1a(), _make_iso_r1b()]
+    return ReferenceSourceOTU(
+        _id="otu_r1", name=name, abbreviation=abbreviation, isolates=isolates
+    )
+
+
+def _make_otu_r2(isolates: list | None = None) -> ReferenceSourceOTU:
+    if isolates is None:
+        isolates = [_make_iso_r2()]
+    return ReferenceSourceOTU(
+        _id="otu_r2", name="OTU Two", abbreviation="OT", isolates=isolates
+    )
+
+
+def _make_otu_r3() -> ReferenceSourceOTU:
+    return ReferenceSourceOTU(
+        _id="otu_r3",
+        name="OTU Three",
+        abbreviation="OTH",
+        isolates=[_make_iso_r3()],
+    )
+
+
+def _make_iso_r1a(source_name: str = "S3", sequences: list | None = None):
+    if sequences is None:
+        sequences = [_make_seq_r1a()]
+    return ReferenceSourceIsolate(
+        id="iso_r1a",
+        default=True,
+        source_type="strain",
+        source_name=source_name,
+        sequences=sequences,
+    )
+
+
+def _make_iso_r1b(sequences: list | None = None):
+    if sequences is None:
+        sequences = [_make_seq_r1b()]
+    return ReferenceSourceIsolate(
+        id="iso_r1b",
+        default=False,
+        source_type="isolate",
+        source_name="NSW",
+        sequences=sequences,
+    )
+
+
+def _make_iso_r2(sequences: list | None = None):
+    if sequences is None:
+        sequences = [_make_seq_r2a(), _make_seq_r2b()]
+    return ReferenceSourceIsolate(
+        id="iso_r2",
+        default=True,
+        source_type="strain",
+        source_name="Standard",
+        sequences=sequences,
+    )
+
+
+def _make_iso_r3():
+    return ReferenceSourceIsolate(
+        id="iso_r3",
+        default=True,
+        source_type="strain",
+        source_name="Type",
+        sequences=[_make_seq_r3()],
+    )
+
+
+def _make_seq_r1a(
+    definition: str = "Sequence 1A", accession: str = "NC_000001"
+) -> ReferenceSourceSequence:
+    return ReferenceSourceSequence(
+        _id="seq_r1a",
+        accession=accession,
+        definition=definition,
+        sequence="ATGCATGCATGCATGC",
+        host="Plants",
+    )
+
+
+def _make_seq_r1b() -> ReferenceSourceSequence:
+    return ReferenceSourceSequence(
+        _id="seq_r1b",
+        accession="NC_000002",
+        definition="Sequence 1B",
+        sequence="GCTAGCTAGCTAGCTA",
+        host="Plants",
+    )
+
+
+def _make_seq_r2a(
+    definition: str = "Sequence 2A", accession: str = "NC_000003"
+) -> ReferenceSourceSequence:
+    return ReferenceSourceSequence(
+        _id="seq_r2a",
+        accession=accession,
+        definition=definition,
+        sequence="TTTTTTTTTTTTTTTT",
+        host="Insects",
+    )
+
+
+def _make_seq_r2b() -> ReferenceSourceSequence:
+    return ReferenceSourceSequence(
+        _id="seq_r2b",
+        accession="NC_000004",
+        definition="Sequence 2B",
+        sequence="AAAAAAAAAAAAAAAA",
+        host="Insects",
+    )
+
+
+def _make_seq_r3() -> ReferenceSourceSequence:
+    return ReferenceSourceSequence(
+        _id="seq_r3",
+        accession="NC_000005",
+        definition="Sequence 3",
+        sequence="CCCCCCCCCCCCCCCC",
+        host="Fungi",
+    )
+
+
 class TestUpdateRemoteReference:
-    async def test_ok(
+    """Tests for update_remote_reference covering all CRUD operations on OTUs,
+    isolates, and sequences.
+
+    A shared ``populated_reference`` fixture sets up a reference with 3 OTUs:
+
+    - OTU 1 (remote id ``otu_r1``): 2 isolates (``iso_r1a``, ``iso_r1b``), 1 sequence
+      each
+    - OTU 2 (remote id ``otu_r2``): 1 isolate (``iso_r2``), 2 sequences
+    - OTU 3 (remote id ``otu_r3``): 1 isolate (``iso_r3``), 1 sequence (``seq_r3``)
+
+    Remote ids (``otu_r*``, ``iso_r*``, ``seq_r*``) are used exclusively for matching
+    in all assertions. MongoDB-generated ``_id`` values are masked in snapshots with
+    ``path_type`` matchers so that tests remain stable across runs.
+    """
+
+    @pytest.fixture
+    async def populated_reference(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
         mongo: Mongo,
-        snapshot,
+        mocker: MockerFixture,
         static_time,
-        mocker,
-    ):
-        """Test that a remote reference is updated correctly, including OTU and sequence syncing."""
+    ) -> tuple[str, int, dict]:
+        """Populate a remote reference and prepare it for a v1.1.0 update.
+
+        Returns ``(ref_id, user_id, update_release)`` where ``update_release`` is the
+        pending release whose ``id`` must be present in the reference ``updates`` array
+        when ``update_remote_reference`` is called.
+
+        ``random_alphanumeric`` is patched with deterministic values so that all
+        MongoDB-generated ids produced during the initial populate are fixed and
+        therefore stable in snapshots.
+        """
         user = await fake.users.create()
-
-        # 1. Setup initial Remote Reference
-        # Mock github to avoid external calls when creating the reference
-        mocker.patch(
-            "virtool.github.get_release",
-            return_value={
-                "id": 1,
-                "name": "v1.0.0",
-                "body": "Initial release",
-                "etag": "etag1",
-                "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0",
-                "published_at": static_time.datetime,
-                "assets": [
-                    {
-                        "id": 1,
-                        "name": "reference.json.gz",
-                        "size": 1024,
-                        "browser_download_url": "https://github.com/virtool/ref-plant-viruses/releases/download/v1.0.0/reference.json.gz",
-                        "content_type": "application/gzip",
-                    }
-                ],
-            },
-        )
-
-        reference = await data_layer.references.create(
-            CreateReferenceRequest(
-                name="Remote Reference",
-                organism="Original Organism",
-                remote_from="virtool/ref-plant-viruses",
-                release_id="1",
-            ),
-            user.id,
-        )
-
-        # Initial data for the reference
-        initial_data = ReferenceSourceData(
-            data_type=ReferenceDataType.genome,
-            organism="Original Organism",
-            otus=[
-                ReferenceSourceOTU(
-                    _id="otu_1",
-                    name="Cherry virus B",
-                    isolates=[
-                        ReferenceSourceIsolate(
-                            id="iso_1",
-                            default=True,
-                            source_type="strain",
-                            source_name="S3",
-                            sequences=[
-                                ReferenceSourceSequence(
-                                    _id="seq_1",
-                                    accession="NC_012345",
-                                    definition="Original definition",
-                                    sequence="ATGC" * 25,
-                                    host="None",
-                                )
-                            ],
-                        )
-                    ],
-                ),
-                ReferenceSourceOTU(
-                    _id="otu_2",
-                    name="Apple virus A",
-                    isolates=[
-                        ReferenceSourceIsolate(
-                            id="iso_2",
-                            default=True,
-                            source_type="strain",
-                            source_name="Standard",
-                            sequences=[
-                                ReferenceSourceSequence(
-                                    _id="seq_2_1",
-                                    accession="NC_222222",
-                                    definition="Kept sequence",
-                                    sequence="ATGC" * 25,
-                                    host="None",
-                                ),
-                                ReferenceSourceSequence(
-                                    _id="seq_2_2",
-                                    accession="NC_111111",
-                                    definition="To be removed",
-                                    sequence="ATGC" * 25,
-                                    host="None",
-                                ),
-                            ],
-                        )
-                    ],
-                ),
-            ],
-        )
+        ref_id = "test_ref"
 
         initial_release = {
             "id": 1,
             "name": "v1.0.0",
             "body": "Initial release",
-            "etag": "etag",
-            "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0",
-            "download_url": "https://github.com/virtool/ref-plant-viruses/releases/download/v1.0.0/reference.json.gz",
+            "html_url": "https://github.com/virtool/ref/releases/tag/v1.0.0",
             "published_at": static_time.datetime,
-            "retrieved_at": static_time.datetime,
             "filename": "reference.json.gz",
             "size": 1024,
             "newer": False,
-            "content_type": "application/gzip",
         }
 
-        # Use the built-in populate_remote_reference to set the initial state
+        await mongo.references.insert_one(
+            {
+                "_id": ref_id,
+                "created_at": static_time.datetime,
+                "data_type": "genome",
+                "description": "Test remote reference",
+                "groups": [],
+                "internal_control": None,
+                "name": "Test Reference",
+                "organism": "virus",
+                "remotes_from": {"slug": "virtool/ref-plant-viruses", "errors": []},
+                "restrict_source_types": False,
+                "source_types": [],
+                "updating": True,
+                "updates": [
+                    {
+                        **initial_release,
+                        "created_at": static_time.datetime,
+                        "ready": False,
+                        "user": {"id": user.id},
+                    }
+                ],
+                "user": {"id": user.id},
+                "users": [],
+            }
+        )
+
+        # Deterministic ids for prepare_otu_insertion call order:
+        # for each OTU: OTU id, then per-isolate: isolate id then sequence id(s).
+        mocker.patch(
+            "virtool.references.alot.random_alphanumeric",
+            side_effect=[
+                # OTU 1 (otu_r1): isolates iso_r1a (seq_r1a) and iso_r1b (seq_r1b)
+                "otu_db_1",
+                "iso_db_1a",
+                "seq_db_1a",
+                "iso_db_1b",
+                "seq_db_1b",
+                # OTU 2 (otu_r2): isolate iso_r2 with seq_r2a and seq_r2b
+                "otu_db_2",
+                "iso_db_2",
+                "seq_db_2a",
+                "seq_db_2b",
+                # OTU 3 (otu_r3): isolate iso_r3 with seq_r3
+                "otu_db_3",
+                "iso_db_3",
+                "seq_db_3",
+            ],
+        )
+
         await data_layer.references.populate_remote_reference(
-            reference.id,
-            initial_data,
+            ref_id,
+            ReferenceSourceData(
+                data_type=ReferenceDataType.genome,
+                organism="Viruses",
+                otus=[_make_otu_r1(), _make_otu_r2(), _make_otu_r3()],
+            ),
             user.id,
             initial_release,
             mocker.AsyncMock(),
         )
 
-        # 2. Update Logic (The "New" Reference)
-        update_data = ReferenceSourceData(
-            data_type=ReferenceDataType.genome,
-            organism="Updated Organism",
-            otus=[
-                # Update: Existing OTU (otu_1) with modified data
-                ReferenceSourceOTU(
-                    _id="otu_1",
-                    name="Cherry virus B updated",
-                    isolates=[
-                        ReferenceSourceIsolate(
-                            id="iso_1",
-                            default=True,
-                            source_type="strain",
-                            source_name="S3",
-                            sequences=[
-                                # Updated Sequence: definition changed
-                                ReferenceSourceSequence(
-                                    _id="seq_1",
-                                    accession="NC_012345",
-                                    definition="Updated definition",
-                                    sequence="ATGC" * 25,
-                                    host="None",
-                                )
-                            ],
-                        )
-                    ],
-                ),
-                # Sync: Existing OTU (otu_2) with one sequence removed and one added
-                ReferenceSourceOTU(
-                    _id="otu_2",
-                    name="Apple virus A",
-                    isolates=[
-                        ReferenceSourceIsolate(
-                            id="iso_2",
-                            default=True,
-                            source_type="strain",
-                            source_name="Standard",
-                            sequences=[
-                                # Kept Sequence
-                                ReferenceSourceSequence(
-                                    _id="seq_2_1",
-                                    accession="NC_222222",
-                                    definition="Kept sequence",
-                                    sequence="ATGC" * 25,
-                                    host="None",
-                                ),
-                                # Added Sequence (New)
-                                ReferenceSourceSequence(
-                                    _id="seq_2_3",
-                                    accession="NC_333333",
-                                    definition="New sequence",
-                                    sequence="GATC" * 25,
-                                    host="None",
-                                ),
-                            ],
-                        )
-                    ],
-                ),
-                # Creation: Completely new OTU
-                ReferenceSourceOTU(
-                    _id="otu_3",
-                    name="Plum virus C",
-                    isolates=[
-                        ReferenceSourceIsolate(
-                            id="iso_3",
-                            default=True,
-                            source_type="strain",
-                            source_name="P1",
-                            sequences=[
-                                ReferenceSourceSequence(
-                                    _id="seq_3_1",
-                                    accession="NC_444444",
-                                    definition="New OTU sequence",
-                                    sequence="CGTA" * 25,
-                                    host="None",
-                                )
-                            ],
-                        )
-                    ],
-                ),
-            ],
-        )
-
         update_release = {
             "id": 2,
             "name": "v1.1.0",
-            "body": "This is a release.",
-            "etag": "etag2",
-            "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v1.1.0",
-            "download_url": "https://github.com/virtool/ref-plant-viruses/releases/download/v1.1.0/reference.json.gz",
+            "body": "v1.1.0 release",
+            "content_type": "application/gzip",
+            "download_url": "https://github.com/virtool/ref/releases/download/v1.1.0/reference.json.gz",
+            "html_url": "https://github.com/virtool/ref/releases/tag/v1.1.0",
             "published_at": static_time.datetime,
             "retrieved_at": static_time.datetime,
             "filename": "reference.json.gz",
-            "size": 1024,
-            "newer": False,
-            "content_type": "application/gzip",
+            "size": 2048,
+            "newer": True,
         }
 
-        # Simulate that a newer release was found and reference is marked for update
         await mongo.references.update_one(
-            {"_id": reference.id},
+            {"_id": ref_id},
             {
                 "$set": {"updating": True, "release": update_release},
                 "$push": {
                     "updates": {
-                        "id": 2,
-                        "name": "v1.1.0",
-                        "body": "This is a release.",
-                        "filename": "reference.json.gz",
-                        "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v1.1.0",
-                        "published_at": static_time.datetime,
-                        "size": 1024,
+                        **update_release,
+                        "created_at": static_time.datetime,
                         "ready": False,
                         "user": {"id": user.id},
-                        "created_at": static_time.datetime,
-                        "newer": True,
                     }
                 },
             },
         )
 
-        # Call the function
+        return ref_id, user.id, update_release
+
+    async def _run_update(
+        self,
+        data_layer: DataLayer,
+        mocker: MockerFixture,
+        ref_id: str,
+        user_id: int,
+        update_release: dict,
+        otus: list[ReferenceSourceOTU],
+        organism: str = "Viruses",
+    ) -> None:
         await data_layer.references.update_remote_reference(
-            reference.id,
-            update_data,
+            ref_id,
+            ReferenceSourceData(
+                data_type=ReferenceDataType.genome,
+                organism=organism,
+                otus=otus,
+            ),
             update_release,
-            user.id,
+            user_id,
             mocker.AsyncMock(),
         )
 
-        # 3. Assertions
-        # Verify Reference metadata
-        updated_ref = await mongo.references.find_one({"_id": reference.id})
-        assert updated_ref["organism"] == "Updated Organism"
-        assert updated_ref["updating"] is False
-        assert updated_ref["installed"]["name"] == "v1.1.0"
+    async def _assert(
+        self,
+        ref_id: str,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
+    ) -> None:
+        """Assert final OTU, sequence, and history collections against snapshots.
 
-        # Verify OTU count
-        assert await mongo.otus.count_documents({"reference.id": reference.id}) == 3
-
-        # Verify OTU 1 Update
-        updated_otu_1 = await mongo.otus.find_one({"remote.id": "otu_1"})
-        assert updated_otu_1["name"] == "Cherry virus B updated"
-
-        # Verify Sequence 1 Update
-        updated_seq_1 = await mongo.sequences.find_one({"remote.id": "seq_1"})
-        assert updated_seq_1["definition"] == "Updated definition"
-        assert updated_seq_1["accession"] == "NC_012345"
-        assert updated_seq_1["sequence"] == "ATGC" * 25
-        assert updated_seq_1["host"] == "None"
-
-        # Verify OTU 2 Sync
-        updated_otu_2 = await mongo.otus.find_one({"remote.id": "otu_2"})
-        otu_2_sequences = await mongo.sequences.find(
-            {"otu_id": updated_otu_2["_id"]}
+        Dynamic MongoDB-generated ``_id`` values and timestamps are masked with
+        ``path_type`` so that snapshots remain stable across runs. Stable remote ids
+        and field values are captured verbatim.
+        """
+        otus = await mongo.otus.find(
+            {"reference.id": ref_id}, sort=[("remote.id", 1)]
         ).to_list(None)
 
-        # Should have seq_2_1 and seq_2_3, but NOT seq_2_2
-        assert len(otu_2_sequences) == 2
-        remote_ids = {s["remote"]["id"] for s in otu_2_sequences}
-        assert "seq_2_1" in remote_ids
-        assert "seq_2_3" in remote_ids
-        assert "seq_2_2" not in remote_ids
+        sequences = await mongo.sequences.find(
+            {"reference.id": ref_id}, sort=[("remote.id", 1)]
+        ).to_list(None)
 
-        seq_2_1 = next(s for s in otu_2_sequences if s["remote"]["id"] == "seq_2_1")
-        assert seq_2_1["accession"] == "NC_222222"
-        assert seq_2_1["definition"] == "Kept sequence"
-        assert seq_2_1["sequence"] == "ATGC" * 25
+        history = await mongo.history.find(
+            {"reference.id": ref_id},
+            sort=[("otu.name", 1), ("otu.version", 1)],
+        ).to_list(None)
 
-        seq_2_3 = next(s for s in otu_2_sequences if s["remote"]["id"] == "seq_2_3")
-        assert seq_2_3["accession"] == "NC_333333"
-        assert seq_2_3["definition"] == "New sequence"
-        assert seq_2_3["sequence"] == "GATC" * 25
-
-        # Verify OTU 3 Creation
-        updated_otu_3 = await mongo.otus.find_one({"remote.id": "otu_3"})
-        assert updated_otu_3["name"] == "Plum virus C"
-        assert (
-            await mongo.sequences.count_documents({"otu_id": updated_otu_3["_id"]}) == 1
-        )
-
-        otu_3_seq = await mongo.sequences.find_one({"otu_id": updated_otu_3["_id"]})
-        assert otu_3_seq["remote"]["id"] == "seq_3_1"
-        assert otu_3_seq["accession"] == "NC_444444"
-        assert otu_3_seq["definition"] == "New OTU sequence"
-        assert otu_3_seq["sequence"] == "CGTA" * 25
-
-    async def test_with_deletion(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-        mongo: Mongo,
-        snapshot,
-        static_time,
-        mocker,
-    ):
-        """Test that an OTU is deleted if it's not in the new data."""
-        user = await fake.users.create()
-
-        # Create a reference using the data layer
-        reference = await data_layer.references.create(
-            CreateReferenceRequest(
-                name="Remote Reference",
-                organism="Original Organism",
-                description="Remote reference description",
+        assert otus == snapshot(
+            name="otus",
+            matcher=path_type(
+                {r".*_id": (str,), r".*\.created_at": (datetime.datetime,)},
+                regex=True,
             ),
-            user.id,
         )
 
-        # Simulate existing remote reference with a pending update
-        await mongo.references.update_one(
-            {"_id": reference.id},
-            {
-                "$set": {
-                    "remotes_from": {"slug": "virtool/ref-plant-viruses", "errors": []},
-                    "updating": True,
-                    "release": {
-                        "id": 1,
-                        "name": "v1.0.0",
-                        "body": "This is a release.",
-                        "etag": "etag",
-                        "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0",
-                        "download_url": "https://github.com/virtool/ref-plant-viruses/releases/download/v1.0.0/reference.json.gz",
-                        "published_at": static_time.datetime,
-                        "retrieved_at": static_time.datetime,
-                        "filename": "reference.json.gz",
-                        "size": 1024,
-                        "newer": True,
-                        "content_type": "application/gzip",
-                    },
-                    "updates": [
-                        {
-                            "id": 1,
-                            "name": "v1.0.0",
-                            "body": "This is a release.",
-                            "filename": "reference.json.gz",
-                            "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0",
-                            "published_at": static_time.datetime,
-                            "size": 1024,
-                            "ready": False,
-                            "user": {"id": user.id},
-                            "created_at": static_time.datetime,
-                            "newer": True,
-                        }
-                    ],
-                }
-            },
+        assert sequences == snapshot(
+            name="sequences",
+            matcher=path_type(
+                {r".*_id": (str,), r".*\.otu_id": (str,)},
+                regex=True,
+            ),
         )
 
-        # Add an OTU that should be deleted
-        await mongo.otus.insert_one(
-            {
-                "_id": "otu_to_delete",
-                "name": "Old OTU",
-                "abbreviation": "OO",
-                "version": 0,
-                "reference": {"id": reference.id},
-                "remote": {"id": "remote_otu_to_delete"},
-                "isolates": [],
-            }
+        assert history == snapshot(
+            name="history",
+            matcher=path_type(
+                {
+                    r".*_id": (str,),
+                    r".*\.created_at": (datetime.datetime,),
+                    r".*\.description": (str,),
+                    r".*\.otu\.id": (str,),
+                },
+                regex=True,
+            ),
         )
 
-        # Prepare ReferenceSourceData (without the old OTU)
-        data = ReferenceSourceData(
-            data_type=ReferenceDataType.genome,
-            organism="Updated Organism",
+    # -- OTU-level tests --
+
+    async def test_otu_create(
+        self,
+        populated_reference: tuple,
+        data_layer: DataLayer,
+        mocker: MockerFixture,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
+    ):
+        """An OTU present in the remote data but absent from the installed reference
+        (matched by ``remote.id``) is inserted with its isolates and sequences, and a
+        create history record is written.
+        """
+        ref_id, user_id, update_release = populated_reference
+
+        await self._run_update(
+            data_layer,
+            mocker,
+            ref_id,
+            user_id,
+            update_release,
             otus=[
+                _make_otu_r1(),
+                _make_otu_r2(),
+                _make_otu_r3(),
+                # New OTU not present in the installed reference
                 ReferenceSourceOTU(
-                    _id="otu_1",
-                    name="Cherry virus B",
+                    _id="otu_r4",
+                    name="OTU Four",
+                    abbreviation="OF",
                     isolates=[
                         ReferenceSourceIsolate(
-                            id="isolate_1",
+                            id="iso_r4",
                             default=True,
                             source_type="strain",
-                            source_name="S3",
+                            source_name="New",
                             sequences=[
                                 ReferenceSourceSequence(
-                                    _id="seq_1",
-                                    accession="NC_076603.1",
-                                    definition="Cherry virus B S3 genomic RNA, complete genome",
-                                    sequence="GATAAGCACACGATCTATCAACAAACAACCTCACTCGACCCAGACTGAGACTGTTCGCAATGGCCCTATCTTACAGGAGCCCGATAGAAGAAGTACTTAA",
+                                    _id="seq_r4",
+                                    accession="NC_000006",
+                                    definition="Sequence 4",
+                                    sequence="GGGGGGGGGGGGGGGG",
+                                    host="None",
                                 )
                             ],
                         )
                     ],
-                )
+                ),
             ],
         )
 
-        release = {
-            "id": 1,
-            "name": "v1.0.0",
-            "body": "This is a release.",
-            "etag": "etag",
-            "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0",
-            "published_at": "2022-01-01T00:00:00Z",
-            "filename": "reference.json.gz",
-            "size": 1024,
-            "newer": False,
-        }
+        await self._assert(ref_id, mongo, snapshot)
 
-        # Progress handler
-        progress_handler = mocker.AsyncMock()
+    async def test_otu_update(
+        self,
+        populated_reference: tuple,
+        data_layer: DataLayer,
+        mocker: MockerFixture,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
+    ):
+        """An OTU whose ``name`` or ``abbreviation`` differs in the remote data is
+        updated and an update history record is written.
+        """
+        ref_id, user_id, update_release = populated_reference
 
-        # Call the function
-        await data_layer.references.update_remote_reference(
-            reference.id,
-            data,
-            release,
-            user.id,
-            progress_handler,
+        await self._run_update(
+            data_layer,
+            mocker,
+            ref_id,
+            user_id,
+            update_release,
+            otus=[
+                # otu_r1: name and abbreviation changed
+                _make_otu_r1(name="OTU One Renamed", abbreviation="OOR"),
+                _make_otu_r2(),
+                _make_otu_r3(),
+            ],
         )
 
-        # Assertions
-        assert await mongo.otus.find_one({"_id": "otu_to_delete"}) is None
-        assert await mongo.otus.count_documents({"reference.id": reference.id}) == 1
-        assert await mongo.references.find_one({"_id": reference.id}) == snapshot
+        await self._assert(ref_id, mongo, snapshot)
+
+    async def test_otu_delete(
+        self,
+        populated_reference: tuple,
+        data_layer: DataLayer,
+        mocker: MockerFixture,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
+    ):
+        """An OTU present in the installed reference whose ``remote.id`` is absent from
+        the remote data is deleted along with all of its sequences, and a remove history
+        record is written.
+        """
+        ref_id, user_id, update_release = populated_reference
+
+        # otu_r3 is intentionally omitted from the update
+        await self._run_update(
+            data_layer,
+            mocker,
+            ref_id,
+            user_id,
+            update_release,
+            otus=[_make_otu_r1(), _make_otu_r2()],
+        )
+
+        await self._assert(ref_id, mongo, snapshot)
+
+    # -- Isolate-level tests --
+
+    async def test_isolate_create(
+        self,
+        populated_reference: tuple,
+        data_layer: DataLayer,
+        mocker: MockerFixture,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
+    ):
+        """A new isolate in the remote OTU (matched by ``remote.id``) that has no
+        corresponding id in the installed OTU is inserted with its sequences, and an
+        update history record is written for the parent OTU.
+        """
+        ref_id, user_id, update_release = populated_reference
+
+        await self._run_update(
+            data_layer,
+            mocker,
+            ref_id,
+            user_id,
+            update_release,
+            otus=[
+                # otu_r1 gains a third isolate
+                _make_otu_r1(
+                    isolates=[
+                        _make_iso_r1a(),
+                        _make_iso_r1b(),
+                        ReferenceSourceIsolate(
+                            id="iso_r1c",
+                            default=False,
+                            source_type="strain",
+                            source_name="QLD",
+                            sequences=[
+                                ReferenceSourceSequence(
+                                    _id="seq_r1c",
+                                    accession="NC_000007",
+                                    definition="Sequence 1C",
+                                    sequence="TTTAAAACCCGGGTTTT",
+                                    host="Plants",
+                                )
+                            ],
+                        ),
+                    ]
+                ),
+                _make_otu_r2(),
+                _make_otu_r3(),
+            ],
+        )
+
+        await self._assert(ref_id, mongo, snapshot)
+
+    async def test_isolate_update(
+        self,
+        populated_reference: tuple,
+        data_layer: DataLayer,
+        mocker: MockerFixture,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
+    ):
+        """An isolate whose ``source_name`` or ``source_type`` differs in the remote
+        data is updated and an update history record is written for the parent OTU.
+        """
+        ref_id, user_id, update_release = populated_reference
+
+        await self._run_update(
+            data_layer,
+            mocker,
+            ref_id,
+            user_id,
+            update_release,
+            otus=[
+                # iso_r1a: source_name changed from "S3" to "S3-Updated"
+                _make_otu_r1(
+                    isolates=[_make_iso_r1a(source_name="S3-Updated"), _make_iso_r1b()]
+                ),
+                _make_otu_r2(),
+                _make_otu_r3(),
+            ],
+        )
+
+        await self._assert(ref_id, mongo, snapshot)
+
+    async def test_isolate_delete(
+        self,
+        populated_reference: tuple,
+        data_layer: DataLayer,
+        mocker: MockerFixture,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
+    ):
+        """An isolate present in the installed OTU whose id is absent from the remote
+        OTU is removed along with its sequences, and an update history record is
+        written for the parent OTU.
+        """
+        ref_id, user_id, update_release = populated_reference
+
+        await self._run_update(
+            data_layer,
+            mocker,
+            ref_id,
+            user_id,
+            update_release,
+            otus=[
+                # otu_r1: iso_r1b removed
+                _make_otu_r1(isolates=[_make_iso_r1a()]),
+                _make_otu_r2(),
+                _make_otu_r3(),
+            ],
+        )
+
+        await self._assert(ref_id, mongo, snapshot)
+
+    # -- Sequence-level tests --
+
+    async def test_sequence_create(
+        self,
+        populated_reference: tuple,
+        data_layer: DataLayer,
+        mocker: MockerFixture,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
+    ):
+        """A new sequence in the remote isolate (matched by ``remote.id``) that has no
+        corresponding ``remote.id`` in the installed isolate is inserted, and an update
+        history record is written for the parent OTU.
+        """
+        ref_id, user_id, update_release = populated_reference
+
+        await self._run_update(
+            data_layer,
+            mocker,
+            ref_id,
+            user_id,
+            update_release,
+            otus=[
+                _make_otu_r1(),
+                # iso_r2 gains a third sequence
+                _make_otu_r2(
+                    isolates=[
+                        _make_iso_r2(
+                            sequences=[
+                                _make_seq_r2a(),
+                                _make_seq_r2b(),
+                                ReferenceSourceSequence(
+                                    _id="seq_r2c",
+                                    accession="NC_000008",
+                                    definition="Sequence 2C",
+                                    sequence="CGTACGTACGTACGTA",
+                                    host="Insects",
+                                ),
+                            ]
+                        )
+                    ]
+                ),
+                _make_otu_r3(),
+            ],
+        )
+
+        await self._assert(ref_id, mongo, snapshot)
+
+    async def test_sequence_update(
+        self,
+        populated_reference: tuple,
+        data_layer: DataLayer,
+        mocker: MockerFixture,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
+    ):
+        """A sequence whose ``accession``, ``definition``, ``host``, or ``sequence``
+        fields differ in the remote data is updated in place, and an update history
+        record is written for the parent OTU.
+        """
+        ref_id, user_id, update_release = populated_reference
+
+        await self._run_update(
+            data_layer,
+            mocker,
+            ref_id,
+            user_id,
+            update_release,
+            otus=[
+                _make_otu_r1(),
+                # seq_r2a: accession and definition updated
+                _make_otu_r2(
+                    isolates=[
+                        _make_iso_r2(
+                            sequences=[
+                                _make_seq_r2a(
+                                    accession="NC_000003.1",
+                                    definition="Sequence 2A updated",
+                                ),
+                                _make_seq_r2b(),
+                            ]
+                        )
+                    ]
+                ),
+                _make_otu_r3(),
+            ],
+        )
+
+        await self._assert(ref_id, mongo, snapshot)
+
+    async def test_sequence_delete(
+        self,
+        populated_reference: tuple,
+        data_layer: DataLayer,
+        mocker: MockerFixture,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
+    ):
+        """A sequence present in the installed isolate whose ``remote.id`` is absent
+        from the remote isolate is deleted, and an update history record is written
+        for the parent OTU.
+        """
+        ref_id, user_id, update_release = populated_reference
+
+        await self._run_update(
+            data_layer,
+            mocker,
+            ref_id,
+            user_id,
+            update_release,
+            otus=[
+                _make_otu_r1(),
+                # seq_r2b removed from iso_r2
+                _make_otu_r2(
+                    isolates=[_make_iso_r2(sequences=[_make_seq_r2a()])]
+                ),
+                _make_otu_r3(),
+            ],
+        )
+
+        await self._assert(ref_id, mongo, snapshot)
 
 
 class TestPopulateRemoteReference:

@@ -8,13 +8,13 @@ __pycache__
 .pytest_cache
 .venv
 .vscode
-GEMINI.md
 
 /build
 /dist
 /docs/_build
 
 CLAUDE.md
+GEMINI.md
 config.json
 settings.json
 env
