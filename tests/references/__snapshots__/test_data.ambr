@@ -157,7 +157,21 @@
     'description': 'Remote reference description',
     'groups': list([
     ]),
-    'installed': None,
+    'installed': dict({
+      'body': 'This is a release.',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'filename': 'reference.json.gz',
+      'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0',
+      'id': 1,
+      'name': 'v1.0.0',
+      'newer': True,
+      'published_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'ready': True,
+      'size': 1024,
+      'user': dict({
+        'id': 1,
+      }),
+    }),
     'name': 'Remote Reference',
     'organism': 'Updated Organism',
     'release': dict({

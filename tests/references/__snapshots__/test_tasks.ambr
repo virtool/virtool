@@ -4938,6 +4938,20 @@
     'description': 'A test reference',
     'groups': list([
     ]),
+    'installed': dict({
+      'body': 'Test body',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'html_url': 'https://virtool.example.com/releases/12345',
+      'id': 12345,
+      'name': 'v1.2.2',
+      'newer': True,
+      'published_at': '2015-10-06T20:00:00Z',
+      'ready': True,
+      'size': 50000,
+      'user': dict({
+        'id': 1,
+      }),
+    }),
     'internal_control': None,
     'name': 'Test',
     'organism': 'virus',
