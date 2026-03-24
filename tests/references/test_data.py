@@ -10,6 +10,7 @@ from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
+from virtool.references.bulk import BulkOTUUpdater
 from virtool.references.models import ReferenceDataType
 from virtool.references.oas import (
     CreateReferenceGroupRequest,
@@ -1371,6 +1372,140 @@ class TestUpdateRemoteReference:
         )
 
         await self._assert(ref_id, mongo, snapshot)
+
+    async def test_update_fails(
+        self,
+        populated_reference: tuple,
+        data_layer: DataLayer,
+        mocker: MockerFixture,
+        mongo: Mongo,
+    ):
+        """When an exception is raised after BulkOTUUpdater.finish completes, both the
+        MongoDB and PostgreSQL transactions are rolled back and the database is restored
+        to its exact pre-update state.
+
+        The update data exercises every main operation that can occur during a remote
+        reference update:
+
+        - OTU create  (otu_r4: new OTU inserted with one isolate and sequence)
+        - OTU update  (otu_r1: name and abbreviation changed)
+        - OTU delete  (otu_r3: absent from update data, so it is removed)
+        - Sequence update (seq_r1a: definition updated within otu_r1)
+        - Sequence delete (seq_r1b: removed by dropping iso_r1b from otu_r1)
+        - Sequence insert (seq_r2c: new sequence added to iso_r2 of otu_r2)
+
+        BulkOTUUpdater.finish is patched to call the real implementation first — so
+        all resources are genuinely written within the open transaction — before raising
+        a RuntimeError that triggers rollback.
+        """
+        ref_id, user_id, update_release = populated_reference
+
+        pre_otus = await mongo.otus.find(
+            {"reference.id": ref_id}, sort=[("remote.id", 1)]
+        ).to_list(None)
+        pre_sequences = await mongo.sequences.find(
+            {"reference.id": ref_id}, sort=[("remote.id", 1)]
+        ).to_list(None)
+        pre_history = await mongo.history.find(
+            {"reference.id": ref_id},
+            sort=[("otu.name", 1), ("otu.version", 1)],
+        ).to_list(None)
+        pre_ref = await mongo.references.find_one({"_id": ref_id})
+
+        original_finish = BulkOTUUpdater.finish
+
+        async def fail_after_finish(self):
+            await original_finish(self)
+            raise RuntimeError("Simulated failure after insertion")
+
+        mocker.patch.object(BulkOTUUpdater, "finish", fail_after_finish)
+
+        with pytest.raises(RuntimeError, match="Simulated failure after insertion"):
+            await self._run_update(
+                data_layer,
+                mocker,
+                ref_id,
+                user_id,
+                update_release,
+                otus=[
+                    # otu_r1: name and abbreviation updated; iso_r1b (and seq_r1b)
+                    # dropped; seq_r1a definition updated.
+                    _make_otu_r1(
+                        name="OTU One Renamed",
+                        abbreviation="OOR",
+                        isolates=[
+                            _make_iso_r1a(
+                                sequences=[
+                                    _make_seq_r1a(definition="Sequence 1A Updated")
+                                ]
+                            )
+                        ],
+                    ),
+                    # otu_r2: seq_r2c inserted into iso_r2.
+                    _make_otu_r2(
+                        isolates=[
+                            _make_iso_r2(
+                                sequences=[
+                                    _make_seq_r2a(),
+                                    _make_seq_r2b(),
+                                    ReferenceSourceSequence(
+                                        _id="seq_r2c",
+                                        accession="NC_000008",
+                                        definition="Sequence 2C",
+                                        sequence="CGTACGTACGTACGTA",
+                                        host="Insects",
+                                    ),
+                                ]
+                            )
+                        ]
+                    ),
+                    # otu_r3 intentionally absent — will be deleted.
+                    # otu_r4: entirely new OTU.
+                    ReferenceSourceOTU(
+                        _id="otu_r4",
+                        name="OTU Four",
+                        abbreviation="OF",
+                        isolates=[
+                            ReferenceSourceIsolate(
+                                id="iso_r4",
+                                default=True,
+                                source_type="strain",
+                                source_name="New",
+                                sequences=[
+                                    ReferenceSourceSequence(
+                                        _id="seq_r4",
+                                        accession="NC_000009",
+                                        definition="Sequence 4",
+                                        sequence="GGGGGGGGGGGGGGGG",
+                                        host="None",
+                                    )
+                                ],
+                            )
+                        ],
+                    ),
+                ],
+            )
+
+        assert (
+            await mongo.otus.find(
+                {"reference.id": ref_id}, sort=[("remote.id", 1)]
+            ).to_list(None)
+            == pre_otus
+        )
+        assert (
+            await mongo.sequences.find(
+                {"reference.id": ref_id}, sort=[("remote.id", 1)]
+            ).to_list(None)
+            == pre_sequences
+        )
+        assert (
+            await mongo.history.find(
+                {"reference.id": ref_id},
+                sort=[("otu.name", 1), ("otu.version", 1)],
+            ).to_list(None)
+            == pre_history
+        )
+        assert await mongo.references.find_one({"_id": ref_id}) == pre_ref
 
 
 class TestPopulateRemoteReference:
