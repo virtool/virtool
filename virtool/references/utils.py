@@ -84,27 +84,6 @@ class ReferenceSourceData(BaseModel):
         return v
 
     @validator("otus")
-    def validate_no_duplicate_abbreviations(cls, v):
-        """Validate that there are no duplicate OTU abbreviations."""
-        duplicate_abbreviations = set()
-        seen_abbreviations = set()
-
-        for otu in v:
-            abbreviation = otu.abbreviation
-            if abbreviation:
-                if abbreviation in seen_abbreviations:
-                    duplicate_abbreviations.add(abbreviation)
-                else:
-                    seen_abbreviations.add(abbreviation)
-
-        if duplicate_abbreviations:
-            raise ValueError(
-                f"Duplicate OTU abbreviations found: {list(duplicate_abbreviations)}"
-            )
-
-        return v
-
-    @validator("otus")
     def validate_no_duplicate_ids(cls, v):
         """Validate that there are no duplicate OTU IDs."""
         duplicate_ids = set()
