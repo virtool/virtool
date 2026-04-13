@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from sqlalchemy.dialects.mysql import insert
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.history.db import prepare_add
@@ -305,10 +305,6 @@ class OTUDataBulkUpdater:
                     self._sequence_updated(otu_change),
                 ),
             )
-        for sequence_delete in otu_change.sequences.deletes:
-            self.delete_sequence_buffer.add(
-                DBBufferData(sequence_delete, self._sequence_updated(otu_change)),
-            )
 
     def _sequence_updated(self, otu_change: OTUChange):
         async def func(*args):
@@ -410,7 +406,6 @@ class OTUUpdateBuffer(BaseDataBuffer):
                     otu_data.data.old,
                     joined_documents.get(otu_data.data.otu_id),
                     user_id,
-                    str(data_path),
                 )
                 for otu_data in data
             ]

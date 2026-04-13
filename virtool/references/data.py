@@ -1144,6 +1144,7 @@ class ReferencesData(DataLayerDomain):
                     "reference.id": ref_id,
                     "remote.id": {"$nin": list({otu.id for otu in data.otus})},
                 },
+                session=mongo_session,
             )
 
             tracker = AccumulatingProgressHandlerWrapper(
