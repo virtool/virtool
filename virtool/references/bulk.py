@@ -259,6 +259,10 @@ class OTUDataBulkUpdater:
         self.delete_otus_buffer.add(
             DBBufferData(otu_delete.otu_change, self._otu_changed(otu_delete)),
         )
+        for sequence_delete in otu_delete.sequences.deletes:
+            self.delete_sequence_buffer.add(
+                DBBufferData(sequence_delete, self._sequence_updated(otu_delete)),
+            )
         self.update_references_buffer.add(
             DBBufferData(
                 otu_delete.reference_update,
