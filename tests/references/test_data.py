@@ -1364,9 +1364,7 @@ class TestUpdateRemoteReference:
             otus=[
                 _make_otu_r1(),
                 # seq_r2b removed from iso_r2
-                _make_otu_r2(
-                    isolates=[_make_iso_r2(sequences=[_make_seq_r2a()])]
-                ),
+                _make_otu_r2(isolates=[_make_iso_r2(sequences=[_make_seq_r2a()])]),
                 _make_otu_r3(),
             ],
         )
