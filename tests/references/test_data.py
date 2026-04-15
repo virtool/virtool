@@ -995,10 +995,15 @@ class TestUpdateRemoteReference:
             {"reference.id": ref_id}, sort=[("remote.id", 1)]
         ).to_list(None)
 
-        history = await mongo.history.find(
-            {"reference.id": ref_id},
-            sort=[("otu.name", 1), ("otu.version", 1), ("_id", 1)],
-        ).to_list(None)
+        history = sorted(
+            await mongo.history.find({"reference.id": ref_id}).to_list(None),
+            key=lambda h: (
+                h["otu"]["name"],
+                str(h["otu"]["version"]),
+                h["method_name"],
+                h["_id"],
+            ),
+        )
 
         assert otus == snapshot(
             name="otus",
