@@ -78,9 +78,6 @@ commit.
 ```bash
 # Generate OpenAPI spec
 mise run oas
-
-# Run Sphinx docs server
-mise run docs
 ```
 
 ### Migrations
@@ -104,7 +101,6 @@ Use `virtool migration create` to write new Virtool migrations (Alembic-based).
   - `sessions/` - Session management
 - `tests/` - Test suite (mirrors `virtool/` structure)
   - `fixtures/` - Shared pytest fixtures
-- `docs/` - Sphinx documentation
 
 ### Entry Points
 

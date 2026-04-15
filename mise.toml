@@ -1,7 +1,3 @@
-[tasks.docs]
-description = "Run the Sphinx autobuild server."
-run = "uv run sphinx-autobuild docs docs/_build"
-
 [tasks.test]
 description = "Run Python tests in Docker."
 run = [
