@@ -5,8 +5,11 @@ from datetime import datetime
 from pathlib import Path
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.history.db import prepare_add
+from virtool.history.sql import SQLHistoryDiff
 from virtool.mongo.core import Collection, Mongo
 from virtool.mongo.identifier import AbstractIdProvider
 from virtool.otus.db import bulk_join_ids, bulk_join_query
@@ -161,13 +164,29 @@ class OTUDataBuffer(BaseDataBuffer):
         return cls(func, task_queue)
 
     @classmethod
-    def history_insert_buffer(cls, task_queue: Queue, collection: "Collection"):
+    def history_insert_buffer(
+        cls,
+        task_queue: Queue,
+        collection: "Collection",
+        pg_session: AsyncSession,
+        pg_lock: asyncio.Lock,
+    ):
         async def func(
             change_buffer: list[BufferData],
             session: AsyncIOMotorClientSession,
         ):
+            async with pg_lock:
+                await pg_session.execute(
+                    insert(SQLHistoryDiff).values(
+                        [
+                            {"change_id": change.data.id, "diff": change.data.diff}
+                            for change in change_buffer
+                        ],
+                    ),
+                )
+
             await collection.insert_many(
-                [item.data for item in change_buffer],
+                [item.data.document for item in change_buffer],
                 session=session,
             )
 
@@ -178,6 +197,8 @@ class OTUDataBulkUpdater:
     def __init__(
         self,
         mongo: "Mongo",
+        pg_session: AsyncSession,
+        pg_lock: asyncio.Lock,
         user_id: str,
         progress_tracker: AccumulatingProgressHandlerWrapper,
         task_queue: Queue,
@@ -215,6 +236,8 @@ class OTUDataBulkUpdater:
         self.update_history_buffer = OTUDataBuffer.history_insert_buffer(
             task_queue,
             mongo.history,
+            pg_session,
+            pg_lock,
         )
 
     def update(self, updates: list[OTUUpdate]) -> None:
@@ -222,6 +245,10 @@ class OTUDataBulkUpdater:
             self.update_otu_buffer.add(
                 DBBufferData(update.otu_change, self._otu_changed(update)),
             )
+            for sequence_delete in update.sequences.deletes:
+                self.delete_sequence_buffer.add(
+                    DBBufferData(sequence_delete, self._sequence_updated(update)),
+                )
 
     def insert(self, update: OTUInsert) -> None:
         self.insert_otu_buffer.add(
@@ -232,6 +259,10 @@ class OTUDataBulkUpdater:
         self.delete_otus_buffer.add(
             DBBufferData(otu_delete.otu_change, self._otu_changed(otu_delete)),
         )
+        for sequence_delete in otu_delete.sequences.deletes:
+            self.delete_sequence_buffer.add(
+                DBBufferData(sequence_delete, self._sequence_updated(otu_delete)),
+            )
         self.update_references_buffer.add(
             DBBufferData(
                 otu_delete.reference_update,
@@ -277,10 +308,6 @@ class OTUDataBulkUpdater:
                     {**sequence_insert, "otu_id": otu_change.otu_id},
                     self._sequence_updated(otu_change),
                 ),
-            )
-        for sequence_delete in otu_change.sequences.deletes:
-            self.delete_sequence_buffer.add(
-                DBBufferData(sequence_delete, self._sequence_updated(otu_change)),
             )
 
     def _sequence_updated(self, otu_change: OTUChange):
@@ -378,12 +405,11 @@ class OTUUpdateBuffer(BaseDataBuffer):
             }
 
             inserts = [
-                await prepare_add(
+                prepare_add(
                     otu_data.data.history_method,
                     otu_data.data.old,
                     joined_documents.get(otu_data.data.otu_id),
                     user_id,
-                    data_path,
                 )
                 for otu_data in data
             ]
@@ -396,6 +422,7 @@ class BulkOTUUpdater:
     def __init__(
         self,
         mongo: "Mongo",
+        pg_session: AsyncSession,
         ref_id: str,
         user_id: str,
         created_at: datetime,
@@ -410,9 +437,12 @@ class BulkOTUUpdater:
         self.user_id = user_id
         self.task_queue = asyncio.Queue()
         self.worker_pool = WorkerPool(self.task_queue, session)
+        pg_lock = asyncio.Lock()
 
         self.update_db = OTUDataBulkUpdater(
             mongo,
+            pg_session,
+            pg_lock,
             user_id,
             progress_tracker,
             self.task_queue,

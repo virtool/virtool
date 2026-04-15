@@ -20,7 +20,7 @@ class HistoryChange:
 class SequenceChanges:
     updates: list[UpdateOne] | None = field(default_factory=list)
     inserts: list[dict] | None = field(default_factory=list)
-    deletes: list[DeleteMany] | None = field(default_factory=list)
+    deletes: list[DeleteOne | DeleteMany] | None = field(default_factory=list)
 
     @property
     def sequence_changes(self):
