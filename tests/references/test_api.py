@@ -240,14 +240,14 @@ class TestCreate:
 
         resp = await client.post(
             "/references/v1",
-            {"name": "Test Viruses", "import_from": str(upload["name_on_disk"])},
+            {"name": "Test Viruses", "import_from": upload["id"]},
         )
 
         body = await resp.json()
 
         assert resp.status == 201
         assert body == snapshot(
-            matcher=path_type({"id": (str,), ".*name_on_disk": (str,)}, regex=True),
+            matcher=path_type({"id": (str,)}, regex=True),
         )
 
     async def test_clone(

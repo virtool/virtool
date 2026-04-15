@@ -40,7 +40,7 @@ from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app, get_new_id, get_one_field
 from virtool.otus.models import OTU, OTUSearchResult
 from virtool.otus.oas import CreateOTURequest
-from virtool.pg.utils import get_row
+from virtool.pg.utils import get_row_by_id
 from virtool.references.alot import prepare_otu_insertion
 from virtool.references.bulk import BulkOTUUpdater
 from virtool.references.db import (
@@ -218,14 +218,12 @@ class ReferencesData(DataLayerDomain):
             document["task"] = {"id": task.id}
 
         elif data.import_from:
-            if not await get_row(
-                self._pg,
-                SQLUpload,
-                ("name_on_disk", data.import_from),
-            ):
+            upload = await get_row_by_id(self._pg, SQLUpload, data.import_from)
+
+            if not upload:
                 raise ResourceNotFoundError("File not found")
 
-            path = self._config.data_path / "files" / data.import_from
+            path = self._config.data_path / "files" / upload.name_on_disk
 
             document = await virtool.references.db.create_import(
                 self._mongo,
@@ -233,7 +231,7 @@ class ReferencesData(DataLayerDomain):
                 settings,
                 data.name,
                 data.description,
-                data.import_from,
+                upload.name_on_disk,
                 user_id,
                 data.data_type,
                 data.organism,

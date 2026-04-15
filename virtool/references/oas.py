@@ -33,8 +33,8 @@ class CreateReferenceRequest(BaseModel):
     clone_from: str | None = Field(
         description="a valid ref_id that the new reference should be cloned from",
     )
-    import_from: str | None = Field(
-        description="a valid file_id that the new reference should be imported from",
+    import_from: int | None = Field(
+        description="the id of an upload to import the reference from",
     )
     remote_from: str | None = Field(
         description="a valid GitHub slug to download and update the new reference from",

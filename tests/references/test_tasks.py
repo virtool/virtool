@@ -22,7 +22,7 @@ from virtool.references.tasks import (
     RemoteReferenceTask,
 )
 from virtool.tasks.sql import SQLTask
-from virtool.uploads.sql import UploadType
+from virtool.uploads.sql import SQLUpload, UploadType
 from virtool.utils import get_temp_dir
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
@@ -202,6 +202,8 @@ async def test_import_reference_task(
         user.id,
     )
 
+    upload_row = await get_row_by_id(pg, SQLUpload, upload.id)
+
     await mongo.references.insert_one(
         {
             "_id": "foo",
@@ -221,7 +223,7 @@ async def test_import_reference_task(
                 id=1,
                 complete=False,
                 context={
-                    "path": str(data_path / "files" / upload.name_on_disk),
+                    "path": str(data_path / "files" / upload_row.name_on_disk),
                     "ref_id": "foo",
                     "user_id": user.id,
                 },
@@ -360,7 +362,9 @@ async def create_reference(
         user.id,
     )
 
-    path = tmp_path / "files" / upload.name_on_disk
+    upload_row = await get_row_by_id(pg, SQLUpload, upload.id)
+
+    path = tmp_path / "files" / upload_row.name_on_disk
 
     async with AsyncSession(pg) as session:
         session.add(
