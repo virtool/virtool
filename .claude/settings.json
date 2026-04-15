@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mise run test *)",
+      "Bash(mise run format *)",
+      "Bash(mise run format:check *)",
+      "Bash(mise run oas *)",
+      "Bash(mise run docs *)",
+      "Bash(mise run test:build *)",
+      "Bash(mise run test:shell *)",
+      "Bash(mise run test:down *)",
+      "Bash(docker compose *)",
+      "Bash(uv run ruff *)",
+      "Bash(uv run pytest *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "if": "Write(*.py)|Edit(*.py)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run ruff format $(jq -r '.tool_input.file_path')",
+            "timeout": 30,
+            "statusMessage": "Formatting with ruff..."
+          }
+        ]
+      }
+    ]
+  }
+}
