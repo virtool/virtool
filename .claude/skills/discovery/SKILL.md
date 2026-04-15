@@ -1,3 +1,8 @@
+---
+name: discovery
+description: Run exhaustive research on a Linear project — codebase analysis, library evaluation, external prior art, failure modes, and decision enumeration. Writes a Discovery document to the project.
+---
+
 # Run Discovery on a Linear project
 
 ## Input

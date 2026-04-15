@@ -1,3 +1,8 @@
+---
+name: issues
+description: Read a Linear project's decided direction and create a complete set of issues with dependencies. Builds the DAG, then spawns per-issue agents for thorough descriptions.
+---
+
 # Create issues for a Linear project
 
 ## Input

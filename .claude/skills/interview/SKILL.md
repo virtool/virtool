@@ -1,3 +1,8 @@
+---
+name: interview
+description: Walk through a Linear project's Discovery decisions interactively, resolve each one, and write the decided direction back to the project.
+---
+
 # Interview: decide on a Linear project's direction
 
 ## Input

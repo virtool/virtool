@@ -1,3 +1,8 @@
+---
+name: plan
+description: Create a plan of attack for the Linear issue associated with the current branch.
+---
+
 # Create a plan of attack for the Linear issue associated with this branch
 
 - The issue number is in the branch name.
