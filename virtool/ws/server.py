@@ -12,7 +12,6 @@ from virtool.api.custom_json import dump_string
 from virtool.data.events import listen_for_client_events
 from virtool.models.base import BaseModel
 from virtool.pg.utils import PgOptions
-from virtool.redis import Redis
 from virtool.ws.cls import WSDeleteMessage, WSInsertMessage, WSMessage
 
 if TYPE_CHECKING:
@@ -28,12 +27,9 @@ class WSServer:
         self,
         pg_options: PgOptions,
         data: "DataLayer",
-        redis: Redis,
     ) -> None:
         self._connections = []
         self._pg_options = pg_options
-        self._data = data
-        self._redis = redis
         self._data = data
 
     async def run(self) -> None:
