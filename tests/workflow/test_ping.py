@@ -37,12 +37,12 @@ async def test_cancellation_from_ping(
     @wf.step
     async def first():
         """Description of the first step."""
-        await asyncio.sleep(2)
+        await asyncio.sleep(10)
 
     @wf.step
     async def second():
         """Description of the second step."""
-        await asyncio.sleep(3)
+        await asyncio.sleep(10)
 
     runtime_task = asyncio.create_task(
         start_runtime(
@@ -51,7 +51,7 @@ async def test_cancellation_from_ping(
         ),
     )
 
-    await asyncio.sleep(2)
+    await asyncio.sleep(3)
 
     workflow_data.job.ping.cancelled = True
 
