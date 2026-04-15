@@ -42,7 +42,7 @@ def extract_blast_info(html: str) -> tuple[str, int]:
     :return: a tuple containing the RID and RTOE
 
     """
-    string = html.split("<!--QBlastInfoBegin")[1].split("QBlastInfoEnd")[0]
+    string = html.split("<!--QBlastInfoBegin")[1].split("QBlastInfoEnd", maxsplit=1)[0]
 
     match = re.search(r"RID = (.+)", string)
     rid = match.group(1)

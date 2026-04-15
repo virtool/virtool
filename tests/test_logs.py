@@ -117,8 +117,8 @@ class TestLogConfiguration:
         )
         mock_processor_instance = MagicMock()
         # Make the processor return the event_dict unchanged
-        mock_processor_instance.side_effect = (
-            lambda _logger, _method, event_dict: event_dict
+        mock_processor_instance.side_effect = lambda _logger, _method, event_dict: (
+            event_dict
         )
         mock_sentry_processor_class.return_value = mock_processor_instance
 
