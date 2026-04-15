@@ -70,8 +70,16 @@ mise run format
 mise run format:check
 ```
 
-Ruff is the only linter/formatter. A `ruff-format` pre-commit hook runs on
-commit.
+Ruff is the only linter/formatter (including import sorting).
+
+Before committing, run `mise run format` and targeted tests for changed modules.
+Run the full test suite if changes touch shared code (data layer, fixtures,
+config). There is no type checker in this project.
+
+### Dev Server
+
+There is no local dev server. The development environment runs via Tilt in a
+separate repo (`virtool/dev`).
 
 ### Other Commands
 
@@ -109,6 +117,31 @@ Use `virtool migration create` to write new Virtool migrations (Alembic-based).
 - `virtool tasks runner` - Task runner (pulls from Redis)
 - `virtool tasks spawner` - Task scheduler
 
+### Data Layer
+
+Request handlers must always go through data layer domains (`virtool/data/`).
+Never access databases directly from API handlers.
+
+### MongoDB Migration
+
+We are gradually migrating away from MongoDB. New features should use
+PostgreSQL.
+
+### Error Handling
+
+- **Data layer** (`virtool/data/errors.py`): Raises `ResourceNotFoundError`,
+  `ResourceConflictError`, `ResourceNotModifiedError`, `ResourceRemoteError`.
+- **API layer** (`virtool/api/errors.py`): Catches `Resource*` exceptions and
+  re-raises as `APINotFound`, `APIBadRequest`, `APIConflict`, etc.
+- **Middleware** (`error_middleware`): Catches all `APIException` instances and
+  returns JSON with `id`, `message`, and optional `errors` fields.
+
+### Vocabulary
+
+Use **"delete"** for permanently destroying an entity. Use **"remove"** for
+detaching an entity from a parent or collection without destroying it (e.g.,
+removing an isolate from an OTU).
+
 ## Code Style
 
 - Don't include comments when it is clear what the code is doing.
@@ -124,6 +157,7 @@ Releases are automated with semantic-release.
 - Use imperative mood: "fix bug" not "fixed bug"
 - Scope is optional: `feat:`, `fix:`, `chore(deps):`, etc.
 - Keep titles concise, lowercase
+- Include a body only when useful; keep it brief
 - Only push or create PRs when asked
 
 ## Linear
@@ -131,7 +165,8 @@ Releases are automated with semantic-release.
 Team name: Virtool
 Team ID: `76cf3c46-c5d9-4df4-b457-0fc053d402f7`
 
-New issues should use the "Backend" label.
+New issues should use the "Backend" label. Choose an appropriate status — don't
+default to "Backlog". Bugs should go to "Todo".
 
 When using sub-agents to interact with Linear:
 - Never update issue comments or status unless explicitly asked.
