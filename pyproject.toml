@@ -46,6 +46,7 @@ dependencies = [
   "sqlalchemy>=2.0.42",
   "structlog-sentry<3.0.0,>=2.1.0",
   "visvalingamwyatt<1.0.0,>=0.1.4",
+  "obstore>=0.5.0",
   "redis<7.0.0,>=6.2.0",
   "enum-tools<1.0.0,>=0.13.0",
   "aiofiles>=24.1.0",
