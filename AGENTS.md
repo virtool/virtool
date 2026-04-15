@@ -135,6 +135,8 @@ Releases are automated with semantic-release.
 Team name: Virtool
 Team ID: `76cf3c46-c5d9-4df4-b457-0fc053d402f7`
 
+New issues should use the "Backend" label.
+
 When using sub-agents to interact with Linear:
 - Never update issue comments or status unless explicitly asked.
 - Never create issues unless explicitly asked.
