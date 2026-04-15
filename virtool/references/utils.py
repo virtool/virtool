@@ -16,7 +16,7 @@ class ReferenceSourceDataError(Exception):
     def __init__(self, errors: list[dict] | None = None):
         super().__init__("Found errors in reference input.")
 
-        self.errors = errors if errors else []
+        self.errors = errors or []
 
 
 class ReferenceSourceSequence(BaseModel):
