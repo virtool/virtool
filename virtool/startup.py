@@ -228,7 +228,6 @@ async def startup_ws(app: App) -> None:
     ws = WSServer(
         config.pg_options,
         app["data"],
-        app["redis"],
     )
 
     ws_task = asyncio.create_task(ws.run())
