@@ -8,11 +8,17 @@ from aiohttp import ClientOSError, ServerDisconnectedError
 from structlog import get_logger
 
 from virtool.workflow.client import WorkflowAPIClient
+from virtool.workflow.runtime.events import Events
 
 logger = get_logger("api")
 
 
-async def _ping_periodically(api: WorkflowAPIClient, job_id: str) -> None:
+async def _ping_periodically(
+    api: WorkflowAPIClient,
+    job_id: str,
+    events: Events,
+    parent_task: asyncio.Task,
+) -> None:
     retries = 0
 
     try:
@@ -24,11 +30,17 @@ async def _ping_periodically(api: WorkflowAPIClient, job_id: str) -> None:
             await asyncio.sleep(0.1)
 
             try:
-                await api.put_json(f"/jobs/{job_id}/ping", {})
+                response = await api.put_json(f"/jobs/{job_id}/ping", {})
             except (ClientOSError, ServerDisconnectedError):
                 await asyncio.sleep(0.3)
                 retries += 1
                 continue
+
+            if response.get("cancelled"):
+                logger.info("received cancellation signal from ping response")
+                events.cancelled.set()
+                parent_task.cancel()
+                break
 
             await asyncio.sleep(5)
     except asyncio.CancelledError:
@@ -36,19 +48,29 @@ async def _ping_periodically(api: WorkflowAPIClient, job_id: str) -> None:
 
 
 @asynccontextmanager
-async def ping_periodically(api: WorkflowAPIClient, job_id: str) -> AsyncIterator[None]:
+async def ping_periodically(
+    api: WorkflowAPIClient,
+    job_id: str,
+    events: Events,
+) -> AsyncIterator[None]:
     """Ping the API to keep the job alive.
 
     While the context manager is open, a task runs that pings the API every 5 seconds.
     When the context manager is closed, the task is cleanly cancelled.
 
+    If the ping response indicates the job has been cancelled, the events object is
+    updated and the parent task is cancelled.
+
     The ping request is retried up to 5 times before the task is cancelled.
 
     :param api: The API client.
     :param job_id: The ID of the job to ping.
+    :param events: The events object for cancellation signaling.
 
     """
-    task = asyncio.create_task(_ping_periodically(api, job_id))
+    parent_task = asyncio.current_task()
+
+    task = asyncio.create_task(_ping_periodically(api, job_id, events, parent_task))
 
     yield
 

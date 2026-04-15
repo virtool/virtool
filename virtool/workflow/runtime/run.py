@@ -199,7 +199,7 @@ async def run_workflow(
 
         scope["work_path"] = await create_work_path(config.work_path)
 
-        async with ping_periodically(api, job_id):
+        async with ping_periodically(api, job_id, events):
             await execute(workflow, scope, events, logger)
             cleanup_builtin_status_hooks()
 
