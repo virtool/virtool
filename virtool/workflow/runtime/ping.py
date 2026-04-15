@@ -1,6 +1,7 @@
 """Ping the API to keep the job alive."""
 
 import asyncio
+import contextlib
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -75,4 +76,6 @@ async def ping_periodically(
     yield
 
     task.cancel()
-    await task
+
+    with contextlib.suppress(asyncio.CancelledError):
+        await task

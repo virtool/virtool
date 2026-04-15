@@ -1,79 +1,69 @@
 import asyncio
-from unittest.mock import AsyncMock
 
-import pytest
+from structlog.testing import LogCapture
 
-from virtool.workflow.runtime.events import Events
-from virtool.workflow.runtime.ping import _ping_periodically, ping_periodically
-
-
-@pytest.fixture()
-def events():
-    return Events()
-
-
-@pytest.fixture()
-def api():
-    return AsyncMock()
+from virtool.config.cls import WorkflowConfig
+from virtool.jobs.models import JobState, JobStatus
+from virtool.redis import Redis
+from virtool.workflow import Workflow
+from virtool.workflow.pytest_plugin.data import WorkflowData
+from virtool.workflow.pytest_plugin.utils import StaticTime
+from virtool.workflow.runtime.run import start_runtime
 
 
-class TestPingPeriodically:
-    async def test_cancellation_from_ping(self, api, events):
-        """When the ping response has cancelled=True, the events object is updated and
-        the parent task is cancelled.
-        """
-        api.put_json = AsyncMock(return_value={"cancelled": True})
+async def test_cancellation_from_ping(
+    log: LogCapture,
+    redis: Redis,
+    static_time: StaticTime,
+    workflow_config: WorkflowConfig,
+    workflow_data: WorkflowData,
+):
+    """Test that the runner exits with a cancelled status when the ping response
+    indicates cancellation.
+    """
+    workflow_data.job.workflow = "pathoscope"
+    workflow_data.job.status = [
+        JobStatus(
+            progress=0,
+            state=JobState.WAITING,
+            timestamp=static_time.datetime,
+        ),
+    ]
 
-        parent_task = AsyncMock(spec=asyncio.Task)
+    await redis.rpush("jobs_pathoscope", workflow_data.job.id)
 
-        await _ping_periodically(api, "test_job", events, parent_task)
+    wf = Workflow()
 
-        assert events.cancelled.is_set()
-        parent_task.cancel.assert_called_once()
+    @wf.step
+    async def first():
+        """Description of the first step."""
+        await asyncio.sleep(2)
 
-    async def test_no_cancellation(self, api, events):
-        """When the ping response has cancelled=False, the ping loop continues and can
-        be cancelled externally.
-        """
-        call_count = 0
+    @wf.step
+    async def second():
+        """Description of the second step."""
+        await asyncio.sleep(3)
 
-        async def mock_put_json(path, data):
-            nonlocal call_count
-            call_count += 1
+    runtime_task = asyncio.create_task(
+        start_runtime(
+            workflow_config,
+            workflow_loader=lambda: wf,
+        ),
+    )
 
-            if call_count >= 3:
-                raise asyncio.CancelledError
+    await asyncio.sleep(2)
 
-            return {"cancelled": False}
+    workflow_data.job.ping.cancelled = True
 
-        api.put_json = mock_put_json
+    await runtime_task
 
-        parent_task = AsyncMock(spec=asyncio.Task)
+    state_and_progress = [
+        (update.state, update.progress) for update in workflow_data.job.status
+    ]
 
-        await _ping_periodically(api, "test_job", events, parent_task)
+    assert state_and_progress[0] == (JobState.WAITING, 0)
+    assert state_and_progress[1] == (JobState.PREPARING, 0)
+    assert state_and_progress[2] == (JobState.RUNNING, 0)
+    assert state_and_progress[-1] == (JobState.CANCELLED, state_and_progress[-2][1])
 
-        assert not events.cancelled.is_set()
-        parent_task.cancel.assert_not_called()
-
-
-class TestPingPeriodicallyContextManager:
-    async def test_cancels_on_ping_cancellation(self, api, events):
-        """When the ping response indicates cancellation, the parent task running in the
-        context manager is cancelled.
-        """
-        api.put_json = AsyncMock(return_value={"cancelled": True})
-
-        with pytest.raises(asyncio.CancelledError):
-            async with ping_periodically(api, "test_job", events):
-                await asyncio.sleep(10)
-
-        assert events.cancelled.is_set()
-
-    async def test_normal_exit(self, api, events):
-        """When the context manager exits normally, the ping task is cancelled."""
-        api.put_json = AsyncMock(return_value={"cancelled": False})
-
-        async with ping_periodically(api, "test_job", events):
-            pass
-
-        assert not events.cancelled.is_set()
+    assert log.has("received cancellation signal from ping response", level="info")
