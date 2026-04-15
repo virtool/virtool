@@ -149,6 +149,189 @@
     ]),
   })
 # ---
+# name: TestPopulateRemoteReference.test_ok
+  dict({
+    '_id': 'ref_id',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'data_type': 'genome',
+    'description': 'Remote reference description',
+    'groups': list([
+    ]),
+    'installed': dict({
+      'body': 'This is a release.',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'filename': 'reference.json.gz',
+      'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0',
+      'id': 1,
+      'name': 'v1.0.0',
+      'newer': True,
+      'published_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'ready': True,
+      'size': 1024,
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    'name': 'Remote Reference',
+    'organism': 'Updated Organism',
+    'release': dict({
+      'body': 'This is a release.',
+      'content_type': 'application/gzip',
+      'download_url': 'https://github.com/virtool/ref-plant-viruses/releases/download/v1.0.0/reference.json.gz',
+      'etag': 'etag',
+      'filename': 'reference.json.gz',
+      'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0',
+      'id': 1,
+      'name': 'v1.0.0',
+      'newer': True,
+      'published_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'retrieved_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'size': 1024,
+    }),
+    'remotes_from': dict({
+      'errors': list([
+      ]),
+      'slug': 'virtool/ref-plant-viruses',
+    }),
+    'restrict_source_types': False,
+    'source_types': list([
+      'strain',
+      'isolate',
+    ]),
+    'targets': None,
+    'updates': list([
+      dict({
+        'body': 'This is a release.',
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'filename': 'reference.json.gz',
+        'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0',
+        'id': 1,
+        'name': 'v1.0.0',
+        'newer': True,
+        'published_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'ready': True,
+        'size': 1024,
+        'user': dict({
+          'id': 1,
+        }),
+      }),
+    ]),
+    'updating': False,
+    'user': dict({
+      'id': 1,
+    }),
+    'users': list([
+      dict({
+        'build': True,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'id': 1,
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      }),
+    ]),
+  })
+# ---
+# name: TestPopulateRemoteReference.test_ok.1
+  list([
+    dict({
+      '_id': 'otu_id_1',
+      'abbreviation': '',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_id_1',
+          'source_name': 'S3',
+          'source_type': 'strain',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'cherry virus b',
+      'name': 'Cherry virus B',
+      'reference': dict({
+        'id': 'ref_id',
+      }),
+      'remote': dict({
+        'id': 'otu_1',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 0,
+    }),
+  ])
+# ---
+# name: TestPopulateRemoteReference.test_ok.2
+  list([
+    dict({
+      '_id': 'otu_id_1.0',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'description': 'Remoted Cherry virus B',
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': 'otu_id_1',
+              'abbreviation': '',
+              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_id_1',
+                  'source_name': 'S3',
+                  'source_type': 'strain',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'cherry virus b',
+              'name': 'Cherry virus B',
+              'reference': dict({
+                'id': 'ref_id',
+              }),
+              'remote': dict({
+                'id': 'otu_1',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': 'otu_id_1',
+        'name': 'Cherry virus B',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'ref_id',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+  ])
+# ---
 # name: TestUpdate.test_control[-False]
   dict({
     'cloned_from': None,
@@ -620,6 +803,4216 @@
     'modify_otu': True,
     'name': 'haematologists',
     'remove': False,
+  })
+# ---
+# name: TestUpdateRemoteReference.test_isolate_create[history]
+  list([
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OO',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_1a',
+                  'source_name': 'S3',
+                  'source_type': 'strain',
+                }),
+                dict({
+                  'default': False,
+                  'id': 'iso_db_1b',
+                  'source_name': 'NSW',
+                  'source_type': 'isolate',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu one',
+              'name': 'OTU One',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r1',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU One',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU One',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OTH',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_3',
+                  'source_name': 'Type',
+                  'source_type': 'strain',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu three',
+              'name': 'OTU Three',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r3',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Three',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Three',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OT',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_2',
+                  'source_name': 'Standard',
+                  'source_type': 'strain',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu two',
+              'name': 'OTU Two',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r2',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Two',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Two',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_isolate_create[otus]
+  list([
+    dict({
+      '_id': str,
+      'abbreviation': 'OO',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r1a',
+          'source_name': 'S3',
+          'source_type': 'strain',
+        }),
+        dict({
+          'default': False,
+          'id': 'iso_r1b',
+          'source_name': 'NSW',
+          'source_type': 'isolate',
+        }),
+        dict({
+          'default': False,
+          'id': 'iso_r1c',
+          'source_name': 'QLD',
+          'source_type': 'strain',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu one',
+      'name': 'OTU One',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r1',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+    dict({
+      '_id': str,
+      'abbreviation': 'OT',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r2',
+          'source_name': 'Standard',
+          'source_type': 'strain',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu two',
+      'name': 'OTU Two',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r2',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+    dict({
+      '_id': str,
+      'abbreviation': 'OTH',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r3',
+          'source_name': 'Type',
+          'source_type': 'strain',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu three',
+      'name': 'OTU Three',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r3',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_isolate_create[sequences]
+  list([
+    dict({
+      '_id': str,
+      'accession': 'NC_000001',
+      'definition': 'Sequence 1A',
+      'host': 'Plants',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r1a',
+      }),
+      'segment': '',
+      'sequence': 'ATGCATGCATGCATGC',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000002',
+      'definition': 'Sequence 1B',
+      'host': 'Plants',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r1b',
+      }),
+      'segment': '',
+      'sequence': 'GCTAGCTAGCTAGCTA',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000007',
+      'definition': 'Sequence 1C',
+      'host': 'Plants',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r1c',
+      }),
+      'segment': '',
+      'sequence': 'TTTAAAACCCGGGTTTT',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000003',
+      'definition': 'Sequence 2A',
+      'host': 'Insects',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r2a',
+      }),
+      'segment': '',
+      'sequence': 'TTTTTTTTTTTTTTTT',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000004',
+      'definition': 'Sequence 2B',
+      'host': 'Insects',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r2b',
+      }),
+      'segment': '',
+      'sequence': 'AAAAAAAAAAAAAAAA',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000005',
+      'definition': 'Sequence 3',
+      'host': 'Fungi',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r3',
+      }),
+      'segment': '',
+      'sequence': 'CCCCCCCCCCCCCCCC',
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_isolate_delete[history]
+  list([
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OO',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_1a',
+                  'source_name': 'S3',
+                  'source_type': 'strain',
+                }),
+                dict({
+                  'default': False,
+                  'id': 'iso_db_1b',
+                  'source_name': 'NSW',
+                  'source_type': 'isolate',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu one',
+              'name': 'OTU One',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r1',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU One',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU One',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OTH',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_3',
+                  'source_name': 'Type',
+                  'source_type': 'strain',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu three',
+              'name': 'OTU Three',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r3',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Three',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Three',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OT',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_2',
+                  'source_name': 'Standard',
+                  'source_type': 'strain',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu two',
+              'name': 'OTU Two',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r2',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Two',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Two',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_isolate_delete[otus]
+  list([
+    dict({
+      '_id': str,
+      'abbreviation': 'OO',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r1a',
+          'source_name': 'S3',
+          'source_type': 'strain',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu one',
+      'name': 'OTU One',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r1',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+    dict({
+      '_id': str,
+      'abbreviation': 'OT',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r2',
+          'source_name': 'Standard',
+          'source_type': 'strain',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu two',
+      'name': 'OTU Two',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r2',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+    dict({
+      '_id': str,
+      'abbreviation': 'OTH',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r3',
+          'source_name': 'Type',
+          'source_type': 'strain',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu three',
+      'name': 'OTU Three',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r3',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_isolate_delete[sequences]
+  list([
+    dict({
+      '_id': str,
+      'accession': 'NC_000001',
+      'definition': 'Sequence 1A',
+      'host': 'Plants',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r1a',
+      }),
+      'segment': '',
+      'sequence': 'ATGCATGCATGCATGC',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000003',
+      'definition': 'Sequence 2A',
+      'host': 'Insects',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r2a',
+      }),
+      'segment': '',
+      'sequence': 'TTTTTTTTTTTTTTTT',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000004',
+      'definition': 'Sequence 2B',
+      'host': 'Insects',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r2b',
+      }),
+      'segment': '',
+      'sequence': 'AAAAAAAAAAAAAAAA',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000005',
+      'definition': 'Sequence 3',
+      'host': 'Fungi',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r3',
+      }),
+      'segment': '',
+      'sequence': 'CCCCCCCCCCCCCCCC',
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_isolate_update[history]
+  list([
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OO',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_1a',
+                  'source_name': 'S3',
+                  'source_type': 'strain',
+                }),
+                dict({
+                  'default': False,
+                  'id': 'iso_db_1b',
+                  'source_name': 'NSW',
+                  'source_type': 'isolate',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu one',
+              'name': 'OTU One',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r1',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU One',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU One',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OTH',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_3',
+                  'source_name': 'Type',
+                  'source_type': 'strain',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu three',
+              'name': 'OTU Three',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r3',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Three',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Three',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OT',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_2',
+                  'source_name': 'Standard',
+                  'source_type': 'strain',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu two',
+              'name': 'OTU Two',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r2',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Two',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Two',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_isolate_update[otus]
+  list([
+    dict({
+      '_id': str,
+      'abbreviation': 'OO',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r1a',
+          'source_name': 'S3-Updated',
+          'source_type': 'strain',
+        }),
+        dict({
+          'default': False,
+          'id': 'iso_r1b',
+          'source_name': 'NSW',
+          'source_type': 'isolate',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu one',
+      'name': 'OTU One',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r1',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+    dict({
+      '_id': str,
+      'abbreviation': 'OT',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r2',
+          'source_name': 'Standard',
+          'source_type': 'strain',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu two',
+      'name': 'OTU Two',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r2',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+    dict({
+      '_id': str,
+      'abbreviation': 'OTH',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r3',
+          'source_name': 'Type',
+          'source_type': 'strain',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu three',
+      'name': 'OTU Three',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r3',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_isolate_update[sequences]
+  list([
+    dict({
+      '_id': str,
+      'accession': 'NC_000001',
+      'definition': 'Sequence 1A',
+      'host': 'Plants',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r1a',
+      }),
+      'segment': '',
+      'sequence': 'ATGCATGCATGCATGC',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000002',
+      'definition': 'Sequence 1B',
+      'host': 'Plants',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r1b',
+      }),
+      'segment': '',
+      'sequence': 'GCTAGCTAGCTAGCTA',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000003',
+      'definition': 'Sequence 2A',
+      'host': 'Insects',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r2a',
+      }),
+      'segment': '',
+      'sequence': 'TTTTTTTTTTTTTTTT',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000004',
+      'definition': 'Sequence 2B',
+      'host': 'Insects',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r2b',
+      }),
+      'segment': '',
+      'sequence': 'AAAAAAAAAAAAAAAA',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000005',
+      'definition': 'Sequence 3',
+      'host': 'Fungi',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r3',
+      }),
+      'segment': '',
+      'sequence': 'CCCCCCCCCCCCCCCC',
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_ok
+  dict({
+    '_id': 'bf1b993c',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'data_type': 'genome',
+    'description': 'Remote reference description',
+    'groups': list([
+    ]),
+    'installed': dict({
+      'body': 'This is a release.',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'filename': 'reference.json.gz',
+      'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0',
+      'id': 1,
+      'name': 'v1.0.0',
+      'newer': False,
+      'published_at': '2022-01-01T00:00:00Z',
+      'ready': True,
+      'size': 1024,
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    'internal_control': None,
+    'name': 'Remote Reference',
+    'organism': 'Updated Organism',
+    'release': dict({
+      'body': 'This is a release.',
+      'content_type': 'application/gzip',
+      'download_url': 'https://github.com/virtool/ref-plant-viruses/releases/download/v1.0.0/reference.json.gz',
+      'etag': 'etag',
+      'filename': 'reference.json.gz',
+      'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0',
+      'id': 1,
+      'name': 'v1.0.0',
+      'newer': False,
+      'published_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'retrieved_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'size': 1024,
+    }),
+    'remotes_from': dict({
+      'errors': list([
+      ]),
+      'slug': 'virtool/ref-plant-viruses',
+    }),
+    'restrict_source_types': False,
+    'source_types': list([
+      'isolate',
+      'strain',
+    ]),
+    'space': dict({
+      'id': 0,
+    }),
+    'targets': None,
+    'updates': list([
+      dict({
+        'body': 'This is a release.',
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'filename': 'reference.json.gz',
+        'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0',
+        'id': 1,
+        'name': 'v1.0.0',
+        'newer': True,
+        'published_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'ready': True,
+        'size': 1024,
+        'user': dict({
+          'id': 1,
+        }),
+      }),
+    ]),
+    'updating': False,
+    'user': dict({
+      'id': 1,
+    }),
+    'users': list([
+      dict({
+        'build': True,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'id': 1,
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      }),
+    ]),
+  })
+# ---
+# name: TestUpdateRemoteReference.test_otu_create[history]
+  list([
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'create',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Four',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OO',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_1a',
+                  'source_name': 'S3',
+                  'source_type': 'strain',
+                }),
+                dict({
+                  'default': False,
+                  'id': 'iso_db_1b',
+                  'source_name': 'NSW',
+                  'source_type': 'isolate',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu one',
+              'name': 'OTU One',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r1',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU One',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU One',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OTH',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_3',
+                  'source_name': 'Type',
+                  'source_type': 'strain',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu three',
+              'name': 'OTU Three',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r3',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Three',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Three',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OT',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_2',
+                  'source_name': 'Standard',
+                  'source_type': 'strain',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu two',
+              'name': 'OTU Two',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r2',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Two',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Two',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_otu_create[otus]
+  list([
+    dict({
+      '_id': str,
+      'abbreviation': 'OO',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r1a',
+          'source_name': 'S3',
+          'source_type': 'strain',
+        }),
+        dict({
+          'default': False,
+          'id': 'iso_r1b',
+          'source_name': 'NSW',
+          'source_type': 'isolate',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu one',
+      'name': 'OTU One',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r1',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+    dict({
+      '_id': str,
+      'abbreviation': 'OT',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r2',
+          'source_name': 'Standard',
+          'source_type': 'strain',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu two',
+      'name': 'OTU Two',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r2',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+    dict({
+      '_id': str,
+      'abbreviation': 'OTH',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r3',
+          'source_name': 'Type',
+          'source_type': 'strain',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu three',
+      'name': 'OTU Three',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r3',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+    dict({
+      '_id': str,
+      'abbreviation': 'OF',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r4',
+          'source_name': 'New',
+          'source_type': 'strain',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu four',
+      'name': 'OTU Four',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r4',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 0,
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_otu_create[sequences]
+  list([
+    dict({
+      '_id': str,
+      'accession': 'NC_000001',
+      'definition': 'Sequence 1A',
+      'host': 'Plants',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r1a',
+      }),
+      'segment': '',
+      'sequence': 'ATGCATGCATGCATGC',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000002',
+      'definition': 'Sequence 1B',
+      'host': 'Plants',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r1b',
+      }),
+      'segment': '',
+      'sequence': 'GCTAGCTAGCTAGCTA',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000003',
+      'definition': 'Sequence 2A',
+      'host': 'Insects',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r2a',
+      }),
+      'segment': '',
+      'sequence': 'TTTTTTTTTTTTTTTT',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000004',
+      'definition': 'Sequence 2B',
+      'host': 'Insects',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r2b',
+      }),
+      'segment': '',
+      'sequence': 'AAAAAAAAAAAAAAAA',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000005',
+      'definition': 'Sequence 3',
+      'host': 'Fungi',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r3',
+      }),
+      'segment': '',
+      'sequence': 'CCCCCCCCCCCCCCCC',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000006',
+      'definition': 'Sequence 4',
+      'host': 'None',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r4',
+      }),
+      'segment': '',
+      'sequence': 'GGGGGGGGGGGGGGGG',
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_otu_delete[history]
+  list([
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OO',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_1a',
+                  'source_name': 'S3',
+                  'source_type': 'strain',
+                }),
+                dict({
+                  'default': False,
+                  'id': 'iso_db_1b',
+                  'source_name': 'NSW',
+                  'source_type': 'isolate',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu one',
+              'name': 'OTU One',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r1',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU One',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU One',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OTH',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_3',
+                  'source_name': 'Type',
+                  'source_type': 'strain',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu three',
+              'name': 'OTU Three',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r3',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Three',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remove',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Three',
+        'version': 'removed',
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OT',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_2',
+                  'source_name': 'Standard',
+                  'source_type': 'strain',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu two',
+              'name': 'OTU Two',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r2',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Two',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Two',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_otu_delete[otus]
+  list([
+    dict({
+      '_id': str,
+      'abbreviation': 'OO',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r1a',
+          'source_name': 'S3',
+          'source_type': 'strain',
+        }),
+        dict({
+          'default': False,
+          'id': 'iso_r1b',
+          'source_name': 'NSW',
+          'source_type': 'isolate',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu one',
+      'name': 'OTU One',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r1',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+    dict({
+      '_id': str,
+      'abbreviation': 'OT',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r2',
+          'source_name': 'Standard',
+          'source_type': 'strain',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu two',
+      'name': 'OTU Two',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r2',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_otu_delete[sequences]
+  list([
+    dict({
+      '_id': str,
+      'accession': 'NC_000001',
+      'definition': 'Sequence 1A',
+      'host': 'Plants',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r1a',
+      }),
+      'segment': '',
+      'sequence': 'ATGCATGCATGCATGC',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000002',
+      'definition': 'Sequence 1B',
+      'host': 'Plants',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r1b',
+      }),
+      'segment': '',
+      'sequence': 'GCTAGCTAGCTAGCTA',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000003',
+      'definition': 'Sequence 2A',
+      'host': 'Insects',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r2a',
+      }),
+      'segment': '',
+      'sequence': 'TTTTTTTTTTTTTTTT',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000004',
+      'definition': 'Sequence 2B',
+      'host': 'Insects',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r2b',
+      }),
+      'segment': '',
+      'sequence': 'AAAAAAAAAAAAAAAA',
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_otu_update[history]
+  list([
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OO',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_1a',
+                  'source_name': 'S3',
+                  'source_type': 'strain',
+                }),
+                dict({
+                  'default': False,
+                  'id': 'iso_db_1b',
+                  'source_name': 'NSW',
+                  'source_type': 'isolate',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu one',
+              'name': 'OTU One',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r1',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU One',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU One',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OTH',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_3',
+                  'source_name': 'Type',
+                  'source_type': 'strain',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu three',
+              'name': 'OTU Three',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r3',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Three',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Three',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OT',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_2',
+                  'source_name': 'Standard',
+                  'source_type': 'strain',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu two',
+              'name': 'OTU Two',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r2',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Two',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Two',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_otu_update[otus]
+  list([
+    dict({
+      '_id': str,
+      'abbreviation': 'OOR',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r1a',
+          'source_name': 'S3',
+          'source_type': 'strain',
+        }),
+        dict({
+          'default': False,
+          'id': 'iso_r1b',
+          'source_name': 'NSW',
+          'source_type': 'isolate',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu one renamed',
+      'name': 'OTU One Renamed',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r1',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+    dict({
+      '_id': str,
+      'abbreviation': 'OT',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r2',
+          'source_name': 'Standard',
+          'source_type': 'strain',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu two',
+      'name': 'OTU Two',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r2',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+    dict({
+      '_id': str,
+      'abbreviation': 'OTH',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r3',
+          'source_name': 'Type',
+          'source_type': 'strain',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu three',
+      'name': 'OTU Three',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r3',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_otu_update[sequences]
+  list([
+    dict({
+      '_id': str,
+      'accession': 'NC_000001',
+      'definition': 'Sequence 1A',
+      'host': 'Plants',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r1a',
+      }),
+      'segment': '',
+      'sequence': 'ATGCATGCATGCATGC',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000002',
+      'definition': 'Sequence 1B',
+      'host': 'Plants',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r1b',
+      }),
+      'segment': '',
+      'sequence': 'GCTAGCTAGCTAGCTA',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000003',
+      'definition': 'Sequence 2A',
+      'host': 'Insects',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r2a',
+      }),
+      'segment': '',
+      'sequence': 'TTTTTTTTTTTTTTTT',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000004',
+      'definition': 'Sequence 2B',
+      'host': 'Insects',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r2b',
+      }),
+      'segment': '',
+      'sequence': 'AAAAAAAAAAAAAAAA',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000005',
+      'definition': 'Sequence 3',
+      'host': 'Fungi',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r3',
+      }),
+      'segment': '',
+      'sequence': 'CCCCCCCCCCCCCCCC',
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_sequence_create[history]
+  list([
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OO',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_1a',
+                  'source_name': 'S3',
+                  'source_type': 'strain',
+                }),
+                dict({
+                  'default': False,
+                  'id': 'iso_db_1b',
+                  'source_name': 'NSW',
+                  'source_type': 'isolate',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu one',
+              'name': 'OTU One',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r1',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU One',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU One',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OTH',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_3',
+                  'source_name': 'Type',
+                  'source_type': 'strain',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu three',
+              'name': 'OTU Three',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r3',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Three',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Three',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OT',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_2',
+                  'source_name': 'Standard',
+                  'source_type': 'strain',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu two',
+              'name': 'OTU Two',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r2',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Two',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Two',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_sequence_create[otus]
+  list([
+    dict({
+      '_id': str,
+      'abbreviation': 'OO',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r1a',
+          'source_name': 'S3',
+          'source_type': 'strain',
+        }),
+        dict({
+          'default': False,
+          'id': 'iso_r1b',
+          'source_name': 'NSW',
+          'source_type': 'isolate',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu one',
+      'name': 'OTU One',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r1',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+    dict({
+      '_id': str,
+      'abbreviation': 'OT',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r2',
+          'source_name': 'Standard',
+          'source_type': 'strain',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu two',
+      'name': 'OTU Two',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r2',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+    dict({
+      '_id': str,
+      'abbreviation': 'OTH',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r3',
+          'source_name': 'Type',
+          'source_type': 'strain',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu three',
+      'name': 'OTU Three',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r3',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_sequence_create[sequences]
+  list([
+    dict({
+      '_id': str,
+      'accession': 'NC_000001',
+      'definition': 'Sequence 1A',
+      'host': 'Plants',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r1a',
+      }),
+      'segment': '',
+      'sequence': 'ATGCATGCATGCATGC',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000002',
+      'definition': 'Sequence 1B',
+      'host': 'Plants',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r1b',
+      }),
+      'segment': '',
+      'sequence': 'GCTAGCTAGCTAGCTA',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000003',
+      'definition': 'Sequence 2A',
+      'host': 'Insects',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r2a',
+      }),
+      'segment': '',
+      'sequence': 'TTTTTTTTTTTTTTTT',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000004',
+      'definition': 'Sequence 2B',
+      'host': 'Insects',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r2b',
+      }),
+      'segment': '',
+      'sequence': 'AAAAAAAAAAAAAAAA',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000008',
+      'definition': 'Sequence 2C',
+      'host': 'Insects',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r2c',
+      }),
+      'segment': '',
+      'sequence': 'CGTACGTACGTACGTA',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000005',
+      'definition': 'Sequence 3',
+      'host': 'Fungi',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r3',
+      }),
+      'segment': '',
+      'sequence': 'CCCCCCCCCCCCCCCC',
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_sequence_delete[history]
+  list([
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OO',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_1a',
+                  'source_name': 'S3',
+                  'source_type': 'strain',
+                }),
+                dict({
+                  'default': False,
+                  'id': 'iso_db_1b',
+                  'source_name': 'NSW',
+                  'source_type': 'isolate',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu one',
+              'name': 'OTU One',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r1',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU One',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU One',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OTH',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_3',
+                  'source_name': 'Type',
+                  'source_type': 'strain',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu three',
+              'name': 'OTU Three',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r3',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Three',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Three',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OT',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_2',
+                  'source_name': 'Standard',
+                  'source_type': 'strain',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu two',
+              'name': 'OTU Two',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r2',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Two',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Two',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_sequence_delete[otus]
+  list([
+    dict({
+      '_id': str,
+      'abbreviation': 'OO',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r1a',
+          'source_name': 'S3',
+          'source_type': 'strain',
+        }),
+        dict({
+          'default': False,
+          'id': 'iso_r1b',
+          'source_name': 'NSW',
+          'source_type': 'isolate',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu one',
+      'name': 'OTU One',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r1',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+    dict({
+      '_id': str,
+      'abbreviation': 'OT',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r2',
+          'source_name': 'Standard',
+          'source_type': 'strain',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu two',
+      'name': 'OTU Two',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r2',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+    dict({
+      '_id': str,
+      'abbreviation': 'OTH',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r3',
+          'source_name': 'Type',
+          'source_type': 'strain',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu three',
+      'name': 'OTU Three',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r3',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_sequence_delete[sequences]
+  list([
+    dict({
+      '_id': str,
+      'accession': 'NC_000001',
+      'definition': 'Sequence 1A',
+      'host': 'Plants',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r1a',
+      }),
+      'segment': '',
+      'sequence': 'ATGCATGCATGCATGC',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000002',
+      'definition': 'Sequence 1B',
+      'host': 'Plants',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r1b',
+      }),
+      'segment': '',
+      'sequence': 'GCTAGCTAGCTAGCTA',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000003',
+      'definition': 'Sequence 2A',
+      'host': 'Insects',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r2a',
+      }),
+      'segment': '',
+      'sequence': 'TTTTTTTTTTTTTTTT',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000005',
+      'definition': 'Sequence 3',
+      'host': 'Fungi',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r3',
+      }),
+      'segment': '',
+      'sequence': 'CCCCCCCCCCCCCCCC',
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_sequence_update[history]
+  list([
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OO',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_1a',
+                  'source_name': 'S3',
+                  'source_type': 'strain',
+                }),
+                dict({
+                  'default': False,
+                  'id': 'iso_db_1b',
+                  'source_name': 'NSW',
+                  'source_type': 'isolate',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu one',
+              'name': 'OTU One',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r1',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU One',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU One',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OTH',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_3',
+                  'source_name': 'Type',
+                  'source_type': 'strain',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu three',
+              'name': 'OTU Three',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r3',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Three',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Three',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
+              'abbreviation': 'OT',
+              'created_at': datetime,
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': 'iso_db_2',
+                  'source_name': 'Standard',
+                  'source_type': 'strain',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'otu two',
+              'name': 'OTU Two',
+              'reference': dict({
+                'id': 'test_ref',
+              }),
+              'remote': dict({
+                'id': 'otu_r2',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'remote',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Two',
+        'version': 0,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    dict({
+      '_id': str,
+      'created_at': datetime,
+      'description': str,
+      'diff': 'postgres',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'update',
+      'otu': dict({
+        'id': str,
+        'name': 'OTU Two',
+        'version': 1,
+      }),
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_sequence_update[otus]
+  list([
+    dict({
+      '_id': str,
+      'abbreviation': 'OO',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r1a',
+          'source_name': 'S3',
+          'source_type': 'strain',
+        }),
+        dict({
+          'default': False,
+          'id': 'iso_r1b',
+          'source_name': 'NSW',
+          'source_type': 'isolate',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu one',
+      'name': 'OTU One',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r1',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+    dict({
+      '_id': str,
+      'abbreviation': 'OT',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r2',
+          'source_name': 'Standard',
+          'source_type': 'strain',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu two',
+      'name': 'OTU Two',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r2',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+    dict({
+      '_id': str,
+      'abbreviation': 'OTH',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': 'iso_r3',
+          'source_name': 'Type',
+          'source_type': 'strain',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'otu three',
+      'name': 'OTU Three',
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'otu_r3',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 1,
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_sequence_update[sequences]
+  list([
+    dict({
+      '_id': str,
+      'accession': 'NC_000001',
+      'definition': 'Sequence 1A',
+      'host': 'Plants',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r1a',
+      }),
+      'segment': '',
+      'sequence': 'ATGCATGCATGCATGC',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000002',
+      'definition': 'Sequence 1B',
+      'host': 'Plants',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r1b',
+      }),
+      'segment': '',
+      'sequence': 'GCTAGCTAGCTAGCTA',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000003.1',
+      'definition': 'Sequence 2A updated',
+      'host': 'Insects',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r2a',
+      }),
+      'segment': '',
+      'sequence': 'TTTTTTTTTTTTTTTT',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000004',
+      'definition': 'Sequence 2B',
+      'host': 'Insects',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r2b',
+      }),
+      'segment': '',
+      'sequence': 'AAAAAAAAAAAAAAAA',
+    }),
+    dict({
+      '_id': str,
+      'accession': 'NC_000005',
+      'definition': 'Sequence 3',
+      'host': 'Fungi',
+      'isolate_id': str,
+      'otu_id': str,
+      'reference': dict({
+        'id': 'test_ref',
+      }),
+      'remote': dict({
+        'id': 'seq_r3',
+      }),
+      'segment': '',
+      'sequence': 'CCCCCCCCCCCCCCCC',
+    }),
+  ])
+# ---
+# name: TestUpdateRemoteReference.test_with_deletion
+  dict({
+    '_id': 'bf1b993c',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'data_type': 'genome',
+    'description': 'Remote reference description',
+    'groups': list([
+    ]),
+    'installed': dict({
+      'body': 'This is a release.',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'filename': 'reference.json.gz',
+      'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0',
+      'id': 1,
+      'name': 'v1.0.0',
+      'newer': False,
+      'published_at': '2022-01-01T00:00:00Z',
+      'ready': True,
+      'size': 1024,
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    'internal_control': None,
+    'name': 'Remote Reference',
+    'organism': 'Updated Organism',
+    'release': dict({
+      'body': 'This is a release.',
+      'content_type': 'application/gzip',
+      'download_url': 'https://github.com/virtool/ref-plant-viruses/releases/download/v1.0.0/reference.json.gz',
+      'etag': 'etag',
+      'filename': 'reference.json.gz',
+      'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0',
+      'id': 1,
+      'name': 'v1.0.0',
+      'newer': False,
+      'published_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'retrieved_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'size': 1024,
+    }),
+    'remotes_from': dict({
+      'errors': list([
+      ]),
+      'slug': 'virtool/ref-plant-viruses',
+    }),
+    'restrict_source_types': False,
+    'source_types': list([
+      'isolate',
+      'strain',
+    ]),
+    'space': dict({
+      'id': 0,
+    }),
+    'targets': None,
+    'updates': list([
+      dict({
+        'body': 'This is a release.',
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'filename': 'reference.json.gz',
+        'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0',
+        'id': 1,
+        'name': 'v1.0.0',
+        'newer': True,
+        'published_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'ready': True,
+        'size': 1024,
+        'user': dict({
+          'id': 1,
+        }),
+      }),
+    ]),
+    'updating': False,
+    'user': dict({
+      'id': 1,
+    }),
+    'users': list([
+      dict({
+        'build': True,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'id': 1,
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      }),
+    ]),
   })
 # ---
 # name: TestUpdateUser.test_ok[mongo]

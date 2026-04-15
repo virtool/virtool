@@ -51,19 +51,27 @@ class TestReferenceSourceData:
             )
 
     def test_duplicate_otu_abbreviations(self, test_merged_otu: dict):
-        with pytest.raises(ValueError, match="Duplicate OTU abbreviations found"):
-            ReferenceSourceData.parse_obj(
+        """Duplicate OTU abbreviations should be allowed."""
+        otu_2 = {
+            **test_merged_otu,
+            "_id": "different_id",
+            "name": "Different Name",
+            "isolates": [
                 {
-                    "otus": [
-                        test_merged_otu,
+                    **test_merged_otu["isolates"][0],
+                    "sequences": [
                         {
-                            **test_merged_otu,
-                            "_id": "different_id",
-                            "name": "Different Name",
-                        },
-                    ]
+                            **test_merged_otu["isolates"][0]["sequences"][0],
+                            "_id": "unique_seq_id",
+                        }
+                    ],
                 }
-            )
+            ],
+        }
+
+        data = ReferenceSourceData.parse_obj({"otus": [test_merged_otu, otu_2]})
+
+        assert len(data.otus) == 2
 
     def test_duplicate_ids(self, test_merged_otu: dict):
         otu_2 = dict(test_merged_otu)

@@ -308,7 +308,7 @@ async def fetch_and_update_release(
 
     document = await mongo.references.find_one(
         ref_id,
-        ["installed", "release", "remotes_from"],
+        ["release", "remotes_from", "installed"],
     )
 
     release = document.get("release")
@@ -352,11 +352,11 @@ async def fetch_and_update_release(
         release = updated_release
 
     if release:
-        installed = document["installed"]
+        installed: dict | None = document.get("installed", None)
 
         release["newer"] = bool(
-            installed
-            and VersionInfo.parse(release["name"].lstrip("v"))
+            not installed
+            or VersionInfo.parse(release["name"].lstrip("v"))
             > VersionInfo.parse(installed["name"].lstrip("v")),
         )
 
@@ -903,25 +903,26 @@ async def bulk_prepare_update_joined_otu(
     ref_id: str,
     session,
 ) -> list[OTUUpdate]:
-    sequence_ids = []
-    for otu_item in otu_data:
-        for isolate in otu_item.otu["isolates"]:
-            sequence_ids.extend([sequence["_id"] for sequence in isolate["sequences"]])
+    otu_ids = [otu_item.old["_id"] for otu_item in otu_data]
 
     cursor = mongo.sequences.find(
-        {
-            "reference.id": ref_id,
-            "remote.id": {"$in": sequence_ids},
-        },
+        {"otu_id": {"$in": otu_ids}},
         session=session,
     )
 
-    found_sequence_ids = {sequence["remote"]["id"] async for sequence in cursor}
+    existing_sequences_by_otu: dict[str, set[str]] = {}
+    async for sequence in cursor:
+        otu_id = sequence["otu_id"]
+        if otu_id not in existing_sequences_by_otu:
+            existing_sequences_by_otu[otu_id] = set()
+        existing_sequences_by_otu[otu_id].add(sequence["remote"]["id"])
 
     otu_updates = []
     for otu_item in otu_data:
         if not check_will_change(otu_item.old, otu_item.otu):
             continue
+
+        existing_remote_ids = existing_sequences_by_otu.get(otu_item.old["_id"], set())
 
         otu_update = UpdateOne(
             {"_id": otu_item.old["_id"]},
@@ -940,8 +941,11 @@ async def bulk_prepare_update_joined_otu(
         sequence_updates = []
         sequence_inserts = []
 
+        new_remote_sequence_ids = set()
+
         for isolate in otu_item.otu["isolates"]:
             for sequence in isolate.pop("sequences"):
+                new_remote_sequence_ids.add(sequence["_id"])
                 sequence_update = {
                     "accession": sequence["accession"],
                     "definition": sequence["definition"],
@@ -955,7 +959,7 @@ async def bulk_prepare_update_joined_otu(
                 }
 
                 remote_sequence_id = sequence_update["remote"]["id"]
-                if remote_sequence_id in found_sequence_ids:
+                if remote_sequence_id in existing_remote_ids:
                     sequence_updates.append(
                         UpdateOne(
                             {"reference.id": ref_id, "remote.id": remote_sequence_id},
@@ -965,10 +969,22 @@ async def bulk_prepare_update_joined_otu(
                 else:
                     sequence_inserts.append(sequence_update)
 
+        # Identify sequences to delete: present in DB but not in update payload
+        sequences_to_delete = []
+        for sequence_id in existing_remote_ids:
+            if sequence_id not in new_remote_sequence_ids:
+                sequences_to_delete.append(
+                    DeleteOne({"reference.id": ref_id, "remote.id": sequence_id})
+                )
+
         otu_updates.append(
             OTUUpdate(
                 otu_update,
-                SequenceChanges(updates=sequence_updates, inserts=sequence_inserts),
+                SequenceChanges(
+                    updates=sequence_updates,
+                    inserts=sequence_inserts,
+                    deletes=sequences_to_delete,
+                ),
                 otu_item.old,
                 otu_id=otu_item.old["_id"],
             ),
