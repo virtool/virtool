@@ -3,6 +3,7 @@ import math
 import uuid
 from asyncio import to_thread
 from contextlib import suppress
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from sqlalchemy import func, select, update
@@ -15,7 +16,7 @@ from virtool.data.events import Operation, emits
 from virtool.data.transforms import apply_transforms
 from virtool.uploads.models import Upload, UploadSearchResult
 from virtool.uploads.sql import SQLUpload, UploadType
-from virtool.uploads.utils import naive_writer
+from virtool.uploads.utils import get_upload_path, naive_writer
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import rm
 
@@ -172,6 +173,29 @@ class UploadsData(DataLayerDomain):
             ),
         )
 
+    async def get_upload_file_info(self, upload_id: int) -> tuple[Path, str]:
+        """Get the file path and original name for downloading an upload.
+
+        :param upload_id: the upload's ID
+        :return: a tuple of the file path and original filename
+        """
+        async with AsyncSession(self._pg) as session:
+            upload = (
+                await session.execute(
+                    select(SQLUpload.name_on_disk, SQLUpload.name).filter_by(
+                        id=upload_id, removed=False
+                    ),
+                )
+            ).first()
+
+            if not upload:
+                raise ResourceNotFoundError
+
+        return (
+            await get_upload_path(self._config, upload.name_on_disk),
+            upload.name,
+        )
+
     @emits(Operation.DELETE)
     async def delete(self, upload_id: int) -> Upload:
         """Delete an upload by its id.
@@ -194,6 +218,7 @@ class UploadsData(DataLayerDomain):
             upload.removed = True
             upload.removed_at = virtool.utils.timestamp()
 
+            name_on_disk = upload.name_on_disk
             upload = upload.to_dict()
 
             await session.commit()
@@ -203,7 +228,7 @@ class UploadsData(DataLayerDomain):
         )
 
         with suppress(FileNotFoundError):
-            await to_thread(rm, self._config.data_path / "files" / upload.name_on_disk)
+            await to_thread(rm, self._config.data_path / "files" / name_on_disk)
 
         return upload
 

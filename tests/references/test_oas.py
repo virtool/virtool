@@ -20,9 +20,9 @@ def mock_create_reference_schema():
         {},
         {"data_type": "bad type"},
         {"remote_from": "test"},
-        {"import_from": "test", "clone_from": "test"},
+        {"import_from": 1, "clone_from": "test"},
         {
-            "import_from": "test",
+            "import_from": 1,
             "clone_from": "test",
             "remote_from": "virtool/ref-plant-viruses",
         },
@@ -39,10 +39,12 @@ def test_schema(update_dict, mock_create_reference_schema):
 
 @pytest.mark.parametrize("value", ["import_from", "clone_from", "remote_from"])
 def test_values(value, mock_create_reference_schema):
-    mock_create_reference_schema.update({value: "test"})
-
-    if value == "remote_from":
+    if value == "import_from":
+        mock_create_reference_schema.update({value: 1})
+    elif value == "remote_from":
         mock_create_reference_schema.update({value: "virtool/ref-plant-viruses"})
+    else:
+        mock_create_reference_schema.update({value: "test"})
 
     CreateReferenceRequest(**mock_create_reference_schema)
 
