@@ -22,9 +22,9 @@ class FilesystemProvider:
     def __init__(self, base_path: Path) -> None:
         self._base_path = base_path.resolve()
 
-    def _resolve(self, key: str) -> Path:
+    async def _resolve(self, key: str) -> Path:
         """Map a storage key to an absolute path under the base directory."""
-        path = (self._base_path / key).resolve()
+        path = await asyncio.to_thread(lambda: (self._base_path / key).resolve())
 
         if not path.is_relative_to(self._base_path):
             msg = f"Key {key!r} resolves outside the base path"
@@ -34,7 +34,7 @@ class FilesystemProvider:
 
     async def read(self, key: str) -> AsyncIterator[bytes]:
         """Stream the contents of the object at ``key`` as chunks of bytes."""
-        path = self._resolve(key)
+        path = await self._resolve(key)
 
         if not await asyncio.to_thread(path.is_file):
             raise StorageKeyNotFoundError(key)
@@ -54,7 +54,7 @@ class FilesystemProvider:
 
         Uses a temporary file and atomic rename to prevent partial writes.
         """
-        path = self._resolve(key)
+        path = await self._resolve(key)
         await asyncio.to_thread(path.parent.mkdir, parents=True, exist_ok=True)
 
         tmp_fd = await asyncio.to_thread(
@@ -80,7 +80,7 @@ class FilesystemProvider:
 
     async def delete(self, key: str) -> None:
         """Delete the object at ``key``. Idempotent."""
-        path = self._resolve(key)
+        path = await self._resolve(key)
         await asyncio.to_thread(path.unlink, True)
 
         parent = path.parent
@@ -106,24 +106,23 @@ class FilesystemProvider:
 
             results = []
 
-            for p in search_dir.rglob("*"):
-                if not p.is_file():
-                    continue
+            for dirpath, _, filenames in os.walk(search_dir):
+                for filename in filenames:
+                    filepath = Path(dirpath) / filename
+                    key = str(filepath.relative_to(self._base_path))
 
-                key = str(p.relative_to(self._base_path))
-
-                if key.startswith(prefix):
-                    stat = p.stat()
-                    results.append(
-                        StorageObjectInfo(
-                            key=key,
-                            size=stat.st_size,
-                            last_modified=datetime.fromtimestamp(
-                                stat.st_mtime,
-                                tz=UTC,
+                    if key.startswith(prefix):
+                        stat = filepath.stat()
+                        results.append(
+                            StorageObjectInfo(
+                                key=key,
+                                size=stat.st_size,
+                                last_modified=datetime.fromtimestamp(
+                                    stat.st_mtime,
+                                    tz=UTC,
+                                ),
                             ),
-                        ),
-                    )
+                        )
 
             return results
 
