@@ -127,7 +127,6 @@
       'created_at': 'approximately_now_datetime',
       'id': 1,
       'name': 'malus.fa.gz',
-      'name_on_disk': 'uuid-malus.fa.gz',
       'ready': True,
       'removed': False,
       'removed_at': None,

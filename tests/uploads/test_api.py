@@ -4,7 +4,6 @@ from pathlib import Path
 import pytest
 from aiohttp import ClientResponse
 from syrupy import SnapshotAssertion
-from syrupy.matchers import path_type
 
 from tests.fixtures.client import ClientSpawner
 from virtool.fake.next import DataFaker
@@ -42,7 +41,7 @@ class TestUpload:
 
         assert resp.status == 201
         assert body["name"] == "reads_1.fq.gz"
-        assert body["name_on_disk"].endswith("-reads_1.fq.gz")
+        assert "name_on_disk" not in body
         assert body["ready"] is True
         assert body["size"] == 723988
         assert body["type"] == "reads"
@@ -130,9 +129,7 @@ class TestFind:
         resp = await client.get(url)
 
         assert resp.status == HTTPStatus.OK
-        assert await resp.json() == snapshot(
-            matcher=path_type({".*name_on_disk": (str,)}, regex=True),
-        )
+        assert await resp.json() == snapshot
 
     @pytest.mark.parametrize(
         "per_page,page",
@@ -177,9 +174,7 @@ class TestFind:
         resp = await client.get(url)
 
         assert resp.status == HTTPStatus.OK
-        assert await resp.json() == snapshot(
-            matcher=path_type({".*name_on_disk": (str,)}, regex=True),
-        )
+        assert await resp.json() == snapshot
 
 
 async def test_get(

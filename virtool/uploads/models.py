@@ -11,7 +11,6 @@ class UploadMinimal(BaseModel):
     id: int
     created_at: datetime
     name: str
-    name_on_disk: str
     ready: bool
     removed: bool
     removed_at: datetime | None
@@ -28,7 +27,6 @@ class UploadMinimal(BaseModel):
                     "id": 106,
                     "created_at": "2022-01-22T17:28:21.491000Z",
                     "name": "MPI19_L3_2.fq.gz",
-                    "name_on_disk": "106-MPI19_L3_2.fq.gz",
                     "ready": True,
                     "removed": False,
                     "removed_at": None,

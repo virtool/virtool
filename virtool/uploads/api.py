@@ -9,12 +9,11 @@ from virtool.api.errors import APINotFound
 from virtool.api.policy import PermissionRoutePolicy, policy
 from virtool.api.routes import Routes
 from virtool.authorization.permissions import LegacyPermission
-from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.uploads.models import Upload
 from virtool.uploads.sql import UploadType
-from virtool.uploads.utils import get_upload_path, multipart_file_chunker
+from virtool.uploads.utils import multipart_file_chunker
 
 routes = Routes()
 
@@ -91,18 +90,16 @@ class UploadView(PydanticView):
             404: Not found
         """
         try:
-            upload = await get_data_from_req(self.request).uploads.get(upload_id)
-
-            upload_path = await get_upload_path(
-                get_config_from_req(self.request), upload.name_on_disk
-            )
+            upload_path, name = await get_data_from_req(
+                self.request
+            ).uploads.get_upload_file_info(upload_id)
         except ResourceNotFoundError:
             raise APINotFound()
 
         return FileResponse(
             upload_path,
             headers={
-                "Content-Disposition": f"attachment; filename={upload.name}",
+                "Content-Disposition": f"attachment; filename={name}",
                 "Content-Type": "application/octet-stream",
             },
         )
@@ -136,16 +133,16 @@ async def download(req):
     upload_id = int(req.match_info["id"])
 
     try:
-        upload = await get_data_from_req(req).uploads.get(upload_id)
+        upload_path, name = await get_data_from_req(req).uploads.get_upload_file_info(
+            upload_id
+        )
     except ResourceNotFoundError:
         raise APINotFound()
-
-    upload_path = await get_upload_path(get_config_from_req(req), upload.name_on_disk)
 
     return FileResponse(
         upload_path,
         headers={
-            "Content-Disposition": f"attachment; filename={upload.name}",
+            "Content-Disposition": f"attachment; filename={name}",
             "Content-Type": "application/octet-stream",
         },
     )

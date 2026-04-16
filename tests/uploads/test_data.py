@@ -30,7 +30,6 @@ async def test_create(
     )
 
     assert upload.name == "sample_1.fq.gz"
-    assert upload.name_on_disk.endswith("-sample_1.fq.gz")
     assert upload.ready is True
     assert upload.removed is False
     assert upload.size == 723988
@@ -39,10 +38,10 @@ async def test_create(
 
     row = await get_row_by_id(pg, SQLUpload, upload.id)
     assert row.name == "sample_1.fq.gz"
-    assert row.name_on_disk == upload.name_on_disk
+    assert row.name_on_disk.endswith("-sample_1.fq.gz")
 
     assert (
-        open(data_path / "files" / upload.name_on_disk, "rb").read()
+        open(data_path / "files" / row.name_on_disk, "rb").read()
         == open(fake_file_path, "rb").read()
     )
 
@@ -51,10 +50,12 @@ async def test_delete(
     data_path: Path,
     data_layer: DataLayer,
     fake: DataFaker,
+    pg: AsyncEngine,
 ):
     before = await fake.uploads.create(user=await fake.users.create())
 
-    path = data_path / "files" / before.name_on_disk
+    row = await get_row_by_id(pg, SQLUpload, before.id)
+    path = data_path / "files" / row.name_on_disk
 
     assert path.is_file()
     assert before.removed_at is None
