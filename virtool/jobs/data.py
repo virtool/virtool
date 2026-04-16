@@ -25,7 +25,7 @@ from virtool.data.topg import (
     retry_both_transactions,
 )
 from virtool.data.transforms import apply_transforms
-from virtool.jobs.client import JobCancellationResult, JobsClient
+from virtool.jobs.client import JobsClient
 from virtool.jobs.models import (
     TERMINAL_JOB_STATES,
     V1_TO_V2_STATE,
@@ -724,48 +724,49 @@ class JobsData:
         if document is None:
             raise ResourceNotFoundError
 
-        if not check_job_is_running_or_waiting(document):
+        latest_state = document["status"][-1]["state"]
+
+        if latest_state not in ("waiting", "preparing", "running"):
             raise ResourceConflictError("Not cancellable")
 
-        result = await self._client.cancel(job_id)
+        await self._client.cancel(job_id)
 
-        if result == JobCancellationResult.REMOVED_FROM_QUEUE:
-            latest = document["status"][-1]
+        latest = document["status"][-1]
 
-            async with both_transactions(self._mongo, self._pg) as (
-                mongo_session,
-                pg_session,
-            ):
-                update_result: UpdateResult = await self._mongo.jobs.update_one(
-                    {"_id": job_id},
-                    {
-                        "$push": {
-                            "status": compose_status(
-                                JobState.CANCELLED,
-                                latest["stage"],
-                                progress=latest["progress"],
-                            ),
-                        },
-                        "$set": {
-                            "state": JobState.CANCELLED.value,
-                        },
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            update_result: UpdateResult = await self._mongo.jobs.update_one(
+                {"_id": job_id},
+                {
+                    "$push": {
+                        "status": compose_status(
+                            JobState.CANCELLED,
+                            latest["stage"],
+                            progress=latest["progress"],
+                        ),
                     },
-                    session=mongo_session,
-                )
+                    "$set": {
+                        "state": JobState.CANCELLED.value,
+                    },
+                },
+                session=mongo_session,
+            )
 
-                if update_result.modified_count == 0:
-                    raise ResourceNotFoundError
+            if update_result.modified_count == 0:
+                raise ResourceNotFoundError
 
-                pg_result = await pg_session.execute(
-                    select(SQLJob).where(
-                        compose_legacy_id_single_expression(SQLJob, job_id),
-                    ),
-                )
-                sql_job = pg_result.scalar()
+            pg_result = await pg_session.execute(
+                select(SQLJob).where(
+                    compose_legacy_id_single_expression(SQLJob, job_id),
+                ),
+            )
+            sql_job = pg_result.scalar()
 
-                if sql_job:
-                    sql_job.state = JobStateV2.CANCELLED.value
-                    sql_job.finished_at = virtool.utils.timestamp()
+            if sql_job:
+                sql_job.state = JobStateV2.CANCELLED.value
+                sql_job.finished_at = virtool.utils.timestamp()
 
         return await self.get(job_id)
 

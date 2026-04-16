@@ -11,7 +11,6 @@ from virtool.redis import Redis
 from virtool.workflow import Workflow
 from virtool.workflow.pytest_plugin.data import WorkflowData
 from virtool.workflow.pytest_plugin.utils import StaticTime
-from virtool.workflow.runtime.redis import get_cancellation_channel
 from virtool.workflow.runtime.run import start_runtime
 
 
@@ -114,7 +113,7 @@ async def test_cancellation(
 
     await asyncio.sleep(5)
 
-    await redis.publish(get_cancellation_channel(redis), workflow_data.job.id)
+    workflow_data.job.ping.cancelled = True
 
     await runtime_task
 
@@ -127,7 +126,7 @@ async def test_cancellation(
     assert state_and_progress[2] == (JobState.RUNNING, 0)
     assert state_and_progress[-1] == (JobState.CANCELLED, state_and_progress[-2][1])
 
-    assert log.has("received cancellation signal from redis", level="info")
+    assert log.has("received cancellation signal from ping response", level="info")
 
 
 async def test_timeout(
