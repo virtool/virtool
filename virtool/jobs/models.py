@@ -1,18 +1,9 @@
-from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from typing import Any
 
 from virtool.models import BaseModel, SearchResult
 from virtool.users.models_base import UserNested
-
-
-@dataclass(frozen=True)
-class QueuedJobID:
-    __slots__ = ("id", "workflow")
-
-    id: str
-    workflow: str
 
 
 class JobError(BaseModel):

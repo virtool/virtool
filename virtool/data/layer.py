@@ -12,14 +12,12 @@ from virtool.groups.data import GroupsData
 from virtool.history.data import HistoryData
 from virtool.hmm.data import HmmsData
 from virtool.indexes.data import IndexData
-from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
 from virtool.messages.data import MessagesData
 from virtool.ml.data import MLData
 from virtool.mongo.core import Mongo
 from virtool.otus.data import OTUData
-from virtool.redis import Redis
 from virtool.references.data import ReferencesData
 from virtool.samples.data import SamplesData
 from virtool.sessions.data import SessionData
@@ -72,7 +70,6 @@ def create_data_layer(
     pg: AsyncEngine,
     config: Config,
     client: ClientSession,
-    redis: Redis,
 ) -> DataLayer:
     """Create and return a data layer object.
 
@@ -80,10 +77,8 @@ def create_data_layer(
     :param pg: the Postgres client
     :param config: the application config object
     :param client: an async HTTP client session for the server
-    :param redis: the redis object
     :return: the application data layer
     """
-    jobs_client = JobsClient(redis)
     http_client = HTTPClient(client)
 
     return DataLayer(
@@ -94,13 +89,13 @@ def create_data_layer(
         HistoryData(config.data_path, mongo, pg),
         HmmsData(client, config, mongo, pg),
         IndexData(mongo, config, pg),
-        JobsData(jobs_client, mongo, pg),
+        JobsData(mongo, pg),
         LabelsData(mongo, pg),
         MessagesData(pg),
         MLData(config, http_client, pg),
         OTUData(config.data_path, mongo, pg),
         ReferencesData(mongo, pg, config, client),
-        SamplesData(config, mongo, pg, jobs_client),
+        SamplesData(config, mongo, pg),
         SubtractionsData(config.base_url, config, mongo, pg),
         SessionData(pg),
         SettingsData(mongo),

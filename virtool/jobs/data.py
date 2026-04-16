@@ -1,5 +1,4 @@
 import math
-from asyncio import gather
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
@@ -25,7 +24,6 @@ from virtool.data.topg import (
     retry_both_transactions,
 )
 from virtool.data.transforms import apply_transforms
-from virtool.jobs.client import JobsClient
 from virtool.jobs.models import (
     TERMINAL_JOB_STATES,
     V1_TO_V2_STATE,
@@ -77,8 +75,7 @@ JOB_CLEAN_DOUBLE_CHECK_DELAY = 15
 class JobsData:
     name = "jobs"
 
-    def __init__(self, client: JobsClient, mongo: Mongo, pg: AsyncEngine):
-        self._client = client
+    def __init__(self, mongo: Mongo, pg: AsyncEngine):
         self._mongo = mongo
         self._pg = pg
 
@@ -356,10 +353,10 @@ class JobsData:
         space_id: int = 1,
         job_id: str | None = None,
     ) -> Job:
-        """Create a job record and queue it.
+        """Create a job record.
 
-        Create job record in MongoDB and get an ID. Queue the ID using the JobsClient so
-        that it is picked up by a workflow runner.
+        Create job records in MongoDB and PostgreSQL. The job will be picked up
+        by a workflow runner via HTTP polling.
 
         :param workflow: the name of the workflow to run
         :param job_args: the arguments required to run the job
@@ -432,8 +429,6 @@ class JobsData:
                         analysis_id=job_args["analysis_id"],
                     ),
                 )
-
-        await self._client.enqueue(workflow, document["_id"])
 
         return await self.get(document["_id"])
 
@@ -729,8 +724,6 @@ class JobsData:
         if latest_state not in ("waiting", "preparing", "running"):
             raise ResourceConflictError("Not cancellable")
 
-        await self._client.cancel(job_id)
-
         latest = document["status"][-1]
 
         async with both_transactions(self._mongo, self._pg) as (
@@ -856,7 +849,6 @@ class JobsData:
     async def force_delete(self) -> None:
         """Force the deletion of all jobs."""
         job_ids = await self._mongo.jobs.distinct("_id")
-        await gather(*[self._client.cancel(job_id) for job_id in job_ids])
         await self._mongo.jobs.delete_many({"_id": {"$in": job_ids}})
 
     async def timeout_stalled_jobs(self) -> int:

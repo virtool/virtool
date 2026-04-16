@@ -198,13 +198,6 @@ class JobsFakerDomain(DataFakerDomain):
             )
 
         if target_state != JobState.WAITING:
-            removed_count = await self._redis.lrem(f"jobs_{job.workflow}", 1, job.id)
-
-            if removed_count == 0:
-                raise ValueError(
-                    f"Job ID {job.id} not found in Redis list for workflow {job.workflow}.",
-                )
-
             job = await self._layer.jobs.acquire(job.id)
 
         previous_status = job.status[-1]

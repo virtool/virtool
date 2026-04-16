@@ -1,9 +1,4 @@
 # serializer version: 1
-# name: TestCreate.test_ok[force_choice][jobs_create_sample]
-  list([
-    'bf1b993c',
-  ])
-# ---
 # name: TestCreate.test_ok[force_choice][mongo]
   dict({
     '_id': 'fb085f7f',
@@ -56,11 +51,6 @@
     }),
   })
 # ---
-# name: TestCreate.test_ok[none][jobs_create_sample]
-  list([
-    'bf1b993c',
-  ])
-# ---
 # name: TestCreate.test_ok[none][mongo]
   dict({
     '_id': 'fb085f7f',
@@ -112,11 +102,6 @@
       'pathoscope': 'none',
     }),
   })
-# ---
-# name: TestCreate.test_ok[users_primary_group][jobs_create_sample]
-  list([
-    'bf1b993c',
-  ])
 # ---
 # name: TestCreate.test_ok[users_primary_group][mongo]
   dict({

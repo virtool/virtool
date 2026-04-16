@@ -24,7 +24,6 @@ from virtool.data.topg import (
 from virtool.data.transforms import apply_transforms
 from virtool.groups.models import GroupMinimal
 from virtool.groups.pg import SQLGroup
-from virtool.jobs.client import JobsClient
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.labels.transforms import AttachLabelsTransform
 from virtool.models.roles import AdministratorRole
@@ -62,12 +61,10 @@ class SamplesData(DataLayerDomain):
         config: Config,
         mongo: Mongo,
         pg: AsyncEngine,
-        jobs_client: JobsClient,
     ):
         self._config = config
         self._mongo = mongo
         self._pg = pg
-        self.jobs_client = jobs_client
 
     async def find(
         self,
