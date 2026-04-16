@@ -3,7 +3,6 @@
 import pytest
 from aiohttp import ClientSession
 from pytest_mock import MockerFixture
-from redis import Redis
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool.data.layer import DataLayer, create_data_layer
@@ -16,7 +15,6 @@ def data_layer(
     mocker: MockerFixture,
     mongo: Mongo,
     pg: AsyncEngine,
-    redis: Redis,
 ) -> DataLayer:
     """A complete data layer backed by testing instances of MongoDB, PostgreSQL, and
     Redis.
@@ -34,5 +32,4 @@ def data_layer(
         pg,
         config,
         mocker.Mock(spec=ClientSession),
-        redis,
     )

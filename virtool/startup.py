@@ -65,7 +65,6 @@ async def startup_data(app: App) -> None:
         app["pg"],
         get_config_from_app(app),
         get_http_session_from_app(app),
-        app["redis"],
     )
 
 

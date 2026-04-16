@@ -1,5 +1,3 @@
-from unittest.mock import call
-
 import arrow
 import pytest
 from pytest_mock import MockerFixture
@@ -9,7 +7,6 @@ from syrupy import SnapshotAssertion
 
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
-from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
 from virtool.jobs.models import JobState
 from virtool.jobs.pg import (
@@ -25,8 +22,8 @@ from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
 @pytest.fixture
-async def jobs_data(mongo, mocker, pg: AsyncEngine) -> JobsData:
-    return JobsData(mocker.Mock(spec=JobsClient), mongo, pg)
+async def jobs_data(mongo, pg: AsyncEngine) -> JobsData:
+    return JobsData(mongo, pg)
 
 
 async def test_cancel(
@@ -113,18 +110,21 @@ async def test_acquire(
     assert await mongo.jobs.find_one() == snapshot
 
 
-async def test_force_delete_jobs(fake: DataFaker, jobs_data: JobsData):
-    """Test that jobs can be force deleted and that the client is cancelled."""
+async def test_force_delete_jobs(
+    fake: DataFaker, jobs_data: JobsData, mongo, pg: AsyncEngine
+):
+    """Test that jobs can be force deleted."""
     user = await fake.users.create()
 
-    job_1 = await fake.jobs.create(user, state=JobState.RUNNING)
-    job_2 = await fake.jobs.create(user, state=JobState.PREPARING)
+    await fake.jobs.create(user, state=JobState.RUNNING)
+    await fake.jobs.create(user, state=JobState.PREPARING)
 
     await jobs_data.force_delete()
 
-    jobs_data._client.cancel.assert_has_calls(
-        [call(job_1.id), call(job_2.id)], any_order=True
-    )
+    assert await mongo.jobs.count_documents({}) == 0
+
+    async with AsyncSession(pg) as session:
+        assert (await session.execute(select(SQLJob))).scalar() is None
 
 
 class TestTimeoutStalledJobs:

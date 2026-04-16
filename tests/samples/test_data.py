@@ -13,7 +13,6 @@ from virtool.models.enums import LibraryType, Permission
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
-from virtool.redis import Redis
 from virtool.samples.models import WorkflowState
 from virtool.samples.oas import CreateSampleRequest
 from virtool.samples.utils import SampleRight
@@ -92,7 +91,6 @@ class TestCreate:
         mongo: Mongo,
         snapshot_recent,
         spawn_client: ClientSpawner,
-        redis: Redis,
     ):
         client = await spawn_client(
             authenticated=True,
@@ -143,9 +141,6 @@ class TestCreate:
         )
 
         assert sample == snapshot_recent(name="mongo")
-        assert await redis.lrange("jobs_create_sample", 0, -1) == snapshot_recent(
-            name="jobs_create_sample",
-        )
 
 
 async def test_finalize(
