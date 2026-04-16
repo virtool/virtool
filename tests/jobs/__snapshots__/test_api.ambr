@@ -868,7 +868,7 @@
     'progress': 0,
     'retries': 0,
     'stage': 'mk_analysis_dir',
-    'state': 'running',
+    'state': 'cancelled',
     'status': list([
       dict({
         'error': None,
@@ -893,6 +893,15 @@
         'progress': 0,
         'stage': 'mk_analysis_dir',
         'state': 'running',
+        'step_description': None,
+        'step_name': None,
+        'timestamp': '2015-10-06T20:00:00Z',
+      }),
+      dict({
+        'error': None,
+        'progress': 0,
+        'stage': 'mk_analysis_dir',
+        'state': 'cancelled',
         'step_description': None,
         'step_name': None,
         'timestamp': '2015-10-06T20:00:00Z',
