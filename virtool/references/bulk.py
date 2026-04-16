@@ -295,6 +295,9 @@ class OTUDataBulkUpdater:
 
             self._insert_sequences(otu_change)
 
+            if otu_change.is_complete:
+                await self.prepare_history(otu_change)
+
         return func
 
     def _insert_sequences(self, otu_change: OTUChange):

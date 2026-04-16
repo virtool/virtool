@@ -2143,6 +2143,93 @@
     }),
   ])
 # ---
+# name: TestUpdateRemoteReference.test_ok
+  dict({
+    '_id': 'bf1b993c',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'data_type': 'genome',
+    'description': 'Remote reference description',
+    'groups': list([
+    ]),
+    'installed': dict({
+      'body': 'This is a release.',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'filename': 'reference.json.gz',
+      'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0',
+      'id': 1,
+      'name': 'v1.0.0',
+      'newer': False,
+      'published_at': '2022-01-01T00:00:00Z',
+      'ready': True,
+      'size': 1024,
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    'internal_control': None,
+    'name': 'Remote Reference',
+    'organism': 'Updated Organism',
+    'release': dict({
+      'body': 'This is a release.',
+      'content_type': 'application/gzip',
+      'download_url': 'https://github.com/virtool/ref-plant-viruses/releases/download/v1.0.0/reference.json.gz',
+      'etag': 'etag',
+      'filename': 'reference.json.gz',
+      'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0',
+      'id': 1,
+      'name': 'v1.0.0',
+      'newer': False,
+      'published_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'retrieved_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'size': 1024,
+    }),
+    'remotes_from': dict({
+      'errors': list([
+      ]),
+      'slug': 'virtool/ref-plant-viruses',
+    }),
+    'restrict_source_types': False,
+    'source_types': list([
+      'isolate',
+      'strain',
+    ]),
+    'space': dict({
+      'id': 0,
+    }),
+    'targets': None,
+    'updates': list([
+      dict({
+        'body': 'This is a release.',
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'filename': 'reference.json.gz',
+        'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0',
+        'id': 1,
+        'name': 'v1.0.0',
+        'newer': True,
+        'published_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'ready': True,
+        'size': 1024,
+        'user': dict({
+          'id': 1,
+        }),
+      }),
+    ]),
+    'updating': False,
+    'user': dict({
+      'id': 1,
+    }),
+    'users': list([
+      dict({
+        'build': True,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'id': 1,
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      }),
+    ]),
+  })
+# ---
 # name: TestUpdateRemoteReference.test_otu_create[history]
   list([
     dict({
@@ -2655,243 +2742,6 @@
       }),
       'segment': '',
       'sequence': 'GGGGGGGGGGGGGGGG',
-    }),
-  ])
-# ---
-# name: TestUpdateRemoteReference.test_otu_delete[history]
-  list([
-    dict({
-      '_id': str,
-      'created_at': datetime,
-      'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OO',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_1a',
-                  'source_name': 'S3',
-                  'source_type': 'strain',
-                }),
-                dict({
-                  'default': False,
-                  'id': 'iso_db_1b',
-                  'source_name': 'NSW',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu one',
-              'name': 'OTU One',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r1',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'remote',
-      'otu': dict({
-        'id': str,
-        'name': 'OTU One',
-        'version': 0,
-      }),
-      'reference': dict({
-        'id': 'test_ref',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
-    }),
-    dict({
-      '_id': str,
-      'created_at': datetime,
-      'description': str,
-      'diff': 'postgres',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'update',
-      'otu': dict({
-        'id': str,
-        'name': 'OTU One',
-        'version': 1,
-      }),
-      'reference': dict({
-        'id': 'test_ref',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
-    }),
-    dict({
-      '_id': str,
-      'created_at': datetime,
-      'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OTH',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_3',
-                  'source_name': 'Type',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu three',
-              'name': 'OTU Three',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r3',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'remote',
-      'otu': dict({
-        'id': str,
-        'name': 'OTU Three',
-        'version': 0,
-      }),
-      'reference': dict({
-        'id': 'test_ref',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
-    }),
-    dict({
-      '_id': str,
-      'created_at': datetime,
-      'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OT',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_2',
-                  'source_name': 'Standard',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu two',
-              'name': 'OTU Two',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r2',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'remote',
-      'otu': dict({
-        'id': str,
-        'name': 'OTU Two',
-        'version': 0,
-      }),
-      'reference': dict({
-        'id': 'test_ref',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
-    }),
-    dict({
-      '_id': str,
-      'created_at': datetime,
-      'description': str,
-      'diff': 'postgres',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'update',
-      'otu': dict({
-        'id': str,
-        'name': 'OTU Two',
-        'version': 1,
-      }),
-      'reference': dict({
-        'id': 'test_ref',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
     }),
   ])
 # ---
@@ -4818,6 +4668,93 @@
       'sequence': 'CCCCCCCCCCCCCCCC',
     }),
   ])
+# ---
+# name: TestUpdateRemoteReference.test_with_deletion
+  dict({
+    '_id': 'bf1b993c',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'data_type': 'genome',
+    'description': 'Remote reference description',
+    'groups': list([
+    ]),
+    'installed': dict({
+      'body': 'This is a release.',
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'filename': 'reference.json.gz',
+      'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0',
+      'id': 1,
+      'name': 'v1.0.0',
+      'newer': False,
+      'published_at': '2022-01-01T00:00:00Z',
+      'ready': True,
+      'size': 1024,
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+    'internal_control': None,
+    'name': 'Remote Reference',
+    'organism': 'Updated Organism',
+    'release': dict({
+      'body': 'This is a release.',
+      'content_type': 'application/gzip',
+      'download_url': 'https://github.com/virtool/ref-plant-viruses/releases/download/v1.0.0/reference.json.gz',
+      'etag': 'etag',
+      'filename': 'reference.json.gz',
+      'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0',
+      'id': 1,
+      'name': 'v1.0.0',
+      'newer': False,
+      'published_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'retrieved_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'size': 1024,
+    }),
+    'remotes_from': dict({
+      'errors': list([
+      ]),
+      'slug': 'virtool/ref-plant-viruses',
+    }),
+    'restrict_source_types': False,
+    'source_types': list([
+      'isolate',
+      'strain',
+    ]),
+    'space': dict({
+      'id': 0,
+    }),
+    'targets': None,
+    'updates': list([
+      dict({
+        'body': 'This is a release.',
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'filename': 'reference.json.gz',
+        'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v1.0.0',
+        'id': 1,
+        'name': 'v1.0.0',
+        'newer': True,
+        'published_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'ready': True,
+        'size': 1024,
+        'user': dict({
+          'id': 1,
+        }),
+      }),
+    ]),
+    'updating': False,
+    'user': dict({
+      'id': 1,
+    }),
+    'users': list([
+      dict({
+        'build': True,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'id': 1,
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      }),
+    ]),
+  })
 # ---
 # name: TestUpdateUser.test_ok[mongo]
   dict({

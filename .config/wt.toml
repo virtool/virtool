@@ -1,2 +1,2 @@
 [pre-start]
-deps = "uv sync"
+deps = "mise trust && uv sync"
