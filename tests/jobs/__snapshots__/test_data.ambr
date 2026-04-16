@@ -76,13 +76,22 @@
     'progress': 0,
     'retries': 0,
     'stage': 'foo',
-    'state': <JobState.RUNNING: 'running'>,
+    'state': <JobState.CANCELLED: 'cancelled'>,
     'status': list([
       dict({
         'error': None,
         'progress': 0,
         'stage': 'foo',
         'state': <JobState.RUNNING: 'running'>,
+        'step_description': None,
+        'step_name': None,
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      }),
+      dict({
+        'error': None,
+        'progress': 0,
+        'stage': 'foo',
+        'state': <JobState.CANCELLED: 'cancelled'>,
         'step_description': None,
         'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
@@ -104,13 +113,22 @@
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'rights': dict({
     }),
-    'state': 'waiting',
+    'state': 'cancelled',
     'status': list([
       dict({
         'error': None,
         'progress': 0.33,
         'stage': 'foo',
         'state': 'running',
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+      }),
+      dict({
+        'error': None,
+        'progress': 0.33,
+        'stage': 'foo',
+        'state': 'cancelled',
+        'step_description': None,
+        'step_name': None,
         'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
       }),
     ]),
