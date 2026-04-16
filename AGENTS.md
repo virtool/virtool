@@ -159,6 +159,8 @@ Releases are automated with semantic-release.
 - Keep titles concise, lowercase
 - Include a body only when useful; keep it brief
 - Only push or create PRs when asked
+- Do not use `git -C` — it breaks allowed tools settings. Run git commands
+  from the working directory instead.
 
 ## Linear
 
