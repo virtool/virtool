@@ -1141,7 +1141,51 @@ class TestUpdateRemoteReference:
             otus=[_make_otu_r1(), _make_otu_r2()],
         )
 
-        await self._assert(ref_id, mongo, snapshot)
+        otus = await mongo.otus.find(
+            {"reference.id": ref_id}, sort=[("remote.id", 1)]
+        ).to_list(None)
+
+        assert otus == snapshot(
+            name="otus",
+            matcher=path_type(
+                {r".*_id": (str,), r".*\.created_at": (datetime.datetime,)},
+                regex=True,
+            ),
+        )
+
+        sequences = await mongo.sequences.find(
+            {"reference.id": ref_id}, sort=[("remote.id", 1)]
+        ).to_list(None)
+
+        assert sequences == snapshot(
+            name="sequences",
+            matcher=path_type(
+                {r".*_id": (str,), r".*\.otu_id": (str,)},
+                regex=True,
+            ),
+        )
+
+        history = await mongo.history.find({"reference.id": ref_id}).to_list(None)
+
+        history_by_key = {
+            (h["otu"]["name"], h["method_name"]): h for h in history
+        }
+
+        # 3 "remote" entries from the initial populate + 2 "update" entries for
+        # OTU One and OTU Two + 1 "remove" entry for OTU Three.
+        assert len(history) == 6
+
+        for name in ("OTU One", "OTU Two", "OTU Three"):
+            assert (name, "remote") in history_by_key
+
+        for name in ("OTU One", "OTU Two"):
+            entry = history_by_key[(name, "update")]
+            assert entry["otu"]["version"] == 1
+            assert entry["reference"]["id"] == ref_id
+
+        remove_entry = history_by_key[("OTU Three", "remove")]
+        assert remove_entry["otu"]["version"] == "removed"
+        assert remove_entry["reference"]["id"] == ref_id
 
     # -- Isolate-level tests --
 
