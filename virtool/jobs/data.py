@@ -724,7 +724,9 @@ class JobsData:
         if document is None:
             raise ResourceNotFoundError
 
-        if not check_job_is_running_or_waiting(document):
+        latest_status = get_latest_status(document)
+
+        if latest_status and latest_status.state in TERMINAL_JOB_STATES:
             raise ResourceConflictError("Not cancellable")
 
         await self._client.cancel(job_id)
