@@ -12,14 +12,6 @@
     dict({
       'error': None,
       'progress': 0,
-      'stage': None,
-      'state': <JobState.PREPARING: 'preparing'>,
-      'step_description': None,
-      'step_name': None,
-    }),
-    dict({
-      'error': None,
-      'progress': 0,
       'stage': 'raise_error',
       'state': <JobState.RUNNING: 'running'>,
       'step_description': 'Raise and error for testing purposes.',
@@ -41,14 +33,6 @@
 # ---
 # name: test_ok[status]
   list([
-    dict({
-      'error': None,
-      'progress': 0,
-      'stage': None,
-      'state': <JobState.PREPARING: 'preparing'>,
-      'step_description': None,
-      'step_name': None,
-    }),
     dict({
       'error': None,
       'progress': 0,

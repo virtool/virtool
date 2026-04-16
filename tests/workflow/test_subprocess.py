@@ -6,7 +6,6 @@ from structlog.testing import LogCapture
 
 from virtool.config.cls import WorkflowConfig
 from virtool.jobs.models import JobState, JobStatus
-from virtool.redis import Redis
 from virtool.workflow import RunSubprocess, Workflow
 from virtool.workflow.errors import SubprocessFailedError
 from virtool.workflow.pytest_plugin.data import WorkflowData
@@ -82,7 +81,6 @@ async def test_terminated_by_cancellation(
     cancel: bool,
     jobs_api_connection_string: str,
     log: LogCapture,
-    redis: Redis,
     redis_connection_string: str,
     static_time: StaticTime,
     tmp_path: Path,
@@ -100,10 +98,6 @@ async def test_terminated_by_cancellation(
             timestamp=static_time.datetime,
         ),
     ]
-
-    redis_list_name = "jobs_pathoscope"
-
-    await redis.rpush(redis_list_name, workflow_data.job.id)
 
     wf = Workflow()
 
@@ -145,6 +139,7 @@ async def test_terminated_by_cancellation(
                 redis_list_name="jobs_pathoscope",
                 sentry_dsn="",
                 timeout=5,
+                workflow="pathoscope",
                 work_path=work_path,
             ),
             workflow_loader=lambda: wf,

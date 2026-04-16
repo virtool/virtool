@@ -103,6 +103,7 @@ def workflow_config(
         redis_list_name="jobs_pathoscope",
         sentry_dsn="",
         timeout=5,
+        workflow="pathoscope",
         work_path=work_path,
     )
 

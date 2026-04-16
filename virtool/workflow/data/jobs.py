@@ -3,7 +3,7 @@ import traceback
 from pyfixtures import fixture
 from structlog import get_logger
 
-from virtool.jobs.models import Job, JobAcquired, JobState
+from virtool.jobs.models import Job, JobAcquired, JobClaimed, JobState
 from virtool.workflow import Workflow, WorkflowStep
 from virtool.workflow.client import WorkflowAPIClient
 
@@ -13,14 +13,15 @@ logger = get_logger("api")
 
 
 @fixture
-async def job(_api: WorkflowAPIClient, _job: JobAcquired) -> Job:
-    return Job.parse_obj(_job)
+async def job(_api: WorkflowAPIClient, _job: JobAcquired | JobClaimed) -> Job:
+    job_json = await _api.get_json(f"/jobs/{_job.id}")
+    return Job(**job_json)
 
 
 @fixture(scope="function")
 async def push_status(
     _api: WorkflowAPIClient,
-    _job: JobAcquired,
+    _job: JobAcquired | JobClaimed,
     _error: Exception | None,
     _state: JobState,
     _step: WorkflowStep | None,

@@ -102,6 +102,8 @@ def workflow_data(
 
     job: JobAcquired = JobFactory.build()
 
+    job.id = "1"
+    job.acquired = False
     job.args = {
         "item_id": 1211,
         "resource_id": "foo",

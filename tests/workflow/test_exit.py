@@ -45,25 +45,9 @@ async def wait_for_job_progress(
     return False
 
 
-async def wait_for_job_consumption(
-    redis: Redis, list_name: str, job_id: str, timeout: float = 10.0
-):
-    """Wait for a job ID to be consumed from the Redis list."""
-    start_time = time.time()
-
-    while time.time() - start_time < timeout:
-        # Check if job is still in the list
-        jobs = await redis.lrange(list_name, 0, -1)
-        if job_id not in jobs:
-            return True
-        await asyncio.sleep(0.1)
-
-    return False
-
-
+@pytest.mark.timeout(30)
 async def test_cancellation(
     log: LogCapture,
-    redis: Redis,
     static_time: StaticTime,
     workflow_config: WorkflowConfig,
     workflow_data: WorkflowData,
@@ -77,10 +61,6 @@ async def test_cancellation(
             timestamp=static_time.datetime,
         ),
     ]
-
-    redis_list_name = "jobs_pathoscope"
-
-    await redis.rpush(redis_list_name, workflow_data.job.id)
 
     wf = Workflow()
 
@@ -131,12 +111,10 @@ async def test_cancellation(
 
 async def test_timeout(
     log: StructuredLogCapture,
-    workflow_config: WorkflowConfig,
+    redis_connection_string: str,
+    tmp_path,
 ):
-    """Test that the runner exits if no job ID can be pulled from Redis before the timeout.
-
-    This situation does not involve a status update being sent to the server.
-    """
+    """Test that the runner exits if no job can be claimed before the timeout."""
     wf = Workflow()
 
     @wf.step
@@ -149,12 +127,25 @@ async def test_timeout(
         """Description of Second."""
         await asyncio.sleep(2)
 
+    config = WorkflowConfig(
+        dev=False,
+        jobs_api_connection_string="http://localhost:1",
+        mem=4,
+        proc=2,
+        redis_connection_string=redis_connection_string,
+        redis_list_name="",
+        sentry_dsn="",
+        timeout=3,
+        workflow="pathoscope",
+        work_path=tmp_path / "work",
+    )
+
     await start_runtime(
-        workflow_config,
+        config,
         workflow_loader=lambda: wf,
     )
 
-    assert log.has("timed out while waiting for job id", level="warning")
+    assert log.has("timed out while waiting for job", level="warning")
 
 
 @pytest.mark.timeout(30)
@@ -206,6 +197,7 @@ async def main():
             redis_list_name="jobs_pathoscope",
             sentry_dsn="",
             timeout=10,
+            workflow="pathoscope",
             work_path=Path("{workflow_config.work_path}"),
         ),
         workflow_loader=lambda: wf,
@@ -226,11 +218,6 @@ if __name__ == "__main__":
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
-
-    await redis.rpush("jobs_pathoscope", workflow_data.job.id)
-
-    # Wait for the job to be consumed from Redis (ensures workflow picked it up)
-    await wait_for_job_consumption(redis, "jobs_pathoscope", workflow_data.job.id)
 
     # Wait for the job to start running, then give it time to start the first step.
     await wait_for_job_status(workflow_data, [JobState.RUNNING])

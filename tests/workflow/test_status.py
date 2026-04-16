@@ -6,11 +6,41 @@ from syrupy import SnapshotAssertion
 from syrupy.filters import props
 
 from virtool.config.cls import WorkflowConfig
-from virtool.jobs.models import JobState, JobStatus
+from virtool.jobs.models import (
+    JobClaim,
+    JobClaimed,
+    JobState,
+    JobStateV2,
+    JobStatus,
+    WorkflowV2,
+)
 from virtool.workflow import Workflow, hooks
 from virtool.workflow.pytest_plugin.data import WorkflowData
 from virtool.workflow.runtime.events import Events
 from virtool.workflow.runtime.run import run_workflow
+
+
+def _make_claimed_job(workflow_data: WorkflowData) -> JobClaimed:
+    """Build a JobClaimed object from workflow test data."""
+    return JobClaimed(
+        id=int(workflow_data.job.id),
+        acquired=True,
+        claim=JobClaim(
+            runner_id="test-runner",
+            mem=4.0,
+            cpu=2.0,
+            image="unknown",
+            runtime_version="0.0.0",
+            workflow_version="0.0.0",
+        ),
+        claimed_at=datetime.now(tz=None),
+        created_at=workflow_data.job.created_at,
+        key=workflow_data.job.key,
+        state=JobStateV2.RUNNING,
+        steps=[],
+        user=workflow_data.job.user,
+        workflow=WorkflowV2(workflow_data.job.workflow),
+    )
 
 
 async def test_ok(
@@ -21,6 +51,7 @@ async def test_ok(
     """Test that status is reported normally in a successful workflow run."""
     wf = Workflow()
 
+    workflow_data.job.workflow = "pathoscope"
     workflow_data.job.status = [
         JobStatus(
             progress=0,
@@ -60,7 +91,11 @@ async def test_ok(
         assert workflow_data.job.status[-1].state == JobState.COMPLETE
 
     await run_workflow(
-        workflow_config, workflow_data.job.id, wf, Events(), get_logger("test")
+        workflow_config,
+        _make_claimed_job(workflow_data),
+        wf,
+        Events(),
+        get_logger("test"),
     )
 
     assert on_success_called is True
@@ -77,6 +112,7 @@ async def test_error(
     workflow_data: WorkflowData,
 ):
     """Test that an error raised in workflow step is reported."""
+    workflow_data.job.workflow = "pathoscope"
     workflow_data.job.status = [
         JobStatus(
             progress=0,
@@ -119,7 +155,7 @@ async def test_error(
 
     await run_workflow(
         workflow_config,
-        workflow_data.job.id,
+        _make_claimed_job(workflow_data),
         wf,
         Events(),
         get_logger("test"),
