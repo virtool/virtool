@@ -110,7 +110,9 @@ async def test_acquire(
     assert await mongo.jobs.find_one() == snapshot
 
 
-async def test_force_delete_jobs(fake: DataFaker, jobs_data: JobsData, mongo):
+async def test_force_delete_jobs(
+    fake: DataFaker, jobs_data: JobsData, mongo, pg: AsyncEngine
+):
     """Test that jobs can be force deleted."""
     user = await fake.users.create()
 
@@ -120,6 +122,9 @@ async def test_force_delete_jobs(fake: DataFaker, jobs_data: JobsData, mongo):
     await jobs_data.force_delete()
 
     assert await mongo.jobs.count_documents({}) == 0
+
+    async with AsyncSession(pg) as session:
+        assert (await session.execute(select(SQLJob))).scalar() is None
 
 
 class TestTimeoutStalledJobs:

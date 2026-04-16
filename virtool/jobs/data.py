@@ -10,7 +10,7 @@ from virtool.users.models_base import UserNested
 if TYPE_CHECKING:
     from pymongo.results import UpdateResult
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
@@ -850,6 +850,10 @@ class JobsData:
         """Force the deletion of all jobs."""
         job_ids = await self._mongo.jobs.distinct("_id")
         await self._mongo.jobs.delete_many({"_id": {"$in": job_ids}})
+
+        async with AsyncSession(self._pg) as session:
+            await session.execute(delete(SQLJob))
+            await session.commit()
 
     async def timeout_stalled_jobs(self) -> int:
         """Timeout stalled jobs.
