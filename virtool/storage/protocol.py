@@ -36,8 +36,7 @@ class StorageBackend(Protocol):
     async def delete(self, key: str) -> None:
         """Delete the object at ``key``.
 
-        Raises :class:`~virtool.storage.errors.StorageKeyNotFoundError` if the
-        key does not exist.
+        Idempotent: succeeds silently if the key does not exist.
         """
         ...
 
