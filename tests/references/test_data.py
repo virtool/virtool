@@ -1167,9 +1167,7 @@ class TestUpdateRemoteReference:
 
         history = await mongo.history.find({"reference.id": ref_id}).to_list(None)
 
-        history_by_key = {
-            (h["otu"]["name"], h["method_name"]): h for h in history
-        }
+        history_by_key = {(h["otu"]["name"], h["method_name"]): h for h in history}
 
         # 3 "remote" entries from the initial populate + 2 "update" entries for
         # OTU One and OTU Two + 1 "remove" entry for OTU Three.
