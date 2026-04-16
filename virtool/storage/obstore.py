@@ -4,6 +4,7 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 import obstore as obs
+from obstore.exceptions import GenericError
 
 from virtool.storage.errors import StorageError, StorageKeyNotFoundError
 from virtool.storage.protocol import STORAGE_CHUNK_SIZE
@@ -60,6 +61,11 @@ class ObstoreProvider:
             await obs.delete_async(self._store, key)
         except FileNotFoundError:
             pass
+        except GenericError as exc:
+            # Some S3-compatible backends (e.g. Garage) return NoSuchKey on
+            # delete of a missing object instead of the 204 that AWS returns.
+            if "NoSuchKey" not in str(exc):
+                raise StorageError(str(exc)) from exc
         except Exception as exc:
             raise StorageError(str(exc)) from exc
 

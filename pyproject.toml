@@ -71,6 +71,9 @@ asyncio_default_test_loop_scope = "session"
 
 testpaths = ["tests"]
 timeout = 10
+markers = [
+  "storage_integration: tests exercising real S3-compatible (Garage) and Azure-compatible (Azurite) storage services running in docker-compose",
+]
 
 [tool.ruff]
 exclude = [
