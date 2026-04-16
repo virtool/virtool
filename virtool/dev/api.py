@@ -27,7 +27,7 @@ async def dev(request):
         mongo = get_mongo_from_app(app)
         pg = app["pg"]
 
-        fake = DataFaker(layer, mongo, pg, request["redis"])
+        fake = DataFaker(layer, mongo, pg)
 
         user = await fake.users.create()
         upload = await fake.uploads.create(

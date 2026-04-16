@@ -7,7 +7,6 @@ from structlog.testing import LogCapture
 
 from virtool.config.cls import WorkflowConfig
 from virtool.jobs.models import JobState, JobStatus
-from virtool.redis import Redis
 from virtool.workflow import Workflow
 from virtool.workflow.pytest_plugin.data import WorkflowData
 from virtool.workflow.pytest_plugin.utils import StaticTime
@@ -111,7 +110,6 @@ async def test_cancellation(
 
 async def test_timeout(
     log: StructuredLogCapture,
-    redis_connection_string: str,
     tmp_path,
 ):
     """Test that the runner exits if no job can be claimed before the timeout."""
@@ -132,8 +130,6 @@ async def test_timeout(
         jobs_api_connection_string="http://localhost:1",
         mem=4,
         proc=2,
-        redis_connection_string=redis_connection_string,
-        redis_list_name="",
         sentry_dsn="",
         timeout=3,
         workflow="pathoscope",
@@ -151,8 +147,6 @@ async def test_timeout(
 @pytest.mark.timeout(30)
 async def test_sigterm(
     jobs_api_connection_string: str,
-    redis: Redis,
-    redis_connection_string: str,
     static_time: StaticTime,
     workflow_config: WorkflowConfig,
     workflow_data: WorkflowData,
@@ -193,8 +187,6 @@ async def main():
             jobs_api_connection_string="{jobs_api_connection_string}",
             mem=4,
             proc=2,
-            redis_connection_string="{redis_connection_string}",
-            redis_list_name="jobs_pathoscope",
             sentry_dsn="",
             timeout=10,
             workflow="pathoscope",

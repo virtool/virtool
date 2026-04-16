@@ -91,16 +91,12 @@ def work_path(tmp_path) -> Path:
 
 
 @pytest.fixture
-def workflow_config(
-    jobs_api_connection_string: str, redis_connection_string: str, work_path: Path
-) -> WorkflowConfig:
+def workflow_config(jobs_api_connection_string: str, work_path: Path) -> WorkflowConfig:
     return WorkflowConfig(
         dev=False,
         jobs_api_connection_string=jobs_api_connection_string,
         mem=4,
         proc=2,
-        redis_connection_string=redis_connection_string,
-        redis_list_name="jobs_pathoscope",
         sentry_dsn="",
         timeout=5,
         workflow="pathoscope",

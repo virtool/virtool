@@ -9,7 +9,6 @@ from virtool.config.cls import TaskRunnerConfig, TaskSpawnerConfig
 from virtool.shutdown import (
     shutdown_executors,
     shutdown_http_client,
-    shutdown_redis,
     shutdown_scheduler,
 )
 from virtool.startup import (
@@ -60,7 +59,6 @@ def run_task_runner(config: TaskRunnerConfig) -> None:
             shutdown_scheduler,
             shutdown_http_client,
             shutdown_executors,
-            shutdown_redis,
         ],
     )
 
@@ -99,7 +97,7 @@ def run_task_spawner(config: TaskSpawnerConfig) -> None:
     )
 
     app.on_shutdown.extend(
-        [shutdown_http_client, shutdown_executors, shutdown_scheduler, shutdown_redis],
+        [shutdown_http_client, shutdown_executors, shutdown_scheduler],
     )
 
     aiohttp.web.run_app(app=app, host=config.host, port=config.port)

@@ -27,17 +27,6 @@ async def shutdown_http_client(app: Application) -> None:
     await get_http_session_from_app(app).close()
 
 
-async def shutdown_redis(app: Application) -> None:
-    """Attempt to close the application :class:`Redis` instance.
-
-    :param app: the application object
-    """
-    logger.info("closing redis connection")
-
-    with suppress(KeyError):
-        await app["redis"].close()
-
-
 async def shutdown_scheduler(app: Application) -> None:
     """Cancel all background tasks.
 

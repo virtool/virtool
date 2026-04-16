@@ -1,8 +1,4 @@
-"""PostgreSQL-based session data layer.
-
-This replaces the Redis-based session storage with PostgreSQL while maintaining
-the same API interface as the original SessionData class.
-"""
+"""PostgreSQL-based session data layer."""
 
 import secrets
 from datetime import timedelta
@@ -20,11 +16,7 @@ from virtool.utils import hash_key
 
 
 class SessionData(DataLayerDomain):
-    """PostgreSQL-based session data layer.
-
-    Provides the same interface as the Redis-based SessionData but stores
-    sessions in PostgreSQL for better consistency and transaction support.
-    """
+    """PostgreSQL-based session data layer."""
 
     def __init__(self, pg: AsyncEngine) -> None:
         """Initialize a the sessions data layer domain."""

@@ -18,7 +18,6 @@ from virtool.startup import (
     startup_settings,
     startup_version,
 )
-from virtool.types import App
 
 
 async def create_app(config: ServerConfig):
@@ -52,16 +51,7 @@ async def create_app(config: ServerConfig):
         ],
     )
 
-    app.on_shutdown.extend([shutdown])
-
     return app
-
-
-async def shutdown(app: App) -> None:
-    try:
-        await app["redis"].close()
-    except KeyError:
-        ...
 
 
 def run_jobs_server(config: ServerConfig) -> None:

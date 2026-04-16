@@ -24,7 +24,6 @@ from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.mongo.identifier import FakeIdProvider
 from virtool.mongo.utils import get_mongo_from_app
-from virtool.redis import Redis
 from virtool.users.models import User
 from virtool.users.oas import UpdateUserRequest
 from virtool.utils import hash_key
@@ -274,8 +273,6 @@ def spawn_client(
     mongo_name: str,
     pg_connection_string: str,
     pg: AsyncEngine,
-    redis: Redis,
-    redis_connection_string: str,
 ) -> ClientSpawner:
     """A factory for spawning test clients
 
@@ -414,13 +411,11 @@ def spawn_client(
             port=9950,
             postgres_connection_string=pg_connection_string,
             real_ip_header="",
-            redis_connection_string=redis_connection_string,
             sentry_dsn="",
         )
 
         mocker.patch("virtool.startup.connect_pg", return_value=pg)
         mocker.patch("virtool.startup.connect_mongo", return_value=mongo)
-        mocker.patch("virtool.startup._connect_redis", return_value=redis)
 
         app = create_app(config)
 
@@ -490,7 +485,6 @@ def spawn_job_client(
     mongo_name: str,
     pg: AsyncEngine,
     pg_connection_string: str,
-    redis_connection_string: str,
     mocker,
 ) -> JobClientSpawner:
     """A factory method for creating an aiohttp client which can authenticate with the
@@ -533,7 +527,6 @@ def spawn_job_client(
                 port=9950,
                 postgres_connection_string=pg_connection_string,
                 real_ip_header="",
-                redis_connection_string=redis_connection_string,
                 sentry_dsn="",
             ),
         )
