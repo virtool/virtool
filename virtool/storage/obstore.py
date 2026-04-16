@@ -1,6 +1,9 @@
 """Storage backend implementation using the obstore library."""
 
 from collections.abc import AsyncIterator
+from typing import Any
+
+import obstore as obs
 
 from virtool.storage.errors import StorageError, StorageKeyNotFoundError
 from virtool.storage.protocol import STORAGE_CHUNK_SIZE
@@ -14,13 +17,13 @@ class ObstoreProvider:
     object. The caller is responsible for configuring the store.
     """
 
-    def __init__(self, store) -> None:
+    def __init__(self, store: Any) -> None:
         self._store = store
 
     async def read(self, key: str) -> AsyncIterator[bytes]:
         """Stream the contents of the object at ``key`` as chunks of bytes."""
         try:
-            result = await self._store.get_async(key)
+            result = await obs.get_async(self._store, key)
         except FileNotFoundError as exc:
             raise StorageKeyNotFoundError(key) from exc
 
@@ -38,7 +41,8 @@ class ObstoreProvider:
                 yield chunk
 
         try:
-            await self._store.put_async(
+            await obs.put_async(
+                self._store,
                 key,
                 _counting_iter(),
                 chunk_size=STORAGE_CHUNK_SIZE,
@@ -53,7 +57,7 @@ class ObstoreProvider:
     async def delete(self, key: str) -> None:
         """Delete the object at ``key``. Idempotent."""
         try:
-            await self._store.delete_async(key)
+            await obs.delete_async(self._store, key)
         except FileNotFoundError:
             pass
         except Exception as exc:
@@ -61,10 +65,8 @@ class ObstoreProvider:
 
     async def list(self, prefix: str) -> AsyncIterator[StorageObjectInfo]:
         """List objects whose keys start with ``prefix``."""
-        stream = self._store.list(prefix=prefix)
-
-        async for chunk in stream:
-            for meta in chunk:
+        async for batch in obs.list(self._store, prefix=prefix):
+            for meta in batch:
                 yield StorageObjectInfo(
                     key=meta["path"],
                     size=meta["size"],
