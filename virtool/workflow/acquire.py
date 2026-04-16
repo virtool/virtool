@@ -85,7 +85,7 @@ async def claim_job_by_polling(
     :return: the claimed job
     """
     async with ClientSession(
-        connector=TCPConnector(force_close=True, limit=100),
+        connector=TCPConnector(limit=100),
     ) as session:
         while True:
             try:
@@ -109,7 +109,9 @@ async def claim_job_by_polling(
                         body=await resp.text(),
                     )
 
-                    raise JobsAPIError("Unexpected API error during job claim")
+                    raise JobsAPIError(
+                        f"Unexpected API error during job claim: {resp.status}",
+                    )
 
             except ClientConnectionError:
                 logger.warning(
