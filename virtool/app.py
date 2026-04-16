@@ -17,7 +17,6 @@ from virtool.routes import setup_routes
 from virtool.shutdown import (
     shutdown_executors,
     shutdown_http_client,
-    shutdown_redis,
     shutdown_scheduler,
 )
 from virtool.startup import (
@@ -109,7 +108,6 @@ def create_app(config: Config):
             shutdown_http_client,
             shutdown_executors,
             shutdown_scheduler,
-            shutdown_redis,
         ]
     )
 

@@ -7,7 +7,6 @@ from virtool.hmm.tasks import HMMRefreshTask
 from virtool.jobs.tasks import JobsTimeoutTask
 from virtool.ml.tasks import MLModelsSyncTask
 from virtool.pg.utils import connect_pg
-from virtool.redis import Redis
 from virtool.references.tasks import ReferenceReleasesRefreshTask, ReferencesCleanTask
 from virtool.samples.tasks import (
     SampleWorkflowsUpdateTask,
@@ -26,20 +25,13 @@ async def startup_data_layer_for_spawner(app: Application) -> None:
 
 
 async def startup_databases_for_spawner(app: Application) -> None:
-    """Create Redis and Postgres connections.
+    """Create the Postgres connection.
 
     :param app: the app object
     """
     config = get_config_from_app(app)
 
-    redis = Redis(config.redis_connection_string)
-
-    pg, _ = await asyncio.gather(
-        connect_pg(config.pg_options),
-        redis.connect(),
-    )
-
-    app.update({"pg": pg, "redis": redis})
+    app["pg"] = await connect_pg(config.pg_options)
 
 
 async def startup_task_spawner(app: Application) -> None:

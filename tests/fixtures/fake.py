@@ -10,7 +10,6 @@ from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.fake.wrapper import FakerWrapper
 from virtool.mongo.core import Mongo
-from virtool.redis import Redis
 
 
 @pytest.fixture
@@ -31,7 +30,6 @@ def fake(
     mocker: MockerFixture,
     mongo: Mongo,
     pg: AsyncEngine,
-    redis: Redis,
 ):
     """Provides a :class:`DataFaker` object for generating deterministic fake data.
 
@@ -56,4 +54,4 @@ def fake(
         ),
     )
 
-    return DataFaker(data_layer, mongo, pg, redis)
+    return DataFaker(data_layer, mongo, pg)

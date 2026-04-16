@@ -55,7 +55,6 @@ class ServerConfig:
     port: int
     postgres_connection_string: str
     real_ip_header: str
-    redis_connection_string: str
     sentry_dsn: str | None
 
     @property
@@ -81,7 +80,6 @@ class TaskRunnerConfig:
     no_revision_check: bool
     port: int
     postgres_connection_string: str
-    redis_connection_string: str
     sentry_dsn: str
 
     @property
@@ -104,7 +102,6 @@ class TaskSpawnerConfig:
     host: str
     port: int
     postgres_connection_string: str
-    redis_connection_string: str
     sentry_dsn: str
 
     @property
@@ -126,12 +123,6 @@ class WorkflowConfig(BaseModel):
 
     proc: int
     """The number of processors available to the workflow run."""
-
-    redis_connection_string: str
-    """The connection string for the Redis database."""
-
-    redis_list_name: str
-    """The name of the redis list to pull job IDs from."""
 
     sentry_dsn: str
     """The DNS for reporting to Sentry."""

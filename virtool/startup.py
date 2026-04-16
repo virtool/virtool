@@ -17,7 +17,6 @@ from virtool.mongo.connect import connect_mongo
 from virtool.mongo.migrate import migrate_status
 from virtool.mongo.utils import get_mongo_from_app
 from virtool.pg.utils import connect_pg
-from virtool.redis import Redis
 from virtool.references.tasks import ReferenceReleasesRefreshTask, ReferencesCleanTask
 from virtool.routes import setup_routes
 from virtool.samples.tasks import SampleWorkflowsUpdateTask
@@ -30,12 +29,6 @@ from virtool.version import determine_server_version, get_version_from_app
 from virtool.ws.server import WSServer
 
 logger = get_logger("startup")
-
-
-async def _connect_redis(redis_connection_string: str) -> Redis:
-    redis = Redis(redis_connection_string)
-    await redis.connect()
-    return redis
 
 
 async def startup_check_db(app: App):
@@ -69,20 +62,19 @@ async def startup_data(app: App) -> None:
 
 
 async def startup_databases(app: App) -> None:
-    """Connects to MongoDB, Redis and Postgres concurrently
+    """Connect to MongoDB and Postgres concurrently.
 
     :param app: the app object
 
     """
     config = get_config_from_app(app)
 
-    mongo, pg, redis = await asyncio.gather(
+    mongo, pg = await asyncio.gather(
         connect_mongo(
             config.mongodb_connection_string,
             config.mongodb_database,
         ),
         connect_pg(config.pg_options),
-        _connect_redis(config.redis_connection_string),
     )
 
     if not get_config_from_app(app).no_revision_check:
@@ -92,7 +84,6 @@ async def startup_databases(app: App) -> None:
         {
             "mongo": mongo,
             "pg": pg,
-            "redis": redis,
         },
     )
 

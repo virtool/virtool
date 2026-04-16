@@ -38,7 +38,6 @@ from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.otus.models import OTU, OTUSegment
 from virtool.otus.oas import CreateOTURequest
-from virtool.redis import Redis
 from virtool.references.tasks import (
     CloneReferenceTask,
     ReferenceReleasesRefreshTask,
@@ -111,11 +110,10 @@ class VirtoolProvider(BaseProvider):
 
 
 class DataFaker:
-    def __init__(self, layer: DataLayer, mongo: Mongo, pg: AsyncEngine, redis: Redis):
+    def __init__(self, layer: DataLayer, mongo: Mongo, pg: AsyncEngine):
         self.layer = layer
         self.mongo = mongo
         self.pg = pg
-        self.redis = redis
 
         self.faker = Faker()
         self.faker.seed_instance(0)
@@ -149,7 +147,6 @@ class DataFakerDomain:
         self._layer: DataLayer = data_faker.layer
         self._mongo = data_faker.mongo
         self._pg = data_faker.pg
-        self._redis = data_faker.redis
 
         self.history = []
 

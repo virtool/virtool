@@ -1,13 +1,13 @@
 # Virtool
 
 Viral infection diagnostics using next-generation sequencing. Python 3.13+ async
-API server using aiohttp, with PostgreSQL, MongoDB, and Redis backends.
+API server using aiohttp, with PostgreSQL and MongoDB backends.
 
 ## Tooling
 
 ### Testing
 
-Tests run in Docker containers with PostgreSQL, MongoDB, and Redis services.
+Tests run in Docker containers with PostgreSQL and MongoDB services.
 
 ```bash
 # Run full test suite
@@ -45,7 +45,6 @@ All shared fixtures live in `tests/fixtures/` (not conftest.py). Key fixtures:
 - `fake` - `DataFaker` for creating test entities (`fake.users.create()`, etc.)
 - `mongo` - function-scoped Motor database (dropped after each test)
 - `pg` / `engine` - session-scoped SQLAlchemy `AsyncEngine`
-- `redis` - function-scoped Redis client (flushed after each test)
 - `snapshot_recent` - Syrupy snapshot with timestamp normalization
 
 Snapshots are stored in `__snapshots__/*.ambr` directories alongside tests.
@@ -98,7 +97,7 @@ Use `virtool migration create` to write new Virtool migrations (Alembic-based).
 
 - `virtool/` - Main package
   - `api/` - API middleware and route handlers
-  - `data/` - Unified data layer abstracting SQL/Mongo/Redis (`layer.py`)
+  - `data/` - Unified data layer abstracting SQL and Mongo (`layer.py`)
   - `pg/` - PostgreSQL models and utilities (SQLAlchemy 2.0+, asyncpg)
   - `mongo/` - MongoDB utilities (motor)
   - `migration/` - Database migrations (Alembic)
@@ -114,7 +113,7 @@ Use `virtool migration create` to write new Virtool migrations (Alembic-based).
 
 - `virtool server api` - Main API server (port 9950)
 - `virtool server jobs` - Jobs API server
-- `virtool tasks runner` - Task runner (pulls from Redis)
+- `virtool tasks runner` - Task runner
 - `virtool tasks spawner` - Task scheduler
 
 ### Data Layer

@@ -47,7 +47,6 @@ dependencies = [
   "structlog-sentry<3.0.0,>=2.1.0",
   "visvalingamwyatt<1.0.0,>=0.1.4",
   "obstore>=0.5.0",
-  "redis<7.0.0,>=6.2.0",
   "enum-tools<1.0.0,>=0.13.0",
   "aiofiles>=24.1.0",
   "pydantic-factories>=1.17.3",
@@ -64,8 +63,8 @@ virtool = "virtool.workflow.pytest_plugin"
 asyncio_mode = "auto"
 
 # Session-scoped event loops required for session-scoped async database connections.
-# Async database drivers (asyncpg, motor, redis) create connection pools bound to
-# the event loop they're created in and cannot be used across different loops.
+# Async database drivers (asyncpg, motor) create connection pools bound to the event
+# loop they're created in and cannot be used across different loops.
 asyncio_default_fixture_loop_scope = "session"
 asyncio_default_test_loop_scope = "session"
 

@@ -39,7 +39,7 @@ class FilesystemProvider:
         if not await asyncio.to_thread(path.is_file):
             raise StorageKeyNotFoundError(key)
 
-        f = await asyncio.to_thread(open, path, "rb")  # noqa: ASYNC230
+        f = await asyncio.to_thread(open, path, "rb")
         try:
             while True:
                 chunk = await asyncio.to_thread(f.read, STORAGE_CHUNK_SIZE)
