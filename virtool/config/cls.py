@@ -137,7 +137,10 @@ class WorkflowConfig(BaseModel):
     """The DNS for reporting to Sentry."""
 
     timeout: int
-    """How long to wait for a job ID from Redis."""
+    """How long to wait for a job to claim."""
+
+    workflow: str
+    """The workflow name this runner handles (e.g. 'pathoscope', 'nuvs')."""
 
     work_path: Path
     """The path to a directory where the workflow can store temporary files."""

@@ -1,5 +1,7 @@
 import asyncio
+import os
 import signal
+import socket
 import sys
 from asyncio import CancelledError
 from collections.abc import Callable
@@ -9,12 +11,17 @@ from pyfixtures import FixtureScope, runs_in_new_fixture_context
 from structlog import get_logger
 
 from virtool.config.cls import WorkflowConfig
-from virtool.jobs.models import JobState
+from virtool.jobs.models import (
+    CreateJobClaimRequest,
+    JobClaimed,
+    JobState,
+    JobStepDefinition,
+)
 from virtool.logs import configure_logging
 from virtool.redis import Redis
 from virtool.sentry import configure_sentry
 from virtool.version import get_virtool_version
-from virtool.workflow.acquire import acquire_job_by_id
+from virtool.workflow.acquire import claim_job_by_polling
 from virtool.workflow.client import api_client
 from virtool.workflow.hooks import (
     cleanup_builtin_status_hooks,
@@ -37,10 +44,7 @@ from virtool.workflow.runtime.discover import (
 from virtool.workflow.runtime.events import Events
 from virtool.workflow.runtime.path import create_work_path
 from virtool.workflow.runtime.ping import ping_periodically
-from virtool.workflow.runtime.redis import (
-    get_next_job_id,
-    wait_for_cancellation,
-)
+from virtool.workflow.runtime.redis import wait_for_cancellation
 from virtool.workflow.utils import get_workflow_version
 from virtool.workflow.workflow import Workflow
 
@@ -151,7 +155,7 @@ async def execute(
 
 async def run_workflow(
     config: WorkflowConfig,
-    job_id: str,
+    claimed_job: JobClaimed,
     workflow: Workflow,
     events: Events,
     logger,
@@ -161,13 +165,13 @@ async def run_workflow(
 
     load_builtin_fixtures()
 
-    job = await acquire_job_by_id(config.jobs_api_connection_string, job_id)
+    job_id = str(claimed_job.id)
 
     async with (
         api_client(
             config.jobs_api_connection_string,
-            job.id,
-            job.key,
+            job_id,
+            claimed_job.key,
         ) as api,
         FixtureScope() as scope,
     ):
@@ -176,7 +180,7 @@ async def run_workflow(
         scope["_api"] = api
         scope["_config"] = config
         scope["_error"] = None
-        scope["_job"] = job
+        scope["_job"] = claimed_job
         scope["_state"] = JobState.WAITING
         scope["_step"] = None
         scope["_workflow"] = workflow
@@ -191,7 +195,7 @@ async def run_workflow(
             "workflow",
             {
                 "runtime_version": get_virtool_version(),
-                "workflow_name": job.workflow,
+                "workflow_name": claimed_job.workflow.value,
                 "workflow_version": get_workflow_version(),
                 "job_id": job_id,
             },
@@ -211,10 +215,11 @@ async def start_runtime(
 ) -> None:
     """Start the workflow runtime.
 
-    The runtime loads the workflow and fixtures. It then waits for a job ID to be pushed
-    to the configured Redis list.
+    The runtime loads the workflow and fixtures. It then polls the jobs API to
+    claim a job via ``POST /jobs/claim``.
 
-    When a job ID is received, the runtime acquires the job from the jobs API and
+    When a job is claimed, the runtime runs the workflow and listens for
+    cancellation signals via Redis.
     """
     configure_logging(bool(config.sentry_dsn))
 
@@ -231,22 +236,42 @@ async def start_runtime(
 
     configure_sentry(config.sentry_dsn, release=get_workflow_version())
 
-    async with Redis(config.redis_connection_string) as redis:
-        try:
-            async with asyncio.timeout(config.timeout):
-                job_id = await get_next_job_id(config.redis_list_name, redis)
-        except TimeoutError:
-            # This happens due to Kubernetes scheduling issues or job cancellations. It
-            # is not an error.
-            logger.warning("timed out while waiting for job id")
-            return
+    claim_request = CreateJobClaimRequest(
+        runner_id=f"{socket.gethostname()}-{os.getpid()}",
+        mem=float(config.mem),
+        cpu=float(config.proc),
+        image=os.environ.get("VT_IMAGE", "unknown"),
+        runtime_version=get_virtool_version(),
+        workflow_version=get_workflow_version(),
+        steps=[
+            JobStepDefinition(
+                id=step.function.__name__,
+                name=step.display_name,
+                description=step.description,
+            )
+            for step in workflow.steps
+        ],
+    )
+
+    try:
+        async with asyncio.timeout(config.timeout):
+            claimed_job = await claim_job_by_polling(
+                config.jobs_api_connection_string,
+                config.workflow,
+                claim_request,
+            )
+    except TimeoutError:
+        logger.warning("timed out while waiting for job")
+        return
+
+    job_id = str(claimed_job.id)
 
     events = Events()
 
     run_workflow_task = asyncio.create_task(
         run_workflow(
             config,
-            job_id,
+            claimed_job,
             workflow,
             events,
             logger,

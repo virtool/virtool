@@ -7,11 +7,11 @@
       'resource_id': 'foo',
       'test': True,
     }),
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'id': 'GMPXMVbyXHUfymCDaloV',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0, tzinfo=datetime.timezone.utc),
+    'id': '1',
     'ping': dict({
       'cancelled': False,
-      'pinged_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'pinged_at': datetime.datetime(2015, 10, 6, 20, 0, tzinfo=datetime.timezone.utc),
     }),
     'progress': 6380,
     'retries': 2614,
@@ -33,7 +33,7 @@
         'state': <JobState.ERROR: 'error'>,
         'step_description': None,
         'step_name': None,
-        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
+        'timestamp': datetime.datetime(2015, 10, 6, 20, 0, tzinfo=datetime.timezone.utc),
       }),
     ]),
     'user': dict({

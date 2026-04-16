@@ -1,13 +1,38 @@
 import asyncio
 from contextlib import suppress
+from datetime import datetime
 
 from structlog import get_logger
 
 from virtool.config.cls import WorkflowConfig
+from virtool.jobs.models import JobClaim, JobClaimed, JobStateV2, WorkflowV2
 from virtool.workflow import Workflow, hooks
 from virtool.workflow.pytest_plugin.data import WorkflowData
 from virtool.workflow.runtime.events import Events
 from virtool.workflow.runtime.run import run_workflow
+
+
+def _make_claimed_job(workflow_data: WorkflowData) -> JobClaimed:
+    """Build a JobClaimed object from workflow test data."""
+    return JobClaimed(
+        id=int(workflow_data.job.id),
+        acquired=True,
+        claim=JobClaim(
+            runner_id="test-runner",
+            mem=4.0,
+            cpu=2.0,
+            image="unknown",
+            runtime_version="0.0.0",
+            workflow_version="0.0.0",
+        ),
+        claimed_at=datetime.now(tz=None),
+        created_at=workflow_data.job.created_at,
+        key=workflow_data.job.key,
+        state=JobStateV2.RUNNING,
+        steps=[],
+        user=workflow_data.job.user,
+        workflow=WorkflowV2(workflow_data.job.workflow),
+    )
 
 
 async def test_success(
@@ -16,6 +41,8 @@ async def test_success(
     """Test that the on_success and on_finish hooks are triggered when a workflow
     succeeds.
     """
+    workflow_data.job.workflow = "pathoscope"
+
     wf = Workflow()
 
     @wf.step
@@ -43,7 +70,11 @@ async def test_success(
         finish_called = True
 
     await run_workflow(
-        workflow_config, workflow_data.job.id, wf, Events(), get_logger("test")
+        workflow_config,
+        _make_claimed_job(workflow_data),
+        wf,
+        Events(),
+        get_logger("test"),
     )
 
     assert success_called
@@ -57,6 +88,8 @@ async def test_error(
     """Test that the on_failure and on_finish hooks are triggered when a workflow fails
     due to an error.
     """
+    workflow_data.job.workflow = "pathoscope"
+
     failure_called = False
     finish_called = False
 
@@ -80,7 +113,11 @@ async def test_error(
 
     with suppress(Exception):
         await run_workflow(
-            workflow_config, workflow_data.job.id, wf, Events(), get_logger("test")
+            workflow_config,
+            _make_claimed_job(workflow_data),
+            wf,
+            Events(),
+            get_logger("test"),
         )
 
     assert failure_called

@@ -102,10 +102,6 @@ async def test_terminated_by_cancellation(
         ),
     ]
 
-    redis_list_name = "jobs_pathoscope"
-
-    await redis.rpush(redis_list_name, workflow_data.job.id)
-
     wf = Workflow()
 
     @wf.step
@@ -146,6 +142,7 @@ async def test_terminated_by_cancellation(
                 redis_list_name="jobs_pathoscope",
                 sentry_dsn="",
                 timeout=5,
+                workflow="pathoscope",
                 work_path=work_path,
             ),
             workflow_loader=lambda: wf,

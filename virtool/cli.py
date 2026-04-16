@@ -240,6 +240,13 @@ def workflow() -> None:
     type=int,
 )
 @click.option(
+    "--workflow-name",
+    "workflow_name",
+    default=get_from_environment("workflow", ""),
+    help="The workflow name this runner handles (e.g. 'pathoscope', 'nuvs').",
+    type=str,
+)
+@click.option(
     "--work-path",
     default=get_from_environment("work_path", "temp"),
     help="The path where temporary files will be stored.",
@@ -255,6 +262,7 @@ def workflow_run(
     redis_list_name: str,
     sentry_dsn: str,
     timeout: int,
+    workflow_name: str,
     work_path: Path,
 ) -> None:
     """Run a workflow."""
@@ -267,6 +275,7 @@ def workflow_run(
         redis_list_name=redis_list_name,
         sentry_dsn=sentry_dsn,
         timeout=timeout,
+        workflow=workflow_name,
         work_path=work_path,
     )
 
