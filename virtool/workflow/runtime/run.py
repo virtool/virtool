@@ -37,10 +37,7 @@ from virtool.workflow.runtime.discover import (
 from virtool.workflow.runtime.events import Events
 from virtool.workflow.runtime.path import create_work_path
 from virtool.workflow.runtime.ping import ping_periodically
-from virtool.workflow.runtime.redis import (
-    get_next_job_id,
-    wait_for_cancellation,
-)
+from virtool.workflow.runtime.redis import get_next_job_id
 from virtool.workflow.utils import get_workflow_version
 from virtool.workflow.workflow import Workflow
 
@@ -260,20 +257,7 @@ async def start_runtime(
 
     signal.signal(signal.SIGTERM, terminate_workflow)
 
-    def cancel_workflow(*_):
-        logger.info("received cancellation signal from redis")
-        events.cancelled.set()
-        run_workflow_task.cancel()
-
-    async with Redis(config.redis_connection_string) as redis:
-        cancellation_task = asyncio.create_task(
-            wait_for_cancellation(redis, job_id, cancel_workflow),
-        )
-
-        await run_workflow_task
-
-        cancellation_task.cancel()
-        await cancellation_task
+    await run_workflow_task
 
     if events.terminated.is_set():
         sys.exit(124)

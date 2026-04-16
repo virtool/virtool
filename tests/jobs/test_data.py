@@ -9,7 +9,7 @@ from syrupy import SnapshotAssertion
 
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
-from virtool.jobs.client import JobCancellationResult, JobsClient
+from virtool.jobs.client import JobsClient
 from virtool.jobs.data import JobsData
 from virtool.jobs.models import JobState
 from virtool.jobs.pg import (
@@ -375,8 +375,6 @@ class TestCancelPostgres:
             0,
             job_id="foo",
         )
-
-        jobs_data._client.cancel.return_value = JobCancellationResult.REMOVED_FROM_QUEUE
 
         await jobs_data.cancel(job.id)
 

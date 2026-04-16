@@ -1,13 +1,7 @@
-import asyncio
-
 import pytest
 
-from virtool.jobs.client import (
-    JobCancellationResult,
-    JobsClient,
-)
+from virtool.jobs.client import JobsClient
 from virtool.redis import Redis
-from virtool.workflow.runtime.redis import get_cancellation_channel
 
 
 @pytest.fixture
@@ -28,7 +22,7 @@ async def test_enqueue(workflow: str, jobs_client: JobsClient, redis: Redis):
 
 @pytest.mark.parametrize("workflow", ["nuvs", "create_sample"])
 async def test_cancel_waiting(workflow: str, jobs_client: JobsClient, redis: Redis):
-    """Test that a job ID is cancelled by removal when still in a Redis list."""
+    """Test that a job ID is removed from Redis lists when cancelled."""
     await redis.rpush(f"jobs_{workflow}", "foo")
 
     keys = ("jobs_nuvs", "jobs_create_sample")
@@ -36,27 +30,7 @@ async def test_cancel_waiting(workflow: str, jobs_client: JobsClient, redis: Red
     for key in keys:
         await redis.rpush(key, "bar", "foo", "baz", "boo")
 
-    assert await jobs_client.cancel("foo") == JobCancellationResult.REMOVED_FROM_QUEUE
+    await jobs_client.cancel("foo")
 
     for key in keys:
         assert await redis.lrange(key, 0, 5) == ["bar", "baz", "boo"]
-
-
-async def test_cancel_running(jobs_client: JobsClient, redis: Redis):
-    """Test that cancellation is published to 'channel:cancel' if the job ID is not in a
-    list already.
-
-    """
-
-    async def cancel():
-        await asyncio.sleep(0.3)
-        await jobs_client.cancel("foo")
-
-    cancel_task = asyncio.create_task(cancel())
-
-    # Check that job ID was published to cancellation channel.
-    async for message in redis.subscribe(get_cancellation_channel(redis)):
-        assert message == "foo"
-        break
-
-    await cancel_task

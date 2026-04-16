@@ -11,7 +11,6 @@ from virtool.workflow import RunSubprocess, Workflow
 from virtool.workflow.errors import SubprocessFailedError
 from virtool.workflow.pytest_plugin.data import WorkflowData
 from virtool.workflow.pytest_plugin.utils import StaticTime
-from virtool.workflow.runtime.redis import get_cancellation_channel
 from virtool.workflow.runtime.run import start_runtime
 
 
@@ -155,7 +154,7 @@ async def test_terminated_by_cancellation(
     await asyncio.sleep(4)
 
     if cancel:
-        await redis.publish(get_cancellation_channel(redis), workflow_data.job.id)
+        workflow_data.job.ping.cancelled = True
 
     await runtime_task
 
@@ -166,6 +165,6 @@ async def test_terminated_by_cancellation(
 
     if cancel:
         assert last_status.state == JobState.CANCELLED
-        assert log.has("received cancellation signal from redis", level="info")
+        assert log.has("received cancellation signal from ping response", level="info")
     else:
         assert last_status.state == JobState.COMPLETE
