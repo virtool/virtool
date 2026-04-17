@@ -21,6 +21,7 @@ from virtool.references.tasks import ReferenceReleasesRefreshTask, ReferencesCle
 from virtool.routes import setup_routes
 from virtool.samples.tasks import SampleWorkflowsUpdateTask
 from virtool.sentry import configure_sentry
+from virtool.storage.factory import create_storage_backend
 from virtool.tasks.periodic import PeriodicTaskSpawner
 from virtool.tasks.runner import TaskRunner
 from virtool.types import App
@@ -157,6 +158,16 @@ async def startup_settings(app: App) -> None:
 
     """
     await get_data_from_app(app).settings.ensure()
+
+
+async def startup_storage(app: App) -> None:
+    """Create the storage backend and attach it to the application.
+
+    :param app: the application object
+    """
+    config = get_config_from_app(app)
+    logger.info("starting storage backend", backend=config.storage_backend)
+    app["storage"] = create_storage_backend(config)
 
 
 async def startup_task_runner(app: App) -> None:

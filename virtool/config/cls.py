@@ -8,12 +8,15 @@ These will be available in the application context and should be accessed using
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel
 from pymongo.uri_parser import parse_uri
 
 from virtool.flags import FlagName
 from virtool.pg.utils import PgOptions
+
+StorageBackendName = Literal["filesystem", "s3", "azure"]
 
 
 @dataclass
@@ -56,6 +59,16 @@ class ServerConfig:
     postgres_connection_string: str
     real_ip_header: str
     sentry_dsn: str | None
+    storage_backend: StorageBackendName = "filesystem"
+    storage_filesystem_path: Path | None = None
+    storage_s3_bucket: str = ""
+    storage_s3_region: str = ""
+    storage_s3_endpoint: str = ""
+    storage_s3_access_key_id: str = ""
+    storage_s3_secret_access_key: str = ""
+    storage_azure_account: str = ""
+    storage_azure_container: str = ""
+    storage_azure_access_key: str = ""
 
     @property
     def mongodb_database(self) -> str:
@@ -67,6 +80,26 @@ class ServerConfig:
 
     def __post_init__(self):
         self.data_path = Path(self.data_path)
+
+        if self.storage_filesystem_path is None:
+            self.storage_filesystem_path = self.data_path / "storage"
+        else:
+            self.storage_filesystem_path = Path(self.storage_filesystem_path)
+
+        if self.storage_backend == "s3" and not self.storage_s3_bucket:
+            raise ValueError(
+                "storage_backend=s3 requires --storage-s3-bucket",
+            )
+
+        if self.storage_backend == "azure":
+            if not self.storage_azure_account:
+                raise ValueError(
+                    "storage_backend=azure requires --storage-azure-account",
+                )
+            if not self.storage_azure_container:
+                raise ValueError(
+                    "storage_backend=azure requires --storage-azure-container",
+                )
 
 
 @dataclass

@@ -1,7 +1,9 @@
 import pytest
 from aiohttp.client import ClientSession, ClientTimeout
 
-from virtool.startup import startup_http_client_session
+from tests.config.test_cls import build_server_config
+from virtool.startup import startup_http_client_session, startup_storage
+from virtool.storage.filesystem import FilesystemProvider
 
 
 @pytest.fixture
@@ -15,7 +17,7 @@ async def fake_app():
     # Close real session created in `test_startup_executors()`.
     try:
         await app["client"].close()
-    except TypeError:
+    except (KeyError, TypeError):
         pass
 
 
@@ -35,3 +37,15 @@ async def test_startup_http_client_headers(mocker, fake_app):
         headers={"User-Agent": "virtool/v1.2.3"},
         timeout=expected_timeout,
     )
+
+
+async def test_startup_storage(fake_app, tmp_path):
+    fake_app["config"] = build_server_config(
+        data_path=tmp_path,
+        storage_backend="filesystem",
+    )
+
+    await startup_storage(fake_app)
+
+    assert isinstance(fake_app["storage"], FilesystemProvider)
+    assert (tmp_path / "storage").is_dir()

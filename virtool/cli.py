@@ -29,6 +29,7 @@ from virtool.config.options import (
     postgres_connection_string_option,
     real_ip_header_option,
     sentry_dsn_option,
+    storage_options,
 )
 from virtool.jobs.main import run_jobs_server
 from virtool.logs import configure_logging
@@ -78,6 +79,7 @@ def server() -> None:
 @postgres_connection_string_option
 @real_ip_header_option
 @sentry_dsn_option
+@storage_options
 def start_api_server(**kwargs) -> None:
     """Start a Virtool public API server."""
     configure_logging(bool(kwargs["sentry_dsn"]))
@@ -98,6 +100,7 @@ def start_api_server(**kwargs) -> None:
 @postgres_connection_string_option
 @real_ip_header_option
 @sentry_dsn_option
+@storage_options
 def start_jobs_api(**kwargs) -> None:
     """Start a Virtool jobs API server."""
     configure_logging(bool(kwargs["sentry_dsn"]))
