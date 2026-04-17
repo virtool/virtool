@@ -28,7 +28,6 @@ from virtool.config.options import (
     no_revision_check_option,
     postgres_connection_string_option,
     real_ip_header_option,
-    redis_connection_string_option,
     sentry_dsn_option,
 )
 from virtool.jobs.main import run_jobs_server
@@ -78,7 +77,6 @@ def server() -> None:
 @no_revision_check_option
 @postgres_connection_string_option
 @real_ip_header_option
-@redis_connection_string_option
 @sentry_dsn_option
 def start_api_server(**kwargs) -> None:
     """Start a Virtool public API server."""
@@ -99,7 +97,6 @@ def start_api_server(**kwargs) -> None:
 @no_revision_check_option
 @postgres_connection_string_option
 @real_ip_header_option
-@redis_connection_string_option
 @sentry_dsn_option
 def start_jobs_api(**kwargs) -> None:
     """Start a Virtool jobs API server."""
@@ -170,10 +167,9 @@ def tasks() -> None:
 @mongodb_connection_string_option
 @no_revision_check_option
 @postgres_connection_string_option
-@redis_connection_string_option
 @sentry_dsn_option
 def start_task_runner(dev: bool, **kwargs) -> None:
-    """Start a service that pulls tasks queued in Redis and runs them."""
+    """Start the task runner service."""
     configure_logging(bool(kwargs["sentry_dsn"]))
 
     logger.info("starting tasks runner")
@@ -185,7 +181,6 @@ def start_task_runner(dev: bool, **kwargs) -> None:
 @address_options
 @dev_option
 @postgres_connection_string_option
-@redis_connection_string_option
 @sentry_dsn_option
 def tasks_spawner(dev: bool, **kwargs) -> None:
     """Schedule all periodically run tasks on hardcoded schedules"""
@@ -222,13 +217,6 @@ def workflow() -> None:
     help="The number of processes to use.",
     type=int,
 )
-@redis_connection_string_option
-@click.option(
-    "--redis-list-name",
-    default=get_from_environment("redis_list_name", ""),
-    help="The name of the Redis list to watch for incoming jobs.",
-    type=str,
-)
 @sentry_dsn_option
 @click.option(
     "--timeout",
@@ -258,8 +246,6 @@ def workflow_run(
     jobs_api_connection_string: str,
     mem: int,
     proc: int,
-    redis_connection_string: str,
-    redis_list_name: str,
     sentry_dsn: str,
     timeout: int,
     workflow_name: str,
@@ -271,8 +257,6 @@ def workflow_run(
         jobs_api_connection_string=jobs_api_connection_string,
         mem=mem,
         proc=proc,
-        redis_connection_string=redis_connection_string,
-        redis_list_name=redis_list_name,
         sentry_dsn=sentry_dsn,
         timeout=timeout,
         workflow=workflow_name,

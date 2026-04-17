@@ -4,7 +4,6 @@ from structlog.testing import LogCapture
 
 from virtool.config.cls import WorkflowConfig
 from virtool.jobs.models import JobState, JobStatus
-from virtool.redis import Redis
 from virtool.workflow import Workflow
 from virtool.workflow.pytest_plugin.data import WorkflowData
 from virtool.workflow.pytest_plugin.utils import StaticTime
@@ -13,7 +12,6 @@ from virtool.workflow.runtime.run import start_runtime
 
 async def test_cancellation_from_ping(
     log: LogCapture,
-    redis: Redis,
     static_time: StaticTime,
     workflow_config: WorkflowConfig,
     workflow_data: WorkflowData,
@@ -29,8 +27,6 @@ async def test_cancellation_from_ping(
             timestamp=static_time.datetime,
         ),
     ]
-
-    await redis.rpush("jobs_pathoscope", workflow_data.job.id)
 
     wf = Workflow()
 

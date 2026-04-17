@@ -118,17 +118,6 @@ postgres_connection_string_option = click.option(
     type=str,
 )
 
-redis_connection_string_option = click.option(
-    "--redis-connection-string",
-    default=get_from_environment(
-        "redis_connection_string",
-        "redis://root:virtool@localhost:6379",
-    ),
-    help="The Redis connection string",
-    required=True,
-    type=str,
-)
-
 sentry_dsn_option = click.option(
     "--sentry-dsn",
     default=get_from_environment("sentry_dsn", ""),

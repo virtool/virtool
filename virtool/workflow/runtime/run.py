@@ -217,7 +217,7 @@ async def start_runtime(
     claim a job via ``POST /jobs/claim``.
 
     When a job is claimed, the runtime runs the workflow and listens for
-    cancellation signals via Redis.
+    cancellation signals sent back on the periodic ping response.
     """
     configure_logging(bool(config.sentry_dsn))
 

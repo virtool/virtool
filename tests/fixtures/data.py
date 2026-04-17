@@ -16,8 +16,7 @@ def data_layer(
     mongo: Mongo,
     pg: AsyncEngine,
 ) -> DataLayer:
-    """A complete data layer backed by testing instances of MongoDB, PostgreSQL, and
-    Redis.
+    """A complete data layer backed by testing instances of MongoDB and PostgreSQL.
 
     Example:
     -------
