@@ -101,18 +101,22 @@ class JobsData:
 
     async def get_counts_v2(self) -> JobCountsV2:
         """Get job counts grouped by v2 state and workflow from PostgreSQL."""
+        async with AsyncSession(self._pg) as session:
+            return await self._query_counts_v2(session)
+
+    async def _query_counts_v2(self, session: AsyncSession) -> JobCountsV2:
+        """Run the counts query against an existing session."""
         counts: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
 
-        async with AsyncSession(self._pg) as session:
-            result = await session.execute(
-                select(SQLJob.state, SQLJob.workflow, func.count()).group_by(
-                    SQLJob.state,
-                    SQLJob.workflow,
-                ),
-            )
+        result = await session.execute(
+            select(SQLJob.state, SQLJob.workflow, func.count()).group_by(
+                SQLJob.state,
+                SQLJob.workflow,
+            ),
+        )
 
-            for state, workflow, count in result.all():
-                counts[state][workflow] = count
+        for state, workflow, count in result.all():
+            counts[state][workflow] = count
 
         return JobCountsV2.parse_obj(counts)
 
@@ -129,49 +133,54 @@ class JobsData:
         if states:
             filters.append(SQLJob.state.in_([s.value for s in states]))
 
-        if users:
-            modern_ids: list[int] = []
-            handles_or_legacy: list[str] = []
+        async with AsyncSession(self._pg) as session:
+            if users:
+                modern_ids: list[int] = []
+                handles_or_legacy: list[str] = []
 
-            for user in users:
-                if isinstance(user, int):
-                    modern_ids.append(user)
-                elif user.isdigit():
-                    modern_ids.append(int(user))
-                else:
-                    handles_or_legacy.append(user)
+                for user in users:
+                    if isinstance(user, int):
+                        modern_ids.append(user)
+                    elif user.isdigit():
+                        modern_ids.append(int(user))
+                    else:
+                        handles_or_legacy.append(user)
 
-            user_clauses = []
+                user_clauses = []
 
-            if modern_ids:
-                user_clauses.append(SQLUser.id.in_(modern_ids))
+                if modern_ids:
+                    user_clauses.append(SQLUser.id.in_(modern_ids))
 
-            if handles_or_legacy:
-                user_clauses.append(SQLUser.legacy_id.in_(handles_or_legacy))
-                user_clauses.append(SQLUser.handle.in_(handles_or_legacy))
+                if handles_or_legacy:
+                    user_clauses.append(SQLUser.legacy_id.in_(handles_or_legacy))
+                    user_clauses.append(SQLUser.handle.in_(handles_or_legacy))
 
-            async with AsyncSession(self._pg) as session:
-                result = await session.execute(
+                resolved = await session.execute(
                     select(SQLUser.id).where(or_(*user_clauses)),
                 )
-                resolved_user_ids = [row[0] for row in result.all()]
+                resolved_user_ids = [row[0] for row in resolved.all()]
 
-            if not resolved_user_ids:
-                return JobSearchResultV2(
-                    counts=await self.get_counts_v2(),
-                    items=[],
-                    total_count=await self._count_jobs(),
-                    found_count=0,
-                    page_count=0,
-                    per_page=per_page,
-                    page=page,
-                )
+                if not resolved_user_ids:
+                    total_count = (
+                        await session.execute(
+                            select(func.count()).select_from(SQLJob),
+                        )
+                    ).scalar_one()
 
-            filters.append(SQLJob.user_id.in_(resolved_user_ids))
+                    return JobSearchResultV2(
+                        counts=await self._query_counts_v2(session),
+                        items=[],
+                        total_count=total_count,
+                        found_count=0,
+                        page_count=0,
+                        per_page=per_page,
+                        page=page,
+                    )
 
-        skip_count = (page - 1) * per_page if page > 1 else 0
+                filters.append(SQLJob.user_id.in_(resolved_user_ids))
 
-        async with AsyncSession(self._pg) as session:
+            skip_count = (page - 1) * per_page if page > 1 else 0
+
             total_count = (
                 await session.execute(select(func.count()).select_from(SQLJob))
             ).scalar_one()
@@ -193,6 +202,8 @@ class JobsData:
 
             rows = (await session.execute(data_query)).unique().all()
 
+            counts = await self._query_counts_v2(session)
+
         page_count = int(math.ceil(found_count / per_page)) if found_count else 0
 
         items = [
@@ -208,7 +219,7 @@ class JobsData:
         ]
 
         return JobSearchResultV2(
-            counts=await self.get_counts_v2(),
+            counts=counts,
             items=items,
             total_count=total_count,
             found_count=found_count,
@@ -216,12 +227,6 @@ class JobsData:
             per_page=per_page,
             page=page,
         )
-
-    async def _count_jobs(self) -> int:
-        """Return the total number of jobs in PostgreSQL."""
-        async with AsyncSession(self._pg) as session:
-            result = await session.execute(select(func.count()).select_from(SQLJob))
-            return result.scalar_one()
 
     async def find(
         self,
@@ -457,8 +462,19 @@ class JobsData:
         """
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
-                select(SQLJob, SQLUser)
+                select(
+                    SQLJob,
+                    SQLUser,
+                    SQLJobSample.sample_id,
+                    SQLJobIndex.index_id,
+                    SQLJobSubtraction.subtraction_id,
+                    SQLJobAnalysis.analysis_id,
+                )
                 .join(SQLUser, SQLJob.user_id == SQLUser.id)
+                .outerjoin(SQLJobSample, SQLJob.id == SQLJobSample.job_id)
+                .outerjoin(SQLJobIndex, SQLJob.id == SQLJobIndex.job_id)
+                .outerjoin(SQLJobSubtraction, SQLJob.id == SQLJobSubtraction.job_id)
+                .outerjoin(SQLJobAnalysis, SQLJob.id == SQLJobAnalysis.job_id)
                 .where(compose_legacy_id_single_expression(SQLJob, job_id)),
             )
             row = result.unique().first()
@@ -466,11 +482,22 @@ class JobsData:
         if row is None:
             raise ResourceNotFoundError
 
-        sql_job, sql_user = row
+        sql_job, sql_user, sample_id, index_id, subtraction_id, analysis_id = row
+
+        args = {
+            field: value
+            for field, value in (
+                ("sample_id", sample_id),
+                ("index_id", index_id),
+                ("subtraction_id", subtraction_id),
+                ("analysis_id", analysis_id),
+            )
+            if value is not None
+        }
 
         return JobV2(
             id=sql_job.legacy_id or str(sql_job.id),
-            args={},
+            args=args,
             claim=JobClaim(**sql_job.claim) if sql_job.claim else None,
             claimed_at=sql_job.claimed_at,
             created_at=sql_job.created_at,
@@ -532,7 +559,12 @@ class JobsData:
             )
             sql_job = pg_result.scalar()
 
-            if sql_job:
+            if sql_job is None:
+                logger.warning(
+                    "acquired job has no postgres row",
+                    job_id=job_id,
+                )
+            else:
                 sql_job.acquired = True
                 sql_job.key = hashed
                 sql_job.pinged_at = now

@@ -9,6 +9,7 @@ from syrupy.matchers import path_type
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from tests.fixtures.response import RespIs
+from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.flags import FlagName
 from virtool.jobs.models import JobState
@@ -1186,6 +1187,39 @@ class TestGetV2:
             "id": "not_found",
             "message": "Not found",
         }
+
+    @pytest.mark.parametrize(
+        ("workflow", "args_key", "args_value"),
+        [
+            ("nuvs", "analysis_id", "abc123"),
+            ("create_sample", "sample_id", "smp-xyz"),
+            ("build_index", "index_id", "idx-9"),
+            ("create_subtraction", "subtraction_id", "sub-1"),
+        ],
+    )
+    async def test_args_from_join_tables(
+        self,
+        workflow: str,
+        args_key: str,
+        args_value: str,
+        fake: DataFaker,
+        data_layer: DataLayer,
+        spawn_client: ClientSpawner,
+    ):
+        """Args comes from the workflow-specific join table on SQLJob."""
+        client = await spawn_client(authenticated=True)
+
+        user = await fake.users.create()
+        job = await data_layer.jobs.create(
+            workflow,
+            {args_key: args_value},
+            user.id,
+        )
+
+        resp = await client.get(f"/jobs/v2/{job.id}")
+
+        assert resp.status == HTTPStatus.OK
+        assert (await resp.json())["args"] == {args_key: args_value}
 
     @pytest.mark.parametrize(
         ("v1_state", "v2_state"),
