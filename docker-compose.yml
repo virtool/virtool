@@ -12,6 +12,10 @@ services:
     working_dir: /app
     command: sleep infinity
     depends_on:
+      azurite:
+        condition: service_healthy
+      garage-init:
+        condition: service_completed_successfully
       mongo:
         condition: service_healthy
       postgres:
@@ -20,6 +24,15 @@ services:
       VT_MONGO_URI: mongodb://root:virtool@mongo:9001
       VT_POSTGRES_URI: postgresql://virtool:virtool@postgres:5432
       UV_PROJECT_ENVIRONMENT: /opt/venv
+      VT_TEST_S3_BUCKET: virtool-test
+      VT_TEST_S3_ENDPOINT: http://garage:3900
+      VT_TEST_S3_REGION: garage
+      VT_TEST_S3_ACCESS_KEY_ID: GK000000000000000000000001
+      VT_TEST_S3_SECRET_ACCESS_KEY: "0000000000000000000000000000000000000000000000000000000000000001"
+      VT_TEST_AZURE_CONTAINER: virtool-test
+      VT_TEST_AZURE_ACCOUNT: devstoreaccount1
+      VT_TEST_AZURE_KEY: "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
+      VT_TEST_AZURE_ENDPOINT: http://azurite:10000/devstoreaccount1
 
   mongo:
     image: mongo:8
@@ -54,6 +67,40 @@ services:
       retries: 10
       start_period: 2s
     command: postgres -c fsync=off
+
+  garage:
+    image: dxflrs/garage:v1.1.0
+    volumes:
+      - ./tests/garage.toml:/etc/garage.toml:ro
+    tmpfs:
+      - /var/lib/garage/meta:size=256m
+      - /var/lib/garage/data:size=256m
+    healthcheck:
+      test: ["CMD", "/garage", "status"]
+      interval: 2s
+      retries: 20
+      start_period: 2s
+
+  garage-init:
+    image: alpine:3.20
+    depends_on:
+      garage:
+        condition: service_healthy
+    volumes:
+      - ./tests/garage-init.sh:/init.sh:ro
+    entrypoint: ["/bin/sh", "/init.sh"]
+    restart: "no"
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:3.33.0
+    command: ["azurite-blob", "--blobHost", "0.0.0.0", "--skipApiVersionCheck"]
+    tmpfs:
+      - /data:size=256m
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "10000"]
+      interval: 2s
+      retries: 10
+      start_period: 2s
 
 volumes:
   container_venv:

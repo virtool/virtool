@@ -29,6 +29,7 @@ pytest_plugins = (
     "tests.fixtures.response",
     "tests.fixtures.samples",
     "tests.fixtures.settings",
+    "tests.fixtures.storage",
     "tests.fixtures.subtractions",
     "tests.fixtures.snapshot_date",
     "tests.fixtures.workflow",
