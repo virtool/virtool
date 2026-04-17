@@ -1110,23 +1110,71 @@ class TestFindV2:
         assert body["found_count"] == 0
         assert body["items"] == []
 
+    async def test_pagination(self, fake: DataFaker, spawn_client: ClientSpawner):
+        client = await spawn_client(authenticated=True)
+
+        user = await fake.users.create()
+
+        for _ in range(5):
+            await fake.jobs.create(user=user, state=JobState.RUNNING, workflow="nuvs")
+
+        resp = await client.get("/jobs/v2?per_page=2&page=2")
+        body = await resp.json()
+
+        assert resp.status == HTTPStatus.OK
+        assert body["page"] == 2
+        assert body["per_page"] == 2
+        assert body["page_count"] == 3
+        assert body["found_count"] == 5
+        assert body["total_count"] == 5
+        assert len(body["items"]) == 2
+
+    async def test_unknown_user(self, fake: DataFaker, spawn_client: ClientSpawner):
+        """Filtering by a user handle that doesn't exist returns no items."""
+        client = await spawn_client(authenticated=True)
+
+        user = await fake.users.create()
+        await fake.jobs.create(user=user, state=JobState.RUNNING, workflow="nuvs")
+
+        resp = await client.get("/jobs/v2?user=nobody-at-all")
+        body = await resp.json()
+
+        assert resp.status == HTTPStatus.OK
+        assert body["found_count"] == 0
+        assert body["items"] == []
+
 
 class TestGetV2:
     async def test_ok(
         self,
         fake: DataFaker,
-        snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
         client = await spawn_client(authenticated=True)
 
         user = await fake.users.create()
-        job = await fake.jobs.create(user=user, state=JobState.RUNNING)
+        job = await fake.jobs.create(
+            user=user,
+            state=JobState.RUNNING,
+            workflow="nuvs",
+        )
 
         resp = await client.get(f"/jobs/v2/{job.id}")
 
         assert resp.status == HTTPStatus.OK
-        assert await resp.json() == snapshot(matcher=_job_response_matcher)
+
+        body = await resp.json()
+
+        assert body["id"] == job.id
+        assert body["args"] == {}
+        assert body["claim"] is None
+        assert body["claimed_at"] is None
+        assert body["progress"] == 0
+        assert body["state"] == "running"
+        assert body["steps"] is None
+        assert body["workflow"] == "nuvs"
+        assert body["user"] == {"id": user.id, "handle": user.handle}
+        assert body["pinged_at"] is not None
 
     async def test_not_found(self, spawn_client: ClientSpawner):
         client = await spawn_client(authenticated=True)

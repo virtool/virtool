@@ -55,3 +55,16 @@ def get_latest_status(document: Document) -> JobStatus | None:
 def check_job_is_running_or_waiting(document: Document) -> bool:
     """Return a boolean indicating whether the passed job is running or waiting."""
     return document["status"][-1]["state"] in ("waiting", "running")
+
+
+def compute_progress(state: str, steps: list[dict] | None) -> int:
+    """Compute a v2 job's progress percentage from its state and steps."""
+    if state in ("succeeded", "failed", "cancelled"):
+        return 100
+
+    if state != "running" or not steps:
+        return 0
+
+    started = sum(1 for s in steps if s.get("started_at") is not None)
+
+    return int(started / len(steps) * 100)
