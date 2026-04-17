@@ -11,6 +11,7 @@ def my_command(host, port):
 """
 
 import os
+from pathlib import Path
 
 import click
 
@@ -124,3 +125,80 @@ sentry_dsn_option = click.option(
     help="A Sentry DSN to report errors to",
     type=str,
 )
+
+
+def storage_options(func):
+    for decorator in [
+        click.option(
+            "--storage-backend",
+            default=get_from_environment("storage_backend", "filesystem"),
+            help="The storage backend to use for object storage",
+            type=click.Choice(["filesystem", "s3", "azure"]),
+        ),
+        click.option(
+            "--storage-filesystem-path",
+            default=get_from_environment("storage_filesystem_path", None),
+            help=(
+                "Base directory for the filesystem backend "
+                "(defaults to <data-path>/storage)"
+            ),
+            type=click.Path(path_type=Path),
+        ),
+        click.option(
+            "--storage-s3-bucket",
+            default=get_from_environment("storage_s3_bucket", ""),
+            help="S3 bucket name (required when --storage-backend=s3)",
+            type=str,
+        ),
+        click.option(
+            "--storage-s3-region",
+            default=get_from_environment("storage_s3_region", ""),
+            help="S3 region",
+            type=str,
+        ),
+        click.option(
+            "--storage-s3-endpoint",
+            default=get_from_environment("storage_s3_endpoint", ""),
+            help="S3 endpoint URL override (for MinIO or S3-compatible services)",
+            type=str,
+        ),
+        click.option(
+            "--storage-s3-access-key-id",
+            default=get_from_environment("storage_s3_access_key_id", ""),
+            help="S3 access key ID",
+            type=str,
+        ),
+        click.option(
+            "--storage-s3-secret-access-key",
+            default=get_from_environment("storage_s3_secret_access_key", ""),
+            help="S3 secret access key",
+            type=str,
+        ),
+        click.option(
+            "--storage-azure-account",
+            default=get_from_environment("storage_azure_account", ""),
+            help=(
+                "Azure Blob Storage account name "
+                "(required when --storage-backend=azure)"
+            ),
+            type=str,
+        ),
+        click.option(
+            "--storage-azure-container",
+            default=get_from_environment("storage_azure_container", ""),
+            help=(
+                "Azure Blob Storage container name "
+                "(required when --storage-backend=azure)"
+            ),
+            type=str,
+        ),
+        click.option(
+            "--storage-azure-access-key",
+            default=get_from_environment("storage_azure_access_key", ""),
+            help="Azure Blob Storage access key",
+            type=str,
+        ),
+    ]:
+        func = decorator(func)
+
+    return func
