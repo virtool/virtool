@@ -2,7 +2,6 @@
 
 from virtool.config.cls import ServerConfig
 from virtool.storage.filesystem import FilesystemProvider
-from virtool.storage.obstore import ObstoreProvider
 from virtool.storage.protocol import StorageBackend
 
 
@@ -15,6 +14,8 @@ def create_storage_backend(config: ServerConfig) -> StorageBackend:
 
         case "s3":
             from obstore.store import S3Store
+
+            from virtool.storage.obstore import ObstoreProvider
 
             kwargs = {}
             if config.storage_s3_region:
@@ -30,6 +31,8 @@ def create_storage_backend(config: ServerConfig) -> StorageBackend:
 
         case "azure":
             from obstore.store import AzureStore
+
+            from virtool.storage.obstore import ObstoreProvider
 
             kwargs = {"account": config.storage_azure_account}
             if config.storage_azure_access_key:
