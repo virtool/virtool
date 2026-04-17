@@ -9,18 +9,18 @@ workers can share the same bucket and container.
 import base64
 import hashlib
 import hmac
-import http.client
 import os
 from collections.abc import AsyncIterator
 from email.utils import formatdate
 
+import aiohttp
 import pytest
 from obstore.store import AzureStore, S3Store
 
 from virtool.storage.obstore import ObstoreProvider
 
 
-def _ensure_azurite_container(
+async def _ensure_azurite_container(
     account: str, key: str, endpoint: str, container: str
 ) -> None:
     """Create the Azurite container if it does not already exist.
@@ -29,16 +29,12 @@ def _ensure_azurite_container(
     `PUT /{container}?restype=container` request with the account shared key and
     accepts 201 (created) or 409 (already exists) as success.
     """
-    parsed = endpoint.removeprefix("http://").split("/", 1)
-    host = parsed[0]
-    account_path_prefix = f"/{parsed[1]}" if len(parsed) > 1 else ""
-    request_path = f"{account_path_prefix}/{container}?restype=container"
-    canonical_resource_path = f"{account_path_prefix}/{container}"
+    url = f"{endpoint}/{container}?restype=container"
+    account_path = endpoint.removeprefix("http://").split("/", 1)[1]
 
     date = formatdate(timeval=None, localtime=False, usegmt=True)
-
     canonical_headers = f"x-ms-date:{date}\nx-ms-version:2023-11-03\n"
-    canonical_resource = f"/{account}{canonical_resource_path}\nrestype:container"
+    canonical_resource = f"/{account}/{account_path}/{container}\nrestype:container"
 
     string_to_sign = (
         "\n".join(
@@ -55,27 +51,25 @@ def _ensure_azurite_container(
         ).digest()
     ).decode("ascii")
 
-    conn = http.client.HTTPConnection(host, timeout=10)
-    conn.request(
-        "PUT",
-        request_path,
-        body="",
-        headers={
-            "x-ms-date": date,
-            "x-ms-version": "2023-11-03",
-            "Content-Length": "0",
-            "Authorization": f"SharedKey {account}:{signature}",
-        },
-    )
-    response = conn.getresponse()
-    body = response.read().decode("utf-8", errors="replace")
-    conn.close()
+    headers = {
+        "x-ms-date": date,
+        "x-ms-version": "2023-11-03",
+        "Content-Length": "0",
+        "Authorization": f"SharedKey {account}:{signature}",
+    }
 
-    if response.status not in (201, 409):
-        raise RuntimeError(
-            f"failed to create Azurite container {container!r}: "
-            f"HTTP {response.status} {body}"
-        )
+    async with (
+        aiohttp.ClientSession() as session,
+        session.put(
+            url, headers=headers, skip_auto_headers={"Content-Type"}
+        ) as response,
+    ):
+        if response.status not in (201, 409):
+            body = await response.text()
+            raise RuntimeError(
+                f"failed to create Azurite container {container!r}: "
+                f"HTTP {response.status} {body}"
+            )
 
 
 @pytest.fixture(scope="session")
@@ -92,13 +86,13 @@ def _s3_store() -> S3Store:
 
 
 @pytest.fixture(scope="session")
-def _azure_store() -> AzureStore:
+async def _azure_store() -> AzureStore:
     account = os.environ["VT_TEST_AZURE_ACCOUNT"]
     key = os.environ["VT_TEST_AZURE_KEY"]
     endpoint = os.environ["VT_TEST_AZURE_ENDPOINT"]
     container = os.environ["VT_TEST_AZURE_CONTAINER"]
 
-    _ensure_azurite_container(account, key, endpoint, container)
+    await _ensure_azurite_container(account, key, endpoint, container)
 
     return AzureStore(
         container,
