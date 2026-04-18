@@ -10,7 +10,7 @@ from virtool.users.models_base import UserNested
 if TYPE_CHECKING:
     from pymongo.results import UpdateResult
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
@@ -27,7 +27,6 @@ from virtool.data.transforms import apply_transforms
 from virtool.jobs.models import (
     TERMINAL_JOB_STATES,
     V1_TO_V2_STATE,
-    V2_TO_V1_STATES,
     CreateJobClaimRequest,
     Job,
     JobAcquired,
@@ -58,11 +57,13 @@ from virtool.jobs.pg import (
 from virtool.jobs.utils import (
     check_job_is_running_or_waiting,
     compose_status,
+    compute_progress,
     get_latest_status,
 )
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.types import Document
+from virtool.users.pg import SQLUser
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
@@ -99,17 +100,23 @@ class JobsData:
         return JobCountsV1.parse_obj(counts)
 
     async def get_counts_v2(self) -> JobCountsV2:
-        """Get job counts, translating v1 states to v2 states."""
-        v1_counts = await self.get_counts()
+        """Get job counts grouped by v2 state and workflow from PostgreSQL."""
+        async with AsyncSession(self._pg) as session:
+            return await self._query_counts_v2(session)
+
+    async def _query_counts_v2(self, session: AsyncSession) -> JobCountsV2:
+        """Run the counts query against an existing session."""
         counts: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
 
-        for v1_state in JobState:
-            v2_state = V1_TO_V2_STATE[v1_state].value
-            for workflow in WorkflowV2:
-                counts[v2_state][workflow.value] += getattr(
-                    getattr(v1_counts, v1_state.value),
-                    workflow.value,
-                )
+        result = await session.execute(
+            select(SQLJob.state, SQLJob.workflow, func.count()).group_by(
+                SQLJob.state,
+                SQLJob.workflow,
+            ),
+        )
+
+        for state, workflow, count in result.all():
+            counts[state][workflow] = count
 
         return JobCountsV2.parse_obj(counts)
 
@@ -120,115 +127,100 @@ class JobsData:
         states: list[JobStateV2],
         users: list[str],
     ) -> JobSearchResultV2:
-        """Find jobs using v2 state names.
+        """Find jobs using v2 state names via a PostgreSQL query."""
+        filters = []
 
-        Queries MongoDB jobs during the transition period, translating v2 state
-        names to v1 for querying and back to v2 for the response.
-        """
-        v1_states = []
-        for state in states:
-            v1_states.extend(V2_TO_V1_STATES[state])
+        if states:
+            filters.append(SQLJob.state.in_([s.value for s in states]))
 
-        skip_count = 0
+        async with AsyncSession(self._pg) as session:
+            if users:
+                modern_ids: list[int] = []
+                handles_or_legacy: list[str] = []
 
-        if page > 1:
-            skip_count = (page - 1) * per_page
+                for user in users:
+                    if isinstance(user, int):
+                        modern_ids.append(user)
+                    elif user.isdigit():
+                        modern_ids.append(int(user))
+                    else:
+                        handles_or_legacy.append(user)
 
-        if users:
-            user_id_variants = await get_user_id_multi_variants(self._pg, users)
-            match_query = {"user.id": {"$in": user_id_variants}}
-        else:
-            match_query = {}
+                user_clauses = []
 
-        match_state = (
-            {"state": {"$in": [state.value for state in v1_states]}}
-            if v1_states
-            else {}
-        )
+                if modern_ids:
+                    user_clauses.append(SQLUser.id.in_(modern_ids))
 
-        data = {}
-        found_count = 0
-        total_count = 0
-        page_count = 0
+                if handles_or_legacy:
+                    user_clauses.append(SQLUser.legacy_id.in_(handles_or_legacy))
+                    user_clauses.append(SQLUser.handle.in_(handles_or_legacy))
 
-        async for paginate_dict in self._mongo.jobs.aggregate(
-            [
-                {
-                    "$facet": {
-                        "total_count": [{"$count": "total_count"}],
-                        "found_count": [
-                            {"$match": match_query},
-                            {"$set": {"last_status": {"$last": "$status"}}},
-                            {"$set": {"state": "$last_status.state"}},
-                            {"$match": match_state},
-                            {"$count": "found_count"},
-                        ],
-                        "data": [
-                            {"$match": match_query},
-                            {
-                                "$set": {
-                                    "last_status": {"$last": "$status"},
-                                    "first_status": {"$first": "$status"},
-                                },
-                            },
-                            {
-                                "$set": {
-                                    "created_at": "$first_status.timestamp",
-                                    "progress": "$last_status.progress",
-                                    "state": "$last_status.state",
-                                },
-                            },
-                            {"$match": match_state},
-                            {"$sort": {"created_at": -1}},
-                            {"$skip": skip_count},
-                            {"$limit": per_page},
-                        ],
-                    },
-                },
-                {
-                    "$project": {
-                        "data": {
-                            "_id": True,
-                            "created_at": True,
-                            "progress": True,
-                            "state": True,
-                            "user": True,
-                            "workflow": True,
-                        },
-                        "total_count": {
-                            "$arrayElemAt": ["$total_count.total_count", 0],
-                        },
-                        "found_count": {
-                            "$arrayElemAt": ["$found_count.found_count", 0],
-                        },
-                    },
-                },
-            ],
-        ):
-            data = paginate_dict["data"]
-            found_count = paginate_dict.get("found_count", 0)
-            total_count = paginate_dict.get("total_count", 0)
-            page_count = int(math.ceil(found_count / per_page)) if found_count else 0
+                resolved = await session.execute(
+                    select(SQLUser.id).where(or_(*user_clauses)),
+                )
+                resolved_user_ids = [row[0] for row in resolved.all()]
 
-        documents = await apply_transforms(
-            [base_processor(d) for d in data],
-            [AttachUserTransform(self._pg)],
-            self._pg,
-        )
+                if not resolved_user_ids:
+                    total_count = (
+                        await session.execute(
+                            select(func.count()).select_from(SQLJob),
+                        )
+                    ).scalar_one()
+
+                    return JobSearchResultV2(
+                        counts=await self._query_counts_v2(session),
+                        items=[],
+                        total_count=total_count,
+                        found_count=0,
+                        page_count=0,
+                        per_page=per_page,
+                        page=page,
+                    )
+
+                filters.append(SQLJob.user_id.in_(resolved_user_ids))
+
+            skip_count = (page - 1) * per_page if page > 1 else 0
+
+            total_count = (
+                await session.execute(select(func.count()).select_from(SQLJob))
+            ).scalar_one()
+
+            found_count_query = select(func.count()).select_from(SQLJob)
+            if filters:
+                found_count_query = found_count_query.where(*filters)
+            found_count = (await session.execute(found_count_query)).scalar_one()
+
+            data_query = (
+                select(SQLJob, SQLUser)
+                .join(SQLUser, SQLJob.user_id == SQLUser.id)
+                .order_by(SQLJob.created_at.desc())
+                .offset(skip_count)
+                .limit(per_page)
+            )
+            if filters:
+                data_query = data_query.where(*filters)
+
+            rows = (await session.execute(data_query)).unique().all()
+
+            counts = await self._query_counts_v2(session)
+
+        page_count = int(math.ceil(found_count / per_page)) if found_count else 0
+
+        items = [
+            JobMinimalV2(
+                id=sql_job.legacy_id or str(sql_job.id),
+                created_at=sql_job.created_at,
+                progress=compute_progress(sql_job.state, sql_job.steps),
+                state=JobStateV2(sql_job.state),
+                user=UserNested(id=sql_user.id, handle=sql_user.handle),
+                workflow=WorkflowV2(sql_job.workflow),
+            )
+            for sql_job, sql_user in rows
+        ]
 
         return JobSearchResultV2(
-            counts=await self.get_counts_v2(),
-            items=[
-                JobMinimalV2(
-                    id=d["id"],
-                    created_at=d["created_at"],
-                    progress=d["progress"],
-                    state=V1_TO_V2_STATE[JobState(d["state"])],
-                    user=UserNested(**d["user"]),
-                    workflow=WorkflowV2(d["workflow"]),
-                )
-                for d in documents
-            ],
+            counts=counts,
+            items=items,
             total_count=total_count,
             found_count=found_count,
             page_count=page_count,
@@ -463,45 +455,58 @@ class JobsData:
         return Job(**document)
 
     async def get_v2(self, job_id: str) -> JobV2:
-        """Get a job using v2 response format.
+        """Get a job using v2 response format from PostgreSQL.
 
-        Queries MongoDB and maps v1 fields to v2 format.
-
-        :param job_id: the ID of the job to get.
+        :param job_id: the ID of the job to get (modern integer or legacy string).
         :return: the job in v2 format
         """
-        document = await self._mongo.jobs.find_one(job_id)
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(
+                    SQLJob,
+                    SQLUser,
+                    SQLJobSample.sample_id,
+                    SQLJobIndex.index_id,
+                    SQLJobSubtraction.subtraction_id,
+                    SQLJobAnalysis.analysis_id,
+                )
+                .join(SQLUser, SQLJob.user_id == SQLUser.id)
+                .outerjoin(SQLJobSample, SQLJob.id == SQLJobSample.job_id)
+                .outerjoin(SQLJobIndex, SQLJob.id == SQLJobIndex.job_id)
+                .outerjoin(SQLJobSubtraction, SQLJob.id == SQLJobSubtraction.job_id)
+                .outerjoin(SQLJobAnalysis, SQLJob.id == SQLJobAnalysis.job_id)
+                .where(compose_legacy_id_single_expression(SQLJob, job_id)),
+            )
+            row = result.unique().first()
 
-        if document is None:
+        if row is None:
             raise ResourceNotFoundError
 
-        last_update = get_latest_status(document)
+        sql_job, sql_user, sample_id, index_id, subtraction_id, analysis_id = row
 
-        document = await apply_transforms(
-            {
-                **document,
-                "id": document["_id"],
-            },
-            [AttachUserTransform(self._pg)],
-            self._pg,
-        )
-
-        claimed_at = None
-        if len(document["status"]) > 1:
-            claimed_at = document["status"][1]["timestamp"]
+        args = {
+            field: value
+            for field, value in (
+                ("sample_id", sample_id),
+                ("index_id", index_id),
+                ("subtraction_id", subtraction_id),
+                ("analysis_id", analysis_id),
+            )
+            if value is not None
+        }
 
         return JobV2(
-            id=document["id"],
-            args=document.get("args", {}),
-            claim=None,
-            claimed_at=claimed_at,
-            created_at=document["created_at"],
-            pinged_at=document["ping"]["pinged_at"] if document.get("ping") else None,
-            progress=last_update.progress,
-            state=V1_TO_V2_STATE[last_update.state],
-            steps=None,
-            user=UserNested(**document["user"]),
-            workflow=WorkflowV2(document["workflow"]),
+            id=sql_job.legacy_id or str(sql_job.id),
+            args=args,
+            claim=JobClaim(**sql_job.claim) if sql_job.claim else None,
+            claimed_at=sql_job.claimed_at,
+            created_at=sql_job.created_at,
+            pinged_at=sql_job.pinged_at,
+            progress=compute_progress(sql_job.state, sql_job.steps),
+            state=JobStateV2(sql_job.state),
+            steps=[JobStep(**s) for s in sql_job.steps] if sql_job.steps else None,
+            user=UserNested(id=sql_user.id, handle=sql_user.handle),
+            workflow=WorkflowV2(sql_job.workflow),
         )
 
     @emits(Operation.UPDATE)
@@ -517,7 +522,6 @@ class JobsData:
         if job_doc is None:
             raise ResourceNotFoundError("Job not found")
 
-        # Check if job is in a terminal state (more specific than already acquired)
         latest_status = get_latest_status(job_doc)
         if latest_status and latest_status.state in TERMINAL_JOB_STATES:
             raise ResourceConflictError("Cannot acquire job in terminal state")
@@ -526,23 +530,45 @@ class JobsData:
             raise ResourceConflictError("Job already acquired")
 
         key, hashed = virtool.utils.generate_key()
+        now = virtool.utils.timestamp()
 
-        await self._mongo.jobs.update_one(
-            {"_id": job_id},
-            {
-                "$set": {
-                    "acquired": True,
-                    "key": hashed,
-                    "ping": {
-                        "pinged_at": virtool.utils.timestamp(),
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            await self._mongo.jobs.update_one(
+                {"_id": job_id},
+                {
+                    "$set": {
+                        "acquired": True,
+                        "key": hashed,
+                        "ping": {"pinged_at": now},
+                        "state": JobState.PREPARING.value,
                     },
-                    "state": JobState.PREPARING.value,
+                    "$push": {
+                        "status": compose_status(JobState.PREPARING, None, progress=3),
+                    },
                 },
-                "$push": {
-                    "status": compose_status(JobState.PREPARING, None, progress=3),
-                },
-            },
-        )
+                session=mongo_session,
+            )
+
+            pg_result = await pg_session.execute(
+                select(SQLJob).where(
+                    compose_legacy_id_single_expression(SQLJob, job_id),
+                ),
+            )
+            sql_job = pg_result.scalar()
+
+            if sql_job is None:
+                logger.warning(
+                    "acquired job has no postgres row",
+                    job_id=job_id,
+                )
+            else:
+                sql_job.acquired = True
+                sql_job.key = hashed
+                sql_job.pinged_at = now
+                sql_job.state = JobStateV2.RUNNING.value
 
         job = await self.get(job_id)
 

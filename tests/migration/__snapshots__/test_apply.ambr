@@ -155,5 +155,12 @@
       'name': 'copy jobs to postgres',
       'revision': 'xtwxolun286s',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 23,
+      'name': 'add job query indexes',
+      'revision': '998195bd5a8b',
+    }),
   ])
 # ---
