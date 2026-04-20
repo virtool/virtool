@@ -366,17 +366,7 @@ class SamplesData(DataLayerDomain):
 
             await self.data.jobs.create(
                 "create_sample",
-                {
-                    "sample_id": sample_id,
-                    "files": [
-                        {
-                            "id": upload["id"],
-                            "name": upload["name"],
-                            "size": upload["size"],
-                        }
-                        for upload in uploads
-                    ],
-                },
+                {"sample_id": sample_id},
                 user_id,
                 job_id=job_id,
             )

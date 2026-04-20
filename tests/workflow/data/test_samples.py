@@ -98,24 +98,6 @@ class TestNewSample:
         work_path: Path,
         workflow_data: WorkflowData,
     ):
-        workflow_data.job.args.update(
-            {
-                "files": [
-                    {
-                        "id": 1,
-                        "name": "reads_1.fq.gz",
-                        "size": 100,
-                    },
-                    {
-                        "id": 2,
-                        "name": "reads_2.fq.gz",
-                        "size": 100,
-                    },
-                ],
-                "sample_id": workflow_data.new_sample.id,
-            },
-        )
-
         workflow_data.job.args["sample_id"] = workflow_data.new_sample.id
 
         new_sample: WFNewSample = await scope.instantiate_by_key("new_sample")
@@ -147,23 +129,7 @@ class TestNewSample:
 
     async def test_finalize(self, scope: FixtureScope, workflow_data: WorkflowData):
         """Test that the finalize method updates the sample with the given quality."""
-        workflow_data.job.args.update(
-            {
-                "files": [
-                    {
-                        "id": 1,
-                        "name": "reads_1.fq.gz",
-                        "size": 100,
-                    },
-                    {
-                        "id": 2,
-                        "name": "reads_2.fq.gz",
-                        "size": 100,
-                    },
-                ],
-                "sample_id": workflow_data.new_sample.id,
-            },
-        )
+        workflow_data.job.args["sample_id"] = workflow_data.new_sample.id
 
         new_sample = await scope.instantiate_by_key("new_sample")
 
@@ -188,23 +154,7 @@ class TestNewSample:
             __model__ = Quality
             __random_seed__ = 1
 
-        workflow_data.job.args.update(
-            {
-                "files": [
-                    {
-                        "id": 1,
-                        "name": "reads_1.fq.gz",
-                        "size": 100,
-                    },
-                    {
-                        "id": 2,
-                        "name": "reads_2.fq.gz",
-                        "size": 100,
-                    },
-                ],
-                "sample_id": workflow_data.new_sample.id,
-            },
-        )
+        workflow_data.job.args["sample_id"] = workflow_data.new_sample.id
 
         workflow_data.new_sample.ready = True
         workflow_data.quality = QualityFactory.build()
@@ -216,23 +166,7 @@ class TestNewSample:
 
     async def test_delete(self, scope: FixtureScope, workflow_data: WorkflowData):
         """Test that the delete method deletes the sample."""
-        workflow_data.job.args.update(
-            {
-                "files": [
-                    {
-                        "id": 1,
-                        "name": "reads_1.fq.gz",
-                        "size": 100,
-                    },
-                    {
-                        "id": 2,
-                        "name": "reads_2.fq.gz",
-                        "size": 100,
-                    },
-                ],
-                "sample_id": workflow_data.new_sample.id,
-            },
-        )
+        workflow_data.job.args["sample_id"] = workflow_data.new_sample.id
 
         new_sample: WFNewSample = await scope.instantiate_by_key("new_sample")
 
@@ -244,23 +178,7 @@ class TestNewSample:
         self, workflow_data: WorkflowData, scope: FixtureScope
     ):
         """Test that the delete method raises an error if the sample does not exist."""
-        workflow_data.job.args.update(
-            {
-                "files": [
-                    {
-                        "id": 1,
-                        "name": "reads_1.fq.gz",
-                        "size": 100,
-                    },
-                    {
-                        "id": 2,
-                        "name": "reads_2.fq.gz",
-                        "size": 100,
-                    },
-                ],
-                "sample_id": workflow_data.new_sample.id,
-            },
-        )
+        workflow_data.job.args["sample_id"] = workflow_data.new_sample.id
 
         new_sample: WFNewSample = await scope.instantiate_by_key("new_sample")
 
@@ -273,23 +191,7 @@ class TestNewSample:
         self, workflow_data: WorkflowData, scope: FixtureScope
     ):
         """Test that the delete method raises an error if the sample is finalized."""
-        workflow_data.job.args.update(
-            {
-                "files": [
-                    {
-                        "id": 1,
-                        "name": "reads_1.fq.gz",
-                        "size": 100,
-                    },
-                    {
-                        "id": 2,
-                        "name": "reads_2.fq.gz",
-                        "size": 100,
-                    },
-                ],
-                "sample_id": workflow_data.new_sample.id,
-            },
-        )
+        workflow_data.job.args["sample_id"] = workflow_data.new_sample.id
 
         new_sample: WFNewSample = await scope.instantiate_by_key("new_sample")
 
@@ -307,23 +209,7 @@ class TestNewSample:
         workflow_data: WorkflowData,
     ):
         """Test that reads can be uploaded to unfinalized samples."""
-        workflow_data.job.args.update(
-            {
-                "files": [
-                    {
-                        "id": 1,
-                        "name": "reads_1.fq.gz",
-                        "size": 100,
-                    },
-                    {
-                        "id": 2,
-                        "name": "reads_2.fq.gz",
-                        "size": 100,
-                    },
-                ],
-                "sample_id": workflow_data.new_sample.id,
-            },
-        )
+        workflow_data.job.args["sample_id"] = workflow_data.new_sample.id
 
         new_sample: WFNewSample = await scope.instantiate_by_key("new_sample")
 

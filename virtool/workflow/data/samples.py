@@ -155,18 +155,14 @@ async def new_sample(
 
     log.info("created uploads directory")
 
-    # TODO: Remove fallback to job.args["files"] once all samples have uploads stored.
-    # Older samples don't have uploads in sample_dict, so we fall back to job.args.
-    sample_uploads = sample_dict.get("uploads") or job.args.get("files") or []
-
     files = tuple(
         WFNewSampleUpload(
-            id=u["id"],
-            name=u["name"],
-            path=Path(uploads_path / u["name"]),
-            size=u["size"],
+            id=u.id,
+            name=u.name,
+            path=Path(uploads_path / u.name),
+            size=u.size,
         )
-        for u in sample_uploads
+        for u in sample.uploads or []
     )
 
     await asyncio.gather(*[uploads.download(f.id, f.path) for f in files])
