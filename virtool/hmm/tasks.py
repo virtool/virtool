@@ -1,5 +1,6 @@
 import asyncio
 from asyncio import to_thread
+from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 
@@ -21,8 +22,7 @@ class HMMInstallTask(BaseTask):
     """Runs a background Task that:
         - downloads the official profiles.hmm.gz file
         - decompresses the hmm.tar.gz file
-        - moves the file to the correct data path
-        - downloads the official annotations.json.gz file
+        - writes the profiles to storage
         - imports the annotations into the database
 
     Task reports the following stages to the hmm_install status document:
@@ -80,12 +80,18 @@ class HMMInstallTask(BaseTask):
             self.temp_path / "hmm" / "annotations.json",
         )
 
+        profile_path = self.temp_path / "hmm" / "profiles.hmm"
+
+        async def _read_profile():
+            data = await to_thread(profile_path.read_bytes)
+            yield data
+
         await self.data.hmms.install(
             annotations,
             self.context["release"],
             self.context["user_id"],
             self.create_progress_handler(),
-            self.temp_path / "hmm" / "profiles.hmm",
+            _read_profile(),
         )
 
     async def cleanup(self) -> None:

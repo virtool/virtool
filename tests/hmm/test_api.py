@@ -1,7 +1,5 @@
 import json
-import shutil
 from http import HTTPStatus
-from pathlib import Path
 
 import pytest
 
@@ -126,56 +124,47 @@ async def test_get(
     assert await resp.json() == snapshot(name="json")
 
 
-async def test_get_hmm_annotations(data_path: Path, spawn_job_client: JobClientSpawner):
+async def test_get_hmm_annotations(spawn_job_client: JobClientSpawner):
     client = await spawn_job_client(authenticated=True)
     mongo = get_mongo_from_app(client.app)
 
     await mongo.hmm.insert_one({"_id": "foo"})
     await mongo.hmm.insert_one({"_id": "bar"})
 
-    compressed_hmm_annotations = data_path / "annotations.json.gz"
-    decompressed_hmm_annotations = data_path / "annotations.json"
-
     async with client.get("/hmms/files/annotations.json.gz") as response:
         assert response.status == HTTPStatus.OK
 
-        with compressed_hmm_annotations.open("wb") as f:
-            f.write(await response.read())
+        compressed_bytes = await response.read()
 
-        decompress_file(compressed_hmm_annotations, decompressed_hmm_annotations)
+    import gzip
 
-        with decompressed_hmm_annotations.open("r") as f:
-            hmms = json.load(f)
+    decompressed = gzip.decompress(compressed_bytes)
+    hmms = json.loads(decompressed)
 
-        assert hmms == [{"id": "foo"}, {"id": "bar"}]
+    assert hmms == [{"id": "foo"}, {"id": "bar"}]
 
 
-@pytest.mark.parametrize("data_exists", [True, False])
 @pytest.mark.parametrize("file_exists", [True, False])
 async def test_get_hmm_profiles(
-    data_exists: bool,
     file_exists: bool,
-    data_path: Path,
-    example_path: Path,
+    example_path,
     spawn_job_client: JobClientSpawner,
 ):
     """Test that HMM profiles can be properly downloaded once they are available."""
     client = await spawn_job_client(authenticated=True)
 
-    hmms_path = data_path / "hmm"
-    profiles_path = hmms_path / "profiles.hmm"
+    if file_exists:
+        profile_bytes = (example_path / "hmms" / "profiles.hmm").read_bytes()
 
-    if data_exists:
-        hmms_path.mkdir()
+        async def _data():
+            yield profile_bytes
 
-        if file_exists:
-            shutil.copy(example_path / "hmms" / "profiles.hmm", hmms_path)
-            assert profiles_path.exists()
+        await client.app["storage"].write("hmm/profiles.hmm", _data())
 
     resp = await client.get("/hmms/files/profiles.hmm")
 
-    if data_exists and file_exists:
+    if file_exists:
         assert resp.status == HTTPStatus.OK
-        assert profiles_path.read_bytes() == await resp.content.read()
+        assert await resp.content.read() == profile_bytes
     else:
-        assert resp.status == 404
+        assert resp.status == HTTPStatus.NOT_FOUND

@@ -95,7 +95,7 @@ def create_data_layer(
         BLASTData(client, mongo, pg),
         GroupsData(mongo, pg),
         HistoryData(config.data_path, mongo, pg),
-        HmmsData(client, config, mongo, pg),
+        HmmsData(client, mongo, pg, storage),
         IndexData(mongo, config, pg),
         JobsData(mongo, pg),
         LabelsData(mongo, pg),

@@ -1,7 +1,6 @@
 import asyncio
-import shutil
-from asyncio import to_thread
-from functools import cached_property
+import gzip
+from collections.abc import AsyncIterator
 from pathlib import Path
 
 from aiohttp import ClientSession
@@ -10,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 import virtool.hmm.db
 from virtool.api.utils import compose_regex_query, paginate
-from virtool.config.cls import Config
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import (
     ResourceConflictError,
@@ -22,36 +20,35 @@ from virtool.github import create_update_subdocument
 from virtool.hmm.db import (
     HMMS_PROJECTION,
     fetch_and_update_release,
-    generate_annotations_json_file,
+    generate_annotations,
 )
 from virtool.hmm.models import HMM, HMMInstalled, HMMSearchResult, HMMStatus
 from virtool.hmm.tasks import HMMInstallTask
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
+from virtool.storage.protocol import StorageBackend
 from virtool.tasks.progress import (
     AbstractProgressHandler,
     AccumulatingProgressHandlerWrapper,
 )
 from virtool.tasks.transforms import AttachTaskTransform
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import compress_file_with_gzip
 
 
 class HmmsData(DataLayerDomain):
     name = "hmms"
 
     def __init__(
-        self, client: ClientSession, config: Config, mongo: Mongo, pg: AsyncEngine
+        self,
+        client: ClientSession,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        storage: StorageBackend,
     ):
         self._client = client
-        self._config = config
         self._mongo = mongo
         self._pg = pg
-
-    @cached_property
-    def profiles_path(self) -> Path:
-        """The path to the HMM profiles file in the application data."""
-        return self._config.data_path / "hmm" / "profiles.hmm"
+        self._storage = storage
 
     async def find(self, query: MultiDictProxy):
         db_query = {}
@@ -74,11 +71,6 @@ class HmmsData(DataLayerDomain):
         return HMMSearchResult(**data, status=status)
 
     async def get(self, hmm_id: str) -> HMM:
-        """Get an HMM resource.
-
-        :param hmm_id: the id of the hmm to get
-        :return: the hmm
-        """
         document = await self._mongo.hmm.find_one({"_id": hmm_id})
 
         if document:
@@ -151,12 +143,8 @@ class HmmsData(DataLayerDomain):
         release,
         user_id: str,
         progress_handler: AbstractProgressHandler,
-        hmm_temp_profile_path,
+        profile_data: AsyncIterator[bytes],
     ) -> None:
-        """Installs annotation and profiles given a list of annotation dictionaries and
-        path to profile file.
-
-        """
         tracker = AccumulatingProgressHandlerWrapper(progress_handler, len(annotations))
 
         try:
@@ -184,46 +172,37 @@ class HmmsData(DataLayerDomain):
             )
 
             try:
-                await to_thread(
-                    self.profiles_path.parent.mkdir,
-                    parents=True,
-                    exist_ok=True,
-                )
-                await to_thread(
-                    shutil.move,
-                    str(hmm_temp_profile_path),
-                    str(self.profiles_path),
-                )
+                await self._storage.write("hmm/profiles.hmm", profile_data)
             except Exception:
                 await session.abort_transaction()
                 raise
 
-    async def get_profiles_path(self) -> Path:
-        path = self._config.data_path / "hmm" / "profiles.hmm"
+    async def download_profiles(self) -> tuple[AsyncIterator[bytes], int]:
+        size = 0
+        async for info in self._storage.list("hmm/profiles.hmm"):
+            size = info.size
+            break
 
-        if await to_thread(path.is_file):
-            return path
+        if not size:
+            raise ResourceNotFoundError("Profiles file could not be found")
 
-        raise ResourceNotFoundError("Profiles file could not be found")
+        return self._storage.read("hmm/profiles.hmm"), size
 
-    async def get_annotations_path(self) -> Path:
-        path = self._config.data_path / "hmm" / "annotations.json.gz"
+    async def download_annotations(self) -> tuple[AsyncIterator[bytes], int]:
+        async for info in self._storage.list("hmm/annotations.json.gz"):
+            return self._storage.read("hmm/annotations.json.gz"), info.size
 
-        if not await to_thread(path.is_file):
-            json_path = await generate_annotations_json_file(
-                self._config.data_path,
-                self._mongo,
-            )
+        annotations_bytes = await generate_annotations(self._mongo)
+        compressed = gzip.compress(annotations_bytes, compresslevel=6)
 
-            await to_thread(compress_file_with_gzip, json_path, path)
+        async def _data():
+            yield compressed
 
-        return path
+        await self._storage.write("hmm/annotations.json.gz", _data())
+
+        return self._storage.read("hmm/annotations.json.gz"), len(compressed)
 
     async def clean_status(self) -> None:
-        """Reset the HMM status to its starting state.
-
-        This is called in the event that an HMM data installation fails.
-        """
         async with self._mongo.create_session() as session:
             await self._mongo.status.find_one_and_update(
                 {"_id": "hmm"},

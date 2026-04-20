@@ -14,7 +14,7 @@ from virtool.github import get_etag, get_release
 from virtool.hmm.utils import format_hmm_release
 from virtool.mongo.core import Mongo
 from virtool.types import Document
-from virtool.utils import base_processor, dump_json, load_json
+from virtool.utils import base_processor, load_json
 
 logger = get_logger("hmms")
 
@@ -178,20 +178,14 @@ async def fetch_and_update_release(
         return release
 
 
-async def generate_annotations_json_file(data_path: Path, mongo: Mongo) -> Path:
-    """Generate the HMMs annotation file at `config.data_path/hmm/annotations.json.gz
+async def generate_annotations(mongo: Mongo) -> bytes:
+    """Generate the HMM annotations as JSON bytes.
 
-    :param data_path: the app data path
     :param mongo: the app mongo client
-    :return: the path to the annotations json file
+    :return: the annotations as JSON bytes
     """
-    annotations_path = data_path / "hmm" / "annotations.json"
-    annotations_path.parent.mkdir(parents=True, exist_ok=True)
+    import json
 
-    await asyncio.to_thread(
-        dump_json,
-        annotations_path,
-        [base_processor(document) async for document in mongo.hmm.find({})],
-    )
+    annotations = [base_processor(document) async for document in mongo.hmm.find({})]
 
-    return annotations_path
+    return json.dumps(annotations).encode()

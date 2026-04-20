@@ -6,7 +6,7 @@ from aiohttp.test_utils import make_mocked_coro
 from pytest_mock import MockerFixture
 
 from virtool.hmm.db import (
-    generate_annotations_json_file,
+    generate_annotations,
     get_hmms_referenced_in_db,
     get_hmms_referenced_in_files,
     get_referenced_hmm_ids,
@@ -91,15 +91,13 @@ async def test_get_referenced_hmm_ids(
     ]
 
 
-async def test_generate_annotations_json_file(data_path: Path, mongo: Mongo):
+async def test_generate_annotations(mongo: Mongo):
     await mongo.hmm.insert_one({"_id": "foo"})
     await mongo.hmm.insert_one({"_id": "bar"})
 
-    path = await generate_annotations_json_file(data_path, mongo)
+    result = await generate_annotations(mongo)
 
-    assert path.exists()
-
-    hmms = json.loads(path.read_text())
+    hmms = json.loads(result)
 
     ids = [document["id"] for document in hmms]
 
