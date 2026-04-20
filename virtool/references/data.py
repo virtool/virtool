@@ -595,11 +595,7 @@ class ReferencesData(DataLayerDomain):
         await self.data.jobs.create(
             "build_index",
             {
-                "ref_id": ref_id,
-                "user_id": user_id,
                 "index_id": document["_id"],
-                "index_version": document["version"],
-                "manifest": document["manifest"],
             },
             user_id,
             0,

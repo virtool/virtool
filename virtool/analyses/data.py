@@ -289,11 +289,6 @@ class AnalysisData(DataLayerDomain):
             data.workflow.value,
             {
                 "analysis_id": analysis_id,
-                "ref_id": data.ref_id,
-                "sample_id": sample_id,
-                "sample_name": sample_name,
-                "index_id": index_id,
-                "subtractions": data.subtractions,
             },
             user_id,
             space_id,
