@@ -307,10 +307,31 @@ class TestCreate:
 
     async def test_remote(
         self,
+        mocker,
         spawn_client: ClientSpawner,
         snapshot: SnapshotAssertion,
         static_time,
     ):
+        mocker.patch(
+            "virtool.github.get_release",
+            make_mocked_coro({
+                "id": 11447367,
+                "name": "v0.1.1",
+                "body": "#### Fixed\n- fixed uploading to GitHub releases in `.travis.yml`",
+                "etag": 'W/"mock_etag"',
+                "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.1",
+                "published_at": "2018-06-12T19:20:57Z",
+                "assets": [
+                    {
+                        "name": "reference.json.gz",
+                        "size": 3695872,
+                        "browser_download_url": "https://github.com/virtool/ref-plant-viruses/releases/download/v0.1.1/reference.json.gz",
+                        "content_type": "application/gzip",
+                    },
+                ],
+            }),
+        )
+
         client = await spawn_client(
             authenticated=True,
             permissions=[Permission.create_ref],
