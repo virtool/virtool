@@ -17,6 +17,7 @@ import aiohttp
 import pytest
 from obstore.store import AzureStore, S3Store
 
+from virtool.storage.memory import MemoryStorageProvider
 from virtool.storage.obstore import ObstoreProvider
 
 
@@ -139,3 +140,8 @@ async def azure_storage(
     await _purge(provider, prefix)
     yield provider
     await _purge(provider, prefix)
+
+
+@pytest.fixture
+def memory_storage() -> MemoryStorageProvider:
+    return MemoryStorageProvider()
