@@ -155,16 +155,14 @@ async def new_sample(
 
     log.info("created uploads directory")
 
-    sample_uploads = sample_dict.get("uploads") or []
-
     files = tuple(
         WFNewSampleUpload(
-            id=u["id"],
-            name=u["name"],
-            path=Path(uploads_path / u["name"]),
-            size=u["size"],
+            id=u.id,
+            name=u.name,
+            path=Path(uploads_path / u.name),
+            size=u.size,
         )
-        for u in sample_uploads
+        for u in sample.uploads or []
     )
 
     await asyncio.gather(*[uploads.download(f.id, f.path) for f in files])
