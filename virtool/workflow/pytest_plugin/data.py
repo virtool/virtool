@@ -11,6 +11,7 @@ from virtool.ml.models import MLModelRelease
 from virtool.references.models import Reference, ReferenceNested
 from virtool.samples.models import Sample
 from virtool.subtractions.models import Subtraction, SubtractionFile, SubtractionNested
+from virtool.uploads.models import UploadMinimal
 from virtool.workflow.pytest_plugin.utils import SUBTRACTION_FILENAMES, StaticTime
 
 
@@ -120,22 +121,38 @@ def workflow_data(
     new_sample = SampleFactory.build()
 
     new_sample_job = JobFactory.build()
-    new_sample_job.args["files"] = [
-        {
-            "id": 1,
-            "name": "reads_1.fq.gz",
-            "size": 100,
-        },
-        {
-            "id": 2,
-            "name": "reads_2.fq.gz",
-            "size": 100,
-        },
-    ]
     new_sample_job.args["sample_id"] = new_sample.id
 
     new_sample.artifacts = []
     new_sample.job = JobMinimal.parse_obj(new_sample_job)
+    new_sample.uploads = [
+        UploadMinimal(
+            id=1,
+            created_at=static_time.datetime,
+            name="reads_1.fq.gz",
+            ready=True,
+            removed=False,
+            removed_at=None,
+            reserved=True,
+            size=100,
+            type="reads",
+            uploaded_at=static_time.datetime,
+            user=new_sample.user,
+        ),
+        UploadMinimal(
+            id=2,
+            created_at=static_time.datetime,
+            name="reads_2.fq.gz",
+            ready=True,
+            removed=False,
+            removed_at=None,
+            reserved=True,
+            size=100,
+            type="reads",
+            uploaded_at=static_time.datetime,
+            user=new_sample.user,
+        ),
+    ]
     new_sample.quality = None
     new_sample.reads = []
     new_sample.ready = False

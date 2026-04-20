@@ -155,9 +155,7 @@ async def new_sample(
 
     log.info("created uploads directory")
 
-    # TODO: Remove fallback to job.args["files"] once all samples have uploads stored.
-    # Older samples don't have uploads in sample_dict, so we fall back to job.args.
-    sample_uploads = sample_dict.get("uploads") or job.args.get("files") or []
+    sample_uploads = sample_dict.get("uploads") or []
 
     files = tuple(
         WFNewSampleUpload(
