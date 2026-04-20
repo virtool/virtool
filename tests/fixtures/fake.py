@@ -1,4 +1,3 @@
-import shutil
 from pathlib import Path
 
 import pytest
@@ -44,14 +43,11 @@ def fake(
 
             assert await data_layer.jobs.get(job.id) == job
     """
-    # Use a local example ML model instead of downloading from GitHub.
-    mocker.patch.object(
-        HTTPClient,
-        "download",
-        side_effect=lambda url, target: shutil.copy(
-            example_path / "ml/model.tar.gz",
-            target,
-        ),
-    )
+    model_bytes = (example_path / "ml/model.tar.gz").read_bytes()
+
+    async def fake_stream(url):
+        yield model_bytes
+
+    mocker.patch.object(HTTPClient, "stream", side_effect=fake_stream)
 
     return DataFaker(data_layer, mongo, pg)

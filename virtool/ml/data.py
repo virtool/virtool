@@ -1,5 +1,5 @@
-import asyncio
 import builtins
+from collections.abc import AsyncIterator
 
 import arrow
 from sqlalchemy import asc, desc, select
@@ -8,10 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.orm import joinedload
 from structlog import get_logger
 
-from virtool.config import Config
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceNotFoundError
-from virtool.data.file import FileDescriptor
 from virtool.data.http import HTTPClient
 from virtool.ml.models import (
     MLModel,
@@ -27,6 +25,7 @@ from virtool.releases import (
     ReleaseType,
     fetch_release_manifest_from_virtool,
 )
+from virtool.storage.protocol import StorageBackend
 from virtool.tasks.sql import SQLTask
 from virtool.utils import timestamp
 
@@ -38,13 +37,13 @@ class MLData(DataLayerDomain):
 
     def __init__(
         self,
-        config: Config,
         http: HTTPClient,
         pg: AsyncEngine,
+        storage: StorageBackend,
     ):
-        self._config = config
         self._http = http
         self._pg = pg
+        self._storage = storage
 
     async def list(self) -> MLModelListResult:
         """Get a list of minimal representations of all ML models and the last time
@@ -151,11 +150,14 @@ class MLData(DataLayerDomain):
                 **{**release.to_dict(), "model": release.model.to_dict()},
             )
 
-    async def download_release(self, release_id: int) -> FileDescriptor:
-        """Download the latest release of an ML model.
+    async def download_release(
+        self,
+        release_id: int,
+    ) -> tuple[AsyncIterator[bytes], int]:
+        """Stream the contents of an ML model release archive.
 
         :param release_id: the ID of the release to download.
-        :return: a file descriptor for the downloaded file.
+        :return: a stream of bytes and the size of the archive.
 
         """
         async with AsyncSession(self._pg) as session:
@@ -168,8 +170,8 @@ class MLData(DataLayerDomain):
             if release is None:
                 raise ResourceNotFoundError
 
-            return FileDescriptor(
-                self._config.data_path / "ml" / str(release_id) / "model.tar.gz",
+            return (
+                self._storage.read(f"ml/{release_id}/model.tar.gz"),
                 release.size,
             )
 
@@ -184,7 +186,9 @@ class MLData(DataLayerDomain):
         :param releases: the release manifest for ML models from www.virtool.ca.
 
         """
-        ml_path = self._config.data_path / "ml"
+        existing_keys: set[str] = set()
+        async for info in self._storage.list("ml/"):
+            existing_keys.add(info.key)
 
         created_at = timestamp()
 
@@ -243,21 +247,16 @@ class MLData(DataLayerDomain):
 
                 await session.flush()
 
-                for release in ml_model.releases:
-                    release_path = ml_path / str(release.id)
-
-                    await asyncio.to_thread(
-                        release_path.mkdir,
-                        parents=True,
-                        exist_ok=True,
-                    )
-
-                    release_path /= "model.tar.gz"
-
-                    if not await asyncio.to_thread(release_path.exists):
-                        await self._http.download(release.download_url, release_path)
+                downloads = [
+                    (f"ml/{release.id}/model.tar.gz", release.download_url)
+                    for release in ml_model.releases
+                    if f"ml/{release.id}/model.tar.gz" not in existing_keys
+                ]
 
                 await session.commit()
+
+                for key, url in downloads:
+                    await self._storage.write(key, self._http.stream(url))
 
     async def sync(self):
         """Fetch the release manifests for ML models from www.virtool.ca and download any

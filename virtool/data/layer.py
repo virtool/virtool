@@ -22,6 +22,7 @@ from virtool.references.data import ReferencesData
 from virtool.samples.data import SamplesData
 from virtool.sessions.data import SessionData
 from virtool.settings.data import SettingsData
+from virtool.storage.protocol import StorageBackend
 from virtool.subtractions.data import SubtractionsData
 from virtool.tasks.data import TasksData
 from virtool.uploads.data import UploadsData
@@ -70,6 +71,7 @@ def create_data_layer(
     pg: AsyncEngine,
     config: Config,
     client: ClientSession,
+    storage: StorageBackend | None = None,
 ) -> DataLayer:
     """Create and return a data layer object.
 
@@ -77,9 +79,15 @@ def create_data_layer(
     :param pg: the Postgres client
     :param config: the application config object
     :param client: an async HTTP client session for the server
+    :param storage: the storage backend for file operations
     :return: the application data layer
     """
     http_client = HTTPClient(client)
+
+    if storage is None:
+        from virtool.storage.filesystem import FilesystemProvider
+
+        storage = FilesystemProvider(config.data_path / "storage")
 
     return DataLayer(
         AccountData(mongo, pg),
@@ -92,7 +100,7 @@ def create_data_layer(
         JobsData(mongo, pg),
         LabelsData(mongo, pg),
         MessagesData(pg),
-        MLData(config, http_client, pg),
+        MLData(http_client, pg, storage),
         OTUData(config.data_path, mongo, pg),
         ReferencesData(mongo, pg, config, client),
         SamplesData(config, mongo, pg),

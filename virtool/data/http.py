@@ -1,6 +1,6 @@
 """An HTTP client for the data layer."""
 
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
 from pathlib import Path
 
 from aiohttp import ClientSession
@@ -21,6 +21,15 @@ class HTTPClient:
     def __init__(self, session: ClientSession) -> None:
         """:param session: the aiohttp client session"""
         self._session = session
+
+    async def stream(self, url: str) -> AsyncIterator[bytes]:
+        """Stream the contents of ``url`` as chunks of bytes."""
+        async with self._session.get(url) as resp:
+            if resp.status > 399:
+                raise HTTPClientError
+
+            async for chunk in resp.content.iter_chunked(DOWNLOAD_CHUNK_SIZE):
+                yield chunk
 
     async def download(
         self,

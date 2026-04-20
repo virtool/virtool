@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool.data.layer import DataLayer, create_data_layer
 from virtool.mongo.core import Mongo
+from virtool.storage.memory import MemoryStorageProvider
 
 
 @pytest.fixture
@@ -31,4 +32,5 @@ def data_layer(
         pg,
         config,
         mocker.Mock(spec=ClientSession),
+        MemoryStorageProvider(),
     )
