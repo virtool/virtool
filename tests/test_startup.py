@@ -3,7 +3,7 @@ from aiohttp.client import ClientSession, ClientTimeout
 
 from tests.config.test_cls import build_server_config
 from virtool.startup import startup_http_client_session, startup_storage
-from virtool.storage.filesystem import FilesystemProvider
+from virtool.storage.routing import FallbackStorageRouter
 
 
 @pytest.fixture
@@ -47,5 +47,5 @@ async def test_startup_storage(fake_app, tmp_path):
 
     await startup_storage(fake_app)
 
-    assert isinstance(fake_app["storage"], FilesystemProvider)
+    assert isinstance(fake_app["storage"], FallbackStorageRouter)
     assert (tmp_path / "storage").is_dir()

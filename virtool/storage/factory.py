@@ -3,10 +3,28 @@
 from virtool.config.cls import ServerConfig
 from virtool.storage.filesystem import FilesystemProvider
 from virtool.storage.protocol import StorageBackend
+from virtool.storage.routing import FallbackStorageRouter
 
 
 def create_storage_backend(config: ServerConfig) -> StorageBackend:
-    """Create the storage backend selected by ``config``."""
+    """Create a :class:`FallbackStorageRouter` from ``config``.
+
+    The primary backend is determined by ``config.storage_backend``. The
+    fallback is always a :class:`FilesystemProvider` (reusing the primary
+    instance in filesystem-only mode).
+    """
+    primary = _create_primary_backend(config)
+
+    if config.storage_backend == "filesystem":
+        fallback = primary
+    else:
+        config.storage_filesystem_path.mkdir(parents=True, exist_ok=True)
+        fallback = FilesystemProvider(config.storage_filesystem_path)
+
+    return FallbackStorageRouter(primary, fallback)
+
+
+def _create_primary_backend(config: ServerConfig) -> StorageBackend:
     match config.storage_backend:
         case "filesystem":
             config.storage_filesystem_path.mkdir(parents=True, exist_ok=True)
