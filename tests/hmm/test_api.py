@@ -7,7 +7,6 @@ from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app
-from virtool.utils import decompress_file
 
 
 @pytest.fixture

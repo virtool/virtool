@@ -1,7 +1,6 @@
 import asyncio
 import gzip
 from collections.abc import AsyncIterator
-from pathlib import Path
 
 from aiohttp import ClientSession
 from multidict import MultiDictProxy
@@ -178,22 +177,26 @@ class HmmsData(DataLayerDomain):
                 raise
 
     async def download_profiles(self) -> tuple[AsyncIterator[bytes], int]:
-        size = 0
-        async for info in self._storage.list("hmm/profiles.hmm"):
-            size = info.size
+        info = None
+        async for item in self._storage.list("hmm/profiles.hmm"):
+            info = item
             break
 
-        if not size:
+        if info is None:
             raise ResourceNotFoundError("Profiles file could not be found")
 
-        return self._storage.read("hmm/profiles.hmm"), size
+        return self._storage.read("hmm/profiles.hmm"), info.size
 
     async def download_annotations(self) -> tuple[AsyncIterator[bytes], int]:
         async for info in self._storage.list("hmm/annotations.json.gz"):
             return self._storage.read("hmm/annotations.json.gz"), info.size
 
         annotations_bytes = await generate_annotations(self._mongo)
-        compressed = gzip.compress(annotations_bytes, compresslevel=6)
+        compressed = await asyncio.to_thread(
+            gzip.compress,
+            annotations_bytes,
+            compresslevel=6,
+        )
 
         async def _data():
             yield compressed

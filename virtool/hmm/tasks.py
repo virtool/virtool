@@ -1,6 +1,5 @@
 import asyncio
 from asyncio import to_thread
-from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 
@@ -83,8 +82,12 @@ class HMMInstallTask(BaseTask):
         profile_path = self.temp_path / "hmm" / "profiles.hmm"
 
         async def _read_profile():
-            data = await to_thread(profile_path.read_bytes)
-            yield data
+            with profile_path.open("rb") as f:
+                while True:
+                    chunk = await to_thread(f.read, 1024 * 1024)
+                    if not chunk:
+                        break
+                    yield chunk
 
         await self.data.hmms.install(
             annotations,

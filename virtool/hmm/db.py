@@ -1,6 +1,7 @@
 """Work with HMM data in the database."""
 
 import asyncio
+import json
 from pathlib import Path
 
 import aiohttp.client_exceptions
@@ -184,8 +185,6 @@ async def generate_annotations(mongo: Mongo) -> bytes:
     :param mongo: the app mongo client
     :return: the annotations as JSON bytes
     """
-    import json
-
     annotations = [base_processor(document) async for document in mongo.hmm.find({})]
 
     return json.dumps(annotations).encode()
