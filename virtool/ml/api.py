@@ -1,6 +1,6 @@
 """Request handlers for querying and downloading machine learning models."""
 
-from aiohttp.web_fileresponse import FileResponse
+from aiohttp.web_response import StreamResponse
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r404
 
@@ -67,14 +67,24 @@ class MLModelFileView(PydanticView):
 
         Downloads the archived model release.
         """
-        file_descriptor = await get_data_from_req(self.request).ml.download_release(
-            release_id
-        )
+        try:
+            stream, size = await get_data_from_req(
+                self.request,
+            ).ml.download_release(release_id)
+        except ResourceNotFoundError:
+            raise APINotFound()
 
-        return FileResponse(
-            file_descriptor.path,
+        response = StreamResponse(
             headers={
                 "Content-Disposition": "attachment; filename=model.tar.gz",
+                "Content-Length": str(size),
                 "Content-Type": "application/octet-stream",
             },
         )
+
+        await response.prepare(self.request)
+
+        async for chunk in stream:
+            await response.write(chunk)
+
+        return response

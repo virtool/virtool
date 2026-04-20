@@ -1,5 +1,4 @@
 import datetime
-import shutil
 from pathlib import Path
 from unittest.mock import call
 
@@ -61,7 +60,6 @@ async def test_get(
 
 
 async def test_load(
-    data_path: Path,
     data_layer: DataLayer,
     example_path: Path,
     fake: DataFaker,
@@ -69,17 +67,13 @@ async def test_load(
     snapshot_recent: SnapshotAssertion,
 ):
     """Test that MLData.load() can load updated models into the database."""
+    model_bytes = (example_path / "ml/model.tar.gz").read_bytes()
 
-    async def download_func(url, target, _=None):
-        shutil.copy(example_path / "ml/model.tar.gz", target)
+    async def fake_stream(url):
+        yield model_bytes
 
-    mocker.patch.object(
-        data_layer.ml._http,
-        "download",
-        download_func,
-    )
-
-    spy = mocker.spy(data_layer.ml._http, "download")
+    mocker.patch.object(data_layer.ml._http, "stream", fake_stream)
+    spy = mocker.spy(data_layer.ml._http, "stream")
 
     first = [fake.ml.create_release_manifest_item() for _ in range(3)]
 
@@ -115,10 +109,13 @@ async def test_load(
 
     spy.assert_has_calls(
         [
-            call("https://www.snyder.com/", data_path / "ml/1/model.tar.gz"),
-            call("http://acosta.com/", data_path / "ml/2/model.tar.gz"),
-            call("http://www.love.net/", data_path / "ml/3/model.tar.gz"),
-            call("https://butler.com/", data_path / "ml/9/model.tar.gz"),
+            call("https://www.snyder.com/"),
+            call("http://acosta.com/"),
+            call("http://www.love.net/"),
+            call("https://butler.com/"),
         ],
         any_order=True,
     )
+
+    expected_keys = {f"ml/{i}/model.tar.gz" for i in [1, 2, 3, 9]}
+    assert data_layer.ml._storage.keys() >= expected_keys
