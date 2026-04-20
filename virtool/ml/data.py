@@ -247,16 +247,16 @@ class MLData(DataLayerDomain):
 
                 await session.flush()
 
-                for release in ml_model.releases:
-                    key = f"ml/{release.id}/model.tar.gz"
-
-                    if key not in existing_keys:
-                        await self._storage.write(
-                            key,
-                            self._http.stream(release.download_url),
-                        )
+                downloads = [
+                    (f"ml/{release.id}/model.tar.gz", release.download_url)
+                    for release in ml_model.releases
+                    if f"ml/{release.id}/model.tar.gz" not in existing_keys
+                ]
 
                 await session.commit()
+
+                for key, url in downloads:
+                    await self._storage.write(key, self._http.stream(url))
 
     async def sync(self):
         """Fetch the release manifests for ML models from www.virtool.ca and download any

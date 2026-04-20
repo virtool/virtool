@@ -10,6 +10,7 @@ from virtool.api.routes import Routes
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.ml.models import MLModel, MLModelListResult, MLModelReleaseMinimal
+from virtool.storage.errors import StorageKeyNotFoundError
 
 routes = Routes()
 
@@ -74,6 +75,11 @@ class MLModelFileView(PydanticView):
         except ResourceNotFoundError:
             raise APINotFound()
 
+        try:
+            first_chunk = await stream.__anext__()
+        except (StopAsyncIteration, StorageKeyNotFoundError):
+            raise APINotFound()
+
         response = StreamResponse(
             headers={
                 "Content-Disposition": "attachment; filename=model.tar.gz",
@@ -83,6 +89,7 @@ class MLModelFileView(PydanticView):
         )
 
         await response.prepare(self.request)
+        await response.write(first_chunk)
 
         async for chunk in stream:
             await response.write(chunk)
