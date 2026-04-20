@@ -250,12 +250,9 @@ class AnalysisData(DataLayerDomain):
         """
         created_at = virtool.utils.timestamp()
 
-        (
-            (index_id, index_version),
-            sample_name,
-        ) = await asyncio.gather(
-            get_current_id_and_version(self._mongo, data.ref_id),
-            get_one_field(self._mongo.samples, "name", sample_id),
+        index_id, index_version = await get_current_id_and_version(
+            self._mongo,
+            data.ref_id,
         )
 
         analysis_id = await get_new_id(self._mongo.analyses)
