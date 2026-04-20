@@ -18,7 +18,6 @@ def _new_subtraction_job(workflow_data: WorkflowData):
     """A job for creating a new subtraction."""
     workflow_data.job.args = {
         "subtraction_id": workflow_data.new_subtraction.id,
-        "files": [{"id": 3, "name": "subtraction.fa.gz"}],
     }
     workflow_data.job.workflow = "create_subtraction"
 

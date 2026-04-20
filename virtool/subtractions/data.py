@@ -214,7 +214,6 @@ class SubtractionsData(DataLayerDomain):
             "create_subtraction",
             {
                 "subtraction_id": subtraction.id,
-                "files": [{"id": upload.id, "name": upload.name}],
             },
             user_id,
             0,

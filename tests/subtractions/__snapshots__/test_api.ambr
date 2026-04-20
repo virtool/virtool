@@ -84,12 +84,6 @@
     '_id': 'bf1b993c',
     'acquired': False,
     'args': dict({
-      'files': list([
-        dict({
-          'id': 1,
-          'name': 'test.fq.gz',
-        }),
-      ]),
       'subtraction_id': 'fb085f7f',
     }),
     'created_at': 'approximately_now_datetime',

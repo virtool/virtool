@@ -6,6 +6,7 @@ from pathlib import Path
 from pyfixtures import fixture
 from structlog import get_logger
 
+from virtool.data.errors import ResourceNotFoundError
 from virtool.jobs.models import Job
 from virtool.subtractions.models import (
     NucleotideComposition,
@@ -176,16 +177,12 @@ async def new_subtraction(
 
     subtraction_json = await _api.get_json(f"/subtractions/{id_}")
 
-    # TODO: Remove fallback to job.args["files"] once all subtractions have uploads stored.
-    # Older subtractions don't have uploads stored, so we fall back to job.args.
     subtraction_upload = subtraction_json.get("upload")
 
-    if subtraction_upload:
-        upload_id = subtraction_upload["id"]
-    elif "files" in job.args:
-        upload_id = job.args["files"][0]["id"]
-    else:
-        raise MissingJobArgumentError("files")
+    if subtraction_upload is None:
+        raise ResourceNotFoundError("Subtraction has no upload")
+
+    upload_id = subtraction_upload["id"]
 
     subtraction_ = Subtraction(**subtraction_json)
 
