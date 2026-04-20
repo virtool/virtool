@@ -25,12 +25,15 @@ class FallbackStorageRouter:
         self._fallback = fallback
 
     async def read(self, key: str) -> AsyncIterator[bytes]:
+        yielded = False
         try:
             async for chunk in self._primary.read(key):
+                yielded = True
                 yield chunk
             return
         except StorageKeyNotFoundError:
-            pass
+            if yielded:
+                raise
 
         async for chunk in self._fallback.read(key):
             yield chunk

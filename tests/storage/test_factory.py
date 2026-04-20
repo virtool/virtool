@@ -10,7 +10,7 @@ from virtool.storage.routing import FallbackStorageRouter
 
 
 class TestFilesystem:
-    def test_returns_fallback_router(self, tmp_path: Path):
+    def test_returns_filesystem_provider(self, tmp_path: Path):
         config = build_server_config(
             data_path=tmp_path,
             storage_backend="filesystem",
@@ -18,9 +18,7 @@ class TestFilesystem:
 
         backend = create_storage_backend(config)
 
-        assert isinstance(backend, FallbackStorageRouter)
-        assert isinstance(backend._primary, FilesystemProvider)
-        assert backend._primary is backend._fallback
+        assert isinstance(backend, FilesystemProvider)
 
     def test_creates_base_directory(self, tmp_path: Path):
         target = tmp_path / "nested" / "storage"

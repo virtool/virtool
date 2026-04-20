@@ -16,10 +16,10 @@ def create_storage_backend(config: ServerConfig) -> StorageBackend:
     primary = _create_primary_backend(config)
 
     if config.storage_backend == "filesystem":
-        fallback = primary
-    else:
-        config.storage_filesystem_path.mkdir(parents=True, exist_ok=True)
-        fallback = FilesystemProvider(config.storage_filesystem_path)
+        return primary
+
+    config.storage_filesystem_path.mkdir(parents=True, exist_ok=True)
+    fallback = FilesystemProvider(config.storage_filesystem_path)
 
     return FallbackStorageRouter(primary, fallback)
 

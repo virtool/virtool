@@ -153,39 +153,3 @@ class TestList:
         assert result[0].key == "a/1"
 
 
-class TestSameInstance:
-    @pytest.fixture
-    def backend(self):
-        return MemoryStorageProvider()
-
-    @pytest.fixture
-    def router(self, backend):
-        return FallbackStorageRouter(backend, backend)
-
-    async def test_read(self, backend, router):
-        await backend.write("key", _async_iter(b"data"))
-
-        result = await _collect_bytes(router.read("key"))
-
-        assert result == b"data"
-
-    async def test_write(self, backend, router):
-        await router.write("key", _async_iter(b"data"))
-
-        assert backend.get_raw("key") == b"data"
-
-    async def test_delete(self, backend, router):
-        await backend.write("key", _async_iter(b"data"))
-
-        await router.delete("key")
-
-        assert "key" not in backend.keys()
-
-    async def test_list_no_duplicates(self, backend, router):
-        await backend.write("a/1", _async_iter(b"x"))
-        await backend.write("a/2", _async_iter(b"y"))
-
-        result = await _collect(router.list("a/"))
-
-        keys = sorted(info.key for info in result)
-        assert keys == ["a/1", "a/2"]
