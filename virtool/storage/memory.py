@@ -48,7 +48,7 @@ class MemoryStorageProvider:
         self._store.pop(key, None)
 
     async def list(self, prefix: str) -> AsyncIterator[StorageObjectInfo]:
-        for key, obj in self._store.items():
+        for key, obj in list(self._store.items()):
             if key.startswith(prefix):
                 yield StorageObjectInfo(
                     key=key,
