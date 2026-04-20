@@ -151,5 +151,3 @@ class TestList:
 
         assert len(result) == 1
         assert result[0].key == "a/1"
-
-
