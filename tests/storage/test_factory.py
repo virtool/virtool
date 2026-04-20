@@ -6,6 +6,7 @@ from tests.config.test_cls import build_server_config
 from virtool.storage.factory import create_storage_backend
 from virtool.storage.filesystem import FilesystemProvider
 from virtool.storage.obstore import ObstoreProvider
+from virtool.storage.routing import FallbackStorageRouter
 
 
 class TestFilesystem:
@@ -49,7 +50,9 @@ class TestS3:
 
         backend = create_storage_backend(config)
 
-        assert isinstance(backend, ObstoreProvider)
+        assert isinstance(backend, FallbackStorageRouter)
+        assert isinstance(backend._primary, ObstoreProvider)
+        assert isinstance(backend._fallback, FilesystemProvider)
         s3_store.assert_called_once_with(
             "my-bucket",
             region="us-west-2",
@@ -86,7 +89,9 @@ class TestAzure:
 
         backend = create_storage_backend(config)
 
-        assert isinstance(backend, ObstoreProvider)
+        assert isinstance(backend, FallbackStorageRouter)
+        assert isinstance(backend._primary, ObstoreProvider)
+        assert isinstance(backend._fallback, FilesystemProvider)
         azure_store.assert_called_once_with(
             "container",
             account="account",
