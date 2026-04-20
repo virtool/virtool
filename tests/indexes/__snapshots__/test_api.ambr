@@ -28,13 +28,6 @@
     'acquired': False,
     'args': dict({
       'index_id': 'fb085f7f',
-      'index_version': 0,
-      'manifest': dict({
-        'bar': 2,
-        'foo': 1,
-      }),
-      'ref_id': 'foo',
-      'user_id': 1,
     }),
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'key': None,
