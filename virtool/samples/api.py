@@ -608,7 +608,7 @@ async def download_reads(req: Request):
 
     if size > 0:
         try:
-            first_chunk = await stream.__anext__()
+            first_chunk = await anext(stream)
         except (StopAsyncIteration, StorageKeyNotFoundError):
             raise APINotFound()
 
@@ -650,7 +650,7 @@ async def download_artifact(req: Request):
 
     if size > 0:
         try:
-            first_chunk = await stream.__anext__()
+            first_chunk = await anext(stream)
         except (StopAsyncIteration, StorageKeyNotFoundError):
             raise APINotFound()
 
