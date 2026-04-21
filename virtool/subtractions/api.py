@@ -1,6 +1,5 @@
 import aiohttp.web
-from aiohttp.web import Response
-from aiohttp.web_fileresponse import FileResponse
+from aiohttp.web import Response, StreamResponse
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404, r409
 
@@ -12,6 +11,7 @@ from virtool.api.schema import schema
 from virtool.authorization.permissions import LegacyPermission
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
+from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.subtractions.models import Subtraction, SubtractionSearchResult
 from virtool.subtractions.oas import (
     CreateSubtractionRequest,
@@ -245,16 +245,29 @@ class SubtractionFileView(PydanticView):
             404: Not found
         """
         try:
-            descriptor = await get_data_from_req(self.request).subtractions.get_file(
-                subtraction_id, filename
-            )
+            stream, size = await get_data_from_req(
+                self.request,
+            ).subtractions.get_file(subtraction_id, filename)
         except ResourceNotFoundError:
             raise APINotFound()
 
-        return FileResponse(
-            descriptor.path,
+        try:
+            first_chunk = await stream.__anext__()
+        except (StopAsyncIteration, StorageKeyNotFoundError):
+            raise APINotFound()
+
+        response = StreamResponse(
             headers={
-                "Content-Length": descriptor.size,
+                "Content-Disposition": f"attachment; filename={filename}",
+                "Content-Length": str(size),
                 "Content-Type": "application/octet-stream",
             },
         )
+
+        await response.prepare(self.request)
+        await response.write(first_chunk)
+
+        async for chunk in stream:
+            await response.write(chunk)
+
+        return response

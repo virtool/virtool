@@ -104,7 +104,7 @@ def create_data_layer(
         OTUData(config.data_path, mongo, pg),
         ReferencesData(mongo, pg, config, client, storage),
         SamplesData(config, mongo, pg),
-        SubtractionsData(config.base_url, config, mongo, pg),
+        SubtractionsData(config.base_url, mongo, pg, storage),
         SessionData(pg),
         SettingsData(mongo),
         TasksData(pg),

@@ -5,7 +5,6 @@ from pathlib import Path
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.config.cls import Config
 from virtool.subtractions.pg import SQLSubtractionFile
 
 FILES = (
@@ -52,14 +51,12 @@ async def get_subtraction_files(pg: AsyncEngine, subtraction_id: str) -> list[di
     return [file.to_dict() for file in files]
 
 
-def join_subtraction_path(config: Config, subtraction_id: str) -> Path:
-    """Join the path to a subtraction directory.
+def subtraction_file_key(subtraction_id: str, filename: str) -> str:
+    return f"subtractions/{subtraction_id.replace(' ', '_')}/{filename}"
 
-    :param config: the application configuration
-    :param subtraction_id: the ID of the subtraction
-    :return: the path to the subtraction directory
-    """
-    return config.data_path / "subtractions" / subtraction_id.replace(" ", "_")
+
+def subtraction_prefix(subtraction_id: str) -> str:
+    return f"subtractions/{subtraction_id.replace(' ', '_')}/"
 
 
 async def rename_bowtie_files(path: Path) -> None:
