@@ -1,9 +1,7 @@
 """API request handlers for managing and querying HMM data."""
 
-import asyncio
-
 from aiohttp.web import Response
-from aiohttp.web_fileresponse import FileResponse
+from aiohttp.web_response import StreamResponse
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r502
 
@@ -11,7 +9,6 @@ from virtool.api.custom_json import json_response
 from virtool.api.errors import APIBadGateway, APIConflict, APINotFound
 from virtool.api.policy import AdministratorRoutePolicy, policy
 from virtool.api.routes import Routes
-from virtool.config import get_config_from_req
 from virtool.data.errors import (
     ResourceConflictError,
     ResourceError,
@@ -22,6 +19,7 @@ from virtool.data.utils import get_data_from_req
 from virtool.hmm.models import HMM, HMMInstalled, HMMSearchResult
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.utils import get_mongo_from_req, get_one_field
+from virtool.storage.errors import StorageKeyNotFoundError
 
 routes = Routes()
 
@@ -178,18 +176,31 @@ async def get_hmm_annotations(req):
 
     Fetches a compressed json file containing the database documents for all HMMs.
     """
-    hmm_path = get_config_from_req(req).data_path / "hmm"
-    await asyncio.to_thread(hmm_path.mkdir, parents=True, exist_ok=True)
+    try:
+        stream, size = await get_data_from_req(req).hmms.download_annotations()
+    except ResourceNotFoundError:
+        raise APINotFound()
 
-    path = await get_data_from_req(req).hmms.get_annotations_path()
+    try:
+        first_chunk = await stream.__anext__()
+    except (StopAsyncIteration, StorageKeyNotFoundError):
+        raise APINotFound()
 
-    return FileResponse(
-        path,
+    response = StreamResponse(
         headers={
             "Content-Disposition": "attachment; filename=annotations.json.gz",
+            "Content-Length": str(size),
             "Content-Type": "application/octet-stream",
         },
     )
+
+    await response.prepare(req)
+    await response.write(first_chunk)
+
+    async for chunk in stream:
+        await response.write(chunk)
+
+    return response
 
 
 @routes.jobs_api.get("/hmms/files/profiles.hmm")
@@ -197,21 +208,29 @@ async def get_hmm_profiles(req):
     """Get HMM profiles.
 
     Downloads the HMM profiles file if HMM data is available.
-
     """
-    hmm_path = get_config_from_req(req).data_path / "hmm"
-    await asyncio.to_thread(hmm_path.mkdir, parents=True, exist_ok=True)
-
     try:
-        path = await get_data_from_req(req).hmms.get_profiles_path()
+        stream, size = await get_data_from_req(req).hmms.download_profiles()
     except ResourceNotFoundError:
         raise APINotFound()
 
-    return FileResponse(
-        path,
-        chunk_size=1024 * 1024,
+    try:
+        first_chunk = await stream.__anext__()
+    except (StopAsyncIteration, StorageKeyNotFoundError):
+        raise APINotFound()
+
+    response = StreamResponse(
         headers={
             "Content-Disposition": "attachment; filename=profiles.hmm",
+            "Content-Length": str(size),
             "Content-Type": "application/octet-stream",
         },
     )
+
+    await response.prepare(req)
+    await response.write(first_chunk)
+
+    async for chunk in stream:
+        await response.write(chunk)
+
+    return response

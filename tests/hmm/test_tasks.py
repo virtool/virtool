@@ -44,8 +44,6 @@ async def test_hmm_install_task(
         )
         await session.commit()
 
-    (tmp_path / "hmm").mkdir(parents=True)
-
     temp_dir = get_temp_dir()
 
     compress_dir = tmp_path / "comp"
@@ -72,4 +70,7 @@ async def test_hmm_install_task(
 
     assert await mongo.hmm.find().to_list(1) == snapshot(name="mongo_hmms")
     assert await data_layer.tasks.get(1) == snapshot(name="data_layer_task")
-    assert {p.name for p in (tmp_path / "hmm").iterdir()} == {"profiles.hmm"}
+    assert "hmm/profiles.hmm" in data_layer.hmms._storage.keys()
+
+    raw = data_layer.hmms._storage.get_raw("hmm/profiles.hmm")
+    assert raw == b"test_profile"
