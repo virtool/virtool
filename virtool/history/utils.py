@@ -1,14 +1,11 @@
 import datetime
 import json
-import os
-from asyncio import to_thread
-from pathlib import Path
 
 import arrow
 import dictdiffer
 
-from virtool.config import get_config_from_app
 from virtool.models.enums import HistoryMethod
+from virtool.storage.protocol import StorageBackend
 
 
 def calculate_diff(old: dict, new: dict) -> list:
@@ -163,17 +160,9 @@ def derive_otu_information(
     return otu_id, otu_name, otu_version, ref_id
 
 
-def join_diff_path(data_path: Path, otu_id: str, otu_version: int | str) -> Path:
-    """Derive the path to a diff file based on the application
-    `data_path` configuration and the OTU ID and version.
-
-    :param data_path: the application data path
-    :param otu_id: the OTU ID to join a diff path for
-    :param otu_version: the OTU version to join a diff path for
-    :return: the change path
-
-    """
-    return data_path / "history" / f"{otu_id}_{otu_version}.json"
+def diff_key(otu_id: str, otu_version: int | str) -> str:
+    """Derive the storage key for a diff file."""
+    return f"history/{otu_id}_{otu_version}.json"
 
 
 def json_encoder(o):
@@ -205,41 +194,39 @@ def json_object_hook(o: dict) -> dict:
     return o
 
 
-def read_diff_file(data_path: Path, otu_id: str, otu_version: int | str):
-    """Read a history diff JSON file."""
-    path = join_diff_path(data_path, otu_id, otu_version)
+async def read_diff_file(
+    storage: StorageBackend,
+    otu_id: str,
+    otu_version: int | str,
+):
+    """Read a history diff from storage."""
+    chunks = []
+    async for chunk in storage.read(diff_key(otu_id, otu_version)):
+        chunks.append(chunk)
 
-    with open(path) as f:
-        return json.load(f, object_hook=json_object_hook)
+    return json.loads(b"".join(chunks), object_hook=json_object_hook)
 
 
-async def remove_diff_files(app, id_list: list[str]) -> None:
-    """Remove multiple diff files given a list of change IDs (`id_list`).
-
-    :param app: the application object
-    :param id_list: a list of change IDs to remove diff files for
-
-    """
-    data_path = get_config_from_app(app).data_path
-
+async def remove_diff_files(
+    storage: StorageBackend,
+    id_list: list[str],
+) -> None:
+    """Remove multiple diff files from storage."""
     for change_id in id_list:
         otu_id, otu_version = change_id.split(".")
-
-        path = join_diff_path(data_path, otu_id, otu_version)
-
-        try:
-            await to_thread(os.remove, path)
-        except FileNotFoundError:
-            pass
+        await storage.delete(diff_key(otu_id, otu_version))
 
 
-def write_diff_file(
-    data_path: Path,
+async def write_diff_file(
+    storage: StorageBackend,
     otu_id: str,
     otu_version: int | str,
     body,
 ) -> None:
-    path = join_diff_path(data_path, otu_id, otu_version)
+    """Write a history diff to storage."""
+    raw = json.dumps(body, default=json_encoder).encode()
 
-    with open(path, "w") as f:
-        json.dump(body, f, default=json_encoder)
+    async def _data():
+        yield raw
+
+    await storage.write(diff_key(otu_id, otu_version), _data())

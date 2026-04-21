@@ -36,6 +36,7 @@ from virtool.pg.utils import get_rows
 from virtool.references.db import lookup_nested_reference_by_id
 from virtool.references.models import ReferenceNested
 from virtool.references.transforms import AttachReferenceTransform
+from virtool.storage.protocol import StorageBackend
 from virtool.uploads.utils import multipart_file_chunker, naive_writer
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor, compress_json_with_gzip, wait_for_checks
@@ -46,10 +47,13 @@ logger = get_logger("indexes")
 class IndexData:
     name = "indexes"
 
-    def __init__(self, mongo: Mongo, config: Config, pg: AsyncEngine):
+    def __init__(
+        self, mongo: Mongo, config: Config, pg: AsyncEngine, storage: StorageBackend
+    ):
         self._config = config
         self._mongo = mongo
         self._pg = pg
+        self._storage = storage
 
     async def find(
         self,
@@ -187,7 +191,7 @@ class IndexData:
         if not json_path.exists():
             patched_otus = await virtool.indexes.db.get_patched_otus(
                 self._mongo,
-                self._config,
+                self._storage,
                 index["manifest"],
             )
 

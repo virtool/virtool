@@ -1,19 +1,18 @@
-import asyncio
-from pathlib import Path
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-import virtool.history
 from virtool.data.transforms import AbstractTransform
 from virtool.history.sql import SQLHistoryDiff
+from virtool.history.utils import read_diff_file
+from virtool.storage.protocol import StorageBackend
 from virtool.types import Document
 
 
 class AttachDiffTransform(AbstractTransform):
-    def __init__(self, data_path: Path, pg: AsyncEngine):
-        self._data_path = data_path
+    def __init__(self, storage: StorageBackend, pg: AsyncEngine):
+        self._storage = storage
         self._pg = pg
 
     async def attach_one(self, document: Document, prepared: Any) -> Document:
@@ -22,13 +21,7 @@ class AttachDiffTransform(AbstractTransform):
     async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
         if document["diff"] == "file":
             otu_id, otu_version = document["id"].split(".")
-
-            return await asyncio.to_thread(
-                virtool.history.utils.read_diff_file,
-                self._data_path,
-                otu_id,
-                otu_version,
-            )
+            return await read_diff_file(self._storage, otu_id, otu_version)
 
         if document["diff"] == "postgres":
             result = await session.execute(

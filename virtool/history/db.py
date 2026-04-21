@@ -1,9 +1,7 @@
 """Work with OTU history in the database."""
 
-import asyncio
 from copy import deepcopy
 from dataclasses import dataclass
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import dictdiffer
@@ -11,7 +9,6 @@ from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-import virtool.history.utils
 import virtool.otus.db
 import virtool.utils
 from virtool.api.utils import paginate
@@ -21,9 +18,11 @@ from virtool.history.utils import (
     calculate_diff,
     compose_history_description,
     derive_otu_information,
+    read_diff_file,
 )
 from virtool.models.enums import HistoryMethod
 from virtool.references.transforms import AttachReferenceTransform
+from virtool.storage.protocol import StorageBackend
 from virtool.types import Document
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
@@ -263,7 +262,7 @@ async def get_most_recent_change(
 
 
 async def patch_to_version(
-    data_path: Path,
+    storage: StorageBackend,
     mongo: "Mongo",
     otu_id: str,
     version: str | int,
@@ -272,7 +271,7 @@ async def patch_to_version(
 
     Uses the diffs in the change documents associated with the otu.
 
-    :param data_path: the data path
+    :param storage: the storage backend
     :param mongo: the database object
     :param otu_id: the id of the otu to patch
     :param version: the version to patch to
@@ -297,9 +296,8 @@ async def patch_to_version(
             reverted_history_ids.append(change["_id"])
 
             if change["diff"] == "file":
-                change["diff"] = await asyncio.to_thread(
-                    virtool.history.utils.read_diff_file,
-                    data_path,
+                change["diff"] = await read_diff_file(
+                    storage,
                     otu_id,
                     change["otu"]["version"],
                 )

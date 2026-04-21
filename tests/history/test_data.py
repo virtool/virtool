@@ -1,5 +1,5 @@
 import asyncio
-from pathlib import Path
+from unittest.mock import AsyncMock
 
 import pytest
 from pytest_mock import MockerFixture
@@ -9,11 +9,11 @@ from syrupy import SnapshotAssertion
 from virtool.fake.next import DataFaker
 from virtool.history.data import HistoryData
 from virtool.mongo.core import Mongo
+from virtool.storage.memory import MemoryStorageProvider
 
 
 @pytest.mark.parametrize("file", [True, False])
 async def test_get(
-    data_path: Path,
     file,
     fake: DataFaker,
     mocker: MockerFixture,
@@ -43,8 +43,10 @@ async def test_get(
     )
 
     mocker.patch(
-        "virtool.history.utils.read_diff_file",
-        return_value="loaded",
+        "virtool.history.transforms.read_diff_file",
+        new=AsyncMock(return_value="loaded"),
     )
 
-    assert await HistoryData(data_path, mongo, pg).get("baz.2") == snapshot
+    assert (
+        await HistoryData(MemoryStorageProvider(), mongo, pg).get("baz.2") == snapshot
+    )
