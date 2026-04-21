@@ -1,3 +1,4 @@
+import asyncio
 import gzip
 import json
 from operator import itemgetter
@@ -6,6 +7,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field, validator
 
 from virtool.references.models import ReferenceDataType
+from virtool.storage.protocol import StorageBackend
 
 RIGHTS = ["build", "modify", "modify_otu", "remove"]
 
@@ -205,6 +207,11 @@ def check_will_change(old: dict, imported: dict) -> bool:
     return False
 
 
+def upload_file_key(name_on_disk: str) -> str:
+    """Derive the storage key for an uploaded file."""
+    return f"files/{name_on_disk}"
+
+
 def load_reference_file(path: Path) -> dict:
     """Load a list of merged otus documents from a file associated with a Virtool
     reference file.
@@ -217,3 +224,14 @@ def load_reference_file(path: Path) -> dict:
 
     with open(path, "rb") as handle, gzip.open(handle, "rt") as gzip_file:
         return json.load(gzip_file)
+
+
+async def load_reference_from_storage(storage: StorageBackend, key: str) -> dict:
+    """Load a gzip-compressed JSON reference file from storage."""
+    chunks = []
+    async for chunk in storage.read(key):
+        chunks.append(chunk)
+
+    raw = b"".join(chunks)
+
+    return await asyncio.to_thread(lambda: json.loads(gzip.decompress(raw)))

@@ -21,6 +21,7 @@ from virtool.references.tasks import (
     ReferencesCleanTask,
     RemoteReferenceTask,
 )
+from virtool.references.utils import upload_file_key
 from virtool.tasks.sql import SQLTask
 from virtool.uploads.sql import SQLUpload, UploadType
 from virtool.utils import get_temp_dir
@@ -186,7 +187,6 @@ def assert_reference_created(
 async def test_import_reference_task(
     assert_reference_created,
     data_layer: DataLayer,
-    data_path: Path,
     example_path: Path,
     fake: DataFaker,
     mongo: Mongo,
@@ -203,6 +203,11 @@ async def test_import_reference_task(
     )
 
     upload_row = await get_row_by_id(pg, SQLUpload, upload.id)
+
+    await data_layer.references._storage.write(
+        upload_file_key(upload_row.name_on_disk),
+        fake_file_chunker(example_path / "indexes/reference.json.gz"),
+    )
 
     await mongo.references.insert_one(
         {
@@ -223,7 +228,7 @@ async def test_import_reference_task(
                 id=1,
                 complete=False,
                 context={
-                    "path": str(data_path / "files" / upload_row.name_on_disk),
+                    "name_on_disk": upload_row.name_on_disk,
                     "ref_id": "foo",
                     "user_id": user.id,
                 },
@@ -351,7 +356,6 @@ async def create_reference(
     mongo: Mongo,
     pg: AsyncEngine,
     static_time: StaticTime,
-    tmp_path: Path,
 ):
     user = await fake.users.create()
 
@@ -364,7 +368,10 @@ async def create_reference(
 
     upload_row = await get_row_by_id(pg, SQLUpload, upload.id)
 
-    path = tmp_path / "files" / upload_row.name_on_disk
+    await data_layer.references._storage.write(
+        upload_file_key(upload_row.name_on_disk),
+        fake_file_chunker(example_path / "indexes/reference.json.gz"),
+    )
 
     async with AsyncSession(pg) as session:
         session.add(
@@ -372,7 +379,7 @@ async def create_reference(
                 id=2,
                 complete=False,
                 context={
-                    "path": str(path),
+                    "name_on_disk": upload_row.name_on_disk,
                     "ref_id": "bar",
                     "user_id": "test",
                 },

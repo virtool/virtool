@@ -226,8 +226,6 @@ class ReferencesData(DataLayerDomain):
             if not upload:
                 raise ResourceNotFoundError("File not found")
 
-            path = self._config.data_path / "files" / upload.name_on_disk
-
             document = await virtool.references.db.create_import(
                 self._mongo,
                 self._pg,
@@ -242,7 +240,7 @@ class ReferencesData(DataLayerDomain):
 
             context = {
                 "created_at": document["created_at"],
-                "path": str(path),
+                "name_on_disk": upload.name_on_disk,
                 "ref_id": document["_id"],
                 "user_id": user_id,
             }
@@ -1161,7 +1159,6 @@ class ReferencesData(DataLayerDomain):
                 ref_id,
                 user_id,
                 created_at,
-                self._config.data_path,
                 tracker,
                 mongo_session,
             )

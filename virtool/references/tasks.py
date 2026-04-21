@@ -1,6 +1,5 @@
 import json
 from asyncio import to_thread
-from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 
@@ -10,7 +9,10 @@ from virtool.data.http import download_file
 from virtool.references.utils import (
     ReferenceSourceData,
     load_reference_file,
+    load_reference_from_storage,
+    upload_file_key,
 )
+from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.tasks.progress import AccumulatingProgressHandlerWrapper
 from virtool.tasks.task import BaseTask
 
@@ -54,11 +56,15 @@ class ImportReferenceTask(BaseTask):
         self.import_data: ReferenceSourceData | None = None
 
     async def load_file(self) -> None:
+        key = upload_file_key(self.context["name_on_disk"])
+
         try:
-            import_data = await to_thread(
-                load_reference_file,
-                Path(self.context["path"]),
+            import_data = await load_reference_from_storage(
+                self.data.references._storage,
+                key,
             )
+        except StorageKeyNotFoundError:
+            return await self._set_error("Could not find reference file in storage")
         except json.decoder.JSONDecodeError as err:
             return await self._set_error(str(err).split("JSONDecodeError: ")[1])
         except OSError as err:
