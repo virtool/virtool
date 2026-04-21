@@ -1,11 +1,10 @@
-from pathlib import Path
-
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
 
 import virtool.analyses.files
 import virtool.analyses.utils
+from virtool.analyses.utils import analysis_file_key, analysis_result_key
 
 
 @pytest.mark.parametrize("exists", [True, False])
@@ -30,12 +29,12 @@ async def test_attach_analysis_files(
     )
 
 
-@pytest.mark.parametrize("name", ["nuvs", "pathoscope"])
-def test_get_json_path(name: str):
-    """Test that the function can correctly extrapolate the path to a nuvs.json file given the `data_path`, `sample_id`,
-    and `analysis_id` arguments.
+def test_analysis_file_key():
+    assert analysis_file_key("1-output.fasta") == "analyses/1-output.fasta"
 
-    """
-    path = virtool.analyses.utils.join_analysis_json_path(Path("data"), "bar", "foo")
 
-    assert path == Path("data/samples/foo/analysis/bar/results.json")
+def test_analysis_result_key():
+    assert (
+        analysis_result_key("abc123", "sample1")
+        == "samples/sample1/analysis/abc123/results.json"
+    )

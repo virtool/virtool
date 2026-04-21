@@ -4,9 +4,9 @@ Formatted documents are destined for API responses or CSV/Excel formatted file
 downloads.
 """
 
-import asyncio
 import csv
 import io
+import json
 import statistics
 from asyncio import gather
 from collections import defaultdict
@@ -15,13 +15,11 @@ from typing import TYPE_CHECKING, Any
 import openpyxl.styles
 import visvalingamwyatt as vw
 
-import virtool.analyses.utils
-from virtool.config.cls import Config
+from virtool.analyses.utils import analysis_result_key
 from virtool.history.db import patch_to_version
 from virtool.models.enums import AnalysisWorkflow
 from virtool.otus.utils import format_isolate_name
 from virtool.storage.protocol import StorageBackend
-from virtool.utils import load_json
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
@@ -49,30 +47,26 @@ def calculate_median_depths(hits: list[dict]) -> dict[str, int]:
     return {hit["id"]: statistics.median(hit["align"]) for hit in hits}
 
 
-async def load_results(config: Config, document: dict[str, Any]) -> dict:
-    """Load the analysis results. Hide the alternative loading from a `results.json`
-    file.
+async def load_results(
+    storage: StorageBackend,
+    document: dict[str, Any],
+) -> dict:
+    """Load the analysis results from storage when they were too large for MongoDB.
 
-    These files are only generated if the analysis data had exceeded the MongoDB size
-    limit (16 MB.
+    The document is returned unmodified if loading from storage is not required.
 
-    The document is returned unmodified if loading from file is not required.
-
-    :param config: the application configuration
+    :param storage: the storage backend
     :param document: the document to load results for
     :return: a complete analysis document
-
     """
     if document["results"] == "file":
-        path = virtool.analyses.utils.join_analysis_json_path(
-            config.data_path,
-            document["_id"],
-            document["sample"]["id"],
-        )
+        key = analysis_result_key(document["_id"], document["sample"]["id"])
 
-        data = await asyncio.to_thread(load_json, path)
+        chunks = []
+        async for chunk in storage.read(key):
+            chunks.append(chunk)
 
-        return {**document, "results": data}
+        return {**document, "results": json.loads(b"".join(chunks))}
 
     return document
 
@@ -115,7 +109,6 @@ async def format_aodp(
 
 
 async def format_pathoscope(
-    config,
     storage: StorageBackend,
     mongo: "Mongo",
     document: dict[str, Any],
@@ -125,14 +118,13 @@ async def format_pathoscope(
 
     Calculate metrics for different organizational levels: OTU, isolate, and sequence.
 
-    :param config: the application config object
     :param storage: the storage backend
     :param mongo: the application Mongo object
     :param document: the document to format
     :return: the formatted document
 
     """
-    document = await load_results(config, document)
+    document = await load_results(storage, document)
 
     hits_by_otu = defaultdict(list)
 
@@ -239,20 +231,20 @@ def format_pathoscope_sequences(
 
 
 async def format_nuvs(
-    config: Config,
+    storage: StorageBackend,
     mongo: "Mongo",
     document: dict[str, Any],
 ) -> dict[str, Any]:
     """Format a NuVs analysis document by attaching the HMM annotation data to the
     results.
 
-    :param config: the config object
+    :param storage: the storage backend
     :param mongo: the database object
     :param document: the document to format
     :return: the formatted document
 
     """
-    document = await load_results(config, document)
+    document = await load_results(storage, document)
 
     hits = document["results"]["hits"]
 
@@ -271,14 +263,12 @@ async def format_nuvs(
 
 
 async def format_analysis_to_excel(
-    config: Config,
     storage: StorageBackend,
     mongo: "Mongo",
     document: dict[str, Any],
 ) -> bytes:
     """Convert a pathoscope analysis document to byte-encoded Excel format for download.
 
-    :param config: the config object
     :param storage: the storage backend
     :param mongo: the database object
     :param document: the document to format
@@ -287,7 +277,7 @@ async def format_analysis_to_excel(
     """
     depths = calculate_median_depths(document["results"]["hits"])
 
-    formatted = await format_analysis(config, storage, mongo, document)
+    formatted = await format_analysis(storage, mongo, document)
 
     output = io.BytesIO()
 
@@ -333,14 +323,12 @@ async def format_analysis_to_excel(
 
 
 async def format_analysis_to_csv(
-    config: Config,
     storage: StorageBackend,
     mongo: "Mongo",
     document: dict[str, Any],
 ) -> str:
     """Convert a pathoscope analysis document to CSV format for download.
 
-    :param config: the app config object
     :param storage: the storage backend
     :param mongo: the app mongo object
     :param document: the document to format
@@ -349,7 +337,7 @@ async def format_analysis_to_csv(
     """
     depths = calculate_median_depths(document["results"]["hits"])
 
-    formatted = await format_analysis(config, storage, mongo, document)
+    formatted = await format_analysis(storage, mongo, document)
 
     output = io.StringIO()
 
@@ -376,14 +364,12 @@ async def format_analysis_to_csv(
 
 
 async def format_analysis(
-    config: Config,
     storage: StorageBackend,
     mongo: "Mongo",
     document: dict[str, Any],
 ) -> dict[str, any]:
     """Format an analysis document to be returned by the API.
 
-    :param config: the config object
     :param storage: the storage backend
     :param mongo: the database object
     :param document: the analysis document to format
@@ -396,13 +382,13 @@ async def format_analysis(
         raise ValueError("Analysis has no workflow field")
 
     if workflow == AnalysisWorkflow.nuvs.value:
-        return await format_nuvs(config, mongo, document)
+        return await format_nuvs(storage, mongo, document)
 
     if workflow == AnalysisWorkflow.aodp.value:
         return await format_aodp(storage, mongo, document)
 
     if "pathoscope" in workflow:
-        return await format_pathoscope(config, storage, mongo, document)
+        return await format_pathoscope(storage, mongo, document)
 
     if workflow == AnalysisWorkflow.iimi.value:
         return document
@@ -427,7 +413,7 @@ async def gather_patched_otus(
     # Use set to only id-version combinations once.
     otu_specifiers = {(hit["otu"]["id"], hit["otu"]["version"]) for hit in results}
 
-    patched_otus = await asyncio.gather(
+    patched_otus = await gather(
         *[
             patch_to_version(storage, mongo, otu_id, version)
             for otu_id, version in otu_specifiers

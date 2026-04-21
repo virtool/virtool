@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -7,6 +6,16 @@ from sqlalchemy.future import select
 from virtool.analyses.sql import SQLAnalysisFile
 
 WORKFLOW_NAMES = ("aodp", "nuvs", "pathoscope_bowtie")
+
+
+def analysis_file_key(name_on_disk: str) -> str:
+    """Derive the storage key for an uploaded analysis file."""
+    return f"analyses/{name_on_disk}"
+
+
+def analysis_result_key(analysis_id: str, sample_id: str) -> str:
+    """Derive the storage key for an analysis results JSON file."""
+    return f"samples/{sample_id}/analysis/{analysis_id}/results.json"
 
 
 async def attach_analysis_files(
@@ -62,31 +71,3 @@ def find_nuvs_sequence_by_index(
         raise ValueError(f"More than one sequence with index {sequence_index}")
 
     return sequences[0]
-
-
-def join_analysis_path(data_path: Path, analysis_id: str, sample_id: str) -> Path:
-    """Returns the path to an analysis JSON output file.
-
-    :param data_path: the application data path
-    :param analysis_id: the id of the NuVs analysis
-    :param sample_id: the id of the parent sample
-    :return: an analysis JSON path
-
-    """
-    return data_path / "samples" / sample_id / "analysis" / analysis_id
-
-
-def join_analysis_json_path(data_path: Path, analysis_id: str, sample_id: str) -> Path:
-    """Join the path to an analysis JSON file for the given sample-analysis ID
-    combination.
-
-    Analysis JSON files are created when the analysis data is too large for a MongoDB
-    document.
-
-    :param data_path: the path to the application data
-    :param analysis_id: the ID of the analysis
-    :param sample_id: the ID of the sample
-    :return: a path
-
-    """
-    return join_analysis_path(data_path, analysis_id, sample_id) / "results.json"
