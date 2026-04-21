@@ -46,10 +46,6 @@ class SQLUser(Base):
         Enum(AdministratorRole, values_callable=lambda obj: [e.value for e in obj]),
         nullable=True,
     )
-    b2c_display_name: Mapped[str] = mapped_column(default="")
-    b2c_given_name: Mapped[str] = mapped_column(default="")
-    b2c_family_name: Mapped[str] = mapped_column(default="")
-    b2c_oid: Mapped[str | None]
     email: Mapped[str] = mapped_column(default="", nullable=False)
     force_reset: Mapped[bool] = mapped_column(default=False)
     handle: Mapped[str]

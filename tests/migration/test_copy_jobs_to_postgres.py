@@ -21,7 +21,7 @@ def static_datetime() -> datetime:
 @pytest.fixture
 async def setup_user(ctx: MigrationContext, apply_alembic: Callable) -> int:
     """Create a user in PostgreSQL using raw SQL and return their ID."""
-    await asyncio.to_thread(apply_alembic)
+    await asyncio.to_thread(apply_alembic, "998195bd5a8b")
 
     async with AsyncSession(ctx.pg) as session:
         result = await session.execute(
