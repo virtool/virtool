@@ -2,7 +2,6 @@ import asyncio
 from asyncio import FIRST_COMPLETED, CancelledError, Queue
 from collections.abc import Callable
 from datetime import datetime
-from pathlib import Path
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy.dialects.postgresql import insert
@@ -390,7 +389,6 @@ class OTUUpdateBuffer(BaseDataBuffer):
         bulk_db_updater: OTUDataBulkUpdater,
         mongo: "Mongo",
         user_id: str,
-        data_path: Path,
     ):
         async def func(
             data: list[OTUUpdateBufferData],
@@ -429,7 +427,6 @@ class BulkOTUUpdater:
         ref_id: str,
         user_id: str,
         created_at: datetime,
-        data_path: Path,
         progress_tracker: AccumulatingProgressHandlerWrapper,
         session: AsyncIOMotorClientSession,
     ):
@@ -464,7 +461,6 @@ class BulkOTUUpdater:
                 self.update_db,
                 mongo,
                 user_id,
-                data_path,
             )
         )
 
