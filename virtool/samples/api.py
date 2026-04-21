@@ -1,21 +1,17 @@
 import asyncio
-import os
-from asyncio import to_thread
 
 from aiohttp.web import (
-    FileResponse,
     Request,
     Response,
+    StreamResponse,
 )
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404
 from pydantic import Field, conint, constr
-from sqlalchemy import exc, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
-import virtool.uploads.db
-import virtool.uploads.utils
 from virtool.analyses.models import AnalysisMinimal
 from virtool.api.client import UserClient
 from virtool.api.custom_json import json_response
@@ -31,7 +27,6 @@ from virtool.api.policy import PermissionRoutePolicy, policy
 from virtool.api.routes import Routes
 from virtool.api.schema import schema
 from virtool.authorization.permissions import LegacyPermission
-from virtool.config import get_config_from_req
 from virtool.data.errors import (
     ResourceConflictError,
     ResourceError,
@@ -43,17 +38,12 @@ from virtool.groups.pg import SQLGroup
 from virtool.jobs.models import JobState
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.utils import get_mongo_from_req
-from virtool.pg.utils import delete_row, get_rows
+from virtool.pg.utils import get_rows
 from virtool.samples.db import (
     SAMPLE_RIGHTS_PROJECTION,
     check_rights,
     get_sample_owner,
     recalculate_workflow_tags,
-)
-from virtool.samples.files import (
-    create_artifact_file,
-    create_reads_file,
-    get_existing_reads,
 )
 from virtool.samples.models import Sample, SampleSearchResult
 from virtool.samples.oas import (
@@ -62,14 +52,14 @@ from virtool.samples.oas import (
     UpdateRightsRequest,
     UpdateSampleRequest,
 )
-from virtool.samples.sql import ArtifactType, SQLSampleArtifact, SQLSampleReads
-from virtool.samples.utils import SampleRight, join_sample_path
+from virtool.samples.sql import SQLSampleReads
+from virtool.samples.utils import SampleRight
+from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.uploads.utils import (
-    is_gzip_compressed,
     multipart_file_chunker,
     naive_validator,
 )
-from virtool.utils import file_stats, get_safely
+from virtool.utils import get_safely
 
 logger = get_logger("samples")
 
@@ -509,7 +499,6 @@ async def upload_artifact(req):
     Uploads artifact created during sample creation using the Jobs API.
     """
     mongo = get_mongo_from_req(req)
-    pg = req.app["pg"]
 
     sample_id = req.match_info["sample_id"]
     artifact_type = req.query.get("type")
@@ -522,43 +511,23 @@ async def upload_artifact(req):
 
     name = req.query.get("name")
 
-    sample_path = join_sample_path(get_config_from_req(req), sample_id)
-    await asyncio.to_thread(sample_path.mkdir, parents=True, exist_ok=True)
-
-    artifact_file_path = sample_path / name
-
-    if artifact_type and artifact_type not in ArtifactType.to_list():
-        raise APIBadRequest("Unsupported sample artifact type")
-
     try:
-        artifact = await create_artifact_file(pg, name, name, sample_id, artifact_type)
-    except exc.IntegrityError:
-        raise APIConflict("Artifact file has already been uploaded for this sample")
-
-    artifact_id = artifact["id"]
-
-    try:
-        size = await virtool.uploads.utils.naive_writer(
+        artifact = await get_data_from_req(req).samples.upload_artifact(
+            sample_id,
+            artifact_type,
+            name,
             multipart_file_chunker(await req.multipart()),
-            artifact_file_path,
         )
+    except ResourceConflictError as err:
+        if "Unsupported" in str(err):
+            raise APIBadRequest(str(err))
+        raise APIConflict(str(err))
     except asyncio.CancelledError:
         logger.info(
             "Sample artifact file upload aborted",
-            id=artifact_id,
             sample_id=sample_id,
         )
-        await delete_row(pg, artifact_id, SQLSampleArtifact)
-        await to_thread(os.remove, artifact_file_path)
-
         return Response(status=499)
-
-    artifact = await virtool.uploads.db.finalize(
-        pg,
-        size,
-        artifact_id,
-        SQLSampleArtifact,
-    )
 
     return json_response(
         artifact,
@@ -574,7 +543,6 @@ async def upload_reads(req):
     Uploads sample reads using the Jobs API.
     """
     mongo = get_mongo_from_req(req)
-    pg = req.app["pg"]
 
     name = req.match_info["filename"]
     sample_id = req.match_info["sample_id"]
@@ -587,36 +555,23 @@ async def upload_reads(req):
     if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
         raise APIBadRequest("File name is not an accepted reads file")
 
-    sample_path = join_sample_path(get_config_from_req(req), sample_id)
-    await asyncio.to_thread(sample_path.mkdir, parents=True, exist_ok=True)
-
-    reads_path = sample_path / name
-
     if not await mongo.samples.find_one(sample_id):
         raise APINotFound()
 
     try:
-        size = await virtool.uploads.utils.naive_writer(
+        reads = await get_data_from_req(req).samples.upload_reads(
+            sample_id,
+            name,
             multipart_file_chunker(await req.multipart()),
-            reads_path,
-            is_gzip_compressed,
+            upload_id=upload,
         )
     except OSError:
         raise APIBadRequest("File is not compressed")
+    except ResourceConflictError as err:
+        raise APIConflict(str(err))
     except asyncio.CancelledError:
         logger.info("sample reads upload aborted", sample_id=sample_id)
         return Response(status=499)
-    try:
-        reads = await create_reads_file(
-            pg,
-            size,
-            name,
-            name,
-            sample_id,
-            upload_id=upload,
-        )
-    except exc.IntegrityError:
-        raise APIConflict("Reads file name is already uploaded for this sample")
 
     return json_response(
         reads,
@@ -632,32 +587,40 @@ async def download_reads(req: Request):
 
     Downloads the sample reads file.
     """
-    mongo = get_mongo_from_req(req)
-    pg = req.app["pg"]
-
     sample_id = req.match_info["sample_id"]
     suffix = req.match_info["suffix"]
-
     file_name = f"reads_{suffix}.fq.gz"
 
-    if not await mongo.samples.find_one(sample_id):
+    try:
+        stream, size, name = await get_data_from_req(req).samples.get_reads_file(
+            sample_id,
+            file_name,
+        )
+    except ResourceNotFoundError:
         raise APINotFound()
 
-    existing_reads = await get_existing_reads(pg, sample_id)
+    response = StreamResponse(
+        headers={
+            "Content-Length": str(size),
+            "Content-Type": "application/gzip",
+        },
+    )
 
-    if file_name not in existing_reads:
-        raise APINotFound()
+    if size > 0:
+        try:
+            first_chunk = await anext(stream)
+        except (StopAsyncIteration, StorageKeyNotFoundError):
+            raise APINotFound()
 
-    file_path = get_config_from_req(req).data_path / "samples" / sample_id / file_name
+        await response.prepare(req)
+        await response.write(first_chunk)
 
-    if not os.path.isfile(file_path):
-        raise APINotFound()
+        async for chunk in stream:
+            await response.write(chunk)
+    else:
+        await response.prepare(req)
 
-    stats = await to_thread(file_stats, file_path)
-
-    headers = {"Content-Length": stats["size"], "Content-Type": "application/gzip"}
-
-    return FileResponse(file_path, chunk_size=1024 * 1024, headers=headers)
+    return response
 
 
 @routes.jobs_api.get("/samples/{sample_id}/artifacts/{filename}")
@@ -667,39 +630,36 @@ async def download_artifact(req: Request):
     Downloads the sample artifact.
 
     """
-    mongo = get_mongo_from_req(req)
-    pg = req.app["pg"]
-
     sample_id = req.match_info["sample_id"]
     filename = req.match_info["filename"]
 
-    if not await mongo.samples.find_one(sample_id):
+    try:
+        stream, size = await get_data_from_req(req).samples.get_artifact_file(
+            sample_id,
+            filename,
+        )
+    except ResourceNotFoundError:
         raise APINotFound()
 
-    async with AsyncSession(pg) as session:
-        result = (
-            await session.execute(
-                select(SQLSampleArtifact).filter_by(sample=sample_id, name=filename),
-            )
-        ).scalar()
-
-    if not result:
-        raise APINotFound()
-
-    artifact = result.to_dict()
-
-    file_path = (
-        get_config_from_req(req).data_path
-        / f"samples/{sample_id}/{artifact['name_on_disk']}"
+    response = StreamResponse(
+        headers={
+            "Content-Length": str(size),
+            "Content-Type": "application/gzip",
+        },
     )
 
-    if not os.path.isfile(file_path):
-        raise APINotFound()
+    if size > 0:
+        try:
+            first_chunk = await anext(stream)
+        except (StopAsyncIteration, StorageKeyNotFoundError):
+            raise APINotFound()
 
-    stats = await to_thread(file_stats, file_path)
+        await response.prepare(req)
+        await response.write(first_chunk)
 
-    return FileResponse(
-        file_path,
-        chunk_size=1024 * 1024,
-        headers={"Content-Length": stats["size"], "Content-Type": "application/gzip"},
-    )
+        async for chunk in stream:
+            await response.write(chunk)
+    else:
+        await response.prepare(req)
+
+    return response

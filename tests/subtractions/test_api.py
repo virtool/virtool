@@ -578,6 +578,7 @@ class TestDownloadSubtractionFile:
     async def test_not_found_path(
         self,
         fake: DataFaker,
+        memory_storage,
         spawn_job_client: JobClientSpawner,
     ):
         """Test that a 404 response is returned when attempting to download a file
@@ -591,6 +592,9 @@ class TestDownloadSubtractionFile:
             upload_type=UploadType.subtraction,
         )
         subtraction = await fake.subtractions.create(user=user, upload=upload)
+
+        async for obj in memory_storage.list(f"subtractions/{subtraction.id}/"):
+            await memory_storage.delete(obj.key)
 
         bowtie_resp = await client.get(
             f"/subtractions/{subtraction.id}/files/subtraction.1.bt2",

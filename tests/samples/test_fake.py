@@ -1,10 +1,8 @@
-import os
 from pathlib import Path
 
 import pytest
 
 from tests.fixtures.client import ClientSpawner
-from virtool.config import get_config_from_app
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.samples.fake import copy_reads_file, create_fake_sample
@@ -42,11 +40,10 @@ async def test_create_fake_sample(
     assert sample == snapshot
 
 
-async def test_copy_reads_file(app, example_path: Path):
+async def test_copy_reads_file(memory_storage, example_path: Path):
     file_path = example_path / "sample" / "reads_1.fq.gz"
 
-    await copy_reads_file(app, file_path, "reads_1.fq.gz", "sample_1")
+    await copy_reads_file(memory_storage, file_path, "reads_1.fq.gz", "sample_1")
 
-    assert os.listdir(get_config_from_app(app).data_path / "samples" / "sample_1") == [
-        "reads_1.fq.gz",
-    ]
+    keys = {obj.key async for obj in memory_storage.list("samples/sample_1/")}
+    assert keys == {"samples/sample_1/reads_1.fq.gz"}

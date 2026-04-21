@@ -1,6 +1,5 @@
 import asyncio
 import gzip
-import os
 from http import HTTPStatus
 from pathlib import Path
 
@@ -881,7 +880,6 @@ class TestDelete:
     async def setup_unfinalized_sample_with_job(
         self,
         job_state: JobState,
-        data_path: Path,
         fake: DataFaker,
         mongo: Mongo,
         spawn_client: ClientSpawner,
@@ -889,8 +887,6 @@ class TestDelete:
     ) -> VirtoolTestClient:
         """Helper to create an unfinalized sample with a job in a specific state."""
         client = await spawn_client(authenticated=True)
-
-        (data_path / "samples/test").mkdir(parents=True)
 
         user = await fake.users.create()
 
@@ -926,14 +922,11 @@ class TestDelete:
 
     async def test_finalized(
         self,
-        data_path: Path,
         fake: DataFaker,
         spawn_client: ClientSpawner,
     ):
         """Test that finalized samples can be deleted."""
         client = await spawn_client(authenticated=True)
-
-        (data_path / "samples/test").mkdir(parents=True)
 
         user = await fake.users.create()
 
@@ -945,7 +938,6 @@ class TestDelete:
 
     async def test_unfinalized_with_error_job(
         self,
-        data_path: Path,
         fake: DataFaker,
         mongo: Mongo,
         spawn_client: ClientSpawner,
@@ -954,7 +946,6 @@ class TestDelete:
         """Test that unfinalized samples with errored jobs can be deleted."""
         client = await self.setup_unfinalized_sample_with_job(
             JobState.ERROR,
-            data_path,
             fake,
             mongo,
             spawn_client,
@@ -967,7 +958,6 @@ class TestDelete:
 
     async def test_unfinalized_with_timeout_job(
         self,
-        data_path: Path,
         fake: DataFaker,
         mongo: Mongo,
         spawn_client: ClientSpawner,
@@ -976,7 +966,6 @@ class TestDelete:
         """Test that unfinalized samples with timed out jobs can be deleted."""
         client = await self.setup_unfinalized_sample_with_job(
             JobState.TIMEOUT,
-            data_path,
             fake,
             mongo,
             spawn_client,
@@ -989,7 +978,6 @@ class TestDelete:
 
     async def test_unfinalized_with_cancelled_job(
         self,
-        data_path: Path,
         fake: DataFaker,
         mongo: Mongo,
         spawn_client: ClientSpawner,
@@ -998,7 +986,6 @@ class TestDelete:
         """Test that unfinalized samples with cancelled jobs can be deleted."""
         client = await self.setup_unfinalized_sample_with_job(
             JobState.CANCELLED,
-            data_path,
             fake,
             mongo,
             spawn_client,
@@ -1011,7 +998,6 @@ class TestDelete:
 
     async def test_unfinalized_with_terminated_job(
         self,
-        data_path: Path,
         fake: DataFaker,
         mongo: Mongo,
         spawn_client: ClientSpawner,
@@ -1020,7 +1006,6 @@ class TestDelete:
         """Test that unfinalized samples with terminated jobs can be deleted."""
         client = await self.setup_unfinalized_sample_with_job(
             JobState.TERMINATED,
-            data_path,
             fake,
             mongo,
             spawn_client,
@@ -1033,7 +1018,6 @@ class TestDelete:
 
     async def test_unfinalized_with_running_job(
         self,
-        data_path: Path,
         fake: DataFaker,
         mongo: Mongo,
         spawn_client: ClientSpawner,
@@ -1042,7 +1026,6 @@ class TestDelete:
         """Test that unfinalized samples with running jobs cannot be deleted."""
         client = await self.setup_unfinalized_sample_with_job(
             JobState.RUNNING,
-            data_path,
             fake,
             mongo,
             spawn_client,
@@ -1057,14 +1040,11 @@ class TestDelete:
     async def test_from_job(
         self,
         finalized: bool,
-        data_path: Path,
         fake: DataFaker,
         spawn_job_client,
     ):
         """Test that job client can delete a sample only when it is unfinalized."""
         client = await spawn_job_client(authenticated=True)
-
-        (data_path / "samples/test").mkdir(parents=True)
 
         user = await fake.users.create()
 
@@ -1275,8 +1255,8 @@ async def test_analyze(
 @pytest.mark.parametrize("error", [None, 400, 409])
 async def test_upload_artifact(
     error: int | None,
-    data_path: Path,
     example_path: Path,
+    memory_storage,
     mongo: Mongo,
     resp_is,
     snapshot: SnapshotAssertion,
@@ -1287,8 +1267,6 @@ async def test_upload_artifact(
     path = example_path / "sample" / "reads_1.fq.gz"
 
     client = await spawn_job_client(authenticated=True)
-
-    sample_file_path = data_path / "samples" / "test"
 
     await mongo.samples.insert_one(
         {
@@ -1320,7 +1298,9 @@ async def test_upload_artifact(
     if not error:
         assert resp.status == 201
         assert await resp.json() == snapshot
-        assert os.listdir(sample_file_path) == ["small.fq.gz"]
+
+        keys = {obj.key async for obj in memory_storage.list("samples/test/")}
+        assert keys == {"samples/test/small.fq.gz"}
     elif error == 400:
         await resp_is.bad_request(resp, "Unsupported sample artifact type")
 
@@ -1328,8 +1308,8 @@ async def test_upload_artifact(
 class TestUploadReads:
     async def test(
         self,
-        data_path: Path,
         example_path: Path,
+        memory_storage,
         mongo: Mongo,
         snapshot: SnapshotAssertion,
         spawn_job_client: JobClientSpawner,
@@ -1360,6 +1340,9 @@ class TestUploadReads:
 
         assert resp_2.status == 201
 
+        keys = {obj.key async for obj in memory_storage.list("samples/test/")}
+        assert keys == {"samples/test/reads_1.fq.gz", "samples/test/reads_2.fq.gz"}
+
         resp_3 = await client.put(
             "/samples/test/reads/reads_2.fq.gz",
             data={"file": open(example_path / "sample" / "reads_2.fq.gz", "rb")},
@@ -1367,11 +1350,6 @@ class TestUploadReads:
 
         assert resp_3.status == 409
         assert await resp_3.json() == snapshot(name="409")
-
-        assert set(os.listdir(data_path / "samples" / "test")) == {
-            "reads_1.fq.gz",
-            "reads_2.fq.gz",
-        }
 
     async def test_uncompressed(
         self,
@@ -1409,7 +1387,7 @@ class TestUploadReads:
 async def test_download_reads(
     suffix: str,
     error: str | None,
-    data_path: Path,
+    memory_storage,
     mongo: Mongo,
     pg: AsyncEngine,
     spawn_client: ClientSpawner,
@@ -1421,9 +1399,11 @@ async def test_download_reads(
     file_name = f"reads_{suffix}.fq.gz"
 
     if error != "404_file":
-        path = data_path / "samples" / "foo"
-        path.mkdir(parents=True)
-        path.joinpath(file_name).write_text("test")
+
+        async def _data():
+            yield b"test"
+
+        await memory_storage.write(f"samples/foo/{file_name}", _data())
 
     if error != "404_sample":
         await mongo.samples.insert_one(
@@ -1453,7 +1433,7 @@ async def test_download_reads(
     else:
         assert resp.status == job_resp.status == HTTPStatus.OK
         assert (
-            (data_path / "samples" / "foo" / file_name).read_bytes()
+            memory_storage.get_raw(f"samples/foo/{file_name}")
             == await resp.content.read()
             == await job_resp.content.read()
         )
@@ -1462,7 +1442,7 @@ async def test_download_reads(
 @pytest.mark.parametrize("error", [None, "404_sample", "404_artifact", "404_file"])
 async def test_download_artifact(
     error: str | None,
-    data_path: Path,
+    memory_storage,
     mongo: Mongo,
     pg: AsyncEngine,
     spawn_job_client: JobClientSpawner,
@@ -1470,9 +1450,11 @@ async def test_download_artifact(
     client = await spawn_job_client(authenticated=True)
 
     if error != "404_file":
-        path = data_path / "samples" / "foo"
-        path.mkdir(parents=True)
-        path.joinpath("fastqc.txt").write_text("test")
+
+        async def _data():
+            yield b"test"
+
+        await memory_storage.write("samples/foo/fastqc.txt", _data())
 
     if error != "404_sample":
         await mongo.samples.insert_one(
@@ -1503,9 +1485,7 @@ async def test_download_artifact(
         return
 
     assert resp.status == HTTPStatus.OK
-    assert (
-        data_path / "samples" / "foo" / "fastqc.txt"
-    ).read_bytes() == await resp.content.read()
+    assert memory_storage.get_raw("samples/foo/fastqc.txt") == await resp.content.read()
 
 
 class TestChangeSampleRights:

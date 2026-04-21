@@ -13,6 +13,7 @@ from virtool.storage.memory import MemoryStorageProvider
 @pytest.fixture
 def data_layer(
     config,
+    memory_storage: MemoryStorageProvider,
     mocker: MockerFixture,
     mongo: Mongo,
     pg: AsyncEngine,
@@ -32,5 +33,5 @@ def data_layer(
         pg,
         config,
         mocker.Mock(spec=ClientSession),
-        MemoryStorageProvider(),
+        memory_storage,
     )

@@ -267,6 +267,7 @@ def spawn_client(
     data_layer: DataLayer,
     data_path: Path,
     fake: DataFaker,
+    memory_storage,
     mocker,
     mongo: Mongo,
     mongo_connection_string: str,
@@ -416,6 +417,10 @@ def spawn_client(
 
         mocker.patch("virtool.startup.connect_pg", return_value=pg)
         mocker.patch("virtool.startup.connect_mongo", return_value=mongo)
+        mocker.patch(
+            "virtool.startup.create_storage_backend",
+            return_value=memory_storage,
+        )
 
         app = create_app(config)
 
@@ -480,6 +485,7 @@ def spawn_client(
 def spawn_job_client(
     aiohttp_client,
     data_path: Path,
+    memory_storage,
     mongo: Mongo,
     mongo_connection_string,
     mongo_name: str,
@@ -512,6 +518,10 @@ def spawn_job_client(
             auth = None
 
         mocker.patch("virtool.startup.connect_pg", return_value=pg)
+        mocker.patch(
+            "virtool.startup.create_storage_backend",
+            return_value=memory_storage,
+        )
 
         app = await virtool.jobs.main.create_app(
             ServerConfig(
