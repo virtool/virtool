@@ -103,7 +103,7 @@ def create_data_layer(
         MLData(http_client, pg, storage),
         OTUData(config.data_path, mongo, pg),
         ReferencesData(mongo, pg, config, client, storage),
-        SamplesData(config, mongo, pg),
+        SamplesData(config, mongo, pg, storage),
         SubtractionsData(config.base_url, mongo, pg, storage),
         SessionData(pg),
         SettingsData(mongo),

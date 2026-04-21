@@ -1,15 +1,14 @@
-import shutil
-from asyncio import to_thread
 from pathlib import Path
 
-from virtool.config import get_config_from_app
 from virtool.data.utils import get_data_from_app
 from virtool.example import example_path
 from virtool.fake.wrapper import FakerWrapper
 from virtool.mongo.utils import get_mongo_from_app
 from virtool.samples.db import create_sample
 from virtool.samples.files import create_reads_file
+from virtool.samples.utils import sample_file_key
 from virtool.settings.models import Settings
+from virtool.storage.protocol import STORAGE_CHUNK_SIZE, StorageBackend
 from virtool.types import App
 
 SAMPLE_ID_UNPAIRED = "sample_unpaired"
@@ -70,6 +69,7 @@ async def create_fake_sample(
 
     mongo = get_mongo_from_app(app)
     pg = app["pg"]
+    storage: StorageBackend = app["storage"]
 
     subtraction_ids = [doc["_id"] async for doc in mongo.subtraction.find()][:2]
 
@@ -78,7 +78,12 @@ async def create_fake_sample(
             for n in (1, 2):
                 file_path = example_path / "sample" / f"reads_{n}.fq.gz"
 
-                await copy_reads_file(app, file_path, f"reads_{n}.fq.gz", sample_id)
+                await copy_reads_file(
+                    storage,
+                    file_path,
+                    f"reads_{n}.fq.gz",
+                    sample_id,
+                )
 
                 await create_reads_file(
                     pg,
@@ -90,7 +95,7 @@ async def create_fake_sample(
         else:
             file_path = example_path / "sample" / "reads_1.fq.gz"
 
-            await copy_reads_file(app, file_path, "reads_1.fq.gz", sample_id)
+            await copy_reads_file(storage, file_path, "reads_1.fq.gz", sample_id)
 
             await create_reads_file(
                 pg,
@@ -129,18 +134,17 @@ async def create_fake_sample(
         )
 
 
+async def _stream_file(file_path: Path):
+    with file_path.open("rb") as f:
+        while chunk := f.read(STORAGE_CHUNK_SIZE):
+            yield chunk
+
+
 async def copy_reads_file(
-    app: App, file_path: Path, filename: str, sample_id: str
+    storage: StorageBackend,
+    file_path: Path,
+    filename: str,
+    sample_id: str,
 ) -> None:
-    """Copy the example reads file to the sample directory.
-
-    :param app: the application object
-    :param file_path: the path to the reads file
-    :param filename: the name of the file
-    :param sample_id: the id of the sample
-
-    """
-    reads_path = get_config_from_app(app).data_path / "samples" / sample_id
-    reads_path.mkdir(parents=True, exist_ok=True)
-
-    await to_thread(shutil.copy, file_path, reads_path / filename)
+    key = sample_file_key(sample_id, filename)
+    await storage.write(key, _stream_file(file_path))

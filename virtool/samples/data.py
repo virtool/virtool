@@ -2,14 +2,16 @@
 
 import asyncio
 import math
-from asyncio import gather, to_thread
+from asyncio import CancelledError, gather, to_thread
+from collections.abc import AsyncGenerator, AsyncIterator
 from contextlib import suppress
 from typing import Any
 
 from pymongo.results import UpdateResult
-from sqlalchemy import select
+from sqlalchemy import exc, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+import virtool.uploads.db
 import virtool.utils
 from virtool.api.client import UserClient
 from virtool.api.utils import compose_regex_query
@@ -29,6 +31,7 @@ from virtool.labels.transforms import AttachLabelsTransform
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_new_id, get_one_field
+from virtool.pg.utils import delete_row
 from virtool.samples.checks import (
     check_labels_do_not_exist,
     check_name_is_in_use,
@@ -41,14 +44,21 @@ from virtool.samples.db import (
     define_initial_workflows,
     recalculate_workflow_tags,
 )
+from virtool.samples.files import (
+    create_artifact_file,
+    create_reads_file,
+    get_existing_reads,
+)
 from virtool.samples.models import Sample, SampleSearchResult
 from virtool.samples.oas import CreateSampleRequest, UpdateSampleRequest
-from virtool.samples.sql import SQLSampleReads
-from virtool.samples.utils import SampleRight, join_sample_path
+from virtool.samples.sql import ArtifactType, SQLSampleArtifact, SQLSampleReads
+from virtool.samples.utils import SampleRight, sample_file_key, sample_prefix
+from virtool.storage.protocol import StorageBackend
 from virtool.subtractions.db import (
     AttachSubtractionsTransform,
 )
 from virtool.uploads.sql import SQLUpload
+from virtool.uploads.utils import is_gzip_compressed
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor, chunk_list, wait_for_checks
 
@@ -61,10 +71,12 @@ class SamplesData(DataLayerDomain):
         config: Config,
         mongo: Mongo,
         pg: AsyncEngine,
+        storage: StorageBackend,
     ):
         self._config = config
         self._mongo = mongo
         self._pg = pg
+        self._storage = storage
 
     async def find(
         self,
@@ -393,12 +405,12 @@ class SamplesData(DataLayerDomain):
             )
 
         if result.deleted_count:
-            with suppress(FileNotFoundError):
-                await to_thread(
-                    virtool.utils.rm,
-                    join_sample_path(self._config, sample_id),
-                    recursive=True,
-                )
+            await asyncio.gather(
+                *[
+                    self._storage.delete(obj.key)
+                    async for obj in self._storage.list(sample_prefix(sample_id))
+                ],
+            )
 
             return sample
 
@@ -567,3 +579,127 @@ class SamplesData(DataLayerDomain):
                     for sample_id in chunk
                 ],
             )
+
+    async def upload_artifact(
+        self,
+        sample_id: str,
+        artifact_type: str | None,
+        filename: str,
+        chunker: AsyncGenerator[bytearray],
+    ) -> dict:
+        if artifact_type and artifact_type not in ArtifactType.to_list():
+            raise ResourceConflictError("Unsupported sample artifact type")
+
+        try:
+            artifact = await create_artifact_file(
+                self._pg,
+                filename,
+                filename,
+                sample_id,
+                artifact_type,
+            )
+        except exc.IntegrityError:
+            raise ResourceConflictError(
+                "Artifact file has already been uploaded for this sample",
+            )
+
+        key = sample_file_key(sample_id, filename)
+
+        try:
+            size = await self._storage.write(key, chunker)
+        except (CancelledError, Exception):
+            await delete_row(self._pg, artifact["id"], SQLSampleArtifact)
+            await self._storage.delete(key)
+            raise
+
+        return await virtool.uploads.db.finalize(
+            self._pg,
+            size,
+            artifact["id"],
+            SQLSampleArtifact,
+        )
+
+    async def upload_reads(
+        self,
+        sample_id: str,
+        filename: str,
+        chunker: AsyncGenerator[bytearray],
+        upload_id: int | None = None,
+    ) -> dict:
+        key = sample_file_key(sample_id, filename)
+
+        async def _validate_and_stream() -> AsyncIterator[bytearray]:
+            first = True
+            async for chunk in chunker:
+                if first:
+                    is_gzip_compressed(chunk)
+                    first = False
+                yield chunk
+
+        size = await self._storage.write(key, _validate_and_stream())
+
+        try:
+            return await create_reads_file(
+                self._pg,
+                size,
+                filename,
+                filename,
+                sample_id,
+                upload_id=upload_id,
+            )
+        except exc.IntegrityError:
+            await self._storage.delete(key)
+            raise ResourceConflictError(
+                "Reads file name is already uploaded for this sample",
+            )
+
+    async def get_reads_file(
+        self,
+        sample_id: str,
+        filename: str,
+    ) -> tuple[AsyncIterator[bytes], int, str]:
+        if not await self._mongo.samples.find_one(sample_id):
+            raise ResourceNotFoundError
+
+        existing_reads = await get_existing_reads(self._pg, sample_id)
+
+        if filename not in existing_reads:
+            raise ResourceNotFoundError
+
+        key = sample_file_key(sample_id, filename)
+
+        async for info in self._storage.list(key):
+            if info.key == key:
+                return self._storage.read(key), info.size, filename
+
+        raise ResourceNotFoundError
+
+    async def get_artifact_file(
+        self,
+        sample_id: str,
+        filename: str,
+    ) -> tuple[AsyncIterator[bytes], int]:
+        if not await self._mongo.samples.find_one(sample_id):
+            raise ResourceNotFoundError
+
+        async with AsyncSession(self._pg) as session:
+            result = (
+                await session.execute(
+                    select(SQLSampleArtifact).filter_by(
+                        sample=sample_id,
+                        name=filename,
+                    ),
+                )
+            ).scalar()
+
+        if not result:
+            raise ResourceNotFoundError
+
+        artifact = result.to_dict()
+        key = sample_file_key(sample_id, artifact["name_on_disk"])
+
+        async for info in self._storage.list(key):
+            if info.key == key:
+                return self._storage.read(key), info.size
+
+        raise ResourceNotFoundError

@@ -1,5 +1,4 @@
 from enum import Enum
-from pathlib import Path
 
 from aiohttp.web import Response
 from sqlalchemy import select
@@ -7,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.api.client import AbstractClient
 from virtool.api.errors import APIBadRequest
-from virtool.config.cls import Config
 from virtool.labels.sql import SQLLabel
 
 PATHOSCOPE_TASK_NAMES = ["pathoscope_bowtie", "pathoscope_barracuda"]
@@ -94,17 +92,9 @@ def bad_labels_response(labels: list[int]) -> Response:
     )
 
 
-def join_legacy_read_path(sample_path: Path, suffix: int) -> Path:
-    """Create a path string for a sample read file using the old file naming
-    convention (eg. reads_1.fastq).
-
-    :param sample_path: the path to the sample directory
-    :param suffix: the read file suffix
-    :return: the read path
-
-    """
-    return sample_path / f"reads_{suffix}.fastq"
+def sample_file_key(sample_id: str, filename: str) -> str:
+    return f"samples/{sample_id}/{filename}"
 
 
-def join_sample_path(config: Config, sample_id) -> Path:
-    return config.data_path / "samples" / sample_id
+def sample_prefix(sample_id: str) -> str:
+    return f"samples/{sample_id}/"
