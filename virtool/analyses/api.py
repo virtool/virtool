@@ -1,14 +1,12 @@
 """Request handlers for managing and viewing analyses."""
 
-import asyncio
-
 import arrow
 from aiohttp.web import (
-    FileResponse,
     HTTPNotModified,
     Request,
     Response,
 )
+from aiohttp.web_response import StreamResponse
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r204, r400, r403, r404, r409
 from pydantic import conint
@@ -27,7 +25,6 @@ from virtool.api.errors import (
 )
 from virtool.api.routes import Routes
 from virtool.api.schema import schema
-from virtool.config import get_config_from_req
 from virtool.data.errors import (
     ResourceConflictError,
     ResourceError,
@@ -35,6 +32,7 @@ from virtool.data.errors import (
     ResourceNotModifiedError,
 )
 from virtool.data.utils import get_data_from_req
+from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.uploads.utils import multipart_file_chunker, naive_validator
 
 routes = Routes()
@@ -247,7 +245,7 @@ async def upload(req: Request) -> Response:
 
 @routes.view("/analyses/{analysis_id}/files/{upload_id}")
 class AnalysisFileView(PydanticView):
-    async def get(self, upload_id: int, /) -> r200[FileResponse] | r404:
+    async def get(self, upload_id: int, /) -> r200[Response] | r404:
         """Download an analysis file.
 
         Downloads a file associated with an analysis. Some workflows retain key files
@@ -258,18 +256,35 @@ class AnalysisFileView(PydanticView):
             404: Not found
         """
         try:
-            name_on_disk = await get_data_from_req(self.request).analyses.get_file_name(
-                upload_id,
-            )
+            stream, size, name = await get_data_from_req(
+                self.request,
+            ).analyses.download_file(upload_id)
         except ResourceNotFoundError:
             raise APINotFound()
 
-        path = get_config_from_req(self.request).data_path / "analyses" / name_on_disk
+        response = StreamResponse(
+            headers={
+                "Content-Disposition": f"attachment; filename={name}",
+                "Content-Length": str(size),
+                "Content-Type": "application/octet-stream",
+            },
+        )
 
-        if not await asyncio.to_thread(path.exists):
-            raise APINotFound()
+        if size > 0:
+            try:
+                first_chunk = await stream.__anext__()
+            except (StopAsyncIteration, StorageKeyNotFoundError):
+                raise APINotFound()
 
-        return FileResponse(path)
+            await response.prepare(self.request)
+            await response.write(first_chunk)
+
+            async for chunk in stream:
+                await response.write(chunk)
+        else:
+            await response.prepare(self.request)
+
+        return response
 
 
 @routes.view("/analyses/documents/{analysis_id}.{extension}")

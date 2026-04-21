@@ -1,5 +1,4 @@
 import json
-import shutil
 from pathlib import Path
 
 from aiohttp.test_utils import make_mocked_coro
@@ -12,21 +11,24 @@ from virtool.hmm.db import (
     get_referenced_hmm_ids,
 )
 from virtool.mongo.core import Mongo
+from virtool.storage.memory import MemoryStorageProvider
 
 
-async def test_get_hmms_referenced_in_files(
-    data_path: Path, example_path: Path, mongo: Mongo
-):
-    path = data_path / "samples" / "foo" / "analysis" / "bar"
-    path.mkdir(parents=True)
+async def test_get_hmms_referenced_in_files(example_path: Path, mongo: Mongo):
+    storage = MemoryStorageProvider()
 
-    shutil.copy(example_path / "nuvs_results.json", path / "results.json")
+    data = (example_path / "nuvs_results.json").read_bytes()
+
+    async def _data():
+        yield data
+
+    await storage.write("samples/foo/analysis/bar/results.json", _data())
 
     await mongo.analyses.insert_one(
         {"_id": "bar", "workflow": "nuvs", "sample": {"id": "foo"}, "results": "file"},
     )
 
-    assert await get_hmms_referenced_in_files(mongo, data_path) == {
+    assert await get_hmms_referenced_in_files(mongo, storage) == {
         "rejiddnd",
         "dltwctfw",
         "wotaqhkz",
@@ -68,10 +70,11 @@ async def test_get_hmms_referenced_in_db(mongo: Mongo):
 
 
 async def test_get_referenced_hmm_ids(
-    data_path: Path,
     mocker: MockerFixture,
     mongo: Mongo,
 ):
+    storage = MemoryStorageProvider()
+
     mocker.patch(
         "virtool.hmm.db.get_hmms_referenced_in_db",
         make_mocked_coro({"a", "b", "d", "f"}),
@@ -82,7 +85,7 @@ async def test_get_referenced_hmm_ids(
         make_mocked_coro({"a", "e", "f"}),
     )
 
-    assert await get_referenced_hmm_ids(mongo, data_path) == [
+    assert await get_referenced_hmm_ids(mongo, storage) == [
         "a",
         "b",
         "d",

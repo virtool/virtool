@@ -2,20 +2,20 @@
 
 import asyncio
 import json
-from pathlib import Path
 
 import aiohttp.client_exceptions
 from aiohttp import ClientSession
 from structlog import get_logger
 
-import virtool.analyses.utils
 import virtool.utils
+from virtool.analyses.utils import analysis_result_key
 from virtool.errors import GitHubError
 from virtool.github import get_etag, get_release
 from virtool.hmm.utils import format_hmm_release
 from virtool.mongo.core import Mongo
+from virtool.storage.protocol import StorageBackend
 from virtool.types import Document
-from virtool.utils import base_processor, load_json
+from virtool.utils import base_processor
 
 logger = get_logger("hmms")
 
@@ -30,50 +30,53 @@ HMMS_PROJECTION = ["_id", "cluster", "names", "count", "families"]
 """A MongoDB projection for HMM document lists."""
 
 
-async def get_referenced_hmm_ids(mongo: Mongo, data_path: Path) -> list[str]:
+async def get_referenced_hmm_ids(mongo: Mongo, storage: StorageBackend) -> list[str]:
     """List the IDs of HMM documents that are used in analyses.
 
     :param mongo: the application database client
-    :param data_path: the application data path
+    :param storage: the storage backend
     :return: a list of unreferenced hmm ids
 
     """
     in_db, in_files = await asyncio.gather(
         get_hmms_referenced_in_db(mongo),
-        get_hmms_referenced_in_files(mongo, data_path),
+        get_hmms_referenced_in_files(mongo, storage),
     )
 
     return sorted(list(in_db | in_files))
 
 
-async def get_hmms_referenced_in_files(mongo: Mongo, data_path: Path) -> set[str]:
+async def get_hmms_referenced_in_files(
+    mongo: Mongo,
+    storage: StorageBackend,
+) -> set[str]:
     """Parse all NuVs JSON results files and return a set of found HMM profile ids.
 
     Used for removing unreferenced HMMs when purging the collection.
 
     :param mongo: the application database object
-    :param data_path: the application data path
+    :param storage: the storage backend
     :return: hmm ids referenced in nuvs result files
 
     """
-    paths = []
+    keys = []
 
     async for document in mongo.analyses.find(
         {"workflow": "nuvs", "results": "file"},
         ["_id", "sample"],
     ):
-        path = virtool.analyses.utils.join_analysis_json_path(
-            data_path,
-            document["_id"],
-            document["sample"]["id"],
+        keys.append(
+            analysis_result_key(document["_id"], document["sample"]["id"]),
         )
-
-        paths.append(path)
 
     hmm_ids = set()
 
-    for path in paths:
-        data = await asyncio.to_thread(load_json, path)
+    for key in keys:
+        chunks = []
+        async for chunk in storage.read(key):
+            chunks.append(chunk)
+
+        data = json.loads(b"".join(chunks))
 
         for sequence in data:
             for orf in sequence["orfs"]:

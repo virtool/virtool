@@ -1,5 +1,6 @@
 import asyncio
 import math
+from collections.abc import AsyncIterator
 from datetime import datetime
 
 import sentry_sdk
@@ -20,6 +21,7 @@ from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import Analysis, AnalysisFile, AnalysisSearchResult
 from virtool.analyses.sql import SQLAnalysisFile, SQLAnalysisResult
 from virtool.analyses.utils import (
+    analysis_file_key,
     attach_analysis_files,
 )
 from virtool.blast.sql import SQLNuVsBlast
@@ -47,9 +49,8 @@ from virtool.storage.protocol import StorageBackend
 from virtool.subtractions.db import (
     AttachSubtractionsTransform,
 )
-from virtool.uploads.utils import naive_writer
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import base_processor, rm, wait_for_checks
+from virtool.utils import base_processor, wait_for_checks
 
 logger = get_logger("analyses")
 
@@ -57,8 +58,7 @@ logger = get_logger("analyses")
 class AnalysisData(DataLayerDomain):
     name = "analyses"
 
-    def __init__(self, mongo: Mongo, config, pg: AsyncEngine, storage: StorageBackend):
-        self._config = config
+    def __init__(self, mongo: Mongo, pg: AsyncEngine, storage: StorageBackend):
         self._mongo = mongo
         self._pg = pg
         self._storage = storage
@@ -200,7 +200,6 @@ class AnalysisData(DataLayerDomain):
                     document["results"] = result.scalars().one()
 
             document = await virtool.analyses.format.format_analysis(
-                self._config,
                 self._storage,
                 self._mongo,
                 document,
@@ -364,18 +363,10 @@ class AnalysisData(DataLayerDomain):
                 ),
             )
 
-        try:
-            await asyncio.to_thread(
-                rm,
-                self._config.data_path
-                / "samples"
-                / analysis.sample.id
-                / "analysis"
-                / analysis_id,
-                True,
-            )
-        except FileNotFoundError:
-            pass
+        async for obj in self._storage.list(
+            f"samples/{analysis.sample.id}/analysis/{analysis_id}/",
+        ):
+            await self._storage.delete(obj.key)
 
         await recalculate_workflow_tags(self._mongo, analysis.sample.id)
 
@@ -417,9 +408,9 @@ class AnalysisData(DataLayerDomain):
         upload_id = analysis_file["id"]
 
         try:
-            size = await naive_writer(
+            size = await self._storage.write(
+                analysis_file_key(analysis_file["name_on_disk"]),
                 chunks,
-                self._config.data_path / "analyses" / analysis_file["name_on_disk"],
             )
         except asyncio.CancelledError:
             logger.info("analysis file upload aborted", upload_id=upload_id)
@@ -435,16 +426,25 @@ class AnalysisData(DataLayerDomain):
 
         return AnalysisFile(**analysis_file)
 
-    async def get_file_name(self, upload_id: int) -> str:
-        """Get a file generated during the analysis.
+    async def download_file(
+        self,
+        upload_id: int,
+    ) -> tuple[AsyncIterator[bytes], int, str]:
+        """Download a file generated during an analysis.
 
         :param upload_id: the upload ID
-        :return: the name on disk of the analysis file
+        :return: the file stream, size, and filename
         """
         analysis_file = await get_row_by_id(self._pg, SQLAnalysisFile, upload_id)
 
-        if analysis_file:
-            return analysis_file.name_on_disk
+        if not analysis_file:
+            raise ResourceNotFoundError()
+
+        key = analysis_file_key(analysis_file.name_on_disk)
+
+        async for info in self._storage.list(key):
+            if info.key == key:
+                return self._storage.read(key), info.size, analysis_file.name
 
         raise ResourceNotFoundError()
 
@@ -477,7 +477,6 @@ class AnalysisData(DataLayerDomain):
         if extension == "xlsx":
             return (
                 await virtool.analyses.format.format_analysis_to_excel(
-                    self._config,
                     self._storage,
                     self._mongo,
                     document,
@@ -487,7 +486,6 @@ class AnalysisData(DataLayerDomain):
 
         return (
             await virtool.analyses.format.format_analysis_to_csv(
-                self._config,
                 self._storage,
                 self._mongo,
                 document,

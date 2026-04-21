@@ -91,7 +91,7 @@ def create_data_layer(
 
     return DataLayer(
         AccountData(mongo, pg),
-        AnalysisData(mongo, config, pg, storage),
+        AnalysisData(mongo, pg, storage),
         BLASTData(client, mongo, pg),
         GroupsData(mongo, pg),
         HistoryData(storage, mongo, pg),

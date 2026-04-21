@@ -1,5 +1,4 @@
 import asyncio
-import os
 from http import HTTPStatus
 from pathlib import Path
 
@@ -12,7 +11,6 @@ from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from tests.fixtures.response import RespIs
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.sql import SQLAnalysisFile, SQLAnalysisResult
-from virtool.config import get_config_from_app
 from virtool.fake.next import DataFaker
 from virtool.jobs.models import Job, JobState
 from virtool.mongo.core import Mongo
@@ -289,11 +287,8 @@ async def test_remove(
     resp_is,
     spawn_client: ClientSpawner,
     static_time,
-    tmp_path: Path,
 ):
     client = await spawn_client(authenticated=True)
-
-    get_config_from_app(client.app).data_path = tmp_path
 
     user = await fake.users.create()
 
@@ -378,14 +373,11 @@ async def test_upload_file(
     snapshot: SnapshotAssertion,
     spawn_job_client: JobClientSpawner,
     static_time: StaticTime,
-    tmp_path: Path,
 ):
     """Test that an analysis result file is properly uploaded and a row is inserted into
     the `analysis_files` SQL table.
     """
     client = await spawn_job_client(authenticated=True)
-
-    get_config_from_app(client.app).data_path = tmp_path
 
     format_ = "foo" if error == 400 else "fasta"
 
@@ -421,11 +413,8 @@ async def test_upload_file(
             assert resp.status == 201
             assert await resp.json() == snapshot
 
-            assert sorted(os.listdir(tmp_path / "analyses")) == [
-                "1-reference.fa",
-                "2-reference.fa",
-            ]
             assert await get_row_by_id(pg, SQLAnalysisFile, 1)
+            assert await get_row_by_id(pg, SQLAnalysisFile, 2)
 
         case 400:
             await resp_is.bad_request(resp_put, "Unsupported analysis file format")
@@ -448,16 +437,12 @@ class TestDownloadAnalysisResult:
         mongo: Mongo,
         spawn_client: ClientSpawner,
         spawn_job_client: JobClientSpawner,
-        tmp_path,
     ):
         """Test that an uploaded analysis result file can subsequently be downloaded."""
         client, job_client = await asyncio.gather(
             spawn_client(administrator=True, authenticated=True),
             spawn_job_client(authenticated=True),
         )
-
-        get_config_from_app(client.app).data_path = tmp_path
-        get_config_from_app(job_client.app).data_path = tmp_path
 
         await mongo.analyses.insert_one(
             {"_id": "foobar", "ready": True, "job": {"id": "hello"}},

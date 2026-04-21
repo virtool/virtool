@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 
 import pytest
 from pytest_mock import MockerFixture
@@ -12,9 +11,7 @@ from virtool.storage.memory import MemoryStorageProvider
 
 
 @pytest.mark.parametrize("loadable", [True, False])
-async def test_load_results(
-    loadable: bool, config, mocker: MockerFixture, tmp_path: Path
-):
+async def test_load_results(loadable: bool):
     """Test that results are loaded from a `results.json` as expected.
 
     Check that the file loading action is not pursued if the results are stored in the
@@ -22,16 +19,17 @@ async def test_load_results(
     """
     results = {"foo": "bar", "bar": "baz"}
 
-    results_path = tmp_path / "results.json"
-    results_path.write_text(json.dumps(results))
+    storage = MemoryStorageProvider()
 
-    m_join_analysis_json_path = mocker.patch(
-        "virtool.analyses.utils.join_analysis_json_path",
-        return_value=results_path,
-    )
+    if loadable:
+
+        async def _data():
+            yield json.dumps(results).encode()
+
+        await storage.write("samples/bar/analysis/foo/results.json", _data())
 
     result = await load_results(
-        config,
+        storage,
         {
             "_id": "foo",
             "results": "file" if loadable else {"baz": "foo"},
@@ -40,10 +38,8 @@ async def test_load_results(
     )
 
     if loadable:
-        m_join_analysis_json_path.assert_called_with(tmp_path, "foo", "bar")
         assert result == {"_id": "foo", "results": results, "sample": {"id": "bar"}}
     else:
-        m_join_analysis_json_path.assert_not_called()
         assert result == {
             "_id": "foo",
             "results": {"baz": "foo"},
@@ -181,7 +177,7 @@ def test_transform_coverage_to_coordinates(
 
 @pytest.mark.parametrize("workflow", [None, "foobar", "nuvs", "pathoscope"])
 async def test_format_analysis(
-    workflow: str | None, config, mocker: MockerFixture, mongo: Mongo
+    workflow: str | None, mocker: MockerFixture, mongo: Mongo
 ):
     """Ensure that:
     * the correct formatting function is called based on the workflow field.
@@ -204,9 +200,7 @@ async def test_format_analysis(
     if workflow:
         document["workflow"] = workflow
 
-    coroutine = virtool.analyses.format.format_analysis(
-        config, storage, mongo, document
-    )
+    coroutine = virtool.analyses.format.format_analysis(storage, mongo, document)
 
     if workflow is None or workflow == "foobar":
         with pytest.raises(ValueError) as err:
@@ -224,9 +218,9 @@ async def test_format_analysis(
         }
 
         if workflow == "nuvs":
-            m_format_nuvs.assert_called_with(config, mongo, document)
+            m_format_nuvs.assert_called_with(storage, mongo, document)
             assert not m_format_pathoscope.called
 
         elif workflow == "pathoscope":
-            m_format_pathoscope.assert_called_with(config, storage, mongo, document)
+            m_format_pathoscope.assert_called_with(storage, mongo, document)
             assert not m_format_nuvs.called
