@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -12,6 +11,7 @@ from virtool.history.models import History, HistorySearchResult
 from virtool.history.transforms import AttachDiffTransform
 from virtool.mongo.core import Mongo
 from virtool.references.transforms import AttachReferenceTransform
+from virtool.storage.protocol import StorageBackend
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
@@ -19,8 +19,8 @@ from virtool.utils import base_processor
 class HistoryData:
     name = "history"
 
-    def __init__(self, data_path: Path, mongo: Mongo, pg: AsyncEngine):
-        self._data_path = data_path
+    def __init__(self, storage: StorageBackend, mongo: Mongo, pg: AsyncEngine):
+        self._storage = storage
         self._mongo = mongo
         self._pg = pg
 
@@ -46,7 +46,7 @@ class HistoryData:
             document = await apply_transforms(
                 base_processor(document),
                 [
-                    AttachDiffTransform(self._data_path, self._pg),
+                    AttachDiffTransform(self._storage, self._pg),
                     AttachReferenceTransform(self._mongo),
                     AttachUserTransform(self._pg),
                 ],
@@ -85,7 +85,7 @@ class HistoryData:
                 otu_version = int(otu_version)
 
             _, patched, history_to_delete = await patch_to_version(
-                self._data_path,
+                self._storage,
                 self._mongo,
                 otu_id,
                 otu_version - 1,

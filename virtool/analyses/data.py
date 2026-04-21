@@ -43,6 +43,7 @@ from virtool.references.transforms import AttachReferenceTransform
 from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.oas import CreateAnalysisRequest
 from virtool.samples.utils import get_sample_rights
+from virtool.storage.protocol import StorageBackend
 from virtool.subtractions.db import (
     AttachSubtractionsTransform,
 )
@@ -56,10 +57,11 @@ logger = get_logger("analyses")
 class AnalysisData(DataLayerDomain):
     name = "analyses"
 
-    def __init__(self, mongo: Mongo, config, pg: AsyncEngine):
+    def __init__(self, mongo: Mongo, config, pg: AsyncEngine, storage: StorageBackend):
         self._config = config
         self._mongo = mongo
         self._pg = pg
+        self._storage = storage
 
     async def find(
         self,
@@ -199,6 +201,7 @@ class AnalysisData(DataLayerDomain):
 
             document = await virtool.analyses.format.format_analysis(
                 self._config,
+                self._storage,
                 self._mongo,
                 document,
             )
@@ -475,6 +478,7 @@ class AnalysisData(DataLayerDomain):
             return (
                 await virtool.analyses.format.format_analysis_to_excel(
                     self._config,
+                    self._storage,
                     self._mongo,
                     document,
                 ),
@@ -484,6 +488,7 @@ class AnalysisData(DataLayerDomain):
         return (
             await virtool.analyses.format.format_analysis_to_csv(
                 self._config,
+                self._storage,
                 self._mongo,
                 document,
             ),

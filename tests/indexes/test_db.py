@@ -8,7 +8,6 @@ from syrupy import SnapshotAssertion
 
 import virtool.indexes.db
 from tests.fixtures.client import ClientSpawner
-from virtool.config import Config
 from virtool.indexes.db import (
     attach_files,
     get_current_id_and_version,
@@ -18,6 +17,7 @@ from virtool.indexes.db import (
 )
 from virtool.indexes.sql import SQLIndexFile
 from virtool.mongo.core import Mongo
+from virtool.storage.memory import MemoryStorageProvider
 
 
 @pytest.mark.parametrize("index_id", [None, "abc"])
@@ -89,23 +89,24 @@ async def test_get_next_version(empty, has_ref, test_indexes, mongo):
     assert await get_next_version(mongo, "hxn167" if has_ref else "foobar") == expected
 
 
-async def test_get_patched_otus(config: Config, mocker: MockerFixture, mongo: Mongo):
+async def test_get_patched_otus(mocker: MockerFixture, mongo: Mongo):
     m = mocker.patch(
         "virtool.history.db.patch_to_version",
         make_mocked_coro((None, {"_id": "foo"}, None)),
     )
 
+    storage = MemoryStorageProvider()
     manifest = {"foo": 2, "bar": 10, "baz": 4}
 
-    patched_otus = await get_patched_otus(mongo, config, manifest)
+    patched_otus = await get_patched_otus(mongo, storage, manifest)
 
     assert list(patched_otus) == [{"_id": "foo"}, {"_id": "foo"}, {"_id": "foo"}]
 
     m.assert_has_calls(
         [
-            mocker.call(config.data_path, mongo, "foo", 2),
-            mocker.call(config.data_path, mongo, "bar", 10),
-            mocker.call(config.data_path, mongo, "baz", 4),
+            mocker.call(storage, mongo, "foo", 2),
+            mocker.call(storage, mongo, "bar", 10),
+            mocker.call(storage, mongo, "baz", 4),
         ],
     )
 

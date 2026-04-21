@@ -19,7 +19,6 @@ from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from tests.fixtures.response import RespIs
-from virtool.config import get_config_from_app
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.indexes.db import INDEX_FILE_NAMES
@@ -294,7 +293,7 @@ async def test_download_otus_json(
     if not file_exists:
         m_get_patched_otus.assert_called_with(
             get_mongo_from_app(client.app),
-            get_config_from_app(client.app),
+            ANY,
             manifest,
         )
 

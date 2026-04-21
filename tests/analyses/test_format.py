@@ -8,6 +8,7 @@ from syrupy import SnapshotAssertion
 import virtool.analyses
 from virtool.analyses.format import load_results, transform_coverage_to_coordinates
 from virtool.mongo.core import Mongo
+from virtool.storage.memory import MemoryStorageProvider
 
 
 @pytest.mark.parametrize("loadable", [True, False])
@@ -197,12 +198,15 @@ async def test_format_analysis(
         return_value={"is_nuvs": False, "is_pathoscope": True},
     )
 
+    storage = MemoryStorageProvider()
     document = {}
 
     if workflow:
         document["workflow"] = workflow
 
-    coroutine = virtool.analyses.format.format_analysis(config, mongo, document)
+    coroutine = virtool.analyses.format.format_analysis(
+        config, storage, mongo, document
+    )
 
     if workflow is None or workflow == "foobar":
         with pytest.raises(ValueError) as err:
@@ -224,5 +228,5 @@ async def test_format_analysis(
             assert not m_format_pathoscope.called
 
         elif workflow == "pathoscope":
-            m_format_pathoscope.assert_called_with(config, mongo, document)
+            m_format_pathoscope.assert_called_with(config, storage, mongo, document)
             assert not m_format_nuvs.called

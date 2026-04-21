@@ -20,6 +20,7 @@ from virtool.config.cls import Config
 from virtool.history.db import patch_to_version
 from virtool.models.enums import AnalysisWorkflow
 from virtool.otus.utils import format_isolate_name
+from virtool.storage.protocol import StorageBackend
 from virtool.utils import load_json
 
 if TYPE_CHECKING:
@@ -77,14 +78,14 @@ async def load_results(config: Config, document: dict[str, Any]) -> dict:
 
 
 async def format_aodp(
-    config,
+    storage: StorageBackend,
     mongo: "Mongo",
     document: dict[str, Any],
 ) -> dict[str, Any]:
     """Format an AODP analysis document by retrieving the detected OTUs and
     incorporating them into the returned document.
 
-    :param config: the application config object
+    :param storage: the storage backend
     :param mongo: the application Mongo object
     :param document: the document to format
     :return: the formatted document
@@ -92,7 +93,7 @@ async def format_aodp(
     """
     hits = document["results"]["hits"]
 
-    patched_otus = await gather_patched_otus(config, mongo, hits)
+    patched_otus = await gather_patched_otus(storage, mongo, hits)
 
     hits_by_sequence_id = defaultdict(list)
 
@@ -115,6 +116,7 @@ async def format_aodp(
 
 async def format_pathoscope(
     config,
+    storage: StorageBackend,
     mongo: "Mongo",
     document: dict[str, Any],
 ) -> dict[str, Any]:
@@ -124,6 +126,7 @@ async def format_pathoscope(
     Calculate metrics for different organizational levels: OTU, isolate, and sequence.
 
     :param config: the application config object
+    :param storage: the storage backend
     :param mongo: the application Mongo object
     :param document: the document to format
     :return: the formatted document
@@ -143,7 +146,7 @@ async def format_pathoscope(
 
     for otu_specifier, hits in hits_by_otu.items():
         otu_id, otu_version = otu_specifier
-        coros.append(format_pathoscope_hits(config, mongo, otu_id, otu_version, hits))
+        coros.append(format_pathoscope_hits(storage, mongo, otu_id, otu_version, hits))
 
     return {
         **document,
@@ -152,14 +155,14 @@ async def format_pathoscope(
 
 
 async def format_pathoscope_hits(
-    config,
+    storage: StorageBackend,
     mongo: "Mongo",
     otu_id: str,
     otu_version,
     hits: list[dict],
 ):
     _, patched_otu, _ = await patch_to_version(
-        config.data_path,
+        storage,
         mongo,
         otu_id,
         otu_version,
@@ -269,12 +272,14 @@ async def format_nuvs(
 
 async def format_analysis_to_excel(
     config: Config,
+    storage: StorageBackend,
     mongo: "Mongo",
     document: dict[str, Any],
 ) -> bytes:
     """Convert a pathoscope analysis document to byte-encoded Excel format for download.
 
     :param config: the config object
+    :param storage: the storage backend
     :param mongo: the database object
     :param document: the document to format
     :return: the formatted Excel workbook
@@ -282,7 +287,7 @@ async def format_analysis_to_excel(
     """
     depths = calculate_median_depths(document["results"]["hits"])
 
-    formatted = await format_analysis(config, mongo, document)
+    formatted = await format_analysis(config, storage, mongo, document)
 
     output = io.BytesIO()
 
@@ -329,12 +334,14 @@ async def format_analysis_to_excel(
 
 async def format_analysis_to_csv(
     config: Config,
+    storage: StorageBackend,
     mongo: "Mongo",
     document: dict[str, Any],
 ) -> str:
     """Convert a pathoscope analysis document to CSV format for download.
 
     :param config: the app config object
+    :param storage: the storage backend
     :param mongo: the app mongo object
     :param document: the document to format
     :return: the formatted CSV data
@@ -342,7 +349,7 @@ async def format_analysis_to_csv(
     """
     depths = calculate_median_depths(document["results"]["hits"])
 
-    formatted = await format_analysis(config, mongo, document)
+    formatted = await format_analysis(config, storage, mongo, document)
 
     output = io.StringIO()
 
@@ -370,12 +377,14 @@ async def format_analysis_to_csv(
 
 async def format_analysis(
     config: Config,
+    storage: StorageBackend,
     mongo: "Mongo",
     document: dict[str, Any],
 ) -> dict[str, any]:
     """Format an analysis document to be returned by the API.
 
     :param config: the config object
+    :param storage: the storage backend
     :param mongo: the database object
     :param document: the analysis document to format
     :return: a formatted document
@@ -390,10 +399,10 @@ async def format_analysis(
         return await format_nuvs(config, mongo, document)
 
     if workflow == AnalysisWorkflow.aodp.value:
-        return await format_aodp(config, mongo, document)
+        return await format_aodp(storage, mongo, document)
 
     if "pathoscope" in workflow:
-        return await format_pathoscope(config, mongo, document)
+        return await format_pathoscope(config, storage, mongo, document)
 
     if workflow == AnalysisWorkflow.iimi.value:
         return document
@@ -402,14 +411,14 @@ async def format_analysis(
 
 
 async def gather_patched_otus(
-    config,
+    storage: StorageBackend,
     mongo: "Mongo",
     results: list[dict],
 ) -> dict[str, dict]:
     """Gather patched OTUs for each result item. Only fetch each id-version combination
     once.
 
-    :param config: the config object
+    :param storage: the storage backend
     :param mongo: the database object
     :param results: the results field from a pathoscope analysis document
     :return: a dict containing patched OTUs keyed by the OTU ID
@@ -420,7 +429,7 @@ async def gather_patched_otus(
 
     patched_otus = await asyncio.gather(
         *[
-            patch_to_version(config.data_path, mongo, otu_id, version)
+            patch_to_version(storage, mongo, otu_id, version)
             for otu_id, version in otu_specifiers
         ],
     )

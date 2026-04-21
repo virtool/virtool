@@ -80,6 +80,7 @@ from virtool.references.tasks import (
 )
 from virtool.references.transforms import AttachImportedFromTransform
 from virtool.references.utils import RIGHTS, ReferenceSourceData
+from virtool.storage.protocol import StorageBackend
 from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
     TaskProgressHandler,
@@ -101,11 +102,13 @@ class ReferencesData(DataLayerDomain):
         pg: AsyncEngine,
         config: Config,
         client: ClientSession,
+        storage: StorageBackend,
     ):
         self._mongo = mongo
         self._pg = pg
         self._config = config
         self._client = client
+        self._storage = storage
 
     async def _extend_user(self, user: Document) -> Document:
         """Extend a user document with additional data from PostgreSQL.
@@ -937,7 +940,7 @@ class ReferencesData(DataLayerDomain):
 
         for source_otu_id, version in manifest.items():
             _, patched, _ = await patch_to_version(
-                self._config.data_path,
+                self._storage,
                 self._mongo,
                 source_otu_id,
                 version,

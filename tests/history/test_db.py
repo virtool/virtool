@@ -1,6 +1,5 @@
 import asyncio
 import datetime
-from pathlib import Path
 
 import pytest
 from sqlalchemy import select
@@ -12,6 +11,7 @@ from virtool.history.sql import SQLHistoryDiff
 from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
+from virtool.storage.memory import MemoryStorageProvider
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
@@ -177,14 +177,13 @@ class TestGetMostRecentChange:
 async def test_patch_to_version(
     remove: bool,
     create_mock_history,
-    data_path: Path,
     mongo: Mongo,
     snapshot: SnapshotAssertion,
 ):
     await create_mock_history(remove=remove)
 
     current, patched, reverted_change_ids = await virtool.history.db.patch_to_version(
-        data_path,
+        MemoryStorageProvider(),
         mongo,
         "6116cba1",
         1,

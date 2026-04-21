@@ -1,9 +1,7 @@
 import json
-import os
 from pathlib import Path
 
 import pytest
-from pytest_mock import MockerFixture
 from syrupy import SnapshotAssertion
 
 from virtool.history.utils import (
@@ -12,13 +10,13 @@ from virtool.history.utils import (
     compose_edit_description,
     compose_remove_description,
     derive_otu_information,
-    join_diff_path,
     json_encoder,
     json_object_hook,
     read_diff_file,
     remove_diff_files,
     write_diff_file,
 )
+from virtool.storage.memory import MemoryStorageProvider
 
 
 def test_calculate_diff(test_otu_edit):
@@ -180,12 +178,6 @@ def test_derive_otu_information(version, missing):
         assert otu_version == 5
 
 
-def test_join_diff_path(tmp_path):
-    path = join_diff_path(tmp_path, "foo", "2")
-
-    assert path == tmp_path / "history/foo_2.json"
-
-
 @pytest.mark.parametrize("is_datetime", [True, False])
 def test_json_encoder(is_datetime, static_time):
     """Test that the custom encoder correctly encodes `datetime` objects to ISO format
@@ -212,53 +204,60 @@ def test_json_object_hook(static_time):
     assert result == {"foo": "bar", "created_at": static_time.datetime}
 
 
-def test_read_diff_file(
-    example_path: Path, mocker: MockerFixture, snapshot: SnapshotAssertion
-):
+async def test_read_diff_file(example_path: Path, snapshot: SnapshotAssertion):
     """Test that a diff is parsed to a `dict` correctly. ISO format dates must be
     converted to `datetime` objects.
     """
-    m = mocker.patch(
-        "virtool.history.utils.join_diff_path",
-        return_value=(example_path / "diff.json"),
-    )
+    storage = MemoryStorageProvider()
 
-    assert read_diff_file("foo", "bar", "baz") == snapshot
+    with open(example_path / "diff.json", "rb") as f:
+        raw = f.read()
 
-    m.assert_called_with("foo", "bar", "baz")
+    async def _data():
+        yield raw
+
+    await storage.write("history/bar_baz.json", _data())
+
+    assert await read_diff_file(storage, "bar", "baz") == snapshot
 
 
-async def test_remove_diff_files(tmp_path, config):
+async def test_remove_diff_files():
     """Test that diff files are removed correctly and the function can handle a
     non-existent diff file.
     """
-    history_dir = tmp_path / "history"
-    history_dir.mkdir()
+    storage = MemoryStorageProvider()
 
-    history_dir.joinpath("foo_0.json").write_text("hello world")
-    history_dir.joinpath("foo_1.json").write_text("hello world")
-    history_dir.joinpath("bar_0.json").write_text("hello world")
-    history_dir.joinpath("bar_1.json").write_text("hello world")
+    for key in [
+        "history/foo_0.json",
+        "history/foo_1.json",
+        "history/bar_0.json",
+        "history/bar_1.json",
+    ]:
+
+        async def _data():
+            yield b"hello world"
+
+        await storage.write(key, _data())
 
     id_list = ["foo.0", "foo.1", "foo.2", "bar.0"]
 
-    app = {"config": config}
+    await remove_diff_files(storage, id_list)
 
-    await remove_diff_files(app, id_list)
+    remaining = [obj.key async for obj in storage.list("history/")]
+    assert remaining == ["history/bar_1.json"]
 
-    assert os.listdir(history_dir) == ["bar_1.json"]
 
-
-async def test_write_diff_file(
-    example_path: Path, snapshot: SnapshotAssertion, tmp_path: Path
-):
+async def test_write_diff_file(example_path: Path, snapshot: SnapshotAssertion):
     """Test that a diff file is written correctly."""
-    (tmp_path / "history").mkdir()
+    storage = MemoryStorageProvider()
 
     with open(example_path / "diff.json") as f:
         diff = json.load(f)
 
-    write_diff_file(tmp_path, "foo", "1", diff)
+    await write_diff_file(storage, "foo", "1", diff)
 
-    with open(tmp_path / "history" / "foo_1.json") as f:
-        assert json.load(f) == snapshot
+    chunks = []
+    async for chunk in storage.read("history/foo_1.json"):
+        chunks.append(chunk)
+
+    assert json.loads(b"".join(chunks)) == snapshot
