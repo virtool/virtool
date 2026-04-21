@@ -66,8 +66,8 @@ class ImportReferenceTask(BaseTask):
         except StorageKeyNotFoundError:
             return await self._set_error("Could not find reference file in storage")
         except json.decoder.JSONDecodeError as err:
-            return await self._set_error(str(err).split("JSONDecodeError: ")[1])
-        except OSError as err:
+            return await self._set_error(str(err))
+        except (OSError, EOFError) as err:
             if "Not a gzipped file" in str(err):
                 await self._set_error("Not a gzipped file")
             else:

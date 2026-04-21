@@ -1,5 +1,6 @@
 import asyncio
 import gzip
+import io
 import json
 from operator import itemgetter
 from pathlib import Path
@@ -234,4 +235,8 @@ async def load_reference_from_storage(storage: StorageBackend, key: str) -> dict
 
     raw = b"".join(chunks)
 
-    return await asyncio.to_thread(lambda: json.loads(gzip.decompress(raw)))
+    def _load():
+        with gzip.GzipFile(fileobj=io.BytesIO(raw)) as f:
+            return json.load(f)
+
+    return await asyncio.to_thread(_load)
