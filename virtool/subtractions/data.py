@@ -8,7 +8,6 @@ from multidict import MultiDictProxy
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from structlog import get_logger
 
 import virtool.mongo.utils
 import virtool.utils
@@ -49,8 +48,6 @@ from virtool.utils import base_processor
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
-
-logger = get_logger("subtractions")
 
 
 class SubtractionsData(DataLayerDomain):
@@ -310,10 +307,14 @@ class SubtractionsData(DataLayerDomain):
                 raise ResourceNotFoundError
 
             async def _delete_files():
-                async for obj in self._storage.list(
-                    subtraction_prefix(subtraction_id),
-                ):
-                    await self._storage.delete(obj.key)
+                await asyncio.gather(
+                    *[
+                        self._storage.delete(obj.key)
+                        async for obj in self._storage.list(
+                            subtraction_prefix(subtraction_id),
+                        )
+                    ],
+                )
 
             await asyncio.gather(
                 unlink_default_subtractions(self._mongo, subtraction_id, session),
@@ -410,8 +411,9 @@ class SubtractionsData(DataLayerDomain):
                 subtraction_file_dict = subtraction_file.to_dict()
 
                 await session.commit()
-        except CancelledError:
+        except (CancelledError, Exception):
             await self._storage.delete(key)
+            raise
 
         return SubtractionFile(
             **subtraction_file_dict,
@@ -441,13 +443,4 @@ class SubtractionsData(DataLayerDomain):
 
         key = subtraction_file_key(subtraction_id, filename)
 
-        async for info in self._storage.list(key):
-            if info.key == key:
-                return self._storage.read(key), file["size"]
-
-        logger.warning(
-            "Expected subtraction file not found",
-            filename=filename,
-            subtraction_id=subtraction_id,
-        )
-        raise ResourceNotFoundError
+        return self._storage.read(key), file["size"]
