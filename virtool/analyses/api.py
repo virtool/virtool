@@ -262,11 +262,6 @@ class AnalysisFileView(PydanticView):
         except ResourceNotFoundError:
             raise APINotFound()
 
-        try:
-            first_chunk = await stream.__anext__()
-        except (StopAsyncIteration, StorageKeyNotFoundError):
-            raise APINotFound()
-
         response = StreamResponse(
             headers={
                 "Content-Disposition": f"attachment; filename={name}",
@@ -275,11 +270,19 @@ class AnalysisFileView(PydanticView):
             },
         )
 
-        await response.prepare(self.request)
-        await response.write(first_chunk)
+        if size > 0:
+            try:
+                first_chunk = await stream.__anext__()
+            except (StopAsyncIteration, StorageKeyNotFoundError):
+                raise APINotFound()
 
-        async for chunk in stream:
-            await response.write(chunk)
+            await response.prepare(self.request)
+            await response.write(first_chunk)
+
+            async for chunk in stream:
+                await response.write(chunk)
+        else:
+            await response.prepare(self.request)
 
         return response
 

@@ -443,7 +443,8 @@ class AnalysisData(DataLayerDomain):
         key = analysis_file_key(analysis_file.name_on_disk)
 
         async for info in self._storage.list(key):
-            return self._storage.read(key), info.size, analysis_file.name
+            if info.key == key:
+                return self._storage.read(key), info.size, analysis_file.name
 
         raise ResourceNotFoundError()
 
