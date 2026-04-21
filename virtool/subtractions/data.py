@@ -1,6 +1,5 @@
 import asyncio
 import math
-import shutil
 from asyncio import CancelledError
 from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING
@@ -14,15 +13,14 @@ from structlog import get_logger
 import virtool.mongo.utils
 import virtool.utils
 from virtool.api.utils import compose_regex_query
-from virtool.config import Config
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emits
-from virtool.data.file import FileDescriptor
 from virtool.data.transforms import apply_transforms
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.pg.utils import get_row_by_id
+from virtool.storage.protocol import StorageBackend
 from virtool.subtractions.db import (
     attach_computed,
     unlink_default_subtractions,
@@ -41,13 +39,13 @@ from virtool.subtractions.pg import SQLSubtractionFile
 from virtool.subtractions.utils import (
     FILES,
     check_subtraction_file_type,
-    join_subtraction_path,
+    subtraction_file_key,
+    subtraction_prefix,
 )
 from virtool.uploads.db import AttachUploadTransform
 from virtool.uploads.sql import SQLUpload
-from virtool.uploads.utils import naive_writer
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import base_processor, rm
+from virtool.utils import base_processor
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
@@ -58,11 +56,17 @@ logger = get_logger("subtractions")
 class SubtractionsData(DataLayerDomain):
     name = "subtractions"
 
-    def __init__(self, base_url: str, config: Config, mongo: "Mongo", pg: AsyncEngine):
+    def __init__(
+        self,
+        base_url: str,
+        mongo: "Mongo",
+        pg: AsyncEngine,
+        storage: StorageBackend,
+    ):
         self._base_url = base_url
-        self._config = config
         self._mongo = mongo
         self._pg = pg
+        self._storage = storage
 
     async def find(self, find: str, short: bool, ready: bool, query: MultiDictProxy):
         db_query = {}
@@ -305,13 +309,15 @@ class SubtractionsData(DataLayerDomain):
             if update_result.modified_count == 0:
                 raise ResourceNotFoundError
 
+            async def _delete_files():
+                async for obj in self._storage.list(
+                    subtraction_prefix(subtraction_id),
+                ):
+                    await self._storage.delete(obj.key)
+
             await asyncio.gather(
                 unlink_default_subtractions(self._mongo, subtraction_id, session),
-                asyncio.to_thread(
-                    shutil.rmtree,
-                    join_subtraction_path(self._config, subtraction_id),
-                    True,
-                ),
+                _delete_files(),
             )
 
         return update_result.modified_count
@@ -376,11 +382,7 @@ class SubtractionsData(DataLayerDomain):
 
         file_type = check_subtraction_file_type(filename)
 
-        subtraction_path = join_subtraction_path(self._config, subtraction_id)
-
-        await asyncio.to_thread(subtraction_path.mkdir, parents=True, exist_ok=True)
-
-        path = subtraction_path / filename
+        key = subtraction_file_key(subtraction_id, filename)
 
         try:
             async with AsyncSession(self._pg) as session:
@@ -397,7 +399,7 @@ class SubtractionsData(DataLayerDomain):
                 except IntegrityError:
                     raise ResourceConflictError("File name already exists")
 
-                size = await naive_writer(chunker, path)
+                size = await self._storage.write(key, chunker)
 
                 subtraction_file.size = size
                 subtraction_file.uploaded_at = virtool.utils.timestamp()
@@ -409,10 +411,7 @@ class SubtractionsData(DataLayerDomain):
 
                 await session.commit()
         except CancelledError:
-            await asyncio.to_thread(
-                rm,
-                self._config.data_path / "subtractions" / subtraction_id / filename,
-            )
+            await self._storage.delete(key)
 
         return SubtractionFile(
             **subtraction_file_dict,
@@ -440,14 +439,15 @@ class SubtractionsData(DataLayerDomain):
 
         file = result.to_dict()
 
-        path = join_subtraction_path(self._config, subtraction_id) / filename
+        key = subtraction_file_key(subtraction_id, filename)
 
-        if not await asyncio.to_thread(path.is_file):
-            logger.warning(
-                "Expected subtraction file not found",
-                filename=filename,
-                subtraction_id=subtraction_id,
-            )
-            raise ResourceNotFoundError
+        async for info in self._storage.list(key):
+            if info.key == key:
+                return self._storage.read(key), file["size"]
 
-        return FileDescriptor(path=path, size=file["size"])
+        logger.warning(
+            "Expected subtraction file not found",
+            filename=filename,
+            subtraction_id=subtraction_id,
+        )
+        raise ResourceNotFoundError
