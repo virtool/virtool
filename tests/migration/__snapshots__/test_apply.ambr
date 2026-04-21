@@ -162,5 +162,12 @@
       'name': 'add job query indexes',
       'revision': '998195bd5a8b',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 24,
+      'name': 'drop b2c columns from users',
+      'revision': 'bd1ffbecfce5',
+    }),
   ])
 # ---
