@@ -60,13 +60,13 @@ class TestWrite:
 
         await provider.write("uploads/file.txt", _async_iter(data))
 
-        assert provider.get_raw("uploads/file.txt") == data
+        assert await _collect_bytes(provider.read("uploads/file.txt")) == data
 
     async def test_overwrites_existing(self, provider):
         await provider.write("key", _async_iter(b"first"))
         await provider.write("key", _async_iter(b"second"))
 
-        assert provider.get_raw("key") == b"second"
+        assert await _collect_bytes(provider.read("key")) == b"second"
 
 
 class TestDelete:
@@ -75,7 +75,8 @@ class TestDelete:
 
         await provider.delete("to_delete")
 
-        assert "to_delete" not in provider.keys()
+        with pytest.raises(StorageKeyNotFoundError):
+            await _collect_bytes(provider.read("to_delete"))
 
     async def test_nonexistent_is_idempotent(self, provider):
         await provider.delete("does/not/exist")
@@ -111,23 +112,3 @@ class TestList:
         assert info.key == "test/file.txt"
         assert info.size == 5
         assert info.last_modified is not None
-
-
-class TestHelpers:
-    async def test_keys_empty(self, provider):
-        assert provider.keys() == set()
-
-    async def test_keys_after_writes(self, provider):
-        await provider.write("a", _async_iter(b"1"))
-        await provider.write("b/c", _async_iter(b"2"))
-
-        assert provider.keys() == {"a", "b/c"}
-
-    async def test_get_raw(self, provider):
-        await provider.write("key", _async_iter(b"value"))
-
-        assert provider.get_raw("key") == b"value"
-
-    async def test_get_raw_missing_raises_key_error(self, provider):
-        with pytest.raises(KeyError):
-            provider.get_raw("missing")

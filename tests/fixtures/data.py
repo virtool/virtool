@@ -7,13 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool.data.layer import DataLayer, create_data_layer
 from virtool.mongo.core import Mongo
-from virtool.storage.memory import MemoryStorageProvider
+from virtool.storage.protocol import StorageBackend
 
 
 @pytest.fixture
 def data_layer(
     config,
-    memory_storage: MemoryStorageProvider,
+    memory_storage: StorageBackend,
     mocker: MockerFixture,
     mongo: Mongo,
     pg: AsyncEngine,

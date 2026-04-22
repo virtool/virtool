@@ -55,11 +55,3 @@ class MemoryStorageProvider:
                     size=len(obj.data),
                     last_modified=obj.last_modified,
                 )
-
-    def keys(self) -> set[str]:
-        """Return the set of all stored keys."""
-        return set(self._store)
-
-    def get_raw(self, key: str) -> bytes:
-        """Return raw bytes for the given key. Raises ``KeyError`` if missing."""
-        return self._store[key].data

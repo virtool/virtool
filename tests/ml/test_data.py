@@ -118,4 +118,5 @@ async def test_load(
     )
 
     expected_keys = {f"ml/{i}/model.tar.gz" for i in [1, 2, 3, 9]}
-    assert data_layer.ml._storage.keys() >= expected_keys
+    actual_keys = {info.key async for info in data_layer.ml._storage.list("ml/")}
+    assert actual_keys >= expected_keys
