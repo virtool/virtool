@@ -8,7 +8,6 @@ from virtool.hmm.tasks import HMMInstallTask
 from virtool.tasks.sql import SQLTask
 from virtool.utils import get_temp_dir
 
-
 annotations = [
     {
         "families": {"None": 2, "Geminiviridae": 235},
@@ -71,5 +70,7 @@ async def test_hmm_install_task(
 
     assert await mongo.hmm.find().to_list(1) == snapshot(name="mongo_hmms")
     assert await data_layer.tasks.get(1) == snapshot(name="data_layer_task")
-    raw = b"".join([chunk async for chunk in data_layer.hmms._storage.read("hmm/profiles.hmm")])
+    raw = b"".join(
+        [chunk async for chunk in data_layer.hmms._storage.read("hmm/profiles.hmm")]
+    )
     assert raw == b"test_profile"
