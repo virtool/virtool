@@ -19,6 +19,7 @@ from obstore.store import AzureStore, S3Store
 
 from virtool.storage.memory import MemoryStorageProvider
 from virtool.storage.obstore import ObstoreProvider
+from virtool.storage.protocol import StorageBackend
 
 
 async def _ensure_azurite_container(
@@ -143,5 +144,5 @@ async def azure_storage(
 
 
 @pytest.fixture
-def memory_storage() -> MemoryStorageProvider:
+def memory_storage() -> StorageBackend:
     return MemoryStorageProvider()

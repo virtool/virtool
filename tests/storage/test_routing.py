@@ -65,8 +65,10 @@ class TestWrite:
     async def test_writes_to_primary_only(self, primary, fallback, router):
         await router.write("key", _async_iter(b"data"))
 
-        assert "key" in primary.keys()
-        assert "key" not in fallback.keys()
+        assert await _collect_bytes(primary.read("key")) == b"data"
+
+        with pytest.raises(StorageKeyNotFoundError):
+            await _collect_bytes(fallback.read("key"))
 
     async def test_returns_byte_count(self, router):
         size = await router.write("key", _async_iter(b"hello"))
@@ -81,22 +83,27 @@ class TestDelete:
 
         await router.delete("key")
 
-        assert "key" not in primary.keys()
-        assert "key" not in fallback.keys()
+        with pytest.raises(StorageKeyNotFoundError):
+            await _collect_bytes(primary.read("key"))
+
+        with pytest.raises(StorageKeyNotFoundError):
+            await _collect_bytes(fallback.read("key"))
 
     async def test_primary_only(self, primary, fallback, router):
         await primary.write("key", _async_iter(b"a"))
 
         await router.delete("key")
 
-        assert "key" not in primary.keys()
+        with pytest.raises(StorageKeyNotFoundError):
+            await _collect_bytes(primary.read("key"))
 
     async def test_fallback_only(self, fallback, router):
         await fallback.write("key", _async_iter(b"a"))
 
         await router.delete("key")
 
-        assert "key" not in fallback.keys()
+        with pytest.raises(StorageKeyNotFoundError):
+            await _collect_bytes(fallback.read("key"))
 
     async def test_missing_from_both(self, router):
         await router.delete("missing")

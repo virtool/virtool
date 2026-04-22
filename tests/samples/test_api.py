@@ -1432,11 +1432,8 @@ async def test_download_reads(
         assert resp.status == job_resp.status == 404
     else:
         assert resp.status == job_resp.status == HTTPStatus.OK
-        assert (
-            memory_storage.get_raw(f"samples/foo/{file_name}")
-            == await resp.content.read()
-            == await job_resp.content.read()
-        )
+        assert await resp.content.read() == b"test"
+        assert await job_resp.content.read() == b"test"
 
 
 @pytest.mark.parametrize("error", [None, "404_sample", "404_artifact", "404_file"])
@@ -1485,7 +1482,7 @@ async def test_download_artifact(
         return
 
     assert resp.status == HTTPStatus.OK
-    assert memory_storage.get_raw("samples/foo/fastqc.txt") == await resp.content.read()
+    assert await resp.content.read() == b"test"
 
 
 class TestChangeSampleRights:
