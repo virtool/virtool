@@ -273,46 +273,7 @@
       '_id': 'otu_id_1.0',
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Remoted Cherry virus B',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': 'otu_id_1',
-              'abbreviation': '',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_id_1',
-                  'source_name': 'S3',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'cherry virus b',
-              'name': 'Cherry virus B',
-              'reference': dict({
-                'id': 'ref_id',
-              }),
-              'remote': dict({
-                'id': 'otu_1',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -811,52 +772,7 @@
       '_id': str,
       'created_at': datetime,
       'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OO',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_1a',
-                  'source_name': 'S3',
-                  'source_type': 'strain',
-                }),
-                dict({
-                  'default': False,
-                  'id': 'iso_db_1b',
-                  'source_name': 'NSW',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu one',
-              'name': 'OTU One',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r1',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -900,46 +816,7 @@
       '_id': str,
       'created_at': datetime,
       'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OTH',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_3',
-                  'source_name': 'Type',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu three',
-              'name': 'OTU Three',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r3',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -983,46 +860,7 @@
       '_id': str,
       'created_at': datetime,
       'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OT',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_2',
-                  'source_name': 'Standard',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu two',
-              'name': 'OTU Two',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r2',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -1279,52 +1117,7 @@
       '_id': str,
       'created_at': datetime,
       'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OO',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_1a',
-                  'source_name': 'S3',
-                  'source_type': 'strain',
-                }),
-                dict({
-                  'default': False,
-                  'id': 'iso_db_1b',
-                  'source_name': 'NSW',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu one',
-              'name': 'OTU One',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r1',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -1368,46 +1161,7 @@
       '_id': str,
       'created_at': datetime,
       'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OTH',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_3',
-                  'source_name': 'Type',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu three',
-              'name': 'OTU Three',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r3',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -1451,46 +1205,7 @@
       '_id': str,
       'created_at': datetime,
       'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OT',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_2',
-                  'source_name': 'Standard',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu two',
-              'name': 'OTU Two',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r2',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -1703,52 +1418,7 @@
       '_id': str,
       'created_at': datetime,
       'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OO',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_1a',
-                  'source_name': 'S3',
-                  'source_type': 'strain',
-                }),
-                dict({
-                  'default': False,
-                  'id': 'iso_db_1b',
-                  'source_name': 'NSW',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu one',
-              'name': 'OTU One',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r1',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -1792,46 +1462,7 @@
       '_id': str,
       'created_at': datetime,
       'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OTH',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_3',
-                  'source_name': 'Type',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu three',
-              'name': 'OTU Three',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r3',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -1875,46 +1506,7 @@
       '_id': str,
       'created_at': datetime,
       'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OT',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_2',
-                  'source_name': 'Standard',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu two',
-              'name': 'OTU Two',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r2',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -2171,52 +1763,7 @@
       '_id': str,
       'created_at': datetime,
       'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OO',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_1a',
-                  'source_name': 'S3',
-                  'source_type': 'strain',
-                }),
-                dict({
-                  'default': False,
-                  'id': 'iso_db_1b',
-                  'source_name': 'NSW',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu one',
-              'name': 'OTU One',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r1',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -2260,46 +1807,7 @@
       '_id': str,
       'created_at': datetime,
       'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OTH',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_3',
-                  'source_name': 'Type',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu three',
-              'name': 'OTU Three',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r3',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -2343,46 +1851,7 @@
       '_id': str,
       'created_at': datetime,
       'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OT',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_2',
-                  'source_name': 'Standard',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu two',
-              'name': 'OTU Two',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r2',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -2804,52 +2273,7 @@
       '_id': str,
       'created_at': datetime,
       'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OO',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_1a',
-                  'source_name': 'S3',
-                  'source_type': 'strain',
-                }),
-                dict({
-                  'default': False,
-                  'id': 'iso_db_1b',
-                  'source_name': 'NSW',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu one',
-              'name': 'OTU One',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r1',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -2893,46 +2317,7 @@
       '_id': str,
       'created_at': datetime,
       'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OTH',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_3',
-                  'source_name': 'Type',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu three',
-              'name': 'OTU Three',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r3',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -2976,46 +2361,7 @@
       '_id': str,
       'created_at': datetime,
       'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OT',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_2',
-                  'source_name': 'Standard',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu two',
-              'name': 'OTU Two',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r2',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -3250,52 +2596,7 @@
       '_id': str,
       'created_at': datetime,
       'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OO',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_1a',
-                  'source_name': 'S3',
-                  'source_type': 'strain',
-                }),
-                dict({
-                  'default': False,
-                  'id': 'iso_db_1b',
-                  'source_name': 'NSW',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu one',
-              'name': 'OTU One',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r1',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -3339,46 +2640,7 @@
       '_id': str,
       'created_at': datetime,
       'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OTH',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_3',
-                  'source_name': 'Type',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu three',
-              'name': 'OTU Three',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r3',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -3422,46 +2684,7 @@
       '_id': str,
       'created_at': datetime,
       'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OT',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_2',
-                  'source_name': 'Standard',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu two',
-              'name': 'OTU Two',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r2',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -3712,52 +2935,7 @@
       '_id': str,
       'created_at': datetime,
       'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OO',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_1a',
-                  'source_name': 'S3',
-                  'source_type': 'strain',
-                }),
-                dict({
-                  'default': False,
-                  'id': 'iso_db_1b',
-                  'source_name': 'NSW',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu one',
-              'name': 'OTU One',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r1',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -3801,46 +2979,7 @@
       '_id': str,
       'created_at': datetime,
       'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OTH',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_3',
-                  'source_name': 'Type',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu three',
-              'name': 'OTU Three',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r3',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -3884,46 +3023,7 @@
       '_id': str,
       'created_at': datetime,
       'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OT',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_2',
-                  'source_name': 'Standard',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu two',
-              'name': 'OTU Two',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r2',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -4142,52 +3242,7 @@
       '_id': str,
       'created_at': datetime,
       'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OO',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_1a',
-                  'source_name': 'S3',
-                  'source_type': 'strain',
-                }),
-                dict({
-                  'default': False,
-                  'id': 'iso_db_1b',
-                  'source_name': 'NSW',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu one',
-              'name': 'OTU One',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r1',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -4231,46 +3286,7 @@
       '_id': str,
       'created_at': datetime,
       'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OTH',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_3',
-                  'source_name': 'Type',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu three',
-              'name': 'OTU Three',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r3',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -4314,46 +3330,7 @@
       '_id': str,
       'created_at': datetime,
       'description': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'OT',
-              'created_at': datetime,
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': 'iso_db_2',
-                  'source_name': 'Standard',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'otu two',
-              'name': 'OTU Two',
-              'reference': dict({
-                'id': 'test_ref',
-              }),
-              'remote': dict({
-                'id': 'otu_r2',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',

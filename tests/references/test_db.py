@@ -1,9 +1,15 @@
+import asyncio
+
 import pytest
-from sqlalchemy.ext.asyncio import AsyncEngine
+from pytest_mock import MockerFixture
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 from virtool.api.client import UserClient
 from virtool.fake.next import DataFaker
+from virtool.history.sql import SQLHistoryDiff
+from virtool.models.enums import HistoryMethod
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.references.db import (
@@ -12,6 +18,7 @@ from virtool.references.db import (
     fetch_and_update_release,
     get_manifest,
     get_reference_groups,
+    populate_insert_only_reference,
 )
 from virtool.startup import startup_http_client_session
 
@@ -188,3 +195,99 @@ async def test_create_document_owner_user(
         "created_at": static_time.datetime,
         "remove": True,
     }
+
+
+async def test_populate_insert_only_reference_rollback(
+    fake: DataFaker,
+    mocker: MockerFixture,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    static_time,
+):
+    """When a Mongo write fails, rollback removes the ``history_diffs`` rows
+    written during the PostgreSQL phase and all Mongo state scoped to the
+    reference, leaving the database as it was before the call.
+    """
+    user = await fake.users.create()
+    ref_id = "ref_rollback_test"
+
+    await mongo.references.insert_one(
+        {
+            "_id": ref_id,
+            "created_at": static_time.datetime,
+            "data_type": "genome",
+            "name": "Rollback",
+            "user": {"id": user.id},
+        },
+    )
+
+    mocker.patch(
+        "virtool.references.alot.random_alphanumeric",
+        side_effect=[
+            "rbotu001",
+            "rbiso001",
+            "rbseq001",
+            "rbotu002",
+            "rbiso002",
+            "rbseq002",
+        ],
+    )
+
+    otus = [
+        {
+            "_id": f"remote_{i}",
+            "name": f"OTU {i}",
+            "abbreviation": f"O{i}",
+            "isolates": [
+                {
+                    "id": f"remote_iso_{i}",
+                    "default": True,
+                    "source_type": "isolate",
+                    "source_name": "a",
+                    "sequences": [
+                        {
+                            "_id": f"remote_seq_{i}",
+                            "accession": f"ACC{i}",
+                            "sequence": "ATCG",
+                            "definition": "test",
+                            "host": "h",
+                        },
+                    ],
+                },
+            ],
+        }
+        for i in (1, 2)
+    ]
+
+    async def fail_sequences_insert(documents, session):
+        # Yield to let the other gather tasks progress before raising, so the
+        # rollback has real Mongo state to clean up.
+        await asyncio.sleep(0.05)
+        raise RuntimeError("forced mongo failure")
+
+    mocker.patch.object(mongo.sequences, "insert_many", fail_sequences_insert)
+
+    with pytest.raises(RuntimeError, match="forced mongo failure"):
+        await populate_insert_only_reference(
+            static_time.datetime,
+            HistoryMethod.remote,
+            mongo,
+            pg,
+            otus,
+            ref_id,
+            user.id,
+        )
+
+    assert await mongo.otus.count_documents({"reference.id": ref_id}) == 0
+    assert await mongo.history.count_documents({"reference.id": ref_id}) == 0
+    assert await mongo.sequences.count_documents({"reference.id": ref_id}) == 0
+    assert await mongo.references.find_one({"_id": ref_id}) is None
+
+    async with AsyncSession(pg) as pg_session:
+        count = await pg_session.scalar(
+            select(func.count())
+            .select_from(SQLHistoryDiff)
+            .where(SQLHistoryDiff.change_id.in_(["rbotu001.0", "rbotu002.0"])),
+        )
+
+    assert count == 0

@@ -222,52 +222,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Imported Habenaria mosaic virus (HaMV)',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'HaMV',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'Ha-1',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'habenaria mosaic virus',
-              'name': 'Habenaria mosaic virus',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': 'a89b6529',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssRNA+',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -289,52 +244,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Imported Hardenbergia virus A (HarVA)',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'HarVA',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'HarVA-57',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hardenbergia virus a',
-              'name': 'Hardenbergia virus A',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': '0b9f16ba',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssRNA+',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -356,52 +266,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Imported Helenium virus S',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': '',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': '',
-                  'source_type': 'unknown',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'helenium virus s',
-              'name': 'Helenium virus S',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': '2oafytcq',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssRNA+',
-                  'name': 'RNA',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -423,52 +288,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Imported Helicoverpa zea nudivirus 2 (HzNV-2)',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'HzNV-2',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'MS1',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'helicoverpa zea nudivirus 2',
-              'name': 'Helicoverpa zea nudivirus 2',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': '6bb1fe0b',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'dsDNA',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -490,52 +310,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Imported Helleborus net necrosis virus (HeNNV)',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'HeNNV',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'G5',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'helleborus net necrosis virus',
-              'name': 'Helleborus net necrosis virus',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': 'c85dca33',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssRNA+',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -557,52 +332,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Imported Hibbertia virus Y (HiVY)',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'HiVY',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'Kioloa',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hibbertia virus y',
-              'name': 'Hibbertia virus Y',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': '579c7055',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssRNA+',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -624,52 +354,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Imported Hibiscus chlorotic ringspot virus (HCRSV)',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'HCRSV',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'unknown',
-                  'source_type': 'unknown',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hibiscus chlorotic ringspot virus',
-              'name': 'Hibiscus chlorotic ringspot virus',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': '0716c1e1',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssRNA+',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -691,57 +376,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Imported Hibiscus golden mosaic virus',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': '',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'BR-IgM1-16',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hibiscus golden mosaic virus',
-              'name': 'Hibiscus golden mosaic virus',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': 'rpz4bwux',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssDNA',
-                  'name': 'DNA A',
-                  'required': True,
-                }),
-                dict({
-                  'molecule': 'ssDNA',
-                  'name': 'DNA B',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -763,62 +398,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Imported Hibiscus green spot virus (HGSV)',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'HGSV',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'WAI 1-1',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hibiscus green spot virus',
-              'name': 'Hibiscus green spot virus',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': '400ab879',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssRNA+',
-                  'name': 'RNA 1',
-                  'required': True,
-                }),
-                dict({
-                  'molecule': 'ssRNA+',
-                  'name': 'RNA 2',
-                  'required': True,
-                }),
-                dict({
-                  'molecule': 'ssRNA+',
-                  'name': 'RNA 3',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -840,57 +420,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Imported Hibiscus-infecting cilevirus',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': '',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'HiCV',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hibiscus-infecting cilevirus',
-              'name': 'Hibiscus-infecting cilevirus',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': 'xxv54nax',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': '',
-                  'name': 'RNA1',
-                  'required': True,
-                }),
-                dict({
-                  'molecule': '',
-                  'name': 'RNA2',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -912,52 +442,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Imported Hollyhock yellow vein mosaic Islamabad virus',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': '',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': '3AK',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hollyhock yellow vein mosaic islamabad virus',
-              'name': 'Hollyhock yellow vein mosaic Islamabad virus',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': 'kqpzbw0s',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssDNA',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -979,52 +464,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Imported Hollyhock yellow vein virus',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': '',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'VIRO 881',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hollyhock yellow vein virus',
-              'name': 'Hollyhock yellow vein virus',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': 'qe8afugr',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssDNA',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -1046,52 +486,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Imported Hollyhock yellow vein virus associated symptomless alphasatellite',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': '',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': '[Pakistan:17-5:06] Lahore2',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hollyhock yellow vein virus associated symptomless alphasatellite',
-              'name': 'Hollyhock yellow vein virus associated symptomless alphasatellite',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': '4ydohve6',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssDNA',
-                  'name': 'Satellite',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -1113,52 +508,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Imported Honeysuckle yellow vein Japan betasatellite (HYVJB)',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'HYVJB',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'Myz',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'honeysuckle yellow vein japan betasatellite',
-              'name': 'Honeysuckle yellow vein Japan betasatellite',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': '9457c8c7',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssDNA',
-                  'name': 'Satellite',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -1180,46 +530,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Imported Honeysuckle yellow vein beta-[Japan:Fukui:2001] (HYVB-Japan)',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'HYVB-Japan',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'Fukui',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'honeysuckle yellow vein beta-[japan:fukui:2001]',
-              'name': 'Honeysuckle yellow vein beta-[Japan:Fukui:2001]',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': '51c5d911',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -1241,64 +552,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Imported Hop latent virus (HpLV)',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'HpLV',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': False,
-                  'id': str,
-                  'source_name': 'Zatec 2008',
-                  'source_type': 'isolate',
-                }),
-                dict({
-                  'default': False,
-                  'id': str,
-                  'source_name': 'Taurus',
-                  'source_type': 'isolate',
-                }),
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': '',
-                  'source_type': 'unknown',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hop latent virus',
-              'name': 'Hop latent virus',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': 'b67008d3',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssRNA+',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -1320,52 +574,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Imported Hosta virus X (HVX)',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'HVX',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'HVX-Kr',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hosta virus x',
-              'name': 'Hosta virus X',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': '41915321',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssRNA+',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -1387,52 +596,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Imported Hot pepper endornavirus',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': '',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'CS',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hot pepper endornavirus',
-              'name': 'Hot pepper endornavirus',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': '898l72tb',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'dsRNA',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -1454,52 +618,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Imported Hoya chlorotic spot virus',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': '',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': '12-415',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hoya chlorotic spot virus',
-              'name': 'Hoya chlorotic spot virus',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': 'q1gu14xk',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssRNA+',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -1521,52 +640,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Imported Hypericum japonicum associated circular DNA',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': '',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'VNHJ1W',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hypericum japonicum associated circular dna',
-              'name': 'Hypericum japonicum associated circular DNA',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': 'lliyqfxq',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssDNA',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -2796,52 +1870,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Remoted Habenaria mosaic virus (HaMV)',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'HaMV',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'Ha-1',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'habenaria mosaic virus',
-              'name': 'Habenaria mosaic virus',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': 'a89b6529',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssRNA+',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -2863,52 +1892,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Remoted Hardenbergia virus A (HarVA)',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'HarVA',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'HarVA-57',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hardenbergia virus a',
-              'name': 'Hardenbergia virus A',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': '0b9f16ba',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssRNA+',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -2930,52 +1914,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Remoted Helenium virus S',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': '',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': '',
-                  'source_type': 'unknown',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'helenium virus s',
-              'name': 'Helenium virus S',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': '2oafytcq',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssRNA+',
-                  'name': 'RNA',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -2997,52 +1936,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Remoted Helicoverpa zea nudivirus 2 (HzNV-2)',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'HzNV-2',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'MS1',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'helicoverpa zea nudivirus 2',
-              'name': 'Helicoverpa zea nudivirus 2',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': '6bb1fe0b',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'dsDNA',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -3064,52 +1958,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Remoted Helleborus net necrosis virus (HeNNV)',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'HeNNV',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'G5',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'helleborus net necrosis virus',
-              'name': 'Helleborus net necrosis virus',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': 'c85dca33',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssRNA+',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -3131,52 +1980,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Remoted Hibbertia virus Y (HiVY)',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'HiVY',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'Kioloa',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hibbertia virus y',
-              'name': 'Hibbertia virus Y',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': '579c7055',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssRNA+',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -3198,52 +2002,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Remoted Hibiscus chlorotic ringspot virus (HCRSV)',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'HCRSV',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'unknown',
-                  'source_type': 'unknown',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hibiscus chlorotic ringspot virus',
-              'name': 'Hibiscus chlorotic ringspot virus',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': '0716c1e1',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssRNA+',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -3265,57 +2024,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Remoted Hibiscus golden mosaic virus',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': '',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'BR-IgM1-16',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hibiscus golden mosaic virus',
-              'name': 'Hibiscus golden mosaic virus',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': 'rpz4bwux',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssDNA',
-                  'name': 'DNA A',
-                  'required': True,
-                }),
-                dict({
-                  'molecule': 'ssDNA',
-                  'name': 'DNA B',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -3337,62 +2046,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Remoted Hibiscus green spot virus (HGSV)',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'HGSV',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'WAI 1-1',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hibiscus green spot virus',
-              'name': 'Hibiscus green spot virus',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': '400ab879',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssRNA+',
-                  'name': 'RNA 1',
-                  'required': True,
-                }),
-                dict({
-                  'molecule': 'ssRNA+',
-                  'name': 'RNA 2',
-                  'required': True,
-                }),
-                dict({
-                  'molecule': 'ssRNA+',
-                  'name': 'RNA 3',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -3414,57 +2068,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Remoted Hibiscus-infecting cilevirus',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': '',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'HiCV',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hibiscus-infecting cilevirus',
-              'name': 'Hibiscus-infecting cilevirus',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': 'xxv54nax',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': '',
-                  'name': 'RNA1',
-                  'required': True,
-                }),
-                dict({
-                  'molecule': '',
-                  'name': 'RNA2',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -3486,52 +2090,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Remoted Hollyhock yellow vein mosaic Islamabad virus',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': '',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': '3AK',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hollyhock yellow vein mosaic islamabad virus',
-              'name': 'Hollyhock yellow vein mosaic Islamabad virus',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': 'kqpzbw0s',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssDNA',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -3553,52 +2112,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Remoted Hollyhock yellow vein virus',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': '',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'VIRO 881',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hollyhock yellow vein virus',
-              'name': 'Hollyhock yellow vein virus',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': 'qe8afugr',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssDNA',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -3620,52 +2134,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Remoted Hollyhock yellow vein virus associated symptomless alphasatellite',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': '',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': '[Pakistan:17-5:06] Lahore2',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hollyhock yellow vein virus associated symptomless alphasatellite',
-              'name': 'Hollyhock yellow vein virus associated symptomless alphasatellite',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': '4ydohve6',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssDNA',
-                  'name': 'Satellite',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -3687,52 +2156,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Remoted Honeysuckle yellow vein Japan betasatellite (HYVJB)',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'HYVJB',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'Myz',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'honeysuckle yellow vein japan betasatellite',
-              'name': 'Honeysuckle yellow vein Japan betasatellite',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': '9457c8c7',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssDNA',
-                  'name': 'Satellite',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -3754,46 +2178,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Remoted Honeysuckle yellow vein beta-[Japan:Fukui:2001] (HYVB-Japan)',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'HYVB-Japan',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'Fukui',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'honeysuckle yellow vein beta-[japan:fukui:2001]',
-              'name': 'Honeysuckle yellow vein beta-[Japan:Fukui:2001]',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': '51c5d911',
-              }),
-              'schema': list([
-              ]),
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -3815,64 +2200,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Remoted Hop latent virus (HpLV)',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'HpLV',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': False,
-                  'id': str,
-                  'source_name': 'Zatec 2008',
-                  'source_type': 'isolate',
-                }),
-                dict({
-                  'default': False,
-                  'id': str,
-                  'source_name': 'Taurus',
-                  'source_type': 'isolate',
-                }),
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': '',
-                  'source_type': 'unknown',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hop latent virus',
-              'name': 'Hop latent virus',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': 'b67008d3',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssRNA+',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -3894,52 +2222,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Remoted Hosta virus X (HVX)',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'HVX',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'HVX-Kr',
-                  'source_type': 'strain',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hosta virus x',
-              'name': 'Hosta virus X',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': '41915321',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssRNA+',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -3961,52 +2244,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Remoted Hot pepper endornavirus',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': '',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'CS',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hot pepper endornavirus',
-              'name': 'Hot pepper endornavirus',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': '898l72tb',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'dsRNA',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -4028,52 +2266,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Remoted Hoya chlorotic spot virus',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': '',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': '12-415',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hoya chlorotic spot virus',
-              'name': 'Hoya chlorotic spot virus',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': 'q1gu14xk',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssRNA+',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -4095,52 +2288,7 @@
       '_id': str,
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Remoted Hypericum japonicum associated circular DNA',
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': '',
-              'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'VNHJ1W',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'hypericum japonicum associated circular dna',
-              'name': 'Hypericum japonicum associated circular DNA',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': 'lliyqfxq',
-              }),
-              'schema': list([
-                dict({
-                  'molecule': 'ssDNA',
-                  'name': 'Genome',
-                  'required': True,
-                }),
-              ]),
-              'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',

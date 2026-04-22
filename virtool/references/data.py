@@ -5,7 +5,8 @@ import arrow
 from aiohttp import ClientConnectionError, ClientConnectorError, ClientSession
 from multidict import MultiDictProxy
 from semver import VersionInfo
-from sqlalchemy import select
+from sqlalchemy import delete, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.history.db
@@ -34,6 +35,7 @@ from virtool.github import create_update_subdocument, format_release
 from virtool.groups.pg import SQLGroup
 from virtool.history.db import patch_to_version
 from virtool.history.models import HistorySearchResult
+from virtool.history.sql import SQLHistoryDiff
 from virtool.indexes.models import IndexMinimal, IndexSearchResult
 from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
@@ -44,6 +46,7 @@ from virtool.pg.utils import get_row_by_id
 from virtool.references.alot import prepare_otu_insertion
 from virtool.references.bulk import BulkOTUUpdater
 from virtool.references.db import (
+    HISTORY_DIFF_CHUNK_SIZE,
     compose_base_find_query,
     fetch_and_update_release,
     get_contributors,
@@ -954,6 +957,7 @@ class ReferencesData(DataLayerDomain):
             created_at,
             HistoryMethod.clone,
             self._mongo,
+            self._pg,
             otus,
             ref_id,
             user_id,
@@ -1006,6 +1010,18 @@ class ReferencesData(DataLayerDomain):
             for otu in data.otus
         ]
 
+        diff_rows = [
+            {"change_id": insertion.history.id, "diff": insertion.history.diff}
+            for insertion in insertions
+        ]
+
+        async with AsyncSession(self._pg) as pg_session:
+            for start in range(0, len(diff_rows), HISTORY_DIFF_CHUNK_SIZE):
+                chunk = diff_rows[start : start + HISTORY_DIFF_CHUNK_SIZE]
+                await pg_session.execute(pg_insert(SQLHistoryDiff).values(chunk))
+
+            await pg_session.commit()
+
         await tracker.add(1)
 
         try:
@@ -1016,7 +1032,7 @@ class ReferencesData(DataLayerDomain):
 
             await asyncio.gather(
                 self._mongo.history.insert_many(
-                    [insertion.history for insertion in insertions],
+                    [insertion.history.document for insertion in insertions],
                     None,
                 ),
                 self._mongo.otus.insert_many(
@@ -1029,6 +1045,19 @@ class ReferencesData(DataLayerDomain):
                 ),
             )
         except Exception:
+            change_ids = [row["change_id"] for row in diff_rows]
+
+            async with AsyncSession(self._pg) as pg_session:
+                for start in range(0, len(change_ids), HISTORY_DIFF_CHUNK_SIZE):
+                    chunk = change_ids[start : start + HISTORY_DIFF_CHUNK_SIZE]
+                    await pg_session.execute(
+                        delete(SQLHistoryDiff).where(
+                            SQLHistoryDiff.change_id.in_(chunk),
+                        ),
+                    )
+
+                await pg_session.commit()
+
             await asyncio.gather(
                 self._mongo.otus.delete_many({"reference.id": ref_id}),
                 self._mongo.history.delete_many({"reference.id": ref_id}),
@@ -1081,6 +1110,7 @@ class ReferencesData(DataLayerDomain):
             created_at,
             HistoryMethod.remote,
             self._mongo,
+            self._pg,
             [otu.dict(by_alias=True) for otu in data.otus],
             ref_id,
             user_id,
