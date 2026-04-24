@@ -10,8 +10,7 @@ from aiohttp.web import Request
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo import DeleteMany, DeleteOne, UpdateOne
 from semver import VersionInfo
-from sqlalchemy import delete, select
-from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 
@@ -24,7 +23,7 @@ from virtool.data.topg import compose_legacy_id_multi_expression
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
-from virtool.history.sql import SQLHistoryDiff
+from virtool.history.db import bulk_delete_diffs, bulk_insert_diffs
 from virtool.models.enums import HistoryMethod
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.utils import get_mongo_from_req
@@ -788,14 +787,6 @@ async def insert_joined_otu(
     return document["_id"]
 
 
-HISTORY_DIFF_CHUNK_SIZE = 16000
-"""Chunk size for bulk inserts into ``history_diffs``.
-
-Each row binds two parameters (``change_id`` and ``diff``); asyncpg caps
-bind parameters per statement at 32767.
-"""
-
-
 async def populate_insert_only_reference(
     created_at: datetime,
     history_method: HistoryMethod,
@@ -821,12 +812,7 @@ async def populate_insert_only_reference(
         for insertion in insertions
     ]
 
-    async with AsyncSession(pg) as pg_session:
-        for start in range(0, len(diff_rows), HISTORY_DIFF_CHUNK_SIZE):
-            chunk = diff_rows[start : start + HISTORY_DIFF_CHUNK_SIZE]
-            await pg_session.execute(pg_insert(SQLHistoryDiff).values(chunk))
-
-        await pg_session.commit()
+    await bulk_insert_diffs(pg, diff_rows)
 
     try:
         sequences = []
@@ -834,28 +820,22 @@ async def populate_insert_only_reference(
         for insertion in insertions:
             sequences.extend(insertion.sequences)
 
-        await asyncio.gather(
-            mongo.history.insert_many(
-                [insertion.history.document for insertion in insertions],
-                None,
-            ),
-            mongo.otus.insert_many(
-                [insertion.otu for insertion in insertions],
-                None,
-            ),
-            mongo.sequences.insert_many(sequences, None),
-        )
+        async with asyncio.TaskGroup() as tg:
+            tg.create_task(
+                mongo.history.insert_many(
+                    [insertion.history.document for insertion in insertions],
+                    None,
+                ),
+            )
+            tg.create_task(
+                mongo.otus.insert_many(
+                    [insertion.otu for insertion in insertions],
+                    None,
+                ),
+            )
+            tg.create_task(mongo.sequences.insert_many(sequences, None))
     except Exception:
-        change_ids = [row["change_id"] for row in diff_rows]
-
-        async with AsyncSession(pg) as pg_session:
-            for start in range(0, len(change_ids), HISTORY_DIFF_CHUNK_SIZE):
-                chunk = change_ids[start : start + HISTORY_DIFF_CHUNK_SIZE]
-                await pg_session.execute(
-                    delete(SQLHistoryDiff).where(SQLHistoryDiff.change_id.in_(chunk)),
-                )
-
-            await pg_session.commit()
+        await bulk_delete_diffs(pg, [row["change_id"] for row in diff_rows])
 
         await asyncio.gather(
             mongo.otus.delete_many({"reference.id": reference_id}),

@@ -259,15 +259,39 @@ async def test_populate_insert_only_reference_rollback(
         for i in (1, 2)
     ]
 
-    async def fail_sequences_insert(documents, session):
-        # Yield to let the other gather tasks progress before raising, so the
-        # rollback has real Mongo state to clean up.
-        await asyncio.sleep(0.05)
+    history_done = asyncio.Event()
+    otus_done = asyncio.Event()
+
+    real_history_insert_many = mongo.history.insert_many
+    real_otus_insert_many = mongo.otus.insert_many
+
+    async def wrapped_history_insert_many(documents, session):
+        try:
+            return await real_history_insert_many(documents, session)
+        finally:
+            history_done.set()
+
+    async def wrapped_otus_insert_many(documents, session):
+        try:
+            return await real_otus_insert_many(documents, session)
+        finally:
+            otus_done.set()
+
+    async def fail_sequences_insert_many(documents, session):
+        # Wait for the sibling inserts to actually land so the rollback has
+        # real Mongo state to clean up — otherwise the test would pass
+        # trivially against empty collections.
+        await asyncio.wait_for(
+            asyncio.gather(history_done.wait(), otus_done.wait()),
+            timeout=5.0,
+        )
         raise RuntimeError("forced mongo failure")
 
-    mocker.patch.object(mongo.sequences, "insert_many", fail_sequences_insert)
+    mocker.patch.object(mongo.history, "insert_many", wrapped_history_insert_many)
+    mocker.patch.object(mongo.otus, "insert_many", wrapped_otus_insert_many)
+    mocker.patch.object(mongo.sequences, "insert_many", fail_sequences_insert_many)
 
-    with pytest.raises(RuntimeError, match="forced mongo failure"):
+    with pytest.raises(ExceptionGroup) as excinfo:
         await populate_insert_only_reference(
             static_time.datetime,
             HistoryMethod.remote,
@@ -277,6 +301,8 @@ async def test_populate_insert_only_reference_rollback(
             ref_id,
             user.id,
         )
+
+    assert excinfo.group_contains(RuntimeError, match="forced mongo failure")
 
     assert await mongo.otus.count_documents({"reference.id": ref_id}) == 0
     assert await mongo.history.count_documents({"reference.id": ref_id}) == 0
