@@ -838,11 +838,12 @@ async def populate_insert_only_reference(
         await bulk_delete_diffs(pg, [row["change_id"] for row in diff_rows])
 
         await asyncio.gather(
-            mongo.otus.delete_many({"reference.id": reference_id}),
             mongo.history.delete_many({"reference.id": reference_id}),
-            mongo.references.delete_one({"_id": reference_id}),
             mongo.sequences.delete_many({"reference.id": reference_id}),
+            mongo.otus.delete_many({"reference.id": reference_id}),
         )
+
+        await mongo.references.delete_one({"_id": reference_id})
         raise
 
 

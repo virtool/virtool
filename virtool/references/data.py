@@ -1042,11 +1042,12 @@ class ReferencesData(DataLayerDomain):
             await bulk_delete_diffs(self._pg, [row["change_id"] for row in diff_rows])
 
             await asyncio.gather(
-                self._mongo.otus.delete_many({"reference.id": ref_id}),
                 self._mongo.history.delete_many({"reference.id": ref_id}),
-                self._mongo.references.delete_one({"_id": ref_id}),
                 self._mongo.sequences.delete_many({"reference.id": ref_id}),
+                self._mongo.otus.delete_many({"reference.id": ref_id}),
             )
+
+            await self._mongo.references.delete_one({"_id": ref_id})
             raise
 
         await tracker.add(1)
