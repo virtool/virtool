@@ -183,9 +183,9 @@ class UploadsData(DataLayerDomain):
         async with AsyncSession(self._pg) as session:
             upload = (
                 await session.execute(
-                    select(SQLUpload.name_on_disk, SQLUpload.name).filter_by(
-                        id=upload_id, removed=False
-                    ),
+                    select(
+                        SQLUpload.name_on_disk, SQLUpload.name, SQLUpload.size
+                    ).filter_by(id=upload_id, removed=False),
                 )
             ).first()
 
@@ -194,11 +194,7 @@ class UploadsData(DataLayerDomain):
 
         key = upload_file_key(upload.name_on_disk)
 
-        async for info in self._storage.list(key):
-            if info.key == key:
-                return self._storage.read(key), info.size, upload.name
-
-        raise ResourceNotFoundError
+        return self._storage.read(key), upload.size, upload.name
 
     @emits(Operation.DELETE)
     async def delete(self, upload_id: int) -> Upload:
