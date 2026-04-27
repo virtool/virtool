@@ -1,3 +1,5 @@
+from collections.abc import AsyncIterator
+
 from aiohttp.web import Request, StreamResponse
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r404
@@ -25,6 +27,32 @@ from virtool.references.db import check_right
 from virtool.storage.errors import StorageKeyNotFoundError
 
 routes = Routes()
+
+
+async def stream_storage_response(
+    req: Request,
+    stream: AsyncIterator[bytes],
+    size: int,
+    headers: dict[str, str],
+    not_found_message: str = "",
+) -> StreamResponse:
+    response = StreamResponse(headers=headers)
+
+    if size > 0:
+        try:
+            first_chunk = await anext(stream)
+        except (StopAsyncIteration, StorageKeyNotFoundError):
+            raise APINotFound(not_found_message or None)
+
+        await response.prepare(req)
+        await response.write(first_chunk)
+
+        async for chunk in stream:
+            await response.write(chunk)
+    else:
+        await response.prepare(req)
+
+    return response
 
 
 @routes.view("/indexes")
@@ -88,29 +116,16 @@ async def download_otus_json(req):
     except ResourceNotFoundError:
         raise APINotFound()
 
-    response = StreamResponse(
-        headers={
+    return await stream_storage_response(
+        req,
+        stream,
+        size,
+        {
             "Content-Disposition": "attachment; filename=otus.json.gz",
             "Content-Length": str(size),
             "Content-Type": "application/octet-stream",
         },
     )
-
-    if size > 0:
-        try:
-            first_chunk = await anext(stream)
-        except (StopAsyncIteration, StorageKeyNotFoundError):
-            raise APINotFound()
-
-        await response.prepare(req)
-        await response.write(first_chunk)
-
-        async for chunk in stream:
-            await response.write(chunk)
-    else:
-        await response.prepare(req)
-
-    return response
 
 
 @routes.view("/indexes/{index_id}/files/{filename}")
@@ -144,29 +159,17 @@ class IndexFileView(PydanticView):
         except ResourceNotFoundError:
             raise APINotFound("File not found")
 
-        response = StreamResponse(
-            headers={
+        return await stream_storage_response(
+            self.request,
+            stream,
+            size,
+            {
                 "Content-Disposition": f"attachment; filename={filename}",
                 "Content-Length": str(size),
                 "Content-Type": "application/octet-stream",
             },
+            not_found_message="File not found",
         )
-
-        if size > 0:
-            try:
-                first_chunk = await anext(stream)
-            except (StopAsyncIteration, StorageKeyNotFoundError):
-                raise APINotFound("File not found")
-
-            await response.prepare(self.request)
-            await response.write(first_chunk)
-
-            async for chunk in stream:
-                await response.write(chunk)
-        else:
-            await response.prepare(self.request)
-
-        return response
 
 
 @routes.jobs_api.get("/indexes/{index_id}/files/{filename}")
@@ -187,28 +190,15 @@ async def download_index_file_for_jobs(req: Request):
     except ResourceNotFoundError:
         raise APINotFound()
 
-    response = StreamResponse(
-        headers={
+    return await stream_storage_response(
+        req,
+        stream,
+        size,
+        {
             "Content-Length": str(size),
             "Content-Type": "application/octet-stream",
         },
     )
-
-    if size > 0:
-        try:
-            first_chunk = await anext(stream)
-        except (StopAsyncIteration, StorageKeyNotFoundError):
-            raise APINotFound()
-
-        await response.prepare(req)
-        await response.write(first_chunk)
-
-        async for chunk in stream:
-            await response.write(chunk)
-    else:
-        await response.prepare(req)
-
-    return response
 
 
 @routes.jobs_api.put("/indexes/{index_id}/files/{filename}")
