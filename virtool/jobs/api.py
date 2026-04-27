@@ -81,6 +81,7 @@ class JobsView(PydanticView):
 
 @routes.view("/jobs/counts")
 class JobsCountsView(PydanticView):
+    @policy(PublicRoutePolicy)
     async def get(self) -> r200[dict[str, dict[str, int]]]:
         """Get job counts.
 
@@ -94,6 +95,7 @@ class JobsCountsView(PydanticView):
 
 @routes.view("/jobs/v2/counts")
 class JobsCountsV2View(PydanticView):
+    @policy(PublicRoutePolicy)
     async def get(self) -> r200[JobCountsV2]:
         """Get v2 job counts.
 
