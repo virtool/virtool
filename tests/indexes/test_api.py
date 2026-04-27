@@ -1,9 +1,6 @@
 import asyncio
-import filecmp
 import gzip
 import json
-import os
-import shutil
 from datetime import timedelta
 from http import HTTPStatus
 from io import BytesIO
@@ -24,9 +21,10 @@ from virtool.fake.next import DataFaker
 from virtool.indexes.db import INDEX_FILE_NAMES
 from virtool.indexes.files import create_index_file
 from virtool.indexes.sql import SQLIndexFile
-from virtool.indexes.utils import check_index_file_type
+from virtool.indexes.utils import check_index_file_type, compose_index_file_key
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app
+from virtool.storage.protocol import StorageBackend
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
@@ -253,8 +251,8 @@ async def test_get(
 @pytest.mark.parametrize("file_exists", [True, False])
 async def test_download_otus_json(
     file_exists: bool,
-    data_path: Path,
     example_path: Path,
+    memory_storage: StorageBackend,
     mocker: MockerFixture,
     mongo: Mongo,
     spawn_job_client: JobClientSpawner,
@@ -271,11 +269,13 @@ async def test_download_otus_json(
 
     client = await spawn_job_client(authenticated=True)
 
-    index_dir = data_path / "references" / "foo" / "bar"
-    index_dir.mkdir(parents=True)
-
     if file_exists:
-        shutil.copy(otus_json_path, index_dir / "otus.json.gz")
+        key = compose_index_file_key("bar", "otus.json.gz")
+
+        async def _stream():
+            yield otus_json_path.read_bytes()
+
+        await memory_storage.write(key, _stream())
 
     manifest = {"foo": 2, "bar": 1, "bad": 5}
 
@@ -541,9 +541,9 @@ async def test_delete_index(
 @pytest.mark.parametrize("error", [None, "409", "404_index", "404_file"])
 async def test_upload(
     error: str | None,
-    data_path: Path,
     example_path: Path,
     fake: DataFaker,
+    memory_storage: StorageBackend,
     mongo: Mongo,
     pg: AsyncEngine,
     resp_is,
@@ -600,7 +600,20 @@ async def test_upload(
         return
 
     assert resp.status == 201
-    assert os.listdir(data_path / "references" / "bar" / "foo") == ["reference.1.bt2"]
+
+    expected_key = compose_index_file_key("foo", "reference.1.bt2")
+
+    found = False
+    async for info in memory_storage.list(expected_key):
+        if info.key == expected_key:
+            found = True
+            break
+    assert found
+
+    chunks = []
+    async for chunk in memory_storage.read(expected_key):
+        chunks.append(chunk)
+    assert b"".join(chunks) == path.read_bytes()
 
     assert await resp.json() == snapshot
     assert await mongo.indexes.find_one("foo") == snapshot
@@ -678,8 +691,8 @@ async def test_finalize(
 @pytest.mark.parametrize("status", [200, 404])
 async def test_download(
     status: int,
-    data_path: Path,
     example_path: Path,
+    memory_storage: StorageBackend,
     mongo: Mongo,
     spawn_job_client: JobClientSpawner,
 ):
@@ -695,12 +708,14 @@ async def test_download(
     )
 
     path = example_path / "indexes" / "reference.1.bt2"
-    target_path = data_path / "references" / "test_reference" / "test_index"
-    target_path.mkdir(parents=True)
-    shutil.copyfile(path, target_path / "reference.1.bt2")
+    expected_bytes = path.read_bytes()
 
-    download_path = target_path / "downloads" / "reference.1.bt2"
-    download_path.parent.mkdir()
+    key = compose_index_file_key("test_index", "reference.1.bt2")
+
+    async def _stream():
+        yield expected_bytes
+
+    await memory_storage.write(key, _stream())
 
     files_url = "/indexes/test_index/files/"
 
@@ -712,7 +727,4 @@ async def test_download(
     async with client.get(files_url) as response:
         assert response.status == status
         if response.status == HTTPStatus.OK:
-            with download_path.open("wb") as f:
-                f.write(await response.read())
-
-            assert filecmp.cmp(download_path, path)
+            assert await response.read() == expected_bytes

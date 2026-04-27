@@ -1,6 +1,3 @@
-from pathlib import Path
-
-
 def check_index_file_type(file_name: str) -> str:
     """Get the index file type based on the extension of given `file_name`
 
@@ -17,12 +14,9 @@ def check_index_file_type(file_name: str) -> str:
     return "bowtie2"
 
 
-def join_index_path(data_path: Path, reference_id: str, index_id: str) -> Path:
-    """Return the path to an index.
+def compose_index_file_key(index_id: str, filename: str) -> str:
+    return f"indexes/{index_id}/{filename}"
 
-    :param data_path: the application data path
-    :param reference_id: the ID of the parent reference
-    :param index_id: the ID of the index
-    :return: the index path
-    """
-    return data_path / "references" / reference_id / index_id
+
+def compose_index_prefix(index_id: str) -> str:
+    return f"indexes/{index_id}/"

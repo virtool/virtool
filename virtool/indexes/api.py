@@ -1,6 +1,6 @@
-from asyncio import to_thread
+from collections.abc import AsyncIterator
 
-from aiohttp.web import FileResponse, Request
+from aiohttp.web import Request, StreamResponse
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r404
 from pydantic import Field
@@ -13,7 +13,6 @@ from virtool.api.errors import (
     APINotFound,
 )
 from virtool.api.routes import Routes
-from virtool.config import get_config_from_req
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.history.models import HistorySearchResult
@@ -23,10 +22,37 @@ from virtool.indexes.oas import (
     ListIndexesResponse,
     ReadyIndexesResponse,
 )
-from virtool.indexes.utils import check_index_file_type, join_index_path
+from virtool.indexes.utils import check_index_file_type
 from virtool.references.db import check_right
+from virtool.storage.errors import StorageKeyNotFoundError
 
 routes = Routes()
+
+
+async def stream_storage_response(
+    req: Request,
+    stream: AsyncIterator[bytes],
+    size: int,
+    headers: dict[str, str],
+    not_found_message: str = "",
+) -> StreamResponse:
+    response = StreamResponse(headers=headers)
+
+    if size > 0:
+        try:
+            first_chunk = await anext(stream)
+        except (StopAsyncIteration, StorageKeyNotFoundError):
+            raise APINotFound(not_found_message or None)
+
+        await response.prepare(req)
+        await response.write(first_chunk)
+
+        async for chunk in stream:
+            await response.write(chunk)
+    else:
+        await response.prepare(req)
+
+    return response
 
 
 @routes.view("/indexes")
@@ -84,16 +110,19 @@ async def download_otus_json(req):
 
     """
     try:
-        json_path = await get_data_from_req(req).index.get_json_path(
-            req.match_info["index_id"]
+        stream, size = await get_data_from_req(req).index.get_otus_json(
+            req.match_info["index_id"],
         )
     except ResourceNotFoundError:
         raise APINotFound()
 
-    return FileResponse(
-        json_path,
-        headers={
+    return await stream_storage_response(
+        req,
+        stream,
+        size,
+        {
             "Content-Disposition": "attachment; filename=otus.json.gz",
+            "Content-Length": str(size),
             "Content-Type": "application/octet-stream",
         },
     )
@@ -123,23 +152,24 @@ class IndexFileView(PydanticView):
         if not await check_right(self.request, reference.id, "read"):
             raise APIInsufficientRights()
 
-        path = (
-            join_index_path(
-                get_config_from_req(self.request).data_path, reference.id, index_id
-            )
-            / filename
+        try:
+            stream, size = await get_data_from_req(
+                self.request,
+            ).index.get_index_file(index_id, filename)
+        except ResourceNotFoundError:
+            raise APINotFound("File not found")
+
+        return await stream_storage_response(
+            self.request,
+            stream,
+            size,
+            {
+                "Content-Disposition": f"attachment; filename={filename}",
+                "Content-Length": str(size),
+                "Content-Type": "application/octet-stream",
+            },
+            not_found_message="File not found",
         )
-
-        if await to_thread(path.exists):
-            return FileResponse(
-                path,
-                headers={
-                    "Content-Disposition": f"attachment; filename={filename}",
-                    "Content-Type": "application/octet-stream",
-                },
-            )
-
-        raise APINotFound("File not found")
 
 
 @routes.jobs_api.get("/indexes/{index_id}/files/{filename}")
@@ -152,23 +182,23 @@ async def download_index_file_for_jobs(req: Request):
     index_id = req.match_info["index_id"]
     filename = req.match_info["filename"]
 
-    if filename not in INDEX_FILE_NAMES:
-        raise APINotFound()
-
     try:
-        reference = await get_data_from_req(req).index.get_reference(index_id)
+        stream, size = await get_data_from_req(req).index.get_index_file(
+            index_id,
+            filename,
+        )
     except ResourceNotFoundError:
         raise APINotFound()
 
-    path = (
-        join_index_path(get_config_from_req(req).data_path, reference.id, index_id)
-        / filename
+    return await stream_storage_response(
+        req,
+        stream,
+        size,
+        {
+            "Content-Length": str(size),
+            "Content-Type": "application/octet-stream",
+        },
     )
-
-    if await to_thread(path.exists):
-        return FileResponse(path)
-
-    raise APINotFound("File not found")
 
 
 @routes.jobs_api.put("/indexes/{index_id}/files/{filename}")
@@ -184,7 +214,7 @@ async def upload(req):
         raise APINotFound("Index file not found")
 
     try:
-        reference = await get_data_from_req(req).index.get_reference(index_id)
+        await get_data_from_req(req).index.get_reference(index_id)
     except ResourceNotFoundError:
         raise APINotFound()
 
@@ -192,7 +222,7 @@ async def upload(req):
 
     try:
         index_file = await get_data_from_req(req).index.upload_file(
-            reference.id, index_id, file_type, name, req.multipart
+            index_id, file_type, name, req.multipart
         )
     except ResourceConflictError:
         raise APIConflict("File name already exists")

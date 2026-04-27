@@ -1,6 +1,6 @@
 import asyncio
-from asyncio import to_thread
-from pathlib import Path
+import gzip
+from collections.abc import AsyncIterator
 
 from multidict import MultiDictProxy
 from sqlalchemy.exc import IntegrityError
@@ -23,12 +23,13 @@ from virtool.history.db import HISTORY_LIST_PROJECTION
 from virtool.history.models import HistorySearchResult
 from virtool.indexes.checks import check_fasta_file_uploaded, check_index_files_uploaded
 from virtool.indexes.db import (
+    INDEX_FILE_NAMES,
     lookup_index_otu_counts,
     update_last_indexed_versions,
 )
 from virtool.indexes.models import Index, IndexFile, IndexMinimal, IndexSearchResult
 from virtool.indexes.sql import SQLIndexFile
-from virtool.indexes.utils import join_index_path
+from virtool.indexes.utils import compose_index_file_key, compose_index_prefix
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
@@ -37,9 +38,9 @@ from virtool.references.db import lookup_nested_reference_by_id
 from virtool.references.models import ReferenceNested
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.storage.protocol import StorageBackend
-from virtool.uploads.utils import multipart_file_chunker, naive_writer
+from virtool.uploads.utils import multipart_file_chunker
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import base_processor, compress_json_with_gzip, wait_for_checks
+from virtool.utils import base_processor, wait_for_checks
 
 logger = get_logger("indexes")
 
@@ -170,40 +171,43 @@ class IndexData:
 
         raise ResourceNotFoundError
 
-    async def get_json_path(self, index_id: str) -> Path:
-        """Get the json path needed for a complete compressed JSON
-        representation of the index OTUs.
+    async def get_otus_json(
+        self,
+        index_id: str,
+    ) -> tuple[AsyncIterator[bytes], int]:
+        """Get a complete compressed JSON representation of the index OTUs.
 
         :param index_id: the index ID
-        :return: the json path
+        :return: an async iterator of bytes and the size
         """
         index = await self._mongo.indexes.find_one(index_id)
 
         if index is None:
             raise ResourceNotFoundError()
 
-        ref_id = index["reference"]["id"]
+        key = compose_index_file_key(index_id, "otus.json.gz")
 
-        json_path = (
-            join_index_path(self._config.data_path, ref_id, index_id) / "otus.json.gz"
+        async for info in self._storage.list(key):
+            if info.key == key:
+                return self._storage.read(key), info.size
+
+        patched_otus = await virtool.indexes.db.get_patched_otus(
+            self._mongo,
+            self._storage,
+            index["manifest"],
         )
 
-        if not json_path.exists():
-            patched_otus = await virtool.indexes.db.get_patched_otus(
-                self._mongo,
-                self._storage,
-                index["manifest"],
-            )
+        compressed = await asyncio.to_thread(gzip.compress, dump_bytes(patched_otus))
 
-            json_string = dump_bytes(patched_otus)
+        async def _stream():
+            yield compressed
 
-            await to_thread(compress_json_with_gzip, json_string, json_path)
+        size = await self._storage.write(key, _stream())
 
-        return json_path
+        return self._storage.read(key), size
 
     async def upload_file(
         self,
-        reference_id: str,
         index_id: str,
         file_type: str,
         name: str,
@@ -211,7 +215,6 @@ class IndexData:
     ) -> IndexFile:
         """Uploads a new index file.
 
-        :param reference_id: the reference ID
         :param index_id: the index ID
         :param file_type: the type of the file to upload
         :param name: the name of the new file
@@ -228,15 +231,12 @@ class IndexData:
             except IntegrityError:
                 raise ResourceConflictError()
 
-            index_path = self._config.data_path / "references" / index_id
+            key = compose_index_file_key(index_id, name)
 
-            await asyncio.to_thread(index_path.mkdir, parents=True, exist_ok=True)
-
-            path = (
-                join_index_path(self._config.data_path, reference_id, index_id) / name
+            size = await self._storage.write(
+                key,
+                multipart_file_chunker(await multipart()),
             )
-
-            size = await naive_writer(multipart_file_chunker(await multipart()), path)
 
             index_file.size = size
             index_file.uploaded_at = virtool.utils.timestamp()
@@ -250,6 +250,28 @@ class IndexData:
             **index_file_dict,
             download_url=f"/indexes/{index_id}/files/{name}",
         )
+
+    async def get_index_file(
+        self,
+        index_id: str,
+        filename: str,
+    ) -> tuple[AsyncIterator[bytes], int]:
+        """Get an index file as a stream.
+
+        :param index_id: the index ID
+        :param filename: the file name
+        :return: an async iterator of bytes and the size
+        """
+        if filename not in INDEX_FILE_NAMES:
+            raise ResourceNotFoundError
+
+        key = compose_index_file_key(index_id, filename)
+
+        async for info in self._storage.list(key):
+            if info.key == key:
+                return self._storage.read(key), info.size
+
+        raise ResourceNotFoundError
 
     @emits(Operation.UPDATE)
     async def finalize(self, index_id: str) -> Index:
@@ -357,5 +379,12 @@ class IndexData:
                 {"$set": {"index": {"id": "unbuilt", "version": "unbuilt"}}},
                 session=mongo_session,
             )
+
+        await asyncio.gather(
+            *[
+                self._storage.delete(obj.key)
+                async for obj in self._storage.list(compose_index_prefix(index_id))
+            ],
+        )
 
         emit(index, "indexes", "delete", Operation.DELETE)
