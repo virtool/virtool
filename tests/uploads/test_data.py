@@ -43,11 +43,10 @@ async def test_create(
     assert row.name_on_disk.endswith("-sample_1.fq.gz")
 
     key = upload_file_key(row.name_on_disk)
-    chunks = []
-    async for chunk in memory_storage.read(key):
-        chunks.append(chunk)
 
-    assert b"".join(chunks) == open(fake_file_path, "rb").read()
+    assert b"".join(
+        [chunk async for chunk in memory_storage.read(key)]
+    ) == fake_file_path.read_bytes()
 
 
 async def test_delete(
