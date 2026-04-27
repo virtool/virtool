@@ -8,14 +8,16 @@ from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.pg.utils import get_row_by_id
+from virtool.storage.protocol import StorageBackend
 from virtool.uploads.sql import SQLUpload, UploadType
+from virtool.uploads.utils import upload_file_key
 
 
 async def test_create(
-    data_path: Path,
     data_layer: DataLayer,
     example_path: Path,
     fake: DataFaker,
+    memory_storage: StorageBackend,
     pg: AsyncEngine,
 ):
     user = await fake.users.create()
@@ -40,24 +42,30 @@ async def test_create(
     assert row.name == "sample_1.fq.gz"
     assert row.name_on_disk.endswith("-sample_1.fq.gz")
 
-    assert (
-        open(data_path / "files" / row.name_on_disk, "rb").read()
-        == open(fake_file_path, "rb").read()
-    )
+    key = upload_file_key(row.name_on_disk)
+    chunks = []
+    async for chunk in memory_storage.read(key):
+        chunks.append(chunk)
+
+    assert b"".join(chunks) == open(fake_file_path, "rb").read()
 
 
 async def test_delete(
-    data_path: Path,
     data_layer: DataLayer,
     fake: DataFaker,
+    memory_storage: StorageBackend,
     pg: AsyncEngine,
 ):
     before = await fake.uploads.create(user=await fake.users.create())
 
     row = await get_row_by_id(pg, SQLUpload, before.id)
-    path = data_path / "files" / row.name_on_disk
+    key = upload_file_key(row.name_on_disk)
 
-    assert path.is_file()
+    found = False
+    async for info in memory_storage.list(key):
+        if info.key == key:
+            found = True
+    assert found
     assert before.removed_at is None
 
     after = await data_layer.uploads.delete(before.id)
@@ -66,7 +74,12 @@ async def test_delete(
     assert after.name == before.name
     assert after.removed is True
     assert after.removed_at is not None
-    assert not path.is_file()
+
+    found = False
+    async for info in memory_storage.list(key):
+        if info.key == key:
+            found = True
+    assert not found
 
     with pytest.raises(ResourceNotFoundError):
         await data_layer.uploads.get(before.id)

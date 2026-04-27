@@ -208,11 +208,6 @@ def check_will_change(old: dict, imported: dict) -> bool:
     return False
 
 
-def upload_file_key(name_on_disk: str) -> str:
-    """Derive the storage key for an uploaded file."""
-    return f"files/{name_on_disk}"
-
-
 def load_reference_file(path: Path) -> dict:
     """Load a list of merged otus documents from a file associated with a Virtool
     reference file.

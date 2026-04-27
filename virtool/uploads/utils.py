@@ -1,17 +1,7 @@
-from asyncio import to_thread
-from collections.abc import AsyncGenerator, Callable
-from pathlib import Path
-from typing import Any
+from collections.abc import AsyncGenerator
 
 from aiohttp import MultipartReader
 from cerberus import Validator
-from structlog import get_logger
-
-from virtool.config.cls import Config
-from virtool.data.errors import ResourceNotFoundError
-from virtool.data.file import ChunkWriter
-
-logger = get_logger("uploads")
 
 CHUNK_SIZE = 1024 * 1000 * 50
 
@@ -53,48 +43,6 @@ async def multipart_file_chunker(
         yield chunk
 
 
-async def naive_writer(
-    chunker,
-    path: Path,
-    on_first_chunk: Callable[[bytes], Any] | None = None,
-) -> int:
-    """Write a new file from an HTTP multipart request.
-
-    :param chunker: yields chunks of a file acquired from a multipart request
-    :param path: the file path to write the data to
-    :param on_first_chunk: a function to call with the first chunk of the file stream
-    :return: size of the new file in bytes
-    """
-    size = 0
-
-    await to_thread(path.parent.mkdir, exist_ok=True, parents=True)
-
-    async with ChunkWriter(path) as writer:
-        async for chunk in chunker:
-            if type(chunk) is str:
-                logger.warning(
-                    "got string chunk while writing file",
-                    path=path,
-                    chunk=chunk,
-                )
-                break
-
-            if size == 0 and on_first_chunk:
-                on_first_chunk(chunk)
-
-            await writer.write(chunk)
-            size += len(chunk)
-
-    logger.info("wrote file", path=path, size=size)
-
-    return size
-
-
-async def get_upload_path(config: Config, name_on_disk: str) -> Path:
-    """Get the local upload path and return it."""
-    upload_path = config.data_path / "files" / name_on_disk
-
-    if not await to_thread(upload_path.exists):
-        raise ResourceNotFoundError("Uploaded file not found at expected location")
-
-    return upload_path
+def upload_file_key(name_on_disk: str) -> str:
+    """Derive the storage key for an uploaded file."""
+    return f"files/{name_on_disk}"

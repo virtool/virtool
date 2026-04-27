@@ -1,6 +1,4 @@
-from collections.abc import AsyncIterator
-
-from aiohttp.web import Request, StreamResponse
+from aiohttp.web import Request
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r404
 from pydantic import Field
@@ -13,6 +11,7 @@ from virtool.api.errors import (
     APINotFound,
 )
 from virtool.api.routes import Routes
+from virtool.api.streaming import stream_storage_response
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.history.models import HistorySearchResult
@@ -24,35 +23,8 @@ from virtool.indexes.oas import (
 )
 from virtool.indexes.utils import check_index_file_type
 from virtool.references.db import check_right
-from virtool.storage.errors import StorageKeyNotFoundError
 
 routes = Routes()
-
-
-async def stream_storage_response(
-    req: Request,
-    stream: AsyncIterator[bytes],
-    size: int,
-    headers: dict[str, str],
-    not_found_message: str = "",
-) -> StreamResponse:
-    response = StreamResponse(headers=headers)
-
-    if size > 0:
-        try:
-            first_chunk = await anext(stream)
-        except (StopAsyncIteration, StorageKeyNotFoundError):
-            raise APINotFound(not_found_message or None)
-
-        await response.prepare(req)
-        await response.write(first_chunk)
-
-        async for chunk in stream:
-            await response.write(chunk)
-    else:
-        await response.prepare(req)
-
-    return response
 
 
 @routes.view("/indexes")

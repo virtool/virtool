@@ -10,11 +10,11 @@ from virtool.references.utils import (
     ReferenceSourceData,
     load_reference_file,
     load_reference_from_storage,
-    upload_file_key,
 )
 from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.tasks.progress import AccumulatingProgressHandlerWrapper
 from virtool.tasks.task import BaseTask
+from virtool.uploads.utils import upload_file_key
 
 if TYPE_CHECKING:
     from virtool.data.layer import DataLayer

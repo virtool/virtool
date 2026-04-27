@@ -108,6 +108,6 @@ def create_data_layer(
         SessionData(pg),
         SettingsData(mongo),
         TasksData(pg),
-        UploadsData(config, mongo, pg),
+        UploadsData(config, mongo, pg, storage),
         UsersData(pg),
     )

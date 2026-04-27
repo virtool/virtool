@@ -21,9 +21,9 @@ from virtool.references.tasks import (
     ReferencesCleanTask,
     RemoteReferenceTask,
 )
-from virtool.references.utils import upload_file_key
 from virtool.tasks.sql import SQLTask
 from virtool.uploads.sql import SQLUpload, UploadType
+from virtool.uploads.utils import upload_file_key
 from virtool.utils import get_temp_dir
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
