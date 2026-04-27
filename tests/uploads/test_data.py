@@ -44,9 +44,10 @@ async def test_create(
 
     key = upload_file_key(row.name_on_disk)
 
-    assert b"".join(
-        [chunk async for chunk in memory_storage.read(key)]
-    ) == fake_file_path.read_bytes()
+    assert (
+        b"".join([chunk async for chunk in memory_storage.read(key)])
+        == fake_file_path.read_bytes()
+    )
 
 
 async def test_delete(
