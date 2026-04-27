@@ -24,7 +24,7 @@ from virtool.indexes.sql import SQLIndexFile
 from virtool.indexes.utils import check_index_file_type, compose_index_file_key
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app
-from virtool.storage.memory import MemoryStorageProvider
+from virtool.storage.protocol import StorageBackend
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
@@ -252,7 +252,7 @@ async def test_get(
 async def test_download_otus_json(
     file_exists: bool,
     example_path: Path,
-    memory_storage: MemoryStorageProvider,
+    memory_storage: StorageBackend,
     mocker: MockerFixture,
     mongo: Mongo,
     spawn_job_client: JobClientSpawner,
@@ -543,7 +543,7 @@ async def test_upload(
     error: str | None,
     example_path: Path,
     fake: DataFaker,
-    memory_storage: MemoryStorageProvider,
+    memory_storage: StorageBackend,
     mongo: Mongo,
     pg: AsyncEngine,
     resp_is,
@@ -692,7 +692,7 @@ async def test_finalize(
 async def test_download(
     status: int,
     example_path: Path,
-    memory_storage: MemoryStorageProvider,
+    memory_storage: StorageBackend,
     mongo: Mongo,
     spawn_job_client: JobClientSpawner,
 ):
