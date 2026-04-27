@@ -2,6 +2,7 @@
 # name: TestCreateGroup.test_ok_and_duplicate[mongo]
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'genome',
     'description': 'This is a test reference.',
@@ -43,6 +44,7 @@
 # ---
 # name: TestCreateUser.test_ok[reference]
   dict({
+    'archived': False,
     'cloned_from': None,
     'contributors': list([
     ]),
@@ -110,6 +112,7 @@
 # name: TestDeleteGroup.test_ok
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'genome',
     'description': 'This is a test reference.',
@@ -131,6 +134,7 @@
 # name: TestDeleteUser.test_ok
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'genome',
     'description': 'This is a test reference.',
@@ -152,6 +156,7 @@
 # name: TestPopulateRemoteReference.test_ok
   dict({
     '_id': 'ref_id',
+    'archived': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'genome',
     'description': 'Remote reference description',
@@ -295,6 +300,7 @@
 # ---
 # name: TestUpdate.test_control[-False]
   dict({
+    'archived': False,
     'cloned_from': None,
     'contributors': list([
     ]),
@@ -340,6 +346,7 @@
 # name: TestUpdate.test_control[-False].1
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'genome',
     'description': 'This is a test reference.',
@@ -367,6 +374,7 @@
 # ---
 # name: TestUpdate.test_control[-True]
   dict({
+    'archived': False,
     'cloned_from': None,
     'contributors': list([
     ]),
@@ -412,6 +420,7 @@
 # name: TestUpdate.test_control[-True].1
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'genome',
     'description': 'This is a test reference.',
@@ -439,6 +448,7 @@
 # ---
 # name: TestUpdate.test_control[None-False]
   dict({
+    'archived': False,
     'cloned_from': None,
     'contributors': list([
     ]),
@@ -484,6 +494,7 @@
 # name: TestUpdate.test_control[None-False].1
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'genome',
     'description': 'This is a test reference.',
@@ -511,6 +522,7 @@
 # ---
 # name: TestUpdate.test_control[None-True]
   dict({
+    'archived': False,
     'cloned_from': None,
     'contributors': list([
     ]),
@@ -556,6 +568,7 @@
 # name: TestUpdate.test_control[None-True].1
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'genome',
     'description': 'This is a test reference.',
@@ -583,6 +596,7 @@
 # ---
 # name: TestUpdate.test_control[baz-False]
   dict({
+    'archived': False,
     'cloned_from': None,
     'contributors': list([
     ]),
@@ -628,6 +642,7 @@
 # name: TestUpdate.test_control[baz-False].1
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'genome',
     'description': 'This is a test reference.',
@@ -655,6 +670,7 @@
 # ---
 # name: TestUpdate.test_control[baz-True]
   dict({
+    'archived': False,
     'cloned_from': None,
     'contributors': list([
     ]),
@@ -700,6 +716,7 @@
 # name: TestUpdate.test_control[baz-True].1
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'genome',
     'description': 'This is a test reference.',
@@ -728,6 +745,7 @@
 # name: TestUpdateGroup.test_ok[mongo]
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'genome',
     'description': 'This is a test reference.',
@@ -3562,6 +3580,7 @@
 # name: TestUpdateUser.test_ok[mongo]
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'genome',
     'description': 'This is a test reference.',

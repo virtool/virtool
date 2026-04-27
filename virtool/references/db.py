@@ -561,6 +561,7 @@ async def create_document(
 
     document = {
         "_id": ref_id,
+        "archived": False,
         "created_at": created_at,
         "data_type": data_type,
         "description": description,

@@ -102,6 +102,7 @@ async def test_clean_references_task(
     await mongo.references.insert_one(
         {
             "_id": "foo",
+            "archived": False,
             "created_at": datetime.datetime(2020, 1, 1, 21, 0, 0),
             "data_type": "genome",
             "description": "",
@@ -246,6 +247,7 @@ async def test_import_reference_task(
     await mongo.references.insert_one(
         {
             "_id": "foo",
+            "archived": False,
             "created_at": static_time.datetime,
             "data_type": "genome",
             "description": "A test reference",
@@ -331,6 +333,7 @@ async def test_remote_reference_task(
             mongo.references.insert_one(
                 {
                     "_id": "foo",
+                    "archived": False,
                     "created_at": static_time.datetime,
                     "data_type": "genome",
                     "description": "A test reference",
@@ -430,6 +433,7 @@ async def create_reference(
             mongo.references.insert_one(
                 {
                     "_id": "bar",
+                    "archived": False,
                     "created_at": static_time.datetime,
                     "data_type": "genome",
                     "description": "This is a test reference.",
@@ -468,6 +472,7 @@ async def test_clone_reference_task(
     await mongo.references.insert_one(
         {
             "_id": "foo",
+            "archived": False,
             "created_at": static_time.datetime,
             "data_type": "genome",
             "description": "A test reference",

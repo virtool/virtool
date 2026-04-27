@@ -140,6 +140,7 @@ class ReferenceNested(BaseModel):
 
 
 class ReferenceMinimal(ReferenceNested):
+    archived: bool
     cloned_from: ReferenceClonedFrom | None = None
     created_at: datetime
     imported_from: UploadMinimal | None = None
@@ -168,6 +169,7 @@ class Reference(ReferenceMinimal):
     class Config:
         schema_extra = {
             "example": {
+                "archived": False,
                 "cloned_from": {"id": "pat6xdn3", "name": "Plant Viruses"},
                 "contributors": [
                     {
@@ -253,6 +255,7 @@ class ReferenceSearchResult(SearchResult):
             "example": {
                 "documents": [
                     {
+                        "archived": False,
                         "cloned_from": {"id": "pat6xdn3", "name": "Plant Viruses"},
                         "created_at": "2022-01-28T23:42:48.321000Z",
                         "data_type": "genome",

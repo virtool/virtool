@@ -48,6 +48,7 @@ async def test_find(
         [
             {
                 "_id": "foo",
+                "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "groups": [],
@@ -60,6 +61,7 @@ async def test_find(
             },
             {
                 "_id": "baz",
+                "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "barcode",
                 "groups": [],
@@ -72,6 +74,7 @@ async def test_find(
             },
             {
                 "_id": "bar",
+                "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "barcode",
                 "groups": [],
@@ -85,6 +88,7 @@ async def test_find(
             },
             {
                 "_id": "goo",
+                "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "barcode",
                 "groups": [{"id": group.id}],
@@ -269,6 +273,7 @@ class TestCreate:
         await mongo.references.insert_one(
             {
                 "_id": "foo",
+                "archived": False,
                 "created_at": virtool.utils.timestamp(),
                 "data_type": "genome",
                 "name": "Foo",
@@ -383,6 +388,7 @@ async def test_edit(
         await mongo.references.insert_one(
             {
                 "_id": "foo",
+                "archived": False,
                 "created_at": virtool.utils.timestamp(),
                 "data_type": data_type,
                 "name": "Foo",
@@ -480,6 +486,7 @@ async def test_delete(
     await mongo.references.insert_one(
         {
             "_id": "foo",
+            "archived": False,
             "created_at": virtool.utils.timestamp(),
             "data_type": "genome",
             "description": "This is a test reference.",
@@ -927,6 +934,7 @@ async def test_create_user(
 
     document = {
         "_id": "foo",
+        "archived": False,
         "created_at": static_time.datetime,
         "data_type": "genome",
         "description": "This is a test reference.",
@@ -1010,6 +1018,7 @@ async def test_create_group(
         await mongo.references.insert_one(
             {
                 "_id": "foo",
+                "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "description": "This is a test reference.",
@@ -1067,6 +1076,7 @@ class TestUpdateUser:
         await mongo.references.insert_one(
             {
                 "_id": "foo",
+                "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "description": "This is a test reference.",
@@ -1145,6 +1155,7 @@ async def test_update_group(
         await mongo.references.insert_one(
             {
                 "_id": "foo",
+                "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "description": "This is a test reference.",
@@ -1206,6 +1217,7 @@ class TestDeleteUser:
         await mongo.references.insert_one(
             {
                 "_id": "foo",
+                "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "description": "This is a test reference.",
@@ -1270,6 +1282,7 @@ async def test_delete_group(
         await mongo.references.insert_one(
             {
                 "_id": "foo",
+                "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "description": "This is a test reference.",
