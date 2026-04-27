@@ -65,14 +65,14 @@ class SQLSession(Base):
             and self.token_hash
         ):
             session_dict["authentication"] = {
-                "user_id": str(self.user_id),
+                "user_id": self.user_id,
                 "token": self.token_hash,
             }
         elif (
             self.session_type == SessionType.reset and self.user_id and self.reset_code
         ):
             session_dict["reset"] = {
-                "user_id": str(self.user_id),
+                "user_id": self.user_id,
                 "code": self.reset_code,
                 "remember": self.reset_remember or False,
             }

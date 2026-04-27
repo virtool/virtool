@@ -1,5 +1,4 @@
 import pytest
-from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.filters import props
@@ -393,37 +392,3 @@ class TestSetAdministratorRole:
         """Test that set_administrator_role raises error for non-existent user."""
         with pytest.raises(ResourceNotFoundError):
             await data_layer.users.set_administrator_role(99999, AdministratorRole.BASE)
-
-
-class TestResolveLegacyId:
-    """Tests for the resolve_legacy_id method."""
-
-    async def test_int_user_id(self, data_layer: DataLayer, fake: DataFaker):
-        """Test that integer user IDs are returned as-is."""
-        user = await fake.users.create()
-        resolved_id = await data_layer.users.resolve_legacy_id(user.id)
-        assert resolved_id == user.id
-
-    async def test_legacy_string_id(
-        self, data_layer: DataLayer, fake: DataFaker, pg: AsyncEngine
-    ):
-        """Test that legacy string IDs are resolved to current integer IDs."""
-        # Create a user with a legacy ID
-        user = await fake.users.create()
-        legacy_id = "legacy_test_user_123"
-
-        # Manually set the legacy_id in the database
-        async with AsyncSession(pg) as session:
-            await session.execute(
-                update(SQLUser).where(SQLUser.id == user.id).values(legacy_id=legacy_id)
-            )
-            await session.commit()
-
-        # Test that resolve_legacy_id returns the current integer ID
-        resolved_id = await data_layer.users.resolve_legacy_id(legacy_id)
-        assert resolved_id == user.id
-
-    async def test_nonexistent_legacy_id(self, data_layer: DataLayer):
-        """Test that resolve_legacy_id raises ResourceNotFoundError for nonexistent legacy ID."""
-        with pytest.raises(ResourceNotFoundError):
-            await data_layer.users.resolve_legacy_id("nonexistent_legacy_id")
