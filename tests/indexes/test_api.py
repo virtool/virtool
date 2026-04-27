@@ -602,8 +602,18 @@ async def test_upload(
     assert resp.status == 201
 
     expected_key = compose_index_file_key("foo", "reference.1.bt2")
-    assert expected_key in memory_storage.keys()
-    assert memory_storage.get_raw(expected_key) == path.read_bytes()
+
+    found = False
+    async for info in memory_storage.list(expected_key):
+        if info.key == expected_key:
+            found = True
+            break
+    assert found
+
+    chunks = []
+    async for chunk in memory_storage.read(expected_key):
+        chunks.append(chunk)
+    assert b"".join(chunks) == path.read_bytes()
 
     assert await resp.json() == snapshot
     assert await mongo.indexes.find_one("foo") == snapshot
