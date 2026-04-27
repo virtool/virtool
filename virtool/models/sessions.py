@@ -4,12 +4,12 @@ from virtool.models import BaseModel
 
 
 class SessionAuthentication(BaseModel):
-    user_id: int | str
+    user_id: int
 
 
 class SessionPasswordReset(BaseModel):
     remember: bool
-    user_id: int | str
+    user_id: int
 
 
 class Session(BaseModel):

@@ -53,7 +53,7 @@ class SessionData(DataLayerDomain):
     async def create_authenticated(
         self,
         ip: str,
-        user_id: str,
+        user_id: int,
         remember: bool,
     ) -> tuple[Session, str]:
         """Create a new authenticated session.
@@ -75,7 +75,7 @@ class SessionData(DataLayerDomain):
 
         sql_session = SQLSession(
             session_id=session_id,
-            user_id=int(user_id),
+            user_id=user_id,
             ip=ip,
             created_at=created_at,
             expires_at=expires_at,
@@ -94,7 +94,7 @@ class SessionData(DataLayerDomain):
     async def create_reset(
         self,
         ip: str,
-        user_id: str,
+        user_id: int,
         remember: bool,
     ) -> tuple[Session, str]:
         """Create a new reset session.
@@ -111,7 +111,7 @@ class SessionData(DataLayerDomain):
 
         sql_session = SQLSession(
             session_id=session_id,
-            user_id=int(user_id),
+            user_id=user_id,
             ip=ip,
             created_at=created_at,
             expires_at=expires_at,

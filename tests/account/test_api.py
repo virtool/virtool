@@ -1444,7 +1444,7 @@ class TestLoginReset:
 
         # Create another session for the same user
         old_session, old_token = await data_layer.sessions.create_authenticated(
-            "127.0.0.1", str(self.user.id), False
+            "127.0.0.1", self.user.id, False
         )
 
         # Reset password
