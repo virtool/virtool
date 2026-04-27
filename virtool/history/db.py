@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 import dictdiffer
 from motor.motor_asyncio import AsyncIOMotorClientSession
+from sqlalchemy import delete
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -44,6 +45,41 @@ HISTORY_LIST_PROJECTION = [
 
 HISTORY_PROJECTION = [*HISTORY_LIST_PROJECTION, "diff"]
 """A MongoDB projection for history that includes the ``diff`` field."""
+
+_HISTORY_DIFF_CHUNK_SIZE = 32767 // 2
+"""Max ``history_diffs`` rows per statement.
+
+asyncpg caps bind parameters per statement at 32767. Each row binds two
+(``change_id`` and ``diff``).
+"""
+
+
+async def bulk_insert_diffs(pg: AsyncEngine, rows: list[dict]) -> None:
+    """Insert ``rows`` into ``history_diffs`` in asyncpg-safe chunks."""
+    async with AsyncSession(pg) as session:
+        for start in range(0, len(rows), _HISTORY_DIFF_CHUNK_SIZE):
+            await session.execute(
+                insert(SQLHistoryDiff).values(
+                    rows[start : start + _HISTORY_DIFF_CHUNK_SIZE],
+                ),
+            )
+
+        await session.commit()
+
+
+async def bulk_delete_diffs(pg: AsyncEngine, change_ids: list[str]) -> None:
+    """Delete ``history_diffs`` rows for the given ``change_ids`` in chunks."""
+    async with AsyncSession(pg) as session:
+        for start in range(0, len(change_ids), _HISTORY_DIFF_CHUNK_SIZE):
+            await session.execute(
+                delete(SQLHistoryDiff).where(
+                    SQLHistoryDiff.change_id.in_(
+                        change_ids[start : start + _HISTORY_DIFF_CHUNK_SIZE],
+                    ),
+                ),
+            )
+
+        await session.commit()
 
 
 @dataclass

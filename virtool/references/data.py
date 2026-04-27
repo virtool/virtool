@@ -32,7 +32,7 @@ from virtool.data.transforms import apply_transforms
 from virtool.errors import GitHubError
 from virtool.github import create_update_subdocument, format_release
 from virtool.groups.pg import SQLGroup
-from virtool.history.db import patch_to_version
+from virtool.history.db import bulk_delete_diffs, bulk_insert_diffs, patch_to_version
 from virtool.history.models import HistorySearchResult
 from virtool.indexes.models import IndexMinimal, IndexSearchResult
 from virtool.models.enums import HistoryMethod
@@ -952,6 +952,7 @@ class ReferencesData(DataLayerDomain):
             created_at,
             HistoryMethod.clone,
             self._mongo,
+            self._pg,
             otus,
             ref_id,
             user_id,
@@ -1004,6 +1005,13 @@ class ReferencesData(DataLayerDomain):
             for otu in data.otus
         ]
 
+        diff_rows = [
+            {"change_id": insertion.history.id, "diff": insertion.history.diff}
+            for insertion in insertions
+        ]
+
+        await bulk_insert_diffs(self._pg, diff_rows)
+
         await tracker.add(1)
 
         try:
@@ -1012,27 +1020,32 @@ class ReferencesData(DataLayerDomain):
             for insertion in insertions:
                 sequences.extend(insertion.sequences)
 
-            await asyncio.gather(
-                self._mongo.history.insert_many(
-                    [insertion.history for insertion in insertions],
-                    None,
-                ),
-                self._mongo.otus.insert_many(
-                    [insertion.otu for insertion in insertions],
-                    None,
-                ),
-                self._mongo.sequences.insert_many(
-                    sequences,
-                    None,
-                ),
-            )
+            async with asyncio.TaskGroup() as tg:
+                tg.create_task(
+                    self._mongo.history.insert_many(
+                        [insertion.history.document for insertion in insertions],
+                        None,
+                    ),
+                )
+                tg.create_task(
+                    self._mongo.otus.insert_many(
+                        [insertion.otu for insertion in insertions],
+                        None,
+                    ),
+                )
+                tg.create_task(
+                    self._mongo.sequences.insert_many(sequences, None),
+                )
         except Exception:
+            await bulk_delete_diffs(self._pg, [row["change_id"] for row in diff_rows])
+
             await asyncio.gather(
-                self._mongo.otus.delete_many({"reference.id": ref_id}),
                 self._mongo.history.delete_many({"reference.id": ref_id}),
-                self._mongo.references.delete_one({"_id": ref_id}),
                 self._mongo.sequences.delete_many({"reference.id": ref_id}),
+                self._mongo.otus.delete_many({"reference.id": ref_id}),
             )
+
+            await self._mongo.references.delete_one({"_id": ref_id})
             raise
 
         await tracker.add(1)
@@ -1079,6 +1092,7 @@ class ReferencesData(DataLayerDomain):
             created_at,
             HistoryMethod.remote,
             self._mongo,
+            self._pg,
             [otu.dict(by_alias=True) for otu in data.otus],
             ref_id,
             user_id,

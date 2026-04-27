@@ -23,6 +23,7 @@ from virtool.data.topg import compose_legacy_id_multi_expression
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
+from virtool.history.db import bulk_delete_diffs, bulk_insert_diffs
 from virtool.models.enums import HistoryMethod
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.utils import get_mongo_from_req
@@ -790,6 +791,7 @@ async def populate_insert_only_reference(
     created_at: datetime,
     history_method: HistoryMethod,
     mongo: "Mongo",
+    pg: AsyncEngine,
     otus: list[dict],
     reference_id: str,
     user_id: str,
@@ -805,30 +807,43 @@ async def populate_insert_only_reference(
         for otu in otus
     ]
 
+    diff_rows = [
+        {"change_id": insertion.history.id, "diff": insertion.history.diff}
+        for insertion in insertions
+    ]
+
+    await bulk_insert_diffs(pg, diff_rows)
+
     try:
         sequences = []
 
         for insertion in insertions:
             sequences.extend(insertion.sequences)
 
-        await asyncio.gather(
-            mongo.history.insert_many(
-                [insertion.history for insertion in insertions],
-                None,
-            ),
-            mongo.otus.insert_many(
-                [insertion.otu for insertion in insertions],
-                None,
-            ),
-            mongo.sequences.insert_many(sequences, None),
-        )
+        async with asyncio.TaskGroup() as tg:
+            tg.create_task(
+                mongo.history.insert_many(
+                    [insertion.history.document for insertion in insertions],
+                    None,
+                ),
+            )
+            tg.create_task(
+                mongo.otus.insert_many(
+                    [insertion.otu for insertion in insertions],
+                    None,
+                ),
+            )
+            tg.create_task(mongo.sequences.insert_many(sequences, None))
     except Exception:
+        await bulk_delete_diffs(pg, [row["change_id"] for row in diff_rows])
+
         await asyncio.gather(
-            mongo.otus.delete_many({"reference.id": reference_id}),
             mongo.history.delete_many({"reference.id": reference_id}),
-            mongo.references.delete_one({"_id": reference_id}),
             mongo.sequences.delete_many({"reference.id": reference_id}),
+            mongo.otus.delete_many({"reference.id": reference_id}),
         )
+
+        await mongo.references.delete_one({"_id": reference_id})
         raise
 
 

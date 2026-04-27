@@ -15,10 +15,24 @@ from virtool.utils import random_alphanumeric
 
 
 @dataclass
+class PreparedInsertionHistory:
+    """A history record prepared for two-phase insertion.
+
+    The diff is stored in PostgreSQL's ``history_diffs`` table keyed by
+    ``id``, while ``document`` is inserted into Mongo's ``history`` collection
+    with a ``"postgres"`` sentinel in place of the diff.
+    """
+
+    diff: dict
+    document: Document
+    id: str
+
+
+@dataclass
 class OTUInsertion:
     """Represents the insertion of an OTU, sequences, and creation history record."""
 
-    history: dict
+    history: PreparedInsertionHistory
     id: str
     otu: dict
     sequences: list[dict]
@@ -29,14 +43,18 @@ def prepare_insertion_history(
     old: dict | None,
     new: dict | None,
     user_id: str,
-) -> Document:
-    """Add a change document to the history collection.
+) -> PreparedInsertionHistory:
+    """Prepare a history record for bulk OTU insertion.
+
+    The diff is returned separately from the Mongo document so the diff can be
+    written to PostgreSQL's ``history_diffs`` table while the Mongo document
+    stores the ``"postgres"`` sentinel.
 
     :param history_method: the name of the method that executed the change
     :param old: the otu document prior to the change
     :param new: the otu document after the change
     :param user_id: the id of the requesting user
-    :return: the change document
+    :return: the prepared history record
     """
     otu_id, otu_name, otu_version, ref_id = derive_otu_information(old, new)
 
@@ -59,17 +77,23 @@ def prepare_insertion_history(
         case _:
             diff = calculate_diff(old, new)
 
-    return {
-        "_id": ".".join([str(otu_id), str(otu_version)]),
-        "diff": diff,
-        "method_name": history_method.value,
-        "description": description,
-        "created_at": virtool.utils.timestamp(),
-        "otu": {"id": otu_id, "name": otu_name, "version": otu_version},
-        "reference": {"id": ref_id},
-        "index": {"id": "unbuilt", "version": "unbuilt"},
-        "user": {"id": user_id},
-    }
+    change_id = ".".join([str(otu_id), str(otu_version)])
+
+    return PreparedInsertionHistory(
+        diff=diff,
+        document={
+            "_id": change_id,
+            "diff": "postgres",
+            "method_name": history_method.value,
+            "description": description,
+            "created_at": virtool.utils.timestamp(),
+            "otu": {"id": otu_id, "name": otu_name, "version": otu_version},
+            "reference": {"id": ref_id},
+            "index": {"id": "unbuilt", "version": "unbuilt"},
+            "user": {"id": user_id},
+        },
+        id=change_id,
+    )
 
 
 def prepare_otu_insertion(

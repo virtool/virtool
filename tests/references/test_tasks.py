@@ -6,12 +6,14 @@ from pathlib import Path
 import arrow
 import pytest
 from pytest_mock import MockerFixture
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
 
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
+from virtool.history.sql import SQLHistoryDiff
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.references.db import get_manifest
@@ -137,6 +139,7 @@ async def test_clean_references_task(
 def assert_reference_created(
     data_layer: DataLayer,
     mongo: Mongo,
+    pg: AsyncEngine,
     snapshot: SnapshotAssertion,
 ):
     async def func(
@@ -177,6 +180,37 @@ def assert_reference_created(
             name="history",
             matcher=path_type(
                 {".*_id": (str,), r".*\d\.id": (str,), ".*otu.id": (str,)}, regex=True
+            ),
+        )
+
+        change_ids = [doc["_id"] for doc in history]
+
+        async with AsyncSession(pg) as pg_session:
+            diff_rows = (
+                (
+                    await pg_session.execute(
+                        select(SQLHistoryDiff).where(
+                            SQLHistoryDiff.change_id.in_(change_ids),
+                        ),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+
+        diff_by_change_id = {row.change_id: row.diff for row in diff_rows}
+
+        assert [
+            {"change_id": cid, "diff": diff_by_change_id[cid]} for cid in change_ids
+        ] == snapshot(
+            name="history_diffs",
+            matcher=path_type(
+                {
+                    ".*change_id": (str,),
+                    ".*_id": (str,),
+                    r".*\d\.id": (str,),
+                },
+                regex=True,
             ),
         )
 
