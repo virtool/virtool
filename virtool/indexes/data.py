@@ -197,7 +197,7 @@ class IndexData:
             index["manifest"],
         )
 
-        compressed = gzip.compress(dump_bytes(patched_otus))
+        compressed = await asyncio.to_thread(gzip.compress, dump_bytes(patched_otus))
 
         async def _stream():
             yield compressed
