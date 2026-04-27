@@ -1,4 +1,3 @@
-from aiohttp.web_fileresponse import FileResponse
 from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r401, r403, r404
@@ -8,6 +7,7 @@ from virtool.api.custom_json import json_response
 from virtool.api.errors import APINotFound
 from virtool.api.policy import PermissionRoutePolicy, policy
 from virtool.api.routes import Routes
+from virtool.api.streaming import stream_storage_response
 from virtool.authorization.permissions import LegacyPermission
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
@@ -76,7 +76,7 @@ class UploadsView(PydanticView):
 
 @routes.view("/uploads/{upload_id}")
 class UploadView(PydanticView):
-    async def get(self, upload_id: int, /) -> r200[FileResponse] | r404:
+    async def get(self, upload_id: int, /) -> r200 | r404:
         """Download an upload.
 
         Downloads a previously uploaded file.
@@ -90,17 +90,20 @@ class UploadView(PydanticView):
             404: Not found
         """
         try:
-            upload_path, name = await get_data_from_req(
+            stream, size, name = await get_data_from_req(
                 self.request
             ).uploads.get_upload_file_info(upload_id)
         except ResourceNotFoundError:
             raise APINotFound()
 
-        return FileResponse(
-            upload_path,
-            headers={
+        return await stream_storage_response(
+            self.request,
+            stream,
+            size,
+            {
                 "Content-Disposition": f"attachment; filename={name}",
                 "Content-Type": "application/octet-stream",
+                "Content-Length": str(size),
             },
         )
 
@@ -133,16 +136,19 @@ async def download(req):
     upload_id = int(req.match_info["id"])
 
     try:
-        upload_path, name = await get_data_from_req(req).uploads.get_upload_file_info(
+        stream, size, name = await get_data_from_req(req).uploads.get_upload_file_info(
             upload_id
         )
     except ResourceNotFoundError:
         raise APINotFound()
 
-    return FileResponse(
-        upload_path,
-        headers={
+    return await stream_storage_response(
+        req,
+        stream,
+        size,
+        {
             "Content-Disposition": f"attachment; filename={name}",
             "Content-Type": "application/octet-stream",
+            "Content-Length": str(size),
         },
     )

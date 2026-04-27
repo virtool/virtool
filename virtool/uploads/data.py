@@ -1,9 +1,6 @@
-import asyncio
 import math
 import uuid
-from asyncio import to_thread
-from contextlib import suppress
-from pathlib import Path
+from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING
 
 from sqlalchemy import func, select, update
@@ -14,11 +11,11 @@ from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.events import Operation, emits
 from virtool.data.transforms import apply_transforms
+from virtool.storage.protocol import StorageBackend
 from virtool.uploads.models import Upload, UploadSearchResult
 from virtool.uploads.sql import SQLUpload, UploadType
-from virtool.uploads.utils import get_upload_path, naive_writer
+from virtool.uploads.utils import upload_file_key
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import rm
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
@@ -27,10 +24,13 @@ if TYPE_CHECKING:
 class UploadsData(DataLayerDomain):
     name = "uploads"
 
-    def __init__(self, config, mongo: "Mongo", pg: AsyncEngine):
+    def __init__(
+        self, config, mongo: "Mongo", pg: AsyncEngine, storage: StorageBackend
+    ):
         self._config = config
         self._mongo: Mongo = mongo
         self._pg: AsyncEngine = pg
+        self._storage = storage
 
     async def find(
         self,
@@ -114,14 +114,13 @@ class UploadsData(DataLayerDomain):
         user: int | None = None,
     ) -> Upload:
         """Create an upload."""
-        uploads_path = self._config.data_path / "files"
-
-        await asyncio.to_thread(uploads_path.mkdir, parents=True, exist_ok=True)
-
         created_at = virtool.utils.timestamp()
         name_on_disk = f"{uuid.uuid4()}-{name}"
 
-        size = await naive_writer(chunker, uploads_path / name_on_disk)
+        size = await self._storage.write(
+            upload_file_key(name_on_disk),
+            chunker,
+        )
 
         async with AsyncSession(self._pg) as session:
             upload = SQLUpload(
@@ -173,28 +172,29 @@ class UploadsData(DataLayerDomain):
             ),
         )
 
-    async def get_upload_file_info(self, upload_id: int) -> tuple[Path, str]:
-        """Get the file path and original name for downloading an upload.
+    async def get_upload_file_info(
+        self, upload_id: int
+    ) -> tuple[AsyncIterator[bytes], int, str]:
+        """Get a stream, size, and original name for downloading an upload.
 
         :param upload_id: the upload's ID
-        :return: a tuple of the file path and original filename
+        :return: a tuple of the file stream, size, and original filename
         """
         async with AsyncSession(self._pg) as session:
             upload = (
                 await session.execute(
-                    select(SQLUpload.name_on_disk, SQLUpload.name).filter_by(
-                        id=upload_id, removed=False
-                    ),
+                    select(
+                        SQLUpload.name_on_disk, SQLUpload.name, SQLUpload.size
+                    ).filter_by(id=upload_id, removed=False),
                 )
             ).first()
 
             if not upload:
                 raise ResourceNotFoundError
 
-        return (
-            await get_upload_path(self._config, upload.name_on_disk),
-            upload.name,
-        )
+        key = upload_file_key(upload.name_on_disk)
+
+        return self._storage.read(key), upload.size, upload.name
 
     @emits(Operation.DELETE)
     async def delete(self, upload_id: int) -> Upload:
@@ -227,8 +227,7 @@ class UploadsData(DataLayerDomain):
             **await apply_transforms(upload, [AttachUserTransform(self._pg)], self._pg),
         )
 
-        with suppress(FileNotFoundError):
-            await to_thread(rm, self._config.data_path / "files" / name_on_disk)
+        await self._storage.delete(upload_file_key(name_on_disk))
 
         return upload
 
