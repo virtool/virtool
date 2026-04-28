@@ -9,7 +9,8 @@ from structlog import get_logger
 
 from virtool.jobs.models import Job
 from virtool.models.enums import LibraryType
-from virtool.samples.models import Quality, Sample
+from virtool.quality.models import Quality
+from virtool.samples.models import Sample
 from virtool.workflow.analysis import ReadPaths
 from virtool.workflow.client import WorkflowAPIClient
 from virtool.workflow.data.uploads import WFUploads

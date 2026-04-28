@@ -6,6 +6,7 @@ from virtool.jobs.models import JobMinimal
 from virtool.labels.models import LabelNested
 from virtool.models import BaseModel, SearchResult
 from virtool.models.enums import LibraryType
+from virtool.quality.models import Quality
 from virtool.samples.models_base import SampleNested
 from virtool.subtractions.models import SubtractionNested
 from virtool.uploads.models import UploadMinimal
@@ -85,16 +86,6 @@ class SampleMinimal(SampleNested):
                 },
             ],
         }
-
-
-class Quality(BaseModel):
-    bases: list[list[int | float]]
-    composition: list[list[int | float]]
-    count: int
-    encoding: str
-    gc: int | float
-    length: list[int]
-    sequences: list[int]
 
 
 class Read(BaseModel):

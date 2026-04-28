@@ -7,7 +7,7 @@ from tests.fixtures.workflow_api.utils import (
     custom_dumps,
     generate_not_found,
 )
-from virtool.samples.models import Quality
+from virtool.quality.models import Quality
 from virtool.workflow.pytest_plugin import WorkflowData
 
 
