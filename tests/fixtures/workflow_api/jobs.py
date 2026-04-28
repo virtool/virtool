@@ -5,7 +5,7 @@ from tests.fixtures.workflow_api.utils import (
     custom_dumps,
     generate_not_found,
 )
-from virtool.jobs.models import JobState, JobStatus
+from virtool.jobs.models import JobState, JobStep
 from virtool.workflow.pytest_plugin.data import WorkflowData
 
 
@@ -17,25 +17,29 @@ def create_jobs_routes(data: WorkflowData):
         async def post(self):
             """Endpoint for testing job claiming via HTTP polling.
 
-            Returns 404 if the job has already been acquired. Tests should set
-            ``data.job.acquired = False`` before starting the runtime to make a
+            Returns 404 if the job has already been claimed. Tests should set
+            ``data.acquired = False`` before starting the runtime to make a
             job available for claiming.
             """
-            if data.job.acquired:
+            if data.acquired:
                 return generate_not_found()
 
-            data.job.acquired = True
-            data.job.status.append(
-                JobStatus(
-                    progress=0,
-                    state=JobState.PREPARING,
-                    timestamp=arrow.utcnow().naive,
-                ),
-            )
+            data.acquired = True
+            data.job.state = JobState.RUNNING
+            body = await self.request.json()
+            data.job.steps = [
+                JobStep(
+                    id=step["id"],
+                    name=step["name"],
+                    description=step["description"],
+                    started_at=None,
+                )
+                for step in body["steps"]
+            ]
 
             return json_response(
                 {
-                    "id": int(data.job.id),
+                    "id": data.job.id,
                     "acquired": True,
                     "claim": {
                         "runner_id": "test-runner",
@@ -49,7 +53,7 @@ def create_jobs_routes(data: WorkflowData):
                     "created_at": data.job.created_at.isoformat(),
                     "key": data.job.key,
                     "state": "running",
-                    "steps": [],
+                    "steps": [step.dict() for step in data.job.steps],
                     "user": data.job.user.dict(),
                     "workflow": data.job.workflow,
                 },
@@ -67,60 +71,51 @@ def create_jobs_routes(data: WorkflowData):
                 dumps=custom_dumps,
             )
 
-        async def patch(self):
-            """Endpoint for testing job acquisition."""
-            json = await self.request.json()
+    @routes.view("/jobs/{job_id}/ping")
+    class JobPingView(View):
+        async def put(self):
+            job_id = int(self.request.match_info["job_id"])
 
-            if json.get("acquired") is not True:
-                return json_response(
-                    {"id": "bad_request", "message": "Bad request"},
-                    status=400,
-                )
+            if job_id != data.job.id:
+                return generate_not_found()
 
-            data.job.acquired = True
-            data.job.status.append(
-                JobStatus(
-                    progress=0,
-                    state=JobState.PREPARING,
-                    timestamp=arrow.utcnow().naive,
-                ),
-            )
+            data.job.pinged_at = arrow.utcnow().naive
 
             return json_response(
-                data.job.dict(),
+                {
+                    "pinged_at": data.job.pinged_at.isoformat(),
+                    "cancelled": data.job.state == JobState.CANCELLED,
+                },
                 status=200,
                 dumps=custom_dumps,
             )
 
-    @routes.view("/jobs/{job_id}/ping")
-    class JobPingView(View):
-        async def put(self):
-            job_id = self.request.match_info["job_id"]
-
-            if job_id != data.job.id:
-                return generate_not_found()
-
-            data.job.ping.pinged_at = arrow.utcnow().naive
-
-            return json_response(data.job.ping.dict(), status=200, dumps=custom_dumps)
-
-    @routes.view("/jobs/{job_id}/status")
-    class JobStatusView(View):
+    @routes.view("/jobs/{job_id}/steps/{step_id}/start")
+    class JobStepStartView(View):
         async def post(self):
-            job_id = self.request.match_info["job_id"]
+            job_id = int(self.request.match_info["job_id"])
+            step_id = self.request.match_info["step_id"]
 
             if job_id != data.job.id:
                 return generate_not_found()
 
-            status = JobStatus(
-                **{
-                    **(await self.request.json()),
-                    "timestamp": arrow.utcnow().naive.isoformat(),
-                },
+            now = arrow.utcnow().naive
+
+            steps = list(data.job.steps or [])
+            step_index = next(
+                (i for i, step in enumerate(steps) if step.id == step_id),
+                None,
             )
 
-            data.job.status.append(status)
+            if step_index is None:
+                return generate_not_found()
 
-            return json_response(status.dict(), status=201, dumps=custom_dumps)
+            steps[step_index].started_at = now
+            data.job.steps = steps
+
+            body = steps[step_index].dict()
+            data.step_start_updates.append(body)
+
+            return json_response(body, status=200, dumps=custom_dumps)
 
     return routes

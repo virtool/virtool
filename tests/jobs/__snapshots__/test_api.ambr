@@ -1,53 +1,4 @@
 # serializer version: 1
-# name: TestAcquire.test_ok
-  dict({
-    'acquired': True,
-    'args': dict({
-      'fact': 'LdJCGRddpwdyFKunVyUD',
-      'nearly': 951.93581531826,
-      'network': 'fhKcDVBJbHFDutYbbXjg',
-      'season': 6981,
-      'task': 'RrnFxjyvDAqsRnDaMrco',
-      'third': 'SUEXExIZVPeFzGRmMglP',
-    }),
-    'created_at': str,
-    'id': 'bf1b993c',
-    'key': str,
-    'ping': dict({
-      'cancelled': False,
-      'pinged_at': str,
-    }),
-    'progress': 3,
-    'retries': 0,
-    'stage': None,
-    'state': 'preparing',
-    'status': list([
-      dict({
-        'error': None,
-        'progress': 0,
-        'stage': None,
-        'state': 'waiting',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': str,
-      }),
-      dict({
-        'error': None,
-        'progress': 3,
-        'stage': None,
-        'state': 'preparing',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': str,
-      }),
-    ]),
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 1,
-    }),
-    'workflow': 'pathoscope_bowtie',
-  })
-# ---
 # name: TestFind.test_basic
   dict({
     'counts': dict({
@@ -60,52 +11,7 @@
         'nuvs': 0,
         'pathoscope': 0,
       }),
-      'complete': dict({
-        'aodp': 0,
-        'build_index': 2,
-        'create_sample': 0,
-        'create_subtraction': 0,
-        'iimi': 0,
-        'nuvs': 0,
-        'pathoscope': 0,
-      }),
-      'error': dict({
-        'aodp': 0,
-        'build_index': 0,
-        'create_sample': 0,
-        'create_subtraction': 0,
-        'iimi': 0,
-        'nuvs': 0,
-        'pathoscope': 0,
-      }),
-      'preparing': dict({
-        'aodp': 0,
-        'build_index': 1,
-        'create_sample': 0,
-        'create_subtraction': 0,
-        'iimi': 0,
-        'nuvs': 0,
-        'pathoscope': 0,
-      }),
-      'running': dict({
-        'aodp': 0,
-        'build_index': 0,
-        'create_sample': 0,
-        'create_subtraction': 1,
-        'iimi': 0,
-        'nuvs': 0,
-        'pathoscope': 0,
-      }),
-      'terminated': dict({
-        'aodp': 0,
-        'build_index': 0,
-        'create_sample': 1,
-        'create_subtraction': 0,
-        'iimi': 0,
-        'nuvs': 1,
-        'pathoscope': 0,
-      }),
-      'timeout': dict({
+      'failed': dict({
         'aodp': 2,
         'build_index': 0,
         'create_sample': 0,
@@ -114,62 +20,40 @@
         'nuvs': 0,
         'pathoscope': 0,
       }),
-      'waiting': dict({
+      'pending': dict({
         'aodp': 0,
         'build_index': 0,
-        'create_sample': 0,
+        'create_sample': 1,
         'create_subtraction': 0,
+        'iimi': 0,
+        'nuvs': 1,
+        'pathoscope': 0,
+      }),
+      'running': dict({
+        'aodp': 1,
+        'build_index': 0,
+        'create_sample': 0,
+        'create_subtraction': 1,
+        'iimi': 0,
+        'nuvs': 1,
+        'pathoscope': 0,
+      }),
+      'succeeded': dict({
+        'aodp': 0,
+        'build_index': 0,
+        'create_sample': 1,
+        'create_subtraction': 1,
         'iimi': 0,
         'nuvs': 0,
         'pathoscope': 0,
       }),
     }),
-    'documents': list([
+    'found_count': 11,
+    'items': list([
       dict({
         'created_at': str,
-        'id': '606cd773',
-        'progress': 3,
-        'retries': 0,
-        'stage': None,
-        'state': 'preparing',
-        'user': dict({
-          'handle': 'modonnell',
-          'id': 3,
-        }),
-        'workflow': 'build_index',
-      }),
-      dict({
-        'created_at': str,
-        'id': '031ff6cb',
-        'progress': 20,
-        'retries': 0,
-        'stage': 'LrgYSvSUrArKVZMpTZsX',
-        'state': 'timeout',
-        'user': dict({
-          'handle': 'modonnell',
-          'id': 3,
-        }),
-        'workflow': 'aodp',
-      }),
-      dict({
-        'created_at': str,
-        'id': '7aa59bf4',
-        'progress': 20,
-        'retries': 0,
-        'stage': 'cmoimlTyThDaWauPZbQA',
-        'state': 'terminated',
-        'user': dict({
-          'handle': 'modonnell',
-          'id': 3,
-        }),
-        'workflow': 'create_sample',
-      }),
-      dict({
-        'created_at': str,
-        'id': '153ff459',
-        'progress': 10,
-        'retries': 0,
-        'stage': 'rKOAxVNxhGjAUqXkPFQB',
+        'id': 11,
+        'progress': 0,
         'state': 'running',
         'user': dict({
           'handle': 'modonnell',
@@ -179,19 +63,49 @@
       }),
       dict({
         'created_at': str,
-        'id': 'f60bae36',
-        'progress': 100,
-        'retries': 0,
-        'stage': 'oRBdHEWGCuwqaOQonBqr',
-        'state': 'complete',
+        'id': 10,
+        'progress': 0,
+        'state': 'running',
         'user': dict({
           'handle': 'modonnell',
           'id': 3,
         }),
-        'workflow': 'build_index',
+        'workflow': 'nuvs',
+      }),
+      dict({
+        'created_at': str,
+        'id': 9,
+        'progress': 100,
+        'state': 'failed',
+        'user': dict({
+          'handle': 'modonnell',
+          'id': 3,
+        }),
+        'workflow': 'aodp',
+      }),
+      dict({
+        'created_at': str,
+        'id': 8,
+        'progress': 100,
+        'state': 'failed',
+        'user': dict({
+          'handle': 'modonnell',
+          'id': 3,
+        }),
+        'workflow': 'aodp',
+      }),
+      dict({
+        'created_at': str,
+        'id': 7,
+        'progress': 100,
+        'state': 'succeeded',
+        'user': dict({
+          'handle': 'modonnell',
+          'id': 3,
+        }),
+        'workflow': 'create_subtraction',
       }),
     ]),
-    'found_count': 11,
     'page': 1,
     'page_count': 3,
     'per_page': 5,
@@ -206,20 +120,28 @@
         'state',
         0,
       ]),
-      'msg': "value is not a valid enumeration member; permitted: 'cancelled', 'complete', 'error', 'preparing', 'running', 'timeout', 'terminated', 'waiting'",
+      'msg': "value is not a valid enumeration member; permitted: 'cancelled', 'failed', 'pending', 'running', 'succeeded'",
       'type': 'type_error.enum',
     }),
   ])
 # ---
 # name: TestPushStatus.test[None]
   dict({
-    'error': None,
-    'progress': 23,
-    'stage': 'build',
+    'args': dict({
+    }),
+    'claim': None,
+    'claimed_at': NoneType,
+    'created_at': str,
+    'id': 'BgVIaJUT',
+    'pinged_at': str,
+    'progress': 0,
     'state': 'running',
-    'step_description': None,
-    'step_name': None,
-    'timestamp': '2015-10-06T20:00:00Z',
+    'steps': None,
+    'user': dict({
+      'handle': 'myersmitchell',
+      'id': 2,
+    }),
+    'workflow': 'create_subtraction',
   })
 # ---
 # name: TestPushStatus.test_bad_state
@@ -273,21 +195,21 @@
   tuple(
     201,
     dict({
-      'error': dict({
-        'details': list([
-          'Valid',
-        ]),
-        'traceback': list([
-          'Valid',
-        ]),
-        'type': 'KeyError',
+      'args': dict({
       }),
-      'progress': 14,
-      'stage': 'fastqc',
-      'state': 'error',
-      'step_description': None,
-      'step_name': None,
-      'timestamp': '2015-10-06T20:00:00Z',
+      'claim': None,
+      'claimed_at': NoneType,
+      'created_at': str,
+      'id': 'BgVIaJUT',
+      'pinged_at': str,
+      'progress': 100,
+      'state': 'failed',
+      'steps': None,
+      'user': dict({
+        'handle': 'myersmitchell',
+        'id': 2,
+      }),
+      'workflow': 'create_subtraction',
     }),
   )
 # ---
@@ -818,118 +740,68 @@
 # ---
 # name: TestPushStatus.test_name_and_description
   dict({
-    'error': None,
-    'progress': 14,
-    'stage': 'fastqc',
-    'state': 'running',
-    'step_description': 'Run FastQC on the raw data',
-    'step_name': 'FastQC',
-    'timestamp': '2015-10-06T20:00:00Z',
-  })
-# ---
-# name: test_cancel[None]
-  dict({
-    'acquired': False,
     'args': dict({
-      'analysis_id': 'e410429b',
-      'index_id': '465428b0',
-      'name': None,
-      'sample_id': '1e01a382',
-      'username': 'igboyes',
-      'workflow': 'nuvs',
     }),
-    'created_at': '2015-10-06T20:00:00Z',
-    'id': '4c530449',
-    'ping': None,
+    'claim': None,
+    'claimed_at': NoneType,
+    'created_at': str,
+    'id': 'BgVIaJUT',
+    'pinged_at': str,
     'progress': 0,
-    'retries': 0,
-    'stage': 'mk_analysis_dir',
-    'state': 'cancelled',
-    'status': list([
-      dict({
-        'error': None,
-        'progress': 0,
-        'stage': None,
-        'state': 'waiting',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': '2015-10-06T20:00:00Z',
-      }),
-      dict({
-        'error': None,
-        'progress': 0,
-        'stage': None,
-        'state': 'running',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': '2015-10-06T20:00:00Z',
-      }),
-      dict({
-        'error': None,
-        'progress': 0,
-        'stage': 'mk_analysis_dir',
-        'state': 'running',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': '2015-10-06T20:00:00Z',
-      }),
-      dict({
-        'error': None,
-        'progress': 0,
-        'stage': 'mk_analysis_dir',
-        'state': 'cancelled',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': '2015-10-06T20:00:00Z',
-      }),
-    ]),
+    'state': 'running',
+    'steps': None,
     'user': dict({
       'handle': 'myersmitchell',
       'id': 2,
     }),
-    'workflow': 'build_index',
+    'workflow': 'create_subtraction',
+  })
+# ---
+# name: test_cancel[None]
+  dict({
+    'args': dict({
+    }),
+    'claim': dict({
+      'cpu': 1.0,
+      'image': 'virtool/fake:latest',
+      'mem': 1.0,
+      'runner_id': 'fake-runner',
+      'runtime_version': '0.0.0',
+      'workflow_version': '0.0.0',
+    }),
+    'claimed_at': str,
+    'created_at': str,
+    'id': 1,
+    'pinged_at': str,
+    'progress': 100,
+    'state': 'cancelled',
+    'steps': None,
+    'user': dict({
+      'handle': 'myersmitchell',
+      'id': 2,
+    }),
+    'workflow': 'nuvs',
   })
 # ---
 # name: test_get[None]
   dict({
-    'acquired': True,
     'args': dict({
-      'buy': 'aJUTVHuIhJxeMChNzFJE',
-      'letter': 'TzqyQTQjZGeLZuJqlLaQ',
-      'picture': 4.11362983803781,
-      'reduce': 24963.910062293,
-      'will': 'EKilxKJTbTDOKidKxUVF',
     }),
+    'claim': dict({
+      'cpu': 1.0,
+      'image': 'virtool/fake:latest',
+      'mem': 1.0,
+      'runner_id': 'fake-runner',
+      'runtime_version': '0.0.0',
+      'workflow_version': '0.0.0',
+    }),
+    'claimed_at': str,
     'created_at': str,
-    'id': 'bf1b993c',
-    'ping': dict({
-      'cancelled': False,
-      'pinged_at': str,
-    }),
-    'progress': 3,
-    'retries': 0,
-    'stage': None,
-    'state': 'preparing',
-    'status': list([
-      dict({
-        'error': None,
-        'progress': 0,
-        'stage': None,
-        'state': 'waiting',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': str,
-      }),
-      dict({
-        'error': None,
-        'progress': 3,
-        'stage': None,
-        'state': 'preparing',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': str,
-      }),
-    ]),
+    'id': 1,
+    'pinged_at': str,
+    'progress': 100,
+    'state': 'failed',
+    'steps': None,
     'user': dict({
       'handle': 'myersmitchell',
       'id': 2,

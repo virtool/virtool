@@ -94,7 +94,7 @@ class IndexData:
         items = await apply_transforms(
             items,
             [
-                AttachJobTransform(self._mongo, self._pg),
+                AttachJobTransform(self._pg),
                 AttachUserTransform(self._pg),
             ],
             self._pg,
@@ -141,7 +141,7 @@ class IndexData:
         document = await apply_transforms(
             base_processor(document),
             [
-                AttachJobTransform(self._mongo, self._pg),
+                AttachJobTransform(self._pg),
                 AttachUserTransform(self._pg),
             ],
             self._pg,

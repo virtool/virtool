@@ -1,7 +1,7 @@
 # serializer version: 1
 # name: TestCreate.test_ok[force_choice][mongo]
   dict({
-    '_id': 'fb085f7f',
+    '_id': 'bf1b993c',
     'all_read': True,
     'all_write': True,
     'created_at': 'approximately_now_datetime',
@@ -14,7 +14,7 @@
     'is_legacy': False,
     'isolate': '',
     'job': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'labels': list([
       1,
@@ -53,7 +53,7 @@
 # ---
 # name: TestCreate.test_ok[none][mongo]
   dict({
-    '_id': 'fb085f7f',
+    '_id': 'bf1b993c',
     'all_read': True,
     'all_write': True,
     'created_at': 'approximately_now_datetime',
@@ -66,7 +66,7 @@
     'is_legacy': False,
     'isolate': '',
     'job': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'labels': list([
       1,
@@ -105,7 +105,7 @@
 # ---
 # name: TestCreate.test_ok[users_primary_group][mongo]
   dict({
-    '_id': 'fb085f7f',
+    '_id': 'bf1b993c',
     'all_read': True,
     'all_write': True,
     'created_at': 'approximately_now_datetime',
@@ -118,7 +118,7 @@
     'is_legacy': False,
     'isolate': '',
     'job': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'labels': list([
       1,
@@ -173,16 +173,14 @@
     'isolate': '',
     'job': dict({
       'created_at': 'not_approximately_now_datetime',
-      'id': 'bf1b993c',
-      'progress': 3,
-      'retries': 0,
-      'stage': None,
-      'state': <JobState.PREPARING: 'preparing'>,
+      'id': 1,
+      'progress': 100,
+      'state': <JobState.FAILED: 'failed'>,
       'user': dict({
         'handle': 'leeashley',
         'id': 1,
       }),
-      'workflow': 'create_sample',
+      'workflow': <Workflow.CREATE_SAMPLE: 'create_sample'>,
     }),
     'labels': list([
       dict({

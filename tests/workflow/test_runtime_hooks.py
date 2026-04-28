@@ -5,7 +5,15 @@ from datetime import datetime
 from structlog import get_logger
 
 from virtool.config.cls import WorkflowConfig
-from virtool.jobs.models import JobClaim, JobClaimed, JobStateV2, WorkflowV2
+from virtool.jobs.models import (
+    JobClaim,
+    JobClaimed,
+    JobState,
+    JobStep,
+)
+from virtool.jobs.models import (
+    Workflow as WorkflowModel,
+)
 from virtool.workflow import Workflow, hooks
 from virtool.workflow.pytest_plugin.data import WorkflowData
 from virtool.workflow.runtime.events import Events
@@ -28,10 +36,10 @@ def _make_claimed_job(workflow_data: WorkflowData) -> JobClaimed:
         claimed_at=datetime.now(tz=None),
         created_at=workflow_data.job.created_at,
         key=workflow_data.job.key,
-        state=JobStateV2.RUNNING,
+        state=JobState.RUNNING,
         steps=[],
         user=workflow_data.job.user,
-        workflow=WorkflowV2(workflow_data.job.workflow),
+        workflow=WorkflowModel(workflow_data.job.workflow),
     )
 
 
@@ -68,6 +76,16 @@ async def test_success(
     def finish_callback():
         nonlocal finish_called
         finish_called = True
+
+    workflow_data.job.steps = [
+        JobStep(
+            id=step.function.__name__,
+            name=step.display_name,
+            description=step.description,
+            started_at=None,
+        )
+        for step in wf.steps
+    ]
 
     await run_workflow(
         workflow_config,
@@ -110,6 +128,16 @@ async def test_error(
         """Description of the first step."""
         await asyncio.sleep(1)
         raise ValueError("test error")
+
+    workflow_data.job.steps = [
+        JobStep(
+            id=step.function.__name__,
+            name=step.display_name,
+            description=step.description,
+            started_at=None,
+        )
+        for step in wf.steps
+    ]
 
     with suppress(Exception):
         await run_workflow(

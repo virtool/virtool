@@ -69,7 +69,7 @@ async def scope(
             scope["_error"] = None
             scope["_job"] = job
             scope["_state"] = job.state
-            scope["_step"] = job.stage
+            scope["_step"] = None
             scope["_workflow"] = job.workflow
 
             scope["logger"] = get_logger("workflow")

@@ -21,7 +21,7 @@
     'is_legacy': False,
     'isolate': '',
     'job': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'labels': list([
       1,
@@ -81,7 +81,7 @@
     'is_legacy': False,
     'isolate': '',
     'job': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'labels': list([
       1,
@@ -141,7 +141,7 @@
     'is_legacy': False,
     'isolate': '',
     'job': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'labels': list([
       1,
@@ -201,7 +201,7 @@
     'is_legacy': False,
     'isolate': '',
     'job': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'labels': list([
       1,
@@ -261,7 +261,7 @@
     'is_legacy': False,
     'isolate': '',
     'job': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'labels': list([
       1,
@@ -322,16 +322,14 @@
     'group_write': True,
     'hold': True,
     'host': '',
-    'id': 'fb085f7f',
+    'id': 'bf1b993c',
     'is_legacy': False,
     'isolate': '',
     'job': dict({
       'created_at': 'approximately_now_isoformat',
-      'id': 'bf1b993c',
+      'id': 1,
       'progress': 0,
-      'retries': 0,
-      'stage': None,
-      'state': 'waiting',
+      'state': 'pending',
       'user': dict({
         'handle': 'leeashley',
         'id': 1,
@@ -405,16 +403,14 @@
     'group_write': True,
     'hold': True,
     'host': '',
-    'id': 'fb085f7f',
+    'id': 'bf1b993c',
     'is_legacy': False,
     'isolate': '',
     'job': dict({
       'created_at': 'approximately_now_isoformat',
-      'id': 'bf1b993c',
+      'id': 1,
       'progress': 0,
-      'retries': 0,
-      'stage': None,
-      'state': 'waiting',
+      'state': 'pending',
       'user': dict({
         'handle': 'leeashley',
         'id': 1,
@@ -488,16 +484,14 @@
     'group_write': True,
     'hold': True,
     'host': '',
-    'id': 'fb085f7f',
+    'id': 'bf1b993c',
     'is_legacy': False,
     'isolate': '',
     'job': dict({
       'created_at': 'approximately_now_isoformat',
-      'id': 'bf1b993c',
+      'id': 1,
       'progress': 0,
-      'retries': 0,
-      'stage': None,
-      'state': 'waiting',
+      'state': 'pending',
       'user': dict({
         'handle': 'leeashley',
         'id': 1,
@@ -588,11 +582,9 @@
     'isolate': '',
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
-      'id': 'bf1b993c',
-      'progress': 3,
-      'retries': 0,
-      'stage': None,
-      'state': 'preparing',
+      'id': 1,
+      'progress': 100,
+      'state': 'failed',
       'user': dict({
         'handle': 'leeashley',
         'id': 1,
@@ -693,11 +685,9 @@
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
-          'id': 'bf1b993c',
-          'progress': 30,
-          'retries': 0,
-          'stage': 'HTCWaKMqqBTFitpKyPAV',
-          'state': 'terminated',
+          'id': 1,
+          'progress': 0,
+          'state': 'pending',
           'user': dict({
             'handle': 'leeashley',
             'id': 1,
@@ -857,11 +847,9 @@
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
-          'id': 'bf1b993c',
-          'progress': 30,
-          'retries': 0,
-          'stage': 'HTCWaKMqqBTFitpKyPAV',
-          'state': 'terminated',
+          'id': 1,
+          'progress': 0,
+          'state': 'pending',
           'user': dict({
             'handle': 'leeashley',
             'id': 1,
@@ -959,11 +947,9 @@
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
-          'id': 'bf1b993c',
-          'progress': 30,
-          'retries': 0,
-          'stage': 'HTCWaKMqqBTFitpKyPAV',
-          'state': 'terminated',
+          'id': 1,
+          'progress': 0,
+          'state': 'pending',
           'user': dict({
             'handle': 'leeashley',
             'id': 1,
@@ -1092,11 +1078,9 @@
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
-          'id': 'bf1b993c',
-          'progress': 30,
-          'retries': 0,
-          'stage': 'HTCWaKMqqBTFitpKyPAV',
-          'state': 'terminated',
+          'id': 1,
+          'progress': 0,
+          'state': 'pending',
           'user': dict({
             'handle': 'leeashley',
             'id': 1,
@@ -1214,11 +1198,9 @@
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
-          'id': 'bf1b993c',
-          'progress': 30,
-          'retries': 0,
-          'stage': 'HTCWaKMqqBTFitpKyPAV',
-          'state': 'terminated',
+          'id': 1,
+          'progress': 0,
+          'state': 'pending',
           'user': dict({
             'handle': 'leeashley',
             'id': 1,
@@ -1305,11 +1287,9 @@
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
-          'id': 'bf1b993c',
-          'progress': 30,
-          'retries': 0,
-          'stage': 'HTCWaKMqqBTFitpKyPAV',
-          'state': 'terminated',
+          'id': 1,
+          'progress': 0,
+          'state': 'pending',
           'user': dict({
             'handle': 'leeashley',
             'id': 1,
@@ -1469,11 +1449,9 @@
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
-          'id': 'bf1b993c',
-          'progress': 30,
-          'retries': 0,
-          'stage': 'HTCWaKMqqBTFitpKyPAV',
-          'state': 'terminated',
+          'id': 1,
+          'progress': 0,
+          'state': 'pending',
           'user': dict({
             'handle': 'leeashley',
             'id': 1,
@@ -1560,11 +1538,9 @@
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
-          'id': 'bf1b993c',
-          'progress': 30,
-          'retries': 0,
-          'stage': 'HTCWaKMqqBTFitpKyPAV',
-          'state': 'terminated',
+          'id': 1,
+          'progress': 0,
+          'state': 'pending',
           'user': dict({
             'handle': 'leeashley',
             'id': 1,
@@ -1651,11 +1627,9 @@
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
-          'id': 'bf1b993c',
-          'progress': 30,
-          'retries': 0,
-          'stage': 'HTCWaKMqqBTFitpKyPAV',
-          'state': 'terminated',
+          'id': 1,
+          'progress': 0,
+          'state': 'pending',
           'user': dict({
             'handle': 'leeashley',
             'id': 1,
@@ -1829,11 +1803,9 @@
     'isolate': '',
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
-      'id': 'bf1b993c',
-      'progress': 3,
-      'retries': 0,
-      'stage': None,
-      'state': 'preparing',
+      'id': 1,
+      'progress': 100,
+      'state': 'failed',
       'user': dict({
         'handle': 'leeashley',
         'id': 1,
@@ -1915,11 +1887,9 @@
     'isolate': '',
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
-      'id': 'bf1b993c',
-      'progress': 3,
-      'retries': 0,
-      'stage': None,
-      'state': 'preparing',
+      'id': 1,
+      'progress': 100,
+      'state': 'failed',
       'user': dict({
         'handle': 'leeashley',
         'id': 1,
@@ -2011,11 +1981,9 @@
     'isolate': '',
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
-      'id': 'bf1b993c',
-      'progress': 3,
-      'retries': 0,
-      'stage': None,
-      'state': 'preparing',
+      'id': 1,
+      'progress': 100,
+      'state': 'failed',
       'user': dict({
         'handle': 'leeashley',
         'id': 1,
@@ -2097,11 +2065,9 @@
     'isolate': '',
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
-      'id': 'bf1b993c',
-      'progress': 3,
-      'retries': 0,
-      'stage': None,
-      'state': 'preparing',
+      'id': 1,
+      'progress': 100,
+      'state': 'failed',
       'user': dict({
         'handle': 'leeashley',
         'id': 1,
@@ -2183,16 +2149,14 @@
     }),
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
-      'id': 'fb085f7f',
+      'id': 1,
       'progress': 0,
-      'retries': 0,
-      'stage': None,
-      'state': 'waiting',
+      'state': 'pending',
       'user': dict({
         'handle': 'leeashley',
         'id': 1,
       }),
-      'workflow': 'pathoscope_bowtie',
+      'workflow': 'pathoscope',
     }),
     'ml': None,
     'ready': False,
@@ -2237,11 +2201,9 @@
     'isolate': '',
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
-      'id': 'bf1b993c',
-      'progress': 3,
-      'retries': 0,
-      'stage': None,
-      'state': 'preparing',
+      'id': 1,
+      'progress': 100,
+      'state': 'failed',
       'user': dict({
         'handle': 'leeashley',
         'id': 1,
@@ -2321,16 +2283,14 @@
         }),
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
-          'id': 'bf1b993c',
+          'id': 1,
           'progress': 0,
-          'retries': 0,
-          'stage': None,
-          'state': 'waiting',
+          'state': 'running',
           'user': dict({
             'handle': 'myersmitchell',
             'id': 2,
           }),
-          'workflow': 'pathoscope_bowtie',
+          'workflow': 'pathoscope',
         }),
         'ml': None,
         'ready': True,

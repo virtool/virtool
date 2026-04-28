@@ -348,13 +348,9 @@ class TestCreate:
         assert await resp.json() == snapshot(name="json")
         assert resp.headers["Location"] == snapshot(name="location")
 
-        index, job = await asyncio.gather(
-            mongo.indexes.find_one(),
-            mongo.jobs.find_one(),
-        )
+        index = await mongo.indexes.find_one()
 
         assert index == snapshot(name="index")
-        assert job == snapshot(name="job")
 
         m_create_manifest.assert_called_with(ANY, "foo")
 

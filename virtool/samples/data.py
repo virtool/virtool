@@ -201,7 +201,7 @@ class SamplesData(DataLayerDomain):
         documents = await apply_transforms(
             [base_processor(d) for d in data],
             [
-                AttachJobTransform(self._mongo, self._pg),
+                AttachJobTransform(self._pg),
                 AttachLabelsTransform(self._pg),
                 AttachUploadsTransform(self._pg),
                 AttachUserTransform(self._pg),
@@ -234,7 +234,7 @@ class SamplesData(DataLayerDomain):
             base_processor(document),
             [
                 AttachArtifactsAndReadsTransform(self._pg),
-                AttachJobTransform(self._mongo, self._pg),
+                AttachJobTransform(self._pg),
                 AttachLabelsTransform(self._pg),
                 AttachSubtractionsTransform(self._mongo),
                 AttachUploadsTransform(self._pg),
@@ -333,13 +333,18 @@ class SamplesData(DataLayerDomain):
                 group = None
 
         async with self._mongo.create_session() as session:
-            job_id = await get_new_id(self._mongo.jobs, session=session)
+            sample_id = _id or await get_new_id(self._mongo.samples, session=session)
+
+            job = await self.data.jobs.create(
+                "create_sample",
+                {"sample_id": sample_id},
+                user_id,
+            )
 
             document, _ = await asyncio.gather(
                 self._mongo.samples.insert_one(
                     {
-                        "_id": _id
-                        or await get_new_id(self._mongo.samples, session=session),
+                        "_id": sample_id,
                         "all_read": settings.sample_all_read,
                         "all_write": settings.sample_all_write,
                         "created_at": virtool.utils.timestamp(),
@@ -351,7 +356,7 @@ class SamplesData(DataLayerDomain):
                         "host": data.host,
                         "is_legacy": False,
                         "isolate": data.isolate,
-                        "job": {"id": job_id},
+                        "job": {"id": job.id},
                         "labels": data.labels,
                         "library_type": data.library_type,
                         "locale": data.locale,
@@ -374,16 +379,7 @@ class SamplesData(DataLayerDomain):
                 self.data.uploads.reserve(data.files),
             )
 
-            sample_id = document["_id"]
-
-            await self.data.jobs.create(
-                "create_sample",
-                {"sample_id": sample_id},
-                user_id,
-                job_id=job_id,
-            )
-
-        return await self.get(sample_id)
+        return await self.get(document["_id"])
 
     @emits(Operation.DELETE)
     async def delete(self, sample_id: str) -> Sample:

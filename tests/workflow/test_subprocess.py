@@ -5,7 +5,7 @@ import pytest
 from structlog.testing import LogCapture
 
 from virtool.config.cls import WorkflowConfig
-from virtool.jobs.models import JobState, JobStatus
+from virtool.jobs.models import JobState
 from virtool.workflow import RunSubprocess, Workflow
 from virtool.workflow.errors import SubprocessFailedError
 from virtool.workflow.pytest_plugin.data import WorkflowData
@@ -90,13 +90,6 @@ async def test_terminated_by_cancellation(
     test_txt_path = tmp_path / "test.txt"
 
     workflow_data.job.workflow = "pathoscope"
-    workflow_data.job.status = [
-        JobStatus(
-            progress=0,
-            state=JobState.WAITING,
-            timestamp=static_time.datetime,
-        ),
-    ]
 
     wf = Workflow()
 
@@ -146,17 +139,18 @@ async def test_terminated_by_cancellation(
     await asyncio.sleep(4)
 
     if cancel:
-        workflow_data.job.ping.cancelled = True
+        workflow_data.job.state = JobState.CANCELLED
 
     await runtime_task
-
-    last_status = workflow_data.job.status[-1]
 
     # This file should not have been written if the job was cancelled!
     assert test_txt_path.is_file() is not cancel
 
     if cancel:
-        assert last_status.state == JobState.CANCELLED
         assert log.has("received cancellation signal from ping response", level="info")
     else:
-        assert last_status.state == JobState.COMPLETE
+        assert [update["id"] for update in workflow_data.step_start_updates] == [
+            "first",
+            "second",
+            "third",
+        ]

@@ -54,24 +54,8 @@ def configure_status_hooks() -> None:
     """
 
     @on_step_start
-    async def handle_step_start(push_status) -> None:
-        await push_status()
-
-    @on_error(once=True)
-    async def handle_error(push_status) -> None:
-        await push_status()
-
-    @on_cancelled(once=True)
-    async def handle_cancelled(push_status) -> None:
-        await push_status()
-
-    @on_terminated(once=True)
-    async def handle_terminated(push_status) -> None:
-        await push_status()
-
-    @on_success(once=True)
-    async def handle_success(push_status) -> None:
-        await push_status()
+    async def handle_step_start(start_step) -> None:
+        await start_step()
 
 
 async def execute(
@@ -115,7 +99,7 @@ async def execute(
         else:
             logger.info("workflow terminated")
 
-            scope["_state"] = JobState.TERMINATED
+            scope["_state"] = JobState.FAILED
 
             if not events.terminated.is_set():
                 logger.warning(
@@ -129,7 +113,7 @@ async def execute(
 
     except Exception as error:
         scope["_error"] = error
-        scope["_state"] = JobState.ERROR
+        scope["_state"] = JobState.FAILED
 
         logger.exception(error)
 
@@ -139,7 +123,7 @@ async def execute(
             raise
 
     else:
-        scope["_state"] = JobState.COMPLETE
+        scope["_state"] = JobState.SUCCEEDED
         scope["_step"] = None
 
         if "results" in scope:
@@ -163,7 +147,7 @@ async def run_workflow(
 
     load_builtin_fixtures()
 
-    job_id = str(claimed_job.id)
+    job_id = claimed_job.id
 
     async with (
         api_client(
@@ -179,7 +163,7 @@ async def run_workflow(
         scope["_config"] = config
         scope["_error"] = None
         scope["_job"] = claimed_job
-        scope["_state"] = JobState.WAITING
+        scope["_state"] = JobState.PENDING
         scope["_step"] = None
         scope["_workflow"] = workflow
 

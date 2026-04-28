@@ -16,7 +16,7 @@ logger = get_logger("api")
 
 async def _ping_periodically(
     api: WorkflowAPIClient,
-    job_id: str,
+    job_id: int,
     events: Events,
     parent_task: asyncio.Task,
 ) -> None:
@@ -51,7 +51,7 @@ async def _ping_periodically(
 @asynccontextmanager
 async def ping_periodically(
     api: WorkflowAPIClient,
-    job_id: str,
+    job_id: int,
     events: Events,
 ) -> AsyncIterator[None]:
     """Ping the API to keep the job alive.

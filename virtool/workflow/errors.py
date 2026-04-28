@@ -3,16 +3,6 @@
 from subprocess import SubprocessError
 
 
-class JobAlreadyAcquiredError(Exception):
-    """Raised when an attempt is made to reacquire a job."""
-
-    def __init__(self, job_id: str) -> None:
-        """Initialize the exception with a message containing the job ID."""
-        super().__init__(
-            f"Job {job_id} is has already been acquired.",
-        )
-
-
 class JobsAPIError(Exception):
     """A base exception for errors due to HTTP errors from the jobs API."""
 

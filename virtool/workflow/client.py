@@ -139,7 +139,7 @@ class WorkflowAPIClient:
 @asynccontextmanager
 async def api_client(
     jobs_api_connection_string: str,
-    job_id: str,
+    job_id: int,
     key: str,
 ) -> AsyncIterator[WorkflowAPIClient]:
     """Create an authenticated :class:``APIClient`` to make API request."""

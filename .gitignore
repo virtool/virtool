@@ -3,6 +3,7 @@ __pycache__
 *.pyc
 .idea
 .cache
+.codex
 .DS_store
 .pytest_cache
 .venv

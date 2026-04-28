@@ -6,7 +6,7 @@ from pydantic_factories import ModelFactory, Use
 
 from virtool.analyses.models import Analysis, AnalysisSample
 from virtool.indexes.models import Index, IndexNested
-from virtool.jobs.models import JobAcquired, JobMinimal, JobPing
+from virtool.jobs.models import JobMinimal, JobStep, JobWithKey
 from virtool.ml.models import MLModelRelease
 from virtool.references.models import Reference, ReferenceNested
 from virtool.samples.models import Sample
@@ -26,8 +26,11 @@ class WorkflowData:
     new_index: Index
     """An un-finalized index for testing index creation workflows."""
 
-    job: JobAcquired
+    job: JobWithKey
     """A fake job."""
+
+    acquired: bool
+    """Whether the fake job has been claimed."""
 
     ml: MLModelRelease | None
     """An ML model release used in the active analysis."""
@@ -46,6 +49,9 @@ class WorkflowData:
 
     new_subtraction: Subtraction
     """An un-finalized subtraction for testing subtraction creation workflows."""
+
+    step_start_updates: list[dict]
+    """Step start updates pushed during the workflow, for test assertions."""
 
 
 @pytest.fixture
@@ -67,9 +73,11 @@ def workflow_data(
     IndexFactory.seed_random(12)
 
     class JobFactory(ModelFactory):
-        __model__ = JobAcquired
+        __model__ = JobWithKey
 
+        claimed_at = Use(lambda: static_time.datetime)
         created_at = Use(lambda: static_time.datetime)
+        pinged_at = Use(lambda: static_time.datetime)
         timestamp = Use(lambda: static_time.datetime)
 
     JobFactory.seed_random(55)
@@ -101,16 +109,24 @@ def workflow_data(
 
         created_at = Use(lambda: static_time.datetime)
 
-    job: JobAcquired = JobFactory.build()
+    job: JobWithKey = JobFactory.build()
 
-    job.id = "1"
-    job.acquired = False
+    job.id = 1
     job.args = {
         "item_id": 1211,
         "resource_id": "foo",
         "test": True,
     }
-    job.ping = JobPing(cancelled=False, pinged_at=static_time.datetime)
+    job.pinged_at = static_time.datetime
+    job.key = "test_key"
+    job.steps = [
+        JobStep(
+            description="SbXerFVrWCqqjehJZicZ",
+            id="psihdpFaJrqQyqzKcYbM",
+            name="RaOtEacjXkNWWrsBOfMP",
+            started_at=static_time.datetime,
+        ),
+    ]
 
     """A finalized sample to be used for testing analyses."""
     sample = SampleFactory.build()
@@ -205,10 +221,12 @@ def workflow_data(
         index=index,
         new_index=new_index,
         job=job,
+        acquired=False,
         ml=ml,
         reference=reference,
         sample=sample,
         new_sample=new_sample,
         subtraction=subtraction,
         new_subtraction=new_subtraction,
+        step_start_updates=[],
     )

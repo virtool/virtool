@@ -149,7 +149,7 @@ class AnalysisData(DataLayerDomain):
             [base_processor(d) for d in documents],
             [
                 AttachMLTransform(self._pg),
-                AttachJobTransform(self._mongo, self._pg),
+                AttachJobTransform(self._pg),
                 AttachReferenceTransform(self._mongo),
                 AttachSubtractionsTransform(self._mongo),
                 AttachUserTransform(self._pg),
@@ -211,7 +211,7 @@ class AnalysisData(DataLayerDomain):
             document["subtractions"] = []
 
         transforms = [
-            AttachJobTransform(self._mongo, self._pg),
+            AttachJobTransform(self._pg),
             AttachMLTransform(self._pg),
             AttachReferenceTransform(self._mongo),
             AttachSubtractionsTransform(self._mongo),
@@ -258,7 +258,13 @@ class AnalysisData(DataLayerDomain):
         )
 
         analysis_id = await get_new_id(self._mongo.analyses)
-        job_id = await get_new_id(self._mongo.jobs)
+
+        job = await self.data.jobs.create(
+            data.workflow.value,
+            {"analysis_id": analysis_id},
+            user_id,
+            space_id,
+        )
 
         await self._mongo.analyses.insert_one(
             {
@@ -266,7 +272,7 @@ class AnalysisData(DataLayerDomain):
                 "created_at": created_at,
                 "files": [],
                 "index": {"id": index_id, "version": index_version},
-                "job": {"id": job_id},
+                "job": {"id": job.id},
                 "ml": data.ml,
                 "reference": {
                     "id": data.ref_id,
@@ -282,16 +288,6 @@ class AnalysisData(DataLayerDomain):
                 },
                 "workflow": data.workflow.value,
             },
-        )
-
-        await self.data.jobs.create(
-            data.workflow.value,
-            {
-                "analysis_id": analysis_id,
-            },
-            user_id,
-            space_id,
-            job_id,
         )
 
         return await self.get(analysis_id, None)

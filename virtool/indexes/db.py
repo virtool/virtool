@@ -95,7 +95,7 @@ async def create(
     mongo,
     ref_id: str,
     user_id: str,
-    job_id: str,
+    job_id: int,
     index_id: str | None = None,
 ) -> dict:
     """Create a new index and update history to show the version and id of the new
@@ -189,7 +189,7 @@ async def find(
         "documents": await apply_transforms(
             [base_processor(d) for d in data["documents"]],
             [
-                AttachJobTransform(mongo, pg),
+                AttachJobTransform(pg),
                 AttachReferenceTransform(mongo),
                 AttachUserTransform(pg),
                 IndexCountsTransform(mongo),

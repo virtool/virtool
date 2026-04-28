@@ -32,7 +32,7 @@ class AbstractClient(ABC):
 
 
 class JobClient(AbstractClient):
-    def __init__(self, job_id: str):
+    def __init__(self, job_id: int):
         self.job_id = job_id
 
     @property

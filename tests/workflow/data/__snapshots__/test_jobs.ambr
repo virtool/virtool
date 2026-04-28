@@ -1,45 +1,30 @@
 # serializer version: 1
 # name: test_ok[pydantic]
   dict({
-    'acquired': False,
     'args': dict({
       'item_id': 1211,
       'resource_id': 'foo',
       'test': True,
     }),
+    'claim': None,
+    'claimed_at': datetime.datetime(2015, 10, 6, 20, 0, tzinfo=datetime.timezone.utc),
     'created_at': datetime.datetime(2015, 10, 6, 20, 0, tzinfo=datetime.timezone.utc),
-    'id': '1',
-    'ping': dict({
-      'cancelled': False,
-      'pinged_at': datetime.datetime(2015, 10, 6, 20, 0, tzinfo=datetime.timezone.utc),
-    }),
-    'progress': 6380,
-    'retries': 2614,
-    'stage': 'NdGxgYaOXiiqkTGjYkYt',
+    'id': 1,
+    'pinged_at': datetime.datetime(2015, 10, 6, 20, 0, tzinfo=datetime.timezone.utc),
+    'progress': 2614,
     'state': <JobState.RUNNING: 'running'>,
-    'status': list([
+    'steps': list([
       dict({
-        'error': dict({
-          'details': list([
-            'bMrnHhYHPrkZDgUvitdv',
-          ]),
-          'traceback': list([
-            'hVGiBXJqoyUfQBjWTjzA',
-          ]),
-          'type': 'CAdPsEbpDIRnZLXrjSyO',
-        }),
-        'progress': 5339,
-        'stage': 'IyQHPsHMRsRTJYXABiRW',
-        'state': <JobState.ERROR: 'error'>,
-        'step_description': None,
-        'step_name': None,
-        'timestamp': datetime.datetime(2015, 10, 6, 20, 0, tzinfo=datetime.timezone.utc),
+        'description': 'SbXerFVrWCqqjehJZicZ',
+        'id': 'psihdpFaJrqQyqzKcYbM',
+        'name': 'RaOtEacjXkNWWrsBOfMP',
+        'started_at': datetime.datetime(2015, 10, 6, 20, 0, tzinfo=datetime.timezone.utc),
       }),
     ]),
     'user': dict({
-      'handle': 'sihdpFaJrqQyqzKcYbMR',
-      'id': 353,
+      'handle': 'XerFVrWCqqjehJZicZBv',
+      'id': 7093,
     }),
-    'workflow': 'aOtEacjXkNWWrsBOfMPS',
+    'workflow': <Workflow.AODP: 'aodp'>,
   })
 # ---

@@ -37,7 +37,7 @@ from virtool.history.models import HistorySearchResult
 from virtool.indexes.models import IndexMinimal, IndexSearchResult
 from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_mongo_from_app, get_new_id, get_one_field
+from virtool.mongo.utils import get_mongo_from_app, get_one_field
 from virtool.otus.models import OTU, OTUSearchResult
 from virtool.otus.oas import CreateOTURequest
 from virtool.pg.utils import get_row_by_id
@@ -589,18 +589,21 @@ class ReferencesData(DataLayerDomain):
         ):
             raise ResourceError("There are no unbuilt changes")
 
-        job_id = await get_new_id(self._mongo.jobs)
+        index_id = await virtool.mongo.utils.get_new_id(self._mongo.indexes)
 
-        document = await virtool.indexes.db.create(self._mongo, ref_id, user_id, job_id)
-
-        await self.data.jobs.create(
+        job = await self.data.jobs.create(
             "build_index",
-            {
-                "index_id": document["_id"],
-            },
+            {"index_id": index_id},
             user_id,
             0,
-            job_id=job_id,
+        )
+
+        document = await virtool.indexes.db.create(
+            self._mongo,
+            ref_id,
+            user_id,
+            job.id,
+            index_id=index_id,
         )
 
         return await self.data.index.get(document["_id"])

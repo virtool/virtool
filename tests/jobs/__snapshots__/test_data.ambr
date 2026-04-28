@@ -1,107 +1,21 @@
 # serializer version: 1
-# name: test_acquire
-  dict({
-    'acquired': True,
-    'args': dict({
-    }),
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'id': 'foo',
-    'key': 'key',
-    'ping': dict({
-      'cancelled': False,
-      'pinged_at': datetime.datetime(2015, 10, 6, 20, 0),
-    }),
-    'progress': 3,
-    'retries': 0,
-    'stage': None,
-    'state': <JobState.PREPARING: 'preparing'>,
-    'status': list([
-      dict({
-        'error': None,
-        'progress': 3,
-        'stage': None,
-        'state': <JobState.PREPARING: 'preparing'>,
-        'step_description': None,
-        'step_name': None,
-        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
-      }),
-    ]),
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 1,
-    }),
-    'workflow': 'build_index',
-  })
-# ---
-# name: test_acquire.1
-  dict({
-    '_id': 'foo',
-    'acquired': True,
-    'archived': False,
-    'args': dict({
-    }),
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'key': 'hashed',
-    'ping': dict({
-      'pinged_at': datetime.datetime(2015, 10, 6, 20, 0),
-    }),
-    'rights': dict({
-    }),
-    'state': 'preparing',
-    'status': list([
-      dict({
-        'error': None,
-        'progress': 3,
-        'stage': None,
-        'state': 'preparing',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
-      }),
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'workflow': 'build_index',
-  })
-# ---
 # name: test_cancel
   dict({
-    'acquired': False,
     'args': dict({
     }),
+    'claim': None,
+    'claimed_at': None,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'id': 'foo',
-    'ping': None,
-    'progress': 0,
-    'retries': 0,
-    'stage': 'foo',
+    'id': 1,
+    'pinged_at': None,
+    'progress': 100,
     'state': <JobState.CANCELLED: 'cancelled'>,
-    'status': list([
-      dict({
-        'error': None,
-        'progress': 0,
-        'stage': 'foo',
-        'state': <JobState.RUNNING: 'running'>,
-        'step_description': None,
-        'step_name': None,
-        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
-      }),
-      dict({
-        'error': None,
-        'progress': 0,
-        'stage': 'foo',
-        'state': <JobState.CANCELLED: 'cancelled'>,
-        'step_description': None,
-        'step_name': None,
-        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
-      }),
-    ]),
+    'steps': None,
     'user': dict({
       'handle': 'leeashley',
       'id': 1,
     }),
-    'workflow': 'build_index',
+    'workflow': <Workflow.BUILD_INDEX: 'build_index'>,
   })
 # ---
 # name: test_cancel.1
@@ -138,35 +52,44 @@
     'workflow': 'build_index',
   })
 # ---
-# name: test_create[None]
+# name: test_create
   dict({
-    'acquired': False,
     'args': dict({
       'sample_id': 'foo',
     }),
+    'claim': None,
+    'claimed_at': None,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'id': 'bf1b993c',
-    'ping': None,
+    'id': 1,
+    'pinged_at': None,
     'progress': 0,
-    'retries': 0,
-    'stage': None,
-    'state': <JobState.WAITING: 'waiting'>,
-    'status': list([
-      dict({
-        'error': None,
-        'progress': 0,
-        'stage': None,
-        'state': <JobState.WAITING: 'waiting'>,
-        'step_description': None,
-        'step_name': None,
-        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
-      }),
-    ]),
+    'state': <JobState.PENDING: 'pending'>,
+    'steps': None,
     'user': dict({
       'handle': 'leeashley',
       'id': 1,
     }),
-    'workflow': 'create_sample',
+    'workflow': <Workflow.CREATE_SAMPLE: 'create_sample'>,
+  })
+# ---
+# name: test_create[None]
+  dict({
+    'args': dict({
+      'sample_id': 'foo',
+    }),
+    'claim': None,
+    'claimed_at': None,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'id': 'random8c',
+    'pinged_at': None,
+    'progress': 0,
+    'state': <JobState.PENDING: 'pending'>,
+    'steps': None,
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 1,
+    }),
+    'workflow': <Workflow.CREATE_SAMPLE: 'create_sample'>,
   })
 # ---
 # name: test_create[None].1
@@ -204,33 +127,22 @@
 # ---
 # name: test_create[bar]
   dict({
-    'acquired': False,
     'args': dict({
       'sample_id': 'foo',
     }),
+    'claim': None,
+    'claimed_at': None,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'id': 'bar',
-    'ping': None,
+    'pinged_at': None,
     'progress': 0,
-    'retries': 0,
-    'stage': None,
-    'state': <JobState.WAITING: 'waiting'>,
-    'status': list([
-      dict({
-        'error': None,
-        'progress': 0,
-        'stage': None,
-        'state': <JobState.WAITING: 'waiting'>,
-        'step_description': None,
-        'step_name': None,
-        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
-      }),
-    ]),
+    'state': <JobState.PENDING: 'pending'>,
+    'steps': None,
     'user': dict({
       'handle': 'leeashley',
       'id': 1,
     }),
-    'workflow': 'create_sample',
+    'workflow': <Workflow.CREATE_SAMPLE: 'create_sample'>,
   })
 # ---
 # name: test_create[bar].1

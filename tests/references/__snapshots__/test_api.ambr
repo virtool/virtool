@@ -987,14 +987,12 @@
     'files': list([
     ]),
     'has_files': True,
-    'id': 'fb085f7f',
+    'id': 'bf1b993c',
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
-      'id': 'bf1b993c',
+      'id': 1,
       'progress': 0,
-      'retries': 0,
-      'stage': None,
-      'state': 'waiting',
+      'state': 'pending',
       'user': dict({
         'handle': 'leeashley',
         'id': 1,
@@ -1023,12 +1021,12 @@
 # ---
 # name: test_create_index[True].1
   dict({
-    '_id': 'fb085f7f',
+    '_id': 'bf1b993c',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'has_files': True,
     'has_json': False,
     'job': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'manifest': dict({
       'bar': 5,

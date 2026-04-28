@@ -17,10 +17,8 @@ from virtool.fake.next import DataFaker
 from virtool.groups.oas import PermissionsUpdate
 from virtool.models.enums import Permission
 from virtool.models.roles import AdministratorRole
-from virtool.mongo.core import Mongo
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.users.oas import UpdateUserRequest
-from virtool.utils import hash_key
 
 
 class TestAPIKeyAuthentication:
@@ -281,7 +279,6 @@ class TestJobAuthentication:
 
     async def test_protected_fails(
         self,
-        mongo: Mongo,
         spawn_client: ClientSpawner,
     ):
         """Check that a request against GET /samples using job authentication fails.
@@ -296,8 +293,6 @@ class TestJobAuthentication:
         await get_data_from_app(client.app).settings.update(
             UpdateSettingsRequest(minimum_password_length=8),
         )
-
-        await mongo.jobs.insert_one({"_id": "foo", "key": hash_key(key)})
 
         resp = await client.get("/samples")
 
