@@ -386,3 +386,66 @@ class TestHasRight:
             client,
             SampleRight.write,
         )
+
+
+class TestHasResourcesForAnalysisJob:
+    @staticmethod
+    async def _seed(mongo: Mongo, *, archived: bool = False) -> None:
+        await mongo.references.insert_one(
+            {
+                "_id": "test_ref",
+                "archived": archived,
+                "data_type": "genome",
+                "name": "Test Reference",
+            },
+        )
+        await mongo.indexes.insert_one(
+            {
+                "_id": "test_index",
+                "reference": {"id": "test_ref"},
+                "ready": True,
+                "version": 1,
+            },
+        )
+        await mongo.subtraction.insert_one(
+            {"_id": "subtraction_1", "name": "Subtraction 1"},
+        )
+
+    async def test_ok(self, data_layer: DataLayer, mongo: Mongo):
+        await self._seed(mongo)
+
+        assert (
+            await data_layer.samples.has_resources_for_analysis_job(
+                "test_ref",
+                ["subtraction_1"],
+            )
+            is None
+        )
+
+    async def test_missing_reference(self, data_layer: DataLayer, mongo: Mongo):
+        with pytest.raises(ResourceConflictError, match=r"Reference does not exist"):
+            await data_layer.samples.has_resources_for_analysis_job(
+                "test_ref",
+                ["subtraction_1"],
+            )
+
+    async def test_archived_reference(self, data_layer: DataLayer, mongo: Mongo):
+        await self._seed(mongo, archived=True)
+
+        with pytest.raises(ResourceConflictError, match=r"Reference is archived"):
+            await data_layer.samples.has_resources_for_analysis_job(
+                "test_ref",
+                ["subtraction_1"],
+            )
+
+    async def test_missing_subtraction(self, data_layer: DataLayer, mongo: Mongo):
+        await self._seed(mongo)
+
+        with pytest.raises(
+            ResourceConflictError,
+            match=r"Subtractions do not exist: missing",
+        ):
+            await data_layer.samples.has_resources_for_analysis_job(
+                "test_ref",
+                ["missing"],
+            )

@@ -463,7 +463,7 @@ class AnalysesView(PydanticView):
                 self.request,
             ).samples.has_resources_for_analysis_job(data.ref_id, data.subtractions)
         except ResourceError as err:
-            raise APIBadRequest(str(err))
+            raise APIConflict(str(err))
 
         analysis = await get_data_from_req(self.request).analyses.create(
             data,

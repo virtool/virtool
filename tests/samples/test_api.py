@@ -1135,7 +1135,15 @@ async def test_find_analyses(
 
 @pytest.mark.parametrize(
     "error",
-    [None, "400_reference", "400_index", "400_ready_index", "400_subtraction", "404"],
+    [
+        None,
+        "409_reference",
+        "409_archived",
+        "409_index",
+        "409_ready_index",
+        "409_subtraction",
+        "404",
+    ],
 )
 async def test_analyze(
     error: str | None,
@@ -1151,27 +1159,27 @@ async def test_analyze(
     client = await spawn_client(authenticated=True)
     client.app["jobs"] = MockJobInterface()
 
-    if error != "400_reference":
+    if error != "409_reference":
         await mongo.references.insert_one(
             {
                 "_id": "test_ref",
-                "archived": False,
+                "archived": error == "409_archived",
                 "data_type": "genome",
                 "name": "Test Reference",
             },
         )
 
-    if error != "400_index":
+    if error != "409_index":
         await mongo.indexes.insert_one(
             {
                 "_id": "test",
                 "reference": {"id": "test_ref"},
-                "ready": error != "400_ready_index",
+                "ready": error != "409_ready_index",
                 "version": 4,
             },
         )
 
-    if error != "400_subtraction":
+    if error != "409_subtraction":
         await mongo.subtraction.insert_one(
             {"_id": "subtraction_1", "name": "Subtraction 1"},
         )
@@ -1204,12 +1212,14 @@ async def test_analyze(
             assert resp.status == 201
             assert resp.headers["Location"] == "/analyses/bf1b993c"
             assert await resp.json() == snapshot
-        case "400_reference":
-            await resp_is.bad_request(resp, "Reference does not exist")
-        case ("400_index", "400_ready_index"):
-            await resp_is.bad_request(resp, "No ready index")
-        case "400_subtraction":
-            await resp_is.bad_request(resp, "Subtractions do not exist: subtraction_1")
+        case "409_reference":
+            await resp_is.conflict(resp, "Reference does not exist")
+        case "409_archived":
+            await resp_is.conflict(resp, "Reference is archived")
+        case ("409_index", "409_ready_index"):
+            await resp_is.conflict(resp, "No ready index")
+        case "409_subtraction":
+            await resp_is.conflict(resp, "Subtractions do not exist: subtraction_1")
         case "404":
             await resp_is.not_found(resp)
 
