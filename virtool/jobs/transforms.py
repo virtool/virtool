@@ -78,8 +78,12 @@ class AttachJobTransform(AbstractTransform):
         def lookup(job_id):
             if job_id is None:
                 return None
-            if isinstance(job_id, int) or (isinstance(job_id, str) and job_id.isdigit()):
-                return jobs_by_pg_id.get(int(job_id)) or jobs_by_legacy_id.get(str(job_id))
+            if isinstance(job_id, int) or (
+                isinstance(job_id, str) and job_id.isdigit()
+            ):
+                return jobs_by_pg_id.get(int(job_id)) or jobs_by_legacy_id.get(
+                    str(job_id)
+                )
             return jobs_by_legacy_id.get(job_id)
 
         return {d["id"]: lookup(get_safely(d, "job", "id")) for d in documents}

@@ -188,9 +188,8 @@ class SubtractionsData(DataLayerDomain):
         if upload is None:
             raise ResourceNotFoundError("Upload does not exist")
 
-        new_subtraction_id = (
-            subtraction_id
-            or await virtool.mongo.utils.get_new_id(self._mongo.subtraction)
+        new_subtraction_id = subtraction_id or await virtool.mongo.utils.get_new_id(
+            self._mongo.subtraction
         )
 
         job = await self.data.jobs.create(
