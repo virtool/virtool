@@ -24,12 +24,11 @@ class AttachJobTransform(AbstractTransform):
         if job_id is None:
             return None
 
-        async with AsyncSession(self._pg) as pg_session:
-            sql_job = (
-                await pg_session.execute(
-                    select(SQLJob).where(_match_job_id(job_id)),
-                )
-            ).scalar()
+        sql_job = (
+            await session.execute(
+                select(SQLJob).where(_match_job_id(job_id)),
+            )
+        ).scalar()
 
         if sql_job is None:
             return None
@@ -49,16 +48,15 @@ class AttachJobTransform(AbstractTransform):
         job_ids.discard(None)
 
         if job_ids:
-            async with AsyncSession(self._pg) as pg_session:
-                sql_jobs = (
-                    (
-                        await pg_session.execute(
-                            select(SQLJob).where(_match_job_ids(job_ids)),
-                        )
+            sql_jobs = (
+                (
+                    await session.execute(
+                        select(SQLJob).where(_match_job_ids(job_ids)),
                     )
-                    .scalars()
-                    .all()
                 )
+                .scalars()
+                .all()
+            )
         else:
             sql_jobs = []
 
