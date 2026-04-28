@@ -18,11 +18,9 @@ def check_email(email: str | None) -> str:
         return email
 
     try:
-        validate_email(email, check_deliverability=False)
+        return validate_email(email, check_deliverability=False).normalized
     except EmailSyntaxError:
         raise ValueError("The format of the email is invalid")
-
-    return email
 
 
 class AccountSettings(BaseModel):
