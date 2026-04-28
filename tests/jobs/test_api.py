@@ -12,7 +12,6 @@ from syrupy.matchers import path_type
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from tests.fixtures.response import RespIs
 from virtool.fake.next import DataFaker
-from virtool.flags import FlagName
 from virtool.jobs.models import JobState
 from virtool.jobs.pg import SQLJob
 from virtool.models.enums import Permission
@@ -314,7 +313,6 @@ class TestClaim:
         """Test that a job can be claimed successfully."""
         client = await spawn_job_client(
             authenticated=False,
-            flags=[FlagName.JOBS_IN_POSTGRES],
         )
 
         user = await fake.users.create()
@@ -382,7 +380,6 @@ class TestClaim:
         """Test that 404 is returned when no pending job is available."""
         client = await spawn_job_client(
             authenticated=False,
-            flags=[FlagName.JOBS_IN_POSTGRES],
         )
 
         resp = await client.post(
@@ -409,7 +406,6 @@ class TestClaim:
         """Test that the oldest pending job is claimed first."""
         client = await spawn_job_client(
             authenticated=False,
-            flags=[FlagName.JOBS_IN_POSTGRES],
         )
 
         user = await fake.users.create()
@@ -457,7 +453,6 @@ class TestClaim:
     ):
         client = await spawn_job_client(
             authenticated=False,
-            flags=[FlagName.JOBS_IN_POSTGRES],
         )
 
         user = await fake.users.create()
@@ -501,7 +496,6 @@ class TestClaim:
         """Test that already-claimed jobs are skipped."""
         client = await spawn_job_client(
             authenticated=False,
-            flags=[FlagName.JOBS_IN_POSTGRES],
         )
 
         user = await fake.users.create()
@@ -577,7 +571,6 @@ class TestStartStep:
         """Test that a step can be started successfully."""
         client = await spawn_job_client(
             authenticated=False,
-            flags=[FlagName.JOBS_IN_POSTGRES],
         )
 
         user = await fake.users.create()
@@ -621,7 +614,6 @@ class TestStartStep:
         """Test that 404 is returned when job doesn't exist."""
         client = await spawn_job_client(
             authenticated=False,
-            flags=[FlagName.JOBS_IN_POSTGRES],
         )
 
         resp = await client.post("/jobs/99999/steps/step_1/start")
@@ -637,7 +629,6 @@ class TestStartStep:
         """Test that 404 is returned when step doesn't exist."""
         client = await spawn_job_client(
             authenticated=False,
-            flags=[FlagName.JOBS_IN_POSTGRES],
         )
 
         user = await fake.users.create()
@@ -671,7 +662,6 @@ class TestStartStep:
         """Test that 409 is returned when step is already started."""
         client = await spawn_job_client(
             authenticated=False,
-            flags=[FlagName.JOBS_IN_POSTGRES],
         )
 
         user = await fake.users.create()
@@ -716,7 +706,6 @@ class TestStartStep:
         """Test that 409 is returned when job is in a terminal state."""
         client = await spawn_job_client(
             authenticated=False,
-            flags=[FlagName.JOBS_IN_POSTGRES],
         )
 
         user = await fake.users.create()
