@@ -5,15 +5,37 @@ from aiohttp import BasicAuth
 from aiohttp.web_request import Request
 from aiohttp.web_response import Response
 from aiohttp.web_routedef import RouteTableDef
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from virtool.flags import FlagName
 from virtool.jobs.models import JobState
+from virtool.jobs.pg import SQLJob
 
 test_routes = RouteTableDef()
 
+CLAIM_BODY = {
+    "runner_id": "runner-1",
+    "mem": 8.0,
+    "cpu": 4.0,
+    "image": "virtool/workflow:1.0.0",
+    "runtime_version": "1.0.0",
+    "workflow_version": "2.0.0",
+    "steps": [],
+}
 
-@test_routes.patch("/test_jobs/{job_id}")
-def public_test_route(request: Request):
-    return Response(status=200)
+
+async def claim_job(client, job) -> str:
+    response = await client.post(
+        f"/jobs/claim?workflow={job.workflow.value}",
+        json=CLAIM_BODY,
+    )
+    body = await response.json()
+
+    assert response.status == HTTPStatus.OK
+    assert "key" in body
+
+    return body["key"]
 
 
 @test_routes.get("/not_public")
@@ -22,14 +44,16 @@ def non_public_test_route(request: Request):
 
 
 async def test_public_routes_are_public(fake, spawn_job_client):
-    """Test that the acquire endpoint is public and doesn't require authentication."""
-    client = await spawn_job_client(authenticated=False)
+    """Test that the claim endpoint is public and doesn't require authentication."""
+    client = await spawn_job_client(
+        authenticated=False,
+        flags=[FlagName.JOBS_IN_POSTGRES],
+    )
 
     user = await fake.users.create()
-    job = await fake.jobs.create(user=user, state=JobState.WAITING)
+    await fake.jobs.create(user=user, state=JobState.PENDING, workflow="nuvs")
 
-    # Should be able to acquire without authentication
-    response = await client.patch(f"/jobs/{job.id}", json={"acquired": True})
+    response = await client.post("/jobs/claim?workflow=nuvs", json=CLAIM_BODY)
 
     assert response.status == HTTPStatus.OK
 
@@ -56,26 +80,18 @@ async def test_unauthorized_when_header_invalid(spawn_job_client):
 
 
 async def test_authorized_when_header_is_valid(fake, spawn_job_client):
-    """Test that a job can authenticate after acquiring with the returned key."""
+    """Test that a job can authenticate after claiming with the returned key."""
     user = await fake.users.create()
-    job = await fake.jobs.create(user=user, state=JobState.WAITING)
+    job = await fake.jobs.create(user=user, state=JobState.PENDING, workflow="nuvs")
 
-    # Use single client with test routes
-    client = await spawn_job_client(authenticated=False, add_route_table=test_routes)
-
-    # Acquire the job to get the key (hits real acquire endpoint, not test_routes)
-    acquire_response = await client.patch(
-        f"/jobs/{job.id}",
-        json={"acquired": True},
+    client = await spawn_job_client(
+        authenticated=False,
+        add_route_table=test_routes,
+        flags=[FlagName.JOBS_IN_POSTGRES],
     )
-    acquire_body = await acquire_response.json()
 
-    assert acquire_response.status == HTTPStatus.OK
-    assert "key" in acquire_body
+    key = await claim_job(client, job)
 
-    key = acquire_body["key"]
-
-    # Test authentication with the key
     auth = BasicAuth(login=f"job-{job.id}", password=key)
     response = await client.get(
         "/not_public",
@@ -89,22 +105,17 @@ async def test_unauthorized_with_wrong_job_id(fake, spawn_job_client):
     """Test that a job cannot authenticate using another job's ID."""
     user = await fake.users.create()
 
-    job_1 = await fake.jobs.create(user=user, state=JobState.WAITING)
-    job_2 = await fake.jobs.create(user=user, state=JobState.WAITING)
+    job_1 = await fake.jobs.create(user=user, state=JobState.PENDING, workflow="nuvs")
+    job_2 = await fake.jobs.create(user=user, state=JobState.PENDING, workflow="nuvs")
 
-    client = await spawn_job_client(authenticated=False, add_route_table=test_routes)
-
-    # Acquire job_1 and get its key
-    acquire_response = await client.patch(
-        f"/jobs/{job_1.id}",
-        json={"acquired": True},
+    client = await spawn_job_client(
+        authenticated=False,
+        add_route_table=test_routes,
+        flags=[FlagName.JOBS_IN_POSTGRES],
     )
-    acquire_body = await acquire_response.json()
 
-    assert acquire_response.status == HTTPStatus.OK
-    key_1 = acquire_body["key"]
+    key_1 = await claim_job(client, job_1)
 
-    # Try to authenticate using job_2's ID with job_1's key
     auth = BasicAuth(login=f"job-{job_2.id}", password=key_1)
     response = await client.get(
         "/not_public",
@@ -117,18 +128,15 @@ async def test_unauthorized_with_wrong_job_id(fake, spawn_job_client):
 async def test_unauthorized_with_wrong_key(fake, spawn_job_client):
     """Test that a job cannot authenticate with an incorrect key."""
     user = await fake.users.create()
-    job = await fake.jobs.create(user=user, state=JobState.WAITING)
+    job = await fake.jobs.create(user=user, state=JobState.PENDING, workflow="nuvs")
 
-    client = await spawn_job_client(authenticated=False, add_route_table=test_routes)
-
-    # Acquire the job successfully
-    acquire_response = await client.patch(
-        f"/jobs/{job.id}",
-        json={"acquired": True},
+    client = await spawn_job_client(
+        authenticated=False,
+        add_route_table=test_routes,
+        flags=[FlagName.JOBS_IN_POSTGRES],
     )
-    assert acquire_response.status == HTTPStatus.OK
+    await claim_job(client, job)
 
-    # Try to authenticate with correct job ID but wrong key
     auth = BasicAuth(login=f"job-{job.id}", password="wrong_key")
     response = await client.get(
         "/not_public",
@@ -154,44 +162,36 @@ async def test_unauthorized_with_nonexistent_job(spawn_job_client):
 @pytest.mark.parametrize(
     "state",
     [
-        JobState.COMPLETE,
-        JobState.ERROR,
+        JobState.SUCCEEDED,
+        JobState.FAILED,
         JobState.CANCELLED,
-        JobState.TERMINATED,
-        JobState.TIMEOUT,
     ],
 )
 async def test_unauthorized_when_job_in_terminal_state(
     state: JobState,
-    data_layer,
     fake,
+    pg: AsyncEngine,
     spawn_job_client,
 ):
     """Test that jobs in terminal states cannot authenticate even with valid credentials."""
     user = await fake.users.create()
-    job = await fake.jobs.create(user=user, state=JobState.WAITING)
+    job = await fake.jobs.create(user=user, state=JobState.PENDING, workflow="nuvs")
 
-    client = await spawn_job_client(authenticated=False, add_route_table=test_routes)
-
-    # Acquire the job and get valid credentials
-    acquire_response = await client.patch(
-        f"/jobs/{job.id}",
-        json={"acquired": True},
-    )
-    acquire_body = await acquire_response.json()
-
-    assert acquire_response.status == HTTPStatus.OK
-    key = acquire_body["key"]
-
-    # Push terminal status to job
-    await data_layer.jobs.push_status(
-        job.id,
-        state,
-        stage=None,
-        progress=100,
+    client = await spawn_job_client(
+        authenticated=False,
+        add_route_table=test_routes,
+        flags=[FlagName.JOBS_IN_POSTGRES],
     )
 
-    # Try to authenticate with valid credentials but terminal state job
+    key = await claim_job(client, job)
+
+    async with AsyncSession(pg) as session:
+        sql_job = (
+            await session.execute(select(SQLJob).where(SQLJob.id == job.id))
+        ).scalar()
+        sql_job.state = state.value
+        await session.commit()
+
     auth = BasicAuth(login=f"job-{job.id}", password=key)
     response = await client.get(
         "/not_public",

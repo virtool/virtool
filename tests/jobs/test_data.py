@@ -1,9 +1,7 @@
 import arrow
 import pytest
-from pytest_mock import MockerFixture
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from syrupy import SnapshotAssertion
 
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
@@ -16,54 +14,27 @@ from virtool.jobs.pg import (
     SQLJobSample,
     SQLJobSubtraction,
 )
-from virtool.mongo.core import Mongo
 from virtool.users.models import User
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
 @pytest.fixture
-async def jobs_data(mongo, pg: AsyncEngine) -> JobsData:
-    return JobsData(mongo, pg)
+async def jobs_data(pg: AsyncEngine) -> JobsData:
+    return JobsData(pg)
 
 
-async def test_cancel(
-    mongo, fake: DataFaker, jobs_data: JobsData, snapshot, static_time
-):
+async def test_cancel(fake: DataFaker, jobs_data: JobsData, snapshot, static_time):
     user = await fake.users.create()
 
-    await mongo.jobs.insert_one(
-        {
-            "_id": "foo",
-            "created_at": static_time.datetime,
-            "state": "waiting",
-            "status": [
-                {
-                    "state": "running",
-                    "stage": "foo",
-                    "error": None,
-                    "progress": 0.33,
-                    "timestamp": static_time.datetime,
-                },
-            ],
-            "rights": {},
-            "archived": False,
-            "workflow": "build_index",
-            "args": {},
-            "user": {"id": user.id},
-        },
-    )
+    job = await jobs_data.create("build_index", {}, user.id, 0)
 
-    assert await jobs_data.cancel("foo") == snapshot
-    assert await mongo.jobs.find_one() == snapshot
+    assert await jobs_data.cancel(job.id) == snapshot
 
 
-@pytest.mark.parametrize("job_id", ["bar", None])
 async def test_create(
-    job_id,
     jobs_data: JobsData,
     mocker,
     snapshot,
-    mongo,
     static_time,
     fake: DataFaker,
 ):
@@ -71,57 +42,19 @@ async def test_create(
 
     user = await fake.users.create()
 
-    job = await jobs_data.create(
-        "create_sample", {"sample_id": "foo"}, user.id, 0, job_id=job_id
-    )
+    job = await jobs_data.create("create_sample", {"sample_id": "foo"}, user.id, 0)
 
     assert job == snapshot
 
-    assert await mongo.jobs.find_one() == snapshot
 
-
-async def test_acquire(
-    mongo: Mongo,
-    fake: DataFaker,
-    jobs_data: JobsData,
-    mocker: MockerFixture,
-    snapshot: SnapshotAssertion,
-    static_time: StaticTime,
-):
-    user = await fake.users.create()
-
-    mocker.patch("virtool.utils.generate_key", return_value=("key", "hashed"))
-
-    await mongo.jobs.insert_one(
-        {
-            "_id": "foo",
-            "acquired": False,
-            "created_at": static_time.datetime,
-            "key": None,
-            "rights": {},
-            "archived": False,
-            "workflow": "build_index",
-            "args": {},
-            "user": {"id": user.id},
-        },
-    )
-
-    assert await jobs_data.acquire("foo") == snapshot
-    assert await mongo.jobs.find_one() == snapshot
-
-
-async def test_force_delete_jobs(
-    fake: DataFaker, jobs_data: JobsData, mongo, pg: AsyncEngine
-):
+async def test_force_delete_jobs(fake: DataFaker, jobs_data: JobsData, pg: AsyncEngine):
     """Test that jobs can be force deleted."""
     user = await fake.users.create()
 
     await fake.jobs.create(user, state=JobState.RUNNING)
-    await fake.jobs.create(user, state=JobState.PREPARING)
+    await fake.jobs.create(user, state=JobState.PENDING)
 
     await jobs_data.force_delete()
-
-    assert await mongo.jobs.count_documents({}) == 0
 
     async with AsyncSession(pg) as session:
         assert (await session.execute(select(SQLJob))).scalar() is None
@@ -139,28 +72,25 @@ class TestTimeoutStalledJobs:
 
     async def test_ok(self, data_layer: DataLayer, fake: DataFaker):
         """Test timeout_stalled_jobs method times out stalled jobs."""
-        # Create a job that should be timed out (stalled RUNNING job)
         timeout_job = await fake.jobs.create(
             self.user,
             state=JobState.RUNNING,
             pinged_at=arrow.utcnow().shift(minutes=-6).naive,
         )
 
-        # Create another job that should be timed out (stalled PREPARING job)
         timeout_job_2 = await fake.jobs.create(
             self.user,
-            state=JobState.PREPARING,
+            state=JobState.RUNNING,
             pinged_at=arrow.utcnow().shift(minutes=-6).naive,
         )
 
         await data_layer.jobs.timeout_stalled_jobs()
 
-        # Check that stalled jobs were timed out
         timeout_result = await data_layer.jobs.get(timeout_job.id)
-        assert timeout_result.state == JobState.TIMEOUT
+        assert timeout_result.state == JobState.FAILED
 
         timeout_result_2 = await data_layer.jobs.get(timeout_job_2.id)
-        assert timeout_result_2.state == JobState.TIMEOUT
+        assert timeout_result_2.state == JobState.FAILED
 
 
 class TestCreatePostgres:
@@ -184,7 +114,7 @@ class TestCreatePostgres:
 
         async with AsyncSession(pg) as session:
             result = await session.execute(
-                select(SQLJob).where(SQLJob.legacy_id == job.id),
+                select(SQLJob).where(SQLJob.id == job.id),
             )
             sql_job = result.scalar()
 
@@ -214,7 +144,7 @@ class TestCreatePostgres:
         async with AsyncSession(pg) as session:
             sql_job = (
                 await session.execute(
-                    select(SQLJob).where(SQLJob.legacy_id == job.id),
+                    select(SQLJob).where(SQLJob.id == job.id),
                 )
             ).scalar()
 
@@ -246,7 +176,7 @@ class TestCreatePostgres:
         async with AsyncSession(pg) as session:
             sql_job = (
                 await session.execute(
-                    select(SQLJob).where(SQLJob.legacy_id == job.id),
+                    select(SQLJob).where(SQLJob.id == job.id),
                 )
             ).scalar()
 
@@ -278,7 +208,7 @@ class TestCreatePostgres:
         async with AsyncSession(pg) as session:
             sql_job = (
                 await session.execute(
-                    select(SQLJob).where(SQLJob.legacy_id == job.id),
+                    select(SQLJob).where(SQLJob.id == job.id),
                 )
             ).scalar()
 
@@ -312,7 +242,7 @@ class TestCreatePostgres:
         async with AsyncSession(pg) as session:
             sql_job = (
                 await session.execute(
-                    select(SQLJob).where(SQLJob.legacy_id == job.id),
+                    select(SQLJob).where(SQLJob.id == job.id),
                 )
             ).scalar()
 
@@ -326,10 +256,10 @@ class TestCreatePostgres:
         assert job_analysis.analysis_id == "analysis_abc"
 
 
-class TestPushStatusPostgres:
-    """Test that push_status() writes to Postgres."""
+class TestStartStepPostgres:
+    """Test that start_step() records step starts in Postgres."""
 
-    async def test_ok(
+    async def test_progress_is_derived_from_started_steps(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
@@ -337,23 +267,29 @@ class TestPushStatusPostgres:
         static_time: StaticTime,
     ):
         user = await fake.users.create()
-        job = await fake.jobs.create(user)
-
-        await data_layer.jobs.push_status(
-            job.id,
-            JobState.COMPLETE,
-            "finished",
-            progress=100,
-        )
+        job = await fake.jobs.create(user, state=JobState.RUNNING)
 
         async with AsyncSession(pg) as session:
             result = await session.execute(
-                select(SQLJob).where(SQLJob.legacy_id == job.id),
+                select(SQLJob).where(SQLJob.id == job.id),
             )
             sql_job = result.scalar()
+            sql_job.steps = [
+                {"id": "step_1", "name": "Step 1", "description": "First step"},
+                {"id": "step_2", "name": "Step 2", "description": "Second step"},
+            ]
+            modern_job_id = sql_job.id
+            await session.commit()
 
-        assert sql_job.state == "succeeded"
-        assert sql_job.finished_at == static_time.datetime
+        await data_layer.jobs.start_step(modern_job_id, "step_1")
+
+        updated_job = await data_layer.jobs.get(job.id)
+
+        assert updated_job.progress == 50
+        assert (
+            updated_job.steps[0].started_at.replace(tzinfo=None) == static_time.datetime
+        )
+        assert updated_job.steps[1].started_at is None
 
 
 class TestCancelPostgres:
@@ -368,19 +304,13 @@ class TestCancelPostgres:
     ):
         user = await fake.users.create()
 
-        job = await jobs_data.create(
-            "build_index",
-            {},
-            user.id,
-            0,
-            job_id="foo",
-        )
+        job = await jobs_data.create("build_index", {}, user.id, 0)
 
         await jobs_data.cancel(job.id)
 
         async with AsyncSession(pg) as session:
             result = await session.execute(
-                select(SQLJob).where(SQLJob.legacy_id == job.id),
+                select(SQLJob).where(SQLJob.id == job.id),
             )
             sql_job = result.scalar()
 
@@ -405,7 +335,7 @@ class TestPingPostgres:
 
         async with AsyncSession(pg) as session:
             result = await session.execute(
-                select(SQLJob).where(SQLJob.legacy_id == job.id),
+                select(SQLJob).where(SQLJob.id == job.id),
             )
             sql_job = result.scalar()
 
@@ -434,7 +364,7 @@ class TestTimeoutStalledJobsPostgres:
 
         async with AsyncSession(pg) as session:
             result = await session.execute(
-                select(SQLJob).where(SQLJob.legacy_id == job.id),
+                select(SQLJob).where(SQLJob.id == job.id),
             )
             sql_job = result.scalar()
 

@@ -17,7 +17,7 @@ from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emits
 from virtool.data.transforms import apply_transforms
 from virtool.jobs.transforms import AttachJobTransform
-from virtool.mongo.utils import get_new_id, get_one_field
+from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import get_row_by_id
 from virtool.storage.protocol import StorageBackend
 from virtool.subtractions.db import (
@@ -157,7 +157,7 @@ class SubtractionsData(DataLayerDomain):
 
         data["documents"] = await apply_transforms(
             [base_processor(d) for d in data["documents"]],
-            [AttachJobTransform(self._mongo, self._pg), AttachUserTransform(self._pg)],
+            [AttachJobTransform(self._pg), AttachUserTransform(self._pg)],
             self._pg,
         )
 
@@ -188,18 +188,27 @@ class SubtractionsData(DataLayerDomain):
         if upload is None:
             raise ResourceNotFoundError("Upload does not exist")
 
-        job_id = await get_new_id(self._mongo.jobs)
+        new_subtraction_id = (
+            subtraction_id
+            or await virtool.mongo.utils.get_new_id(self._mongo.subtraction)
+        )
+
+        job = await self.data.jobs.create(
+            "create_subtraction",
+            {"subtraction_id": new_subtraction_id},
+            user_id,
+            0,
+        )
 
         document = await self._mongo.subtraction.insert_one(
             {
-                "_id": subtraction_id
-                or await virtool.mongo.utils.get_new_id(self._mongo.subtraction),
+                "_id": new_subtraction_id,
                 "count": None,
                 "created_at": virtool.utils.timestamp(),
                 "deleted": False,
                 "file": {"id": upload.id, "name": upload.name},
                 "gc": None,
-                "job": {"id": job_id},
+                "job": {"id": job.id},
                 "name": data.name,
                 "nickname": data.nickname,
                 "ready": False,
@@ -209,19 +218,7 @@ class SubtractionsData(DataLayerDomain):
             },
         )
 
-        subtraction = await self.get(document["_id"])
-
-        await self.data.jobs.create(
-            "create_subtraction",
-            {
-                "subtraction_id": subtraction.id,
-            },
-            user_id,
-            0,
-            job_id,
-        )
-
-        return subtraction
+        return await self.get(document["_id"])
 
     async def get(self, subtraction_id: str) -> Subtraction:
         """Get a subtraction by its id."""
@@ -258,7 +255,7 @@ class SubtractionsData(DataLayerDomain):
             document = await apply_transforms(
                 base_processor(document),
                 [
-                    AttachJobTransform(self._mongo, self._pg),
+                    AttachJobTransform(self._pg),
                     AttachUploadTransform(self._pg),
                     AttachUserTransform(self._pg, ignore_errors=True),
                 ],

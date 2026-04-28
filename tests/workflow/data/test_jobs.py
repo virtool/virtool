@@ -10,7 +10,7 @@ async def test_ok(
     snapshot: SnapshotAssertion,
     workflow_data: WorkflowData,
 ):
-    workflow_data.job.acquired = False
+    workflow_data.acquired = False
 
     job: Job = await scope.get_or_instantiate("job")
 

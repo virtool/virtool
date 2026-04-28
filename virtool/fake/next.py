@@ -21,6 +21,7 @@ from faker.providers import (
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+import virtool.utils
 from virtool.data.layer import DataLayer
 from virtool.example import example_path
 from virtool.fake.providers import OrganismProvider, SegmentProvider, SequenceProvider
@@ -28,7 +29,8 @@ from virtool.groups.models import Group
 from virtool.groups.oas import PermissionsUpdate, UpdateGroupRequest
 from virtool.groups.pg import SQLGroup
 from virtool.hmm.models import HMM
-from virtool.jobs.models import Job, JobState
+from virtool.jobs.models import TERMINAL_JOB_STATES, Job, JobState
+from virtool.jobs.pg import SQLJob
 from virtool.jobs.utils import WORKFLOW_NAMES
 from virtool.labels.models import Label
 from virtool.ml.models import MLModel
@@ -161,16 +163,6 @@ class JobsFakerDomain(DataFakerDomain):
         state: JobState | None = None,
         workflow: str | None = None,
     ) -> Job:
-        """Create a fake job.
-
-        A job will be created with status updates in a valid order.
-
-        :param user: the user that created the job
-        :param pinged_at: the time the job was last pinged.
-        :param state: the state the most recent status update should have
-        :param workflow: the workflow the job is running
-        :return:
-        """
         job = await self._layer.jobs.create(
             (workflow or self._faker.workflow()).replace("jobs_", ""),
             self._faker.pydict(nb_elements=6, value_types=[str, int, float]),
@@ -178,66 +170,50 @@ class JobsFakerDomain(DataFakerDomain):
             0,
         )
 
-        if state:
-            target_state = state
-        else:
-            target_state = self._faker.random_element(
-                [
-                    JobState.CANCELLED,
-                    JobState.COMPLETE,
-                    JobState.ERROR,
-                    JobState.PREPARING,
-                    JobState.RUNNING,
-                    JobState.TERMINATED,
-                    JobState.TIMEOUT,
-                    JobState.WAITING,
-                ],
-            )
+        target_state = state or self._faker.random_element(
+            [
+                JobState.CANCELLED,
+                JobState.FAILED,
+                JobState.PENDING,
+                JobState.RUNNING,
+                JobState.SUCCEEDED,
+            ],
+        )
 
-        if target_state != JobState.WAITING:
-            job = await self._layer.jobs.acquire(job.id)
+        if target_state == JobState.PENDING:
+            return job
 
-        previous_status = job.status[-1]
-        progress = 0
-
-        while progress <= 50:
-            if previous_status.state is target_state:
-                break
-
-            if progress == 50:
-                next_state = target_state
-            elif previous_status.state == JobState.WAITING:
-                next_state = JobState.PREPARING
-            elif previous_status.state == JobState.PREPARING:
-                next_state = JobState.RUNNING
-            else:
-                next_state = self._faker.random_element(
-                    [JobState.RUNNING, target_state],
-                )
-
-            progress += 10
-            step_name = self._faker.pystr()
-
-            previous_status = await self._layer.jobs.push_status(
-                job.id,
-                state=next_state,
-                stage=step_name,
-                step_name=step_name,
-                step_description=self._faker.pystr(),
-                error=None,
-                progress=100 if next_state == JobState.COMPLETE else progress,
-            )
-
-        if target_state != JobState.WAITING and pinged_at is None:
+        if pinged_at is None:
             pinged_at = arrow.utcnow().shift(minutes=-1).naive
 
-        if pinged_at:
-            await self._mongo.jobs.update_one(
-                {"_id": job.id},
-                {
-                    "$set": {"ping": {"pinged_at": pinged_at}},
+        async with AsyncSession(self._pg) as session:
+            values = {
+                "acquired": True,
+                "claim": {
+                    "runner_id": "fake-runner",
+                    "mem": 1.0,
+                    "cpu": 1.0,
+                    "image": "virtool/fake:latest",
+                    "runtime_version": "0.0.0",
+                    "workflow_version": "0.0.0",
                 },
+                "claimed_at": virtool.utils.timestamp(),
+                "key": virtool.utils.hash_key("fake-job-key"),
+                "pinged_at": pinged_at,
+                "state": JobState.RUNNING.value,
+                "steps": [],
+            }
+
+            if target_state != JobState.RUNNING:
+                values["state"] = target_state.value
+
+                if target_state in TERMINAL_JOB_STATES:
+                    values["finished_at"] = virtool.utils.timestamp()
+
+            await session.execute(
+                update(SQLJob).where(SQLJob.id == job.id).values(**values),
             )
+            await session.commit()
 
         return await self._layer.jobs.get(job.id)
 

@@ -97,7 +97,7 @@ def create_data_layer(
         HistoryData(storage, mongo, pg),
         HmmsData(client, mongo, pg, storage),
         IndexData(mongo, config, pg, storage),
-        JobsData(mongo, pg),
+        JobsData(pg),
         LabelsData(mongo, pg),
         MessagesData(pg),
         MLData(http_client, pg, storage),

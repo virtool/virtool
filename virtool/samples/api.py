@@ -35,7 +35,7 @@ from virtool.data.errors import (
 from virtool.data.utils import get_data_from_req
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
-from virtool.jobs.models import JobState
+from virtool.jobs.models import TERMINAL_JOB_STATES
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.utils import get_mongo_from_req
 from virtool.pg.utils import get_rows
@@ -65,12 +65,7 @@ logger = get_logger("samples")
 
 routes = Routes()
 
-DELETABLE_JOB_STATES = {
-    JobState.ERROR,
-    JobState.TIMEOUT,
-    JobState.CANCELLED,
-    JobState.TERMINATED,
-}
+DELETABLE_JOB_STATES = {s.value for s in TERMINAL_JOB_STATES}
 """Job states that allow sample deletion.
 
 Samples with jobs in these states can be deleted because the jobs are no longer
@@ -240,18 +235,15 @@ class SampleView(PydanticView):
                     "Unfinalized samples without jobs cannot be deleted"
                 )
 
-            job_document = await mongo.jobs.find_one(
-                {"_id": job_id},
-                {"status": 1},
-            )
+            try:
+                job = await get_data_from_req(self.request).jobs.get(job_id)
+            except ResourceNotFoundError:
+                job = None
 
-            if job_document:
-                current_state = JobState(job_document["status"][-1]["state"])
-
-                if current_state not in DELETABLE_JOB_STATES:
-                    raise APIBadRequest(
-                        f"Cannot delete sample with active job (current state: {current_state.value})"
-                    )
+            if job is not None and job.state.value not in DELETABLE_JOB_STATES:
+                raise APIBadRequest(
+                    f"Cannot delete sample with active job (current state: {job.state.value})"
+                )
 
         try:
             await get_data_from_req(self.request).samples.delete(sample_id)
@@ -386,18 +378,15 @@ async def job_remove(req):
     job_id = get_safely(sample_document, "job", "id")
 
     if job_id:
-        job_document = await mongo.jobs.find_one(
-            {"_id": job_id},
-            {"status": 1},
-        )
+        try:
+            job = await get_data_from_req(req).jobs.get(job_id)
+        except ResourceNotFoundError:
+            job = None
 
-        if job_document:
-            current_state = JobState(job_document["status"][-1]["state"])
-
-            if current_state not in DELETABLE_JOB_STATES:
-                raise APIBadRequest(
-                    f"Cannot delete sample with active job (current state: {current_state.value})"
-                )
+        if job is not None and job.state.value not in DELETABLE_JOB_STATES:
+            raise APIBadRequest(
+                f"Cannot delete sample with active job (current state: {job.state.value})"
+            )
 
     reads_files = await get_rows(pg, SQLSampleReads, "sample", sample_id)
     upload_ids = [upload for reads in reads_files if (upload := reads.upload)]

@@ -4,16 +4,8 @@
     dict({
       'error': None,
       'progress': 0,
-      'stage': None,
-      'state': <JobState.PREPARING: 'preparing'>,
-      'step_description': None,
-      'step_name': None,
-    }),
-    dict({
-      'error': None,
-      'progress': 0,
       'stage': 'raise_error',
-      'state': <JobState.RUNNING: 'running'>,
+      'state': 'running',
       'step_description': 'Raise and error for testing purposes.',
       'step_name': 'Raise Error',
     }),
@@ -25,9 +17,18 @@
       }),
       'progress': 0,
       'stage': 'raise_error',
-      'state': <JobState.ERROR: 'error'>,
+      'state': 'failed',
       'step_description': 'Raise and error for testing purposes.',
       'step_name': 'Raise Error',
+    }),
+  ])
+# ---
+# name: test_error[step_starts]
+  list([
+    dict({
+      'description': 'Raise and error for testing purposes.',
+      'id': 'raise_error',
+      'name': 'Raise Error',
     }),
   ])
 # ---
@@ -36,16 +37,8 @@
     dict({
       'error': None,
       'progress': 0,
-      'stage': None,
-      'state': <JobState.PREPARING: 'preparing'>,
-      'step_description': None,
-      'step_name': None,
-    }),
-    dict({
-      'error': None,
-      'progress': 0,
       'stage': 'first',
-      'state': <JobState.RUNNING: 'running'>,
+      'state': 'running',
       'step_description': 'Description of First.',
       'step_name': 'First',
     }),
@@ -53,7 +46,7 @@
       'error': None,
       'progress': 50,
       'stage': 'second',
-      'state': <JobState.RUNNING: 'running'>,
+      'state': 'running',
       'step_description': 'Description of Second.',
       'step_name': 'Second',
     }),
@@ -61,9 +54,23 @@
       'error': None,
       'progress': 100,
       'stage': '',
-      'state': <JobState.COMPLETE: 'complete'>,
+      'state': 'succeeded',
       'step_description': '',
       'step_name': '',
+    }),
+  ])
+# ---
+# name: test_ok[step_starts]
+  list([
+    dict({
+      'description': 'Description of First.',
+      'id': 'first',
+      'name': 'First',
+    }),
+    dict({
+      'description': 'Description of Second.',
+      'id': 'second',
+      'name': 'Second',
     }),
   ])
 # ---

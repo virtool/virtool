@@ -158,7 +158,7 @@ async def test_get(
     user_1 = await fake.users.create()
     user_2 = await fake.users.create()
 
-    job = await fake.jobs.create(user=user_2, state=JobState.COMPLETE)
+    job = await fake.jobs.create(user=user_2, state=JobState.SUCCEEDED)
 
     await asyncio.gather(
         mongo.subtraction.insert_many(

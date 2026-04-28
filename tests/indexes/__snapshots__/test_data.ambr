@@ -67,16 +67,14 @@
     'id': 'foo',
     'job': dict({
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'id': 'bf1b993c',
-      'progress': 3,
-      'retries': 0,
-      'stage': None,
-      'state': <JobState.PREPARING: 'preparing'>,
+      'id': 1,
+      'progress': 100,
+      'state': <JobState.FAILED: 'failed'>,
       'user': dict({
         'handle': 'leeashley',
         'id': 1,
       }),
-      'workflow': 'pathoscope_bowtie',
+      'workflow': <Workflow.PATHOSCOPE: 'pathoscope'>,
     }),
     'manifest': dict({
     }),
@@ -102,7 +100,7 @@
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'has_files': True,
     'job': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'manifest': dict({
     }),

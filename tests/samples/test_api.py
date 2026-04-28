@@ -892,26 +892,7 @@ class TestDelete:
 
         await create_fake_sample(client.app, "test", user.id, finalized=False)
 
-        job = await fake.jobs.create(user, workflow="create_sample")
-
-        await mongo.jobs.update_one(
-            {"_id": job.id},
-            {
-                "$set": {
-                    "status": [
-                        {
-                            "error": None,
-                            "progress": 0,
-                            "stage": None,
-                            "state": job_state.value,
-                            "step_description": None,
-                            "step_name": None,
-                            "timestamp": static_time.datetime,
-                        },
-                    ],
-                },
-            },
-        )
+        job = await fake.jobs.create(user, state=job_state, workflow="create_sample")
 
         await mongo.samples.update_one(
             {"_id": "test"},
@@ -936,36 +917,16 @@ class TestDelete:
 
         assert resp.status == 204
 
-    async def test_unfinalized_with_error_job(
+    async def test_unfinalized_with_failed_job(
         self,
         fake: DataFaker,
         mongo: Mongo,
         spawn_client: ClientSpawner,
         static_time,
     ):
-        """Test that unfinalized samples with errored jobs can be deleted."""
+        """Test that unfinalized samples with failed jobs can be deleted."""
         client = await self.setup_unfinalized_sample_with_job(
-            JobState.ERROR,
-            fake,
-            mongo,
-            spawn_client,
-            static_time,
-        )
-
-        resp = await client.delete("/samples/test")
-
-        assert resp.status == 204
-
-    async def test_unfinalized_with_timeout_job(
-        self,
-        fake: DataFaker,
-        mongo: Mongo,
-        spawn_client: ClientSpawner,
-        static_time,
-    ):
-        """Test that unfinalized samples with timed out jobs can be deleted."""
-        client = await self.setup_unfinalized_sample_with_job(
-            JobState.TIMEOUT,
+            JobState.FAILED,
             fake,
             mongo,
             spawn_client,
@@ -996,16 +957,16 @@ class TestDelete:
 
         assert resp.status == 204
 
-    async def test_unfinalized_with_terminated_job(
+    async def test_unfinalized_with_succeeded_job(
         self,
         fake: DataFaker,
         mongo: Mongo,
         spawn_client: ClientSpawner,
         static_time,
     ):
-        """Test that unfinalized samples with terminated jobs can be deleted."""
+        """Test that unfinalized samples with succeeded jobs can be deleted."""
         client = await self.setup_unfinalized_sample_with_job(
-            JobState.TERMINATED,
+            JobState.SUCCEEDED,
             fake,
             mongo,
             spawn_client,

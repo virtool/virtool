@@ -4,10 +4,11 @@ import json
 from pathlib import Path
 from typing import Any, Protocol
 
+import arrow
 import pytest
 from aiohttp import BasicAuth, ClientResponse
 from aiohttp.web import RouteTableDef
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.jobs.main
 from virtool.api.custom_json import dump_string
@@ -19,6 +20,7 @@ from virtool.fake.next import DataFaker
 from virtool.flags import FeatureFlags, FlagName
 from virtool.groups.models import GroupMinimal
 from virtool.groups.oas import PermissionsUpdate
+from virtool.jobs.pg import SQLJob
 from virtool.models.enums import Permission
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
@@ -26,6 +28,7 @@ from virtool.mongo.identifier import FakeIdProvider
 from virtool.mongo.utils import get_mongo_from_app
 from virtool.users.models import User
 from virtool.users.oas import UpdateUserRequest
+from virtool.users.pg import SQLUser
 from virtool.utils import hash_key
 
 
@@ -505,14 +508,32 @@ def spawn_job_client(
         flags: list[FlagName] | None = None,
     ):
         if authenticated:
-            # Create a test job to use for authentication.
-            job_id, key = "test_job", "test_key"
+            key = "test_key"
 
-            await mongo.jobs.insert_one(
-                {"_id": "test_job", "key": hash_key("test_key")},
-            )
+            async with AsyncSession(pg) as session:
+                test_user = SQLUser(
+                    handle="test_job_user",
+                    password=b"",
+                    force_reset=False,
+                    last_password_change=arrow.utcnow().naive,
+                    settings={},
+                )
+                session.add(test_user)
+                await session.flush()
 
-            # Create Basic Authentication header.
+                test_job = SQLJob(
+                    acquired=True,
+                    created_at=arrow.utcnow().naive,
+                    key=hash_key(key),
+                    state="running",
+                    user_id=test_user.id,
+                    workflow="nuvs",
+                )
+                session.add(test_job)
+                await session.flush()
+                job_id = test_job.id
+                await session.commit()
+
             auth = BasicAuth(login=f"job-{job_id}", password=key)
         else:
             auth = None

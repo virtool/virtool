@@ -1,4 +1,5 @@
 from datetime import datetime
+from types import NoneType
 
 from syrupy.matchers import path_type
 
@@ -28,8 +29,9 @@ async def test_groups_and_users(fake: DataFaker, snapshot):
         name="job",
         matcher=path_type(
             {
+                "claimed_at": (datetime, NoneType),
                 "created_at": (datetime,),
-                ".*pinged_at": (datetime,),
+                ".*pinged_at": (datetime, NoneType),
                 ".*timestamp": (datetime,),
             },
             regex=True,
@@ -44,8 +46,9 @@ async def test_jobs(fake: DataFaker, snapshot):
         name="job",
         matcher=path_type(
             {
+                "claimed_at": (datetime, NoneType),
                 "created_at": (datetime,),
-                ".*pinged_at": (datetime,),
+                ".*pinged_at": (datetime, NoneType),
                 ".*timestamp": (datetime,),
             },
             regex=True,

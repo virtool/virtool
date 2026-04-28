@@ -609,7 +609,6 @@ class TestDownloadSubtractionFile:
 
 async def test_create(
     fake: DataFaker,
-    mongo: Mongo,
     spawn_client: ClientSpawner,
     snapshot_recent: SnapshotAssertion,
 ):
@@ -632,8 +631,3 @@ async def test_create(
 
     assert resp.status == 201
     assert await resp.json() == snapshot_recent(name="resp")
-
-    assert await mongo.jobs.find_one(
-        {},
-        projection={"status.timestamp": False},
-    ) == snapshot_recent(name="job")

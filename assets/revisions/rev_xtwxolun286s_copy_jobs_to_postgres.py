@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from structlog import get_logger
 
-from virtool.jobs.models import TERMINAL_JOB_STATES, V1_TO_V2_STATE, JobState
+from virtool.jobs.models import JobState
 from virtool.jobs.pg import (
     SQLJob,
     SQLJobAnalysis,
@@ -22,6 +22,21 @@ from virtool.users.pg import SQLUser
 from virtool.utils import get_safely
 
 logger = get_logger("migration")
+
+LEGACY_TO_JOB_STATE: dict[str, JobState] = {
+    "cancelled": JobState.CANCELLED,
+    "complete": JobState.SUCCEEDED,
+    "error": JobState.FAILED,
+    "preparing": JobState.RUNNING,
+    "running": JobState.RUNNING,
+    "terminated": JobState.FAILED,
+    "timeout": JobState.FAILED,
+    "waiting": JobState.PENDING,
+}
+
+LEGACY_TERMINAL_JOB_STATES = frozenset(
+    {"cancelled", "complete", "error", "terminated", "timeout"},
+)
 
 # Revision identifiers.
 name = "copy jobs to postgres"
@@ -115,12 +130,16 @@ async def _migrate_job(
         raise ValueError(msg)
 
     last_status = status_list[-1]
-    v1_state = JobState(last_status.get("state", "waiting"))
-    v2_state = V1_TO_V2_STATE[v1_state].value
+    legacy_state = last_status.get("state", "waiting")
 
-    # Determine finished_at (only for terminal states).
+    if legacy_state not in LEGACY_TO_JOB_STATE:
+        msg = f"Unknown legacy job state {legacy_state!r} for job {job_id}"
+        raise ValueError(msg)
+
+    v2_state = LEGACY_TO_JOB_STATE[legacy_state].value
+
     finished_at = None
-    if v1_state in TERMINAL_JOB_STATES:
+    if legacy_state in LEGACY_TERMINAL_JOB_STATES:
         finished_at = last_status.get("timestamp")
 
     # Get created_at from job or first status.
