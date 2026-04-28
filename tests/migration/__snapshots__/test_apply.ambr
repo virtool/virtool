@@ -176,5 +176,12 @@
       'name': 'backfill user ids to integers',
       'revision': 'ie7r3vdaf5mu',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 26,
+      'name': 'add archived to references',
+      'revision': 'g2cecswiq3r2',
+    }),
   ])
 # ---

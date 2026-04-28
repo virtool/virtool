@@ -2,6 +2,7 @@
 # name: test_clean_references_task[clean]
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2020, 1, 1, 21, 0),
     'data_type': 'genome',
     'description': '',
@@ -32,6 +33,7 @@
 # name: test_clean_references_task[no_updates]
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2020, 1, 1, 21, 0),
     'data_type': 'genome',
     'description': '',
@@ -62,6 +64,7 @@
 # name: test_clean_references_task[ready]
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2020, 1, 1, 21, 0),
     'data_type': 'genome',
     'description': '',
@@ -114,6 +117,7 @@
 # name: test_clean_references_task[too_new]
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2020, 1, 1, 21, 0),
     'data_type': 'genome',
     'description': '',
@@ -167,6 +171,7 @@
 # name: test_clean_references_task[too_old]
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2020, 1, 1, 21, 0),
     'data_type': 'genome',
     'description': '',
@@ -2443,6 +2448,7 @@
 # name: test_import_reference_task[ref]
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'genome',
     'description': 'A test reference',
@@ -5101,6 +5107,7 @@
 # name: test_remote_reference_task[ref]
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'genome',
     'description': 'A test reference',

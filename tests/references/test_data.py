@@ -51,6 +51,7 @@ class TestUpdate:
         await mongo.references.insert_one(
             {
                 "_id": "foo",
+                "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "description": "This is a test reference.",
@@ -136,6 +137,7 @@ class TestCreateUser:
         await mongo.references.insert_one(
             {
                 "_id": "foo",
+                "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "description": "This is a test reference.",
@@ -187,6 +189,7 @@ class TestCreateUser:
         await mongo.references.insert_one(
             {
                 "_id": "foo",
+                "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "description": "This is a test reference.",
@@ -226,6 +229,7 @@ class TestUpdateUser:
         await mongo.references.insert_one(
             {
                 "_id": "foo",
+                "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "description": "This is a test reference.",
@@ -286,6 +290,7 @@ class TestUpdateUser:
             await mongo.references.insert_one(
                 {
                     "_id": "foo",
+                    "archived": False,
                     "created_at": static_time.datetime,
                     "data_type": "genome",
                     "description": "This is a test reference.",
@@ -326,6 +331,7 @@ class TestDeleteUser:
         await mongo.references.insert_one(
             {
                 "_id": "foo",
+                "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "description": "This is a test reference.",
@@ -377,6 +383,7 @@ class TestDeleteUser:
             await mongo.references.insert_one(
                 {
                     "_id": "foo",
+                    "archived": False,
                     "created_at": static_time.datetime,
                     "data_type": "genome",
                     "description": "This is a test reference.",
@@ -411,6 +418,7 @@ class TestCreateGroup:
         await mongo.references.insert_one(
             {
                 "_id": "foo",
+                "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "description": "This is a test reference.",
@@ -481,6 +489,7 @@ class TestCreateGroup:
         await mongo.references.insert_one(
             {
                 "_id": "foo",
+                "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "description": "This is a test reference.",
@@ -520,6 +529,7 @@ class TestUpdateGroup:
         await mongo.references.insert_one(
             {
                 "_id": "foo",
+                "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "description": "This is a test reference.",
@@ -573,6 +583,7 @@ class TestUpdateGroup:
             await mongo.references.insert_one(
                 {
                     "_id": "foo",
+                    "archived": False,
                     "created_at": static_time.datetime,
                     "data_type": "genome",
                     "description": "This is a test reference.",
@@ -613,6 +624,7 @@ class TestDeleteGroup:
         await mongo.references.insert_one(
             {
                 "_id": "foo",
+                "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "description": "This is a test reference.",
@@ -664,6 +676,7 @@ class TestDeleteGroup:
             await mongo.references.insert_one(
                 {
                     "_id": "foo",
+                    "archived": False,
                     "created_at": static_time.datetime,
                     "data_type": "genome",
                     "description": "This is a test reference.",
@@ -863,6 +876,7 @@ class TestUpdateRemoteReference:
         await mongo.references.insert_one(
             {
                 "_id": ref_id,
+                "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "description": "Test remote reference",
@@ -1585,6 +1599,7 @@ class TestPopulateRemoteReference:
         await mongo.references.insert_one(
             {
                 "_id": "ref_id",
+                "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "description": "Remote reference description",

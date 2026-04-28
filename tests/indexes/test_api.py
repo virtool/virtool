@@ -88,8 +88,18 @@ class TestFind:
             ),
             mongo.references.insert_many(
                 [
-                    {"_id": "bar", "name": "Bar", "data_type": "genome"},
-                    {"_id": "foo", "name": "Foo", "data_type": "genome"},
+                    {
+                        "_id": "bar",
+                        "archived": False,
+                        "data_type": "genome",
+                        "name": "Bar",
+                    },
+                    {
+                        "_id": "foo",
+                        "archived": False,
+                        "data_type": "genome",
+                        "name": "Foo",
+                    },
                 ],
                 session=None,
             ),
@@ -150,8 +160,18 @@ class TestFind:
             ),
             mongo.references.insert_many(
                 [
-                    {"_id": "bar", "name": "Bar", "data_type": "genome"},
-                    {"_id": "foo", "name": "Foo", "data_type": "genome"},
+                    {
+                        "_id": "bar",
+                        "archived": False,
+                        "data_type": "genome",
+                        "name": "Bar",
+                    },
+                    {
+                        "_id": "foo",
+                        "archived": False,
+                        "data_type": "genome",
+                        "name": "Foo",
+                    },
                 ],
                 session=None,
             ),
@@ -181,7 +201,7 @@ async def test_get(
     await asyncio.gather(
         mongo.references.insert_many(
             [
-                {"_id": "bar", "name": "Bar", "data_type": "genome"},
+                {"_id": "bar", "archived": False, "data_type": "genome", "name": "Bar"},
             ],
             session=None,
         ),
@@ -320,7 +340,7 @@ class TestCreate:
 
         await asyncio.gather(
             mongo.references.insert_one(
-                {"_id": "foo", "name": "Foo", "data_type": "genome"},
+                {"_id": "foo", "archived": False, "data_type": "genome", "name": "Foo"},
             ),
             # Insert unbuilt changes to prevent initial check failure.
             mongo.history.insert_one(
@@ -461,8 +481,8 @@ async def test_find_history(
         ),
         mongo.references.insert_many(
             [
-                {"_id": "bar", "name": "Bar", "data_type": "genome"},
-                {"_id": "foo", "name": "Foo", "data_type": "genome"},
+                {"_id": "bar", "archived": False, "data_type": "genome", "name": "Bar"},
+                {"_id": "foo", "archived": False, "data_type": "genome", "name": "Foo"},
             ],
             session=None,
         ),
@@ -494,7 +514,7 @@ async def test_delete_index(
     if error != 404:
         await asyncio.gather(
             mongo.references.insert_one(
-                {"_id": "foo", "data_type": "genome", "name": "Foo"},
+                {"_id": "foo", "archived": False, "data_type": "genome", "name": "Foo"},
             ),
             mongo.indexes.insert_one(
                 {
@@ -557,8 +577,8 @@ async def test_upload(
         fake.users.create(),
         mongo.references.insert_many(
             [
-                {"_id": "bar", "name": "Bar", "data_type": "genome"},
-                {"_id": "foo", "name": "Foo", "data_type": "genome"},
+                {"_id": "bar", "archived": False, "data_type": "genome", "name": "Bar"},
+                {"_id": "foo", "archived": False, "data_type": "genome", "name": "Foo"},
             ],
             session=None,
         ),
@@ -646,7 +666,12 @@ async def test_finalize(
 
     if error != "404_reference":
         await mongo.references.insert_one(
-            {"_id": "hxn167", "name": "Test A", "data_type": "genome"},
+            {
+                "_id": "hxn167",
+                "archived": False,
+                "data_type": "genome",
+                "name": "Test A",
+            },
         )
 
     await asyncio.gather(
@@ -699,7 +724,12 @@ async def test_download(
             {"_id": "test_index", "reference": {"id": "test_reference"}},
         ),
         mongo.references.insert_one(
-            {"_id": "test_reference", "name": "Test A", "data_type": "genome"},
+            {
+                "_id": "test_reference",
+                "archived": False,
+                "data_type": "genome",
+                "name": "Test A",
+            },
         ),
     )
 

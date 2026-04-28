@@ -22,6 +22,7 @@ def check_ref_right(mocker: MockerFixture, request):
 def test_ref():
     return {
         "_id": "hxn167",
+        "archived": False,
         "data_type": "genome",
         "groups": [],
         "name": "Reference A",
@@ -34,6 +35,7 @@ def test_ref():
 def reference(static_time):
     return {
         "_id": "3tt0w336",
+        "archived": False,
         "created_at": static_time.datetime,
         "data_type": "genome",
         "description": "",

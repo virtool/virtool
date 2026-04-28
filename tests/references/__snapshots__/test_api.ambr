@@ -4,6 +4,7 @@
 # ---
 # name: TestCreate.test_clone[resp]
   dict({
+    'archived': False,
     'cloned_from': dict({
       'id': 'foo',
       'name': 'Foo',
@@ -61,6 +62,7 @@
 # ---
 # name: TestCreate.test_import
   dict({
+    'archived': False,
     'cloned_from': None,
     'contributors': list([
     ]),
@@ -133,6 +135,7 @@
 # ---
 # name: TestCreate.test_ok[barcode][resp]
   dict({
+    'archived': False,
     'cloned_from': None,
     'contributors': list([
     ]),
@@ -183,6 +186,7 @@
 # ---
 # name: TestCreate.test_ok[genome][resp]
   dict({
+    'archived': False,
     'cloned_from': None,
     'contributors': list([
     ]),
@@ -232,6 +236,7 @@
 # ---
 # name: TestCreate.test_remote[resp]
   dict({
+    'archived': False,
     'cloned_from': None,
     'contributors': list([
     ]),
@@ -666,6 +671,7 @@
 # name: TestDeleteUser.test_ok
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'genome',
     'description': 'This is a test reference.',
@@ -824,6 +830,7 @@
 # ---
 # name: TestGet.test_ok
   dict({
+    'archived': False,
     'cloned_from': None,
     'contributors': list([
     ]),
@@ -891,6 +898,7 @@
 # name: TestUpdateUser.test_ok.1
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'genome',
     'description': 'This is a test reference.',
@@ -939,6 +947,7 @@
 # name: test_create_group[None].1
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'genome',
     'description': 'This is a test reference.',
@@ -1045,6 +1054,7 @@
 # name: test_create_user[None][mongo]
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'genome',
     'description': 'This is a test reference.',
@@ -1092,6 +1102,7 @@
 # name: test_delete_group[None]
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'genome',
     'description': 'This is a test reference.',
@@ -1144,6 +1155,7 @@
 # name: test_edit[None-barcode][db]
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'barcode',
     'description': 'This is a test reference.',
@@ -1189,6 +1201,7 @@
 # ---
 # name: test_edit[None-barcode][resp]
   dict({
+    'archived': False,
     'cloned_from': None,
     'contributors': list([
     ]),
@@ -1251,6 +1264,7 @@
 # name: test_edit[None-genome][db]
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'genome',
     'description': 'This is a test reference.',
@@ -1289,6 +1303,7 @@
 # ---
 # name: test_edit[None-genome][resp]
   dict({
+    'archived': False,
     'cloned_from': None,
     'contributors': list([
     ]),
@@ -1346,6 +1361,7 @@
   dict({
     'documents': list([
       dict({
+        'archived': False,
         'cloned_from': None,
         'created_at': '2015-10-06T20:00:00Z',
         'data_type': 'barcode',
@@ -1376,6 +1392,7 @@
         }),
       }),
       dict({
+        'archived': False,
         'cloned_from': None,
         'created_at': '2015-10-06T20:00:00Z',
         'data_type': 'barcode',
@@ -1406,6 +1423,7 @@
         }),
       }),
       dict({
+        'archived': False,
         'cloned_from': None,
         'created_at': '2015-10-06T20:00:00Z',
         'data_type': 'genome',
@@ -1855,6 +1873,7 @@
 # name: test_update_group[None][mongo]
   dict({
     '_id': 'foo',
+    'archived': False,
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'data_type': 'genome',
     'description': 'This is a test reference.',

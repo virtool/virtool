@@ -25,7 +25,12 @@ async def test_task(
     await asyncio.gather(
         mongo.samples.insert_one({"_id": "sample"}),
         mongo.references.insert_one(
-            {"_id": "reference", "name": "Reference", "data_type": "genome"},
+            {
+                "_id": "reference",
+                "archived": False,
+                "data_type": "genome",
+                "name": "Reference",
+            },
         ),
     )
 

@@ -21,7 +21,7 @@ async def test_finalize(
 
     await asyncio.gather(
         mongo.references.insert_one(
-            {"_id": "bar", "name": "Bar", "data_type": "genome"},
+            {"_id": "bar", "archived": False, "data_type": "genome", "name": "Bar"},
         ),
         mongo.indexes.insert_one(
             {

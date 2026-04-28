@@ -1063,8 +1063,8 @@ async def test_find_analyses(
         ),
         mongo.references.insert_many(
             [
-                {"_id": "foo", "data_type": "genome", "name": "Foo"},
-                {"_id": "baz", "data_type": "genome", "name": "Baz"},
+                {"_id": "foo", "archived": False, "data_type": "genome", "name": "Foo"},
+                {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
             ],
             session=None,
         ),
@@ -1155,8 +1155,9 @@ async def test_analyze(
         await mongo.references.insert_one(
             {
                 "_id": "test_ref",
-                "name": "Test Reference",
+                "archived": False,
                 "data_type": "genome",
+                "name": "Test Reference",
             },
         )
 

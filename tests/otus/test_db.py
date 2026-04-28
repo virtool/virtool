@@ -82,7 +82,12 @@ async def test_check_segment_or_target(
     await asyncio.gather(
         mongo.otus.insert_one({"_id": "foo", "schema": [{"name": "RNA1"}]}),
         mongo.references.insert_one(
-            {"_id": "bar", "data_type": data_type, "targets": [{"name": "CPN60"}]}
+            {
+                "_id": "bar",
+                "archived": False,
+                "data_type": data_type,
+                "targets": [{"name": "CPN60"}],
+            }
         ),
         mongo.sequences.insert_one(
             {

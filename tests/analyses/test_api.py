@@ -55,8 +55,8 @@ async def test_find(
     await asyncio.gather(
         mongo.references.insert_many(
             [
-                {"_id": "foo", "data_type": "genome", "name": "Foo"},
-                {"_id": "baz", "data_type": "genome", "name": "Baz"},
+                {"_id": "foo", "archived": False, "data_type": "genome", "name": "Foo"},
+                {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
             ],
             session=None,
         ),
@@ -166,7 +166,7 @@ async def test_get(
             session=None,
         ),
         mongo.references.insert_one(
-            {"_id": "baz", "data_type": "genome", "name": "Baz"},
+            {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
         ),
     )
 
@@ -237,7 +237,7 @@ async def test_get_304(
             session=None,
         ),
         mongo.references.insert_one(
-            {"_id": "baz", "data_type": "genome", "name": "Baz"},
+            {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
         ),
         mongo.samples.insert_one(
             {
@@ -297,7 +297,7 @@ async def test_remove(
             {"_id": "bar", "version": 3, "reference": {"id": "baz"}},
         ),
         mongo.references.insert_one(
-            {"_id": "baz", "data_type": "genome", "name": "Baz"},
+            {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
         ),
         mongo.subtraction.insert_many(
             [{"_id": "plum", "name": "Plum"}, {"_id": "apple", "name": "Apple"}],
@@ -605,7 +605,7 @@ class TestFinalize:
                 },
             ),
             mongo.references.insert_one(
-                {"_id": "baz", "name": "Baz", "data_type": "genome"},
+                {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
             ),
             mongo.samples.insert_one(
                 {
