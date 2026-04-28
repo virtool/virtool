@@ -19,7 +19,12 @@ async def test_find(
 
     await asyncio.gather(
         mongo.references.insert_one(
-            {"_id": "hxn167", "data_type": "genome", "name": "Reference A"},
+            {
+                "_id": "hxn167",
+                "archived": False,
+                "data_type": "genome",
+                "name": "Reference A",
+            },
         ),
         mongo.history.insert_many(
             [{**c, "user": {"id": client.user.id}} for c in test_changes],
@@ -52,7 +57,12 @@ async def test_get(
             session=None,
         ),
         mongo.references.insert_one(
-            {"_id": "hxn167", "data_type": "genome", "name": "Reference A"},
+            {
+                "_id": "hxn167",
+                "archived": False,
+                "data_type": "genome",
+                "name": "Reference A",
+            },
         ),
     )
 

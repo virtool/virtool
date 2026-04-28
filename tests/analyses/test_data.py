@@ -32,8 +32,9 @@ async def setup_sample(mongo: "Mongo", fake: DataFaker) -> str:
         mongo.references.insert_one(
             {
                 "_id": "test_ref",
-                "name": "Test Reference",
+                "archived": False,
                 "data_type": "genome",
+                "name": "Test Reference",
             },
         ),
         mongo.subtraction.insert_many(

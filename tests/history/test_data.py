@@ -26,7 +26,12 @@ async def test_get(
 
     await asyncio.gather(
         mongo.references.insert_one(
-            {"_id": "hxn167", "data_type": "genome", "name": "Reference A"},
+            {
+                "_id": "hxn167",
+                "archived": False,
+                "data_type": "genome",
+                "name": "Reference A",
+            },
         ),
         mongo.history.insert_one(
             {

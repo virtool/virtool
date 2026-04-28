@@ -65,6 +65,7 @@ async def test_check_right(
     await mongo.references.insert_one(
         {
             "_id": "baz",
+            "archived": False,
             "groups": [
                 {
                     "id": "foo" if membership == "group" else "none",
@@ -118,6 +119,7 @@ async def test_fetch_and_update_release(mongo: Mongo, fake_app, snapshot, static
     await mongo.references.insert_one(
         {
             "_id": "fake_ref_id",
+            "archived": False,
             "installed": {"name": "1.0.0-fake-install"},
             "release": {"name": "1.0.0-fake-release"},
             "remotes_from": {"slug": "virtool/ref-plant-viruses"},
