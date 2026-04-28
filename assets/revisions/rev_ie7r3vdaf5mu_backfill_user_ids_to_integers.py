@@ -79,32 +79,26 @@ async def upgrade(ctx: MigrationContext) -> None:
     await _backfill_users_groups(ctx.mongo, group_map)
 
 
-def _coerce_user_id(value: int | str, user_map: dict[str, int]) -> int:
+def _coerce_id(value: int | str, id_map: dict[str, int], resource_name: str) -> int:
     if isinstance(value, int):
         return value
 
     if isinstance(value, str) and value.isdigit():
         return int(value)
 
-    if value not in user_map:
-        msg = f"User legacy id {value!r} not found in postgres"
+    if value not in id_map:
+        msg = f"{resource_name} legacy id {value!r} not found in postgres"
         raise ValueError(msg)
 
-    return user_map[value]
+    return id_map[value]
+
+
+def _coerce_user_id(value: int | str, user_map: dict[str, int]) -> int:
+    return _coerce_id(value, user_map, "User")
 
 
 def _coerce_group_id(value: int | str, group_map: dict[str, int]) -> int:
-    if isinstance(value, int):
-        return value
-
-    if isinstance(value, str) and value.isdigit():
-        return int(value)
-
-    if value not in group_map:
-        msg = f"Group legacy id {value!r} not found in postgres"
-        raise ValueError(msg)
-
-    return group_map[value]
+    return _coerce_id(value, group_map, "Group")
 
 
 async def _backfill_user_field(
@@ -160,15 +154,19 @@ async def _backfill_references(
         update: dict = {}
 
         user = doc.get("user")
+        users_list = doc.get("users")
+
+        if not (user and "id" in user) and users_list is None:
+            skipped += 1
+            continue
+
         if user and "id" in user:
             current = user["id"]
             new = _coerce_user_id(current, user_map)
             if not (isinstance(current, int) and new == current):
                 update["user.id"] = new
-        else:
-            skipped += 1
 
-        users = doc.get("users") or []
+        users = users_list or []
         new_users = []
         users_changed = False
 
