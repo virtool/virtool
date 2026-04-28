@@ -169,5 +169,12 @@
       'name': 'drop b2c columns from users',
       'revision': 'bd1ffbecfce5',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 25,
+      'name': 'backfill user ids to integers',
+      'revision': 'ie7r3vdaf5mu',
+    }),
   ])
 # ---
