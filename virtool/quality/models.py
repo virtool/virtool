@@ -1,5 +1,4 @@
 from virtool.models import BaseModel
-from virtool.samples.models import Quality
 
 
 class NucleotidePoint(BaseModel):

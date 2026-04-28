@@ -8,6 +8,7 @@ from virtool.analyses.models import Analysis, AnalysisSample
 from virtool.indexes.models import Index, IndexNested
 from virtool.jobs.models import JobMinimal, JobStep, JobWithKey
 from virtool.ml.models import MLModelRelease
+from virtool.quality.models import Quality
 from virtool.references.models import Reference, ReferenceNested
 from virtool.samples.models import Sample
 from virtool.subtractions.models import Subtraction, SubtractionFile, SubtractionNested
@@ -132,6 +133,16 @@ def workflow_data(
     sample = SampleFactory.build()
     sample.job = JobMinimal.parse_obj(job)
     sample.artifacts = []
+    sample.quality = Quality(
+        bases=[],
+        composition=[],
+        count=0,
+        encoding="",
+        gc=0,
+        length=[0, 0],
+        sequences=[],
+    )
+    sample.ready = True
 
     # A new sample with the fake job configured as the creation job for the sample.
     new_sample = SampleFactory.build()
