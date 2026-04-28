@@ -18,7 +18,7 @@ def check_email(email: str | None) -> str:
         return email
 
     try:
-        validate_email(email)
+        validate_email(email, check_deliverability=False)
     except EmailSyntaxError:
         raise ValueError("The format of the email is invalid")
 
