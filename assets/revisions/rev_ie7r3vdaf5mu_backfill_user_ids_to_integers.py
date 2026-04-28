@@ -16,13 +16,11 @@ Date: 2026-04-28 18:00:54.759190
 from typing import TYPE_CHECKING
 
 import arrow
-from sqlalchemy import select
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from structlog import get_logger
 
-from virtool.groups.pg import SQLGroup
 from virtool.migration import MigrationContext
-from virtool.users.pg import SQLUser
 
 if TYPE_CHECKING:
     from motor.motor_asyncio import AsyncIOMotorDatabase
@@ -55,14 +53,12 @@ SIMPLE_USER_COLLECTIONS = (
 async def upgrade(ctx: MigrationContext) -> None:
     async with AsyncSession(ctx.pg) as pg_session:
         user_result = await pg_session.execute(
-            select(SQLUser.id, SQLUser.legacy_id).where(SQLUser.legacy_id.isnot(None)),
+            text("SELECT id, legacy_id FROM users WHERE legacy_id IS NOT NULL"),
         )
         user_map: dict[str, int] = {row.legacy_id: row.id for row in user_result}
 
         group_result = await pg_session.execute(
-            select(SQLGroup.id, SQLGroup.legacy_id).where(
-                SQLGroup.legacy_id.isnot(None),
-            ),
+            text("SELECT id, legacy_id FROM groups WHERE legacy_id IS NOT NULL"),
         )
         group_map: dict[str, int] = {row.legacy_id: row.id for row in group_result}
 
