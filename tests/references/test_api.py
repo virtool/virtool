@@ -1492,3 +1492,173 @@ class TestFindHistory:
         resp = await self.client.get("/references/v1/nonexistent/history")
 
         assert resp.status == HTTPStatus.NOT_FOUND
+
+
+class TestArchivedReferenceRejectsWrites:
+    """User-driven writes against archived references must return 409."""
+
+    @pytest.fixture
+    async def archived_ref(
+        self,
+        mongo: Mongo,
+        spawn_client: ClientSpawner,
+        static_time: StaticTime,
+    ) -> tuple[VirtoolTestClient, str]:
+        client = await spawn_client(authenticated=True)
+
+        await mongo.references.insert_one(
+            {
+                "_id": "foo",
+                "archived": True,
+                "created_at": static_time.datetime,
+                "data_type": "genome",
+                "groups": [],
+                "internal_control": None,
+                "name": "Foo",
+                "organism": "virus",
+                "release": {
+                    "id": 10742520,
+                    "name": "v0.3.0",
+                    "body": "Lorem ipsum",
+                    "etag": 'W/"ef123d746a33f88ee44203d3ca6bc2f7"',
+                    "filename": "reference.json.gz",
+                    "size": 3709091,
+                    "html_url": "https://example.com",
+                    "download_url": "https://example.com/reference.json.gz",
+                    "published_at": "2018-04-26T19:35:33Z",
+                    "content_type": "application/gzip",
+                    "newer": True,
+                    "retrieved_at": "2018-04-14T19:52:17.465000Z",
+                },
+                "restrict_source_types": False,
+                "source_types": ["isolate", "strain"],
+                "user": {"id": client.user.id},
+                "users": [
+                    {
+                        "id": client.user.id,
+                        "build": True,
+                        "created_at": static_time.datetime,
+                        "modify": True,
+                        "modify_otu": True,
+                        "remove": True,
+                    },
+                ],
+            },
+        )
+
+        return client, "foo"
+
+    async def test_patch(
+        self,
+        archived_ref: tuple[VirtoolTestClient, str],
+        mocker,
+        resp_is: RespIs,
+    ):
+        client, ref_id = archived_ref
+
+        mocker.patch(
+            "virtool.references.api.check_right",
+            make_mocked_coro(return_value=True),
+        )
+
+        resp = await client.patch(f"/references/v1/{ref_id}", {"name": "Bar"})
+
+        await resp_is.conflict(resp, "Reference is archived")
+
+    async def test_create_otu(
+        self,
+        archived_ref: tuple[VirtoolTestClient, str],
+        mocker,
+        resp_is: RespIs,
+    ):
+        client, ref_id = archived_ref
+
+        mocker.patch(
+            "virtool.references.db.check_right",
+            make_mocked_coro(return_value=True),
+        )
+
+        resp = await client.post(
+            f"/references/v1/{ref_id}/otus",
+            {"name": "Tobacco mosaic virus"},
+        )
+
+        await resp_is.conflict(resp, "Reference is archived")
+
+    async def test_create_index(
+        self,
+        archived_ref: tuple[VirtoolTestClient, str],
+        mocker,
+        resp_is: RespIs,
+    ):
+        client, ref_id = archived_ref
+
+        mocker.patch(
+            "virtool.references.db.check_right",
+            make_mocked_coro(return_value=True),
+        )
+
+        resp = await client.post(f"/references/v1/{ref_id}/indexes", {})
+
+        await resp_is.conflict(resp, "Reference is archived")
+
+    async def test_create_update(
+        self,
+        archived_ref: tuple[VirtoolTestClient, str],
+        mocker,
+        resp_is: RespIs,
+    ):
+        client, ref_id = archived_ref
+
+        mocker.patch(
+            "virtool.references.db.check_right",
+            make_mocked_coro(return_value=True),
+        )
+
+        resp = await client.post(f"/references/v1/{ref_id}/updates", {})
+
+        await resp_is.conflict(resp, "Reference is archived")
+
+
+async def test_archived_reference_allows_user_rights_update(
+    fake: DataFaker,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+    static_time: StaticTime,
+):
+    """Rights-management routes are unaffected by the archived guard (D5)."""
+    client = await spawn_client(authenticated=True)
+    user = await fake.users.create()
+
+    await mongo.references.insert_one(
+        {
+            "_id": "foo",
+            "archived": True,
+            "created_at": static_time.datetime,
+            "data_type": "genome",
+            "description": "",
+            "groups": [],
+            "name": "Test",
+            "organism": "virus",
+            "restrict_source_types": False,
+            "source_types": [],
+            "user": {"id": client.user.id},
+            "users": [
+                {
+                    "id": client.user.id,
+                    "build": True,
+                    "created_at": static_time.datetime,
+                    "modify": True,
+                    "modify_otu": True,
+                    "remove": True,
+                },
+            ],
+        },
+    )
+
+    resp = await client.post(
+        "/references/v1/foo/users",
+        {"user_id": user.id, "modify": True},
+    )
+
+    assert resp.status == 201

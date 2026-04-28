@@ -174,7 +174,7 @@ class ReferenceView(PydanticView):
         except ResourceNotFoundError:
             raise APINotFound()
         except ResourceConflictError as err:
-            raise APIBadRequest(str(err))
+            raise APIConflict(str(err))
 
         return json_response(reference)
 
@@ -273,6 +273,8 @@ class ReferenceUpdatesView(PydanticView):
             )
         except ResourceNotFoundError:
             raise APINotFound()
+        except ResourceConflictError as err:
+            raise APIConflict(str(err))
         except ResourceError as err:
             raise APIBadRequest(str(err))
 
@@ -335,6 +337,8 @@ class ReferenceOTUsView(PydanticView):
             )
         except ResourceNotFoundError:
             raise APINotFound()
+        except ResourceConflictError as e:
+            raise APIConflict(str(e))
         except ResourceError as e:
             raise APIBadRequest(str(e))
 

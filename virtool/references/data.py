@@ -110,6 +110,18 @@ class ReferencesData(DataLayerDomain):
         self._client = client
         self._storage = storage
 
+    async def _require_not_archived(self, ref_id: str) -> None:
+        document = await self._mongo.references.find_one(
+            {"_id": ref_id},
+            {"archived": 1},
+        )
+
+        if document is None:
+            raise ResourceNotFoundError()
+
+        if document.get("archived"):
+            raise ResourceConflictError("Reference is archived")
+
     async def _extend_user(self, user: Document) -> Document:
         """Extend a user document with additional data from PostgreSQL.
 
@@ -387,6 +399,8 @@ class ReferencesData(DataLayerDomain):
     @emits(Operation.UPDATE)
     async def update(self, ref_id: str, data: UpdateReferenceRequest) -> Reference:
         """Update a reference."""
+        await self._require_not_archived(ref_id)
+
         document = await self._mongo.references.find_one(ref_id)
 
         if document is None:
@@ -455,6 +469,8 @@ class ReferencesData(DataLayerDomain):
         ref_id: str,
         user_id: str,
     ) -> ReferenceRelease:
+        await self._require_not_archived(ref_id)
+
         document = await self._mongo.references.find_one(ref_id, ["release"])
 
         if document is None:
@@ -519,6 +535,8 @@ class ReferencesData(DataLayerDomain):
         data: CreateOTURequest,
         user_id: str,
     ) -> OTU:
+        await self._require_not_archived(ref_id)
+
         # Check if either the name or abbreviation are already in use. Send a ``400`` if
         # they are.
         if message := await virtool.otus.db.check_name_and_abbreviation(
@@ -570,6 +588,8 @@ class ReferencesData(DataLayerDomain):
     async def create_index(self, ref_id: str, req, user_id: str) -> IndexMinimal:
         if not await virtool.references.db.check_right(req, ref_id, "build"):
             raise APIInsufficientRights()
+
+        await self._require_not_archived(ref_id)
 
         if await self._mongo.indexes.count_documents(
             {"reference.id": ref_id, "ready": False},
