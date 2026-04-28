@@ -14,7 +14,6 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.utils import get_data_from_req
-from virtool.flags import FlagName, flag
 from virtool.jobs.models import (
     CreateJobClaimRequest,
     Job,
@@ -129,7 +128,6 @@ class JobsAPIJobView(PydanticView):
 
 
 @routes.jobs_api.view("/jobs/claim")
-@flag(FlagName.JOBS_IN_POSTGRES)
 class ClaimJobView(PydanticView):
     @policy(PublicRoutePolicy)
     async def post(
@@ -156,7 +154,6 @@ class ClaimJobView(PydanticView):
 
 
 @routes.jobs_api.view("/jobs/{job_id}/steps/{step_id}/start")
-@flag(FlagName.JOBS_IN_POSTGRES)
 class StartJobStepView(PydanticView):
     @policy(PublicRoutePolicy)
     async def post(

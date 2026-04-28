@@ -8,7 +8,6 @@ from aiohttp.web_routedef import RouteTableDef
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.flags import FlagName
 from virtool.jobs.models import JobState
 from virtool.jobs.pg import SQLJob
 
@@ -47,7 +46,6 @@ async def test_public_routes_are_public(fake, spawn_job_client):
     """Test that the claim endpoint is public and doesn't require authentication."""
     client = await spawn_job_client(
         authenticated=False,
-        flags=[FlagName.JOBS_IN_POSTGRES],
     )
 
     user = await fake.users.create()
@@ -87,7 +85,6 @@ async def test_authorized_when_header_is_valid(fake, spawn_job_client):
     client = await spawn_job_client(
         authenticated=False,
         add_route_table=test_routes,
-        flags=[FlagName.JOBS_IN_POSTGRES],
     )
 
     key = await claim_job(client, job)
@@ -111,7 +108,6 @@ async def test_unauthorized_with_wrong_job_id(fake, spawn_job_client):
     client = await spawn_job_client(
         authenticated=False,
         add_route_table=test_routes,
-        flags=[FlagName.JOBS_IN_POSTGRES],
     )
 
     key_1 = await claim_job(client, job_1)
@@ -133,7 +129,6 @@ async def test_unauthorized_with_wrong_key(fake, spawn_job_client):
     client = await spawn_job_client(
         authenticated=False,
         add_route_table=test_routes,
-        flags=[FlagName.JOBS_IN_POSTGRES],
     )
     await claim_job(client, job)
 
@@ -180,7 +175,6 @@ async def test_unauthorized_when_job_in_terminal_state(
     client = await spawn_job_client(
         authenticated=False,
         add_route_table=test_routes,
-        flags=[FlagName.JOBS_IN_POSTGRES],
     )
 
     key = await claim_job(client, job)
