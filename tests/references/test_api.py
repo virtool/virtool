@@ -711,6 +711,205 @@ async def test_update(
         assert await get_one_field(mongo.references, "task", "foo") == {"id": 1}
 
 
+def _archive_reference_doc(user_id: int, *, archived: bool, official: bool = False):
+    document = {
+        "_id": "foo",
+        "archived": archived,
+        "created_at": virtool.utils.timestamp(),
+        "data_type": "genome",
+        "description": "",
+        "groups": [],
+        "internal_control": None,
+        "name": "Foo",
+        "organism": "virus",
+        "restrict_source_types": False,
+        "source_types": ["isolate", "strain"],
+        "user": {"id": user_id},
+        "users": [],
+    }
+
+    if official:
+        document["remotes_from"] = {"slug": "virtool/ref-plant-viruses", "errors": []}
+
+    return document
+
+
+class TestArchive:
+    @pytest.mark.parametrize("already_archived", [False, True])
+    async def test_ok(
+        self,
+        already_archived: bool,
+        fake: DataFaker,
+        mocker,
+        mongo: Mongo,
+        snapshot_recent: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+    ):
+        client = await spawn_client(authenticated=True)
+        user = await fake.users.create()
+
+        await mongo.references.insert_one(
+            _archive_reference_doc(user.id, archived=already_archived),
+        )
+
+        mocker.patch(
+            "virtool.references.api.check_right",
+            make_mocked_coro(return_value=True),
+        )
+
+        resp = await client.post("/references/v1/foo/archive", {})
+
+        assert resp.status == 200
+        body = await resp.json()
+        assert body["archived"] is True
+        assert body == snapshot_recent(name="resp")
+        assert await get_one_field(mongo.references, "archived", "foo") is True
+
+    async def test_official_conflict(
+        self,
+        fake: DataFaker,
+        mocker,
+        mongo: Mongo,
+        resp_is: RespIs,
+        spawn_client: ClientSpawner,
+    ):
+        client = await spawn_client(authenticated=True)
+        user = await fake.users.create()
+
+        await mongo.references.insert_one(
+            _archive_reference_doc(user.id, archived=False, official=True),
+        )
+
+        mocker.patch(
+            "virtool.references.api.check_right",
+            make_mocked_coro(return_value=True),
+        )
+
+        resp = await client.post("/references/v1/foo/archive", {})
+
+        await resp_is.conflict(
+            resp,
+            "Cannot archive the official plant viruses reference",
+        )
+        assert await get_one_field(mongo.references, "archived", "foo") is False
+
+    async def test_insufficient_rights(
+        self,
+        fake: DataFaker,
+        mocker,
+        mongo: Mongo,
+        resp_is: RespIs,
+        spawn_client: ClientSpawner,
+    ):
+        client = await spawn_client(authenticated=True)
+        user = await fake.users.create()
+
+        await mongo.references.insert_one(
+            _archive_reference_doc(user.id, archived=False),
+        )
+
+        mocker.patch(
+            "virtool.references.api.check_right",
+            make_mocked_coro(return_value=False),
+        )
+
+        resp = await client.post("/references/v1/foo/archive", {})
+
+        await resp_is.insufficient_rights(resp)
+        assert await get_one_field(mongo.references, "archived", "foo") is False
+
+    async def test_not_found(
+        self,
+        mocker,
+        resp_is: RespIs,
+        spawn_client: ClientSpawner,
+    ):
+        client = await spawn_client(authenticated=True)
+
+        mocker.patch(
+            "virtool.references.api.check_right",
+            make_mocked_coro(return_value=True),
+        )
+
+        resp = await client.post("/references/v1/foo/archive", {})
+
+        await resp_is.not_found(resp)
+
+
+class TestUnarchive:
+    @pytest.mark.parametrize("already_archived", [True, False])
+    async def test_ok(
+        self,
+        already_archived: bool,
+        fake: DataFaker,
+        mocker,
+        mongo: Mongo,
+        snapshot_recent: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+    ):
+        client = await spawn_client(authenticated=True)
+        user = await fake.users.create()
+
+        await mongo.references.insert_one(
+            _archive_reference_doc(user.id, archived=already_archived),
+        )
+
+        mocker.patch(
+            "virtool.references.api.check_right",
+            make_mocked_coro(return_value=True),
+        )
+
+        resp = await client.post("/references/v1/foo/unarchive", {})
+
+        assert resp.status == 200
+        body = await resp.json()
+        assert body["archived"] is False
+        assert body == snapshot_recent(name="resp")
+        assert await get_one_field(mongo.references, "archived", "foo") is False
+
+    async def test_insufficient_rights(
+        self,
+        fake: DataFaker,
+        mocker,
+        mongo: Mongo,
+        resp_is: RespIs,
+        spawn_client: ClientSpawner,
+    ):
+        client = await spawn_client(authenticated=True)
+        user = await fake.users.create()
+
+        await mongo.references.insert_one(
+            _archive_reference_doc(user.id, archived=True),
+        )
+
+        mocker.patch(
+            "virtool.references.api.check_right",
+            make_mocked_coro(return_value=False),
+        )
+
+        resp = await client.post("/references/v1/foo/unarchive", {})
+
+        await resp_is.insufficient_rights(resp)
+        assert await get_one_field(mongo.references, "archived", "foo") is True
+
+    async def test_not_found(
+        self,
+        mocker,
+        resp_is: RespIs,
+        spawn_client: ClientSpawner,
+    ):
+        client = await spawn_client(authenticated=True)
+
+        mocker.patch(
+            "virtool.references.api.check_right",
+            make_mocked_coro(return_value=True),
+        )
+
+        resp = await client.post("/references/v1/foo/unarchive", {})
+
+        await resp_is.not_found(resp)
+
+
 class TestCreateOTU:
     @pytest.mark.parametrize("abbreviation", [None, "TMV", ""])
     @pytest.mark.parametrize("error", [None, "403", "404"])

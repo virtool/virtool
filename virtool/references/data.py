@@ -402,6 +402,43 @@ class ReferencesData(DataLayerDomain):
 
         return await self.get(ref_id)
 
+    @emits(Operation.UPDATE)
+    async def archive(self, ref_id: str) -> Reference:
+        """Archive a reference."""
+        document = await self._mongo.references.find_one(ref_id)
+
+        if document is None:
+            raise ResourceNotFoundError()
+
+        if get_safely(document, "remotes_from", "slug") == OFFICIAL_REMOTE_SLUG:
+            raise ResourceConflictError(
+                "Cannot archive the official plant viruses reference",
+            )
+
+        if not document.get("archived", False):
+            await self._mongo.references.update_one(
+                {"_id": ref_id},
+                {"$set": {"archived": True}},
+            )
+
+        return await self.get(ref_id)
+
+    @emits(Operation.UPDATE)
+    async def unarchive(self, ref_id: str) -> Reference:
+        """Unarchive a reference."""
+        document = await self._mongo.references.find_one(ref_id)
+
+        if document is None:
+            raise ResourceNotFoundError()
+
+        if document.get("archived", False):
+            await self._mongo.references.update_one(
+                {"_id": ref_id},
+                {"$set": {"archived": False}},
+            )
+
+        return await self.get(ref_id)
+
     async def remove(self, ref_id: str, req) -> None:
         if not await virtool.references.db.check_right(req, ref_id, "remove"):
             raise APIInsufficientRights()

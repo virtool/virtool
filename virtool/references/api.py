@@ -5,7 +5,17 @@ TODO: Drop support for string group ids when we fully migrate to SQL.
 
 from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r202, r204, r400, r403, r404, r502
+from aiohttp_pydantic.oas.typing import (
+    r200,
+    r201,
+    r202,
+    r204,
+    r400,
+    r403,
+    r404,
+    r409,
+    r502,
+)
 from pydantic import Field
 
 import virtool.references.db
@@ -277,6 +287,66 @@ class ReferenceUpdatesView(PydanticView):
             raise APIBadRequest(str(err))
 
         return json_response(update, status=201)
+
+
+@routes.view("/references/v1/{ref_id}/archive")
+class ReferenceArchiveView(PydanticView):
+    async def post(self, ref_id: str, /) -> r200[Reference] | r403 | r404 | r409:
+        """Archive a reference.
+
+        Marks a reference as archived. Archiving the official plant viruses
+        reference is not allowed.
+
+        Status Codes:
+            200: Successful operation
+            403: Insufficient rights
+            404: Not found
+            409: Cannot archive the official plant viruses reference
+        """
+        try:
+            if not await check_right(self.request, ref_id, "modify"):
+                raise APIInsufficientRights()
+        except ResourceNotFoundError:
+            raise APINotFound
+
+        try:
+            reference = await get_data_from_req(self.request).references.archive(
+                ref_id,
+            )
+        except ResourceNotFoundError:
+            raise APINotFound()
+        except ResourceConflictError as err:
+            raise APIConflict(str(err))
+
+        return json_response(reference)
+
+
+@routes.view("/references/v1/{ref_id}/unarchive")
+class ReferenceUnarchiveView(PydanticView):
+    async def post(self, ref_id: str, /) -> r200[Reference] | r403 | r404:
+        """Unarchive a reference.
+
+        Marks a reference as not archived.
+
+        Status Codes:
+            200: Successful operation
+            403: Insufficient rights
+            404: Not found
+        """
+        try:
+            if not await check_right(self.request, ref_id, "modify"):
+                raise APIInsufficientRights()
+        except ResourceNotFoundError:
+            raise APINotFound
+
+        try:
+            reference = await get_data_from_req(self.request).references.unarchive(
+                ref_id,
+            )
+        except ResourceNotFoundError:
+            raise APINotFound()
+
+        return json_response(reference)
 
 
 @routes.view("/references/v1/{ref_id}/otus")
