@@ -1133,95 +1133,175 @@ async def test_find_analyses(
     assert await resp.json() == snapshot
 
 
-@pytest.mark.parametrize(
-    "error",
-    [
-        None,
-        "409_reference",
-        "409_archived",
-        "409_index",
-        "409_ready_index",
-        "409_subtraction",
-        "404",
-    ],
-)
-async def test_analyze(
-    error: str | None,
-    mocker,
-    mongo: Mongo,
-    resp_is,
-    snapshot: SnapshotAssertion,
-    spawn_client: ClientSpawner,
-    static_time,
-):
-    mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
+class TestAnalyze:
+    @pytest.fixture
+    async def analyze_client(
+        self,
+        mocker,
+        spawn_client: ClientSpawner,
+    ) -> VirtoolTestClient:
+        mocker.patch(
+            "virtool.samples.utils.get_sample_rights",
+            return_value=(True, True),
+        )
 
-    client = await spawn_client(authenticated=True)
-    client.app["jobs"] = MockJobInterface()
+        client = await spawn_client(authenticated=True)
+        client.app["jobs"] = MockJobInterface()
 
-    if error != "409_reference":
-        await mongo.references.insert_one(
-            {
-                "_id": "test_ref",
-                "archived": error == "409_archived",
-                "data_type": "genome",
-                "name": "Test Reference",
+        return client
+
+    @staticmethod
+    async def _seed(
+        mongo: Mongo,
+        static_time,
+        *,
+        reference: bool = True,
+        archived: bool = False,
+        index: bool = True,
+        index_ready: bool = True,
+        subtraction: bool = True,
+        sample: bool = True,
+    ) -> None:
+        if reference:
+            await mongo.references.insert_one(
+                {
+                    "_id": "test_ref",
+                    "archived": archived,
+                    "data_type": "genome",
+                    "name": "Test Reference",
+                },
+            )
+
+        if index:
+            await mongo.indexes.insert_one(
+                {
+                    "_id": "test",
+                    "reference": {"id": "test_ref"},
+                    "ready": index_ready,
+                    "version": 4,
+                },
+            )
+
+        if subtraction:
+            await mongo.subtraction.insert_one(
+                {"_id": "subtraction_1", "name": "Subtraction 1"},
+            )
+
+        if sample:
+            await mongo.samples.insert_one(
+                {
+                    "_id": "test",
+                    "name": "Test",
+                    "created_at": static_time.datetime,
+                    "all_read": True,
+                    "all_write": True,
+                    "ready": True,
+                },
+            )
+
+    @staticmethod
+    async def _post(client: VirtoolTestClient):
+        return await client.post(
+            "/samples/test/analyses",
+            data={
+                "workflow": "pathoscope_bowtie",
+                "ref_id": "test_ref",
+                "subtractions": ["subtraction_1"],
             },
         )
 
-    if error != "409_index":
-        await mongo.indexes.insert_one(
-            {
-                "_id": "test",
-                "reference": {"id": "test_ref"},
-                "ready": error != "409_ready_index",
-                "version": 4,
-            },
-        )
+    async def test_ok(
+        self,
+        analyze_client: VirtoolTestClient,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
+        static_time,
+    ):
+        await self._seed(mongo, static_time)
 
-    if error != "409_subtraction":
-        await mongo.subtraction.insert_one(
-            {"_id": "subtraction_1", "name": "Subtraction 1"},
-        )
+        resp = await self._post(analyze_client)
 
-    if error != "404":
-        await mongo.samples.insert_one(
-            {
-                "_id": "test",
-                "name": "Test",
-                "created_at": static_time.datetime,
-                "all_read": True,
-                "all_write": True,
-                "ready": True,
-            },
-        )
+        assert resp.status == 201
+        assert resp.headers["Location"] == "/analyses/bf1b993c"
+        assert await resp.json() == snapshot
 
-    resp = await client.post(
-        "/samples/test/analyses",
-        data={
-            "workflow": "pathoscope_bowtie",
-            "ref_id": "test_ref",
-            "subtractions": [
-                "subtraction_1",
-            ],
-        },
-    )
+    async def test_missing_reference(
+        self,
+        analyze_client: VirtoolTestClient,
+        mongo: Mongo,
+        resp_is,
+        static_time,
+    ):
+        await self._seed(mongo, static_time, reference=False)
 
-    match error:
-        case None:
-            assert resp.status == 201
-            assert resp.headers["Location"] == "/analyses/bf1b993c"
-            assert await resp.json() == snapshot
-        case "409_reference":
-            await resp_is.conflict(resp, "Reference does not exist")
-        case "409_archived":
-            await resp_is.conflict(resp, "Reference is archived")
-        case ("409_index", "409_ready_index"):
-            await resp_is.conflict(resp, "No ready index")
-        case "409_subtraction":
-            await resp_is.conflict(resp, "Subtractions do not exist: subtraction_1")
-        case "404":
-            await resp_is.not_found(resp)
+        resp = await self._post(analyze_client)
+
+        await resp_is.conflict(resp, "Reference does not exist")
+
+    async def test_archived_reference(
+        self,
+        analyze_client: VirtoolTestClient,
+        mongo: Mongo,
+        resp_is,
+        static_time,
+    ):
+        await self._seed(mongo, static_time, archived=True)
+
+        resp = await self._post(analyze_client)
+
+        await resp_is.conflict(resp, "Reference is archived")
+
+    async def test_no_index(
+        self,
+        analyze_client: VirtoolTestClient,
+        mongo: Mongo,
+        resp_is,
+        static_time,
+    ):
+        await self._seed(mongo, static_time, index=False)
+
+        resp = await self._post(analyze_client)
+
+        await resp_is.conflict(resp, "No ready index")
+
+    async def test_unbuilt_index(
+        self,
+        analyze_client: VirtoolTestClient,
+        mongo: Mongo,
+        resp_is,
+        static_time,
+    ):
+        await self._seed(mongo, static_time, index_ready=False)
+
+        resp = await self._post(analyze_client)
+
+        await resp_is.conflict(resp, "No ready index")
+
+    async def test_missing_subtraction(
+        self,
+        analyze_client: VirtoolTestClient,
+        mongo: Mongo,
+        resp_is,
+        static_time,
+    ):
+        await self._seed(mongo, static_time, subtraction=False)
+
+        resp = await self._post(analyze_client)
+
+        await resp_is.conflict(resp, "Subtractions do not exist: subtraction_1")
+
+    async def test_missing_sample(
+        self,
+        analyze_client: VirtoolTestClient,
+        mongo: Mongo,
+        resp_is,
+        static_time,
+    ):
+        await self._seed(mongo, static_time, sample=False)
+
+        resp = await self._post(analyze_client)
+
+        await resp_is.not_found(resp)
 
 
 @pytest.mark.parametrize("error", [None, 400, 409])

@@ -2137,7 +2137,7 @@
     'message': 'File is not compressed',
   })
 # ---
-# name: test_analyze[None]
+# name: TestAnalyze.test_ok
   dict({
     'created_at': '2015-10-06T20:00:00Z',
     'files': list([
