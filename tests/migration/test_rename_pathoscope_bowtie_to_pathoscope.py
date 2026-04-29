@@ -1,6 +1,7 @@
 """Tests for the rename-pathoscope-bowtie-to-pathoscope migration."""
 
 import asyncio
+import json
 from collections.abc import Callable
 
 import arrow
@@ -25,25 +26,31 @@ async def _insert_user(
     quick_analyze_workflow: str | None,
 ) -> int:
     settings = (
-        '{"quick_analyze_workflow": "' + quick_analyze_workflow + '"}'
+        {"quick_analyze_workflow": quick_analyze_workflow}
         if quick_analyze_workflow is not None
-        else "{}"
+        else {}
     )
     async with AsyncSession(ctx.pg) as session:
         result = await session.execute(
             text(
-                f"""
+                """
                 INSERT INTO users (
                     handle, active, email, force_reset,
                     invalidate_sessions, last_password_change, password, settings
                 )
                 VALUES (
-                    :handle, true, '', false, false, :now, :pw, '{settings}'::jsonb
+                    :handle, true, '', false, false, :now, :pw,
+                    CAST(:settings AS jsonb)
                 )
                 RETURNING id
                 """,
             ),
-            {"handle": handle, "now": arrow.utcnow().naive, "pw": b"hashed"},
+            {
+                "handle": handle,
+                "now": arrow.utcnow().naive,
+                "pw": b"hashed",
+                "settings": json.dumps(settings),
+            },
         )
         user_id = result.scalar_one()
         await session.commit()
