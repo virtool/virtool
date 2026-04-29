@@ -1611,7 +1611,7 @@
     'page': 1,
     'page_count': 1,
     'per_page': 25,
-    'total_count': 3,
+    'total_count': 4,
   })
 # ---
 # name: test_find[include]
@@ -1790,7 +1790,7 @@
     'page': 1,
     'page_count': 1,
     'per_page': 25,
-    'total_count': 1,
+    'total_count': 4,
   })
 # ---
 # name: test_find_otus[False-None]

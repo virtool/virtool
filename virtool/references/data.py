@@ -146,17 +146,17 @@ class ReferencesData(DataLayerDomain):
         archived: Literal["include", "only"] | None = None,
     ) -> ReferenceSearchResult:
         """Find references."""
-        mongo_query = {}
+        mongo_query = {**compose_archived_filter(archived)}
 
         if find:
-            mongo_query = compose_regex_query(find, ["name", "data_type"])
+            mongo_query = {
+                **mongo_query,
+                **compose_regex_query(find, ["name", "data_type"]),
+            }
 
         # TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings
         user_id_variants = await get_user_id_single_variants(self._pg, user_id)
-        base_query = {
-            **compose_archived_filter(archived),
-            **compose_rights_filter(user_id_variants, administrator, groups),
-        }
+        base_query = compose_rights_filter(user_id_variants, administrator, groups)
 
         data = await paginate(
             self._mongo.references,

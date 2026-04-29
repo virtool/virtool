@@ -161,21 +161,34 @@ async def find(
     :return: the index document
 
     """
+    mongo_query: dict = {}
+
     if ref_id:
         base_query = {"reference.id": ref_id}
     else:
+        # base_query is the orphan filter only (visibility scope). The lifecycle
+        # filter goes into mongo_query so total_count reflects all indexes whose
+        # reference exists, while found_count narrows to the requested
+        # lifecycle.
         base_query = {
-            "reference.id": {
-                "$in": await mongo.references.distinct(
-                    "_id",
-                    compose_archived_filter(archived),
-                ),
-            },
+            "reference.id": {"$in": await mongo.references.distinct("_id")},
         }
+
+        archived_filter = compose_archived_filter(archived)
+
+        if archived_filter:
+            mongo_query = {
+                "reference.id": {
+                    "$in": await mongo.references.distinct(
+                        "_id",
+                        archived_filter,
+                    ),
+                },
+            }
 
     data = await paginate(
         mongo.indexes,
-        {},
+        mongo_query,
         req_query,
         base_query=base_query,
         projection=[
