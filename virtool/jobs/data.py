@@ -455,7 +455,7 @@ class JobsData:
         """
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
-                select(SQLJob).where(SQLJob.id == job_id),
+                select(SQLJob).where(SQLJob.id == job_id).with_for_update(),
             )
             sql_job = result.scalar()
 
