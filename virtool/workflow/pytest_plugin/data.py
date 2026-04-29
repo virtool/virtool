@@ -54,6 +54,9 @@ class WorkflowData:
     step_start_updates: list[dict]
     """Step start updates pushed during the workflow, for test assertions."""
 
+    finish_called: bool
+    """Whether the workflow runtime called the finish endpoint."""
+
 
 @pytest.fixture
 def workflow_data(
@@ -240,4 +243,5 @@ def workflow_data(
         subtraction=subtraction,
         new_subtraction=new_subtraction,
         step_start_updates=[],
+        finish_called=False,
     )

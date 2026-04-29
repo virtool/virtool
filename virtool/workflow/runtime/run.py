@@ -16,12 +16,13 @@ from virtool.jobs.models import (
     JobClaimed,
     JobState,
     JobStepDefinition,
+    JobWithKey,
 )
 from virtool.logs import configure_logging
 from virtool.sentry import configure_sentry
 from virtool.version import get_virtool_version
 from virtool.workflow.acquire import claim_job_by_polling
-from virtool.workflow.client import api_client
+from virtool.workflow.client import WorkflowAPIClient, api_client
 from virtool.workflow.hooks import (
     cleanup_builtin_status_hooks,
     on_cancelled,
@@ -56,6 +57,13 @@ def configure_status_hooks() -> None:
     @on_step_start
     async def handle_step_start(start_step) -> None:
         await start_step()
+
+    @on_success
+    async def handle_success(
+        _api: WorkflowAPIClient,
+        _job: JobWithKey | JobClaimed,
+    ) -> None:
+        await _api.post_json(f"/jobs/{_job.id}/finish", {})
 
 
 async def execute(

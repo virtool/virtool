@@ -90,6 +90,23 @@ def create_jobs_routes(data: WorkflowData):
                 dumps=custom_dumps,
             )
 
+    @routes.view("/jobs/{job_id}/finish")
+    class JobFinishView(View):
+        async def post(self):
+            job_id = int(self.request.match_info["job_id"])
+
+            if job_id != data.job.id:
+                return generate_not_found()
+
+            data.job.state = JobState.SUCCEEDED
+            data.finish_called = True
+
+            return json_response(
+                data.job.dict(),
+                status=200,
+                dumps=custom_dumps,
+            )
+
     @routes.view("/jobs/{job_id}/steps/{step_id}/start")
     class JobStepStartView(View):
         async def post(self):

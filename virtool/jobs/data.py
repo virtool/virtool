@@ -445,6 +445,34 @@ class JobsData:
         )
 
     @emits(Operation.UPDATE)
+    async def finish(self, job_id: int) -> Job:
+        """Finish a job.
+
+        Marks the job as succeeded.
+
+        :param job_id: the ID of the job to finish
+        :return: the updated job
+        """
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLJob).where(SQLJob.id == job_id).with_for_update(),
+            )
+            sql_job = result.scalar()
+
+            if sql_job is None:
+                raise ResourceNotFoundError
+
+            if sql_job.state != "running":
+                raise ResourceConflictError("Job is not running")
+
+            sql_job.state = JobState.SUCCEEDED.value
+            sql_job.finished_at = virtool.utils.timestamp()
+
+            await session.commit()
+
+        return await self.get(job_id)
+
+    @emits(Operation.UPDATE)
     async def cancel(self, job_id: int) -> Job:
         """Cancel a job.
 
