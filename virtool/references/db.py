@@ -39,6 +39,7 @@ from virtool.references.bulk_models import (
     SequenceChanges,
 )
 from virtool.references.utils import (
+    OFFICIAL_REMOTE_SLUG,
     check_will_change,
 )
 from virtool.releases import (
@@ -471,7 +472,7 @@ async def get_official_installed(mongo: "Mongo") -> bool:
     """
     return (
         await mongo.references.count_documents(
-            {"remotes_from.slug": "virtool/ref-plant-viruses"},
+            {"remotes_from.slug": OFFICIAL_REMOTE_SLUG},
         )
         > 0
     )
