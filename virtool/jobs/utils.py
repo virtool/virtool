@@ -4,7 +4,7 @@ WORKFLOW_NAMES = (
     "jobs_create_subtraction",
     "jobs_aodp",
     "jobs_nuvs",
-    "jobs_pathoscope_bowtie",
+    "jobs_pathoscope",
 )
 
 

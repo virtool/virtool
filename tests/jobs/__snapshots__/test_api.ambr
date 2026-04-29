@@ -36,7 +36,7 @@
         'create_subtraction': 1,
         'iimi': 0,
         'nuvs': 1,
-        'pathoscope': 0,
+        'pathoscope': 1,
       }),
       'succeeded': dict({
         'aodp': 0,
@@ -45,7 +45,7 @@
         'create_subtraction': 1,
         'iimi': 0,
         'nuvs': 0,
-        'pathoscope': 0,
+        'pathoscope': 1,
       }),
     }),
     'found_count': 11,

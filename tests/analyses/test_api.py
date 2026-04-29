@@ -80,7 +80,7 @@ async def test_find(
             [
                 {
                     "_id": "test_1",
-                    "workflow": "pathoscope_bowtie",
+                    "workflow": "pathoscope",
                     "created_at": static_time.datetime,
                     "ready": True,
                     "job": {"id": job.id},
@@ -94,7 +94,7 @@ async def test_find(
                 },
                 {
                     "_id": "test_2",
-                    "workflow": "pathoscope_bowtie",
+                    "workflow": "pathoscope",
                     "created_at": static_time.datetime,
                     "ready": True,
                     "job": {"id": job.id},
@@ -108,7 +108,7 @@ async def test_find(
                 },
                 {
                     "_id": "test_3",
-                    "workflow": "pathoscope_bowtie",
+                    "workflow": "pathoscope",
                     "created_at": static_time.datetime,
                     "ready": True,
                     "job": None,
@@ -199,7 +199,7 @@ async def test_get(
                     "sample": {"id": "baz"},
                     "subtractions": ["plum", "apple"],
                     "user": {"id": user_1.id},
-                    "workflow": "pathoscope_bowtie",
+                    "workflow": "pathoscope",
                 },
             ),
             create_analysis_file(pg, "foobar", "fasta", "reference.fa"),
@@ -259,7 +259,7 @@ async def test_get_304(
                 "ready": ready,
                 "job": {"id": "test"},
                 "index": {"version": 3, "id": "bar"},
-                "workflow": "pathoscope_bowtie",
+                "workflow": "pathoscope",
                 "results": {"hits": []},
                 "sample": {"id": "baz"},
                 "reference": {"id": "baz"},
@@ -342,7 +342,7 @@ async def test_remove(
                 "sample": {"id": "baz", "name": "Baz"},
                 "subtractions": ["plum"],
                 "user": {"id": user.id},
-                "workflow": "pathoscope_bowtie",
+                "workflow": "pathoscope",
                 "results": {"hits": []},
             },
         )
@@ -529,7 +529,7 @@ async def test_blast(
             analysis_document["results"]["hits"].pop(1)
 
         elif error == "409_workflow":
-            analysis_document["workflow"] = "pathoscope_bowtie"
+            analysis_document["workflow"] = "pathoscope"
 
         elif error == "409_ready":
             analysis_document["ready"] = False

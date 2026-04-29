@@ -445,48 +445,6 @@ class TestClaim:
         body = await resp.json()
         assert body["id"] == older_job_id
 
-    async def test_claims_pathoscope_bowtie_alias(
-        self,
-        fake: DataFaker,
-        pg: AsyncEngine,
-        spawn_job_client: JobClientSpawner,
-    ):
-        client = await spawn_job_client(
-            authenticated=False,
-        )
-
-        user = await fake.users.create()
-
-        async with AsyncSession(pg) as session:
-            job = SQLJob(
-                created_at=arrow.utcnow().naive,
-                state="pending",
-                user_id=user.id,
-                workflow="pathoscope_bowtie",
-            )
-            session.add(job)
-            await session.flush()
-            job_id = job.id
-            await session.commit()
-
-        resp = await client.post(
-            "/jobs/claim?workflow=pathoscope_bowtie",
-            json={
-                "runner_id": "runner-1",
-                "mem": 8.0,
-                "cpu": 4.0,
-                "image": "virtool/workflow:1.0.0",
-                "runtime_version": "1.0.0",
-                "workflow_version": "2.0.0",
-                "steps": [],
-            },
-        )
-
-        assert resp.status == HTTPStatus.OK
-        body = await resp.json()
-        assert body["id"] == job_id
-        assert body["workflow"] == "pathoscope"
-
     async def test_skips_already_claimed(
         self,
         fake: DataFaker,
