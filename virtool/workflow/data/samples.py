@@ -13,7 +13,7 @@ from virtool.samples.models import Quality, Sample
 from virtool.workflow.analysis import ReadPaths
 from virtool.workflow.client import WorkflowAPIClient
 from virtool.workflow.data.uploads import WFUploads
-from virtool.workflow.errors import JobsAPINotFoundError
+from virtool.workflow.errors import JobsAPINotFoundError, MissingJobArgumentError
 
 logger = get_logger("api")
 
@@ -81,6 +81,27 @@ class WFNewSample:
     upload: Callable[[Path], Coroutine[None, None, None]]
 
 
+async def get_sample_id(_api: WorkflowAPIClient, job: Job) -> str:
+    try:
+        return job.args["sample_id"]
+    except KeyError:
+        pass
+
+    try:
+        analysis_id = job.args["analysis_id"]
+    except KeyError:
+        raise MissingJobArgumentError("Missing job args key 'sample_id'") from None
+
+    analysis = await _api.get_json(f"/analyses/{analysis_id}")
+
+    try:
+        return analysis["sample"]["id"]
+    except KeyError:
+        raise MissingJobArgumentError(
+            f"Analysis {analysis_id!r} does not include sample id",
+        ) from None
+
+
 @fixture
 async def sample(
     _api: WorkflowAPIClient,
@@ -89,7 +110,7 @@ async def sample(
     work_path: Path,
 ) -> WFSample:
     """The sample associated with the current job."""
-    id_ = job.args["sample_id"]
+    id_ = await get_sample_id(_api, job)
 
     base_url_path = f"/samples/{id_}"
 
@@ -138,7 +159,10 @@ async def new_sample(
     work_path: Path,
 ) -> WFNewSample:
     """The sample associated with the current job."""
-    id_ = job.args["sample_id"]
+    try:
+        id_ = job.args["sample_id"]
+    except KeyError:
+        raise MissingJobArgumentError("Missing job args key 'sample_id'") from None
 
     log = logger.bind(resource="sample", id=id_)
     log.info("loading sample for sample creation")

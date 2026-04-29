@@ -6,7 +6,11 @@ from pyfixtures import FixtureScope
 
 from virtool.samples.models import Quality
 from virtool.workflow.data.samples import WFNewSample, WFSample
-from virtool.workflow.errors import JobsAPIConflictError, JobsAPINotFoundError
+from virtool.workflow.errors import (
+    JobsAPIConflictError,
+    JobsAPINotFoundError,
+    MissingJobArgumentError,
+)
 from virtool.workflow.pytest_plugin.data import WorkflowData
 
 QUALITY = {
@@ -81,6 +85,29 @@ class TestSample:
 
             assert path.exists()
 
+    async def test_ok_from_analysis_id(
+        self,
+        scope: FixtureScope,
+        workflow_data: WorkflowData,
+    ):
+        workflow_data.job.args = {"analysis_id": workflow_data.analysis.id}
+
+        sample: WFSample = await scope.instantiate_by_key("sample")
+
+        assert sample.id == workflow_data.sample.id
+
+    async def test_missing_sample_id(
+        self,
+        scope: FixtureScope,
+        workflow_data: WorkflowData,
+    ):
+        workflow_data.job.args = {}
+
+        with pytest.raises(MissingJobArgumentError) as err:
+            await scope.instantiate_by_key("sample")
+
+        assert "Missing job args key 'sample_id'" in str(err)
+
     async def test_not_found(self, scope: FixtureScope, workflow_data: WorkflowData):
         workflow_data.job.args["sample_id"] = "not_found"
 
@@ -126,6 +153,18 @@ class TestNewSample:
                 ) as f2,
             ):
                 assert f1.read() == f2.read()
+
+    async def test_missing_sample_id(
+        self,
+        scope: FixtureScope,
+        workflow_data: WorkflowData,
+    ):
+        workflow_data.job.args = {}
+
+        with pytest.raises(MissingJobArgumentError) as err:
+            await scope.instantiate_by_key("new_sample")
+
+        assert "Missing job args key 'sample_id'" in str(err)
 
     async def test_finalize(self, scope: FixtureScope, workflow_data: WorkflowData):
         """Test that the finalize method updates the sample with the given quality."""
