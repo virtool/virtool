@@ -559,6 +559,66 @@ class TestClaim:
         assert resp.status == HTTPStatus.NOT_FOUND
 
 
+class TestFinish:
+    """Tests for POST /jobs/{job_id}/finish endpoint."""
+
+    async def test_ok(
+        self,
+        fake: DataFaker,
+        pg: AsyncEngine,
+        spawn_job_client: JobClientSpawner,
+    ):
+        """Test that a running job can be finished."""
+        client = await spawn_job_client(authenticated=False)
+
+        user = await fake.users.create()
+        job = await fake.jobs.create(user, state=JobState.RUNNING)
+
+        resp = await client.post(f"/jobs/{job.id}/finish")
+
+        assert resp.status == HTTPStatus.OK
+
+        body = await resp.json()
+        assert body["state"] == "succeeded"
+        assert "key" not in body
+
+        async with AsyncSession(pg) as session:
+            sql_job = (
+                await session.execute(select(SQLJob).where(SQLJob.id == job.id))
+            ).scalar()
+
+        assert sql_job.state == "succeeded"
+        assert sql_job.finished_at is not None
+
+    async def test_not_found(self, spawn_job_client: JobClientSpawner):
+        """Test that 404 is returned when the job doesn't exist."""
+        client = await spawn_job_client(authenticated=False)
+
+        resp = await client.post("/jobs/999999/finish")
+
+        assert resp.status == HTTPStatus.NOT_FOUND
+
+    @pytest.mark.parametrize(
+        "state",
+        [JobState.PENDING, JobState.SUCCEEDED, JobState.FAILED, JobState.CANCELLED],
+    )
+    async def test_not_running(
+        self,
+        state: JobState,
+        fake: DataFaker,
+        spawn_job_client: JobClientSpawner,
+    ):
+        """Test that 409 is returned when the job isn't running."""
+        client = await spawn_job_client(authenticated=False)
+
+        user = await fake.users.create()
+        job = await fake.jobs.create(user, state=state)
+
+        resp = await client.post(f"/jobs/{job.id}/finish")
+
+        assert resp.status == HTTPStatus.CONFLICT
+
+
 class TestStartStep:
     """Tests for POST /jobs/{job_id}/steps/{step_id}/start endpoint."""
 

@@ -3,6 +3,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.jobs.data import JobsData
@@ -290,6 +291,52 @@ class TestStartStepPostgres:
             updated_job.steps[0].started_at.replace(tzinfo=None) == static_time.datetime
         )
         assert updated_job.steps[1].started_at is None
+
+
+class TestFinish:
+    """Test the finish() method of JobsData."""
+
+    async def test_ok(
+        self,
+        fake: DataFaker,
+        jobs_data: JobsData,
+        pg: AsyncEngine,
+        static_time: StaticTime,
+    ):
+        user = await fake.users.create()
+        job = await fake.jobs.create(user, state=JobState.RUNNING)
+
+        finished = await jobs_data.finish(job.id)
+
+        assert finished.state == JobState.SUCCEEDED
+
+        async with AsyncSession(pg) as session:
+            sql_job = (
+                await session.execute(select(SQLJob).where(SQLJob.id == job.id))
+            ).scalar()
+
+        assert sql_job.state == "succeeded"
+        assert sql_job.finished_at == static_time.datetime
+
+    async def test_not_found(self, jobs_data: JobsData):
+        with pytest.raises(ResourceNotFoundError):
+            await jobs_data.finish(999999)
+
+    @pytest.mark.parametrize(
+        "state",
+        [JobState.PENDING, JobState.SUCCEEDED, JobState.FAILED, JobState.CANCELLED],
+    )
+    async def test_not_running(
+        self,
+        state: JobState,
+        fake: DataFaker,
+        jobs_data: JobsData,
+    ):
+        user = await fake.users.create()
+        job = await fake.jobs.create(user, state=state)
+
+        with pytest.raises(ResourceConflictError):
+            await jobs_data.finish(job.id)
 
 
 class TestCancelPostgres:

@@ -204,6 +204,29 @@ class CancelJobView(PydanticView):
         return json_response(document)
 
 
+@routes.jobs_api.view("/jobs/{job_id}/finish")
+class FinishJobView(PydanticView):
+    @policy(PublicRoutePolicy)
+    async def post(self, job_id: int, /) -> r200[Job] | r404 | r409:
+        """Finish a job.
+
+        Marks a job as succeeded.
+
+        Status Codes:
+            200: Successful operation
+            404: Job not found
+            409: Job is not in a running state
+        """
+        try:
+            job = await get_data_from_req(self.request).jobs.finish(job_id)
+        except ResourceNotFoundError:
+            raise APINotFound()
+        except ResourceConflictError as e:
+            raise APIConflict(str(e))
+
+        return json_response(job)
+
+
 @routes.jobs_api.view("/jobs/{job_id}/ping")
 class JobPingView(PydanticView):
     async def put(self, job_id: int, /) -> r200[JobPing] | r404:
