@@ -270,30 +270,26 @@ def compose_archived_filter(
     return {"archived": False}
 
 
-def compose_base_find_query(
+def compose_rights_filter(
     user_id_variants: list[int | str],
     administrator: bool,
     groups: list[int | str],
-    archived: Literal["include", "only"] | None = None,
 ) -> dict:
-    """Compose a query for filtering reference search results by user read
-    rights and lifecycle state.
+    """Compose a Mongo filter restricting reference results to those the
+    requesting user has read rights to.
 
-    See :func:`compose_archived_filter` for the lifecycle semantics.
+    Administrators bypass the filter and receive an empty dict.
 
     TODO: Revert to single user_id parameter when all user IDs are migrated away from MongoDB strings.
 
     :param user_id_variants: all ID variants (modern and legacy) for the requesting user
     :param administrator: the administrator flag of the user requesting the search
     :param groups: the id group membership of the user requesting the search
-    :param archived: lifecycle filter mode
-    :return: a valid MongoDB query
+    :return: a Mongo filter dict; empty for administrators
 
     """
-    query: dict = compose_archived_filter(archived)
-
     if administrator:
-        return query
+        return {}
 
     user_queries = []
     for id_variant in user_id_variants:
@@ -304,12 +300,12 @@ def compose_base_find_query(
             ]
         )
 
-    query["$or"] = [
-        {"groups.id": {"$in": groups}},
-        *user_queries,
-    ]
-
-    return query
+    return {
+        "$or": [
+            {"groups.id": {"$in": groups}},
+            *user_queries,
+        ],
+    }
 
 
 async def fetch_and_update_release(

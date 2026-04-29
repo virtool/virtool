@@ -14,7 +14,8 @@ from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.references.db import (
     check_right,
-    compose_base_find_query,
+    compose_archived_filter,
+    compose_rights_filter,
     create_document,
     fetch_and_update_release,
     get_manifest,
@@ -96,53 +97,48 @@ async def test_check_right(
         assert result is expect
 
 
-class TestComposeBaseFindQuery:
-    """Cover the rights and lifecycle (``archived``) facets of the base query."""
+class TestComposeArchivedFilter:
+    """The lifecycle facet of the references find query."""
 
     @pytest.mark.parametrize(
-        ("archived", "expected_archived_clause"),
+        ("archived", "expected"),
         [
             (None, {"archived": False}),
             ("include", {}),
             ("only", {"archived": True}),
         ],
     )
-    def test_administrator(self, archived, expected_archived_clause):
-        """Administrators bypass the rights filter; lifecycle filter still applies."""
+    def test(self, archived, expected):
+        assert compose_archived_filter(archived) == expected
+
+
+class TestComposeRightsFilter:
+    """The user-rights facet of the references find query."""
+
+    def test_administrator(self):
+        """Administrators bypass the rights filter."""
         assert (
-            compose_base_find_query(
+            compose_rights_filter(
                 user_id_variants=["bar"],
                 administrator=True,
                 groups=["foo"],
-                archived=archived,
             )
-            == expected_archived_clause
+            == {}
         )
 
-    @pytest.mark.parametrize(
-        ("archived", "expected_archived_clause"),
-        [
-            (None, {"archived": False}),
-            ("include", {}),
-            ("only", {"archived": True}),
-        ],
-    )
-    def test_non_administrator(self, archived, expected_archived_clause):
-        """Non-administrators get a rights ``$or`` plus the lifecycle filter."""
-        rights_clause = {
+    def test_non_administrator(self):
+        """Non-administrators get an ``$or`` over their group and user id variants."""
+        assert compose_rights_filter(
+            user_id_variants=["bar"],
+            administrator=False,
+            groups=["foo"],
+        ) == {
             "$or": [
                 {"groups.id": {"$in": ["foo"]}},
                 {"users.id": "bar"},
                 {"user.id": "bar"},
             ],
         }
-
-        assert compose_base_find_query(
-            user_id_variants=["bar"],
-            administrator=False,
-            groups=["foo"],
-            archived=archived,
-        ) == {**expected_archived_clause, **rights_clause}
 
 
 async def test_create_manifest(mongo: Mongo, test_otu: dict):
