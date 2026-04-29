@@ -32,9 +32,20 @@ from virtool.workflow.pytest_plugin.utils import StaticTime
 @pytest.mark.parametrize(
     ("archived_param", "expected_ids"),
     [
-        (None, {"foo", "bar", "goo"}),
-        ("include", {"foo", "bar", "goo", "qux"}),
-        ("only", {"qux"}),
+        (
+            None,
+            {"owned_active", "user_member_active", "group_member_active"},
+        ),
+        (
+            "include",
+            {
+                "owned_active",
+                "user_member_active",
+                "group_member_active",
+                "owned_archived",
+            },
+        ),
+        ("only", {"owned_archived"}),
     ],
     ids=["default", "include", "only"],
 )
@@ -52,10 +63,9 @@ async def test_find(
     """The ``archived`` query param toggles between active-only (default),
     both, and archived-only references the user can read.
 
-    Reference ``baz`` is owned by another user and never visible to the client;
-    ``zap`` is archived but owned by another user, so it is also never visible
-    — together they prove the rights filter still applies regardless of the
-    lifecycle filter.
+    The ``other_active`` and ``other_archived`` references are owned by a
+    different user and never visible to the client, proving the rights filter
+    still applies regardless of the lifecycle filter.
     """
     client = await spawn_client(authenticated=True)
 
@@ -66,39 +76,39 @@ async def test_find(
     await mongo.references.insert_many(
         [
             {
-                "_id": "foo",
+                "_id": "owned_active",
                 "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "groups": [],
                 "internal_control": None,
-                "name": "Foo",
+                "name": "Owned Active",
                 "organism": "virus",
                 "restrict_source_types": False,
                 "task": {"id": 1},
                 "user": {"id": client.user.id},
             },
             {
-                "_id": "baz",
+                "_id": "other_active",
                 "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "barcode",
                 "groups": [],
                 "internal_control": None,
-                "name": "Baz",
+                "name": "Other Active",
                 "organism": "virus",
                 "restrict_source_types": True,
                 "task": {"id": 2},
                 "user": {"id": user.id},
             },
             {
-                "_id": "bar",
+                "_id": "user_member_active",
                 "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "barcode",
                 "groups": [],
                 "internal_control": None,
-                "name": "Baz",
+                "name": "User Member Active",
                 "organism": "virus",
                 "restrict_source_types": True,
                 "task": {"id": 2},
@@ -106,13 +116,13 @@ async def test_find(
                 "users": [{"id": client.user.id}],
             },
             {
-                "_id": "goo",
+                "_id": "group_member_active",
                 "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "barcode",
                 "groups": [{"id": group.id}],
                 "internal_control": None,
-                "name": "Baz",
+                "name": "Group Member Active",
                 "organism": "virus",
                 "restrict_source_types": True,
                 "task": {"id": 2},
@@ -120,26 +130,26 @@ async def test_find(
                 "users": [],
             },
             {
-                "_id": "qux",
+                "_id": "owned_archived",
                 "archived": True,
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "groups": [],
                 "internal_control": None,
-                "name": "Qux",
+                "name": "Owned Archived",
                 "organism": "virus",
                 "restrict_source_types": False,
                 "task": {"id": 1},
                 "user": {"id": client.user.id},
             },
             {
-                "_id": "zap",
+                "_id": "other_archived",
                 "archived": True,
                 "created_at": static_time.datetime,
                 "data_type": "barcode",
                 "groups": [],
                 "internal_control": None,
-                "name": "Zap",
+                "name": "Other Archived",
                 "organism": "virus",
                 "restrict_source_types": True,
                 "task": {"id": 2},

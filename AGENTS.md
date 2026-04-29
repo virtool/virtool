@@ -59,6 +59,12 @@ everything else.
 Tests are async-first via pytest-asyncio. Use `pytest-xdist` (`-n`) for
 parallel runs.
 
+Identifiers in test fixtures (Mongo `_id`s, fake names, etc.) should describe
+the role they play. Avoid placeholders like `foo`, `bar`, `baz`, `qux` — they
+make snapshots and `expected_ids` sets opaque to readers. Prefer names like
+`owned_active`, `user_member_active`, `other_archived` that read directly as
+the scenario being exercised.
+
 ### Formatting and Linting
 
 ```bash
