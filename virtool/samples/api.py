@@ -6,7 +6,7 @@ from aiohttp.web import (
     StreamResponse,
 )
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404
+from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404, r409
 from pydantic import Field, conint, constr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -434,18 +434,20 @@ class AnalysesView(PydanticView):
         sample_id: str,
         /,
         data: CreateAnalysisRequest,
-    ) -> r201[AnalysisMinimal] | r400 | r403 | r404:
+    ) -> r201[AnalysisMinimal] | r400 | r403 | r404 | r409:
         """Start analysis job.
 
         Starts an analysis job for a given sample.
 
         Status Codes:
             201: Successful operation
-            400: Reference does not exist
-            400: No index is ready for the reference
             400: Invalid input
             403: Insufficient rights
             404: Not found
+            409: Reference does not exist
+            409: Reference is archived
+            409: No index is ready for the reference
+            409: Subtractions do not exist
         """
         mongo = get_mongo_from_req(self.request)
 
