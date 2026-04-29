@@ -1151,7 +1151,7 @@ class TestAnalyze:
         return client
 
     @staticmethod
-    async def _seed(
+    async def _insert_analysis_resources(
         mongo: Mongo,
         static_time,
         *,
@@ -1217,7 +1217,7 @@ class TestAnalyze:
         snapshot: SnapshotAssertion,
         static_time,
     ):
-        await self._seed(mongo, static_time)
+        await self._insert_analysis_resources(mongo, static_time)
 
         resp = await self._post(analyze_client)
 
@@ -1232,7 +1232,7 @@ class TestAnalyze:
         resp_is,
         static_time,
     ):
-        await self._seed(mongo, static_time, reference=False)
+        await self._insert_analysis_resources(mongo, static_time, reference=False)
 
         resp = await self._post(analyze_client)
 
@@ -1245,7 +1245,7 @@ class TestAnalyze:
         resp_is,
         static_time,
     ):
-        await self._seed(mongo, static_time, archived=True)
+        await self._insert_analysis_resources(mongo, static_time, archived=True)
 
         resp = await self._post(analyze_client)
 
@@ -1258,7 +1258,7 @@ class TestAnalyze:
         resp_is,
         static_time,
     ):
-        await self._seed(mongo, static_time, index=False)
+        await self._insert_analysis_resources(mongo, static_time, index=False)
 
         resp = await self._post(analyze_client)
 
@@ -1271,7 +1271,7 @@ class TestAnalyze:
         resp_is,
         static_time,
     ):
-        await self._seed(mongo, static_time, index_ready=False)
+        await self._insert_analysis_resources(mongo, static_time, index_ready=False)
 
         resp = await self._post(analyze_client)
 
@@ -1284,7 +1284,7 @@ class TestAnalyze:
         resp_is,
         static_time,
     ):
-        await self._seed(mongo, static_time, subtraction=False)
+        await self._insert_analysis_resources(mongo, static_time, subtraction=False)
 
         resp = await self._post(analyze_client)
 
@@ -1297,7 +1297,7 @@ class TestAnalyze:
         resp_is,
         static_time,
     ):
-        await self._seed(mongo, static_time, sample=False)
+        await self._insert_analysis_resources(mongo, static_time, sample=False)
 
         resp = await self._post(analyze_client)
 
