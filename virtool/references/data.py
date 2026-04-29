@@ -79,7 +79,7 @@ from virtool.references.tasks import (
     UpdateRemoteReferenceTask,
 )
 from virtool.references.transforms import AttachImportedFromTransform
-from virtool.references.utils import RIGHTS, ReferenceSourceData
+from virtool.references.utils import OFFICIAL_REMOTE_SLUG, RIGHTS, ReferenceSourceData
 from virtool.storage.protocol import StorageBackend
 from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
@@ -176,7 +176,7 @@ class ReferencesData(DataLayerDomain):
                 self._pg,
             ),
             self._mongo.references.count_documents(
-                {"remotes_from.slug": "virtool/ref-plant-viruses"},
+                {"remotes_from.slug": OFFICIAL_REMOTE_SLUG},
             ),
         )
 
@@ -399,6 +399,43 @@ class ReferencesData(DataLayerDomain):
             data.pop("targets", None)
 
         await self._mongo.references.update_one({"_id": ref_id}, {"$set": data})
+
+        return await self.get(ref_id)
+
+    @emits(Operation.UPDATE)
+    async def archive(self, ref_id: str) -> Reference:
+        """Archive a reference."""
+        document = await self._mongo.references.find_one(ref_id)
+
+        if document is None:
+            raise ResourceNotFoundError()
+
+        if get_safely(document, "remotes_from", "slug") == OFFICIAL_REMOTE_SLUG:
+            raise ResourceConflictError(
+                "Cannot archive the official plant viruses reference",
+            )
+
+        if not document.get("archived", False):
+            await self._mongo.references.update_one(
+                {"_id": ref_id},
+                {"$set": {"archived": True}},
+            )
+
+        return await self.get(ref_id)
+
+    @emits(Operation.UPDATE)
+    async def unarchive(self, ref_id: str) -> Reference:
+        """Unarchive a reference."""
+        document = await self._mongo.references.find_one(ref_id)
+
+        if document is None:
+            raise ResourceNotFoundError()
+
+        if document.get("archived", False):
+            await self._mongo.references.update_one(
+                {"_id": ref_id},
+                {"$set": {"archived": False}},
+            )
 
         return await self.get(ref_id)
 
