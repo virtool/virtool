@@ -141,6 +141,19 @@ Use **"delete"** for permanently destroying an entity. Use **"remove"** for
 detaching an entity from a parent or collection without destroying it (e.g.,
 removing an isolate from an OTU).
 
+### Lifecycle Filter Convention
+
+For list endpoints that expose a lifecycle field (e.g. `archived`), filter on
+that field with a tri-state query parameter named after the field:
+
+- absent → only entities where the field is `False` (the active set)
+- `{field}=include` → both states
+- `{field}=only` → only entities where the field is `True`
+
+Type the parameter as `Literal["include", "only"] | None = None` so Pydantic
+returns a 400 on invalid values. Document the three states in the OAS
+description. The canonical example is `archived` on `GET /references/v1`.
+
 ## Code Style
 
 - Don't include comments when it is clear what the code is doing.

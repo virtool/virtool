@@ -3,6 +3,8 @@
 TODO: Drop support for string group ids when we fully migrate to SQL.
 """
 
+from typing import Literal
+
 from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r202, r204, r400, r403, r404, r502
@@ -63,13 +65,25 @@ RIGHTS_SCHEMA = {
 
 @routes.view("/references/v1")
 class ReferencesView(PydanticView):
-    async def get(self, find: str | None) -> r200[ReferenceSearchResult]:
+    async def get(
+        self,
+        find: str | None = None,
+        archived: Literal["include", "only"] | None = Field(
+            default=None,
+            description=(
+                "Lifecycle filter. Omit to return only active references; "
+                "`include` to return both active and archived; `only` to "
+                "return only archived references."
+            ),
+        ),
+    ) -> r200[ReferenceSearchResult] | r400:
         """Find references.
 
         Lists references that match the find term.
 
         Status Codes:
             200: Successful operation
+            400: Invalid query
         """
         search_result = await get_data_from_req(self.request).references.find(
             find,
@@ -77,6 +91,7 @@ class ReferencesView(PydanticView):
             self.request["client"].administrator_role == AdministratorRole.FULL,
             self.request["client"].groups,
             self.request.query,
+            archived,
         )
 
         return json_response(search_result)

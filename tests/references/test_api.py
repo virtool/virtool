@@ -29,7 +29,18 @@ from virtool.utils import get_http_session_from_app
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
+@pytest.mark.parametrize(
+    ("archived_param", "expected_ids"),
+    [
+        (None, {"foo", "bar", "goo"}),
+        ("include", {"foo", "bar", "goo", "qux"}),
+        ("only", {"qux"}),
+    ],
+    ids=["default", "include", "only"],
+)
 async def test_find(
+    archived_param: str | None,
+    expected_ids: set[str],
     data_layer: DataLayer,
     fake: DataFaker,
     pg: AsyncEngine,
@@ -38,6 +49,14 @@ async def test_find(
     spawn_client: ClientSpawner,
     static_time,
 ):
+    """The ``archived`` query param toggles between active-only (default),
+    both, and archived-only references the user can read.
+
+    Reference ``baz`` is owned by another user and never visible to the client;
+    ``zap`` is archived but owned by another user, so it is also never visible
+    — together they prove the rights filter still applies regardless of the
+    lifecycle filter.
+    """
     client = await spawn_client(authenticated=True)
 
     group = await fake.groups.create()
@@ -100,6 +119,32 @@ async def test_find(
                 "user": {"id": user.id},
                 "users": [],
             },
+            {
+                "_id": "qux",
+                "archived": True,
+                "created_at": static_time.datetime,
+                "data_type": "genome",
+                "groups": [],
+                "internal_control": None,
+                "name": "Qux",
+                "organism": "virus",
+                "restrict_source_types": False,
+                "task": {"id": 1},
+                "user": {"id": client.user.id},
+            },
+            {
+                "_id": "zap",
+                "archived": True,
+                "created_at": static_time.datetime,
+                "data_type": "barcode",
+                "groups": [],
+                "internal_control": None,
+                "name": "Zap",
+                "organism": "virus",
+                "restrict_source_types": True,
+                "task": {"id": 2},
+                "user": {"id": user.id},
+            },
         ],
         session=None,
     )
@@ -133,15 +178,25 @@ async def test_find(
         )
         await session.commit()
 
-    resp = await client.get("/references/v1")
+    url = "/references/v1"
+    if archived_param is not None:
+        url = f"{url}?archived={archived_param}"
+
+    resp = await client.get(url)
     body = await resp.json()
 
     assert resp.status == HTTPStatus.OK
     assert body == snapshot
+    assert {d["id"] for d in body["documents"]} == expected_ids
 
-    # Make sure the user does not have access to the reference "baz" where they are not
-    # the owner, in ``users`` or a member of a group in ``groups``.
-    assert {d["id"] for d in body["documents"]} == {"foo", "bar", "goo"}
+
+async def test_find_archived_invalid(spawn_client: ClientSpawner):
+    """An invalid ``archived`` value yields a 400 with Pydantic detail."""
+    client = await spawn_client(authenticated=True)
+
+    resp = await client.get("/references/v1?archived=foo")
+
+    assert resp.status == HTTPStatus.BAD_REQUEST
 
 
 class TestGet:

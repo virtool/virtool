@@ -1,5 +1,6 @@
 import asyncio
 from datetime import datetime, timedelta
+from typing import Literal
 
 import arrow
 from aiohttp import ClientConnectionError, ClientConnectorError, ClientSession
@@ -141,6 +142,7 @@ class ReferencesData(DataLayerDomain):
         administrator: bool,
         groups: list[int | str],
         query: MultiDictProxy,
+        archived: Literal["include", "only"] | None = None,
     ) -> ReferenceSearchResult:
         """Find references."""
         mongo_query = {}
@@ -150,7 +152,12 @@ class ReferencesData(DataLayerDomain):
 
         # TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings
         user_id_variants = await get_user_id_single_variants(self._pg, user_id)
-        base_query = compose_base_find_query(user_id_variants, administrator, groups)
+        base_query = compose_base_find_query(
+            user_id_variants,
+            administrator,
+            groups,
+            archived,
+        )
 
         data = await paginate(
             self._mongo.references,

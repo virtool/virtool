@@ -2,7 +2,7 @@
 
 import asyncio
 import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import pymongo
 from aiohttp import ClientConnectorError
@@ -249,23 +249,51 @@ async def check_source_type(mongo: "Mongo", ref_id: str, source_type: str) -> bo
     return True
 
 
+def compose_archived_filter(
+    archived: Literal["include", "only"] | None,
+) -> dict:
+    """Compose a Mongo filter on ``references.archived`` for the project-wide
+    ``{field}=include|only`` lifecycle convention.
+
+    - ``None`` (default): only active references → ``{"archived": False}``
+    - ``"include"``: both states → ``{}`` (no constraint)
+    - ``"only"``: only archived references → ``{"archived": True}``
+
+    :param archived: lifecycle filter mode
+    :return: a Mongo filter dict for the ``archived`` field
+
+    """
+    if archived == "only":
+        return {"archived": True}
+    if archived == "include":
+        return {}
+    return {"archived": False}
+
+
 def compose_base_find_query(
     user_id_variants: list[int | str],
     administrator: bool,
     groups: list[int | str],
+    archived: Literal["include", "only"] | None = None,
 ) -> dict:
-    """Compose a query for filtering reference search results based on user read rights.
+    """Compose a query for filtering reference search results by user read
+    rights and lifecycle state.
+
+    See :func:`compose_archived_filter` for the lifecycle semantics.
 
     TODO: Revert to single user_id parameter when all user IDs are migrated away from MongoDB strings.
 
     :param user_id_variants: all ID variants (modern and legacy) for the requesting user
     :param administrator: the administrator flag of the user requesting the search
     :param groups: the id group membership of the user requesting the search
+    :param archived: lifecycle filter mode
     :return: a valid MongoDB query
 
     """
+    query: dict = compose_archived_filter(archived)
+
     if administrator:
-        return {}
+        return query
 
     user_queries = []
     for id_variant in user_id_variants:
@@ -276,12 +304,12 @@ def compose_base_find_query(
             ]
         )
 
-    return {
-        "$or": [
-            {"groups.id": {"$in": groups}},
-            *user_queries,
-        ],
-    }
+    query["$or"] = [
+        {"groups.id": {"$in": groups}},
+        *user_queries,
+    ]
+
+    return query
 
 
 async def fetch_and_update_release(

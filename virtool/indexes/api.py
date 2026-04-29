@@ -1,6 +1,8 @@
+from typing import Literal
+
 from aiohttp.web import Request
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r404
+from aiohttp_pydantic.oas.typing import r200, r400, r404
 from pydantic import Field
 
 from virtool.api.custom_json import json_response
@@ -35,16 +37,26 @@ class IndexesView(PydanticView):
             default=False,
             description="Return only indexes that are ready for use in analysis.",
         ),
-    ) -> r200[ListIndexesResponse] | r200[list[ReadyIndexesResponse]]:
+        archived: Literal["include", "only"] | None = Field(
+            default=None,
+            description=(
+                "Lifecycle filter on the index's reference. Omit to return "
+                "only indexes whose reference is active; `include` to return "
+                "indexes for both active and archived references; `only` to "
+                "return only indexes whose reference is archived."
+            ),
+        ),
+    ) -> r200[ListIndexesResponse] | r200[list[ReadyIndexesResponse]] | r400:
         """Find indexes.
 
         Lists all existing indexes.
 
         Status Codes:
             200: Successful operation
+            400: Invalid query
         """
         data = await get_data_from_req(self.request).index.find(
-            ready, self.request.query
+            ready, self.request.query, archived=archived
         )
 
         if isinstance(data, IndexSearchResult):

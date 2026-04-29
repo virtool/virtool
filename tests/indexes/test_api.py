@@ -29,8 +29,19 @@ from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
 class TestFind:
+    @pytest.mark.parametrize(
+        ("archived_param", "expected_ids"),
+        [
+            (None, {"bar", "foo"}),
+            ("include", {"bar", "foo", "qux"}),
+            ("only", {"qux"}),
+        ],
+        ids=["default", "include", "only"],
+    )
     async def test(
         self,
+        archived_param: str | None,
+        expected_ids: set[str],
         fake: DataFaker,
         mocker: MockerFixture,
         mongo: Mongo,
@@ -44,6 +55,7 @@ class TestFind:
 
         job_1 = await fake.jobs.create(user=user, workflow="build_index")
         job_2 = await fake.jobs.create(user=user, workflow="build_index")
+        job_3 = await fake.jobs.create(user=user, workflow="build_index")
 
         await asyncio.gather(
             mongo.history.insert_many(
@@ -83,6 +95,18 @@ class TestFind:
                         "user": {"id": user.id},
                         "sequence_otu_map": {"foo": "foo_otu"},
                     },
+                    {
+                        "_id": "qux",
+                        "version": 0,
+                        "created_at": static_time.datetime,
+                        "manifest": {"foo": 2},
+                        "ready": False,
+                        "has_files": True,
+                        "job": {"id": job_3.id},
+                        "reference": {"id": "baz"},
+                        "user": {"id": user.id},
+                        "sequence_otu_map": {"foo": "baz_otu"},
+                    },
                 ],
                 session=None,
             ),
@@ -100,6 +124,12 @@ class TestFind:
                         "data_type": "genome",
                         "name": "Foo",
                     },
+                    {
+                        "_id": "baz",
+                        "archived": True,
+                        "data_type": "genome",
+                        "name": "Baz",
+                    },
                 ],
                 session=None,
             ),
@@ -112,13 +142,30 @@ class TestFind:
             ),
         )
 
-        resp = await client.get("/indexes")
+        url = "/indexes"
+        if archived_param is not None:
+            url = f"{url}?archived={archived_param}"
+
+        resp = await client.get(url)
+        body = await resp.json()
 
         assert resp.status == HTTPStatus.OK
-        assert await resp.json() == snapshot
+        assert body == snapshot
+        assert {d["id"] for d in body["documents"]} == expected_ids
 
+    @pytest.mark.parametrize(
+        ("archived_param", "expected_ids"),
+        [
+            (None, {"bot", "daz"}),
+            ("include", {"bot", "daz", "qaz"}),
+            ("only", {"qaz"}),
+        ],
+        ids=["default", "include", "only"],
+    )
     async def test_ready(
         self,
+        archived_param: str | None,
+        expected_ids: set[str],
         fake: DataFaker,
         snapshot,
         mongo: Mongo,
@@ -155,6 +202,17 @@ class TestFind:
                         "reference": {"id": "foo"},
                         "user": {"id": user.id},
                     },
+                    {
+                        "_id": "qaz",
+                        "version": 0,
+                        "created_at": static_time.datetime + timedelta(hours=4),
+                        "manifest": {"foo": 2},
+                        "ready": True,
+                        "has_files": True,
+                        "job": {"id": job.id},
+                        "reference": {"id": "baz"},
+                        "user": {"id": user.id},
+                    },
                 ],
                 session=None,
             ),
@@ -172,15 +230,35 @@ class TestFind:
                         "data_type": "genome",
                         "name": "Foo",
                     },
+                    {
+                        "_id": "baz",
+                        "archived": True,
+                        "data_type": "genome",
+                        "name": "Baz",
+                    },
                 ],
                 session=None,
             ),
         )
 
-        resp = await client.get("/indexes?ready=True")
+        url = "/indexes?ready=True"
+        if archived_param is not None:
+            url = f"{url}&archived={archived_param}"
+
+        resp = await client.get(url)
+        body = await resp.json()
 
         assert resp.status == HTTPStatus.OK
-        assert await resp.json() == snapshot
+        assert body == snapshot
+        assert {d["id"] for d in body} == expected_ids
+
+    async def test_archived_invalid(self, spawn_client: ClientSpawner):
+        """An invalid ``archived`` value yields a 400 with Pydantic detail."""
+        client = await spawn_client(authenticated=True)
+
+        resp = await client.get("/indexes?archived=foo")
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
 
 
 @pytest.mark.parametrize("error", [None, "404"])

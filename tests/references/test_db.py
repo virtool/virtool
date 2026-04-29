@@ -14,6 +14,7 @@ from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.references.db import (
     check_right,
+    compose_base_find_query,
     create_document,
     fetch_and_update_release,
     get_manifest,
@@ -93,6 +94,55 @@ async def test_check_right(
         assert result is False
     else:
         assert result is expect
+
+
+class TestComposeBaseFindQuery:
+    """Cover the rights and lifecycle (``archived``) facets of the base query."""
+
+    @pytest.mark.parametrize(
+        ("archived", "expected_archived_clause"),
+        [
+            (None, {"archived": False}),
+            ("include", {}),
+            ("only", {"archived": True}),
+        ],
+    )
+    def test_administrator(self, archived, expected_archived_clause):
+        """Administrators bypass the rights filter; lifecycle filter still applies."""
+        assert (
+            compose_base_find_query(
+                user_id_variants=["bar"],
+                administrator=True,
+                groups=["foo"],
+                archived=archived,
+            )
+            == expected_archived_clause
+        )
+
+    @pytest.mark.parametrize(
+        ("archived", "expected_archived_clause"),
+        [
+            (None, {"archived": False}),
+            ("include", {}),
+            ("only", {"archived": True}),
+        ],
+    )
+    def test_non_administrator(self, archived, expected_archived_clause):
+        """Non-administrators get a rights ``$or`` plus the lifecycle filter."""
+        rights_clause = {
+            "$or": [
+                {"groups.id": {"$in": ["foo"]}},
+                {"users.id": "bar"},
+                {"user.id": "bar"},
+            ],
+        }
+
+        assert compose_base_find_query(
+            user_id_variants=["bar"],
+            administrator=False,
+            groups=["foo"],
+            archived=archived,
+        ) == {**expected_archived_clause, **rights_clause}
 
 
 async def test_create_manifest(mongo: Mongo, test_otu: dict):

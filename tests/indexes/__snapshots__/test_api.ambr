@@ -104,7 +104,7 @@
 # name: TestCreate.test[True][location]
   'https://virtool.example.com/indexes/bf1b993c'
 # ---
-# name: TestFind.test
+# name: TestFind.test[default]
   dict({
     'change_count': 12,
     'documents': list([
@@ -176,7 +176,151 @@
     'total_otu_count': 123,
   })
 # ---
-# name: TestFind.test_ready
+# name: TestFind.test[include]
+  dict({
+    'change_count': 12,
+    'documents': list([
+      dict({
+        'change_count': 4,
+        'created_at': '2015-10-06T20:00:00Z',
+        'has_files': True,
+        'id': 'bar',
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 1,
+          'progress': 100,
+          'state': 'cancelled',
+          'user': dict({
+            'handle': 'myersmitchell',
+            'id': 2,
+          }),
+          'workflow': 'build_index',
+        }),
+        'modified_otu_count': 3,
+        'ready': False,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'bar',
+          'name': 'Bar',
+        }),
+        'user': dict({
+          'handle': 'myersmitchell',
+          'id': 2,
+        }),
+        'version': 1,
+      }),
+      dict({
+        'change_count': 2,
+        'created_at': '2015-10-06T20:00:00Z',
+        'has_files': True,
+        'id': 'foo',
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 2,
+          'progress': 0,
+          'state': 'running',
+          'user': dict({
+            'handle': 'myersmitchell',
+            'id': 2,
+          }),
+          'workflow': 'build_index',
+        }),
+        'modified_otu_count': 2,
+        'ready': False,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'foo',
+          'name': 'Foo',
+        }),
+        'user': dict({
+          'handle': 'myersmitchell',
+          'id': 2,
+        }),
+        'version': 0,
+      }),
+      dict({
+        'change_count': 0,
+        'created_at': '2015-10-06T20:00:00Z',
+        'has_files': True,
+        'id': 'qux',
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 3,
+          'progress': 0,
+          'state': 'running',
+          'user': dict({
+            'handle': 'myersmitchell',
+            'id': 2,
+          }),
+          'workflow': 'build_index',
+        }),
+        'modified_otu_count': 0,
+        'ready': False,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'baz',
+          'name': 'Baz',
+        }),
+        'user': dict({
+          'handle': 'myersmitchell',
+          'id': 2,
+        }),
+        'version': 0,
+      }),
+    ]),
+    'found_count': 3,
+    'modified_otu_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+    'total_otu_count': 123,
+  })
+# ---
+# name: TestFind.test[only]
+  dict({
+    'change_count': 12,
+    'documents': list([
+      dict({
+        'change_count': 0,
+        'created_at': '2015-10-06T20:00:00Z',
+        'has_files': True,
+        'id': 'qux',
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 3,
+          'progress': 0,
+          'state': 'running',
+          'user': dict({
+            'handle': 'myersmitchell',
+            'id': 2,
+          }),
+          'workflow': 'build_index',
+        }),
+        'modified_otu_count': 0,
+        'ready': False,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'baz',
+          'name': 'Baz',
+        }),
+        'user': dict({
+          'handle': 'myersmitchell',
+          'id': 2,
+        }),
+        'version': 0,
+      }),
+    ]),
+    'found_count': 1,
+    'modified_otu_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 1,
+    'total_otu_count': 123,
+  })
+# ---
+# name: TestFind.test_ready[default]
   list([
     dict({
       'change_count': 0,
@@ -235,6 +379,130 @@
         'id': 2,
       }),
       'version': 1,
+    }),
+  ])
+# ---
+# name: TestFind.test_ready[include]
+  list([
+    dict({
+      'change_count': 0,
+      'created_at': '2015-10-06T20:00:00Z',
+      'has_files': True,
+      'id': 'daz',
+      'job': dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 1,
+        'progress': 100,
+        'state': 'failed',
+        'user': dict({
+          'handle': 'myersmitchell',
+          'id': 2,
+        }),
+        'workflow': 'nuvs',
+      }),
+      'modified_otu_count': 0,
+      'ready': True,
+      'reference': dict({
+        'data_type': 'genome',
+        'id': 'foo',
+        'name': 'Foo',
+      }),
+      'user': dict({
+        'handle': 'myersmitchell',
+        'id': 2,
+      }),
+      'version': 0,
+    }),
+    dict({
+      'change_count': 0,
+      'created_at': '2015-10-06T22:00:00Z',
+      'has_files': True,
+      'id': 'bot',
+      'job': dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 1,
+        'progress': 100,
+        'state': 'failed',
+        'user': dict({
+          'handle': 'myersmitchell',
+          'id': 2,
+        }),
+        'workflow': 'nuvs',
+      }),
+      'modified_otu_count': 0,
+      'ready': True,
+      'reference': dict({
+        'data_type': 'genome',
+        'id': 'bar',
+        'name': 'Bar',
+      }),
+      'user': dict({
+        'handle': 'myersmitchell',
+        'id': 2,
+      }),
+      'version': 1,
+    }),
+    dict({
+      'change_count': 0,
+      'created_at': '2015-10-07T00:00:00Z',
+      'has_files': True,
+      'id': 'qaz',
+      'job': dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 1,
+        'progress': 100,
+        'state': 'failed',
+        'user': dict({
+          'handle': 'myersmitchell',
+          'id': 2,
+        }),
+        'workflow': 'nuvs',
+      }),
+      'modified_otu_count': 0,
+      'ready': True,
+      'reference': dict({
+        'data_type': 'genome',
+        'id': 'baz',
+        'name': 'Baz',
+      }),
+      'user': dict({
+        'handle': 'myersmitchell',
+        'id': 2,
+      }),
+      'version': 0,
+    }),
+  ])
+# ---
+# name: TestFind.test_ready[only]
+  list([
+    dict({
+      'change_count': 0,
+      'created_at': '2015-10-07T00:00:00Z',
+      'has_files': True,
+      'id': 'qaz',
+      'job': dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 1,
+        'progress': 100,
+        'state': 'failed',
+        'user': dict({
+          'handle': 'myersmitchell',
+          'id': 2,
+        }),
+        'workflow': 'nuvs',
+      }),
+      'modified_otu_count': 0,
+      'ready': True,
+      'reference': dict({
+        'data_type': 'genome',
+        'id': 'baz',
+        'name': 'Baz',
+      }),
+      'user': dict({
+        'handle': 'myersmitchell',
+        'id': 2,
+      }),
+      'version': 0,
     }),
   ])
 # ---

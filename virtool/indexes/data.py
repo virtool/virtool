@@ -1,6 +1,7 @@
 import asyncio
 import gzip
 from collections.abc import AsyncIterator
+from typing import Literal
 
 from multidict import MultiDictProxy
 from sqlalchemy.exc import IntegrityError
@@ -34,7 +35,7 @@ from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import get_rows
-from virtool.references.db import lookup_nested_reference_by_id
+from virtool.references.db import compose_archived_filter, lookup_nested_reference_by_id
 from virtool.references.models import ReferenceNested
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.storage.protocol import StorageBackend
@@ -60,15 +61,20 @@ class IndexData:
         self,
         ready: bool,
         query: MultiDictProxy,
+        archived: Literal["include", "only"] | None = None,
     ) -> list[IndexMinimal] | IndexSearchResult:
         """List all indexes.
 
         :param ready: the request object
         :param query: the request query object
+        :param archived: lifecycle filter on the index's reference; see
+            :func:`virtool.references.db.compose_archived_filter`
         :return: a list of all index documents
         """
         if not ready:
-            data = await virtool.indexes.db.find(self._mongo, self._pg, query)
+            data = await virtool.indexes.db.find(
+                self._mongo, self._pg, query, archived=archived
+            )
             return IndexSearchResult(**data)
 
         items = [
@@ -79,7 +85,10 @@ class IndexData:
                         "$match": {
                             "ready": True,
                             "reference.id": {
-                                "$in": await self._mongo.references.distinct("_id"),
+                                "$in": await self._mongo.references.distinct(
+                                    "_id",
+                                    compose_archived_filter(archived),
+                                ),
                             },
                         },
                     },
