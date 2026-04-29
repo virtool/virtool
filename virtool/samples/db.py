@@ -21,7 +21,6 @@ from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.samples.models import WorkflowState
 from virtool.samples.sql import SQLSampleArtifact, SQLSampleReads
-from virtool.samples.utils import PATHOSCOPE_TASK_NAMES
 from virtool.settings.models import Settings
 from virtool.types import Document
 from virtool.uploads.sql import SQLUpload
@@ -346,7 +345,7 @@ def derive_workflow_state(analyses: list, library_type) -> dict:
     workflow_states = define_initial_workflows(library_type)
 
     for analysis in analyses:
-        workflow_name = get_workflow_name(analysis["workflow"])
+        workflow_name = analysis["workflow"]
 
         if workflow_states[workflow_name] in (
             WorkflowState.COMPLETE.value,
@@ -361,20 +360,6 @@ def derive_workflow_state(analyses: list, library_type) -> dict:
         )
 
     return {"workflows": workflow_states}
-
-
-def get_workflow_name(workflow_name: str) -> str:
-    """Returns the name of the workflow that is being used. If the workflow name is
-    "pathoscope_bowtie" or "pathoscope_bowtie2", then "pathoscope" is returned.
-
-    :param workflow_name: the name of the workflow
-    :return: the name of the workflow that is being used
-
-    """
-    if workflow_name in PATHOSCOPE_TASK_NAMES:
-        return "pathoscope"
-
-    return workflow_name
 
 
 async def recalculate_workflow_tags(

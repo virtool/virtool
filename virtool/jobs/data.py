@@ -223,8 +223,7 @@ class JobsData:
                     ),
                 )
             elif (
-                workflow in ("aodp", "nuvs", "pathoscope", "pathoscope_bowtie")
-                and "analysis_id" in job_args
+                workflow in ("aodp", "nuvs", "pathoscope") and "analysis_id" in job_args
             ):
                 session.add(
                     SQLJobAnalysis(
@@ -307,15 +306,10 @@ class JobsData:
         :raises ResourceNotFoundError: if no unclaimed job is available
         """
         async with AsyncSession(self._pg) as session:
-            workflows = [workflow.value]
-
-            if workflow is Workflow.PATHOSCOPE:
-                workflows.append("pathoscope_bowtie")
-
             result = await session.execute(
                 select(SQLJob)
                 .where(
-                    SQLJob.workflow.in_(workflows),
+                    SQLJob.workflow == workflow.value,
                     SQLJob.acquired == False,  # noqa: E712
                     SQLJob.state == "pending",
                 )

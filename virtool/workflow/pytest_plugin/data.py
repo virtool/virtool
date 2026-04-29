@@ -225,7 +225,7 @@ def workflow_data(
 
     analysis: Analysis = AnalysisFactory.build()
     analysis.sample = AnalysisSample.parse_obj(sample)
-    analysis.workflow = "pathoscope_bowtie"
+    analysis.workflow = "pathoscope"
     analysis.index = IndexNested.parse_obj(index)
     analysis.reference = ReferenceNested.parse_obj(reference)
     analysis.subtractions = [SubtractionNested.parse_obj(subtraction)]

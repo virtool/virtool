@@ -42,7 +42,7 @@ class AnalysisWorkflow(str, Enum):
     aodp = "aodp"
     iimi = "iimi"
     nuvs = "nuvs"
-    pathoscope_bowtie = "pathoscope_bowtie"
+    pathoscope = "pathoscope"
 
 
 QuickAnalyzeWorkflow = AnalysisWorkflow

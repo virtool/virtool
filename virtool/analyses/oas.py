@@ -21,7 +21,7 @@ class FindAnalysesResponse(AnalysisSearchResult):
                             "handle": "mrott",
                             "id": "ihvze2u9",
                         },
-                        "workflow": "pathoscope_bowtie",
+                        "workflow": "pathoscope",
                     }
                 ],
                 "found_count": 2621,

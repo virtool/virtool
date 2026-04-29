@@ -5,7 +5,7 @@ from sqlalchemy.future import select
 
 from virtool.analyses.sql import SQLAnalysisFile
 
-WORKFLOW_NAMES = ("aodp", "nuvs", "pathoscope_bowtie")
+WORKFLOW_NAMES = ("aodp", "nuvs", "pathoscope")
 
 
 def analysis_file_key(name_on_disk: str) -> str:

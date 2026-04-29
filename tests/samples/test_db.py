@@ -29,15 +29,6 @@ class TestCalculateWorkflowTags:
         ],
     )
     @pytest.mark.parametrize(
-        ("alg1", "alg2"),
-        [
-            ("bowtie", "bowtie"),
-            ("bowtie", "barracuda"),
-            ("barracuda", "bowtie"),
-            ("barracuda", "barracuda"),
-        ],
-    )
-    @pytest.mark.parametrize(
         ("nuvs_ready", "nuvs_tag"),
         [
             ([False, False], "ip"),
@@ -46,10 +37,9 @@ class TestCalculateWorkflowTags:
             ([True, True], True),
         ],
     )
-    def test(self, path_ready, alg1, alg2, path_tag, nuvs_ready, nuvs_tag):
-        """Test that the function returns the correct update dict for every combination of pathoscope
-        and nuvs ready states.
-
+    def test(self, path_ready, path_tag, nuvs_ready, nuvs_tag):
+        """Test that the function returns the correct update dict for every
+        combination of pathoscope and nuvs ready states.
         """
         index = 0
 
@@ -57,12 +47,8 @@ class TestCalculateWorkflowTags:
         nuvs_ready_1, nuvs_ready_2 = nuvs_ready
 
         documents = [
-            {
-                "_id": index,
-                "ready": path_ready_1,
-                "workflow": f"pathoscope_{alg1}",
-            },
-            {"_id": index, "ready": path_ready_2, "workflow": f"pathoscope_{alg2}"},
+            {"_id": index, "ready": path_ready_1, "workflow": "pathoscope"},
+            {"_id": index, "ready": path_ready_2, "workflow": "pathoscope"},
             {"_id": index, "ready": nuvs_ready_1, "workflow": "nuvs"},
             {"_id": index, "ready": nuvs_ready_2, "workflow": "nuvs"},
         ]
@@ -78,13 +64,13 @@ async def test_recalculate_workflow_tags(mocker: MockerFixture, mongo: Mongo):
     analysis_documents = [
         {
             "_id": "test_1",
-            "workflow": "pathoscope_bowtie",
+            "workflow": "pathoscope",
             "ready": "ip",
             "sample": {"id": "test"},
         },
         {
             "_id": "test_2",
-            "workflow": "pathoscope_bowtie",
+            "workflow": "pathoscope",
             "ready": True,
             "sample": {"id": "test"},
         },
@@ -102,7 +88,7 @@ async def test_recalculate_workflow_tags(mocker: MockerFixture, mongo: Mongo):
             {
                 "_id": "test_4",
                 "sample": {"id": "foobar"},
-                "workflow": "pathoscope_bowtie",
+                "workflow": "pathoscope",
                 "ready": True,
             },
         ],

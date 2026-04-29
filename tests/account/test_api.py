@@ -275,7 +275,7 @@ async def test_get_settings(spawn_client: ClientSpawner) -> None:
         "skip_quick_analyze_dialog": True,
         "show_ids": True,
         "show_versions": True,
-        "quick_analyze_workflow": "pathoscope_bowtie",
+        "quick_analyze_workflow": "pathoscope",
     }
 
 
@@ -303,7 +303,7 @@ class TestUpdateSettings:
         # Verify other settings remain unchanged
         assert body["show_versions"] is True
         assert body["skip_quick_analyze_dialog"] is True
-        assert body["quick_analyze_workflow"] == "pathoscope_bowtie"
+        assert body["quick_analyze_workflow"] == "pathoscope"
 
     async def test_invalid_input(
         self,
