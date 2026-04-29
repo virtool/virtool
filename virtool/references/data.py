@@ -79,7 +79,7 @@ from virtool.references.tasks import (
     UpdateRemoteReferenceTask,
 )
 from virtool.references.transforms import AttachImportedFromTransform
-from virtool.references.utils import RIGHTS, ReferenceSourceData
+from virtool.references.utils import OFFICIAL_REMOTE_SLUG, RIGHTS, ReferenceSourceData
 from virtool.storage.protocol import StorageBackend
 from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
@@ -176,7 +176,7 @@ class ReferencesData(DataLayerDomain):
                 self._pg,
             ),
             self._mongo.references.count_documents(
-                {"remotes_from.slug": "virtool/ref-plant-viruses"},
+                {"remotes_from.slug": OFFICIAL_REMOTE_SLUG},
             ),
         )
 

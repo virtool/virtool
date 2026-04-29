@@ -12,6 +12,8 @@ from virtool.storage.protocol import StorageBackend
 
 RIGHTS = ["build", "modify", "modify_otu", "remove"]
 
+OFFICIAL_REMOTE_SLUG = "virtool/ref-plant-viruses"
+
 
 class ReferenceSourceDataError(Exception):
     """An exception raised when source data used to create a reference is invalid."""
