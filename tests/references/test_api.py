@@ -190,7 +190,7 @@ async def test_find(
 
     url = "/references/v1"
     if archived is not None:
-        url = f"{url}?archived={'true' if archived else 'false'}"
+        url = f"{url}?archived={archived}"
 
     resp = await client.get(url)
     body = await resp.json()

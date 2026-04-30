@@ -168,7 +168,7 @@ class TestFind:
 
         url = "/indexes"
         if archived is not None:
-            url = f"{url}?archived={'true' if archived else 'false'}"
+            url = f"{url}?archived={archived}"
 
         resp = await client.get(url)
         body = await resp.json()
@@ -267,7 +267,7 @@ class TestFind:
 
         url = "/indexes?ready=True"
         if archived is not None:
-            url = f"{url}&archived={'true' if archived else 'false'}"
+            url = f"{url}&archived={archived}"
 
         resp = await client.get(url)
         body = await resp.json()
