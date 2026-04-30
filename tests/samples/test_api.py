@@ -1072,7 +1072,7 @@ async def test_find_analyses(
             [
                 {
                     "_id": "test_1",
-                    "workflow": "pathoscope_bowtie",
+                    "workflow": "pathoscope",
                     "created_at": static_time.datetime,
                     "ready": True,
                     "job": {"id": job.id},
@@ -1085,7 +1085,7 @@ async def test_find_analyses(
                 },
                 {
                     "_id": "test_2",
-                    "workflow": "pathoscope_bowtie",
+                    "workflow": "pathoscope",
                     "created_at": static_time.datetime,
                     "ready": True,
                     "job": {"id": "foo"},
@@ -1098,7 +1098,7 @@ async def test_find_analyses(
                 },
                 {
                     "_id": "test_3",
-                    "workflow": "pathoscope_bowtie",
+                    "workflow": "pathoscope",
                     "created_at": static_time.datetime,
                     "ready": True,
                     "job": None,
@@ -1111,7 +1111,7 @@ async def test_find_analyses(
                 },
                 {
                     "_id": "test_4",
-                    "workflow": "pathoscope_bowtie",
+                    "workflow": "pathoscope",
                     "created_at": static_time.datetime,
                     "ready": True,
                     "job": None,
@@ -1204,7 +1204,7 @@ class TestAnalyze:
         return await client.post(
             "/samples/test/analyses",
             data={
-                "workflow": "pathoscope_bowtie",
+                "workflow": "pathoscope",
                 "ref_id": "test_ref",
                 "subtractions": ["subtraction_1"],
             },

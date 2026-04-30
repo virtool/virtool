@@ -39,7 +39,7 @@ async def test_update_workflows_fields(
                 "_id": "test",
                 "sample": {"id": "test_id"},
                 "ready": ready,
-                "workflow": "pathoscope_bowtie",
+                "workflow": "pathoscope",
             },
             {
                 "_id": "test1",

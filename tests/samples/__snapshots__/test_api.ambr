@@ -2180,7 +2180,7 @@
       'handle': 'leeashley',
       'id': 1,
     }),
-    'workflow': 'pathoscope_bowtie',
+    'workflow': 'pathoscope',
   })
 # ---
 # name: test_finalize[quality]
@@ -2309,7 +2309,7 @@
           'handle': 'myersmitchell',
           'id': 2,
         }),
-        'workflow': 'pathoscope_bowtie',
+        'workflow': 'pathoscope',
       }),
       dict({
         'created_at': '2015-10-06T20:00:00Z',
@@ -2340,7 +2340,7 @@
           'handle': 'myersmitchell',
           'id': 2,
         }),
-        'workflow': 'pathoscope_bowtie',
+        'workflow': 'pathoscope',
       }),
       dict({
         'created_at': '2015-10-06T20:00:00Z',
@@ -2371,7 +2371,7 @@
           'handle': 'modonnell',
           'id': 3,
         }),
-        'workflow': 'pathoscope_bowtie',
+        'workflow': 'pathoscope',
       }),
     ]),
     'found_count': 3,

@@ -1,4 +1,80 @@
 # serializer version: 1
+# name: TestArchive.test_ok[False][resp]
+  dict({
+    'archived': True,
+    'cloned_from': None,
+    'contributors': list([
+    ]),
+    'created_at': 'approximately_now_isoformat',
+    'data_type': 'genome',
+    'description': '',
+    'groups': list([
+    ]),
+    'id': 'foo',
+    'imported_from': None,
+    'installed': None,
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Foo',
+    'organism': 'virus',
+    'otu_count': 0,
+    'release': None,
+    'remotes_from': None,
+    'restrict_source_types': False,
+    'source_types': list([
+      'isolate',
+      'strain',
+    ]),
+    'targets': None,
+    'task': None,
+    'unbuilt_change_count': 0,
+    'updating': None,
+    'user': dict({
+      'handle': 'myersmitchell',
+      'id': 2,
+    }),
+    'users': list([
+    ]),
+  })
+# ---
+# name: TestArchive.test_ok[True][resp]
+  dict({
+    'archived': True,
+    'cloned_from': None,
+    'contributors': list([
+    ]),
+    'created_at': 'approximately_now_isoformat',
+    'data_type': 'genome',
+    'description': '',
+    'groups': list([
+    ]),
+    'id': 'foo',
+    'imported_from': None,
+    'installed': None,
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Foo',
+    'organism': 'virus',
+    'otu_count': 0,
+    'release': None,
+    'remotes_from': None,
+    'restrict_source_types': False,
+    'source_types': list([
+      'isolate',
+      'strain',
+    ]),
+    'targets': None,
+    'task': None,
+    'unbuilt_change_count': 0,
+    'updating': None,
+    'user': dict({
+      'handle': 'myersmitchell',
+      'id': 2,
+    }),
+    'users': list([
+    ]),
+  })
+# ---
 # name: TestCreate.test_clone[location]
   '/references/v1/bf1b993c'
 # ---
@@ -881,6 +957,82 @@
         'modify_otu': False,
         'remove': False,
       }),
+    ]),
+  })
+# ---
+# name: TestUnarchive.test_ok[False][resp]
+  dict({
+    'archived': False,
+    'cloned_from': None,
+    'contributors': list([
+    ]),
+    'created_at': 'approximately_now_isoformat',
+    'data_type': 'genome',
+    'description': '',
+    'groups': list([
+    ]),
+    'id': 'foo',
+    'imported_from': None,
+    'installed': None,
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Foo',
+    'organism': 'virus',
+    'otu_count': 0,
+    'release': None,
+    'remotes_from': None,
+    'restrict_source_types': False,
+    'source_types': list([
+      'isolate',
+      'strain',
+    ]),
+    'targets': None,
+    'task': None,
+    'unbuilt_change_count': 0,
+    'updating': None,
+    'user': dict({
+      'handle': 'myersmitchell',
+      'id': 2,
+    }),
+    'users': list([
+    ]),
+  })
+# ---
+# name: TestUnarchive.test_ok[True][resp]
+  dict({
+    'archived': False,
+    'cloned_from': None,
+    'contributors': list([
+    ]),
+    'created_at': 'approximately_now_isoformat',
+    'data_type': 'genome',
+    'description': '',
+    'groups': list([
+    ]),
+    'id': 'foo',
+    'imported_from': None,
+    'installed': None,
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Foo',
+    'organism': 'virus',
+    'otu_count': 0,
+    'release': None,
+    'remotes_from': None,
+    'restrict_source_types': False,
+    'source_types': list([
+      'isolate',
+      'strain',
+    ]),
+    'targets': None,
+    'task': None,
+    'unbuilt_change_count': 0,
+    'updating': None,
+    'user': dict({
+      'handle': 'myersmitchell',
+      'id': 2,
+    }),
+    'users': list([
     ]),
   })
 # ---

@@ -56,7 +56,7 @@ class AnalysisMinimal(BaseModel):
                         "handle": "mrott",
                         "id": "ihvze2u9",
                     },
-                    "workflow": "pathoscope_bowtie",
+                    "workflow": "pathoscope",
                 },
             ],
         }
@@ -124,7 +124,7 @@ class Analysis(AnalysisMinimal):
                 "subtractions": [{"id": "1sk885at", "name": "Vitis vinifera"}],
                 "updated_at": "2022-08-15T17:42:35.979000Z",
                 "user": {"administrator": True, "handle": "mrott", "id": "ihvze2u9"},
-                "workflow": "pathoscope_bowtie",
+                "workflow": "pathoscope",
             }
         }
 

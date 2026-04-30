@@ -223,8 +223,7 @@ class JobsData:
                     ),
                 )
             elif (
-                workflow in ("aodp", "nuvs", "pathoscope", "pathoscope_bowtie")
-                and "analysis_id" in job_args
+                workflow in ("aodp", "nuvs", "pathoscope") and "analysis_id" in job_args
             ):
                 session.add(
                     SQLJobAnalysis(
@@ -307,15 +306,10 @@ class JobsData:
         :raises ResourceNotFoundError: if no unclaimed job is available
         """
         async with AsyncSession(self._pg) as session:
-            workflows = [workflow.value]
-
-            if workflow is Workflow.PATHOSCOPE:
-                workflows.append("pathoscope_bowtie")
-
             result = await session.execute(
                 select(SQLJob)
                 .where(
-                    SQLJob.workflow.in_(workflows),
+                    SQLJob.workflow == workflow.value,
                     SQLJob.acquired == False,  # noqa: E712
                     SQLJob.state == "pending",
                 )
@@ -443,6 +437,34 @@ class JobsData:
             cancelled=cancelled,
             pinged_at=now,
         )
+
+    @emits(Operation.UPDATE)
+    async def finish(self, job_id: int) -> Job:
+        """Finish a job.
+
+        Marks the job as succeeded.
+
+        :param job_id: the ID of the job to finish
+        :return: the updated job
+        """
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLJob).where(SQLJob.id == job_id).with_for_update(),
+            )
+            sql_job = result.scalar()
+
+            if sql_job is None:
+                raise ResourceNotFoundError
+
+            if sql_job.state != "running":
+                raise ResourceConflictError("Job is not running")
+
+            sql_job.state = JobState.SUCCEEDED.value
+            sql_job.finished_at = virtool.utils.timestamp()
+
+            await session.commit()
+
+        return await self.get(job_id)
 
     @emits(Operation.UPDATE)
     async def cancel(self, job_id: int) -> Job:

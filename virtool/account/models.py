@@ -35,7 +35,7 @@ class AccountSettings(BaseModel):
                 "skip_quick_analyze_dialog": True,
                 "show_ids": True,
                 "show_versions": True,
-                "quick_analyze_workflow": "pathoscope_bowtie",
+                "quick_analyze_workflow": "pathoscope",
             }
         }
 
@@ -84,7 +84,7 @@ class Account(User):
                     "name": "Technician",
                 },
                 "settings": {
-                    "quick_analyze_workflow": "pathoscope_bowtie",
+                    "quick_analyze_workflow": "pathoscope",
                     "show_ids": True,
                     "show_versions": True,
                     "skip_quick_analyze_dialog": True,

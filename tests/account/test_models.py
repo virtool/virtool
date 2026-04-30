@@ -23,7 +23,7 @@ BASE_ACCOUNT_DATA = {
     },
     "primary_group": None,
     "settings": {
-        "quick_analyze_workflow": "pathoscope_bowtie",
+        "quick_analyze_workflow": "pathoscope",
         "show_ids": True,
         "show_versions": True,
         "skip_quick_analyze_dialog": True,

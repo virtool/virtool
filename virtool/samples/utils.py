@@ -8,8 +8,6 @@ from virtool.api.client import AbstractClient
 from virtool.api.errors import APIBadRequest
 from virtool.labels.sql import SQLLabel
 
-PATHOSCOPE_TASK_NAMES = ["pathoscope_bowtie", "pathoscope_barracuda"]
-
 
 class SampleRight(Enum):
     read = "read"
@@ -28,7 +26,7 @@ def calculate_workflow_tags(analyses: list) -> dict:
     nuvs = False
 
     for analysis in analyses:
-        if pathoscope is not True and analysis["workflow"] in PATHOSCOPE_TASK_NAMES:
+        if pathoscope is not True and analysis["workflow"] == "pathoscope":
             pathoscope = analysis["ready"] or "ip" or pathoscope
 
         if nuvs is not True and analysis["workflow"] == "nuvs":

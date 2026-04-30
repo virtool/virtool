@@ -98,6 +98,7 @@ async def test_success(
     assert success_called
     assert not error_called
     assert finish_called
+    assert workflow_data.finish_called is True
 
 
 async def test_error(
@@ -150,3 +151,4 @@ async def test_error(
 
     assert failure_called
     assert finish_called
+    assert workflow_data.finish_called is False

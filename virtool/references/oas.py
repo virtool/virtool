@@ -2,8 +2,9 @@ from pydantic import Field, constr, root_validator, validator
 
 from virtool.models import BaseModel
 from virtool.models.validators import prevent_none
+from virtool.references.utils import OFFICIAL_REMOTE_SLUG
 
-ALLOWED_REMOTE = ["virtool/ref-plant-viruses"]
+ALLOWED_REMOTE = [OFFICIAL_REMOTE_SLUG]
 ALLOWED_DATA_TYPE = ["barcode", "genome"]
 
 
