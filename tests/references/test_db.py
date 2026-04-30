@@ -103,9 +103,9 @@ class TestComposeArchivedFilter:
     @pytest.mark.parametrize(
         ("archived", "expected"),
         [
-            (None, {"archived": False}),
-            ("include", {}),
-            ("only", {"archived": True}),
+            (None, {}),
+            (True, {"archived": True}),
+            (False, {"archived": False}),
         ],
     )
     def test(self, archived, expected):

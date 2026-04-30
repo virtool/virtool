@@ -1,7 +1,6 @@
 import asyncio
 import gzip
 from collections.abc import AsyncIterator
-from typing import Literal
 
 from multidict import MultiDictProxy
 from sqlalchemy.exc import IntegrityError
@@ -61,7 +60,7 @@ class IndexData:
         self,
         ready: bool,
         query: MultiDictProxy,
-        archived: Literal["include", "only"] | None = None,
+        archived: bool | None = None,
     ) -> list[IndexMinimal] | IndexSearchResult:
         """List all indexes.
 

@@ -30,17 +30,17 @@ from virtool.workflow.pytest_plugin.utils import StaticTime
 
 class TestFind:
     @pytest.mark.parametrize(
-        ("archived_param", "expected_ids"),
+        ("archived", "expected_ids"),
         [
-            (None, {"bar", "foo"}),
-            ("include", {"bar", "foo", "qux"}),
-            ("only", {"qux"}),
+            (None, {"bar", "foo", "qux"}),
+            (True, {"qux"}),
+            (False, {"bar", "foo"}),
         ],
-        ids=["default", "include", "only"],
+        ids=["default", "archived", "active"],
     )
-    async def test(
+    async def test_find(
         self,
-        archived_param: str | None,
+        archived: bool | None,
         expected_ids: set[str],
         fake: DataFaker,
         mocker: MockerFixture,
@@ -143,8 +143,8 @@ class TestFind:
         )
 
         url = "/indexes"
-        if archived_param is not None:
-            url = f"{url}?archived={archived_param}"
+        if archived is not None:
+            url = f"{url}?archived={'true' if archived else 'false'}"
 
         resp = await client.get(url)
         body = await resp.json()
@@ -154,17 +154,17 @@ class TestFind:
         assert {d["id"] for d in body["documents"]} == expected_ids
 
     @pytest.mark.parametrize(
-        ("archived_param", "expected_ids"),
+        ("archived", "expected_ids"),
         [
-            (None, {"bot", "daz"}),
-            ("include", {"bot", "daz", "qaz"}),
-            ("only", {"qaz"}),
+            (None, {"bot", "daz", "qaz"}),
+            (True, {"qaz"}),
+            (False, {"bot", "daz"}),
         ],
-        ids=["default", "include", "only"],
+        ids=["default", "archived", "active"],
     )
     async def test_ready(
         self,
-        archived_param: str | None,
+        archived: bool | None,
         expected_ids: set[str],
         fake: DataFaker,
         snapshot,
@@ -242,8 +242,8 @@ class TestFind:
         )
 
         url = "/indexes?ready=True"
-        if archived_param is not None:
-            url = f"{url}&archived={archived_param}"
+        if archived is not None:
+            url = f"{url}&archived={'true' if archived else 'false'}"
 
         resp = await client.get(url)
         body = await resp.json()

@@ -3,8 +3,6 @@
 TODO: Drop support for string group ids when we fully migrate to SQL.
 """
 
-from typing import Literal
-
 from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import (
@@ -78,12 +76,12 @@ class ReferencesView(PydanticView):
     async def get(
         self,
         find: str | None = None,
-        archived: Literal["include", "only"] | None = Field(
+        archived: bool | None = Field(
             default=None,
             description=(
-                "Lifecycle filter. Omit to return only active references; "
-                "`include` to return both active and archived; `only` to "
-                "return only archived references."
+                "Lifecycle filter. Omit to return both active and archived "
+                "references; `true` to return only archived references; "
+                "`false` to return only active references."
             ),
         ),
     ) -> r200[ReferenceSearchResult] | r400:

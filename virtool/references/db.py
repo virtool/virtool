@@ -2,7 +2,7 @@
 
 import asyncio
 import datetime
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 
 import pymongo
 from aiohttp import ClientConnectorError
@@ -250,25 +250,21 @@ async def check_source_type(mongo: "Mongo", ref_id: str, source_type: str) -> bo
     return True
 
 
-def compose_archived_filter(
-    archived: Literal["include", "only"] | None,
-) -> dict:
+def compose_archived_filter(archived: bool | None) -> dict:
     """Compose a Mongo filter on ``references.archived`` for the project-wide
-    ``{field}=include|only`` lifecycle convention.
+    ``bool | None`` lifecycle convention.
 
-    - ``None`` (default): only active references → ``{"archived": False}``
-    - ``"include"``: both states → ``{}`` (no constraint)
-    - ``"only"``: only archived references → ``{"archived": True}``
+    - ``None`` (default): no constraint → ``{}`` (both states)
+    - ``True``: only archived references → ``{"archived": True}``
+    - ``False``: only active references → ``{"archived": False}``
 
     :param archived: lifecycle filter mode
     :return: a Mongo filter dict for the ``archived`` field
 
     """
-    if archived == "only":
-        return {"archived": True}
-    if archived == "include":
+    if archived is None:
         return {}
-    return {"archived": False}
+    return {"archived": archived}
 
 
 def compose_rights_filter(

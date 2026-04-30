@@ -1,5 +1,3 @@
-from typing import Literal
-
 from aiohttp.web import Request
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r400, r404
@@ -37,13 +35,13 @@ class IndexesView(PydanticView):
             default=False,
             description="Return only indexes that are ready for use in analysis.",
         ),
-        archived: Literal["include", "only"] | None = Field(
+        archived: bool | None = Field(
             default=None,
             description=(
                 "Lifecycle filter on the index's reference. Omit to return "
-                "only indexes whose reference is active; `include` to return "
-                "indexes for both active and archived references; `only` to "
-                "return only indexes whose reference is archived."
+                "indexes for both active and archived references; `true` to "
+                "return only indexes whose reference is archived; `false` to "
+                "return only indexes whose reference is active."
             ),
         ),
     ) -> r200[ListIndexesResponse] | r200[list[ReadyIndexesResponse]] | r400:

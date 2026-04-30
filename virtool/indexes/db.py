@@ -3,7 +3,7 @@
 import asyncio
 import asyncio.tasks
 from collections.abc import Mapping
-from typing import Any, Literal
+from typing import Any
 
 import pymongo
 from motor.motor_asyncio import AsyncIOMotorClientSession
@@ -146,7 +146,7 @@ async def find(
     pg: AsyncEngine,
     req_query: Mapping,
     ref_id: str | None = None,
-    archived: Literal["include", "only"] | None = None,
+    archived: bool | None = None,
 ) -> dict:
     """Find an index document matching the `req_query`
 

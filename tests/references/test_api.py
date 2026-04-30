@@ -30,14 +30,10 @@ from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
 @pytest.mark.parametrize(
-    ("archived_param", "expected_ids"),
+    ("archived", "expected_ids"),
     [
         (
             None,
-            {"owned_active", "user_member_active", "group_member_active"},
-        ),
-        (
-            "include",
             {
                 "owned_active",
                 "user_member_active",
@@ -45,12 +41,16 @@ from virtool.workflow.pytest_plugin.utils import StaticTime
                 "owned_archived",
             },
         ),
-        ("only", {"owned_archived"}),
+        (True, {"owned_archived"}),
+        (
+            False,
+            {"owned_active", "user_member_active", "group_member_active"},
+        ),
     ],
-    ids=["default", "include", "only"],
+    ids=["default", "archived", "active"],
 )
 async def test_find(
-    archived_param: str | None,
+    archived: bool | None,
     expected_ids: set[str],
     data_layer: DataLayer,
     fake: DataFaker,
@@ -60,8 +60,8 @@ async def test_find(
     spawn_client: ClientSpawner,
     static_time,
 ):
-    """The ``archived`` query param toggles between active-only (default),
-    both, and archived-only references the user can read.
+    """The ``archived`` query param toggles between both states (default),
+    archived-only, and active-only references the user can read.
 
     The ``other_active`` and ``other_archived`` references are owned by a
     different user and never visible to the client, proving the rights filter
@@ -189,8 +189,8 @@ async def test_find(
         await session.commit()
 
     url = "/references/v1"
-    if archived_param is not None:
-        url = f"{url}?archived={archived_param}"
+    if archived is not None:
+        url = f"{url}?archived={'true' if archived else 'false'}"
 
     resp = await client.get(url)
     body = await resp.json()

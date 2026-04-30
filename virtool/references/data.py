@@ -1,6 +1,5 @@
 import asyncio
 from datetime import datetime, timedelta
-from typing import Literal
 
 import arrow
 from aiohttp import ClientConnectionError, ClientConnectorError, ClientSession
@@ -143,7 +142,7 @@ class ReferencesData(DataLayerDomain):
         administrator: bool,
         groups: list[int | str],
         query: MultiDictProxy,
-        archived: Literal["include", "only"] | None = None,
+        archived: bool | None = None,
     ) -> ReferenceSearchResult:
         """Find references."""
         mongo_query = {**compose_archived_filter(archived)}

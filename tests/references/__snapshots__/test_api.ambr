@@ -1509,7 +1509,7 @@
     ]),
   })
 # ---
-# name: test_find[default]
+# name: test_find[active]
   dict({
     'documents': list([
       dict({
@@ -1614,7 +1614,50 @@
     'total_count': 4,
   })
 # ---
-# name: test_find[include]
+# name: test_find[archived]
+  dict({
+    'documents': list([
+      dict({
+        'archived': True,
+        'cloned_from': None,
+        'created_at': '2015-10-06T20:00:00Z',
+        'data_type': 'genome',
+        'id': 'owned_archived',
+        'imported_from': None,
+        'installed': None,
+        'internal_control': None,
+        'latest_build': None,
+        'name': 'Owned Archived',
+        'organism': 'virus',
+        'otu_count': 0,
+        'release': None,
+        'remotes_from': None,
+        'task': dict({
+          'complete': True,
+          'created_at': '2015-10-06T20:00:00Z',
+          'error': None,
+          'id': 1,
+          'progress': 100,
+          'step': 'download',
+          'type': 'clone_reference',
+        }),
+        'unbuilt_change_count': 0,
+        'updating': None,
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 1,
+        }),
+      }),
+    ]),
+    'found_count': 1,
+    'official_installed': False,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 4,
+  })
+# ---
+# name: test_find[default]
   dict({
     'documents': list([
       dict({
@@ -1743,49 +1786,6 @@
       }),
     ]),
     'found_count': 4,
-    'official_installed': False,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 4,
-  })
-# ---
-# name: test_find[only]
-  dict({
-    'documents': list([
-      dict({
-        'archived': True,
-        'cloned_from': None,
-        'created_at': '2015-10-06T20:00:00Z',
-        'data_type': 'genome',
-        'id': 'owned_archived',
-        'imported_from': None,
-        'installed': None,
-        'internal_control': None,
-        'latest_build': None,
-        'name': 'Owned Archived',
-        'organism': 'virus',
-        'otu_count': 0,
-        'release': None,
-        'remotes_from': None,
-        'task': dict({
-          'complete': True,
-          'created_at': '2015-10-06T20:00:00Z',
-          'error': None,
-          'id': 1,
-          'progress': 100,
-          'step': 'download',
-          'type': 'clone_reference',
-        }),
-        'unbuilt_change_count': 0,
-        'updating': None,
-        'user': dict({
-          'handle': 'leeashley',
-          'id': 1,
-        }),
-      }),
-    ]),
-    'found_count': 1,
     'official_installed': False,
     'page': 1,
     'page_count': 1,

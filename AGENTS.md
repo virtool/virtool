@@ -149,16 +149,17 @@ removing an isolate from an OTU).
 
 ### Lifecycle Filter Convention
 
-For list endpoints that expose a lifecycle field (e.g. `archived`), filter on
-that field with a tri-state query parameter named after the field:
+For list endpoints that expose a boolean lifecycle field (e.g. `archived`),
+filter on that field with a tri-state query parameter named after the field:
 
-- absent → only entities where the field is `False` (the active set)
-- `{field}=include` → both states
-- `{field}=only` → only entities where the field is `True`
+- absent / `null` → no constraint (both states)
+- `{field}=true` → only entities where the field is `True`
+- `{field}=false` → only entities where the field is `False`
 
-Type the parameter as `Literal["include", "only"] | None = None` so Pydantic
-returns a 400 on invalid values. Document the three states in the OAS
-description. The canonical example is `archived` on `GET /references/v1`.
+Type the parameter as `bool | None = None`. This matches the existing
+`verified` filter on `GET /references/v1/{ref_id}/otus`. Document the three
+states in the OAS description. The canonical example is `archived` on
+`GET /references/v1`.
 
 ## Code Style
 
