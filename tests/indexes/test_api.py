@@ -32,9 +32,9 @@ class TestFind:
     @pytest.mark.parametrize(
         ("archived", "expected_ids"),
         [
-            (None, {"bar", "foo", "qux"}),
-            (True, {"qux"}),
-            (False, {"bar", "foo"}),
+            (None, {"idx_active_a", "idx_active_b", "idx_archived"}),
+            (True, {"idx_archived"}),
+            (False, {"idx_active_a", "idx_active_b"}),
         ],
         ids=["default", "archived", "active"],
     )
@@ -53,59 +53,83 @@ class TestFind:
 
         user = await fake.users.create()
 
-        job_1 = await fake.jobs.create(user=user, workflow="build_index")
-        job_2 = await fake.jobs.create(user=user, workflow="build_index")
-        job_3 = await fake.jobs.create(user=user, workflow="build_index")
+        job_active_a = await fake.jobs.create(user=user, workflow="build_index")
+        job_active_b = await fake.jobs.create(user=user, workflow="build_index")
+        job_archived = await fake.jobs.create(user=user, workflow="build_index")
 
         await asyncio.gather(
             mongo.history.insert_many(
                 [
-                    {"_id": "0", "index": {"id": "bar"}, "otu": {"id": "baz"}},
-                    {"_id": "1", "index": {"id": "foo"}, "otu": {"id": "baz"}},
-                    {"_id": "2", "index": {"id": "bar"}, "otu": {"id": "bat"}},
-                    {"_id": "3", "index": {"id": "bar"}, "otu": {"id": "baz"}},
-                    {"_id": "4", "index": {"id": "bar"}, "otu": {"id": "bad"}},
-                    {"_id": "5", "index": {"id": "foo"}, "otu": {"id": "boo"}},
+                    {
+                        "_id": "0",
+                        "index": {"id": "idx_active_a"},
+                        "otu": {"id": "otu_1"},
+                    },
+                    {
+                        "_id": "1",
+                        "index": {"id": "idx_active_b"},
+                        "otu": {"id": "otu_1"},
+                    },
+                    {
+                        "_id": "2",
+                        "index": {"id": "idx_active_a"},
+                        "otu": {"id": "otu_2"},
+                    },
+                    {
+                        "_id": "3",
+                        "index": {"id": "idx_active_a"},
+                        "otu": {"id": "otu_1"},
+                    },
+                    {
+                        "_id": "4",
+                        "index": {"id": "idx_active_a"},
+                        "otu": {"id": "otu_3"},
+                    },
+                    {
+                        "_id": "5",
+                        "index": {"id": "idx_active_b"},
+                        "otu": {"id": "otu_4"},
+                    },
                 ],
                 session=None,
             ),
             mongo.indexes.insert_many(
                 [
                     {
-                        "_id": "bar",
+                        "_id": "idx_active_a",
                         "version": 1,
                         "created_at": static_time.datetime,
-                        "manifest": {"foo": 2},
+                        "manifest": {"otu_1": 2},
                         "ready": False,
                         "has_files": True,
-                        "job": {"id": job_1.id},
-                        "reference": {"id": "bar"},
+                        "job": {"id": job_active_a.id},
+                        "reference": {"id": "ref_active_a"},
                         "user": {"id": user.id},
-                        "sequence_otu_map": {"foo": "bar_otu"},
+                        "sequence_otu_map": {"seq_1": "otu_1"},
                     },
                     {
-                        "_id": "foo",
+                        "_id": "idx_active_b",
                         "version": 0,
                         "created_at": static_time.datetime,
-                        "manifest": {"foo": 2},
+                        "manifest": {"otu_1": 2},
                         "ready": False,
                         "has_files": True,
-                        "job": {"id": job_2.id},
-                        "reference": {"id": "foo"},
+                        "job": {"id": job_active_b.id},
+                        "reference": {"id": "ref_active_b"},
                         "user": {"id": user.id},
-                        "sequence_otu_map": {"foo": "foo_otu"},
+                        "sequence_otu_map": {"seq_1": "otu_2"},
                     },
                     {
-                        "_id": "qux",
+                        "_id": "idx_archived",
                         "version": 0,
                         "created_at": static_time.datetime,
-                        "manifest": {"foo": 2},
+                        "manifest": {"otu_1": 2},
                         "ready": False,
                         "has_files": True,
-                        "job": {"id": job_3.id},
-                        "reference": {"id": "baz"},
+                        "job": {"id": job_archived.id},
+                        "reference": {"id": "ref_archived"},
                         "user": {"id": user.id},
-                        "sequence_otu_map": {"foo": "baz_otu"},
+                        "sequence_otu_map": {"seq_1": "otu_5"},
                     },
                 ],
                 session=None,
@@ -113,22 +137,22 @@ class TestFind:
             mongo.references.insert_many(
                 [
                     {
-                        "_id": "bar",
+                        "_id": "ref_active_a",
                         "archived": False,
                         "data_type": "genome",
-                        "name": "Bar",
+                        "name": "Active A",
                     },
                     {
-                        "_id": "foo",
+                        "_id": "ref_active_b",
                         "archived": False,
                         "data_type": "genome",
-                        "name": "Foo",
+                        "name": "Active B",
                     },
                     {
-                        "_id": "baz",
+                        "_id": "ref_archived",
                         "archived": True,
                         "data_type": "genome",
-                        "name": "Baz",
+                        "name": "Archived",
                     },
                 ],
                 session=None,
@@ -156,9 +180,9 @@ class TestFind:
     @pytest.mark.parametrize(
         ("archived", "expected_ids"),
         [
-            (None, {"bot", "daz", "qaz"}),
-            (True, {"qaz"}),
-            (False, {"bot", "daz"}),
+            (None, {"idx_active_a", "idx_active_b", "idx_archived"}),
+            (True, {"idx_archived"}),
+            (False, {"idx_active_a", "idx_active_b"}),
         ],
         ids=["default", "archived", "active"],
     )
@@ -181,36 +205,36 @@ class TestFind:
             mongo.indexes.insert_many(
                 [
                     {
-                        "_id": "bot",
+                        "_id": "idx_active_a",
                         "version": 1,
                         "created_at": static_time.datetime + timedelta(hours=2),
-                        "manifest": {"foo": 2},
+                        "manifest": {"otu_1": 2},
                         "ready": True,
                         "has_files": True,
                         "job": {"id": job.id},
-                        "reference": {"id": "bar"},
+                        "reference": {"id": "ref_active_a"},
                         "user": {"id": user.id},
                     },
                     {
-                        "_id": "daz",
+                        "_id": "idx_active_b",
                         "version": 0,
                         "created_at": static_time.datetime,
-                        "manifest": {"foo": 2},
+                        "manifest": {"otu_1": 2},
                         "ready": True,
                         "has_files": True,
                         "job": {"id": job.id},
-                        "reference": {"id": "foo"},
+                        "reference": {"id": "ref_active_b"},
                         "user": {"id": user.id},
                     },
                     {
-                        "_id": "qaz",
+                        "_id": "idx_archived",
                         "version": 0,
                         "created_at": static_time.datetime + timedelta(hours=4),
-                        "manifest": {"foo": 2},
+                        "manifest": {"otu_1": 2},
                         "ready": True,
                         "has_files": True,
                         "job": {"id": job.id},
-                        "reference": {"id": "baz"},
+                        "reference": {"id": "ref_archived"},
                         "user": {"id": user.id},
                     },
                 ],
@@ -219,22 +243,22 @@ class TestFind:
             mongo.references.insert_many(
                 [
                     {
-                        "_id": "bar",
+                        "_id": "ref_active_a",
                         "archived": False,
                         "data_type": "genome",
-                        "name": "Bar",
+                        "name": "Active A",
                     },
                     {
-                        "_id": "foo",
+                        "_id": "ref_active_b",
                         "archived": False,
                         "data_type": "genome",
-                        "name": "Foo",
+                        "name": "Active B",
                     },
                     {
-                        "_id": "baz",
+                        "_id": "ref_archived",
                         "archived": True,
                         "data_type": "genome",
-                        "name": "Baz",
+                        "name": "Archived",
                     },
                 ],
                 session=None,

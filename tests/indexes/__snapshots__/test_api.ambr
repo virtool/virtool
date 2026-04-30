@@ -79,7 +79,7 @@
         'change_count': 4,
         'created_at': '2015-10-06T20:00:00Z',
         'has_files': True,
-        'id': 'bar',
+        'id': 'idx_active_a',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': 1,
@@ -95,8 +95,8 @@
         'ready': False,
         'reference': dict({
           'data_type': 'genome',
-          'id': 'bar',
-          'name': 'Bar',
+          'id': 'ref_active_a',
+          'name': 'Active A',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -108,7 +108,7 @@
         'change_count': 2,
         'created_at': '2015-10-06T20:00:00Z',
         'has_files': True,
-        'id': 'foo',
+        'id': 'idx_active_b',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': 2,
@@ -124,8 +124,8 @@
         'ready': False,
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
-          'name': 'Foo',
+          'id': 'ref_active_b',
+          'name': 'Active B',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -151,7 +151,7 @@
         'change_count': 0,
         'created_at': '2015-10-06T20:00:00Z',
         'has_files': True,
-        'id': 'qux',
+        'id': 'idx_archived',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': 3,
@@ -167,8 +167,8 @@
         'ready': False,
         'reference': dict({
           'data_type': 'genome',
-          'id': 'baz',
-          'name': 'Baz',
+          'id': 'ref_archived',
+          'name': 'Archived',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -194,7 +194,7 @@
         'change_count': 4,
         'created_at': '2015-10-06T20:00:00Z',
         'has_files': True,
-        'id': 'bar',
+        'id': 'idx_active_a',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': 1,
@@ -210,8 +210,8 @@
         'ready': False,
         'reference': dict({
           'data_type': 'genome',
-          'id': 'bar',
-          'name': 'Bar',
+          'id': 'ref_active_a',
+          'name': 'Active A',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -223,7 +223,7 @@
         'change_count': 2,
         'created_at': '2015-10-06T20:00:00Z',
         'has_files': True,
-        'id': 'foo',
+        'id': 'idx_active_b',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': 2,
@@ -239,8 +239,8 @@
         'ready': False,
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
-          'name': 'Foo',
+          'id': 'ref_active_b',
+          'name': 'Active B',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -252,7 +252,7 @@
         'change_count': 0,
         'created_at': '2015-10-06T20:00:00Z',
         'has_files': True,
-        'id': 'qux',
+        'id': 'idx_archived',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': 3,
@@ -268,8 +268,8 @@
         'ready': False,
         'reference': dict({
           'data_type': 'genome',
-          'id': 'baz',
-          'name': 'Baz',
+          'id': 'ref_archived',
+          'name': 'Archived',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -293,7 +293,7 @@
       'change_count': 0,
       'created_at': '2015-10-06T20:00:00Z',
       'has_files': True,
-      'id': 'daz',
+      'id': 'idx_active_b',
       'job': dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 1,
@@ -309,8 +309,8 @@
       'ready': True,
       'reference': dict({
         'data_type': 'genome',
-        'id': 'foo',
-        'name': 'Foo',
+        'id': 'ref_active_b',
+        'name': 'Active B',
       }),
       'user': dict({
         'handle': 'myersmitchell',
@@ -322,7 +322,7 @@
       'change_count': 0,
       'created_at': '2015-10-06T22:00:00Z',
       'has_files': True,
-      'id': 'bot',
+      'id': 'idx_active_a',
       'job': dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 1,
@@ -338,8 +338,8 @@
       'ready': True,
       'reference': dict({
         'data_type': 'genome',
-        'id': 'bar',
-        'name': 'Bar',
+        'id': 'ref_active_a',
+        'name': 'Active A',
       }),
       'user': dict({
         'handle': 'myersmitchell',
@@ -355,7 +355,7 @@
       'change_count': 0,
       'created_at': '2015-10-07T00:00:00Z',
       'has_files': True,
-      'id': 'qaz',
+      'id': 'idx_archived',
       'job': dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 1,
@@ -371,8 +371,8 @@
       'ready': True,
       'reference': dict({
         'data_type': 'genome',
-        'id': 'baz',
-        'name': 'Baz',
+        'id': 'ref_archived',
+        'name': 'Archived',
       }),
       'user': dict({
         'handle': 'myersmitchell',
@@ -388,7 +388,7 @@
       'change_count': 0,
       'created_at': '2015-10-06T20:00:00Z',
       'has_files': True,
-      'id': 'daz',
+      'id': 'idx_active_b',
       'job': dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 1,
@@ -404,8 +404,8 @@
       'ready': True,
       'reference': dict({
         'data_type': 'genome',
-        'id': 'foo',
-        'name': 'Foo',
+        'id': 'ref_active_b',
+        'name': 'Active B',
       }),
       'user': dict({
         'handle': 'myersmitchell',
@@ -417,7 +417,7 @@
       'change_count': 0,
       'created_at': '2015-10-06T22:00:00Z',
       'has_files': True,
-      'id': 'bot',
+      'id': 'idx_active_a',
       'job': dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 1,
@@ -433,8 +433,8 @@
       'ready': True,
       'reference': dict({
         'data_type': 'genome',
-        'id': 'bar',
-        'name': 'Bar',
+        'id': 'ref_active_a',
+        'name': 'Active A',
       }),
       'user': dict({
         'handle': 'myersmitchell',
@@ -446,7 +446,7 @@
       'change_count': 0,
       'created_at': '2015-10-07T00:00:00Z',
       'has_files': True,
-      'id': 'qaz',
+      'id': 'idx_archived',
       'job': dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 1,
@@ -462,8 +462,8 @@
       'ready': True,
       'reference': dict({
         'data_type': 'genome',
-        'id': 'baz',
-        'name': 'Baz',
+        'id': 'ref_archived',
+        'name': 'Archived',
       }),
       'user': dict({
         'handle': 'myersmitchell',
