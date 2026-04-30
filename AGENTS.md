@@ -59,6 +59,12 @@ everything else.
 Tests are async-first via pytest-asyncio. Use `pytest-xdist` (`-n`) for
 parallel runs.
 
+Identifiers in test fixtures (Mongo `_id`s, fake names, etc.) should describe
+the role they play. Avoid placeholders like `foo`, `bar`, `baz`, `qux` — they
+make snapshots and `expected_ids` sets opaque to readers. Prefer names like
+`owned_active`, `user_member_active`, `other_archived` that read directly as
+the scenario being exercised.
+
 ### Formatting and Linting
 
 ```bash
@@ -140,6 +146,20 @@ PostgreSQL.
 Use **"delete"** for permanently destroying an entity. Use **"remove"** for
 detaching an entity from a parent or collection without destroying it (e.g.,
 removing an isolate from an OTU).
+
+### Lifecycle Filter Convention
+
+For list endpoints that expose a boolean lifecycle field (e.g. `archived`),
+filter on that field with a tri-state query parameter named after the field:
+
+- absent / `null` → no constraint (both states)
+- `{field}=true` → only entities where the field is `True`
+- `{field}=false` → only entities where the field is `False`
+
+Type the parameter as `bool | None = None`. This matches the existing
+`verified` filter on `GET /references/v1/{ref_id}/otus`. Document the three
+states in the OAS description. The canonical example is `archived` on
+`GET /references/v1`.
 
 ## Code Style
 

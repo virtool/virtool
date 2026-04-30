@@ -44,7 +44,8 @@ from virtool.pg.utils import get_row_by_id
 from virtool.references.alot import prepare_otu_insertion
 from virtool.references.bulk import BulkOTUUpdater
 from virtool.references.db import (
-    compose_base_find_query,
+    compose_archived_filter,
+    compose_rights_filter,
     fetch_and_update_release,
     get_contributors,
     get_internal_control,
@@ -153,16 +154,20 @@ class ReferencesData(DataLayerDomain):
         administrator: bool,
         groups: list[int | str],
         query: MultiDictProxy,
+        archived: bool | None = None,
     ) -> ReferenceSearchResult:
         """Find references."""
-        mongo_query = {}
+        mongo_query = {**compose_archived_filter(archived)}
 
         if find:
-            mongo_query = compose_regex_query(find, ["name", "data_type"])
+            mongo_query = {
+                **mongo_query,
+                **compose_regex_query(find, ["name", "data_type"]),
+            }
 
         # TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings
         user_id_variants = await get_user_id_single_variants(self._pg, user_id)
-        base_query = compose_base_find_query(user_id_variants, administrator, groups)
+        base_query = compose_rights_filter(user_id_variants, administrator, groups)
 
         data = await paginate(
             self._mongo.references,

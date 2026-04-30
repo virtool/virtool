@@ -18,6 +18,7 @@ from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.indexes.sql import SQLIndexFile
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
+from virtool.references.db import compose_archived_filter
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.storage.protocol import StorageBackend
 from virtool.types import Document
@@ -145,23 +146,49 @@ async def find(
     pg: AsyncEngine,
     req_query: Mapping,
     ref_id: str | None = None,
+    archived: bool | None = None,
 ) -> dict:
     """Find an index document matching the `req_query`
+
+    When ``ref_id`` is given, ``archived`` is ignored — the reference is
+    already chosen, so its lifecycle state is fixed.
 
     :param mongo: the application database client
     :param req_query: the request object
     :param ref_id: the id of the reference
+    :param archived: lifecycle filter on the index's reference; see
+        :func:`virtool.references.db.compose_archived_filter`
     :return: the index document
 
     """
+    mongo_query: dict = {}
+
     if ref_id:
         base_query = {"reference.id": ref_id}
     else:
-        base_query = {"reference.id": {"$in": await mongo.references.distinct("_id")}}
+        # base_query is the orphan filter only (visibility scope). The lifecycle
+        # filter goes into mongo_query so total_count reflects all indexes whose
+        # reference exists, while found_count narrows to the requested
+        # lifecycle.
+        base_query = {
+            "reference.id": {"$in": await mongo.references.distinct("_id")},
+        }
+
+        archived_filter = compose_archived_filter(archived)
+
+        if archived_filter:
+            mongo_query = {
+                "reference.id": {
+                    "$in": await mongo.references.distinct(
+                        "_id",
+                        archived_filter,
+                    ),
+                },
+            }
 
     data = await paginate(
         mongo.indexes,
-        {},
+        mongo_query,
         req_query,
         base_query=base_query,
         projection=[

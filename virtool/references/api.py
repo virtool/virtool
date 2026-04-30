@@ -73,13 +73,25 @@ RIGHTS_SCHEMA = {
 
 @routes.view("/references/v1")
 class ReferencesView(PydanticView):
-    async def get(self, find: str | None) -> r200[ReferenceSearchResult]:
+    async def get(
+        self,
+        find: str | None = None,
+        archived: bool | None = Field(
+            default=None,
+            description=(
+                "Lifecycle filter. Omit to return both active and archived "
+                "references; `true` to return only archived references; "
+                "`false` to return only active references."
+            ),
+        ),
+    ) -> r200[ReferenceSearchResult] | r400:
         """Find references.
 
         Lists references that match the find term.
 
         Status Codes:
             200: Successful operation
+            400: Invalid query
         """
         search_result = await get_data_from_req(self.request).references.find(
             find,
@@ -87,6 +99,7 @@ class ReferencesView(PydanticView):
             self.request["client"].administrator_role == AdministratorRole.FULL,
             self.request["client"].groups,
             self.request.query,
+            archived,
         )
 
         return json_response(search_result)
