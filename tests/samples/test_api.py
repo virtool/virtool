@@ -836,33 +836,36 @@ class TestEdit:
         assert await resp.json() == snapshot(name="json")
 
 
-@pytest.mark.parametrize("field", ["quality", "not_quality"])
-async def test_finalize(
-    field: str,
-    snapshot,
-    resp_is,
-    spawn_job_client,
-    tmp_path,
-    get_sample_ready_false,
-):
+class TestFinalize:
     """Test that sample can be finalized using the Jobs API."""
-    client = await spawn_job_client(authenticated=True)
 
-    json = {
-        field: {
-            "bases": [[1543]],
-            "composition": [[6372]],
-            "count": 7069,
-            "encoding": "OuBQPPuwYimrxkNpPWUx",
-            "gc": 34222440,
-            "length": [3237],
-            "sequences": [7091],
-        },
-    }
+    @staticmethod
+    def _quality_payload(field: str) -> dict:
+        return {
+            field: {
+                "bases": [[1543]],
+                "composition": [[6372]],
+                "count": 7069,
+                "encoding": "OuBQPPuwYimrxkNpPWUx",
+                "gc": 34222440,
+                "length": [3237],
+                "sequences": [7091],
+            },
+        }
 
-    resp = await client.patch("/samples/test", json=json)
+    async def test_quality(
+        self,
+        snapshot,
+        spawn_job_client,
+        tmp_path,
+        get_sample_ready_false,
+    ):
+        client = await spawn_job_client(authenticated=True)
 
-    if field == "quality":
+        json = self._quality_payload("quality")
+
+        resp = await client.patch("/samples/test", json=json)
+
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
@@ -871,7 +874,21 @@ async def test_finalize(
 
         resp = await client.patch("/samples/test", json=json)
         assert resp.status == 500
-    else:
+
+    async def test_not_quality(
+        self,
+        resp_is,
+        spawn_job_client,
+        tmp_path,
+        get_sample_ready_false,
+    ):
+        client = await spawn_job_client(authenticated=True)
+
+        resp = await client.patch(
+            "/samples/test",
+            json=self._quality_payload("not_quality"),
+        )
+
         assert resp.status == 422
         await resp_is.invalid_input(resp, {"quality": ["required field"]})
 
@@ -1151,53 +1168,37 @@ class TestAnalyze:
         return client
 
     @staticmethod
-    async def _insert_analysis_resources(
-        mongo: Mongo,
-        static_time,
-        *,
-        reference: bool = True,
-        archived: bool = False,
-        index: bool = True,
-        index_ready: bool = True,
-        subtraction: bool = True,
-        sample: bool = True,
-    ) -> None:
-        if reference:
-            await mongo.references.insert_one(
-                {
-                    "_id": "test_ref",
-                    "archived": archived,
-                    "data_type": "genome",
-                    "name": "Test Reference",
-                },
-            )
+    async def _insert_reference(mongo: Mongo, *, archived: bool = False) -> None:
+        await mongo.references.insert_one(
+            {
+                "_id": "test_ref",
+                "archived": archived,
+                "data_type": "genome",
+                "name": "Test Reference",
+            },
+        )
 
-        if index:
-            await mongo.indexes.insert_one(
-                {
-                    "_id": "test",
-                    "reference": {"id": "test_ref"},
-                    "ready": index_ready,
-                    "version": 4,
-                },
-            )
+    @staticmethod
+    async def _insert_index(mongo: Mongo, *, ready: bool = True) -> None:
+        await mongo.indexes.insert_one(
+            {
+                "_id": "test",
+                "reference": {"id": "test_ref"},
+                "ready": ready,
+                "version": 4,
+            },
+        )
 
-        if subtraction:
-            await mongo.subtraction.insert_one(
-                {"_id": "subtraction_1", "name": "Subtraction 1"},
-            )
+    @staticmethod
+    async def _insert_subtraction(mongo: Mongo) -> None:
+        await mongo.subtraction.insert_one(
+            {"_id": "subtraction_1", "name": "Subtraction 1"},
+        )
 
-        if sample:
-            await mongo.samples.insert_one(
-                {
-                    "_id": "test",
-                    "name": "Test",
-                    "created_at": static_time.datetime,
-                    "all_read": True,
-                    "all_write": True,
-                    "ready": True,
-                },
-            )
+    @staticmethod
+    async def _insert_sample(client: VirtoolTestClient, fake: DataFaker) -> None:
+        user = await fake.users.create()
+        await create_fake_sample(client.app, "test", user.id, finalized=True)
 
     @staticmethod
     async def _post(client: VirtoolTestClient):
@@ -1213,11 +1214,15 @@ class TestAnalyze:
     async def test_ok(
         self,
         analyze_client: VirtoolTestClient,
+        fake: DataFaker,
         mongo: Mongo,
         snapshot: SnapshotAssertion,
         static_time,
     ):
-        await self._insert_analysis_resources(mongo, static_time)
+        await self._insert_reference(mongo)
+        await self._insert_index(mongo)
+        await self._insert_subtraction(mongo)
+        await self._insert_sample(analyze_client, fake)
 
         resp = await self._post(analyze_client)
 
@@ -1228,11 +1233,14 @@ class TestAnalyze:
     async def test_missing_reference(
         self,
         analyze_client: VirtoolTestClient,
+        fake: DataFaker,
         mongo: Mongo,
         resp_is,
         static_time,
     ):
-        await self._insert_analysis_resources(mongo, static_time, reference=False)
+        await self._insert_index(mongo)
+        await self._insert_subtraction(mongo)
+        await self._insert_sample(analyze_client, fake)
 
         resp = await self._post(analyze_client)
 
@@ -1241,11 +1249,15 @@ class TestAnalyze:
     async def test_archived_reference(
         self,
         analyze_client: VirtoolTestClient,
+        fake: DataFaker,
         mongo: Mongo,
         resp_is,
         static_time,
     ):
-        await self._insert_analysis_resources(mongo, static_time, archived=True)
+        await self._insert_reference(mongo, archived=True)
+        await self._insert_index(mongo)
+        await self._insert_subtraction(mongo)
+        await self._insert_sample(analyze_client, fake)
 
         resp = await self._post(analyze_client)
 
@@ -1254,11 +1266,14 @@ class TestAnalyze:
     async def test_no_index(
         self,
         analyze_client: VirtoolTestClient,
+        fake: DataFaker,
         mongo: Mongo,
         resp_is,
         static_time,
     ):
-        await self._insert_analysis_resources(mongo, static_time, index=False)
+        await self._insert_reference(mongo)
+        await self._insert_subtraction(mongo)
+        await self._insert_sample(analyze_client, fake)
 
         resp = await self._post(analyze_client)
 
@@ -1267,11 +1282,15 @@ class TestAnalyze:
     async def test_unbuilt_index(
         self,
         analyze_client: VirtoolTestClient,
+        fake: DataFaker,
         mongo: Mongo,
         resp_is,
         static_time,
     ):
-        await self._insert_analysis_resources(mongo, static_time, index_ready=False)
+        await self._insert_reference(mongo)
+        await self._insert_index(mongo, ready=False)
+        await self._insert_subtraction(mongo)
+        await self._insert_sample(analyze_client, fake)
 
         resp = await self._post(analyze_client)
 
@@ -1280,11 +1299,14 @@ class TestAnalyze:
     async def test_missing_subtraction(
         self,
         analyze_client: VirtoolTestClient,
+        fake: DataFaker,
         mongo: Mongo,
         resp_is,
         static_time,
     ):
-        await self._insert_analysis_resources(mongo, static_time, subtraction=False)
+        await self._insert_reference(mongo)
+        await self._insert_index(mongo)
+        await self._insert_sample(analyze_client, fake)
 
         resp = await self._post(analyze_client)
 
@@ -1297,64 +1319,94 @@ class TestAnalyze:
         resp_is,
         static_time,
     ):
-        await self._insert_analysis_resources(mongo, static_time, sample=False)
+        await self._insert_reference(mongo)
+        await self._insert_index(mongo)
+        await self._insert_subtraction(mongo)
 
         resp = await self._post(analyze_client)
 
         await resp_is.not_found(resp)
 
 
-@pytest.mark.parametrize("error", [None, 400, 409])
-async def test_upload_artifact(
-    error: int | None,
-    example_path: Path,
-    memory_storage,
-    mongo: Mongo,
-    resp_is,
-    snapshot: SnapshotAssertion,
-    spawn_job_client: JobClientSpawner,
-    static_time,
-):
+class TestUploadArtifact:
     """Test that new artifacts can be uploaded after sample creation using the Jobs API."""
-    path = example_path / "sample" / "reads_1.fq.gz"
 
-    client = await spawn_job_client(authenticated=True)
+    @staticmethod
+    async def _insert_sample(mongo: Mongo) -> None:
+        await mongo.samples.insert_one({"_id": "test", "ready": True})
 
-    await mongo.samples.insert_one(
-        {
-            "_id": "test",
-            "ready": True,
-        },
-    )
-
-    artifact_type = "fastq" if error != 400 else "foo"
-
-    data = {"file": open(path, "rb")}
-
-    resp = await client.post(
-        f"/samples/test/artifacts?name=small.fq.gz&type={artifact_type}",
-        data=data,
-    )
-
-    if error == 409:
-        resp_2 = await client.post(
+    @staticmethod
+    async def _post(
+        client: VirtoolTestClient,
+        path: Path,
+        artifact_type: str,
+    ):
+        return await client.post(
             f"/samples/test/artifacts?name=small.fq.gz&type={artifact_type}",
-            data={**data, "file": open(path, "rb")},
+            data={"file": open(path, "rb")},
         )
 
-        await resp_is.conflict(
-            resp_2,
-            "Artifact file has already been uploaded for this sample",
+    async def test_ok(
+        self,
+        example_path: Path,
+        memory_storage,
+        mongo: Mongo,
+        snapshot: SnapshotAssertion,
+        spawn_job_client: JobClientSpawner,
+        static_time,
+    ):
+        client = await spawn_job_client(authenticated=True)
+        await self._insert_sample(mongo)
+
+        resp = await self._post(
+            client, example_path / "sample" / "reads_1.fq.gz", "fastq"
         )
 
-    if not error:
         assert resp.status == 201
         assert await resp.json() == snapshot
 
         keys = {obj.key async for obj in memory_storage.list("samples/test/")}
         assert keys == {"samples/test/small.fq.gz"}
-    elif error == 400:
+
+    async def test_unsupported_type(
+        self,
+        example_path: Path,
+        mongo: Mongo,
+        resp_is,
+        spawn_job_client: JobClientSpawner,
+        static_time,
+    ):
+        client = await spawn_job_client(authenticated=True)
+        await self._insert_sample(mongo)
+
+        resp = await self._post(
+            client, example_path / "sample" / "reads_1.fq.gz", "foo"
+        )
+
         await resp_is.bad_request(resp, "Unsupported sample artifact type")
+
+    async def test_duplicate_upload(
+        self,
+        example_path: Path,
+        mongo: Mongo,
+        resp_is,
+        spawn_job_client: JobClientSpawner,
+        static_time,
+    ):
+        client = await spawn_job_client(authenticated=True)
+        await self._insert_sample(mongo)
+
+        path = example_path / "sample" / "reads_1.fq.gz"
+
+        resp_1 = await self._post(client, path, "fastq")
+        assert resp_1.status == 201
+
+        resp_2 = await self._post(client, path, "fastq")
+
+        await resp_is.conflict(
+            resp_2,
+            "Artifact file has already been uploaded for this sample",
+        )
 
 
 class TestUploadReads:
@@ -1434,38 +1486,20 @@ class TestUploadReads:
         assert await resp.json() == snapshot
 
 
-@pytest.mark.parametrize("suffix", ["1", "2"])
-@pytest.mark.parametrize("error", [None, "404_sample", "404_reads", "404_file"])
-async def test_download_reads(
-    suffix: str,
-    error: str | None,
-    memory_storage,
-    mongo: Mongo,
-    pg: AsyncEngine,
-    spawn_client: ClientSpawner,
-    spawn_job_client: JobClientSpawner,
-):
-    client = await spawn_client(authenticated=True)
-    job_client = await spawn_job_client(authenticated=True)
-
-    file_name = f"reads_{suffix}.fq.gz"
-
-    if error != "404_file":
-
+class TestDownloadReads:
+    @staticmethod
+    async def _write_file(memory_storage, file_name: str) -> None:
         async def _data():
             yield b"test"
 
         await memory_storage.write(f"samples/foo/{file_name}", _data())
 
-    if error != "404_sample":
-        await mongo.samples.insert_one(
-            {
-                "_id": "foo",
-                "ready": True,
-            },
-        )
+    @staticmethod
+    async def _insert_sample(mongo: Mongo) -> None:
+        await mongo.samples.insert_one({"_id": "foo", "ready": True})
 
-    if error != "404_reads":
+    @staticmethod
+    async def _insert_reads_row(pg: AsyncEngine, file_name: str) -> None:
         async with AsyncSession(pg) as session:
             session.add(
                 SQLSampleReads(
@@ -1477,43 +1511,107 @@ async def test_download_reads(
             )
             await session.commit()
 
-    resp = await client.get(f"/samples/foo/reads/{file_name}")
-    job_resp = await job_client.get(f"/samples/foo/reads/{file_name}")
+    @pytest.mark.parametrize("suffix", ["1", "2"])
+    async def test_ok(
+        self,
+        suffix: str,
+        memory_storage,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        spawn_client: ClientSpawner,
+        spawn_job_client: JobClientSpawner,
+    ):
+        client = await spawn_client(authenticated=True)
+        job_client = await spawn_job_client(authenticated=True)
 
-    if error:
-        assert resp.status == job_resp.status == 404
-    else:
+        file_name = f"reads_{suffix}.fq.gz"
+
+        await self._write_file(memory_storage, file_name)
+        await self._insert_sample(mongo)
+        await self._insert_reads_row(pg, file_name)
+
+        resp = await client.get(f"/samples/foo/reads/{file_name}")
+        job_resp = await job_client.get(f"/samples/foo/reads/{file_name}")
+
         assert resp.status == job_resp.status == HTTPStatus.OK
         assert await resp.content.read() == b"test"
         assert await job_resp.content.read() == b"test"
 
+    async def test_404_sample(
+        self,
+        memory_storage,
+        pg: AsyncEngine,
+        spawn_client: ClientSpawner,
+        spawn_job_client: JobClientSpawner,
+    ):
+        client = await spawn_client(authenticated=True)
+        job_client = await spawn_job_client(authenticated=True)
 
-@pytest.mark.parametrize("error", [None, "404_sample", "404_artifact", "404_file"])
-async def test_download_artifact(
-    error: str | None,
-    memory_storage,
-    mongo: Mongo,
-    pg: AsyncEngine,
-    spawn_job_client: JobClientSpawner,
-):
-    client = await spawn_job_client(authenticated=True)
+        file_name = "reads_1.fq.gz"
 
-    if error != "404_file":
+        await self._write_file(memory_storage, file_name)
+        await self._insert_reads_row(pg, file_name)
 
+        resp = await client.get(f"/samples/foo/reads/{file_name}")
+        job_resp = await job_client.get(f"/samples/foo/reads/{file_name}")
+
+        assert resp.status == job_resp.status == 404
+
+    async def test_404_reads(
+        self,
+        memory_storage,
+        mongo: Mongo,
+        spawn_client: ClientSpawner,
+        spawn_job_client: JobClientSpawner,
+    ):
+        client = await spawn_client(authenticated=True)
+        job_client = await spawn_job_client(authenticated=True)
+
+        file_name = "reads_1.fq.gz"
+
+        await self._write_file(memory_storage, file_name)
+        await self._insert_sample(mongo)
+
+        resp = await client.get(f"/samples/foo/reads/{file_name}")
+        job_resp = await job_client.get(f"/samples/foo/reads/{file_name}")
+
+        assert resp.status == job_resp.status == 404
+
+    async def test_404_file(
+        self,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        spawn_client: ClientSpawner,
+        spawn_job_client: JobClientSpawner,
+    ):
+        client = await spawn_client(authenticated=True)
+        job_client = await spawn_job_client(authenticated=True)
+
+        file_name = "reads_1.fq.gz"
+
+        await self._insert_sample(mongo)
+        await self._insert_reads_row(pg, file_name)
+
+        resp = await client.get(f"/samples/foo/reads/{file_name}")
+        job_resp = await job_client.get(f"/samples/foo/reads/{file_name}")
+
+        assert resp.status == job_resp.status == 404
+
+
+class TestDownloadArtifact:
+    @staticmethod
+    async def _write_file(memory_storage) -> None:
         async def _data():
             yield b"test"
 
         await memory_storage.write("samples/foo/fastqc.txt", _data())
 
-    if error != "404_sample":
-        await mongo.samples.insert_one(
-            {
-                "_id": "foo",
-                "ready": True,
-            },
-        )
+    @staticmethod
+    async def _insert_sample(mongo: Mongo) -> None:
+        await mongo.samples.insert_one({"_id": "foo", "ready": True})
 
-    if error != "404_artifact":
+    @staticmethod
+    async def _insert_artifact_row(pg: AsyncEngine) -> None:
         async with AsyncSession(pg) as session:
             session.add(
                 SQLSampleArtifact(
@@ -1524,17 +1622,70 @@ async def test_download_artifact(
                     type="fastq",
                 ),
             )
-
             await session.commit()
 
-    resp = await client.get("/samples/foo/artifacts/fastqc.txt")
+    async def test_ok(
+        self,
+        memory_storage,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        spawn_job_client: JobClientSpawner,
+    ):
+        client = await spawn_job_client(authenticated=True)
 
-    if error:
+        await self._write_file(memory_storage)
+        await self._insert_sample(mongo)
+        await self._insert_artifact_row(pg)
+
+        resp = await client.get("/samples/foo/artifacts/fastqc.txt")
+
+        assert resp.status == HTTPStatus.OK
+        assert await resp.content.read() == b"test"
+
+    async def test_404_sample(
+        self,
+        memory_storage,
+        pg: AsyncEngine,
+        spawn_job_client: JobClientSpawner,
+    ):
+        client = await spawn_job_client(authenticated=True)
+
+        await self._write_file(memory_storage)
+        await self._insert_artifact_row(pg)
+
+        resp = await client.get("/samples/foo/artifacts/fastqc.txt")
+
         assert resp.status == 404
-        return
 
-    assert resp.status == HTTPStatus.OK
-    assert await resp.content.read() == b"test"
+    async def test_404_artifact(
+        self,
+        memory_storage,
+        mongo: Mongo,
+        spawn_job_client: JobClientSpawner,
+    ):
+        client = await spawn_job_client(authenticated=True)
+
+        await self._write_file(memory_storage)
+        await self._insert_sample(mongo)
+
+        resp = await client.get("/samples/foo/artifacts/fastqc.txt")
+
+        assert resp.status == 404
+
+    async def test_404_file(
+        self,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        spawn_job_client: JobClientSpawner,
+    ):
+        client = await spawn_job_client(authenticated=True)
+
+        await self._insert_sample(mongo)
+        await self._insert_artifact_row(pg)
+
+        resp = await client.get("/samples/foo/artifacts/fastqc.txt")
+
+        assert resp.status == 404
 
 
 class TestChangeSampleRights:
