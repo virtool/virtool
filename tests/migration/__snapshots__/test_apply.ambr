@@ -190,5 +190,12 @@
       'name': 'rename pathoscope bowtie to pathoscope',
       'revision': '3g8rzbqj6k69',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 28,
+      'name': 'drop unused mongo files collection',
+      'revision': 'wsopnh02rvet',
+    }),
   ])
 # ---

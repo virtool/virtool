@@ -69,6 +69,7 @@ class ServerConfig:
     storage_azure_account: str = ""
     storage_azure_container: str = ""
     storage_azure_access_key: str = ""
+    storage_azure_endpoint: str = ""
 
     @property
     def mongodb_database(self) -> str:

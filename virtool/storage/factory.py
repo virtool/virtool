@@ -2,20 +2,29 @@
 
 from virtool.config.cls import ServerConfig
 from virtool.storage.filesystem import FilesystemProvider
+from virtool.storage.object import ObjectProvider
 from virtool.storage.protocol import StorageBackend
 from virtool.storage.routing import FallbackStorageRouter
 
 
-def create_storage_backend(config: ServerConfig) -> StorageBackend:
-    """Create a :class:`FallbackStorageRouter` from ``config``.
+def create_storage_backend(
+    config: ServerConfig,
+    *,
+    with_fallback: bool = True,
+) -> StorageBackend:
+    """Create the configured storage backend.
 
-    The primary backend is determined by ``config.storage_backend``. The
-    fallback is always a :class:`FilesystemProvider` (reusing the primary
-    instance in filesystem-only mode).
+    The primary backend is determined by ``config.storage_backend``. When
+    ``with_fallback`` is true (the default) a non-filesystem primary is wrapped
+    in a :class:`FallbackStorageRouter` whose fallback is a
+    :class:`FilesystemProvider` rooted at ``config.storage_filesystem_path``.
+
+    Pass ``with_fallback=False`` to obtain the bare primary — useful for tests
+    that need to drive the remote backend directly.
     """
     primary = _create_primary_backend(config)
 
-    if config.storage_backend == "filesystem":
+    if config.storage_backend == "filesystem" or not with_fallback:
         return primary
 
     config.storage_filesystem_path.mkdir(parents=True, exist_ok=True)
@@ -31,33 +40,20 @@ def _create_primary_backend(config: ServerConfig) -> StorageBackend:
             return FilesystemProvider(config.storage_filesystem_path)
 
         case "s3":
-            from obstore.store import S3Store
-
-            from virtool.storage.obstore import ObstoreProvider
-
-            kwargs = {}
-            if config.storage_s3_region:
-                kwargs["region"] = config.storage_s3_region
-            if config.storage_s3_endpoint:
-                kwargs["endpoint"] = config.storage_s3_endpoint
-            if config.storage_s3_access_key_id:
-                kwargs["access_key_id"] = config.storage_s3_access_key_id
-            if config.storage_s3_secret_access_key:
-                kwargs["secret_access_key"] = config.storage_s3_secret_access_key
-
-            return ObstoreProvider(S3Store(config.storage_s3_bucket, **kwargs))
+            return ObjectProvider.for_s3(
+                config.storage_s3_bucket,
+                region=config.storage_s3_region or None,
+                endpoint=config.storage_s3_endpoint or None,
+                access_key_id=config.storage_s3_access_key_id or None,
+                secret_access_key=config.storage_s3_secret_access_key or None,
+            )
 
         case "azure":
-            from obstore.store import AzureStore
-
-            from virtool.storage.obstore import ObstoreProvider
-
-            kwargs = {"account": config.storage_azure_account}
-            if config.storage_azure_access_key:
-                kwargs["access_key"] = config.storage_azure_access_key
-
-            return ObstoreProvider(
-                AzureStore(config.storage_azure_container, **kwargs),
+            return ObjectProvider.for_azure(
+                config.storage_azure_container,
+                account=config.storage_azure_account,
+                access_key=config.storage_azure_access_key or None,
+                endpoint=config.storage_azure_endpoint or None,
             )
 
         case _:

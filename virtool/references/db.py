@@ -250,19 +250,39 @@ async def check_source_type(mongo: "Mongo", ref_id: str, source_type: str) -> bo
     return True
 
 
-def compose_base_find_query(
+def compose_archived_filter(archived: bool | None) -> dict:
+    """Compose a Mongo filter on ``references.archived`` for the project-wide
+    ``bool | None`` lifecycle convention.
+
+    - ``None`` (default): no constraint → ``{}`` (both states)
+    - ``True``: only archived references → ``{"archived": True}``
+    - ``False``: only active references → ``{"archived": False}``
+
+    :param archived: lifecycle filter mode
+    :return: a Mongo filter dict for the ``archived`` field
+
+    """
+    if archived is None:
+        return {}
+    return {"archived": archived}
+
+
+def compose_rights_filter(
     user_id_variants: list[int | str],
     administrator: bool,
     groups: list[int | str],
 ) -> dict:
-    """Compose a query for filtering reference search results based on user read rights.
+    """Compose a Mongo filter restricting reference results to those the
+    requesting user has read rights to.
+
+    Administrators bypass the filter and receive an empty dict.
 
     TODO: Revert to single user_id parameter when all user IDs are migrated away from MongoDB strings.
 
     :param user_id_variants: all ID variants (modern and legacy) for the requesting user
     :param administrator: the administrator flag of the user requesting the search
     :param groups: the id group membership of the user requesting the search
-    :return: a valid MongoDB query
+    :return: a Mongo filter dict; empty for administrators
 
     """
     if administrator:

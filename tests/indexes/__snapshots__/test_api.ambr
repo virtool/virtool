@@ -22,39 +22,6 @@
     'version': 0,
   })
 # ---
-# name: TestCreate.test[True][job]
-  dict({
-    '_id': 'bf1b993c',
-    'acquired': False,
-    'args': dict({
-      'index_id': 'fb085f7f',
-    }),
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'key': None,
-    'ping': None,
-    'rights': dict({
-    }),
-    'space': dict({
-      'id': 0,
-    }),
-    'state': 'waiting',
-    'status': list([
-      dict({
-        'error': None,
-        'progress': 0,
-        'stage': None,
-        'state': 'waiting',
-        'step_description': None,
-        'step_name': None,
-        'timestamp': datetime.datetime(2015, 10, 6, 20, 0),
-      }),
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'workflow': 'build_index',
-  })
-# ---
 # name: TestCreate.test[True][json]
   dict({
     'change_count': 1,
@@ -104,7 +71,7 @@
 # name: TestCreate.test[True][location]
   'https://virtool.example.com/indexes/bf1b993c'
 # ---
-# name: TestFind.test
+# name: TestFind.test_find[active]
   dict({
     'change_count': 12,
     'documents': list([
@@ -112,7 +79,7 @@
         'change_count': 4,
         'created_at': '2015-10-06T20:00:00Z',
         'has_files': True,
-        'id': 'bar',
+        'id': 'idx_active_a',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': 1,
@@ -128,8 +95,8 @@
         'ready': False,
         'reference': dict({
           'data_type': 'genome',
-          'id': 'bar',
-          'name': 'Bar',
+          'id': 'ref_active_a',
+          'name': 'Active A',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -141,7 +108,7 @@
         'change_count': 2,
         'created_at': '2015-10-06T20:00:00Z',
         'has_files': True,
-        'id': 'foo',
+        'id': 'idx_active_b',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': 2,
@@ -157,8 +124,8 @@
         'ready': False,
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
-          'name': 'Foo',
+          'id': 'ref_active_b',
+          'name': 'Active B',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -172,17 +139,161 @@
     'page': 1,
     'page_count': 1,
     'per_page': 25,
-    'total_count': 2,
+    'total_count': 3,
     'total_otu_count': 123,
   })
 # ---
-# name: TestFind.test_ready
+# name: TestFind.test_find[archived]
+  dict({
+    'change_count': 12,
+    'documents': list([
+      dict({
+        'change_count': 0,
+        'created_at': '2015-10-06T20:00:00Z',
+        'has_files': True,
+        'id': 'idx_archived',
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 3,
+          'progress': 0,
+          'state': 'running',
+          'user': dict({
+            'handle': 'myersmitchell',
+            'id': 2,
+          }),
+          'workflow': 'build_index',
+        }),
+        'modified_otu_count': 0,
+        'ready': False,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'ref_archived',
+          'name': 'Archived',
+        }),
+        'user': dict({
+          'handle': 'myersmitchell',
+          'id': 2,
+        }),
+        'version': 0,
+      }),
+    ]),
+    'found_count': 1,
+    'modified_otu_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+    'total_otu_count': 123,
+  })
+# ---
+# name: TestFind.test_find[default]
+  dict({
+    'change_count': 12,
+    'documents': list([
+      dict({
+        'change_count': 4,
+        'created_at': '2015-10-06T20:00:00Z',
+        'has_files': True,
+        'id': 'idx_active_a',
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 1,
+          'progress': 100,
+          'state': 'cancelled',
+          'user': dict({
+            'handle': 'myersmitchell',
+            'id': 2,
+          }),
+          'workflow': 'build_index',
+        }),
+        'modified_otu_count': 3,
+        'ready': False,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'ref_active_a',
+          'name': 'Active A',
+        }),
+        'user': dict({
+          'handle': 'myersmitchell',
+          'id': 2,
+        }),
+        'version': 1,
+      }),
+      dict({
+        'change_count': 2,
+        'created_at': '2015-10-06T20:00:00Z',
+        'has_files': True,
+        'id': 'idx_active_b',
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 2,
+          'progress': 0,
+          'state': 'running',
+          'user': dict({
+            'handle': 'myersmitchell',
+            'id': 2,
+          }),
+          'workflow': 'build_index',
+        }),
+        'modified_otu_count': 2,
+        'ready': False,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'ref_active_b',
+          'name': 'Active B',
+        }),
+        'user': dict({
+          'handle': 'myersmitchell',
+          'id': 2,
+        }),
+        'version': 0,
+      }),
+      dict({
+        'change_count': 0,
+        'created_at': '2015-10-06T20:00:00Z',
+        'has_files': True,
+        'id': 'idx_archived',
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 3,
+          'progress': 0,
+          'state': 'running',
+          'user': dict({
+            'handle': 'myersmitchell',
+            'id': 2,
+          }),
+          'workflow': 'build_index',
+        }),
+        'modified_otu_count': 0,
+        'ready': False,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'ref_archived',
+          'name': 'Archived',
+        }),
+        'user': dict({
+          'handle': 'myersmitchell',
+          'id': 2,
+        }),
+        'version': 0,
+      }),
+    ]),
+    'found_count': 3,
+    'modified_otu_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+    'total_otu_count': 123,
+  })
+# ---
+# name: TestFind.test_ready[active]
   list([
     dict({
       'change_count': 0,
       'created_at': '2015-10-06T20:00:00Z',
       'has_files': True,
-      'id': 'daz',
+      'id': 'idx_active_b',
       'job': dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 1,
@@ -198,8 +309,8 @@
       'ready': True,
       'reference': dict({
         'data_type': 'genome',
-        'id': 'foo',
-        'name': 'Foo',
+        'id': 'ref_active_b',
+        'name': 'Active B',
       }),
       'user': dict({
         'handle': 'myersmitchell',
@@ -211,7 +322,7 @@
       'change_count': 0,
       'created_at': '2015-10-06T22:00:00Z',
       'has_files': True,
-      'id': 'bot',
+      'id': 'idx_active_a',
       'job': dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 1,
@@ -227,14 +338,138 @@
       'ready': True,
       'reference': dict({
         'data_type': 'genome',
-        'id': 'bar',
-        'name': 'Bar',
+        'id': 'ref_active_a',
+        'name': 'Active A',
       }),
       'user': dict({
         'handle': 'myersmitchell',
         'id': 2,
       }),
       'version': 1,
+    }),
+  ])
+# ---
+# name: TestFind.test_ready[archived]
+  list([
+    dict({
+      'change_count': 0,
+      'created_at': '2015-10-07T00:00:00Z',
+      'has_files': True,
+      'id': 'idx_archived',
+      'job': dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 1,
+        'progress': 100,
+        'state': 'failed',
+        'user': dict({
+          'handle': 'myersmitchell',
+          'id': 2,
+        }),
+        'workflow': 'nuvs',
+      }),
+      'modified_otu_count': 0,
+      'ready': True,
+      'reference': dict({
+        'data_type': 'genome',
+        'id': 'ref_archived',
+        'name': 'Archived',
+      }),
+      'user': dict({
+        'handle': 'myersmitchell',
+        'id': 2,
+      }),
+      'version': 0,
+    }),
+  ])
+# ---
+# name: TestFind.test_ready[default]
+  list([
+    dict({
+      'change_count': 0,
+      'created_at': '2015-10-06T20:00:00Z',
+      'has_files': True,
+      'id': 'idx_active_b',
+      'job': dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 1,
+        'progress': 100,
+        'state': 'failed',
+        'user': dict({
+          'handle': 'myersmitchell',
+          'id': 2,
+        }),
+        'workflow': 'nuvs',
+      }),
+      'modified_otu_count': 0,
+      'ready': True,
+      'reference': dict({
+        'data_type': 'genome',
+        'id': 'ref_active_b',
+        'name': 'Active B',
+      }),
+      'user': dict({
+        'handle': 'myersmitchell',
+        'id': 2,
+      }),
+      'version': 0,
+    }),
+    dict({
+      'change_count': 0,
+      'created_at': '2015-10-06T22:00:00Z',
+      'has_files': True,
+      'id': 'idx_active_a',
+      'job': dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 1,
+        'progress': 100,
+        'state': 'failed',
+        'user': dict({
+          'handle': 'myersmitchell',
+          'id': 2,
+        }),
+        'workflow': 'nuvs',
+      }),
+      'modified_otu_count': 0,
+      'ready': True,
+      'reference': dict({
+        'data_type': 'genome',
+        'id': 'ref_active_a',
+        'name': 'Active A',
+      }),
+      'user': dict({
+        'handle': 'myersmitchell',
+        'id': 2,
+      }),
+      'version': 1,
+    }),
+    dict({
+      'change_count': 0,
+      'created_at': '2015-10-07T00:00:00Z',
+      'has_files': True,
+      'id': 'idx_archived',
+      'job': dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 1,
+        'progress': 100,
+        'state': 'failed',
+        'user': dict({
+          'handle': 'myersmitchell',
+          'id': 2,
+        }),
+        'workflow': 'nuvs',
+      }),
+      'modified_otu_count': 0,
+      'ready': True,
+      'reference': dict({
+        'data_type': 'genome',
+        'id': 'ref_archived',
+        'name': 'Archived',
+      }),
+      'user': dict({
+        'handle': 'myersmitchell',
+        'id': 2,
+      }),
+      'version': 0,
     }),
   ])
 # ---

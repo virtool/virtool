@@ -29,7 +29,29 @@ from virtool.utils import get_http_session_from_app
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
+@pytest.mark.parametrize(
+    ("archived", "expected_ids"),
+    [
+        (
+            None,
+            {
+                "owned_active",
+                "user_member_active",
+                "group_member_active",
+                "owned_archived",
+            },
+        ),
+        (True, {"owned_archived"}),
+        (
+            False,
+            {"owned_active", "user_member_active", "group_member_active"},
+        ),
+    ],
+    ids=["default", "archived", "active"],
+)
 async def test_find(
+    archived: bool | None,
+    expected_ids: set[str],
     data_layer: DataLayer,
     fake: DataFaker,
     pg: AsyncEngine,
@@ -38,6 +60,13 @@ async def test_find(
     spawn_client: ClientSpawner,
     static_time,
 ):
+    """The ``archived`` query param toggles between both states (default),
+    archived-only, and active-only references the user can read.
+
+    The ``other_active`` and ``other_archived`` references are owned by a
+    different user and never visible to the client, proving the rights filter
+    still applies regardless of the lifecycle filter.
+    """
     client = await spawn_client(authenticated=True)
 
     group = await fake.groups.create()
@@ -47,39 +76,39 @@ async def test_find(
     await mongo.references.insert_many(
         [
             {
-                "_id": "foo",
+                "_id": "owned_active",
                 "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "groups": [],
                 "internal_control": None,
-                "name": "Foo",
+                "name": "Owned Active",
                 "organism": "virus",
                 "restrict_source_types": False,
                 "task": {"id": 1},
                 "user": {"id": client.user.id},
             },
             {
-                "_id": "baz",
+                "_id": "other_active",
                 "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "barcode",
                 "groups": [],
                 "internal_control": None,
-                "name": "Baz",
+                "name": "Other Active",
                 "organism": "virus",
                 "restrict_source_types": True,
                 "task": {"id": 2},
                 "user": {"id": user.id},
             },
             {
-                "_id": "bar",
+                "_id": "user_member_active",
                 "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "barcode",
                 "groups": [],
                 "internal_control": None,
-                "name": "Baz",
+                "name": "User Member Active",
                 "organism": "virus",
                 "restrict_source_types": True,
                 "task": {"id": 2},
@@ -87,18 +116,44 @@ async def test_find(
                 "users": [{"id": client.user.id}],
             },
             {
-                "_id": "goo",
+                "_id": "group_member_active",
                 "archived": False,
                 "created_at": static_time.datetime,
                 "data_type": "barcode",
                 "groups": [{"id": group.id}],
                 "internal_control": None,
-                "name": "Baz",
+                "name": "Group Member Active",
                 "organism": "virus",
                 "restrict_source_types": True,
                 "task": {"id": 2},
                 "user": {"id": user.id},
                 "users": [],
+            },
+            {
+                "_id": "owned_archived",
+                "archived": True,
+                "created_at": static_time.datetime,
+                "data_type": "genome",
+                "groups": [],
+                "internal_control": None,
+                "name": "Owned Archived",
+                "organism": "virus",
+                "restrict_source_types": False,
+                "task": {"id": 1},
+                "user": {"id": client.user.id},
+            },
+            {
+                "_id": "other_archived",
+                "archived": True,
+                "created_at": static_time.datetime,
+                "data_type": "barcode",
+                "groups": [],
+                "internal_control": None,
+                "name": "Other Archived",
+                "organism": "virus",
+                "restrict_source_types": True,
+                "task": {"id": 2},
+                "user": {"id": user.id},
             },
         ],
         session=None,
@@ -133,15 +188,25 @@ async def test_find(
         )
         await session.commit()
 
-    resp = await client.get("/references/v1")
+    url = "/references/v1"
+    if archived is not None:
+        url = f"{url}?archived={archived}"
+
+    resp = await client.get(url)
     body = await resp.json()
 
     assert resp.status == HTTPStatus.OK
     assert body == snapshot
+    assert {d["id"] for d in body["documents"]} == expected_ids
 
-    # Make sure the user does not have access to the reference "baz" where they are not
-    # the owner, in ``users`` or a member of a group in ``groups``.
-    assert {d["id"] for d in body["documents"]} == {"foo", "bar", "goo"}
+
+async def test_find_archived_invalid(spawn_client: ClientSpawner):
+    """An invalid ``archived`` value yields a 400 with Pydantic detail."""
+    client = await spawn_client(authenticated=True)
+
+    resp = await client.get("/references/v1?archived=foo")
+
+    assert resp.status == HTTPStatus.BAD_REQUEST
 
 
 class TestGet:
@@ -1691,3 +1756,173 @@ class TestFindHistory:
         resp = await self.client.get("/references/v1/nonexistent/history")
 
         assert resp.status == HTTPStatus.NOT_FOUND
+
+
+class TestArchivedReferenceRejectsWrites:
+    """User-driven writes against archived references must return 409."""
+
+    @pytest.fixture
+    async def archived_ref(
+        self,
+        mongo: Mongo,
+        spawn_client: ClientSpawner,
+        static_time: StaticTime,
+    ) -> tuple[VirtoolTestClient, str]:
+        client = await spawn_client(authenticated=True)
+
+        await mongo.references.insert_one(
+            {
+                "_id": "foo",
+                "archived": True,
+                "created_at": static_time.datetime,
+                "data_type": "genome",
+                "groups": [],
+                "internal_control": None,
+                "name": "Foo",
+                "organism": "virus",
+                "release": {
+                    "id": 10742520,
+                    "name": "v0.3.0",
+                    "body": "Lorem ipsum",
+                    "etag": 'W/"ef123d746a33f88ee44203d3ca6bc2f7"',
+                    "filename": "reference.json.gz",
+                    "size": 3709091,
+                    "html_url": "https://example.com",
+                    "download_url": "https://example.com/reference.json.gz",
+                    "published_at": "2018-04-26T19:35:33Z",
+                    "content_type": "application/gzip",
+                    "newer": True,
+                    "retrieved_at": "2018-04-14T19:52:17.465000Z",
+                },
+                "restrict_source_types": False,
+                "source_types": ["isolate", "strain"],
+                "user": {"id": client.user.id},
+                "users": [
+                    {
+                        "id": client.user.id,
+                        "build": True,
+                        "created_at": static_time.datetime,
+                        "modify": True,
+                        "modify_otu": True,
+                        "remove": True,
+                    },
+                ],
+            },
+        )
+
+        return client, "foo"
+
+    async def test_patch(
+        self,
+        archived_ref: tuple[VirtoolTestClient, str],
+        mocker,
+        resp_is: RespIs,
+    ):
+        client, ref_id = archived_ref
+
+        mocker.patch(
+            "virtool.references.api.check_right",
+            make_mocked_coro(return_value=True),
+        )
+
+        resp = await client.patch(f"/references/v1/{ref_id}", {"name": "Bar"})
+
+        await resp_is.conflict(resp, "Reference is archived")
+
+    async def test_create_otu(
+        self,
+        archived_ref: tuple[VirtoolTestClient, str],
+        mocker,
+        resp_is: RespIs,
+    ):
+        client, ref_id = archived_ref
+
+        mocker.patch(
+            "virtool.references.db.check_right",
+            make_mocked_coro(return_value=True),
+        )
+
+        resp = await client.post(
+            f"/references/v1/{ref_id}/otus",
+            {"name": "Tobacco mosaic virus"},
+        )
+
+        await resp_is.conflict(resp, "Reference is archived")
+
+    async def test_create_index(
+        self,
+        archived_ref: tuple[VirtoolTestClient, str],
+        mocker,
+        resp_is: RespIs,
+    ):
+        client, ref_id = archived_ref
+
+        mocker.patch(
+            "virtool.references.db.check_right",
+            make_mocked_coro(return_value=True),
+        )
+
+        resp = await client.post(f"/references/v1/{ref_id}/indexes", {})
+
+        await resp_is.conflict(resp, "Reference is archived")
+
+    async def test_create_update(
+        self,
+        archived_ref: tuple[VirtoolTestClient, str],
+        mocker,
+        resp_is: RespIs,
+    ):
+        client, ref_id = archived_ref
+
+        mocker.patch(
+            "virtool.references.db.check_right",
+            make_mocked_coro(return_value=True),
+        )
+
+        resp = await client.post(f"/references/v1/{ref_id}/updates", {})
+
+        await resp_is.conflict(resp, "Reference is archived")
+
+
+async def test_archived_reference_allows_user_rights_update(
+    fake: DataFaker,
+    mongo: Mongo,
+    spawn_client: ClientSpawner,
+    static_time: StaticTime,
+):
+    """Rights-management routes are unaffected by the archived guard (D5)."""
+    client = await spawn_client(authenticated=True)
+    user = await fake.users.create()
+
+    await mongo.references.insert_one(
+        {
+            "_id": "foo",
+            "archived": True,
+            "created_at": static_time.datetime,
+            "data_type": "genome",
+            "description": "",
+            "groups": [],
+            "name": "Test",
+            "organism": "virus",
+            "restrict_source_types": False,
+            "source_types": [],
+            "user": {"id": client.user.id},
+            "users": [
+                {
+                    "id": client.user.id,
+                    "build": True,
+                    "created_at": static_time.datetime,
+                    "modify": True,
+                    "modify_otu": True,
+                    "remove": True,
+                },
+            ],
+        },
+    )
+
+    resp = await client.post(
+        "/references/v1/foo/users",
+        {"user_id": user.id, "modify": True},
+    )
+
+    assert resp.status == 201

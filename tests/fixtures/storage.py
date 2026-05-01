@@ -1,9 +1,11 @@
 """Fixtures for the Garage (S3) and Azurite (Azure Blob) integration test services.
 
 Connection parameters are read from the ``VT_TEST_*`` environment variables set by
-``docker-compose.yml`` on the ``test`` service. Each test receives a fresh
-``ObstoreProvider`` whose per-test prefix has been purged, so multiple xdist
-workers can share the same bucket and container.
+``docker-compose.yml`` on the ``test`` service. Providers are built via
+:func:`virtool.storage.factory.create_storage_backend` so the integration suite
+exercises the same code path the deployed server uses. Each test receives a
+fresh ``ObjectProvider`` whose per-test prefix has been purged, so multiple
+xdist workers can share the same bucket and container.
 """
 
 import base64
@@ -12,13 +14,15 @@ import hmac
 import os
 from collections.abc import AsyncIterator
 from email.utils import formatdate
+from pathlib import Path
 
 import aiohttp
 import pytest
-from obstore.store import AzureStore, S3Store
 
+from tests.config.test_cls import build_server_config
+from virtool.storage.factory import create_storage_backend
 from virtool.storage.memory import MemoryStorageProvider
-from virtool.storage.obstore import ObstoreProvider
+from virtool.storage.object import ObjectProvider
 from virtool.storage.protocol import StorageBackend
 
 
@@ -75,20 +79,26 @@ async def _ensure_azurite_container(
 
 
 @pytest.fixture(scope="session")
-def _s3_store() -> S3Store:
-    return S3Store(
-        os.environ["VT_TEST_S3_BUCKET"],
-        endpoint=os.environ["VT_TEST_S3_ENDPOINT"],
-        region=os.environ["VT_TEST_S3_REGION"],
-        access_key_id=os.environ["VT_TEST_S3_ACCESS_KEY_ID"],
-        secret_access_key=os.environ["VT_TEST_S3_SECRET_ACCESS_KEY"],
-        virtual_hosted_style_request=False,
-        client_options={"allow_http": True},
+def _s3_provider(tmp_path_factory: pytest.TempPathFactory) -> ObjectProvider:
+    data_path: Path = tmp_path_factory.mktemp("storage_factory_s3_fallback")
+    config = build_server_config(
+        data_path=data_path,
+        storage_backend="s3",
+        storage_s3_bucket=os.environ["VT_TEST_S3_BUCKET"],
+        storage_s3_endpoint=os.environ["VT_TEST_S3_ENDPOINT"],
+        storage_s3_region=os.environ["VT_TEST_S3_REGION"],
+        storage_s3_access_key_id=os.environ["VT_TEST_S3_ACCESS_KEY_ID"],
+        storage_s3_secret_access_key=os.environ["VT_TEST_S3_SECRET_ACCESS_KEY"],
     )
+    backend = create_storage_backend(config, with_fallback=False)
+    assert isinstance(backend, ObjectProvider)
+    return backend
 
 
 @pytest.fixture(scope="session")
-async def _azure_store() -> AzureStore:
+async def _azure_provider(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> ObjectProvider:
     account = os.environ["VT_TEST_AZURE_ACCOUNT"]
     key = os.environ["VT_TEST_AZURE_KEY"]
     endpoint = os.environ["VT_TEST_AZURE_ENDPOINT"]
@@ -96,16 +106,21 @@ async def _azure_store() -> AzureStore:
 
     await _ensure_azurite_container(account, key, endpoint, container)
 
-    return AzureStore(
-        container,
-        account_name=account,
-        account_key=key,
-        endpoint=endpoint,
-        client_options={"allow_http": True},
+    data_path: Path = tmp_path_factory.mktemp("storage_factory_azure_fallback")
+    config = build_server_config(
+        data_path=data_path,
+        storage_backend="azure",
+        storage_azure_account=account,
+        storage_azure_container=container,
+        storage_azure_access_key=key,
+        storage_azure_endpoint=endpoint,
     )
+    backend = create_storage_backend(config, with_fallback=False)
+    assert isinstance(backend, ObjectProvider)
+    return backend
 
 
-async def _purge(provider: ObstoreProvider, prefix: str) -> None:
+async def _purge(provider: ObjectProvider, prefix: str) -> None:
     async for info in provider.list(prefix):
         await provider.delete(info.key)
 
@@ -119,28 +134,26 @@ def _test_prefix(request: pytest.FixtureRequest, worker_id: str) -> str:
 
 @pytest.fixture
 async def s3_storage(
-    _s3_store: S3Store,
+    _s3_provider: ObjectProvider,
     request: pytest.FixtureRequest,
     worker_id: str,
-) -> AsyncIterator[ObstoreProvider]:
-    provider = ObstoreProvider(_s3_store)
+) -> AsyncIterator[ObjectProvider]:
     prefix = _test_prefix(request, worker_id)
-    await _purge(provider, prefix)
-    yield provider
-    await _purge(provider, prefix)
+    await _purge(_s3_provider, prefix)
+    yield _s3_provider
+    await _purge(_s3_provider, prefix)
 
 
 @pytest.fixture
 async def azure_storage(
-    _azure_store: AzureStore,
+    _azure_provider: ObjectProvider,
     request: pytest.FixtureRequest,
     worker_id: str,
-) -> AsyncIterator[ObstoreProvider]:
-    provider = ObstoreProvider(_azure_store)
+) -> AsyncIterator[ObjectProvider]:
     prefix = _test_prefix(request, worker_id)
-    await _purge(provider, prefix)
-    yield provider
-    await _purge(provider, prefix)
+    await _purge(_azure_provider, prefix)
+    yield _azure_provider
+    await _purge(_azure_provider, prefix)
 
 
 @pytest.fixture

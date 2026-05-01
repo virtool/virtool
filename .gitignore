@@ -12,6 +12,7 @@ __pycache__
 /build
 /dist
 /docs/_build
+/virtool/spec
 
 config.json
 settings.json

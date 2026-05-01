@@ -163,7 +163,6 @@ class Mongo:
         self.id_provider = id_provider
 
         self.analyses = self.bind_collection("analyses")
-        self.files = self.bind_collection("files")
         self.history = self.bind_collection("history")
         self.hmm = self.bind_collection("hmm")
         self.indexes = self.bind_collection("indexes")

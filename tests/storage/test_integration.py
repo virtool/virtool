@@ -1,15 +1,17 @@
-"""Integration tests for :class:`ObstoreProvider` against real services.
+"""Integration tests for the storage backend against real remote services.
 
-Exercises the Protocol contract against Garage (S3-compatible) and Azurite
-(Azure Blob emulator) containers defined in ``docker-compose.yml``. Each test
-receives a fresh provider whose per-test prefix is purged before and after the
-test, so runs are isolated across pytest-xdist workers.
+Exercises the storage protocol against Garage (S3-compatible) and Azurite
+(Azure Blob emulator) containers defined in ``docker-compose.yml``. Providers
+are built through :func:`virtool.storage.factory.create_storage_backend`, so
+this suite also covers the factory's wiring for the remote backends. Each
+test receives a fresh provider whose per-test prefix is purged before and
+after the test, so runs are isolated across pytest-xdist workers.
 """
 
 import pytest
 
 from virtool.storage.errors import StorageKeyNotFoundError
-from virtool.storage.obstore import ObstoreProvider
+from virtool.storage.object import ObjectProvider
 from virtool.storage.protocol import STORAGE_CHUNK_SIZE
 from virtool.storage.types import StorageObjectInfo
 
@@ -17,7 +19,7 @@ pytestmark = pytest.mark.storage_integration
 
 
 @pytest.fixture(params=["s3", "azure"])
-def provider(request, s3_storage, azure_storage) -> ObstoreProvider:
+def provider(request, s3_storage, azure_storage) -> ObjectProvider:
     return {"s3": s3_storage, "azure": azure_storage}[request.param]
 
 
