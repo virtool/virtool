@@ -839,10 +839,17 @@ class TestEdit:
 class TestFinalize:
     """Test that sample can be finalized using the Jobs API."""
 
-    @staticmethod
-    def _quality_payload(field: str) -> dict:
-        return {
-            field: {
+    async def test_quality(
+        self,
+        resp_is,
+        snapshot,
+        spawn_job_client,
+        get_sample_ready_false,
+    ):
+        client = await spawn_job_client(authenticated=True)
+
+        json = {
+            "quality": {
                 "bases": [[1543]],
                 "composition": [[6372]],
                 "count": 7069,
@@ -853,17 +860,6 @@ class TestFinalize:
             },
         }
 
-    async def test_quality(
-        self,
-        snapshot,
-        spawn_job_client,
-        tmp_path,
-        get_sample_ready_false,
-    ):
-        client = await spawn_job_client(authenticated=True)
-
-        json = self._quality_payload("quality")
-
         resp = await client.patch("/samples/test", json=json)
 
         assert resp.status == HTTPStatus.OK
@@ -873,21 +869,16 @@ class TestFinalize:
             await get_data_from_app(client.app).uploads.get(1)
 
         resp = await client.patch("/samples/test", json=json)
-        assert resp.status == 500
+        await resp_is.conflict(resp, "Sample already finalized")
 
     async def test_not_quality(
         self,
         resp_is,
         spawn_job_client,
-        tmp_path,
-        get_sample_ready_false,
     ):
         client = await spawn_job_client(authenticated=True)
 
-        resp = await client.patch(
-            "/samples/test",
-            json=self._quality_payload("not_quality"),
-        )
+        resp = await client.patch("/samples/test", json={})
 
         assert resp.status == 422
         await resp_is.invalid_input(resp, {"quality": ["required field"]})
@@ -1238,7 +1229,6 @@ class TestAnalyze:
         resp_is,
         static_time,
     ):
-        await self._insert_index(mongo)
         await self._insert_subtraction(mongo)
         await self._insert_sample(analyze_client, fake)
 

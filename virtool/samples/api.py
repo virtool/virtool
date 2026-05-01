@@ -282,10 +282,15 @@ async def finalize(req):
 
     sample_id = req.match_info["sample_id"]
 
-    sample = await get_data_from_req(req).samples.finalize(
-        sample_id,
-        data["quality"],
-    )
+    try:
+        sample = await get_data_from_req(req).samples.finalize(
+            sample_id,
+            data["quality"],
+        )
+    except ResourceConflictError as err:
+        raise APIConflict(str(err))
+    except ResourceNotFoundError:
+        raise APINotFound()
 
     return json_response(sample)
 
