@@ -198,6 +198,16 @@ def storage_options(func):
             help="Azure Blob Storage access key",
             type=str,
         ),
+        click.option(
+            "--storage-azure-endpoint",
+            default=get_from_environment("storage_azure_endpoint", ""),
+            help=(
+                "Azure Blob Storage endpoint URL (e.g. for Azurite or "
+                "non-default regions); leave empty to use the default Azure "
+                "endpoint"
+            ),
+            type=str,
+        ),
     ]:
         func = decorator(func)
 

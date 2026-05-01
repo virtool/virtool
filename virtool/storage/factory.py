@@ -33,30 +33,35 @@ def _create_primary_backend(config: ServerConfig) -> StorageBackend:
         case "s3":
             from obstore.store import S3Store
 
-            from virtool.storage.obstore import ObstoreProvider
+            from virtool.storage.object import ObjectProvider
 
             kwargs = {}
             if config.storage_s3_region:
                 kwargs["region"] = config.storage_s3_region
             if config.storage_s3_endpoint:
                 kwargs["endpoint"] = config.storage_s3_endpoint
+                kwargs["virtual_hosted_style_request"] = False
+                kwargs["client_options"] = {"allow_http": True}
             if config.storage_s3_access_key_id:
                 kwargs["access_key_id"] = config.storage_s3_access_key_id
             if config.storage_s3_secret_access_key:
                 kwargs["secret_access_key"] = config.storage_s3_secret_access_key
 
-            return ObstoreProvider(S3Store(config.storage_s3_bucket, **kwargs))
+            return ObjectProvider(S3Store(config.storage_s3_bucket, **kwargs))
 
         case "azure":
             from obstore.store import AzureStore
 
-            from virtool.storage.obstore import ObstoreProvider
+            from virtool.storage.object import ObjectProvider
 
-            kwargs = {"account": config.storage_azure_account}
+            kwargs = {"account_name": config.storage_azure_account}
             if config.storage_azure_access_key:
-                kwargs["access_key"] = config.storage_azure_access_key
+                kwargs["account_key"] = config.storage_azure_access_key
+            if config.storage_azure_endpoint:
+                kwargs["endpoint"] = config.storage_azure_endpoint
+                kwargs["client_options"] = {"allow_http": True}
 
-            return ObstoreProvider(
+            return ObjectProvider(
                 AzureStore(config.storage_azure_container, **kwargs),
             )
 

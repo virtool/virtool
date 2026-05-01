@@ -1,4 +1,9 @@
-"""Storage backend implementation using the obstore library."""
+"""Object-storage backend implementation (S3, Azure Blob, etc.).
+
+Currently backed by the ``obstore`` library, but the public surface
+(``ObjectProvider``) is intentionally library-agnostic so the implementation
+can be swapped without renaming callers or tests.
+"""
 
 from collections.abc import AsyncIterator
 from typing import Any
@@ -11,8 +16,8 @@ from virtool.storage.protocol import STORAGE_CHUNK_SIZE
 from virtool.storage.types import StorageObjectInfo
 
 
-class ObstoreProvider:
-    """StorageBackend implementation backed by any obstore ObjectStore.
+class ObjectProvider:
+    """StorageBackend implementation for object storage services.
 
     Accepts an S3Store, AzureStore, MemoryStore, or any other obstore store
     object. The caller is responsible for configuring the store.

@@ -2,13 +2,13 @@ import pytest
 from obstore.store import MemoryStore
 
 from virtool.storage.errors import StorageKeyNotFoundError
-from virtool.storage.obstore import ObstoreProvider
+from virtool.storage.object import ObjectProvider
 from virtool.storage.types import StorageObjectInfo
 
 
 @pytest.fixture
 def provider():
-    return ObstoreProvider(MemoryStore())
+    return ObjectProvider(MemoryStore())
 
 
 async def _async_iter(data: bytes, chunk_size: int = 1024):
