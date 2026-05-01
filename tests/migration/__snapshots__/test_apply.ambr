@@ -197,5 +197,12 @@
       'name': 'drop unused mongo files collection',
       'revision': 'wsopnh02rvet',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 29,
+      'name': 'drop unused mongo collections',
+      'revision': 'k9s3n2p7x4qa',
+    }),
   ])
 # ---
