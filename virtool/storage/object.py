@@ -114,8 +114,6 @@ class ObjectProvider:
                 _counting_iter(),
                 chunk_size=STORAGE_CHUNK_SIZE,
             )
-        except FileNotFoundError as exc:
-            raise StorageKeyNotFoundError(key) from exc
         except Exception as exc:
             raise StorageError(str(exc)) from exc
 
@@ -128,6 +126,8 @@ class ObjectProvider:
         except FileNotFoundError:
             pass
         except GenericError as exc:
+            # Some S3-compatible backends (e.g. Garage) return NoSuchKey on
+            # delete of a missing object instead of the 204 that AWS returns.
             if "NoSuchKey" not in str(exc):
                 raise StorageError(str(exc)) from exc
         except Exception as exc:
