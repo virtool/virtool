@@ -1,12 +1,13 @@
 """Object-storage backend implementation (S3, Azure Blob, etc.).
 
-Currently backed by the ``obstore`` library, but the public surface
-(``ObjectProvider``) is intentionally library-agnostic so the implementation
-can be swapped without renaming callers or tests.
+Backed by the ``obstore`` library. ``obstore`` is imported only here; no other
+module in the project should reach for ``obstore`` types directly. Construct
+instances through the named classmethods (:meth:`ObjectProvider.for_s3`,
+:meth:`ObjectProvider.for_azure`, :meth:`ObjectProvider.for_memory`).
 """
 
 from collections.abc import AsyncIterator
-from typing import Any
+from typing import Self
 
 import obstore as obs
 from obstore.exceptions import GenericError
@@ -17,14 +18,74 @@ from virtool.storage.types import StorageObjectInfo
 
 
 class ObjectProvider:
-    """StorageBackend implementation for object storage services.
+    """``StorageBackend`` implementation for object storage services.
 
-    Accepts an S3Store, AzureStore, MemoryStore, or any other obstore store
-    object. The caller is responsible for configuring the store.
+    The underlying ``obstore`` store is an opaque handle. Use the ``for_*``
+    classmethods to build a provider for a specific backend.
     """
 
-    def __init__(self, store: Any) -> None:
-        self._store = store
+    def __init__(self, _store: object) -> None:
+        self._store = _store
+
+    @classmethod
+    def for_s3(
+        cls,
+        bucket: str,
+        *,
+        region: str | None = None,
+        endpoint: str | None = None,
+        access_key_id: str | None = None,
+        secret_access_key: str | None = None,
+    ) -> Self:
+        """Build a provider for an S3 (or S3-compatible) bucket."""
+        from obstore.store import S3Store
+
+        kwargs: dict[str, object] = {}
+        if region:
+            kwargs["region"] = region
+        if endpoint:
+            kwargs["endpoint"] = endpoint
+            kwargs["virtual_hosted_style_request"] = False
+            kwargs["client_options"] = {"allow_http": True}
+        if access_key_id:
+            kwargs["access_key_id"] = access_key_id
+        if secret_access_key:
+            kwargs["secret_access_key"] = secret_access_key
+
+        return cls(S3Store(bucket, **kwargs))
+
+    @classmethod
+    def for_azure(
+        cls,
+        container: str,
+        *,
+        account: str,
+        access_key: str | None = None,
+        endpoint: str | None = None,
+    ) -> Self:
+        """Build a provider for an Azure Blob Storage container."""
+        from obstore.store import AzureStore
+
+        kwargs: dict[str, object] = {"account_name": account}
+        if access_key:
+            kwargs["account_key"] = access_key
+        if endpoint:
+            kwargs["endpoint"] = endpoint
+            kwargs["client_options"] = {"allow_http": True}
+
+        return cls(AzureStore(container, **kwargs))
+
+    @classmethod
+    def for_memory(cls) -> Self:
+        """Build a provider backed by an obstore in-memory store.
+
+        Intended for unit tests that exercise this class's translation between
+        ``obstore`` and the ``StorageBackend`` protocol. Tests that just need
+        an in-memory ``StorageBackend`` should use ``MemoryStorageProvider``.
+        """
+        from obstore.store import MemoryStore
+
+        return cls(MemoryStore())
 
     async def read(self, key: str) -> AsyncIterator[bytes]:
         """Stream the contents of the object at ``key`` as chunks of bytes."""
@@ -67,8 +128,6 @@ class ObjectProvider:
         except FileNotFoundError:
             pass
         except GenericError as exc:
-            # Some S3-compatible backends (e.g. Garage) return NoSuchKey on
-            # delete of a missing object instead of the 204 that AWS returns.
             if "NoSuchKey" not in str(exc):
                 raise StorageError(str(exc)) from exc
         except Exception as exc:

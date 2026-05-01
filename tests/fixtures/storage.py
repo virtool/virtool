@@ -24,7 +24,6 @@ from virtool.storage.factory import create_storage_backend
 from virtool.storage.memory import MemoryStorageProvider
 from virtool.storage.object import ObjectProvider
 from virtool.storage.protocol import StorageBackend
-from virtool.storage.routing import FallbackStorageRouter
 
 
 async def _ensure_azurite_container(
@@ -79,20 +78,6 @@ async def _ensure_azurite_container(
             )
 
 
-def _unwrap_primary(backend: StorageBackend) -> ObjectProvider:
-    """Return the primary ``ObjectProvider`` from a fallback router.
-
-    ``create_storage_backend`` wraps non-filesystem primaries in a
-    :class:`FallbackStorageRouter`. The integration suite drives the object
-    provider directly so per-test prefix purging only touches the remote
-    service, not the on-disk fallback.
-    """
-    assert isinstance(backend, FallbackStorageRouter)
-    primary = backend._primary
-    assert isinstance(primary, ObjectProvider)
-    return primary
-
-
 @pytest.fixture(scope="session")
 def _s3_provider(tmp_path_factory: pytest.TempPathFactory) -> ObjectProvider:
     data_path: Path = tmp_path_factory.mktemp("storage_factory_s3_fallback")
@@ -105,7 +90,9 @@ def _s3_provider(tmp_path_factory: pytest.TempPathFactory) -> ObjectProvider:
         storage_s3_access_key_id=os.environ["VT_TEST_S3_ACCESS_KEY_ID"],
         storage_s3_secret_access_key=os.environ["VT_TEST_S3_SECRET_ACCESS_KEY"],
     )
-    return _unwrap_primary(create_storage_backend(config))
+    backend = create_storage_backend(config, with_fallback=False)
+    assert isinstance(backend, ObjectProvider)
+    return backend
 
 
 @pytest.fixture(scope="session")
@@ -128,7 +115,9 @@ async def _azure_provider(
         storage_azure_access_key=key,
         storage_azure_endpoint=endpoint,
     )
-    return _unwrap_primary(create_storage_backend(config))
+    backend = create_storage_backend(config, with_fallback=False)
+    assert isinstance(backend, ObjectProvider)
+    return backend
 
 
 async def _purge(provider: ObjectProvider, prefix: str) -> None:
