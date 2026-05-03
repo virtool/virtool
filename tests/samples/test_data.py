@@ -17,7 +17,7 @@ from virtool.samples.models import WorkflowState
 from virtool.samples.oas import CreateSampleRequest
 from virtool.samples.utils import SampleRight
 from virtool.settings.oas import UpdateSettingsRequest
-from virtool.uploads.sql import SQLUpload
+from virtool.uploads.sql import SQLUpload, UploadType
 from virtool.users.oas import UpdateUserRequest
 
 
@@ -390,34 +390,47 @@ class TestHasRight:
 
 class TestHasResourcesForAnalysisJob:
     @staticmethod
-    async def _seed(mongo: Mongo, *, archived: bool = False) -> None:
-        await mongo.references.insert_one(
-            {
-                "_id": "test_ref",
-                "archived": archived,
-                "data_type": "genome",
-                "name": "Test Reference",
-            },
-        )
-        await mongo.indexes.insert_one(
-            {
-                "_id": "test_index",
-                "reference": {"id": "test_ref"},
-                "ready": True,
-                "version": 1,
-            },
-        )
-        await mongo.subtraction.insert_one(
-            {"_id": "subtraction_1", "name": "Subtraction 1"},
+    async def _seed(
+        fake: DataFaker,
+        mongo: Mongo,
+        *,
+        archived: bool = False,
+    ) -> str:
+        user = await fake.users.create()
+        upload = await fake.uploads.create(
+            user=user,
+            upload_type=UploadType.subtraction,
         )
 
-    async def test_ok(self, data_layer: DataLayer, mongo: Mongo):
-        await self._seed(mongo)
+        _, _, subtraction = await asyncio.gather(
+            mongo.references.insert_one(
+                {
+                    "_id": "test_ref",
+                    "archived": archived,
+                    "data_type": "genome",
+                    "name": "Test Reference",
+                },
+            ),
+            mongo.indexes.insert_one(
+                {
+                    "_id": "test_index",
+                    "reference": {"id": "test_ref"},
+                    "ready": True,
+                    "version": 1,
+                },
+            ),
+            fake.subtractions.create(user=user, upload=upload),
+        )
+
+        return subtraction.id
+
+    async def test_ok(self, data_layer: DataLayer, fake: DataFaker, mongo: Mongo):
+        subtraction_id = await self._seed(fake, mongo)
 
         assert (
             await data_layer.samples.has_resources_for_analysis_job(
                 "test_ref",
-                ["subtraction_1"],
+                [subtraction_id],
             )
             is None
         )
@@ -429,23 +442,33 @@ class TestHasResourcesForAnalysisJob:
                 ["subtraction_1"],
             )
 
-    async def test_archived_reference(self, data_layer: DataLayer, mongo: Mongo):
-        await self._seed(mongo, archived=True)
+    async def test_archived_reference(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+    ):
+        subtraction_id = await self._seed(fake, mongo, archived=True)
 
         with pytest.raises(ResourceConflictError, match=r"Reference is archived"):
             await data_layer.samples.has_resources_for_analysis_job(
                 "test_ref",
-                ["subtraction_1"],
+                [subtraction_id],
             )
 
-    async def test_missing_subtraction(self, data_layer: DataLayer, mongo: Mongo):
-        await self._seed(mongo)
+    async def test_missing_subtraction(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+    ):
+        subtraction_id = await self._seed(fake, mongo)
 
         with pytest.raises(
             ResourceConflictError,
-            match=r"Subtractions do not exist: missing",
+            match=r"^Subtractions do not exist: missing$",
         ):
             await data_layer.samples.has_resources_for_analysis_job(
                 "test_ref",
-                ["missing"],
+                [subtraction_id, "missing"],
             )
