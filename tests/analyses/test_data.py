@@ -160,6 +160,28 @@ async def test_create_analysis_id(
     )
 
 
+async def test_get_without_if_modified_since(
+    data_layer: DataLayer,
+    setup_sample: str,
+):
+    """Test that an analysis can be fetched without an HTTP cache validator."""
+    analysis = await data_layer.analyses.create(
+        CreateAnalysisRequest(
+            ml=None,
+            ref_id="test_ref",
+            subtractions=["subtraction_1", "subtraction_2"],
+            workflow=AnalysisWorkflow.nuvs,
+        ),
+        "test_sample",
+        setup_sample,
+        0,
+    )
+
+    fetched = await data_layer.analyses.get(analysis.id)
+
+    assert fetched.id == analysis.id
+
+
 async def test_upload_file(
     data_layer: DataLayer,
     example_path: Path,
