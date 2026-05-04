@@ -171,7 +171,7 @@ class AnalysisData(DataLayerDomain):
     async def get(
         self,
         analysis_id: str,
-        if_modified_since: datetime | None,
+        if_modified_since: datetime | None = None,
     ) -> Analysis:
         """Get a single analysis by its ID.
 
