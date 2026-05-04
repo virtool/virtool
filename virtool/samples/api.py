@@ -6,7 +6,7 @@ from aiohttp.web import (
     StreamResponse,
 )
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404
+from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404, r409
 from pydantic import Field, conint, constr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -282,10 +282,15 @@ async def finalize(req):
 
     sample_id = req.match_info["sample_id"]
 
-    sample = await get_data_from_req(req).samples.finalize(
-        sample_id,
-        data["quality"],
-    )
+    try:
+        sample = await get_data_from_req(req).samples.finalize(
+            sample_id,
+            data["quality"],
+        )
+    except ResourceConflictError as err:
+        raise APIConflict(str(err))
+    except ResourceNotFoundError:
+        raise APINotFound()
 
     return json_response(sample)
 
@@ -434,18 +439,20 @@ class AnalysesView(PydanticView):
         sample_id: str,
         /,
         data: CreateAnalysisRequest,
-    ) -> r201[AnalysisMinimal] | r400 | r403 | r404:
+    ) -> r201[AnalysisMinimal] | r400 | r403 | r404 | r409:
         """Start analysis job.
 
         Starts an analysis job for a given sample.
 
         Status Codes:
             201: Successful operation
-            400: Reference does not exist
-            400: No index is ready for the reference
             400: Invalid input
             403: Insufficient rights
             404: Not found
+            409: Reference does not exist
+            409: Reference is archived
+            409: No index is ready for the reference
+            409: Subtractions do not exist
         """
         mongo = get_mongo_from_req(self.request)
 
@@ -463,7 +470,7 @@ class AnalysesView(PydanticView):
                 self.request,
             ).samples.has_resources_for_analysis_job(data.ref_id, data.subtractions)
         except ResourceError as err:
-            raise APIBadRequest(str(err))
+            raise APIConflict(str(err))
 
         analysis = await get_data_from_req(self.request).analyses.create(
             data,

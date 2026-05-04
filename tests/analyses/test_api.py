@@ -218,6 +218,63 @@ async def test_get(
         await resp_is.not_found(resp)
 
 
+async def test_get_archived_reference(
+    fake: DataFaker,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    spawn_client: ClientSpawner,
+    static_time: StaticTime,
+):
+    """An existing analysis whose reference is archived still resolves
+    reference metadata on GET via ``AttachReferenceTransform``.
+    """
+    client = await spawn_client(authenticated=True)
+
+    user = await fake.users.create()
+    job = await fake.jobs.create(user=user, state=JobState.SUCCEEDED)
+
+    await asyncio.gather(
+        mongo.references.insert_one(
+            {"_id": "baz", "archived": True, "data_type": "genome", "name": "Baz"},
+        ),
+        mongo.samples.insert_one(
+            {
+                "_id": "baz",
+                "all_read": True,
+                "all_write": False,
+                "group": "tech",
+                "group_read": True,
+                "group_write": True,
+                "labels": [],
+                "subtractions": [],
+                "user": {"id": user.id},
+            },
+        ),
+        mongo.analyses.insert_one(
+            {
+                "_id": "foobar",
+                "created_at": static_time.datetime,
+                "index": {"version": 3, "id": "bar"},
+                "job": {"id": job.id},
+                "ready": True,
+                "reference": {"id": "baz"},
+                "results": {"hits": []},
+                "sample": {"id": "baz"},
+                "subtractions": [],
+                "user": {"id": user.id},
+                "workflow": "pathoscope",
+            },
+        ),
+        create_analysis_file(pg, "foobar", "fasta", "reference.fa"),
+    )
+
+    resp = await client.get("/analyses/foobar")
+
+    assert resp.status == HTTPStatus.OK
+    body = await resp.json()
+    assert body["reference"] == {"id": "baz", "data_type": "genome", "name": "Baz"}
+
+
 @pytest.mark.parametrize("ready", [True, False])
 async def test_get_304(
     ready: bool,

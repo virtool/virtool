@@ -1,4 +1,50 @@
 # serializer version: 1
+# name: TestAnalyze.test_ok
+  dict({
+    'created_at': '2015-10-06T20:00:00Z',
+    'files': list([
+    ]),
+    'id': 'bf1b993c',
+    'index': dict({
+      'id': 'test',
+      'version': 4,
+    }),
+    'job': dict({
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 1,
+      'progress': 0,
+      'state': 'pending',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+      'workflow': 'pathoscope',
+    }),
+    'ml': None,
+    'ready': False,
+    'reference': dict({
+      'data_type': 'genome',
+      'id': 'test_ref',
+      'name': 'Test Reference',
+    }),
+    'results': None,
+    'sample': dict({
+      'id': 'test',
+    }),
+    'subtractions': list([
+      dict({
+        'id': 'subtraction_1',
+        'name': 'Subtraction 1',
+      }),
+    ]),
+    'updated_at': '2015-10-06T20:00:00Z',
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 1,
+    }),
+    'workflow': 'pathoscope',
+  })
+# ---
 # name: TestChangeSampleRights.test_set_none_group_id[mongo]
   dict({
     '_id': 'test',
@@ -642,6 +688,94 @@
   dict({
     'id': 'bad_request',
     'message': 'Subtractions do not exist: bar',
+  })
+# ---
+# name: TestFinalize.test_quality
+  dict({
+    'all_read': True,
+    'all_write': True,
+    'artifacts': list([
+    ]),
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': None,
+    'group_read': True,
+    'group_write': True,
+    'hold': False,
+    'host': '',
+    'id': 'test',
+    'is_legacy': False,
+    'isolate': '',
+    'job': dict({
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 1,
+      'progress': 100,
+      'state': 'failed',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+      'workflow': 'create_sample',
+    }),
+    'labels': list([
+      dict({
+        'color': '#629f70',
+        'description': 'American whole magazine truth stop whose.',
+        'id': 1,
+        'name': 'Three',
+      }),
+    ]),
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': True,
+    'quality': dict({
+      'bases': list([
+        list([
+          1543,
+        ]),
+      ]),
+      'composition': list([
+        list([
+          6372,
+        ]),
+      ]),
+      'count': 7069,
+      'encoding': 'OuBQPPuwYimrxkNpPWUx',
+      'gc': 34222440,
+      'length': list([
+        3237,
+      ]),
+      'sequences': list([
+        7091,
+      ]),
+    }),
+    'reads': list([
+    ]),
+    'ready': True,
+    'subtractions': list([
+      dict({
+        'id': 'apple',
+        'name': 'Apple',
+      }),
+      dict({
+        'id': 'pear',
+        'name': 'Pear',
+      }),
+    ]),
+    'uploads': None,
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 1,
+    }),
+    'workflows': dict({
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
+    }),
   })
 # ---
 # name: TestFind.test_labels[None]
@@ -2125,6 +2259,17 @@
     }),
   })
 # ---
+# name: TestUploadArtifact.test_ok
+  dict({
+    'id': 1,
+    'name': 'small.fq.gz',
+    'name_on_disk': 'small.fq.gz',
+    'sample': 'test',
+    'size': 723988,
+    'type': 'fastq',
+    'uploaded_at': '2015-10-06T20:00:00Z',
+  })
+# ---
 # name: TestUploadReads.test[409]
   dict({
     'id': 'conflict',
@@ -2135,140 +2280,6 @@
   dict({
     'id': 'bad_request',
     'message': 'File is not compressed',
-  })
-# ---
-# name: test_analyze[None]
-  dict({
-    'created_at': '2015-10-06T20:00:00Z',
-    'files': list([
-    ]),
-    'id': 'bf1b993c',
-    'index': dict({
-      'id': 'test',
-      'version': 4,
-    }),
-    'job': dict({
-      'created_at': '2015-10-06T20:00:00Z',
-      'id': 1,
-      'progress': 0,
-      'state': 'pending',
-      'user': dict({
-        'handle': 'leeashley',
-        'id': 1,
-      }),
-      'workflow': 'pathoscope',
-    }),
-    'ml': None,
-    'ready': False,
-    'reference': dict({
-      'data_type': 'genome',
-      'id': 'test_ref',
-      'name': 'Test Reference',
-    }),
-    'results': None,
-    'sample': dict({
-      'id': 'test',
-    }),
-    'subtractions': list([
-      dict({
-        'id': 'subtraction_1',
-        'name': 'Subtraction 1',
-      }),
-    ]),
-    'updated_at': '2015-10-06T20:00:00Z',
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 1,
-    }),
-    'workflow': 'pathoscope',
-  })
-# ---
-# name: test_finalize[quality]
-  dict({
-    'all_read': True,
-    'all_write': True,
-    'artifacts': list([
-    ]),
-    'created_at': '2015-10-06T20:00:00Z',
-    'format': 'fastq',
-    'group': None,
-    'group_read': True,
-    'group_write': True,
-    'hold': False,
-    'host': '',
-    'id': 'test',
-    'is_legacy': False,
-    'isolate': '',
-    'job': dict({
-      'created_at': '2015-10-06T20:00:00Z',
-      'id': 1,
-      'progress': 100,
-      'state': 'failed',
-      'user': dict({
-        'handle': 'leeashley',
-        'id': 1,
-      }),
-      'workflow': 'create_sample',
-    }),
-    'labels': list([
-      dict({
-        'color': '#629f70',
-        'description': 'American whole magazine truth stop whose.',
-        'id': 1,
-        'name': 'Three',
-      }),
-    ]),
-    'library_type': 'normal',
-    'locale': '',
-    'name': 'Test',
-    'notes': '',
-    'nuvs': False,
-    'paired': False,
-    'pathoscope': True,
-    'quality': dict({
-      'bases': list([
-        list([
-          1543,
-        ]),
-      ]),
-      'composition': list([
-        list([
-          6372,
-        ]),
-      ]),
-      'count': 7069,
-      'encoding': 'OuBQPPuwYimrxkNpPWUx',
-      'gc': 34222440,
-      'length': list([
-        3237,
-      ]),
-      'sequences': list([
-        7091,
-      ]),
-    }),
-    'reads': list([
-    ]),
-    'ready': True,
-    'subtractions': list([
-      dict({
-        'id': 'apple',
-        'name': 'Apple',
-      }),
-      dict({
-        'id': 'pear',
-        'name': 'Pear',
-      }),
-    ]),
-    'uploads': None,
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 1,
-    }),
-    'workflows': dict({
-      'aodp': 'incompatible',
-      'nuvs': 'pending',
-      'pathoscope': 'complete',
-    }),
   })
 # ---
 # name: test_find_analyses
@@ -2379,16 +2390,5 @@
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  })
-# ---
-# name: test_upload_artifact[None]
-  dict({
-    'id': 1,
-    'name': 'small.fq.gz',
-    'name_on_disk': 'small.fq.gz',
-    'sample': 'test',
-    'size': 723988,
-    'type': 'fastq',
-    'uploaded_at': '2015-10-06T20:00:00Z',
   })
 # ---

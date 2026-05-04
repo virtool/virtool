@@ -546,8 +546,16 @@ class SamplesData(DataLayerDomain):
         :param ref_id: the reference id
         :param subtractions: list of subtractions
         """
-        if not await self._mongo.references.count_documents({"_id": ref_id}):
+        reference = await self._mongo.references.find_one(
+            {"_id": ref_id},
+            ["archived"],
+        )
+
+        if reference is None:
             raise ResourceConflictError("Reference does not exist")
+
+        if reference.get("archived"):
+            raise ResourceConflictError("Reference is archived")
 
         if not await self._mongo.indexes.count_documents(
             {"reference.id": ref_id, "ready": True},
