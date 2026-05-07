@@ -1,0 +1,47 @@
+"""create caches table
+
+Revision ID: c3a7e9b4d1f2
+Revises: bd1ffbecfce5
+Create Date: 2026-05-06 00:00:00.000000+00:00
+
+"""
+
+import sqlalchemy as sa
+from alembic import op
+from sqlalchemy.dialects.postgresql import JSONB
+
+revision = "c3a7e9b4d1f2"
+down_revision = "bd1ffbecfce5"
+branch_labels = None
+depends_on = None
+
+CACHE_TYPES = (
+    "reference_mapping_index",
+    "subtraction_mapping_index",
+    "trimmed_reads",
+)
+
+
+def upgrade() -> None:
+    cache_type_enum = sa.Enum(*CACHE_TYPES, name="cachetype")
+
+    op.create_table(
+        "caches",
+        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("key", sa.String(), nullable=False),
+        sa.Column("type", cache_type_enum, nullable=False),
+        sa.Column("tool_name", sa.String(), nullable=False),
+        sa.Column("tool_version", sa.String(), nullable=False),
+        sa.Column("params", JSONB(), nullable=False),
+        sa.Column("parent_id", sa.String(), nullable=False),
+        sa.Column("size", sa.BigInteger(), nullable=False),
+        sa.Column("created_at", sa.DateTime(), nullable=False),
+        sa.Column("last_accessed_at", sa.DateTime(), nullable=False),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("key"),
+    )
+
+
+def downgrade() -> None:
+    op.drop_table("caches")
+    sa.Enum(name="cachetype").drop(op.get_bind(), checkfirst=False)
