@@ -1,9 +1,9 @@
-"""Postgres-backed repository for cache rows.
+"""Data-layer domain for cache rows.
 
-The repo intentionally exposes a small surface — ``get``, ``put``,
+The domain intentionally exposes a small surface — ``get``, ``put``,
 ``delete_by_key``, ``delete_for_parent``. Higher-level concerns
 (eviction, blob lifecycle, the jobs API) live elsewhere and call into
-this repo.
+this domain.
 """
 
 from datetime import timedelta
@@ -17,6 +17,7 @@ import virtool.utils
 from virtool.caches.keys import derive_key, normalize_semver
 from virtool.caches.sql import SQLCache
 from virtool.caches.types import CacheType
+from virtool.data.domain import DataLayerDomain
 
 LAST_ACCESSED_BUCKET = timedelta(minutes=5)
 """How stale ``last_accessed_at`` may be before ``get`` updates it.
@@ -25,7 +26,9 @@ A coarse bucket keeps eviction ordering useful while avoiding a write on
 every read."""
 
 
-class CacheRepo:
+class CachesData(DataLayerDomain):
+    name = "caches"
+
     def __init__(self, pg: AsyncEngine):
         self._pg = pg
 
