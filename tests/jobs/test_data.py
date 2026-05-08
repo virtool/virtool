@@ -224,8 +224,10 @@ class TestCreatePostgres:
         assert job_subtraction is not None
         assert job_subtraction.subtraction_id == "sub_789"
 
+    @pytest.mark.parametrize("workflow", ["aodp", "iimi", "nuvs", "pathoscope"])
     async def test_analysis_join_table(
         self,
+        workflow: str,
         jobs_data: JobsData,
         fake: DataFaker,
         pg: AsyncEngine,
@@ -234,7 +236,7 @@ class TestCreatePostgres:
         user = await fake.users.create()
 
         job = await jobs_data.create(
-            "nuvs",
+            workflow,
             {"analysis_id": "analysis_abc"},
             user.id,
             0,
@@ -255,6 +257,9 @@ class TestCreatePostgres:
 
         assert job_analysis is not None
         assert job_analysis.analysis_id == "analysis_abc"
+
+        fetched_job = await jobs_data.get(job.id)
+        assert fetched_job.args == {"analysis_id": "analysis_abc"}
 
 
 class TestStartStepPostgres:
