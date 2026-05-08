@@ -2,7 +2,7 @@ import hashlib
 
 import pytest
 
-from virtool.caches.keys import canonicalize_params, derive_key, normalize_semver
+from virtool.caches.utils import canonicalize_params, derive_key, normalize_semver
 from virtool.caches.types import CacheType
 
 

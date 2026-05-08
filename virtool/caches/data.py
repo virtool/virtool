@@ -14,8 +14,9 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
-from virtool.caches.keys import derive_key, normalize_semver
-from virtool.caches.sql import SQLCache
+from virtool.caches.utils import derive_key, normalize_semver
+from virtool.caches.models import Cache
+from virtool.caches.pg import SQLCache
 from virtool.caches.types import CacheType
 from virtool.data.domain import DataLayerDomain
 
@@ -32,28 +33,27 @@ class CachesData(DataLayerDomain):
     def __init__(self, pg: AsyncEngine):
         self._pg = pg
 
-    async def get(self, key: str) -> SQLCache | None:
+    async def get(self, key: str) -> Cache | None:
         """Return the cache row for ``key`` or ``None``.
 
         ``last_accessed_at`` is touched in the same transaction when the
         existing value is older than :data:`LAST_ACCESSED_BUCKET`.
         """
         async with AsyncSession(self._pg, expire_on_commit=False) as session:
-            cache = (
+            row = (
                 await session.execute(select(SQLCache).where(SQLCache.key == key))
             ).scalar_one_or_none()
 
-            if cache is None:
+            if row is None:
                 return None
 
             now = virtool.utils.timestamp()
 
-            if now - cache.last_accessed_at >= LAST_ACCESSED_BUCKET:
-                cache.last_accessed_at = now
+            if now - row.last_accessed_at >= LAST_ACCESSED_BUCKET:
+                row.last_accessed_at = now
                 await session.commit()
 
-            session.expunge(cache)
-            return cache
+            return Cache(**row.to_dict())
 
     async def put(
         self,
@@ -63,7 +63,7 @@ class CachesData(DataLayerDomain):
         params: dict[str, Any],
         parent_id: str,
         size: int,
-    ) -> SQLCache:
+    ) -> Cache:
         """Insert a cache row, returning the row that ends up persisted.
 
         The insert is ``ON CONFLICT (key) DO NOTHING``: if two callers race
@@ -90,9 +90,11 @@ class CachesData(DataLayerDomain):
             )
             await session.commit()
 
-            return (
+            row = (
                 await session.execute(select(SQLCache).where(SQLCache.key == key))
             ).scalar_one()
+
+            return Cache(**row.to_dict())
 
     async def delete_by_key(self, key: str) -> bool:
         """Delete the row identified by ``key``.

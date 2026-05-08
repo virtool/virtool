@@ -5,8 +5,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.caches.data import LAST_ACCESSED_BUCKET, CachesData
-from virtool.caches.keys import derive_key
-from virtool.caches.sql import SQLCache
+from virtool.caches.utils import derive_key
+from virtool.caches.pg import SQLCache
 from virtool.caches.types import CacheType
 
 
