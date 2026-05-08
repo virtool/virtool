@@ -14,11 +14,13 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
-from virtool.caches.utils import derive_key, normalize_semver
 from virtool.caches.models import Cache
 from virtool.caches.pg import SQLCache
 from virtool.caches.types import CacheType
+from virtool.caches.utils import derive_key, normalize_params
 from virtool.data.domain import DataLayerDomain
+
+_REQUIRED_PARAM_KEYS = ("tool_name", "tool_version")
 
 LAST_ACCESSED_BUCKET = timedelta(minutes=5)
 """How stale ``last_accessed_at`` may be before ``get`` updates it.
@@ -58,18 +60,25 @@ class CachesData(DataLayerDomain):
     async def put(
         self,
         cache_type: CacheType,
-        tool_name: str,
-        tool_version: str,
         params: dict[str, Any],
         parent_id: str,
         size: int,
     ) -> Cache:
         """Insert a cache row, returning the row that ends up persisted.
 
+        ``params`` must contain ``tool_name`` and ``tool_version``; both are
+        part of the key and are stored inside the JSONB column rather than as
+        dedicated SQL columns. Missing either raises :class:`ValueError`.
+
         The insert is ``ON CONFLICT (key) DO NOTHING``: if two callers race
         with the same key, the loser silently observes the winner's row.
         """
-        key = derive_key(cache_type, tool_name, tool_version, params, parent_id)
+        missing = [k for k in _REQUIRED_PARAM_KEYS if k not in params]
+        if missing:
+            raise ValueError(f"params is missing required keys: {missing}")
+
+        normalized_params = normalize_params(params)
+        key = derive_key(cache_type, params, parent_id)
         now = virtool.utils.timestamp()
 
         async with AsyncSession(self._pg, expire_on_commit=False) as session:
@@ -78,9 +87,7 @@ class CachesData(DataLayerDomain):
                 .values(
                     key=key,
                     type=cache_type,
-                    tool_name=tool_name,
-                    tool_version=normalize_semver(tool_version),
-                    params=params,
+                    params=normalized_params,
                     parent_id=parent_id,
                     size=size,
                     created_at=now,

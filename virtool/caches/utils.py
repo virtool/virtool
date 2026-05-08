@@ -1,9 +1,10 @@
 """Pure-Python helpers for content-addressing cache entries.
 
 A cache key is the SHA-256 digest of the NUL-joined canonical form of
-``(cache_type, tool_name, normalize_semver(tool_version), canonical_params,
-parent_id)``. Identical inputs always produce the same key, so two callers can
-discover a hit without coordination.
+``(cache_type, canonical_params, parent_id)``. ``params`` must include
+``tool_name`` and ``tool_version`` — the data layer enforces this on insert.
+``tool_version`` is normalized before canonicalization so that build metadata
+does not change the key.
 """
 
 import hashlib
@@ -37,20 +38,25 @@ def normalize_semver(tool_version: str) -> str:
     return str(version.replace(build=None))
 
 
+def normalize_params(params: dict[str, Any]) -> dict[str, Any]:
+    """Return a copy of ``params`` with ``tool_version`` semver-normalized."""
+    return {**params, "tool_version": normalize_semver(params["tool_version"])}
+
+
 def derive_key(
     cache_type: CacheType,
-    tool_name: str,
-    tool_version: str,
     params: dict[str, Any],
     parent_id: str,
 ) -> str:
-    """Derive the SHA-256 cache key for the given inputs."""
+    """Derive the SHA-256 cache key for the given inputs.
+
+    ``params`` must contain ``tool_name`` and ``tool_version``; the version is
+    normalized before canonicalization.
+    """
     payload = _KEY_FIELD_SEPARATOR.join(
         [
             cache_type.value,
-            tool_name,
-            normalize_semver(tool_version),
-            canonicalize_params(params),
+            canonicalize_params(normalize_params(params)),
             parent_id,
         ],
     )

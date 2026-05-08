@@ -10,8 +10,6 @@ class Cache(BaseModel):
     id: int
     key: str
     type: CacheType
-    tool_name: str
-    tool_version: str
     params: dict
     parent_id: str
     size: int

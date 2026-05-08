@@ -26,17 +26,18 @@ class SQLCache(Base):
     type: Mapped[CacheType] = mapped_column(Enum(CacheType))
     """The kind of artifact stored at this key."""
 
-    tool_name: Mapped[str]
-    """The tool that produced the artifact (e.g. ``bowtie2``)."""
-
-    tool_version: Mapped[str]
-    """The normalized semver of the producing tool."""
-
     params: Mapped[dict] = mapped_column(JSONB)
-    """The canonical parameter dict used to derive ``key``."""
+    """The canonical parameter dict used to derive ``key``.
 
-    parent_id: Mapped[str]
-    """The Mongo ``_id`` of the parent resource (no FK)."""
+    Includes ``tool_name`` and the normalized ``tool_version``; the data layer
+    enforces their presence on insert.
+    """
+
+    parent_id: Mapped[str] = mapped_column(index=True)
+    """The Mongo ``_id`` of the parent resource (no FK).
+
+    Indexed to support ``delete_for_parent`` lookups.
+    """
 
     size: Mapped[int] = mapped_column(BigInteger)
     """Size of the on-disk blob in bytes."""

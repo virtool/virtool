@@ -30,8 +30,6 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("key", sa.String(), nullable=False),
         sa.Column("type", cache_type_enum, nullable=False),
-        sa.Column("tool_name", sa.String(), nullable=False),
-        sa.Column("tool_version", sa.String(), nullable=False),
         sa.Column("params", JSONB(), nullable=False),
         sa.Column("parent_id", sa.String(), nullable=False),
         sa.Column("size", sa.BigInteger(), nullable=False),
@@ -40,8 +38,15 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("key"),
     )
+    op.create_index(
+        op.f("ix_caches_parent_id"),
+        "caches",
+        ["parent_id"],
+        unique=False,
+    )
 
 
 def downgrade() -> None:
+    op.drop_index(op.f("ix_caches_parent_id"), table_name="caches")
     op.drop_table("caches")
     sa.Enum(name="cachetype").drop(op.get_bind(), checkfirst=False)

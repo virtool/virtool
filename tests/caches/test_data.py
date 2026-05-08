@@ -5,9 +5,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.caches.data import LAST_ACCESSED_BUCKET, CachesData
-from virtool.caches.utils import derive_key
 from virtool.caches.pg import SQLCache
 from virtool.caches.types import CacheType
+from virtool.caches.utils import derive_key
 
 
 @pytest.fixture
@@ -29,24 +29,25 @@ class TestPut:
         pg: AsyncEngine,
         static_time,
     ):
+        params = {
+            "tool_name": "fastp",
+            "tool_version": "0.23.4",
+            "min_length": 50,
+        }
         cache = await caches.put(
             CacheType.sample_trimmed_reads,
-            "fastp",
-            "0.23.4",
-            {"min_length": 50},
+            params,
             "sample_alpha",
             size=1024,
         )
 
         assert cache.key == derive_key(
             CacheType.sample_trimmed_reads,
-            "fastp",
-            "0.23.4",
-            {"min_length": 50},
+            params,
             "sample_alpha",
         )
         assert cache.size == 1024
-        assert cache.tool_version == "0.23.4"
+        assert cache.params == params
         assert cache.created_at == static_time.datetime
         assert cache.last_accessed_at == static_time.datetime
 
@@ -61,14 +62,35 @@ class TestPut:
     ):
         cache = await caches.put(
             CacheType.sample_trimmed_reads,
-            "fastp",
-            "v0.23.4+build.7",
-            {},
+            {"tool_name": "fastp", "tool_version": "v0.23.4+build.7"},
             "sample_alpha",
             size=1,
         )
 
-        assert cache.tool_version == "0.23.4"
+        assert cache.params["tool_version"] == "0.23.4"
+
+    @pytest.mark.parametrize(
+        "params",
+        [
+            {},
+            {"tool_name": "fastp"},
+            {"tool_version": "0.23.4"},
+            {"min_length": 50},
+        ],
+    )
+    async def test_rejects_missing_tool_keys(
+        self,
+        caches: CachesData,
+        static_time,
+        params: dict,
+    ):
+        with pytest.raises(ValueError, match="missing required keys"):
+            await caches.put(
+                CacheType.sample_trimmed_reads,
+                params,
+                "sample_alpha",
+                size=1,
+            )
 
     async def test_concurrent_put_keeps_first(
         self,
@@ -76,20 +98,21 @@ class TestPut:
         pg: AsyncEngine,
         static_time,
     ):
+        params = {
+            "tool_name": "fastp",
+            "tool_version": "0.23.4",
+            "min_length": 50,
+        }
         first = await caches.put(
             CacheType.sample_trimmed_reads,
-            "fastp",
-            "0.23.4",
-            {"min_length": 50},
+            params,
             "sample_alpha",
             size=1024,
         )
 
         second = await caches.put(
             CacheType.sample_trimmed_reads,
-            "fastp",
-            "0.23.4",
-            {"min_length": 50},
+            params,
             "sample_alpha",
             size=9999,
         )
@@ -117,9 +140,7 @@ class TestGet:
     async def test_hit_returns_row(self, caches: CachesData, static_time):
         put = await caches.put(
             CacheType.sample_trimmed_reads,
-            "fastp",
-            "0.23.4",
-            {},
+            {"tool_name": "fastp", "tool_version": "0.23.4"},
             "sample_alpha",
             size=1,
         )
@@ -138,9 +159,7 @@ class TestGet:
     ):
         put = await caches.put(
             CacheType.sample_trimmed_reads,
-            "fastp",
-            "0.23.4",
-            {},
+            {"tool_name": "fastp", "tool_version": "0.23.4"},
             "sample_alpha",
             size=1,
         )
@@ -162,9 +181,7 @@ class TestGet:
     ):
         put = await caches.put(
             CacheType.sample_trimmed_reads,
-            "fastp",
-            "0.23.4",
-            {},
+            {"tool_name": "fastp", "tool_version": "0.23.4"},
             "sample_alpha",
             size=1,
         )
@@ -187,9 +204,7 @@ class TestDelete:
     ):
         put = await caches.put(
             CacheType.sample_trimmed_reads,
-            "fastp",
-            "0.23.4",
-            {},
+            {"tool_name": "fastp", "tool_version": "0.23.4"},
             "sample_alpha",
             size=1,
         )
@@ -210,25 +225,19 @@ class TestDelete:
     ):
         owned_a = await caches.put(
             CacheType.sample_trimmed_reads,
-            "fastp",
-            "0.23.4",
-            {"min_length": 50},
+            {"tool_name": "fastp", "tool_version": "0.23.4", "min_length": 50},
             "sample_alpha",
             size=1,
         )
         owned_b = await caches.put(
             CacheType.sample_trimmed_reads,
-            "fastp",
-            "0.23.4",
-            {"min_length": 75},
+            {"tool_name": "fastp", "tool_version": "0.23.4", "min_length": 75},
             "sample_alpha",
             size=1,
         )
         other = await caches.put(
             CacheType.sample_trimmed_reads,
-            "fastp",
-            "0.23.4",
-            {},
+            {"tool_name": "fastp", "tool_version": "0.23.4"},
             "sample_beta",
             size=1,
         )
