@@ -27,11 +27,7 @@ class SQLCache(Base):
     """The kind of artifact stored at this key."""
 
     params: Mapped[dict] = mapped_column(JSONB)
-    """The canonical parameter dict used to derive ``key``.
-
-    Includes ``tool_name`` and the normalized ``tool_version``; the data layer
-    enforces their presence on insert.
-    """
+    """The canonical parameter dict used to derive ``key``."""
 
     parent_id: Mapped[str] = mapped_column(index=True)
     """The Mongo ``_id`` of the parent resource (no FK).
