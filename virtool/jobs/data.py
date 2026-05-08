@@ -223,7 +223,8 @@ class JobsData:
                     ),
                 )
             elif (
-                workflow in ("aodp", "nuvs", "pathoscope") and "analysis_id" in job_args
+                workflow in ("aodp", "iimi", "nuvs", "pathoscope")
+                and "analysis_id" in job_args
             ):
                 session.add(
                     SQLJobAnalysis(
