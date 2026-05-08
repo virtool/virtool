@@ -9,11 +9,7 @@ from virtool.pg.base import Base
 
 
 class SQLCache(Base):
-    """A reusable artifact keyed by a SHA-256 of its inputs.
-
-    ``parent_id`` references a Mongo document by ``_id`` and is intentionally
-    not a foreign key; cleanup of orphan rows is handled out-of-band.
-    """
+    """A reusable artifact keyed by a SHA-256 of its inputs. """
 
     __tablename__ = "caches"
 
@@ -30,9 +26,9 @@ class SQLCache(Base):
     """The canonical parameter dict used to derive ``key``."""
 
     parent_id: Mapped[str] = mapped_column(index=True)
-    """The Mongo ``_id`` of the parent resource (no FK).
+    """The potentially external ``id`` of the parent resource (no FK).
 
-    Indexed to support ``delete_for_parent`` lookups.
+    Indexed to support deletion based on parent ids lookups.
     """
 
     size: Mapped[int] = mapped_column(BigInteger)
