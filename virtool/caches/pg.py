@@ -9,7 +9,7 @@ from virtool.pg.base import Base
 
 
 class SQLCache(Base):
-    """A reusable artifact keyed by a SHA-256 of its inputs. """
+    """A reusable artifact keyed by a SHA-256 of its inputs."""
 
     __tablename__ = "caches"
 

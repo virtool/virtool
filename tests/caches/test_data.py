@@ -1,4 +1,6 @@
+from collections.abc import AsyncIterator
 from datetime import timedelta
+from pathlib import Path
 
 import pytest
 from sqlalchemy import select
@@ -6,13 +8,18 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.caches.data import LAST_ACCESSED_BUCKET, CachesData
 from virtool.caches.pg import SQLCache
+from virtool.caches.storage import cache_blob_path
 from virtool.caches.types import CacheType
 from virtool.caches.utils import derive_key
 
 
 @pytest.fixture
-def caches(pg: AsyncEngine) -> CachesData:
-    return CachesData(pg)
+def caches(pg: AsyncEngine, tmp_path: Path) -> CachesData:
+    return CachesData(pg, tmp_path)
+
+
+async def _chunker(payload: bytes) -> AsyncIterator[bytes]:
+    yield payload
 
 
 async def _read_row(pg: AsyncEngine, key: str) -> SQLCache | None:
@@ -23,30 +30,34 @@ async def _read_row(pg: AsyncEngine, key: str) -> SQLCache | None:
 
 
 class TestPut:
-    async def test_inserts_row(
+    async def test_inserts_row_and_writes_blob(
         self,
         caches: CachesData,
         pg: AsyncEngine,
         static_time,
+        tmp_path: Path,
     ):
         params = {
             "tool_name": "fastp",
             "tool_version": "0.23.4",
             "min_length": 50,
         }
-        cache = await caches.put(
+        payload = b"trimmed-reads-payload"
+
+        cache, inserted = await caches.put(
+            _chunker(payload),
             CacheType.sample_trimmed_reads,
-            params,
             "sample_alpha",
-            size=1024,
+            params,
         )
 
+        assert inserted is True
         assert cache.key == derive_key(
             CacheType.sample_trimmed_reads,
             params,
             "sample_alpha",
         )
-        assert cache.size == 1024
+        assert cache.size == len(payload)
         assert cache.params == params
         assert cache.created_at == static_time.datetime
         assert cache.last_accessed_at == static_time.datetime
@@ -55,16 +66,19 @@ class TestPut:
         assert row is not None
         assert row.id == cache.id
 
+        blob_path = cache_blob_path(tmp_path, cache.key)
+        assert blob_path.read_bytes() == payload
+
     async def test_normalizes_stored_version(
         self,
         caches: CachesData,
         static_time,
     ):
-        cache = await caches.put(
+        cache, _ = await caches.put(
+            _chunker(b"x"),
             CacheType.sample_trimmed_reads,
-            {"tool_name": "fastp", "tool_version": "v0.23.4+build.7"},
             "sample_alpha",
-            size=1,
+            {"tool_name": "fastp", "tool_version": "v0.23.4+build.7"},
         )
 
         assert cache.params["tool_version"] == "0.23.4"
@@ -86,10 +100,10 @@ class TestPut:
     ):
         with pytest.raises(ValueError, match="missing required keys"):
             await caches.put(
+                _chunker(b"x"),
                 CacheType.sample_trimmed_reads,
-                params,
                 "sample_alpha",
-                size=1,
+                params,
             )
 
     async def test_concurrent_put_keeps_first(
@@ -97,28 +111,33 @@ class TestPut:
         caches: CachesData,
         pg: AsyncEngine,
         static_time,
+        tmp_path: Path,
     ):
         params = {
             "tool_name": "fastp",
             "tool_version": "0.23.4",
             "min_length": 50,
         }
-        first = await caches.put(
+        first_payload = b"first-writer"
+
+        first, first_inserted = await caches.put(
+            _chunker(first_payload),
             CacheType.sample_trimmed_reads,
-            params,
             "sample_alpha",
-            size=1024,
+            params,
         )
 
-        second = await caches.put(
+        second, second_inserted = await caches.put(
+            _chunker(b"second-writer-different-bytes"),
             CacheType.sample_trimmed_reads,
-            params,
             "sample_alpha",
-            size=9999,
+            params,
         )
 
+        assert first_inserted is True
+        assert second_inserted is False
         assert first.id == second.id
-        assert second.size == 1024
+        assert second.size == len(first_payload)
 
         async with AsyncSession(pg) as session:
             rows = (
@@ -138,11 +157,11 @@ class TestGet:
         assert await caches.get("missing") is None
 
     async def test_hit_returns_row(self, caches: CachesData, static_time):
-        put = await caches.put(
+        put, _ = await caches.put(
+            _chunker(b"x"),
             CacheType.sample_trimmed_reads,
-            {"tool_name": "fastp", "tool_version": "0.23.4"},
             "sample_alpha",
-            size=1,
+            {"tool_name": "fastp", "tool_version": "0.23.4"},
         )
 
         got = await caches.get(put.key)
@@ -157,11 +176,11 @@ class TestGet:
         static_time,
         mocker,
     ):
-        put = await caches.put(
+        put, _ = await caches.put(
+            _chunker(b"x"),
             CacheType.sample_trimmed_reads,
-            {"tool_name": "fastp", "tool_version": "0.23.4"},
             "sample_alpha",
-            size=1,
+            {"tool_name": "fastp", "tool_version": "0.23.4"},
         )
 
         bumped = static_time.datetime + (LAST_ACCESSED_BUCKET - timedelta(seconds=1))
@@ -179,11 +198,11 @@ class TestGet:
         static_time,
         mocker,
     ):
-        put = await caches.put(
+        put, _ = await caches.put(
+            _chunker(b"x"),
             CacheType.sample_trimmed_reads,
-            {"tool_name": "fastp", "tool_version": "0.23.4"},
             "sample_alpha",
-            size=1,
+            {"tool_name": "fastp", "tool_version": "0.23.4"},
         )
 
         bumped = static_time.datetime + LAST_ACCESSED_BUCKET + timedelta(seconds=1)
@@ -201,53 +220,82 @@ class TestDelete:
         caches: CachesData,
         pg: AsyncEngine,
         static_time,
+        tmp_path: Path,
     ):
-        put = await caches.put(
+        put, _ = await caches.put(
+            _chunker(b"payload"),
             CacheType.sample_trimmed_reads,
-            {"tool_name": "fastp", "tool_version": "0.23.4"},
             "sample_alpha",
-            size=1,
+            {"tool_name": "fastp", "tool_version": "0.23.4"},
         )
+        blob_path = cache_blob_path(tmp_path, put.key)
+        assert blob_path.exists()
 
-        deleted = await caches.delete_by_key(put.key)
+        await caches.delete_by_key(put.key)
 
-        assert deleted is True
         assert await _read_row(pg, put.key) is None
+        assert not blob_path.exists()
 
-    async def test_delete_by_key_miss(self, caches: CachesData, static_time):
-        assert await caches.delete_by_key("missing") is False
+    async def test_delete_by_key_miss_is_idempotent(
+        self,
+        caches: CachesData,
+        static_time,
+    ):
+        await caches.delete_by_key("missing")
 
-    async def test_delete_for_parent_returns_keys(
+    async def test_delete_for_parent_filters_by_type(
         self,
         caches: CachesData,
         pg: AsyncEngine,
         static_time,
+        tmp_path: Path,
     ):
-        owned_a = await caches.put(
+        owned_trimmed_a, _ = await caches.put(
+            _chunker(b"a"),
             CacheType.sample_trimmed_reads,
+            "sample_alpha",
             {"tool_name": "fastp", "tool_version": "0.23.4", "min_length": 50},
-            "sample_alpha",
-            size=1,
         )
-        owned_b = await caches.put(
+        owned_trimmed_b, _ = await caches.put(
+            _chunker(b"b"),
             CacheType.sample_trimmed_reads,
+            "sample_alpha",
             {"tool_name": "fastp", "tool_version": "0.23.4", "min_length": 75},
+        )
+        owned_other_type, _ = await caches.put(
+            _chunker(b"c"),
+            CacheType.subtraction_mapping_index,
             "sample_alpha",
-            size=1,
+            {"tool_name": "bowtie2", "tool_version": "2.5.1"},
         )
-        other = await caches.put(
+        other_parent, _ = await caches.put(
+            _chunker(b"d"),
             CacheType.sample_trimmed_reads,
-            {"tool_name": "fastp", "tool_version": "0.23.4"},
             "sample_beta",
-            size=1,
+            {"tool_name": "fastp", "tool_version": "0.23.4"},
         )
 
-        deleted_keys = await caches.delete_for_parent("sample_alpha")
+        deleted = await caches.delete_for_parent(
+            "sample_alpha",
+            CacheType.sample_trimmed_reads,
+        )
 
-        assert set(deleted_keys) == {owned_a.key, owned_b.key}
-        assert await _read_row(pg, owned_a.key) is None
-        assert await _read_row(pg, owned_b.key) is None
-        assert await _read_row(pg, other.key) is not None
+        assert deleted == 2
+        assert await _read_row(pg, owned_trimmed_a.key) is None
+        assert await _read_row(pg, owned_trimmed_b.key) is None
+        assert await _read_row(pg, owned_other_type.key) is not None
+        assert await _read_row(pg, other_parent.key) is not None
+
+        assert not cache_blob_path(tmp_path, owned_trimmed_a.key).exists()
+        assert not cache_blob_path(tmp_path, owned_trimmed_b.key).exists()
+        assert cache_blob_path(tmp_path, owned_other_type.key).exists()
+        assert cache_blob_path(tmp_path, other_parent.key).exists()
 
     async def test_delete_for_parent_no_rows(self, caches: CachesData, static_time):
-        assert await caches.delete_for_parent("nobody") == []
+        assert (
+            await caches.delete_for_parent(
+                "nobody",
+                CacheType.sample_trimmed_reads,
+            )
+            == 0
+        )
