@@ -8,14 +8,36 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.caches.data import LAST_ACCESSED_BUCKET, CachesData
 from virtool.caches.pg import SQLCache
-from virtool.caches.storage import cache_blob_path
 from virtool.caches.types import CacheType
 from virtool.caches.utils import derive_key
+from virtool.storage.errors import StorageKeyNotFoundError
+from virtool.storage.filesystem import FilesystemProvider
 
 
 @pytest.fixture
-def caches(pg: AsyncEngine, tmp_path: Path) -> CachesData:
-    return CachesData(pg, tmp_path)
+def storage(tmp_path: Path) -> FilesystemProvider:
+    return FilesystemProvider(tmp_path / "storage")
+
+
+@pytest.fixture
+def caches(pg: AsyncEngine, storage: FilesystemProvider) -> CachesData:
+    return CachesData(pg, storage)
+
+
+async def _read_blob(storage: FilesystemProvider, key: str) -> bytes:
+    chunks = []
+    async for chunk in storage.read(f"caches/{key}"):
+        chunks.append(chunk)
+    return b"".join(chunks)
+
+
+async def _blob_exists(storage: FilesystemProvider, key: str) -> bool:
+    try:
+        async for _ in storage.read(f"caches/{key}"):
+            pass
+    except StorageKeyNotFoundError:
+        return False
+    return True
 
 
 async def _chunker(payload: bytes) -> AsyncIterator[bytes]:
@@ -35,7 +57,7 @@ class TestPut:
         caches: CachesData,
         pg: AsyncEngine,
         static_time,
-        tmp_path: Path,
+        storage: FilesystemProvider,
     ):
         params = {
             "tool_name": "fastp",
@@ -66,8 +88,7 @@ class TestPut:
         assert row is not None
         assert row.id == cache.id
 
-        blob_path = cache_blob_path(tmp_path, cache.key)
-        assert blob_path.read_bytes() == payload
+        assert await _read_blob(storage, cache.key) == payload
 
     async def test_normalizes_stored_version(
         self,
@@ -111,7 +132,6 @@ class TestPut:
         caches: CachesData,
         pg: AsyncEngine,
         static_time,
-        tmp_path: Path,
     ):
         params = {
             "tool_name": "fastp",
@@ -220,7 +240,7 @@ class TestDelete:
         caches: CachesData,
         pg: AsyncEngine,
         static_time,
-        tmp_path: Path,
+        storage: FilesystemProvider,
     ):
         put, _ = await caches.put(
             _chunker(b"payload"),
@@ -228,13 +248,12 @@ class TestDelete:
             "sample_alpha",
             {"tool_name": "fastp", "tool_version": "0.23.4"},
         )
-        blob_path = cache_blob_path(tmp_path, put.key)
-        assert blob_path.exists()
+        assert await _blob_exists(storage, put.key)
 
         await caches.delete_by_key(put.key)
 
         assert await _read_row(pg, put.key) is None
-        assert not blob_path.exists()
+        assert not await _blob_exists(storage, put.key)
 
     async def test_delete_by_key_miss_is_idempotent(
         self,
@@ -248,7 +267,7 @@ class TestDelete:
         caches: CachesData,
         pg: AsyncEngine,
         static_time,
-        tmp_path: Path,
+        storage: FilesystemProvider,
     ):
         owned_trimmed_a, _ = await caches.put(
             _chunker(b"a"),
@@ -286,10 +305,10 @@ class TestDelete:
         assert await _read_row(pg, owned_other_type.key) is not None
         assert await _read_row(pg, other_parent.key) is not None
 
-        assert not cache_blob_path(tmp_path, owned_trimmed_a.key).exists()
-        assert not cache_blob_path(tmp_path, owned_trimmed_b.key).exists()
-        assert cache_blob_path(tmp_path, owned_other_type.key).exists()
-        assert cache_blob_path(tmp_path, other_parent.key).exists()
+        assert not await _blob_exists(storage, owned_trimmed_a.key)
+        assert not await _blob_exists(storage, owned_trimmed_b.key)
+        assert await _blob_exists(storage, owned_other_type.key)
+        assert await _blob_exists(storage, other_parent.key)
 
     async def test_delete_for_parent_no_rows(self, caches: CachesData, static_time):
         assert (

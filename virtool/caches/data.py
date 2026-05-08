@@ -7,7 +7,6 @@ than touching the SQL or the filesystem directly.
 
 from collections.abc import AsyncIterator
 from datetime import timedelta
-from pathlib import Path
 from typing import Any
 
 from sqlalchemy import delete, select
@@ -20,7 +19,7 @@ from virtool.caches.pg import SQLCache
 from virtool.caches.types import CacheType
 from virtool.caches.utils import derive_key, normalize_params
 from virtool.data.domain import DataLayerDomain
-from virtool.storage.filesystem import FilesystemProvider
+from virtool.storage.protocol import StorageBackend
 
 _REQUIRED_PARAM_KEYS = ("tool_name", "tool_version")
 
@@ -32,16 +31,16 @@ every read."""
 
 
 def _blob_key(key: str) -> str:
-    """Storage key for a cache blob, sharded by the first two chars of ``key``."""
-    return f"{key[:2]}/{key}"
+    """Storage key for a cache blob under the shared ``caches/`` namespace."""
+    return f"caches/{key}"
 
 
 class CachesData(DataLayerDomain):
     name = "caches"
 
-    def __init__(self, pg: AsyncEngine, data_path: Path):
+    def __init__(self, pg: AsyncEngine, storage: StorageBackend):
         self._pg = pg
-        self._storage = FilesystemProvider(data_path / "storage" / "caches")
+        self._storage = storage
 
     async def get(self, key: str) -> Cache | None:
         """Return the cache row for ``key`` or ``None``.
