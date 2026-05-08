@@ -18,7 +18,7 @@ depends_on = None
 CACHE_TYPES = (
     "reference_mapping_index",
     "subtraction_mapping_index",
-    "trimmed_reads",
+    "sample_trimmed_reads",
 )
 
 

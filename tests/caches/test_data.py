@@ -30,7 +30,7 @@ class TestPut:
         static_time,
     ):
         cache = await caches.put(
-            CacheType.trimmed_reads,
+            CacheType.sample_trimmed_reads,
             "fastp",
             "0.23.4",
             {"min_length": 50},
@@ -39,7 +39,7 @@ class TestPut:
         )
 
         assert cache.key == derive_key(
-            CacheType.trimmed_reads,
+            CacheType.sample_trimmed_reads,
             "fastp",
             "0.23.4",
             {"min_length": 50},
@@ -60,7 +60,7 @@ class TestPut:
         static_time,
     ):
         cache = await caches.put(
-            CacheType.trimmed_reads,
+            CacheType.sample_trimmed_reads,
             "fastp",
             "v0.23.4+build.7",
             {},
@@ -77,7 +77,7 @@ class TestPut:
         static_time,
     ):
         first = await caches.put(
-            CacheType.trimmed_reads,
+            CacheType.sample_trimmed_reads,
             "fastp",
             "0.23.4",
             {"min_length": 50},
@@ -86,7 +86,7 @@ class TestPut:
         )
 
         second = await caches.put(
-            CacheType.trimmed_reads,
+            CacheType.sample_trimmed_reads,
             "fastp",
             "0.23.4",
             {"min_length": 50},
@@ -116,7 +116,7 @@ class TestGet:
 
     async def test_hit_returns_row(self, caches: CachesData, static_time):
         put = await caches.put(
-            CacheType.trimmed_reads,
+            CacheType.sample_trimmed_reads,
             "fastp",
             "0.23.4",
             {},
@@ -137,7 +137,7 @@ class TestGet:
         mocker,
     ):
         put = await caches.put(
-            CacheType.trimmed_reads,
+            CacheType.sample_trimmed_reads,
             "fastp",
             "0.23.4",
             {},
@@ -161,7 +161,7 @@ class TestGet:
         mocker,
     ):
         put = await caches.put(
-            CacheType.trimmed_reads,
+            CacheType.sample_trimmed_reads,
             "fastp",
             "0.23.4",
             {},
@@ -186,7 +186,7 @@ class TestDelete:
         static_time,
     ):
         put = await caches.put(
-            CacheType.trimmed_reads,
+            CacheType.sample_trimmed_reads,
             "fastp",
             "0.23.4",
             {},
@@ -209,7 +209,7 @@ class TestDelete:
         static_time,
     ):
         owned_a = await caches.put(
-            CacheType.trimmed_reads,
+            CacheType.sample_trimmed_reads,
             "fastp",
             "0.23.4",
             {"min_length": 50},
@@ -217,7 +217,7 @@ class TestDelete:
             size=1,
         )
         owned_b = await caches.put(
-            CacheType.trimmed_reads,
+            CacheType.sample_trimmed_reads,
             "fastp",
             "0.23.4",
             {"min_length": 75},
@@ -225,7 +225,7 @@ class TestDelete:
             size=1,
         )
         other = await caches.put(
-            CacheType.trimmed_reads,
+            CacheType.sample_trimmed_reads,
             "fastp",
             "0.23.4",
             {},

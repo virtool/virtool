@@ -6,4 +6,4 @@ class CacheType(str, SQLEnum):
 
     reference_mapping_index = "reference_mapping_index"
     subtraction_mapping_index = "subtraction_mapping_index"
-    trimmed_reads = "trimmed_reads"
+    sample_trimmed_reads = "sample_trimmed_reads"

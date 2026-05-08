@@ -54,7 +54,7 @@ class TestNormalizeSemver:
 class TestDeriveKey:
     def test_returns_sha256_hex(self):
         key = derive_key(
-            CacheType.trimmed_reads,
+            CacheType.sample_trimmed_reads,
             "fastp",
             "0.23.4",
             {"min_length": 50},
@@ -65,14 +65,14 @@ class TestDeriveKey:
 
     def test_param_order_independent(self):
         key_a = derive_key(
-            CacheType.trimmed_reads,
+            CacheType.sample_trimmed_reads,
             "fastp",
             "0.23.4",
             {"a": 1, "b": 2},
             "sample_alpha",
         )
         key_b = derive_key(
-            CacheType.trimmed_reads,
+            CacheType.sample_trimmed_reads,
             "fastp",
             "0.23.4",
             {"b": 2, "a": 1},
@@ -82,14 +82,14 @@ class TestDeriveKey:
 
     def test_build_metadata_does_not_change_key(self):
         key_a = derive_key(
-            CacheType.trimmed_reads,
+            CacheType.sample_trimmed_reads,
             "fastp",
             "0.23.4",
             {},
             "sample_alpha",
         )
         key_b = derive_key(
-            CacheType.trimmed_reads,
+            CacheType.sample_trimmed_reads,
             "fastp",
             "0.23.4+build.7",
             {},
@@ -99,14 +99,14 @@ class TestDeriveKey:
 
     def test_prerelease_changes_key(self):
         key_release = derive_key(
-            CacheType.trimmed_reads,
+            CacheType.sample_trimmed_reads,
             "fastp",
             "0.23.4",
             {},
             "sample_alpha",
         )
         key_prerelease = derive_key(
-            CacheType.trimmed_reads,
+            CacheType.sample_trimmed_reads,
             "fastp",
             "0.23.4-rc.1",
             {},
@@ -116,14 +116,14 @@ class TestDeriveKey:
 
     def test_parent_id_changes_key(self):
         key_alpha = derive_key(
-            CacheType.trimmed_reads,
+            CacheType.sample_trimmed_reads,
             "fastp",
             "0.23.4",
             {},
             "sample_alpha",
         )
         key_beta = derive_key(
-            CacheType.trimmed_reads,
+            CacheType.sample_trimmed_reads,
             "fastp",
             "0.23.4",
             {},
@@ -133,7 +133,7 @@ class TestDeriveKey:
 
     def test_cache_type_changes_key(self):
         key_reads = derive_key(
-            CacheType.trimmed_reads,
+            CacheType.sample_trimmed_reads,
             "bowtie2",
             "2.5.1",
             {},
@@ -152,7 +152,7 @@ class TestDeriveKey:
         """Pin the field layout: NUL-joined, normalized version, canonical params."""
         payload = "\x00".join(
             [
-                "trimmed_reads",
+                "sample_trimmed_reads",
                 "fastp",
                 "0.23.4",
                 '{"min_length":50}',
@@ -162,7 +162,7 @@ class TestDeriveKey:
         expected = hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
         actual = derive_key(
-            CacheType.trimmed_reads,
+            CacheType.sample_trimmed_reads,
             "fastp",
             "0.23.4+build.7",
             {"min_length": 50},
