@@ -66,7 +66,7 @@ class TestPut:
         }
         payload = b"trimmed-reads-payload"
 
-        cache, inserted = await caches.put(
+        cache, inserted = await caches.create(
             _chunker(payload),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
@@ -95,7 +95,7 @@ class TestPut:
         caches: CachesData,
         static_time,
     ):
-        cache, _ = await caches.put(
+        cache, _ = await caches.create(
             _chunker(b"x"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
@@ -120,7 +120,7 @@ class TestPut:
         params: dict,
     ):
         with pytest.raises(ValueError, match="missing required keys"):
-            await caches.put(
+            await caches.create(
                 _chunker(b"x"),
                 CacheType.sample_trimmed_reads,
                 "sample_alpha",
@@ -140,14 +140,14 @@ class TestPut:
         }
         first_payload = b"first-writer"
 
-        first, first_inserted = await caches.put(
+        first, first_inserted = await caches.create(
             _chunker(first_payload),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
             params,
         )
 
-        second, second_inserted = await caches.put(
+        second, second_inserted = await caches.create(
             _chunker(b"second-writer-different-bytes"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
@@ -177,17 +177,17 @@ class TestGet:
         assert await caches.get("missing") is None
 
     async def test_hit_returns_row(self, caches: CachesData, static_time):
-        put, _ = await caches.put(
+        cache, _ = await caches.create(
             _chunker(b"x"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
             {"tool_name": "fastp", "tool_version": "0.23.4"},
         )
 
-        got = await caches.get(put.key)
+        got = await caches.get(cache.key)
 
         assert got is not None
-        assert got.id == put.id
+        assert got.id == cache.id
 
     async def test_does_not_touch_within_bucket(
         self,
@@ -196,7 +196,7 @@ class TestGet:
         static_time,
         mocker,
     ):
-        put, _ = await caches.put(
+        cache, _ = await caches.create(
             _chunker(b"x"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
@@ -206,9 +206,9 @@ class TestGet:
         bumped = static_time.datetime + (LAST_ACCESSED_BUCKET - timedelta(seconds=1))
         mocker.patch("virtool.utils.timestamp", return_value=bumped)
 
-        await caches.get(put.key)
+        await caches.get(cache.key)
 
-        row = await _read_row(pg, put.key)
+        row = await _read_row(pg, cache.key)
         assert row.last_accessed_at == static_time.datetime
 
     async def test_touches_after_bucket(
@@ -218,7 +218,7 @@ class TestGet:
         static_time,
         mocker,
     ):
-        put, _ = await caches.put(
+        cache, _ = await caches.create(
             _chunker(b"x"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
@@ -228,9 +228,9 @@ class TestGet:
         bumped = static_time.datetime + LAST_ACCESSED_BUCKET + timedelta(seconds=1)
         mocker.patch("virtool.utils.timestamp", return_value=bumped)
 
-        await caches.get(put.key)
+        await caches.get(cache.key)
 
-        row = await _read_row(pg, put.key)
+        row = await _read_row(pg, cache.key)
         assert row.last_accessed_at == bumped
 
 
@@ -242,18 +242,18 @@ class TestDelete:
         static_time,
         storage: FilesystemProvider,
     ):
-        put, _ = await caches.put(
+        cache, _ = await caches.create(
             _chunker(b"payload"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
             {"tool_name": "fastp", "tool_version": "0.23.4"},
         )
-        assert await _blob_exists(storage, put.key)
+        assert await _blob_exists(storage, cache.key)
 
-        await caches.delete_by_key(put.key)
+        await caches.delete_by_key(cache.key)
 
-        assert await _read_row(pg, put.key) is None
-        assert not await _blob_exists(storage, put.key)
+        assert await _read_row(pg, cache.key) is None
+        assert not await _blob_exists(storage, cache.key)
 
     async def test_delete_by_key_miss_is_idempotent(
         self,
@@ -262,39 +262,39 @@ class TestDelete:
     ):
         await caches.delete_by_key("missing")
 
-    async def test_delete_for_parent_filters_by_type(
+    async def test_delete_by_parent_filters_by_type(
         self,
         caches: CachesData,
         pg: AsyncEngine,
         static_time,
         storage: FilesystemProvider,
     ):
-        owned_trimmed_a, _ = await caches.put(
+        owned_trimmed_a, _ = await caches.create(
             _chunker(b"a"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
             {"tool_name": "fastp", "tool_version": "0.23.4", "min_length": 50},
         )
-        owned_trimmed_b, _ = await caches.put(
+        owned_trimmed_b, _ = await caches.create(
             _chunker(b"b"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
             {"tool_name": "fastp", "tool_version": "0.23.4", "min_length": 75},
         )
-        owned_other_type, _ = await caches.put(
+        owned_other_type, _ = await caches.create(
             _chunker(b"c"),
             CacheType.subtraction_mapping_index,
             "sample_alpha",
             {"tool_name": "bowtie2", "tool_version": "2.5.1"},
         )
-        other_parent, _ = await caches.put(
+        other_parent, _ = await caches.create(
             _chunker(b"d"),
             CacheType.sample_trimmed_reads,
             "sample_beta",
             {"tool_name": "fastp", "tool_version": "0.23.4"},
         )
 
-        deleted = await caches.delete_for_parent(
+        deleted = await caches.delete_by_parent(
             "sample_alpha",
             CacheType.sample_trimmed_reads,
         )
@@ -310,9 +310,9 @@ class TestDelete:
         assert await _blob_exists(storage, owned_other_type.key)
         assert await _blob_exists(storage, other_parent.key)
 
-    async def test_delete_for_parent_no_rows(self, caches: CachesData, static_time):
+    async def test_delete_by_parent_no_rows(self, caches: CachesData, static_time):
         assert (
-            await caches.delete_for_parent(
+            await caches.delete_by_parent(
                 "nobody",
                 CacheType.sample_trimmed_reads,
             )

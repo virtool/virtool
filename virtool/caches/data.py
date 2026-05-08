@@ -64,7 +64,7 @@ class CachesData(DataLayerDomain):
 
             return Cache(**row.to_dict())
 
-    async def put(
+    async def create(
         self,
         chunker: AsyncIterator[bytes],
         cache_type: CacheType,
@@ -138,7 +138,7 @@ class CachesData(DataLayerDomain):
 
         await self._storage.delete(_blob_key(key))
 
-    async def delete_for_parent(self, parent_id: str, cache_type: CacheType) -> int:
+    async def delete_by_parent(self, parent_id: str, cache_type: CacheType) -> int:
         """Delete all rows of ``cache_type`` referencing ``parent_id`` and their blobs.
 
         Returns the number of rows deleted.
