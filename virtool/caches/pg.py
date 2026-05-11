@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Enum
+from sqlalchemy import BigInteger, Enum, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -12,11 +12,12 @@ class SQLCache(Base):
     """A reusable artifact keyed by a SHA-256 of its inputs."""
 
     __tablename__ = "caches"
+    __table_args__ = (UniqueConstraint("key", name="cache_key"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     """Auto-incrementing surrogate primary key."""
 
-    key: Mapped[str] = mapped_column(unique=True)
+    key: Mapped[str] = mapped_column()
     """The content-addressed SHA-256 hex digest identifying this cache."""
 
     blob_uuid: Mapped[str] = mapped_column(unique=True)
@@ -36,7 +37,7 @@ class SQLCache(Base):
     parent_id: Mapped[str] = mapped_column(index=True)
     """The potentially external ``id`` of the parent resource (no FK).
 
-    Indexed to support deletion based on parent ids lookups.
+    Indexed to support lookups when deleting by parent id.
     """
 
     size: Mapped[int] = mapped_column(BigInteger)

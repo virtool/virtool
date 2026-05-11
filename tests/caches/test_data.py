@@ -143,7 +143,7 @@ class TestPut:
                 params,
             )
 
-    async def test_concurrent_put_raises_already_exists(
+    async def test_duplicate_key_raises_already_exists(
         self,
         caches: CachesData,
         pg: AsyncEngine,

@@ -37,7 +37,7 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("last_accessed_at", sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("key"),
+        sa.UniqueConstraint("key", name="cache_key"),
         sa.UniqueConstraint("blob_uuid"),
     )
     op.create_index(

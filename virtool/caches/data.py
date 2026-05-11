@@ -5,6 +5,7 @@ Higher-level concerns (eviction, the jobs API) call into this domain rather
 than touching the SQL or the filesystem directly.
 """
 
+import asyncio
 import uuid
 from collections.abc import AsyncIterator
 from datetime import timedelta
@@ -22,6 +23,7 @@ from virtool.caches.types import CacheType
 from virtool.caches.utils import derive_key, normalize_params
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import CacheAlreadyExistsError
+from virtool.pg.utils import extract_constraint_name
 from virtool.storage.protocol import StorageBackend
 
 _REQUIRED_PARAM_KEYS = ("tool_name", "tool_version")
@@ -33,27 +35,14 @@ A coarse bucket keeps eviction ordering useful while avoiding a write on
 every read."""
 
 
-_CACHE_KEY_CONSTRAINT = "caches_key_key"
-"""Name of the PostgreSQL unique constraint on ``caches.key``.
+_CACHE_KEY_CONSTRAINT = "cache_key"
+"""Name of the unique constraint on ``caches.key``.
 
-Used to distinguish the expected race (another writer inserted the same key
-first) from any other integrity violation, which would indicate a real bug.
+Pinned explicitly on both the migration and the SQLAlchemy model so this
+constant, the DDL, and the ORM agree on the single name. Used to distinguish
+the expected race (another writer inserted the same key first) from any other
+integrity violation, which would indicate a real bug.
 """
-
-
-def _extract_constraint_name(err: IntegrityError) -> str | None:
-    """Return the constraint name from an asyncpg-backed ``IntegrityError``.
-
-    SQLAlchemy wraps the asyncpg ``UniqueViolationError`` twice — once in a
-    dialect-level adapter and once in :class:`sqlalchemy.exc.IntegrityError` —
-    so the ``constraint_name`` attribute can live on ``err.orig`` itself or on
-    its ``__cause__``. Walk both rather than guessing which version we're on.
-    """
-    for candidate in (err.orig, getattr(err.orig, "__cause__", None)):
-        name = getattr(candidate, "constraint_name", None)
-        if name is not None:
-            return name
-    return None
 
 
 def _blob_key(blob_uuid: str) -> str:
@@ -162,7 +151,7 @@ class CachesData(DataLayerDomain):
                     inserted_id = result.scalar_one()
                     await session.commit()
                 except IntegrityError as err:
-                    if _extract_constraint_name(err) == _CACHE_KEY_CONSTRAINT:
+                    if extract_constraint_name(err) == _CACHE_KEY_CONSTRAINT:
                         raise CacheAlreadyExistsError from err
                     raise
         except BaseException:
@@ -216,7 +205,8 @@ class CachesData(DataLayerDomain):
             blob_uuids = [row[0] for row in result.all()]
             await session.commit()
 
-        for blob_uuid in blob_uuids:
-            await self._storage.delete(_blob_key(blob_uuid))
+        await asyncio.gather(
+            *(self._storage.delete(_blob_key(blob_uuid)) for blob_uuid in blob_uuids),
+        )
 
         return len(blob_uuids)
