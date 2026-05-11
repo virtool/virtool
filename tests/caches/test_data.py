@@ -24,20 +24,24 @@ def caches(pg: AsyncEngine, storage: FilesystemProvider) -> CachesData:
     return CachesData(pg, storage)
 
 
-async def _read_blob(storage: FilesystemProvider, key: str) -> bytes:
+async def _read_blob(storage: FilesystemProvider, blob_uuid: str) -> bytes:
     chunks = []
-    async for chunk in storage.read(f"caches/{key}"):
+    async for chunk in storage.read(f"caches/{blob_uuid}"):
         chunks.append(chunk)
     return b"".join(chunks)
 
 
-async def _blob_exists(storage: FilesystemProvider, key: str) -> bool:
+async def _blob_exists(storage: FilesystemProvider, blob_uuid: str) -> bool:
     try:
-        async for _ in storage.read(f"caches/{key}"):
+        async for _ in storage.read(f"caches/{blob_uuid}"):
             pass
     except StorageKeyNotFoundError:
         return False
     return True
+
+
+async def _list_blob_uuids(storage: FilesystemProvider) -> list[str]:
+    return [info.key.split("/", 1)[1] async for info in storage.list("caches/")]
 
 
 async def _chunker(payload: bytes) -> AsyncIterator[bytes]:
@@ -79,6 +83,7 @@ class TestPut:
             params,
             "sample_alpha",
         )
+        assert cache.blob_uuid
         assert cache.size == len(payload)
         assert cache.params == params
         assert cache.created_at == static_time.datetime
@@ -87,8 +92,9 @@ class TestPut:
         row = await _read_row(pg, cache.key)
         assert row is not None
         assert row.id == cache.id
+        assert row.blob_uuid == cache.blob_uuid
 
-        assert await _read_blob(storage, cache.key) == payload
+        assert await _read_blob(storage, cache.blob_uuid) == payload
 
     async def test_normalizes_stored_version(
         self,
@@ -132,6 +138,7 @@ class TestPut:
         caches: CachesData,
         pg: AsyncEngine,
         static_time,
+        storage: FilesystemProvider,
     ):
         params = {
             "tool_name": "fastp",
@@ -157,6 +164,7 @@ class TestPut:
         assert first_inserted is True
         assert second_inserted is False
         assert first.id == second.id
+        assert first.blob_uuid == second.blob_uuid
         assert second.size == len(first_payload)
 
         async with AsyncSession(pg) as session:
@@ -170,6 +178,45 @@ class TestPut:
                 .all()
             )
         assert len(rows) == 1
+
+        assert await _list_blob_uuids(storage) == [first.blob_uuid]
+        assert await _read_blob(storage, first.blob_uuid) == first_payload
+
+    async def test_insert_failure_deletes_only_own_blob(
+        self,
+        caches: CachesData,
+        pg: AsyncEngine,
+        static_time,
+        storage: FilesystemProvider,
+        mocker,
+    ):
+        params = {"tool_name": "fastp", "tool_version": "0.23.4"}
+
+        winner, _ = await caches.create(
+            _chunker(b"winner-payload"),
+            CacheType.sample_trimmed_reads,
+            "sample_alpha",
+            params,
+        )
+
+        real_commit = AsyncSession.commit
+
+        async def fail_once(self):
+            mocker.patch.object(AsyncSession, "commit", real_commit)
+            raise RuntimeError("simulated commit failure")
+
+        mocker.patch.object(AsyncSession, "commit", fail_once)
+
+        with pytest.raises(RuntimeError, match="simulated commit failure"):
+            await caches.create(
+                _chunker(b"loser-payload"),
+                CacheType.sample_trimmed_reads,
+                "sample_alpha",
+                params,
+            )
+
+        assert await _list_blob_uuids(storage) == [winner.blob_uuid]
+        assert await _read_blob(storage, winner.blob_uuid) == b"winner-payload"
 
 
 class TestGet:
@@ -275,12 +322,12 @@ class TestDelete:
             "sample_alpha",
             {"tool_name": "fastp", "tool_version": "0.23.4"},
         )
-        assert await _blob_exists(storage, cache.key)
+        assert await _blob_exists(storage, cache.blob_uuid)
 
         await caches.delete_by_key(cache.key)
 
         assert await _read_row(pg, cache.key) is None
-        assert not await _blob_exists(storage, cache.key)
+        assert not await _blob_exists(storage, cache.blob_uuid)
 
     async def test_delete_by_key_miss_is_idempotent(
         self,
@@ -332,10 +379,10 @@ class TestDelete:
         assert await _read_row(pg, owned_other_type.key) is not None
         assert await _read_row(pg, other_parent.key) is not None
 
-        assert not await _blob_exists(storage, owned_trimmed_a.key)
-        assert not await _blob_exists(storage, owned_trimmed_b.key)
-        assert await _blob_exists(storage, owned_other_type.key)
-        assert await _blob_exists(storage, other_parent.key)
+        assert not await _blob_exists(storage, owned_trimmed_a.blob_uuid)
+        assert not await _blob_exists(storage, owned_trimmed_b.blob_uuid)
+        assert await _blob_exists(storage, owned_other_type.blob_uuid)
+        assert await _blob_exists(storage, other_parent.blob_uuid)
 
     async def test_delete_by_parent_no_rows(self, caches: CachesData, static_time):
         assert (

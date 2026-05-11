@@ -19,6 +19,14 @@ class SQLCache(Base):
     key: Mapped[str] = mapped_column(unique=True)
     """The content-addressed SHA-256 hex digest identifying this cache."""
 
+    blob_uuid: Mapped[str] = mapped_column(unique=True)
+    """Random UUID identifying this row's blob in storage.
+
+    Decouples the storage path from the cache ``key`` so concurrent writers
+    for the same key never target the same blob path. The blob lives at
+    ``caches/<blob_uuid>``.
+    """
+
     type: Mapped[CacheType] = mapped_column(Enum(CacheType))
     """The kind of artifact stored at this key."""
 

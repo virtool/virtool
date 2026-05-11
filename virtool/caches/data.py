@@ -5,6 +5,7 @@ Higher-level concerns (eviction, the jobs API) call into this domain rather
 than touching the SQL or the filesystem directly.
 """
 
+import uuid
 from collections.abc import AsyncIterator
 from datetime import timedelta
 from typing import Any
@@ -30,9 +31,9 @@ A coarse bucket keeps eviction ordering useful while avoiding a write on
 every read."""
 
 
-def _blob_key(key: str) -> str:
+def _blob_key(blob_uuid: str) -> str:
     """Storage key for a cache blob under the shared ``caches/`` namespace."""
-    return f"caches/{key}"
+    return f"caches/{blob_uuid}"
 
 
 class CachesData(DataLayerDomain):
@@ -93,12 +94,12 @@ class CachesData(DataLayerDomain):
         part of the key and are stored inside the JSONB column rather than as
         dedicated SQL columns. Missing either raises :class:`ValueError`.
 
-        The blob is streamed from ``chunker`` to disk first; the row is then
-        inserted with ``ON CONFLICT (key) DO NOTHING``. If two callers race
-        on the same key the loser's ``inserted`` is ``False`` and it observes
-        the winner's row. If the row insert raises, the blob is deleted
-        before the exception propagates so the row and blob never disagree
-        about existence.
+        The blob is written to ``caches/<blob_uuid>`` under a per-write UUID,
+        so concurrent writers for the same key never target the same path. The
+        row is then inserted with ``ON CONFLICT (key) DO NOTHING``: the loser
+        deletes its own blob and observes the winner's row with ``inserted``
+        set to ``False``. The per-write UUID makes the rollback unconditionally
+        safe — deleting our blob can never affect another writer's blob.
         """
         missing = [k for k in _REQUIRED_PARAM_KEYS if k not in params]
         if missing:
@@ -106,7 +107,8 @@ class CachesData(DataLayerDomain):
 
         normalized = normalize_params(params)
         key = derive_key(cache_type, params, parent_id)
-        blob_key = _blob_key(key)
+        blob_uuid = uuid.uuid4().hex
+        blob_key = _blob_key(blob_uuid)
 
         size = await self._storage.write(blob_key, chunker)
 
@@ -118,6 +120,7 @@ class CachesData(DataLayerDomain):
                     insert(SQLCache)
                     .values(
                         key=key,
+                        blob_uuid=blob_uuid,
                         type=cache_type,
                         params=normalized,
                         parent_id=parent_id,
@@ -140,6 +143,9 @@ class CachesData(DataLayerDomain):
             await self._storage.delete(blob_key)
             raise
 
+        if inserted_id is None:
+            await self._storage.delete(blob_key)
+
         return Cache(**row.to_dict()), inserted_id is not None
 
     async def delete_by_key(self, key: str) -> None:
@@ -149,10 +155,16 @@ class CachesData(DataLayerDomain):
         treated as already-deleted.
         """
         async with AsyncSession(self._pg, expire_on_commit=False) as session:
-            await session.execute(delete(SQLCache).where(SQLCache.key == key))
+            result = await session.execute(
+                delete(SQLCache)
+                .where(SQLCache.key == key)
+                .returning(SQLCache.blob_uuid),
+            )
+            blob_uuid = result.scalar_one_or_none()
             await session.commit()
 
-        await self._storage.delete(_blob_key(key))
+        if blob_uuid is not None:
+            await self._storage.delete(_blob_key(blob_uuid))
 
     async def delete_by_parent(self, parent_id: str, cache_type: CacheType) -> int:
         """Delete all rows of ``cache_type`` referencing ``parent_id`` and their blobs.
@@ -166,12 +178,12 @@ class CachesData(DataLayerDomain):
                     SQLCache.parent_id == parent_id,
                     SQLCache.type == cache_type,
                 )
-                .returning(SQLCache.key),
+                .returning(SQLCache.blob_uuid),
             )
-            keys = [row[0] for row in result.all()]
+            blob_uuids = [row[0] for row in result.all()]
             await session.commit()
 
-        for key in keys:
-            await self._storage.delete(_blob_key(key))
+        for blob_uuid in blob_uuids:
+            await self._storage.delete(_blob_key(blob_uuid))
 
-        return len(keys)
+        return len(blob_uuids)
