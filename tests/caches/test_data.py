@@ -10,6 +10,7 @@ from virtool.caches.data import LAST_ACCESSED_BUCKET, CachesData, _blob_key
 from virtool.caches.pg import SQLCache
 from virtool.caches.types import CacheType
 from virtool.caches.utils import derive_key
+from virtool.data.errors import CacheAlreadyExistsError
 from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.filesystem import FilesystemProvider
 
@@ -80,14 +81,13 @@ class TestPut:
         }
         payload = b"trimmed-reads-payload"
 
-        cache, inserted = await caches.create(
+        cache = await caches.create(
             _chunker(payload),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
             params,
         )
 
-        assert inserted is True
         assert cache.key == derive_key(
             CacheType.sample_trimmed_reads,
             params,
@@ -111,7 +111,7 @@ class TestPut:
         caches: CachesData,
         static_time,
     ):
-        cache, _ = await caches.create(
+        cache = await caches.create(
             _chunker(b"x"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
@@ -143,7 +143,7 @@ class TestPut:
                 params,
             )
 
-    async def test_concurrent_put_keeps_first(
+    async def test_concurrent_put_raises_already_exists(
         self,
         caches: CachesData,
         pg: AsyncEngine,
@@ -157,25 +157,20 @@ class TestPut:
         }
         first_payload = b"first-writer"
 
-        first, first_inserted = await caches.create(
+        first = await caches.create(
             _chunker(first_payload),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
             params,
         )
 
-        second, second_inserted = await caches.create(
-            _chunker(b"second-writer-different-bytes"),
-            CacheType.sample_trimmed_reads,
-            "sample_alpha",
-            params,
-        )
-
-        assert first_inserted is True
-        assert second_inserted is False
-        assert first.id == second.id
-        assert first.blob_uuid == second.blob_uuid
-        assert second.size == len(first_payload)
+        with pytest.raises(CacheAlreadyExistsError):
+            await caches.create(
+                _chunker(b"second-writer-different-bytes"),
+                CacheType.sample_trimmed_reads,
+                "sample_alpha",
+                params,
+            )
 
         async with AsyncSession(pg) as session:
             rows = (
@@ -188,11 +183,12 @@ class TestPut:
                 .all()
             )
         assert len(rows) == 1
+        assert rows[0].blob_uuid == first.blob_uuid
 
         assert await _list_blob_uuids(storage) == [first.blob_uuid]
         assert await _read_blob(storage, first.blob_uuid) == first_payload
 
-    async def test_insert_failure_deletes_only_own_blob(
+    async def test_db_failure_deletes_blob_and_propagates(
         self,
         caches: CachesData,
         pg: AsyncEngine,
@@ -202,31 +198,21 @@ class TestPut:
     ):
         params = {"tool_name": "fastp", "tool_version": "0.23.4"}
 
-        winner, _ = await caches.create(
-            _chunker(b"winner-payload"),
-            CacheType.sample_trimmed_reads,
-            "sample_alpha",
-            params,
+        mocker.patch.object(
+            AsyncSession,
+            "commit",
+            side_effect=RuntimeError("simulated commit failure"),
         )
-
-        real_commit = AsyncSession.commit
-
-        async def fail_once(self):
-            mocker.patch.object(AsyncSession, "commit", real_commit)
-            raise RuntimeError("simulated commit failure")
-
-        mocker.patch.object(AsyncSession, "commit", fail_once)
 
         with pytest.raises(RuntimeError, match="simulated commit failure"):
             await caches.create(
-                _chunker(b"loser-payload"),
+                _chunker(b"orphan-payload"),
                 CacheType.sample_trimmed_reads,
                 "sample_alpha",
                 params,
             )
 
-        assert await _list_blob_uuids(storage) == [winner.blob_uuid]
-        assert await _read_blob(storage, winner.blob_uuid) == b"winner-payload"
+        assert await _list_blob_uuids(storage) == []
 
 
 class TestGet:
@@ -241,7 +227,7 @@ class TestGet:
         )
 
     async def test_hit_returns_row(self, caches: CachesData, static_time):
-        cache, _ = await caches.create(
+        cache = await caches.create(
             _chunker(b"x"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
@@ -272,7 +258,7 @@ class TestGet:
         static_time,
         mocker,
     ):
-        cache, _ = await caches.create(
+        cache = await caches.create(
             _chunker(b"x"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
@@ -298,7 +284,7 @@ class TestGet:
         static_time,
         mocker,
     ):
-        cache, _ = await caches.create(
+        cache = await caches.create(
             _chunker(b"x"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
@@ -326,7 +312,7 @@ class TestDelete:
         static_time,
         storage: FilesystemProvider,
     ):
-        cache, _ = await caches.create(
+        cache = await caches.create(
             _chunker(b"payload"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
@@ -353,25 +339,25 @@ class TestDelete:
         static_time,
         storage: FilesystemProvider,
     ):
-        owned_trimmed_a, _ = await caches.create(
+        owned_trimmed_a = await caches.create(
             _chunker(b"a"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
             {"tool_name": "fastp", "tool_version": "0.23.4", "min_length": 50},
         )
-        owned_trimmed_b, _ = await caches.create(
+        owned_trimmed_b = await caches.create(
             _chunker(b"b"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
             {"tool_name": "fastp", "tool_version": "0.23.4", "min_length": 75},
         )
-        owned_other_type, _ = await caches.create(
+        owned_other_type = await caches.create(
             _chunker(b"c"),
             CacheType.subtraction_mapping_index,
             "sample_alpha",
             {"tool_name": "bowtie2", "tool_version": "2.5.1"},
         )
-        other_parent, _ = await caches.create(
+        other_parent = await caches.create(
             _chunker(b"d"),
             CacheType.sample_trimmed_reads,
             "sample_beta",

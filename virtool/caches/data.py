@@ -12,6 +12,7 @@ from typing import Any
 
 from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
@@ -20,6 +21,7 @@ from virtool.caches.pg import SQLCache
 from virtool.caches.types import CacheType
 from virtool.caches.utils import derive_key, normalize_params
 from virtool.data.domain import DataLayerDomain
+from virtool.data.errors import CacheAlreadyExistsError
 from virtool.storage.protocol import StorageBackend
 
 _REQUIRED_PARAM_KEYS = ("tool_name", "tool_version")
@@ -29,6 +31,29 @@ LAST_ACCESSED_BUCKET = timedelta(minutes=5)
 
 A coarse bucket keeps eviction ordering useful while avoiding a write on
 every read."""
+
+
+_CACHE_KEY_CONSTRAINT = "caches_key_key"
+"""Name of the PostgreSQL unique constraint on ``caches.key``.
+
+Used to distinguish the expected race (another writer inserted the same key
+first) from any other integrity violation, which would indicate a real bug.
+"""
+
+
+def _extract_constraint_name(err: IntegrityError) -> str | None:
+    """Return the constraint name from an asyncpg-backed ``IntegrityError``.
+
+    SQLAlchemy wraps the asyncpg ``UniqueViolationError`` twice — once in a
+    dialect-level adapter and once in :class:`sqlalchemy.exc.IntegrityError` —
+    so the ``constraint_name`` attribute can live on ``err.orig`` itself or on
+    its ``__cause__``. Walk both rather than guessing which version we're on.
+    """
+    for candidate in (err.orig, getattr(err.orig, "__cause__", None)):
+        name = getattr(candidate, "constraint_name", None)
+        if name is not None:
+            return name
+    return None
 
 
 def _blob_key(blob_uuid: str) -> str:
@@ -87,8 +112,8 @@ class CachesData(DataLayerDomain):
         cache_type: CacheType,
         parent_id: str,
         params: dict[str, Any],
-    ) -> tuple[Cache, bool]:
-        """Write a cache blob and insert its row, returning ``(entry, inserted)``.
+    ) -> Cache:
+        """Write a cache blob and insert its row, returning the new ``Cache``.
 
         ``params`` must contain ``tool_name`` and ``tool_version``; both are
         part of the key and are stored inside the JSONB column rather than as
@@ -96,10 +121,14 @@ class CachesData(DataLayerDomain):
 
         The blob is written to ``caches/v1/<blob_uuid>`` under a per-write UUID,
         so concurrent writers for the same key never target the same path. The
-        row is then inserted with ``ON CONFLICT (key) DO NOTHING``: the loser
-        deletes its own blob and observes the winner's row with ``inserted``
-        set to ``False``. The per-write UUID makes the rollback unconditionally
-        safe — deleting our blob can never affect another writer's blob.
+        per-write UUID makes the rollback unconditionally safe — deleting our
+        blob can never affect another writer's blob.
+
+        Raises :class:`CacheAlreadyExistsError` when another writer inserted
+        the same key first. The caller's blob has been deleted before the
+        error is raised; the race is the expected outcome of a duplicate
+        write, not a failure. Any other failure during the insert deletes the
+        caller's blob and re-raises the underlying error.
         """
         missing = [k for k in _REQUIRED_PARAM_KEYS if k not in params]
         if missing:
@@ -110,43 +139,47 @@ class CachesData(DataLayerDomain):
         blob_uuid = uuid.uuid4().hex
         blob_key = _blob_key(blob_uuid)
 
-        size = await self._storage.write(blob_key, chunker)
-
         try:
+            size = await self._storage.write(blob_key, chunker)
             now = virtool.utils.timestamp()
 
             async with AsyncSession(self._pg, expire_on_commit=False) as session:
-                result = await session.execute(
-                    insert(SQLCache)
-                    .values(
-                        key=key,
-                        blob_uuid=blob_uuid,
-                        type=cache_type,
-                        params=normalized,
-                        parent_id=parent_id,
-                        size=size,
-                        created_at=now,
-                        last_accessed_at=now,
+                try:
+                    result = await session.execute(
+                        insert(SQLCache)
+                        .values(
+                            key=key,
+                            blob_uuid=blob_uuid,
+                            type=cache_type,
+                            params=normalized,
+                            parent_id=parent_id,
+                            size=size,
+                            created_at=now,
+                            last_accessed_at=now,
+                        )
+                        .returning(SQLCache.id),
                     )
-                    .on_conflict_do_nothing(index_elements=[SQLCache.key])
-                    .returning(SQLCache.id),
-                )
-                inserted_id = result.scalar_one_or_none()
-                await session.commit()
-
-                row = (
-                    await session.execute(
-                        select(SQLCache).where(SQLCache.key == key),
-                    )
-                ).scalar_one()
+                    inserted_id = result.scalar_one()
+                    await session.commit()
+                except IntegrityError as err:
+                    if _extract_constraint_name(err) == _CACHE_KEY_CONSTRAINT:
+                        raise CacheAlreadyExistsError from err
+                    raise
         except BaseException:
             await self._storage.delete(blob_key)
             raise
 
-        if inserted_id is None:
-            await self._storage.delete(blob_key)
-
-        return Cache(**row.to_dict()), inserted_id is not None
+        return Cache(
+            id=inserted_id,
+            key=key,
+            blob_uuid=blob_uuid,
+            type=cache_type,
+            params=normalized,
+            parent_id=parent_id,
+            size=size,
+            created_at=now,
+            last_accessed_at=now,
+        )
 
     async def delete_by_key(self, key: str) -> None:
         """Delete the row and blob identified by ``key``.

@@ -40,6 +40,18 @@ class ResourceConflictError(ResourceError):
     """
 
 
+class CacheAlreadyExistsError(ResourceConflictError):
+    """A cache with the derived key was inserted by another writer before us.
+
+    Raised by :meth:`virtool.caches.data.CachesData.create` when the unique
+    constraint on ``caches.key`` fires. The race is expected under concurrent
+    writers for the same inputs and is not a failure state — the cache is now
+    present and consumers can proceed. Distinct from the general
+    :class:`ResourceConflictError` so call sites can observe race rates
+    without conflating them with other conflicts or real DB write failures.
+    """
+
+
 class ResourceNotFoundError(ResourceError):
     """The requested resource does not exist.
 
