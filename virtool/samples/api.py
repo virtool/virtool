@@ -597,7 +597,6 @@ async def download_reads(req: Request):
     return await stream_storage_response(
         req,
         stream,
-        size,
         {
             "Content-Length": str(size),
             "Content-Type": "application/gzip",
@@ -626,7 +625,6 @@ async def download_artifact(req: Request):
     return await stream_storage_response(
         req,
         stream,
-        size,
         {
             "Content-Length": str(size),
             "Content-Type": "application/gzip",

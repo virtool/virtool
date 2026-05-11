@@ -9,7 +9,6 @@ from virtool.storage.errors import StorageKeyNotFoundError
 async def stream_storage_response(
     req: Request,
     stream: AsyncIterator[bytes],
-    size: int,
     headers: dict[str, str],
     not_found_message: str = "",
 ) -> StreamResponse:
