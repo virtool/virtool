@@ -20,13 +20,11 @@ import virtool.utils
 from virtool.caches.models import Cache
 from virtool.caches.pg import SQLCache
 from virtool.caches.types import CacheType
-from virtool.caches.utils import derive_key, normalize_params
+from virtool.caches.utils import build_stored_params, derive_key
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import CacheAlreadyExistsError
 from virtool.pg.utils import extract_constraint_name
 from virtool.storage.protocol import StorageBackend
-
-_REQUIRED_PARAM_KEYS = ("tool_name", "tool_version")
 
 LAST_ACCESSED_BUCKET = timedelta(minutes=5)
 """How stale ``last_accessed_at`` may be before ``get`` updates it.
@@ -61,23 +59,20 @@ class CachesData(DataLayerDomain):
         self,
         cache_type: CacheType,
         parent_id: str,
+        tool_name: str,
+        tool_version: str,
         params: dict[str, Any],
     ) -> Cache | None:
         """Return the cache row matching the derived key, or ``None``.
 
-        ``params`` must contain ``tool_name`` and ``tool_version``; both are
-        part of the key. Missing either raises :class:`ValueError`. The key is
-        derived the same way as :meth:`create`, so callers pass the same
-        triple.
+        ``tool_name`` and ``tool_version`` are part of the key alongside any
+        caller-supplied ``params``. The key is derived the same way as
+        :meth:`create`, so callers pass the same arguments.
 
         ``last_accessed_at`` is touched in the same transaction when the
         existing value is older than :data:`LAST_ACCESSED_BUCKET`.
         """
-        missing = [k for k in _REQUIRED_PARAM_KEYS if k not in params]
-        if missing:
-            raise ValueError(f"params is missing required keys: {missing}")
-
-        key = derive_key(cache_type, params, parent_id)
+        key = derive_key(cache_type, parent_id, tool_name, tool_version, params)
 
         async with AsyncSession(self._pg, expire_on_commit=False) as session:
             row = (
@@ -100,13 +95,15 @@ class CachesData(DataLayerDomain):
         chunker: AsyncIterator[bytes],
         cache_type: CacheType,
         parent_id: str,
+        tool_name: str,
+        tool_version: str,
         params: dict[str, Any],
     ) -> Cache:
         """Write a cache blob and insert its row, returning the new ``Cache``.
 
-        ``params`` must contain ``tool_name`` and ``tool_version``; both are
-        part of the key and are stored inside the JSONB column rather than as
-        dedicated SQL columns. Missing either raises :class:`ValueError`.
+        ``tool_name`` and ``tool_version`` are part of the key and are stored
+        inside the JSONB column alongside ``params`` rather than as dedicated
+        SQL columns.
 
         The blob is written to ``caches/v1/<blob_uuid>`` under a per-write UUID,
         so concurrent writers for the same key never target the same path. The
@@ -119,12 +116,8 @@ class CachesData(DataLayerDomain):
         write, not a failure. Any other failure during the insert deletes the
         caller's blob and re-raises the underlying error.
         """
-        missing = [k for k in _REQUIRED_PARAM_KEYS if k not in params]
-        if missing:
-            raise ValueError(f"params is missing required keys: {missing}")
-
-        normalized = normalize_params(params)
-        key = derive_key(cache_type, params, parent_id)
+        stored_params = build_stored_params(tool_name, tool_version, params)
+        key = derive_key(cache_type, parent_id, tool_name, tool_version, params)
         blob_uuid = uuid.uuid4().hex
         blob_key = _blob_key(blob_uuid)
 
@@ -140,7 +133,7 @@ class CachesData(DataLayerDomain):
                             key=key,
                             blob_uuid=blob_uuid,
                             type=cache_type,
-                            params=normalized,
+                            params=stored_params,
                             parent_id=parent_id,
                             size=size,
                             created_at=now,
@@ -163,7 +156,7 @@ class CachesData(DataLayerDomain):
             key=key,
             blob_uuid=blob_uuid,
             type=cache_type,
-            params=normalized,
+            params=stored_params,
             parent_id=parent_id,
             size=size,
             created_at=now,

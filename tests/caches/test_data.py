@@ -74,28 +74,31 @@ class TestPut:
         static_time,
         storage: FilesystemProvider,
     ):
-        params = {
-            "tool_name": "fastp",
-            "tool_version": "0.23.4",
-            "min_length": 50,
-        }
         payload = b"trimmed-reads-payload"
 
         cache = await caches.create(
             _chunker(payload),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            params,
+            "fastp",
+            "0.23.4",
+            {"min_length": 50},
         )
 
         assert cache.key == derive_key(
             CacheType.sample_trimmed_reads,
-            params,
             "sample_alpha",
+            "fastp",
+            "0.23.4",
+            {"min_length": 50},
         )
         assert cache.blob_uuid
         assert cache.size == len(payload)
-        assert cache.params == params
+        assert cache.params == {
+            "tool_name": "fastp",
+            "tool_version": "0.23.4",
+            "min_length": 50,
+        }
         assert cache.created_at == static_time.datetime
         assert cache.last_accessed_at == static_time.datetime
 
@@ -115,33 +118,12 @@ class TestPut:
             _chunker(b"x"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            {"tool_name": "fastp", "tool_version": "v0.23.4+build.7"},
+            "fastp",
+            "v0.23.4+build.7",
+            {},
         )
 
         assert cache.params["tool_version"] == "0.23.4"
-
-    @pytest.mark.parametrize(
-        "params",
-        [
-            {},
-            {"tool_name": "fastp"},
-            {"tool_version": "0.23.4"},
-            {"min_length": 50},
-        ],
-    )
-    async def test_rejects_missing_tool_keys(
-        self,
-        caches: CachesData,
-        static_time,
-        params: dict,
-    ):
-        with pytest.raises(ValueError, match="missing required keys"):
-            await caches.create(
-                _chunker(b"x"),
-                CacheType.sample_trimmed_reads,
-                "sample_alpha",
-                params,
-            )
 
     async def test_duplicate_key_raises_already_exists(
         self,
@@ -150,18 +132,15 @@ class TestPut:
         static_time,
         storage: FilesystemProvider,
     ):
-        params = {
-            "tool_name": "fastp",
-            "tool_version": "0.23.4",
-            "min_length": 50,
-        }
         first_payload = b"first-writer"
 
         first = await caches.create(
             _chunker(first_payload),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            params,
+            "fastp",
+            "0.23.4",
+            {"min_length": 50},
         )
 
         with pytest.raises(CacheAlreadyExistsError):
@@ -169,7 +148,9 @@ class TestPut:
                 _chunker(b"second-writer-different-bytes"),
                 CacheType.sample_trimmed_reads,
                 "sample_alpha",
-                params,
+                "fastp",
+                "0.23.4",
+                {"min_length": 50},
             )
 
         async with AsyncSession(pg) as session:
@@ -196,8 +177,6 @@ class TestPut:
         storage: FilesystemProvider,
         mocker,
     ):
-        params = {"tool_name": "fastp", "tool_version": "0.23.4"}
-
         mocker.patch.object(
             AsyncSession,
             "commit",
@@ -209,7 +188,9 @@ class TestPut:
                 _chunker(b"orphan-payload"),
                 CacheType.sample_trimmed_reads,
                 "sample_alpha",
-                params,
+                "fastp",
+                "0.23.4",
+                {},
             )
 
         assert await _list_blob_uuids(storage) == []
@@ -221,7 +202,9 @@ class TestGet:
             await caches.get(
                 CacheType.sample_trimmed_reads,
                 "sample_alpha",
-                {"tool_name": "fastp", "tool_version": "0.23.4"},
+                "fastp",
+                "0.23.4",
+                {},
             )
             is None
         )
@@ -231,25 +214,21 @@ class TestGet:
             _chunker(b"x"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            {"tool_name": "fastp", "tool_version": "0.23.4"},
+            "fastp",
+            "0.23.4",
+            {},
         )
 
         got = await caches.get(
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            {"tool_name": "fastp", "tool_version": "0.23.4"},
+            "fastp",
+            "0.23.4",
+            {},
         )
 
         assert got is not None
         assert got.id == cache.id
-
-    async def test_rejects_missing_tool_keys(self, caches: CachesData, static_time):
-        with pytest.raises(ValueError, match="missing required keys"):
-            await caches.get(
-                CacheType.sample_trimmed_reads,
-                "sample_alpha",
-                {"tool_name": "fastp"},
-            )
 
     async def test_does_not_touch_within_bucket(
         self,
@@ -262,7 +241,9 @@ class TestGet:
             _chunker(b"x"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            {"tool_name": "fastp", "tool_version": "0.23.4"},
+            "fastp",
+            "0.23.4",
+            {},
         )
 
         bumped = static_time.datetime + (LAST_ACCESSED_BUCKET - timedelta(seconds=1))
@@ -271,7 +252,9 @@ class TestGet:
         await caches.get(
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            {"tool_name": "fastp", "tool_version": "0.23.4"},
+            "fastp",
+            "0.23.4",
+            {},
         )
 
         row = await _read_row(pg, cache.key)
@@ -288,7 +271,9 @@ class TestGet:
             _chunker(b"x"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            {"tool_name": "fastp", "tool_version": "0.23.4"},
+            "fastp",
+            "0.23.4",
+            {},
         )
 
         bumped = static_time.datetime + LAST_ACCESSED_BUCKET + timedelta(seconds=1)
@@ -297,7 +282,9 @@ class TestGet:
         await caches.get(
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            {"tool_name": "fastp", "tool_version": "0.23.4"},
+            "fastp",
+            "0.23.4",
+            {},
         )
 
         row = await _read_row(pg, cache.key)
@@ -316,7 +303,9 @@ class TestDelete:
             _chunker(b"payload"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            {"tool_name": "fastp", "tool_version": "0.23.4"},
+            "fastp",
+            "0.23.4",
+            {},
         )
         assert await _blob_exists(storage, cache.blob_uuid)
 
@@ -343,25 +332,33 @@ class TestDelete:
             _chunker(b"a"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            {"tool_name": "fastp", "tool_version": "0.23.4", "min_length": 50},
+            "fastp",
+            "0.23.4",
+            {"min_length": 50},
         )
         owned_trimmed_b = await caches.create(
             _chunker(b"b"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            {"tool_name": "fastp", "tool_version": "0.23.4", "min_length": 75},
+            "fastp",
+            "0.23.4",
+            {"min_length": 75},
         )
         owned_other_type = await caches.create(
             _chunker(b"c"),
             CacheType.subtraction_mapping_index,
             "sample_alpha",
-            {"tool_name": "bowtie2", "tool_version": "2.5.1"},
+            "bowtie2",
+            "2.5.1",
+            {},
         )
         other_parent = await caches.create(
             _chunker(b"d"),
             CacheType.sample_trimmed_reads,
             "sample_beta",
-            {"tool_name": "fastp", "tool_version": "0.23.4"},
+            "fastp",
+            "0.23.4",
+            {},
         )
 
         deleted = await caches.delete_by_parent(

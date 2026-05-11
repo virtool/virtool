@@ -3,7 +3,12 @@ import hashlib
 import pytest
 
 from virtool.caches.types import CacheType
-from virtool.caches.utils import canonicalize_params, derive_key, normalize_semver
+from virtool.caches.utils import (
+    build_stored_params,
+    canonicalize_params,
+    derive_key,
+    normalize_semver,
+)
 
 
 class TestCanonicalizeParams:
@@ -51,12 +56,42 @@ class TestNormalizeSemver:
             normalize_semver("not-a-version")
 
 
+class TestBuildStoredParams:
+    def test_merges_tool_fields(self):
+        assert build_stored_params("fastp", "0.23.4", {"min_length": 50}) == {
+            "tool_name": "fastp",
+            "tool_version": "0.23.4",
+            "min_length": 50,
+        }
+
+    def test_normalizes_version(self):
+        result = build_stored_params("fastp", "v0.23.4+build.7", {})
+        assert result["tool_version"] == "0.23.4"
+
+    def test_explicit_args_win_over_params(self):
+        result = build_stored_params(
+            "fastp",
+            "0.23.4",
+            {"tool_name": "trimmomatic", "tool_version": "1.0.0"},
+        )
+        assert result["tool_name"] == "fastp"
+        assert result["tool_version"] == "0.23.4"
+
+    def test_empty_params(self):
+        assert build_stored_params("fastp", "0.23.4", {}) == {
+            "tool_name": "fastp",
+            "tool_version": "0.23.4",
+        }
+
+
 class TestDeriveKey:
     def test_returns_sha256_hex(self):
         key = derive_key(
             CacheType.sample_trimmed_reads,
-            {"tool_name": "fastp", "tool_version": "0.23.4", "min_length": 50},
             "sample_alpha",
+            "fastp",
+            "0.23.4",
+            {"min_length": 50},
         )
         assert len(key) == 64
         assert int(key, 16) >= 0
@@ -64,78 +99,102 @@ class TestDeriveKey:
     def test_param_order_independent(self):
         key_a = derive_key(
             CacheType.sample_trimmed_reads,
-            {"tool_name": "fastp", "tool_version": "0.23.4", "a": 1, "b": 2},
             "sample_alpha",
+            "fastp",
+            "0.23.4",
+            {"a": 1, "b": 2},
         )
         key_b = derive_key(
             CacheType.sample_trimmed_reads,
-            {"b": 2, "a": 1, "tool_version": "0.23.4", "tool_name": "fastp"},
             "sample_alpha",
+            "fastp",
+            "0.23.4",
+            {"b": 2, "a": 1},
         )
         assert key_a == key_b
 
     def test_build_metadata_does_not_change_key(self):
         key_a = derive_key(
             CacheType.sample_trimmed_reads,
-            {"tool_name": "fastp", "tool_version": "0.23.4"},
             "sample_alpha",
+            "fastp",
+            "0.23.4",
+            {},
         )
         key_b = derive_key(
             CacheType.sample_trimmed_reads,
-            {"tool_name": "fastp", "tool_version": "0.23.4+build.7"},
             "sample_alpha",
+            "fastp",
+            "0.23.4+build.7",
+            {},
         )
         assert key_a == key_b
 
     def test_prerelease_changes_key(self):
         key_release = derive_key(
             CacheType.sample_trimmed_reads,
-            {"tool_name": "fastp", "tool_version": "0.23.4"},
             "sample_alpha",
+            "fastp",
+            "0.23.4",
+            {},
         )
         key_prerelease = derive_key(
             CacheType.sample_trimmed_reads,
-            {"tool_name": "fastp", "tool_version": "0.23.4-rc.1"},
             "sample_alpha",
+            "fastp",
+            "0.23.4-rc.1",
+            {},
         )
         assert key_release != key_prerelease
 
     def test_parent_id_changes_key(self):
         key_alpha = derive_key(
             CacheType.sample_trimmed_reads,
-            {"tool_name": "fastp", "tool_version": "0.23.4"},
             "sample_alpha",
+            "fastp",
+            "0.23.4",
+            {},
         )
         key_beta = derive_key(
             CacheType.sample_trimmed_reads,
-            {"tool_name": "fastp", "tool_version": "0.23.4"},
             "sample_beta",
+            "fastp",
+            "0.23.4",
+            {},
         )
         assert key_alpha != key_beta
 
     def test_cache_type_changes_key(self):
         key_reads = derive_key(
             CacheType.sample_trimmed_reads,
-            {"tool_name": "bowtie2", "tool_version": "2.5.1"},
             "ref_alpha",
+            "bowtie2",
+            "2.5.1",
+            {},
         )
         key_index = derive_key(
             CacheType.reference_mapping_index,
-            {"tool_name": "bowtie2", "tool_version": "2.5.1"},
             "ref_alpha",
+            "bowtie2",
+            "2.5.1",
+            {},
         )
         assert key_reads != key_index
 
     def test_tool_name_changes_key(self):
         key_fastp = derive_key(
             CacheType.sample_trimmed_reads,
-            {"tool_name": "fastp", "tool_version": "0.23.4"},
             "sample_alpha",
+            "fastp",
+            "0.23.4",
+            {},
         )
         key_other = derive_key(
             CacheType.sample_trimmed_reads,
-            {"tool_name": "trimmomatic", "tool_version": "0.23.4"},
             "sample_alpha",
+            "trimmomatic",
+            "0.23.4",
+            {},
         )
         assert key_fastp != key_other
 
@@ -152,11 +211,9 @@ class TestDeriveKey:
 
         actual = derive_key(
             CacheType.sample_trimmed_reads,
-            {
-                "tool_name": "fastp",
-                "tool_version": "0.23.4+build.7",
-                "min_length": 50,
-            },
             "sample_alpha",
+            "fastp",
+            "0.23.4+build.7",
+            {"min_length": 50},
         )
         assert actual == expected

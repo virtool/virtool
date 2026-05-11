@@ -1,10 +1,10 @@
 """Pure-Python helpers for content-addressing cache entries.
 
 A cache key is the SHA-256 digest of the NUL-joined canonical form of
-``(cache_type, canonical_params, parent_id)``. ``params`` must include
-``tool_name`` and ``tool_version`` — the data layer enforces this on insert.
-``tool_version`` is normalized before canonicalization so that build metadata
-does not change the key.
+``(cache_type, canonical_params, parent_id)``. ``tool_name`` and
+``tool_version`` are passed explicitly and folded into the canonical params
+alongside any caller-supplied fields. ``tool_version`` is normalized before
+canonicalization so that build metadata does not change the key.
 """
 
 import hashlib
@@ -38,25 +38,42 @@ def normalize_semver(tool_version: str) -> str:
     return str(version.replace(build=None))
 
 
-def normalize_params(params: dict[str, Any]) -> dict[str, Any]:
-    """Return a copy of ``params`` with ``tool_version`` semver-normalized."""
-    return {**params, "tool_version": normalize_semver(params["tool_version"])}
+def build_stored_params(
+    tool_name: str,
+    tool_version: str,
+    params: dict[str, Any],
+) -> dict[str, Any]:
+    """Return the JSONB-ready params dict for a cache entry.
+
+    Merges the explicit tool fields into ``params`` with the version
+    semver-normalized. Explicit arguments win over any same-named keys in
+    ``params``.
+    """
+    return {
+        **params,
+        "tool_name": tool_name,
+        "tool_version": normalize_semver(tool_version),
+    }
 
 
 def derive_key(
     cache_type: CacheType,
-    params: dict[str, Any],
     parent_id: str,
+    tool_name: str,
+    tool_version: str,
+    params: dict[str, Any],
 ) -> str:
     """Derive the SHA-256 cache key for the given inputs.
 
-    ``params`` must contain ``tool_name`` and ``tool_version``; the version is
-    normalized before canonicalization.
+    ``tool_version`` is normalized before canonicalization; ``tool_name`` and
+    the normalized version are folded into ``params`` for the canonical form.
     """
     payload = _KEY_FIELD_SEPARATOR.join(
         [
             cache_type.value,
-            canonicalize_params(normalize_params(params)),
+            canonicalize_params(
+                build_stored_params(tool_name, tool_version, params),
+            ),
             parent_id,
         ],
     )
