@@ -24,7 +24,7 @@ class SQLCache(Base):
 
     Decouples the storage path from the cache ``key`` so concurrent writers
     for the same key never target the same blob path. The blob lives at
-    ``caches/<blob_uuid>``.
+    ``caches/v1/<blob_uuid>``.
     """
 
     type: Mapped[CacheType] = mapped_column(Enum(CacheType))

@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.caches.data import LAST_ACCESSED_BUCKET, CachesData
+from virtool.caches.data import LAST_ACCESSED_BUCKET, CachesData, _blob_key
 from virtool.caches.pg import SQLCache
 from virtool.caches.types import CacheType
 from virtool.caches.utils import derive_key
@@ -26,14 +26,14 @@ def caches(pg: AsyncEngine, storage: FilesystemProvider) -> CachesData:
 
 async def _read_blob(storage: FilesystemProvider, blob_uuid: str) -> bytes:
     chunks = []
-    async for chunk in storage.read(f"caches/{blob_uuid}"):
+    async for chunk in storage.read(f"caches/v1/{blob_uuid}"):
         chunks.append(chunk)
     return b"".join(chunks)
 
 
 async def _blob_exists(storage: FilesystemProvider, blob_uuid: str) -> bool:
     try:
-        async for _ in storage.read(f"caches/{blob_uuid}"):
+        async for _ in storage.read(f"caches/v1/{blob_uuid}"):
             pass
     except StorageKeyNotFoundError:
         return False
@@ -41,7 +41,9 @@ async def _blob_exists(storage: FilesystemProvider, blob_uuid: str) -> bool:
 
 
 async def _list_blob_uuids(storage: FilesystemProvider) -> list[str]:
-    return [info.key.split("/", 1)[1] async for info in storage.list("caches/")]
+    return [
+        info.key.removeprefix("caches/v1/") async for info in storage.list("caches/v1/")
+    ]
 
 
 async def _chunker(payload: bytes) -> AsyncIterator[bytes]:
@@ -53,6 +55,14 @@ async def _read_row(pg: AsyncEngine, key: str) -> SQLCache | None:
         return (
             await session.execute(select(SQLCache).where(SQLCache.key == key))
         ).scalar_one_or_none()
+
+
+class TestBlobKey:
+    def test_pins_v1_namespace(self):
+        assert (
+            _blob_key("3d8f1c527a4e4b9c9a521c8e7d3b0a91")
+            == "caches/v1/3d8f1c527a4e4b9c9a521c8e7d3b0a91"
+        )
 
 
 class TestPut:

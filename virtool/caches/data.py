@@ -32,8 +32,8 @@ every read."""
 
 
 def _blob_key(blob_uuid: str) -> str:
-    """Storage key for a cache blob under the shared ``caches/`` namespace."""
-    return f"caches/{blob_uuid}"
+    """Storage key for a cache blob under the shared ``caches/v1/`` namespace."""
+    return f"caches/v1/{blob_uuid}"
 
 
 class CachesData(DataLayerDomain):
@@ -94,7 +94,7 @@ class CachesData(DataLayerDomain):
         part of the key and are stored inside the JSONB column rather than as
         dedicated SQL columns. Missing either raises :class:`ValueError`.
 
-        The blob is written to ``caches/<blob_uuid>`` under a per-write UUID,
+        The blob is written to ``caches/v1/<blob_uuid>`` under a per-write UUID,
         so concurrent writers for the same key never target the same path. The
         row is then inserted with ``ON CONFLICT (key) DO NOTHING``: the loser
         deletes its own blob and observes the winner's row with ``inserted``
