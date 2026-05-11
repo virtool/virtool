@@ -1,8 +1,6 @@
 """Data-layer domain for cache rows.
 
-The domain owns both row lifecycle and blob lifecycle for cache entries.
-Higher-level concerns (eviction, the jobs API) call into this domain rather
-than touching the SQL or the filesystem directly.
+Owns both row and blob lifecycle for cache entries.
 """
 
 import asyncio
@@ -27,19 +25,17 @@ from virtool.pg.utils import extract_constraint_name
 from virtool.storage.protocol import StorageBackend
 
 LAST_ACCESSED_BUCKET = timedelta(minutes=5)
-"""How stale ``last_accessed_at`` may be before ``get`` updates it.
+"""Max staleness of ``last_accessed_at`` before ``get`` refreshes it.
 
-A coarse bucket keeps eviction ordering useful while avoiding a write on
-every read."""
+A coarse bucket keeps eviction ordering useful without a write on every read.
+"""
 
 
 _CACHE_KEY_CONSTRAINT = "cache_key"
 """Name of the unique constraint on ``caches.key``.
 
-Pinned explicitly on both the migration and the SQLAlchemy model so this
-constant, the DDL, and the ORM agree on the single name. Used to distinguish
-the expected race (another writer inserted the same key first) from any other
-integrity violation, which would indicate a real bug.
+Pinned in the migration, the SQLAlchemy model, and here so we can distinguish
+the expected duplicate-key race from any other integrity violation.
 """
 
 
@@ -65,12 +61,8 @@ class CachesData(DataLayerDomain):
     ) -> Cache | None:
         """Return the cache row matching the derived key, or ``None``.
 
-        ``tool_name`` and ``tool_version`` are part of the key alongside any
-        caller-supplied ``params``. The key is derived the same way as
-        :meth:`create`, so callers pass the same arguments.
-
-        ``last_accessed_at`` is touched in the same transaction when the
-        existing value is older than :data:`LAST_ACCESSED_BUCKET`.
+        Refreshes ``last_accessed_at`` when it is older than
+        :data:`LAST_ACCESSED_BUCKET`.
         """
         key = derive_key(cache_type, parent_id, tool_name, tool_version, params)
 
@@ -101,20 +93,14 @@ class CachesData(DataLayerDomain):
     ) -> Cache:
         """Write a cache blob and insert its row, returning the new ``Cache``.
 
-        ``tool_name`` and ``tool_version`` are part of the key and are stored
-        inside the JSONB column alongside ``params`` rather than as dedicated
-        SQL columns.
-
-        The blob is written to ``caches/v1/<blob_uuid>`` under a per-write UUID,
-        so concurrent writers for the same key never target the same path. The
-        per-write UUID makes the rollback unconditionally safe — deleting our
-        blob can never affect another writer's blob.
+        Blobs are written under a per-write UUID so concurrent writers for the
+        same key never target the same path, making rollback unconditionally
+        safe — deleting our blob can never affect another writer's.
 
         Raises :class:`CacheAlreadyExistsError` when another writer inserted
-        the same key first. The caller's blob has been deleted before the
-        error is raised; the race is the expected outcome of a duplicate
-        write, not a failure. Any other failure during the insert deletes the
-        caller's blob and re-raises the underlying error.
+        the same key first; the caller's blob is deleted before the error is
+        raised. Any other failure during insert also deletes the caller's blob
+        before re-raising.
         """
         stored_params = build_stored_params(tool_name, tool_version, params)
         key = derive_key(cache_type, parent_id, tool_name, tool_version, params)
@@ -125,7 +111,7 @@ class CachesData(DataLayerDomain):
             size = await self._storage.write(blob_key, chunker)
             now = virtool.utils.timestamp()
 
-            async with AsyncSession(self._pg, expire_on_commit=False) as session:
+            async with AsyncSession(self._pg) as session:
                 try:
                     result = await session.execute(
                         insert(SQLCache)
@@ -169,7 +155,7 @@ class CachesData(DataLayerDomain):
         Both deletions are idempotent; missing row or missing blob are
         treated as already-deleted.
         """
-        async with AsyncSession(self._pg, expire_on_commit=False) as session:
+        async with AsyncSession(self._pg) as session:
             result = await session.execute(
                 delete(SQLCache)
                 .where(SQLCache.key == key)
@@ -186,7 +172,7 @@ class CachesData(DataLayerDomain):
 
         Returns the number of rows deleted.
         """
-        async with AsyncSession(self._pg, expire_on_commit=False) as session:
+        async with AsyncSession(self._pg) as session:
             result = await session.execute(
                 delete(SQLCache)
                 .where(
