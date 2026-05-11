@@ -42,12 +42,28 @@ class CachesData(DataLayerDomain):
         self._pg = pg
         self._storage = storage
 
-    async def get(self, key: str) -> Cache | None:
-        """Return the cache row for ``key`` or ``None``.
+    async def get(
+        self,
+        cache_type: CacheType,
+        parent_id: str,
+        params: dict[str, Any],
+    ) -> Cache | None:
+        """Return the cache row matching the derived key, or ``None``.
+
+        ``params`` must contain ``tool_name`` and ``tool_version``; both are
+        part of the key. Missing either raises :class:`ValueError`. The key is
+        derived the same way as :meth:`create`, so callers pass the same
+        triple.
 
         ``last_accessed_at`` is touched in the same transaction when the
         existing value is older than :data:`LAST_ACCESSED_BUCKET`.
         """
+        missing = [k for k in _REQUIRED_PARAM_KEYS if k not in params]
+        if missing:
+            raise ValueError(f"params is missing required keys: {missing}")
+
+        key = derive_key(cache_type, params, parent_id)
+
         async with AsyncSession(self._pg, expire_on_commit=False) as session:
             row = (
                 await session.execute(select(SQLCache).where(SQLCache.key == key))

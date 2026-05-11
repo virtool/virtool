@@ -174,7 +174,14 @@ class TestPut:
 
 class TestGet:
     async def test_missing_returns_none(self, caches: CachesData, static_time):
-        assert await caches.get("missing") is None
+        assert (
+            await caches.get(
+                CacheType.sample_trimmed_reads,
+                "sample_alpha",
+                {"tool_name": "fastp", "tool_version": "0.23.4"},
+            )
+            is None
+        )
 
     async def test_hit_returns_row(self, caches: CachesData, static_time):
         cache, _ = await caches.create(
@@ -184,10 +191,22 @@ class TestGet:
             {"tool_name": "fastp", "tool_version": "0.23.4"},
         )
 
-        got = await caches.get(cache.key)
+        got = await caches.get(
+            CacheType.sample_trimmed_reads,
+            "sample_alpha",
+            {"tool_name": "fastp", "tool_version": "0.23.4"},
+        )
 
         assert got is not None
         assert got.id == cache.id
+
+    async def test_rejects_missing_tool_keys(self, caches: CachesData, static_time):
+        with pytest.raises(ValueError, match="missing required keys"):
+            await caches.get(
+                CacheType.sample_trimmed_reads,
+                "sample_alpha",
+                {"tool_name": "fastp"},
+            )
 
     async def test_does_not_touch_within_bucket(
         self,
@@ -206,7 +225,11 @@ class TestGet:
         bumped = static_time.datetime + (LAST_ACCESSED_BUCKET - timedelta(seconds=1))
         mocker.patch("virtool.utils.timestamp", return_value=bumped)
 
-        await caches.get(cache.key)
+        await caches.get(
+            CacheType.sample_trimmed_reads,
+            "sample_alpha",
+            {"tool_name": "fastp", "tool_version": "0.23.4"},
+        )
 
         row = await _read_row(pg, cache.key)
         assert row.last_accessed_at == static_time.datetime
@@ -228,7 +251,11 @@ class TestGet:
         bumped = static_time.datetime + LAST_ACCESSED_BUCKET + timedelta(seconds=1)
         mocker.patch("virtool.utils.timestamp", return_value=bumped)
 
-        await caches.get(cache.key)
+        await caches.get(
+            CacheType.sample_trimmed_reads,
+            "sample_alpha",
+            {"tool_name": "fastp", "tool_version": "0.23.4"},
+        )
 
         row = await _read_row(pg, cache.key)
         assert row.last_accessed_at == bumped
