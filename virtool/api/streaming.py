@@ -15,18 +15,19 @@ async def stream_storage_response(
 ) -> StreamResponse:
     response = StreamResponse(headers=headers)
 
-    if size > 0:
-        try:
-            first_chunk = await anext(stream)
-        except (StopAsyncIteration, StorageKeyNotFoundError):
-            raise APINotFound(not_found_message or None)
+    try:
+        first_chunk = await anext(stream)
+    except StorageKeyNotFoundError:
+        raise APINotFound(not_found_message or None)
+    except StopAsyncIteration:
+        first_chunk = None
 
-        await response.prepare(req)
+    await response.prepare(req)
+
+    if first_chunk is not None:
         await response.write(first_chunk)
 
         async for chunk in stream:
             await response.write(chunk)
-    else:
-        await response.prepare(req)
 
     return response

@@ -45,6 +45,12 @@ class FallbackStorageRouter:
         await self._primary.delete(key)
         await self._fallback.delete(key)
 
+    async def size(self, key: str) -> int:
+        try:
+            return await self._primary.size(key)
+        except StorageKeyNotFoundError:
+            return await self._fallback.size(key)
+
     async def list(self, prefix: str) -> AsyncIterator[StorageObjectInfo]:
         seen: set[str] = set()
 

@@ -171,6 +171,7 @@ def tasks() -> None:
 @no_revision_check_option
 @postgres_connection_string_option
 @sentry_dsn_option
+@storage_options
 def start_task_runner(dev: bool, **kwargs) -> None:
     """Start the task runner service."""
     configure_logging(bool(kwargs["sentry_dsn"]))

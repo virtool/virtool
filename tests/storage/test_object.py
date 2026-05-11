@@ -37,6 +37,22 @@ class TestErrorTranslation:
         await provider.delete("does/not/exist")
 
 
+class TestSize:
+    async def test_ok(self, provider):
+        await provider.write("samples/abc/reads.fq.gz", _async_iter(b"hello world"))
+
+        assert await provider.size("samples/abc/reads.fq.gz") == 11
+
+    async def test_empty_object(self, provider):
+        await provider.write("empty", _async_iter(b""))
+
+        assert await provider.size("empty") == 0
+
+    async def test_nonexistent_key(self, provider):
+        with pytest.raises(StorageKeyNotFoundError):
+            await provider.size("does/not/exist")
+
+
 class TestRoundtrip:
     async def test_write_then_read(self, provider):
         await provider.write("samples/abc/reads.fq.gz", _async_iter(b"hello"))

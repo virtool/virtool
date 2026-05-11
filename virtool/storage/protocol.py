@@ -47,3 +47,11 @@ class StorageBackend(Protocol):
         matching object.
         """
         ...
+
+    async def size(self, key: str) -> int:
+        """Return the size in bytes of the object at ``key``.
+
+        Raises :class:`~virtool.storage.errors.StorageKeyNotFoundError` if the
+        key does not exist.
+        """
+        ...

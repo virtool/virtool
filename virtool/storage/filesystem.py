@@ -91,6 +91,20 @@ class FilesystemProvider:
                 break
             parent = parent.parent
 
+    async def size(self, key: str) -> int:
+        """Return the size in bytes of the object at ``key``."""
+        path = await self._resolve(key)
+
+        if not await asyncio.to_thread(path.is_file):
+            raise StorageKeyNotFoundError(key)
+
+        try:
+            stat = await asyncio.to_thread(path.stat)
+        except FileNotFoundError as exc:
+            raise StorageKeyNotFoundError(key) from exc
+
+        return stat.st_size
+
     async def list(self, prefix: str) -> AsyncIterator[StorageObjectInfo]:
         """List objects whose keys start with ``prefix``."""
 

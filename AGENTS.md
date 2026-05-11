@@ -168,6 +168,27 @@ states in the OAS description. The canonical example is `archived` on
 - Ruff enforces all rules (`select = ["ALL"]`) with specific ignores. Test files
   have relaxed type annotation and docstring rules.
 
+## Explicit Configuration, Loud Failures
+
+Prefer explicit wiring and loud errors over silent fallbacks. A required
+dependency that quietly defaults to *something plausible* will mask broken
+configuration for weeks before anyone notices.
+
+- Required constructor and factory parameters must be non-optional with no
+  default. Do not write `dep: X | None = None` and then construct a fallback
+  inside the function — that turns a forgotten caller into silent
+  misbehaviour.
+- Look up required app state with `app["key"]` (which raises `KeyError`), not
+  `app.get("key")` (which returns `None`).
+- Don't add production fallbacks to make tests easier. Tests pass explicit
+  doubles (in-memory backends, tmp paths). Production code stays strict.
+- When adding a new aiohttp entry point (API server, jobs server, task runner,
+  task spawner), audit `on_startup` against the other entry points. A missing
+  `startup_*` is a wiring bug, not a runtime "use a sensible default" moment.
+- Config values that have no safe default should validate at load time and
+  raise. Don't silently coerce empty strings, `None`, or missing env vars to
+  working-but-wrong values.
+
 ## Git
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org).
