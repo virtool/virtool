@@ -3,7 +3,6 @@ import asyncio
 from aiohttp.web import (
     Request,
     Response,
-    StreamResponse,
 )
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404, r409
@@ -26,6 +25,7 @@ from virtool.api.errors import (
 from virtool.api.policy import PermissionRoutePolicy, policy
 from virtool.api.routes import Routes
 from virtool.api.schema import schema
+from virtool.api.streaming import stream_storage_response
 from virtool.authorization.permissions import LegacyPermission
 from virtool.data.errors import (
     ResourceConflictError,
@@ -54,7 +54,6 @@ from virtool.samples.oas import (
 )
 from virtool.samples.sql import SQLSampleReads
 from virtool.samples.utils import SampleRight
-from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.uploads.utils import (
     multipart_file_chunker,
     naive_validator,
@@ -595,28 +594,14 @@ async def download_reads(req: Request):
     except ResourceNotFoundError:
         raise APINotFound()
 
-    response = StreamResponse(
-        headers={
+    return await stream_storage_response(
+        req,
+        stream,
+        {
             "Content-Length": str(size),
             "Content-Type": "application/gzip",
         },
     )
-
-    if size > 0:
-        try:
-            first_chunk = await anext(stream)
-        except (StopAsyncIteration, StorageKeyNotFoundError):
-            raise APINotFound()
-
-        await response.prepare(req)
-        await response.write(first_chunk)
-
-        async for chunk in stream:
-            await response.write(chunk)
-    else:
-        await response.prepare(req)
-
-    return response
 
 
 @routes.jobs_api.get("/samples/{sample_id}/artifacts/{filename}")
@@ -637,25 +622,11 @@ async def download_artifact(req: Request):
     except ResourceNotFoundError:
         raise APINotFound()
 
-    response = StreamResponse(
-        headers={
+    return await stream_storage_response(
+        req,
+        stream,
+        {
             "Content-Length": str(size),
             "Content-Type": "application/gzip",
         },
     )
-
-    if size > 0:
-        try:
-            first_chunk = await anext(stream)
-        except (StopAsyncIteration, StorageKeyNotFoundError):
-            raise APINotFound()
-
-        await response.prepare(req)
-        await response.write(first_chunk)
-
-        async for chunk in stream:
-            await response.write(chunk)
-    else:
-        await response.prepare(req)
-
-    return response

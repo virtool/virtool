@@ -133,6 +133,15 @@ class ObjectProvider:
         except Exception as exc:
             raise StorageError(str(exc)) from exc
 
+    async def size(self, key: str) -> int:
+        """Return the size in bytes of the object at ``key``."""
+        try:
+            meta = await obs.head_async(self._store, key)
+        except FileNotFoundError as exc:
+            raise StorageKeyNotFoundError(key) from exc
+
+        return meta["size"]
+
     async def list(self, prefix: str) -> AsyncIterator[StorageObjectInfo]:
         """List objects whose keys start with ``prefix``."""
         async for batch in obs.list(self._store, prefix=prefix):

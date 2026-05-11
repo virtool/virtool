@@ -115,6 +115,17 @@ class TaskRunnerConfig:
     port: int
     postgres_connection_string: str
     sentry_dsn: str
+    storage_backend: StorageBackendName = "filesystem"
+    storage_filesystem_path: Path | None = None
+    storage_s3_bucket: str = ""
+    storage_s3_region: str = ""
+    storage_s3_endpoint: str = ""
+    storage_s3_access_key_id: str = ""
+    storage_s3_secret_access_key: str = ""
+    storage_azure_account: str = ""
+    storage_azure_container: str = ""
+    storage_azure_access_key: str = ""
+    storage_azure_endpoint: str = ""
 
     @property
     def mongodb_database(self) -> str:
@@ -126,6 +137,26 @@ class TaskRunnerConfig:
 
     def __post_init__(self):
         self.data_path = Path(self.data_path)
+
+        if self.storage_filesystem_path is None:
+            self.storage_filesystem_path = self.data_path / "storage"
+        else:
+            self.storage_filesystem_path = Path(self.storage_filesystem_path)
+
+        if self.storage_backend == "s3" and not self.storage_s3_bucket:
+            raise ValueError(
+                "storage_backend=s3 requires --storage-s3-bucket",
+            )
+
+        if self.storage_backend == "azure":
+            if not self.storage_azure_account:
+                raise ValueError(
+                    "storage_backend=azure requires --storage-azure-account",
+                )
+            if not self.storage_azure_container:
+                raise ValueError(
+                    "storage_backend=azure requires --storage-azure-container",
+                )
 
 
 @dataclass

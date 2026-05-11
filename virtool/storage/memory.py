@@ -47,6 +47,12 @@ class MemoryStorageProvider:
     async def delete(self, key: str) -> None:
         self._store.pop(key, None)
 
+    async def size(self, key: str) -> int:
+        try:
+            return len(self._store[key].data)
+        except KeyError as exc:
+            raise StorageKeyNotFoundError(key) from exc
+
     async def list(self, prefix: str) -> AsyncIterator[StorageObjectInfo]:
         for key, obj in list(self._store.items()):
             if key.startswith(prefix):

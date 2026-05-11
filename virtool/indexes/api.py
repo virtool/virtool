@@ -101,7 +101,6 @@ async def download_otus_json(req):
     return await stream_storage_response(
         req,
         stream,
-        size,
         {
             "Content-Disposition": "attachment; filename=otus.json.gz",
             "Content-Length": str(size),
@@ -144,7 +143,6 @@ class IndexFileView(PydanticView):
         return await stream_storage_response(
             self.request,
             stream,
-            size,
             {
                 "Content-Disposition": f"attachment; filename={filename}",
                 "Content-Length": str(size),
@@ -175,7 +173,6 @@ async def download_index_file_for_jobs(req: Request):
     return await stream_storage_response(
         req,
         stream,
-        size,
         {
             "Content-Length": str(size),
             "Content-Type": "application/octet-stream",

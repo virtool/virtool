@@ -47,7 +47,6 @@ from virtool.samples.db import (
 from virtool.samples.files import (
     create_artifact_file,
     create_reads_file,
-    get_existing_reads,
 )
 from virtool.samples.models import Sample, SampleSearchResult
 from virtool.samples.oas import CreateSampleRequest, UpdateSampleRequest
@@ -665,18 +664,22 @@ class SamplesData(DataLayerDomain):
         if not await self._mongo.samples.find_one(sample_id):
             raise ResourceNotFoundError
 
-        existing_reads = await get_existing_reads(self._pg, sample_id)
+        async with AsyncSession(self._pg) as session:
+            row = (
+                await session.execute(
+                    select(SQLSampleReads).filter_by(
+                        sample=sample_id,
+                        name=filename,
+                    ),
+                )
+            ).scalar()
 
-        if filename not in existing_reads:
+        if row is None:
             raise ResourceNotFoundError
 
         key = sample_file_key(sample_id, filename)
 
-        async for info in self._storage.list(key):
-            if info.key == key:
-                return self._storage.read(key), info.size, filename
-
-        raise ResourceNotFoundError
+        return self._storage.read(key), row.size, filename
 
     async def get_artifact_file(
         self,
@@ -702,8 +705,4 @@ class SamplesData(DataLayerDomain):
         artifact = result.to_dict()
         key = sample_file_key(sample_id, artifact["name_on_disk"])
 
-        async for info in self._storage.list(key):
-            if info.key == key:
-                return self._storage.read(key), info.size
-
-        raise ResourceNotFoundError
+        return self._storage.read(key), result.size

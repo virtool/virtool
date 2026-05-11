@@ -18,6 +18,7 @@ from virtool.startup import (
     startup_executors,
     startup_http_client_session,
     startup_sentry,
+    startup_storage,
     startup_task_runner,
     startup_version,
 )
@@ -47,6 +48,7 @@ def run_task_runner(config: TaskRunnerConfig) -> None:
             startup_http_client_session,
             startup_databases,
             startup_executors,
+            startup_storage,
             startup_data,
             startup_events,
             startup_task_runner,

@@ -109,6 +109,28 @@ class TestDelete:
         await router.delete("missing")
 
 
+class TestSize:
+    async def test_primary_hit(self, primary, router):
+        await primary.write("key", _async_iter(b"primary"))
+
+        assert await router.size("key") == 7
+
+    async def test_falls_back_to_fallback(self, fallback, router):
+        await fallback.write("key", _async_iter(b"fallback data"))
+
+        assert await router.size("key") == 13
+
+    async def test_primary_takes_precedence(self, primary, fallback, router):
+        await primary.write("key", _async_iter(b"short"))
+        await fallback.write("key", _async_iter(b"a longer value"))
+
+        assert await router.size("key") == 5
+
+    async def test_missing_from_both_raises(self, router):
+        with pytest.raises(StorageKeyNotFoundError):
+            await router.size("missing")
+
+
 class TestList:
     async def test_merges_results(self, primary, fallback, router):
         await primary.write("a/1", _async_iter(b"p"))

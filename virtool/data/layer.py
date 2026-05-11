@@ -71,7 +71,7 @@ def create_data_layer(
     pg: AsyncEngine,
     config: Config,
     client: ClientSession,
-    storage: StorageBackend | None = None,
+    storage: StorageBackend,
 ) -> DataLayer:
     """Create and return a data layer object.
 
@@ -83,11 +83,6 @@ def create_data_layer(
     :return: the application data layer
     """
     http_client = HTTPClient(client)
-
-    if storage is None:
-        from virtool.storage.filesystem import FilesystemProvider
-
-        storage = FilesystemProvider(config.data_path / "storage")
 
     return DataLayer(
         AccountData(mongo, pg),

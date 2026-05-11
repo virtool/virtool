@@ -1489,7 +1489,11 @@ class TestDownloadReads:
         await mongo.samples.insert_one({"_id": "foo", "ready": True})
 
     @staticmethod
-    async def _insert_reads_row(pg: AsyncEngine, file_name: str) -> None:
+    async def _insert_reads_row(
+        pg: AsyncEngine,
+        file_name: str,
+        size: int = 4,
+    ) -> None:
         async with AsyncSession(pg) as session:
             session.add(
                 SQLSampleReads(
@@ -1497,6 +1501,7 @@ class TestDownloadReads:
                     sample="foo",
                     name=file_name,
                     name_on_disk=file_name,
+                    size=size,
                 ),
             )
             await session.commit()
@@ -1587,6 +1592,26 @@ class TestDownloadReads:
 
         assert resp.status == job_resp.status == 404
 
+    async def test_404_zero_byte_missing_object(
+        self,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        spawn_client: ClientSpawner,
+        spawn_job_client: JobClientSpawner,
+    ):
+        client = await spawn_client(authenticated=True)
+        job_client = await spawn_job_client(authenticated=True)
+
+        file_name = "reads_1.fq.gz"
+
+        await self._insert_sample(mongo)
+        await self._insert_reads_row(pg, file_name, size=0)
+
+        resp = await client.get(f"/samples/foo/reads/{file_name}")
+        job_resp = await job_client.get(f"/samples/foo/reads/{file_name}")
+
+        assert resp.status == job_resp.status == 404
+
 
 class TestDownloadArtifact:
     @staticmethod
@@ -1601,7 +1626,7 @@ class TestDownloadArtifact:
         await mongo.samples.insert_one({"_id": "foo", "ready": True})
 
     @staticmethod
-    async def _insert_artifact_row(pg: AsyncEngine) -> None:
+    async def _insert_artifact_row(pg: AsyncEngine, size: int = 4) -> None:
         async with AsyncSession(pg) as session:
             session.add(
                 SQLSampleArtifact(
@@ -1610,6 +1635,7 @@ class TestDownloadArtifact:
                     name="fastqc.txt",
                     name_on_disk="fastqc.txt",
                     type="fastq",
+                    size=size,
                 ),
             )
             await session.commit()
@@ -1672,6 +1698,21 @@ class TestDownloadArtifact:
 
         await self._insert_sample(mongo)
         await self._insert_artifact_row(pg)
+
+        resp = await client.get("/samples/foo/artifacts/fastqc.txt")
+
+        assert resp.status == 404
+
+    async def test_404_zero_byte_missing_object(
+        self,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        spawn_job_client: JobClientSpawner,
+    ):
+        client = await spawn_job_client(authenticated=True)
+
+        await self._insert_sample(mongo)
+        await self._insert_artifact_row(pg, size=0)
 
         resp = await client.get("/samples/foo/artifacts/fastqc.txt")
 

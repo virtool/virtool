@@ -817,6 +817,7 @@ async def test_download(
     example_path: Path,
     memory_storage: StorageBackend,
     mongo: Mongo,
+    pg: AsyncEngine,
     spawn_job_client: JobClientSpawner,
 ):
     client = await spawn_job_client(authenticated=True)
@@ -844,6 +845,17 @@ async def test_download(
         yield expected_bytes
 
     await memory_storage.write(key, _stream())
+
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLIndexFile(
+                name="reference.1.bt2",
+                index="test_index",
+                type="bowtie2",
+                size=len(expected_bytes),
+            ),
+        )
+        await session.commit()
 
     files_url = "/indexes/test_index/files/"
 

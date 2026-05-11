@@ -124,6 +124,20 @@ class TestList:
         assert info.last_modified is not None
 
 
+class TestSize:
+    async def test_ok(self, provider, request, worker_id):
+        key = _key(request, worker_id, "sized.txt")
+        await provider.write(key, _async_iter(b"hello world"))
+
+        assert await provider.size(key) == 11
+
+    async def test_nonexistent_raises(self, provider, request, worker_id):
+        key = _key(request, worker_id, "never-existed.txt")
+
+        with pytest.raises(StorageKeyNotFoundError):
+            await provider.size(key)
+
+
 class TestErrors:
     async def test_read_nonexistent_raises(self, provider, request, worker_id):
         key = _key(request, worker_id, "never-existed.txt")

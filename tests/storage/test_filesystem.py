@@ -119,6 +119,25 @@ class TestDelete:
         assert (tmp_path / "a" / "b" / "keep.txt").exists()
 
 
+class TestSize:
+    async def test_ok(self, provider, tmp_path):
+        path = tmp_path / "samples" / "abc" / "reads.fq.gz"
+        path.parent.mkdir(parents=True)
+        path.write_bytes(b"hello world")
+
+        assert await provider.size("samples/abc/reads.fq.gz") == 11
+
+    async def test_empty_object(self, provider, tmp_path):
+        path = tmp_path / "empty"
+        path.write_bytes(b"")
+
+        assert await provider.size("empty") == 0
+
+    async def test_nonexistent_key(self, provider):
+        with pytest.raises(StorageKeyNotFoundError):
+            await provider.size("does/not/exist")
+
+
 class TestList:
     async def test_with_prefix(self, provider, tmp_path):
         (tmp_path / "samples" / "a").mkdir(parents=True)

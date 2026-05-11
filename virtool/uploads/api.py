@@ -99,7 +99,6 @@ class UploadView(PydanticView):
         return await stream_storage_response(
             self.request,
             stream,
-            size,
             {
                 "Content-Disposition": f"attachment; filename={name}",
                 "Content-Type": "application/octet-stream",
@@ -145,7 +144,6 @@ async def download(req):
     return await stream_storage_response(
         req,
         stream,
-        size,
         {
             "Content-Disposition": f"attachment; filename={name}",
             "Content-Type": "application/octet-stream",

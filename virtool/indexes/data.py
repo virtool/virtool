@@ -3,6 +3,7 @@ import gzip
 from collections.abc import AsyncIterator
 
 from multidict import MultiDictProxy
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
@@ -37,6 +38,7 @@ from virtool.pg.utils import get_rows
 from virtool.references.db import compose_archived_filter, lookup_nested_reference_by_id
 from virtool.references.models import ReferenceNested
 from virtool.references.transforms import AttachReferenceTransform
+from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
 from virtool.uploads.utils import multipart_file_chunker
 from virtool.users.transforms import AttachUserTransform
@@ -195,22 +197,23 @@ class IndexData:
 
         key = compose_index_file_key(index_id, "otus.json.gz")
 
-        async for info in self._storage.list(key):
-            if info.key == key:
-                return self._storage.read(key), info.size
+        try:
+            size = await self._storage.size(key)
+        except StorageKeyNotFoundError:
+            patched_otus = await virtool.indexes.db.get_patched_otus(
+                self._mongo,
+                self._storage,
+                index["manifest"],
+            )
 
-        patched_otus = await virtool.indexes.db.get_patched_otus(
-            self._mongo,
-            self._storage,
-            index["manifest"],
-        )
+            compressed = await asyncio.to_thread(
+                gzip.compress, dump_bytes(patched_otus)
+            )
 
-        compressed = await asyncio.to_thread(gzip.compress, dump_bytes(patched_otus))
+            async def _stream():
+                yield compressed
 
-        async def _stream():
-            yield compressed
-
-        size = await self._storage.write(key, _stream())
+            size = await self._storage.write(key, _stream())
 
         return self._storage.read(key), size
 
@@ -273,13 +276,19 @@ class IndexData:
         if filename not in INDEX_FILE_NAMES:
             raise ResourceNotFoundError
 
+        async with AsyncSession(self._pg) as session:
+            row = (
+                await session.execute(
+                    select(SQLIndexFile).filter_by(index=index_id, name=filename),
+                )
+            ).scalar()
+
+        if row is None:
+            raise ResourceNotFoundError
+
         key = compose_index_file_key(index_id, filename)
 
-        async for info in self._storage.list(key):
-            if info.key == key:
-                return self._storage.read(key), info.size
-
-        raise ResourceNotFoundError
+        return self._storage.read(key), row.size
 
     @emits(Operation.UPDATE)
     async def finalize(self, index_id: str) -> Index:
