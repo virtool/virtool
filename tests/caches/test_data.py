@@ -41,23 +41,23 @@ class TestPut:
             _chunker(payload),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            "fastp",
-            "0.23.4",
+            "skewer",
+            "0.2.2",
             {"min_length": 50},
         )
 
         assert cache.key == derive_key(
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            "fastp",
-            "0.23.4",
+            "skewer",
+            "0.2.2",
             {"min_length": 50},
         )
         assert cache.blob_uuid
         assert cache.size == len(payload)
         assert cache.params == {
-            "tool_name": "fastp",
-            "tool_version": "0.23.4",
+            "tool_name": "skewer",
+            "tool_version": "0.2.2",
             "min_length": 50,
         }
         assert cache.created_at == static_time.datetime
@@ -82,12 +82,12 @@ class TestPut:
             _chunker(b"x"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            "fastp",
-            "v0.23.4+build.7",
+            "skewer",
+            "v0.2.2+build.7",
             {},
         )
 
-        assert cache.params["tool_version"] == "0.23.4"
+        assert cache.params["tool_version"] == "0.2.2"
 
     async def test_duplicate_key_raises_already_exists(
         self,
@@ -102,8 +102,8 @@ class TestPut:
             _chunker(first_payload),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            "fastp",
-            "0.23.4",
+            "skewer",
+            "0.2.2",
             {"min_length": 50},
         )
 
@@ -112,8 +112,8 @@ class TestPut:
                 _chunker(b"second-writer-different-bytes"),
                 CacheType.sample_trimmed_reads,
                 "sample_alpha",
-                "fastp",
-                "0.23.4",
+                "skewer",
+                "0.2.2",
                 {"min_length": 50},
             )
 
@@ -157,8 +157,8 @@ class TestPut:
                 _chunker(b"orphan-payload"),
                 CacheType.sample_trimmed_reads,
                 "sample_alpha",
-                "fastp",
-                "0.23.4",
+                "skewer",
+                "0.2.2",
                 {},
             )
 
@@ -172,8 +172,8 @@ class TestGet:
             await data_layer.caches.get(
                 CacheType.sample_trimmed_reads,
                 "sample_alpha",
-                "fastp",
-                "0.23.4",
+                "skewer",
+                "0.2.2",
                 {},
             )
             is None
@@ -184,16 +184,16 @@ class TestGet:
             _chunker(b"x"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            "fastp",
-            "0.23.4",
+            "skewer",
+            "0.2.2",
             {},
         )
 
         got = await data_layer.caches.get(
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            "fastp",
-            "0.23.4",
+            "skewer",
+            "0.2.2",
             {},
         )
 
@@ -211,8 +211,8 @@ class TestGet:
             _chunker(b"x"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            "fastp",
-            "0.23.4",
+            "skewer",
+            "0.2.2",
             {},
         )
 
@@ -222,8 +222,8 @@ class TestGet:
         await data_layer.caches.get(
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            "fastp",
-            "0.23.4",
+            "skewer",
+            "0.2.2",
             {},
         )
 
@@ -241,8 +241,8 @@ class TestGet:
             _chunker(b"x"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            "fastp",
-            "0.23.4",
+            "skewer",
+            "0.2.2",
             {},
         )
 
@@ -252,8 +252,8 @@ class TestGet:
         await data_layer.caches.get(
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            "fastp",
-            "0.23.4",
+            "skewer",
+            "0.2.2",
             {},
         )
 
@@ -273,8 +273,8 @@ class TestDelete:
             _chunker(b"payload"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            "fastp",
-            "0.23.4",
+            "skewer",
+            "0.2.2",
             {},
         )
         keys_before = [
@@ -290,12 +290,30 @@ class TestDelete:
         ]
         assert keys_after == []
 
-    async def test_delete_by_key_miss_is_idempotent(
+    async def test_delete_by_key_is_idempotent(
         self,
         data_layer: DataLayer,
+        pg: AsyncEngine,
         static_time,
+        memory_storage: StorageBackend,
     ):
-        await data_layer.caches.delete_by_key("missing")
+        cache = await data_layer.caches.create(
+            _chunker(b"payload"),
+            CacheType.sample_trimmed_reads,
+            "sample_alpha",
+            "skewer",
+            "0.2.2",
+            {},
+        )
+
+        await data_layer.caches.delete_by_key(cache.key)
+        await data_layer.caches.delete_by_key(cache.key)
+
+        assert await get_row(pg, SQLCache, ("key", cache.key)) is None
+        keys = [info.key async for info in memory_storage.list(_blob_key(""))]
+        assert keys == []
+
+        await data_layer.caches.delete_by_key("never-existed")
 
     async def test_delete_by_parent_filters_by_type(
         self,
@@ -308,16 +326,16 @@ class TestDelete:
             _chunker(b"a"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            "fastp",
-            "0.23.4",
+            "skewer",
+            "0.2.2",
             {"min_length": 50},
         )
         owned_trimmed_b = await data_layer.caches.create(
             _chunker(b"b"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            "fastp",
-            "0.23.4",
+            "skewer",
+            "0.2.2",
             {"min_length": 75},
         )
         owned_other_type = await data_layer.caches.create(
@@ -332,8 +350,8 @@ class TestDelete:
             _chunker(b"d"),
             CacheType.sample_trimmed_reads,
             "sample_beta",
-            "fastp",
-            "0.23.4",
+            "skewer",
+            "0.2.2",
             {},
         )
 

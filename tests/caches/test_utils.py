@@ -58,29 +58,29 @@ class TestNormalizeSemver:
 
 class TestBuildStoredParams:
     def test_merges_tool_fields(self):
-        assert build_stored_params("fastp", "0.23.4", {"min_length": 50}) == {
-            "tool_name": "fastp",
-            "tool_version": "0.23.4",
+        assert build_stored_params("skewer", "0.2.2", {"min_length": 50}) == {
+            "tool_name": "skewer",
+            "tool_version": "0.2.2",
             "min_length": 50,
         }
 
     def test_normalizes_version(self):
-        result = build_stored_params("fastp", "v0.23.4+build.7", {})
-        assert result["tool_version"] == "0.23.4"
+        result = build_stored_params("skewer", "v0.2.2+build.7", {})
+        assert result["tool_version"] == "0.2.2"
 
     def test_explicit_args_win_over_params(self):
         result = build_stored_params(
-            "fastp",
-            "0.23.4",
+            "skewer",
+            "0.2.2",
             {"tool_name": "trimmomatic", "tool_version": "1.0.0"},
         )
-        assert result["tool_name"] == "fastp"
-        assert result["tool_version"] == "0.23.4"
+        assert result["tool_name"] == "skewer"
+        assert result["tool_version"] == "0.2.2"
 
     def test_empty_params(self):
-        assert build_stored_params("fastp", "0.23.4", {}) == {
-            "tool_name": "fastp",
-            "tool_version": "0.23.4",
+        assert build_stored_params("skewer", "0.2.2", {}) == {
+            "tool_name": "skewer",
+            "tool_version": "0.2.2",
         }
 
 
@@ -89,8 +89,8 @@ class TestDeriveKey:
         key = derive_key(
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            "fastp",
-            "0.23.4",
+            "skewer",
+            "0.2.2",
             {"min_length": 50},
         )
         assert len(key) == 64
@@ -100,15 +100,15 @@ class TestDeriveKey:
         key_a = derive_key(
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            "fastp",
-            "0.23.4",
+            "skewer",
+            "0.2.2",
             {"a": 1, "b": 2},
         )
         key_b = derive_key(
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            "fastp",
-            "0.23.4",
+            "skewer",
+            "0.2.2",
             {"b": 2, "a": 1},
         )
         assert key_a == key_b
@@ -117,15 +117,15 @@ class TestDeriveKey:
         key_a = derive_key(
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            "fastp",
-            "0.23.4",
+            "skewer",
+            "0.2.2",
             {},
         )
         key_b = derive_key(
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            "fastp",
-            "0.23.4+build.7",
+            "skewer",
+            "0.2.2+build.7",
             {},
         )
         assert key_a == key_b
@@ -134,15 +134,15 @@ class TestDeriveKey:
         key_release = derive_key(
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            "fastp",
-            "0.23.4",
+            "skewer",
+            "0.2.2",
             {},
         )
         key_prerelease = derive_key(
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            "fastp",
-            "0.23.4-rc.1",
+            "skewer",
+            "0.2.2-rc.1",
             {},
         )
         assert key_release != key_prerelease
@@ -151,15 +151,15 @@ class TestDeriveKey:
         key_alpha = derive_key(
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            "fastp",
-            "0.23.4",
+            "skewer",
+            "0.2.2",
             {},
         )
         key_beta = derive_key(
             CacheType.sample_trimmed_reads,
             "sample_beta",
-            "fastp",
-            "0.23.4",
+            "skewer",
+            "0.2.2",
             {},
         )
         assert key_alpha != key_beta
@@ -182,28 +182,28 @@ class TestDeriveKey:
         assert key_reads != key_index
 
     def test_tool_name_changes_key(self):
-        key_fastp = derive_key(
+        key_skewer = derive_key(
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            "fastp",
-            "0.23.4",
+            "skewer",
+            "0.2.2",
             {},
         )
         key_other = derive_key(
             CacheType.sample_trimmed_reads,
             "sample_alpha",
             "trimmomatic",
-            "0.23.4",
+            "0.2.2",
             {},
         )
-        assert key_fastp != key_other
+        assert key_skewer != key_other
 
     def test_matches_manual_sha256(self):
         """Pin the field layout: NUL-joined, normalized version, canonical params."""
         payload = "\x00".join(
             [
                 "sample_trimmed_reads",
-                '{"min_length":50,"tool_name":"fastp","tool_version":"0.23.4"}',
+                '{"min_length":50,"tool_name":"skewer","tool_version":"0.2.2"}',
                 "sample_alpha",
             ],
         )
@@ -212,8 +212,8 @@ class TestDeriveKey:
         actual = derive_key(
             CacheType.sample_trimmed_reads,
             "sample_alpha",
-            "fastp",
-            "0.23.4+build.7",
+            "skewer",
+            "0.2.2+build.7",
             {"min_length": 50},
         )
         assert actual == expected

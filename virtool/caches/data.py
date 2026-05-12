@@ -112,29 +112,29 @@ class CachesData(DataLayerDomain):
             now = virtool.utils.timestamp()
 
             async with AsyncSession(self._pg) as session:
-                try:
-                    result = await session.execute(
-                        insert(SQLCache)
-                        .values(
-                            key=key,
-                            blob_uuid=blob_uuid,
-                            type=cache_type,
-                            params=stored_params,
-                            parent_id=parent_id,
-                            size=size,
-                            created_at=now,
-                            last_accessed_at=now,
-                        )
-                        .returning(SQLCache.id),
+                result = await session.execute(
+                    insert(SQLCache)
+                    .values(
+                        key=key,
+                        blob_uuid=blob_uuid,
+                        type=cache_type,
+                        params=stored_params,
+                        parent_id=parent_id,
+                        size=size,
+                        created_at=now,
+                        last_accessed_at=now,
                     )
-                    inserted_id = result.scalar_one()
-                    await session.commit()
-                except IntegrityError as err:
-                    if extract_constraint_name(err) == _CACHE_KEY_CONSTRAINT:
-                        raise CacheAlreadyExistsError from err
-                    raise
-        except BaseException:
+                    .returning(SQLCache.id),
+                )
+                inserted_id = result.scalar_one()
+                await session.commit()
+        except BaseException as err:
             await self._storage.delete(blob_key)
+            if (
+                isinstance(err, IntegrityError)
+                and extract_constraint_name(err) == _CACHE_KEY_CONSTRAINT
+            ):
+                raise CacheAlreadyExistsError from err
             raise
 
         return Cache(
