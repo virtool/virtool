@@ -10,7 +10,7 @@ class Cache(BaseModel):
 
     id: int
     key: str
-    blob_uuid: str
+    storage_key: str
     type: CacheType
     params: dict[str, Any]
     parent_id: str

@@ -1,6 +1,6 @@
 """Data-layer domain for cache rows.
 
-Owns both row and blob lifecycle for cache entries.
+Owns both row and storage-object lifecycle for cache entries.
 """
 
 import asyncio
@@ -39,9 +39,14 @@ the expected duplicate-key race from any other integrity violation.
 """
 
 
-def _blob_key(blob_uuid: str) -> str:
-    """Storage key for a cache blob under the shared ``caches/v1/`` namespace."""
-    return f"caches/v1/{blob_uuid}"
+def _storage_key(uuid_: str) -> str:
+    """Build a storage key for a new cache entry under ``caches/v1/``.
+
+    Only used at insert time. Reads and deletes load the persisted
+    ``storage_key`` column verbatim and hand it directly to the storage
+    backend.
+    """
+    return f"caches/v1/{uuid_}"
 
 
 class CachesData(DataLayerDomain):
@@ -92,25 +97,25 @@ class CachesData(DataLayerDomain):
         tool_version: str,
         params: dict[str, Any],
     ) -> Cache:
-        """Write a cache blob and insert its row, returning the new ``Cache``.
+        """Write a cache storage object and insert its row, returning the new ``Cache``.
 
-        Blobs are written under a per-write UUID so concurrent writers for the
-        same key never target the same path, making rollback unconditionally
-        safe — deleting our blob can never affect another writer's.
+        Storage objects are written under a per-write UUID so concurrent
+        writers for the same key never target the same path, making rollback
+        unconditionally safe — deleting our storage object can never affect
+        another writer's.
 
         Raises :class:`CacheAlreadyExistsError` when another writer inserted
-        the same key first; the caller's blob is deleted before the error is
-        raised. Any other failure during insert also deletes the caller's blob
-        before re-raising.
+        the same key first; the caller's storage object is deleted before the
+        error is raised. Any other failure during insert also deletes the
+        caller's storage object before re-raising.
         """
         cache_type = CacheType(cache_type)
         stored_params = build_stored_params(tool_name, tool_version, params)
         key = derive_key(cache_type, parent_id, tool_name, tool_version, params)
-        blob_uuid = uuid.uuid4().hex
-        blob_key = _blob_key(blob_uuid)
+        storage_key = _storage_key(uuid.uuid4().hex)
 
         try:
-            size = await self._storage.write(blob_key, chunker)
+            size = await self._storage.write(storage_key, chunker)
             now = virtool.utils.timestamp()
 
             async with AsyncSession(self._pg) as session:
@@ -118,7 +123,7 @@ class CachesData(DataLayerDomain):
                     insert(SQLCache)
                     .values(
                         key=key,
-                        blob_uuid=blob_uuid,
+                        storage_key=storage_key,
                         type=cache_type.value,
                         params=stored_params,
                         parent_id=parent_id,
@@ -131,7 +136,7 @@ class CachesData(DataLayerDomain):
                 inserted_id = result.scalar_one()
                 await session.commit()
         except BaseException as err:
-            await self._storage.delete(blob_key)
+            await self._storage.delete(storage_key)
             if (
                 isinstance(err, IntegrityError)
                 and extract_constraint_name(err) == _CACHE_KEY_CONSTRAINT
@@ -142,7 +147,7 @@ class CachesData(DataLayerDomain):
         return Cache(
             id=inserted_id,
             key=key,
-            blob_uuid=blob_uuid,
+            storage_key=storage_key,
             type=cache_type,
             params=stored_params,
             parent_id=parent_id,
@@ -152,25 +157,25 @@ class CachesData(DataLayerDomain):
         )
 
     async def delete_by_key(self, key: str) -> None:
-        """Delete the row and blob identified by ``key``.
+        """Delete the row and storage object identified by ``key``.
 
-        Both deletions are idempotent; missing row or missing blob are
-        treated as already-deleted.
+        Both deletions are idempotent; a missing row or missing storage
+        object is treated as already-deleted.
         """
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
                 delete(SQLCache)
                 .where(SQLCache.key == key)
-                .returning(SQLCache.blob_uuid),
+                .returning(SQLCache.storage_key),
             )
-            blob_uuid = result.scalar_one_or_none()
+            storage_key = result.scalar_one_or_none()
             await session.commit()
 
-        if blob_uuid is not None:
-            await self._storage.delete(_blob_key(blob_uuid))
+        if storage_key is not None:
+            await self._storage.delete(storage_key)
 
     async def delete_by_parent(self, parent_id: str, cache_type: CacheType) -> int:
-        """Delete all rows of ``cache_type`` referencing ``parent_id`` and their blobs.
+        """Delete all rows of ``cache_type`` referencing ``parent_id`` and their storage objects.
 
         Returns the number of rows deleted.
         """
@@ -182,13 +187,13 @@ class CachesData(DataLayerDomain):
                     SQLCache.parent_id == parent_id,
                     SQLCache.type == cache_type.value,
                 )
-                .returning(SQLCache.blob_uuid),
+                .returning(SQLCache.storage_key),
             )
-            blob_uuids = [row[0] for row in result.all()]
+            storage_keys = [row[0] for row in result.all()]
             await session.commit()
 
         await asyncio.gather(
-            *(self._storage.delete(_blob_key(blob_uuid)) for blob_uuid in blob_uuids),
+            *(self._storage.delete(storage_key) for storage_key in storage_keys),
         )
 
-        return len(blob_uuids)
+        return len(storage_keys)

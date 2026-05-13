@@ -21,7 +21,7 @@ def upgrade() -> None:
         "caches",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("key", sa.String(), nullable=False),
-        sa.Column("blob_uuid", sa.String(), nullable=False),
+        sa.Column("storage_key", sa.String(), nullable=False),
         sa.Column("type", sa.String(), nullable=False),
         sa.Column("params", JSONB(), nullable=False),
         sa.Column("parent_id", sa.String(), nullable=False),
@@ -30,7 +30,7 @@ def upgrade() -> None:
         sa.Column("last_accessed_at", sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("key", name="cache_key"),
-        sa.UniqueConstraint("blob_uuid"),
+        sa.UniqueConstraint("storage_key"),
     )
     op.create_index(
         op.f("ix_caches_parent_id"),

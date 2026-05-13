@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.caches.data import LAST_ACCESSED_BUCKET, _blob_key
+from virtool.caches.data import LAST_ACCESSED_BUCKET, _storage_key
 from virtool.caches.pg import SQLCache
 from virtool.caches.types import CacheType
 from virtool.caches.utils import derive_key
@@ -19,16 +19,16 @@ async def _chunker(payload: bytes) -> AsyncIterator[bytes]:
     yield payload
 
 
-class TestBlobKey:
+class TestStorageKey:
     def test_pins_v1_namespace(self):
         assert (
-            _blob_key("3d8f1c527a4e4b9c9a521c8e7d3b0a91")
+            _storage_key("3d8f1c527a4e4b9c9a521c8e7d3b0a91")
             == "caches/v1/3d8f1c527a4e4b9c9a521c8e7d3b0a91"
         )
 
 
 class TestPut:
-    async def test_inserts_row_and_writes_blob(
+    async def test_inserts_row_and_writes_storage_object(
         self,
         data_layer: DataLayer,
         pg: AsyncEngine,
@@ -53,7 +53,7 @@ class TestPut:
             "0.2.2",
             {"min_length": 50},
         )
-        assert cache.blob_uuid
+        assert cache.storage_key.startswith("caches/v1/")
         assert cache.size == len(payload)
         assert cache.params == {
             "tool_name": "skewer",
@@ -66,11 +66,9 @@ class TestPut:
         row = await get_row(pg, SQLCache, ("key", cache.key))
         assert row is not None
         assert row.id == cache.id
-        assert row.blob_uuid == cache.blob_uuid
+        assert row.storage_key == cache.storage_key
 
-        chunks = [
-            chunk async for chunk in memory_storage.read(_blob_key(cache.blob_uuid))
-        ]
+        chunks = [chunk async for chunk in memory_storage.read(cache.storage_key)]
         assert b"".join(chunks) == payload
 
     async def test_stores_raw_version(
@@ -128,17 +126,15 @@ class TestPut:
                 .all()
             )
         assert len(rows) == 1
-        assert rows[0].blob_uuid == first.blob_uuid
+        assert rows[0].storage_key == first.storage_key
 
-        keys = [info.key async for info in memory_storage.list(_blob_key(""))]
-        assert keys == [_blob_key(first.blob_uuid)]
+        keys = [info.key async for info in memory_storage.list(_storage_key(""))]
+        assert keys == [first.storage_key]
 
-        chunks = [
-            chunk async for chunk in memory_storage.read(_blob_key(first.blob_uuid))
-        ]
+        chunks = [chunk async for chunk in memory_storage.read(first.storage_key)]
         assert b"".join(chunks) == first_payload
 
-    async def test_db_failure_deletes_blob_and_propagates(
+    async def test_db_failure_deletes_storage_object_and_propagates(
         self,
         data_layer: DataLayer,
         pg: AsyncEngine,
@@ -162,7 +158,7 @@ class TestPut:
                 {},
             )
 
-        keys = [info.key async for info in memory_storage.list(_blob_key(""))]
+        keys = [info.key async for info in memory_storage.list(_storage_key(""))]
         assert keys == []
 
 
@@ -278,16 +274,14 @@ class TestDelete:
             {},
         )
         keys_before = [
-            info.key async for info in memory_storage.list(_blob_key(cache.blob_uuid))
+            info.key async for info in memory_storage.list(cache.storage_key)
         ]
-        assert keys_before == [_blob_key(cache.blob_uuid)]
+        assert keys_before == [cache.storage_key]
 
         await data_layer.caches.delete_by_key(cache.key)
 
         assert await get_row(pg, SQLCache, ("key", cache.key)) is None
-        keys_after = [
-            info.key async for info in memory_storage.list(_blob_key(cache.blob_uuid))
-        ]
+        keys_after = [info.key async for info in memory_storage.list(cache.storage_key)]
         assert keys_after == []
 
     async def test_delete_by_key_is_idempotent(
@@ -310,7 +304,7 @@ class TestDelete:
         await data_layer.caches.delete_by_key(cache.key)
 
         assert await get_row(pg, SQLCache, ("key", cache.key)) is None
-        keys = [info.key async for info in memory_storage.list(_blob_key(""))]
+        keys = [info.key async for info in memory_storage.list(_storage_key(""))]
         assert keys == []
 
         await data_layer.caches.delete_by_key("never-existed")
@@ -367,12 +361,12 @@ class TestDelete:
         assert await get_row(pg, SQLCache, ("key", other_parent.key)) is not None
 
         remaining = sorted(
-            [info.key async for info in memory_storage.list(_blob_key(""))],
+            [info.key async for info in memory_storage.list(_storage_key(""))],
         )
         assert remaining == sorted(
             [
-                _blob_key(owned_other_type.blob_uuid),
-                _blob_key(other_parent.blob_uuid),
+                owned_other_type.storage_key,
+                other_parent.storage_key,
             ],
         )
 

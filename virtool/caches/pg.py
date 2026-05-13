@@ -19,12 +19,12 @@ class SQLCache(Base):
     key: Mapped[str] = mapped_column()
     """The content-addressed SHA-256 hex digest identifying this cache."""
 
-    blob_uuid: Mapped[str] = mapped_column(unique=True)
-    """Random UUID identifying this row's blob in storage.
+    storage_key: Mapped[str] = mapped_column(unique=True)
+    """Full storage key for this row's storage object (e.g. ``caches/v1/<uuid>``).
 
-    Decouples the storage path from the cache ``key`` so concurrent writers
-    for the same key never target the same blob path. The blob lives at
-    ``caches/v1/<blob_uuid>``.
+    Generated at insert time from a per-write UUID so concurrent writers for
+    the same cache key never target the same storage path. Stored verbatim so
+    readers can hand it to the storage backend without re-deriving it.
     """
 
     type: Mapped[str] = mapped_column()
@@ -45,7 +45,7 @@ class SQLCache(Base):
     """
 
     size: Mapped[int] = mapped_column(BigInteger)
-    """Size of the on-disk blob in bytes."""
+    """Size of the on-disk storage object in bytes."""
 
     created_at: Mapped[datetime]
     """When the row was inserted."""
