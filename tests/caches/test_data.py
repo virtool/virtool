@@ -73,7 +73,7 @@ class TestPut:
         ]
         assert b"".join(chunks) == payload
 
-    async def test_normalizes_stored_version(
+    async def test_stores_raw_version(
         self,
         data_layer: DataLayer,
         static_time,
@@ -87,7 +87,7 @@ class TestPut:
             {},
         )
 
-        assert cache.params["tool_version"] == "0.2.2"
+        assert cache.params["tool_version"] == "v0.2.2+build.7"
 
     async def test_duplicate_key_raises_already_exists(
         self,

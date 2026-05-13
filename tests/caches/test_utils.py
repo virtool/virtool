@@ -1,13 +1,10 @@
 import hashlib
 
-import pytest
-
 from virtool.caches.types import CacheType
 from virtool.caches.utils import (
     build_stored_params,
     canonicalize_params,
     derive_key,
-    normalize_semver,
 )
 
 
@@ -35,27 +32,6 @@ class TestCanonicalizeParams:
         assert canonical == '{"outer":{"a":2,"b":1}}'
 
 
-class TestNormalizeSemver:
-    def test_passthrough(self):
-        assert normalize_semver("1.2.3") == "1.2.3"
-
-    def test_strips_v_prefix(self):
-        assert normalize_semver("v1.2.3") == "1.2.3"
-
-    def test_keeps_prerelease(self):
-        assert normalize_semver("1.2.3-rc.1") == "1.2.3-rc.1"
-
-    def test_strips_build_metadata(self):
-        assert normalize_semver("1.2.3+build.7") == "1.2.3"
-
-    def test_strips_build_keeps_prerelease(self):
-        assert normalize_semver("1.2.3-rc.1+build.7") == "1.2.3-rc.1"
-
-    def test_invalid_raises(self):
-        with pytest.raises(ValueError):
-            normalize_semver("not-a-version")
-
-
 class TestBuildStoredParams:
     def test_merges_tool_fields(self):
         assert build_stored_params("skewer", "0.2.2", {"min_length": 50}) == {
@@ -64,9 +40,9 @@ class TestBuildStoredParams:
             "min_length": 50,
         }
 
-    def test_normalizes_version(self):
+    def test_preserves_raw_version(self):
         result = build_stored_params("skewer", "v0.2.2+build.7", {})
-        assert result["tool_version"] == "0.2.2"
+        assert result["tool_version"] == "v0.2.2+build.7"
 
     def test_explicit_args_win_over_params(self):
         result = build_stored_params(
@@ -113,7 +89,7 @@ class TestDeriveKey:
         )
         assert key_a == key_b
 
-    def test_build_metadata_does_not_change_key(self):
+    def test_version_string_changes_key(self):
         key_a = derive_key(
             CacheType.sample_trimmed_reads,
             "sample_alpha",
@@ -128,7 +104,7 @@ class TestDeriveKey:
             "0.2.2+build.7",
             {},
         )
-        assert key_a == key_b
+        assert key_a != key_b
 
     def test_prerelease_changes_key(self):
         key_release = derive_key(
@@ -199,11 +175,11 @@ class TestDeriveKey:
         assert key_skewer != key_other
 
     def test_matches_manual_sha256(self):
-        """Pin the field layout: NUL-joined, normalized version, canonical params."""
+        """Pin the field layout: NUL-joined, raw version, canonical params."""
         payload = "\x00".join(
             [
                 "sample_trimmed_reads",
-                '{"min_length":50,"tool_name":"skewer","tool_version":"0.2.2"}',
+                '{"min_length":50,"tool_name":"skewer","tool_version":"0.2.2+build.7"}',
                 "sample_alpha",
             ],
         )
