@@ -15,7 +15,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
-from virtool.caches.models import Cache
+from virtool.caches.models import Cache, CacheHit
 from virtool.caches.pg import SQLCache
 from virtool.caches.types import CacheType
 from virtool.caches.utils import build_stored_params, derive_key
@@ -63,8 +63,11 @@ class CachesData(DataLayerDomain):
         tool_name: str,
         tool_version: str,
         params: dict[str, Any],
-    ) -> Cache | None:
-        """Return the cache row matching the derived key, or ``None``.
+    ) -> CacheHit | None:
+        """Return a :class:`CacheHit` for the matching row, or ``None``.
+
+        The returned hit carries a lazy chunker over the stored bytes; the
+        underlying storage stream is not opened until the chunker is iterated.
 
         Refreshes ``last_accessed_at`` when it is older than
         :data:`LAST_ACCESSED_BUCKET`.
@@ -86,7 +89,10 @@ class CachesData(DataLayerDomain):
                 row.last_accessed_at = now
                 await session.commit()
 
-            return Cache(**row.to_dict())
+            return CacheHit(
+                **row.to_dict(),
+                data=self._storage.read(row.storage_key),
+            )
 
     async def create(
         self,

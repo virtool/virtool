@@ -2,16 +2,12 @@ from collections.abc import AsyncIterator
 from datetime import timedelta
 
 import pytest
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.caches.data import LAST_ACCESSED_BUCKET, _storage_key
-from virtool.caches.pg import SQLCache
 from virtool.caches.types import CacheType
-from virtool.caches.utils import derive_key
 from virtool.data.errors import CacheAlreadyExistsError
 from virtool.data.layer import DataLayer
-from virtool.pg.utils import get_row
 from virtool.storage.protocol import StorageBackend
 
 
@@ -27,119 +23,103 @@ class TestStorageKey:
         )
 
 
-class TestPut:
-    async def test_inserts_row_and_writes_storage_object(
+class TestCreate:
+    async def test_round_trip(
         self,
         data_layer: DataLayer,
-        pg: AsyncEngine,
         static_time,
-        memory_storage: StorageBackend,
     ):
         payload = b"trimmed-reads-payload"
+        cache_type = CacheType.sample_trimmed_reads
+        parent_id = "sample_alpha"
+        tool_name = "skewer"
+        tool_version = "0.2.2"
+        params = {"min_length": 50}
 
-        cache = await data_layer.caches.create(
+        created = await data_layer.caches.create(
             _chunker(payload),
-            CacheType.sample_trimmed_reads,
-            "sample_alpha",
-            "skewer",
-            "0.2.2",
-            {"min_length": 50},
+            cache_type,
+            parent_id,
+            tool_name,
+            tool_version,
+            params,
         )
 
-        assert cache.key == derive_key(
-            CacheType.sample_trimmed_reads,
-            "sample_alpha",
-            "skewer",
-            "0.2.2",
-            {"min_length": 50},
+        hit = await data_layer.caches.get(
+            cache_type,
+            parent_id,
+            tool_name,
+            tool_version,
+            params,
         )
-        assert cache.storage_key.startswith("caches/v1/")
-        assert cache.size == len(payload)
-        assert cache.params == {
-            "tool_name": "skewer",
-            "tool_version": "0.2.2",
+
+        assert hit is not None
+        assert hit.id == created.id
+        assert hit.key == created.key
+        assert hit.storage_key == created.storage_key
+        assert hit.type == cache_type
+        assert hit.parent_id == parent_id
+        assert hit.params == {
+            "tool_name": tool_name,
+            "tool_version": tool_version,
             "min_length": 50,
         }
-        assert cache.created_at == static_time.datetime
-        assert cache.last_accessed_at == static_time.datetime
+        assert hit.size == created.size == len(payload)
 
-        row = await get_row(pg, SQLCache, ("key", cache.key))
-        assert row is not None
-        assert row.id == cache.id
-        assert row.storage_key == cache.storage_key
-
-        chunks = [chunk async for chunk in memory_storage.read(cache.storage_key)]
+        chunks = [chunk async for chunk in hit.data]
         assert b"".join(chunks) == payload
-
-    async def test_stores_raw_version(
-        self,
-        data_layer: DataLayer,
-        static_time,
-    ):
-        cache = await data_layer.caches.create(
-            _chunker(b"x"),
-            CacheType.sample_trimmed_reads,
-            "sample_alpha",
-            "skewer",
-            "v0.2.2+build.7",
-            {},
-        )
-
-        assert cache.params["tool_version"] == "v0.2.2+build.7"
 
     async def test_duplicate_key_raises_already_exists(
         self,
         data_layer: DataLayer,
-        pg: AsyncEngine,
-        static_time,
         memory_storage: StorageBackend,
+        static_time,
     ):
         first_payload = b"first-writer"
+        cache_type = CacheType.sample_trimmed_reads
+        parent_id = "sample_alpha"
+        tool_name = "skewer"
+        tool_version = "0.2.2"
+        params = {"min_length": 50}
 
-        first = await data_layer.caches.create(
+        await data_layer.caches.create(
             _chunker(first_payload),
-            CacheType.sample_trimmed_reads,
-            "sample_alpha",
-            "skewer",
-            "0.2.2",
-            {"min_length": 50},
+            cache_type,
+            parent_id,
+            tool_name,
+            tool_version,
+            params,
         )
 
         with pytest.raises(CacheAlreadyExistsError):
             await data_layer.caches.create(
                 _chunker(b"second-writer-different-bytes"),
-                CacheType.sample_trimmed_reads,
-                "sample_alpha",
-                "skewer",
-                "0.2.2",
-                {"min_length": 50},
+                cache_type,
+                parent_id,
+                tool_name,
+                tool_version,
+                params,
             )
 
-        async with AsyncSession(pg) as session:
-            rows = (
-                (
-                    await session.execute(
-                        select(SQLCache).where(SQLCache.key == first.key),
-                    )
-                )
-                .scalars()
-                .all()
-            )
-        assert len(rows) == 1
-        assert rows[0].storage_key == first.storage_key
+        hit = await data_layer.caches.get(
+            cache_type,
+            parent_id,
+            tool_name,
+            tool_version,
+            params,
+        )
+        assert hit is not None
+        chunks = [chunk async for chunk in hit.data]
+        assert b"".join(chunks) == first_payload
 
         keys = [info.key async for info in memory_storage.list(_storage_key(""))]
-        assert keys == [first.storage_key]
-
-        chunks = [chunk async for chunk in memory_storage.read(first.storage_key)]
-        assert b"".join(chunks) == first_payload
+        assert len(keys) == 1
 
     async def test_db_failure_deletes_storage_object_and_propagates(
         self,
         data_layer: DataLayer,
-        pg: AsyncEngine,
-        static_time,
         memory_storage: StorageBackend,
+        static_time,
         mocker,
     ):
         mocker.patch.object(
@@ -158,6 +138,17 @@ class TestPut:
                 {},
             )
 
+        assert (
+            await data_layer.caches.get(
+                CacheType.sample_trimmed_reads,
+                "sample_alpha",
+                "skewer",
+                "0.2.2",
+                {},
+            )
+            is None
+        )
+
         keys = [info.key async for info in memory_storage.list(_storage_key(""))]
         assert keys == []
 
@@ -175,35 +166,13 @@ class TestGet:
             is None
         )
 
-    async def test_hit_returns_row(self, data_layer: DataLayer, static_time):
-        cache = await data_layer.caches.create(
-            _chunker(b"x"),
-            CacheType.sample_trimmed_reads,
-            "sample_alpha",
-            "skewer",
-            "0.2.2",
-            {},
-        )
-
-        got = await data_layer.caches.get(
-            CacheType.sample_trimmed_reads,
-            "sample_alpha",
-            "skewer",
-            "0.2.2",
-            {},
-        )
-
-        assert got is not None
-        assert got.id == cache.id
-
     async def test_does_not_touch_within_bucket(
         self,
         data_layer: DataLayer,
-        pg: AsyncEngine,
         static_time,
         mocker,
     ):
-        cache = await data_layer.caches.create(
+        await data_layer.caches.create(
             _chunker(b"x"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
@@ -215,7 +184,7 @@ class TestGet:
         bumped = static_time.datetime + (LAST_ACCESSED_BUCKET - timedelta(seconds=1))
         mocker.patch("virtool.utils.timestamp", return_value=bumped)
 
-        await data_layer.caches.get(
+        hit = await data_layer.caches.get(
             CacheType.sample_trimmed_reads,
             "sample_alpha",
             "skewer",
@@ -223,17 +192,16 @@ class TestGet:
             {},
         )
 
-        row = await get_row(pg, SQLCache, ("key", cache.key))
-        assert row.last_accessed_at == static_time.datetime
+        assert hit is not None
+        assert hit.last_accessed_at == static_time.datetime
 
     async def test_touches_after_bucket(
         self,
         data_layer: DataLayer,
-        pg: AsyncEngine,
         static_time,
         mocker,
     ):
-        cache = await data_layer.caches.create(
+        await data_layer.caches.create(
             _chunker(b"x"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
@@ -245,7 +213,7 @@ class TestGet:
         bumped = static_time.datetime + LAST_ACCESSED_BUCKET + timedelta(seconds=1)
         mocker.patch("virtool.utils.timestamp", return_value=bumped)
 
-        await data_layer.caches.get(
+        hit = await data_layer.caches.get(
             CacheType.sample_trimmed_reads,
             "sample_alpha",
             "skewer",
@@ -253,70 +221,92 @@ class TestGet:
             {},
         )
 
-        row = await get_row(pg, SQLCache, ("key", cache.key))
-        assert row.last_accessed_at == bumped
+        assert hit is not None
+        assert hit.last_accessed_at == bumped
 
 
 class TestDelete:
     async def test_delete_by_key_hit(
         self,
         data_layer: DataLayer,
-        pg: AsyncEngine,
-        static_time,
         memory_storage: StorageBackend,
+        static_time,
     ):
-        cache = await data_layer.caches.create(
+        cache_type = CacheType.sample_trimmed_reads
+        parent_id = "sample_alpha"
+        tool_name = "skewer"
+        tool_version = "0.2.2"
+        params = {}
+
+        created = await data_layer.caches.create(
             _chunker(b"payload"),
-            CacheType.sample_trimmed_reads,
-            "sample_alpha",
-            "skewer",
-            "0.2.2",
-            {},
+            cache_type,
+            parent_id,
+            tool_name,
+            tool_version,
+            params,
         )
-        keys_before = [
-            info.key async for info in memory_storage.list(cache.storage_key)
-        ]
-        assert keys_before == [cache.storage_key]
 
-        await data_layer.caches.delete_by_key(cache.key)
+        await data_layer.caches.delete_by_key(created.key)
 
-        assert await get_row(pg, SQLCache, ("key", cache.key)) is None
-        keys_after = [info.key async for info in memory_storage.list(cache.storage_key)]
-        assert keys_after == []
+        assert (
+            await data_layer.caches.get(
+                cache_type,
+                parent_id,
+                tool_name,
+                tool_version,
+                params,
+            )
+            is None
+        )
+        keys = [info.key async for info in memory_storage.list(_storage_key(""))]
+        assert keys == []
 
     async def test_delete_by_key_is_idempotent(
         self,
         data_layer: DataLayer,
-        pg: AsyncEngine,
-        static_time,
         memory_storage: StorageBackend,
+        static_time,
     ):
-        cache = await data_layer.caches.create(
+        cache_type = CacheType.sample_trimmed_reads
+        parent_id = "sample_alpha"
+        tool_name = "skewer"
+        tool_version = "0.2.2"
+        params = {}
+
+        created = await data_layer.caches.create(
             _chunker(b"payload"),
-            CacheType.sample_trimmed_reads,
-            "sample_alpha",
-            "skewer",
-            "0.2.2",
-            {},
+            cache_type,
+            parent_id,
+            tool_name,
+            tool_version,
+            params,
         )
 
-        await data_layer.caches.delete_by_key(cache.key)
-        await data_layer.caches.delete_by_key(cache.key)
+        await data_layer.caches.delete_by_key(created.key)
+        await data_layer.caches.delete_by_key(created.key)
+        await data_layer.caches.delete_by_key("never-existed")
 
-        assert await get_row(pg, SQLCache, ("key", cache.key)) is None
+        assert (
+            await data_layer.caches.get(
+                cache_type,
+                parent_id,
+                tool_name,
+                tool_version,
+                params,
+            )
+            is None
+        )
         keys = [info.key async for info in memory_storage.list(_storage_key(""))]
         assert keys == []
-
-        await data_layer.caches.delete_by_key("never-existed")
 
     async def test_delete_by_parent_filters_by_type(
         self,
         data_layer: DataLayer,
-        pg: AsyncEngine,
-        static_time,
         memory_storage: StorageBackend,
+        static_time,
     ):
-        owned_trimmed_a = await data_layer.caches.create(
+        await data_layer.caches.create(
             _chunker(b"a"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
@@ -324,7 +314,7 @@ class TestDelete:
             "0.2.2",
             {"min_length": 50},
         )
-        owned_trimmed_b = await data_layer.caches.create(
+        await data_layer.caches.create(
             _chunker(b"b"),
             CacheType.sample_trimmed_reads,
             "sample_alpha",
@@ -332,7 +322,7 @@ class TestDelete:
             "0.2.2",
             {"min_length": 75},
         )
-        owned_other_type = await data_layer.caches.create(
+        await data_layer.caches.create(
             _chunker(b"c"),
             CacheType.subtraction_mapping_index,
             "sample_alpha",
@@ -340,7 +330,7 @@ class TestDelete:
             "2.5.1",
             {},
         )
-        other_parent = await data_layer.caches.create(
+        await data_layer.caches.create(
             _chunker(b"d"),
             CacheType.sample_trimmed_reads,
             "sample_beta",
@@ -355,20 +345,55 @@ class TestDelete:
         )
 
         assert deleted == 2
-        assert await get_row(pg, SQLCache, ("key", owned_trimmed_a.key)) is None
-        assert await get_row(pg, SQLCache, ("key", owned_trimmed_b.key)) is None
-        assert await get_row(pg, SQLCache, ("key", owned_other_type.key)) is not None
-        assert await get_row(pg, SQLCache, ("key", other_parent.key)) is not None
 
-        remaining = sorted(
-            [info.key async for info in memory_storage.list(_storage_key(""))],
+        # Targeted rows are gone.
+        assert (
+            await data_layer.caches.get(
+                CacheType.sample_trimmed_reads,
+                "sample_alpha",
+                "skewer",
+                "0.2.2",
+                {"min_length": 50},
+            )
+            is None
         )
-        assert remaining == sorted(
-            [
-                owned_other_type.storage_key,
-                other_parent.storage_key,
-            ],
+        assert (
+            await data_layer.caches.get(
+                CacheType.sample_trimmed_reads,
+                "sample_alpha",
+                "skewer",
+                "0.2.2",
+                {"min_length": 75},
+            )
+            is None
         )
+
+        # Other type for the same parent survives.
+        assert (
+            await data_layer.caches.get(
+                CacheType.subtraction_mapping_index,
+                "sample_alpha",
+                "bowtie2",
+                "2.5.1",
+                {},
+            )
+            is not None
+        )
+
+        # Same type for a different parent survives.
+        assert (
+            await data_layer.caches.get(
+                CacheType.sample_trimmed_reads,
+                "sample_beta",
+                "skewer",
+                "0.2.2",
+                {},
+            )
+            is not None
+        )
+
+        keys = [info.key async for info in memory_storage.list(_storage_key(""))]
+        assert len(keys) == 2
 
     async def test_delete_by_parent_no_rows(
         self,
