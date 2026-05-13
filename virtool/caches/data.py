@@ -64,6 +64,7 @@ class CachesData(DataLayerDomain):
         Refreshes ``last_accessed_at`` when it is older than
         :data:`LAST_ACCESSED_BUCKET`.
         """
+        cache_type = CacheType(cache_type)
         key = derive_key(cache_type, parent_id, tool_name, tool_version, params)
 
         async with AsyncSession(self._pg, expire_on_commit=False) as session:
@@ -102,6 +103,7 @@ class CachesData(DataLayerDomain):
         raised. Any other failure during insert also deletes the caller's blob
         before re-raising.
         """
+        cache_type = CacheType(cache_type)
         stored_params = build_stored_params(tool_name, tool_version, params)
         key = derive_key(cache_type, parent_id, tool_name, tool_version, params)
         blob_uuid = uuid.uuid4().hex
@@ -117,7 +119,7 @@ class CachesData(DataLayerDomain):
                     .values(
                         key=key,
                         blob_uuid=blob_uuid,
-                        type=cache_type,
+                        type=cache_type.value,
                         params=stored_params,
                         parent_id=parent_id,
                         size=size,
@@ -172,12 +174,13 @@ class CachesData(DataLayerDomain):
 
         Returns the number of rows deleted.
         """
+        cache_type = CacheType(cache_type)
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
                 delete(SQLCache)
                 .where(
                     SQLCache.parent_id == parent_id,
-                    SQLCache.type == cache_type,
+                    SQLCache.type == cache_type.value,
                 )
                 .returning(SQLCache.blob_uuid),
             )

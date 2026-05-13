@@ -15,22 +15,14 @@ down_revision = "bd1ffbecfce5"
 branch_labels = None
 depends_on = None
 
-CACHE_TYPES = (
-    "reference_mapping_index",
-    "subtraction_mapping_index",
-    "sample_trimmed_reads",
-)
-
 
 def upgrade() -> None:
-    cache_type_enum = sa.Enum(*CACHE_TYPES, name="cachetype")
-
     op.create_table(
         "caches",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("key", sa.String(), nullable=False),
         sa.Column("blob_uuid", sa.String(), nullable=False),
-        sa.Column("type", cache_type_enum, nullable=False),
+        sa.Column("type", sa.String(), nullable=False),
         sa.Column("params", JSONB(), nullable=False),
         sa.Column("parent_id", sa.String(), nullable=False),
         sa.Column("size", sa.BigInteger(), nullable=False),
@@ -51,4 +43,3 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_index(op.f("ix_caches_parent_id"), table_name="caches")
     op.drop_table("caches")
-    sa.Enum(name="cachetype").drop(op.get_bind(), checkfirst=False)

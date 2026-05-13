@@ -1,10 +1,9 @@
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Enum, UniqueConstraint
+from sqlalchemy import BigInteger, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
-from virtool.caches.types import CacheType
 from virtool.pg.base import Base
 
 
@@ -28,8 +27,13 @@ class SQLCache(Base):
     ``caches/v1/<blob_uuid>``.
     """
 
-    type: Mapped[CacheType] = mapped_column(Enum(CacheType))
-    """The kind of artifact stored at this key."""
+    type: Mapped[str] = mapped_column()
+    """The kind of artifact stored at this key.
+
+    Stored as a plain string; valid values are enforced at the data layer
+    against the :class:`virtool.caches.types.CacheType` enum used by the
+    :class:`virtool.caches.models.Cache` Pydantic model.
+    """
 
     params: Mapped[dict] = mapped_column(JSONB)
     """The canonical parameter dict used to derive ``key``."""
