@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import virtool.utils
 from virtool.caches.models import Cache, CacheHit
 from virtool.caches.pg import SQLCache
-from virtool.caches.types import CacheParams
+from virtool.caches.types import BaseCacheParams
 from virtool.caches.utils import derive_key
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import CacheAlreadyExistsError
@@ -59,7 +59,7 @@ class CachesData(DataLayerDomain):
         self,
         cache_type: str,
         parent_id: str,
-        params: CacheParams,
+        params: BaseCacheParams,
     ) -> CacheHit | None:
         """Return a :class:`CacheHit` for the matching row, or ``None``.
 
@@ -95,7 +95,7 @@ class CachesData(DataLayerDomain):
         chunker: AsyncIterator[bytes],
         cache_type: str,
         parent_id: str,
-        params: CacheParams,
+        params: BaseCacheParams,
     ) -> Cache:
         """Write a cache storage object and insert its row, returning the new ``Cache``.
 

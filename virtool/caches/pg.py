@@ -32,8 +32,8 @@ class SQLCache(Base):
 
     An opaque discriminator owned by the caller. The cache module does not
     enforce a value set; callers pair each ``type`` string with a
-    :class:`virtool.caches.types.CacheParams` subclass that pins the shape
-    of ``params``.
+    :class:`virtool.caches.types.BaseCacheParams` subclass that pins the
+    shape of ``params``.
     """
 
     params: Mapped[dict] = mapped_column(JSONB)

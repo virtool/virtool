@@ -5,16 +5,16 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.caches.data import LAST_ACCESSED_BUCKET, _storage_key
-from virtool.caches.types import CacheParams
 from virtool.data.errors import CacheAlreadyExistsError
 from virtool.data.layer import DataLayer
 from virtool.storage.protocol import StorageBackend
+from virtool.workflow.models import WorkflowCacheParams
 
 SAMPLE_TRIMMED_READS = "sample_trimmed_reads"
 SUBTRACTION_MAPPING_INDEX = "subtraction_mapping_index"
 
 
-class SkewerCacheParams(CacheParams):
+class SkewerCacheParams(WorkflowCacheParams):
     """Workflow-style params: a skewer-based read trimming run."""
 
     min_length: int = 0
@@ -277,7 +277,10 @@ class TestDelete:
             tool_version="0.2.2",
             min_length=75,
         )
-        alpha_subtraction = CacheParams(tool_name="bowtie2", tool_version="2.5.1")
+        alpha_subtraction = WorkflowCacheParams(
+            tool_name="bowtie2",
+            tool_version="2.5.1",
+        )
         beta_default = SkewerCacheParams(tool_name="skewer", tool_version="0.2.2")
 
         await data_layer.caches.create(

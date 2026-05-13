@@ -1,16 +1,14 @@
 from pydantic import BaseModel
 
 
-class CacheParams(BaseModel):
+class BaseCacheParams(BaseModel):
     """Base shape for the parameter payload of a cache entry.
 
-    Subclass per use case to declare the keys that contribute to the cache
-    key. ``tool_name`` and ``tool_version`` are required on the base because
-    every cache entry today is keyed on the tool that produced it.
+    The cache module enforces no fields of its own; callers subclass this
+    type to declare the keys that contribute to their cache key. ``extra``
+    is forbidden so a typo in a caller's subclass surfaces as a validation
+    error rather than a silent cache miss.
     """
-
-    tool_name: str
-    tool_version: str
 
     class Config:
         extra = "forbid"
