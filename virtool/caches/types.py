@@ -1,9 +1,17 @@
-from virtool.pg.utils import SQLEnum
+from pydantic import BaseModel
 
 
-class CacheType(str, SQLEnum):
-    """The kinds of artifacts the cache module stores."""
+class CacheParams(BaseModel):
+    """Base shape for the parameter payload of a cache entry.
 
-    reference_mapping_index = "reference_mapping_index"
-    subtraction_mapping_index = "subtraction_mapping_index"
-    sample_trimmed_reads = "sample_trimmed_reads"
+    Subclass per use case to declare the keys that contribute to the cache
+    key. ``tool_name`` and ``tool_version`` are required on the base because
+    every cache entry today is keyed on the tool that produced it.
+    """
+
+    tool_name: str
+    tool_version: str
+
+    class Config:
+        extra = "forbid"
+        allow_mutation = False

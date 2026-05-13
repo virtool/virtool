@@ -1,67 +1,35 @@
 """Pure-Python helpers for content-addressing cache entries.
 
 A cache key is the SHA-256 digest of the NUL-joined canonical form of
-``(cache_type, canonical_params, parent_id)``. ``tool_name`` and
-``tool_version`` are passed explicitly and folded into the canonical params
-alongside any caller-supplied fields. ``tool_version`` is used verbatim, so
-any variation in the version string produces a distinct key.
+``(cache_type, canonical_params, parent_id)``. ``canonical_params`` is the
+sorted-key, tight-separator JSON dump of the :class:`CacheParams` payload.
 """
 
 import hashlib
 import json
-from typing import Any
 
-from virtool.caches.types import CacheType
+from virtool.caches.types import CacheParams
 
 _KEY_FIELD_SEPARATOR = "\x00"
 
 
-def canonicalize_params(params: dict[str, Any]) -> str:
+def canonicalize_params(params: CacheParams) -> str:
     """Serialize ``params`` to a stable, byte-identical string.
 
     Keys are sorted, separators are tight, and non-ASCII characters are
     escaped so the output is independent of platform locale.
     """
-    return json.dumps(params, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
-
-
-def build_stored_params(
-    tool_name: str,
-    tool_version: str,
-    params: dict[str, Any],
-) -> dict[str, Any]:
-    """Return the JSONB-ready params dict for a cache entry.
-
-    Merges the explicit tool fields into ``params``. Explicit arguments win
-    over any same-named keys in ``params``.
-    """
-    return {
-        **params,
-        "tool_name": tool_name,
-        "tool_version": tool_version,
-    }
-
-
-def derive_key(
-    cache_type: CacheType,
-    parent_id: str,
-    tool_name: str,
-    tool_version: str,
-    params: dict[str, Any],
-) -> str:
-    """Derive the SHA-256 cache key for the given inputs.
-
-    ``tool_name`` and ``tool_version`` are folded into ``params`` for the
-    canonical form.
-    """
-    payload = _KEY_FIELD_SEPARATOR.join(
-        [
-            cache_type.value,
-            canonicalize_params(
-                build_stored_params(tool_name, tool_version, params),
-            ),
-            parent_id,
-        ],
+    return json.dumps(
+        params.dict(),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
     )
 
+
+def derive_key(cache_type: str, parent_id: str, params: CacheParams) -> str:
+    """Derive the SHA-256 cache key for the given inputs."""
+    payload = _KEY_FIELD_SEPARATOR.join(
+        [cache_type, canonicalize_params(params), parent_id],
+    )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()

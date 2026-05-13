@@ -7,7 +7,6 @@ import asyncio
 import uuid
 from collections.abc import AsyncIterator
 from datetime import timedelta
-from typing import Any
 
 from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert
@@ -17,8 +16,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import virtool.utils
 from virtool.caches.models import Cache, CacheHit
 from virtool.caches.pg import SQLCache
-from virtool.caches.types import CacheType
-from virtool.caches.utils import build_stored_params, derive_key
+from virtool.caches.types import CacheParams
+from virtool.caches.utils import derive_key
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import CacheAlreadyExistsError
 from virtool.pg.utils import extract_constraint_name
@@ -58,11 +57,9 @@ class CachesData(DataLayerDomain):
 
     async def get(
         self,
-        cache_type: CacheType,
+        cache_type: str,
         parent_id: str,
-        tool_name: str,
-        tool_version: str,
-        params: dict[str, Any],
+        params: CacheParams,
     ) -> CacheHit | None:
         """Return a :class:`CacheHit` for the matching row, or ``None``.
 
@@ -72,8 +69,7 @@ class CachesData(DataLayerDomain):
         Refreshes ``last_accessed_at`` when it is older than
         :data:`LAST_ACCESSED_BUCKET`.
         """
-        cache_type = CacheType(cache_type)
-        key = derive_key(cache_type, parent_id, tool_name, tool_version, params)
+        key = derive_key(cache_type, parent_id, params)
 
         async with AsyncSession(self._pg, expire_on_commit=False) as session:
             row = (
@@ -97,11 +93,9 @@ class CachesData(DataLayerDomain):
     async def create(
         self,
         chunker: AsyncIterator[bytes],
-        cache_type: CacheType,
+        cache_type: str,
         parent_id: str,
-        tool_name: str,
-        tool_version: str,
-        params: dict[str, Any],
+        params: CacheParams,
     ) -> Cache:
         """Write a cache storage object and insert its row, returning the new ``Cache``.
 
@@ -115,9 +109,8 @@ class CachesData(DataLayerDomain):
         error is raised. Any other failure during insert also deletes the
         caller's storage object before re-raising.
         """
-        cache_type = CacheType(cache_type)
-        stored_params = build_stored_params(tool_name, tool_version, params)
-        key = derive_key(cache_type, parent_id, tool_name, tool_version, params)
+        stored_params = params.dict()
+        key = derive_key(cache_type, parent_id, params)
         storage_key = _storage_key(uuid.uuid4().hex)
 
         try:
@@ -130,7 +123,7 @@ class CachesData(DataLayerDomain):
                     .values(
                         key=key,
                         storage_key=storage_key,
-                        type=cache_type.value,
+                        type=cache_type,
                         params=stored_params,
                         parent_id=parent_id,
                         size=size,
@@ -180,18 +173,17 @@ class CachesData(DataLayerDomain):
         if storage_key is not None:
             await self._storage.delete(storage_key)
 
-    async def delete_by_parent(self, parent_id: str, cache_type: CacheType) -> int:
+    async def delete_by_parent(self, parent_id: str, cache_type: str) -> int:
         """Delete all rows of ``cache_type`` referencing ``parent_id`` and their storage objects.
 
         Returns the number of rows deleted.
         """
-        cache_type = CacheType(cache_type)
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
                 delete(SQLCache)
                 .where(
                     SQLCache.parent_id == parent_id,
-                    SQLCache.type == cache_type.value,
+                    SQLCache.type == cache_type,
                 )
                 .returning(SQLCache.storage_key),
             )

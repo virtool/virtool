@@ -5,10 +5,19 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.caches.data import LAST_ACCESSED_BUCKET, _storage_key
-from virtool.caches.types import CacheType
+from virtool.caches.types import CacheParams
 from virtool.data.errors import CacheAlreadyExistsError
 from virtool.data.layer import DataLayer
 from virtool.storage.protocol import StorageBackend
+
+SAMPLE_TRIMMED_READS = "sample_trimmed_reads"
+SUBTRACTION_MAPPING_INDEX = "subtraction_mapping_index"
+
+
+class SkewerCacheParams(CacheParams):
+    """Workflow-style params: a skewer-based read trimming run."""
+
+    min_length: int = 0
 
 
 async def _chunker(payload: bytes) -> AsyncIterator[bytes]:
@@ -30,38 +39,31 @@ class TestCreate:
         static_time,
     ):
         payload = b"trimmed-reads-payload"
-        cache_type = CacheType.sample_trimmed_reads
         parent_id = "sample_alpha"
-        tool_name = "skewer"
-        tool_version = "0.2.2"
-        params = {"min_length": 50}
+        params = SkewerCacheParams(
+            tool_name="skewer",
+            tool_version="0.2.2",
+            min_length=50,
+        )
 
         created = await data_layer.caches.create(
             _chunker(payload),
-            cache_type,
+            SAMPLE_TRIMMED_READS,
             parent_id,
-            tool_name,
-            tool_version,
             params,
         )
 
-        hit = await data_layer.caches.get(
-            cache_type,
-            parent_id,
-            tool_name,
-            tool_version,
-            params,
-        )
+        hit = await data_layer.caches.get(SAMPLE_TRIMMED_READS, parent_id, params)
 
         assert hit is not None
         assert hit.id == created.id
         assert hit.key == created.key
         assert hit.storage_key == created.storage_key
-        assert hit.type == cache_type
+        assert hit.type == SAMPLE_TRIMMED_READS
         assert hit.parent_id == parent_id
         assert hit.params == {
-            "tool_name": tool_name,
-            "tool_version": tool_version,
+            "tool_name": "skewer",
+            "tool_version": "0.2.2",
             "min_length": 50,
         }
         assert hit.size == created.size == len(payload)
@@ -76,38 +78,29 @@ class TestCreate:
         static_time,
     ):
         first_payload = b"first-writer"
-        cache_type = CacheType.sample_trimmed_reads
         parent_id = "sample_alpha"
-        tool_name = "skewer"
-        tool_version = "0.2.2"
-        params = {"min_length": 50}
+        params = SkewerCacheParams(
+            tool_name="skewer",
+            tool_version="0.2.2",
+            min_length=50,
+        )
 
         await data_layer.caches.create(
             _chunker(first_payload),
-            cache_type,
+            SAMPLE_TRIMMED_READS,
             parent_id,
-            tool_name,
-            tool_version,
             params,
         )
 
         with pytest.raises(CacheAlreadyExistsError):
             await data_layer.caches.create(
                 _chunker(b"second-writer-different-bytes"),
-                cache_type,
+                SAMPLE_TRIMMED_READS,
                 parent_id,
-                tool_name,
-                tool_version,
                 params,
             )
 
-        hit = await data_layer.caches.get(
-            cache_type,
-            parent_id,
-            tool_name,
-            tool_version,
-            params,
-        )
+        hit = await data_layer.caches.get(SAMPLE_TRIMMED_READS, parent_id, params)
         assert hit is not None
         chunks = [chunk async for chunk in hit.data]
         assert b"".join(chunks) == first_payload
@@ -128,23 +121,21 @@ class TestCreate:
             side_effect=RuntimeError("simulated commit failure"),
         )
 
+        params = SkewerCacheParams(tool_name="skewer", tool_version="0.2.2")
+
         with pytest.raises(RuntimeError, match="simulated commit failure"):
             await data_layer.caches.create(
                 _chunker(b"orphan-payload"),
-                CacheType.sample_trimmed_reads,
+                SAMPLE_TRIMMED_READS,
                 "sample_alpha",
-                "skewer",
-                "0.2.2",
-                {},
+                params,
             )
 
         assert (
             await data_layer.caches.get(
-                CacheType.sample_trimmed_reads,
+                SAMPLE_TRIMMED_READS,
                 "sample_alpha",
-                "skewer",
-                "0.2.2",
-                {},
+                params,
             )
             is None
         )
@@ -157,11 +148,9 @@ class TestGet:
     async def test_missing_returns_none(self, data_layer: DataLayer, static_time):
         assert (
             await data_layer.caches.get(
-                CacheType.sample_trimmed_reads,
+                SAMPLE_TRIMMED_READS,
                 "sample_alpha",
-                "skewer",
-                "0.2.2",
-                {},
+                SkewerCacheParams(tool_name="skewer", tool_version="0.2.2"),
             )
             is None
         )
@@ -172,24 +161,22 @@ class TestGet:
         static_time,
         mocker,
     ):
+        params = SkewerCacheParams(tool_name="skewer", tool_version="0.2.2")
+
         await data_layer.caches.create(
             _chunker(b"x"),
-            CacheType.sample_trimmed_reads,
+            SAMPLE_TRIMMED_READS,
             "sample_alpha",
-            "skewer",
-            "0.2.2",
-            {},
+            params,
         )
 
         bumped = static_time.datetime + (LAST_ACCESSED_BUCKET - timedelta(seconds=1))
         mocker.patch("virtool.utils.timestamp", return_value=bumped)
 
         hit = await data_layer.caches.get(
-            CacheType.sample_trimmed_reads,
+            SAMPLE_TRIMMED_READS,
             "sample_alpha",
-            "skewer",
-            "0.2.2",
-            {},
+            params,
         )
 
         assert hit is not None
@@ -201,24 +188,22 @@ class TestGet:
         static_time,
         mocker,
     ):
+        params = SkewerCacheParams(tool_name="skewer", tool_version="0.2.2")
+
         await data_layer.caches.create(
             _chunker(b"x"),
-            CacheType.sample_trimmed_reads,
+            SAMPLE_TRIMMED_READS,
             "sample_alpha",
-            "skewer",
-            "0.2.2",
-            {},
+            params,
         )
 
         bumped = static_time.datetime + LAST_ACCESSED_BUCKET + timedelta(seconds=1)
         mocker.patch("virtool.utils.timestamp", return_value=bumped)
 
         hit = await data_layer.caches.get(
-            CacheType.sample_trimmed_reads,
+            SAMPLE_TRIMMED_READS,
             "sample_alpha",
-            "skewer",
-            "0.2.2",
-            {},
+            params,
         )
 
         assert hit is not None
@@ -232,32 +217,20 @@ class TestDelete:
         memory_storage: StorageBackend,
         static_time,
     ):
-        cache_type = CacheType.sample_trimmed_reads
         parent_id = "sample_alpha"
-        tool_name = "skewer"
-        tool_version = "0.2.2"
-        params = {}
+        params = SkewerCacheParams(tool_name="skewer", tool_version="0.2.2")
 
         created = await data_layer.caches.create(
             _chunker(b"payload"),
-            cache_type,
+            SAMPLE_TRIMMED_READS,
             parent_id,
-            tool_name,
-            tool_version,
             params,
         )
 
         await data_layer.caches.delete_by_key(created.key)
 
         assert (
-            await data_layer.caches.get(
-                cache_type,
-                parent_id,
-                tool_name,
-                tool_version,
-                params,
-            )
-            is None
+            await data_layer.caches.get(SAMPLE_TRIMMED_READS, parent_id, params) is None
         )
         keys = [info.key async for info in memory_storage.list(_storage_key(""))]
         assert keys == []
@@ -268,18 +241,13 @@ class TestDelete:
         memory_storage: StorageBackend,
         static_time,
     ):
-        cache_type = CacheType.sample_trimmed_reads
         parent_id = "sample_alpha"
-        tool_name = "skewer"
-        tool_version = "0.2.2"
-        params = {}
+        params = SkewerCacheParams(tool_name="skewer", tool_version="0.2.2")
 
         created = await data_layer.caches.create(
             _chunker(b"payload"),
-            cache_type,
+            SAMPLE_TRIMMED_READS,
             parent_id,
-            tool_name,
-            tool_version,
             params,
         )
 
@@ -288,14 +256,7 @@ class TestDelete:
         await data_layer.caches.delete_by_key("never-existed")
 
         assert (
-            await data_layer.caches.get(
-                cache_type,
-                parent_id,
-                tool_name,
-                tool_version,
-                params,
-            )
-            is None
+            await data_layer.caches.get(SAMPLE_TRIMMED_READS, parent_id, params) is None
         )
         keys = [info.key async for info in memory_storage.list(_storage_key(""))]
         assert keys == []
@@ -306,42 +267,47 @@ class TestDelete:
         memory_storage: StorageBackend,
         static_time,
     ):
+        alpha_short = SkewerCacheParams(
+            tool_name="skewer",
+            tool_version="0.2.2",
+            min_length=50,
+        )
+        alpha_long = SkewerCacheParams(
+            tool_name="skewer",
+            tool_version="0.2.2",
+            min_length=75,
+        )
+        alpha_subtraction = CacheParams(tool_name="bowtie2", tool_version="2.5.1")
+        beta_default = SkewerCacheParams(tool_name="skewer", tool_version="0.2.2")
+
         await data_layer.caches.create(
             _chunker(b"a"),
-            CacheType.sample_trimmed_reads,
+            SAMPLE_TRIMMED_READS,
             "sample_alpha",
-            "skewer",
-            "0.2.2",
-            {"min_length": 50},
+            alpha_short,
         )
         await data_layer.caches.create(
             _chunker(b"b"),
-            CacheType.sample_trimmed_reads,
+            SAMPLE_TRIMMED_READS,
             "sample_alpha",
-            "skewer",
-            "0.2.2",
-            {"min_length": 75},
+            alpha_long,
         )
         await data_layer.caches.create(
             _chunker(b"c"),
-            CacheType.subtraction_mapping_index,
+            SUBTRACTION_MAPPING_INDEX,
             "sample_alpha",
-            "bowtie2",
-            "2.5.1",
-            {},
+            alpha_subtraction,
         )
         await data_layer.caches.create(
             _chunker(b"d"),
-            CacheType.sample_trimmed_reads,
+            SAMPLE_TRIMMED_READS,
             "sample_beta",
-            "skewer",
-            "0.2.2",
-            {},
+            beta_default,
         )
 
         deleted = await data_layer.caches.delete_by_parent(
             "sample_alpha",
-            CacheType.sample_trimmed_reads,
+            SAMPLE_TRIMMED_READS,
         )
 
         assert deleted == 2
@@ -349,21 +315,17 @@ class TestDelete:
         # Targeted rows are gone.
         assert (
             await data_layer.caches.get(
-                CacheType.sample_trimmed_reads,
+                SAMPLE_TRIMMED_READS,
                 "sample_alpha",
-                "skewer",
-                "0.2.2",
-                {"min_length": 50},
+                alpha_short,
             )
             is None
         )
         assert (
             await data_layer.caches.get(
-                CacheType.sample_trimmed_reads,
+                SAMPLE_TRIMMED_READS,
                 "sample_alpha",
-                "skewer",
-                "0.2.2",
-                {"min_length": 75},
+                alpha_long,
             )
             is None
         )
@@ -371,11 +333,9 @@ class TestDelete:
         # Other type for the same parent survives.
         assert (
             await data_layer.caches.get(
-                CacheType.subtraction_mapping_index,
+                SUBTRACTION_MAPPING_INDEX,
                 "sample_alpha",
-                "bowtie2",
-                "2.5.1",
-                {},
+                alpha_subtraction,
             )
             is not None
         )
@@ -383,11 +343,9 @@ class TestDelete:
         # Same type for a different parent survives.
         assert (
             await data_layer.caches.get(
-                CacheType.sample_trimmed_reads,
+                SAMPLE_TRIMMED_READS,
                 "sample_beta",
-                "skewer",
-                "0.2.2",
-                {},
+                beta_default,
             )
             is not None
         )
@@ -403,7 +361,7 @@ class TestDelete:
         assert (
             await data_layer.caches.delete_by_parent(
                 "nobody",
-                CacheType.sample_trimmed_reads,
+                SAMPLE_TRIMMED_READS,
             )
             == 0
         )

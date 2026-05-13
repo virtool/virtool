@@ -30,9 +30,10 @@ class SQLCache(Base):
     type: Mapped[str] = mapped_column()
     """The kind of artifact stored at this key.
 
-    Stored as a plain string; valid values are enforced at the data layer
-    against the :class:`virtool.caches.types.CacheType` enum used by the
-    :class:`virtool.caches.models.Cache` Pydantic model.
+    An opaque discriminator owned by the caller. The cache module does not
+    enforce a value set; callers pair each ``type`` string with a
+    :class:`virtool.caches.types.CacheParams` subclass that pins the shape
+    of ``params``.
     """
 
     params: Mapped[dict] = mapped_column(JSONB)
