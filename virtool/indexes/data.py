@@ -38,6 +38,7 @@ from virtool.pg.utils import get_rows
 from virtool.references.db import compose_archived_filter, lookup_nested_reference_by_id
 from virtool.references.models import ReferenceNested
 from virtool.references.transforms import AttachReferenceTransform
+from virtool.storage.cleanup import delete_prefix
 from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
 from virtool.uploads.utils import multipart_file_chunker
@@ -397,11 +398,14 @@ class IndexData:
                 session=mongo_session,
             )
 
-        await asyncio.gather(
-            *[
-                self._storage.delete(obj.key)
-                async for obj in self._storage.list(compose_index_prefix(index_id))
-            ],
-        )
+        for key, exc in await delete_prefix(
+            self._storage, compose_index_prefix(index_id)
+        ):
+            logger.error(
+                "storage cleanup failed; file orphaned",
+                index_id=index_id,
+                key=key,
+                error=repr(exc),
+            )
 
         emit(index, "indexes", "delete", Operation.DELETE)

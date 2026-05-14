@@ -3,7 +3,6 @@ from aiohttp.client import ClientSession, ClientTimeout
 
 from tests.config.test_cls import build_server_config
 from virtool.startup import startup_http_client_session, startup_storage
-from virtool.storage.filesystem import FilesystemProvider
 
 
 @pytest.fixture
@@ -39,13 +38,15 @@ async def test_startup_http_client_headers(mocker, fake_app):
     )
 
 
-async def test_startup_storage(fake_app, tmp_path):
-    fake_app["config"] = build_server_config(
-        data_path=tmp_path,
-        storage_backend="filesystem",
+async def test_startup_storage(fake_app, tmp_path, mocker):
+    fake_app["config"] = build_server_config(data_path=tmp_path)
+
+    backend = mocker.Mock()
+    mocker.patch(
+        "virtool.startup.create_storage_backend",
+        return_value=backend,
     )
 
     await startup_storage(fake_app)
 
-    assert isinstance(fake_app["storage"], FilesystemProvider)
-    assert (tmp_path / "storage").is_dir()
+    assert fake_app["storage"] is backend

@@ -10,6 +10,7 @@ from typing import Any
 from pymongo.results import UpdateResult
 from sqlalchemy import exc, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from structlog import get_logger
 
 import virtool.uploads.db
 import virtool.utils
@@ -52,6 +53,7 @@ from virtool.samples.models import Sample, SampleSearchResult
 from virtool.samples.oas import CreateSampleRequest, UpdateSampleRequest
 from virtool.samples.sql import ArtifactType, SQLSampleArtifact, SQLSampleReads
 from virtool.samples.utils import SampleRight, sample_file_key, sample_prefix
+from virtool.storage.cleanup import delete_prefix
 from virtool.storage.protocol import StorageBackend
 from virtool.subtractions.db import (
     AttachSubtractionsTransform,
@@ -60,6 +62,8 @@ from virtool.uploads.sql import SQLUpload
 from virtool.uploads.utils import is_gzip_compressed
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor, chunk_list, wait_for_checks
+
+logger = get_logger("samples")
 
 
 class SamplesData(DataLayerDomain):
@@ -400,12 +404,15 @@ class SamplesData(DataLayerDomain):
             )
 
         if result.deleted_count:
-            await asyncio.gather(
-                *[
-                    self._storage.delete(obj.key)
-                    async for obj in self._storage.list(sample_prefix(sample_id))
-                ],
-            )
+            for key, exc in await delete_prefix(
+                self._storage, sample_prefix(sample_id)
+            ):
+                logger.error(
+                    "storage cleanup failed; file orphaned",
+                    sample_id=sample_id,
+                    key=key,
+                    error=repr(exc),
+                )
 
             return sample
 

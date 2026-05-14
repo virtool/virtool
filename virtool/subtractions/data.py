@@ -8,6 +8,7 @@ from multidict import MultiDictProxy
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from structlog import get_logger
 
 import virtool.mongo.utils
 import virtool.utils
@@ -19,6 +20,7 @@ from virtool.data.transforms import apply_transforms
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import get_row_by_id
+from virtool.storage.cleanup import delete_prefix
 from virtool.storage.protocol import StorageBackend
 from virtool.subtractions.db import (
     attach_computed,
@@ -48,6 +50,8 @@ from virtool.utils import base_processor
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
+
+logger = get_logger("subtractions")
 
 
 class SubtractionsData(DataLayerDomain):
@@ -303,18 +307,21 @@ class SubtractionsData(DataLayerDomain):
                 raise ResourceNotFoundError
 
             async def _delete_files():
-                await asyncio.gather(
-                    *[
-                        self._storage.delete(obj.key)
-                        async for obj in self._storage.list(
-                            subtraction_prefix(subtraction_id),
-                        )
-                    ],
+                return await delete_prefix(
+                    self._storage, subtraction_prefix(subtraction_id)
                 )
 
-            await asyncio.gather(
+            _, failures = await asyncio.gather(
                 unlink_default_subtractions(self._mongo, subtraction_id, session),
                 _delete_files(),
+            )
+
+        for key, exc in failures:
+            logger.error(
+                "storage cleanup failed; file orphaned",
+                subtraction_id=subtraction_id,
+                key=key,
+                error=repr(exc),
             )
 
         return update_result.modified_count

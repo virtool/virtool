@@ -16,7 +16,22 @@ from pymongo.uri_parser import parse_uri
 from virtool.flags import FlagName
 from virtool.pg.utils import PgOptions
 
-StorageBackendName = Literal["filesystem", "s3", "azure"]
+StorageBackendName = Literal["s3", "azure"]
+
+
+def _validate_s3_credentials(access_key_id: str, secret_access_key: str) -> None:
+    """Reject partial S3 credential config.
+
+    Both keys empty is fine (use IAM role / instance metadata) and both keys
+    set is fine. Anything else likely means a typo in an env-var name produced
+    a silent empty default, which would otherwise be indistinguishable from
+    intentional reliance on instance credentials.
+    """
+    if bool(access_key_id) != bool(secret_access_key):
+        raise ValueError(
+            "storage_s3_access_key_id and storage_s3_secret_access_key must be "
+            "set together, or both left empty to use IAM role credentials",
+        )
 
 
 @dataclass
@@ -59,8 +74,7 @@ class ServerConfig:
     postgres_connection_string: str
     real_ip_header: str
     sentry_dsn: str | None
-    storage_backend: StorageBackendName = "filesystem"
-    storage_filesystem_path: Path | None = None
+    storage_backend: StorageBackendName
     storage_s3_bucket: str = ""
     storage_s3_region: str = ""
     storage_s3_endpoint: str = ""
@@ -82,14 +96,15 @@ class ServerConfig:
     def __post_init__(self):
         self.data_path = Path(self.data_path)
 
-        if self.storage_filesystem_path is None:
-            self.storage_filesystem_path = self.data_path / "storage"
-        else:
-            self.storage_filesystem_path = Path(self.storage_filesystem_path)
-
         if self.storage_backend == "s3" and not self.storage_s3_bucket:
             raise ValueError(
                 "storage_backend=s3 requires --storage-s3-bucket",
+            )
+
+        if self.storage_backend == "s3":
+            _validate_s3_credentials(
+                self.storage_s3_access_key_id,
+                self.storage_s3_secret_access_key,
             )
 
         if self.storage_backend == "azure":
@@ -115,8 +130,7 @@ class TaskRunnerConfig:
     port: int
     postgres_connection_string: str
     sentry_dsn: str
-    storage_backend: StorageBackendName = "filesystem"
-    storage_filesystem_path: Path | None = None
+    storage_backend: StorageBackendName
     storage_s3_bucket: str = ""
     storage_s3_region: str = ""
     storage_s3_endpoint: str = ""
@@ -138,14 +152,15 @@ class TaskRunnerConfig:
     def __post_init__(self):
         self.data_path = Path(self.data_path)
 
-        if self.storage_filesystem_path is None:
-            self.storage_filesystem_path = self.data_path / "storage"
-        else:
-            self.storage_filesystem_path = Path(self.storage_filesystem_path)
-
         if self.storage_backend == "s3" and not self.storage_s3_bucket:
             raise ValueError(
                 "storage_backend=s3 requires --storage-s3-bucket",
+            )
+
+        if self.storage_backend == "s3":
+            _validate_s3_credentials(
+                self.storage_s3_access_key_id,
+                self.storage_s3_secret_access_key,
             )
 
         if self.storage_backend == "azure":

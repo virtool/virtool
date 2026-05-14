@@ -6,6 +6,7 @@ instances through the named classmethods (:meth:`ObjectProvider.for_s3`,
 :meth:`ObjectProvider.for_azure`, :meth:`ObjectProvider.for_memory`).
 """
 
+import re
 from collections.abc import AsyncIterator
 from typing import Self
 
@@ -15,6 +16,8 @@ from obstore.exceptions import GenericError
 from virtool.storage.errors import StorageError, StorageKeyNotFoundError
 from virtool.storage.protocol import STORAGE_CHUNK_SIZE
 from virtool.storage.types import StorageObjectInfo
+
+_S3_NOT_FOUND_CODE_RE = re.compile(r'\bcode:\s*"?NoSuchKey"?')
 
 
 class ObjectProvider:
@@ -46,7 +49,8 @@ class ObjectProvider:
         if endpoint:
             kwargs["endpoint"] = endpoint
             kwargs["virtual_hosted_style_request"] = False
-            kwargs["client_options"] = {"allow_http": True}
+            if endpoint.startswith("http://"):
+                kwargs["client_options"] = {"allow_http": True}
         if access_key_id:
             kwargs["access_key_id"] = access_key_id
         if secret_access_key:
@@ -71,7 +75,8 @@ class ObjectProvider:
             kwargs["account_key"] = access_key
         if endpoint:
             kwargs["endpoint"] = endpoint
-            kwargs["client_options"] = {"allow_http": True}
+            if endpoint.startswith("http://"):
+                kwargs["client_options"] = {"allow_http": True}
 
         return cls(AzureStore(container, **kwargs))
 
@@ -126,10 +131,18 @@ class ObjectProvider:
         except FileNotFoundError:
             pass
         except GenericError as exc:
-            # Some S3-compatible backends (e.g. Garage) return NoSuchKey on
-            # delete of a missing object instead of the 204 that AWS returns.
-            if "NoSuchKey" not in str(exc):
-                raise StorageError(str(exc)) from exc
+            # Some S3-compatible backends (e.g. Garage) wrap a missing-object
+            # response as a GenericError instead of FileNotFoundError. The
+            # surfaced message embeds obstore's structured S3 error code
+            # (`code: "NoSuchKey"` from the Rust debug payload, or
+            # `(code: NoSuchKey)` in the human form). Match that structured
+            # marker so an unrelated error whose message merely mentions
+            # NoSuchKey in prose (audit traces, wrapped error chains) is not
+            # silently swallowed.
+            msg = str(exc)
+            if _S3_NOT_FOUND_CODE_RE.search(msg):
+                return
+            raise StorageError(msg) from exc
         except Exception as exc:
             raise StorageError(str(exc)) from exc
 

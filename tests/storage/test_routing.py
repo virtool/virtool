@@ -60,6 +60,22 @@ class TestRead:
         with pytest.raises(StorageKeyNotFoundError):
             await _collect_bytes(router.read("missing"))
 
+    async def test_primary_error_does_not_fall_back(
+        self, primary, fallback, router, mocker
+    ):
+        """A non-missing primary failure must propagate, not serve the fallback.
+
+        Otherwise a misconfigured or unreachable primary (e.g. a permissions
+        error that the backend happens to surface as ``FileNotFoundError``)
+        would silently serve a stale fallback copy instead of failing loudly.
+        """
+        await fallback.write("key", _async_iter(b"stale"))
+
+        mocker.patch.object(primary, "size", side_effect=RuntimeError("primary down"))
+
+        with pytest.raises(RuntimeError, match="primary down"):
+            await _collect_bytes(router.read("key"))
+
 
 class TestWrite:
     async def test_writes_to_primary_only(self, primary, fallback, router):
@@ -74,6 +90,64 @@ class TestWrite:
         size = await router.write("key", _async_iter(b"hello"))
 
         assert size == 5
+
+    async def test_drains_fallback_on_successful_write(self, primary, fallback, router):
+        """A successful write removes any pre-existing legacy copy in the fallback.
+
+        This keeps the migration shim draining over time so the fallback is
+        never left holding shadow copies of keys the primary now owns.
+        """
+        await fallback.write("key", _async_iter(b"legacy"))
+
+        await router.write("key", _async_iter(b"new"))
+
+        assert await _collect_bytes(primary.read("key")) == b"new"
+        with pytest.raises(StorageKeyNotFoundError):
+            await _collect_bytes(fallback.read("key"))
+
+        assert await _collect_bytes(router.read("key")) == b"new"
+
+    async def test_drains_fallback_even_if_primary_write_fails(
+        self, primary, fallback, router, mocker
+    ):
+        """A failed primary write must not leave the stale fallback copy readable.
+
+        Without the pre-write drain, the next read would silently serve the
+        legacy copy as if it were the new write. After the drain, the read
+        raises ``StorageKeyNotFoundError`` so callers see the failure.
+        """
+        await fallback.write("key", _async_iter(b"legacy"))
+
+        mocker.patch.object(primary, "write", side_effect=RuntimeError("primary down"))
+
+        with pytest.raises(RuntimeError, match="primary down"):
+            await router.write("key", _async_iter(b"new"))
+
+        with pytest.raises(StorageKeyNotFoundError):
+            await _collect_bytes(router.read("key"))
+
+    async def test_fallback_delete_failure_aborts_write(
+        self, primary, fallback, router, mocker
+    ):
+        """A failed fallback drain must abort before touching the primary.
+
+        Otherwise a successful primary write would leave the legacy copy in
+        place silently. Failing fast keeps state unchanged so the caller can
+        retry safely.
+        """
+        await fallback.write("key", _async_iter(b"legacy"))
+
+        primary_write = mocker.spy(primary, "write")
+        mocker.patch.object(
+            fallback,
+            "delete",
+            side_effect=RuntimeError("fallback delete down"),
+        )
+
+        with pytest.raises(RuntimeError, match="fallback delete down"):
+            await router.write("key", _async_iter(b"new"))
+
+        primary_write.assert_not_called()
 
 
 class TestDelete:
@@ -107,6 +181,48 @@ class TestDelete:
 
     async def test_missing_from_both(self, router):
         await router.delete("missing")
+
+    async def test_fallback_failure_does_not_skip_primary(
+        self, primary, fallback, router, mocker
+    ):
+        await primary.write("key", _async_iter(b"a"))
+
+        boom = RuntimeError("fallback down")
+        mocker.patch.object(fallback, "delete", side_effect=boom)
+
+        with pytest.raises(RuntimeError, match="fallback down"):
+            await router.delete("key")
+
+        with pytest.raises(StorageKeyNotFoundError):
+            await _collect_bytes(primary.read("key"))
+
+    async def test_primary_failure_does_not_skip_fallback(
+        self, primary, fallback, router, mocker
+    ):
+        await fallback.write("key", _async_iter(b"a"))
+
+        boom = RuntimeError("primary down")
+        mocker.patch.object(primary, "delete", side_effect=boom)
+
+        with pytest.raises(RuntimeError, match="primary down"):
+            await router.delete("key")
+
+        with pytest.raises(StorageKeyNotFoundError):
+            await _collect_bytes(fallback.read("key"))
+
+    async def test_both_failures_raised_as_group(
+        self, primary, fallback, router, mocker
+    ):
+        mocker.patch.object(primary, "delete", side_effect=RuntimeError("primary down"))
+        mocker.patch.object(
+            fallback, "delete", side_effect=RuntimeError("fallback down")
+        )
+
+        with pytest.raises(BaseExceptionGroup) as exc_info:
+            await router.delete("key")
+
+        messages = {str(e) for e in exc_info.value.exceptions}
+        assert messages == {"primary down", "fallback down"}
 
 
 class TestSize:
