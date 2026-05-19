@@ -10,10 +10,8 @@ class Cache(BaseModel):
 
     id: int
     key: str
-    storage_key: str
     type: str
     params: dict[str, Any]
-    parent_id: str
     size: int
     created_at: datetime
     last_accessed_at: datetime

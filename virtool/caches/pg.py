@@ -39,12 +39,6 @@ class SQLCache(Base):
     params: Mapped[dict] = mapped_column(JSONB)
     """The canonical parameter dict used to derive ``key``."""
 
-    parent_id: Mapped[str] = mapped_column(index=True)
-    """The potentially external ``id`` of the parent resource (no FK).
-
-    Indexed to support lookups when deleting by parent id.
-    """
-
     size: Mapped[int] = mapped_column(BigInteger)
     """Size of the on-disk storage object in bytes."""
 
@@ -52,4 +46,4 @@ class SQLCache(Base):
     """When the row was inserted."""
 
     last_accessed_at: Mapped[datetime]
-    """The most recent ``get`` time, time-bucketed by the repo."""
+    """The most recent ``get`` time, coalesced by the repo."""

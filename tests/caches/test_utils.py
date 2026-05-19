@@ -55,7 +55,6 @@ class TestDeriveKey:
     def test_returns_sha256_hex(self):
         key = derive_key(
             "sample_trimmed_reads",
-            "sample_alpha",
             SortFieldParams(z_field=1, a_field=2),
         )
         assert len(key) == 64
@@ -64,35 +63,16 @@ class TestDeriveKey:
     def test_field_value_changes_key(self):
         assert derive_key(
             "sample_trimmed_reads",
-            "sample_alpha",
             SortFieldParams(z_field=1, a_field=2),
         ) != derive_key(
             "sample_trimmed_reads",
-            "sample_alpha",
             SortFieldParams(z_field=1, a_field=3),
-        )
-
-    def test_parent_id_changes_key(self):
-        params = SortFieldParams(z_field=1, a_field=2)
-        assert derive_key(
-            "sample_trimmed_reads",
-            "sample_alpha",
-            params,
-        ) != derive_key(
-            "sample_trimmed_reads",
-            "sample_beta",
-            params,
         )
 
     def test_cache_type_changes_key(self):
         params = SortFieldParams(z_field=1, a_field=2)
-        assert derive_key(
-            "sample_trimmed_reads",
-            "ref_alpha",
-            params,
-        ) != derive_key(
+        assert derive_key("sample_trimmed_reads", params) != derive_key(
             "reference_mapping_index",
-            "ref_alpha",
             params,
         )
 
@@ -100,28 +80,24 @@ class TestDeriveKey:
         """Different subclasses with different schemas produce different keys."""
         assert derive_key(
             "sample_trimmed_reads",
-            "sample_alpha",
             TwoFieldParams(name="skewer", version="0.2.2"),
         ) != derive_key(
             "sample_trimmed_reads",
-            "sample_alpha",
             SortFieldParams(z_field=1, a_field=2),
         )
 
     def test_matches_manual_sha256(self):
-        """Pin the field layout: NUL-joined params dump, no extra wrapping."""
+        """Pin the field layout: NUL-joined cache_type and canonical params."""
         payload = "\x00".join(
             [
                 "sample_trimmed_reads",
                 '{"a_field":2,"z_field":1}',
-                "sample_alpha",
             ],
         )
         expected = hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
         actual = derive_key(
             "sample_trimmed_reads",
-            "sample_alpha",
             SortFieldParams(z_field=1, a_field=2),
         )
         assert actual == expected

@@ -1,3 +1,6 @@
+from pydantic import validator
+from semver import VersionInfo
+
 from virtool.caches.types import BaseCacheParams
 
 
@@ -11,3 +14,13 @@ class WorkflowCacheParams(BaseCacheParams):
 
     tool_name: str
     tool_version: str
+
+    @validator("tool_version")
+    def _tool_version_is_semver(cls, value: str) -> str:
+        try:
+            VersionInfo.parse(value.lstrip("v"))
+        except ValueError as exc:
+            raise ValueError(
+                f"tool_version must be a valid semantic version, got {value!r}",
+            ) from exc
+        return value

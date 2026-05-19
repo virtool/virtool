@@ -24,7 +24,6 @@ def upgrade() -> None:
         sa.Column("storage_key", sa.String(), nullable=False),
         sa.Column("type", sa.String(), nullable=False),
         sa.Column("params", JSONB(), nullable=False),
-        sa.Column("parent_id", sa.String(), nullable=False),
         sa.Column("size", sa.BigInteger(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("last_accessed_at", sa.DateTime(), nullable=False),
@@ -32,14 +31,7 @@ def upgrade() -> None:
         sa.UniqueConstraint("key", name="cache_key"),
         sa.UniqueConstraint("storage_key"),
     )
-    op.create_index(
-        op.f("ix_caches_parent_id"),
-        "caches",
-        ["parent_id"],
-        unique=False,
-    )
 
 
 def downgrade() -> None:
-    op.drop_index(op.f("ix_caches_parent_id"), table_name="caches")
     op.drop_table("caches")

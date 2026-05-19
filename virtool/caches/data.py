@@ -3,12 +3,11 @@
 Owns both row and storage-object lifecycle for cache entries.
 """
 
-import asyncio
 import uuid
 from collections.abc import AsyncIterator
 from datetime import timedelta
 
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -23,10 +22,11 @@ from virtool.data.errors import CacheAlreadyExistsError
 from virtool.pg.utils import extract_constraint_name
 from virtool.storage.protocol import StorageBackend
 
-LAST_ACCESSED_BUCKET = timedelta(minutes=5)
-"""Max staleness of ``last_accessed_at`` before ``get`` refreshes it.
+LAST_ACCESSED_REFRESH_INTERVAL = timedelta(minutes=5)
+"""Minimum interval between ``last_accessed_at`` refreshes on ``get``.
 
-A coarse bucket keeps eviction ordering useful without a write on every read.
+Coalescing writes at this granularity keeps eviction ordering useful without
+a write on every read.
 """
 
 
@@ -41,9 +41,8 @@ the expected duplicate-key race from any other integrity violation.
 def _storage_key(uuid_: str) -> str:
     """Build a storage key for a new cache entry under ``caches/v1/``.
 
-    Only used at insert time. Reads and deletes load the persisted
-    ``storage_key`` column verbatim and hand it directly to the storage
-    backend.
+    Only used at insert time. Reads load the persisted ``storage_key``
+    column verbatim and hand it directly to the storage backend.
     """
     return f"caches/v1/{uuid_}"
 
@@ -58,7 +57,6 @@ class CachesData(DataLayerDomain):
     async def get(
         self,
         cache_type: str,
-        parent_id: str,
         params: BaseCacheParams,
     ) -> CacheHit | None:
         """Return a :class:`CacheHit` for the matching row, or ``None``.
@@ -67,9 +65,9 @@ class CachesData(DataLayerDomain):
         underlying storage stream is not opened until the chunker is iterated.
 
         Refreshes ``last_accessed_at`` when it is older than
-        :data:`LAST_ACCESSED_BUCKET`.
+        :data:`LAST_ACCESSED_REFRESH_INTERVAL`.
         """
-        key = derive_key(cache_type, parent_id, params)
+        key = derive_key(cache_type, params)
 
         async with AsyncSession(self._pg, expire_on_commit=False) as session:
             row = (
@@ -81,7 +79,7 @@ class CachesData(DataLayerDomain):
 
             now = virtool.utils.timestamp()
 
-            if now - row.last_accessed_at >= LAST_ACCESSED_BUCKET:
+            if now - row.last_accessed_at >= LAST_ACCESSED_REFRESH_INTERVAL:
                 row.last_accessed_at = now
                 await session.commit()
 
@@ -94,7 +92,6 @@ class CachesData(DataLayerDomain):
         self,
         chunker: AsyncIterator[bytes],
         cache_type: str,
-        parent_id: str,
         params: BaseCacheParams,
     ) -> Cache:
         """Write a cache storage object and insert its row, returning the new ``Cache``.
@@ -110,7 +107,7 @@ class CachesData(DataLayerDomain):
         caller's storage object before re-raising.
         """
         stored_params = params.dict()
-        key = derive_key(cache_type, parent_id, params)
+        key = derive_key(cache_type, params)
         storage_key = _storage_key(uuid.uuid4().hex)
 
         try:
@@ -125,7 +122,6 @@ class CachesData(DataLayerDomain):
                         storage_key=storage_key,
                         type=cache_type,
                         params=stored_params,
-                        parent_id=parent_id,
                         size=size,
                         created_at=now,
                         last_accessed_at=now,
@@ -146,52 +142,9 @@ class CachesData(DataLayerDomain):
         return Cache(
             id=inserted_id,
             key=key,
-            storage_key=storage_key,
             type=cache_type,
             params=stored_params,
-            parent_id=parent_id,
             size=size,
             created_at=now,
             last_accessed_at=now,
         )
-
-    async def delete_by_key(self, key: str) -> None:
-        """Delete the row and storage object identified by ``key``.
-
-        Both deletions are idempotent; a missing row or missing storage
-        object is treated as already-deleted.
-        """
-        async with AsyncSession(self._pg) as session:
-            result = await session.execute(
-                delete(SQLCache)
-                .where(SQLCache.key == key)
-                .returning(SQLCache.storage_key),
-            )
-            storage_key = result.scalar_one_or_none()
-            await session.commit()
-
-        if storage_key is not None:
-            await self._storage.delete(storage_key)
-
-    async def delete_by_parent(self, parent_id: str, cache_type: str) -> int:
-        """Delete all rows of ``cache_type`` referencing ``parent_id`` and their storage objects.
-
-        Returns the number of rows deleted.
-        """
-        async with AsyncSession(self._pg) as session:
-            result = await session.execute(
-                delete(SQLCache)
-                .where(
-                    SQLCache.parent_id == parent_id,
-                    SQLCache.type == cache_type,
-                )
-                .returning(SQLCache.storage_key),
-            )
-            storage_keys = [row[0] for row in result.all()]
-            await session.commit()
-
-        await asyncio.gather(
-            *(self._storage.delete(storage_key) for storage_key in storage_keys),
-        )
-
-        return len(storage_keys)
