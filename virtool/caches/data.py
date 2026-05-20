@@ -18,7 +18,7 @@ from virtool.caches.pg import CACHE_KEY_CONSTRAINT, SQLCache
 from virtool.caches.types import BaseCacheParams
 from virtool.caches.utils import derive_key
 from virtool.data.domain import DataLayerDomain
-from virtool.data.errors import CacheAlreadyExistsError
+from virtool.data.errors import CacheAlreadyExistsError, CacheMissError
 from virtool.pg.utils import extract_constraint_name
 from virtool.storage.protocol import StorageBackend
 
@@ -49,14 +49,16 @@ class CachesData(DataLayerDomain):
     async def get(
         self,
         params: BaseCacheParams,
-    ) -> CacheHit | None:
-        """Return a :class:`CacheHit` for the matching row, or ``None``.
+    ) -> CacheHit:
+        """Return a :class:`CacheHit` for the matching row.
 
         The returned hit carries a lazy chunker over the stored bytes; the
         underlying storage stream is not opened until the chunker is iterated.
 
         Refreshes ``last_accessed_at`` when it is older than
         :data:`LAST_ACCESSED_REFRESH_INTERVAL`.
+
+        Raises :class:`CacheMissError` when no row matches the derived key.
         """
         key = derive_key(params)
 
@@ -66,7 +68,7 @@ class CachesData(DataLayerDomain):
             ).scalar_one_or_none()
 
             if row is None:
-                return None
+                raise CacheMissError
 
             now = virtool.utils.timestamp()
 

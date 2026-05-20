@@ -80,6 +80,18 @@ class ResourceNotFoundError(ResourceError):
     """
 
 
+class CacheMissError(ResourceNotFoundError):
+    """No cache row matches the derived key.
+
+    Raised by :meth:`virtool.caches.data.CachesData.get` when a lookup finds
+    no row for the given params. A miss is the expected normal-flow outcome
+    for cache reads — callers branch on it to recompute and call
+    :meth:`~virtool.caches.data.CachesData.create`. Distinct from the general
+    :class:`ResourceNotFoundError` so call sites can observe cache hit rates
+    and so a miss is not conflated with a user-facing 404.
+    """
+
+
 class ResourceNotModifiedError(ResourceError):
     """The resource has not been modified since a provided date.
 

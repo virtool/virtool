@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.caches.data import LAST_ACCESSED_REFRESH_INTERVAL, _storage_key
-from virtool.data.errors import CacheAlreadyExistsError
+from virtool.data.errors import CacheAlreadyExistsError, CacheMissError
 from virtool.data.layer import DataLayer
 from virtool.jobs.models import Workflow
 from virtool.storage.protocol import StorageBackend
@@ -53,7 +53,6 @@ class TestCreate:
 
         hit = await data_layer.caches.get(params)
 
-        assert hit is not None
         assert hit.id == created.id
         assert hit.key == created.key
         assert hit.params == {
@@ -90,7 +89,6 @@ class TestCreate:
             )
 
         hit = await data_layer.caches.get(params)
-        assert hit is not None
         chunks = [chunk async for chunk in hit.data]
         assert b"".join(chunks) == first_payload
 
@@ -117,20 +115,22 @@ class TestCreate:
                 params,
             )
 
-        assert await data_layer.caches.get(params) is None
+        with pytest.raises(CacheMissError):
+            await data_layer.caches.get(params)
 
         keys = [info.key async for info in memory_storage.list(_storage_key(""))]
         assert keys == []
 
 
 class TestGet:
-    async def test_missing_returns_none(self, data_layer: DataLayer):
-        assert (
+    async def test_missing_raises_cache_miss(self, data_layer: DataLayer):
+        with pytest.raises(CacheMissError):
             await data_layer.caches.get(
-                CreateSampleCacheParams(workflow_name=Workflow.CREATE_SAMPLE, workflow_version="0.2.2"),
+                CreateSampleCacheParams(
+                    workflow_name=Workflow.CREATE_SAMPLE,
+                    workflow_version="0.2.2",
+                ),
             )
-            is None
-        )
 
     async def test_touches_after_refresh_interval(
         self,
@@ -152,5 +152,4 @@ class TestGet:
 
         hit = await data_layer.caches.get(params)
 
-        assert hit is not None
         assert hit.last_accessed_at == bumped
