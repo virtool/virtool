@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
 from virtool.caches.models import Cache, CacheHit
-from virtool.caches.pg import SQLCache
+from virtool.caches.pg import CACHE_KEY_CONSTRAINT, SQLCache
 from virtool.caches.types import BaseCacheParams
 from virtool.caches.utils import derive_key
 from virtool.data.domain import DataLayerDomain
@@ -27,14 +27,6 @@ LAST_ACCESSED_REFRESH_INTERVAL = timedelta(minutes=5)
 
 Coalescing writes at this granularity keeps eviction ordering useful without
 a write on every read.
-"""
-
-
-_CACHE_KEY_CONSTRAINT = "cache_key"
-"""Name of the unique constraint on ``caches.key``.
-
-Pinned in the migration, the SQLAlchemy model, and here so we can distinguish
-the expected duplicate-key race from any other integrity violation.
 """
 
 
@@ -56,7 +48,6 @@ class CachesData(DataLayerDomain):
 
     async def get(
         self,
-        cache_type: str,
         params: BaseCacheParams,
     ) -> CacheHit | None:
         """Return a :class:`CacheHit` for the matching row, or ``None``.
@@ -67,7 +58,7 @@ class CachesData(DataLayerDomain):
         Refreshes ``last_accessed_at`` when it is older than
         :data:`LAST_ACCESSED_REFRESH_INTERVAL`.
         """
-        key = derive_key(cache_type, params)
+        key = derive_key(params)
 
         async with AsyncSession(self._pg, expire_on_commit=False) as session:
             row = (
@@ -91,7 +82,6 @@ class CachesData(DataLayerDomain):
     async def create(
         self,
         chunker: AsyncIterator[bytes],
-        cache_type: str,
         params: BaseCacheParams,
     ) -> Cache:
         """Write a cache storage object and insert its row, returning the new ``Cache``.
@@ -107,7 +97,7 @@ class CachesData(DataLayerDomain):
         caller's storage object before re-raising.
         """
         stored_params = params.dict()
-        key = derive_key(cache_type, params)
+        key = derive_key(params)
         storage_key = _storage_key(uuid.uuid4().hex)
 
         try:
@@ -120,7 +110,6 @@ class CachesData(DataLayerDomain):
                     .values(
                         key=key,
                         storage_key=storage_key,
-                        type=cache_type,
                         params=stored_params,
                         size=size,
                         created_at=now,
@@ -134,7 +123,7 @@ class CachesData(DataLayerDomain):
             await self._storage.delete(storage_key)
             if (
                 isinstance(err, IntegrityError)
-                and extract_constraint_name(err) == _CACHE_KEY_CONSTRAINT
+                and extract_constraint_name(err) == CACHE_KEY_CONSTRAINT
             ):
                 raise CacheAlreadyExistsError from err
             raise
@@ -142,7 +131,6 @@ class CachesData(DataLayerDomain):
         return Cache(
             id=inserted_id,
             key=key,
-            type=cache_type,
             params=stored_params,
             size=size,
             created_at=now,

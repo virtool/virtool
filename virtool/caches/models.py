@@ -10,7 +10,6 @@ class Cache(BaseModel):
 
     id: int
     key: str
-    type: str
     params: dict[str, Any]
     size: int
     created_at: datetime

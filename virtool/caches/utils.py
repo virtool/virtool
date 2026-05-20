@@ -1,8 +1,8 @@
 """Pure-Python helpers for content-addressing cache entries.
 
-A cache key is the SHA-256 digest of the NUL-joined canonical form of
-``(cache_type, canonical_params)``. ``canonical_params`` is the sorted-key,
-tight-separator JSON dump of the :class:`BaseCacheParams` payload.
+A cache key is the SHA-256 digest of the canonical-form JSON dump of the
+:class:`BaseCacheParams` payload. ``canonicalize_params`` produces a stable,
+byte-identical serialization so equivalent params always hash to the same key.
 """
 
 import hashlib
@@ -25,7 +25,6 @@ def canonicalize_params(params: BaseCacheParams) -> str:
     )
 
 
-def derive_key(cache_type: str, params: BaseCacheParams) -> str:
-    """Derive the SHA-256 cache key for the given inputs."""
-    payload = "\x00".join([cache_type, canonicalize_params(params)])
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+def derive_key(params: BaseCacheParams) -> str:
+    """Derive the SHA-256 cache key for the given params."""
+    return hashlib.sha256(canonicalize_params(params).encode("utf-8")).hexdigest()

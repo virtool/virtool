@@ -22,7 +22,6 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("key", sa.String(), nullable=False),
         sa.Column("storage_key", sa.String(), nullable=False),
-        sa.Column("type", sa.String(), nullable=False),
         sa.Column("params", JSONB(), nullable=False),
         sa.Column("size", sa.BigInteger(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),

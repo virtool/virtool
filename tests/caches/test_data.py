@@ -10,8 +10,6 @@ from virtool.data.layer import DataLayer
 from virtool.storage.protocol import StorageBackend
 from virtool.workflow.models import WorkflowCacheParams
 
-SAMPLE_TRIMMED_READS = "sample_trimmed_reads"
-
 
 class SkewerCacheParams(WorkflowCacheParams):
     """Workflow-style params: a skewer-based read trimming run."""
@@ -45,16 +43,14 @@ class TestCreate:
 
         created = await data_layer.caches.create(
             _chunker(payload),
-            SAMPLE_TRIMMED_READS,
             params,
         )
 
-        hit = await data_layer.caches.get(SAMPLE_TRIMMED_READS, params)
+        hit = await data_layer.caches.get(params)
 
         assert hit is not None
         assert hit.id == created.id
         assert hit.key == created.key
-        assert hit.type == SAMPLE_TRIMMED_READS
         assert hit.params == {
             "tool_name": "skewer",
             "tool_version": "0.2.2",
@@ -79,18 +75,16 @@ class TestCreate:
 
         await data_layer.caches.create(
             _chunker(first_payload),
-            SAMPLE_TRIMMED_READS,
             params,
         )
 
         with pytest.raises(CacheAlreadyExistsError):
             await data_layer.caches.create(
                 _chunker(b"second-writer-different-bytes"),
-                SAMPLE_TRIMMED_READS,
                 params,
             )
 
-        hit = await data_layer.caches.get(SAMPLE_TRIMMED_READS, params)
+        hit = await data_layer.caches.get(params)
         assert hit is not None
         chunks = [chunk async for chunk in hit.data]
         assert b"".join(chunks) == first_payload
@@ -115,11 +109,10 @@ class TestCreate:
         with pytest.raises(RuntimeError, match="simulated commit failure"):
             await data_layer.caches.create(
                 _chunker(b"orphan-payload"),
-                SAMPLE_TRIMMED_READS,
                 params,
             )
 
-        assert await data_layer.caches.get(SAMPLE_TRIMMED_READS, params) is None
+        assert await data_layer.caches.get(params) is None
 
         keys = [info.key async for info in memory_storage.list(_storage_key(""))]
         assert keys == []
@@ -129,35 +122,10 @@ class TestGet:
     async def test_missing_returns_none(self, data_layer: DataLayer):
         assert (
             await data_layer.caches.get(
-                SAMPLE_TRIMMED_READS,
                 SkewerCacheParams(tool_name="skewer", tool_version="0.2.2"),
             )
             is None
         )
-
-    async def test_does_not_touch_within_refresh_interval(
-        self,
-        data_layer: DataLayer,
-        static_time,
-        mocker,
-    ):
-        params = SkewerCacheParams(tool_name="skewer", tool_version="0.2.2")
-
-        await data_layer.caches.create(
-            _chunker(b"x"),
-            SAMPLE_TRIMMED_READS,
-            params,
-        )
-
-        bumped = static_time.datetime + (
-            LAST_ACCESSED_REFRESH_INTERVAL - timedelta(seconds=1)
-        )
-        mocker.patch("virtool.utils.timestamp", return_value=bumped)
-
-        hit = await data_layer.caches.get(SAMPLE_TRIMMED_READS, params)
-
-        assert hit is not None
-        assert hit.last_accessed_at == static_time.datetime
 
     async def test_touches_after_refresh_interval(
         self,
@@ -169,7 +137,6 @@ class TestGet:
 
         await data_layer.caches.create(
             _chunker(b"x"),
-            SAMPLE_TRIMMED_READS,
             params,
         )
 
@@ -178,7 +145,7 @@ class TestGet:
         )
         mocker.patch("virtool.utils.timestamp", return_value=bumped)
 
-        hit = await data_layer.caches.get(SAMPLE_TRIMMED_READS, params)
+        hit = await data_layer.caches.get(params)
 
         assert hit is not None
         assert hit.last_accessed_at == bumped
