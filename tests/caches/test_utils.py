@@ -31,9 +31,6 @@ class TwoFieldParams(BaseCacheParams):
 
 
 class TestCanonicalizeParams:
-    def test_base_only(self):
-        assert canonicalize_params(BaseCacheParams()) == "{}"
-
     def test_sorts_keys(self):
         params = SortFieldParams(z_field=1, a_field=2)
         assert canonicalize_params(params) == '{"a_field":2,"z_field":1}'

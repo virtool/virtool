@@ -43,6 +43,7 @@ class TestCreate:
         params = CreateSampleCacheParams(
             workflow_name=Workflow.CREATE_SAMPLE,
             workflow_version="0.2.2",
+            step="trim_reads",
             min_length=50,
         )
 
@@ -58,6 +59,7 @@ class TestCreate:
         assert hit.params == {
             "workflow_name": "create_sample",
             "workflow_version": "0.2.2",
+            "step": "trim_reads",
             "min_length": 50,
         }
         assert hit.size == created.size == len(payload)
@@ -74,6 +76,7 @@ class TestCreate:
         params = CreateSampleCacheParams(
             workflow_name=Workflow.CREATE_SAMPLE,
             workflow_version="0.2.2",
+            step="trim_reads",
             min_length=50,
         )
 
@@ -107,7 +110,11 @@ class TestCreate:
             side_effect=RuntimeError("simulated commit failure"),
         )
 
-        params = CreateSampleCacheParams(workflow_name=Workflow.CREATE_SAMPLE, workflow_version="0.2.2")
+        params = CreateSampleCacheParams(
+            workflow_name=Workflow.CREATE_SAMPLE,
+            workflow_version="0.2.2",
+            step="trim_reads",
+        )
 
         with pytest.raises(RuntimeError, match="simulated commit failure"):
             await data_layer.caches.create(
@@ -129,6 +136,7 @@ class TestGet:
                 CreateSampleCacheParams(
                     workflow_name=Workflow.CREATE_SAMPLE,
                     workflow_version="0.2.2",
+                    step="trim_reads",
                 ),
             )
 
@@ -138,7 +146,11 @@ class TestGet:
         static_time,
         mocker,
     ):
-        params = CreateSampleCacheParams(workflow_name=Workflow.CREATE_SAMPLE, workflow_version="0.2.2")
+        params = CreateSampleCacheParams(
+            workflow_name=Workflow.CREATE_SAMPLE,
+            workflow_version="0.2.2",
+            step="trim_reads",
+        )
 
         await data_layer.caches.create(
             _chunker(b"x"),

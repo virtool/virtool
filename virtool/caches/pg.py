@@ -44,4 +44,4 @@ class SQLCache(Base):
     """When the row was inserted."""
 
     last_accessed_at: Mapped[datetime]
-    """The most recent ``get`` time, coalesced by the repo."""
+    """The most recent ``get`` time, coalesced by the data layer."""

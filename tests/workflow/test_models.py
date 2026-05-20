@@ -14,6 +14,7 @@ class TestWorkflowCacheParams:
         params = WorkflowCacheParams(
             workflow_name=Workflow.CREATE_SAMPLE,
             workflow_version=version,
+            step="trim_reads",
         )
         assert params.workflow_version == version
 
@@ -26,12 +27,21 @@ class TestWorkflowCacheParams:
             WorkflowCacheParams(
                 workflow_name=Workflow.CREATE_SAMPLE,
                 workflow_version=version,
+                step="trim_reads",
             )
 
     def test_rejects_unknown_workflow_name(self):
         with pytest.raises(ValidationError, match="workflow_name"):
             WorkflowCacheParams(
                 workflow_name="not_a_real_workflow",
+                workflow_version="1.0.0",
+                step="trim_reads",
+            )
+
+    def test_rejects_missing_step(self):
+        with pytest.raises(ValidationError, match="step"):
+            WorkflowCacheParams(
+                workflow_name=Workflow.CREATE_SAMPLE,
                 workflow_version="1.0.0",
             )
 
@@ -40,5 +50,6 @@ class TestWorkflowCacheParams:
         params = WorkflowCacheParams(
             workflow_name=Workflow.CREATE_SAMPLE,
             workflow_version="1.0.0",
+            step="trim_reads",
         )
         assert params.dict()["workflow_name"] == "create_sample"
