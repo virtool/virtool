@@ -7,12 +7,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from virtool.caches.data import LAST_ACCESSED_REFRESH_INTERVAL, _storage_key
 from virtool.data.errors import CacheAlreadyExistsError
 from virtool.data.layer import DataLayer
+from virtool.jobs.models import Workflow
 from virtool.storage.protocol import StorageBackend
 from virtool.workflow.models import WorkflowCacheParams
 
 
-class SkewerCacheParams(WorkflowCacheParams):
-    """Workflow-style params: a skewer-based read trimming run."""
+class CreateSampleCacheParams(WorkflowCacheParams):
+    """Cache shape for the create_sample workflow, which uses skewer to trim reads.
+
+    ``min_length`` is a skewer-specific knob carried through the workflow's
+    cache key.
+    """
 
     min_length: int = 0
 
@@ -35,9 +40,9 @@ class TestCreate:
         data_layer: DataLayer,
     ):
         payload = b"trimmed-reads-payload"
-        params = SkewerCacheParams(
-            tool_name="skewer",
-            tool_version="0.2.2",
+        params = CreateSampleCacheParams(
+            workflow_name=Workflow.CREATE_SAMPLE,
+            workflow_version="0.2.2",
             min_length=50,
         )
 
@@ -52,8 +57,8 @@ class TestCreate:
         assert hit.id == created.id
         assert hit.key == created.key
         assert hit.params == {
-            "tool_name": "skewer",
-            "tool_version": "0.2.2",
+            "workflow_name": "create_sample",
+            "workflow_version": "0.2.2",
             "min_length": 50,
         }
         assert hit.size == created.size == len(payload)
@@ -67,9 +72,9 @@ class TestCreate:
         memory_storage: StorageBackend,
     ):
         first_payload = b"first-writer"
-        params = SkewerCacheParams(
-            tool_name="skewer",
-            tool_version="0.2.2",
+        params = CreateSampleCacheParams(
+            workflow_name=Workflow.CREATE_SAMPLE,
+            workflow_version="0.2.2",
             min_length=50,
         )
 
@@ -104,7 +109,7 @@ class TestCreate:
             side_effect=RuntimeError("simulated commit failure"),
         )
 
-        params = SkewerCacheParams(tool_name="skewer", tool_version="0.2.2")
+        params = CreateSampleCacheParams(workflow_name=Workflow.CREATE_SAMPLE, workflow_version="0.2.2")
 
         with pytest.raises(RuntimeError, match="simulated commit failure"):
             await data_layer.caches.create(
@@ -122,7 +127,7 @@ class TestGet:
     async def test_missing_returns_none(self, data_layer: DataLayer):
         assert (
             await data_layer.caches.get(
-                SkewerCacheParams(tool_name="skewer", tool_version="0.2.2"),
+                CreateSampleCacheParams(workflow_name=Workflow.CREATE_SAMPLE, workflow_version="0.2.2"),
             )
             is None
         )
@@ -133,7 +138,7 @@ class TestGet:
         static_time,
         mocker,
     ):
-        params = SkewerCacheParams(tool_name="skewer", tool_version="0.2.2")
+        params = CreateSampleCacheParams(workflow_name=Workflow.CREATE_SAMPLE, workflow_version="0.2.2")
 
         await data_layer.caches.create(
             _chunker(b"x"),

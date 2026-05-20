@@ -2,25 +2,35 @@ from pydantic import validator
 from semver import VersionInfo
 
 from virtool.caches.types import BaseCacheParams
+from virtool.jobs.models import Workflow
 
 
 class WorkflowCacheParams(BaseCacheParams):
     """Cache params shared by every workflow-produced cache entry.
 
     Workflows subclass this to declare the additional keys that contribute
-    to their cache key. ``tool_name`` and ``tool_version`` are required
-    because every workflow cache is keyed on the tool that produced it.
+    to their cache key. ``workflow_name`` and ``workflow_version`` are
+    required so every cache row is namespaced by the workflow that produced
+    it; bumping ``workflow_version`` is the canonical way to invalidate
+    downstream cached artifacts when a workflow's semantics change.
+
+    ``workflow_name`` is typed as :class:`virtool.jobs.models.Workflow` so the
+    set of valid namespaces is bounded; ``use_enum_values`` ensures the cache
+    key digest sees the stable string value rather than the enum member.
     """
 
-    tool_name: str
-    tool_version: str
+    workflow_name: Workflow
+    workflow_version: str
 
-    @validator("tool_version")
-    def _tool_version_is_semver(cls, value: str) -> str:
+    class Config:
+        use_enum_values = True
+
+    @validator("workflow_version")
+    def _workflow_version_is_semver(cls, value: str) -> str:
         try:
             VersionInfo.parse(value.lstrip("v"))
         except ValueError as exc:
             raise ValueError(
-                f"tool_version must be a valid semantic version, got {value!r}",
+                f"workflow_version must be a valid semantic version, got {value!r}",
             ) from exc
         return value
