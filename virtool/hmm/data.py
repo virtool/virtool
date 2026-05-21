@@ -174,6 +174,11 @@ class HmmsData(DataLayerDomain):
                 await self._storage.write("hmm/profiles.hmm", profile_data)
             except Exception:
                 await session.abort_transaction()
+                # obstore.put_async is not atomic from the caller's
+                # perspective: a failure can leave an incomplete multipart
+                # upload on S3 or a partially written file on disk. Cleanup
+                # keeps a retry from being shadowed by orphaned data.
+                await self._storage.delete("hmm/profiles.hmm")
                 raise
 
     async def download_profiles(self) -> tuple[AsyncIterator[bytes], int]:

@@ -11,7 +11,6 @@ def my_command(host, port):
 """
 
 import os
-from pathlib import Path
 
 import click
 
@@ -131,18 +130,10 @@ def storage_options(func):
     for decorator in [
         click.option(
             "--storage-backend",
-            default=get_from_environment("storage_backend", "filesystem"),
-            help="The storage backend to use for object storage",
-            type=click.Choice(["filesystem", "s3", "azure"]),
-        ),
-        click.option(
-            "--storage-filesystem-path",
-            default=get_from_environment("storage_filesystem_path", None),
-            help=(
-                "Base directory for the filesystem backend "
-                "(defaults to <data-path>/storage)"
-            ),
-            type=click.Path(path_type=Path),
+            default=get_from_environment("storage_backend", None),
+            help="The object-storage backend to use",
+            required=True,
+            type=click.Choice(["s3", "azure"]),
         ),
         click.option(
             "--storage-s3-bucket",

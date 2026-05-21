@@ -180,6 +180,13 @@ class TestList:
 
         assert result == []
 
+    async def test_base_path_missing_raises(self, tmp_path):
+        missing = tmp_path / "gone"
+        provider = FilesystemProvider(missing)
+
+        with pytest.raises(StorageError):
+            await _collect(provider.list("samples/"))
+
 
 class TestSecurity:
     async def test_path_traversal_rejected(self, provider):
@@ -193,3 +200,19 @@ class TestSecurity:
     async def test_path_traversal_rejected_on_delete(self, provider):
         with pytest.raises(StorageError):
             await provider.delete("../../etc/passwd")
+
+    async def test_symlink_traversal_rejected(self, provider, tmp_path):
+        outside = tmp_path.parent / "outside_base"
+        outside.mkdir()
+        (outside / "secret").write_bytes(b"secret data")
+
+        (tmp_path / "escape").symlink_to(outside)
+
+        with pytest.raises(StorageError):
+            await _collect_bytes(provider.read("escape/secret"))
+
+        with pytest.raises(StorageError):
+            await provider.write("escape/new", _async_iter(b"bad"))
+
+        with pytest.raises(StorageError):
+            await provider.delete("escape/secret")

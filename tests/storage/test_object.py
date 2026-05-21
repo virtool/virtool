@@ -9,8 +9,9 @@ suite. These tests focus on translation between obstore and the
 """
 
 import pytest
+from obstore.exceptions import GenericError
 
-from virtool.storage.errors import StorageKeyNotFoundError
+from virtool.storage.errors import StorageError, StorageKeyNotFoundError
 from virtool.storage.object import ObjectProvider
 
 
@@ -35,6 +36,70 @@ class TestErrorTranslation:
 
     async def test_delete_missing_key_is_idempotent(self, provider):
         await provider.delete("does/not/exist")
+
+    async def test_delete_swallows_s3_compatible_no_such_key(self, provider, mocker):
+        """Garage-style backends wrap not-found as GenericError carrying a
+        structured ``code: "NoSuchKey"`` marker; verify the provider treats it
+        as idempotent.
+        """
+        mocker.patch(
+            "virtool.storage.object.obs.delete_async",
+            side_effect=GenericError(
+                "Generic S3 error: DeleteObjects request failed for key foo: "
+                "Key not found (code: NoSuchKey)\n\n"
+                "Debug source:\n"
+                "Generic {\n"
+                '    store: "S3",\n'
+                "    source: DeleteFailed {\n"
+                '        path: "foo",\n'
+                '        code: "NoSuchKey",\n'
+                '        message: "Key not found",\n'
+                "    },\n"
+                "}",
+            ),
+        )
+
+        await provider.delete("missing")
+
+    async def test_delete_does_not_swallow_prose_mention_of_no_such_key(
+        self,
+        provider,
+        mocker,
+    ):
+        """A GenericError that merely mentions NoSuchKey in prose (audit
+        traces, wrapped error chains) without a structured ``code:`` field
+        must surface as StorageError.
+        """
+        mocker.patch(
+            "virtool.storage.object.obs.delete_async",
+            side_effect=GenericError(
+                "Generic S3 error: throttled (status 503). Prior request "
+                "context: GET NoSuchKey lookup",
+            ),
+        )
+
+        with pytest.raises(StorageError):
+            await provider.delete("present")
+
+    async def test_delete_does_not_swallow_unrelated_error_code(
+        self,
+        provider,
+        mocker,
+    ):
+        """A structured S3 error code other than NoSuchKey (e.g. NoSuchBucket)
+        must not be treated as a missing object.
+        """
+        mocker.patch(
+            "virtool.storage.object.obs.delete_async",
+            side_effect=GenericError(
+                "Generic S3 error: bucket missing (code: NoSuchBucket)\n\n"
+                "Debug source:\n"
+                'Generic { source: BucketMissing { code: "NoSuchBucket" } }',
+            ),
+        )
+
+        with pytest.raises(StorageError):
+            await provider.delete("present")
 
 
 class TestSize:
@@ -78,3 +143,50 @@ class TestRoundtrip:
 
         with pytest.raises(StorageKeyNotFoundError):
             await _collect_bytes(provider.read("doomed"))
+
+
+class TestAllowHttpGating:
+    """``allow_http`` must only be enabled for plaintext ``http://`` endpoints.
+
+    Setting it unconditionally on any custom endpoint silently permits
+    plaintext traffic to an operator-configured ``https://`` host.
+    """
+
+    def test_for_s3_allows_http_only_for_http_endpoint(self, mocker):
+        s3_store = mocker.patch("obstore.store.S3Store")
+
+        ObjectProvider.for_s3("bucket", endpoint="http://minio:9000")
+
+        assert s3_store.call_args.kwargs["client_options"] == {"allow_http": True}
+
+    def test_for_s3_omits_allow_http_for_https_endpoint(self, mocker):
+        s3_store = mocker.patch("obstore.store.S3Store")
+
+        ObjectProvider.for_s3("bucket", endpoint="https://s3.example.com")
+
+        assert "client_options" not in s3_store.call_args.kwargs
+
+    def test_for_s3_omits_allow_http_when_no_endpoint(self, mocker):
+        s3_store = mocker.patch("obstore.store.S3Store")
+
+        ObjectProvider.for_s3("bucket", region="us-east-1")
+
+        assert "client_options" not in s3_store.call_args.kwargs
+
+    def test_for_azure_allows_http_only_for_http_endpoint(self, mocker):
+        azure_store = mocker.patch("obstore.store.AzureStore")
+
+        ObjectProvider.for_azure(
+            "container", account="dev", endpoint="http://azurite:10000"
+        )
+
+        assert azure_store.call_args.kwargs["client_options"] == {"allow_http": True}
+
+    def test_for_azure_omits_allow_http_for_https_endpoint(self, mocker):
+        azure_store = mocker.patch("obstore.store.AzureStore")
+
+        ObjectProvider.for_azure(
+            "container", account="prod", endpoint="https://prod.blob.core.windows.net"
+        )
+
+        assert "client_options" not in azure_store.call_args.kwargs

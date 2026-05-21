@@ -1,6 +1,7 @@
 """Storage backend implementation using the local filesystem."""
 
 import asyncio
+import errno
 import os
 import tempfile
 from collections.abc import AsyncIterator
@@ -87,8 +88,10 @@ class FilesystemProvider:
         while parent != self._base_path:
             try:
                 await asyncio.to_thread(parent.rmdir)
-            except OSError:
-                break
+            except OSError as exc:
+                if exc.errno in (errno.ENOTEMPTY, errno.EEXIST, errno.ENOENT):
+                    break
+                raise
             parent = parent.parent
 
     async def size(self, key: str) -> int:
@@ -109,6 +112,10 @@ class FilesystemProvider:
         """List objects whose keys start with ``prefix``."""
 
         def _walk():
+            if not self._base_path.is_dir():
+                msg = f"Storage base path {self._base_path} does not exist"
+                raise StorageError(msg)
+
             prefix_path = self._base_path / prefix
 
             if prefix_path.is_dir():

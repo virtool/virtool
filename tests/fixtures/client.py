@@ -416,6 +416,8 @@ def spawn_client(
             postgres_connection_string=pg_connection_string,
             real_ip_header="",
             sentry_dsn="",
+            storage_backend="s3",
+            storage_s3_bucket="test-bucket",
         )
 
         mocker.patch("virtool.startup.connect_pg", return_value=pg)
@@ -559,6 +561,8 @@ def spawn_job_client(
                 postgres_connection_string=pg_connection_string,
                 real_ip_header="",
                 sentry_dsn="",
+                storage_backend="s3",
+                storage_s3_bucket="test-bucket",
             ),
         )
 

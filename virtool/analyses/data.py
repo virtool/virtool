@@ -45,6 +45,7 @@ from virtool.references.transforms import AttachReferenceTransform
 from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.oas import CreateAnalysisRequest
 from virtool.samples.utils import get_sample_rights
+from virtool.storage.cleanup import delete_prefix
 from virtool.storage.protocol import StorageBackend
 from virtool.subtractions.db import (
     AttachSubtractionsTransform,
@@ -359,10 +360,17 @@ class AnalysisData(DataLayerDomain):
                 ),
             )
 
-        async for obj in self._storage.list(
+        for key, exc in await delete_prefix(
+            self._storage,
             f"samples/{analysis.sample.id}/analysis/{analysis_id}/",
         ):
-            await self._storage.delete(obj.key)
+            logger.error(
+                "storage cleanup failed; file orphaned",
+                analysis_id=analysis_id,
+                sample_id=analysis.sample.id,
+                key=key,
+                error=repr(exc),
+            )
 
         await recalculate_workflow_tags(self._mongo, analysis.sample.id)
 

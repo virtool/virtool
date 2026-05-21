@@ -7,38 +7,30 @@ from virtool.storage.protocol import StorageBackend
 from virtool.storage.routing import FallbackStorageRouter
 
 
-def create_storage_backend(
-    config: ServerConfig,
-    *,
-    with_fallback: bool = True,
-) -> StorageBackend:
+def create_storage_backend(config: ServerConfig) -> StorageBackend:
     """Create the configured storage backend.
 
-    The primary backend is determined by ``config.storage_backend``. When
-    ``with_fallback`` is true (the default) a non-filesystem primary is wrapped
-    in a :class:`FallbackStorageRouter` whose fallback is a
-    :class:`FilesystemProvider` rooted at ``config.storage_filesystem_path``.
+    The primary is an object-storage backend (S3 or Azure Blob) determined by
+    ``config.storage_backend``. A :class:`FilesystemProvider` rooted at
+    ``config.data_path`` is wired in as a read/migration fallback via
+    :class:`FallbackStorageRouter`.
 
-    Pass ``with_fallback=False`` to obtain the bare primary — useful for tests
-    that need to drive the remote backend directly.
+    The fallback exists only to surface legacy on-disk files during the
+    migration to object storage and will be removed entirely once that
+    migration is complete.
     """
-    primary = _create_primary_backend(config)
-
-    if config.storage_backend == "filesystem" or not with_fallback:
-        return primary
-
-    config.storage_filesystem_path.mkdir(parents=True, exist_ok=True)
-    fallback = FilesystemProvider(config.storage_filesystem_path)
-
+    primary = build_primary_backend(config)
+    fallback = FilesystemProvider(config.data_path)
     return FallbackStorageRouter(primary, fallback)
 
 
-def _create_primary_backend(config: ServerConfig) -> StorageBackend:
-    match config.storage_backend:
-        case "filesystem":
-            config.storage_filesystem_path.mkdir(parents=True, exist_ok=True)
-            return FilesystemProvider(config.storage_filesystem_path)
+def build_primary_backend(config: ServerConfig) -> StorageBackend:
+    """Build the object-storage primary backend.
 
+    Exposed for tests that need to drive the remote backend directly without
+    the filesystem fallback wrapper.
+    """
+    match config.storage_backend:
         case "s3":
             return ObjectProvider.for_s3(
                 config.storage_s3_bucket,
