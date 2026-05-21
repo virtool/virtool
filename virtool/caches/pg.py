@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import BigInteger, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from virtool.pg.base import Base
@@ -31,6 +32,14 @@ class SQLCache(Base):
     Generated at insert time from a per-write UUID so concurrent writers for
     the same cache key never target the same storage path. Stored verbatim so
     readers can hand it to the storage backend without re-deriving it.
+    """
+
+    params: Mapped[dict] = mapped_column(JSONB)
+    """Diagnostic metadata recorded at insert time.
+
+    Not used for lookup or key derivation — readers fetch by ``key`` alone.
+    Persisted so a row carries a human-readable description of what produced
+    it for forensic debugging.
     """
 
     size: Mapped[int] = mapped_column(BigInteger)

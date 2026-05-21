@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterator
 from datetime import datetime
+from typing import Any
 
 from virtool.models.base import BaseModel
 
@@ -9,6 +10,7 @@ class Cache(BaseModel):
 
     id: int
     key: str
+    params: dict[str, Any]
     size: int
     created_at: datetime
     last_accessed_at: datetime

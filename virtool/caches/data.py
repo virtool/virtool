@@ -45,11 +45,7 @@ class CachesData(DataLayerDomain):
         self._pg = pg
         self._storage = storage
 
-    async def get(
-        self,
-        key: str,
-        params: dict[str, Any] | None = None,
-    ) -> CacheHit:
+    async def get(self, key: str) -> CacheHit:
         """Return a :class:`CacheHit` for ``key``.
 
         The returned hit carries a lazy chunker over the stored bytes; the
@@ -57,10 +53,6 @@ class CachesData(DataLayerDomain):
 
         Refreshes ``last_accessed_at`` when it is older than
         :data:`LAST_ACCESSED_REFRESH_INTERVAL`.
-
-        ``params`` is diagnostic metadata only — surfaced in
-        :class:`CacheMissError` messages so a miss can be debugged without
-        re-deriving the caller's inputs. It does not affect the lookup.
 
         Raises :class:`CacheMissError` when no row matches ``key``.
         """
@@ -70,9 +62,7 @@ class CachesData(DataLayerDomain):
             ).scalar_one_or_none()
 
             if row is None:
-                raise CacheMissError(
-                    f"no cache row for key={key!r} (params={params or {}!r})",
-                )
+                raise CacheMissError
 
             now = virtool.utils.timestamp()
 
@@ -89,8 +79,13 @@ class CachesData(DataLayerDomain):
         self,
         chunker: AsyncIterator[bytes],
         key: str,
+        params: dict[str, Any] | None = None,
     ) -> Cache:
         """Write a cache storage object and insert its row under ``key``.
+
+        ``params`` is diagnostic metadata persisted with the row. It is not
+        used for lookup or key derivation — readers fetch by ``key`` alone.
+        Defaults to an empty dict when the caller has nothing to record.
 
         Storage objects are written under a per-write UUID so concurrent
         writers for the same key never target the same path, making rollback
@@ -102,6 +97,7 @@ class CachesData(DataLayerDomain):
         error is raised. Any other failure during insert also deletes the
         caller's storage object before re-raising.
         """
+        stored_params = params or {}
         storage_key = _storage_key(uuid.uuid4().hex)
 
         try:
@@ -114,6 +110,7 @@ class CachesData(DataLayerDomain):
                     .values(
                         key=key,
                         storage_key=storage_key,
+                        params=stored_params,
                         size=size,
                         created_at=now,
                         last_accessed_at=now,
@@ -134,6 +131,7 @@ class CachesData(DataLayerDomain):
         return Cache(
             id=inserted_id,
             key=key,
+            params=stored_params,
             size=size,
             created_at=now,
             last_accessed_at=now,

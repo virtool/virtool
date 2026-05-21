@@ -41,16 +41,32 @@ class TestCreate:
     ):
         payload = b"trimmed-reads-payload"
 
-        created = await data_layer.caches.create(_chunker(payload), TRIM_READS_KEY)
+        created = await data_layer.caches.create(
+            _chunker(payload),
+            TRIM_READS_KEY,
+            TRIM_READS_PARAMS,
+        )
 
         hit = await data_layer.caches.get(TRIM_READS_KEY)
 
         assert hit.id == created.id
         assert hit.key == created.key == TRIM_READS_KEY
+        assert hit.params == created.params == TRIM_READS_PARAMS
         assert hit.size == created.size == len(payload)
 
         chunks = [chunk async for chunk in hit.data]
         assert b"".join(chunks) == payload
+
+    async def test_defaults_params_to_empty_dict(self, data_layer: DataLayer):
+        created = await data_layer.caches.create(
+            _chunker(b"no-diagnostics"),
+            TRIM_READS_KEY,
+        )
+
+        hit = await data_layer.caches.get(TRIM_READS_KEY)
+
+        assert created.params == {}
+        assert hit.params == {}
 
     async def test_duplicate_key_raises_already_exists(
         self,
@@ -59,12 +75,17 @@ class TestCreate:
     ):
         first_payload = b"first-writer"
 
-        await data_layer.caches.create(_chunker(first_payload), TRIM_READS_KEY)
+        await data_layer.caches.create(
+            _chunker(first_payload),
+            TRIM_READS_KEY,
+            TRIM_READS_PARAMS,
+        )
 
         with pytest.raises(CacheAlreadyExistsError):
             await data_layer.caches.create(
                 _chunker(b"second-writer-different-bytes"),
                 TRIM_READS_KEY,
+                TRIM_READS_PARAMS,
             )
 
         hit = await data_layer.caches.get(TRIM_READS_KEY)
@@ -90,6 +111,7 @@ class TestCreate:
             await data_layer.caches.create(
                 _chunker(b"orphan-payload"),
                 TRIM_READS_KEY,
+                TRIM_READS_PARAMS,
             )
 
         with pytest.raises(CacheMissError):
@@ -104,25 +126,17 @@ class TestGet:
         with pytest.raises(CacheMissError):
             await data_layer.caches.get(TRIM_READS_KEY)
 
-    async def test_miss_message_includes_key_and_params(
-        self,
-        data_layer: DataLayer,
-    ):
-        with pytest.raises(CacheMissError) as exc_info:
-            await data_layer.caches.get(TRIM_READS_KEY, TRIM_READS_PARAMS)
-
-        message = str(exc_info.value)
-        assert TRIM_READS_KEY in message
-        assert "trim_reads" in message
-        assert "min_length" in message
-
     async def test_touches_after_refresh_interval(
         self,
         data_layer: DataLayer,
         static_time,
         mocker,
     ):
-        await data_layer.caches.create(_chunker(b"x"), TRIM_READS_KEY)
+        await data_layer.caches.create(
+            _chunker(b"x"),
+            TRIM_READS_KEY,
+            TRIM_READS_PARAMS,
+        )
 
         bumped = (
             static_time.datetime + LAST_ACCESSED_REFRESH_INTERVAL + timedelta(seconds=1)
