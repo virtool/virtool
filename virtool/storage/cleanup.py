@@ -16,10 +16,15 @@ async def delete_prefix(
     objects orphans, so propagating one failure would skip the rest of the
     cleanup while telling the API client the whole operation failed.
 
-    Returns a list of ``(key, exception)`` pairs for the deletes that raised.
-    Callers must log these so orphans remain observable.
+    Returns a list of ``(key, exception)`` pairs for failures. Callers must log
+    these so orphans remain observable. If the initial list call fails the
+    prefix itself is reported in place of a key, since no per-object keys are
+    known at that point.
     """
-    keys = [obj.key async for obj in storage.list(prefix)]
+    try:
+        keys = [obj.key async for obj in storage.list(prefix)]
+    except Exception as exc:
+        return [(prefix, exc)]
 
     results = await asyncio.gather(
         *(storage.delete(key) for key in keys),

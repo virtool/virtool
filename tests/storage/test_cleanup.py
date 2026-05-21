@@ -58,3 +58,18 @@ async def test_returns_failures_and_deletes_siblings(provider, mocker):
         "samples/abc/reads_1.fq.gz",
         "samples/other/reads_1.fq.gz",
     ]
+
+
+async def test_list_failure_reported_under_prefix(provider, mocker):
+    async def failing_list(prefix: str):
+        raise StorageError("S3 5xx")
+        yield  # pragma: no cover
+
+    mocker.patch.object(provider, "list", side_effect=failing_list)
+
+    failures = await delete_prefix(provider, "samples/abc/")
+
+    assert len(failures) == 1
+    failed_key, failed_exc = failures[0]
+    assert failed_key == "samples/abc/"
+    assert isinstance(failed_exc, StorageError)
