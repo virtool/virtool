@@ -7,23 +7,23 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from virtool.caches.data import LAST_ACCESSED_REFRESH_INTERVAL, _storage_key
 from virtool.data.errors import CacheAlreadyExistsError, CacheMissError
 from virtool.data.layer import DataLayer
-from virtool.jobs.models import Workflow
 from virtool.storage.protocol import StorageBackend
-from virtool.workflow.models import WorkflowCacheParams
-
-
-class CreateSampleCacheParams(WorkflowCacheParams):
-    """Cache shape for the create_sample workflow, which uses skewer to trim reads.
-
-    ``min_length`` is a skewer-specific knob carried through the workflow's
-    cache key.
-    """
-
-    min_length: int = 0
 
 
 async def _chunker(payload: bytes) -> AsyncIterator[bytes]:
     yield payload
+
+
+TRIM_READS_KEY = "0" * 64
+"""A stand-in 64-char hex key. The data layer treats keys as opaque, so any
+caller-chosen string works for these tests."""
+
+TRIM_READS_PARAMS = {
+    "workflow_name": "create_sample",
+    "workflow_version": "0.2.2",
+    "step": "trim_reads",
+    "min_length": 50,
+}
 
 
 class TestStorageKey:
@@ -40,28 +40,13 @@ class TestCreate:
         data_layer: DataLayer,
     ):
         payload = b"trimmed-reads-payload"
-        params = CreateSampleCacheParams(
-            workflow_name=Workflow.CREATE_SAMPLE,
-            workflow_version="0.2.2",
-            step="trim_reads",
-            min_length=50,
-        )
 
-        created = await data_layer.caches.create(
-            _chunker(payload),
-            params,
-        )
+        created = await data_layer.caches.create(_chunker(payload), TRIM_READS_KEY)
 
-        hit = await data_layer.caches.get(params)
+        hit = await data_layer.caches.get(TRIM_READS_KEY)
 
         assert hit.id == created.id
-        assert hit.key == created.key
-        assert hit.params == {
-            "workflow_name": "create_sample",
-            "workflow_version": "0.2.2",
-            "step": "trim_reads",
-            "min_length": 50,
-        }
+        assert hit.key == created.key == TRIM_READS_KEY
         assert hit.size == created.size == len(payload)
 
         chunks = [chunk async for chunk in hit.data]
@@ -73,25 +58,16 @@ class TestCreate:
         memory_storage: StorageBackend,
     ):
         first_payload = b"first-writer"
-        params = CreateSampleCacheParams(
-            workflow_name=Workflow.CREATE_SAMPLE,
-            workflow_version="0.2.2",
-            step="trim_reads",
-            min_length=50,
-        )
 
-        await data_layer.caches.create(
-            _chunker(first_payload),
-            params,
-        )
+        await data_layer.caches.create(_chunker(first_payload), TRIM_READS_KEY)
 
         with pytest.raises(CacheAlreadyExistsError):
             await data_layer.caches.create(
                 _chunker(b"second-writer-different-bytes"),
-                params,
+                TRIM_READS_KEY,
             )
 
-        hit = await data_layer.caches.get(params)
+        hit = await data_layer.caches.get(TRIM_READS_KEY)
         chunks = [chunk async for chunk in hit.data]
         assert b"".join(chunks) == first_payload
 
@@ -110,20 +86,14 @@ class TestCreate:
             side_effect=RuntimeError("simulated commit failure"),
         )
 
-        params = CreateSampleCacheParams(
-            workflow_name=Workflow.CREATE_SAMPLE,
-            workflow_version="0.2.2",
-            step="trim_reads",
-        )
-
         with pytest.raises(RuntimeError, match="simulated commit failure"):
             await data_layer.caches.create(
                 _chunker(b"orphan-payload"),
-                params,
+                TRIM_READS_KEY,
             )
 
         with pytest.raises(CacheMissError):
-            await data_layer.caches.get(params)
+            await data_layer.caches.get(TRIM_READS_KEY)
 
         keys = [info.key async for info in memory_storage.list(_storage_key(""))]
         assert keys == []
@@ -132,13 +102,19 @@ class TestCreate:
 class TestGet:
     async def test_missing_raises_cache_miss(self, data_layer: DataLayer):
         with pytest.raises(CacheMissError):
-            await data_layer.caches.get(
-                CreateSampleCacheParams(
-                    workflow_name=Workflow.CREATE_SAMPLE,
-                    workflow_version="0.2.2",
-                    step="trim_reads",
-                ),
-            )
+            await data_layer.caches.get(TRIM_READS_KEY)
+
+    async def test_miss_message_includes_key_and_params(
+        self,
+        data_layer: DataLayer,
+    ):
+        with pytest.raises(CacheMissError) as exc_info:
+            await data_layer.caches.get(TRIM_READS_KEY, TRIM_READS_PARAMS)
+
+        message = str(exc_info.value)
+        assert TRIM_READS_KEY in message
+        assert "trim_reads" in message
+        assert "min_length" in message
 
     async def test_touches_after_refresh_interval(
         self,
@@ -146,22 +122,13 @@ class TestGet:
         static_time,
         mocker,
     ):
-        params = CreateSampleCacheParams(
-            workflow_name=Workflow.CREATE_SAMPLE,
-            workflow_version="0.2.2",
-            step="trim_reads",
-        )
-
-        await data_layer.caches.create(
-            _chunker(b"x"),
-            params,
-        )
+        await data_layer.caches.create(_chunker(b"x"), TRIM_READS_KEY)
 
         bumped = (
             static_time.datetime + LAST_ACCESSED_REFRESH_INTERVAL + timedelta(seconds=1)
         )
         mocker.patch("virtool.utils.timestamp", return_value=bumped)
 
-        hit = await data_layer.caches.get(params)
+        hit = await data_layer.caches.get(TRIM_READS_KEY)
 
         assert hit.last_accessed_at == bumped

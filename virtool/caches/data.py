@@ -6,6 +6,7 @@ Owns both row and storage-object lifecycle for cache entries.
 import uuid
 from collections.abc import AsyncIterator
 from datetime import timedelta
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
@@ -15,8 +16,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import virtool.utils
 from virtool.caches.models import Cache, CacheHit
 from virtool.caches.pg import CACHE_KEY_CONSTRAINT, SQLCache
-from virtool.caches.types import BaseCacheParams
-from virtool.caches.utils import derive_key
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import CacheAlreadyExistsError, CacheMissError
 from virtool.pg.utils import extract_constraint_name
@@ -48,9 +47,10 @@ class CachesData(DataLayerDomain):
 
     async def get(
         self,
-        params: BaseCacheParams,
+        key: str,
+        params: dict[str, Any] | None = None,
     ) -> CacheHit:
-        """Return a :class:`CacheHit` for the matching row.
+        """Return a :class:`CacheHit` for ``key``.
 
         The returned hit carries a lazy chunker over the stored bytes; the
         underlying storage stream is not opened until the chunker is iterated.
@@ -58,17 +58,21 @@ class CachesData(DataLayerDomain):
         Refreshes ``last_accessed_at`` when it is older than
         :data:`LAST_ACCESSED_REFRESH_INTERVAL`.
 
-        Raises :class:`CacheMissError` when no row matches the derived key.
-        """
-        key = derive_key(params)
+        ``params`` is diagnostic metadata only — surfaced in
+        :class:`CacheMissError` messages so a miss can be debugged without
+        re-deriving the caller's inputs. It does not affect the lookup.
 
+        Raises :class:`CacheMissError` when no row matches ``key``.
+        """
         async with AsyncSession(self._pg, expire_on_commit=False) as session:
             row = (
                 await session.execute(select(SQLCache).where(SQLCache.key == key))
             ).scalar_one_or_none()
 
             if row is None:
-                raise CacheMissError
+                raise CacheMissError(
+                    f"no cache row for key={key!r} (params={params or {}!r})",
+                )
 
             now = virtool.utils.timestamp()
 
@@ -84,9 +88,9 @@ class CachesData(DataLayerDomain):
     async def create(
         self,
         chunker: AsyncIterator[bytes],
-        params: BaseCacheParams,
+        key: str,
     ) -> Cache:
-        """Write a cache storage object and insert its row, returning the new ``Cache``.
+        """Write a cache storage object and insert its row under ``key``.
 
         Storage objects are written under a per-write UUID so concurrent
         writers for the same key never target the same path, making rollback
@@ -98,8 +102,6 @@ class CachesData(DataLayerDomain):
         error is raised. Any other failure during insert also deletes the
         caller's storage object before re-raising.
         """
-        stored_params = params.dict()
-        key = derive_key(params)
         storage_key = _storage_key(uuid.uuid4().hex)
 
         try:
@@ -112,7 +114,6 @@ class CachesData(DataLayerDomain):
                     .values(
                         key=key,
                         storage_key=storage_key,
-                        params=stored_params,
                         size=size,
                         created_at=now,
                         last_accessed_at=now,
@@ -133,7 +134,6 @@ class CachesData(DataLayerDomain):
         return Cache(
             id=inserted_id,
             key=key,
-            params=stored_params,
             size=size,
             created_at=now,
             last_accessed_at=now,

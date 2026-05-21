@@ -1,16 +1,14 @@
 from collections.abc import AsyncIterator
 from datetime import datetime
-from typing import Any
 
 from virtool.models.base import BaseModel
 
 
 class Cache(BaseModel):
-    """A reusable artifact keyed by a SHA-256 of its inputs."""
+    """A reusable artifact addressed by an opaque caller-supplied key."""
 
     id: int
     key: str
-    params: dict[str, Any]
     size: int
     created_at: datetime
     last_accessed_at: datetime

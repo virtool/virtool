@@ -1,30 +1,33 @@
 """Pure-Python helpers for content-addressing cache entries.
 
-A cache key is the SHA-256 digest of the canonical-form JSON dump of the
-:class:`BaseCacheParams` payload. ``canonicalize_params`` produces a stable,
-byte-identical serialization so equivalent params always hash to the same key.
+These helpers are offered to downstream consumers that want to derive a
+stable cache key from a parameter dict. The caches data layer does not call
+them — callers supply a precomputed key to
+:meth:`virtool.caches.data.CachesData.get` and
+:meth:`virtool.caches.data.CachesData.create`. There is no defined
+relationship between a row's key and any params dict the caller may pass.
 """
 
 import hashlib
 import json
+from typing import Any
 
-from virtool.caches.types import BaseCacheParams
 
-
-def canonicalize_params(params: BaseCacheParams) -> str:
+def canonicalize_params(params: dict[str, Any]) -> str:
     """Serialize ``params`` to a stable, byte-identical string.
 
     Keys are sorted, separators are tight, and non-ASCII characters are
-    escaped so the output is independent of platform locale.
+    escaped so the output is independent of platform locale. Values must be
+    JSON-serializable.
     """
     return json.dumps(
-        params.dict(),
+        params,
         sort_keys=True,
         separators=(",", ":"),
         ensure_ascii=True,
     )
 
 
-def derive_key(params: BaseCacheParams) -> str:
-    """Derive the SHA-256 cache key for the given params."""
+def derive_key(params: dict[str, Any]) -> str:
+    """Derive a SHA-256 hex digest for the given params dict."""
     return hashlib.sha256(canonicalize_params(params).encode("utf-8")).hexdigest()

@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from sqlalchemy import BigInteger, UniqueConstraint
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from virtool.pg.base import Base
@@ -15,7 +14,7 @@ the expected duplicate-key race from any other integrity violation.
 
 
 class SQLCache(Base):
-    """A reusable artifact keyed by a SHA-256 of its inputs."""
+    """A reusable artifact addressed by an opaque caller-supplied key."""
 
     __tablename__ = "caches"
     __table_args__ = (UniqueConstraint("key", name=CACHE_KEY_CONSTRAINT),)
@@ -24,7 +23,7 @@ class SQLCache(Base):
     """Auto-incrementing surrogate primary key."""
 
     key: Mapped[str] = mapped_column()
-    """The content-addressed SHA-256 hex digest identifying this cache."""
+    """The opaque cache key supplied by the caller."""
 
     storage_key: Mapped[str] = mapped_column(unique=True)
     """Full storage key for this row's storage object (e.g. ``caches/v1/<uuid>``).
@@ -33,9 +32,6 @@ class SQLCache(Base):
     the same cache key never target the same storage path. Stored verbatim so
     readers can hand it to the storage backend without re-deriving it.
     """
-
-    params: Mapped[dict] = mapped_column(JSONB)
-    """The canonical parameter dict used to derive ``key``."""
 
     size: Mapped[int] = mapped_column(BigInteger)
     """Size of the on-disk storage object in bytes."""
