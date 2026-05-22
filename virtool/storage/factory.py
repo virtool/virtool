@@ -1,11 +1,32 @@
 """Factory for constructing the configured storage backend."""
 
-from virtool.config.cls import ServerConfig
+from typing import Protocol
+
+from virtool.config.cls import ServerConfig, StorageBackendName
 from virtool.storage.filesystem import FilesystemProvider
 from virtool.storage.legacy import LegacyIndexFilesystemAdapter
 from virtool.storage.object import ObjectProvider
 from virtool.storage.protocol import StorageBackend
 from virtool.storage.routing import FallbackStorageRouter
+
+
+class StorageBackendConfig(Protocol):
+    """Structural type for the ``storage_*`` fields ``build_primary_backend`` reads.
+
+    ``ServerConfig``, ``TaskRunnerConfig`` and ``StorageMigrationSettings``
+    all satisfy this without explicit inheritance.
+    """
+
+    storage_backend: StorageBackendName
+    storage_s3_bucket: str
+    storage_s3_region: str
+    storage_s3_endpoint: str
+    storage_s3_access_key_id: str
+    storage_s3_secret_access_key: str
+    storage_azure_account: str
+    storage_azure_container: str
+    storage_azure_access_key: str
+    storage_azure_endpoint: str
 
 
 def create_storage_backend(config: ServerConfig) -> StorageBackend:
@@ -30,11 +51,12 @@ def create_storage_backend(config: ServerConfig) -> StorageBackend:
     return FallbackStorageRouter(primary, fallback)
 
 
-def build_primary_backend(config: ServerConfig) -> StorageBackend:
+def build_primary_backend(config: StorageBackendConfig) -> StorageBackend:
     """Build the object-storage primary backend.
 
     Exposed for tests that need to drive the remote backend directly without
-    the filesystem fallback wrapper.
+    the filesystem fallback wrapper, and for the storage migration CLI which
+    must bypass the fallback router.
     """
     match config.storage_backend:
         case "s3":
