@@ -2,6 +2,7 @@
 
 from virtool.config.cls import ServerConfig
 from virtool.storage.filesystem import FilesystemProvider
+from virtool.storage.legacy import LegacyIndexFilesystemAdapter
 from virtool.storage.object import ObjectProvider
 from virtool.storage.protocol import StorageBackend
 from virtool.storage.routing import FallbackStorageRouter
@@ -13,14 +14,19 @@ def create_storage_backend(config: ServerConfig) -> StorageBackend:
     The primary is an object-storage backend (S3 or Azure Blob) determined by
     ``config.storage_backend``. A :class:`FilesystemProvider` rooted at
     ``config.data_path`` is wired in as a read/migration fallback via
-    :class:`FallbackStorageRouter`.
+    :class:`FallbackStorageRouter`, wrapped in
+    :class:`LegacyIndexFilesystemAdapter` so legacy index files at
+    ``references/{ref_id}/{index_id}/...`` are reachable via the new
+    ``indexes/{index_id}/...`` keys.
 
     The fallback exists only to surface legacy on-disk files during the
     migration to object storage and will be removed entirely once that
     migration is complete.
     """
     primary = build_primary_backend(config)
-    fallback = FilesystemProvider(config.data_path)
+    fallback = LegacyIndexFilesystemAdapter(
+        FilesystemProvider(config.data_path), config.data_path
+    )
     return FallbackStorageRouter(primary, fallback)
 
 
