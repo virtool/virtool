@@ -76,6 +76,7 @@ class JobsView(PydanticView):
 
 
 @routes.view("/jobs/counts")
+@routes.jobs_api.view("/jobs/counts")
 class JobsCountsView(PydanticView):
     @policy(PublicRoutePolicy)
     async def get(self) -> r200[JobCounts]:

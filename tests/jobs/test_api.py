@@ -171,6 +171,28 @@ class TestGetCounts:
 
         assert sum(c for counts in body.values() for c in counts.values()) == 0
 
+    async def test_jobs_api(self, fake: DataFaker, spawn_job_client: JobClientSpawner):
+        client = await spawn_job_client(authenticated=False)
+
+        user = await fake.users.create()
+
+        await fake.jobs.create(user=user, state=JobState.PENDING, workflow="nuvs")
+        await fake.jobs.create(user=user, state=JobState.PENDING, workflow="nuvs")
+        await fake.jobs.create(user=user, state=JobState.RUNNING, workflow="pathoscope")
+        await fake.jobs.create(user=user, state=JobState.SUCCEEDED, workflow="nuvs")
+
+        resp = await client.get("/jobs/counts")
+
+        assert resp.status == HTTPStatus.OK
+
+        body = await resp.json()
+
+        assert body["pending"]["nuvs"] == 2
+        assert body["running"]["pathoscope"] == 1
+        assert body["succeeded"]["nuvs"] == 1
+
+        assert sum(c for counts in body.values() for c in counts.values()) == 4
+
 
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(error, fake: DataFaker, snapshot, spawn_client):
