@@ -204,5 +204,12 @@
       'name': 'drop unused mongo collections',
       'revision': 'k9s3n2p7x4qa',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 30,
+      'name': 'create caches table',
+      'revision': 'c3a7e9b4d1f2',
+    }),
   ])
 # ---

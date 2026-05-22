@@ -7,6 +7,7 @@ from urllib.parse import parse_qs, urlparse
 import orjson
 from sqlalchemy import URL, select, text
 from sqlalchemy.engine.result import ScalarResult
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from structlog import get_logger
 
@@ -216,3 +217,18 @@ async def get_generic(
     """
     async with AsyncSession(pg) as session:
         return (await session.execute(statement)).scalars()
+
+
+def extract_constraint_name(err: IntegrityError) -> str | None:
+    """Return the constraint name from an asyncpg-backed ``IntegrityError``.
+
+    SQLAlchemy wraps the asyncpg ``UniqueViolationError`` twice — once in a
+    dialect-level adapter and once in :class:`sqlalchemy.exc.IntegrityError` —
+    so the ``constraint_name`` attribute can live on ``err.orig`` itself or on
+    its ``__cause__``. Walk both rather than guessing which version we're on.
+    """
+    for candidate in (err.orig, getattr(err.orig, "__cause__", None)):
+        name = getattr(candidate, "constraint_name", None)
+        if name is not None:
+            return name
+    return None

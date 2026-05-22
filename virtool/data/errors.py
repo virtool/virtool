@@ -40,6 +40,18 @@ class ResourceConflictError(ResourceError):
     """
 
 
+class CacheAlreadyExistsError(ResourceConflictError):
+    """A cache with the derived key was inserted by another writer before us.
+
+    Raised by :meth:`virtool.caches.data.CachesData.create` when the unique
+    constraint on ``caches.key`` fires. The race is expected under concurrent
+    writers for the same inputs and is not a failure state — the cache is now
+    present and consumers can proceed. Distinct from the general
+    :class:`ResourceConflictError` so call sites can observe race rates
+    without conflating them with other conflicts or real DB write failures.
+    """
+
+
 class ResourceNotFoundError(ResourceError):
     """The requested resource does not exist.
 
@@ -65,6 +77,18 @@ class ResourceNotFoundError(ResourceError):
     - A request to create a subtraction where the referenced FASTA upload does not
       exist.
 
+    """
+
+
+class CacheMissError(ResourceNotFoundError):
+    """No cache row matches the derived key.
+
+    Raised by :meth:`virtool.caches.data.CachesData.get` when a lookup finds
+    no row for the given params. A miss is the expected normal-flow outcome
+    for cache reads — callers branch on it to recompute and call
+    :meth:`~virtool.caches.data.CachesData.create`. Distinct from the general
+    :class:`ResourceNotFoundError` so call sites can observe cache hit rates
+    and so a miss is not conflated with a user-facing 404.
     """
 
 
