@@ -170,9 +170,7 @@ class TestWrite:
         adapter could never find.
         """
         with pytest.raises(StorageError, match="cannot write index key"):
-            await adapter.write(
-                "indexes/missing/otus.json.gz", _async_iter(b"x")
-            )
+            await adapter.write("indexes/missing/otus.json.gz", _async_iter(b"x"))
 
 
 class TestCache:
