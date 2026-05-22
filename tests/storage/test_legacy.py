@@ -8,11 +8,6 @@ from virtool.storage.legacy import LegacyIndexFilesystemAdapter
 
 
 @pytest.fixture
-def data_path(tmp_path: Path) -> Path:
-    return tmp_path
-
-
-@pytest.fixture
 def inner(data_path: Path) -> FilesystemProvider:
     return FilesystemProvider(data_path)
 
