@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from virtool.storage.errors import StorageKeyNotFoundError
+from virtool.storage.errors import StorageError, StorageKeyNotFoundError
 from virtool.storage.filesystem import FilesystemProvider
 from virtool.storage.legacy import LegacyIndexFilesystemAdapter
 
@@ -167,6 +167,17 @@ class TestWrite:
         assert (data_path / "samples" / "sample1" / "reads.fq.gz").read_bytes() == (
             b"reads"
         )
+
+    async def test_unknown_index_raises(self, adapter):
+        """A write through the legacy adapter for an unresolvable index_id must
+        fail loudly. Falling back to the untranslated key would create a file
+        at ``indexes/{id}/...`` on disk that subsequent reads through the same
+        adapter could never find.
+        """
+        with pytest.raises(StorageError, match="cannot write index key"):
+            await adapter.write(
+                "indexes/missing/otus.json.gz", _async_iter(b"x")
+            )
 
 
 class TestCache:

@@ -17,7 +17,7 @@ import re
 from collections.abc import AsyncIterator
 from pathlib import Path
 
-from virtool.storage.errors import StorageKeyNotFoundError
+from virtool.storage.errors import StorageError, StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
 from virtool.storage.types import StorageObjectInfo
 
@@ -31,9 +31,9 @@ class LegacyIndexFilesystemAdapter:
     and resolves ``index_id`` to its parent ``ref_id`` by scanning
     ``{data_path}/references/*``. Non-index keys pass through unchanged. When
     no matching ``references/*/{index_id}`` directory exists on disk, reads
-    raise :class:`StorageKeyNotFoundError`, deletes are no-ops, and lists
-    yield nothing — matching the behaviour of a key that has never been
-    written.
+    raise :class:`StorageKeyNotFoundError`, deletes are no-ops, lists yield
+    nothing, and writes raise :class:`StorageError` — the adapter cannot
+    construct a legacy path without a known ``ref_id``.
     """
 
     def __init__(self, inner: StorageBackend, data_path: Path) -> None:
@@ -89,7 +89,11 @@ class LegacyIndexFilesystemAdapter:
     async def write(self, key: str, data: AsyncIterator[bytes]) -> int:
         translated = await self._translate(key)
         if translated is None:
-            return await self._inner.write(key, data)
+            msg = (
+                f"cannot write index key {key!r} through the legacy fallback: "
+                "no on-disk reference directory contains this index_id"
+            )
+            raise StorageError(msg)
         return await self._inner.write(translated, data)
 
     async def delete(self, key: str) -> None:
