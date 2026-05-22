@@ -13,8 +13,10 @@ this module and unwire it from :mod:`virtool.storage.factory`.
 """
 
 import asyncio
+import os
 import re
 from collections.abc import AsyncIterator
+from datetime import UTC, datetime
 from pathlib import Path
 
 from virtool.storage.errors import StorageError, StorageKeyNotFoundError
@@ -22,6 +24,7 @@ from virtool.storage.protocol import StorageBackend
 from virtool.storage.types import StorageObjectInfo
 
 _INDEX_KEY_RE = re.compile(r"^indexes/(?P<index_id>[^/]+)(?P<rest>/.*)?$")
+_INDEXES_ROOT_PREFIXES = ("indexes", "indexes/")
 
 
 class LegacyIndexFilesystemAdapter:
@@ -109,6 +112,11 @@ class LegacyIndexFilesystemAdapter:
         return await self._inner.size(translated)
 
     async def list(self, prefix: str) -> AsyncIterator[StorageObjectInfo]:
+        if prefix in _INDEXES_ROOT_PREFIXES:
+            for info in await asyncio.to_thread(self._scan_all_indexes):
+                yield info
+            return
+
         match = _INDEX_KEY_RE.match(prefix)
         if match is None:
             async for info in self._inner.list(prefix):
@@ -132,3 +140,43 @@ class LegacyIndexFilesystemAdapter:
                 size=info.size,
                 last_modified=info.last_modified,
             )
+
+    def _scan_all_indexes(self) -> "list[StorageObjectInfo]":
+        """Enumerate every on-disk index file across all reference directories.
+
+        Used to support listing under just ``indexes/`` (no ``index_id``),
+        which the storage migration CLI needs to discover and migrate every
+        index in one pass. Populates the ``index_id -> ref_id`` cache as a
+        side effect so subsequent reads do not need to re-scan.
+        """
+        results: "list[StorageObjectInfo]" = []
+
+        if not self._references_path.is_dir():
+            return results
+
+        for ref_dir in self._references_path.iterdir():
+            if not ref_dir.is_dir():
+                continue
+
+            for index_dir in ref_dir.iterdir():
+                if not index_dir.is_dir():
+                    continue
+
+                self._cache[index_dir.name] = ref_dir.name
+
+                for dirpath, _, filenames in os.walk(index_dir):
+                    for filename in filenames:
+                        filepath = Path(dirpath) / filename
+                        rel = filepath.relative_to(index_dir).as_posix()
+                        stat = filepath.stat()
+                        results.append(
+                            StorageObjectInfo(
+                                key=f"indexes/{index_dir.name}/{rel}",
+                                size=stat.st_size,
+                                last_modified=datetime.fromtimestamp(
+                                    stat.st_mtime, tz=UTC
+                                ),
+                            )
+                        )
+
+        return results
