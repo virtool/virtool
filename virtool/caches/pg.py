@@ -35,12 +35,7 @@ class SQLCache(Base):
     """
 
     params: Mapped[dict] = mapped_column(JSONB)
-    """Diagnostic metadata recorded at insert time.
-
-    Not used for lookup or key derivation — readers fetch by ``key`` alone.
-    Persisted so a row carries a human-readable description of what produced
-    it for forensic debugging.
-    """
+    """Diagnostic metadata persisted with the row; not used for lookup."""
 
     size: Mapped[int] = mapped_column(BigInteger)
     """Size of the on-disk storage object in bytes."""

@@ -19,8 +19,7 @@ class Cache(BaseModel):
 class CacheHit(Cache):
     """A :class:`Cache` plus a lazy byte stream over the stored payload.
 
-    Returned by :meth:`virtool.caches.data.CachesData.get`. The ``data``
-    stream is not opened until iterated.
+    The ``data`` stream is not opened until iterated.
     """
 
     data: AsyncIterator[bytes]
