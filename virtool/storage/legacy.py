@@ -149,7 +149,7 @@ class LegacyIndexFilesystemAdapter:
         index in one pass. Populates the ``index_id -> ref_id`` cache as a
         side effect so subsequent reads do not need to re-scan.
         """
-        results: "list[StorageObjectInfo]" = []
+        results: list[StorageObjectInfo] = []
 
         if not self._references_path.is_dir():
             return results

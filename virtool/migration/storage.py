@@ -17,7 +17,6 @@ from dataclasses import dataclass
 from structlog import get_logger
 
 from virtool.migration.storage_settings import StorageMigrationSettings
-from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.factory import build_primary_backend
 from virtool.storage.filesystem import FilesystemProvider
 from virtool.storage.legacy import LegacyIndexFilesystemAdapter
@@ -55,6 +54,15 @@ PROGRESS_LOG_INTERVAL: int = 100
 """Log a running progress line every N files processed."""
 
 
+FAILURE_LOG_SAMPLE: int = 10
+"""Cap the per-list sample of failing keys included in the verification log.
+
+The full :class:`StorageVerificationReport` is still returned to the caller;
+the log line is bounded so a large failure does not produce an unwieldy
+structured log entry.
+"""
+
+
 @dataclass(frozen=True, slots=True)
 class StorageMigrationReport:
     """Result of a single ``migrate_category`` invocation."""
@@ -90,7 +98,15 @@ async def migrate_category(
     Skips objects already present in ``destination`` with the same byte
     size. When ``dry_run`` is true, logs what would be copied without
     writing.
+
+    The destination prefix is enumerated once up-front into an in-memory
+    ``key -> size`` map, so per-file existence checks don't fire an extra
+    metadata round-trip (e.g. an S3 ``HEAD``) for every source object.
     """
+    destination_sizes: dict[str, int] = {
+        info.key: info.size async for info in destination.list(prefix)
+    }
+
     copied = 0
     skipped = 0
     bytes_copied = 0
@@ -99,10 +115,7 @@ async def migrate_category(
     async for info in source.list(prefix):
         seen += 1
 
-        try:
-            destination_size = await destination.size(info.key)
-        except StorageKeyNotFoundError:
-            destination_size = None
+        destination_size = destination_sizes.get(info.key)
 
         if destination_size == info.size:
             skipped += 1
@@ -244,7 +257,9 @@ async def run_storage_migration(
         category=category,
         source_count=verification.source_count,
         destination_count=verification.destination_count,
-        missing_keys=verification.missing_keys,
-        size_mismatches=verification.size_mismatches,
+        missing_count=len(verification.missing_keys),
+        size_mismatch_count=len(verification.size_mismatches),
+        missing_keys_sample=verification.missing_keys[:FAILURE_LOG_SAMPLE],
+        size_mismatches_sample=verification.size_mismatches[:FAILURE_LOG_SAMPLE],
     )
     raise SystemExit(1)
