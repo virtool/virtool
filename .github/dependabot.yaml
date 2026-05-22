@@ -4,6 +4,23 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      pytest:
+        patterns:
+          - "pytest*"
+      sentry:
+        patterns:
+          - "sentry-sdk"
+          - "structlog-sentry"
+      postgres:
+        patterns:
+          - "sqlalchemy"
+          - "alembic"
+          - "asyncpg"
+      aiohttp:
+        patterns:
+          - "aiohttp"
+          - "aiohttp-pydantic"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
