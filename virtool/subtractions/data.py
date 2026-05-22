@@ -176,7 +176,7 @@ class SubtractionsData(DataLayerDomain):
     async def create(
         self,
         data: CreateSubtractionRequest,
-        user_id: str,
+        user_id: int,
         space_id: int,
         subtraction_id: str | None = None,
     ) -> Subtraction:

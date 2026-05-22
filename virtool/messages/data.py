@@ -37,7 +37,7 @@ class MessagesData:
 
         raise ResourceConflictError
 
-    async def create(self, data: CreateMessageRequest, user_id: str) -> InstanceMessage:
+    async def create(self, data: CreateMessageRequest, user_id: int) -> InstanceMessage:
         """Create an administrative instance message."""
         instance_message = SQLInstanceMessage(
             color=data.color,

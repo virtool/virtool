@@ -221,7 +221,6 @@ async def get_contributors(mongo: "Mongo", pg: AsyncEngine, query: dict) -> list
     """
     from sqlalchemy import select
 
-    from virtool.data.topg import compose_legacy_id_multi_expression
     from virtool.users.pg import SQLUser
 
     cursor = mongo.history.aggregate(
@@ -233,40 +232,24 @@ async def get_contributors(mongo: "Mongo", pg: AsyncEngine, query: dict) -> list
     if not contributors:
         return []
 
-    # Look up users from PostgreSQL
     user_ids = [c["id"] for c in contributors]
 
     async with AsyncSession(pg) as session:
         result = await session.execute(
-            select(SQLUser.id, SQLUser.handle, SQLUser.legacy_id).where(
-                compose_legacy_id_multi_expression(SQLUser, user_ids)
-            )
+            select(SQLUser.id, SQLUser.handle).where(SQLUser.id.in_(user_ids)),
         )
 
         user_rows = result.all()
 
-    # Create a mapping from original IDs to user data
-    users = {}
-    for row in user_rows:
-        # Map both the modern ID and legacy ID to the user data
-        user_data = {"id": row.id, "handle": row.handle}
-        users[row.id] = user_data
-        if row.legacy_id:
-            users[row.legacy_id] = user_data
+    users = {row.id: {"id": row.id, "handle": row.handle} for row in user_rows}
 
-    # Build result with PostgreSQL user IDs
-    result = []
-    for contributor in contributors:
-        user_data = users.get(contributor["id"], {"id": -1, "handle": "Unknown User"})
-        result.append(
-            {
-                "id": user_data["id"],
-                "handle": user_data["handle"],
-                "count": contributor["count"],
-            }
-        )
-
-    return result
+    return [
+        {
+            **users.get(c["id"], {"id": -1, "handle": "Unknown User"}),
+            "count": c["count"],
+        }
+        for c in contributors
+    ]
 
 
 async def get_most_recent_change(

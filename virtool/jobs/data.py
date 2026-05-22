@@ -184,7 +184,7 @@ class JobsData:
         self,
         workflow: str,
         job_args: Document,
-        user_id: str,
+        user_id: int,
         space_id: int = 1,
     ) -> Job:
         """Create a job record.

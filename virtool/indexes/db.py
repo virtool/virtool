@@ -95,7 +95,7 @@ class IndexCountsTransform(AbstractTransform):
 async def create(
     mongo,
     ref_id: str,
-    user_id: str,
+    user_id: int,
     job_id: int,
     index_id: str | None = None,
 ) -> dict:

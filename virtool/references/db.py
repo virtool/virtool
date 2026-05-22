@@ -164,32 +164,18 @@ async def get_reference_users(
 
     async with AsyncSession(pg) as session:
         result = await session.execute(
-            select(SQLUser.id, SQLUser.handle, SQLUser.legacy_id).where(
-                compose_legacy_id_multi_expression(SQLUser, user_ids)
-            )
+            select(SQLUser.id, SQLUser.handle).where(SQLUser.id.in_(user_ids)),
         )
 
         user_rows = result.all()
 
-    user_map = {}
-    for row in user_rows:
-        user_data = {"id": row.id, "handle": row.handle}
-        user_map[row.id] = user_data
-        if row.legacy_id:
-            user_map[row.legacy_id] = user_data
+    user_map = {row.id: {"id": row.id, "handle": row.handle} for row in user_rows}
 
-    result = []
-    for user in users:
-        user_id = user["id"]
-        if user_data := user_map.get(user_id):
-            result.append(
-                {
-                    **user,
-                    **user_data,
-                }
-            )
-
-    return result
+    return [
+        {**user, **user_data}
+        for user in users
+        if (user_data := user_map.get(user["id"]))
+    ]
 
 
 async def check_right(req: Request, ref_id: str, right: str) -> bool:
@@ -268,7 +254,7 @@ def compose_archived_filter(archived: bool | None) -> dict:
 
 
 def compose_rights_filter(
-    user_id_variants: list[int | str],
+    user_id: int,
     administrator: bool,
     groups: list[int | str],
 ) -> dict:
@@ -277,9 +263,7 @@ def compose_rights_filter(
 
     Administrators bypass the filter and receive an empty dict.
 
-    TODO: Revert to single user_id parameter when all user IDs are migrated away from MongoDB strings.
-
-    :param user_id_variants: all ID variants (modern and legacy) for the requesting user
+    :param user_id: the id of the user requesting the search
     :param administrator: the administrator flag of the user requesting the search
     :param groups: the id group membership of the user requesting the search
     :return: a Mongo filter dict; empty for administrators
@@ -288,14 +272,10 @@ def compose_rights_filter(
     if administrator:
         return {}
 
-    user_queries = []
-    for id_variant in user_id_variants:
-        user_queries.extend(
-            [
-                {"users.id": id_variant},
-                {"user.id": id_variant},
-            ]
-        )
+    user_queries = [
+        {"users.id": user_id},
+        {"user.id": user_id},
+    ]
 
     return {
         "$or": [
@@ -524,7 +504,7 @@ async def create_clone(
     name: str,
     clone_from: str,
     description: str,
-    user_id: str,
+    user_id: int,
 ) -> Document:
     source = await mongo.references.find_one(clone_from)
 
@@ -555,7 +535,7 @@ async def create_document(
     data_type: str | None,
     created_at: datetime,
     ref_id: str | None = None,
-    user_id: str | None = None,
+    user_id: int | None = None,
     users=None,
 ):
     if ref_id and await mongo.references.count_documents({"_id": ref_id}):
@@ -610,7 +590,7 @@ async def create_import(
     name: str,
     description: str,
     import_from: str,
-    user_id: str,
+    user_id: int,
     data_type: str,
     organism: str,
 ) -> dict:
@@ -654,7 +634,7 @@ async def create_remote(
     name: str,
     release: dict,
     remote_from: str,
-    user_id: str,
+    user_id: int,
     data_type: str,
 ) -> dict:
     """Create a remote reference document in the database.
@@ -707,7 +687,7 @@ async def insert_change(
     pg: AsyncEngine,
     otu_id: str,
     method_name: HistoryMethod,
-    user_id: str,
+    user_id: int,
     session: AsyncIOMotorClientSession,
     old: Document | None = None,
 ) -> None:
@@ -750,7 +730,7 @@ async def insert_joined_otu(
     otu: dict,
     created_at: datetime.datetime,
     ref_id: str,
-    user_id: str,
+    user_id: int,
     session: AsyncIOMotorClientSession,
 ) -> str:
     issues = verify(otu)
@@ -816,7 +796,7 @@ async def populate_insert_only_reference(
     pg: AsyncEngine,
     otus: list[dict],
     reference_id: str,
-    user_id: str,
+    user_id: int,
 ) -> None:
     insertions = [
         prepare_otu_insertion(
@@ -1034,7 +1014,7 @@ def prepare_insert_otu(
     otu: dict,
     created_at: datetime.datetime,
     ref_id: str,
-    user_id: str,
+    user_id: int,
 ) -> OTUInsert:
     issues = verify(otu)
 

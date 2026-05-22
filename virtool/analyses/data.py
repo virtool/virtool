@@ -235,7 +235,7 @@ class AnalysisData(DataLayerDomain):
         self,
         data: CreateAnalysisRequest,
         sample_id: str,
-        user_id: str,
+        user_id: int,
         space_id: int,
     ) -> Analysis:
         """Creates a new analysis.

@@ -14,7 +14,7 @@ logger = get_logger("github")
 def create_update_subdocument(
     release: dict,
     ready: bool,
-    user_id: str,
+    user_id: int,
     created_at: datetime.datetime | None = None,
 ) -> dict:
     update = {

@@ -233,7 +233,7 @@ async def create_sample(
     subtractions: list[str],
     notes: str,
     labels: list[int],
-    user_id: str,
+    user_id: int,
     settings: Settings,
     paired: bool = False,
     _id: str | None = None,
