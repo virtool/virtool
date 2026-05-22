@@ -99,18 +99,14 @@ class AttachUserTransform(AbstractTransform):
         if isinstance(user_data, int):
             return {**document, "user": {"id": user_data}}
 
-        if isinstance(user_data, str) and user_data.isdigit():
-            return {**document, "user": {"id": int(user_data)}}
-
         if isinstance(user_data, dict):
             if "id" not in user_data:
                 raise KeyError("Document has user field, but no user.id")
 
             user_id = user_data["id"]
-            if isinstance(user_id, str) and user_id.isdigit():
-                user_data = {**user_data, "id": int(user_id)}
 
-            return {**document, "user": user_data}
+            if isinstance(user_id, int):
+                return {**document, "user": {**user_data, "id": user_id}}
 
         if user_data is None:
             return {**document, "user": None}
