@@ -31,7 +31,6 @@ CATEGORY_PREFIXES: dict[str, str] = {
     "uploads": "files/",
     "subtractions": "subtractions/",
     "ml-models": "ml/",
-    "references": "references/",
     "history": "history/",
     "indexes": "indexes/",
     "samples": "samples/",
@@ -42,6 +41,13 @@ CATEGORY_PREFIXES: dict[str, str] = {
 The on-disk directory names were confirmed against the data-layer modules
 (``virtool/hmm/data.py``, ``virtool/uploads/utils.py`` etc.). Note that the
 ``hmms`` category uses the ``hmm/`` prefix (singular on disk).
+
+There is intentionally no ``references`` category. The on-disk
+``data_path/references/`` tree holds only the legacy index file layout;
+the application reads those files via ``indexes/{index_id}/...`` keys, so
+the ``indexes`` category (with :class:`LegacyIndexFilesystemAdapter`)
+already migrates them to the correct destination keys. A literal
+``references/`` migration would copy them under keys nothing reads.
 """
 
 
