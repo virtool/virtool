@@ -5,6 +5,7 @@ import pytest
 from tests.config.test_cls import build_server_config
 from virtool.storage.factory import build_primary_backend, create_storage_backend
 from virtool.storage.filesystem import FilesystemProvider
+from virtool.storage.legacy import LegacyIndexFilesystemAdapter
 from virtool.storage.object import ObjectProvider
 from virtool.storage.routing import FallbackStorageRouter
 
@@ -21,8 +22,9 @@ class TestCreateStorageBackend:
 
         assert isinstance(backend, FallbackStorageRouter)
         assert isinstance(backend._primary, ObjectProvider)
-        assert isinstance(backend._fallback, FilesystemProvider)
-        assert backend._fallback._base_path == tmp_path.resolve()
+        assert isinstance(backend._fallback, LegacyIndexFilesystemAdapter)
+        assert isinstance(backend._fallback._inner, FilesystemProvider)
+        assert backend._fallback._inner._base_path == tmp_path.resolve()
 
     def test_azure_wraps_with_fallback_at_data_path(self, tmp_path: Path):
         config = build_server_config(
@@ -37,14 +39,15 @@ class TestCreateStorageBackend:
 
         assert isinstance(backend, FallbackStorageRouter)
         assert isinstance(backend._primary, ObjectProvider)
-        assert backend._fallback._base_path == tmp_path.resolve()
+        assert isinstance(backend._fallback, LegacyIndexFilesystemAdapter)
+        assert backend._fallback._inner._base_path == tmp_path.resolve()
 
     def test_fallback_root_is_not_data_path_storage(self, tmp_path: Path):
         config = build_server_config(data_path=tmp_path)
 
         backend = create_storage_backend(config)
 
-        assert backend._fallback._base_path != (tmp_path / "storage").resolve()
+        assert backend._fallback._inner._base_path != (tmp_path / "storage").resolve()
 
 
 class TestBuildPrimaryBackend:
