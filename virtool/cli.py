@@ -37,6 +37,8 @@ from virtool.migration.apply import apply
 from virtool.migration.create import create_revision
 from virtool.migration.depend import depend
 from virtool.migration.show import show_revisions
+from virtool.migration.storage import CATEGORY_PREFIXES, run_storage_migration
+from virtool.migration.storage_settings import StorageMigrationSettings
 from virtool.oas.cmd import show_oas
 from virtool.tasks.main import run_task_runner, run_task_spawner
 from virtool.workflow.runtime.run import start_runtime
@@ -156,6 +158,31 @@ def migration_show(**kwargs) -> None:
     """Apply all pending migrations."""
     configure_logging(False)
     show_revisions()
+
+
+@migration.command("storage")
+@click.option(
+    "--category",
+    required=True,
+    type=click.Choice(sorted(CATEGORY_PREFIXES)),
+    help="Storage category to migrate.",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="List files that would be copied without writing.",
+)
+def migration_storage(category: str, dry_run: bool) -> None:
+    """Migrate one storage category from filesystem to object storage.
+
+    Storage configuration is loaded from ``VT_*`` environment variables,
+    matching the rest of the application. The migration bypasses the
+    runtime fallback router and streams files directly into the
+    configured object backend. Source files are never deleted.
+    """
+    configure_logging(False)
+    settings = StorageMigrationSettings()
+    asyncio.run(run_storage_migration(settings, category, dry_run))
 
 
 @cli.group("tasks")
