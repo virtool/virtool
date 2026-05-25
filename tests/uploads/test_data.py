@@ -28,7 +28,7 @@ async def test_create(
         fake_file_chunker(fake_file_path),
         "sample_1.fq.gz",
         UploadType.reads,
-        user=user.id,
+        user_id=user.id,
     )
 
     assert upload.name == "sample_1.fq.gz"

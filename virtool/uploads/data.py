@@ -21,6 +21,24 @@ if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
 
 
+def serialize(upload: SQLUpload) -> dict:
+    return {
+        "id": upload.id,
+        "created_at": upload.created_at,
+        "name": upload.name,
+        "name_on_disk": upload.name_on_disk,
+        "ready": upload.ready,
+        "removed": upload.removed,
+        "removed_at": upload.removed_at,
+        "reserved": upload.reserved,
+        "size": upload.size,
+        "space": upload.space,
+        "type": upload.type.value if upload.type is not None else None,
+        "uploaded_at": upload.uploaded_at,
+        "user": {"id": upload.user_id} if upload.user_id is not None else None,
+    }
+
+
 class UploadsData(DataLayerDomain):
     name = "uploads"
 
@@ -34,7 +52,7 @@ class UploadsData(DataLayerDomain):
 
     async def find(
         self,
-        user,
+        user_id: int | None,
         page: int,
         per_page: int,
         upload_type,
@@ -48,8 +66,8 @@ class UploadsData(DataLayerDomain):
 
         filters = []
 
-        if user:
-            filters.append(SQLUpload.user == str(user))  # skipcq: PTC-W0068,PYL-R1714
+        if user_id is not None:
+            filters.append(SQLUpload.user_id == user_id)  # skipcq: PTC-W0068,PYL-R1714
 
         if upload_type:
             filters.append(SQLUpload.type == upload_type)  # skipcq: PTC-W0068,PYL-R1714
@@ -88,7 +106,7 @@ class UploadsData(DataLayerDomain):
             )
 
             uploads = [
-                row.to_dict()
+                serialize(row)
                 for row in (await session.execute(query)).unique().scalars()
             ]
 
@@ -111,7 +129,7 @@ class UploadsData(DataLayerDomain):
         chunker,
         name: str,
         upload_type: UploadType,
-        user: int | None = None,
+        user_id: int | None = None,
     ) -> Upload:
         """Create an upload."""
         created_at = virtool.utils.timestamp()
@@ -133,14 +151,14 @@ class UploadsData(DataLayerDomain):
                 size=size,
                 type=upload_type,
                 uploaded_at=virtool.utils.timestamp(),
-                user=str(user) if user is not None else None,
+                user_id=user_id,
             )
 
             session.add(upload)
             await session.commit()
             await session.refresh(upload)
 
-            upload_dict = upload.to_dict()
+            upload_dict = serialize(upload)
 
         return Upload(
             **await apply_transforms(
@@ -166,7 +184,7 @@ class UploadsData(DataLayerDomain):
 
         return Upload(
             **await apply_transforms(
-                upload.to_dict(),
+                serialize(upload),
                 [AttachUserTransform(self._pg)],
                 self._pg,
             ),
@@ -219,7 +237,7 @@ class UploadsData(DataLayerDomain):
             upload.removed_at = virtool.utils.timestamp()
 
             name_on_disk = upload.name_on_disk
-            upload = upload.to_dict()
+            upload = serialize(upload)
 
             await session.commit()
 
