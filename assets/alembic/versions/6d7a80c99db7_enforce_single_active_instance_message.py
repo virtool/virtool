@@ -21,7 +21,7 @@ def upgrade() -> None:
         """
         UPDATE instance_messages SET active = false
         WHERE active = true
-          AND id NOT IN (SELECT MAX(id) FROM instance_messages WHERE active = true)
+          AND id < (SELECT MAX(id) FROM instance_messages WHERE active = true)
         """,
     )
 
