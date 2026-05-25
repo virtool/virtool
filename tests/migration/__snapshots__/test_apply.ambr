@@ -211,5 +211,12 @@
       'name': 'create caches table',
       'revision': 'c3a7e9b4d1f2',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 31,
+      'name': 'enforce single active instance message',
+      'revision': '6d7a80c99db7',
+    }),
   ])
 # ---
