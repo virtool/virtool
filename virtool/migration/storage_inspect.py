@@ -194,7 +194,11 @@ async def _hash_sample(
     mismatches: list[str] = []
 
     for key in keys:
-        source_hash = await _hash_stream(source.read(key))
+        try:
+            source_hash = await _hash_stream(source.read(key))
+        except StorageKeyNotFoundError:
+            mismatches.append(key)
+            continue
 
         try:
             destination_hash = await _hash_stream(destination.read(key))
@@ -276,6 +280,13 @@ async def run_storage_inspection(
 
     Raises :class:`SystemExit` with a non-zero status if any check fails.
     """
+    if not settings.data_path.is_dir():
+        logger.error(
+            "data_path is not a directory or does not exist",
+            data_path=str(settings.data_path),
+        )
+        raise SystemExit(1)
+
     categories: list[str] = (
         [category] if category is not None else list(CATEGORY_PREFIXES)
     )

@@ -9,6 +9,7 @@ from virtool.migration.storage import CATEGORY_PREFIXES
 from virtool.migration.storage_inspect import (
     _classify_remaining,
     _collect_covered_disk_paths,
+    _hash_sample,
     _walk_disk,
     run_storage_inspection,
 )
@@ -116,6 +117,17 @@ class TestHappyPath:
 
 
 class TestFailureModes:
+    async def test_invalid_data_path(self, tmp_path: Path):
+        with pytest.raises(SystemExit) as exc_info:
+            await run_storage_inspection(
+                _settings(tmp_path / "nonexistent"),
+                category=None,
+                sample_size=100,
+                full_hash=False,
+            )
+
+        assert exc_info.value.code == 1
+
     async def test_missing_destination_key(self, tmp_path: Path, mocker):
         items = _stage_data_path(tmp_path)
         items_without_one = {
@@ -201,6 +213,27 @@ class TestFailureModes:
             sample_size=100,
             full_hash=True,
         )
+
+
+class TestHashSample:
+    async def test_source_missing_key_counts_as_mismatch(self):
+        """A key missing in source is registered as a mismatch, not an exception."""
+        source = MemoryStorageProvider()
+        destination = MemoryStorageProvider()
+        await _populate(destination, {"present.bin": b"data"})
+
+        mismatches = await _hash_sample(source, destination, ["present.bin"])
+
+        assert mismatches == ["present.bin"]
+
+    async def test_destination_missing_key_counts_as_mismatch(self):
+        source = MemoryStorageProvider()
+        destination = MemoryStorageProvider()
+        await _populate(source, {"present.bin": b"data"})
+
+        mismatches = await _hash_sample(source, destination, ["present.bin"])
+
+        assert mismatches == ["present.bin"]
 
 
 class TestReport:
