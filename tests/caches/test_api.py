@@ -2,7 +2,7 @@ from collections.abc import AsyncIterator
 from http import HTTPStatus
 
 import pytest
-from aiohttp import BasicAuth, FormData
+from aiohttp import BasicAuth
 
 from tests.fixtures.response import RespIs
 from virtool.api.custom_json import dump_string
@@ -12,30 +12,6 @@ from virtool.storage.protocol import StorageBackend
 
 async def _chunker(payload: bytes) -> AsyncIterator[bytes]:
     yield payload
-
-
-def _form(params, payload: bytes = b"cached-bytes") -> FormData:
-    form = FormData()
-    form.add_field("params", dump_string(params), content_type="application/json")
-    form.add_field(
-        "blob",
-        payload,
-        content_type="application/octet-stream",
-        filename="cache.bin",
-    )
-    return form
-
-
-def _malformed_form(params: str, payload: bytes = b"cached-bytes") -> FormData:
-    form = FormData()
-    form.add_field("params", params, content_type="application/json")
-    form.add_field(
-        "blob",
-        payload,
-        content_type="application/octet-stream",
-        filename="cache.bin",
-    )
-    return form
 
 
 def _assert_metadata(body: dict, key: str, params: dict, size: int):
@@ -123,7 +99,11 @@ async def test_put_create_then_get(spawn_job_client):
 
     client = await spawn_job_client(authenticated=True)
 
-    put_resp = await client.put(f"/caches/{key}", data=_form(params, payload))
+    put_resp = await client.put(
+        f"/caches/{key}",
+        data=payload,
+        params={"params": dump_string(params)},
+    )
     put_body = await put_resp.json()
 
     assert put_resp.status == HTTPStatus.CREATED
@@ -146,10 +126,18 @@ async def test_put_duplicate_returns_existing_metadata_and_keeps_original_blob(
 
     client = await spawn_job_client(authenticated=True)
 
-    first_resp = await client.put(f"/caches/{key}", data=_form(params, first_payload))
+    first_resp = await client.put(
+        f"/caches/{key}",
+        data=first_payload,
+        params={"params": dump_string(params)},
+    )
     first_body = await first_resp.json()
 
-    second_resp = await client.put(f"/caches/{key}", data=_form(params, second_payload))
+    second_resp = await client.put(
+        f"/caches/{key}",
+        data=second_payload,
+        params={"params": dump_string(params)},
+    )
     second_body = await second_resp.json()
 
     assert first_resp.status == HTTPStatus.CREATED
@@ -166,53 +154,43 @@ async def test_put_duplicate_returns_existing_metadata_and_keeps_original_blob(
 async def test_put_bad_params(params: str, spawn_job_client):
     client = await spawn_job_client(authenticated=True)
 
-    resp = await client.put("/caches/bad-params", data=_malformed_form(params))
-
-    await RespIs.bad_request(resp)
-
-
-async def test_put_missing_blob(spawn_job_client):
-    form = FormData()
-    form.add_field(
-        "params",
-        dump_string({"step": "trim_reads"}),
-        content_type="application/json",
+    resp = await client.put(
+        "/caches/bad-params",
+        data=b"cached-bytes",
+        params={"params": params},
     )
 
-    client = await spawn_job_client(authenticated=True)
-
-    resp = await client.put("/caches/missing-blob", data=form)
-
     await RespIs.bad_request(resp)
 
 
-async def test_put_rejects_legacy_top_level_fields(spawn_job_client):
-    form = FormData()
-    form.add_field("cache_type", "reads")
-    form.add_field("params", dump_string({"step": "trim_reads"}))
-    form.add_field(
-        "blob",
-        b"cached",
-        content_type="application/octet-stream",
-        filename="cache.bin",
+async def test_put_defaults_params_to_empty_dict(spawn_job_client):
+    key = "trim-reads-no-params"
+    payload = b"cached"
+
+    client = await spawn_job_client(authenticated=True)
+
+    resp = await client.put(f"/caches/{key}", data=payload)
+    body = await resp.json()
+
+    assert resp.status == HTTPStatus.CREATED
+    _assert_metadata(body, key, {}, len(payload))
+
+
+async def test_put_accepts_null_params(spawn_job_client):
+    key = "trim-reads-null-params"
+    payload = b"cached"
+
+    client = await spawn_job_client(authenticated=True)
+
+    resp = await client.put(
+        f"/caches/{key}",
+        data=payload,
+        params={"params": "null"},
     )
+    body = await resp.json()
 
-    client = await spawn_job_client(authenticated=True)
-
-    resp = await client.put("/caches/legacy-fields", data=form)
-
-    await RespIs.bad_request(resp)
-
-
-async def test_put_rejects_legacy_top_level_fields_after_blob(spawn_job_client):
-    form = _form({"step": "trim_reads"})
-    form.add_field("parent_id", "sample-id")
-
-    client = await spawn_job_client(authenticated=True)
-
-    resp = await client.put("/caches/legacy-fields-after-blob", data=form)
-
-    await RespIs.bad_request(resp)
+    assert resp.status == HTTPStatus.CREATED
+    _assert_metadata(body, key, {}, len(payload))
 
 
 async def test_delete_not_registered(spawn_job_client):
