@@ -218,5 +218,12 @@
       'name': 'enforce single active instance message',
       'revision': '6d7a80c99db7',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 32,
+      'name': 'add uploads user_id',
+      'revision': 'd7f8f4569939',
+    }),
   ])
 # ---
