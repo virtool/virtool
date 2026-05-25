@@ -18,6 +18,7 @@ from virtool.config.cls import (
 from virtool.config.options import (
     address_options,
     base_url_option,
+    cache_max_size_option,
     data_path_option,
     dev_option,
     flags_option,
@@ -69,6 +70,7 @@ def server() -> None:
 @server.command("api")
 @address_options
 @base_url_option
+@cache_max_size_option
 @data_path_option
 @dev_option
 @flags_option
@@ -90,6 +92,7 @@ def start_api_server(**kwargs) -> None:
 
 @server.command("jobs")
 @address_options
+@cache_max_size_option
 @data_path_option
 @dev_option
 @flags_option

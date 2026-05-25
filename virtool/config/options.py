@@ -48,6 +48,13 @@ base_url_option = click.option(
     type=str,
 )
 
+cache_max_size_option = click.option(
+    "--cache-max-size",
+    default=get_from_environment("cache_max_size", 10 * 1024**3),
+    help="The maximum size in bytes for a cache payload upload",
+    type=int,
+)
+
 data_path_option = click.option(
     "--data-path",
     default=get_from_environment("data_path", "./data"),

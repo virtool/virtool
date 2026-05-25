@@ -77,6 +77,13 @@ class APIConflict(APIException):
         super().__init__(error_id, message, status_code=409)
 
 
+class APIRequestEntityTooLarge(APIException):
+    """Exception raised when an API request body exceeds the allowed size."""
+
+    def __init__(self, message: str = "Request entity too large"):
+        super().__init__("request_entity_too_large", message, status_code=413)
+
+
 class APIUnprocessableEntity(APIException):
     """Raising this exception during request handling immediately returns a
     `422` (Unprocessable Entity) response to the client.

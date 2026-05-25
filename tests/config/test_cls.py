@@ -8,6 +8,7 @@ from virtool.config.cls import ServerConfig
 def build_server_config(**overrides) -> ServerConfig:
     defaults = {
         "base_url": "",
+        "cache_max_size": 10 * 1024**3,
         "data_path": Path("./data"),
         "dev": False,
         "flags": [],
@@ -32,6 +33,7 @@ class TestStorageBackendRequired:
         with pytest.raises(TypeError, match="storage_backend"):
             ServerConfig(
                 base_url="",
+                cache_max_size=10 * 1024**3,
                 data_path=Path("./data"),
                 dev=False,
                 flags=[],
@@ -45,6 +47,12 @@ class TestStorageBackendRequired:
                 real_ip_header="",
                 sentry_dsn="",
             )
+
+
+class TestCacheMaxSizeValidation:
+    def test_non_positive_raises(self):
+        with pytest.raises(ValueError, match="cache_max_size"):
+            build_server_config(cache_max_size=0)
 
 
 class TestS3Validation:

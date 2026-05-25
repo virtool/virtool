@@ -1,7 +1,6 @@
 from collections.abc import AsyncGenerator
 
 from aiohttp import MultipartReader
-from aiohttp.web import Request
 from cerberus import Validator
 
 CHUNK_SIZE = 1024 * 1000 * 50
@@ -41,12 +40,6 @@ async def multipart_file_chunker(
         if not chunk:
             break
 
-        yield chunk
-
-
-async def request_body_chunker(req: Request) -> AsyncGenerator[bytes]:
-    """Iterates through a request body as byte chunks."""
-    while chunk := await req.content.read(CHUNK_SIZE):
         yield chunk
 
 

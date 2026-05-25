@@ -14,6 +14,10 @@ async def _chunker(payload: bytes) -> AsyncIterator[bytes]:
     yield payload
 
 
+async def _chunked_body(payload: bytes) -> AsyncIterator[bytes]:
+    yield payload
+
+
 def _assert_metadata(body: dict, key: str, params: dict, size: int):
     assert body["key"] == key
     assert body["params"] == params
@@ -191,6 +195,26 @@ async def test_put_accepts_null_params(spawn_job_client):
 
     assert resp.status == HTTPStatus.CREATED
     _assert_metadata(body, key, {}, len(payload))
+
+
+async def test_put_requires_content_length(spawn_job_client):
+    client = await spawn_job_client(authenticated=True)
+
+    resp = await client.put("/caches/chunked-body", data=_chunked_body(b"cached"))
+
+    await RespIs.bad_request(resp, "Content-Length header is required")
+
+
+async def test_put_rejects_payload_over_cache_max_size(spawn_job_client):
+    client = await spawn_job_client(authenticated=True, cache_max_size=4)
+
+    resp = await client.put("/caches/too-large", data=b"cached")
+
+    assert resp.status == HTTPStatus.REQUEST_ENTITY_TOO_LARGE
+    assert await resp.json() == {
+        "id": "request_entity_too_large",
+        "message": "Cache payload exceeds maximum size of 4 bytes",
+    }
 
 
 async def test_delete_not_registered(spawn_job_client):

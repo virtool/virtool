@@ -62,6 +62,7 @@ class MigrationConfig:
 @dataclass
 class ServerConfig:
     base_url: str
+    cache_max_size: int
     data_path: Path
     dev: bool
     flags: list[FlagName]
@@ -95,6 +96,9 @@ class ServerConfig:
 
     def __post_init__(self):
         self.data_path = Path(self.data_path)
+
+        if self.cache_max_size <= 0:
+            raise ValueError("cache_max_size must be greater than zero")
 
         if self.storage_backend == "s3" and not self.storage_s3_bucket:
             raise ValueError(

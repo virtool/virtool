@@ -220,6 +220,7 @@ class JobClientSpawner(Protocol):
         auth: BasicAuth | None = None,
         authenticated: bool = False,
         base_url: str = "",
+        cache_max_size: int = 10 * 1024**3,
         dev: bool = False,
         flags: list[FlagName] | None = None,
     ) -> VirtoolTestClient:
@@ -404,6 +405,7 @@ def spawn_client(
         """
         config = ServerConfig(
             base_url=base_url,
+            cache_max_size=cache_max_size,
             data_path=data_path,
             dev=dev,
             flags=[],
@@ -506,6 +508,7 @@ def spawn_job_client(
         add_route_table: RouteTableDef = None,
         authenticated: bool = False,
         base_url: str = "",
+        cache_max_size: int = 10 * 1024**3,
         dev: bool = False,
         flags: list[FlagName] | None = None,
     ):
@@ -549,6 +552,7 @@ def spawn_job_client(
         app = await virtool.jobs.main.create_app(
             ServerConfig(
                 base_url=base_url,
+                cache_max_size=cache_max_size,
                 data_path=data_path,
                 dev=dev,
                 flags=[],
