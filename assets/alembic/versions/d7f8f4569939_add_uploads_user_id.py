@@ -21,7 +21,7 @@ drop the trigger, set ``user_id`` NOT NULL, and drop the ``"user"``
 column.
 
 Revision ID: d7f8f4569939
-Revises: c3a7e9b4d1f2
+Revises: 6d7a80c99db7
 Create Date: 2026-05-25 22:24:47.242433+00:00
 
 """
@@ -30,7 +30,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision = "d7f8f4569939"
-down_revision = "c3a7e9b4d1f2"
+down_revision = "6d7a80c99db7"
 branch_labels = None
 depends_on = None
 

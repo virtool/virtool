@@ -20,7 +20,7 @@ async def setup_users(
 
     Returns a mapping of ``legacy_id`` → ``users.id`` for the seeded users.
     """
-    await asyncio.to_thread(apply_alembic, "c3a7e9b4d1f2")
+    await asyncio.to_thread(apply_alembic, "6d7a80c99db7")
 
     async with AsyncSession(ctx.pg) as session:
         result = await session.execute(
