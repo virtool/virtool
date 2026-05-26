@@ -23,7 +23,7 @@ def _metadata(hit: CacheHit) -> Cache:
 
 
 @routes.jobs_api.get("/caches/{key}")
-async def get_cache(req: Request):
+async def download_cache(req: Request):
     key = req.match_info["key"]
 
     try:
@@ -46,7 +46,7 @@ async def get_cache(req: Request):
 
 
 @routes.jobs_api.put("/caches/{key}")
-async def put_cache(req: Request):
+async def upload_cache(req: Request):
     key = req.match_info["key"]
     params = read_cache_params(req)
     content_length = read_cache_content_length(req)
