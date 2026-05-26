@@ -210,6 +210,12 @@ async def check_right(req: Request, ref_id: str, right: str) -> bool:
     groups: list[dict] = reference["groups"]
     users: list[dict] = reference["users"]
 
+    if right == "read":
+        if any(user["id"] == client.user_id for user in users):
+            return True
+
+        return any(group["id"] in client.groups for group in groups)
+
     for user in users:
         if user["id"] == client.user_id:
             if user[right]:

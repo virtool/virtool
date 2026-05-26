@@ -22,6 +22,7 @@ from virtool.references.db import (
     get_reference_groups,
     populate_insert_only_reference,
 )
+from virtool.references.models import ReferenceRights
 from virtool.startup import startup_http_client_session
 
 
@@ -64,6 +65,13 @@ async def test_check_right(
     mock_req["client"].user_id = "bar"
     mock_req["client"].groups = ["foo"]
 
+    rights = ReferenceRights(
+        build=False,
+        modify=False,
+        modify_otu=True,
+        remove=False,
+    ).dict()
+
     await mongo.references.insert_one(
         {
             "_id": "baz",
@@ -71,17 +79,13 @@ async def test_check_right(
             "groups": [
                 {
                     "id": "foo" if membership == "group" else "none",
-                    "read": True,
-                    "modify": False,
-                    "modify_otu": True,
+                    **rights,
                 },
             ],
             "users": [
                 {
                     "id": "bar" if membership == "user" else "none",
-                    "read": True,
-                    "modify": False,
-                    "modify_otu": True,
+                    **rights,
                 },
             ],
         },
