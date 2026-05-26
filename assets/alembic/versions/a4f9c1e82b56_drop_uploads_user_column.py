@@ -15,8 +15,9 @@ The migration:
 - sets ``user_id`` NOT NULL,
 - drops the legacy ``"user"`` column.
 
-Rolling back past this migration requires restoring the column and
-re-running the Phase 1 backfill.
+This migration is irreversible: ``downgrade`` raises ``CommandError``
+because restoring the dropped ``"user"`` column would require re-running
+the Phase 1 backfill against archived legacy data.
 
 Revision ID: a4f9c1e82b56
 Revises: d7f8f4569939
@@ -26,6 +27,7 @@ Create Date: 2026-05-26 00:47:17.514003+00:00
 
 import sqlalchemy as sa
 from alembic import op
+from alembic.util.exc import CommandError
 
 revision = "a4f9c1e82b56"
 down_revision = "d7f8f4569939"
@@ -53,5 +55,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.add_column("uploads", sa.Column("user", sa.String(), nullable=True))
-    op.alter_column("uploads", "user_id", nullable=True)
+    msg = (
+        "a4f9c1e82b56 is irreversible: restoring the dropped 'user' column "
+        "requires re-running the Phase 1 backfill against archived legacy data, "
+        "which Alembic cannot do automatically."
+    )
+    raise CommandError(msg)

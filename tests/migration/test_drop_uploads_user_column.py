@@ -86,7 +86,7 @@ class TestSchemaCleanup:
             ).scalar_one()
             assert before == 1
 
-        await asyncio.to_thread(apply_alembic, "head")
+        await asyncio.to_thread(apply_alembic, "a4f9c1e82b56")
 
         async with AsyncSession(ctx.pg) as session:
             after = (
@@ -116,7 +116,7 @@ class TestSchemaCleanup:
         setup_phase_2: dict[str, int],
         apply_alembic: Callable,
     ):
-        await asyncio.to_thread(apply_alembic, "head")
+        await asyncio.to_thread(apply_alembic, "a4f9c1e82b56")
 
         async with AsyncSession(ctx.pg) as session:
             column_count = (
@@ -135,7 +135,7 @@ class TestSchemaCleanup:
         setup_phase_2: dict[str, int],
         apply_alembic: Callable,
     ):
-        await asyncio.to_thread(apply_alembic, "head")
+        await asyncio.to_thread(apply_alembic, "a4f9c1e82b56")
 
         async with AsyncSession(ctx.pg) as session:
             is_nullable = (
@@ -159,7 +159,7 @@ class TestSchemaCleanup:
             ctx, "alice_upload.txt", str(alice)
         )
 
-        await asyncio.to_thread(apply_alembic, "head")
+        await asyncio.to_thread(apply_alembic, "a4f9c1e82b56")
 
         async with AsyncSession(ctx.pg) as session:
             user_id = (
@@ -190,4 +190,4 @@ class TestTripwire:
             await session.commit()
 
         with pytest.raises(RuntimeError, match="NULL user_id"):
-            await asyncio.to_thread(apply_alembic, "head")
+            await asyncio.to_thread(apply_alembic, "a4f9c1e82b56")
