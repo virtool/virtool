@@ -19,6 +19,9 @@ from virtool.utils import base_processor
 
 logger = get_logger("hmms")
 
+HMM_REPO_SLUG = "virtool/virtool-hmm"
+"""The GitHub slug for the canonical HMM data repository."""
+
 HMMS_REFRESH_INTERVAL = 600
 """How frequently the HMMs should be refreshed from the GitHub repository.
 

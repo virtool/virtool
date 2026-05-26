@@ -17,6 +17,7 @@ from virtool.data.errors import (
 from virtool.data.transforms import apply_transforms
 from virtool.github import create_update_subdocument
 from virtool.hmm.db import (
+    HMM_REPO_SLUG,
     HMMS_PROJECTION,
     fetch_and_update_release,
     generate_annotations,
@@ -103,12 +104,10 @@ class HmmsData(DataLayerDomain):
         ):
             raise ResourceConflictError("Install already in progress")
 
-        settings = await self.data.settings.get_all()
-
         await virtool.hmm.db.fetch_and_update_release(
             self._client,
             self._mongo,
-            settings.hmm_slug,
+            HMM_REPO_SLUG,
         )
 
         release = await get_one_field(self._mongo.status, "release", "hmm")
@@ -219,6 +218,4 @@ class HmmsData(DataLayerDomain):
             )
 
     async def update_release(self) -> None:
-        settings = await self.data.settings.get_all()
-
-        await fetch_and_update_release(self._client, self._mongo, settings.hmm_slug)
+        await fetch_and_update_release(self._client, self._mongo, HMM_REPO_SLUG)

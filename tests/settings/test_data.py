@@ -18,8 +18,6 @@ async def test_ensure(mongo, settings_data: SettingsData, snapshot, test_setting
         sample_group_write=False,
         sample_all_read=True,
         sample_all_write=False,
-        sample_unique_names=True,
-        hmm_slug="virtool/virtool-hmm",
         enable_api=True,
         enable_sentry=True,
         minimum_password_length=8,

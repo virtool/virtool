@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, constr
+from pydantic import BaseModel, Field
 
 
 class UpdateSettingsRequest(BaseModel):
@@ -7,7 +7,6 @@ class UpdateSettingsRequest(BaseModel):
     sample_group_write: bool = False
     sample_all_read: bool = True
     sample_all_write: bool = False
-    hmm_slug: constr(strip_whitespace=True) = "virtool/virtool-hmm"
     enable_api: bool = False
     enable_sentry: bool = True
     minimum_password_length: int = 8
