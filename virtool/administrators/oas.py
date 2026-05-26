@@ -50,7 +50,7 @@ class ListRolesResponse(BaseModel):
                 {
                     "id": "settings",
                     "name": "Settings",
-                    "description": "Manage instance settings and administrative messages.",
+                    "description": "Manage instance settings.",
                 },
                 {
                     "id": "spaces",
