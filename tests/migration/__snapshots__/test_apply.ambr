@@ -225,5 +225,12 @@
       'name': 'add uploads user_id',
       'revision': 'd7f8f4569939',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 33,
+      'name': 'drop uploads user column',
+      'revision': 'a4f9c1e82b56',
+    }),
   ])
 # ---

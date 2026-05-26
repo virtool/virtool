@@ -79,7 +79,7 @@ class TestBackfill:
         alice = setup_users["alice_legacy"]
         upload_id = await _insert_upload(ctx, "by_id.txt", str(alice))
 
-        await asyncio.to_thread(apply_alembic, "head")
+        await asyncio.to_thread(apply_alembic, "d7f8f4569939")
 
         assert await _fetch_user_id(ctx, upload_id) == alice
 
@@ -92,7 +92,7 @@ class TestBackfill:
         bob = setup_users["bob_legacy"]
         upload_id = await _insert_upload(ctx, "by_legacy.txt", "bob_legacy")
 
-        await asyncio.to_thread(apply_alembic, "head")
+        await asyncio.to_thread(apply_alembic, "d7f8f4569939")
 
         assert await _fetch_user_id(ctx, upload_id) == bob
 
@@ -105,7 +105,7 @@ class TestBackfill:
         await _insert_upload(ctx, "orphan.txt", "ghost_user")
 
         with pytest.raises(RuntimeError, match="could not be mapped"):
-            await asyncio.to_thread(apply_alembic, "head")
+            await asyncio.to_thread(apply_alembic, "d7f8f4569939")
 
 
 class TestTrigger:
@@ -115,7 +115,7 @@ class TestTrigger:
         setup_users: dict[str, int],
         apply_alembic: Callable,
     ):
-        await asyncio.to_thread(apply_alembic, "head")
+        await asyncio.to_thread(apply_alembic, "d7f8f4569939")
 
         alice = setup_users["alice_legacy"]
         upload_id = await _insert_upload(ctx, "post.txt", str(alice))
@@ -128,7 +128,7 @@ class TestTrigger:
         setup_users: dict[str, int],
         apply_alembic: Callable,
     ):
-        await asyncio.to_thread(apply_alembic, "head")
+        await asyncio.to_thread(apply_alembic, "d7f8f4569939")
 
         bob = setup_users["bob_legacy"]
         upload_id = await _insert_upload(ctx, "post_legacy.txt", "bob_legacy")
@@ -141,7 +141,7 @@ class TestTrigger:
         setup_users: dict[str, int],
         apply_alembic: Callable,
     ):
-        await asyncio.to_thread(apply_alembic, "head")
+        await asyncio.to_thread(apply_alembic, "d7f8f4569939")
 
         alice = setup_users["alice_legacy"]
 
@@ -170,7 +170,7 @@ class TestTrigger:
 
         upload_id = await _insert_upload(ctx, "switch.txt", "alice_legacy")
 
-        await asyncio.to_thread(apply_alembic, "head")
+        await asyncio.to_thread(apply_alembic, "d7f8f4569939")
 
         assert await _fetch_user_id(ctx, upload_id) == alice
 
