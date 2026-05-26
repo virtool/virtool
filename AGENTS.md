@@ -95,7 +95,16 @@ mise run oas
 
 ### Migrations
 
-Use `virtool migration create` to write new Virtool migrations (Alembic-based).
+Create new Alembic revisions with the alembic CLI:
+
+```bash
+uv run alembic revision -m "short summary"
+```
+
+This writes a stub at `assets/alembic/versions/<id>_<slug>.py` with the next
+revision ID and the current head as `down_revision`. Fill in `upgrade()` and
+`downgrade()` afterward. Do not hand-write revision files or invent revision
+IDs — let alembic generate them so the chain stays consistent.
 
 ## Architecture
 
