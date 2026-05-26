@@ -18,17 +18,6 @@ async def _chunked_body(payload: bytes) -> AsyncIterator[bytes]:
     yield payload
 
 
-def _assert_metadata(body: dict, key: str, params: dict, size: int):
-    assert body["key"] == key
-    assert body["params"] == params
-    assert body["size"] == size
-    assert isinstance(body["id"], int)
-    assert isinstance(body["created_at"], str)
-    assert isinstance(body["last_accessed_at"], str)
-    assert "data" not in body
-    assert "storage_key" not in body
-
-
 async def test_get(data_layer: DataLayer, spawn_job_client):
     key = "trim-reads-get"
     params = {"workflow": "create_sample", "step": "trim_reads"}
@@ -85,10 +74,9 @@ async def test_put_create_then_get(spawn_job_client):
         data=payload,
         params={"params": dump_string(params)},
     )
-    put_body = await put_resp.json()
 
     assert put_resp.status == HTTPStatus.CREATED
-    _assert_metadata(put_body, key, params, len(payload))
+    assert await put_resp.read() == b""
 
     get_resp = await client.get(f"/caches/{key}")
 
@@ -97,7 +85,7 @@ async def test_put_create_then_get(spawn_job_client):
     assert await get_resp.read() == payload
 
 
-async def test_put_duplicate_returns_existing_metadata_and_keeps_original_blob(
+async def test_put_duplicate_returns_ok_and_keeps_original_blob(
     spawn_job_client,
 ):
     key = "trim-reads-put-duplicate"
@@ -112,18 +100,17 @@ async def test_put_duplicate_returns_existing_metadata_and_keeps_original_blob(
         data=first_payload,
         params={"params": dump_string(params)},
     )
-    first_body = await first_resp.json()
 
     second_resp = await client.put(
         f"/caches/{key}",
         data=second_payload,
         params={"params": dump_string(params)},
     )
-    second_body = await second_resp.json()
 
     assert first_resp.status == HTTPStatus.CREATED
+    assert await first_resp.read() == b""
     assert second_resp.status == HTTPStatus.OK
-    assert second_body == first_body
+    assert await second_resp.read() == b""
 
     blob_resp = await client.get(f"/caches/{key}")
 
@@ -131,8 +118,14 @@ async def test_put_duplicate_returns_existing_metadata_and_keeps_original_blob(
     assert await blob_resp.read() == first_payload
 
 
-@pytest.mark.parametrize("params", ["{", "[]"])
-async def test_put_bad_params(params: str, spawn_job_client):
+@pytest.mark.parametrize(
+    ("params", "message"),
+    [
+        ("{", "Invalid JSON in 'params' query parameter"),
+        ("[]", "Query parameter 'params' must be a JSON object"),
+    ],
+)
+async def test_put_bad_params(params: str, message: str, spawn_job_client):
     client = await spawn_job_client(authenticated=True)
 
     resp = await client.put(
@@ -141,7 +134,7 @@ async def test_put_bad_params(params: str, spawn_job_client):
         params={"params": params},
     )
 
-    await RespIs.bad_request(resp)
+    await RespIs.bad_request(resp, message)
 
 
 async def test_put_defaults_params_to_empty_dict(spawn_job_client):
@@ -151,10 +144,9 @@ async def test_put_defaults_params_to_empty_dict(spawn_job_client):
     client = await spawn_job_client(authenticated=True)
 
     resp = await client.put(f"/caches/{key}", data=payload)
-    body = await resp.json()
 
     assert resp.status == HTTPStatus.CREATED
-    _assert_metadata(body, key, {}, len(payload))
+    assert await resp.read() == b""
 
 
 async def test_put_accepts_null_params(spawn_job_client):
@@ -168,10 +160,9 @@ async def test_put_accepts_null_params(spawn_job_client):
         data=payload,
         params={"params": "null"},
     )
-    body = await resp.json()
 
     assert resp.status == HTTPStatus.CREATED
-    _assert_metadata(body, key, {}, len(payload))
+    assert await resp.read() == b""
 
 
 async def test_put_requires_content_length(spawn_job_client):

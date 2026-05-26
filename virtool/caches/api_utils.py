@@ -19,14 +19,14 @@ def read_cache_params(req: Request) -> dict[str, Any] | None:
 
     try:
         params = loads(value)
-    except ValueError:
-        raise APIBadRequest()
+    except ValueError as err:
+        raise APIBadRequest("Invalid JSON in 'params' query parameter") from err
 
     if params is None:
         return None
 
     if not isinstance(params, dict):
-        raise APIBadRequest()
+        raise APIBadRequest("Query parameter 'params' must be a JSON object")
 
     return params
 
@@ -53,6 +53,9 @@ async def cache_body_chunker(
 
     while chunk := await req.content.read(STORAGE_CHUNK_SIZE):
         size += len(chunk)
+
+        if size > content_length:
+            raise APIBadRequest("Request body size exceeds Content-Length")
 
         if size > CACHE_MAX_SIZE:
             raise APIRequestEntityTooLarge(
