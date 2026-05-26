@@ -176,6 +176,29 @@ class TestFind:
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
+    async def test_filters_by_user(
+        self,
+        fake: DataFaker,
+        spawn_client: ClientSpawner,
+    ):
+        client = await spawn_client(authenticated=True)
+
+        matching_user = await fake.users.create()
+        other_user = await fake.users.create()
+
+        matching_upload = await fake.uploads.create(user=matching_user)
+        await fake.uploads.create(user=other_user)
+
+        resp = await client.get(f"/uploads?user={matching_user.id}")
+
+        assert resp.status == HTTPStatus.OK
+
+        body = await resp.json()
+
+        assert body["found_count"] == 1
+        assert body["items"][0]["id"] == matching_upload.id
+        assert body["items"][0]["user"]["id"] == matching_user.id
+
 
 async def test_get(
     example_path: Path,
