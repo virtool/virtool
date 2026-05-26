@@ -10,6 +10,7 @@ from virtool.caches.api_utils import (
     read_cache_content_length,
     read_cache_params,
 )
+from virtool.caches.models import Cache, CacheHit
 from virtool.data.errors import CacheAlreadyExistsError, CacheMissError
 from virtool.data.utils import get_data_from_req
 
@@ -17,27 +18,16 @@ logger = get_logger("caches")
 routes = Routes()
 
 
+def _metadata(hit: CacheHit) -> Cache:
+    return Cache(**hit.dict(exclude={"data"}))
+
+
 @routes.jobs_api.get("/caches/{key}")
 async def get_cache(req: Request):
     key = req.match_info["key"]
 
     try:
-        cache = await get_data_from_req(req).caches.get(key)
-    except CacheMissError:
-        logger.info("cache miss", key=key)
-        raise APINotFound()
-
-    logger.info("cache hit", key=key)
-
-    return json_response(cache)
-
-
-@routes.jobs_api.get("/caches/{key}/blob")
-async def get_cache_blob(req: Request):
-    key = req.match_info["key"]
-
-    try:
-        hit = await get_data_from_req(req).caches.get_blob(key)
+        hit = await get_data_from_req(req).caches.get(key)
     except CacheMissError:
         logger.info("cache miss", key=key)
         raise APINotFound()
@@ -71,11 +61,11 @@ async def put_cache(req: Request):
         logger.info("cache put race", key=key)
 
         try:
-            cache = await get_data_from_req(req).caches.get(key)
+            hit = await get_data_from_req(req).caches.get(key)
         except CacheMissError:
             raise APINotFound()
 
-        return json_response(cache)
+        return json_response(_metadata(hit))
 
     logger.info("cache put", key=key, size=created.size)
 

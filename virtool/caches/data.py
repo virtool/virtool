@@ -51,20 +51,11 @@ class CachesData(DataLayerDomain):
 
             return row.to_dict(), row.storage_key
 
-    async def get(self, key: str) -> Cache:
-        """Return the cache entry for ``key``.
+    async def get(self, key: str) -> CacheHit:
+        """Return the cache entry and lazy payload stream for ``key``.
 
         Refreshes ``last_accessed_at`` when it is older than
         :data:`LAST_ACCESSED_REFRESH_INTERVAL`.
-
-        Raises :class:`CacheMissError` when no row matches ``key``.
-        """
-        row_data, _ = await self._get_row_data(key)
-
-        return Cache(**row_data)
-
-    async def get_blob(self, key: str) -> CacheHit:
-        """Return the cache entry and lazy payload stream for ``key``.
 
         The returned data stream is lazy and is not opened until iterated.
 

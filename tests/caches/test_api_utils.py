@@ -5,7 +5,7 @@ from virtool.caches.api_utils import CACHE_MAX_SIZE, read_cache_content_length
 
 
 class TestReadCacheContentLength:
-    def test_rejects_values_over_postgres_bigint(self, mocker):
+    def test_rejects_values_over_cache_max_size(self, mocker):
         req = mocker.Mock(content_length=CACHE_MAX_SIZE + 1)
 
         with pytest.raises(

@@ -39,10 +39,11 @@ async def test_get(data_layer: DataLayer, spawn_job_client):
     client = await spawn_job_client(authenticated=True)
 
     resp = await client.get(f"/caches/{key}")
-    body = await resp.json()
 
     assert resp.status == HTTPStatus.OK
-    _assert_metadata(body, key, params, len(payload))
+    assert resp.headers["Content-Type"] == "application/octet-stream"
+    assert resp.headers["Content-Length"] == str(len(payload))
+    assert await resp.read() == payload
 
 
 async def test_get_not_found(spawn_job_client):
@@ -53,31 +54,7 @@ async def test_get_not_found(spawn_job_client):
     await RespIs.not_found(resp)
 
 
-async def test_get_blob(data_layer: DataLayer, spawn_job_client):
-    key = "trim-reads-blob"
-    payload = b"trimmed reads blob"
-
-    await data_layer.caches.create(_chunker(payload), key, {"step": "trim_reads"})
-
-    client = await spawn_job_client(authenticated=True)
-
-    resp = await client.get(f"/caches/{key}/blob")
-
-    assert resp.status == HTTPStatus.OK
-    assert resp.headers["Content-Type"] == "application/octet-stream"
-    assert resp.headers["Content-Length"] == str(len(payload))
-    assert await resp.read() == payload
-
-
-async def test_get_blob_not_found(spawn_job_client):
-    client = await spawn_job_client(authenticated=True)
-
-    resp = await client.get("/caches/missing-cache/blob")
-
-    await RespIs.not_found(resp)
-
-
-async def test_get_blob_storage_not_found(
+async def test_get_storage_not_found(
     data_layer: DataLayer,
     memory_storage: StorageBackend,
     spawn_job_client,
@@ -91,7 +68,7 @@ async def test_get_blob_storage_not_found(
 
     client = await spawn_job_client(authenticated=True)
 
-    resp = await client.get(f"/caches/{key}/blob")
+    resp = await client.get(f"/caches/{key}")
 
     await RespIs.not_found(resp)
 
@@ -114,10 +91,10 @@ async def test_put_create_then_get(spawn_job_client):
     _assert_metadata(put_body, key, params, len(payload))
 
     get_resp = await client.get(f"/caches/{key}")
-    get_body = await get_resp.json()
 
     assert get_resp.status == HTTPStatus.OK
-    assert get_body == put_body
+    assert get_resp.headers["Content-Length"] == str(len(payload))
+    assert await get_resp.read() == payload
 
 
 async def test_put_duplicate_returns_existing_metadata_and_keeps_original_blob(
@@ -148,7 +125,7 @@ async def test_put_duplicate_returns_existing_metadata_and_keeps_original_blob(
     assert second_resp.status == HTTPStatus.OK
     assert second_body == first_body
 
-    blob_resp = await client.get(f"/caches/{key}/blob")
+    blob_resp = await client.get(f"/caches/{key}")
 
     assert blob_resp.status == HTTPStatus.OK
     assert await blob_resp.read() == first_payload
@@ -213,11 +190,18 @@ async def test_delete_not_registered(spawn_job_client):
     assert resp.status == HTTPStatus.METHOD_NOT_ALLOWED
 
 
+async def test_blob_route_not_registered(spawn_job_client):
+    client = await spawn_job_client(authenticated=True)
+
+    resp = await client.get("/caches/cache-key/blob")
+
+    assert resp.status == HTTPStatus.NOT_FOUND
+
+
 @pytest.mark.parametrize(
     ("method", "path"),
     [
         ("get", "/caches/cache-key"),
-        ("get", "/caches/cache-key/blob"),
         ("put", "/caches/cache-key"),
     ],
 )
@@ -236,7 +220,6 @@ async def test_auth_required(method: str, path: str, spawn_job_client):
     ("method", "path"),
     [
         ("get", "/caches/cache-key"),
-        ("get", "/caches/cache-key/blob"),
         ("put", "/caches/cache-key"),
     ],
 )
