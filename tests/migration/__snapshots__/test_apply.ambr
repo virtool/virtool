@@ -232,5 +232,12 @@
       'name': 'drop uploads user column',
       'revision': 'a4f9c1e82b56',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 34,
+      'name': 'add instance_messages user_id',
+      'revision': 'c24b524f77e3',
+    }),
   ])
 # ---
