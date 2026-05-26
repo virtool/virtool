@@ -5,24 +5,10 @@ from aiohttp.web import Request
 
 from virtool.api.custom_json import loads
 from virtool.api.errors import APIBadRequest, APIRequestEntityTooLarge
-from virtool.caches.models import Cache
 from virtool.storage.protocol import STORAGE_CHUNK_SIZE
 
 CACHE_MAX_SIZE = 10 * 1024**3
 """Maximum cache payload size in bytes."""
-
-
-def cache_metadata(cache: Cache) -> dict[str, Any]:
-    return cache.dict(
-        include={
-            "id",
-            "key",
-            "params",
-            "size",
-            "created_at",
-            "last_accessed_at",
-        },
-    )
 
 
 def read_cache_params(req: Request) -> dict[str, Any] | None:

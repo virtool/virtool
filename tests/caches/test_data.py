@@ -47,13 +47,14 @@ class TestCreate:
             TRIM_READS_PARAMS,
         )
 
-        hit = await data_layer.caches.get(TRIM_READS_KEY)
+        cache = await data_layer.caches.get(TRIM_READS_KEY)
 
-        assert hit.id == created.id
-        assert hit.key == created.key == TRIM_READS_KEY
-        assert hit.params == created.params == TRIM_READS_PARAMS
-        assert hit.size == created.size == len(payload)
+        assert cache.id == created.id
+        assert cache.key == created.key == TRIM_READS_KEY
+        assert cache.params == created.params == TRIM_READS_PARAMS
+        assert cache.size == created.size == len(payload)
 
+        hit = await data_layer.caches.get_blob(TRIM_READS_KEY)
         chunks = [chunk async for chunk in hit.data]
         assert b"".join(chunks) == payload
 
@@ -63,10 +64,10 @@ class TestCreate:
             TRIM_READS_KEY,
         )
 
-        hit = await data_layer.caches.get(TRIM_READS_KEY)
+        cache = await data_layer.caches.get(TRIM_READS_KEY)
 
         assert created.params == {}
-        assert hit.params == {}
+        assert cache.params == {}
 
     async def test_duplicate_key_raises_already_exists(
         self,
@@ -88,7 +89,7 @@ class TestCreate:
                 TRIM_READS_PARAMS,
             )
 
-        hit = await data_layer.caches.get(TRIM_READS_KEY)
+        hit = await data_layer.caches.get_blob(TRIM_READS_KEY)
         chunks = [chunk async for chunk in hit.data]
         assert b"".join(chunks) == first_payload
 

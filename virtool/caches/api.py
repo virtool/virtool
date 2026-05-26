@@ -7,7 +7,6 @@ from virtool.api.routes import Routes
 from virtool.api.streaming import stream_storage_response
 from virtool.caches.api_utils import (
     cache_body_chunker,
-    cache_metadata,
     read_cache_content_length,
     read_cache_params,
 )
@@ -23,14 +22,14 @@ async def get_cache(req: Request):
     key = req.match_info["key"]
 
     try:
-        hit = await get_data_from_req(req).caches.get(key)
+        cache = await get_data_from_req(req).caches.get(key)
     except CacheMissError:
         logger.info("cache miss", key=key)
         raise APINotFound()
 
     logger.info("cache hit", key=key)
 
-    return json_response(cache_metadata(hit))
+    return json_response(cache)
 
 
 @routes.jobs_api.get("/caches/{key}/blob")
@@ -38,7 +37,7 @@ async def get_cache_blob(req: Request):
     key = req.match_info["key"]
 
     try:
-        hit = await get_data_from_req(req).caches.get(key)
+        hit = await get_data_from_req(req).caches.get_blob(key)
     except CacheMissError:
         logger.info("cache miss", key=key)
         raise APINotFound()
@@ -72,12 +71,12 @@ async def put_cache(req: Request):
         logger.info("cache put race", key=key)
 
         try:
-            hit = await get_data_from_req(req).caches.get(key)
+            cache = await get_data_from_req(req).caches.get(key)
         except CacheMissError:
             raise APINotFound()
 
-        return json_response(cache_metadata(hit))
+        return json_response(cache)
 
     logger.info("cache put", key=key, size=created.size)
 
-    return json_response(cache_metadata(created), status=201)
+    return json_response(created, status=201)
