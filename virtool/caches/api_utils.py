@@ -8,6 +8,9 @@ from virtool.api.errors import APIBadRequest, APIRequestEntityTooLarge
 from virtool.caches.models import Cache
 from virtool.storage.protocol import STORAGE_CHUNK_SIZE
 
+CACHE_MAX_SIZE = 10 * 1024**3
+"""Maximum cache payload size in bytes."""
+
 
 def cache_metadata(cache: Cache) -> dict[str, Any]:
     return cache.dict(
@@ -42,15 +45,15 @@ def read_cache_params(req: Request) -> dict[str, Any] | None:
     return params
 
 
-def read_cache_content_length(req: Request, max_size: int) -> int:
+def read_cache_content_length(req: Request) -> int:
     content_length = req.content_length
 
     if content_length is None:
         raise APIBadRequest("Content-Length header is required")
 
-    if content_length > max_size:
+    if content_length > CACHE_MAX_SIZE:
         raise APIRequestEntityTooLarge(
-            f"Cache payload exceeds maximum size of {max_size} bytes",
+            f"Cache payload exceeds maximum size of {CACHE_MAX_SIZE} bytes",
         )
 
     return content_length
@@ -59,16 +62,15 @@ def read_cache_content_length(req: Request, max_size: int) -> int:
 async def cache_body_chunker(
     req: Request,
     content_length: int,
-    max_size: int,
 ) -> AsyncIterator[bytes]:
     size = 0
 
     while chunk := await req.content.read(STORAGE_CHUNK_SIZE):
         size += len(chunk)
 
-        if size > max_size:
+        if size > CACHE_MAX_SIZE:
             raise APIRequestEntityTooLarge(
-                f"Cache payload exceeds maximum size of {max_size} bytes",
+                f"Cache payload exceeds maximum size of {CACHE_MAX_SIZE} bytes",
             )
 
         yield chunk

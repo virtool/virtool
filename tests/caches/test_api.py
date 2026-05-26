@@ -205,18 +205,6 @@ async def test_put_requires_content_length(spawn_job_client):
     await RespIs.bad_request(resp, "Content-Length header is required")
 
 
-async def test_put_rejects_payload_over_cache_max_size(spawn_job_client):
-    client = await spawn_job_client(authenticated=True, cache_max_size=4)
-
-    resp = await client.put("/caches/too-large", data=b"cached")
-
-    assert resp.status == HTTPStatus.REQUEST_ENTITY_TOO_LARGE
-    assert await resp.json() == {
-        "id": "request_entity_too_large",
-        "message": "Cache payload exceeds maximum size of 4 bytes",
-    }
-
-
 async def test_delete_not_registered(spawn_job_client):
     client = await spawn_job_client(authenticated=True)
 

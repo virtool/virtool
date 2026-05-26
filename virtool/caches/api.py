@@ -11,7 +11,6 @@ from virtool.caches.api_utils import (
     read_cache_content_length,
     read_cache_params,
 )
-from virtool.config import get_config_from_req
 from virtool.data.errors import CacheAlreadyExistsError, CacheMissError
 from virtool.data.utils import get_data_from_req
 
@@ -61,12 +60,11 @@ async def get_cache_blob(req: Request):
 async def put_cache(req: Request):
     key = req.match_info["key"]
     params = read_cache_params(req)
-    max_size = get_config_from_req(req).cache_max_size
-    content_length = read_cache_content_length(req, max_size)
+    content_length = read_cache_content_length(req)
 
     try:
         created = await get_data_from_req(req).caches.create(
-            cache_body_chunker(req, content_length, max_size),
+            cache_body_chunker(req, content_length),
             key,
             params,
         )
