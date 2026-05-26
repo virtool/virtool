@@ -211,6 +211,14 @@ Releases are automated with semantic-release.
 - Do not use `git -C` — it breaks allowed tools settings. Run git commands
   from the working directory instead.
 
+### Pull Request Descriptions
+
+Keep PR bodies short. Summarize what changed and why in a few sentences or
+bullets. Do not add a "Test plan" section, a checklist of test commands, or a
+list of behaviours to verify — those belong in the test suite, not the PR
+body. If something genuinely cannot be covered by tests and requires manual
+verification, mention only that specific item.
+
 ## Linear
 
 Team name: Virtool
