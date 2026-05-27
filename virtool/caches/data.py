@@ -139,25 +139,6 @@ class CachesData(DataLayerDomain):
             last_accessed_at=now,
         )
 
-    async def delete_by_key(self, key: str) -> bool:
-        """Delete the row and storage object for ``key`` if present."""
-        async with AsyncSession(self._pg) as session:
-            storage_key = (
-                await session.execute(
-                    delete(SQLCache)
-                    .where(SQLCache.key == key)
-                    .returning(SQLCache.storage_key),
-                )
-            ).scalar_one_or_none()
-            await session.commit()
-
-        if storage_key is None:
-            return False
-
-        await self._storage.delete(storage_key)
-
-        return True
-
     async def total_size(self) -> int:
         """Return the total size of all cache entries."""
         async with AsyncSession(self._pg) as session:
@@ -220,23 +201,42 @@ class CachesData(DataLayerDomain):
 
         return candidates
 
-    async def _delete_eviction_candidate(
-        self, candidate: CacheEvictionCandidate
-    ) -> bool:
-        """Delete an eviction candidate from storage, then remove its cache row."""
-        await self._storage.delete(candidate.storage_key)
+    async def _delete_eviction_candidates(
+        self,
+        candidates: list[CacheEvictionCandidate],
+    ) -> list[CacheEvictionCandidate]:
+        """Delete eviction candidates from storage, then remove their cache rows."""
+        storage_deleted_candidates = []
+
+        for candidate in candidates:
+            await self._storage.delete(candidate.storage_key)
+            storage_deleted_candidates.append(candidate)
+
+        if not storage_deleted_candidates:
+            return []
 
         async with AsyncSession(self._pg) as session:
-            deleted_id = (
-                await session.execute(
-                    delete(SQLCache)
-                    .where(SQLCache.id == candidate.id)
-                    .returning(SQLCache.id),
+            deleted_ids = {
+                row.id
+                for row in (
+                    await session.execute(
+                        delete(SQLCache)
+                        .where(
+                            SQLCache.id.in_(
+                                candidate.id for candidate in storage_deleted_candidates
+                            ),
+                        )
+                        .returning(SQLCache.id),
+                    )
                 )
-            ).scalar_one_or_none()
+            }
             await session.commit()
 
-        return deleted_id is not None
+        return [
+            candidate
+            for candidate in storage_deleted_candidates
+            if candidate.id in deleted_ids
+        ]
 
     async def evict_lru(self) -> None:
         """Evict least-recently used cache entries until storage is under budget."""
@@ -245,10 +245,7 @@ class CachesData(DataLayerDomain):
             now - CACHE_EVICTION_GRACE_PERIOD,
         )
 
-        for candidate in candidates:
-            if not await self._delete_eviction_candidate(candidate):
-                continue
-
+        for candidate in await self._delete_eviction_candidates(candidates):
             logger.info(
                 "evicted cache entry",
                 key=candidate.key,
