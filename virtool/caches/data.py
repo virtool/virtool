@@ -172,55 +172,53 @@ class CachesData(DataLayerDomain):
         last_accessed_before: datetime,
     ) -> list[CacheEvictionCandidate]:
         """Return the LRU candidates needed to get under the storage budget."""
-        total_size = select(func.coalesce(func.sum(SQLCache.size), 0)).scalar_subquery()
-        bytes_to_free = total_size - self.storage_budget_bytes
-        running_size = func.sum(SQLCache.size).over(
-            order_by=(SQLCache.last_accessed_at.asc(), SQLCache.id.asc()),
-        )
-        candidates = (
-            select(
-                SQLCache.id,
-                SQLCache.key,
-                SQLCache.storage_key,
-                SQLCache.size,
-                SQLCache.last_accessed_at,
-                running_size.label("running_size"),
-            )
-            .where(SQLCache.last_accessed_at < last_accessed_before)
-            .subquery()
-        )
-
         async with AsyncSession(self._pg) as session:
+            total_size = await session.scalar(
+                select(func.coalesce(func.sum(SQLCache.size), 0)),
+            )
+
+            bytes_to_free = total_size - self.storage_budget_bytes
+
+            if bytes_to_free <= 0:
+                return []
+
             rows = (
                 await session.execute(
                     select(
-                        candidates.c.id,
-                        candidates.c.key,
-                        candidates.c.storage_key,
-                        candidates.c.size,
-                        candidates.c.last_accessed_at,
+                        SQLCache.id,
+                        SQLCache.key,
+                        SQLCache.storage_key,
+                        SQLCache.size,
+                        SQLCache.last_accessed_at,
                     )
-                    .where(
-                        bytes_to_free > 0,
-                        candidates.c.running_size - candidates.c.size < bytes_to_free,
-                    )
+                    .where(SQLCache.last_accessed_at < last_accessed_before)
                     .order_by(
-                        candidates.c.last_accessed_at.asc(),
-                        candidates.c.id.asc(),
+                        SQLCache.last_accessed_at.asc(),
+                        SQLCache.id.asc(),
                     ),
                 )
             ).all()
 
-        return [
-            CacheEvictionCandidate(
-                id=row.id,
-                key=row.key,
-                storage_key=row.storage_key,
-                size=row.size,
-                last_accessed_at=row.last_accessed_at,
+        freed_size = 0
+        candidates = []
+
+        for row in rows:
+            candidates.append(
+                CacheEvictionCandidate(
+                    id=row.id,
+                    key=row.key,
+                    storage_key=row.storage_key,
+                    size=row.size,
+                    last_accessed_at=row.last_accessed_at,
+                ),
             )
-            for row in rows
-        ]
+
+            freed_size += row.size
+
+            if freed_size >= bytes_to_free:
+                break
+
+        return candidates
 
     async def _delete_eviction_candidate(
         self, candidate: CacheEvictionCandidate
