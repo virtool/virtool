@@ -6,7 +6,6 @@ from aiohttp import ClientSession
 from multidict import MultiDictProxy
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-import virtool.hmm.db
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import (
@@ -104,7 +103,7 @@ class HmmsData(DataLayerDomain):
         ):
             raise ResourceConflictError("Install already in progress")
 
-        await virtool.hmm.db.fetch_and_update_release(
+        await fetch_and_update_release(
             self._client,
             self._mongo,
             HMM_REPO_SLUG,
