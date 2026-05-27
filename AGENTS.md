@@ -34,6 +34,25 @@ We use Syrupy-based snapshot testing.
 Run targeted tests for the modules you changed. Run the full suite before
 committing if changes touch shared code (data layer, fixtures, config).
 
+Write tests for behavior owned by the code being changed. A good test should
+protect a current requirement, an explicit contract, a meaningful boundary, or a
+regression that the changed code is responsible for preventing.
+
+Avoid tests whose main assertion is that unrelated or hypothetical behavior does
+not exist. Absence can be worth testing when it is part of a real contract or
+security boundary, but not merely because an endpoint, option, state, or feature
+might be added someday.
+
+Avoid re-testing behavior that primarily belongs to another module or layer.
+When a change depends on shared infrastructure, authentication, routing,
+serialization, or another cross-cutting concern, test only the integration point
+that the changed code owns unless the change deliberately alters that shared
+contract.
+
+Prefer negative tests that exercise meaningful failure modes: invalid input,
+unauthorized or forbidden access, missing resources, conflicts, unsupported
+states, or regressions tied directly to the changed behavior.
+
 ### Test Conventions
 
 Tests mirror the source tree: `virtool/account/` → `tests/account/`. Files are
@@ -126,6 +145,23 @@ Use `virtool migration create` to write new Virtool migrations (Alembic-based).
 
 Request handlers must always go through data layer domains (`virtool/data/`).
 Never access databases directly from API handlers.
+
+API modules should primarily define route declarations and thin request handlers.
+Move reusable business logic, persistence decisions, resource shaping, and
+cross-route helpers into the appropriate data-layer, domain, or support module
+instead of growing the API module.
+
+Data-layer domains own persistence, cross-resource consistency, data-derived
+decisions, and the application/resource model shapes returned by operations.
+
+API handlers own HTTP concerns: route/query/body parsing, request-context
+authorization checks, status codes, headers, streaming response construction, and
+translation from `Resource*` errors to `API*` errors.
+
+Do not reshape a data-layer result into a different application/resource model
+in an API handler to compensate for a missing data-layer operation. Add or adjust
+a data-layer method instead. Legacy handlers that access Mongo/Postgres directly
+or reshape domain results are not precedent for new work.
 
 ### MongoDB Migration
 
