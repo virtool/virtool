@@ -65,7 +65,7 @@ async def test_get_storage_not_found(
 
     resp = await client.get(f"/caches/{key}")
 
-    assert resp.status == HTTPStatus.INTERNAL_SERVER_ERROR
+    await RespIs.not_found(resp)
 
 
 async def test_put_duplicate_returns_ok_and_keeps_original_blob(

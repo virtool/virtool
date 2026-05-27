@@ -5,7 +5,7 @@ from aiohttp.web import Application
 import virtool.api.accept
 import virtool.jobs.auth
 from virtool.api.errors import error_middleware
-from virtool.caches.api_utils import CACHE_MAX_SIZE
+from virtool.caches.utils import CACHE_MAX_SIZE
 from virtool.config.cls import ServerConfig
 from virtool.flags import FeatureFlags, feature_flag_middleware
 from virtool.jobs.routes import startup_routes
