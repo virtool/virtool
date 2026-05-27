@@ -167,23 +167,47 @@ class CachesData(DataLayerDomain):
 
         return result.scalar_one()
 
-    async def select_eviction_candidates(
+    async def _select_eviction_candidates(
         self,
         last_accessed_before: datetime,
     ) -> list[CacheEvictionCandidate]:
-        """Return LRU candidates outside the grace window."""
+        """Return the LRU candidates needed to get under the storage budget."""
+        total_size = select(func.coalesce(func.sum(SQLCache.size), 0)).scalar_subquery()
+        bytes_to_free = total_size - self.storage_budget_bytes
+        running_size = func.sum(SQLCache.size).over(
+            order_by=(SQLCache.last_accessed_at.asc(), SQLCache.id.asc()),
+        )
+        candidates = (
+            select(
+                SQLCache.id,
+                SQLCache.key,
+                SQLCache.storage_key,
+                SQLCache.size,
+                SQLCache.last_accessed_at,
+                running_size.label("running_size"),
+            )
+            .where(SQLCache.last_accessed_at < last_accessed_before)
+            .subquery()
+        )
+
         async with AsyncSession(self._pg) as session:
             rows = (
                 await session.execute(
                     select(
-                        SQLCache.id,
-                        SQLCache.key,
-                        SQLCache.storage_key,
-                        SQLCache.size,
-                        SQLCache.last_accessed_at,
+                        candidates.c.id,
+                        candidates.c.key,
+                        candidates.c.storage_key,
+                        candidates.c.size,
+                        candidates.c.last_accessed_at,
                     )
-                    .where(SQLCache.last_accessed_at < last_accessed_before)
-                    .order_by(SQLCache.last_accessed_at.asc()),
+                    .where(
+                        bytes_to_free > 0,
+                        candidates.c.running_size - candidates.c.size < bytes_to_free,
+                    )
+                    .order_by(
+                        candidates.c.last_accessed_at.asc(),
+                        candidates.c.id.asc(),
+                    ),
                 )
             ).all()
 
@@ -198,22 +222,34 @@ class CachesData(DataLayerDomain):
             for row in rows
         ]
 
-    async def evict_lru(self, now: datetime) -> None:
+    async def _delete_eviction_candidate(
+        self, candidate: CacheEvictionCandidate
+    ) -> bool:
+        """Delete an eviction candidate from storage, then remove its cache row."""
+        await self._storage.delete(candidate.storage_key)
+
+        async with AsyncSession(self._pg) as session:
+            deleted_id = (
+                await session.execute(
+                    delete(SQLCache)
+                    .where(SQLCache.id == candidate.id)
+                    .returning(SQLCache.id),
+                )
+            ).scalar_one_or_none()
+            await session.commit()
+
+        return deleted_id is not None
+
+    async def evict_lru(self) -> None:
         """Evict least-recently used cache entries until storage is under budget."""
-        total_size = await self.total_size()
-
-        if total_size <= self.storage_budget_bytes:
-            return
-
-        candidates = await self.select_eviction_candidates(
+        now = virtool.utils.timestamp()
+        candidates = await self._select_eviction_candidates(
             now - CACHE_EVICTION_GRACE_PERIOD,
         )
 
         for candidate in candidates:
-            if not await self.delete_by_key(candidate.key):
+            if not await self._delete_eviction_candidate(candidate):
                 continue
-
-            total_size -= candidate.size
 
             logger.info(
                 "evicted cache entry",
@@ -222,6 +258,3 @@ class CachesData(DataLayerDomain):
                 size=candidate.size,
                 age=str(now - candidate.last_accessed_at),
             )
-
-            if total_size <= self.storage_budget_bytes:
-                return

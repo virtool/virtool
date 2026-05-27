@@ -17,7 +17,7 @@ from virtool.flags import FlagName
 from virtool.pg.utils import PgOptions
 
 StorageBackendName = Literal["s3", "azure"]
-CACHE_STORAGE_BUDGET_BYTES = 100 * 1024**3
+CACHE_STORAGE_BUDGET = 100 * 1024**3
 """100 GiB, a conservative single-node default operators can override."""
 
 
@@ -53,9 +53,9 @@ def _validate_s3_credentials(access_key_id: str, secret_access_key: str) -> None
         )
 
 
-def _validate_cache_storage_budget_bytes(cache_storage_budget_bytes: int) -> None:
-    if cache_storage_budget_bytes <= 0:
-        raise ValueError("cache_storage_budget_bytes must be greater than 0")
+def _validate_cache_storage_budget(cache_storage_budget: int) -> None:
+    if cache_storage_budget <= 0:
+        raise ValueError("cache_storage_budget must be greater than 0")
 
 
 @dataclass
@@ -95,7 +95,7 @@ class ServerConfig:
     sentry_dsn: str | None
     storage_backend: StorageBackendName
     storage_fallback_path: Path | None = None
-    cache_storage_budget_bytes: int = CACHE_STORAGE_BUDGET_BYTES
+    cache_storage_budget: int = CACHE_STORAGE_BUDGET
     storage_s3_bucket: str = ""
     storage_s3_region: str = ""
     storage_s3_endpoint: str = ""
@@ -120,7 +120,7 @@ class ServerConfig:
                 self.storage_fallback_path,
             )
 
-        _validate_cache_storage_budget_bytes(self.cache_storage_budget_bytes)
+        _validate_cache_storage_budget(self.cache_storage_budget)
 
         if self.storage_backend == "s3" and not self.storage_s3_bucket:
             raise ValueError(
@@ -157,7 +157,7 @@ class TaskRunnerConfig:
     sentry_dsn: str
     storage_backend: StorageBackendName
     storage_fallback_path: Path | None = None
-    cache_storage_budget_bytes: int = CACHE_STORAGE_BUDGET_BYTES
+    cache_storage_budget: int = CACHE_STORAGE_BUDGET
     storage_s3_bucket: str = ""
     storage_s3_region: str = ""
     storage_s3_endpoint: str = ""
@@ -182,7 +182,7 @@ class TaskRunnerConfig:
                 self.storage_fallback_path,
             )
 
-        _validate_cache_storage_budget_bytes(self.cache_storage_budget_bytes)
+        _validate_cache_storage_budget(self.cache_storage_budget)
 
         if self.storage_backend == "s3" and not self.storage_s3_bucket:
             raise ValueError(

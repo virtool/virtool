@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from virtool.config.cls import (
-    CACHE_STORAGE_BUDGET_BYTES,
+    CACHE_STORAGE_BUDGET,
     ServerConfig,
     TaskRunnerConfig,
 )
@@ -66,18 +66,16 @@ def build_task_runner_config(**overrides) -> TaskRunnerConfig:
     return TaskRunnerConfig(**defaults)
 
 
-def test_cache_storage_budget_bytes_default():
-    assert (
-        build_server_config().cache_storage_budget_bytes == CACHE_STORAGE_BUDGET_BYTES
-    )
+def test_cache_storage_budget_default():
+    assert build_server_config().cache_storage_budget == CACHE_STORAGE_BUDGET
 
 
 @pytest.mark.parametrize(
     "build_config", [build_server_config, build_task_runner_config]
 )
-def test_cache_storage_budget_bytes_must_be_positive(build_config):
+def test_cache_storage_budget_must_be_positive(build_config):
     with pytest.raises(ValueError, match="greater than 0"):
-        build_config(cache_storage_budget_bytes=0)
+        build_config(cache_storage_budget=0)
 
 
 class TestStorageBackendRequired:

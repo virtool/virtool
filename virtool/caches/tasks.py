@@ -3,7 +3,6 @@
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 
-import virtool.utils
 from virtool.tasks.task import BaseTask
 
 if TYPE_CHECKING:
@@ -25,4 +24,4 @@ class LRUCacheEvictionTask(BaseTask):
         self.steps = [self.evict]
 
     async def evict(self) -> None:
-        await self.data.caches.evict_lru(virtool.utils.timestamp())
+        await self.data.caches.evict_lru()

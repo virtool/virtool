@@ -15,7 +15,7 @@ from pathlib import Path
 
 import click
 
-from virtool.config.cls import CACHE_STORAGE_BUDGET_BYTES
+from virtool.config.cls import CACHE_STORAGE_BUDGET
 from virtool.flags import FlagName
 
 
@@ -61,11 +61,11 @@ storage_fallback_path_option = click.option(
     type=click.Path(exists=True, path_type=Path),
 )
 
-cache_storage_budget_bytes_option = click.option(
-    "--cache-storage-budget-bytes",
+cache_storage_budget_option = click.option(
+    "--cache-storage-budget",
     default=get_from_environment(
-        "cache_storage_budget_bytes",
-        CACHE_STORAGE_BUDGET_BYTES,
+        "cache_storage_budget",
+        CACHE_STORAGE_BUDGET,
     ),
     help="The cache storage budget in bytes",
     type=int,

@@ -5,7 +5,11 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.caches.data import LAST_ACCESSED_REFRESH_INTERVAL, _storage_key
+from virtool.caches.data import (
+    CACHE_EVICTION_GRACE_PERIOD,
+    LAST_ACCESSED_REFRESH_INTERVAL,
+    _storage_key,
+)
 from virtool.caches.pg import SQLCache
 from virtool.data.errors import CacheAlreadyExistsError, CacheMissError
 from virtool.data.layer import DataLayer
@@ -173,6 +177,39 @@ class TestGet:
 
 
 class TestEvictLRU:
+    async def test_selects_only_candidates_needed_to_get_under_budget(
+        self,
+        data_layer: DataLayer,
+        pg: AsyncEngine,
+        static_time,
+    ):
+        data_layer.caches.storage_budget_bytes = 65
+
+        for key, size, age in [
+            ("oldest", 10, timedelta(hours=5)),
+            ("older", 20, timedelta(hours=4)),
+            ("needed", 30, timedelta(hours=3)),
+            ("unneeded", 40, timedelta(hours=2)),
+        ]:
+            await _create_cache_with_last_accessed(
+                data_layer,
+                pg,
+                key,
+                size,
+                static_time.datetime,
+                age,
+            )
+
+        candidates = await data_layer.caches._select_eviction_candidates(
+            static_time.datetime - CACHE_EVICTION_GRACE_PERIOD,
+        )
+
+        assert [candidate.key for candidate in candidates] == [
+            "oldest",
+            "older",
+            "needed",
+        ]
+
     async def test_under_budget_no_op(
         self,
         data_layer: DataLayer,
@@ -191,8 +228,12 @@ class TestEvictLRU:
             timedelta(hours=2),
         )
         log_info = mocker.patch("virtool.caches.data.logger.info")
+        mocker.patch(
+            "virtool.caches.data.virtool.utils.timestamp",
+            return_value=static_time.datetime,
+        )
 
-        await data_layer.caches.evict_lru(static_time.datetime)
+        await data_layer.caches.evict_lru()
 
         assert await data_layer.caches.get("under_budget")
         assert [chunk async for chunk in memory_storage.read(storage_key)]
@@ -203,6 +244,7 @@ class TestEvictLRU:
         data_layer: DataLayer,
         memory_storage: StorageBackend,
         pg: AsyncEngine,
+        mocker,
         static_time,
     ):
         data_layer.caches.storage_budget_bytes = 80
@@ -230,8 +272,12 @@ class TestEvictLRU:
             static_time.datetime,
             timedelta(hours=2),
         )
+        mocker.patch(
+            "virtool.caches.data.virtool.utils.timestamp",
+            return_value=static_time.datetime,
+        )
 
-        await data_layer.caches.evict_lru(static_time.datetime)
+        await data_layer.caches.evict_lru()
 
         with pytest.raises(CacheMissError):
             await data_layer.caches.get("oldest")
@@ -246,6 +292,7 @@ class TestEvictLRU:
         self,
         data_layer: DataLayer,
         pg: AsyncEngine,
+        mocker,
         static_time,
     ):
         data_layer.caches.storage_budget_bytes = 50
@@ -265,8 +312,54 @@ class TestEvictLRU:
             static_time.datetime,
             timedelta(minutes=10),
         )
+        mocker.patch(
+            "virtool.caches.data.virtool.utils.timestamp",
+            return_value=static_time.datetime,
+        )
 
-        await data_layer.caches.evict_lru(static_time.datetime)
+        await data_layer.caches.evict_lru()
 
         assert await data_layer.caches.get("recent_large")
         assert await data_layer.caches.get("recent_small")
+
+    async def test_db_delete_failure_leaves_recoverable_row_after_storage_delete(
+        self,
+        data_layer: DataLayer,
+        memory_storage: StorageBackend,
+        pg: AsyncEngine,
+        mocker,
+        static_time,
+    ):
+        data_layer.caches.storage_budget_bytes = 1
+        storage_key = await _create_cache_with_last_accessed(
+            data_layer,
+            pg,
+            "delete_commit_fails",
+            10,
+            static_time.datetime,
+            timedelta(hours=2),
+        )
+        mocker.patch(
+            "virtool.caches.data.virtool.utils.timestamp",
+            return_value=static_time.datetime,
+        )
+        mocker.patch.object(
+            AsyncSession,
+            "commit",
+            side_effect=RuntimeError("simulated commit failure"),
+        )
+
+        with pytest.raises(RuntimeError, match="simulated commit failure"):
+            await data_layer.caches.evict_lru()
+
+        async with AsyncSession(pg) as session:
+            row = (
+                await session.execute(
+                    select(SQLCache).where(SQLCache.key == "delete_commit_fails")
+                )
+            ).scalar_one_or_none()
+
+        assert row is not None
+
+        with pytest.raises(StorageKeyNotFoundError):
+            [chunk async for chunk in memory_storage.read(storage_key)]
