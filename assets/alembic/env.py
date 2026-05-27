@@ -10,6 +10,7 @@ from virtool.blast.sql import SQLNuVsBlast
 from virtool.groups.pg import SQLGroup
 from virtool.indexes.sql import SQLIndexFile
 from virtool.labels.sql import SQLLabel
+from virtool.messages.sql import SQLInstanceMessage
 from virtool.ml.pg import SQLMLModel, SQLMLModelRelease
 from virtool.pg.base import Base
 from virtool.samples.sql import SQLSampleArtifact, SQLSampleReads
@@ -36,6 +37,7 @@ __models__ = (
     SQLAnalysisFile,
     SQLGroup,
     SQLIndexFile,
+    SQLInstanceMessage,
     SQLLabel,
     SQLMLModel,
     SQLMLModelRelease,
