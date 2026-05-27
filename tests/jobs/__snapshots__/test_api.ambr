@@ -783,7 +783,7 @@
     'workflow': 'nuvs',
   })
 # ---
-# name: test_get[None]
+# name: TestGet.test_ok
   dict({
     'args': dict({
     }),
