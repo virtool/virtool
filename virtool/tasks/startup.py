@@ -2,6 +2,7 @@ import asyncio
 
 from aiohttp.web_app import Application
 
+from virtool.caches.tasks import LRUCacheEvictionTask
 from virtool.config import get_config_from_app
 from virtool.hmm.tasks import HMMRefreshTask
 from virtool.jobs.tasks import JobsTimeoutTask
@@ -41,6 +42,7 @@ async def startup_task_spawner(app: Application) -> None:
             [
                 (HMMRefreshTask, 600),
                 (JobsTimeoutTask, 600),
+                (LRUCacheEvictionTask, 3600),
                 (MLModelsSyncTask, 600),
                 (ReferenceReleasesRefreshTask, 600),
                 (ReferencesCleanTask, 3600),

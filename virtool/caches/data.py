@@ -2,13 +2,15 @@
 
 import uuid
 from collections.abc import AsyncIterator
-from datetime import timedelta
+from dataclasses import dataclass
+from datetime import datetime, timedelta
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import delete, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from structlog import get_logger
 
 import virtool.utils
 from virtool.caches.models import Cache, CacheHit
@@ -21,6 +23,21 @@ from virtool.storage.protocol import StorageBackend
 LAST_ACCESSED_REFRESH_INTERVAL = timedelta(minutes=5)
 """Minimum interval between ``last_accessed_at`` refreshes."""
 
+CACHE_EVICTION_GRACE_PERIOD = timedelta(hours=1)
+"""Minimum cache age before an entry can be evicted for budget pressure."""
+
+logger = get_logger("caches.data")
+
+
+@dataclass(frozen=True, slots=True)
+class CacheEvictionCandidate:
+    id: int
+    key: str
+    storage_key: str
+    size: int
+    last_accessed_at: datetime
+    cache_type: str = "cache"
+
 
 def _storage_key(uuid_: str) -> str:
     """Build a storage key under ``caches/v1/``."""
@@ -30,9 +47,15 @@ def _storage_key(uuid_: str) -> str:
 class CachesData(DataLayerDomain):
     name = "caches"
 
-    def __init__(self, pg: AsyncEngine, storage: StorageBackend):
+    def __init__(
+        self,
+        pg: AsyncEngine,
+        storage: StorageBackend,
+        storage_budget_bytes: int,
+    ):
         self._pg = pg
         self._storage = storage
+        self.storage_budget_bytes = storage_budget_bytes
 
     async def get(self, key: str) -> CacheHit:
         """Return the cache entry and lazy payload stream for ``key``.
@@ -115,3 +138,90 @@ class CachesData(DataLayerDomain):
             created_at=now,
             last_accessed_at=now,
         )
+
+    async def delete_by_key(self, key: str) -> bool:
+        """Delete the row and storage object for ``key`` if present."""
+        async with AsyncSession(self._pg) as session:
+            storage_key = (
+                await session.execute(
+                    delete(SQLCache)
+                    .where(SQLCache.key == key)
+                    .returning(SQLCache.storage_key),
+                )
+            ).scalar_one_or_none()
+            await session.commit()
+
+        if storage_key is None:
+            return False
+
+        await self._storage.delete(storage_key)
+
+        return True
+
+    async def total_size(self) -> int:
+        """Return the total size of all cache entries."""
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(func.coalesce(func.sum(SQLCache.size), 0))
+            )
+
+        return result.scalar_one()
+
+    async def select_eviction_candidates(
+        self,
+        last_accessed_before: datetime,
+    ) -> list[CacheEvictionCandidate]:
+        """Return LRU candidates outside the grace window."""
+        async with AsyncSession(self._pg) as session:
+            rows = (
+                await session.execute(
+                    select(
+                        SQLCache.id,
+                        SQLCache.key,
+                        SQLCache.storage_key,
+                        SQLCache.size,
+                        SQLCache.last_accessed_at,
+                    )
+                    .where(SQLCache.last_accessed_at < last_accessed_before)
+                    .order_by(SQLCache.last_accessed_at.asc()),
+                )
+            ).all()
+
+        return [
+            CacheEvictionCandidate(
+                id=row.id,
+                key=row.key,
+                storage_key=row.storage_key,
+                size=row.size,
+                last_accessed_at=row.last_accessed_at,
+            )
+            for row in rows
+        ]
+
+    async def evict_lru(self, now: datetime) -> None:
+        """Evict least-recently used cache entries until storage is under budget."""
+        total_size = await self.total_size()
+
+        if total_size <= self.storage_budget_bytes:
+            return
+
+        candidates = await self.select_eviction_candidates(
+            now - CACHE_EVICTION_GRACE_PERIOD,
+        )
+
+        for candidate in candidates:
+            if not await self.delete_by_key(candidate.key):
+                continue
+
+            total_size -= candidate.size
+
+            logger.info(
+                "evicted cache entry",
+                key=candidate.key,
+                cache_type=candidate.cache_type,
+                size=candidate.size,
+                age=str(now - candidate.last_accessed_at),
+            )
+
+            if total_size <= self.storage_budget_bytes:
+                return

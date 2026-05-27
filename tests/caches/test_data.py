@@ -1,17 +1,42 @@
 from collections.abc import AsyncIterator
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.caches.data import LAST_ACCESSED_REFRESH_INTERVAL, _storage_key
+from virtool.caches.pg import SQLCache
 from virtool.data.errors import CacheAlreadyExistsError, CacheMissError
 from virtool.data.layer import DataLayer
+from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
 
 
 async def _chunker(payload: bytes) -> AsyncIterator[bytes]:
     yield payload
+
+
+async def _create_cache_with_last_accessed(
+    data_layer: DataLayer,
+    pg: AsyncEngine,
+    key: str,
+    size: int,
+    now: datetime,
+    last_accessed_delta: timedelta,
+) -> str:
+    await data_layer.caches.create(_chunker(bytes(size)), key)
+    last_accessed_at = now - last_accessed_delta
+
+    async with AsyncSession(pg) as session:
+        row = (
+            await session.execute(select(SQLCache).where(SQLCache.key == key))
+        ).scalar_one()
+        row.last_accessed_at = last_accessed_at
+        storage_key = row.storage_key
+        await session.commit()
+
+    return storage_key
 
 
 TRIM_READS_KEY = "0" * 64
@@ -145,3 +170,103 @@ class TestGet:
         hit = await data_layer.caches.get(TRIM_READS_KEY)
 
         assert hit.last_accessed_at == bumped
+
+
+class TestEvictLRU:
+    async def test_under_budget_no_op(
+        self,
+        data_layer: DataLayer,
+        memory_storage: StorageBackend,
+        pg: AsyncEngine,
+        mocker,
+        static_time,
+    ):
+        data_layer.caches.storage_budget_bytes = 100
+        storage_key = await _create_cache_with_last_accessed(
+            data_layer,
+            pg,
+            "under_budget",
+            40,
+            static_time.datetime,
+            timedelta(hours=2),
+        )
+        log_info = mocker.patch("virtool.caches.data.logger.info")
+
+        await data_layer.caches.evict_lru(static_time.datetime)
+
+        assert await data_layer.caches.get("under_budget")
+        assert [chunk async for chunk in memory_storage.read(storage_key)]
+        log_info.assert_not_called()
+
+    async def test_over_budget_evicts_oldest_first_and_stops(
+        self,
+        data_layer: DataLayer,
+        memory_storage: StorageBackend,
+        pg: AsyncEngine,
+        static_time,
+    ):
+        data_layer.caches.storage_budget_bytes = 80
+        oldest_storage_key = await _create_cache_with_last_accessed(
+            data_layer,
+            pg,
+            "oldest",
+            25,
+            static_time.datetime,
+            timedelta(hours=4),
+        )
+        await _create_cache_with_last_accessed(
+            data_layer,
+            pg,
+            "middle",
+            30,
+            static_time.datetime,
+            timedelta(hours=3),
+        )
+        await _create_cache_with_last_accessed(
+            data_layer,
+            pg,
+            "newest",
+            50,
+            static_time.datetime,
+            timedelta(hours=2),
+        )
+
+        await data_layer.caches.evict_lru(static_time.datetime)
+
+        with pytest.raises(CacheMissError):
+            await data_layer.caches.get("oldest")
+
+        assert await data_layer.caches.get("middle")
+        assert await data_layer.caches.get("newest")
+
+        with pytest.raises(StorageKeyNotFoundError):
+            [chunk async for chunk in memory_storage.read(oldest_storage_key)]
+
+    async def test_grace_window_skips_recent_rows_when_over_budget(
+        self,
+        data_layer: DataLayer,
+        pg: AsyncEngine,
+        static_time,
+    ):
+        data_layer.caches.storage_budget_bytes = 50
+        await _create_cache_with_last_accessed(
+            data_layer,
+            pg,
+            "recent_large",
+            80,
+            static_time.datetime,
+            timedelta(minutes=30),
+        )
+        await _create_cache_with_last_accessed(
+            data_layer,
+            pg,
+            "recent_small",
+            50,
+            static_time.datetime,
+            timedelta(minutes=10),
+        )
+
+        await data_layer.caches.evict_lru(static_time.datetime)
+
+        assert await data_layer.caches.get("recent_large")
+        assert await data_layer.caches.get("recent_small")
