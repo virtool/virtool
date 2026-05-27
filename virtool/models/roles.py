@@ -10,7 +10,7 @@ class AdministratorRole(str, Enum):
     """Manage who is an administrator and what they can do."""
 
     SETTINGS = "settings"
-    """Manage instance settings and administrative messages."""
+    """Manage instance settings."""
 
     SPACES = "spaces"
     """Manage users in any space. Delete any space."""

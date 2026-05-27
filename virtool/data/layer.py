@@ -15,7 +15,6 @@ from virtool.hmm.data import HmmsData
 from virtool.indexes.data import IndexData
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
-from virtool.messages.data import MessagesData
 from virtool.ml.data import MLData
 from virtool.mongo.core import Mongo
 from virtool.otus.data import OTUData
@@ -44,7 +43,6 @@ class DataLayer:
     index: IndexData
     jobs: JobsData
     labels: LabelsData
-    messages: MessagesData
     ml: "MLData"
     otus: OTUData
     references: ReferencesData
@@ -97,7 +95,6 @@ def create_data_layer(
         IndexData(mongo, config, pg, storage),
         JobsData(pg),
         LabelsData(mongo, pg),
-        MessagesData(pg),
         MLData(http_client, pg, storage),
         OTUData(config.data_path, mongo, pg),
         ReferencesData(mongo, pg, config, client, storage),

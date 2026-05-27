@@ -35,10 +35,6 @@ async def get(req):
             "history": {"url": "/history", "doc": f"{API_URL_ROOT}/history"},
             "hmms": {"url": "/hmms", "doc": f"{API_URL_ROOT}/hmms"},
             "indexes": {"url": "/indexes", "doc": f"{API_URL_ROOT}/indexes"},
-            "instance_message": {
-                "url": "/instance_message",
-                "doc": f"{API_URL_ROOT}/instance_message",
-            },
             "jobs": {"url": "/jobs", "doc": f"{API_URL_ROOT}/jobs"},
             "labels": {"url": "/labels", "doc": f"{API_URL_ROOT}/labels"},
             "ml": {"url": "/ml", "doc": f"{API_URL_ROOT}/ml"},

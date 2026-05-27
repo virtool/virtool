@@ -39,10 +39,6 @@
         'doc': 'https://www.virtool.ca/docs/api/indexes',
         'url': '/indexes',
       }),
-      'instance_message': dict({
-        'doc': 'https://www.virtool.ca/docs/api/instance_message',
-        'url': '/instance_message',
-      }),
       'jobs': dict({
         'doc': 'https://www.virtool.ca/docs/api/jobs',
         'url': '/jobs',
@@ -132,10 +128,6 @@
         'doc': 'https://www.virtool.ca/docs/api/indexes',
         'url': '/indexes',
       }),
-      'instance_message': dict({
-        'doc': 'https://www.virtool.ca/docs/api/instance_message',
-        'url': '/instance_message',
-      }),
       'jobs': dict({
         'doc': 'https://www.virtool.ca/docs/api/jobs',
         'url': '/jobs',
@@ -224,10 +216,6 @@
       'indexes': dict({
         'doc': 'https://www.virtool.ca/docs/api/indexes',
         'url': '/indexes',
-      }),
-      'instance_message': dict({
-        'doc': 'https://www.virtool.ca/docs/api/instance_message',
-        'url': '/instance_message',
       }),
       'jobs': dict({
         'doc': 'https://www.virtool.ca/docs/api/jobs',
