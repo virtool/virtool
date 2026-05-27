@@ -194,16 +194,15 @@ class TestGetCounts:
         assert sum(c for counts in body.values() for c in counts.values()) == 4
 
 
-class TestGet:
-    @pytest.fixture(autouse=True)
-    async def _setup(self, fake: DataFaker, spawn_client: ClientSpawner):
-        self.client = await spawn_client(authenticated=True)
-        self.user = await fake.users.create()
+@pytest.mark.parametrize("error", [None, "404"])
+async def test_get(error, fake: DataFaker, snapshot, spawn_client):
+    client = await spawn_client(authenticated=True)
 
-    async def test_ok(self, fake: DataFaker, snapshot):
-        job = await fake.jobs.create(user=self.user)
+    user = await fake.users.create()
 
-        resp = await self.client.get(f"/jobs/{job.id}")
+    if error is None:
+        job = await fake.jobs.create(user=user)
+        resp = await client.get(f"/jobs/{job.id}")
         body = await resp.json()
 
         assert resp.status == HTTPStatus.OK
@@ -211,9 +210,8 @@ class TestGet:
 
         # Explicitly ensure the secret API key is not returned in the response.
         assert "key" not in body
-
-    async def test_not_found(self):
-        resp = await self.client.get("/jobs/999999")
+    else:
+        resp = await client.get("/jobs/999999")
         body = await resp.json()
 
         assert resp.status == 404
