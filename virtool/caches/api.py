@@ -6,6 +6,7 @@ from virtool.api.routes import Routes
 from virtool.api.streaming import stream_storage_response
 from virtool.caches.api_utils import (
     cache_body_chunker,
+    cache_data_chunker,
     read_cache_content_length,
     read_cache_params,
 )
@@ -30,7 +31,7 @@ async def download_cache(req: Request):
 
     return await stream_storage_response(
         req,
-        hit.data,
+        cache_data_chunker(key, hit.data),
         {
             "Content-Length": str(hit.size),
             "Content-Type": "application/octet-stream",

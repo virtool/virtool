@@ -17,7 +17,10 @@ async def stream_storage_response(
     try:
         first_chunk = await anext(stream)
     except StorageKeyNotFoundError:
-        raise APINotFound(not_found_message or None)
+        if not_found_message:
+            raise APINotFound(not_found_message)
+
+        raise APINotFound()
     except StopAsyncIteration:
         first_chunk = None
 

@@ -5,10 +5,26 @@ from aiohttp.web import Request
 
 from virtool.api.custom_json import loads
 from virtool.api.errors import APIBadRequest, APIRequestEntityTooLarge
+from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import STORAGE_CHUNK_SIZE
 
 CACHE_MAX_SIZE = 10 * 1024**3
 """Maximum cache payload size in bytes."""
+
+
+class CacheStorageMissingError(RuntimeError):
+    """Raised when a cache row points at a missing storage object."""
+
+
+async def cache_data_chunker(
+    key: str, data: AsyncIterator[bytes]
+) -> AsyncIterator[bytes]:
+    try:
+        async for chunk in data:
+            yield chunk
+    except StorageKeyNotFoundError as err:
+        msg = f"Cache storage object is missing for key {key!r}"
+        raise CacheStorageMissingError(msg) from err
 
 
 def read_cache_params(req: Request) -> dict[str, Any] | None:

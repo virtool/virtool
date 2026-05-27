@@ -34,7 +34,16 @@ class CachesData(DataLayerDomain):
         self._pg = pg
         self._storage = storage
 
-    async def _get_row_data(self, key: str) -> tuple[dict[str, Any], str]:
+    async def get(self, key: str) -> CacheHit:
+        """Return the cache entry and lazy payload stream for ``key``.
+
+        Refreshes ``last_accessed_at`` when it is older than
+        :data:`LAST_ACCESSED_REFRESH_INTERVAL`.
+
+        The returned data stream is lazy and is not opened until iterated.
+
+        Raises :class:`CacheMissError` when no row matches ``key``.
+        """
         async with AsyncSession(self._pg, expire_on_commit=False) as session:
             row = (
                 await session.execute(select(SQLCache).where(SQLCache.key == key))
@@ -49,24 +58,10 @@ class CachesData(DataLayerDomain):
                 row.last_accessed_at = now
                 await session.commit()
 
-            return row.to_dict(), row.storage_key
-
-    async def get(self, key: str) -> CacheHit:
-        """Return the cache entry and lazy payload stream for ``key``.
-
-        Refreshes ``last_accessed_at`` when it is older than
-        :data:`LAST_ACCESSED_REFRESH_INTERVAL`.
-
-        The returned data stream is lazy and is not opened until iterated.
-
-        Raises :class:`CacheMissError` when no row matches ``key``.
-        """
-        row_data, storage_key = await self._get_row_data(key)
-
-        return CacheHit(
-            **row_data,
-            data=self._storage.read(storage_key),
-        )
+            return CacheHit(
+                **row.to_dict(),
+                data=self._storage.read(row.storage_key),
+            )
 
     async def create(
         self,
