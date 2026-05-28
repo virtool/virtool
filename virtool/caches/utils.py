@@ -15,7 +15,6 @@ from typing import Any
 
 from aiohttp.web import Request
 
-from virtool.api.custom_json import loads
 from virtool.api.errors import APIBadRequest, APIRequestEntityTooLarge
 from virtool.storage.protocol import STORAGE_CHUNK_SIZE
 
@@ -43,17 +42,7 @@ def derive_key(params: dict[str, Any]) -> str:
     return hashlib.sha256(canonicalize_params(params).encode("utf-8")).hexdigest()
 
 
-def read_cache_params(req: Request) -> dict[str, Any] | None:
-    value = req.query.get("params")
-
-    if value is None:
-        return None
-
-    try:
-        params = loads(value)
-    except ValueError as err:
-        raise APIBadRequest("Invalid JSON in 'params' query parameter") from err
-
+def validate_cache_params(params: Any) -> dict[str, Any] | None:
     if params is None:
         return None
 

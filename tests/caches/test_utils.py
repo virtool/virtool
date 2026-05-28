@@ -1,8 +1,8 @@
 import hashlib
 
 import pytest
+from aiohttp.test_utils import make_mocked_request
 
-from virtool.api.custom_json import dump_string
 from virtool.api.errors import APIBadRequest, APIRequestEntityTooLarge
 from virtool.caches.utils import (
     CACHE_MAX_SIZE,
@@ -10,7 +10,7 @@ from virtool.caches.utils import (
     canonicalize_params,
     derive_key,
     read_cache_content_length,
-    read_cache_params,
+    validate_cache_params,
 )
 
 
@@ -59,40 +59,33 @@ class TestDeriveKey:
         assert actual == expected
 
 
-class TestReadCacheParams:
-    def test_returns_none_when_params_missing(self, mocker):
-        req = mocker.Mock(query={})
+class TestValidateCacheParams:
+    def test_returns_none_when_params_missing(self):
+        assert validate_cache_params(None) is None
 
-        assert read_cache_params(req) is None
-
-    def test_returns_valid_params(self, mocker):
+    def test_returns_valid_params(self):
         params = {"sample_id": "sample", "workflow": "nuvs"}
-        req = mocker.Mock(query={"params": dump_string(params)})
 
-        assert read_cache_params(req) == params
+        assert validate_cache_params(params) == params
 
-    def test_rejects_invalid_json(self, mocker):
-        req = mocker.Mock(query={"params": "{"})
-
-        with pytest.raises(
-            APIBadRequest,
-            match="Invalid JSON in 'params' query parameter",
-        ):
-            read_cache_params(req)
-
-    def test_rejects_non_object_json(self, mocker):
-        req = mocker.Mock(query={"params": "[]"})
-
+    def test_rejects_non_object_json(self):
         with pytest.raises(
             APIBadRequest,
             match="Query parameter 'params' must be a JSON object",
         ):
-            read_cache_params(req)
+            validate_cache_params([])
+
+    def test_rejects_string_params(self):
+        with pytest.raises(
+            APIBadRequest,
+            match="Query parameter 'params' must be a JSON object",
+        ):
+            validate_cache_params("workflow")
 
 
 class TestReadCacheContentLength:
-    def test_rejects_missing_content_length(self, mocker):
-        req = mocker.Mock(content_length=None)
+    def test_rejects_missing_content_length(self):
+        req = make_mocked_request("PUT", "/caches/trim-reads")
 
         with pytest.raises(
             APIBadRequest,
@@ -100,8 +93,12 @@ class TestReadCacheContentLength:
         ):
             read_cache_content_length(req)
 
-    def test_rejects_values_over_cache_max_size(self, mocker):
-        req = mocker.Mock(content_length=CACHE_MAX_SIZE + 1)
+    def test_rejects_values_over_cache_max_size(self):
+        req = make_mocked_request(
+            "PUT",
+            "/caches/trim-reads",
+            headers={"Content-Length": str(CACHE_MAX_SIZE + 1)},
+        )
 
         with pytest.raises(
             APIRequestEntityTooLarge,
