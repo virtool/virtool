@@ -12,7 +12,14 @@ from virtool.data.events import (
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.jobs.data import JobsData
-from virtool.jobs.models import Job, JobState
+from virtool.jobs.models import (
+    CreateJobClaimRequest,
+    Job,
+    JobClaimed,
+    JobState,
+    JobStepDefinition,
+    Workflow,
+)
 from virtool.jobs.pg import (
     SQLJob,
     SQLJobAnalysis,
@@ -335,6 +342,64 @@ class TestStartStepPostgres:
         assert event.operation == Operation.UPDATE
         assert isinstance(event.data, Job)
         assert event.data.id == job.id
+
+
+class TestClaim:
+    """Test the claim() method of JobsData."""
+
+    async def test_emits_job_without_secret_key(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """Claiming a job emits a jobs-domain update carrying a Job, not JobClaimed.
+
+        The emitted data must not be the JobClaimed object, which carries the
+        one-time secret runner key.
+        """
+        user = await fake.users.create()
+
+        async with AsyncSession(pg) as session:
+            sql_job = SQLJob(
+                created_at=arrow.utcnow().naive,
+                state="pending",
+                user_id=user.id,
+                workflow="nuvs",
+            )
+            session.add(sql_job)
+            await session.flush()
+            job_id = sql_job.id
+            await session.commit()
+
+        dangerously_clear_events()
+
+        await data_layer.jobs.claim(
+            Workflow.NUVS,
+            CreateJobClaimRequest(
+                runner_id="runner-1",
+                mem=8.0,
+                cpu=4.0,
+                image="virtool/workflow:1.0.0",
+                runtime_version="1.0.0",
+                workflow_version="2.0.0",
+                steps=[
+                    JobStepDefinition(
+                        id="step_1",
+                        name="Step 1",
+                        description="First step",
+                    ),
+                ],
+            ),
+        )
+
+        event = await dangerously_get_event()
+
+        assert event.domain == "jobs"
+        assert event.operation == Operation.UPDATE
+        assert isinstance(event.data, Job)
+        assert not isinstance(event.data, JobClaimed)
+        assert event.data.id == job_id
 
 
 class TestFinish:

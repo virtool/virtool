@@ -293,7 +293,6 @@ class JobsData:
             workflow=Workflow(sql_job.workflow),
         )
 
-    @emits(Operation.UPDATE)
     async def claim(
         self, workflow: Workflow, body: CreateJobClaimRequest
     ) -> JobClaimed:
@@ -349,6 +348,8 @@ class JobsData:
             [AttachUserTransform(self._pg)],
             self._pg,
         )
+
+        emit(await self.get(job_id), self.name, "claim", Operation.UPDATE)
 
         return JobClaimed(
             id=job_id,
