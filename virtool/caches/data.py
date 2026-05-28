@@ -35,11 +35,12 @@ class CachesData(DataLayerDomain):
         self._storage = storage
 
     async def get(self, key: str) -> CacheHit:
-        """Return the cache entry for ``key``.
+        """Return the cache entry and lazy payload stream for ``key``.
 
-        The returned data stream is lazy and is not opened until iterated.
         Refreshes ``last_accessed_at`` when it is older than
         :data:`LAST_ACCESSED_REFRESH_INTERVAL`.
+
+        The returned data stream is lazy and is not opened until iterated.
 
         Raises :class:`CacheMissError` when no row matches ``key``.
         """
