@@ -1,9 +1,11 @@
 import asyncio
+from collections.abc import AsyncIterator
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
+import virtool.utils
 from tests.fixtures.client import ClientSpawner
 from virtool.api.client import UserClient
 from virtool.data.errors import ResourceConflictError
@@ -15,9 +17,13 @@ from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.samples.models import WorkflowState
 from virtool.samples.oas import CreateSampleRequest
+from virtool.samples.sql import SQLSampleReads
 from virtool.samples.utils import SampleRight
 from virtool.settings.oas import UpdateSettingsRequest
+from virtool.storage.errors import StorageKeyNotFoundError
+from virtool.storage.protocol import StorageBackend
 from virtool.uploads.sql import SQLUpload, UploadType
+from virtool.uploads.utils import upload_file_key
 from virtool.users.oas import UpdateUserRequest
 
 
@@ -145,13 +151,42 @@ class TestCreate:
 
 async def test_finalize(
     data_layer: DataLayer,
+    fake: DataFaker,
     get_sample_ready_false,
+    memory_storage: StorageBackend,
     mongo: Mongo,
+    pg: AsyncEngine,
     snapshot_recent: SnapshotAssertion,
     spawn_client: ClientSpawner,
-    tmp_path,
 ):
-    """Test that sample can be finalized"""
+    """Test that finalizing a sample deletes its upload files from storage."""
+    upload = await fake.uploads.create(user=await fake.users.create())
+
+    upload_row = await get_row_by_id(pg, SQLUpload, upload.id)
+    upload_name_on_disk = upload_row.name_on_disk
+
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLSampleReads(
+                name="reads.fq.gz",
+                name_on_disk="reads_1.fq.gz",
+                sample="test",
+                size=len(b"upload contents"),
+                upload=upload.id,
+                uploaded_at=virtool.utils.timestamp(),
+            ),
+        )
+
+        await session.commit()
+
+    async def _chunks() -> AsyncIterator[bytes]:
+        yield b"upload contents"
+
+    upload_key = upload_file_key(upload_name_on_disk)
+    await memory_storage.write(upload_key, _chunks())
+
+    assert await memory_storage.size(upload_key) == len(b"upload contents")
+
     quality = {
         "bases": [[1543]],
         "composition": [[6372]],
@@ -162,17 +197,14 @@ async def test_finalize(
         "sequences": [7091],
     }
 
-    assert (
-        await data_layer.samples.finalize(
-            "test",
-            quality,
-        )
-    ).dict() == snapshot_recent()
+    sample = await data_layer.samples.finalize("test", quality)
 
-    sample = await data_layer.samples.get("test")
-
+    assert sample.dict() == snapshot_recent()
     assert sample.quality == quality
     assert sample.ready is True
+
+    with pytest.raises(StorageKeyNotFoundError):
+        await memory_storage.size(upload_key)
 
 
 async def test_finalized_already(get_sample_ready_false, data_layer):
