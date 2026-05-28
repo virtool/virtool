@@ -293,6 +293,7 @@ class JobsData:
             workflow=Workflow(sql_job.workflow),
         )
 
+    @emits(Operation.UPDATE)
     async def claim(
         self, workflow: Workflow, body: CreateJobClaimRequest
     ) -> JobClaimed:
@@ -404,6 +405,8 @@ class JobsData:
             job.steps = updated_steps
 
             await session.commit()
+
+        emit(await self.get(job_id), self.name, "start_step", Operation.UPDATE)
 
         return JobStepStarted(
             id=step["id"],

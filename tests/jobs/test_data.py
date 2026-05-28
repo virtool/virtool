@@ -4,10 +4,15 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
+from virtool.data.events import (
+    Operation,
+    dangerously_clear_events,
+    dangerously_get_event,
+)
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.jobs.data import JobsData
-from virtool.jobs.models import JobState
+from virtool.jobs.models import Job, JobState
 from virtool.jobs.pg import (
     SQLJob,
     SQLJobAnalysis,
@@ -296,6 +301,40 @@ class TestStartStepPostgres:
             updated_job.steps[0].started_at.replace(tzinfo=None) == static_time.datetime
         )
         assert updated_job.steps[1].started_at is None
+
+    async def test_emits_job_update_event(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """Starting a step emits a jobs-domain update carrying the job id.
+
+        The event data must be the full job (keyed by the integer job id), not
+        the step status, so the websocket server can refetch and push the job.
+        """
+        user = await fake.users.create()
+        job = await fake.jobs.create(user, state=JobState.RUNNING)
+
+        async with AsyncSession(pg) as session:
+            sql_job = (
+                await session.execute(select(SQLJob).where(SQLJob.id == job.id))
+            ).scalar()
+            sql_job.steps = [
+                {"id": "step_1", "name": "Step 1", "description": "First step"},
+            ]
+            await session.commit()
+
+        dangerously_clear_events()
+
+        await data_layer.jobs.start_step(job.id, "step_1")
+
+        event = await dangerously_get_event()
+
+        assert event.domain == "jobs"
+        assert event.operation == Operation.UPDATE
+        assert isinstance(event.data, Job)
+        assert event.data.id == job.id
 
 
 class TestFinish:
