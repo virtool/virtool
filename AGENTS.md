@@ -58,6 +58,16 @@ states, or regressions tied directly to the changed behavior.
 Tests mirror the source tree: `virtool/account/` → `tests/account/`. Files are
 named `test_*.py`.
 
+Prefer class-based test organization when a group of tests exercises the same
+unit, endpoint, or behavior area. Use the class name to describe the shared
+context and individual test names to describe the expected behavior.
+
+Avoid parametrized tests when the parameters introduce flag-based control flow,
+conditional assertions, or branching setup inside the test body. In those cases,
+write separate explicit tests instead. Parametrization is still appropriate for
+simple input/output matrices where each case follows the same execution path and
+asserts the same contract.
+
 All shared fixtures live in `tests/fixtures/` (not conftest.py). Key fixtures:
 
 - `spawn_client` - test HTTP client (`VirtoolTestClient`)

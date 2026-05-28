@@ -102,21 +102,31 @@ class TestPut:
         assert blob_resp.status == HTTPStatus.OK
         assert await blob_resp.read() == first_payload
 
-    @pytest.mark.parametrize(
-        ("params", "message"),
-        [
-            ("{", "Invalid JSON in 'params' query parameter"),
-            ("[]", "Query parameter 'params' must be a JSON object"),
-        ],
-    )
-    async def test_bad_params(self, params: str, message: str):
+    async def test_bad_params_json(self):
         resp = await self.client.put(
             "/caches/bad-params",
             data=b"cached-bytes",
-            params={"params": params},
+            params={"params": "{"},
         )
 
-        await RespIs.bad_request(resp, message)
+        assert resp.status == HTTPStatus.BAD_REQUEST
+        assert await resp.json() == [
+            {
+                "loc": ["params"],
+                "msg": "Invalid JSON",
+                "type": "value_error.json",
+                "in": "query string",
+            },
+        ]
+
+    async def test_bad_params_non_object(self):
+        resp = await self.client.put(
+            "/caches/bad-params",
+            data=b"cached-bytes",
+            params={"params": "[]"},
+        )
+
+        await RespIs.bad_request(resp, "Query parameter 'params' must be a JSON object")
 
     @pytest.mark.parametrize(
         ("key", "params"),

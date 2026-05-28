@@ -1,13 +1,11 @@
 from typing import Any
 
 from aiohttp.web import Response
-from aiohttp.web_response import StreamResponse
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.injectors import CONTEXT
-from pydantic import Json, ValidationError
+from pydantic import Json
 from structlog import get_logger
 
-from virtool.api.errors import APIBadRequest, APINotFound
+from virtool.api.errors import APINotFound
 from virtool.api.routes import Routes
 from virtool.api.streaming import stream_storage_response
 from virtool.caches.utils import (
@@ -60,16 +58,3 @@ class CacheView(PydanticView):
         logger.info("cache put", key=key, size=created.size)
 
         return Response(status=201)
-
-    async def on_validation_error(
-        self,
-        exception: ValidationError,
-        context: CONTEXT,
-    ) -> StreamResponse:
-        if context == "query string" and any(
-            error["loc"] == ("params",) and error["type"] == "value_error.json"
-            for error in exception.errors()
-        ):
-            raise APIBadRequest("Invalid JSON in 'params' query parameter")
-
-        raise APIBadRequest()
