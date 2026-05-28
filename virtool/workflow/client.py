@@ -1,11 +1,18 @@
+import asyncio
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from http import HTTPStatus
 from pathlib import Path
+from tempfile import TemporaryFile
+from typing import Any, BinaryIO
+from urllib.parse import quote
 
 import aiofiles
 from aiohttp import BasicAuth, ClientSession, ClientTimeout
 from structlog import get_logger
 
+from virtool.api.custom_json import dump_string
 from virtool.workflow.api.utils import (
     decode_json_response,
     raise_exception_by_status_code,
@@ -134,6 +141,97 @@ class WorkflowAPIClient:
                 return await decode_json_response(resp)
             except ValueError:
                 return None
+
+    @retry
+    async def head_cache(self, key: str) -> bool:
+        path = self._get_cache_path(key)
+
+        async with self.http.get(f"{self.jobs_api_connection_string}{path}") as resp:
+            if resp.status == HTTPStatus.OK:
+                return True
+
+            if resp.status == HTTPStatus.NOT_FOUND:
+                return False
+
+            await raise_exception_by_status_code(resp)
+
+    @retry
+    async def get_cache(self, key: str) -> bool:
+        return await self.head_cache(key)
+
+    @retry
+    async def get_cache_blob(self, key: str, dest: Path) -> None:
+        path = self._get_cache_path(key)
+
+        async with self.http.get(f"{self.jobs_api_connection_string}{path}") as resp:
+            if resp.status != HTTPStatus.OK:
+                await raise_exception_by_status_code(resp)
+
+            async with aiofiles.open(dest, "wb") as f:
+                async for chunk in resp.content.iter_chunked(API_CHUNK_SIZE):
+                    await f.write(chunk)
+
+    @retry
+    async def put_cache(
+        self,
+        key: str,
+        params: dict[str, Any],
+        fileobj: BinaryIO | AsyncIterator[bytes],
+    ) -> bool:
+        async with (
+            _cache_blob_body(fileobj) as (body, size),
+            self.http.put(
+                f"{self.jobs_api_connection_string}{self._get_cache_path(key)}",
+                data=body,
+                headers={
+                    "Content-Length": str(size),
+                    "Content-Type": "application/octet-stream",
+                },
+                params={"params": dump_string(params)},
+            ) as resp,
+        ):
+            await raise_exception_by_status_code(resp)
+            return resp.status == HTTPStatus.CREATED
+
+    @staticmethod
+    def _get_cache_path(key: str) -> str:
+        return f"/caches/{quote(key, safe='')}"
+
+
+@asynccontextmanager
+async def _cache_blob_body(fileobj: BinaryIO | AsyncIterator[bytes]):
+    if hasattr(fileobj, "__aiter__"):
+        with TemporaryFile("w+b") as temp_file:
+            size = 0
+
+            async for chunk in fileobj:
+                await asyncio.to_thread(temp_file.write, chunk)
+                size += len(chunk)
+
+            temp_file.seek(0)
+            yield temp_file, size
+
+        return
+
+    try:
+        start = fileobj.tell()
+        fileobj.seek(0, os.SEEK_END)
+        end = fileobj.tell()
+        fileobj.seek(start)
+    except (AttributeError, OSError):
+        with TemporaryFile("w+b") as temp_file:
+            size = 0
+
+            while chunk := await asyncio.to_thread(fileobj.read, API_CHUNK_SIZE):
+                await asyncio.to_thread(temp_file.write, chunk)
+                size += len(chunk)
+
+            temp_file.seek(0)
+            yield temp_file, size
+
+        return
+
+    yield fileobj, end - start
 
 
 @asynccontextmanager
