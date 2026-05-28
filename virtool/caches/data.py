@@ -2,17 +2,21 @@
 
 import uuid
 from collections.abc import AsyncIterator
-from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Any
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
 import virtool.utils
+from virtool.caches.db import (
+    bulk_delete_cache,
+    get_cache_deletion_targets,
+    select_eviction_candidates,
+)
 from virtool.caches.models import Cache, CacheHit
 from virtool.caches.pg import CACHE_KEY_CONSTRAINT, SQLCache
 from virtool.data.domain import DataLayerDomain
@@ -27,16 +31,6 @@ CACHE_EVICTION_GRACE_PERIOD = timedelta(hours=1)
 """Minimum cache age before an entry can be evicted for budget pressure."""
 
 logger = get_logger("caches.data")
-
-
-@dataclass(frozen=True, slots=True)
-class CacheEvictionCandidate:
-    id: int
-    key: str
-    storage_key: str
-    size: int
-    last_accessed_at: datetime
-    cache_type: str = "cache"
 
 
 def _storage_key(uuid_: str) -> str:
@@ -139,113 +133,32 @@ class CachesData(DataLayerDomain):
             last_accessed_at=now,
         )
 
-    async def total_size(self) -> int:
-        """Return the total size of all cache entries."""
-        async with AsyncSession(self._pg) as session:
-            result = await session.execute(
-                select(func.coalesce(func.sum(SQLCache.size), 0))
-            )
+    async def _bulk_delete_cache(self, cache_ids: list[int]) -> set[int]:
+        """Delete cache storage objects, then remove their cache rows."""
+        storage_deleted_ids = []
 
-        return result.scalar_one()
+        for target in await get_cache_deletion_targets(self._pg, cache_ids):
+            await self._storage.delete(target.storage_key)
+            storage_deleted_ids.append(target.id)
 
-    async def _select_eviction_candidates(
-        self,
-        last_accessed_before: datetime,
-    ) -> list[CacheEvictionCandidate]:
-        """Return the LRU candidates needed to get under the storage budget."""
-        async with AsyncSession(self._pg) as session:
-            total_size = await session.scalar(
-                select(func.coalesce(func.sum(SQLCache.size), 0)),
-            )
-
-            bytes_to_free = total_size - self.storage_budget_bytes
-
-            if bytes_to_free <= 0:
-                return []
-
-            rows = (
-                await session.execute(
-                    select(
-                        SQLCache.id,
-                        SQLCache.key,
-                        SQLCache.storage_key,
-                        SQLCache.size,
-                        SQLCache.last_accessed_at,
-                    )
-                    .where(SQLCache.last_accessed_at < last_accessed_before)
-                    .order_by(
-                        SQLCache.last_accessed_at.asc(),
-                        SQLCache.id.asc(),
-                    ),
-                )
-            ).all()
-
-        freed_size = 0
-        candidates = []
-
-        for row in rows:
-            candidates.append(
-                CacheEvictionCandidate(
-                    id=row.id,
-                    key=row.key,
-                    storage_key=row.storage_key,
-                    size=row.size,
-                    last_accessed_at=row.last_accessed_at,
-                ),
-            )
-
-            freed_size += row.size
-
-            if freed_size >= bytes_to_free:
-                break
-
-        return candidates
-
-    async def _delete_eviction_candidates(
-        self,
-        candidates: list[CacheEvictionCandidate],
-    ) -> list[CacheEvictionCandidate]:
-        """Delete eviction candidates from storage, then remove their cache rows."""
-        storage_deleted_candidates = []
-
-        for candidate in candidates:
-            await self._storage.delete(candidate.storage_key)
-            storage_deleted_candidates.append(candidate)
-
-        if not storage_deleted_candidates:
-            return []
-
-        async with AsyncSession(self._pg) as session:
-            deleted_ids = {
-                row.id
-                for row in (
-                    await session.execute(
-                        delete(SQLCache)
-                        .where(
-                            SQLCache.id.in_(
-                                candidate.id for candidate in storage_deleted_candidates
-                            ),
-                        )
-                        .returning(SQLCache.id),
-                    )
-                )
-            }
-            await session.commit()
-
-        return [
-            candidate
-            for candidate in storage_deleted_candidates
-            if candidate.id in deleted_ids
-        ]
+        return await bulk_delete_cache(self._pg, storage_deleted_ids)
 
     async def evict_lru(self) -> None:
         """Evict least-recently used cache entries until storage is under budget."""
         now = virtool.utils.timestamp()
-        candidates = await self._select_eviction_candidates(
+        candidates = await select_eviction_candidates(
+            self._pg,
+            self.storage_budget_bytes,
             now - CACHE_EVICTION_GRACE_PERIOD,
         )
+        deleted_ids = await self._bulk_delete_cache(
+            [candidate.id for candidate in candidates],
+        )
 
-        for candidate in await self._delete_eviction_candidates(candidates):
+        for candidate in candidates:
+            if candidate.id not in deleted_ids:
+                continue
+
             logger.info(
                 "evicted cache entry",
                 key=candidate.key,

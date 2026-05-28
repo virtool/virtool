@@ -10,6 +10,7 @@ from virtool.caches.data import (
     LAST_ACCESSED_REFRESH_INTERVAL,
     _storage_key,
 )
+from virtool.caches.db import select_eviction_candidates
 from virtool.caches.pg import SQLCache
 from virtool.data.errors import CacheAlreadyExistsError, CacheMissError
 from virtool.data.layer import DataLayer
@@ -21,7 +22,7 @@ async def _chunker(payload: bytes) -> AsyncIterator[bytes]:
     yield payload
 
 
-async def _create_cache_with_last_accessed(
+async def _create_aged_cache(
     data_layer: DataLayer,
     pg: AsyncEngine,
     key: str,
@@ -191,7 +192,7 @@ class TestEvictLRU:
             ("needed", 30, timedelta(hours=3)),
             ("unneeded", 40, timedelta(hours=2)),
         ]:
-            await _create_cache_with_last_accessed(
+            await _create_aged_cache(
                 data_layer,
                 pg,
                 key,
@@ -200,7 +201,9 @@ class TestEvictLRU:
                 age,
             )
 
-        candidates = await data_layer.caches._select_eviction_candidates(
+        candidates = await select_eviction_candidates(
+            pg,
+            data_layer.caches.storage_budget_bytes,
             static_time.datetime - CACHE_EVICTION_GRACE_PERIOD,
         )
 
@@ -219,7 +222,7 @@ class TestEvictLRU:
         static_time,
     ):
         data_layer.caches.storage_budget_bytes = 100
-        storage_key = await _create_cache_with_last_accessed(
+        storage_key = await _create_aged_cache(
             data_layer,
             pg,
             "under_budget",
@@ -248,7 +251,7 @@ class TestEvictLRU:
         static_time,
     ):
         data_layer.caches.storage_budget_bytes = 80
-        oldest_storage_key = await _create_cache_with_last_accessed(
+        oldest_storage_key = await _create_aged_cache(
             data_layer,
             pg,
             "oldest",
@@ -256,7 +259,7 @@ class TestEvictLRU:
             static_time.datetime,
             timedelta(hours=4),
         )
-        await _create_cache_with_last_accessed(
+        await _create_aged_cache(
             data_layer,
             pg,
             "middle",
@@ -264,7 +267,7 @@ class TestEvictLRU:
             static_time.datetime,
             timedelta(hours=3),
         )
-        await _create_cache_with_last_accessed(
+        await _create_aged_cache(
             data_layer,
             pg,
             "newest",
@@ -296,7 +299,7 @@ class TestEvictLRU:
         static_time,
     ):
         data_layer.caches.storage_budget_bytes = 50
-        await _create_cache_with_last_accessed(
+        await _create_aged_cache(
             data_layer,
             pg,
             "recent_large",
@@ -304,7 +307,7 @@ class TestEvictLRU:
             static_time.datetime,
             timedelta(minutes=30),
         )
-        await _create_cache_with_last_accessed(
+        await _create_aged_cache(
             data_layer,
             pg,
             "recent_small",
@@ -331,7 +334,7 @@ class TestEvictLRU:
         static_time,
     ):
         data_layer.caches.storage_budget_bytes = 1
-        storage_key = await _create_cache_with_last_accessed(
+        storage_key = await _create_aged_cache(
             data_layer,
             pg,
             "delete_commit_fails",
