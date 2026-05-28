@@ -7,7 +7,7 @@ import pytest
 
 from virtool.data.layer import DataLayer
 from virtool.workflow.client import WorkflowAPIClient
-from virtool.workflow.data.tar import stream_dir_as_tar
+from virtool.workflow.data.tar import get_tar_size, stream_dir_as_tar
 from virtool.workflow.errors import JobsAPINotFoundError
 
 
@@ -26,51 +26,24 @@ async def cache_client(spawn_job_client) -> WorkflowAPIClient:
     )
 
 
-class TestHeadCache:
-    async def test_ok(self, cache_client: WorkflowAPIClient):
-        await cache_client.put_cache(
-            "trim-reads-head",
-            {"step": "trim_reads"},
-            BytesIO(b"cached"),
-        )
-
-        assert await cache_client.head_cache("trim-reads-head") is True
-
-    async def test_not_found(self, cache_client: WorkflowAPIClient):
-        assert await cache_client.head_cache("missing-cache") is False
-
-
 class TestGetCache:
-    async def test_ok(self, cache_client: WorkflowAPIClient):
-        await cache_client.put_cache(
-            "trim-reads-exists",
-            {"step": "trim_reads"},
-            BytesIO(b"cached"),
-        )
-
-        assert await cache_client.get_cache("trim-reads-exists") is True
-
-    async def test_not_found(self, cache_client: WorkflowAPIClient):
-        assert await cache_client.get_cache("missing-cache") is False
-
-
-class TestGetCacheBlob:
     async def test_ok(self, cache_client: WorkflowAPIClient, tmp_path: Path):
         payload = b"trimmed reads"
         await cache_client.put_cache(
             "trim-reads-blob",
-            {"step": "trim_reads"},
             BytesIO(payload),
+            len(payload),
+            {"step": "trim_reads"},
         )
         dest = tmp_path / "cache.blob"
 
-        await cache_client.get_cache_blob("trim-reads-blob", dest)
+        await cache_client.get_cache("trim-reads-blob", dest)
 
         assert dest.read_bytes() == payload
 
     async def test_not_found(self, cache_client: WorkflowAPIClient, tmp_path: Path):
         with pytest.raises(JobsAPINotFoundError):
-            await cache_client.get_cache_blob("missing-cache", tmp_path / "cache.blob")
+            await cache_client.get_cache("missing-cache", tmp_path / "cache.blob")
 
 
 class TestPutCache:
@@ -85,9 +58,11 @@ class TestPutCache:
         payload = b"cached payload"
         dest = tmp_path / "cache.blob"
 
-        created = await cache_client.put_cache(key, params, BytesIO(payload))
+        created = await cache_client.put_cache(
+            key, BytesIO(payload), len(payload), params
+        )
         hit = await data_layer.caches.get(key)
-        await cache_client.get_cache_blob(key, dest)
+        await cache_client.get_cache(key, dest)
 
         assert created is True
         assert hit.key == key
@@ -106,15 +81,17 @@ class TestPutCache:
 
         created = await cache_client.put_cache(
             key,
-            {"step": "trim_reads"},
             BytesIO(original_payload),
+            len(original_payload),
+            {"step": "trim_reads"},
         )
         duplicate_created = await cache_client.put_cache(
             key,
-            {"step": "trim_reads", "attempt": 2},
             BytesIO(b"replacement payload"),
+            len(b"replacement payload"),
+            {"step": "trim_reads", "attempt": 2},
         )
-        await cache_client.get_cache_blob(key, dest)
+        await cache_client.get_cache(key, dest)
 
         assert created is True
         assert duplicate_created is False
@@ -130,10 +107,11 @@ class TestPutCache:
 
         created = await cache_client.put_cache(
             key,
-            {"step": "trim_reads"},
             _iter_chunks(b"cached ", b"payload"),
+            len(b"cached payload"),
+            {"step": "trim_reads"},
         )
-        await cache_client.get_cache_blob(key, dest)
+        await cache_client.get_cache(key, dest)
 
         assert created is True
         assert dest.read_bytes() == b"cached payload"
@@ -149,13 +127,15 @@ class TestPutCache:
         (directory / "reference.1.bt2").write_bytes(b"reference")
         (nested / "reference.2.bt2").write_bytes(b"nested-reference")
         dest = tmp_path / "cache.tar"
+        tar_size = await get_tar_size(directory)
 
         created = await cache_client.put_cache(
             "bowtie2-index",
-            {"tool": "bowtie2", "version": "2.5.4"},
             stream_dir_as_tar(directory),
+            tar_size,
+            {"tool": "bowtie2", "version": "2.5.4"},
         )
-        await cache_client.get_cache_blob("bowtie2-index", dest)
+        await cache_client.get_cache("bowtie2-index", dest)
 
         with tarfile.open(dest, mode="r:") as archive:
             assert sorted(archive.getnames()) == [
