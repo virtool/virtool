@@ -219,6 +219,31 @@
       ]),
     }),
     'reads': list([
+      dict({
+        'download_url': '/samples/test/reads/reads.fq.gz',
+        'id': 1,
+        'name': 'reads.fq.gz',
+        'name_on_disk': 'reads_1.fq.gz',
+        'sample': 'test',
+        'size': 15,
+        'upload': dict({
+          'created_at': 'not_approximately_now_datetime',
+          'id': 1,
+          'name': 'test.fq.gz',
+          'ready': True,
+          'removed': True,
+          'removed_at': 'not_approximately_now_datetime',
+          'reserved': False,
+          'size': 723988,
+          'type': 'reads',
+          'uploaded_at': 'not_approximately_now_datetime',
+          'user': dict({
+            'handle': 'zwilliams',
+            'id': 2,
+          }),
+        }),
+        'uploaded_at': 'not_approximately_now_datetime',
+      }),
     ]),
     'ready': True,
     'subtractions': list([
