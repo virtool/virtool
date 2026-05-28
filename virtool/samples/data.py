@@ -458,9 +458,6 @@ class SamplesData(DataLayerDomain):
             for row in rows:
                 names_on_disk.append(row.name_on_disk)
 
-                if isinstance(row.reads, list):
-                    row.reads.clear()
-
                 row.removed = True
                 row.removed_at = virtool.utils.timestamp()
                 session.add(row)
