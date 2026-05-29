@@ -49,6 +49,21 @@ class TestUpdate:
         with pytest.raises(ResourceNotFoundError):
             await settings_data.update(UpdateSettingsRequest(enable_api=True))
 
+    async def test_empty_returns_current(
+        self,
+        pg: AsyncEngine,
+        settings_data: SettingsData,
+    ):
+        await seed_row(pg, enable_api=True, minimum_password_length=16)
+
+        settings = await settings_data.update(UpdateSettingsRequest())
+
+        assert settings == Settings(enable_api=True, minimum_password_length=16)
+
+    async def test_empty_missing_row_raises(self, settings_data: SettingsData):
+        with pytest.raises(ResourceNotFoundError):
+            await settings_data.update(UpdateSettingsRequest())
+
 
 class TestEnsure:
     async def test_seeds_defaults_when_missing(self, settings_data: SettingsData):

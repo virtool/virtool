@@ -42,12 +42,17 @@ class SettingsData:
         :raises ResourceNotFoundError: if the settings row does not exist
         :return: the application settings
         """
+        update_data = data.dict(exclude_unset=True)
+
+        if not update_data:
+            return await self.get_all()
+
         async with AsyncSession(self._pg) as session:
             updated = (
                 await session.execute(
                     update(SQLSettings)
                     .where(SQLSettings.id == 1)
-                    .values(**data.dict(exclude_unset=True))
+                    .values(**update_data)
                     .returning(SQLSettings),
                 )
             ).scalar()
