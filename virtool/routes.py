@@ -5,7 +5,6 @@ import virtool.api.root
 import virtool.caches.api
 import virtool.dev.api
 import virtool.genbank.api
-import virtool.groups.api
 import virtool.history.api
 import virtool.hmm.api
 import virtool.indexes.api
@@ -20,7 +19,6 @@ import virtool.subtractions.api
 import virtool.tasks.api
 import virtool.uploads.api
 import virtool.users.api
-import virtool.ws.route
 
 ROUTES = (
     virtool.account.api.routes,
@@ -28,7 +26,6 @@ ROUTES = (
     virtool.analyses.api.routes,
     virtool.caches.api.routes,
     virtool.genbank.api.routes,
-    virtool.groups.api.routes,
     virtool.history.api.routes,
     virtool.hmm.api.routes,
     virtool.indexes.api.routes,
@@ -48,8 +45,6 @@ ROUTES = (
 
 
 def setup_routes(app, dev: bool = False) -> None:
-    app.router.add_get("/ws", virtool.ws.route.root)
-
     if dev:
         app.router.add_routes(virtool.dev.api.routes)
 

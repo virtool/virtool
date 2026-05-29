@@ -31,7 +31,6 @@ async def get(req):
             "account": {"url": "/account", "doc": f"{API_URL_ROOT}/account"},
             "admin": {"url": "/admin", "doc": f"{API_URL_ROOT}/admin"},
             "analyses": {"url": "/analyses", "doc": f"{API_URL_ROOT}/analyses"},
-            "groups": {"url": "/groups", "doc": f"{API_URL_ROOT}/groups"},
             "history": {"url": "/history", "doc": f"{API_URL_ROOT}/history"},
             "hmms": {"url": "/hmms", "doc": f"{API_URL_ROOT}/hmms"},
             "indexes": {"url": "/indexes", "doc": f"{API_URL_ROOT}/indexes"},
