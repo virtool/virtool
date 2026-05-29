@@ -35,7 +35,7 @@ def serialize(upload: SQLUpload) -> dict:
         "space": upload.space,
         "type": upload.type.value if upload.type is not None else None,
         "uploaded_at": upload.uploaded_at,
-        "user": {"id": upload.user_id} if upload.user_id is not None else None,
+        "user": {"id": upload.user_id},
     }
 
 
@@ -129,7 +129,7 @@ class UploadsData(DataLayerDomain):
         chunker,
         name: str,
         upload_type: UploadType,
-        user_id: int | None = None,
+        user_id: int,
     ) -> Upload:
         """Create an upload."""
         created_at = virtool.utils.timestamp()

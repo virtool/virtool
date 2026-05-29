@@ -40,5 +40,5 @@ class SQLUpload(Base):
     size: Column = Column(BigInteger)
     space: Mapped[int] = Column(Integer, ForeignKey("spaces.id"), nullable=True)
     type: Column = Column(Enum(UploadType))
-    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     uploaded_at: Column = Column(DateTime)

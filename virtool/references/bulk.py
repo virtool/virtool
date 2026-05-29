@@ -198,7 +198,7 @@ class OTUDataBulkUpdater:
         mongo: "Mongo",
         pg_session: AsyncSession,
         pg_lock: asyncio.Lock,
-        user_id: str,
+        user_id: int,
         progress_tracker: AccumulatingProgressHandlerWrapper,
         task_queue: Queue,
         prepare_history: Callable,
@@ -338,7 +338,7 @@ class OTUUpdateBuffer(BaseDataBuffer):
         prepare_otu_update_buffer: BaseDataBuffer,
         mongo: "Mongo",
         ref_id: str,
-        user_id: str,
+        user_id: int,
         created_at: datetime,
     ):
         async def func(data: list[OTUUpdateBufferData], session):
@@ -388,7 +388,7 @@ class OTUUpdateBuffer(BaseDataBuffer):
         task_queue: Queue,
         bulk_db_updater: OTUDataBulkUpdater,
         mongo: "Mongo",
-        user_id: str,
+        user_id: int,
     ):
         async def func(
             data: list[OTUUpdateBufferData],
@@ -425,7 +425,7 @@ class BulkOTUUpdater:
         mongo: "Mongo",
         pg_session: AsyncSession,
         ref_id: str,
-        user_id: str,
+        user_id: int,
         created_at: datetime,
         progress_tracker: AccumulatingProgressHandlerWrapper,
         session: AsyncIOMotorClientSession,

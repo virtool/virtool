@@ -123,7 +123,7 @@ class TestComposeRightsFilter:
         """Administrators bypass the rights filter."""
         assert (
             compose_rights_filter(
-                user_id_variants=["bar"],
+                user_id=7,
                 administrator=True,
                 groups=["foo"],
             )
@@ -131,16 +131,16 @@ class TestComposeRightsFilter:
         )
 
     def test_non_administrator(self):
-        """Non-administrators get an ``$or`` over their group and user id variants."""
+        """Non-administrators get an ``$or`` over their group and user id."""
         assert compose_rights_filter(
-            user_id_variants=["bar"],
+            user_id=7,
             administrator=False,
             groups=["foo"],
         ) == {
             "$or": [
                 {"groups.id": {"$in": ["foo"]}},
-                {"users.id": "bar"},
-                {"user.id": "bar"},
+                {"users.id": 7},
+                {"user.id": 7},
             ],
         }
 

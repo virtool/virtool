@@ -97,7 +97,7 @@ class HmmsData(DataLayerDomain):
 
         return HMMStatus(**document)
 
-    async def install_update(self, user_id: str) -> HMMInstalled:
+    async def install_update(self, user_id: int) -> HMMInstalled:
         if await self._mongo.status.count_documents(
             {"_id": "hmm", "updates.ready": False},
         ):
@@ -138,7 +138,7 @@ class HmmsData(DataLayerDomain):
         self,
         annotations: list[dict],
         release,
-        user_id: str,
+        user_id: int,
         progress_handler: AbstractProgressHandler,
         profile_data: AsyncIterator[bytes],
     ) -> None:
