@@ -4,6 +4,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    reviewers:
+      - "igboyes"
     groups:
       pytest:
         patterns:
@@ -25,3 +27,5 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    reviewers:
+      - "igboyes"
