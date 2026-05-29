@@ -5,6 +5,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 from sqlalchemy.ext.asyncio import AsyncEngine
 
+from virtool.account.sql import SQLAPIKey
 from virtool.analyses.sql import SQLAnalysisFile
 from virtool.blast.sql import SQLNuVsBlast
 from virtool.groups.pg import SQLGroup
@@ -35,6 +36,7 @@ config = context.config
 target_metadata = Base.metadata
 
 __models__ = (
+    SQLAPIKey,
     SQLAnalysisFile,
     SQLGroup,
     SQLIndexFile,
