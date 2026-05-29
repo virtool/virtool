@@ -1,16 +1,11 @@
-from sqlalchemy import Boolean, CheckConstraint, Column, Integer, String
+from sqlalchemy import CheckConstraint, String
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import Mapped, mapped_column
 
 from virtool.pg.base import Base
 
 
 class SQLSettings(Base):
-    """The single row of application settings.
-
-    The table holds exactly one row, enforced by the ``id = 1`` check
-    constraint. Its columns mirror :class:`virtool.settings.models.Settings`.
-    """
-
     __tablename__ = "settings"
     __table_args__ = (
         CheckConstraint("id = 1", name="ck_settings_singleton"),
@@ -20,13 +15,13 @@ class SQLSettings(Base):
         ),
     )
 
-    id = Column(Integer, primary_key=True, autoincrement=False)
-    default_source_types = Column(JSONB, nullable=False)
-    enable_api = Column(Boolean, nullable=False)
-    enable_sentry = Column(Boolean, nullable=False)
-    minimum_password_length = Column(Integer, nullable=False)
-    sample_all_read = Column(Boolean, nullable=False)
-    sample_all_write = Column(Boolean, nullable=False)
-    sample_group = Column(String, nullable=False)
-    sample_group_read = Column(Boolean, nullable=False)
-    sample_group_write = Column(Boolean, nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
+    default_source_types: Mapped[list] = mapped_column(JSONB)
+    enable_api: Mapped[bool]
+    enable_sentry: Mapped[bool]
+    minimum_password_length: Mapped[int]
+    sample_all_read: Mapped[bool]
+    sample_all_write: Mapped[bool]
+    sample_group: Mapped[str] = mapped_column(String)
+    sample_group_read: Mapped[bool]
+    sample_group_write: Mapped[bool]
