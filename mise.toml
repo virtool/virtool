@@ -33,10 +33,3 @@ run = [
 description = "Check code formatting with ruff."
 run = "uv run ruff format --check"
 
-[tasks.oas]
-description = "Generate OpenAPI specification."
-run = [
-  "mkdir -p virtool/spec",
-  "uv run virtool oas > virtool/spec/openapi.json"
-]
-

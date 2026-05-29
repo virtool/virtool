@@ -37,7 +37,6 @@ from virtool.migration.apply import apply
 from virtool.migration.create import create_revision
 from virtool.migration.depend import depend
 from virtool.migration.show import show_revisions
-from virtool.oas.cmd import show_oas
 from virtool.tasks.main import run_task_runner, run_task_spawner
 from virtool.workflow.runtime.run import start_runtime
 
@@ -113,12 +112,6 @@ def start_jobs_api(**kwargs) -> None:
             base_url="",
         ),
     )
-
-
-@cli.command
-def oas() -> None:
-    """Work with the Virtool OpenAPI specification."""
-    show_oas()
 
 
 @cli.group("migration")

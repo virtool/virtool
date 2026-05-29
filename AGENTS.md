@@ -115,13 +115,6 @@ config). There is no type checker in this project.
 There is no local dev server. The development environment runs via Tilt in a
 separate repo (`virtool/dev`).
 
-### Other Commands
-
-```bash
-# Generate OpenAPI spec
-mise run oas
-```
-
 ### Migrations
 
 Create new Alembic revisions with the alembic CLI:
