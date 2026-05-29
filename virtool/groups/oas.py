@@ -16,17 +16,6 @@ class PermissionsUpdate(BaseModel):
     upload_file: bool | None
 
 
-class CreateGroupRequest(BaseModel):
-    """A schema for requests to create groups."""
-
-    name: constr(strip_whitespace=True, min_length=1) = Field(
-        description="a name for the group",
-    )
-
-    class Config:
-        schema_extra = {"example": {"name": "Research"}}
-
-
 class UpdateGroupRequest(BaseModel):
     """Used when updating permissions and/or group `name`."""
 

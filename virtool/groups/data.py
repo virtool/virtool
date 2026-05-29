@@ -1,13 +1,11 @@
-import math
-
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
 from virtool.data.topg import both_transactions
-from virtool.groups.models import Group, GroupMinimal, GroupSearchResult
+from virtool.groups.models import Group
 from virtool.groups.oas import UpdateGroupRequest
 from virtool.groups.pg import SQLGroup
 from virtool.mongo.core import Mongo
@@ -26,61 +24,6 @@ class GroupsData:
     ):
         self._mongo = mongo
         self._pg = pg
-
-    async def list(self) -> list[GroupMinimal]:
-        """List all user groups.
-
-        :return: a list of all user groups
-
-        """
-        async with AsyncSession(self._pg) as session:
-            result = await session.execute(select(SQLGroup).order_by(SQLGroup.name))
-            return [GroupMinimal(**group.to_dict()) for group in result.scalars()]
-
-    async def find(self, page: int, per_page: int, term: str = "") -> GroupSearchResult:
-        """Finds all user groups matching the term
-
-        :return: a list of all user groups
-
-        """
-        if term:
-            filters = [SQLGroup.name.ilike(f"%{term}%")]
-        else:
-            filters = []
-
-        if page > 1:
-            skip = (page - 1) * per_page
-        else:
-            skip = 0
-
-        async with AsyncSession(self._pg) as session:
-            count_result = await session.execute(
-                select(
-                    select(func.count(SQLGroup.id)).where(*filters).label("found"),
-                    select(func.count(SQLGroup.id)).label("total"),
-                ),
-            )
-
-            found_count, total_count = count_result.fetchone()
-
-            result = await session.execute(
-                select(SQLGroup)
-                .where(*filters)
-                .order_by(SQLGroup.name)
-                .offset(skip)
-                .limit(per_page),
-            )
-
-            groups = [row.to_dict() for row in result.unique().scalars()]
-
-        return GroupSearchResult(
-            items=groups,
-            found_count=found_count,
-            total_count=total_count,
-            page=page,
-            page_count=int(math.ceil(found_count / per_page)),
-            per_page=per_page,
-        )
 
     async def get(self, group_id: int) -> Group:
         """Get a single group by its ID.
