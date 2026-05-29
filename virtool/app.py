@@ -1,7 +1,4 @@
-import logging.config
-
 import aiohttp.web
-from aiohttp_pydantic import oas
 
 from virtool.api.accept import accept_middleware
 from virtool.api.authentication import authentication_middleware
@@ -13,7 +10,6 @@ from virtool.api.redirects import redirect_middleware
 from virtool.api.sessions import session_middleware
 from virtool.config.cls import Config
 from virtool.flags import FeatureFlags, feature_flag_middleware
-from virtool.routes import setup_routes
 from virtool.shutdown import (
     shutdown_executors,
     shutdown_http_client,
@@ -36,33 +32,6 @@ from virtool.startup import (
 )
 
 
-def create_app_without_startup():
-    logging.config.dictConfig(
-        {
-            "version": 1,
-            "disable_existing_loggers": True,
-        }
-    )
-
-    middlewares = [
-        logging_middleware,
-        headers_middleware,
-        redirect_middleware,
-        error_middleware,
-        session_middleware,
-        authentication_middleware,
-        accept_middleware,
-        route_policy_middleware,
-    ]
-
-    app = aiohttp.web.Application(middlewares=middlewares)
-
-    setup_routes(app)
-    oas.setup(app)
-
-    return app
-
-
 def create_app(config: Config):
     """Creates the Virtool application."""
     middlewares = [
@@ -78,8 +47,6 @@ def create_app(config: Config):
     ]
 
     app = aiohttp.web.Application(middlewares=middlewares)
-
-    oas.setup(app)
 
     app["config"] = config
     app["mode"] = "server"
