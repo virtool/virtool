@@ -2,7 +2,6 @@
 
 import sys
 from dataclasses import dataclass
-from pathlib import Path
 
 import orjson
 from motor.motor_asyncio import (
@@ -50,7 +49,6 @@ class RevisionContext:
 class MigrationContext:
     mongo: AsyncIOMotorDatabase
     pg: AsyncEngine
-    data_path: Path
 
 
 async def create_migration_context(config: MigrationConfig) -> MigrationContext:
@@ -84,5 +82,4 @@ async def create_migration_context(config: MigrationConfig) -> MigrationContext:
     return MigrationContext(
         mongo=mongo_database,
         pg=pg,
-        data_path=config.data_path,
     )

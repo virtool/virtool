@@ -18,7 +18,6 @@ from virtool.config.cls import (
 from virtool.config.options import (
     address_options,
     base_url_option,
-    data_path_option,
     dev_option,
     flags_option,
     get_from_environment,

@@ -49,13 +49,6 @@ base_url_option = click.option(
     type=str,
 )
 
-data_path_option = click.option(
-    "--data-path",
-    default=get_from_environment("data_path", "./data"),
-    help="The path to the application data directory",
-    type=click.Path(exists=True),
-)
-
 storage_fallback_path_option = click.option(
     "--storage-fallback-path",
     default=get_from_environment("storage_fallback_path", None),
