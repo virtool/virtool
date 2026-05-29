@@ -239,11 +239,10 @@ class ReferencesData(DataLayerDomain):
 
             document = await virtool.references.db.create_import(
                 self._mongo,
-                self._pg,
                 settings,
                 data.name,
                 data.description,
-                upload.name_on_disk,
+                upload.id,
                 user_id,
                 data.data_type,
                 data.organism,

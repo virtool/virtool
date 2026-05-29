@@ -124,6 +124,32 @@ async def test_unresolvable_upload_is_cleared(ctx: MigrationContext):
 
 
 @pytest.mark.usefixtures("upload")
+async def test_unresolvable_int_id_is_cleared(ctx: MigrationContext):
+    """An integer id pointing at a deleted upload has imported_from cleared."""
+    await ctx.mongo.references.insert_one(
+        {"_id": "dangling-int", "imported_from": {"id": 9999}},
+    )
+
+    await upgrade(ctx)
+
+    doc = await ctx.mongo.references.find_one({"_id": "dangling-int"})
+    assert doc["imported_from"] is None
+
+
+@pytest.mark.usefixtures("upload")
+async def test_unresolvable_digit_string_id_is_cleared(ctx: MigrationContext):
+    """A numeric string id pointing at a deleted upload has imported_from cleared."""
+    await ctx.mongo.references.insert_one(
+        {"_id": "dangling-digit", "imported_from": {"id": "9999"}},
+    )
+
+    await upgrade(ctx)
+
+    doc = await ctx.mongo.references.find_one({"_id": "dangling-digit"})
+    assert doc["imported_from"] is None
+
+
+@pytest.mark.usefixtures("upload")
 async def test_reference_without_imported_from_untouched(ctx: MigrationContext):
     """A reference with no imported_from field is left alone."""
     await ctx.mongo.references.insert_one({"_id": "plain", "name": "Plain"})

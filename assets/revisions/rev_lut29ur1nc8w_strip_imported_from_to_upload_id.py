@@ -54,29 +54,37 @@ async def upgrade(ctx: MigrationContext) -> None:
         result = await pg_session.execute(
             text("SELECT id, name_on_disk FROM uploads"),
         )
-        name_on_disk_map: dict[str, int] = {
-            row.name_on_disk: row.id for row in result if row.name_on_disk is not None
-        }
+        name_on_disk_map: dict[str, int] = {}
+        valid_upload_ids: set[int] = set()
+
+        for row in result:
+            valid_upload_ids.add(row.id)
+
+            if row.name_on_disk is not None:
+                name_on_disk_map[row.name_on_disk] = row.id
 
     logger.info("built upload name_on_disk map", uploads=len(name_on_disk_map))
 
-    await _strip_imported_from(ctx.mongo, name_on_disk_map)
+    await _strip_imported_from(ctx.mongo, name_on_disk_map, valid_upload_ids)
 
 
 def _resolve_upload_id(
     value: int | str | None,
     name_on_disk_map: dict[str, int],
+    valid_upload_ids: set[int],
 ) -> int | None:
     """Resolve a stored ``imported_from`` id to the integer upload id.
 
     Returns ``None`` when the value cannot be resolved to an existing upload.
     """
     if isinstance(value, int):
-        return value
+        return value if value in valid_upload_ids else None
 
     if isinstance(value, str):
         if value.isdigit():
-            return int(value)
+            resolved = int(value)
+
+            return resolved if resolved in valid_upload_ids else None
 
         return name_on_disk_map.get(value)
 
@@ -86,6 +94,7 @@ def _resolve_upload_id(
 async def _strip_imported_from(
     mongo: "AsyncIOMotorDatabase",
     name_on_disk_map: dict[str, int],
+    valid_upload_ids: set[int],
 ) -> None:
     collection = mongo.references
 
@@ -107,7 +116,11 @@ async def _strip_imported_from(
             cleared += 1
             continue
 
-        upload_id = _resolve_upload_id(imported_from.get("id"), name_on_disk_map)
+        upload_id = _resolve_upload_id(
+            imported_from.get("id"),
+            name_on_disk_map,
+            valid_upload_ids,
+        )
 
         if upload_id is None:
             logger.warning(

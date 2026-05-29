@@ -29,7 +29,6 @@ from virtool.models.roles import AdministratorRole
 from virtool.mongo.utils import get_mongo_from_req
 from virtool.otus.db import join
 from virtool.otus.utils import verify
-from virtool.pg.utils import get_row
 from virtool.references.alot import prepare_otu_insertion
 from virtool.references.bulk_models import (
     OTUData,
@@ -49,7 +48,6 @@ from virtool.releases import (
 )
 from virtool.settings.models import Settings
 from virtool.types import Document
-from virtool.uploads.sql import SQLUpload
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
@@ -591,11 +589,10 @@ async def create_document(
 
 async def create_import(
     mongo: "Mongo",
-    pg: AsyncEngine,
     settings: Settings,
     name: str,
     description: str,
-    import_from: str,
+    upload_id: int,
     user_id: int,
     data_type: str,
     organism: str,
@@ -603,11 +600,10 @@ async def create_import(
     """Import a previously exported Virtool reference.
 
     :param mongo: the application database client
-    :param pg: PostgreSQL database object
     :param settings: the application settings object
     :param name: the name for the new reference
     :param description: a description for the new reference
-    :param import_from: the uploaded file to import from
+    :param upload_id: the id of the uploaded file to import from
     :param user_id: the id of the creating user
     :param data_type: the data type of the reference
     :param organism: the organism
@@ -627,9 +623,7 @@ async def create_import(
         user_id=user_id,
     )
 
-    upload = await get_row(pg, SQLUpload, ("name_on_disk", import_from))
-
-    document["imported_from"] = {"id": upload.id}
+    document["imported_from"] = {"id": upload_id}
 
     return document
 
