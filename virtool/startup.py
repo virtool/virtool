@@ -27,7 +27,6 @@ from virtool.tasks.runner import TaskRunner
 from virtool.types import App
 from virtool.utils import get_http_session_from_app
 from virtool.version import determine_server_version, get_version_from_app
-from virtool.ws.server import WSServer
 
 logger = get_logger("startup")
 
@@ -219,23 +218,3 @@ async def startup_version(app: App) -> None:
     logger.info("starting virtool", version=version, mode=app["mode"])
 
     app["version"] = version
-
-
-async def startup_ws(app: App) -> None:
-    """Start the websocket server."""
-    logger.info("starting websocket server")
-
-    config = get_config_from_app(app)
-
-    ws = WSServer(
-        config.pg_options,
-        app["data"],
-    )
-
-    ws_task = asyncio.create_task(ws.run())
-    cleanup_task = asyncio.create_task(
-        ws.periodically_close_expired_websocket_connections(),
-    )
-
-    app.setdefault("background_tasks", []).extend([ws_task, cleanup_task])
-    app["ws"] = ws

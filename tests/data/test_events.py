@@ -1,19 +1,11 @@
-import asyncio
-
-from sqlalchemy.ext.asyncio import AsyncEngine
-
 from virtool.data.domain import DataLayerDomain
 from virtool.data.events import (
-    EventPublisher,
     Operation,
     dangerously_clear_events,
     dangerously_get_event,
-    emit,
     emits,
-    listen_for_client_events,
 )
 from virtool.models.base import BaseModel
-from virtool.pg.utils import PgOptions
 
 
 class Emitted(BaseModel):
@@ -68,44 +60,3 @@ async def test_emits_named():
     assert event.domain == "example"
     assert event.name == "explicit"
     assert event.operation == Operation.UPDATE
-
-
-async def test_publish_and_listen(
-    pg: AsyncEngine,
-    postgres_options: PgOptions,
-):
-    """Test that an event published with ``emit()`` can be received via Postgres
-    NOTIFY/LISTEN.
-    """
-    dangerously_clear_events()
-
-    received_event = None
-
-    async def listen():
-        nonlocal received_event
-        async for event in listen_for_client_events(postgres_options):
-            received_event = event
-            break
-
-    listen_task = asyncio.create_task(listen())
-
-    # Give the listener time to connect and start listening before publishing.
-    await asyncio.sleep(0.1)
-
-    publisher_task = asyncio.create_task(EventPublisher(pg).run())
-
-    emit(Emitted(name="Wilfred", age=72), "example", "publish", Operation.CREATE)
-
-    await asyncio.wait_for(listen_task, timeout=5.0)
-
-    assert received_event is not None
-    assert received_event.domain == "example"
-    assert received_event.resource_id == "test-id"
-    assert received_event.operation == "create"
-
-    publisher_task.cancel()
-
-    try:
-        await publisher_task
-    except asyncio.CancelledError:
-        pass
