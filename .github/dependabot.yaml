@@ -21,6 +21,9 @@ updates:
         patterns:
           - "aiohttp"
           - "aiohttp-pydantic"
+    ignore:
+      - dependency-name: "pydantic"
+        versions: [">=2.0.0"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
