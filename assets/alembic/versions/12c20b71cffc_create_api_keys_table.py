@@ -33,6 +33,9 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
     )
 
+    op.create_index("idx_api_keys_user_id", "api_keys", ["user_id"])
+
 
 def downgrade() -> None:
+    op.drop_index("idx_api_keys_user_id", table_name="api_keys")
     op.drop_table("api_keys")

@@ -18,5 +18,7 @@ class SQLAPIKey(Base):
     hashed: Mapped[str] = mapped_column(unique=True)
     name: Mapped[str]
     created_at: Mapped[datetime]
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
     permissions: Mapped[dict] = mapped_column(JSONB)
