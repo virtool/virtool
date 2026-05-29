@@ -20,7 +20,6 @@ import virtool.subtractions.api
 import virtool.tasks.api
 import virtool.uploads.api
 import virtool.users.api
-import virtool.ws.route
 
 ROUTES = (
     virtool.account.api.routes,
@@ -48,8 +47,6 @@ ROUTES = (
 
 
 def setup_routes(app, dev: bool = False) -> None:
-    app.router.add_get("/ws", virtool.ws.route.root)
-
     if dev:
         app.router.add_routes(virtool.dev.api.routes)
 

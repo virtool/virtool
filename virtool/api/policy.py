@@ -84,12 +84,6 @@ class PublicRoutePolicy(DefaultRoutePolicy):
     allow_unauthenticated = True
 
 
-class WebSocketRoutePolicy(DefaultRoutePolicy):
-    """Only for use with websocket, accessible by any client."""
-
-    allow_unauthenticated = True
-
-
 def policy(route_policy: DefaultRoutePolicy | type[DefaultRoutePolicy]):
     """Apply the provided route policy to the decorated request handler."""
 
