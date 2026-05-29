@@ -18,7 +18,6 @@ from virtool.config.cls import (
 from virtool.config.options import (
     address_options,
     base_url_option,
-    data_path_option,
     dev_option,
     flags_option,
     get_from_environment,
@@ -38,9 +37,6 @@ from virtool.migration.apply import apply
 from virtool.migration.create import create_revision
 from virtool.migration.depend import depend
 from virtool.migration.show import show_revisions
-from virtool.migration.storage import CATEGORY_PREFIXES, run_storage_migration
-from virtool.migration.storage_inspect import run_storage_inspection
-from virtool.migration.storage_settings import StorageMigrationSettings
 from virtool.oas.cmd import show_oas
 from virtool.tasks.main import run_task_runner, run_task_spawner
 from virtool.workflow.runtime.run import start_runtime
@@ -131,7 +127,6 @@ def migration() -> None:
 
 
 @migration.command("apply")
-@data_path_option
 @mongodb_connection_string_option
 @postgres_connection_string_option
 def migration_apply(**kwargs) -> None:
@@ -160,70 +155,6 @@ def migration_show(**kwargs) -> None:
     """Apply all pending migrations."""
     configure_logging(False)
     show_revisions()
-
-
-@migration.command("storage")
-@click.option(
-    "--category",
-    required=True,
-    type=click.Choice(sorted(CATEGORY_PREFIXES)),
-    help="Storage category to migrate.",
-)
-@click.option(
-    "--dry-run",
-    is_flag=True,
-    help="List files that would be copied without writing.",
-)
-def migration_storage(category: str, dry_run: bool) -> None:
-    """Migrate one storage category from filesystem to object storage.
-
-    Storage configuration is loaded from ``VT_*`` environment variables,
-    matching the rest of the application. The migration bypasses the
-    runtime fallback router and streams files directly into the
-    configured object backend. Source files are never deleted.
-    """
-    configure_logging(False)
-    settings = StorageMigrationSettings()
-    asyncio.run(run_storage_migration(settings, category, dry_run))
-
-
-@migration.command("storage-inspect")
-@click.option(
-    "--category",
-    default=None,
-    type=click.Choice(sorted(CATEGORY_PREFIXES)),
-    help="Limit listing parity and content hashing to a single category.",
-)
-@click.option(
-    "--sample-size",
-    default=100,
-    show_default=True,
-    type=click.IntRange(min=1),
-    help="Number of random keys per category to hash end-to-end.",
-)
-@click.option(
-    "--full-hash",
-    is_flag=True,
-    help="Hash every key instead of a random sample.",
-)
-def migration_storage_inspect(
-    category: str | None,
-    sample_size: int,
-    full_hash: bool,
-) -> None:
-    """Inspect the on-disk source against object storage before deletion.
-
-    Read-only: walks ``data_path`` for orphaned files, re-verifies the
-    listing parity of every migrated category, and stream-hashes a
-    sample of source objects against the destination. Exits non-zero
-    on any drift so a Kubernetes ``Job`` will land in ``Failed`` and
-    block the operator from running ``rm`` against ``data_path``.
-    """
-    configure_logging(False)
-    settings = StorageMigrationSettings()
-    asyncio.run(
-        run_storage_inspection(settings, category, sample_size, full_hash),
-    )
 
 
 @cli.group("tasks")

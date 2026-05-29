@@ -55,7 +55,6 @@ def _validate_s3_credentials(access_key_id: str, secret_access_key: str) -> None
 class MigrationConfig:
     """Configuration for the migration service."""
 
-    data_path: Path
     mongodb_connection_string: str
     postgres_connection_string: str
 
@@ -71,9 +70,6 @@ class MigrationConfig:
     @property
     def pg_options(self):
         return PgOptions.from_connection_string(self.postgres_connection_string)
-
-    def __post_init__(self):
-        self.data_path = Path(self.data_path)
 
 
 @dataclass

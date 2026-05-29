@@ -17,8 +17,8 @@ logger = get_logger("storage")
 class StorageBackendConfig(Protocol):
     """Structural type for the ``storage_*`` fields ``build_primary_backend`` reads.
 
-    ``ServerConfig``, ``TaskRunnerConfig`` and ``StorageMigrationSettings``
-    all satisfy this without explicit inheritance.
+    ``ServerConfig`` and ``TaskRunnerConfig`` both satisfy this without
+    explicit inheritance.
     """
 
     storage_backend: StorageBackendName
@@ -72,8 +72,7 @@ def build_primary_backend(config: StorageBackendConfig) -> StorageBackend:
     """Build the object-storage primary backend.
 
     Exposed for tests that need to drive the remote backend directly without
-    the filesystem fallback wrapper, and for the storage migration CLI which
-    must bypass the fallback router.
+    the filesystem fallback wrapper.
     """
     match config.storage_backend:
         case "s3":
