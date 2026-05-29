@@ -62,6 +62,28 @@ class TestUpgrade:
         assert settings["enable_api"] is False
         assert settings["minimum_password_length"] == 8
 
+    async def test_skips_null_values(
+        self,
+        ctx: MigrationContext,
+        apply_alembic: Callable,
+    ):
+        await asyncio.to_thread(apply_alembic, REVISION)
+
+        await ctx.mongo.settings.insert_one(
+            {
+                "_id": "settings",
+                "sample_group": None,
+                "minimum_password_length": 16,
+            },
+        )
+
+        await upgrade(ctx)
+
+        settings = await fetch_settings(ctx)
+
+        assert settings["sample_group"] == "none"
+        assert settings["minimum_password_length"] == 16
+
     async def test_skips_when_already_customized(
         self,
         ctx: MigrationContext,

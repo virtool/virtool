@@ -35,6 +35,10 @@ async def upgrade(ctx: MigrationContext) -> None:
     migration safe to re-run and ensuring it never clobbers settings that have
     already been changed in PostgreSQL. Fields dropped from the model
     (``hmm_slug``, ``sample_unique_names``) are ignored if present in MongoDB.
+
+    Legacy documents may carry ``null`` for non-nullable fields (notably
+    ``sample_group``). Such values are skipped so the seeded default stands
+    rather than violating the column constraint.
     """
     mongo_settings = await ctx.mongo.settings.find_one({"_id": "settings"})
 
@@ -45,7 +49,7 @@ async def upgrade(ctx: MigrationContext) -> None:
     backfill = {
         field: mongo_settings[field]
         for field in Settings.__fields__
-        if field in mongo_settings
+        if mongo_settings.get(field) is not None
     }
 
     if not backfill:
