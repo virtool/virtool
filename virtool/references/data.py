@@ -239,11 +239,10 @@ class ReferencesData(DataLayerDomain):
 
             document = await virtool.references.db.create_import(
                 self._mongo,
-                self._pg,
                 settings,
                 data.name,
                 data.description,
-                upload.name_on_disk,
+                upload.id,
                 user_id,
                 data.data_type,
                 data.organism,
@@ -378,16 +377,11 @@ class ReferencesData(DataLayerDomain):
 
         document["installed"] = installed
 
-        imported_from = document.get("imported_from")
-
-        if imported_from:
-            imported_from = await apply_transforms(
-                imported_from,
-                [AttachUserTransform(self._pg)],
-                self._pg,
-            )
-
-        document["imported_from"] = imported_from
+        document = await apply_transforms(
+            document,
+            [AttachImportedFromTransform(self._mongo, self._pg)],
+            self._pg,
+        )
 
         for user in document["users"]:
             if "created_at" not in user:

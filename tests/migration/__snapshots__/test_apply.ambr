@@ -257,6 +257,13 @@
       'applied_at': datetime,
       'created_at': datetime,
       'id': 37,
+      'name': 'strip imported_from to upload id',
+      'revision': 'lut29ur1nc8w',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 38,
       'name': 'create api_keys table',
       'revision': '12c20b71cffc',
     }),
