@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pytest
 
 from virtool.config.cls import ServerConfig
@@ -8,7 +6,6 @@ from virtool.config.cls import ServerConfig
 def build_server_config(**overrides) -> ServerConfig:
     defaults = {
         "base_url": "",
-        "data_path": Path("./data"),
         "dev": False,
         "flags": [],
         "host": "localhost",
@@ -32,7 +29,6 @@ class TestStorageBackendRequired:
         with pytest.raises(TypeError, match="storage_backend"):
             ServerConfig(
                 base_url="",
-                data_path=Path("./data"),
                 dev=False,
                 flags=[],
                 host="localhost",

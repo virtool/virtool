@@ -38,8 +38,8 @@ async def test_startup_http_client_headers(mocker, fake_app):
     )
 
 
-async def test_startup_storage(fake_app, tmp_path, mocker):
-    fake_app["config"] = build_server_config(data_path=tmp_path)
+async def test_startup_storage(fake_app, mocker):
+    fake_app["config"] = build_server_config()
 
     backend = mocker.Mock()
     mocker.patch(
