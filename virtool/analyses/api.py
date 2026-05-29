@@ -32,7 +32,6 @@ from virtool.data.errors import (
     ResourceNotModifiedError,
 )
 from virtool.data.utils import get_data_from_req
-from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.uploads.utils import multipart_file_chunker, naive_validator
 
 routes = Routes()
@@ -273,7 +272,7 @@ class AnalysisFileView(PydanticView):
         if size > 0:
             try:
                 first_chunk = await stream.__anext__()
-            except (StopAsyncIteration, StorageKeyNotFoundError):
+            except StopAsyncIteration:
                 raise APINotFound()
 
             await response.prepare(self.request)

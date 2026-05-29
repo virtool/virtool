@@ -11,7 +11,6 @@ from virtool.references.utils import (
     load_reference_file,
     load_reference_from_storage,
 )
-from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.tasks.progress import AccumulatingProgressHandlerWrapper
 from virtool.tasks.task import BaseTask
 from virtool.uploads.utils import upload_file_key
@@ -63,8 +62,6 @@ class ImportReferenceTask(BaseTask):
                 self.data.references._storage,
                 key,
             )
-        except StorageKeyNotFoundError:
-            return await self._set_error("Could not find reference file in storage")
         except json.decoder.JSONDecodeError as err:
             return await self._set_error(str(err))
         except (OSError, EOFError) as err:
