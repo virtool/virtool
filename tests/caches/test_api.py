@@ -48,11 +48,14 @@ class TestGet:
 
         await RespIs.not_found(resp)
 
-    async def test_storage_not_found(
+    async def test_missing_blob_is_server_error(
         self,
         data_layer: DataLayer,
         memory_storage: StorageBackend,
     ):
+        """A cache that resolves but whose blob is missing is a server-side
+        data-integrity bug, returning 500 rather than a client-facing 404.
+        """
         key = "trim-reads-missing-storage"
 
         await data_layer.caches.create(
@@ -66,7 +69,7 @@ class TestGet:
 
         resp = await self.client.get(f"/caches/{key}")
 
-        await RespIs.not_found(resp)
+        assert resp.status == 500
 
 
 class TestPut:

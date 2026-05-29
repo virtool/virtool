@@ -148,7 +148,6 @@ class IndexFileView(PydanticView):
                 "Content-Length": str(size),
                 "Content-Type": "application/octet-stream",
             },
-            not_found_message="File not found",
         )
 
 

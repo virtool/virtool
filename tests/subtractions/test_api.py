@@ -575,14 +575,17 @@ class TestDownloadSubtractionFile:
         assert bowtie_resp.status == 404
         assert fasta_resp.status == 404
 
-    async def test_not_found_path(
+    async def test_missing_blob_is_server_error(
         self,
         fake: DataFaker,
         memory_storage,
         spawn_job_client: JobClientSpawner,
     ):
-        """Test that a 404 response is returned when attempting to download a file
-        that has a database entry but does not exist in storage.
+        """Test that a 500 response is returned when a file has a database entry but
+        its blob is missing from storage.
+
+        A missing blob after the database row has resolved is a server-side
+        data-integrity bug, not a client-facing 404.
         """
         client = await spawn_job_client(authenticated=True)
 
@@ -603,8 +606,8 @@ class TestDownloadSubtractionFile:
             f"/subtractions/{subtraction.id}/files/subtraction.fa.gz",
         )
 
-        assert bowtie_resp.status == 404
-        assert fasta_resp.status == 404
+        assert bowtie_resp.status == 500
+        assert fasta_resp.status == 500
 
 
 async def test_create(

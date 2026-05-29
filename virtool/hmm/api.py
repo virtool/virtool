@@ -19,7 +19,6 @@ from virtool.data.utils import get_data_from_req
 from virtool.hmm.models import HMM, HMMInstalled, HMMSearchResult
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.utils import get_mongo_from_req, get_one_field
-from virtool.storage.errors import StorageKeyNotFoundError
 
 routes = Routes()
 
@@ -183,7 +182,7 @@ async def get_hmm_annotations(req):
 
     try:
         first_chunk = await stream.__anext__()
-    except (StopAsyncIteration, StorageKeyNotFoundError):
+    except StopAsyncIteration:
         raise APINotFound()
 
     response = StreamResponse(
@@ -216,7 +215,7 @@ async def get_hmm_profiles(req):
 
     try:
         first_chunk = await stream.__anext__()
-    except (StopAsyncIteration, StorageKeyNotFoundError):
+    except StopAsyncIteration:
         raise APINotFound()
 
     response = StreamResponse(

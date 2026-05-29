@@ -1572,13 +1572,16 @@ class TestDownloadReads:
 
         assert resp.status == job_resp.status == 404
 
-    async def test_404_file(
+    async def test_missing_blob_is_server_error(
         self,
         mongo: Mongo,
         pg: AsyncEngine,
         spawn_client: ClientSpawner,
         spawn_job_client: JobClientSpawner,
     ):
+        """A reads row that resolves but whose blob is missing is a server-side
+        data-integrity bug, returning 500 rather than a client-facing 404.
+        """
         client = await spawn_client(authenticated=True)
         job_client = await spawn_job_client(authenticated=True)
 
@@ -1590,15 +1593,18 @@ class TestDownloadReads:
         resp = await client.get(f"/samples/foo/reads/{file_name}")
         job_resp = await job_client.get(f"/samples/foo/reads/{file_name}")
 
-        assert resp.status == job_resp.status == 404
+        assert resp.status == job_resp.status == 500
 
-    async def test_404_zero_byte_missing_object(
+    async def test_zero_byte_missing_blob_is_server_error(
         self,
         mongo: Mongo,
         pg: AsyncEngine,
         spawn_client: ClientSpawner,
         spawn_job_client: JobClientSpawner,
     ):
+        """A zero-byte reads row whose blob is missing is a server-side
+        data-integrity bug, returning 500 rather than a client-facing 404.
+        """
         client = await spawn_client(authenticated=True)
         job_client = await spawn_job_client(authenticated=True)
 
@@ -1610,7 +1616,7 @@ class TestDownloadReads:
         resp = await client.get(f"/samples/foo/reads/{file_name}")
         job_resp = await job_client.get(f"/samples/foo/reads/{file_name}")
 
-        assert resp.status == job_resp.status == 404
+        assert resp.status == job_resp.status == 500
 
 
 class TestDownloadArtifact:
@@ -1688,12 +1694,15 @@ class TestDownloadArtifact:
 
         assert resp.status == 404
 
-    async def test_404_file(
+    async def test_missing_blob_is_server_error(
         self,
         mongo: Mongo,
         pg: AsyncEngine,
         spawn_job_client: JobClientSpawner,
     ):
+        """An artifact row that resolves but whose blob is missing is a server-side
+        data-integrity bug, returning 500 rather than a client-facing 404.
+        """
         client = await spawn_job_client(authenticated=True)
 
         await self._insert_sample(mongo)
@@ -1701,14 +1710,17 @@ class TestDownloadArtifact:
 
         resp = await client.get("/samples/foo/artifacts/fastqc.txt")
 
-        assert resp.status == 404
+        assert resp.status == 500
 
-    async def test_404_zero_byte_missing_object(
+    async def test_zero_byte_missing_blob_is_server_error(
         self,
         mongo: Mongo,
         pg: AsyncEngine,
         spawn_job_client: JobClientSpawner,
     ):
+        """A zero-byte artifact row whose blob is missing is a server-side
+        data-integrity bug, returning 500 rather than a client-facing 404.
+        """
         client = await spawn_job_client(authenticated=True)
 
         await self._insert_sample(mongo)
@@ -1716,7 +1728,7 @@ class TestDownloadArtifact:
 
         resp = await client.get("/samples/foo/artifacts/fastqc.txt")
 
-        assert resp.status == 404
+        assert resp.status == 500
 
 
 class TestChangeSampleRights:

@@ -11,7 +11,6 @@ from virtool.api.schema import schema
 from virtool.authorization.permissions import LegacyPermission
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.subtractions.models import Subtraction, SubtractionSearchResult
 from virtool.subtractions.oas import (
     CreateSubtractionRequest,
@@ -253,7 +252,7 @@ class SubtractionFileView(PydanticView):
 
         try:
             first_chunk = await stream.__anext__()
-        except (StopAsyncIteration, StorageKeyNotFoundError):
+        except StopAsyncIteration:
             raise APINotFound()
 
         response = StreamResponse(

@@ -38,7 +38,6 @@ class CacheView(PydanticView):
                 "Content-Length": str(hit.size),
                 "Content-Type": "application/octet-stream",
             },
-            not_found_message="Not found",
         )
 
     async def put(self, key: str, /, params: Json[Any] | None = None):
