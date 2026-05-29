@@ -37,9 +37,6 @@ from virtool.migration.apply import apply
 from virtool.migration.create import create_revision
 from virtool.migration.depend import depend
 from virtool.migration.show import show_revisions
-from virtool.migration.storage import CATEGORY_PREFIXES, run_storage_migration
-from virtool.migration.storage_inspect import run_storage_inspection
-from virtool.migration.storage_settings import StorageMigrationSettings
 from virtool.oas.cmd import show_oas
 from virtool.tasks.main import run_task_runner, run_task_spawner
 from virtool.workflow.runtime.run import start_runtime
@@ -130,7 +127,6 @@ def migration() -> None:
 
 
 @migration.command("apply")
-@data_path_option
 @mongodb_connection_string_option
 @postgres_connection_string_option
 def migration_apply(**kwargs) -> None:
