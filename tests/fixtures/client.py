@@ -268,7 +268,7 @@ class ClientSpawner(Protocol):
 def spawn_client(
     aiohttp_client,
     data_layer: DataLayer,
-    data_path: Path,
+    tmp_path: Path,
     fake: DataFaker,
     memory_storage,
     mocker,
@@ -404,7 +404,7 @@ def spawn_client(
         """
         config = ServerConfig(
             base_url=base_url,
-            data_path=data_path,
+            data_path=tmp_path,
             dev=dev,
             flags=[],
             host="localhost",
@@ -489,7 +489,7 @@ def spawn_client(
 @pytest.fixture
 def spawn_job_client(
     aiohttp_client,
-    data_path: Path,
+    tmp_path: Path,
     memory_storage,
     mongo: Mongo,
     mongo_connection_string,
@@ -549,7 +549,7 @@ def spawn_job_client(
         app = await virtool.jobs.main.create_app(
             ServerConfig(
                 base_url=base_url,
-                data_path=data_path,
+                data_path=tmp_path,
                 dev=dev,
                 flags=[],
                 host="localhost",
