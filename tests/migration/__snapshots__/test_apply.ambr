@@ -239,5 +239,12 @@
       'name': 'add instance_messages user_id',
       'revision': 'c24b524f77e3',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 35,
+      'name': 'create settings table',
+      'revision': 'd16de6e24788',
+    }),
   ])
 # ---
