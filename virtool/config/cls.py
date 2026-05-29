@@ -19,6 +19,23 @@ from virtool.pg.utils import PgOptions
 StorageBackendName = Literal["s3", "azure"]
 
 
+def _validate_fallback_path(value: str | Path) -> Path:
+    raw = str(value)
+
+    if not raw:
+        raise ValueError("storage_fallback_path cannot be an empty string")
+
+    path = Path(raw)
+
+    if not path.exists():
+        raise ValueError(f"storage_fallback_path does not exist: {path}")
+
+    if not path.is_dir():
+        raise ValueError(f"storage_fallback_path is not a directory: {path}")
+
+    return path
+
+
 def _validate_s3_credentials(access_key_id: str, secret_access_key: str) -> None:
     """Reject partial S3 credential config.
 
@@ -62,7 +79,6 @@ class MigrationConfig:
 @dataclass
 class ServerConfig:
     base_url: str
-    data_path: Path
     dev: bool
     flags: list[FlagName]
     host: str
@@ -75,6 +91,7 @@ class ServerConfig:
     real_ip_header: str
     sentry_dsn: str | None
     storage_backend: StorageBackendName
+    storage_fallback_path: Path | None = None
     storage_s3_bucket: str = ""
     storage_s3_region: str = ""
     storage_s3_endpoint: str = ""
@@ -94,7 +111,10 @@ class ServerConfig:
         return PgOptions.from_connection_string(self.postgres_connection_string)
 
     def __post_init__(self):
-        self.data_path = Path(self.data_path)
+        if self.storage_fallback_path is not None:
+            self.storage_fallback_path = _validate_fallback_path(
+                self.storage_fallback_path,
+            )
 
         if self.storage_backend == "s3" and not self.storage_s3_bucket:
             raise ValueError(
@@ -123,7 +143,6 @@ class TaskRunnerConfig:
     """Configuration for the task runner service."""
 
     base_url: str
-    data_path: Path
     host: str
     mongodb_connection_string: str
     no_revision_check: bool
@@ -131,6 +150,7 @@ class TaskRunnerConfig:
     postgres_connection_string: str
     sentry_dsn: str
     storage_backend: StorageBackendName
+    storage_fallback_path: Path | None = None
     storage_s3_bucket: str = ""
     storage_s3_region: str = ""
     storage_s3_endpoint: str = ""
@@ -150,7 +170,10 @@ class TaskRunnerConfig:
         return PgOptions.from_connection_string(self.postgres_connection_string)
 
     def __post_init__(self):
-        self.data_path = Path(self.data_path)
+        if self.storage_fallback_path is not None:
+            self.storage_fallback_path = _validate_fallback_path(
+                self.storage_fallback_path,
+            )
 
         if self.storage_backend == "s3" and not self.storage_s3_bucket:
             raise ValueError(

@@ -404,7 +404,6 @@ def spawn_client(
         """
         config = ServerConfig(
             base_url=base_url,
-            data_path=tmp_path,
             dev=dev,
             flags=[],
             host="localhost",
@@ -549,7 +548,6 @@ def spawn_job_client(
         app = await virtool.jobs.main.create_app(
             ServerConfig(
                 base_url=base_url,
-                data_path=tmp_path,
                 dev=dev,
                 flags=[],
                 host="localhost",

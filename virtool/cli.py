@@ -29,6 +29,7 @@ from virtool.config.options import (
     postgres_connection_string_option,
     real_ip_header_option,
     sentry_dsn_option,
+    storage_fallback_path_option,
     storage_options,
 )
 from virtool.jobs.main import run_jobs_server
@@ -72,7 +73,7 @@ def server() -> None:
 @server.command("api")
 @address_options
 @base_url_option
-@data_path_option
+@storage_fallback_path_option
 @dev_option
 @flags_option
 @mongodb_connection_string_option
@@ -93,7 +94,7 @@ def start_api_server(**kwargs) -> None:
 
 @server.command("jobs")
 @address_options
-@data_path_option
+@storage_fallback_path_option
 @dev_option
 @flags_option
 @mongodb_connection_string_option
@@ -232,7 +233,7 @@ def tasks() -> None:
 
 @tasks.command("runner")
 @address_options
-@data_path_option
+@storage_fallback_path_option
 @dev_option
 @mongodb_connection_string_option
 @no_revision_check_option
