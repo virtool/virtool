@@ -349,6 +349,8 @@ class JobsData:
             self._pg,
         )
 
+        emit(await self.get(job_id), self.name, "claim", Operation.UPDATE)
+
         return JobClaimed(
             id=job_id,
             acquired=True,
@@ -404,6 +406,8 @@ class JobsData:
             job.steps = updated_steps
 
             await session.commit()
+
+        emit(await self.get(job_id), self.name, "start_step", Operation.UPDATE)
 
         return JobStepStarted(
             id=step["id"],

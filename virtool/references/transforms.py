@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.pg.utils import get_row_by_id
 from virtool.types import Document
+from virtool.uploads.data import serialize as serialize_upload
 from virtool.uploads.sql import SQLUpload
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor, get_safely
@@ -78,7 +79,7 @@ class AttachImportedFromTransform(AbstractTransform):
         row = await get_row_by_id(self._pg, SQLUpload, upload_id)
 
         return await apply_transforms(
-            row.to_dict(), [AttachUserTransform(self._pg)], self._pg
+            serialize_upload(row), [AttachUserTransform(self._pg)], self._pg
         )
 
     async def attach_one(

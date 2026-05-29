@@ -8,7 +8,7 @@ from sqlalchemy import (
     Integer,
     String,
 )
-from sqlalchemy.orm import Mapped, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from virtool.pg.base import Base
 from virtool.pg.utils import SQLEnum
@@ -40,5 +40,5 @@ class SQLUpload(Base):
     size: Column = Column(BigInteger)
     space: Mapped[int] = Column(Integer, ForeignKey("spaces.id"), nullable=True)
     type: Column = Column(Enum(UploadType))
-    user: Column = Column(String)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     uploaded_at: Column = Column(DateTime)

@@ -2,9 +2,8 @@
 
 import asyncio
 import math
-from asyncio import CancelledError, gather, to_thread
+from asyncio import CancelledError, gather
 from collections.abc import AsyncGenerator, AsyncIterator
-from contextlib import suppress
 from typing import Any
 
 from pymongo.results import UpdateResult
@@ -56,7 +55,7 @@ from virtool.subtractions.db import (
     AttachSubtractionsTransform,
 )
 from virtool.uploads.sql import SQLUpload
-from virtool.uploads.utils import is_gzip_compressed
+from virtool.uploads.utils import is_gzip_compressed, upload_file_key
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor, chunk_list, wait_for_checks
 
@@ -433,7 +432,7 @@ class SamplesData(DataLayerDomain):
         if not result.modified_count:
             raise ResourceNotFoundError
 
-        files_to_delete = []
+        names_on_disk = []
 
         async with AsyncSession(self._pg) as session:
             rows = (
@@ -449,12 +448,7 @@ class SamplesData(DataLayerDomain):
             )
 
             for row in rows:
-                files_to_delete.append(
-                    self._config.data_path / "files" / row.name_on_disk
-                )
-
-                if row.reads is not None:
-                    row.reads.clear()
+                names_on_disk.append(row.name_on_disk)
 
                 row.removed = True
                 row.removed_at = virtool.utils.timestamp()
@@ -462,11 +456,9 @@ class SamplesData(DataLayerDomain):
 
             await session.commit()
 
-        async def delete_file(path):
-            with suppress(FileNotFoundError):
-                await to_thread(virtool.utils.rm, path)
-
-        await gather(*[delete_file(path) for path in files_to_delete])
+        await gather(
+            *[self._storage.delete(upload_file_key(name)) for name in names_on_disk],
+        )
 
         return await self.get(sample_id)
 

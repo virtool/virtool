@@ -108,7 +108,7 @@ def migration_mongo_name(worker_id: str) -> str:
 
 @pytest.fixture
 def migration_config(
-    data_path: Path,
+    tmp_path: Path,
     migration_pg_connection_string: str,
     mongo_connection_string: str,
     migration_mongo_name: str,
@@ -118,7 +118,7 @@ def migration_config(
 
     """
     return MigrationConfig(
-        data_path=data_path,
+        data_path=tmp_path,
         mongodb_connection_string=f"{mongo_connection_string}/{migration_mongo_name}?authSource=admin",
         postgres_connection_string=migration_pg_connection_string,
     )

@@ -8,19 +8,19 @@ from virtool.storage.legacy import LegacyIndexFilesystemAdapter
 
 
 @pytest.fixture
-def inner(data_path: Path) -> FilesystemProvider:
-    return FilesystemProvider(data_path)
+def inner(tmp_path: Path) -> FilesystemProvider:
+    return FilesystemProvider(tmp_path)
 
 
 @pytest.fixture
-def adapter(inner: FilesystemProvider, data_path: Path) -> LegacyIndexFilesystemAdapter:
-    return LegacyIndexFilesystemAdapter(inner, data_path)
+def adapter(inner: FilesystemProvider, tmp_path: Path) -> LegacyIndexFilesystemAdapter:
+    return LegacyIndexFilesystemAdapter(inner, tmp_path)
 
 
 def _seed_legacy_index(
-    data_path: Path, ref_id: str, index_id: str, filename: str, contents: bytes
+    tmp_path: Path, ref_id: str, index_id: str, filename: str, contents: bytes
 ) -> Path:
-    path = data_path / "references" / ref_id / index_id / filename
+    path = tmp_path / "references" / ref_id / index_id / filename
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(contents)
     return path
@@ -40,15 +40,15 @@ async def _collect(aiter) -> list:
 
 
 class TestRead:
-    async def test_translates_index_key(self, adapter, data_path):
-        _seed_legacy_index(data_path, "ref1", "idx1", "reference.json.gz", b"payload")
+    async def test_translates_index_key(self, adapter, tmp_path):
+        _seed_legacy_index(tmp_path, "ref1", "idx1", "reference.json.gz", b"payload")
 
         result = await _collect_bytes(adapter.read("indexes/idx1/reference.json.gz"))
 
         assert result == b"payload"
 
-    async def test_passes_through_non_index_key(self, adapter, data_path):
-        path = data_path / "samples" / "sample1" / "reads.fq.gz"
+    async def test_passes_through_non_index_key(self, adapter, tmp_path):
+        path = tmp_path / "samples" / "sample1" / "reads.fq.gz"
         path.parent.mkdir(parents=True)
         path.write_bytes(b"reads")
 
@@ -60,16 +60,16 @@ class TestRead:
         with pytest.raises(StorageKeyNotFoundError):
             await _collect_bytes(adapter.read("indexes/missing/reference.json.gz"))
 
-    async def test_index_present_but_file_missing_raises(self, adapter, data_path):
-        (data_path / "references" / "ref1" / "idx1").mkdir(parents=True)
+    async def test_index_present_but_file_missing_raises(self, adapter, tmp_path):
+        (tmp_path / "references" / "ref1" / "idx1").mkdir(parents=True)
 
         with pytest.raises(StorageKeyNotFoundError):
             await _collect_bytes(adapter.read("indexes/idx1/reference.json.gz"))
 
 
 class TestSize:
-    async def test_translates_index_key(self, adapter, data_path):
-        _seed_legacy_index(data_path, "ref1", "idx1", "reference.json.gz", b"payload")
+    async def test_translates_index_key(self, adapter, tmp_path):
+        _seed_legacy_index(tmp_path, "ref1", "idx1", "reference.json.gz", b"payload")
 
         assert await adapter.size("indexes/idx1/reference.json.gz") == len(b"payload")
 
@@ -77,8 +77,8 @@ class TestSize:
         with pytest.raises(StorageKeyNotFoundError):
             await adapter.size("indexes/missing/reference.json.gz")
 
-    async def test_passes_through_non_index_key(self, adapter, data_path):
-        path = data_path / "samples" / "sample1" / "reads.fq.gz"
+    async def test_passes_through_non_index_key(self, adapter, tmp_path):
+        path = tmp_path / "samples" / "sample1" / "reads.fq.gz"
         path.parent.mkdir(parents=True)
         path.write_bytes(b"reads")
 
@@ -86,9 +86,9 @@ class TestSize:
 
 
 class TestDelete:
-    async def test_translates_index_key(self, adapter, data_path):
+    async def test_translates_index_key(self, adapter, tmp_path):
         path = _seed_legacy_index(
-            data_path, "ref1", "idx1", "reference.json.gz", b"payload"
+            tmp_path, "ref1", "idx1", "reference.json.gz", b"payload"
         )
 
         await adapter.delete("indexes/idx1/reference.json.gz")
@@ -98,8 +98,8 @@ class TestDelete:
     async def test_unknown_index_is_noop(self, adapter):
         await adapter.delete("indexes/missing/reference.json.gz")
 
-    async def test_passes_through_non_index_key(self, adapter, data_path):
-        path = data_path / "samples" / "sample1" / "reads.fq.gz"
+    async def test_passes_through_non_index_key(self, adapter, tmp_path):
+        path = tmp_path / "samples" / "sample1" / "reads.fq.gz"
         path.parent.mkdir(parents=True)
         path.write_bytes(b"reads")
 
@@ -109,9 +109,9 @@ class TestDelete:
 
 
 class TestList:
-    async def test_translates_prefix_and_rewrites_keys(self, adapter, data_path):
-        _seed_legacy_index(data_path, "ref1", "idx1", "reference.json.gz", b"a")
-        _seed_legacy_index(data_path, "ref1", "idx1", "reference.fa.gz", b"bb")
+    async def test_translates_prefix_and_rewrites_keys(self, adapter, tmp_path):
+        _seed_legacy_index(tmp_path, "ref1", "idx1", "reference.json.gz", b"a")
+        _seed_legacy_index(tmp_path, "ref1", "idx1", "reference.fa.gz", b"bb")
 
         result = await _collect(adapter.list("indexes/idx1/"))
 
@@ -124,8 +124,8 @@ class TestList:
     async def test_unknown_index_yields_nothing(self, adapter):
         assert await _collect(adapter.list("indexes/missing/")) == []
 
-    async def test_passes_through_non_index_prefix(self, adapter, data_path):
-        path = data_path / "samples" / "sample1" / "reads.fq.gz"
+    async def test_passes_through_non_index_prefix(self, adapter, tmp_path):
+        path = tmp_path / "samples" / "sample1" / "reads.fq.gz"
         path.parent.mkdir(parents=True)
         path.write_bytes(b"reads")
 
@@ -133,9 +133,9 @@ class TestList:
 
         assert [info.key for info in result] == ["samples/sample1/reads.fq.gz"]
 
-    async def test_does_not_leak_other_indexes(self, adapter, data_path):
-        _seed_legacy_index(data_path, "ref1", "idx1", "reference.json.gz", b"a")
-        _seed_legacy_index(data_path, "ref1", "idx2", "reference.json.gz", b"b")
+    async def test_does_not_leak_other_indexes(self, adapter, tmp_path):
+        _seed_legacy_index(tmp_path, "ref1", "idx1", "reference.json.gz", b"a")
+        _seed_legacy_index(tmp_path, "ref1", "idx2", "reference.json.gz", b"b")
 
         result = await _collect(adapter.list("indexes/idx1/"))
 
@@ -143,8 +143,8 @@ class TestList:
 
 
 class TestWrite:
-    async def test_writes_translated_path(self, adapter, data_path):
-        (data_path / "references" / "ref1" / "idx1").mkdir(parents=True)
+    async def test_writes_translated_path(self, adapter, tmp_path):
+        (tmp_path / "references" / "ref1" / "idx1").mkdir(parents=True)
 
         size = await adapter.write(
             "indexes/idx1/otus.json.gz", _async_iter(b"compressed")
@@ -152,14 +152,14 @@ class TestWrite:
 
         assert size == len(b"compressed")
         assert (
-            data_path / "references" / "ref1" / "idx1" / "otus.json.gz"
+            tmp_path / "references" / "ref1" / "idx1" / "otus.json.gz"
         ).read_bytes() == b"compressed"
 
-    async def test_passes_through_non_index_key(self, adapter, data_path):
+    async def test_passes_through_non_index_key(self, adapter, tmp_path):
         size = await adapter.write("samples/sample1/reads.fq.gz", _async_iter(b"reads"))
 
         assert size == len(b"reads")
-        assert (data_path / "samples" / "sample1" / "reads.fq.gz").read_bytes() == (
+        assert (tmp_path / "samples" / "sample1" / "reads.fq.gz").read_bytes() == (
             b"reads"
         )
 
@@ -174,8 +174,8 @@ class TestWrite:
 
 
 class TestCache:
-    async def test_resolves_once_per_index(self, adapter, data_path, mocker):
-        _seed_legacy_index(data_path, "ref1", "idx1", "reference.json.gz", b"a")
+    async def test_resolves_once_per_index(self, adapter, tmp_path, mocker):
+        _seed_legacy_index(tmp_path, "ref1", "idx1", "reference.json.gz", b"a")
 
         spy = mocker.spy(adapter, "_resolve_ref_id")
 

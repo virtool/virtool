@@ -22,7 +22,7 @@ routes = Routes()
 class UploadsView(PydanticView):
     async def get(
         self,
-        user: str | None = None,
+        user: int | None = None,
         page: conint(ge=1) = 1,
         per_page: conint(ge=1, le=100) = 25,
         upload_type: str | None = None,
@@ -64,7 +64,7 @@ class UploadsView(PydanticView):
             multipart_file_chunker(await self.request.multipart()),
             name,
             upload_type,
-            user=str(self.request["client"].user_id),
+            user_id=self.request["client"].user_id,
         )
 
         return json_response(

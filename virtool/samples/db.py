@@ -23,6 +23,7 @@ from virtool.samples.models import WorkflowState
 from virtool.samples.sql import SQLSampleArtifact, SQLSampleReads
 from virtool.settings.models import Settings
 from virtool.types import Document
+from virtool.uploads.data import serialize as serialize_upload
 from virtool.uploads.sql import SQLUpload
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
@@ -70,13 +71,19 @@ class AttachArtifactsAndReadsTransform(AbstractTransform):
 
         for reads_file in reads:
             if upload := reads_file.get("upload"):
-                reads_file["upload"] = (
+                upload_dict = serialize_upload(
                     (
                         await session.execute(
                             select(SQLUpload).filter_by(id=upload),
                         )
                     ).scalar()
-                ).to_dict()
+                )
+
+                reads_file["upload"] = await apply_transforms(
+                    upload_dict,
+                    [AttachUserTransform(self._pg, ignore_errors=True)],
+                    self._pg,
+                )
 
             reads_file["download_url"] = str(
                 URL("/samples") / sample_id / "reads" / reads_file["name"]
@@ -115,7 +122,7 @@ class AttachUploadsTransform(AbstractTransform):
             select(SQLUpload).where(SQLUpload.id.in_(upload_ids)),
         )
 
-        upload_dicts = [upload.to_dict() for upload in result.scalars()]
+        upload_dicts = [serialize_upload(upload) for upload in result.scalars()]
 
         upload_dicts = await apply_transforms(
             upload_dicts,
@@ -144,7 +151,7 @@ class AttachUploadsTransform(AbstractTransform):
             select(SQLUpload).where(SQLUpload.id.in_(list(all_upload_ids))),
         )
 
-        upload_dicts = [upload.to_dict() for upload in result.scalars()]
+        upload_dicts = [serialize_upload(upload) for upload in result.scalars()]
 
         upload_dicts = await apply_transforms(
             upload_dicts,

@@ -38,6 +38,7 @@ from virtool.migration.create import create_revision
 from virtool.migration.depend import depend
 from virtool.migration.show import show_revisions
 from virtool.migration.storage import CATEGORY_PREFIXES, run_storage_migration
+from virtool.migration.storage_inspect import run_storage_inspection
 from virtool.migration.storage_settings import StorageMigrationSettings
 from virtool.oas.cmd import show_oas
 from virtool.tasks.main import run_task_runner, run_task_spawner
@@ -183,6 +184,45 @@ def migration_storage(category: str, dry_run: bool) -> None:
     configure_logging(False)
     settings = StorageMigrationSettings()
     asyncio.run(run_storage_migration(settings, category, dry_run))
+
+
+@migration.command("storage-inspect")
+@click.option(
+    "--category",
+    default=None,
+    type=click.Choice(sorted(CATEGORY_PREFIXES)),
+    help="Limit listing parity and content hashing to a single category.",
+)
+@click.option(
+    "--sample-size",
+    default=100,
+    show_default=True,
+    type=click.IntRange(min=1),
+    help="Number of random keys per category to hash end-to-end.",
+)
+@click.option(
+    "--full-hash",
+    is_flag=True,
+    help="Hash every key instead of a random sample.",
+)
+def migration_storage_inspect(
+    category: str | None,
+    sample_size: int,
+    full_hash: bool,
+) -> None:
+    """Inspect the on-disk source against object storage before deletion.
+
+    Read-only: walks ``data_path`` for orphaned files, re-verifies the
+    listing parity of every migrated category, and stream-hashes a
+    sample of source objects against the destination. Exits non-zero
+    on any drift so a Kubernetes ``Job`` will land in ``Failed`` and
+    block the operator from running ``rm`` against ``data_path``.
+    """
+    configure_logging(False)
+    settings = StorageMigrationSettings()
+    asyncio.run(
+        run_storage_inspection(settings, category, sample_size, full_hash),
+    )
 
 
 @cli.group("tasks")

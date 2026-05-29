@@ -49,6 +49,7 @@ from virtool.releases import (
 )
 from virtool.settings.models import Settings
 from virtool.types import Document
+from virtool.uploads.data import serialize as serialize_upload
 from virtool.uploads.sql import SQLUpload
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
@@ -194,6 +195,12 @@ async def check_right(req: Request, ref_id: str, right: str) -> bool:
 
     groups: list[dict] = reference["groups"]
     users: list[dict] = reference["users"]
+
+    if right == "read":
+        if any(user["id"] == client.user_id for user in users):
+            return True
+
+        return any(group["id"] in client.groups for group in groups)
 
     for user in users:
         if user["id"] == client.user_id:
@@ -623,7 +630,7 @@ async def create_import(
 
     upload = await get_row(pg, SQLUpload, ("name_on_disk", import_from))
 
-    document["imported_from"] = upload.to_dict()
+    document["imported_from"] = serialize_upload(upload)
 
     return document
 
