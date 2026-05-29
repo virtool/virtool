@@ -19,6 +19,23 @@ from virtool.pg.utils import PgOptions
 StorageBackendName = Literal["s3", "azure"]
 
 
+def _validate_fallback_path(value: str | Path) -> Path:
+    raw = str(value)
+
+    if not raw:
+        raise ValueError("storage_fallback_path cannot be an empty string")
+
+    path = Path(raw)
+
+    if not path.exists():
+        raise ValueError(f"storage_fallback_path does not exist: {path}")
+
+    if not path.is_dir():
+        raise ValueError(f"storage_fallback_path is not a directory: {path}")
+
+    return path
+
+
 def _validate_s3_credentials(access_key_id: str, secret_access_key: str) -> None:
     """Reject partial S3 credential config.
 
@@ -95,7 +112,9 @@ class ServerConfig:
 
     def __post_init__(self):
         if self.storage_fallback_path is not None:
-            self.storage_fallback_path = Path(self.storage_fallback_path)
+            self.storage_fallback_path = _validate_fallback_path(
+                self.storage_fallback_path,
+            )
 
         if self.storage_backend == "s3" and not self.storage_s3_bucket:
             raise ValueError(
@@ -152,7 +171,9 @@ class TaskRunnerConfig:
 
     def __post_init__(self):
         if self.storage_fallback_path is not None:
-            self.storage_fallback_path = Path(self.storage_fallback_path)
+            self.storage_fallback_path = _validate_fallback_path(
+                self.storage_fallback_path,
+            )
 
         if self.storage_backend == "s3" and not self.storage_s3_bucket:
             raise ValueError(
