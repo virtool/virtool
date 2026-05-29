@@ -5,6 +5,7 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
+import virtool.account.sql  # noqa: F401  schema mirror, no app importer
 import virtool.messages.sql
 import virtool.settings.sql  # noqa: F401  schema mirror, no app importer
 from virtool.api.custom_json import dump_string
