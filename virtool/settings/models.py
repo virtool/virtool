@@ -8,7 +8,7 @@ class Settings(BaseModel):
     minimum_password_length: int = 8
     sample_all_read: bool = True
     sample_all_write: bool = False
-    sample_group: int | str | None = None
+    sample_group: str = "none"
     sample_group_read: bool = True
     sample_group_write: bool = False
 
