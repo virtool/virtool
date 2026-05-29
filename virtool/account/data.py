@@ -371,17 +371,17 @@ class AccountData(DataLayerDomain):
         else:
             permissions_update = data.permissions.dict(exclude_unset=True)
 
-        if not await self._mongo.keys.count_documents({"id": key_id}):
-            raise ResourceNotFoundError()
+        existing_permissions = await get_one_field(
+            self._mongo.keys,
+            "permissions",
+            {"id": key_id, "user.id": user_id},
+        )
+
+        if existing_permissions is None:
+            raise ResourceNotFoundError
 
         new_permissions = {
-            **(
-                await get_one_field(
-                    self._mongo.keys,
-                    "permissions",
-                    {"id": key_id, "user.id": user_id},
-                )
-            ),
+            **existing_permissions,
             **permissions_update,
         }
 
@@ -390,13 +390,13 @@ class AccountData(DataLayerDomain):
             pg_session,
         ):
             await self._mongo.keys.update_one(
-                {"id": key_id},
+                {"id": key_id, "user.id": user_id},
                 {"$set": {"permissions": new_permissions}},
                 session=mongo_session,
             )
             await pg_session.execute(
                 update(SQLAPIKey)
-                .where(SQLAPIKey.id == key_id)
+                .where(SQLAPIKey.id == key_id, SQLAPIKey.user_id == user_id)
                 .values(permissions=new_permissions),
             )
 

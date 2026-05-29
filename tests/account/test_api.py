@@ -778,7 +778,10 @@ class TestUpdateAPIKey:
             {"permissions": {Permission.create_sample.value: True}},
         )
 
-        assert resp.status == 500
+        assert resp.status == 404
+
+        unchanged = await data_layer.account.get_key(other_user.id, other_key.id)
+        assert unchanged.permissions.create_sample is False
 
     async def test_permission_revocation(
         self,

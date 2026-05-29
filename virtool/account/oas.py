@@ -94,7 +94,7 @@ class CreateAPIKeyResponse(APIKey):
             "example": {
                 "created_at": "2015-10-06T20:00:00Z",
                 "groups": [],
-                "id": "foobar_0",
+                "id": 42,
                 "key": "raw_key",
                 "name": "Foobar",
                 "permissions": {
