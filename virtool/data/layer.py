@@ -101,7 +101,7 @@ def create_data_layer(
         SamplesData(config, mongo, pg, storage),
         SubtractionsData(config.base_url, mongo, pg, storage),
         SessionData(pg),
-        SettingsData(mongo),
+        SettingsData(pg),
         TasksData(pg),
         UploadsData(config, mongo, pg, storage),
         UsersData(pg),

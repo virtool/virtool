@@ -246,5 +246,12 @@
       'name': 'create settings table',
       'revision': 'd16de6e24788',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 36,
+      'name': 'copy settings to postgres',
+      'revision': 'q928h2q03qmp',
+    }),
   ])
 # ---
