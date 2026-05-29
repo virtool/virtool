@@ -49,7 +49,6 @@ from virtool.releases import (
 )
 from virtool.settings.models import Settings
 from virtool.types import Document
-from virtool.uploads.data import serialize as serialize_upload
 from virtool.uploads.sql import SQLUpload
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
@@ -630,7 +629,7 @@ async def create_import(
 
     upload = await get_row(pg, SQLUpload, ("name_on_disk", import_from))
 
-    document["imported_from"] = serialize_upload(upload)
+    document["imported_from"] = {"id": upload.id}
 
     return document
 
