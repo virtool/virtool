@@ -1,4 +1,3 @@
-from virtool.models import SearchResult
 from virtool.models.base import BaseModel
 from virtool.users.models_base import UserNested
 
@@ -44,7 +43,3 @@ class Group(GroupMinimal):
                 "users": [],
             },
         }
-
-
-class GroupSearchResult(SearchResult):
-    items: list[GroupMinimal]
