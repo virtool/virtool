@@ -15,7 +15,6 @@ import hmac
 import os
 from collections.abc import AsyncIterator
 from email.utils import formatdate
-from pathlib import Path
 
 import aiohttp
 import pytest
@@ -80,10 +79,8 @@ async def _ensure_azurite_container(
 
 
 @pytest.fixture(scope="session")
-def _s3_provider(tmp_path_factory: pytest.TempPathFactory) -> ObjectProvider:
-    data_path: Path = tmp_path_factory.mktemp("storage_factory_s3_fallback")
+def _s3_provider() -> ObjectProvider:
     config = build_server_config(
-        data_path=data_path,
         storage_backend="s3",
         storage_s3_bucket=os.environ["VT_TEST_S3_BUCKET"],
         storage_s3_endpoint=os.environ["VT_TEST_S3_ENDPOINT"],
@@ -97,9 +94,7 @@ def _s3_provider(tmp_path_factory: pytest.TempPathFactory) -> ObjectProvider:
 
 
 @pytest.fixture(scope="session")
-async def _azure_provider(
-    tmp_path_factory: pytest.TempPathFactory,
-) -> ObjectProvider:
+async def _azure_provider() -> ObjectProvider:
     account = os.environ["VT_TEST_AZURE_ACCOUNT"]
     key = os.environ["VT_TEST_AZURE_KEY"]
     endpoint = os.environ["VT_TEST_AZURE_ENDPOINT"]
@@ -107,9 +102,7 @@ async def _azure_provider(
 
     await _ensure_azurite_container(account, key, endpoint, container)
 
-    data_path: Path = tmp_path_factory.mktemp("storage_factory_azure_fallback")
     config = build_server_config(
-        data_path=data_path,
         storage_backend="azure",
         storage_azure_account=account,
         storage_azure_container=container,

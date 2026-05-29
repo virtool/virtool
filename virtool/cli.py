@@ -29,6 +29,7 @@ from virtool.config.options import (
     postgres_connection_string_option,
     real_ip_header_option,
     sentry_dsn_option,
+    storage_fallback_path_option,
     storage_options,
 )
 from virtool.jobs.main import run_jobs_server
@@ -69,7 +70,7 @@ def server() -> None:
 @server.command("api")
 @address_options
 @base_url_option
-@data_path_option
+@storage_fallback_path_option
 @dev_option
 @flags_option
 @mongodb_connection_string_option
@@ -90,7 +91,7 @@ def start_api_server(**kwargs) -> None:
 
 @server.command("jobs")
 @address_options
-@data_path_option
+@storage_fallback_path_option
 @dev_option
 @flags_option
 @mongodb_connection_string_option
@@ -157,70 +158,6 @@ def migration_show(**kwargs) -> None:
     show_revisions()
 
 
-@migration.command("storage")
-@click.option(
-    "--category",
-    required=True,
-    type=click.Choice(sorted(CATEGORY_PREFIXES)),
-    help="Storage category to migrate.",
-)
-@click.option(
-    "--dry-run",
-    is_flag=True,
-    help="List files that would be copied without writing.",
-)
-def migration_storage(category: str, dry_run: bool) -> None:
-    """Migrate one storage category from filesystem to object storage.
-
-    Storage configuration is loaded from ``VT_*`` environment variables,
-    matching the rest of the application. The migration bypasses the
-    runtime fallback router and streams files directly into the
-    configured object backend. Source files are never deleted.
-    """
-    configure_logging(False)
-    settings = StorageMigrationSettings()
-    asyncio.run(run_storage_migration(settings, category, dry_run))
-
-
-@migration.command("storage-inspect")
-@click.option(
-    "--category",
-    default=None,
-    type=click.Choice(sorted(CATEGORY_PREFIXES)),
-    help="Limit listing parity and content hashing to a single category.",
-)
-@click.option(
-    "--sample-size",
-    default=100,
-    show_default=True,
-    type=click.IntRange(min=1),
-    help="Number of random keys per category to hash end-to-end.",
-)
-@click.option(
-    "--full-hash",
-    is_flag=True,
-    help="Hash every key instead of a random sample.",
-)
-def migration_storage_inspect(
-    category: str | None,
-    sample_size: int,
-    full_hash: bool,
-) -> None:
-    """Inspect the on-disk source against object storage before deletion.
-
-    Read-only: walks ``data_path`` for orphaned files, re-verifies the
-    listing parity of every migrated category, and stream-hashes a
-    sample of source objects against the destination. Exits non-zero
-    on any drift so a Kubernetes ``Job`` will land in ``Failed`` and
-    block the operator from running ``rm`` against ``data_path``.
-    """
-    configure_logging(False)
-    settings = StorageMigrationSettings()
-    asyncio.run(
-        run_storage_inspection(settings, category, sample_size, full_hash),
-    )
-
-
 @cli.group("tasks")
 def tasks() -> None:
     """Manage Virtool tasks."""
@@ -228,7 +165,7 @@ def tasks() -> None:
 
 @tasks.command("runner")
 @address_options
-@data_path_option
+@storage_fallback_path_option
 @dev_option
 @mongodb_connection_string_option
 @no_revision_check_option
