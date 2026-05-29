@@ -487,20 +487,22 @@ class TestCreateAPIKey:
         self,
         spawn_client: ClientSpawner,
     ) -> None:
-        """Test that uniqueness is ensured on the ``id`` field."""
+        """Test that keys sharing a name receive distinct integer ids."""
         client = await spawn_client(authenticated=True)
 
         resp_1 = await client.post("/account/keys", {"name": "Foobar"})
         assert resp_1.status == 201
         data_1 = await resp_1.json()
-        assert data_1["id"] == "foobar_0"
+        assert isinstance(data_1["id"], int)
         assert data_1["name"] == "Foobar"
 
         resp_2 = await client.post("/account/keys", {"name": "Foobar"})
         assert resp_2.status == 201
         data_2 = await resp_2.json()
-        assert data_2["id"] == "foobar_1"
+        assert isinstance(data_2["id"], int)
         assert data_2["name"] == "Foobar"
+
+        assert data_1["id"] != data_2["id"]
 
     async def test_permission_exceeds_user_create(
         self,
@@ -686,7 +688,7 @@ class TestUpdateAPIKey:
         await mongo.keys.insert_one(
             {
                 "_id": "foobar",
-                "id": "foobar_0",
+                "id": 1,
                 "name": "Foobar",
                 "created_at": static_time.datetime,
                 "administrator": True,
@@ -707,7 +709,7 @@ class TestUpdateAPIKey:
             data = {}
 
         resp = await client.patch(
-            "/account/keys/foobar_0",
+            "/account/keys/1",
             data,
         )
 
@@ -722,7 +724,7 @@ class TestUpdateAPIKey:
         client = await spawn_client(authenticated=True)
 
         resp = await client.patch(
-            "/account/keys/foobar_0",
+            "/account/keys/1",
             {"permissions": {Permission.create_sample.value: True}},
         )
 
@@ -1000,13 +1002,13 @@ class TestDelete:
             await mongo.keys.insert_one(
                 {
                     "_id": "foobar",
-                    "id": "foobar_0",
+                    "id": 1,
                     "name": "Foobar",
                     "user": {"id": client.user.id},
                 },
             )
 
-        resp = await client.delete("/account/keys/foobar_0")
+        resp = await client.delete("/account/keys/1")
 
         if error is None:
             assert resp.status == 204
@@ -1031,11 +1033,11 @@ class TestDelete:
             [
                 {
                     "_id": "hello_world",
-                    "id": "hello_world_0",
+                    "id": 1,
                     "user": {"id": client.user.id},
                 },
-                {"_id": "foobar", "id": "foobar_0", "user": {"id": client.user.id}},
-                {"_id": "baz", "id": "baz_0", "user": {"id": user.id}},
+                {"_id": "foobar", "id": 2, "user": {"id": client.user.id}},
+                {"_id": "baz", "id": 3, "user": {"id": user.id}},
             ],
             session=None,
         )
@@ -1045,7 +1047,7 @@ class TestDelete:
         assert resp.status == 204
 
         assert await mongo.keys.find().to_list(None) == [
-            {"_id": "baz", "id": "baz_0", "user": {"id": user.id}},
+            {"_id": "baz", "id": 3, "user": {"id": user.id}},
         ]
 
     async def test_cannot_delete_other_users_key(
@@ -1084,8 +1086,8 @@ class TestDelete:
         ("PATCH", "/account/settings"),
         ("GET", "/account/keys"),
         ("POST", "/account/keys"),
-        ("PATCH", "/account/keys/foobar"),
-        ("DELETE", "/account/keys/foobar"),
+        ("PATCH", "/account/keys/1"),
+        ("DELETE", "/account/keys/1"),
         ("DELETE", "/account/keys"),
     ],
 )
@@ -1134,7 +1136,7 @@ async def test_is_permission_dict(
 
     data = {"permissions": permissions}
 
-    resp = await client.patch("/account/keys/foo", data=data)
+    resp = await client.patch("/account/keys/1", data=data)
 
     if value == "valid_permissions":
         await resp_is.not_found(resp)

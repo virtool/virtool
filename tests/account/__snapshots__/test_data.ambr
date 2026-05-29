@@ -1,5 +1,5 @@
 # serializer version: 1
-# name: test_create_api_key[does_not_have_permission][data]
+# name: TestCreateKey.test_ok[does_not_have_permission][data]
   dict({
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': list([
@@ -14,7 +14,7 @@
         'name': 'musicians',
       }),
     ]),
-    'id': 'foo_0',
+    'id': 1,
     'name': 'Foo',
     'permissions': dict({
       'cancel_job': False,
@@ -28,7 +28,7 @@
     }),
   })
 # ---
-# name: test_create_api_key[does_not_have_permission][mongo]
+# name: TestCreateKey.test_ok[does_not_have_permission][mongo]
   dict({
     '_id': 'baz',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -36,7 +36,7 @@
       2,
       1,
     ]),
-    'id': 'foo_0',
+    'id': 1,
     'name': 'Foo',
     'permissions': dict({
       'create_sample': True,
@@ -47,7 +47,22 @@
     }),
   })
 # ---
-# name: test_create_api_key[has_permission][data]
+# name: TestCreateKey.test_ok[does_not_have_permission][pg]
+  list([
+    dict({
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'hashed': 'baz',
+      'id': 1,
+      'name': 'Foo',
+      'permissions': dict({
+        'create_sample': True,
+        'modify_subtraction': True,
+      }),
+      'user_id': 1,
+    }),
+  ])
+# ---
+# name: TestCreateKey.test_ok[has_permission][data]
   dict({
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': list([
@@ -62,7 +77,7 @@
         'name': 'musicians',
       }),
     ]),
-    'id': 'foo_0',
+    'id': 1,
     'name': 'Foo',
     'permissions': dict({
       'cancel_job': False,
@@ -76,7 +91,7 @@
     }),
   })
 # ---
-# name: test_create_api_key[has_permission][mongo]
+# name: TestCreateKey.test_ok[has_permission][mongo]
   dict({
     '_id': 'baz',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -84,7 +99,7 @@
       2,
       1,
     ]),
-    'id': 'foo_0',
+    'id': 1,
     'name': 'Foo',
     'permissions': dict({
       'create_sample': True,
@@ -94,4 +109,19 @@
       'id': 1,
     }),
   })
+# ---
+# name: TestCreateKey.test_ok[has_permission][pg]
+  list([
+    dict({
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'hashed': 'baz',
+      'id': 1,
+      'name': 'Foo',
+      'permissions': dict({
+        'create_sample': True,
+        'modify_subtraction': True,
+      }),
+      'user_id': 1,
+    }),
+  ])
 # ---

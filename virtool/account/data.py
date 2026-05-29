@@ -1,4 +1,4 @@
-from sqlalchemy import cast, select, update
+from sqlalchemy import cast, delete, select, update
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
@@ -14,9 +14,11 @@ from virtool.account.oas import (
     UpdateKeyRequest,
     UpdateSettingsRequest,
 )
+from virtool.account.sql import SQLAPIKey
 from virtool.administrators.oas import UpdateUserRequest
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceError, ResourceNotFoundError
+from virtool.data.topg import both_transactions
 from virtool.data.transforms import apply_transforms
 from virtool.groups.transforms import AttachGroupsTransform
 from virtool.models.sessions import Session
@@ -208,7 +210,7 @@ class AccountData(DataLayerDomain):
 
         return [APIKey.parse_obj(key) for key in keys]
 
-    async def get_key(self, user_id: int, key_id: str) -> APIKey:
+    async def get_key(self, user_id: int, key_id: int) -> APIKey:
         """Get the complete representation of the API key identified by the `key_id`.
 
         The internal key ID and secret key value itself are not returned in the
@@ -299,35 +301,62 @@ class AccountData(DataLayerDomain):
 
         raw, hashed = virtool.utils.generate_key()
 
-        id_ = await _get_alternate_id(self._mongo, data.name)
+        created_at = virtool.utils.timestamp()
+        permissions = data.permissions.dict(exclude_unset=True)
 
-        await self._mongo.keys.insert_one(
-            {
-                "_id": hashed,
-                "id": id_,
-                "created_at": virtool.utils.timestamp(),
-                "groups": [group.id for group in user.groups],
-                "name": data.name,
-                "permissions": data.permissions.dict(exclude_unset=True),
-                "user": {"id": user_id},
-            },
-        )
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            sql_key = SQLAPIKey(
+                hashed=hashed,
+                name=data.name,
+                created_at=created_at,
+                user_id=user_id,
+                permissions=permissions,
+            )
+            pg_session.add(sql_key)
+            await pg_session.flush()
+            key_id = sql_key.id
+
+            await self._mongo.keys.insert_one(
+                {
+                    "_id": hashed,
+                    "id": key_id,
+                    "created_at": created_at,
+                    "groups": [group.id for group in user.groups],
+                    "name": data.name,
+                    "permissions": permissions,
+                    "user": {"id": user_id},
+                },
+                session=mongo_session,
+            )
 
         logger.info("created key", raw=raw, hashed=hashed)
 
-        return raw, await self.get_key(user_id, id_)
+        return raw, await self.get_key(user_id, key_id)
 
     async def delete_keys(self, user_id: int) -> None:
         """Delete all API keys for the account associated with the requesting session.
 
         :param user_id: the user ID
         """
-        await self._mongo.keys.delete_many({"user.id": user_id})
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            await self._mongo.keys.delete_many(
+                {"user.id": user_id},
+                session=mongo_session,
+            )
+            await pg_session.execute(
+                delete(SQLAPIKey).where(SQLAPIKey.user_id == user_id),
+            )
 
     async def update_key(
         self,
         user_id: int,
-        key_id: str,
+        key_id: int,
         data: UpdateKeyRequest,
     ) -> APIKey:
         """Change the permissions for an existing API key.
@@ -338,9 +367,9 @@ class AccountData(DataLayerDomain):
         :return: the API key
         """
         if data.permissions is None:
-            update = {}
+            permissions_update = {}
         else:
-            update = data.permissions.dict(exclude_unset=True)
+            permissions_update = data.permissions.dict(exclude_unset=True)
 
         if not await self._mongo.keys.count_documents({"id": key_id}):
             raise ResourceNotFoundError()
@@ -353,28 +382,50 @@ class AccountData(DataLayerDomain):
                     {"id": key_id, "user.id": user_id},
                 )
             ),
-            **update,
+            **permissions_update,
         }
 
-        await self._mongo.keys.update_one(
-            {"id": key_id},
-            {"$set": {"permissions": new_permissions}},
-        )
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            await self._mongo.keys.update_one(
+                {"id": key_id},
+                {"$set": {"permissions": new_permissions}},
+                session=mongo_session,
+            )
+            await pg_session.execute(
+                update(SQLAPIKey)
+                .where(SQLAPIKey.id == key_id)
+                .values(permissions=new_permissions),
+            )
 
         return await self.get_key(user_id, key_id)
 
-    async def delete_key(self, user_id: int, key_id: str) -> None:
+    async def delete_key(self, user_id: int, key_id: int) -> None:
         """Delete an API key by its id.
 
         :param user_id: the user ID
         :param key_id: the ID of the API key to delete
         """
-        delete_result = await self._mongo.keys.delete_one(
-            {"id": key_id, "user.id": user_id},
-        )
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            delete_result = await self._mongo.keys.delete_one(
+                {"id": key_id, "user.id": user_id},
+                session=mongo_session,
+            )
 
-        if delete_result.deleted_count == 0:
-            raise ResourceNotFoundError()
+            if delete_result.deleted_count == 0:
+                raise ResourceNotFoundError()
+
+            await pg_session.execute(
+                delete(SQLAPIKey).where(
+                    SQLAPIKey.id == key_id,
+                    SQLAPIKey.user_id == user_id,
+                ),
+            )
 
     async def login(self, data: CreateLoginRequest) -> int:
         """Create a new session for the user with `username`.
@@ -466,25 +517,3 @@ class AccountData(DataLayerDomain):
             session.reset.user_id,
             remember=session.reset.remember,
         )
-
-
-async def _get_alternate_id(mongo: Mongo, name: str) -> str:
-    """Get an alternate id for an API key whose provided `name` is not unique. Appends
-    an integer suffix to the end of the `name`.
-
-    :param mongo: the application mongodb client
-    :param name: the API key name
-    :return: an alternate unique id for the key
-
-    """
-    existing_alt_ids = await mongo.keys.distinct("id")
-
-    suffix = 0
-
-    while True:
-        candidate = f"{name.lower()}_{suffix}"
-
-        if candidate not in existing_alt_ids:
-            return candidate
-
-        suffix += 1
