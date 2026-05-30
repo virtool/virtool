@@ -8,11 +8,7 @@ from pytest_structlog import StructuredLogCapture
 from virtool.data.layer import DataLayer
 from virtool.workflow.client import WorkflowAPIClient
 from virtool.workflow.data.cache import CacheHit, CacheMiss, WorkflowCache
-from virtool.workflow.data.tar import extract_tar_to_dir
-
-
-async def _chunker(payload: bytes) -> AsyncIterator[bytes]:
-    yield payload
+from virtool.workflow.data.tar import get_tar_size, stream_path_as_tar
 
 
 @pytest.fixture
@@ -35,12 +31,15 @@ class TestWorkflowCacheGet:
         cache_scope: FixtureScope,
         data_layer: DataLayer,
         log: StructuredLogCapture,
+        tmp_path: Path,
     ):
         key = "workflow-cache-hit"
+        source = tmp_path / "artifact.bin"
         payload = b"cached payload"
+        source.write_bytes(payload)
 
         await data_layer.caches.create(
-            _chunker(payload),
+            stream_path_as_tar(source),
             key,
             {"workflow": "nuvs"},
         )
@@ -50,7 +49,7 @@ class TestWorkflowCacheGet:
 
         assert isinstance(result, CacheHit)
         assert result.key == key
-        assert result.path.read_bytes() == payload
+        assert (result.path / "artifact.bin").read_bytes() == payload
         assert log.has("cache hit", key=key)
 
     async def test_miss(
@@ -92,9 +91,9 @@ class TestWorkflowCachePut:
 
         assert created is True
         assert hit.params == params
-        assert hit.size == len(payload)
+        assert hit.size == await get_tar_size(source)
         assert isinstance(result, CacheHit)
-        assert result.path.read_bytes() == payload
+        assert (result.path / "artifact.bin").read_bytes() == payload
         assert log.has("cache put", key=key, created=True)
 
     async def test_duplicate(
@@ -116,7 +115,7 @@ class TestWorkflowCachePut:
         assert created is True
         assert duplicate_created is False
         assert isinstance(result, CacheHit)
-        assert result.path.read_bytes() == b"original"
+        assert (result.path / "original.bin").read_bytes() == b"original"
 
     async def test_directory_tar_round_trip(
         self,
@@ -126,7 +125,6 @@ class TestWorkflowCachePut:
         key = "workflow-cache-directory"
         source = tmp_path / "source"
         nested = source / "nested"
-        extracted = tmp_path / "extracted"
         nested.mkdir(parents=True)
         (source / "reference.1.bt2").write_bytes(b"reference")
         (nested / "reference.2.bt2").write_bytes(b"nested-reference")
@@ -141,10 +139,7 @@ class TestWorkflowCachePut:
 
         assert created is True
         assert isinstance(result, CacheHit)
-
-        await extract_tar_to_dir(result.path, extracted)
-
-        assert (extracted / "reference.1.bt2").read_bytes() == b"reference"
-        assert (extracted / "nested" / "reference.2.bt2").read_bytes() == (
+        assert (result.path / "reference.1.bt2").read_bytes() == b"reference"
+        assert (result.path / "nested" / "reference.2.bt2").read_bytes() == (
             b"nested-reference"
         )

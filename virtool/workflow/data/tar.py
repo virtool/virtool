@@ -18,23 +18,28 @@ class _CountingWriter:
         return len(data)
 
 
-def _write_dir_as_tar(directory: Path, fileobj: BinaryIO | _CountingWriter) -> None:
-    if not directory.is_dir():
-        raise NotADirectoryError(directory)
-
+def _write_path_as_tar(source: Path, fileobj: BinaryIO | _CountingWriter) -> None:
     with tarfile.open(fileobj=fileobj, mode="w|") as archive:
-        for path in sorted(directory.rglob("*")):
-            if path.is_file():
-                archive.add(
-                    path,
-                    arcname=path.relative_to(directory).as_posix(),
-                )
+        if source.is_file():
+            archive.add(source, arcname=source.name)
+            return
+
+        if source.is_dir():
+            for path in sorted(source.rglob("*")):
+                if path.is_file():
+                    archive.add(
+                        path,
+                        arcname=path.relative_to(source).as_posix(),
+                    )
+            return
+
+        raise FileNotFoundError(source)
 
 
-async def get_tar_size(directory: Path) -> int:
+async def get_tar_size(source: Path) -> int:
     writer = _CountingWriter()
 
-    await asyncio.to_thread(_write_dir_as_tar, directory, writer)
+    await asyncio.to_thread(_write_path_as_tar, source, writer)
 
     return writer.size
 
@@ -49,12 +54,12 @@ async def extract_tar_to_dir(archive_path: Path, directory: Path) -> None:
     await asyncio.to_thread(extract)
 
 
-async def stream_dir_as_tar(directory: Path) -> AsyncIterator[bytes]:
+async def stream_path_as_tar(source: Path) -> AsyncIterator[bytes]:
     read_fd, write_fd = os.pipe()
 
     def write_tar() -> None:
         with os.fdopen(write_fd, "wb", closefd=True) as pipe:
-            _write_dir_as_tar(directory, pipe)
+            _write_path_as_tar(source, pipe)
 
     producer = asyncio.create_task(asyncio.to_thread(write_tar))
 
@@ -69,3 +74,11 @@ async def stream_dir_as_tar(directory: Path) -> AsyncIterator[bytes]:
             producer.cancel()
             with suppress(asyncio.CancelledError):
                 await producer
+
+
+async def stream_dir_as_tar(directory: Path) -> AsyncIterator[bytes]:
+    if not directory.is_dir():
+        raise NotADirectoryError(directory)
+
+    async for chunk in stream_path_as_tar(directory):
+        yield chunk

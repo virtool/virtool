@@ -7,7 +7,11 @@ from pyfixtures import fixture
 from structlog import get_logger
 
 from virtool.workflow.client import WorkflowAPIClient
-from virtool.workflow.data.tar import get_tar_size, stream_dir_as_tar
+from virtool.workflow.data.tar import (
+    extract_tar_to_dir,
+    get_tar_size,
+    stream_path_as_tar,
+)
 from virtool.workflow.errors import JobsAPINotFoundError
 
 logger = get_logger("api")
@@ -33,12 +37,15 @@ class WorkflowCache:
         self._make_path()
 
         path = self._get_path(key)
+        archive_path = self._get_archive_path(key)
 
         try:
-            await self._api.get_cache(key, path)
+            await self._api.get_cache(key, archive_path)
         except JobsAPINotFoundError:
             logger.info("cache miss", key=key)
             return CacheMiss(key)
+
+        await extract_tar_to_dir(archive_path, path)
 
         logger.info("cache hit", key=key)
         return CacheHit(key, path)
@@ -51,12 +58,7 @@ class WorkflowCache:
     ) -> bool:
         self._make_path()
 
-        if source.is_dir():
-            created = await self._put_directory(key, source, params)
-        elif source.is_file():
-            created = await self._put_file(key, source, params)
-        else:
-            raise FileNotFoundError(source)
+        created = await self._put_path(key, source, params)
 
         logger.info("cache put", key=key, created=created)
         return created
@@ -64,31 +66,25 @@ class WorkflowCache:
     def _get_path(self, key: str) -> Path:
         return self._path / sha256(key.encode()).hexdigest()
 
+    def _get_archive_path(self, key: str) -> Path:
+        return self._path / f"{sha256(key.encode()).hexdigest()}.tar"
+
     def _make_path(self) -> None:
         self._path.mkdir(parents=True, exist_ok=True)
 
-    async def _put_directory(
+    async def _put_path(
         self,
         key: str,
         source: Path,
         params: dict[str, Any] | None,
     ) -> bool:
         size = await get_tar_size(source)
-        return await self._api.put_cache(key, stream_dir_as_tar(source), size, params)
-
-    async def _put_file(
-        self,
-        key: str,
-        source: Path,
-        params: dict[str, Any] | None,
-    ) -> bool:
-        with source.open("rb") as file:
-            return await self._api.put_cache(
-                key,
-                file,
-                source.stat().st_size,
-                params,
-            )
+        return await self._api.put_cache(
+            key,
+            stream_path_as_tar(source),
+            size,
+            params,
+        )
 
 
 @fixture
