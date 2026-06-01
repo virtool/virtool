@@ -195,6 +195,17 @@ Use **"delete"** for permanently destroying an entity. Use **"remove"** for
 detaching an entity from a parent or collection without destroying it (e.g.,
 removing an isolate from an OTU).
 
+### Datetimes
+
+Datetimes in Virtool are **naive UTC** — no `tzinfo` attached, always
+representing UTC. Generate them with `virtool.utils.timestamp()`
+(`arrow.utcnow().naive`), never `datetime.now()` or aware datetimes.
+
+Postgres datetime columns use plain `DateTime` / `Mapped[datetime]`, **not**
+`DateTime(timezone=True)`. Adding `timezone=True` would diverge from every
+existing model and store offset-aware values that the rest of the codebase does
+not expect.
+
 ### Lifecycle Filter Convention
 
 For list endpoints that expose a boolean lifecycle field (e.g. `archived`),

@@ -1,5 +1,16 @@
-from sqlalchemy import BigInteger, Column, DateTime, Enum, Integer, String
+from datetime import datetime
+
+from sqlalchemy import (
+    BigInteger,
+    Column,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+)
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import Mapped, mapped_column
 
 from virtool.pg.base import Base
 from virtool.pg.utils import SQLEnum
@@ -15,6 +26,38 @@ class AnalysisFormat(str, SQLEnum):
     csv = "csv"
     tsv = "tsv"
     json = "json"
+
+
+class SQLAnalysis(Base):
+    """SQL model for analysis metadata and results.
+
+    Column naming convention:
+
+    - A bare column (``sample``, ``reference``, ``index``) holds a legacy Mongo
+      string id and has no foreign key, because the referenced collection has
+      not been migrated to Postgres.
+    - An ``{entity}_id`` column is a real foreign key to an existing SQL table.
+
+    The Mongo ``space`` field is intentionally dropped.
+    """
+
+    __tablename__ = "analyses"
+
+    id: Mapped[str] = mapped_column(primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+    updated_at: Mapped[datetime] = mapped_column(DateTime)
+    workflow: Mapped[str]
+    ready: Mapped[bool]
+    results: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    sample: Mapped[str]
+    reference: Mapped[str]
+    index: Mapped[str]
+    subtractions: Mapped[list] = mapped_column(JSONB, default=list)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    job_id: Mapped[int | None] = mapped_column(ForeignKey("jobs.id"), nullable=True)
+    ml_id: Mapped[int | None] = mapped_column(
+        ForeignKey("ml_model_releases.id"), nullable=True
+    )
 
 
 class SQLAnalysisResult(Base):
