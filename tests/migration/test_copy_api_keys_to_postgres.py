@@ -1,6 +1,7 @@
 """Tests for the copy api keys to postgres migration."""
 
 import asyncio
+import json
 from collections.abc import Callable
 
 import arrow
@@ -9,24 +10,37 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from assets.revisions.rev_31su1xw351h2_copy_api_keys_to_postgres import upgrade
 from virtool.migration.ctx import MigrationContext
-from virtool.users.pg import SQLUser
 
 REVISION = "12c20b71cffc"
+
+INSERT_USER = text(
+    """
+    INSERT INTO users (
+        active, email, force_reset, handle, invalidate_sessions,
+        last_password_change, legacy_id, password, settings
+    )
+    VALUES (
+        true, '', false, :handle, false,
+        :last_password_change, :legacy_id, :password, cast(:settings as jsonb)
+    )
+    RETURNING id
+    """,
+)
 
 
 async def create_user(ctx: MigrationContext, legacy_id: str | None = None) -> int:
     async with AsyncSession(ctx.pg) as session:
-        user = SQLUser(
-            handle="key_owner",
-            legacy_id=legacy_id,
-            password=b"",
-            force_reset=False,
-            last_password_change=arrow.utcnow().naive,
-            settings={},
+        result = await session.execute(
+            INSERT_USER,
+            {
+                "handle": "key_owner",
+                "last_password_change": arrow.utcnow().naive,
+                "legacy_id": legacy_id,
+                "password": b"",
+                "settings": json.dumps({}),
+            },
         )
-        session.add(user)
-        await session.flush()
-        user_id = user.id
+        user_id = result.scalar_one()
         await session.commit()
 
     return user_id
