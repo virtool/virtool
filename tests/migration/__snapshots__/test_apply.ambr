@@ -267,5 +267,12 @@
       'name': 'create api_keys table',
       'revision': '12c20b71cffc',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 39,
+      'name': 'copy api keys to postgres',
+      'revision': '31su1xw351h2',
+    }),
   ])
 # ---

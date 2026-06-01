@@ -96,7 +96,7 @@ class Account(User):
 class APIKey(BaseModel):
     """A user's API key."""
 
-    id: str
+    id: int
     created_at: datetime
     groups: list[GroupMinimal]
     name: str
@@ -107,7 +107,7 @@ class APIKey(BaseModel):
             "example": {
                 "created_at": "2015-10-06T20:00:00Z",
                 "groups": [],
-                "id": "foobar_0",
+                "id": 42,
                 "name": "Foobar",
                 "permissions": {
                     "cancel_job": False,

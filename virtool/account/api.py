@@ -197,7 +197,7 @@ class KeysView(PydanticView):
 
 @routes.view("/account/keys/{key_id}")
 class KeyView(PydanticView):
-    async def get(self, key_id: str, /) -> r200[APIKey] | r404:
+    async def get(self, key_id: int, /) -> r200[APIKey] | r404:
         """Get an API key.
 
         Fetches the details for an API key registered on the account associated with
@@ -217,7 +217,7 @@ class KeyView(PydanticView):
         return json_response(key, status=200)
 
     async def patch(
-        self, key_id: str, /, data: UpdateKeyRequest
+        self, key_id: int, /, data: UpdateKeyRequest
     ) -> r200[APIKey] | r400 | r401 | r404:
         """Update an API key.
 
@@ -241,7 +241,7 @@ class KeyView(PydanticView):
 
         return json_response(key)
 
-    async def delete(self, key_id: str, /) -> r204 | r401 | r404:
+    async def delete(self, key_id: int, /) -> r204 | r401 | r404:
         """Delete an API key.
 
         Removes an API key by its 'key id'.
