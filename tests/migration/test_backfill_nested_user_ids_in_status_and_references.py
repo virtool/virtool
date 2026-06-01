@@ -120,6 +120,44 @@ class TestStatusHMM:
         doc = await ctx.mongo.status.find_one({"_id": "hmm"})
         assert doc["installed"]["user"]["id"] == alice
 
+    async def test_numeric_legacy_id_maps_via_user_map(
+        self,
+        ctx: MigrationContext,
+        setup_users: dict[str, int],
+    ):
+        """A numeric legacy id must resolve via the map, not raw int coercion."""
+        async with AsyncSession(ctx.pg) as session:
+            result = await session.execute(
+                text("""
+                    INSERT INTO users (
+                        handle, legacy_id, active, email, force_reset,
+                        invalidate_sessions, last_password_change, password, settings
+                    )
+                    VALUES
+                        ('carol', '123', true, '',
+                         false, false, :now, :pw, '{}'::jsonb)
+                    RETURNING id, legacy_id
+                """),
+                {"now": arrow.utcnow().naive, "pw": b"hashed"},
+            )
+            carol = result.first().id
+            await session.commit()
+
+        assert carol != 123
+
+        await ctx.mongo.status.insert_one(
+            {
+                "_id": "hmm",
+                "installed": {"id": 0, "user": {"id": "123"}},
+                "updates": [],
+            },
+        )
+
+        await upgrade(ctx)
+
+        doc = await ctx.mongo.status.find_one({"_id": "hmm"})
+        assert doc["installed"]["user"]["id"] == carol
+
     @pytest.mark.usefixtures("setup_users")
     async def test_null_installed_is_skipped(
         self,

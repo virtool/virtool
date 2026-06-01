@@ -61,14 +61,14 @@ def _coerce_user_id(value: int | str, user_map: dict[str, int]) -> int:
     if isinstance(value, int):
         return value
 
+    if value in user_map:
+        return user_map[value]
+
     if isinstance(value, str) and value.isdigit():
         return int(value)
 
-    if value not in user_map:
-        msg = f"User legacy id {value!r} not found in postgres"
-        raise ValueError(msg)
-
-    return user_map[value]
+    msg = f"User legacy id {value!r} not found in postgres"
+    raise ValueError(msg)
 
 
 def _coerce_nested_user_id(
