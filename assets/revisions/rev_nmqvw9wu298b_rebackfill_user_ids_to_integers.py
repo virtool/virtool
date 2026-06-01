@@ -91,9 +91,6 @@ def _coerce_id(value: int | str, id_map: dict[str, int], resource_name: str) -> 
     if value in id_map:
         return id_map[value]
 
-    if isinstance(value, str) and value.isdigit():
-        return int(value)
-
     msg = f"{resource_name} legacy id {value!r} not found in postgres"
     raise ValueError(msg)
 
@@ -117,7 +114,10 @@ async def _backfill_user_field(
     unchanged = 0
     skipped = 0
 
-    async for doc in collection.find({}, projection={"user": 1}):
+    async for doc in collection.find(
+        {"user.id": {"$type": "string"}},
+        projection={"user": 1},
+    ):
         user = doc.get("user")
         if not user or "id" not in user:
             skipped += 1
@@ -155,7 +155,10 @@ async def _backfill_references(
     unchanged = 0
     skipped = 0
 
-    async for doc in collection.find({}, projection={"user": 1, "users": 1}):
+    async for doc in collection.find(
+        {"$or": [{"user.id": {"$type": "string"}}, {"users.id": {"$type": "string"}}]},
+        projection={"user": 1, "users": 1},
+    ):
         update: dict = {}
 
         user = doc.get("user")
@@ -214,7 +217,10 @@ async def _backfill_users_groups(
     unchanged = 0
     skipped = 0
 
-    async for doc in collection.find({}, projection={"groups": 1}):
+    async for doc in collection.find(
+        {"groups": {"$type": "string"}},
+        projection={"groups": 1},
+    ):
         groups = doc.get("groups")
         if groups is None:
             skipped += 1
