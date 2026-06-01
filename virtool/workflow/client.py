@@ -151,7 +151,6 @@ class WorkflowAPIClient:
                 async for chunk in resp.content.iter_chunked(API_CHUNK_SIZE):
                     await f.write(chunk)
 
-    @retry
     async def put_cache(
         self,
         key: str,

@@ -33,10 +33,9 @@ class WorkflowCache:
         self._api = api
         self._path = work_path / "caches"
 
-    async def get(self, key: str) -> CacheHit | CacheMiss:
+    async def get(self, key: str, target: Path) -> CacheHit | CacheMiss:
         self._make_path()
 
-        path = self._get_path(key)
         archive_path = self._get_archive_path(key)
 
         try:
@@ -45,10 +44,11 @@ class WorkflowCache:
             logger.info("cache miss", key=key)
             return CacheMiss(key)
 
-        await extract_tar_to_dir(archive_path, path)
+        self._prepare_target(target)
+        await extract_tar_to_dir(archive_path, target)
 
         logger.info("cache hit", key=key)
-        return CacheHit(key, path)
+        return CacheHit(key, target)
 
     async def put(
         self,
@@ -58,13 +58,16 @@ class WorkflowCache:
     ) -> bool:
         self._make_path()
 
-        created = await self._put_path(key, source, params)
+        size = await get_tar_size(source)
+        created = await self._api.put_cache(
+            key,
+            stream_path_as_tar(source),
+            size,
+            params,
+        )
 
         logger.info("cache put", key=key, created=created)
         return created
-
-    def _get_path(self, key: str) -> Path:
-        return self._path / sha256(key.encode()).hexdigest()
 
     def _get_archive_path(self, key: str) -> Path:
         return self._path / f"{sha256(key.encode()).hexdigest()}.tar"
@@ -72,19 +75,16 @@ class WorkflowCache:
     def _make_path(self) -> None:
         self._path.mkdir(parents=True, exist_ok=True)
 
-    async def _put_path(
-        self,
-        key: str,
-        source: Path,
-        params: dict[str, Any] | None,
-    ) -> bool:
-        size = await get_tar_size(source)
-        return await self._api.put_cache(
-            key,
-            stream_path_as_tar(source),
-            size,
-            params,
-        )
+    @staticmethod
+    def _prepare_target(target: Path) -> None:
+        if not target.exists():
+            return
+
+        if not target.is_dir():
+            raise NotADirectoryError(target)
+
+        if any(target.iterdir()):
+            raise FileExistsError(target)
 
 
 @fixture

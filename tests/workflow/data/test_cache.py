@@ -45,10 +45,12 @@ class TestWorkflowCacheGet:
         )
 
         workflow_cache: WorkflowCache = await cache_scope.instantiate_by_key("cache")
-        result = await workflow_cache.get(key)
+        target = tmp_path / "target"
+        result = await workflow_cache.get(key, target)
 
         assert isinstance(result, CacheHit)
         assert result.key == key
+        assert result.path == target
         assert (result.path / "artifact.bin").read_bytes() == payload
         assert log.has("cache hit", key=key)
 
@@ -56,15 +58,42 @@ class TestWorkflowCacheGet:
         self,
         cache_scope: FixtureScope,
         log: StructuredLogCapture,
+        tmp_path: Path,
     ):
         key = "workflow-cache-miss"
 
         workflow_cache: WorkflowCache = await cache_scope.instantiate_by_key("cache")
-        result = await workflow_cache.get(key)
+        target = tmp_path / "target"
+        result = await workflow_cache.get(key, target)
 
         assert isinstance(result, CacheMiss)
         assert result.key == key
+        assert not target.exists()
         assert log.has("cache miss", key=key)
+
+    async def test_non_empty_target(
+        self,
+        cache_scope: FixtureScope,
+        data_layer: DataLayer,
+        tmp_path: Path,
+    ):
+        key = "workflow-cache-non-empty-target"
+        source = tmp_path / "artifact.bin"
+        source.write_bytes(b"cached payload")
+        target = tmp_path / "target"
+        target.mkdir()
+        (target / "stale.txt").write_bytes(b"stale")
+
+        await data_layer.caches.create(
+            stream_path_as_tar(source),
+            key,
+            {"workflow": "nuvs"},
+        )
+
+        workflow_cache: WorkflowCache = await cache_scope.instantiate_by_key("cache")
+
+        with pytest.raises(FileExistsError):
+            await workflow_cache.get(key, target)
 
 
 class TestWorkflowCachePut:
@@ -87,12 +116,14 @@ class TestWorkflowCachePut:
         workflow_cache: WorkflowCache = await cache_scope.instantiate_by_key("cache")
         created = await workflow_cache.put(key, source, params=params)
         hit = await data_layer.caches.get(key)
-        result = await workflow_cache.get(key)
+        target = tmp_path / "target"
+        result = await workflow_cache.get(key, target)
 
         assert created is True
         assert hit.params == params
         assert hit.size == await get_tar_size(source)
         assert isinstance(result, CacheHit)
+        assert result.path == target
         assert (result.path / "artifact.bin").read_bytes() == payload
         assert log.has("cache put", key=key, created=True)
 
@@ -110,7 +141,8 @@ class TestWorkflowCachePut:
         workflow_cache: WorkflowCache = await cache_scope.instantiate_by_key("cache")
         created = await workflow_cache.put(key, original)
         duplicate_created = await workflow_cache.put(key, replacement)
-        result = await workflow_cache.get(key)
+        target = tmp_path / "target"
+        result = await workflow_cache.get(key, target)
 
         assert created is True
         assert duplicate_created is False
@@ -135,10 +167,12 @@ class TestWorkflowCachePut:
             source,
             params={"tool": "bowtie2", "version": "2.5.4"},
         )
-        result = await workflow_cache.get(key)
+        target = tmp_path / "target"
+        result = await workflow_cache.get(key, target)
 
         assert created is True
         assert isinstance(result, CacheHit)
+        assert result.path == target
         assert (result.path / "reference.1.bt2").read_bytes() == b"reference"
         assert (result.path / "nested" / "reference.2.bt2").read_bytes() == (
             b"nested-reference"
