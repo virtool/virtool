@@ -1,5 +1,5 @@
 import pytest
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
@@ -11,7 +11,7 @@ from virtool.fake.next import DataFaker
 from virtool.groups.oas import PermissionsUpdate
 from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
-from virtool.utils import hash_key
+from virtool.users.pg import SQLUser
 
 
 async def get_sql_keys(pg: AsyncEngine) -> list[dict]:
@@ -341,34 +341,54 @@ class TestDeleteKeys:
 
 
 class TestGetKeyBySecret:
-    async def test_ok(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-        mongo: Mongo,
-    ):
+    async def test_ok(self, data_layer: DataLayer, fake: DataFaker):
         """``get_key_by_secret`` resolves a key by its raw secret value."""
         user = await fake.users.create()
 
-        raw_key = "test_secret_key"
-        hashed_key = hash_key(raw_key)
-
-        await mongo.keys.insert_one(
-            {
-                "_id": hashed_key,
-                "id": 1,
-                "name": "Test Key",
-                "created_at": "2023-01-01T00:00:00.000000Z",
-                "permissions": {"create_sample": True},
-                "user": {"id": user.id},
-                "groups": [],
-            },
+        raw_key, api_key = await data_layer.account.create_key(
+            CreateKeyRequest(
+                name="Test Key",
+                permissions=PermissionsUpdate(create_sample=True),
+            ),
+            user.id,
         )
 
         result = await data_layer.account.get_key_by_secret(user.id, raw_key)
 
-        assert result.id == 1
+        assert result.id == api_key.id
         assert result.name == "Test Key"
+
+    async def test_legacy_user_id(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """``get_key_by_secret`` resolves a key for a user that carries a
+        ``legacy_id``.
+
+        The ``api_keys`` foreign key is on the integer ``user_id``, so the
+        lookup must not depend on the user's legacy string id. This guards
+        against re-introducing the dropped Mongo/PG user-id translation path.
+        """
+        user = await fake.users.create()
+
+        async with AsyncSession(pg) as session:
+            await session.execute(
+                update(SQLUser)
+                .where(SQLUser.id == user.id)
+                .values(legacy_id="legacy_owner"),
+            )
+            await session.commit()
+
+        raw_key, api_key = await data_layer.account.create_key(
+            CreateKeyRequest(name="Test Key", permissions=PermissionsUpdate()),
+            user.id,
+        )
+
+        result = await data_layer.account.get_key_by_secret(user.id, raw_key)
+
+        assert result.id == api_key.id
 
     async def test_not_found(self, data_layer: DataLayer, fake: DataFaker):
         """``get_key_by_secret`` raises ``ResourceNotFoundError`` for an unknown key."""

@@ -666,6 +666,7 @@ class TestUpdateAPIKey:
         has_perm: bool,
         data_layer: DataLayer,
         fake: DataFaker,
+        mocker,
         mongo: Mongo,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
@@ -685,17 +686,11 @@ class TestUpdateAPIKey:
             UpdateUserRequest(administrator=has_admin, groups=[group.id]),
         )
 
-        await mongo.keys.insert_one(
-            {
-                "_id": "foobar",
-                "id": 1,
-                "name": "Foobar",
-                "created_at": static_time.datetime,
-                "administrator": True,
-                "user": {"id": client.user.id},
-                "groups": [],
-                "permissions": {p.value: False for p in Permission},
-            },
+        mocker.patch("virtool.utils.generate_key", return_value=("bar", "baz"))
+
+        _, api_key = await data_layer.account.create_key(
+            CreateKeyRequest(name="Foobar", permissions=PermissionsUpdate()),
+            client.user.id,
         )
 
         data = {
@@ -709,7 +704,7 @@ class TestUpdateAPIKey:
             data = {}
 
         resp = await client.patch(
-            "/account/keys/1",
+            f"/account/keys/{api_key.id}",
             data,
         )
 
@@ -990,68 +985,68 @@ class TestLogout:
 class TestDelete:
     """Test API key deletion functionality."""
 
-    @pytest.mark.parametrize("error", [None, "404"])
     async def test_remove_single_key(
         self,
-        error: str | None,
+        data_layer: DataLayer,
         mongo: Mongo,
         spawn_client: ClientSpawner,
-        snapshot: SnapshotAssertion,
     ) -> None:
-        """Test deleting a single API key."""
+        """Deleting a single API key removes it from both stores."""
         client = await spawn_client(authenticated=True)
 
-        if error is None:
-            await mongo.keys.insert_one(
-                {
-                    "_id": "foobar",
-                    "id": 1,
-                    "name": "Foobar",
-                    "user": {"id": client.user.id},
-                },
-            )
+        _, api_key = await data_layer.account.create_key(
+            CreateKeyRequest(name="Foobar", permissions=PermissionsUpdate()),
+            client.user.id,
+        )
+
+        resp = await client.delete(f"/account/keys/{api_key.id}")
+
+        assert resp.status == 204
+        assert await mongo.keys.count_documents({}) == 0
+
+    async def test_remove_single_key_not_found(
+        self,
+        spawn_client: ClientSpawner,
+    ) -> None:
+        """Deleting a key that does not exist returns 404."""
+        client = await spawn_client(authenticated=True)
 
         resp = await client.delete("/account/keys/1")
 
-        if error is None:
-            assert resp.status == 204
-            assert await mongo.keys.count_documents({}) == 0
-
-        else:
-            assert resp.status == 404
-            assert await resp.json() == {"id": "not_found", "message": "Not found"}
+        assert resp.status == 404
+        assert await resp.json() == {"id": "not_found", "message": "Not found"}
 
     async def test_remove_all_keys(
         self,
+        data_layer: DataLayer,
         fake: DataFaker,
         mongo: Mongo,
         spawn_client: ClientSpawner,
     ) -> None:
-        """Test deleting all API keys for a user."""
+        """Deleting all keys removes only the requesting user's keys."""
         client = await spawn_client(authenticated=True)
 
-        user = await fake.users.create()
+        other = await fake.users.create()
 
-        await mongo.keys.insert_many(
-            [
-                {
-                    "_id": "hello_world",
-                    "id": 1,
-                    "user": {"id": client.user.id},
-                },
-                {"_id": "foobar", "id": 2, "user": {"id": client.user.id}},
-                {"_id": "baz", "id": 3, "user": {"id": user.id}},
-            ],
-            session=None,
+        await data_layer.account.create_key(
+            CreateKeyRequest(name="Owned One", permissions=PermissionsUpdate()),
+            client.user.id,
+        )
+        await data_layer.account.create_key(
+            CreateKeyRequest(name="Owned Two", permissions=PermissionsUpdate()),
+            client.user.id,
+        )
+        _, other_key = await data_layer.account.create_key(
+            CreateKeyRequest(name="Other", permissions=PermissionsUpdate()),
+            other.id,
         )
 
         resp = await client.delete("/account/keys")
 
         assert resp.status == 204
 
-        assert await mongo.keys.find().to_list(None) == [
-            {"_id": "baz", "id": 3, "user": {"id": user.id}},
-        ]
+        remaining = await mongo.keys.find().to_list(None)
+        assert [document["id"] for document in remaining] == [other_key.id]
 
     async def test_cannot_delete_other_users_key(
         self,
