@@ -666,6 +666,7 @@ class TestUpdateAPIKey:
         has_perm: bool,
         data_layer: DataLayer,
         fake: DataFaker,
+        mocker,
         mongo: Mongo,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
@@ -684,6 +685,8 @@ class TestUpdateAPIKey:
             client.user.id,
             UpdateUserRequest(administrator=has_admin, groups=[group.id]),
         )
+
+        mocker.patch("virtool.utils.generate_key", return_value=("bar", "baz"))
 
         _, api_key = await data_layer.account.create_key(
             CreateKeyRequest(name="Foobar", permissions=PermissionsUpdate()),

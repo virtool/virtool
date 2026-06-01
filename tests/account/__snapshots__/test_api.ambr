@@ -221,7 +221,7 @@
 # ---
 # name: TestUpdateAPIKey.test[False-False].1
   dict({
-    '_id': '17a3cc5485915ee9f386efcc4003d20d48c4a082b5b035cb8b94391f66700306',
+    '_id': 'baz',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': list([
       1,
@@ -263,7 +263,7 @@
 # ---
 # name: TestUpdateAPIKey.test[False-True].1
   dict({
-    '_id': '8f7a70142479ca39a936d05af9033e15c86d90a9daa0858b0b777c9fa7d45820',
+    '_id': 'baz',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': list([
       1,
@@ -305,7 +305,7 @@
 # ---
 # name: TestUpdateAPIKey.test[True-False].1
   dict({
-    '_id': '50f9d62c42e3e08cdd09b3e962c7ee5c785a7bcc43d5c0e0f6d0fb319858dd7d',
+    '_id': 'baz',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': list([
       1,
@@ -347,7 +347,7 @@
 # ---
 # name: TestUpdateAPIKey.test[True-True].1
   dict({
-    '_id': '6f574a92502f7a0baf72e75a41ab84c69609f0f8d5afbecdb84c1f0bcbc69533',
+    '_id': 'baz',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': list([
       1,
@@ -389,7 +389,7 @@
 # ---
 # name: TestUpdateAPIKey.test[missing-False].1
   dict({
-    '_id': 'a5ca55ab10f765a9626bb6316d5ebd4468c97e5b32ef56c11f271d0d71626010',
+    '_id': 'baz',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': list([
       1,
@@ -429,7 +429,7 @@
 # ---
 # name: TestUpdateAPIKey.test[missing-True].1
   dict({
-    '_id': '2e056168a9728b8601f05a695869d78f819f3177fd5c0f66e499ba088cbe6317',
+    '_id': 'baz',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'groups': list([
       1,
