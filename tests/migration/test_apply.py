@@ -76,3 +76,37 @@ async def test_apply_revisions_with_missing_last_applied(
     # All real revisions should be present.
     for revision in all_revisions:
         assert any(r.revision == revision.id for r in applied)
+
+
+async def test_apply_fills_in_missed_earlier_revision(
+    migration_config: MigrationConfig,
+    migration_pg: AsyncEngine,
+):
+    """A revision missing from the table is applied even when a later revision is
+    already recorded.
+
+    Recording only the head revision simulates a history where revisions were
+    applied out of order: every earlier revision is unrecorded. The position-based
+    scan used to skip all of them because they sort before the recorded head; now
+    each unrecorded revision is filled in.
+    """
+    all_revisions = load_all_revisions()
+    head = all_revisions[-1]
+
+    async with AsyncSession(migration_pg) as session:
+        session.add(
+            SQLRevision(
+                applied_at=arrow.utcnow().naive,
+                created_at=head.created_at,
+                name=head.name,
+                revision=head.id,
+            ),
+        )
+        await session.commit()
+
+    await apply(migration_config)
+
+    applied_ids = {r.revision for r in await list_applied_revisions(migration_pg)}
+
+    for revision in all_revisions:
+        assert revision.id in applied_ids
