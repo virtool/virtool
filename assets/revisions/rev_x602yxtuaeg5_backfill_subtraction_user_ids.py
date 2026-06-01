@@ -76,24 +76,12 @@ async def _backfill_user_field(
     collection = mongo["subtraction"]
 
     migrated = 0
-    unchanged = 0
-    skipped = 0
 
     async for doc in collection.find(
         {"user.id": {"$type": "string"}},
         projection={"user": 1},
     ):
-        user = doc.get("user")
-        if not user or "id" not in user:
-            skipped += 1
-            continue
-
-        current = user["id"]
-        new = _coerce_user_id(current, user_map)
-
-        if new == current and isinstance(current, int):
-            unchanged += 1
-            continue
+        new = _coerce_user_id(doc["user"]["id"], user_map)
 
         await collection.update_one(
             {"_id": doc["_id"]},
@@ -105,6 +93,4 @@ async def _backfill_user_field(
         "backfilled user.id",
         collection="subtraction",
         migrated=migrated,
-        unchanged=unchanged,
-        skipped=skipped,
     )
