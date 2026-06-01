@@ -14,10 +14,11 @@ from virtool.users.pg import SQLUser
 REVISION = "12c20b71cffc"
 
 
-async def create_user(ctx: MigrationContext) -> int:
+async def create_user(ctx: MigrationContext, legacy_id: str | None = None) -> int:
     async with AsyncSession(ctx.pg) as session:
         user = SQLUser(
             handle="key_owner",
+            legacy_id=legacy_id,
             password=b"",
             force_reset=False,
             last_password_change=arrow.utcnow().naive,
@@ -90,6 +91,35 @@ class TestUpgrade:
 
         assert first["id"] == api_keys[0]["id"]
         assert second["id"] == api_keys[1]["id"]
+
+    async def test_resolves_legacy_string_user_and_date(
+        self,
+        ctx: MigrationContext,
+        apply_alembic: Callable,
+    ):
+        await asyncio.to_thread(apply_alembic, REVISION)
+
+        user_id = await create_user(ctx, legacy_id="bob")
+
+        await ctx.mongo.keys.insert_one(
+            {
+                "_id": "hashed_one",
+                "id": "first_key_0",
+                "name": "First Key",
+                "created_at": "2023-01-01T00:00:00Z",
+                "groups": [],
+                "permissions": {"create_sample": True},
+                "user": {"id": "bob"},
+            },
+        )
+
+        await upgrade(ctx)
+
+        api_keys = await fetch_api_keys(ctx)
+
+        assert len(api_keys) == 1
+        assert api_keys[0]["user_id"] == user_id
+        assert api_keys[0]["created_at"] == arrow.get("2023-01-01T00:00:00Z").naive
 
     async def test_no_keys_is_noop(
         self,

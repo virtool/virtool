@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from structlog import get_logger
 
 from virtool.account.sql import SQLAPIKey
+from virtool.data.topg import resolve_user_id
 from virtool.migration import MigrationContext
 
 logger = get_logger("migration")
@@ -51,8 +52,8 @@ async def upgrade(ctx: MigrationContext) -> None:
             sql_key = SQLAPIKey(
                 hashed=document["_id"],
                 name=document["name"],
-                created_at=document["created_at"],
-                user_id=document["user"]["id"],
+                created_at=arrow.get(document["created_at"]).naive,
+                user_id=await resolve_user_id(session, document["user"]["id"]),
                 permissions=document["permissions"],
             )
 
