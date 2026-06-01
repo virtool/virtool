@@ -42,7 +42,7 @@ required_alembic_revision = None
 SIMPLE_USER_COLLECTIONS = (
     "keys",
     "samples",
-    "subtractions",
+    "subtraction",
     "analyses",
     "otus",
     "history",

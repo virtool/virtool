@@ -63,7 +63,7 @@ class TestSimpleCollections:
 
     @pytest.mark.parametrize(
         "collection_name",
-        ["keys", "samples", "subtractions", "analyses", "otus", "history", "indexes"],
+        ["keys", "samples", "subtraction", "analyses", "otus", "history", "indexes"],
     )
     async def test_legacy_string_converts(
         self,

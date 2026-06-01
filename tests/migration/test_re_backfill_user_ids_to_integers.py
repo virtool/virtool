@@ -57,7 +57,7 @@ async def setup_users_and_groups(
 class TestSimpleCollections:
     @pytest.mark.parametrize(
         "collection_name",
-        ["keys", "samples", "subtractions", "analyses", "otus", "history", "indexes"],
+        ["keys", "samples", "subtraction", "analyses", "otus", "history", "indexes"],
     )
     async def test_legacy_string_converts(
         self,
@@ -81,11 +81,11 @@ class TestSimpleCollections:
         setup_users_and_groups: dict[str, int],
     ):
         pg_id = setup_users_and_groups["bob_legacy"]
-        await ctx.mongo.subtractions.insert_one({"_id": "s1", "user": {"id": pg_id}})
+        await ctx.mongo.subtraction.insert_one({"_id": "s1", "user": {"id": pg_id}})
 
         await upgrade(ctx)
 
-        doc = await ctx.mongo.subtractions.find_one({"_id": "s1"})
+        doc = await ctx.mongo.subtraction.find_one({"_id": "s1"})
         assert doc["user"]["id"] == pg_id
 
     async def test_numeric_legacy_id_maps_via_user_map(
@@ -113,13 +113,13 @@ class TestSimpleCollections:
 
         assert carol != 123
 
-        await ctx.mongo.subtractions.insert_one(
+        await ctx.mongo.subtraction.insert_one(
             {"_id": "s2", "user": {"id": "123"}},
         )
 
         await upgrade(ctx)
 
-        doc = await ctx.mongo.subtractions.find_one({"_id": "s2"})
+        doc = await ctx.mongo.subtraction.find_one({"_id": "s2"})
         assert doc["user"]["id"] == carol
 
     @pytest.mark.usefixtures("setup_users_and_groups")
@@ -127,7 +127,7 @@ class TestSimpleCollections:
         self,
         ctx: MigrationContext,
     ):
-        await ctx.mongo.subtractions.insert_one(
+        await ctx.mongo.subtraction.insert_one(
             {"_id": "orphan", "user": {"id": "ghost_user"}},
         )
 
