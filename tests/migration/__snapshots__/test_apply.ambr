@@ -274,5 +274,12 @@
       'name': 'copy api keys to postgres',
       'revision': '31su1xw351h2',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 40,
+      'name': 'backfill nested user ids in status and references',
+      'revision': '6k51od8ta28a',
+    }),
   ])
 # ---
