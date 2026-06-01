@@ -19,14 +19,11 @@ from virtool.administrators.oas import UpdateUserRequest
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.topg import both_transactions
-from virtool.data.transforms import apply_transforms
-from virtool.groups.transforms import AttachGroupsTransform
 from virtool.models.sessions import Session
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_one_field
 from virtool.users.pg import SQLUser
 from virtool.users.utils import limit_permissions
-from virtool.utils import base_processor, hash_key
+from virtool.utils import hash_key
 
 logger = get_logger(layer="data", domain="account")
 
@@ -194,21 +191,25 @@ class AccountData(DataLayerDomain):
         :param user_id: the user ID
         :return: the api keys
         """
-        keys = await apply_transforms(
-            [
-                base_processor(key)
-                async for key in self._mongo.keys.find(
-                    {"user.id": user_id},
-                    {"_id": False, "user": False},
-                )
-            ],
-            [
-                AttachGroupsTransform(self._pg),
-            ],
-            self._pg,
-        )
+        user = await self.data.users.get(user_id)
+        groups = sorted(user.groups, key=lambda group: group.name)
 
-        return [APIKey.parse_obj(key) for key in keys]
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLAPIKey).where(SQLAPIKey.user_id == user_id),
+            )
+            keys = result.scalars().all()
+
+        return [
+            APIKey(
+                id=key.id,
+                created_at=key.created_at,
+                groups=groups,
+                name=key.name,
+                permissions=key.permissions,
+            )
+            for key in keys
+        ]
 
     async def get_key(self, user_id: int, key_id: int) -> APIKey:
         """Get the complete representation of the API key identified by the `key_id`.
@@ -220,40 +221,34 @@ class AccountData(DataLayerDomain):
         :param key_id: the ID of the API key to get
         :return: the API key
         """
-        document = await self._mongo.keys.find_one(
-            {"id": key_id, "user.id": user_id},
-            {
-                "_id": False,
-                "user": False,
-            },
-        )
-
         user = await self.data.users.get(user_id)
 
-        if not document:
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLAPIKey).where(
+                    SQLAPIKey.id == key_id,
+                    SQLAPIKey.user_id == user_id,
+                ),
+            )
+            key = result.scalar_one_or_none()
+
+        if key is None:
             raise ResourceNotFoundError
 
-        document = await apply_transforms(
-            base_processor(document),
-            [
-                AttachGroupsTransform(self._pg),
-            ],
-            self._pg,
-        )
-
         if user.administrator_role:
-            document["permissions"] = document["permissions"]
+            permissions = key.permissions
         else:
-            document["permissions"] = limit_permissions(
-                document["permissions"],
+            permissions = limit_permissions(
+                key.permissions,
                 user.permissions.dict(),
             )
 
         return APIKey(
-            **{
-                **document,
-                "groups": sorted(document["groups"], key=lambda g: g["name"]),
-            },
+            id=key.id,
+            created_at=key.created_at,
+            groups=sorted(user.groups, key=lambda group: group.name),
+            name=key.name,
+            permissions=permissions,
         )
 
     async def get_key_by_secret(self, user_id: int, key: str) -> APIKey:
@@ -265,26 +260,27 @@ class AccountData(DataLayerDomain):
         :param key: the raw API key
         :return: the API key
         """
-        document = await self._mongo.keys.find_one(
-            {"_id": hash_key(key), "user.id": user_id},
-            {
-                "_id": False,
-                "user": False,
-            },
-        )
+        user = await self.data.users.get(user_id)
 
-        if not document:
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLAPIKey).where(
+                    SQLAPIKey.user_id == user_id,
+                    SQLAPIKey.hashed == hash_key(key),
+                ),
+            )
+            api_key = result.scalar_one_or_none()
+
+        if api_key is None:
             raise ResourceNotFoundError
 
-        document = await apply_transforms(
-            base_processor(document),
-            [
-                AttachGroupsTransform(self._pg),
-            ],
-            self._pg,
+        return APIKey(
+            id=api_key.id,
+            created_at=api_key.created_at,
+            groups=sorted(user.groups, key=lambda group: group.name),
+            name=api_key.name,
+            permissions=api_key.permissions,
         )
-
-        return APIKey(**document)
 
     async def create_key(
         self,
@@ -371,11 +367,14 @@ class AccountData(DataLayerDomain):
         else:
             permissions_update = data.permissions.dict(exclude_unset=True)
 
-        existing_permissions = await get_one_field(
-            self._mongo.keys,
-            "permissions",
-            {"id": key_id, "user.id": user_id},
-        )
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLAPIKey.permissions).where(
+                    SQLAPIKey.id == key_id,
+                    SQLAPIKey.user_id == user_id,
+                ),
+            )
+            existing_permissions = result.scalar_one_or_none()
 
         if existing_permissions is None:
             raise ResourceNotFoundError
