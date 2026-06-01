@@ -281,5 +281,12 @@
       'name': 'backfill nested user ids in status and references',
       'revision': '6k51od8ta28a',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 41,
+      'name': 're-backfill user ids to integers',
+      'revision': 'nmqvw9wu298b',
+    }),
   ])
 # ---
