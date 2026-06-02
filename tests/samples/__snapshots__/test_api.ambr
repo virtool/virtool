@@ -2280,6 +2280,12 @@
     'message': 'Reads file name is already uploaded for this sample',
   })
 # ---
+# name: TestUploadReads.test_empty
+  dict({
+    'id': 'bad_request',
+    'message': 'File is not compressed',
+  })
+# ---
 # name: TestUploadReads.test_uncompressed
   dict({
     'id': 'bad_request',

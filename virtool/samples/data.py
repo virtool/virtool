@@ -631,15 +631,19 @@ class SamplesData(DataLayerDomain):
     ) -> dict:
         key = sample_file_key(sample_id, filename)
 
-        async def _validate_and_stream() -> AsyncIterator[bytearray]:
-            first = True
+        first = await anext(chunker, None)
+
+        if first is None:
+            raise OSError("Empty reads file")
+
+        is_gzip_compressed(first)
+
+        async def _stream() -> AsyncIterator[bytearray]:
+            yield first
             async for chunk in chunker:
-                if first:
-                    is_gzip_compressed(chunk)
-                    first = False
                 yield chunk
 
-        size = await self._storage.write(key, _validate_and_stream())
+        size = await self._storage.write(key, _stream())
 
         try:
             return await create_reads_file(
