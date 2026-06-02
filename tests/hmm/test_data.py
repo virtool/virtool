@@ -1,8 +1,11 @@
+import gzip
+import json
+
 import pytest
 
 from virtool.data.errors import ResourceNotFoundError
 from virtool.fake.next import DataFaker
-from virtool.hmm.data import HmmsData
+from virtool.hmm.data import HMM_ANNOTATIONS_KEY, HMM_PROFILES_KEY, HmmsData
 from virtool.storage.object import ObjectProvider
 
 
@@ -71,7 +74,7 @@ class TestDownloadProfiles:
         async def _data():
             yield b"PROFILE-BYTES"
 
-        await storage.write("hmm/profiles.hmm", _data())
+        await storage.write(HMM_PROFILES_KEY, _data())
 
         hmms = HmmsData(None, None, None, storage)
 
@@ -95,7 +98,7 @@ class TestDownloadAnnotations:
         async def _data():
             yield b"STORED-ANNOTATIONS"
 
-        await storage.write("hmm/annotations.json.gz", _data())
+        await storage.write(HMM_ANNOTATIONS_KEY, _data())
 
         hmms = HmmsData(None, None, None, storage)
 
@@ -103,3 +106,30 @@ class TestDownloadAnnotations:
 
         assert size == len(b"STORED-ANNOTATIONS")
         assert await _drain(stream) == b"STORED-ANNOTATIONS"
+
+    async def test_regenerates_and_stores_when_missing(self, mongo):
+        """When no object exists, annotations are regenerated from Mongo and stored."""
+        storage = ObjectProvider.for_memory()
+
+        await mongo.hmm.insert_many(
+            [
+                {"_id": "annotation_alpha", "cluster": 1, "hidden": False},
+                {"_id": "annotation_beta", "cluster": 2, "hidden": False},
+            ],
+            session=None,
+        )
+
+        hmms = HmmsData(None, mongo, None, storage)
+
+        stream, size = await hmms.download_annotations()
+
+        assert size > 0
+
+        regenerated = await _drain(stream)
+        assert size == len(regenerated)
+
+        clusters = {a["cluster"] for a in json.loads(gzip.decompress(regenerated))}
+        assert clusters == {1, 2}
+
+        stored = await _drain(storage.read(HMM_ANNOTATIONS_KEY))
+        assert stored == regenerated

@@ -34,6 +34,12 @@ from virtool.tasks.progress import (
 from virtool.tasks.transforms import AttachTaskTransform
 from virtool.users.transforms import AttachUserTransform
 
+HMM_PROFILES_KEY = "hmm/profiles.hmm"
+"""The storage key for the HMM profiles file."""
+
+HMM_ANNOTATIONS_KEY = "hmm/annotations.json.gz"
+"""The storage key for the gzipped HMM annotations file."""
+
 
 class HmmsData(DataLayerDomain):
     name = "hmms"
@@ -170,31 +176,31 @@ class HmmsData(DataLayerDomain):
             )
 
             try:
-                await self._storage.write("hmm/profiles.hmm", profile_data)
+                await self._storage.write(HMM_PROFILES_KEY, profile_data)
             except Exception:
                 await session.abort_transaction()
                 # obstore.put_async is not atomic from the caller's
                 # perspective: a failure can leave an incomplete multipart
                 # upload on S3 or a partially written file on disk. Cleanup
                 # keeps a retry from being shadowed by orphaned data.
-                await self._storage.delete("hmm/profiles.hmm")
+                await self._storage.delete(HMM_PROFILES_KEY)
                 raise
 
     async def download_profiles(self) -> tuple[AsyncIterator[bytes], int]:
         try:
-            size = await self._storage.size("hmm/profiles.hmm")
+            size = await self._storage.size(HMM_PROFILES_KEY)
         except StorageKeyNotFoundError as err:
             raise ResourceNotFoundError("Profiles file could not be found") from err
 
-        return self._storage.read("hmm/profiles.hmm"), size
+        return self._storage.read(HMM_PROFILES_KEY), size
 
     async def download_annotations(self) -> tuple[AsyncIterator[bytes], int]:
         try:
-            size = await self._storage.size("hmm/annotations.json.gz")
+            size = await self._storage.size(HMM_ANNOTATIONS_KEY)
         except StorageKeyNotFoundError:
             pass
         else:
-            return self._storage.read("hmm/annotations.json.gz"), size
+            return self._storage.read(HMM_ANNOTATIONS_KEY), size
 
         annotations_bytes = await generate_annotations(self._mongo)
         compressed = await asyncio.to_thread(
@@ -206,9 +212,9 @@ class HmmsData(DataLayerDomain):
         async def _data():
             yield compressed
 
-        await self._storage.write("hmm/annotations.json.gz", _data())
+        await self._storage.write(HMM_ANNOTATIONS_KEY, _data())
 
-        return self._storage.read("hmm/annotations.json.gz"), len(compressed)
+        return self._storage.read(HMM_ANNOTATIONS_KEY), len(compressed)
 
     async def clean_status(self) -> None:
         async with self._mongo.create_session() as session:
