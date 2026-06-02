@@ -19,11 +19,9 @@ from virtool.history.utils import (
     calculate_diff,
     compose_history_description,
     derive_otu_information,
-    read_diff_file,
 )
 from virtool.models.enums import HistoryMethod
 from virtool.references.transforms import AttachReferenceTransform
-from virtool.storage.protocol import StorageBackend
 from virtool.types import Document
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
@@ -281,7 +279,6 @@ async def get_most_recent_change(
 
 
 async def patch_to_version(
-    storage: StorageBackend,
     mongo: "Mongo",
     otu_id: str,
     version: str | int,
@@ -290,7 +287,6 @@ async def patch_to_version(
 
     Uses the diffs in the change documents associated with the otu.
 
-    :param storage: the storage backend
     :param mongo: the database object
     :param otu_id: the id of the otu to patch
     :param version: the version to patch to
@@ -313,13 +309,6 @@ async def patch_to_version(
     ):
         if change["otu"]["version"] == "removed" or change["otu"]["version"] > version:
             reverted_history_ids.append(change["_id"])
-
-            if change["diff"] == "file":
-                change["diff"] = await read_diff_file(
-                    storage,
-                    otu_id,
-                    change["otu"]["version"],
-                )
 
             if change["method_name"] == "remove":
                 patched = change["diff"]
