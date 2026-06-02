@@ -10,6 +10,7 @@ from virtool.caches.data import CachesData
 from virtool.config import Config
 from virtool.data.http import HTTPClient
 from virtool.groups.data import GroupsData
+from virtool.health.data import HealthData
 from virtool.history.data import HistoryData
 from virtool.hmm.data import HmmsData
 from virtool.indexes.data import IndexData
@@ -38,6 +39,7 @@ class DataLayer:
     blast: BLASTData
     caches: CachesData
     groups: GroupsData
+    health: HealthData
     history: HistoryData
     hmms: HmmsData
     index: IndexData
@@ -90,6 +92,7 @@ def create_data_layer(
         BLASTData(client, mongo, pg),
         CachesData(pg, storage),
         GroupsData(pg),
+        HealthData(mongo, pg),
         HistoryData(mongo, pg),
         HmmsData(client, mongo, pg, storage),
         IndexData(mongo, config, pg, storage),
