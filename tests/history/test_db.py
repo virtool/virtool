@@ -11,7 +11,6 @@ from virtool.history.sql import SQLHistoryDiff
 from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
-from virtool.storage.memory import MemoryStorageProvider
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
@@ -183,7 +182,6 @@ async def test_patch_to_version(
     await create_mock_history(remove=remove)
 
     current, patched, reverted_change_ids = await virtool.history.db.patch_to_version(
-        MemoryStorageProvider(),
         mongo,
         "6116cba1",
         1,

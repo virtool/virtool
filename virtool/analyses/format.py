@@ -72,14 +72,12 @@ async def load_results(
 
 
 async def format_aodp(
-    storage: StorageBackend,
     mongo: "Mongo",
     document: dict[str, Any],
 ) -> dict[str, Any]:
     """Format an AODP analysis document by retrieving the detected OTUs and
     incorporating them into the returned document.
 
-    :param storage: the storage backend
     :param mongo: the application Mongo object
     :param document: the document to format
     :return: the formatted document
@@ -87,7 +85,7 @@ async def format_aodp(
     """
     hits = document["results"]["hits"]
 
-    patched_otus = await gather_patched_otus(storage, mongo, hits)
+    patched_otus = await gather_patched_otus(mongo, hits)
 
     hits_by_sequence_id = defaultdict(list)
 
@@ -138,7 +136,7 @@ async def format_pathoscope(
 
     for otu_specifier, hits in hits_by_otu.items():
         otu_id, otu_version = otu_specifier
-        coros.append(format_pathoscope_hits(storage, mongo, otu_id, otu_version, hits))
+        coros.append(format_pathoscope_hits(mongo, otu_id, otu_version, hits))
 
     return {
         **document,
@@ -147,14 +145,12 @@ async def format_pathoscope(
 
 
 async def format_pathoscope_hits(
-    storage: StorageBackend,
     mongo: "Mongo",
     otu_id: str,
     otu_version,
     hits: list[dict],
 ):
     _, patched_otu, _ = await patch_to_version(
-        storage,
         mongo,
         otu_id,
         otu_version,
@@ -385,7 +381,7 @@ async def format_analysis(
         return await format_nuvs(storage, mongo, document)
 
     if workflow == AnalysisWorkflow.aodp.value:
-        return await format_aodp(storage, mongo, document)
+        return await format_aodp(mongo, document)
 
     if "pathoscope" in workflow:
         return await format_pathoscope(storage, mongo, document)
@@ -397,14 +393,12 @@ async def format_analysis(
 
 
 async def gather_patched_otus(
-    storage: StorageBackend,
     mongo: "Mongo",
     results: list[dict],
 ) -> dict[str, dict]:
     """Gather patched OTUs for each result item. Only fetch each id-version combination
     once.
 
-    :param storage: the storage backend
     :param mongo: the database object
     :param results: the results field from a pathoscope analysis document
     :return: a dict containing patched OTUs keyed by the OTU ID
@@ -415,7 +409,7 @@ async def gather_patched_otus(
 
     patched_otus = await gather(
         *[
-            patch_to_version(storage, mongo, otu_id, version)
+            patch_to_version(mongo, otu_id, version)
             for otu_id, version in otu_specifiers
         ],
     )

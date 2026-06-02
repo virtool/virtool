@@ -1,22 +1,15 @@
 import asyncio
-from unittest.mock import AsyncMock
 
-import pytest
-from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
 
 from virtool.fake.next import DataFaker
 from virtool.history.data import HistoryData
 from virtool.mongo.core import Mongo
-from virtool.storage.memory import MemoryStorageProvider
 
 
-@pytest.mark.parametrize("file", [True, False])
 async def test_get(
-    file,
     fake: DataFaker,
-    mocker: MockerFixture,
     mongo: Mongo,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
@@ -36,7 +29,7 @@ async def test_get(
         mongo.history.insert_one(
             {
                 "_id": "baz.2",
-                "diff": "file" if file else {"foo": "bar"},
+                "diff": {"foo": "bar"},
                 "user": {"id": user.id},
                 "reference": {"id": "hxn167"},
                 "created_at": static_time.datetime,
@@ -47,11 +40,4 @@ async def test_get(
         ),
     )
 
-    mocker.patch(
-        "virtool.history.transforms.read_diff_file",
-        new=AsyncMock(return_value="loaded"),
-    )
-
-    assert (
-        await HistoryData(MemoryStorageProvider(), mongo, pg).get("baz.2") == snapshot
-    )
+    assert await HistoryData(mongo, pg).get("baz.2") == snapshot

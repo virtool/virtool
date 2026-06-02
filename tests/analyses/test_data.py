@@ -273,7 +273,7 @@ class TestCreate:
     ):
         """A failure writing the Postgres row rolls back the Mongo write too."""
         mocker.patch(
-            "virtool.analyses.data.resolve_user_id",
+            "virtool.analyses.data.insert",
             side_effect=RuntimeError("boom"),
         )
 

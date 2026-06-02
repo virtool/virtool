@@ -106,14 +106,14 @@ class TestUpgrade:
         assert first["id"] == api_keys[0]["id"]
         assert second["id"] == api_keys[1]["id"]
 
-    async def test_resolves_legacy_string_user_and_date(
+    async def test_coerces_string_created_at(
         self,
         ctx: MigrationContext,
         apply_alembic: Callable,
     ):
         await asyncio.to_thread(apply_alembic, REVISION)
 
-        user_id = await create_user(ctx, legacy_id="bob")
+        user_id = await create_user(ctx)
 
         await ctx.mongo.keys.insert_one(
             {
@@ -123,7 +123,7 @@ class TestUpgrade:
                 "created_at": "2023-01-01T00:00:00Z",
                 "groups": [],
                 "permissions": {"create_sample": True},
-                "user": {"id": "bob"},
+                "user": {"id": user_id},
             },
         )
 
