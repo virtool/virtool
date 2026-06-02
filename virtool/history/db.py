@@ -310,6 +310,15 @@ async def _resolve_diffs(pg: AsyncEngine, changes: list[Document]) -> dict[str, 
             for change_id, diff in result.all():
                 resolved[change_id] = diff
 
+        missing = [
+            change_id for change_id in postgres_change_ids if change_id not in resolved
+        ]
+
+        if missing:
+            raise ValueError(
+                f"Missing history_diffs rows for changes: {', '.join(missing)}",
+            )
+
     return resolved
 
 
