@@ -11,6 +11,7 @@ routes = Routes()
 
 
 @routes.view("/health/live")
+@routes.jobs_api.view("/health/live")
 class LivenessView(PydanticView):
     @policy(PublicRoutePolicy)
     async def get(self) -> r200[Liveness]:
@@ -27,6 +28,7 @@ class LivenessView(PydanticView):
 
 
 @routes.view("/health/ready")
+@routes.jobs_api.view("/health/ready")
 class ReadinessView(PydanticView):
     @policy(PublicRoutePolicy)
     async def get(self) -> r200[Readiness] | r503[Readiness]:

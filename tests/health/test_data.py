@@ -1,4 +1,6 @@
+from pymongo.errors import ServerSelectionTimeoutError
 from pytest_mock import MockerFixture
+from sqlalchemy.exc import OperationalError
 
 from virtool.data.layer import DataLayer
 
@@ -25,7 +27,7 @@ class TestCheckReadiness:
 
         async def fail_ping(command, *args, **kwargs):
             if command == "ping":
-                raise Exception("connection refused")
+                raise ServerSelectionTimeoutError("connection refused")
             return await real_command(command, *args, **kwargs)
 
         mocker.patch.object(motor_database, "command", side_effect=fail_ping)
@@ -44,7 +46,9 @@ class TestCheckReadiness:
         """An unreachable PostgreSQL marks only that check failed and overall not ready."""
         mocker.patch(
             "virtool.health.data.AsyncSession",
-            side_effect=Exception("connection refused"),
+            side_effect=OperationalError(
+                "SELECT 1", None, Exception("connection refused")
+            ),
         )
 
         readiness = await data_layer.health.check_readiness()

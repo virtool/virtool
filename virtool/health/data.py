@@ -1,4 +1,8 @@
+import asyncio
+
+from pymongo.errors import PyMongoError
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
@@ -7,6 +11,13 @@ from virtool.health.models import Readiness, ReadinessChecks
 from virtool.mongo.core import Mongo
 
 logger = get_logger("health")
+
+CHECK_TIMEOUT = 5
+"""The maximum time in seconds to wait for a single backend readiness check.
+
+Bounds each probe so a hung connection fails fast and deterministically instead of
+stalling the readiness response past an orchestrator's probe timeout.
+"""
 
 
 class HealthData(DataLayerDomain):
@@ -33,8 +44,9 @@ class HealthData(DataLayerDomain):
 
     async def _check_mongo(self) -> bool:
         try:
-            await self._mongo.motor_database.command("ping")
-        except Exception:
+            async with asyncio.timeout(CHECK_TIMEOUT):
+                await self._mongo.motor_database.command("ping")
+        except (PyMongoError, TimeoutError):
             logger.exception("mongodb readiness check failed")
             return False
 
@@ -42,9 +54,10 @@ class HealthData(DataLayerDomain):
 
     async def _check_postgres(self) -> bool:
         try:
-            async with AsyncSession(self._pg) as session:
-                await session.execute(text("SELECT 1"))
-        except Exception:
+            async with asyncio.timeout(CHECK_TIMEOUT):
+                async with AsyncSession(self._pg) as session:
+                    await session.execute(text("SELECT 1"))
+        except (SQLAlchemyError, TimeoutError):
             logger.exception("postgres readiness check failed")
             return False
 

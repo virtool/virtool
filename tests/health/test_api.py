@@ -1,6 +1,6 @@
 from pytest_mock import MockerFixture
 
-from tests.fixtures.client import ClientSpawner
+from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from virtool.health.models import Readiness, ReadinessChecks
 
 
@@ -40,9 +40,10 @@ class TestReadiness:
         """Readiness returns 503 with the failing dependency surfaced in ``checks``."""
         client = await spawn_client()
 
-        mocker.patch.object(
+        check_readiness = mocker.patch.object(
             client.app["data"].health,
             "check_readiness",
+            new_callable=mocker.AsyncMock,
             return_value=Readiness(
                 ready=False,
                 checks=ReadinessChecks(mongodb=False, postgres=True),
@@ -55,4 +56,28 @@ class TestReadiness:
         assert await resp.json() == {
             "ready": False,
             "checks": {"mongodb": False, "postgres": True},
+        }
+        check_readiness.assert_awaited_once()
+
+
+class TestJobsServer:
+    """The endpoints are also served, unauthenticated, by the jobs API server."""
+
+    async def test_live(self, spawn_job_client: JobClientSpawner):
+        client = await spawn_job_client()
+
+        resp = await client.get("/health/live")
+
+        assert resp.status == 200
+        assert await resp.json() == {"status": "alive"}
+
+    async def test_ready(self, spawn_job_client: JobClientSpawner):
+        client = await spawn_job_client()
+
+        resp = await client.get("/health/ready")
+
+        assert resp.status == 200
+        assert await resp.json() == {
+            "ready": True,
+            "checks": {"mongodb": True, "postgres": True},
         }
