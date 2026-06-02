@@ -85,7 +85,7 @@ def create_data_layer(
     http_client = HTTPClient(client)
 
     return DataLayer(
-        AccountData(mongo, pg),
+        AccountData(pg),
         AnalysisData(mongo, pg, storage),
         BLASTData(client, mongo, pg),
         CachesData(pg, storage),
