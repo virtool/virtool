@@ -633,8 +633,8 @@ class SamplesData(DataLayerDomain):
 
         first = await anext(chunker, None)
 
-        if first is None:
-            raise OSError("Empty reads file")
+        if not first:
+            raise EOFError("Reads file is empty")
 
         is_gzip_compressed(first)
 

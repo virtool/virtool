@@ -1451,11 +1451,15 @@ class TestUploadReads:
         self,
         example_path: Path,
         fake: DataFaker,
+        memory_storage,
         mongo: Mongo,
+        pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         spawn_job_client: JobClientSpawner,
     ):
-        """Test that uncompressed sample reads are rejected."""
+        """Test that uncompressed sample reads are rejected without writing a
+        storage object or a SQL row.
+        """
         client = await spawn_job_client(authenticated=True)
 
         await mongo.samples.insert_one(
@@ -1476,6 +1480,17 @@ class TestUploadReads:
 
         assert resp.status == 400
         assert await resp.json() == snapshot
+
+        assert [obj.key async for obj in memory_storage.list("samples/test/")] == []
+
+        async with AsyncSession(pg) as session:
+            rows = (
+                (await session.execute(select(SQLSampleReads).filter_by(sample="test")))
+                .scalars()
+                .all()
+            )
+
+        assert rows == []
 
     async def test_empty(
         self,

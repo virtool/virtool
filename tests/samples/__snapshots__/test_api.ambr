@@ -2283,7 +2283,7 @@
 # name: TestUploadReads.test_empty
   dict({
     'id': 'bad_request',
-    'message': 'File is not compressed',
+    'message': 'Reads file is empty',
   })
 # ---
 # name: TestUploadReads.test_uncompressed
