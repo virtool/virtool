@@ -525,7 +525,11 @@
     ]),
     'created_at': 'approximately_now_isoformat',
     'format': 'fastq',
-    'group': None,
+    'group': dict({
+      'id': 2,
+      'legacy_id': None,
+      'name': 'gaffers',
+    }),
     'group_read': True,
     'group_write': True,
     'hold': True,

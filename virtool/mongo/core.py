@@ -175,7 +175,6 @@ class Mongo:
         self.sequences = self.bind_collection("sequences")
         self.status = self.bind_collection("status")
         self.subtraction = self.bind_collection("subtraction")
-        self.users = self.bind_collection("users")
 
     def bind_collection(self, name: str) -> Collection:
         return Collection(self, name)
