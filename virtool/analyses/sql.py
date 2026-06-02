@@ -6,6 +6,7 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    Identity,
     Integer,
     String,
 )
@@ -43,7 +44,8 @@ class SQLAnalysis(Base):
 
     __tablename__ = "analyses"
 
-    id: Mapped[str] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    legacy_id: Mapped[str | None] = mapped_column(unique=True)
     created_at: Mapped[datetime] = mapped_column(DateTime)
     updated_at: Mapped[datetime] = mapped_column(DateTime)
     workflow: Mapped[str]
