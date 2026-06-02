@@ -28,25 +28,6 @@
     }),
   })
 # ---
-# name: TestCreateKey.test_ok[does_not_have_permission][mongo]
-  dict({
-    '_id': 'baz',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': list([
-      2,
-      1,
-    ]),
-    'id': 1,
-    'name': 'Foo',
-    'permissions': dict({
-      'create_sample': True,
-      'modify_subtraction': True,
-    }),
-    'user': dict({
-      'id': 1,
-    }),
-  })
-# ---
 # name: TestCreateKey.test_ok[does_not_have_permission][pg]
   list([
     dict({
@@ -88,25 +69,6 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    }),
-  })
-# ---
-# name: TestCreateKey.test_ok[has_permission][mongo]
-  dict({
-    '_id': 'baz',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': list([
-      2,
-      1,
-    ]),
-    'id': 1,
-    'name': 'Foo',
-    'permissions': dict({
-      'create_sample': True,
-      'modify_subtraction': True,
-    }),
-    'user': dict({
-      'id': 1,
     }),
   })
 # ---

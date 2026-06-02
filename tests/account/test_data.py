@@ -53,8 +53,9 @@ class TestCreateKey:
         snapshot: SnapshotAssertion,
         static_time,
     ):
-        """A created key is written to both MongoDB and PostgreSQL, sharing the
-        PostgreSQL integer id, with permissions limited to those the owner holds.
+        """A created key is written to PostgreSQL only, sharing its integer id with
+        the returned key, with permissions limited to those the owner holds, and is
+        never written to MongoDB.
         """
         mocker.patch("virtool.utils.generate_key", return_value=("bar", "baz"))
 
@@ -82,42 +83,12 @@ class TestCreateKey:
 
         assert api_key == snapshot(name="data")
 
-        mongo_document = await mongo.keys.find_one()
-        assert mongo_document == snapshot(name="mongo")
-
         sql_keys = await get_sql_keys(pg)
         assert sql_keys == snapshot(name="pg")
 
-        assert mongo_document["id"] == sql_keys[0]["id"] == api_key.id
-        assert mongo_document["_id"] == sql_keys[0]["hashed"]
-
-    async def test_rollback(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-        mocker,
-        mongo: Mongo,
-        pg: AsyncEngine,
-    ):
-        """When the PostgreSQL write fails, the MongoDB write is rolled back and no
-        key is left in either store.
-        """
-        mocker.patch("virtool.utils.generate_key", return_value=("bar", "baz"))
-
-        user = await fake.users.create()
-
-        mocker.patch.object(
-            AsyncSession, "commit", side_effect=RuntimeError("postgres down")
-        )
-
-        with pytest.raises(RuntimeError, match="postgres down"):
-            await data_layer.account.create_key(
-                CreateKeyRequest(name="Foo", permissions=PermissionsUpdate()),
-                user.id,
-            )
+        assert sql_keys[0]["id"] == api_key.id
 
         assert await mongo.keys.count_documents({}) == 0
-        assert await get_sql_keys(pg) == []
 
 
 class TestUpdateKey:
@@ -128,7 +99,9 @@ class TestUpdateKey:
         mongo: Mongo,
         pg: AsyncEngine,
     ):
-        """Updating permissions is reflected in both MongoDB and PostgreSQL."""
+        """Updating permissions is reflected in PostgreSQL and never written to
+        MongoDB.
+        """
         user = await fake.users.create(
             groups=[
                 await fake.groups.create(
@@ -150,13 +123,11 @@ class TestUpdateKey:
             UpdateKeyRequest(permissions=PermissionsUpdate(modify_subtraction=True)),
         )
 
-        mongo_document = await mongo.keys.find_one({"id": api_key.id})
-        assert mongo_document["permissions"]["create_sample"] is True
-        assert mongo_document["permissions"]["modify_subtraction"] is True
-
         sql_keys = await get_sql_keys(pg)
         assert sql_keys[0]["permissions"]["create_sample"] is True
         assert sql_keys[0]["permissions"]["modify_subtraction"] is True
+
+        assert await mongo.keys.count_documents({}) == 0
 
     async def test_not_found(self, data_layer: DataLayer, fake: DataFaker):
         """Updating a key that does not exist raises ``ResourceNotFoundError``."""
@@ -169,51 +140,6 @@ class TestUpdateKey:
                 UpdateKeyRequest(permissions=PermissionsUpdate(create_sample=True)),
             )
 
-    async def test_rollback(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-        mocker,
-        mongo: Mongo,
-        pg: AsyncEngine,
-    ):
-        """When the PostgreSQL write fails, the MongoDB permissions update is rolled
-        back and both stores keep the original permissions.
-        """
-        user = await fake.users.create(
-            groups=[
-                await fake.groups.create(
-                    PermissionsUpdate(create_sample=True, modify_subtraction=True),
-                ),
-            ],
-        )
-
-        _, api_key = await data_layer.account.create_key(
-            CreateKeyRequest(
-                name="Foo", permissions=PermissionsUpdate(create_sample=True)
-            ),
-            user.id,
-        )
-
-        mocker.patch.object(
-            AsyncSession, "commit", side_effect=RuntimeError("postgres down")
-        )
-
-        with pytest.raises(RuntimeError, match="postgres down"):
-            await data_layer.account.update_key(
-                user.id,
-                api_key.id,
-                UpdateKeyRequest(
-                    permissions=PermissionsUpdate(modify_subtraction=True)
-                ),
-            )
-
-        mongo_document = await mongo.keys.find_one({"id": api_key.id})
-        assert mongo_document["permissions"].get("modify_subtraction", False) is False
-
-        sql_keys = await get_sql_keys(pg)
-        assert sql_keys[0]["permissions"].get("modify_subtraction", False) is False
-
 
 class TestDeleteKey:
     async def test_ok(
@@ -223,7 +149,7 @@ class TestDeleteKey:
         mongo: Mongo,
         pg: AsyncEngine,
     ):
-        """Deleting a key removes it from both MongoDB and PostgreSQL."""
+        """Deleting a key removes it from PostgreSQL and never touches MongoDB."""
         user = await fake.users.create()
 
         _, api_key = await data_layer.account.create_key(
@@ -233,8 +159,8 @@ class TestDeleteKey:
 
         await data_layer.account.delete_key(user.id, api_key.id)
 
-        assert await mongo.keys.count_documents({}) == 0
         assert await get_sql_keys(pg) == []
+        assert await mongo.keys.count_documents({}) == 0
 
     async def test_not_found(self, data_layer: DataLayer, fake: DataFaker):
         """Deleting a key that does not exist raises ``ResourceNotFoundError``."""
@@ -242,34 +168,6 @@ class TestDeleteKey:
 
         with pytest.raises(ResourceNotFoundError):
             await data_layer.account.delete_key(user.id, 999)
-
-    async def test_rollback(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-        mocker,
-        mongo: Mongo,
-        pg: AsyncEngine,
-    ):
-        """When the PostgreSQL delete fails, the MongoDB delete is rolled back and the
-        key remains in both stores.
-        """
-        user = await fake.users.create()
-
-        _, api_key = await data_layer.account.create_key(
-            CreateKeyRequest(name="Foo", permissions=PermissionsUpdate()),
-            user.id,
-        )
-
-        mocker.patch.object(
-            AsyncSession, "commit", side_effect=RuntimeError("postgres down")
-        )
-
-        with pytest.raises(RuntimeError, match="postgres down"):
-            await data_layer.account.delete_key(user.id, api_key.id)
-
-        assert await mongo.keys.count_documents({"id": api_key.id}) == 1
-        assert len(await get_sql_keys(pg)) == 1
 
 
 class TestDeleteKeys:
@@ -280,8 +178,8 @@ class TestDeleteKeys:
         mongo: Mongo,
         pg: AsyncEngine,
     ):
-        """Deleting all of a user's keys removes only that user's keys from both
-        stores, leaving other users' keys intact.
+        """Deleting all of a user's keys removes only that user's keys from
+        PostgreSQL, leaving other users' keys intact and never touching MongoDB.
         """
         owner = await fake.users.create()
         other = await fake.users.create()
@@ -301,43 +199,11 @@ class TestDeleteKeys:
 
         await data_layer.account.delete_keys(owner.id)
 
-        assert await mongo.keys.count_documents({"user.id": owner.id}) == 0
-
         sql_keys = await get_sql_keys(pg)
         assert [key["id"] for key in sql_keys] == [other_key.id]
         assert sql_keys[0]["user_id"] == other.id
 
-    async def test_rollback(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-        mocker,
-        mongo: Mongo,
-        pg: AsyncEngine,
-    ):
-        """When the PostgreSQL delete fails, the MongoDB delete is rolled back and all
-        of the user's keys remain in both stores.
-        """
-        owner = await fake.users.create()
-
-        await data_layer.account.create_key(
-            CreateKeyRequest(name="Owned One", permissions=PermissionsUpdate()),
-            owner.id,
-        )
-        await data_layer.account.create_key(
-            CreateKeyRequest(name="Owned Two", permissions=PermissionsUpdate()),
-            owner.id,
-        )
-
-        mocker.patch.object(
-            AsyncSession, "commit", side_effect=RuntimeError("postgres down")
-        )
-
-        with pytest.raises(RuntimeError, match="postgres down"):
-            await data_layer.account.delete_keys(owner.id)
-
-        assert await mongo.keys.count_documents({"user.id": owner.id}) == 2
-        assert len(await get_sql_keys(pg)) == 2
+        assert await mongo.keys.count_documents({}) == 0
 
 
 class TestGetKeyBySecret:
