@@ -20,13 +20,17 @@ def upgrade() -> None:
     """Swap the Mongo string ``id`` primary key for an integer surrogate.
 
     The original ``id`` column (the Mongo ``_id``) is renamed to ``legacy_id`` and
-    kept as a unique VARCHAR bridge. A new ``BIGINT GENERATED ALWAYS AS IDENTITY``
-    ``id`` column becomes the primary key; existing rows are backfilled from the
-    identity sequence as the column is added.
+    kept as a unique, nullable VARCHAR bridge. Dropping ``NOT NULL`` lets analyses
+    created natively in Postgres omit a legacy Mongo id, matching the ``legacy_id``
+    convention on ``jobs``, ``users``, and ``groups``. A new
+    ``BIGINT GENERATED ALWAYS AS IDENTITY`` ``id`` column becomes the primary key;
+    existing rows are backfilled from the identity sequence as the column is added.
     """
     op.drop_constraint("analyses_pkey", "analyses", type_="primary")
 
     op.alter_column("analyses", "id", new_column_name="legacy_id")
+
+    op.alter_column("analyses", "legacy_id", nullable=True)
 
     op.create_unique_constraint("analyses_legacy_id_key", "analyses", ["legacy_id"])
 
@@ -44,11 +48,20 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Fold ``legacy_id`` back into a string ``id`` primary key.
+
+    A string ``id`` primary key cannot be null, so any analysis created natively
+    in Postgres without a ``legacy_id`` has no value to restore. Re-imposing
+    ``NOT NULL`` makes that case fail loudly rather than silently producing an
+    invalid primary key.
+    """
     op.drop_constraint("analyses_pkey", "analyses", type_="primary")
 
     op.drop_column("analyses", "id")
 
     op.drop_constraint("analyses_legacy_id_key", "analyses", type_="unique")
+
+    op.alter_column("analyses", "legacy_id", nullable=False)
 
     op.alter_column("analyses", "legacy_id", new_column_name="id")
 

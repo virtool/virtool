@@ -5,7 +5,9 @@ from pathlib import Path
 import alembic.command
 import alembic.config
 import arrow
+import pytest
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 
@@ -56,6 +58,28 @@ async def _insert_analysis(session: AsyncSession, legacy_id: str, user_id: int) 
     )
 
 
+async def _insert_post_upgrade_analysis(
+    session: AsyncSession,
+    user_id: int,
+    legacy_id: str | None,
+) -> None:
+    await session.execute(
+        text(
+            """
+            INSERT INTO analyses (
+                legacy_id, created_at, updated_at, workflow, ready, results,
+                sample, reference, "index", subtractions, user_id
+            )
+            VALUES (
+                :legacy_id, :now, :now, 'nuvs', false, NULL,
+                'sample', 'reference', 'index', '[]'::jsonb, :user_id
+            )
+            """,
+        ),
+        {"legacy_id": legacy_id, "now": arrow.utcnow().naive, "user_id": user_id},
+    )
+
+
 async def test_upgrade_preserves_rows_and_assigns_integer_ids(
     apply_alembic: Callable,
     migration_pg: AsyncEngine,
@@ -102,6 +126,10 @@ async def test_upgrade_then_insert_autoincrements_id(
     await asyncio.to_thread(apply_alembic, "1e6490edc217")
 
     async with AsyncSession(migration_pg) as session:
+        existing_max_id = (
+            await session.execute(text("SELECT max(id) FROM analyses"))
+        ).scalar_one()
+
         new_id = (
             await session.execute(
                 text(
@@ -123,6 +151,7 @@ async def test_upgrade_then_insert_autoincrements_id(
         await session.commit()
 
     assert isinstance(new_id, int)
+    assert new_id > existing_max_id
 
 
 async def test_downgrade_restores_string_id(
@@ -144,3 +173,43 @@ async def test_downgrade_restores_string_id(
         ids = (await session.execute(text("SELECT id FROM analyses"))).scalars().all()
 
     assert ids == ["analysis_alpha"]
+
+
+async def test_upgrade_enforces_legacy_id_uniqueness(
+    apply_alembic: Callable,
+    migration_pg: AsyncEngine,
+):
+    """The unique constraint added in the upgrade rejects duplicate ``legacy_id``."""
+    await asyncio.to_thread(apply_alembic, "1e6490edc217")
+
+    async with AsyncSession(migration_pg) as session:
+        user_id = await _insert_user(session)
+        await _insert_post_upgrade_analysis(session, user_id, "analysis_alpha")
+        await session.commit()
+
+    async with AsyncSession(migration_pg) as session:
+        with pytest.raises(IntegrityError):
+            await _insert_post_upgrade_analysis(session, user_id, "analysis_alpha")
+            await session.commit()
+
+
+async def test_upgrade_allows_null_legacy_id(
+    apply_alembic: Callable,
+    migration_pg: AsyncEngine,
+):
+    """Dropping ``NOT NULL`` lets a natively-created analysis omit ``legacy_id``."""
+    await asyncio.to_thread(apply_alembic, "1e6490edc217")
+
+    async with AsyncSession(migration_pg) as session:
+        user_id = await _insert_user(session)
+        await _insert_post_upgrade_analysis(session, user_id, None)
+        await session.commit()
+
+    async with AsyncSession(migration_pg) as session:
+        legacy_ids = (
+            (await session.execute(text("SELECT legacy_id FROM analyses")))
+            .scalars()
+            .all()
+        )
+
+    assert legacy_ids == [None]
