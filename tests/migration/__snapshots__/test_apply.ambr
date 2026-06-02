@@ -316,5 +316,12 @@
       'name': 'drop dead migrations settings and keys mongo collections',
       'revision': 'mhemgwig928w',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 46,
+      'name': 'drop users mongo collection',
+      'revision': 'vm9nfmtwgrv9',
+    }),
   ])
 # ---
