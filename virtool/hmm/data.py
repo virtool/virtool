@@ -25,6 +25,7 @@ from virtool.hmm.models import HMM, HMMInstalled, HMMSearchResult, HMMStatus
 from virtool.hmm.tasks import HMMInstallTask
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
+from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
 from virtool.tasks.progress import (
     AbstractProgressHandler,
@@ -32,6 +33,12 @@ from virtool.tasks.progress import (
 )
 from virtool.tasks.transforms import AttachTaskTransform
 from virtool.users.transforms import AttachUserTransform
+
+HMM_PROFILES_KEY = "hmm/profiles.hmm"
+"""The storage key for the HMM profiles file."""
+
+HMM_ANNOTATIONS_KEY = "hmm/annotations.json.gz"
+"""The storage key for the gzipped HMM annotations file."""
 
 
 class HmmsData(DataLayerDomain):
@@ -169,30 +176,31 @@ class HmmsData(DataLayerDomain):
             )
 
             try:
-                await self._storage.write("hmm/profiles.hmm", profile_data)
+                await self._storage.write(HMM_PROFILES_KEY, profile_data)
             except Exception:
                 await session.abort_transaction()
                 # obstore.put_async is not atomic from the caller's
                 # perspective: a failure can leave an incomplete multipart
                 # upload on S3 or a partially written file on disk. Cleanup
                 # keeps a retry from being shadowed by orphaned data.
-                await self._storage.delete("hmm/profiles.hmm")
+                await self._storage.delete(HMM_PROFILES_KEY)
                 raise
 
     async def download_profiles(self) -> tuple[AsyncIterator[bytes], int]:
-        info = None
-        async for item in self._storage.list("hmm/profiles.hmm"):
-            info = item
-            break
+        try:
+            size = await self._storage.size(HMM_PROFILES_KEY)
+        except StorageKeyNotFoundError as err:
+            raise ResourceNotFoundError("Profiles file could not be found") from err
 
-        if info is None:
-            raise ResourceNotFoundError("Profiles file could not be found")
-
-        return self._storage.read("hmm/profiles.hmm"), info.size
+        return self._storage.read(HMM_PROFILES_KEY), size
 
     async def download_annotations(self) -> tuple[AsyncIterator[bytes], int]:
-        async for info in self._storage.list("hmm/annotations.json.gz"):
-            return self._storage.read("hmm/annotations.json.gz"), info.size
+        try:
+            size = await self._storage.size(HMM_ANNOTATIONS_KEY)
+        except StorageKeyNotFoundError:
+            pass
+        else:
+            return self._storage.read(HMM_ANNOTATIONS_KEY), size
 
         annotations_bytes = await generate_annotations(self._mongo)
         compressed = await asyncio.to_thread(
@@ -204,9 +212,9 @@ class HmmsData(DataLayerDomain):
         async def _data():
             yield compressed
 
-        await self._storage.write("hmm/annotations.json.gz", _data())
+        await self._storage.write(HMM_ANNOTATIONS_KEY, _data())
 
-        return self._storage.read("hmm/annotations.json.gz"), len(compressed)
+        return self._storage.read(HMM_ANNOTATIONS_KEY), len(compressed)
 
     async def clean_status(self) -> None:
         async with self._mongo.create_session() as session:
