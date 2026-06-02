@@ -27,6 +27,34 @@ class TestWritePathAsTar:
 
 
 class TestExtractTarToDir:
+    async def test_absolute_path_raises(self, tmp_path: Path):
+        archive_path = tmp_path / "cache.tar"
+        target = tmp_path / "target"
+
+        with tarfile.open(archive_path, mode="w") as archive:
+            member = tarfile.TarInfo("/artifact.bin")
+            member.size = 0
+            archive.addfile(member)
+
+        with pytest.raises(ValueError, match="absolute path"):
+            await extract_tar_to_dir(archive_path, target)
+
+        assert not target.exists()
+
+    async def test_path_traversal_raises(self, tmp_path: Path):
+        archive_path = tmp_path / "cache.tar"
+        target = tmp_path / "target"
+
+        with tarfile.open(archive_path, mode="w") as archive:
+            member = tarfile.TarInfo("../escape.txt")
+            member.size = 0
+            archive.addfile(member)
+
+        with pytest.raises(ValueError, match="unsafe path"):
+            await extract_tar_to_dir(archive_path, target)
+
+        assert not (tmp_path / "escape.txt").exists()
+
     async def test_multiple_top_level_entries_raises(self, tmp_path: Path):
         archive_path = tmp_path / "cache.tar"
         target = tmp_path / "target"

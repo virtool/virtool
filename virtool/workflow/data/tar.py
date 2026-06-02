@@ -12,15 +12,12 @@ def _add_path_to_archive(source: Path, archive: tarfile.TarFile) -> None:
 
 
 def _check_member(member: tarfile.TarInfo) -> tuple[str, ...]:
-    if not member.isdir() and not member.isfile():
-        raise ValueError(f"Unsupported tar member type: {member.name}")
-
     if member.name.startswith("/"):
         raise ValueError(f"Tar member uses an absolute path: {member.name}")
 
     parts = tuple(member.name.split("/"))
 
-    if not parts or any(part in {"", ".", ".."} for part in parts):
+    if ".." in parts:
         raise ValueError(f"Tar member uses an unsafe path: {member.name}")
 
     return parts

@@ -1,5 +1,6 @@
 import asyncio
 from collections.abc import AsyncIterator
+from hashlib import sha256
 from pathlib import Path
 
 import pytest
@@ -60,6 +61,33 @@ class TestWorkflowCacheGet:
         assert result.path == target / "artifact.bin"
         assert result.path.read_bytes() == payload
         assert log.has("cache hit", key=key)
+
+    async def test_hit_uses_downloaded_archive(
+        self,
+        mocker,
+        tmp_path: Path,
+        work_path: Path,
+    ):
+        key = "workflow-cache-downloaded-archive"
+        source = tmp_path / "artifact.bin"
+        payload = b"cached payload"
+        source.write_bytes(payload)
+
+        cache_path = work_path / "caches"
+        cache_path.mkdir()
+        archive_path = cache_path / f"{sha256(key.encode()).hexdigest()}.tar"
+        await write_path_as_tar(source, archive_path)
+
+        api = mocker.Mock()
+        api.get_cache = mocker.AsyncMock()
+        workflow_cache = WorkflowCache(api, work_path)
+        target = tmp_path / "target"
+        result = await workflow_cache.get(key, target)
+
+        assert isinstance(result, CacheHit)
+        assert result.path == target / "artifact.bin"
+        assert result.path.read_bytes() == payload
+        api.get_cache.assert_not_awaited()
 
     async def test_miss(
         self,

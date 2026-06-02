@@ -38,11 +38,12 @@ class WorkflowCache:
 
         archive_path = self._get_archive_path(key)
 
-        try:
-            await self._api.get_cache(key, archive_path)
-        except JobsAPINotFoundError:
-            logger.info("cache miss", key=key)
-            return CacheMiss(key)
+        if not archive_path.exists():
+            try:
+                await self._api.get_cache(key, archive_path)
+            except JobsAPINotFoundError:
+                logger.info("cache miss", key=key)
+                return CacheMiss(key)
 
         self._check_target_dir(target)
         restored_path = await extract_tar_to_dir(archive_path, target)
