@@ -2,10 +2,11 @@ from typing import TYPE_CHECKING
 from zipfile import BadZipFile
 
 from aiohttp import ClientSession
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
+from virtool.analyses.sql import SQLAnalysis
 from virtool.analyses.utils import find_nuvs_sequence_by_index
 from virtool.blast.db import delete_nuvs_blast, get_nuvs_blast
 from virtool.blast.models import NuvsBlast
@@ -20,6 +21,7 @@ from virtool.blast.utils import (
 )
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceNotFoundError
+from virtool.data.topg import both_transactions
 from virtool.types import Document
 
 if TYPE_CHECKING:
@@ -54,9 +56,12 @@ class BLASTData(DataLayerDomain):
         """
         created_at = virtool.utils.timestamp()
 
-        async with AsyncSession(self._pg) as session:
-            await delete_nuvs_blast(session, analysis_id, sequence_index)
-            await session.flush()
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            await delete_nuvs_blast(pg_session, analysis_id, sequence_index)
+            await pg_session.flush()
 
             blast_row = SQLNuVsBlast(
                 analysis_id=analysis_id,
@@ -67,8 +72,20 @@ class BLASTData(DataLayerDomain):
                 updated_at=created_at,
             )
 
-            session.add(blast_row)
-            await session.flush()
+            pg_session.add(blast_row)
+            await pg_session.flush()
+
+            await pg_session.execute(
+                update(SQLAnalysis)
+                .where(SQLAnalysis.id == analysis_id)
+                .values(updated_at=created_at),
+            )
+
+            await self._mongo.analyses.update_one(
+                {"_id": analysis_id},
+                {"$set": {"updated_at": created_at}},
+                session=mongo_session,
+            )
 
             await self.data.tasks.create(
                 BLASTTask,
@@ -76,13 +93,6 @@ class BLASTData(DataLayerDomain):
             )
 
             blast = NuvsBlast(**blast_row.to_dict())
-
-            # Don't commit until the task has been created.
-            await session.commit()
-
-        await self._mongo.analyses.update_one(
-            {"_id": analysis_id}, {"$set": {"updated_at": created_at}}
-        )
 
         return blast
 
@@ -170,8 +180,11 @@ class BLASTData(DataLayerDomain):
             except BadZipFile:
                 error = "Unable to interpret NCBI result"
 
-        async with AsyncSession(self._pg) as session:
-            blast_row = await get_nuvs_blast(session, analysis_id, sequence_index)
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            blast_row = await get_nuvs_blast(pg_session, analysis_id, sequence_index)
 
             blast_row.last_checked_at = updated_at
             blast_row.updated_at = updated_at
@@ -183,12 +196,17 @@ class BLASTData(DataLayerDomain):
                     blast_row.result = result
                     blast_row.ready = True
 
-            await session.commit()
+            await pg_session.execute(
+                update(SQLAnalysis)
+                .where(SQLAnalysis.id == analysis_id)
+                .values(updated_at=updated_at),
+            )
 
-        await self._mongo.analyses.update_one(
-            {"_id": analysis_id},
-            {"$set": {"updated_at": updated_at}},
-        )
+            await self._mongo.analyses.update_one(
+                {"_id": analysis_id},
+                {"$set": {"updated_at": updated_at}},
+                session=mongo_session,
+            )
 
         return await self.get_nuvs_blast(analysis_id, sequence_index)
 
@@ -199,15 +217,27 @@ class BLASTData(DataLayerDomain):
         :param sequence_index: the index of the BLASTed NuVs sequence
         :return: the number of deleted records
         """
-        async with AsyncSession(self._pg) as session:
-            deleted_count = await delete_nuvs_blast(
-                session, analysis_id, sequence_index
-            )
-            await session.commit()
+        updated_at = virtool.utils.timestamp()
 
-        await self._mongo.analyses.update_one(
-            {"_id": analysis_id}, {"$set": {"updated_at": virtool.utils.timestamp()}}
-        )
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            deleted_count = await delete_nuvs_blast(
+                pg_session, analysis_id, sequence_index
+            )
+
+            await pg_session.execute(
+                update(SQLAnalysis)
+                .where(SQLAnalysis.id == analysis_id)
+                .values(updated_at=updated_at),
+            )
+
+            await self._mongo.analyses.update_one(
+                {"_id": analysis_id},
+                {"$set": {"updated_at": updated_at}},
+                session=mongo_session,
+            )
 
         return deleted_count
 

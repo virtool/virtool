@@ -4,7 +4,7 @@ from collections.abc import AsyncIterator
 from datetime import datetime
 
 import sentry_sdk
-from sqlalchemy import delete, insert, select
+from sqlalchemy import delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
@@ -19,7 +19,7 @@ from virtool.analyses.checks import (
 from virtool.analyses.db import filter_analyses_by_sample_rights
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import Analysis, AnalysisFile, AnalysisSearchResult
-from virtool.analyses.sql import SQLAnalysisFile, SQLAnalysisResult
+from virtool.analyses.sql import SQLAnalysis, SQLAnalysisFile, SQLAnalysisResult
 from virtool.analyses.utils import (
     analysis_file_key,
     attach_analysis_files,
@@ -33,7 +33,7 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.events import Operation, emit, emits
-from virtool.data.topg import both_transactions
+from virtool.data.topg import both_transactions, resolve_user_id
 from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
 from virtool.jobs.transforms import AttachJobTransform
@@ -267,29 +267,54 @@ class AnalysisData(DataLayerDomain):
             space_id,
         )
 
-        await self._mongo.analyses.insert_one(
-            {
-                "_id": analysis_id,
-                "created_at": created_at,
-                "files": [],
-                "index": {"id": index_id, "version": index_version},
-                "job": {"id": job.id},
-                "ml": data.ml,
-                "reference": {
-                    "id": data.ref_id,
+        subtractions = data.subtractions if data.subtractions is not None else []
+
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            await self._mongo.analyses.insert_one(
+                {
+                    "_id": analysis_id,
+                    "created_at": created_at,
+                    "files": [],
+                    "index": {"id": index_id, "version": index_version},
+                    "job": {"id": job.id},
+                    "ml": data.ml,
+                    "reference": {
+                        "id": data.ref_id,
+                    },
+                    "ready": False,
+                    "results": None,
+                    "sample": {"id": sample_id},
+                    "space": {"id": space_id},
+                    "subtractions": subtractions,
+                    "updated_at": created_at,
+                    "user": {
+                        "id": user_id,
+                    },
+                    "workflow": data.workflow.value,
                 },
-                "ready": False,
-                "results": None,
-                "sample": {"id": sample_id},
-                "space": {"id": space_id},
-                "subtractions": data.subtractions,
-                "updated_at": created_at,
-                "user": {
-                    "id": user_id,
-                },
-                "workflow": data.workflow.value,
-            },
-        )
+                session=mongo_session,
+            )
+
+            await pg_session.execute(
+                insert(SQLAnalysis).values(
+                    id=analysis_id,
+                    created_at=created_at,
+                    updated_at=created_at,
+                    workflow=data.workflow.value,
+                    ready=False,
+                    results=None,
+                    sample=sample_id,
+                    reference=data.ref_id,
+                    index=index_id,
+                    subtractions=subtractions,
+                    user_id=await resolve_user_id(pg_session, user_id),
+                    job_id=job.id,
+                    ml_id=data.ml,
+                ),
+            )
 
         return await self.get(analysis_id, None)
 
@@ -357,6 +382,9 @@ class AnalysisData(DataLayerDomain):
                     delete(SQLAnalysisResult).where(
                         SQLAnalysisResult.analysis_id == analysis_id,
                     ),
+                ),
+                pg_session.execute(
+                    delete(SQLAnalysis).where(SQLAnalysis.id == analysis_id),
                 ),
             )
 
@@ -523,20 +551,16 @@ class AnalysisData(DataLayerDomain):
             check_analysis_nuvs_sequence(document, sequence_index),
         )
 
-        async with AsyncSession(self._pg) as session:
-            await session.execute(
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            await pg_session.execute(
                 delete(SQLNuVsBlast)
                 .where(SQLNuVsBlast.analysis_id == analysis_id)
                 .where(SQLNuVsBlast.sequence_index == sequence_index),
             )
-            await session.commit()
-
-            await self._mongo.analyses.update_one(
-                {"_id": analysis_id},
-                {"$set": {"updated_at": virtool.utils.timestamp()}},
-            )
-
-            await session.flush()
+            await pg_session.flush()
 
             blast = SQLNuVsBlast(
                 analysis_id=analysis_id,
@@ -547,8 +571,20 @@ class AnalysisData(DataLayerDomain):
                 updated_at=timestamp,
             )
 
-            session.add(blast)
-            await session.flush()
+            pg_session.add(blast)
+            await pg_session.flush()
+
+            await pg_session.execute(
+                update(SQLAnalysis)
+                .where(SQLAnalysis.id == analysis_id)
+                .values(updated_at=timestamp),
+            )
+
+            await self._mongo.analyses.update_one(
+                {"_id": analysis_id},
+                {"$set": {"updated_at": timestamp}},
+                session=mongo_session,
+            )
 
             await self.data.tasks.create(
                 BLASTTask,
@@ -556,7 +592,6 @@ class AnalysisData(DataLayerDomain):
             )
 
             blast_data = blast.to_dict()
-            await session.commit()
 
         return blast_data
 
@@ -587,6 +622,12 @@ class AnalysisData(DataLayerDomain):
                     analysis_id=analysis_id,
                     results=results,
                 ),
+            )
+
+            await pg_session.execute(
+                update(SQLAnalysis)
+                .where(SQLAnalysis.id == analysis_id)
+                .values(ready=True, results=results, updated_at=updated_at),
             )
 
             document = await self._mongo.analyses.find_one_and_update(

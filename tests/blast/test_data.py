@@ -6,12 +6,17 @@ from aiohttp import ClientSession
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from virtool.analyses.sql import SQLAnalysis
 from virtool.blast.data import BLASTData
 from virtool.blast.sql import SQLNuVsBlast
 from virtool.blast.task import BLASTTask
 from virtool.data.layer import DataLayer
+from virtool.pg.utils import get_row_by_id
 from virtool.tasks.data import TasksData
 from virtool.tasks.sql import SQLTask
+from virtool.users.pg import SQLUser
+
+OLD_TIME = arrow.get("2015-01-01T00:00:00").naive
 
 
 @pytest.fixture
@@ -30,7 +35,33 @@ async def blast_data(mocker, mongo, pg: AsyncEngine, static_time):
     async with AsyncSession(pg) as session:
         task = SQLTask(created_at=static_time.datetime, type="blast")
         session.add(task)
+
+        session.add(
+            SQLUser(
+                id=1,
+                handle="leeashley",
+                last_password_change=static_time.datetime,
+                password=b"hashed",
+                settings={},
+            ),
+        )
         await session.flush()
+
+        session.add(
+            SQLAnalysis(
+                id="analysis",
+                created_at=OLD_TIME,
+                updated_at=OLD_TIME,
+                workflow="nuvs",
+                ready=False,
+                results=None,
+                sample="sample",
+                reference="reference",
+                index="index",
+                subtractions=[],
+                user_id=1,
+            ),
+        )
 
         session.add_all(
             [
@@ -169,3 +200,47 @@ async def test_delete_nuvs_blast(blast_data: BLASTData, pg: AsyncEngine):
 
 async def test_list_by_analysis(blast_data: BLASTData, pg: AsyncEngine, snapshot):
     assert await blast_data.list_by_analysis("analysis_2") == snapshot
+
+
+class TestAnalysisUpdatedAtBump:
+    """The ``analyses`` Postgres row ``updated_at`` is bumped on every BLAST mutation."""
+
+    async def test_create(
+        self,
+        blast_data: BLASTData,
+        pg: AsyncEngine,
+        static_time,
+    ):
+        await blast_data.create_nuvs_blast("analysis", 12)
+
+        row = await get_row_by_id(pg, SQLAnalysis, "analysis")
+        assert row.updated_at == static_time.datetime
+        assert row.updated_at != OLD_TIME
+
+    async def test_check(
+        self,
+        blast_data: BLASTData,
+        pg: AsyncEngine,
+        static_time,
+        mocker,
+    ):
+        mocker.patch("virtool.blast.data.check_rid", return_value=False)
+
+        await blast_data.create_nuvs_blast("analysis", 12)
+        await blast_data.check_nuvs_blast("analysis", 12)
+
+        row = await get_row_by_id(pg, SQLAnalysis, "analysis")
+        assert row.updated_at == static_time.datetime
+        assert row.updated_at != OLD_TIME
+
+    async def test_delete(
+        self,
+        blast_data: BLASTData,
+        pg: AsyncEngine,
+        static_time,
+    ):
+        await blast_data.delete_nuvs_blast("analysis", 21)
+
+        row = await get_row_by_id(pg, SQLAnalysis, "analysis")
+        assert row.updated_at == static_time.datetime
+        assert row.updated_at != OLD_TIME
