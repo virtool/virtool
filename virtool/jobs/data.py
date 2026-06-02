@@ -9,7 +9,6 @@ from structlog import get_logger
 import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
-from virtool.data.topg import resolve_user_id
 from virtool.data.transforms import apply_transforms
 from virtool.jobs.models import (
     CreateJobClaimRequest,
@@ -195,13 +194,11 @@ class JobsData:
         :param space_id: the space that the job belongs to
         """
         async with AsyncSession(self._pg) as session:
-            pg_user_id = await resolve_user_id(session, user_id)
-
             sql_job = SQLJob(
                 acquired=False,
                 created_at=virtool.utils.timestamp(),
                 state="pending",
-                user_id=pg_user_id,
+                user_id=user_id,
                 workflow=workflow,
             )
             session.add(sql_job)

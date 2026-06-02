@@ -5,11 +5,10 @@ from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, TypeVar
 
 from pymongo.errors import OperationFailure
-from sqlalchemy import ColumnExpressionArgument, or_, select
+from sqlalchemy import ColumnExpressionArgument, or_
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.pg.base import HasLegacyAndModernIDs
-from virtool.users.pg import SQLUser
 
 if TYPE_CHECKING:
     from motor.motor_asyncio import AsyncIOMotorClientSession as ClientSession
@@ -134,26 +133,3 @@ def compose_legacy_id_single_expression(
         return model.id == int(id_)
 
     return model.legacy_id == id_
-
-
-async def resolve_user_id(session: AsyncSession, user_id: int | str) -> int:
-    """Resolve a user ID to its Postgres integer ID.
-
-    Use this within an existing session (e.g., inside both_transactions).
-
-    :param session: an async SQLAlchemy session
-    :param user_id: a user ID (modern int or legacy string)
-    :return: the Postgres integer user ID
-    :raises NoResultFound: if no user is found
-    """
-    if isinstance(user_id, int):
-        return user_id
-
-    if isinstance(user_id, str) and user_id.isdigit():
-        return int(user_id)
-
-    result = await session.execute(
-        select(SQLUser.id).where(SQLUser.legacy_id == user_id),
-    )
-
-    return result.scalar_one()
