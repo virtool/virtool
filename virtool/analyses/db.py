@@ -35,7 +35,7 @@ async def bump_analysis_updated_at(
     """
     await pg_session.execute(
         update(SQLAnalysis)
-        .where(SQLAnalysis.id == analysis_id)
+        .where(SQLAnalysis.legacy_id == analysis_id)
         .values(updated_at=updated_at),
     )
 

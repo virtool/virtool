@@ -16,7 +16,7 @@ from virtool.fake.next import DataFaker
 from virtool.models.enums import AnalysisWorkflow, LibraryType, Permission
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
-from virtool.pg.utils import get_row_by_id
+from virtool.pg.utils import get_row, get_row_by_id
 from virtool.samples.models import WorkflowState
 from virtool.samples.oas import CreateAnalysisRequest, CreateSampleRequest
 from virtool.samples.sql import SQLSampleReads
@@ -593,12 +593,12 @@ class TestDelete:
 
         await data_layer.analyses.finalize(analysis.id, {"hits": []})
 
-        assert await get_row_by_id(pg, SQLAnalysis, analysis.id) is not None
+        assert await get_row(pg, SQLAnalysis, ("legacy_id", analysis.id)) is not None
 
         await data_layer.samples.delete("test_sample")
 
         assert await mongo.analyses.find_one({"_id": analysis.id}) is None
-        assert await get_row_by_id(pg, SQLAnalysis, analysis.id) is None
+        assert await get_row(pg, SQLAnalysis, ("legacy_id", analysis.id)) is None
 
         async with AsyncSession(pg) as session:
             result = await session.execute(

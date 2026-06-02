@@ -304,7 +304,7 @@ class AnalysisData(DataLayerDomain):
 
             await pg_session.execute(
                 insert(SQLAnalysis).values(
-                    id=analysis_id,
+                    legacy_id=analysis_id,
                     created_at=created_at,
                     updated_at=created_at,
                     workflow=data.workflow.value,
@@ -389,7 +389,7 @@ class AnalysisData(DataLayerDomain):
             )
 
             await pg_session.execute(
-                delete(SQLAnalysis).where(SQLAnalysis.id == analysis_id),
+                delete(SQLAnalysis).where(SQLAnalysis.legacy_id == analysis_id),
             )
 
         for key, exc in await delete_prefix(
@@ -628,7 +628,7 @@ class AnalysisData(DataLayerDomain):
 
             await pg_session.execute(
                 update(SQLAnalysis)
-                .where(SQLAnalysis.id == analysis_id)
+                .where(SQLAnalysis.legacy_id == analysis_id)
                 .values(ready=True, results=results, updated_at=updated_at),
             )
 

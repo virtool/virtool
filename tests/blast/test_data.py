@@ -11,7 +11,7 @@ from virtool.blast.data import BLASTData
 from virtool.blast.sql import SQLNuVsBlast
 from virtool.blast.task import BLASTTask
 from virtool.data.layer import DataLayer
-from virtool.pg.utils import get_row_by_id
+from virtool.pg.utils import get_row
 from virtool.tasks.data import TasksData
 from virtool.tasks.sql import SQLTask
 from virtool.users.pg import SQLUser
@@ -49,7 +49,7 @@ async def blast_data(mocker, mongo, pg: AsyncEngine, static_time):
 
         session.add(
             SQLAnalysis(
-                id="analysis",
+                legacy_id="analysis",
                 created_at=OLD_TIME,
                 updated_at=OLD_TIME,
                 workflow="nuvs",
@@ -216,7 +216,7 @@ class TestAnalysisUpdatedAtBump:
     ):
         await blast_data.create_nuvs_blast("analysis", 12)
 
-        row = await get_row_by_id(pg, SQLAnalysis, "analysis")
+        row = await get_row(pg, SQLAnalysis, ("legacy_id", "analysis"))
         assert row.updated_at == static_time.datetime
         assert row.updated_at != OLD_TIME
 
@@ -240,7 +240,7 @@ class TestAnalysisUpdatedAtBump:
         async with AsyncSession(pg) as session:
             await session.execute(
                 update(SQLAnalysis)
-                .where(SQLAnalysis.id == "analysis")
+                .where(SQLAnalysis.legacy_id == "analysis")
                 .values(updated_at=OLD_TIME),
             )
             await session.commit()
@@ -251,7 +251,7 @@ class TestAnalysisUpdatedAtBump:
 
         await blast_data.check_nuvs_blast("analysis", 12)
 
-        row = await get_row_by_id(pg, SQLAnalysis, "analysis")
+        row = await get_row(pg, SQLAnalysis, ("legacy_id", "analysis"))
         assert row.updated_at == static_time.datetime
         assert row.updated_at != OLD_TIME
 
@@ -267,7 +267,7 @@ class TestAnalysisUpdatedAtBump:
     ):
         await blast_data.delete_nuvs_blast("analysis", 21)
 
-        row = await get_row_by_id(pg, SQLAnalysis, "analysis")
+        row = await get_row(pg, SQLAnalysis, ("legacy_id", "analysis"))
         assert row.updated_at == static_time.datetime
         assert row.updated_at != OLD_TIME
 
