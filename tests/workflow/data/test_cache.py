@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import AsyncIterator
 from pathlib import Path
 
@@ -8,7 +9,13 @@ from pytest_structlog import StructuredLogCapture
 from virtool.data.layer import DataLayer
 from virtool.workflow.client import WorkflowAPIClient
 from virtool.workflow.data.cache import CacheHit, CacheMiss, WorkflowCache
-from virtool.workflow.data.tar import get_tar_size, stream_path_as_tar
+from virtool.workflow.data.tar import write_path_as_tar
+
+
+async def _read_file(path: Path) -> AsyncIterator[bytes]:
+    with path.open("rb") as file:
+        while chunk := await asyncio.to_thread(file.read, 1024 * 1024):
+            yield chunk
 
 
 @pytest.fixture
@@ -38,10 +45,10 @@ class TestWorkflowCacheGet:
         payload = b"cached payload"
         source.write_bytes(payload)
 
+        archive_path = tmp_path / "cache.tar"
+        await write_path_as_tar(source, archive_path)
         await data_layer.caches.create(
-            stream_path_as_tar(source),
-            key,
-            {"workflow": "nuvs"},
+            _read_file(archive_path), key, {"workflow": "nuvs"}
         )
 
         workflow_cache: WorkflowCache = await cache_scope.instantiate_by_key("cache")
@@ -84,10 +91,10 @@ class TestWorkflowCacheGet:
         target.mkdir()
         (target / "stale.txt").write_bytes(b"stale")
 
+        archive_path = tmp_path / "cache.tar"
+        await write_path_as_tar(source, archive_path)
         await data_layer.caches.create(
-            stream_path_as_tar(source),
-            key,
-            {"workflow": "nuvs"},
+            _read_file(archive_path), key, {"workflow": "nuvs"}
         )
 
         workflow_cache: WorkflowCache = await cache_scope.instantiate_by_key("cache")
@@ -102,6 +109,7 @@ class TestWorkflowCachePut:
         cache_scope: FixtureScope,
         data_layer: DataLayer,
         tmp_path: Path,
+        work_path: Path,
         log: StructuredLogCapture,
     ):
         key = "workflow-cache-file"
@@ -115,13 +123,17 @@ class TestWorkflowCachePut:
 
         workflow_cache: WorkflowCache = await cache_scope.instantiate_by_key("cache")
         created = await workflow_cache.put(key, source, params=params)
+        assert not any((work_path / "caches").iterdir())
+
         hit = await data_layer.caches.get(key)
+        expected_archive_path = tmp_path / "expected-cache.tar"
+        await write_path_as_tar(source, expected_archive_path)
         target = tmp_path / "target"
         result = await workflow_cache.get(key, target)
 
         assert created is True
         assert hit.params == params
-        assert hit.size == await get_tar_size(source)
+        assert hit.size == expected_archive_path.stat().st_size
         assert isinstance(result, CacheHit)
         assert result.path == target
         assert (result.path / "artifact.bin").read_bytes() == payload
