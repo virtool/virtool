@@ -26,7 +26,7 @@ def upgrade() -> None:
         sa.Column("workflow", sa.String(), nullable=False),
         sa.Column("ready", sa.Boolean(), nullable=False),
         sa.Column("results", JSONB(), nullable=True),
-        sa.Column("sample", sa.String(), nullable=False),
+        sa.Column("sample", sa.String(), nullable=False, index=True),
         sa.Column("reference", sa.String(), nullable=False),
         sa.Column("index", sa.String(), nullable=False),
         sa.Column("subtractions", JSONB(), nullable=False),

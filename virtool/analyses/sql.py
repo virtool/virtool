@@ -49,7 +49,7 @@ class SQLAnalysis(Base):
     workflow: Mapped[str]
     ready: Mapped[bool]
     results: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
-    sample: Mapped[str]
+    sample: Mapped[str] = mapped_column(index=True)
     reference: Mapped[str]
     index: Mapped[str]
     subtractions: Mapped[list] = mapped_column(JSONB, default=list)
