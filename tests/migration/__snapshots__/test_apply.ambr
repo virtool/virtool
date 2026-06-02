@@ -309,5 +309,12 @@
       'name': 'drop dormant sample cache tables',
       'revision': '7ea2f370163c',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 45,
+      'name': 'drop dead migrations settings and keys mongo collections',
+      'revision': 'mhemgwig928w',
+    }),
   ])
 # ---
