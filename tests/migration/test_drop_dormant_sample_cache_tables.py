@@ -19,7 +19,7 @@ async def _table_exists(session: AsyncSession, name: str) -> bool:
             await session.execute(
                 text(
                     "SELECT COUNT(*) FROM information_schema.tables "
-                    "WHERE table_name = :name",
+                    "WHERE table_schema = 'public' AND table_name = :name",
                 ),
                 {"name": name},
             )
@@ -66,7 +66,7 @@ class TestDropCacheTables:
 
         async with AsyncSession(ctx.pg) as session:
             for table in CACHE_TABLES:
-                await session.execute(text(f"DROP TABLE {table}"))
+                await session.execute(text(f"DROP TABLE IF EXISTS {table}"))
             await session.commit()
 
         await asyncio.to_thread(apply_alembic, REVISION)
