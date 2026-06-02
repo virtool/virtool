@@ -10,7 +10,6 @@ from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.groups.oas import PermissionsUpdate
 from virtool.models.enums import Permission
-from virtool.mongo.core import Mongo
 from virtool.users.pg import SQLUser
 
 
@@ -48,14 +47,12 @@ class TestCreateKey:
         data_layer: DataLayer,
         fake: DataFaker,
         mocker,
-        mongo: Mongo,
         pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         static_time,
     ):
-        """A created key is written to PostgreSQL only, sharing its integer id with
-        the returned key, with permissions limited to those the owner holds, and is
-        never written to MongoDB.
+        """A created key is written to PostgreSQL, sharing its integer id with the
+        returned key, with permissions limited to those the owner holds.
         """
         mocker.patch("virtool.utils.generate_key", return_value=("bar", "baz"))
 
@@ -88,20 +85,15 @@ class TestCreateKey:
 
         assert sql_keys[0]["id"] == api_key.id
 
-        assert await mongo.keys.count_documents({}) == 0
-
 
 class TestUpdateKey:
     async def test_ok(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
-        """Updating permissions is reflected in PostgreSQL and never written to
-        MongoDB.
-        """
+        """Updating permissions is reflected in PostgreSQL."""
         user = await fake.users.create(
             groups=[
                 await fake.groups.create(
@@ -127,8 +119,6 @@ class TestUpdateKey:
         assert sql_keys[0]["permissions"]["create_sample"] is True
         assert sql_keys[0]["permissions"]["modify_subtraction"] is True
 
-        assert await mongo.keys.count_documents({}) == 0
-
     async def test_not_found(self, data_layer: DataLayer, fake: DataFaker):
         """Updating a key that does not exist raises ``ResourceNotFoundError``."""
         user = await fake.users.create()
@@ -146,10 +136,9 @@ class TestDeleteKey:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
-        """Deleting a key removes it from PostgreSQL and never touches MongoDB."""
+        """Deleting a key removes it from PostgreSQL."""
         user = await fake.users.create()
 
         _, api_key = await data_layer.account.create_key(
@@ -160,7 +149,6 @@ class TestDeleteKey:
         await data_layer.account.delete_key(user.id, api_key.id)
 
         assert await get_sql_keys(pg) == []
-        assert await mongo.keys.count_documents({}) == 0
 
     async def test_not_found(self, data_layer: DataLayer, fake: DataFaker):
         """Deleting a key that does not exist raises ``ResourceNotFoundError``."""
@@ -175,11 +163,10 @@ class TestDeleteKeys:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
         """Deleting all of a user's keys removes only that user's keys from
-        PostgreSQL, leaving other users' keys intact and never touching MongoDB.
+        PostgreSQL, leaving other users' keys intact.
         """
         owner = await fake.users.create()
         other = await fake.users.create()
@@ -202,8 +189,6 @@ class TestDeleteKeys:
         sql_keys = await get_sql_keys(pg)
         assert [key["id"] for key in sql_keys] == [other_key.id]
         assert sql_keys[0]["user_id"] == other.id
-
-        assert await mongo.keys.count_documents({}) == 0
 
 
 class TestGetKeyBySecret:
