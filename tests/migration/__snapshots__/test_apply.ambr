@@ -330,5 +330,12 @@
       'name': 'drop groups mongo collection',
       'revision': '3mwt95y6wx5o',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 48,
+      'name': 'switch analyses to integer id with legacy_id',
+      'revision': '1e6490edc217',
+    }),
   ])
 # ---
