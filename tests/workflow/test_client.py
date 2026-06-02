@@ -117,11 +117,13 @@ class TestPutCache:
 
         with tarfile.open(dest, mode="r:") as archive:
             assert sorted(archive.getnames()) == [
-                "nested/reference.2.bt2",
-                "reference.1.bt2",
+                "bowtie2",
+                "bowtie2/nested",
+                "bowtie2/nested/reference.2.bt2",
+                "bowtie2/reference.1.bt2",
             ]
-            assert archive.extractfile("reference.1.bt2").read() == b"reference"
-            assert archive.extractfile("nested/reference.2.bt2").read() == (
+            assert archive.extractfile("bowtie2/reference.1.bt2").read() == b"reference"
+            assert archive.extractfile("bowtie2/nested/reference.2.bt2").read() == (
                 b"nested-reference"
             )
 

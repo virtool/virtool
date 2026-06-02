@@ -57,8 +57,8 @@ class TestWorkflowCacheGet:
 
         assert isinstance(result, CacheHit)
         assert result.key == key
-        assert result.path == target
-        assert (result.path / "artifact.bin").read_bytes() == payload
+        assert result.path == target / "artifact.bin"
+        assert result.path.read_bytes() == payload
         assert log.has("cache hit", key=key)
 
     async def test_miss(
@@ -78,7 +78,7 @@ class TestWorkflowCacheGet:
         assert not target.exists()
         assert log.has("cache miss", key=key)
 
-    async def test_non_empty_target(
+    async def test_non_empty_target_with_unrelated_file(
         self,
         cache_scope: FixtureScope,
         data_layer: DataLayer,
@@ -98,6 +98,52 @@ class TestWorkflowCacheGet:
         )
 
         workflow_cache: WorkflowCache = await cache_scope.instantiate_by_key("cache")
+        result = await workflow_cache.get(key, target)
+
+        assert isinstance(result, CacheHit)
+        assert result.path == target / "artifact.bin"
+        assert result.path.read_bytes() == b"cached payload"
+        assert (target / "stale.txt").read_bytes() == b"stale"
+
+    async def test_file_occupied(
+        self,
+        cache_scope: FixtureScope,
+        data_layer: DataLayer,
+        tmp_path: Path,
+    ):
+        key = "workflow-cache-file-occupied"
+        source = tmp_path / "artifact.bin"
+        source.write_bytes(b"cached payload")
+        target = tmp_path / "target"
+        target.mkdir()
+        (target / "artifact.bin").write_bytes(b"existing")
+
+        archive_path = tmp_path / "cache.tar"
+        await write_path_as_tar(source, archive_path)
+        await data_layer.caches.create(
+            _read_file(archive_path), key, {"workflow": "nuvs"}
+        )
+
+        workflow_cache: WorkflowCache = await cache_scope.instantiate_by_key("cache")
+
+        with pytest.raises(FileExistsError):
+            await workflow_cache.get(key, target)
+
+    async def test_directory_occupied(
+        self,
+        cache_scope: FixtureScope,
+        tmp_path: Path,
+    ):
+        key = "workflow-cache-directory-occupied"
+        source = tmp_path / "source"
+        source.mkdir()
+        (source / "reference.1.bt2").write_bytes(b"reference")
+        target = tmp_path / "target"
+        target.mkdir()
+        (target / "source").mkdir()
+
+        workflow_cache: WorkflowCache = await cache_scope.instantiate_by_key("cache")
+        await workflow_cache.put(key, source)
 
         with pytest.raises(FileExistsError):
             await workflow_cache.get(key, target)
@@ -135,8 +181,8 @@ class TestWorkflowCachePut:
         assert hit.params == params
         assert hit.size == expected_archive_path.stat().st_size
         assert isinstance(result, CacheHit)
-        assert result.path == target
-        assert (result.path / "artifact.bin").read_bytes() == payload
+        assert result.path == target / "artifact.bin"
+        assert result.path.read_bytes() == payload
         assert log.has("cache put", key=key, created=True)
 
     async def test_duplicate(
@@ -159,7 +205,8 @@ class TestWorkflowCachePut:
         assert created is True
         assert duplicate_created is False
         assert isinstance(result, CacheHit)
-        assert (result.path / "original.bin").read_bytes() == b"original"
+        assert result.path == target / "original.bin"
+        assert result.path.read_bytes() == b"original"
 
     async def test_directory_tar_round_trip(
         self,
@@ -184,7 +231,7 @@ class TestWorkflowCachePut:
 
         assert created is True
         assert isinstance(result, CacheHit)
-        assert result.path == target
+        assert result.path == target / "source"
         assert (result.path / "reference.1.bt2").read_bytes() == b"reference"
         assert (result.path / "nested" / "reference.2.bt2").read_bytes() == (
             b"nested-reference"
