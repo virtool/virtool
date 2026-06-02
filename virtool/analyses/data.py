@@ -206,6 +206,7 @@ class AnalysisData(DataLayerDomain):
             document = await virtool.analyses.format.format_analysis(
                 self._storage,
                 self._mongo,
+                self._pg,
                 document,
             )
 
@@ -510,6 +511,7 @@ class AnalysisData(DataLayerDomain):
                 await virtool.analyses.format.format_analysis_to_excel(
                     self._storage,
                     self._mongo,
+                    self._pg,
                     document,
                 ),
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -519,6 +521,7 @@ class AnalysisData(DataLayerDomain):
             await virtool.analyses.format.format_analysis_to_csv(
                 self._storage,
                 self._mongo,
+                self._pg,
                 document,
             ),
             "text/csv",

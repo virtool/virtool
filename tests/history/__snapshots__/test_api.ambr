@@ -165,40 +165,7 @@
       '_id': '6116cba1.0',
       'created_at': datetime.datetime(2017, 7, 12, 16, 0, 50, 495000),
       'description': 'Description',
-      'diff': dict({
-        '_id': '6116cba1',
-        'abbreviation': 'PVF',
-        'imported': True,
-        'isolates': list([
-          dict({
-            'default': True,
-            'id': 'cab8b360',
-            'sequences': list([
-              dict({
-                '_id': 'KX269872',
-                'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
-                'host': 'sweet cherry',
-                'isolate_id': 'cab8b360',
-                'otu_id': '6116cba1',
-                'segment': None,
-                'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
-              }),
-            ]),
-            'source_name': '8816-v2',
-            'source_type': 'isolate',
-          }),
-        ]),
-        'last_indexed_version': 0,
-        'lower_name': 'prunus virus f',
-        'name': 'Prunus virus F',
-        'reference': dict({
-          'id': 'hxn167',
-        }),
-        'schema': list([
-        ]),
-        'verified': False,
-        'version': 0,
-      }),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -220,24 +187,7 @@
       '_id': '6116cba1.1',
       'created_at': datetime.datetime(2017, 7, 12, 16, 0, 50, 600000),
       'description': 'Description',
-      'diff': list([
-        list([
-          'change',
-          'version',
-          list([
-            0,
-            1,
-          ]),
-        ]),
-        list([
-          'change',
-          'abbreviation',
-          list([
-            'PVF',
-            'TST',
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -301,40 +251,7 @@
       '_id': '6116cba1.0',
       'created_at': datetime.datetime(2017, 7, 12, 16, 0, 50, 495000),
       'description': 'Description',
-      'diff': dict({
-        '_id': '6116cba1',
-        'abbreviation': 'PVF',
-        'imported': True,
-        'isolates': list([
-          dict({
-            'default': True,
-            'id': 'cab8b360',
-            'sequences': list([
-              dict({
-                '_id': 'KX269872',
-                'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
-                'host': 'sweet cherry',
-                'isolate_id': 'cab8b360',
-                'otu_id': '6116cba1',
-                'segment': None,
-                'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
-              }),
-            ]),
-            'source_name': '8816-v2',
-            'source_type': 'isolate',
-          }),
-        ]),
-        'last_indexed_version': 0,
-        'lower_name': 'prunus virus f',
-        'name': 'Prunus virus F',
-        'reference': dict({
-          'id': 'hxn167',
-        }),
-        'schema': list([
-        ]),
-        'verified': False,
-        'version': 0,
-      }),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',
@@ -356,24 +273,7 @@
       '_id': '6116cba1.1',
       'created_at': datetime.datetime(2017, 7, 12, 16, 0, 50, 600000),
       'description': 'Description',
-      'diff': list([
-        list([
-          'change',
-          'version',
-          list([
-            0,
-            1,
-          ]),
-        ]),
-        list([
-          'change',
-          'abbreviation',
-          list([
-            'PVF',
-            'TST',
-          ]),
-        ]),
-      ]),
+      'diff': 'postgres',
       'index': dict({
         'id': 'unbuilt',
         'version': 'unbuilt',

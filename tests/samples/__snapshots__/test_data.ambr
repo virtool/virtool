@@ -110,7 +110,7 @@
     'all_write': True,
     'created_at': 'approximately_now_datetime',
     'format': 'fastq',
-    'group': None,
+    'group': 2,
     'group_read': True,
     'group_write': True,
     'hold': True,

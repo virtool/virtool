@@ -1,5 +1,6 @@
 import asyncio
 from pathlib import Path
+from unittest.mock import ANY
 
 import pytest
 from sqlalchemy import select
@@ -306,9 +307,9 @@ class TestFinalize:
         """Finalize marks the Postgres row ready and writes results matching the
         ``analysis_results`` row.
         """
-        mocker.patch(
+        m_format_analysis = mocker.patch(
             "virtool.analyses.format.format_analysis",
-            side_effect=lambda _storage, _mongo, document: document,
+            side_effect=lambda _storage, _mongo, _pg, document: document,
         )
 
         analysis = await data_layer.analyses.create(
@@ -345,6 +346,10 @@ class TestFinalize:
         # Mongo stores datetimes at millisecond precision, so the bumped timestamp is
         # compared by advancement rather than exact equality with the Postgres row.
         assert document["updated_at"] > created.updated_at
+
+        # The PostgreSQL engine must be threaded through to format_analysis so it can
+        # resolve Postgres-stored history diffs.
+        m_format_analysis.assert_called_with(ANY, mongo, pg, ANY)
 
     async def test_rolls_back_when_mongo_write_fails(
         self,

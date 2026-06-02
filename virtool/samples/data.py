@@ -57,6 +57,7 @@ from virtool.subtractions.db import (
 )
 from virtool.uploads.sql import SQLUpload
 from virtool.uploads.utils import is_gzip_compressed, upload_file_key
+from virtool.users.pg import SQLUser
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor, chunk_list, wait_for_checks
 
@@ -314,18 +315,11 @@ class SamplesData(DataLayerDomain):
         # Assign the user's primary group as the sample owner group if the
         # setting is ``users_primary_group``.
         elif settings.sample_group == "users_primary_group":
-            group = await get_one_field(self._mongo.users, "primary_group", user_id)
+            async with AsyncSession(self._pg) as session:
+                user = await session.get(SQLUser, user_id)
 
-            if isinstance(group, str):
-                async with AsyncSession(self._pg) as session:
-                    group = await session.execute(
-                        select(SQLGroup).where(SQLGroup.legacy_id == group),
-                    )
-
-                    group = group.scalar_one().id
-
-            if not group:
-                group = None
+            if user is not None and user.primary_group is not None:
+                group = user.primary_group.id
 
         async with self._mongo.create_session() as session:
             sample_id = _id or await get_new_id(self._mongo.samples, session=session)

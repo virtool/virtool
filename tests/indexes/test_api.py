@@ -415,6 +415,7 @@ async def test_download_otus_json(
     if not file_exists:
         m_get_patched_otus.assert_called_with(
             get_mongo_from_app(client.app),
+            client.app["pg"],
             manifest,
         )
 

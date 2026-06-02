@@ -84,6 +84,7 @@ class HistoryData:
 
             _, patched, history_to_delete = await patch_to_version(
                 self._mongo,
+                self._pg,
                 otu_id,
                 otu_version - 1,
             )
