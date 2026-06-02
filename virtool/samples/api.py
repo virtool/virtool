@@ -560,6 +560,8 @@ async def upload_reads(req):
             multipart_file_chunker(await req.multipart()),
             upload_id=upload,
         )
+    except EOFError:
+        raise APIBadRequest("Reads file is empty")
     except OSError:
         raise APIBadRequest("File is not compressed")
     except ResourceConflictError as err:

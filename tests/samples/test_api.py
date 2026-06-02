@@ -1,11 +1,13 @@
 import asyncio
 import gzip
+import io
 from http import HTTPStatus
 from pathlib import Path
 
 import arrow
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
@@ -1449,11 +1451,15 @@ class TestUploadReads:
         self,
         example_path: Path,
         fake: DataFaker,
+        memory_storage,
         mongo: Mongo,
+        pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         spawn_job_client: JobClientSpawner,
     ):
-        """Test that uncompressed sample reads are rejected."""
+        """Test that uncompressed sample reads are rejected without writing a
+        storage object or a SQL row.
+        """
         client = await spawn_job_client(authenticated=True)
 
         await mongo.samples.insert_one(
@@ -1474,6 +1480,56 @@ class TestUploadReads:
 
         assert resp.status == 400
         assert await resp.json() == snapshot
+
+        assert [obj.key async for obj in memory_storage.list("samples/test/")] == []
+
+        async with AsyncSession(pg) as session:
+            rows = (
+                (await session.execute(select(SQLSampleReads).filter_by(sample="test")))
+                .scalars()
+                .all()
+            )
+
+        assert rows == []
+
+    async def test_empty(
+        self,
+        memory_storage,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        snapshot: SnapshotAssertion,
+        spawn_job_client: JobClientSpawner,
+    ):
+        """Test that an empty reads upload is rejected without writing a storage
+        object or a SQL row.
+        """
+        client = await spawn_job_client(authenticated=True)
+
+        await mongo.samples.insert_one(
+            {
+                "_id": "test",
+                "ready": True,
+            },
+        )
+
+        resp = await client.put(
+            "/samples/test/reads/reads_1.fq.gz",
+            data={"file": io.BytesIO(b"")},
+        )
+
+        assert resp.status == 400
+        assert await resp.json() == snapshot
+
+        assert [obj.key async for obj in memory_storage.list("samples/test/")] == []
+
+        async with AsyncSession(pg) as session:
+            rows = (
+                (await session.execute(select(SQLSampleReads).filter_by(sample="test")))
+                .scalars()
+                .all()
+            )
+
+        assert rows == []
 
 
 class TestDownloadReads:
