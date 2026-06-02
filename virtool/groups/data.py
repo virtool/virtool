@@ -4,11 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
-from virtool.data.topg import both_transactions
 from virtool.groups.models import Group
 from virtool.groups.oas import UpdateGroupRequest
 from virtool.groups.pg import SQLGroup
-from virtool.mongo.core import Mongo
 from virtool.users.models_base import UserNested
 from virtool.users.pg import SQLUser, SQLUserGroup
 from virtool.users.utils import generate_base_permissions
@@ -19,10 +17,8 @@ class GroupsData:
 
     def __init__(
         self,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
-        self._mongo = mongo
         self._pg = pg
 
     async def get(self, group_id: int) -> Group:
@@ -94,18 +90,13 @@ class GroupsData:
         :raises ResourceNotFoundError: if the group does not exist
 
         """
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
-            group = await pg_session.get(SQLGroup, group_id)
+        async with AsyncSession(self._pg) as session:
+            group = await session.get(SQLGroup, group_id)
 
             if not group:
                 raise ResourceNotFoundError
 
             data = data.dict(exclude_unset=True)
-
-            db_update = {}
 
             if "name" in data:
                 group.name = data["name"]
@@ -113,16 +104,12 @@ class GroupsData:
             if "permissions" in data:
                 group.permissions = {**group.permissions, **data["permissions"]}
 
-            if db_update:
-                group.update(db_update)
+            await session.commit()
 
         return await self.get(group_id)
 
     async def delete(self, group_id: int) -> None:
         """Delete a group by its id.
-
-        Deletes the group and updates all member user permissions if they are affected
-        by deletion of the group.
 
         :param group_id: the id of the group to delete
         :raises ResourceNotFoundError: if the group is not found
@@ -130,15 +117,14 @@ class GroupsData:
         """
         group = await self.get(group_id)
 
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
-            result = await pg_session.execute(
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
                 delete(SQLGroup).where(SQLGroup.id == group_id),
             )
 
             if not result.rowcount:
                 raise ResourceNotFoundError
+
+            await session.commit()
 
         emit(group, "groups", "delete", Operation.DELETE)

@@ -89,7 +89,7 @@ def create_data_layer(
         AnalysisData(mongo, pg, storage),
         BLASTData(client, mongo, pg),
         CachesData(pg, storage),
-        GroupsData(mongo, pg),
+        GroupsData(pg),
         HistoryData(mongo, pg),
         HmmsData(client, mongo, pg, storage),
         IndexData(mongo, config, pg, storage),
