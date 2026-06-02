@@ -2,21 +2,23 @@ import asyncio
 from collections.abc import AsyncIterator
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 import virtool.utils
 from tests.fixtures.client import ClientSpawner
+from virtool.analyses.sql import SQLAnalysis, SQLAnalysisResult
 from virtool.api.client import UserClient
 from virtool.data.errors import ResourceConflictError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
-from virtool.models.enums import LibraryType, Permission
+from virtool.models.enums import AnalysisWorkflow, LibraryType, Permission
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.samples.models import WorkflowState
-from virtool.samples.oas import CreateSampleRequest
+from virtool.samples.oas import CreateAnalysisRequest, CreateSampleRequest
 from virtool.samples.sql import SQLSampleReads
 from virtool.samples.utils import SampleRight
 from virtool.settings.oas import UpdateSettingsRequest
@@ -504,3 +506,104 @@ class TestHasResourcesForAnalysisJob:
                 "test_ref",
                 [subtraction_id, "missing"],
             )
+
+
+class TestDelete:
+    """Deleting a sample cascades to its analyses in both Mongo and Postgres."""
+
+    async def _setup(self, fake: DataFaker, mongo: Mongo) -> str:
+        user = await fake.users.create()
+
+        await asyncio.gather(
+            mongo.samples.insert_one(
+                {
+                    "_id": "test_sample",
+                    "all_read": True,
+                    "all_write": True,
+                    "created_at": virtool.utils.timestamp(),
+                    "files": [],
+                    "format": "fastq",
+                    "group": "none",
+                    "group_read": True,
+                    "group_write": True,
+                    "hold": False,
+                    "host": "",
+                    "is_legacy": False,
+                    "isolate": "",
+                    "job": None,
+                    "labels": [],
+                    "library_type": LibraryType.normal.value,
+                    "locale": "",
+                    "name": "Test Sample",
+                    "notes": "",
+                    "nuvs": False,
+                    "pathoscope": True,
+                    "ready": True,
+                    "subtractions": [],
+                    "user": {"id": user.id},
+                    "workflows": {
+                        "aodp": WorkflowState.INCOMPATIBLE.value,
+                        "pathoscope": WorkflowState.COMPLETE.value,
+                        "nuvs": WorkflowState.PENDING.value,
+                    },
+                },
+            ),
+            mongo.indexes.insert_one(
+                {
+                    "_id": "test_index",
+                    "version": 11,
+                    "ready": True,
+                    "reference": {"id": "test_ref"},
+                },
+            ),
+            mongo.references.insert_one(
+                {
+                    "_id": "test_ref",
+                    "archived": False,
+                    "data_type": "genome",
+                    "name": "Test Reference",
+                },
+            ),
+        )
+
+        return user.id
+
+    async def test_deletes_analysis_pg_rows(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        memory_storage: StorageBackend,
+        mongo: Mongo,
+        pg: AsyncEngine,
+    ):
+        """Deleting a sample removes its analyses' Postgres rows and result rows."""
+        user_id = await self._setup(fake, mongo)
+
+        analysis = await data_layer.analyses.create(
+            CreateAnalysisRequest(
+                ml=None,
+                ref_id="test_ref",
+                subtractions=[],
+                workflow=AnalysisWorkflow.nuvs,
+            ),
+            "test_sample",
+            user_id,
+            0,
+        )
+
+        await data_layer.analyses.finalize(analysis.id, {"hits": []})
+
+        assert await get_row_by_id(pg, SQLAnalysis, analysis.id) is not None
+
+        await data_layer.samples.delete("test_sample")
+
+        assert await mongo.analyses.find_one({"_id": analysis.id}) is None
+        assert await get_row_by_id(pg, SQLAnalysis, analysis.id) is None
+
+        async with AsyncSession(pg) as session:
+            result = await session.execute(
+                select(SQLAnalysisResult).where(
+                    SQLAnalysisResult.analysis_id == analysis.id,
+                ),
+            )
+            assert result.scalar_one_or_none() is None

@@ -7,19 +7,20 @@ from collections.abc import AsyncGenerator, AsyncIterator
 from typing import Any
 
 from pymongo.results import UpdateResult
-from sqlalchemy import exc, select
+from sqlalchemy import delete, exc, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
 import virtool.uploads.db
 import virtool.utils
+from virtool.analyses.sql import SQLAnalysis, SQLAnalysisResult
 from virtool.api.client import UserClient
 from virtool.api.utils import compose_regex_query
 from virtool.config.cls import Config
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emits
-from virtool.data.topg import compose_legacy_id_multi_expression
+from virtool.data.topg import both_transactions, compose_legacy_id_multi_expression
 from virtool.data.transforms import apply_transforms
 from virtool.groups.models import GroupMinimal
 from virtool.groups.pg import SQLGroup
@@ -385,13 +386,27 @@ class SamplesData(DataLayerDomain):
         """
         sample = await self.get(sample_id)
 
-        async with self._mongo.create_session() as session:
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
             result = await self._mongo.samples.delete_one(
-                {"_id": sample_id}, session=session
+                {"_id": sample_id}, session=mongo_session
             )
             await self._mongo.analyses.delete_many(
                 {"sample.id": sample_id},
-                session=session,
+                session=mongo_session,
+            )
+
+            await pg_session.execute(
+                delete(SQLAnalysisResult).where(
+                    SQLAnalysisResult.analysis_id.in_(
+                        select(SQLAnalysis.id).where(SQLAnalysis.sample == sample_id),
+                    ),
+                ),
+            )
+            await pg_session.execute(
+                delete(SQLAnalysis).where(SQLAnalysis.sample == sample_id),
             )
 
         if result.deleted_count:
