@@ -23,6 +23,7 @@ from virtool.references.tasks import (
     ReferencesCleanTask,
     RemoteReferenceTask,
 )
+from virtool.storage.protocol import StorageBackend
 from virtool.tasks.sql import SQLTask
 from virtool.uploads.sql import SQLUpload, UploadType
 from virtool.uploads.utils import upload_file_key
@@ -224,6 +225,7 @@ async def test_import_reference_task(
     data_layer: DataLayer,
     example_path: Path,
     fake: DataFaker,
+    memory_storage: StorageBackend,
     mongo: Mongo,
     pg: AsyncEngine,
     static_time: StaticTime,
@@ -239,7 +241,7 @@ async def test_import_reference_task(
 
     upload_row = await get_row_by_id(pg, SQLUpload, upload.id)
 
-    await data_layer.references._storage.write(
+    await memory_storage.write(
         upload_file_key(upload_row.name_on_disk),
         fake_file_chunker(example_path / "indexes/reference.json.gz"),
     )
@@ -390,6 +392,7 @@ async def create_reference(
     example_path: Path,
     fake: DataFaker,
     data_layer: DataLayer,
+    memory_storage: StorageBackend,
     mongo: Mongo,
     pg: AsyncEngine,
     static_time: StaticTime,
@@ -405,7 +408,7 @@ async def create_reference(
 
     upload_row = await get_row_by_id(pg, SQLUpload, upload.id)
 
-    await data_layer.references._storage.write(
+    await memory_storage.write(
         upload_file_key(upload_row.name_on_disk),
         fake_file_chunker(example_path / "indexes/reference.json.gz"),
     )

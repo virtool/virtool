@@ -77,6 +77,7 @@ from virtool.references.tasks import (
 )
 from virtool.references.transforms import AttachImportedFromTransform
 from virtool.references.utils import OFFICIAL_REMOTE_SLUG, RIGHTS, ReferenceSourceData
+from virtool.storage.protocol import StorageBackend
 from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
     TaskProgressHandler,
@@ -98,11 +99,13 @@ class ReferencesData(DataLayerDomain):
         pg: AsyncEngine,
         config: Config,
         client: ClientSession,
+        storage: StorageBackend,
     ):
         self._mongo = mongo
         self._pg = pg
         self._config = config
         self._client = client
+        self._storage = storage
 
     async def _require_not_archived(self, ref_id: str) -> None:
         document = await self._mongo.references.find_one(
