@@ -36,7 +36,7 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.events import Operation, emit, emits
-from virtool.data.topg import both_transactions, resolve_user_id
+from virtool.data.topg import both_transactions
 from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
 from virtool.jobs.transforms import AttachJobTransform
@@ -313,7 +313,7 @@ class AnalysisData(DataLayerDomain):
                     reference=data.ref_id,
                     index=index_id,
                     subtractions=subtractions,
-                    user_id=await resolve_user_id(pg_session, user_id),
+                    user_id=user_id,
                     job_id=job.id,
                     ml_id=data.ml,
                 ),
