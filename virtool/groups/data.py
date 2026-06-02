@@ -88,23 +88,27 @@ class GroupsData:
         :param data: updates to the current group permissions or name
         :return: the updated group
         :raises ResourceNotFoundError: if the group does not exist
+        :raises ResourceConflictError: if a group with the given name already exists
 
         """
-        async with AsyncSession(self._pg) as session:
-            group = await session.get(SQLGroup, group_id)
+        try:
+            async with AsyncSession(self._pg) as session:
+                group = await session.get(SQLGroup, group_id)
 
-            if not group:
-                raise ResourceNotFoundError
+                if not group:
+                    raise ResourceNotFoundError
 
-            data = data.dict(exclude_unset=True)
+                data = data.dict(exclude_unset=True)
 
-            if "name" in data:
-                group.name = data["name"]
+                if "name" in data:
+                    group.name = data["name"]
 
-            if "permissions" in data:
-                group.permissions = {**group.permissions, **data["permissions"]}
+                if "permissions" in data:
+                    group.permissions = {**group.permissions, **data["permissions"]}
 
-            await session.commit()
+                await session.commit()
+        except IntegrityError:
+            raise ResourceConflictError("Group already exists")
 
         return await self.get(group_id)
 

@@ -68,6 +68,15 @@ async def test_update_name(
     assert await get_row_by_id(pg, SQLGroup, group.id) == snapshot(name="pg_after")
 
 
+async def test_update_duplicate_name(data_layer: DataLayer):
+    """Test that a group cannot be renamed to a name that already exists."""
+    await data_layer.groups.create("Existing")
+    group = await data_layer.groups.create("Other")
+
+    with pytest.raises(ResourceConflictError):
+        await data_layer.groups.update(group.id, UpdateGroupRequest(name="Existing"))
+
+
 async def test_update_permissions(
     data_layer: DataLayer,
     pg: AsyncEngine,

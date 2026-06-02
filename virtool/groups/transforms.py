@@ -87,7 +87,7 @@ class AttachGroupsTransform(AbstractTransform):
 
     async def prepare_many(
         self, documents: list[Document], session: AsyncSession
-    ) -> dict[int, Any]:
+    ) -> dict[str, Any]:
         group_ids = {group for document in documents for group in document["groups"]}
 
         if not group_ids:
