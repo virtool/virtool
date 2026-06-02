@@ -113,6 +113,8 @@ async def test_create_nuvs_blast(blast_data: BLASTData, pg, snapshot):
 
 
 class TestCheckNuvsBlast:
+    """Checking a NuVs BLAST syncs its state from NCBI into our records."""
+
     async def test_running(self, blast_data: BLASTData, mocker, pg, snapshot):
         """Check that the ``last_checked_at`` field is updated when the BLAST is still
         running on NCBI.

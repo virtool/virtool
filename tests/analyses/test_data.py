@@ -204,7 +204,9 @@ def _create_request() -> CreateAnalysisRequest:
     )
 
 
-class TestDualWriteCreate:
+class TestCreate:
+    """Creating an analysis dual-writes to Mongo and Postgres."""
+
     async def test_mirrors_mongo(
         self,
         data_layer: DataLayer,
@@ -289,7 +291,9 @@ class TestDualWriteCreate:
             assert result.scalars().first() is None
 
 
-class TestDualWriteFinalize:
+class TestFinalize:
+    """Finalizing an analysis dual-writes results and the ready flag to both backends."""
+
     async def test_mirrors_mongo(
         self,
         data_layer: DataLayer,
@@ -379,7 +383,9 @@ class TestDualWriteFinalize:
             assert result.scalars().first() is None
 
 
-class TestDualWriteDelete:
+class TestDelete:
+    """Deleting an analysis removes it from both Mongo and Postgres."""
+
     async def test_deletes_pg_row(
         self,
         data_layer: DataLayer,
