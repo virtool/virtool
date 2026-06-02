@@ -3,7 +3,7 @@
 A repeat of the ``ie7r3vdaf5mu`` backfill. That revision was recorded as applied
 on environments where the Mongo data was never actually rewritten (it was skipped
 by the old position-based apply logic), leaving legacy string ``user.id`` values
-in collections like ``subtractions`` that crash the user transform.
+in collections like ``subtraction`` that crash the user transform.
 
 Because ``ie7r3vdaf5mu`` is already recorded as applied, it cannot be re-run under
 its own id. This new revision re-runs the same backfill so those environments
@@ -51,7 +51,7 @@ required_alembic_revision = None
 SIMPLE_USER_COLLECTIONS = (
     "keys",
     "samples",
-    "subtractions",
+    "subtraction",
     "analyses",
     "otus",
     "history",

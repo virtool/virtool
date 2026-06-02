@@ -288,5 +288,12 @@
       'name': 're-backfill user ids to integers',
       'revision': 'nmqvw9wu298b',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 42,
+      'name': 'backfill subtraction user ids',
+      'revision': 'x602yxtuaeg5',
+    }),
   ])
 # ---
