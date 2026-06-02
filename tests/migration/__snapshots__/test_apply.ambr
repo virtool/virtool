@@ -320,6 +320,13 @@
       'applied_at': datetime,
       'created_at': datetime,
       'id': 46,
+      'name': 'drop users mongo collection',
+      'revision': 'vm9nfmtwgrv9',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 47,
       'name': 'drop groups mongo collection',
       'revision': '3mwt95y6wx5o',
     }),

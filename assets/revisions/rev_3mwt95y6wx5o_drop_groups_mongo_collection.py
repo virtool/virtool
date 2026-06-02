@@ -27,7 +27,7 @@ created_at = arrow.get("2026-06-02 18:57:24.826896")
 revision_id = "3mwt95y6wx5o"
 
 alembic_down_revision = None
-virtool_down_revision = "mhemgwig928w"
+virtool_down_revision = "vm9nfmtwgrv9"
 
 # Change this if an Alembic revision is required to run this migration.
 required_alembic_revision = None
