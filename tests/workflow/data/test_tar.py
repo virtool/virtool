@@ -1,3 +1,4 @@
+import io
 import tarfile
 from pathlib import Path
 
@@ -27,19 +28,20 @@ class TestWritePathAsTar:
 
 
 class TestExtractTarToDir:
-    async def test_absolute_path_raises(self, tmp_path: Path):
+    async def test_absolute_path_returns_normalized_restored_path(self, tmp_path: Path):
         archive_path = tmp_path / "cache.tar"
         target = tmp_path / "target"
+        payload = b"payload"
 
         with tarfile.open(archive_path, mode="w") as archive:
             member = tarfile.TarInfo("/artifact.bin")
-            member.size = 0
-            archive.addfile(member)
+            member.size = len(payload)
+            archive.addfile(member, io.BytesIO(payload))
 
-        with pytest.raises(ValueError, match="absolute path"):
-            await extract_tar_to_dir(archive_path, target)
+        restored_path = await extract_tar_to_dir(archive_path, target)
 
-        assert not target.exists()
+        assert restored_path == target / "artifact.bin"
+        assert restored_path.read_bytes() == payload
 
     async def test_path_traversal_raises(self, tmp_path: Path):
         archive_path = tmp_path / "cache.tar"
@@ -50,7 +52,7 @@ class TestExtractTarToDir:
             member.size = 0
             archive.addfile(member)
 
-        with pytest.raises(ValueError, match="unsafe path"):
+        with pytest.raises(tarfile.OutsideDestinationError):
             await extract_tar_to_dir(archive_path, target)
 
         assert not (tmp_path / "escape.txt").exists()

@@ -11,23 +11,11 @@ def _add_path_to_archive(source: Path, archive: tarfile.TarFile) -> None:
     raise FileNotFoundError(source)
 
 
-def _check_member(member: tarfile.TarInfo) -> tuple[str, ...]:
-    if member.name.startswith("/"):
-        raise ValueError(f"Tar member uses an absolute path: {member.name}")
-
-    parts = tuple(member.name.split("/"))
-
-    if ".." in parts:
-        raise ValueError(f"Tar member uses an unsafe path: {member.name}")
-
-    return parts
-
-
 def _check_archive(archive: tarfile.TarFile, directory: Path) -> Path:
     top_level_names = set()
 
     for member in archive.getmembers():
-        parts = _check_member(member)
+        parts = member.name.lstrip("/").split("/")
         top_level_names.add(parts[0])
 
     if not top_level_names:
