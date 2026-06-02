@@ -25,6 +25,7 @@ from virtool.hmm.models import HMM, HMMInstalled, HMMSearchResult, HMMStatus
 from virtool.hmm.tasks import HMMInstallTask
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
+from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
 from virtool.tasks.progress import (
     AbstractProgressHandler,
@@ -180,19 +181,20 @@ class HmmsData(DataLayerDomain):
                 raise
 
     async def download_profiles(self) -> tuple[AsyncIterator[bytes], int]:
-        info = None
-        async for item in self._storage.list("hmm/profiles.hmm"):
-            info = item
-            break
+        try:
+            size = await self._storage.size("hmm/profiles.hmm")
+        except StorageKeyNotFoundError as err:
+            raise ResourceNotFoundError("Profiles file could not be found") from err
 
-        if info is None:
-            raise ResourceNotFoundError("Profiles file could not be found")
-
-        return self._storage.read("hmm/profiles.hmm"), info.size
+        return self._storage.read("hmm/profiles.hmm"), size
 
     async def download_annotations(self) -> tuple[AsyncIterator[bytes], int]:
-        async for info in self._storage.list("hmm/annotations.json.gz"):
-            return self._storage.read("hmm/annotations.json.gz"), info.size
+        try:
+            size = await self._storage.size("hmm/annotations.json.gz")
+        except StorageKeyNotFoundError:
+            pass
+        else:
+            return self._storage.read("hmm/annotations.json.gz"), size
 
         annotations_bytes = await generate_annotations(self._mongo)
         compressed = await asyncio.to_thread(

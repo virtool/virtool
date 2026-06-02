@@ -1,4 +1,9 @@
+import pytest
+
+from virtool.data.errors import ResourceNotFoundError
 from virtool.fake.next import DataFaker
+from virtool.hmm.data import HmmsData
+from virtool.storage.object import ObjectProvider
 
 
 async def test_get_status(
@@ -44,3 +49,57 @@ async def test_get_status(
     )
 
     assert await data_layer.hmms.get_status() == snapshot
+
+
+async def _drain(stream) -> bytes:
+    return b"".join([chunk async for chunk in stream])
+
+
+class TestDownloadProfiles:
+    """``download_profiles`` must find the object by exact key.
+
+    These run against a real ``obstore``-backed provider, whose ``list``
+    evaluates prefixes on path-segment boundaries. Listing the full key
+    ``hmm/profiles.hmm`` as a prefix returns nothing even when the object
+    exists, so the method must probe the exact key instead — the regression
+    behind VIR-2418.
+    """
+
+    async def test_returns_stored_object(self):
+        storage = ObjectProvider.for_memory()
+
+        async def _data():
+            yield b"PROFILE-BYTES"
+
+        await storage.write("hmm/profiles.hmm", _data())
+
+        hmms = HmmsData(None, None, None, storage)
+
+        stream, size = await hmms.download_profiles()
+
+        assert size == len(b"PROFILE-BYTES")
+        assert await _drain(stream) == b"PROFILE-BYTES"
+
+    async def test_missing_raises_not_found(self):
+        hmms = HmmsData(None, None, None, ObjectProvider.for_memory())
+
+        with pytest.raises(ResourceNotFoundError):
+            await hmms.download_profiles()
+
+
+class TestDownloadAnnotations:
+    async def test_returns_stored_object_without_regenerating(self):
+        """A present annotations object is served, not regenerated from Mongo."""
+        storage = ObjectProvider.for_memory()
+
+        async def _data():
+            yield b"STORED-ANNOTATIONS"
+
+        await storage.write("hmm/annotations.json.gz", _data())
+
+        hmms = HmmsData(None, None, None, storage)
+
+        stream, size = await hmms.download_annotations()
+
+        assert size == len(b"STORED-ANNOTATIONS")
+        assert await _drain(stream) == b"STORED-ANNOTATIONS"
