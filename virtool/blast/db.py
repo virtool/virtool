@@ -29,6 +29,4 @@ async def delete_nuvs_blast(
         .where(SQLNuVsBlast.sequence_index == sequence_index),
     )
 
-    await session.commit()
-
     return result.rowcount
