@@ -2,11 +2,11 @@ from typing import TYPE_CHECKING
 from zipfile import BadZipFile
 
 from aiohttp import ClientSession
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
-from virtool.analyses.sql import SQLAnalysis
+from virtool.analyses.db import bump_analysis_updated_at
 from virtool.analyses.utils import find_nuvs_sequence_by_index
 from virtool.blast.db import delete_nuvs_blast, get_nuvs_blast
 from virtool.blast.models import NuvsBlast
@@ -75,16 +75,12 @@ class BLASTData(DataLayerDomain):
             pg_session.add(blast_row)
             await pg_session.flush()
 
-            await pg_session.execute(
-                update(SQLAnalysis)
-                .where(SQLAnalysis.id == analysis_id)
-                .values(updated_at=created_at),
-            )
-
-            await self._mongo.analyses.update_one(
-                {"_id": analysis_id},
-                {"$set": {"updated_at": created_at}},
-                session=mongo_session,
+            await bump_analysis_updated_at(
+                self._mongo,
+                mongo_session,
+                pg_session,
+                analysis_id,
+                created_at,
             )
 
             await self.data.tasks.create(
@@ -186,6 +182,9 @@ class BLASTData(DataLayerDomain):
         ):
             blast_row = await get_nuvs_blast(pg_session, analysis_id, sequence_index)
 
+            if blast_row is None:
+                raise ResourceNotFoundError
+
             blast_row.last_checked_at = updated_at
             blast_row.updated_at = updated_at
 
@@ -196,16 +195,12 @@ class BLASTData(DataLayerDomain):
                     blast_row.result = result
                     blast_row.ready = True
 
-            await pg_session.execute(
-                update(SQLAnalysis)
-                .where(SQLAnalysis.id == analysis_id)
-                .values(updated_at=updated_at),
-            )
-
-            await self._mongo.analyses.update_one(
-                {"_id": analysis_id},
-                {"$set": {"updated_at": updated_at}},
-                session=mongo_session,
+            await bump_analysis_updated_at(
+                self._mongo,
+                mongo_session,
+                pg_session,
+                analysis_id,
+                updated_at,
             )
 
         return await self.get_nuvs_blast(analysis_id, sequence_index)
@@ -227,16 +222,12 @@ class BLASTData(DataLayerDomain):
                 pg_session, analysis_id, sequence_index
             )
 
-            await pg_session.execute(
-                update(SQLAnalysis)
-                .where(SQLAnalysis.id == analysis_id)
-                .values(updated_at=updated_at),
-            )
-
-            await self._mongo.analyses.update_one(
-                {"_id": analysis_id},
-                {"$set": {"updated_at": updated_at}},
-                session=mongo_session,
+            await bump_analysis_updated_at(
+                self._mongo,
+                mongo_session,
+                pg_session,
+                analysis_id,
+                updated_at,
             )
 
         return deleted_count

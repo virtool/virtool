@@ -1,15 +1,49 @@
 """Work with analyses in the database."""
 
+from datetime import datetime
 from typing import Any
 
-from sqlalchemy import select
+from motor.motor_asyncio import AsyncIOMotorClientSession
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.analyses.sql import SQLAnalysisFile
+from virtool.analyses.sql import SQLAnalysis, SQLAnalysisFile
 from virtool.data.transforms import AbstractTransform
 from virtool.mongo.core import Mongo
 from virtool.samples.utils import get_sample_rights
 from virtool.types import Document
+
+
+async def bump_analysis_updated_at(
+    mongo: Mongo,
+    mongo_session: AsyncIOMotorClientSession,
+    pg_session: AsyncSession,
+    analysis_id: str,
+    updated_at: datetime,
+) -> None:
+    """Bump an analysis ``updated_at`` timestamp in both Postgres and Mongo.
+
+    This keeps the two backends in sync during the MongoDB-to-Postgres migration and
+    must be called within a :func:`both_transactions` block so the writes commit
+    together.
+
+    :param mongo: the application MongoDB client
+    :param mongo_session: the active Mongo transaction session
+    :param pg_session: the active Postgres transaction session
+    :param analysis_id: the ID of the analysis to bump
+    :param updated_at: the timestamp to set
+    """
+    await pg_session.execute(
+        update(SQLAnalysis)
+        .where(SQLAnalysis.id == analysis_id)
+        .values(updated_at=updated_at),
+    )
+
+    await mongo.analyses.update_one(
+        {"_id": analysis_id},
+        {"$set": {"updated_at": updated_at}},
+        session=mongo_session,
+    )
 
 
 class AttachAnalysisFileTransform(AbstractTransform):

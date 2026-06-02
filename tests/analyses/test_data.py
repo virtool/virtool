@@ -333,6 +333,14 @@ class TestDualWriteFinalize:
             )
             assert result.scalar_one() == results
 
+        document = await mongo.analyses.find_one({"_id": analysis.id})
+
+        assert document["ready"] is True
+        assert document["results"] == "sql"
+        # Mongo stores datetimes at millisecond precision, so the bumped timestamp is
+        # compared by advancement rather than exact equality with the Postgres row.
+        assert document["updated_at"] > created.updated_at
+
     async def test_rolls_back_when_mongo_write_fails(
         self,
         data_layer: DataLayer,

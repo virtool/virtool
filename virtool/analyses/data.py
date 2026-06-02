@@ -16,7 +16,10 @@ from virtool.analyses.checks import (
     check_if_analysis_is_running,
     check_if_analysis_modified,
 )
-from virtool.analyses.db import filter_analyses_by_sample_rights
+from virtool.analyses.db import (
+    bump_analysis_updated_at,
+    filter_analyses_by_sample_rights,
+)
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import Analysis, AnalysisFile, AnalysisSearchResult
 from virtool.analyses.sql import SQLAnalysis, SQLAnalysisFile, SQLAnalysisResult
@@ -373,19 +376,19 @@ class AnalysisData(DataLayerDomain):
             mongo_session,
             pg_session,
         ):
-            await asyncio.gather(
-                self._mongo.analyses.delete_one(
-                    {"_id": analysis.id},
-                    session=mongo_session,
+            await self._mongo.analyses.delete_one(
+                {"_id": analysis.id},
+                session=mongo_session,
+            )
+
+            await pg_session.execute(
+                delete(SQLAnalysisResult).where(
+                    SQLAnalysisResult.analysis_id == analysis_id,
                 ),
-                pg_session.execute(
-                    delete(SQLAnalysisResult).where(
-                        SQLAnalysisResult.analysis_id == analysis_id,
-                    ),
-                ),
-                pg_session.execute(
-                    delete(SQLAnalysis).where(SQLAnalysis.id == analysis_id),
-                ),
+            )
+
+            await pg_session.execute(
+                delete(SQLAnalysis).where(SQLAnalysis.id == analysis_id),
             )
 
         for key, exc in await delete_prefix(
@@ -574,16 +577,12 @@ class AnalysisData(DataLayerDomain):
             pg_session.add(blast)
             await pg_session.flush()
 
-            await pg_session.execute(
-                update(SQLAnalysis)
-                .where(SQLAnalysis.id == analysis_id)
-                .values(updated_at=timestamp),
-            )
-
-            await self._mongo.analyses.update_one(
-                {"_id": analysis_id},
-                {"$set": {"updated_at": timestamp}},
-                session=mongo_session,
+            await bump_analysis_updated_at(
+                self._mongo,
+                mongo_session,
+                pg_session,
+                analysis_id,
+                timestamp,
             )
 
             await self.data.tasks.create(
