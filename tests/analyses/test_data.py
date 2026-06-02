@@ -307,7 +307,7 @@ class TestFinalize:
         """
         mocker.patch(
             "virtool.analyses.format.format_analysis",
-            side_effect=lambda _storage, _mongo, document: document,
+            side_effect=lambda _storage, _mongo, _pg, document: document,
         )
 
         analysis = await data_layer.analyses.create(

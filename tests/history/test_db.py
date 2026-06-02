@@ -177,12 +177,14 @@ async def test_patch_to_version(
     remove: bool,
     create_mock_history,
     mongo: Mongo,
+    pg: AsyncEngine,
     snapshot: SnapshotAssertion,
 ):
     await create_mock_history(remove=remove)
 
     current, patched, reverted_change_ids = await virtool.history.db.patch_to_version(
         mongo,
+        pg,
         "6116cba1",
         1,
     )

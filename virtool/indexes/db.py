@@ -320,12 +320,14 @@ async def get_unbuilt_stats(mongo: "Mongo", ref_id: str | None = None) -> dict:
 
 async def get_patched_otus(
     mongo: "Mongo",
+    pg: AsyncEngine,
     manifest: dict[str, int],
 ) -> list[dict]:
     """Get joined OTUs patched to a specific version based on a manifest of OTU ids and
     versions.
 
     :param mongo: the application mongodb client
+    :param pg: the application PostgreSQL database object
     :param manifest: the manifest
 
     """
@@ -335,6 +337,7 @@ async def get_patched_otus(
             *[
                 virtool.history.db.patch_to_version(
                     mongo,
+                    pg,
                     patch_id,
                     patch_version,
                 )

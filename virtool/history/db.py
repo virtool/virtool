@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import dictdiffer
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -278,8 +278,44 @@ async def get_most_recent_change(
     )
 
 
+async def _resolve_diffs(pg: AsyncEngine, changes: list[Document]) -> dict[str, object]:
+    """Resolve the ``diff`` for each change, fetching Postgres-stored diffs in one query.
+
+    Changes created since OTU diffs moved to Postgres store the sentinel string
+    ``"postgres"`` in Mongo and the real diff in ``SQLHistoryDiff``. Older inline diffs
+    are returned as-is.
+
+    :param pg: the application PostgreSQL database object
+    :param changes: the change documents to resolve diffs for
+    :return: a mapping of change id to resolved diff
+
+    """
+    resolved: dict[str, object] = {}
+    postgres_change_ids = []
+
+    for change in changes:
+        if change["diff"] == "postgres":
+            postgres_change_ids.append(change["_id"])
+        else:
+            resolved[change["_id"]] = change["diff"]
+
+    if postgres_change_ids:
+        async with AsyncSession(pg) as session:
+            result = await session.execute(
+                select(SQLHistoryDiff.change_id, SQLHistoryDiff.diff).where(
+                    SQLHistoryDiff.change_id.in_(postgres_change_ids),
+                ),
+            )
+
+            for change_id, diff in result.all():
+                resolved[change_id] = diff
+
+    return resolved
+
+
 async def patch_to_version(
     mongo: "Mongo",
+    pg: AsyncEngine,
     otu_id: str,
     version: str | int,
 ) -> tuple:
@@ -288,6 +324,7 @@ async def patch_to_version(
     Uses the diffs in the change documents associated with the otu.
 
     :param mongo: the database object
+    :param pg: the application PostgreSQL database object
     :param otu_id: the id of the otu to patch
     :param version: the version to patch to
     :return: the current joined otu, patched otu, and the ids of reverted changes
@@ -302,25 +339,32 @@ async def patch_to_version(
 
     patched = deepcopy(current)
 
-    # Sort the changes by descending timestamp.
+    # Collect the changes to revert, sorted by descending version.
+    changes_to_revert = []
+
     async for change in mongo.history.find(
         {"otu.id": otu_id},
         sort=[("otu.version", -1)],
     ):
         if change["otu"]["version"] == "removed" or change["otu"]["version"] > version:
-            reverted_history_ids.append(change["_id"])
-
-            if change["method_name"] == "remove":
-                patched = change["diff"]
-
-            elif change["method_name"] == "create":
-                patched = None
-
-            else:
-                diff = dictdiffer.swap(change["diff"])
-                patched = dictdiffer.patch(diff, patched)
+            changes_to_revert.append(change)
         else:
             break
+
+    diffs = await _resolve_diffs(pg, changes_to_revert)
+
+    for change in changes_to_revert:
+        reverted_history_ids.append(change["_id"])
+        diff = diffs[change["_id"]]
+
+        if change["method_name"] == "remove":
+            patched = diff
+
+        elif change["method_name"] == "create":
+            patched = None
+
+        else:
+            patched = dictdiffer.patch(dictdiffer.swap(diff), patched)
 
     if current == {}:
         current = None

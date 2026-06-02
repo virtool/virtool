@@ -957,6 +957,7 @@ class ReferencesData(DataLayerDomain):
         for source_otu_id, version in manifest.items():
             _, patched, _ = await patch_to_version(
                 self._mongo,
+                self._pg,
                 source_otu_id,
                 version,
             )
