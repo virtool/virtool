@@ -401,7 +401,9 @@ class SamplesData(DataLayerDomain):
             await pg_session.execute(
                 delete(SQLAnalysisResult).where(
                     SQLAnalysisResult.analysis_id.in_(
-                        select(SQLAnalysis.id).where(SQLAnalysis.sample == sample_id),
+                        select(SQLAnalysis.legacy_id).where(
+                            SQLAnalysis.sample == sample_id,
+                        ),
                     ),
                 ),
             )

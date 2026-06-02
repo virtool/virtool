@@ -13,7 +13,7 @@ from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.models.enums import AnalysisWorkflow
 from virtool.mongo.core import Mongo
-from virtool.pg.utils import get_row_by_id
+from virtool.pg.utils import get_row, get_row_by_id
 from virtool.samples.oas import CreateAnalysisRequest
 from virtool.utils import timestamp
 
@@ -223,10 +223,11 @@ class TestCreate:
         )
 
         document = await mongo.analyses.find_one({"_id": analysis.id})
-        row = await get_row_by_id(pg, SQLAnalysis, analysis.id)
+        row = await get_row(pg, SQLAnalysis, ("legacy_id", analysis.id))
 
         assert row is not None
-        assert row.id == document["_id"]
+        assert isinstance(row.id, int)
+        assert row.legacy_id == document["_id"]
         assert row.workflow == document["workflow"]
         assert row.ready is False
         assert row.results is None
@@ -258,7 +259,7 @@ class TestCreate:
             0,
         )
 
-        row = await get_row_by_id(pg, SQLAnalysis, analysis.id)
+        row = await get_row(pg, SQLAnalysis, ("legacy_id", analysis.id))
 
         assert row.subtractions == []
 
@@ -317,13 +318,13 @@ class TestFinalize:
             0,
         )
 
-        created = await get_row_by_id(pg, SQLAnalysis, analysis.id)
+        created = await get_row(pg, SQLAnalysis, ("legacy_id", analysis.id))
 
         results = {"hits": [{"index": 0, "sequence": "ACGT"}]}
 
         await data_layer.analyses.finalize(analysis.id, results)
 
-        row = await get_row_by_id(pg, SQLAnalysis, analysis.id)
+        row = await get_row(pg, SQLAnalysis, ("legacy_id", analysis.id))
 
         assert row.ready is True
         assert row.results == results
@@ -370,7 +371,7 @@ class TestFinalize:
         with pytest.raises(RuntimeError):
             await data_layer.analyses.finalize(analysis.id, {"hits": []})
 
-        row = await get_row_by_id(pg, SQLAnalysis, analysis.id)
+        row = await get_row(pg, SQLAnalysis, ("legacy_id", analysis.id))
         assert row.ready is False
         assert row.results is None
 
@@ -404,7 +405,7 @@ class TestDelete:
         await data_layer.analyses.delete(analysis.id, jobs_api_flag=True)
 
         assert await mongo.analyses.find_one({"_id": analysis.id}) is None
-        assert await get_row_by_id(pg, SQLAnalysis, analysis.id) is None
+        assert await get_row(pg, SQLAnalysis, ("legacy_id", analysis.id)) is None
 
     async def test_rolls_back_when_mongo_delete_fails(
         self,
@@ -431,7 +432,7 @@ class TestDelete:
         with pytest.raises(RuntimeError):
             await data_layer.analyses.delete(analysis.id, jobs_api_flag=True)
 
-        assert await get_row_by_id(pg, SQLAnalysis, analysis.id) is not None
+        assert await get_row(pg, SQLAnalysis, ("legacy_id", analysis.id)) is not None
 
 
 async def test_get_without_if_modified_since(
