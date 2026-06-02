@@ -17,7 +17,6 @@ from virtool.indexes.db import (
 )
 from virtool.indexes.sql import SQLIndexFile
 from virtool.mongo.core import Mongo
-from virtool.storage.memory import MemoryStorageProvider
 
 
 @pytest.mark.parametrize("index_id", [None, "abc"])
@@ -95,18 +94,17 @@ async def test_get_patched_otus(mocker: MockerFixture, mongo: Mongo):
         make_mocked_coro((None, {"_id": "foo"}, None)),
     )
 
-    storage = MemoryStorageProvider()
     manifest = {"foo": 2, "bar": 10, "baz": 4}
 
-    patched_otus = await get_patched_otus(mongo, storage, manifest)
+    patched_otus = await get_patched_otus(mongo, manifest)
 
     assert list(patched_otus) == [{"_id": "foo"}, {"_id": "foo"}, {"_id": "foo"}]
 
     m.assert_has_calls(
         [
-            mocker.call(storage, mongo, "foo", 2),
-            mocker.call(storage, mongo, "bar", 10),
-            mocker.call(storage, mongo, "baz", 4),
+            mocker.call(mongo, "foo", 2),
+            mocker.call(mongo, "bar", 10),
+            mocker.call(mongo, "baz", 4),
         ],
     )
 

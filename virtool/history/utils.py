@@ -1,11 +1,6 @@
-import datetime
-import json
-
-import arrow
 import dictdiffer
 
 from virtool.models.enums import HistoryMethod
-from virtool.storage.protocol import StorageBackend
 
 
 def calculate_diff(old: dict, new: dict) -> list:
@@ -158,75 +153,3 @@ def derive_otu_information(
         ref_id = new["reference"]["id"]
 
     return otu_id, otu_name, otu_version, ref_id
-
-
-def diff_key(otu_id: str, otu_version: int | str) -> str:
-    """Derive the storage key for a diff file."""
-    return f"history/{otu_id}_{otu_version}.json"
-
-
-def json_encoder(o):
-    """A custom JSON encoder function that stores `datetime` objects
-    as ISO format date strings.
-
-    :param o: a JSON value object
-    :return: the object converted to a `datetime` if necessary
-
-    """
-    if isinstance(o, datetime.datetime):
-        return arrow.get(o).isoformat()
-
-    return o
-
-
-def json_object_hook(o: dict) -> dict:
-    """A JSON decoder hook for converting `created_at` fields from
-    ISO format dates to `datetime` objects.
-
-    :param o: the JSON parsing dict
-    :return: the parsed dict
-
-    """
-    for key, value in o.items():
-        if key == "created_at":
-            o[key] = arrow.get(value).naive
-
-    return o
-
-
-async def read_diff_file(
-    storage: StorageBackend,
-    otu_id: str,
-    otu_version: int | str,
-):
-    """Read a history diff from storage."""
-    chunks = []
-    async for chunk in storage.read(diff_key(otu_id, otu_version)):
-        chunks.append(chunk)
-
-    return json.loads(b"".join(chunks), object_hook=json_object_hook)
-
-
-async def remove_diff_files(
-    storage: StorageBackend,
-    id_list: list[str],
-) -> None:
-    """Remove multiple diff files from storage."""
-    for change_id in id_list:
-        otu_id, otu_version = change_id.split(".")
-        await storage.delete(diff_key(otu_id, otu_version))
-
-
-async def write_diff_file(
-    storage: StorageBackend,
-    otu_id: str,
-    otu_version: int | str,
-    body,
-) -> None:
-    """Write a history diff to storage."""
-    raw = json.dumps(body, default=json_encoder).encode()
-
-    async def _data():
-        yield raw
-
-    await storage.write(diff_key(otu_id, otu_version), _data())

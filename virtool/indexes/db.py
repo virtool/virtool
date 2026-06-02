@@ -20,7 +20,6 @@ from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
 from virtool.references.db import compose_archived_filter
 from virtool.references.transforms import AttachReferenceTransform
-from virtool.storage.protocol import StorageBackend
 from virtool.types import Document
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
@@ -321,14 +320,12 @@ async def get_unbuilt_stats(mongo: "Mongo", ref_id: str | None = None) -> dict:
 
 async def get_patched_otus(
     mongo: "Mongo",
-    storage: StorageBackend,
     manifest: dict[str, int],
 ) -> list[dict]:
     """Get joined OTUs patched to a specific version based on a manifest of OTU ids and
     versions.
 
     :param mongo: the application mongodb client
-    :param storage: the storage backend
     :param manifest: the manifest
 
     """
@@ -337,7 +334,6 @@ async def get_patched_otus(
         for j in await asyncio.tasks.gather(
             *[
                 virtool.history.db.patch_to_version(
-                    storage,
                     mongo,
                     patch_id,
                     patch_version,
