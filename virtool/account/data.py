@@ -289,8 +289,6 @@ class AccountData(DataLayerDomain):
         :param user_id: the user ID
         :return: the API key
         """
-        await self.data.users.get(user_id)
-
         raw, hashed = virtool.utils.generate_key()
 
         created_at = virtool.utils.timestamp()
