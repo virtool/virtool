@@ -306,14 +306,21 @@ async def format_analysis_to_excel(
     :return: the formatted Excel workbook
 
     """
-    depths = calculate_median_depths(results["hits"])
+    loaded_results = await load_results(
+        storage,
+        results=results,
+        legacy_id=legacy_id,
+        sample_id=sample_id,
+    )
+
+    depths = calculate_median_depths(loaded_results["hits"])
 
     formatted = await format_analysis(
         storage,
         mongo,
         pg,
         workflow=workflow,
-        results=results,
+        results=loaded_results,
         legacy_id=legacy_id,
         sample_id=sample_id,
     )
@@ -383,14 +390,21 @@ async def format_analysis_to_csv(
     :return: the formatted CSV data
 
     """
-    depths = calculate_median_depths(results["hits"])
+    loaded_results = await load_results(
+        storage,
+        results=results,
+        legacy_id=legacy_id,
+        sample_id=sample_id,
+    )
+
+    depths = calculate_median_depths(loaded_results["hits"])
 
     formatted = await format_analysis(
         storage,
         mongo,
         pg,
         workflow=workflow,
-        results=results,
+        results=loaded_results,
         legacy_id=legacy_id,
         sample_id=sample_id,
     )

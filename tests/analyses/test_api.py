@@ -8,6 +8,7 @@ from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
+from tests.fixtures.analysis import seed_analysis
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from tests.fixtures.response import RespIs
 from virtool.analyses.files import create_analysis_file
@@ -18,48 +19,6 @@ from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.users.models import User
 from virtool.workflow.pytest_plugin.utils import StaticTime
-
-
-async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> None:
-    """Seed an analysis into both backends and its index, mirroring production
-    dual-writes.
-
-    The index version is taken from the inline ``index.version`` and written to the
-    ``indexes`` collection, where ``AttachIndexTransform`` resolves it at read time.
-    Non-integer ``job.id`` placeholders are stored as a null ``job_id`` since the
-    Postgres column is a foreign key to ``jobs.id``.
-    """
-    index = document["index"]
-    job = document.get("job")
-    results = document.get("results")
-
-    await mongo.indexes.update_one(
-        {"_id": index["id"]},
-        {"$set": {"version": index["version"]}},
-        upsert=True,
-    )
-
-    await mongo.analyses.insert_one(document)
-
-    async with AsyncSession(pg) as session:
-        session.add(
-            SQLAnalysis(
-                legacy_id=document["_id"],
-                created_at=document["created_at"],
-                updated_at=document.get("updated_at", document["created_at"]),
-                workflow=document["workflow"],
-                ready=document["ready"],
-                results=results if isinstance(results, dict) else None,
-                sample=document["sample"]["id"],
-                reference=document["reference"]["id"],
-                index=index["id"],
-                subtractions=document.get("subtractions") or [],
-                user_id=document["user"]["id"],
-                job_id=job["id"] if job and isinstance(job["id"], int) else None,
-                ml_id=document.get("ml"),
-            ),
-        )
-        await session.commit()
 
 
 @pytest.fixture
@@ -626,6 +585,7 @@ async def test_blast(
     if error != "404_analysis":
         analysis_document = {
             "_id": "foobar",
+            "created_at": static_time.datetime,
             "workflow": "nuvs",
             "ready": True,
             "results": {
@@ -636,6 +596,10 @@ async def test_blast(
                 ],
             },
             "sample": {"id": "baz"},
+            "reference": {"id": "ref"},
+            "index": {"id": "index", "version": 0},
+            "subtractions": [],
+            "user": {"id": user.id},
         }
 
         if error == "404_sequence":
@@ -660,25 +624,7 @@ async def test_blast(
                 },
             )
 
-        await mongo.analyses.insert_one(analysis_document)
-
-        async with AsyncSession(pg) as session:
-            session.add(
-                SQLAnalysis(
-                    legacy_id="foobar",
-                    created_at=static_time.datetime,
-                    updated_at=static_time.datetime,
-                    workflow=analysis_document["workflow"],
-                    ready=analysis_document["ready"],
-                    results=analysis_document["results"],
-                    sample=analysis_document["sample"]["id"],
-                    reference="ref",
-                    index="index",
-                    subtractions=[],
-                    user_id=user.id,
-                ),
-            )
-            await session.commit()
+        await seed_analysis(mongo, pg, analysis_document)
 
     await client.put("/analyses/foobar/5/blast", {})
 
