@@ -397,13 +397,18 @@ class TestUpgrade:
 
         assert stored == setup_user
 
-    async def test_unknown_job_raises(
+    async def test_orphan_job_backfills_null(
         self,
         ctx: MigrationContext,
         setup_user: int,
         static_datetime: datetime,
     ):
-        """A document referencing a job absent from Postgres aborts loudly."""
+        """A document referencing a deleted job is backfilled with a null job_id.
+
+        Jobs used to be deletable, so legacy analyses can reference a job that no
+        longer exists. The migration writes the row with ``job_id = NULL`` rather
+        than aborting.
+        """
         await ctx.mongo.analyses.insert_one(
             make_analysis_document(
                 analysis_id="orphan_job_analysis",
@@ -413,11 +418,18 @@ class TestUpgrade:
             ),
         )
 
-        with pytest.raises(
-            ValueError,
-            match=r"Analysis orphan_job_analysis references unknown job",
-        ):
-            await upgrade(ctx)
+        await upgrade(ctx)
+
+        async with AsyncSession(ctx.pg) as session:
+            row = (
+                await session.execute(
+                    text(
+                        "SELECT job_id FROM analyses WHERE legacy_id = 'orphan_job_analysis'"
+                    ),
+                )
+            ).one()
+
+        assert row.job_id is None
 
     async def test_idempotent_rerun(
         self,
