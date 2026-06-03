@@ -21,7 +21,7 @@ from virtool.analyses.db import (
 )
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import Analysis, AnalysisFile, AnalysisSearchResult
-from virtool.analyses.sql import SQLAnalysis, SQLAnalysisFile, SQLAnalysisResult
+from virtool.analyses.sql import SQLAnalysis, SQLAnalysisFile
 from virtool.analyses.utils import (
     analysis_file_key,
     attach_analysis_files,
@@ -35,7 +35,7 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.events import Operation, emit, emits
-from virtool.data.topg import both_transactions, compose_legacy_id_single_expression
+from virtool.data.topg import compose_legacy_id_single_expression
 from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
 from virtool.indexes.transforms import AttachIndexTransform
@@ -290,7 +290,7 @@ class AnalysisData(DataLayerDomain):
         """
         created_at = virtool.utils.timestamp()
 
-        index_id, index_version = await get_current_id_and_version(
+        index_id, _ = await get_current_id_and_version(
             self._mongo,
             data.ref_id,
         )
@@ -306,36 +306,8 @@ class AnalysisData(DataLayerDomain):
 
         subtractions = data.subtractions if data.subtractions is not None else []
 
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
-            await self._mongo.analyses.insert_one(
-                {
-                    "_id": analysis_id,
-                    "created_at": created_at,
-                    "files": [],
-                    "index": {"id": index_id, "version": index_version},
-                    "job": {"id": job.id},
-                    "ml": data.ml,
-                    "reference": {
-                        "id": data.ref_id,
-                    },
-                    "ready": False,
-                    "results": None,
-                    "sample": {"id": sample_id},
-                    "space": {"id": space_id},
-                    "subtractions": subtractions,
-                    "updated_at": created_at,
-                    "user": {
-                        "id": user_id,
-                    },
-                    "workflow": data.workflow.value,
-                },
-                session=mongo_session,
-            )
-
-            await pg_session.execute(
+        async with AsyncSession(self._pg) as session:
+            await session.execute(
                 insert(SQLAnalysis).values(
                     legacy_id=analysis_id,
                     created_at=created_at,
@@ -352,6 +324,8 @@ class AnalysisData(DataLayerDomain):
                     ml_id=data.ml,
                 ),
             )
+
+            await session.commit()
 
         return await self.get(analysis_id, None)
 
@@ -413,24 +387,12 @@ class AnalysisData(DataLayerDomain):
 
         legacy_id = (await self._resolve_ids(analysis.id)).legacy_id
 
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
-            await self._mongo.analyses.delete_one(
-                {"_id": legacy_id},
-                session=mongo_session,
-            )
-
-            await pg_session.execute(
-                delete(SQLAnalysisResult).where(
-                    SQLAnalysisResult.analysis_id == legacy_id,
-                ),
-            )
-
-            await pg_session.execute(
+        async with AsyncSession(self._pg) as session:
+            await session.execute(
                 delete(SQLAnalysis).where(SQLAnalysis.id == analysis.id),
             )
+
+            await session.commit()
 
         for key, exc in await delete_prefix(
             self._storage,
@@ -609,16 +571,13 @@ class AnalysisData(DataLayerDomain):
             check_analysis_nuvs_sequence(analysis.results, sequence_index),
         )
 
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
-            await pg_session.execute(
+        async with AsyncSession(self._pg) as session:
+            await session.execute(
                 delete(SQLNuVsBlast)
                 .where(SQLNuVsBlast.analysis_id == legacy_id)
                 .where(SQLNuVsBlast.sequence_index == sequence_index),
             )
-            await pg_session.flush()
+            await session.flush()
 
             blast = SQLNuVsBlast(
                 analysis_id=legacy_id,
@@ -629,16 +588,10 @@ class AnalysisData(DataLayerDomain):
                 updated_at=timestamp,
             )
 
-            pg_session.add(blast)
-            await pg_session.flush()
+            session.add(blast)
+            await session.flush()
 
-            await bump_analysis_updated_at(
-                self._mongo,
-                mongo_session,
-                pg_session,
-                legacy_id,
-                timestamp,
-            )
+            await bump_analysis_updated_at(session, legacy_id, timestamp)
 
             await self.data.tasks.create(
                 BLASTTask,
@@ -646,6 +599,8 @@ class AnalysisData(DataLayerDomain):
             )
 
             blast_data = blast.to_dict()
+
+            await session.commit()
 
         return blast_data
 
@@ -681,28 +636,14 @@ class AnalysisData(DataLayerDomain):
 
         sample_id = row.sample
 
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
-            await pg_session.execute(
-                insert(SQLAnalysisResult).values(
-                    analysis_id=row.legacy_id,
-                    results=results,
-                ),
-            )
-
-            await pg_session.execute(
+        async with AsyncSession(self._pg) as session:
+            await session.execute(
                 update(SQLAnalysis)
                 .where(SQLAnalysis.id == row.id)
                 .values(ready=True, results=results, updated_at=updated_at),
             )
 
-            await self._mongo.analyses.find_one_and_update(
-                {"_id": row.legacy_id},
-                {"$set": {"results": "sql", "ready": True, "updated_at": updated_at}},
-                session=mongo_session,
-            )
+            await session.commit()
 
         await recalculate_workflow_tags(self._mongo, self._pg, sample_id)
 

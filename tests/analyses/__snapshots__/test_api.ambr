@@ -44,36 +44,6 @@
     'workflow': 'nuvs',
   })
 # ---
-# name: TestFinalize.test_ok.1
-  dict({
-    '_id': 'analysis1',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'files': list([
-    ]),
-    'index': dict({
-      'id': 'foo',
-      'version': 2,
-    }),
-    'job': dict({
-      'id': 1,
-    }),
-    'ready': True,
-    'reference': dict({
-      'id': 'baz',
-    }),
-    'results': 'sql',
-    'sample': dict({
-      'id': 'sample1',
-    }),
-    'subtractions': list([
-    ]),
-    'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'user': dict({
-      'id': 1,
-    }),
-    'workflow': 'nuvs',
-  })
-# ---
 # name: test_blast[None]
   dict({
     'analysis_id': 'foobar',

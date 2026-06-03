@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.filters import props
 
-from virtool.analyses.sql import SQLAnalysis, SQLAnalysisFile, SQLAnalysisResult
+from virtool.analyses.sql import SQLAnalysis, SQLAnalysisFile
 from virtool.api.client import UserClient
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
@@ -140,12 +140,10 @@ async def test_find(
 
 async def test_create(
     data_layer: DataLayer,
-    mongo: Mongo,
-    pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     setup_sample: str,
 ):
-    """Tests that an analysis is created given an analysis id with the expected fields."""
+    """Tests that an analysis is created with the expected fields."""
     user_id: str = setup_sample
 
     analysis = await data_layer.analyses.create(
@@ -162,43 +160,6 @@ async def test_create(
 
     assert analysis == snapshot(name="obj", exclude=props("created_at", "updated_at"))
 
-    row = await get_row(pg, SQLAnalysis, ("id", analysis.id))
-    assert await mongo.analyses.find_one({"_id": row.legacy_id}) == snapshot(
-        name="mongo",
-        exclude=props("created_at", "updated_at"),
-    )
-
-
-async def test_create_analysis_id(
-    data_layer: DataLayer,
-    mongo: Mongo,
-    pg: AsyncEngine,
-    snapshot: SnapshotAssertion,
-    setup_sample: str,
-):
-    """Tests that an analysis is created with the expected fields."""
-    user_id = setup_sample
-
-    analysis = await data_layer.analyses.create(
-        CreateAnalysisRequest(
-            ml=None,
-            ref_id="test_ref",
-            subtractions=["subtraction_1", "subtraction_2"],
-            workflow=AnalysisWorkflow.nuvs,
-        ),
-        "test_sample",
-        user_id,
-        0,
-    )
-
-    assert analysis == snapshot(name="obj", exclude=props("created_at", "updated_at"))
-
-    row = await get_row(pg, SQLAnalysis, ("id", analysis.id))
-    assert await mongo.analyses.find_one({"_id": row.legacy_id}) == snapshot(
-        name="mongo",
-        exclude=props("created_at", "updated_at"),
-    )
-
 
 def _create_request() -> CreateAnalysisRequest:
     return CreateAnalysisRequest(
@@ -210,16 +171,15 @@ def _create_request() -> CreateAnalysisRequest:
 
 
 class TestCreate:
-    """Creating an analysis dual-writes to Mongo and Postgres."""
+    """Creating an analysis writes a Postgres row."""
 
-    async def test_mirrors_mongo(
+    async def test_writes_pg_row(
         self,
         data_layer: DataLayer,
-        mongo: Mongo,
         pg: AsyncEngine,
         setup_sample: str,
     ):
-        """The Postgres row mirrors the Mongo document after create."""
+        """The Postgres row reflects the creation request."""
         analysis = await data_layer.analyses.create(
             _create_request(),
             "test_sample",
@@ -228,21 +188,16 @@ class TestCreate:
         )
 
         row = await get_row(pg, SQLAnalysis, ("id", analysis.id))
-        document = await mongo.analyses.find_one({"_id": row.legacy_id})
 
         assert row is not None
         assert row.id == analysis.id
-        assert row.legacy_id == document["_id"]
-        assert row.workflow == document["workflow"]
+        assert row.workflow == "nuvs"
         assert row.ready is False
         assert row.results is None
-        assert document["results"] is None
-        assert row.sample == document["sample"]["id"]
-        assert row.reference == document["reference"]["id"]
-        assert row.index == document["index"]["id"]
-        assert row.subtractions == document["subtractions"]
-        assert row.job_id == document["job"]["id"]
-        assert row.ml_id == document["ml"]
+        assert row.sample == "test_sample"
+        assert row.reference == "test_ref"
+        assert row.subtractions == ["subtraction_1", "subtraction_2"]
+        assert row.ml_id is None
         assert row.created_at == row.updated_at
         assert isinstance(row.user_id, int)
 
@@ -271,12 +226,11 @@ class TestCreate:
     async def test_rolls_back_when_pg_write_fails(
         self,
         data_layer: DataLayer,
-        mongo: Mongo,
         pg: AsyncEngine,
         setup_sample: str,
         mocker,
     ):
-        """A failure writing the Postgres row rolls back the Mongo write too."""
+        """A failure writing the Postgres row leaves no analysis behind."""
         mocker.patch(
             "virtool.analyses.data.insert",
             side_effect=RuntimeError("boom"),
@@ -290,17 +244,15 @@ class TestCreate:
                 0,
             )
 
-        assert await mongo.analyses.count_documents({}) == 0
-
         async with AsyncSession(pg) as session:
             result = await session.execute(select(SQLAnalysis))
             assert result.scalars().first() is None
 
 
 class TestFinalize:
-    """Finalizing an analysis dual-writes results and the ready flag to both backends."""
+    """Finalizing an analysis writes results and the ready flag to Postgres."""
 
-    async def test_mirrors_mongo(
+    async def test_writes_results(
         self,
         data_layer: DataLayer,
         mongo: Mongo,
@@ -308,9 +260,7 @@ class TestFinalize:
         setup_sample: str,
         mocker,
     ):
-        """Finalize marks the Postgres row ready and writes results matching the
-        ``analysis_results`` row.
-        """
+        """Finalize marks the Postgres row ready and stores the results."""
         m_format_analysis = mocker.patch(
             "virtool.analyses.format.format_analysis",
             side_effect=lambda _storage, _mongo, _pg, *, results, **_: results,
@@ -335,22 +285,6 @@ class TestFinalize:
         assert row.results == results
         assert row.updated_at > created.updated_at
 
-        async with AsyncSession(pg) as session:
-            result = await session.execute(
-                select(SQLAnalysisResult.results).where(
-                    SQLAnalysisResult.analysis_id == created.legacy_id,
-                ),
-            )
-            assert result.scalar_one() == results
-
-        document = await mongo.analyses.find_one({"_id": created.legacy_id})
-
-        assert document["ready"] is True
-        assert document["results"] == "sql"
-        # Mongo stores datetimes at millisecond precision, so the bumped timestamp is
-        # compared by advancement rather than exact equality with the Postgres row.
-        assert document["updated_at"] > created.updated_at
-
         # The PostgreSQL engine must be threaded through to format_analysis so it can
         # resolve Postgres-stored history diffs.
         m_format_analysis.assert_called_with(
@@ -363,95 +297,27 @@ class TestFinalize:
             sample_id=ANY,
         )
 
-    async def test_rolls_back_when_mongo_write_fails(
-        self,
-        data_layer: DataLayer,
-        pg: AsyncEngine,
-        setup_sample: str,
-        mongo: Mongo,
-        mocker,
-    ):
-        """A failure updating Mongo rolls back the Postgres writes."""
-        analysis = await data_layer.analyses.create(
-            _create_request(),
-            "test_sample",
-            setup_sample,
-            0,
-        )
-
-        mocker.patch.object(
-            mongo.analyses,
-            "find_one_and_update",
-            side_effect=RuntimeError("boom"),
-        )
-
-        with pytest.raises(RuntimeError):
-            await data_layer.analyses.finalize(analysis.id, {"hits": []})
-
-        row = await get_row(pg, SQLAnalysis, ("id", analysis.id))
-        assert row.ready is False
-        assert row.results is None
-
-        async with AsyncSession(pg) as session:
-            result = await session.execute(
-                select(SQLAnalysisResult).where(
-                    SQLAnalysisResult.analysis_id == row.legacy_id,
-                ),
-            )
-            assert result.scalars().first() is None
-
 
 class TestDelete:
-    """Deleting an analysis removes it from both Mongo and Postgres."""
+    """Deleting an analysis removes its Postgres row."""
 
     async def test_deletes_pg_row(
         self,
         data_layer: DataLayer,
-        mongo: Mongo,
         pg: AsyncEngine,
         setup_sample: str,
     ):
-        """Delete removes the Postgres row alongside the Mongo document."""
+        """Delete removes the Postgres row."""
         analysis = await data_layer.analyses.create(
             _create_request(),
             "test_sample",
             setup_sample,
             0,
         )
-
-        row = await get_row(pg, SQLAnalysis, ("id", analysis.id))
 
         await data_layer.analyses.delete(analysis.id, jobs_api_flag=True)
 
-        assert await mongo.analyses.find_one({"_id": row.legacy_id}) is None
         assert await get_row(pg, SQLAnalysis, ("id", analysis.id)) is None
-
-    async def test_rolls_back_when_mongo_delete_fails(
-        self,
-        data_layer: DataLayer,
-        mongo: Mongo,
-        pg: AsyncEngine,
-        setup_sample: str,
-        mocker,
-    ):
-        """A failure deleting from Mongo leaves the Postgres row in place."""
-        analysis = await data_layer.analyses.create(
-            _create_request(),
-            "test_sample",
-            setup_sample,
-            0,
-        )
-
-        mocker.patch.object(
-            mongo.analyses,
-            "delete_one",
-            side_effect=RuntimeError("boom"),
-        )
-
-        with pytest.raises(RuntimeError):
-            await data_layer.analyses.delete(analysis.id, jobs_api_flag=True)
-
-        assert await get_row(pg, SQLAnalysis, ("id", analysis.id)) is not None
 
 
 async def test_get_without_if_modified_since(
