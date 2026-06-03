@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
 import virtool.utils
+from virtool.analyses.sql import SQLAnalysis
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
 from virtool.data.transforms import apply_transforms
@@ -249,13 +250,13 @@ class JobsData:
                     SQLJobSample.sample_id,
                     SQLJobIndex.index_id,
                     SQLJobSubtraction.subtraction_id,
-                    SQLJobAnalysis.analysis_id,
+                    SQLAnalysis.legacy_id,
                 )
                 .join(SQLUser, SQLJob.user_id == SQLUser.id)
                 .outerjoin(SQLJobSample, SQLJob.id == SQLJobSample.job_id)
                 .outerjoin(SQLJobIndex, SQLJob.id == SQLJobIndex.job_id)
                 .outerjoin(SQLJobSubtraction, SQLJob.id == SQLJobSubtraction.job_id)
-                .outerjoin(SQLJobAnalysis, SQLJob.id == SQLJobAnalysis.job_id)
+                .outerjoin(SQLAnalysis, SQLAnalysis.job_id == SQLJob.id)
                 .where(SQLJob.id == job_id),
             )
             row = result.unique().first()

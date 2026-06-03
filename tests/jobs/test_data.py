@@ -3,6 +3,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from virtool.analyses.sql import SQLAnalysis
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import (
     Operation,
@@ -253,6 +254,26 @@ class TestCreatePostgres:
             user.id,
             0,
         )
+
+        # ``get`` resolves the analysis id from the analysis row linked by
+        # ``job_id``, mirroring the row written when an analysis is created.
+        async with AsyncSession(pg) as session:
+            session.add(
+                SQLAnalysis(
+                    legacy_id="analysis_abc",
+                    created_at=arrow.utcnow().naive,
+                    updated_at=arrow.utcnow().naive,
+                    workflow=workflow,
+                    ready=False,
+                    sample="sample_abc",
+                    reference="ref_abc",
+                    index="index_abc",
+                    subtractions=[],
+                    user_id=user.id,
+                    job_id=job.id,
+                ),
+            )
+            await session.commit()
 
         async with AsyncSession(pg) as session:
             sql_job = (
