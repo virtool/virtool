@@ -8,7 +8,7 @@ class FindAnalysesResponse(AnalysisSearchResult):
                 "documents": [
                     {
                         "created_at": "2022-08-15T17:42:35.979000Z",
-                        "id": "ofv7rp4v",
+                        "id": 3145,
                         "index": {"id": "u3lm1rk8", "version": 14},
                         "job": {"id": "us3toy8j"},
                         "ready": True,

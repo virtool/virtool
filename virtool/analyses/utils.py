@@ -27,7 +27,8 @@ async def attach_analysis_files(
     `GET` response.
 
     :param pg: PostgreSQL AsyncEngine object
-    :param analysis_id: An id for a specific analysis
+    :param analysis_id: the legacy slug used to look up the still-string-keyed
+        ``analysis_files`` rows
     :param document: The analysis document
     :return: List of file details for each file associated with an analysis
     """
@@ -42,7 +43,12 @@ async def attach_analysis_files(
             .all()
         )
 
-    return {**document, "files": [result.to_dict() for result in results]}
+    return {
+        **document,
+        "files": [
+            {**result.to_dict(), "analysis": document["_id"]} for result in results
+        ],
+    }
 
 
 def find_nuvs_sequence_by_index(

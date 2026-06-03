@@ -593,17 +593,19 @@ class TestDelete:
 
         await data_layer.analyses.finalize(analysis.id, {"hits": []})
 
-        assert await get_row(pg, SQLAnalysis, ("legacy_id", analysis.id)) is not None
+        row = await get_row(pg, SQLAnalysis, ("id", analysis.id))
+        assert row is not None
+        legacy_id = row.legacy_id
 
         await data_layer.samples.delete("test_sample")
 
-        assert await mongo.analyses.find_one({"_id": analysis.id}) is None
-        assert await get_row(pg, SQLAnalysis, ("legacy_id", analysis.id)) is None
+        assert await mongo.analyses.find_one({"_id": legacy_id}) is None
+        assert await get_row(pg, SQLAnalysis, ("id", analysis.id)) is None
 
         async with AsyncSession(pg) as session:
             result = await session.execute(
                 select(SQLAnalysisResult).where(
-                    SQLAnalysisResult.analysis_id == analysis.id,
+                    SQLAnalysisResult.analysis_id == legacy_id,
                 ),
             )
             assert result.scalar_one_or_none() is None

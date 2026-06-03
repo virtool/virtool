@@ -1222,7 +1222,7 @@ class TestAnalyze:
         resp = await self._post(analyze_client)
 
         assert resp.status == 201
-        assert resp.headers["Location"] == "/analyses/bf1b993c"
+        assert resp.headers["Location"] == "/analyses/1"
         assert await resp.json() == snapshot
 
     async def test_missing_reference(
