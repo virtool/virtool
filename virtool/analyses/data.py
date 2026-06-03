@@ -3,8 +3,7 @@ import math
 from collections.abc import AsyncIterator
 from datetime import datetime
 
-import sentry_sdk
-from sqlalchemy import delete, insert, select, update
+from sqlalchemy import delete, func, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
@@ -36,9 +35,10 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.events import Operation, emit, emits
-from virtool.data.topg import both_transactions
+from virtool.data.topg import both_transactions, compose_legacy_id_single_expression
 from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
+from virtool.indexes.transforms import AttachIndexTransform
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.ml.transforms import AttachMLTransform
 from virtool.mongo.core import Mongo
@@ -57,6 +57,54 @@ from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor, wait_for_checks
 
 logger = get_logger("analyses")
+
+FIND_COLUMNS = (
+    SQLAnalysis.legacy_id,
+    SQLAnalysis.created_at,
+    SQLAnalysis.updated_at,
+    SQLAnalysis.workflow,
+    SQLAnalysis.ready,
+    SQLAnalysis.sample,
+    SQLAnalysis.reference,
+    SQLAnalysis.index,
+    SQLAnalysis.subtractions,
+    SQLAnalysis.user_id,
+    SQLAnalysis.job_id,
+    SQLAnalysis.ml_id,
+)
+"""The ``SQLAnalysis`` columns selected for list views.
+
+The TOASTed ``results`` column is deliberately excluded.
+"""
+
+
+def _row_to_document(row, *, include_results: bool) -> dict:
+    """Shape a ``SQLAnalysis`` row into the Mongo-like document the transforms and
+    formatters expect.
+
+    The legacy id is used as ``_id`` so responses stay compatible with the Mongo
+    string ids still present in URLs. ``base_processor`` later renames it to ``id``.
+    """
+    document = {
+        "_id": row.legacy_id,
+        "created_at": row.created_at,
+        "updated_at": row.updated_at,
+        "workflow": row.workflow,
+        "ready": row.ready,
+        "sample": {"id": row.sample},
+        "reference": {"id": row.reference},
+        "index": {"id": row.index},
+        # Iimi analyses can have ``None`` for subtractions.
+        "subtractions": row.subtractions or [],
+        "user": {"id": row.user_id},
+        "job": {"id": row.job_id} if row.job_id else None,
+        "ml": row.ml_id,
+    }
+
+    if include_results:
+        document["results"] = row.results
+
+    return document
 
 
 class AnalysisData(DataLayerDomain):
@@ -82,60 +130,28 @@ class AnalysisData(DataLayerDomain):
         :param sample_id: sample id to search by
         :return: a list of all analysis documents
         """
-        sort = {"created_at": -1}
-
         skip_count = 0
 
         if page > 1:
             skip_count = (page - 1) * per_page
 
-        pipeline = [
-            {"$match": {"sample.id": sample_id} if sample_id is not None else {}},
-            {
-                "$facet": {
-                    "total_count": [{"$count": "total_count"}],
-                    "data": [
-                        {"$sort": sort},
-                        {"$skip": skip_count},
-                        {"$limit": per_page},
-                    ],
-                },
-            },
-            {
-                "$project": {
-                    "data": {
-                        "_id": True,
-                        "created_at": True,
-                        "index": True,
-                        "job": True,
-                        "ml": True,
-                        "ready": True,
-                        "reference": True,
-                        "sample": True,
-                        "subtractions": True,
-                        "updated_at": True,
-                        "user": True,
-                        "workflow": True,
-                    },
-                    "total_count": {"$arrayElemAt": ["$total_count.total_count", 0]},
-                },
-            },
-        ]
+        count_statement = select(func.count()).select_from(SQLAnalysis)
+        statement = select(*FIND_COLUMNS).order_by(
+            SQLAnalysis.created_at.desc(),
+            SQLAnalysis.id.desc(),
+        )
 
-        data: tuple[list[dict], int] | None = None
+        if sample_id is not None:
+            count_statement = count_statement.where(SQLAnalysis.sample == sample_id)
+            statement = statement.where(SQLAnalysis.sample == sample_id)
 
-        with sentry_sdk.start_span(op="mongo", name="aggregate_find_analyses"):
-            async for paginate_dict in self._mongo.analyses.aggregate(pipeline):
-                data = (
-                    paginate_dict["data"],
-                    paginate_dict.get("total_count", 0),
-                )
-                break
+        async with AsyncSession(self._pg) as session:
+            total_count = (await session.execute(count_statement)).scalar_one()
+            rows = (
+                await session.execute(statement.offset(skip_count).limit(per_page))
+            ).all()
 
-        if data is None:
-            raise ValueError("No data returned in aggregation")
-
-        documents, total_count = data
+        documents = [_row_to_document(row, include_results=False) for row in rows]
 
         documents = await filter_analyses_by_sample_rights(
             client,
@@ -143,15 +159,10 @@ class AnalysisData(DataLayerDomain):
             documents,
         )
 
-        # Have to do this because Iimi analyses have ``None`` for subtractions.
-        # TODO: Make all analyses have an empty list for subtractions.
-        for document in documents:
-            if document.get("subtractions") is None:
-                document["subtractions"] = []
-
         documents = await apply_transforms(
             [base_processor(d) for d in documents],
             [
+                AttachIndexTransform(self._mongo),
                 AttachMLTransform(self._pg),
                 AttachJobTransform(self._pg),
                 AttachReferenceTransform(self._mongo),
@@ -183,26 +194,25 @@ class AnalysisData(DataLayerDomain):
         :param if_modified_since: the date the document should have been last modified
         :return: the analysis
         """
-        document = await self._mongo.analyses.find_one({"_id": analysis_id})
+        async with AsyncSession(self._pg) as session:
+            row = (
+                await session.execute(
+                    select(SQLAnalysis).where(
+                        compose_legacy_id_single_expression(SQLAnalysis, analysis_id),
+                    ),
+                )
+            ).scalar_one_or_none()
 
-        if not document:
+        if row is None:
             raise ResourceNotFoundError()
+
+        document = _row_to_document(row, include_results=True)
 
         await wait_for_checks(check_if_analysis_modified(if_modified_since, document))
 
         document = await attach_analysis_files(self._pg, analysis_id, document)
 
         if document["ready"]:
-            if document["results"] == "sql":
-                async with AsyncSession(self._pg) as session:
-                    result = await session.execute(
-                        select(SQLAnalysisResult.results).where(
-                            SQLAnalysisResult.analysis_id == analysis_id,
-                        ),
-                    )
-
-                    document["results"] = result.scalars().one()
-
             document = await virtool.analyses.format.format_analysis(
                 self._storage,
                 self._mongo,
@@ -210,12 +220,8 @@ class AnalysisData(DataLayerDomain):
                 document,
             )
 
-        # Have to do this because Iimi analyses have ``None`` for subtractions.
-        # TODO: Make all analyses have an empty list for subtractions.
-        if document.get("subtractions") is None:
-            document["subtractions"] = []
-
         transforms = [
+            AttachIndexTransform(self._mongo),
             AttachJobTransform(self._pg),
             AttachMLTransform(self._pg),
             AttachReferenceTransform(self._mongo),
