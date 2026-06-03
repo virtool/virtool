@@ -54,21 +54,16 @@ class TasksData:
 
         """
         async with AsyncSession(self._pg) as session:
-            result = await session.execute(
-                select(SQLTask.acquired_at.is_(None), func.count())
-                .where(SQLTask.complete.is_(False), SQLTask.error.is_(None))
-                .group_by(SQLTask.acquired_at.is_(None)),
-            )
+            queued, running = (
+                await session.execute(
+                    select(
+                        func.count().filter(SQLTask.acquired_at.is_(None)),
+                        func.count().filter(SQLTask.acquired_at.is_not(None)),
+                    ).where(SQLTask.complete.is_(False), SQLTask.error.is_(None)),
+                )
+            ).one()
 
-        counts = TaskCounts()
-
-        for unacquired, count in result.all():
-            if unacquired:
-                counts.queued = count
-            else:
-                counts.running = count
-
-        return counts
+        return TaskCounts(queued=queued, running=running)
 
     async def get(self, task_id: int) -> Task:
         """Get the task corresponding with passed "task_id".
