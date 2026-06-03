@@ -115,13 +115,6 @@ config). There is no type checker in this project.
 There is no local dev server. The development environment runs via Tilt in a
 separate repo (`virtool/dev`).
 
-### Other Commands
-
-```bash
-# Generate OpenAPI spec
-mise run oas
-```
-
 ### Migrations
 
 Create new Alembic revisions with the alembic CLI:
@@ -202,6 +195,17 @@ Use **"delete"** for permanently destroying an entity. Use **"remove"** for
 detaching an entity from a parent or collection without destroying it (e.g.,
 removing an isolate from an OTU).
 
+### Datetimes
+
+Datetimes in Virtool are **naive UTC** — no `tzinfo` attached, always
+representing UTC. Generate them with `virtool.utils.timestamp()`
+(`arrow.utcnow().naive`), never `datetime.now()` or aware datetimes.
+
+Postgres datetime columns use plain `DateTime` / `Mapped[datetime]`, **not**
+`DateTime(timezone=True)`. Adding `timezone=True` would diverge from every
+existing model and store offset-aware values that the rest of the codebase does
+not expect.
+
 ### Lifecycle Filter Convention
 
 For list endpoints that expose a boolean lifecycle field (e.g. `archived`),
@@ -272,6 +276,12 @@ Team ID: `76cf3c46-c5d9-4df4-b457-0fc053d402f7`
 
 New issues should use the "Backend" label. Choose an appropriate status — don't
 default to "Backlog". Bugs should go to "Todo".
+
+### Issue Naming
+
+- Capitalize issue titles.
+- Keep Conventional Commit types and scopes out of titles (e.g. write "Fix
+  sample creation" not "fix(samples): blah").
 
 When using sub-agents to interact with Linear:
 - Never update issue comments or status unless explicitly asked.

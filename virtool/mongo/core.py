@@ -167,18 +167,14 @@ class Mongo:
         self.hmm = self.bind_collection("hmm")
         self.indexes = self.bind_collection("indexes")
         self.jobs = self.bind_collection("jobs")
-        self.keys = self.bind_collection("keys")
         self.labels = self.bind_collection("labels")
-        self.migrations = self.bind_collection("migrations")
         self.otus = self.bind_collection("otus")
         self.tasks = self.bind_collection("tasks")
         self.references = self.bind_collection("references")
         self.samples = self.bind_collection("samples")
-        self.settings = self.bind_collection("settings")
         self.sequences = self.bind_collection("sequences")
         self.status = self.bind_collection("status")
         self.subtraction = self.bind_collection("subtraction")
-        self.users = self.bind_collection("users")
 
     def bind_collection(self, name: str) -> Collection:
         return Collection(self, name)

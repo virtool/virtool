@@ -5,7 +5,6 @@ from syrupy.assertion import SnapshotAssertion
 from virtool.data.transforms import apply_transforms
 from virtool.fake.next import DataFaker
 from virtool.groups.pg import SQLGroup
-from virtool.users.pg import SQLUser
 from virtool.users.transforms import AttachPermissionsTransform, AttachUserTransform
 
 
@@ -98,37 +97,6 @@ class TestAttachUserTransform:
                 {"id": "foo", "user": {"id": user_2.id}},
                 {"id": "baz", "user": {"id": user_1.id}},
             ]
-
-        assert (
-            await apply_transforms(documents, [AttachUserTransform(pg)], pg) == snapshot
-        )
-
-    async def test_mixed_id_formats(
-        self,
-        fake: DataFaker,
-        pg: AsyncEngine,
-        snapshot: SnapshotAssertion,
-    ):
-        """Test that users with both modern and legacy IDs don't cause validation errors."""
-        user_with_legacy = await fake.users.create()
-        user_without_legacy = await fake.users.create()
-
-        # Manually set a legacy_id for the first user
-        async with AsyncSession(pg) as session:
-            result = await session.get(SQLUser, user_with_legacy.id)
-            result.legacy_id = "legacy_user_123"
-            await session.commit()
-
-        # Test documents using different ID formats
-        documents = [
-            {"id": "doc1", "user": {"id": user_with_legacy.id}},  # Modern ID
-            {"id": "doc2", "user": {"id": "legacy_user_123"}},  # Legacy ID
-            {"id": "doc3", "user": {"id": user_without_legacy.id}},  # Modern ID only
-            {
-                "id": "doc4",
-                "user": {"id": str(user_with_legacy.id)},
-            },  # String modern ID
-        ]
 
         assert (
             await apply_transforms(documents, [AttachUserTransform(pg)], pg) == snapshot

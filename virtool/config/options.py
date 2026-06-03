@@ -11,6 +11,7 @@ def my_command(host, port):
 """
 
 import os
+from pathlib import Path
 
 import click
 
@@ -48,11 +49,15 @@ base_url_option = click.option(
     type=str,
 )
 
-data_path_option = click.option(
-    "--data-path",
-    default=get_from_environment("data_path", "./data"),
-    help="The path to the application data directory",
-    type=click.Path(exists=True),
+storage_fallback_path_option = click.option(
+    "--storage-fallback-path",
+    default=get_from_environment("storage_fallback_path", None),
+    help=(
+        "Path to a legacy on-disk data directory used as a read fallback. When "
+        "set, the object-storage backend is wrapped with the legacy filesystem "
+        "fallback. Leave unset for blob-only storage (the default)."
+    ),
+    type=click.Path(exists=True, path_type=Path),
 )
 
 dev_option = click.option(

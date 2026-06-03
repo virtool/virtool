@@ -203,7 +203,7 @@ class IndexData:
         except StorageKeyNotFoundError:
             patched_otus = await virtool.indexes.db.get_patched_otus(
                 self._mongo,
-                self._storage,
+                self._pg,
                 index["manifest"],
             )
 

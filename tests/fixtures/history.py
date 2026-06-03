@@ -2,6 +2,8 @@ import datetime
 
 import pytest
 
+from virtool.history.db import bulk_insert_diffs
+
 
 @pytest.fixture
 def test_change(static_time):
@@ -99,7 +101,7 @@ def test_otu_edit():
 
 
 @pytest.fixture
-def create_mock_history(mongo):
+def create_mock_history(mongo, pg):
     async def func(remove):
         documents = [
             {
@@ -264,6 +266,19 @@ def create_mock_history(mongo):
             }
 
             await mongo.otus.insert_one(otu)
+
+        # Mirror production: store the real diff in Postgres and only the
+        # "postgres" sentinel in Mongo.
+        await bulk_insert_diffs(
+            pg,
+            [
+                {"change_id": document["_id"], "diff": document["diff"]}
+                for document in documents
+            ],
+        )
+
+        for document in documents:
+            document["diff"] = "postgres"
 
         await mongo.history.insert_many(documents, session=None)
 

@@ -11,7 +11,7 @@ from virtool.storage.protocol import StorageBackend
 
 
 @pytest.fixture
-def data_layer(
+async def data_layer(
     config,
     memory_storage: StorageBackend,
     mocker: MockerFixture,
@@ -19,6 +19,9 @@ def data_layer(
     pg: AsyncEngine,
 ) -> DataLayer:
     """A complete data layer backed by testing instances of MongoDB and PostgreSQL.
+
+    The singleton settings row is seeded to mirror application startup, which
+    always calls ``settings.ensure()`` before serving requests.
 
     Example:
     -------
@@ -28,10 +31,14 @@ def data_layer(
             await data_layer.samples.create(...)
 
     """
-    return create_data_layer(
+    layer = create_data_layer(
         mongo,
         pg,
         config,
         mocker.Mock(spec=ClientSession),
         memory_storage,
     )
+
+    await layer.settings.ensure()
+
+    return layer

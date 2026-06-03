@@ -2,7 +2,6 @@ from collections.abc import AsyncIterator
 
 import pytest
 
-from virtool.api.errors import APINotFound
 from virtool.api.streaming import stream_storage_response
 from virtool.storage.errors import StorageKeyNotFoundError
 
@@ -12,15 +11,7 @@ async def _missing_stream() -> AsyncIterator[bytes]:
     yield b""
 
 
-async def test_stream_storage_response_uses_default_not_found_message():
-    with pytest.raises(APINotFound) as err:
+async def test_stream_storage_response_propagates_storage_key_not_found():
+    """A missing blob is a server-side bug and must propagate, not become a 404."""
+    with pytest.raises(StorageKeyNotFoundError):
         await stream_storage_response(None, _missing_stream(), {})
-
-    assert err.value.message == "Not found"
-
-
-async def test_stream_storage_response_uses_custom_not_found_message():
-    with pytest.raises(APINotFound) as err:
-        await stream_storage_response(None, _missing_stream(), {}, "File not found")
-
-    assert err.value.message == "File not found"

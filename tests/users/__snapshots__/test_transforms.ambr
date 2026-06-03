@@ -87,38 +87,6 @@
     }),
   })
 # ---
-# name: TestAttachUserTransform.test_mixed_id_formats
-  list([
-    dict({
-      'id': 'doc1',
-      'user': dict({
-        'handle': 'leeashley',
-        'id': 1,
-      }),
-    }),
-    dict({
-      'id': 'doc2',
-      'user': dict({
-        'handle': 'leeashley',
-        'id': 1,
-      }),
-    }),
-    dict({
-      'id': 'doc3',
-      'user': dict({
-        'handle': 'zclark',
-        'id': 2,
-      }),
-    }),
-    dict({
-      'id': 'doc4',
-      'user': dict({
-        'handle': 'leeashley',
-        'id': 1,
-      }),
-    }),
-  ])
-# ---
 # name: TestAttachUserTransform.test_ok[False]
   dict({
     'id': 'bar',

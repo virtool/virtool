@@ -199,8 +199,13 @@
   dict({
     'created_at': '2015-10-06T20:00:00Z',
     'groups': list([
+      dict({
+        'id': 1,
+        'legacy_id': None,
+        'name': 'musicians',
+      }),
     ]),
-    'id': 'foobar_0',
+    'id': 1,
     'name': 'Foobar',
     'permissions': dict({
       'cancel_job': False,
@@ -211,30 +216,6 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    }),
-  })
-# ---
-# name: TestUpdateAPIKey.test[False-False].1
-  dict({
-    '_id': 'foobar',
-    'administrator': True,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': list([
-    ]),
-    'id': 'foobar_0',
-    'name': 'Foobar',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': True,
-      'modify_hmm': False,
-      'modify_subtraction': True,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-    'user': dict({
-      'id': 1,
     }),
   })
 # ---
@@ -242,8 +223,13 @@
   dict({
     'created_at': '2015-10-06T20:00:00Z',
     'groups': list([
+      dict({
+        'id': 1,
+        'legacy_id': None,
+        'name': 'musicians',
+      }),
     ]),
-    'id': 'foobar_0',
+    'id': 1,
     'name': 'Foobar',
     'permissions': dict({
       'cancel_job': False,
@@ -254,30 +240,6 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    }),
-  })
-# ---
-# name: TestUpdateAPIKey.test[False-True].1
-  dict({
-    '_id': 'foobar',
-    'administrator': True,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': list([
-    ]),
-    'id': 'foobar_0',
-    'name': 'Foobar',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': True,
-      'modify_hmm': False,
-      'modify_subtraction': True,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-    'user': dict({
-      'id': 1,
     }),
   })
 # ---
@@ -285,8 +247,13 @@
   dict({
     'created_at': '2015-10-06T20:00:00Z',
     'groups': list([
+      dict({
+        'id': 1,
+        'legacy_id': None,
+        'name': 'musicians',
+      }),
     ]),
-    'id': 'foobar_0',
+    'id': 1,
     'name': 'Foobar',
     'permissions': dict({
       'cancel_job': False,
@@ -297,30 +264,6 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    }),
-  })
-# ---
-# name: TestUpdateAPIKey.test[True-False].1
-  dict({
-    '_id': 'foobar',
-    'administrator': True,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': list([
-    ]),
-    'id': 'foobar_0',
-    'name': 'Foobar',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': True,
-      'modify_hmm': False,
-      'modify_subtraction': True,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-    'user': dict({
-      'id': 1,
     }),
   })
 # ---
@@ -328,8 +271,13 @@
   dict({
     'created_at': '2015-10-06T20:00:00Z',
     'groups': list([
+      dict({
+        'id': 1,
+        'legacy_id': None,
+        'name': 'musicians',
+      }),
     ]),
-    'id': 'foobar_0',
+    'id': 1,
     'name': 'Foobar',
     'permissions': dict({
       'cancel_job': False,
@@ -340,30 +288,6 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    }),
-  })
-# ---
-# name: TestUpdateAPIKey.test[True-True].1
-  dict({
-    '_id': 'foobar',
-    'administrator': True,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': list([
-    ]),
-    'id': 'foobar_0',
-    'name': 'Foobar',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': True,
-      'modify_hmm': False,
-      'modify_subtraction': True,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-    'user': dict({
-      'id': 1,
     }),
   })
 # ---
@@ -371,8 +295,13 @@
   dict({
     'created_at': '2015-10-06T20:00:00Z',
     'groups': list([
+      dict({
+        'id': 1,
+        'legacy_id': None,
+        'name': 'musicians',
+      }),
     ]),
-    'id': 'foobar_0',
+    'id': 1,
     'name': 'Foobar',
     'permissions': dict({
       'cancel_job': False,
@@ -383,30 +312,6 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    }),
-  })
-# ---
-# name: TestUpdateAPIKey.test[missing-False].1
-  dict({
-    '_id': 'foobar',
-    'administrator': True,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': list([
-    ]),
-    'id': 'foobar_0',
-    'name': 'Foobar',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-    'user': dict({
-      'id': 1,
     }),
   })
 # ---
@@ -414,8 +319,13 @@
   dict({
     'created_at': '2015-10-06T20:00:00Z',
     'groups': list([
+      dict({
+        'id': 1,
+        'legacy_id': None,
+        'name': 'musicians',
+      }),
     ]),
-    'id': 'foobar_0',
+    'id': 1,
     'name': 'Foobar',
     'permissions': dict({
       'cancel_job': False,
@@ -426,30 +336,6 @@
       'remove_file': False,
       'remove_job': False,
       'upload_file': False,
-    }),
-  })
-# ---
-# name: TestUpdateAPIKey.test[missing-True].1
-  dict({
-    '_id': 'foobar',
-    'administrator': True,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'groups': list([
-    ]),
-    'id': 'foobar_0',
-    'name': 'Foobar',
-    'permissions': dict({
-      'cancel_job': False,
-      'create_ref': False,
-      'create_sample': False,
-      'modify_hmm': False,
-      'modify_subtraction': False,
-      'remove_file': False,
-      'remove_job': False,
-      'upload_file': False,
-    }),
-    'user': dict({
-      'id': 1,
     }),
   })
 # ---
@@ -551,7 +437,7 @@
       'created_at': 'approximately_now_isoformat',
       'groups': list([
       ]),
-      'id': 'foobar_0',
+      'id': 1,
       'name': 'Foobar',
       'permissions': dict({
         'cancel_job': False,
@@ -568,7 +454,7 @@
       'created_at': 'approximately_now_isoformat',
       'groups': list([
       ]),
-      'id': 'baz_0',
+      'id': 2,
       'name': 'Baz',
       'permissions': dict({
         'cancel_job': False,

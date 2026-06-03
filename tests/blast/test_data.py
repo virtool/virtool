@@ -6,12 +6,17 @@ from aiohttp import ClientSession
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from virtool.analyses.sql import SQLAnalysis
 from virtool.blast.data import BLASTData
 from virtool.blast.sql import SQLNuVsBlast
 from virtool.blast.task import BLASTTask
 from virtool.data.layer import DataLayer
+from virtool.pg.utils import get_row
 from virtool.tasks.data import TasksData
 from virtool.tasks.sql import SQLTask
+from virtool.users.pg import SQLUser
+
+OLD_TIME = arrow.get("2015-01-01T00:00:00").naive
 
 
 @pytest.fixture
@@ -30,7 +35,33 @@ async def blast_data(mocker, mongo, pg: AsyncEngine, static_time):
     async with AsyncSession(pg) as session:
         task = SQLTask(created_at=static_time.datetime, type="blast")
         session.add(task)
+
+        session.add(
+            SQLUser(
+                id=1,
+                handle="leeashley",
+                last_password_change=static_time.datetime,
+                password=b"hashed",
+                settings={},
+            ),
+        )
         await session.flush()
+
+        session.add(
+            SQLAnalysis(
+                legacy_id="analysis",
+                created_at=OLD_TIME,
+                updated_at=OLD_TIME,
+                workflow="nuvs",
+                ready=False,
+                results=None,
+                sample="sample",
+                reference="reference",
+                index="index",
+                subtractions=[],
+                user_id=1,
+            ),
+        )
 
         session.add_all(
             [
@@ -82,6 +113,8 @@ async def test_create_nuvs_blast(blast_data: BLASTData, pg, snapshot):
 
 
 class TestCheckNuvsBlast:
+    """Checking a NuVs BLAST syncs its state from NCBI into our records."""
+
     async def test_running(self, blast_data: BLASTData, mocker, pg, snapshot):
         """Check that the ``last_checked_at`` field is updated when the BLAST is still
         running on NCBI.
@@ -169,3 +202,74 @@ async def test_delete_nuvs_blast(blast_data: BLASTData, pg: AsyncEngine):
 
 async def test_list_by_analysis(blast_data: BLASTData, pg: AsyncEngine, snapshot):
     assert await blast_data.list_by_analysis("analysis_2") == snapshot
+
+
+class TestAnalysisUpdatedAtBump:
+    """Every BLAST mutation bumps the analysis ``updated_at`` in Postgres and Mongo."""
+
+    async def test_create(
+        self,
+        blast_data: BLASTData,
+        pg: AsyncEngine,
+        static_time,
+        mongo,
+    ):
+        await blast_data.create_nuvs_blast("analysis", 12)
+
+        row = await get_row(pg, SQLAnalysis, ("legacy_id", "analysis"))
+        assert row.updated_at == static_time.datetime
+        assert row.updated_at != OLD_TIME
+
+        mongo_analysis = await mongo.analyses.find_one({"_id": "analysis"})
+        assert mongo_analysis["updated_at"] == row.updated_at
+
+    async def test_check(
+        self,
+        blast_data: BLASTData,
+        pg: AsyncEngine,
+        static_time,
+        mongo,
+        mocker,
+    ):
+        mocker.patch("virtool.blast.data.check_rid", return_value=False)
+
+        await blast_data.create_nuvs_blast("analysis", 12)
+
+        # Reset both backends to an old timestamp so the assertions prove that
+        # ``check_nuvs_blast`` performed the bump, not ``create_nuvs_blast``.
+        async with AsyncSession(pg) as session:
+            await session.execute(
+                update(SQLAnalysis)
+                .where(SQLAnalysis.legacy_id == "analysis")
+                .values(updated_at=OLD_TIME),
+            )
+            await session.commit()
+
+        await mongo.analyses.update_one(
+            {"_id": "analysis"}, {"$set": {"updated_at": OLD_TIME}}
+        )
+
+        await blast_data.check_nuvs_blast("analysis", 12)
+
+        row = await get_row(pg, SQLAnalysis, ("legacy_id", "analysis"))
+        assert row.updated_at == static_time.datetime
+        assert row.updated_at != OLD_TIME
+
+        mongo_analysis = await mongo.analyses.find_one({"_id": "analysis"})
+        assert mongo_analysis["updated_at"] == row.updated_at
+
+    async def test_delete(
+        self,
+        blast_data: BLASTData,
+        pg: AsyncEngine,
+        static_time,
+        mongo,
+    ):
+        await blast_data.delete_nuvs_blast("analysis", 21)
+
+        row = await get_row(pg, SQLAnalysis, ("legacy_id", "analysis"))
+        assert row.updated_at == static_time.datetime
+        assert row.updated_at != OLD_TIME
+
+        mongo_analysis = await mongo.analyses.find_one({"_id": "analysis"})
+        assert mongo_analysis["updated_at"] == row.updated_at

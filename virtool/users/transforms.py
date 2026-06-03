@@ -8,10 +8,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.data.topg import (
-    compose_legacy_id_multi_expression,
-    compose_legacy_id_single_expression,
-)
+from virtool.data.topg import compose_legacy_id_multi_expression
 from virtool.data.transforms import AbstractTransform
 from virtool.groups.pg import SQLGroup, merge_group_permissions
 from virtool.types import Document
@@ -99,14 +96,17 @@ class AttachUserTransform(AbstractTransform):
 
             raise KeyError("Document has no user field")
 
-        if isinstance(user_data, str):
+        if isinstance(user_data, int):
             return {**document, "user": {"id": user_data}}
 
         if isinstance(user_data, dict):
             if "id" not in user_data:
                 raise KeyError("Document has user field, but no user.id")
 
-            return {**document, "user": user_data}
+            user_id = user_data["id"]
+
+            if isinstance(user_id, int):
+                return {**document, "user": {**user_data, "id": user_id}}
 
         if user_data is None:
             return {**document, "user": None}
@@ -137,9 +137,7 @@ class AttachUserTransform(AbstractTransform):
         user_id = get_safely(document, "user", "id")
 
         result = await session.execute(
-            select(SQLUser.id, SQLUser.handle, SQLUser.legacy_id).where(
-                compose_legacy_id_single_expression(SQLUser, user_id),
-            ),
+            select(SQLUser.id, SQLUser.handle).where(SQLUser.id == user_id),
         )
 
         user_row = result.first()
@@ -162,39 +160,14 @@ class AttachUserTransform(AbstractTransform):
             return {d["id"]: None for d in documents}
 
         result = await session.execute(
-            select(SQLUser.id, SQLUser.handle, SQLUser.legacy_id).where(
-                compose_legacy_id_multi_expression(SQLUser, user_ids),
-            ),
+            select(SQLUser.id, SQLUser.handle).where(SQLUser.id.in_(user_ids)),
         )
 
-        user_rows = result.all()
+        user_map = {
+            row.id: {"id": row.id, "handle": row.handle} for row in result.all()
+        }
 
-        # Create mapping for both id and legacy_id lookups
-        user_map = {}
-        for user_row in user_rows:
-            user_data = {
-                "id": user_row.id,
-                "handle": user_row.handle,
-            }
-            user_map[user_row.id] = user_data
-            user_map[str(user_row.id)] = user_data  # String version of Postgres ID
-            if user_row.legacy_id:
-                user_map[user_row.legacy_id] = user_data
-                user_map[str(user_row.legacy_id)] = (
-                    user_data  # String version of legacy ID
-                )
-
-        found_ids = set()
-        for user_row in user_rows:
-            found_ids.add(user_row.id)
-            if user_row.legacy_id:
-                found_ids.add(user_row.legacy_id)
-            # Also add string versions for comparison
-            found_ids.add(str(user_row.id))
-            if user_row.legacy_id:
-                found_ids.add(str(user_row.legacy_id))
-
-        non_existent_user_ids = user_ids - found_ids
+        non_existent_user_ids = user_ids - user_map.keys()
         if non_existent_user_ids:
             raise KeyError(
                 f"Document contains non-existent user(s): {non_existent_user_ids}",

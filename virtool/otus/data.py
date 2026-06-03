@@ -3,7 +3,6 @@
 import asyncio
 from collections.abc import Mapping
 from copy import deepcopy
-from pathlib import Path
 from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
@@ -47,8 +46,7 @@ class OTUData:
 
     name = "otus"
 
-    def __init__(self, data_path: Path, mongo: Mongo, pg: AsyncEngine) -> None:
-        self._data_path = data_path
+    def __init__(self, mongo: Mongo, pg: AsyncEngine) -> None:
         self._mongo = mongo
         self._pg = pg
 

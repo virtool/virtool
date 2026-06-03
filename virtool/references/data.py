@@ -23,11 +23,7 @@ from virtool.data.errors import (
     ResourceRemoteError,
 )
 from virtool.data.events import Operation, emit, emits
-from virtool.data.topg import (
-    both_transactions,
-    compose_legacy_id_single_expression,
-    get_user_id_single_variants,
-)
+from virtool.data.topg import both_transactions
 from virtool.data.transforms import apply_transforms
 from virtool.errors import GitHubError
 from virtool.github import create_update_subdocument, format_release
@@ -132,7 +128,7 @@ class ReferencesData(DataLayerDomain):
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
                 select(SQLUser.id, SQLUser.handle, SQLUser.legacy_id).where(
-                    compose_legacy_id_single_expression(SQLUser, user["id"]),
+                    SQLUser.id == user["id"],
                 ),
             )
 
@@ -150,7 +146,7 @@ class ReferencesData(DataLayerDomain):
     async def find(
         self,
         find: str,
-        user_id: str,
+        user_id: int,
         administrator: bool,
         groups: list[int | str],
         query: MultiDictProxy,
@@ -165,9 +161,7 @@ class ReferencesData(DataLayerDomain):
                 **compose_regex_query(find, ["name", "data_type"]),
             }
 
-        # TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings
-        user_id_variants = await get_user_id_single_variants(self._pg, user_id)
-        base_query = compose_rights_filter(user_id_variants, administrator, groups)
+        base_query = compose_rights_filter(user_id, administrator, groups)
 
         data = await paginate(
             self._mongo.references,
@@ -206,7 +200,7 @@ class ReferencesData(DataLayerDomain):
         )
 
     @emits(Operation.CREATE)
-    async def create(self, data: CreateReferenceRequest, user_id: str) -> Reference:
+    async def create(self, data: CreateReferenceRequest, user_id: int) -> Reference:
         settings = await self.data.settings.get_all()
 
         if data.clone_from:
@@ -245,11 +239,10 @@ class ReferencesData(DataLayerDomain):
 
             document = await virtool.references.db.create_import(
                 self._mongo,
-                self._pg,
                 settings,
                 data.name,
                 data.description,
-                upload.name_on_disk,
+                upload.id,
                 user_id,
                 data.data_type,
                 data.organism,
@@ -384,16 +377,11 @@ class ReferencesData(DataLayerDomain):
 
         document["installed"] = installed
 
-        imported_from = document.get("imported_from")
-
-        if imported_from:
-            imported_from = await apply_transforms(
-                imported_from,
-                [AttachUserTransform(self._pg)],
-                self._pg,
-            )
-
-        document["imported_from"] = imported_from
+        document = await apply_transforms(
+            document,
+            [AttachImportedFromTransform(self._mongo, self._pg)],
+            self._pg,
+        )
 
         for user in document["users"]:
             if "created_at" not in user:
@@ -509,7 +497,7 @@ class ReferencesData(DataLayerDomain):
     async def create_update(
         self,
         ref_id: str,
-        user_id: str,
+        user_id: int,
     ) -> ReferenceRelease:
         await self._require_not_archived(ref_id)
 
@@ -575,7 +563,7 @@ class ReferencesData(DataLayerDomain):
         self,
         ref_id: str,
         data: CreateOTURequest,
-        user_id: str,
+        user_id: int,
     ) -> OTU:
         await self._require_not_archived(ref_id)
 
@@ -627,7 +615,7 @@ class ReferencesData(DataLayerDomain):
         return IndexSearchResult(**data)
 
     @emits(Operation.CREATE, domain="indexes", name="create")
-    async def create_index(self, ref_id: str, req, user_id: str) -> IndexMinimal:
+    async def create_index(self, ref_id: str, req, user_id: int) -> IndexMinimal:
         if not await virtool.references.db.check_right(req, ref_id, "build"):
             raise APIInsufficientRights()
 
@@ -854,12 +842,10 @@ class ReferencesData(DataLayerDomain):
             raise ResourceNotFoundError()
 
         async with AsyncSession(self._pg) as session:
-            from virtool.data.topg import compose_legacy_id_single_expression
-
             result = await session.execute(
                 select(SQLUser.id, SQLUser.handle, SQLUser.legacy_id).where(
-                    compose_legacy_id_single_expression(SQLUser, data.user_id)
-                )
+                    SQLUser.id == data.user_id,
+                ),
             )
             user_row = result.first()
 
@@ -867,10 +853,7 @@ class ReferencesData(DataLayerDomain):
                 raise ResourceConflictError("User does not exist")
 
             existing_user_ids = {u["id"] for u in document["users"]}
-            if (
-                user_row.id in existing_user_ids
-                or user_row.legacy_id in existing_user_ids
-            ):
+            if user_row.id in existing_user_ids:
                 raise ResourceConflictError("User already exists")
 
         reference_user = {
@@ -894,24 +877,14 @@ class ReferencesData(DataLayerDomain):
     async def update_user(
         self,
         ref_id: str,
-        user_id: str,
+        user_id: int,
         data: ReferenceRightsRequest,
     ) -> ReferenceUser:
-        """Update a reference user.
-
-        TODO: Update this once we have fixed the nested user IDs in a migration
-        to only match against integer user IDs.
-        """
-        # Handle both string and integer user IDs during migration
-        query = {"_id": ref_id, "$or": [{"users.id": user_id}]}
-        try:
-            # Also try matching as integer if user_id is a valid integer string
-            int_user_id = int(user_id)
-            query["$or"].append({"users.id": int_user_id})
-        except ValueError:
-            pass
-
-        document = await self._mongo.references.find_one(query, ["users"])
+        """Update a reference user."""
+        document = await self._mongo.references.find_one(
+            {"_id": ref_id, "users.id": user_id},
+            ["users"],
+        )
 
         if document is None:
             raise ResourceNotFoundError()
@@ -919,10 +892,7 @@ class ReferencesData(DataLayerDomain):
         data = data.dict(exclude_unset=True)
 
         for user in document["users"]:
-            # Handle both string and integer user IDs during migration
-            if user["id"] == user_id or (
-                isinstance(user["id"], int) and str(user["id"]) == user_id
-            ):
+            if user["id"] == user_id:
                 user.update({key: data.get(key, user[key]) for key in RIGHTS})
 
                 await self._mongo.references.update_one(
@@ -941,39 +911,22 @@ class ReferencesData(DataLayerDomain):
 
         raise ResourceNotFoundError()
 
-    async def delete_user(self, ref_id: str, user_id: str) -> None:
+    async def delete_user(self, ref_id: str, user_id: int) -> None:
         """Delete a reference user.
-
-        TODO: Update this once we have fixed the nested user IDs in a migration
-        to only match against integer user IDs.
 
         :param ref_id: the id of the reference
         :param user_id: the id of the user to delete
 
         """
-        # Handle both string and integer user IDs during migration
-        query = {"_id": ref_id, "$or": [{"users.id": user_id}]}
-        try:
-            # Also try matching as integer if user_id is a valid integer string
-            int_user_id = int(user_id)
-            query["$or"].append({"users.id": int_user_id})
-        except ValueError:
-            pass
-
-        document = await self._mongo.references.find_one(query, ["groups", "users"])
+        document = await self._mongo.references.find_one(
+            {"_id": ref_id, "users.id": user_id},
+            ["groups", "users"],
+        )
 
         if document is None:
             raise ResourceNotFoundError
 
-        # Retain only the users that don't match the passed user_id.
-        # Handle both string and integer user IDs during migration
-        filtered_users = []
-        for user in document["users"]:
-            if not (
-                user["id"] == user_id
-                or (isinstance(user["id"], int) and str(user["id"]) == user_id)
-            ):
-                filtered_users.append(user)
+        filtered_users = [user for user in document["users"] if user["id"] != user_id]
 
         await self._mongo.references.update_one(
             {"_id": ref_id},
@@ -986,7 +939,7 @@ class ReferencesData(DataLayerDomain):
         self,
         manifest: dict[str, int],
         ref_id: str,
-        user_id: str,
+        user_id: int,
         progress_handler: TaskProgressHandler,
     ) -> None:
         """Populate a reference with the data from another reference."""
@@ -1003,8 +956,8 @@ class ReferencesData(DataLayerDomain):
 
         for source_otu_id, version in manifest.items():
             _, patched, _ = await patch_to_version(
-                self._storage,
                 self._mongo,
+                self._pg,
                 source_otu_id,
                 version,
             )
@@ -1035,7 +988,7 @@ class ReferencesData(DataLayerDomain):
     async def populate_imported_reference(
         self,
         ref_id: str,
-        user_id: str,
+        user_id: int,
         data: ReferenceSourceData,
         progress_handler: TaskProgressHandler,
     ) -> None:
@@ -1126,7 +1079,7 @@ class ReferencesData(DataLayerDomain):
         self,
         ref_id: str,
         data: ReferenceSourceData,
-        user_id: str,
+        user_id: int,
         release: Document,
         progress_handler: TaskProgressHandler,
     ) -> None:
@@ -1190,7 +1143,7 @@ class ReferencesData(DataLayerDomain):
         ref_id: str,
         data: ReferenceSourceData,
         release: Document,
-        user_id: str,
+        user_id: int,
         progress_handler,
     ) -> None:
         """Update a remote reference to a newer version.

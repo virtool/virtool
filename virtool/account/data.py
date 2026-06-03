@@ -1,4 +1,4 @@
-from sqlalchemy import cast, select, update
+from sqlalchemy import cast, delete, select, update
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
@@ -14,18 +14,14 @@ from virtool.account.oas import (
     UpdateKeyRequest,
     UpdateSettingsRequest,
 )
+from virtool.account.sql import SQLAPIKey
 from virtool.administrators.oas import UpdateUserRequest
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceError, ResourceNotFoundError
-from virtool.data.topg import get_user_id_single_variants
-from virtool.data.transforms import apply_transforms
-from virtool.groups.transforms import AttachGroupsTransform
 from virtool.models.sessions import Session
-from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_one_field
 from virtool.users.pg import SQLUser
 from virtool.users.utils import limit_permissions
-from virtool.utils import base_processor, hash_key
+from virtool.utils import hash_key
 
 logger = get_logger(layer="data", domain="account")
 
@@ -35,10 +31,8 @@ class AccountData(DataLayerDomain):
 
     def __init__(
         self,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
-        self._mongo = mongo
         self._pg = pg
 
     async def get(self, user_id: int) -> Account:
@@ -190,31 +184,30 @@ class AccountData(DataLayerDomain):
     async def get_keys(self, user_id: int) -> list[APIKey]:
         """Get API keys associated with the authenticated user account.
 
-        TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings.
-
         :param user_id: the user ID
         :return: the api keys
         """
-        # Get all ID variants to handle legacy string IDs in MongoDB
-        user_id_variants = await get_user_id_single_variants(self._pg, user_id)
+        user = await self.data.users.get(user_id)
+        groups = sorted(user.groups, key=lambda group: group.name)
 
-        keys = await apply_transforms(
-            [
-                base_processor(key)
-                async for key in self._mongo.keys.find(
-                    {"user.id": {"$in": user_id_variants}},
-                    {"_id": False, "user": False},
-                )
-            ],
-            [
-                AttachGroupsTransform(self._pg),
-            ],
-            self._pg,
-        )
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLAPIKey).where(SQLAPIKey.user_id == user_id),
+            )
+            keys = result.scalars().all()
 
-        return [APIKey.parse_obj(key) for key in keys]
+        return [
+            APIKey(
+                id=key.id,
+                created_at=key.created_at,
+                groups=groups,
+                name=key.name,
+                permissions=key.permissions,
+            )
+            for key in keys
+        ]
 
-    async def get_key(self, user_id: int, key_id: str) -> APIKey:
+    async def get_key(self, user_id: int, key_id: int) -> APIKey:
         """Get the complete representation of the API key identified by the `key_id`.
 
         The internal key ID and secret key value itself are not returned in the
@@ -224,40 +217,34 @@ class AccountData(DataLayerDomain):
         :param key_id: the ID of the API key to get
         :return: the API key
         """
-        document = await self._mongo.keys.find_one(
-            {"id": key_id, "user.id": user_id},
-            {
-                "_id": False,
-                "user": False,
-            },
-        )
-
         user = await self.data.users.get(user_id)
 
-        if not document:
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLAPIKey).where(
+                    SQLAPIKey.id == key_id,
+                    SQLAPIKey.user_id == user_id,
+                ),
+            )
+            key = result.scalar_one_or_none()
+
+        if key is None:
             raise ResourceNotFoundError
 
-        document = await apply_transforms(
-            base_processor(document),
-            [
-                AttachGroupsTransform(self._pg),
-            ],
-            self._pg,
-        )
-
         if user.administrator_role:
-            document["permissions"] = document["permissions"]
+            permissions = key.permissions
         else:
-            document["permissions"] = limit_permissions(
-                document["permissions"],
+            permissions = limit_permissions(
+                key.permissions,
                 user.permissions.dict(),
             )
 
         return APIKey(
-            **{
-                **document,
-                "groups": sorted(document["groups"], key=lambda g: g["name"]),
-            },
+            id=key.id,
+            created_at=key.created_at,
+            groups=sorted(user.groups, key=lambda group: group.name),
+            name=key.name,
+            permissions=permissions,
         )
 
     async def get_key_by_secret(self, user_id: int, key: str) -> APIKey:
@@ -265,34 +252,31 @@ class AccountData(DataLayerDomain):
 
         The secret key is not returned in the result.
 
-        TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings.
-
         :param user_id: the user id
         :param key: the raw API key
         :return: the API key
         """
-        user_id_variants = await get_user_id_single_variants(self._pg, user_id)
+        user = await self.data.users.get(user_id)
 
-        document = await self._mongo.keys.find_one(
-            {"_id": hash_key(key), "user.id": {"$in": user_id_variants}},
-            {
-                "_id": False,
-                "user": False,
-            },
-        )
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLAPIKey).where(
+                    SQLAPIKey.user_id == user_id,
+                    SQLAPIKey.hashed == hash_key(key),
+                ),
+            )
+            api_key = result.scalar_one_or_none()
 
-        if not document:
+        if api_key is None:
             raise ResourceNotFoundError
 
-        document = await apply_transforms(
-            base_processor(document),
-            [
-                AttachGroupsTransform(self._pg),
-            ],
-            self._pg,
+        return APIKey(
+            id=api_key.id,
+            created_at=api_key.created_at,
+            groups=sorted(user.groups, key=lambda group: group.name),
+            name=api_key.name,
+            permissions=api_key.permissions,
         )
-
-        return APIKey(**document)
 
     async def create_key(
         self,
@@ -305,48 +289,47 @@ class AccountData(DataLayerDomain):
         :param user_id: the user ID
         :return: the API key
         """
-        user = await self.data.users.get(user_id)
-
         raw, hashed = virtool.utils.generate_key()
 
-        id_ = await _get_alternate_id(self._mongo, data.name)
+        created_at = virtool.utils.timestamp()
+        permissions = data.permissions.dict(exclude_unset=True)
 
-        await self._mongo.keys.insert_one(
-            {
-                "_id": hashed,
-                "id": id_,
-                "created_at": virtool.utils.timestamp(),
-                "groups": [group.id for group in user.groups],
-                "name": data.name,
-                "permissions": data.permissions.dict(exclude_unset=True),
-                "user": {"id": user_id},
-            },
-        )
+        async with AsyncSession(self._pg) as session:
+            sql_key = SQLAPIKey(
+                hashed=hashed,
+                name=data.name,
+                created_at=created_at,
+                user_id=user_id,
+                permissions=permissions,
+            )
+            session.add(sql_key)
+            await session.flush()
+            key_id = sql_key.id
+
+            await session.commit()
 
         logger.info("created key", raw=raw, hashed=hashed)
 
-        return raw, await self.get_key(user_id, id_)
+        return raw, await self.get_key(user_id, key_id)
 
     async def delete_keys(self, user_id: int) -> None:
         """Delete all API keys for the account associated with the requesting session.
 
-        TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings.
-
         :param user_id: the user ID
         """
-        # Get all ID variants to handle legacy string IDs in MongoDB
-        user_id_variants = await get_user_id_single_variants(self._pg, user_id)
-        await self._mongo.keys.delete_many({"user.id": {"$in": user_id_variants}})
+        async with AsyncSession(self._pg) as session:
+            await session.execute(
+                delete(SQLAPIKey).where(SQLAPIKey.user_id == user_id),
+            )
+            await session.commit()
 
     async def update_key(
         self,
         user_id: int,
-        key_id: str,
+        key_id: int,
         data: UpdateKeyRequest,
     ) -> APIKey:
         """Change the permissions for an existing API key.
-
-        TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings.
 
         :param user_id: the user ID
         :param key_id: the ID of the API key to update
@@ -354,50 +337,55 @@ class AccountData(DataLayerDomain):
         :return: the API key
         """
         if data.permissions is None:
-            update = {}
+            permissions_update = {}
         else:
-            update = data.permissions.dict(exclude_unset=True)
+            permissions_update = data.permissions.dict(exclude_unset=True)
 
-        if not await self._mongo.keys.count_documents({"id": key_id}):
-            raise ResourceNotFoundError()
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLAPIKey.permissions).where(
+                    SQLAPIKey.id == key_id,
+                    SQLAPIKey.user_id == user_id,
+                ),
+            )
+            existing_permissions = result.scalar_one_or_none()
 
-        # Get all ID variants to handle legacy string IDs in MongoDB
-        user_id_variants = await get_user_id_single_variants(self._pg, user_id)
+        if existing_permissions is None:
+            raise ResourceNotFoundError
 
         new_permissions = {
-            **(
-                await get_one_field(
-                    self._mongo.keys,
-                    "permissions",
-                    {"id": key_id, "user.id": {"$in": user_id_variants}},
-                )
-            ),
-            **update,
+            **existing_permissions,
+            **permissions_update,
         }
 
-        await self._mongo.keys.update_one(
-            {"id": key_id},
-            {"$set": {"permissions": new_permissions}},
-        )
+        async with AsyncSession(self._pg) as session:
+            await session.execute(
+                update(SQLAPIKey)
+                .where(SQLAPIKey.id == key_id, SQLAPIKey.user_id == user_id)
+                .values(permissions=new_permissions),
+            )
+            await session.commit()
 
         return await self.get_key(user_id, key_id)
 
-    async def delete_key(self, user_id: int, key_id: str) -> None:
+    async def delete_key(self, user_id: int, key_id: int) -> None:
         """Delete an API key by its id.
-
-        TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings.
 
         :param user_id: the user ID
         :param key_id: the ID of the API key to delete
         """
-        # Get all ID variants to handle legacy string IDs in MongoDB
-        user_id_variants = await get_user_id_single_variants(self._pg, user_id)
-        delete_result = await self._mongo.keys.delete_one(
-            {"id": key_id, "user.id": {"$in": user_id_variants}},
-        )
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                delete(SQLAPIKey).where(
+                    SQLAPIKey.id == key_id,
+                    SQLAPIKey.user_id == user_id,
+                ),
+            )
 
-        if delete_result.deleted_count == 0:
-            raise ResourceNotFoundError()
+            if result.rowcount == 0:
+                raise ResourceNotFoundError
+
+            await session.commit()
 
     async def login(self, data: CreateLoginRequest) -> int:
         """Create a new session for the user with `username`.
@@ -489,25 +477,3 @@ class AccountData(DataLayerDomain):
             session.reset.user_id,
             remember=session.reset.remember,
         )
-
-
-async def _get_alternate_id(mongo: Mongo, name: str) -> str:
-    """Get an alternate id for an API key whose provided `name` is not unique. Appends
-    an integer suffix to the end of the `name`.
-
-    :param mongo: the application mongodb client
-    :param name: the API key name
-    :return: an alternate unique id for the key
-
-    """
-    existing_alt_ids = await mongo.keys.distinct("id")
-
-    suffix = 0
-
-    while True:
-        candidate = f"{name.lower()}_{suffix}"
-
-        if candidate not in existing_alt_ids:
-            return candidate
-
-        suffix += 1

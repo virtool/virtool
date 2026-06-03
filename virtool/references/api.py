@@ -716,7 +716,7 @@ class ReferenceUserView(PydanticView):
     async def patch(
         self,
         ref_id: str,
-        user_id: str,
+        user_id: int,
         /,
         data: ReferenceRightsRequest,
     ) -> r200[ReferenceUser] | r403 | r404:
@@ -750,7 +750,7 @@ class ReferenceUserView(PydanticView):
 
         return json_response(user)
 
-    async def delete(self, ref_id: str, user_id: str, /) -> r204 | r403 | r404:
+    async def delete(self, ref_id: str, user_id: int, /) -> r204 | r403 | r404:
         """Remove a user.
 
         Removes a user from the reference.

@@ -11,9 +11,19 @@ from virtool.storage.routing import FallbackStorageRouter
 
 
 class TestCreateStorageBackend:
-    def test_s3_wraps_with_fallback_at_data_path(self, tmp_path: Path):
+    def test_no_fallback_path_returns_bare_primary(self):
         config = build_server_config(
-            data_path=tmp_path,
+            storage_backend="s3",
+            storage_s3_bucket="bucket",
+        )
+
+        backend = create_storage_backend(config)
+
+        assert isinstance(backend, ObjectProvider)
+
+    def test_s3_wraps_with_fallback_at_path(self, tmp_path: Path):
+        config = build_server_config(
+            storage_fallback_path=tmp_path,
             storage_backend="s3",
             storage_s3_bucket="bucket",
         )
@@ -26,9 +36,9 @@ class TestCreateStorageBackend:
         assert isinstance(backend._fallback._inner, FilesystemProvider)
         assert backend._fallback._inner._base_path == tmp_path.resolve()
 
-    def test_azure_wraps_with_fallback_at_data_path(self, tmp_path: Path):
+    def test_azure_wraps_with_fallback_at_path(self, tmp_path: Path):
         config = build_server_config(
-            data_path=tmp_path,
+            storage_fallback_path=tmp_path,
             storage_backend="azure",
             storage_s3_bucket="",
             storage_azure_account="account",
@@ -42,8 +52,8 @@ class TestCreateStorageBackend:
         assert isinstance(backend._fallback, LegacyIndexFilesystemAdapter)
         assert backend._fallback._inner._base_path == tmp_path.resolve()
 
-    def test_fallback_root_is_not_data_path_storage(self, tmp_path: Path):
-        config = build_server_config(data_path=tmp_path)
+    def test_fallback_root_is_not_storage_subdir(self, tmp_path: Path):
+        config = build_server_config(storage_fallback_path=tmp_path)
 
         backend = create_storage_backend(config)
 
@@ -51,17 +61,16 @@ class TestCreateStorageBackend:
 
 
 class TestBuildPrimaryBackend:
-    def test_s3(self, tmp_path: Path):
+    def test_s3(self):
         config = build_server_config(
-            data_path=tmp_path,
             storage_backend="s3",
             storage_s3_bucket="bucket",
         )
 
         assert isinstance(build_primary_backend(config), ObjectProvider)
 
-    def test_unknown_raises(self, tmp_path: Path):
-        config = build_server_config(data_path=tmp_path)
+    def test_unknown_raises(self):
+        config = build_server_config()
         config.storage_backend = "nonsense"
 
         with pytest.raises(ValueError, match="Unknown storage_backend"):

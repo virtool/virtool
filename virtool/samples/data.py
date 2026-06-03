@@ -2,28 +2,25 @@
 
 import asyncio
 import math
-from asyncio import CancelledError, gather, to_thread
+from asyncio import CancelledError, gather
 from collections.abc import AsyncGenerator, AsyncIterator
-from contextlib import suppress
 from typing import Any
 
 from pymongo.results import UpdateResult
-from sqlalchemy import exc, select
+from sqlalchemy import delete, exc, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
 import virtool.uploads.db
 import virtool.utils
+from virtool.analyses.sql import SQLAnalysis, SQLAnalysisResult
 from virtool.api.client import UserClient
 from virtool.api.utils import compose_regex_query
 from virtool.config.cls import Config
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emits
-from virtool.data.topg import (
-    compose_legacy_id_multi_expression,
-    get_user_id_single_variants,
-)
+from virtool.data.topg import both_transactions, compose_legacy_id_multi_expression
 from virtool.data.transforms import apply_transforms
 from virtool.groups.models import GroupMinimal
 from virtool.groups.pg import SQLGroup
@@ -59,7 +56,8 @@ from virtool.subtractions.db import (
     AttachSubtractionsTransform,
 )
 from virtool.uploads.sql import SQLUpload
-from virtool.uploads.utils import is_gzip_compressed
+from virtool.uploads.utils import is_gzip_compressed, upload_file_key
+from virtool.users.pg import SQLUser
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor, chunk_list, wait_for_checks
 
@@ -107,15 +105,10 @@ class SamplesData(DataLayerDomain):
         if queries:
             query["$and"] = queries
 
-        # TODO: Remove user ID variants logic when all user IDs are migrated away from MongoDB strings
-        user_id_variants = await get_user_id_single_variants(self._pg, client.user_id)
-
         rights_filter = [
             {"all_read": True},
+            {"user.id": client.user_id},
         ]
-
-        for user_id_variant in user_id_variants:
-            rights_filter.append({"user.id": user_id_variant})
 
         if client.groups:
             async with AsyncSession(self._pg) as session:
@@ -282,7 +275,7 @@ class SamplesData(DataLayerDomain):
     async def create(
         self,
         data: CreateSampleRequest,
-        user_id: str,
+        user_id: int,
         space_id: int,
         _id: str | None = None,
     ) -> Sample:
@@ -322,18 +315,11 @@ class SamplesData(DataLayerDomain):
         # Assign the user's primary group as the sample owner group if the
         # setting is ``users_primary_group``.
         elif settings.sample_group == "users_primary_group":
-            group = await get_one_field(self._mongo.users, "primary_group", user_id)
+            async with AsyncSession(self._pg) as session:
+                user = await session.get(SQLUser, user_id)
 
-            if isinstance(group, str):
-                async with AsyncSession(self._pg) as session:
-                    group = await session.execute(
-                        select(SQLGroup).where(SQLGroup.legacy_id == group),
-                    )
-
-                    group = group.scalar_one().id
-
-            if not group:
-                group = None
+            if user is not None and user.primary_group is not None:
+                group = user.primary_group.id
 
         async with self._mongo.create_session() as session:
             sample_id = _id or await get_new_id(self._mongo.samples, session=session)
@@ -394,13 +380,29 @@ class SamplesData(DataLayerDomain):
         """
         sample = await self.get(sample_id)
 
-        async with self._mongo.create_session() as session:
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
             result = await self._mongo.samples.delete_one(
-                {"_id": sample_id}, session=session
+                {"_id": sample_id}, session=mongo_session
             )
             await self._mongo.analyses.delete_many(
                 {"sample.id": sample_id},
-                session=session,
+                session=mongo_session,
+            )
+
+            await pg_session.execute(
+                delete(SQLAnalysisResult).where(
+                    SQLAnalysisResult.analysis_id.in_(
+                        select(SQLAnalysis.legacy_id).where(
+                            SQLAnalysis.sample == sample_id,
+                        ),
+                    ),
+                ),
+            )
+            await pg_session.execute(
+                delete(SQLAnalysis).where(SQLAnalysis.sample == sample_id),
             )
 
         if result.deleted_count:
@@ -441,7 +443,7 @@ class SamplesData(DataLayerDomain):
         if not result.modified_count:
             raise ResourceNotFoundError
 
-        files_to_delete = []
+        names_on_disk = []
 
         async with AsyncSession(self._pg) as session:
             rows = (
@@ -457,12 +459,7 @@ class SamplesData(DataLayerDomain):
             )
 
             for row in rows:
-                files_to_delete.append(
-                    self._config.data_path / "files" / row.name_on_disk
-                )
-
-                if row.reads is not None:
-                    row.reads.clear()
+                names_on_disk.append(row.name_on_disk)
 
                 row.removed = True
                 row.removed_at = virtool.utils.timestamp()
@@ -470,11 +467,9 @@ class SamplesData(DataLayerDomain):
 
             await session.commit()
 
-        async def delete_file(path):
-            with suppress(FileNotFoundError):
-                await to_thread(virtool.utils.rm, path)
-
-        await gather(*[delete_file(path) for path in files_to_delete])
+        await gather(
+            *[self._storage.delete(upload_file_key(name)) for name in names_on_disk],
+        )
 
         return await self.get(sample_id)
 
@@ -638,15 +633,19 @@ class SamplesData(DataLayerDomain):
     ) -> dict:
         key = sample_file_key(sample_id, filename)
 
-        async def _validate_and_stream() -> AsyncIterator[bytearray]:
-            first = True
+        first = await anext(chunker, None)
+
+        if not first:
+            raise EOFError("Reads file is empty")
+
+        is_gzip_compressed(first)
+
+        async def _stream() -> AsyncIterator[bytearray]:
+            yield first
             async for chunk in chunker:
-                if first:
-                    is_gzip_compressed(chunk)
-                    first = False
                 yield chunk
 
-        size = await self._storage.write(key, _validate_and_stream())
+        size = await self._storage.write(key, _stream())
 
         try:
             return await create_reads_file(

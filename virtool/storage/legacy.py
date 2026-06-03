@@ -144,10 +144,10 @@ class LegacyIndexFilesystemAdapter:
     def _scan_all_indexes(self) -> "list[StorageObjectInfo]":
         """Enumerate every on-disk index file across all reference directories.
 
-        Used to support listing under just ``indexes/`` (no ``index_id``),
-        which the storage migration CLI needs to discover and migrate every
-        index in one pass. Populates the ``index_id -> ref_id`` cache as a
-        side effect so subsequent reads do not need to re-scan.
+        Used to support listing under just ``indexes/`` (no ``index_id``), so a
+        caller can discover every legacy index in one pass. Populates the
+        ``index_id -> ref_id`` cache as a side effect so subsequent reads do not
+        need to re-scan.
         """
         results: list[StorageObjectInfo] = []
 

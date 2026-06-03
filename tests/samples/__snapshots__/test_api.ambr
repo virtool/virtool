@@ -525,7 +525,11 @@
     ]),
     'created_at': 'approximately_now_isoformat',
     'format': 'fastq',
-    'group': None,
+    'group': dict({
+      'id': 2,
+      'legacy_id': None,
+      'name': 'gaffers',
+    }),
     'group_read': True,
     'group_write': True,
     'hold': True,
@@ -2274,6 +2278,12 @@
   dict({
     'id': 'conflict',
     'message': 'Reads file name is already uploaded for this sample',
+  })
+# ---
+# name: TestUploadReads.test_empty
+  dict({
+    'id': 'bad_request',
+    'message': 'Reads file is empty',
   })
 # ---
 # name: TestUploadReads.test_uncompressed

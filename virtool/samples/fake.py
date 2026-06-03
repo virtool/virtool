@@ -61,7 +61,7 @@ async def create_fake_quality(fake: FakerWrapper | None) -> dict:
 async def create_fake_sample(
     app: App,
     sample_id: str,
-    user_id: str,
+    user_id: int,
     paired: bool = False,
     finalized: bool = False,
 ) -> None:

@@ -14,7 +14,6 @@ from virtool.migration.cls import GenericRevision, RevisionSource
 from virtool.migration.ctx import MigrationContext, create_migration_context
 from virtool.migration.pg import (
     SQLRevision,
-    fetch_last_applied_revision,
     list_applied_revisions,
 )
 from virtool.migration.show import load_all_revisions
@@ -29,7 +28,8 @@ async def apply(config: MigrationConfig) -> None:
     The following safety measures are taken:
     * Revisions that have already been successfully applied will not be reapplied.
     * When a revision fails to apply, the entire migration process will stop.
-    * Revisions will start applied after the last successfully applied revision.
+    * Every revision not yet recorded as applied is applied, in dependency order,
+      so a revision that was missed in the past is filled in rather than skipped.
 
     :param config: the configuration values for migration
     """
@@ -51,46 +51,26 @@ async def apply(config: MigrationConfig) -> None:
 
     await ensure_revisions_table(ctx.pg)
 
-    last_applied_revision = await fetch_last_applied_revision(ctx.pg)
+    applied_revisions = await list_applied_revisions(ctx.pg)
+    applied_revision_ids = {revision.revision for revision in applied_revisions}
 
-    if last_applied_revision:
-        logger.info(
-            "Found last applied revision",
-            revision=last_applied_revision.revision,
-            name=last_applied_revision.name,
-        )
+    if applied_revisions:
+        logger.info("Found applied revisions", count=len(applied_revisions))
     else:
         logger.info("No revisions have been applied yet")
 
-    applied_revision_ids = {
-        revision.revision for revision in await list_applied_revisions(ctx.pg)
-    }
-
-    all_revision_ids = {r.id for r in all_revisions}
-
-    # If the last applied revision no longer exists in the codebase, start from the
-    # beginning and rely on applied_revision_ids to skip already-applied revisions.
-    if last_applied_revision and last_applied_revision.revision not in all_revision_ids:
-        logger.warning(
-            "Last applied revision not found in codebase, "
-            "will skip already-applied revisions",
-            revision=last_applied_revision.revision,
-        )
-        start_applying = True
-    else:
-        start_applying = last_applied_revision is None
-
+    # Apply every revision that has not been recorded as applied, iterating in
+    # dependency order.
+    #
+    # We decide revision-by-revision against the set of applied revision ids
+    # rather than scanning forward from a single "last applied" position. A
+    # position-based scan assumes every revision ordered before the latest
+    # record was applied, which silently skips any earlier revision that was
+    # never run -- for example when a past, buggy version applied revisions out
+    # of order. Checking each revision guarantees a missed one is filled in, and
+    # the dependency-ordered iteration guarantees it is applied in the correct
+    # order relative to the revisions around it.
     for revision in all_revisions:
-        if not start_applying:
-            if revision.id == last_applied_revision.revision:
-                start_applying = True
-
-            continue
-
-        logger.info("Checking revision", id=revision.id, name=revision.name)
-
-        # This is necessary because buggy versions of the migration may have applied
-        # revisions in the wrong order.
         if revision.id in applied_revision_ids:
             logger.info(
                 "Revision is already applied",

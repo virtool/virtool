@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Any
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.transforms import AbstractTransform, apply_transforms
@@ -71,23 +72,60 @@ class AttachImportedFromTransform(AbstractTransform):
     async def prepare_one(
         self, document: Document, session: AsyncSession
     ) -> Document | None:
-        try:
-            upload_id = document["imported_from"]["id"]
-        except KeyError:
+        imported_from = document.get("imported_from")
+
+        if not imported_from:
             return None
 
-        row = await get_row_by_id(self._pg, SQLUpload, upload_id)
+        row = await get_row_by_id(self._pg, SQLUpload, imported_from["id"])
+
+        if row is None:
+            return None
 
         return await apply_transforms(
             serialize_upload(row), [AttachUserTransform(self._pg)], self._pg
         )
+
+    async def prepare_many(
+        self,
+        documents: list[Document],
+        session: AsyncSession,
+    ) -> dict[str, Document | None]:
+        upload_ids = {
+            document["imported_from"]["id"]
+            for document in documents
+            if document.get("imported_from")
+        }
+
+        result = await session.execute(
+            select(SQLUpload).where(SQLUpload.id.in_(upload_ids)),
+        )
+
+        upload_lookup = {
+            row.id: await apply_transforms(
+                serialize_upload(row),
+                [AttachUserTransform(self._pg)],
+                self._pg,
+            )
+            for row in result.scalars()
+        }
+
+        prepared: dict[str, Document | None] = {}
+
+        for document in documents:
+            imported_from = document.get("imported_from")
+            prepared[document["id"]] = (
+                upload_lookup.get(imported_from["id"]) if imported_from else None
+            )
+
+        return prepared
 
     async def attach_one(
         self,
         document: Document,
         prepared: Document | None,
     ) -> Document:
-        if prepared is None:
+        if prepared is None and not document.get("imported_from"):
             return document
 
         return {**document, "imported_from": prepared}

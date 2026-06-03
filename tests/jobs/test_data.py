@@ -4,10 +4,22 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
+from virtool.data.events import (
+    Operation,
+    dangerously_clear_events,
+    dangerously_get_event,
+)
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.jobs.data import JobsData
-from virtool.jobs.models import JobState
+from virtool.jobs.models import (
+    CreateJobClaimRequest,
+    Job,
+    JobClaimed,
+    JobState,
+    JobStepDefinition,
+    Workflow,
+)
 from virtool.jobs.pg import (
     SQLJob,
     SQLJobAnalysis,
@@ -296,6 +308,98 @@ class TestStartStepPostgres:
             updated_job.steps[0].started_at.replace(tzinfo=None) == static_time.datetime
         )
         assert updated_job.steps[1].started_at is None
+
+    async def test_emits_job_update_event(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """Starting a step emits a jobs-domain update carrying the job id.
+
+        The event data must be the full job (keyed by the integer job id), not
+        the step status, so the websocket server can refetch and push the job.
+        """
+        user = await fake.users.create()
+        job = await fake.jobs.create(user, state=JobState.RUNNING)
+
+        async with AsyncSession(pg) as session:
+            sql_job = (
+                await session.execute(select(SQLJob).where(SQLJob.id == job.id))
+            ).scalar()
+            sql_job.steps = [
+                {"id": "step_1", "name": "Step 1", "description": "First step"},
+            ]
+            await session.commit()
+
+        dangerously_clear_events()
+
+        await data_layer.jobs.start_step(job.id, "step_1")
+
+        event = await dangerously_get_event()
+
+        assert event.domain == "jobs"
+        assert event.operation == Operation.UPDATE
+        assert isinstance(event.data, Job)
+        assert event.data.id == job.id
+
+
+class TestClaim:
+    """Test the claim() method of JobsData."""
+
+    async def test_emits_job_without_secret_key(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """Claiming a job emits a jobs-domain update carrying a Job, not JobClaimed.
+
+        The emitted data must not be the JobClaimed object, which carries the
+        one-time secret runner key.
+        """
+        user = await fake.users.create()
+
+        async with AsyncSession(pg) as session:
+            sql_job = SQLJob(
+                created_at=arrow.utcnow().naive,
+                state="pending",
+                user_id=user.id,
+                workflow="nuvs",
+            )
+            session.add(sql_job)
+            await session.flush()
+            job_id = sql_job.id
+            await session.commit()
+
+        dangerously_clear_events()
+
+        await data_layer.jobs.claim(
+            Workflow.NUVS,
+            CreateJobClaimRequest(
+                runner_id="runner-1",
+                mem=8.0,
+                cpu=4.0,
+                image="virtool/workflow:1.0.0",
+                runtime_version="1.0.0",
+                workflow_version="2.0.0",
+                steps=[
+                    JobStepDefinition(
+                        id="step_1",
+                        name="Step 1",
+                        description="First step",
+                    ),
+                ],
+            ),
+        )
+
+        event = await dangerously_get_event()
+
+        assert event.domain == "jobs"
+        assert event.operation == Operation.UPDATE
+        assert isinstance(event.data, Job)
+        assert not isinstance(event.data, JobClaimed)
+        assert event.data.id == job_id
 
 
 class TestFinish:

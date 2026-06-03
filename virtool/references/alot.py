@@ -42,7 +42,7 @@ def prepare_insertion_history(
     history_method: HistoryMethod,
     old: dict | None,
     new: dict | None,
-    user_id: str,
+    user_id: int,
 ) -> PreparedInsertionHistory:
     """Prepare a history record for bulk OTU insertion.
 
@@ -101,7 +101,7 @@ def prepare_otu_insertion(
     history_method: HistoryMethod,
     otu: dict,
     ref_id: str,
-    user_id: str,
+    user_id: int,
 ) -> OTUInsertion:
     otu_id = random_alphanumeric(length=8)
 

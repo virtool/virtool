@@ -1,21 +1,18 @@
 import asyncio
 import functools
 from asyncio import CancelledError
-from collections.abc import AsyncGenerator, Awaitable, Callable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from typing import ParamSpec, TypeVar
 
-import asyncpg
-import orjson
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
 from virtool.api.custom_json import dump_string
 from virtool.models.base import BaseModel
-from virtool.pg.utils import PgOptions
 from virtool.utils import timestamp
 
 logger = get_logger("events")
@@ -40,15 +37,6 @@ class Event:
     name: str
     operation: Operation
     timestamp: datetime
-
-
-@dataclass
-class ClientEvent:
-    """A notification received from Postgres LISTEN."""
-
-    domain: str
-    resource_id: str | int
-    operation: str
 
 
 class _InternalEventsTarget:
@@ -198,42 +186,3 @@ class EventPublisher:
                     )
         except CancelledError:
             pass
-
-
-async def listen_for_client_events(
-    pg_options: PgOptions,
-) -> AsyncGenerator[ClientEvent]:
-    """Listen for client events via Postgres NOTIFY.
-
-    Uses a dedicated asyncpg connection outside the SQLAlchemy pool.
-    """
-    try:
-        conn = await asyncpg.connect(
-            database=pg_options.database,
-            host=pg_options.host,
-            user=pg_options.username,
-            password=pg_options.password,
-            ssl=pg_options.ssl,
-        )
-        queue: asyncio.Queue[str] = asyncio.Queue()
-    except Exception as e:
-        logger.warning("failed to connect to database", exc_info=e)
-
-    def on_notify(connection, pid, channel, payload):
-        queue.put_nowait(payload)
-
-    await conn.add_listener("client_events", on_notify)
-    logger.info("listening for client events")
-
-    try:
-        while True:
-            payload = await queue.get()
-            data = orjson.loads(payload)
-            yield ClientEvent(
-                domain=data["domain"],
-                resource_id=data["resource_id"],
-                operation=data["operation"],
-            )
-    finally:
-        await conn.remove_listener("client_events", on_notify)
-        await conn.close()

@@ -2,7 +2,7 @@ from virtool.api.errors import APINoContent
 from virtool.api.routes import Routes
 from virtool.data.utils import get_data_from_app, get_data_from_req
 from virtool.fake.next import DataFaker
-from virtool.mongo.utils import get_mongo_from_app, get_mongo_from_req
+from virtool.mongo.utils import get_mongo_from_app
 from virtool.samples.fake import create_fake_sample
 from virtool.uploads.sql import UploadType
 from virtool.utils import random_alphanumeric
@@ -15,11 +15,6 @@ async def dev(request):
     data = await request.json()
     command = data.get("command")
     app = request.app
-
-    if command == "clear_users":
-        mongo = get_mongo_from_req(request)
-
-        await mongo.keys.delete_many({})
 
     if command == "create_subtraction":
         layer = get_data_from_app(app)

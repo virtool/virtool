@@ -10,7 +10,6 @@ from virtool.api.routes import Routes
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.ml.models import MLModel, MLModelListResult, MLModelReleaseMinimal
-from virtool.storage.errors import StorageKeyNotFoundError
 
 routes = Routes()
 
@@ -77,7 +76,7 @@ class MLModelFileView(PydanticView):
 
         try:
             first_chunk = await stream.__anext__()
-        except (StopAsyncIteration, StorageKeyNotFoundError):
+        except StopAsyncIteration:
             raise APINotFound()
 
         response = StreamResponse(

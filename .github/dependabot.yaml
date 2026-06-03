@@ -4,6 +4,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    reviewers:
+      - "igboyes"
     groups:
       pytest:
         patterns:
@@ -21,7 +23,12 @@ updates:
         patterns:
           - "aiohttp"
           - "aiohttp-pydantic"
+    ignore:
+      - dependency-name: "pydantic"
+        versions: [">=2.0.0"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
+    reviewers:
+      - "igboyes"

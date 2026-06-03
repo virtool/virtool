@@ -8,7 +8,6 @@ from virtool.config.cls import ServerConfig
 def build_server_config(**overrides) -> ServerConfig:
     defaults = {
         "base_url": "",
-        "data_path": Path("./data"),
         "dev": False,
         "flags": [],
         "host": "localhost",
@@ -27,12 +26,31 @@ def build_server_config(**overrides) -> ServerConfig:
     return ServerConfig(**defaults)
 
 
+class TestFallbackPathValidation:
+    def test_empty_string_raises(self):
+        with pytest.raises(ValueError, match="empty string"):
+            build_server_config(storage_fallback_path="")
+
+    def test_nonexistent_path_raises(self):
+        with pytest.raises(ValueError, match="does not exist"):
+            build_server_config(storage_fallback_path="/nonexistent/path/xyz")
+
+    def test_file_path_raises(self, tmp_path: Path):
+        f = tmp_path / "not_a_dir.txt"
+        f.write_text("x")
+        with pytest.raises(ValueError, match="not a directory"):
+            build_server_config(storage_fallback_path=f)
+
+    def test_valid_directory_ok(self, tmp_path: Path):
+        config = build_server_config(storage_fallback_path=tmp_path)
+        assert config.storage_fallback_path == tmp_path
+
+
 class TestStorageBackendRequired:
     def test_missing_raises(self):
         with pytest.raises(TypeError, match="storage_backend"):
             ServerConfig(
                 base_url="",
-                data_path=Path("./data"),
                 dev=False,
                 flags=[],
                 host="localhost",

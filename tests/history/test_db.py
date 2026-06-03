@@ -11,7 +11,6 @@ from virtool.history.sql import SQLHistoryDiff
 from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
-from virtool.storage.memory import MemoryStorageProvider
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
@@ -178,13 +177,14 @@ async def test_patch_to_version(
     remove: bool,
     create_mock_history,
     mongo: Mongo,
+    pg: AsyncEngine,
     snapshot: SnapshotAssertion,
 ):
     await create_mock_history(remove=remove)
 
     current, patched, reverted_change_ids = await virtool.history.db.patch_to_version(
-        MemoryStorageProvider(),
         mongo,
+        pg,
         "6116cba1",
         1,
     )
@@ -192,3 +192,20 @@ async def test_patch_to_version(
     assert current == snapshot(name="current")
     assert patched == snapshot(name="patched")
     assert reverted_change_ids == snapshot(name="reverted_change_ids")
+
+
+async def test_patch_to_version_missing_diff(mongo: Mongo, pg: AsyncEngine):
+    """A change with the ``"postgres"`` sentinel but no ``SQLHistoryDiff`` row raises a
+    clear error instead of failing later with a ``KeyError``.
+    """
+    await mongo.history.insert_one(
+        {
+            "_id": "6116cba1.1",
+            "diff": "postgres",
+            "method_name": "update",
+            "otu": {"id": "6116cba1", "name": "Prunus virus F", "version": 1},
+        },
+    )
+
+    with pytest.raises(ValueError, match="Missing history_diffs rows.*6116cba1.1"):
+        await virtool.history.db.patch_to_version(mongo, pg, "6116cba1", 0)

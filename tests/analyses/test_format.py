@@ -195,12 +195,13 @@ async def test_format_analysis(
     )
 
     storage = MemoryStorageProvider()
+    pg = mocker.Mock()
     document = {}
 
     if workflow:
         document["workflow"] = workflow
 
-    coroutine = virtool.analyses.format.format_analysis(storage, mongo, document)
+    coroutine = virtool.analyses.format.format_analysis(storage, mongo, pg, document)
 
     if workflow is None or workflow == "foobar":
         with pytest.raises(ValueError) as err:
@@ -222,5 +223,5 @@ async def test_format_analysis(
             assert not m_format_pathoscope.called
 
         elif workflow == "pathoscope":
-            m_format_pathoscope.assert_called_with(storage, mongo, document)
+            m_format_pathoscope.assert_called_with(storage, mongo, pg, document)
             assert not m_format_nuvs.called

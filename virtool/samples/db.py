@@ -71,12 +71,18 @@ class AttachArtifactsAndReadsTransform(AbstractTransform):
 
         for reads_file in reads:
             if upload := reads_file.get("upload"):
-                reads_file["upload"] = serialize_upload(
+                upload_dict = serialize_upload(
                     (
                         await session.execute(
                             select(SQLUpload).filter_by(id=upload),
                         )
                     ).scalar()
+                )
+
+                reads_file["upload"] = await apply_transforms(
+                    upload_dict,
+                    [AttachUserTransform(self._pg, ignore_errors=True)],
+                    self._pg,
                 )
 
             reads_file["download_url"] = str(
@@ -234,7 +240,7 @@ async def create_sample(
     subtractions: list[str],
     notes: str,
     labels: list[int],
-    user_id: str,
+    user_id: int,
     settings: Settings,
     paired: bool = False,
     _id: str | None = None,

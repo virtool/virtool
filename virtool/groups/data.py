@@ -1,16 +1,12 @@
-import math
-
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
-from virtool.data.topg import both_transactions
-from virtool.groups.models import Group, GroupMinimal, GroupSearchResult
+from virtool.groups.models import Group
 from virtool.groups.oas import UpdateGroupRequest
 from virtool.groups.pg import SQLGroup
-from virtool.mongo.core import Mongo
 from virtool.users.models_base import UserNested
 from virtool.users.pg import SQLUser, SQLUserGroup
 from virtool.users.utils import generate_base_permissions
@@ -21,66 +17,9 @@ class GroupsData:
 
     def __init__(
         self,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
-        self._mongo = mongo
         self._pg = pg
-
-    async def list(self) -> list[GroupMinimal]:
-        """List all user groups.
-
-        :return: a list of all user groups
-
-        """
-        async with AsyncSession(self._pg) as session:
-            result = await session.execute(select(SQLGroup).order_by(SQLGroup.name))
-            return [GroupMinimal(**group.to_dict()) for group in result.scalars()]
-
-    async def find(self, page: int, per_page: int, term: str = "") -> GroupSearchResult:
-        """Finds all user groups matching the term
-
-        :return: a list of all user groups
-
-        """
-        if term:
-            filters = [SQLGroup.name.ilike(f"%{term}%")]
-        else:
-            filters = []
-
-        if page > 1:
-            skip = (page - 1) * per_page
-        else:
-            skip = 0
-
-        async with AsyncSession(self._pg) as session:
-            count_result = await session.execute(
-                select(
-                    select(func.count(SQLGroup.id)).where(*filters).label("found"),
-                    select(func.count(SQLGroup.id)).label("total"),
-                ),
-            )
-
-            found_count, total_count = count_result.fetchone()
-
-            result = await session.execute(
-                select(SQLGroup)
-                .where(*filters)
-                .order_by(SQLGroup.name)
-                .offset(skip)
-                .limit(per_page),
-            )
-
-            groups = [row.to_dict() for row in result.unique().scalars()]
-
-        return GroupSearchResult(
-            items=groups,
-            found_count=found_count,
-            total_count=total_count,
-            page=page,
-            page_count=int(math.ceil(found_count / per_page)),
-            per_page=per_page,
-        )
 
     async def get(self, group_id: int) -> Group:
         """Get a single group by its ID.
@@ -149,37 +88,32 @@ class GroupsData:
         :param data: updates to the current group permissions or name
         :return: the updated group
         :raises ResourceNotFoundError: if the group does not exist
+        :raises ResourceConflictError: if a group with the given name already exists
 
         """
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
-            group = await pg_session.get(SQLGroup, group_id)
+        try:
+            async with AsyncSession(self._pg) as session:
+                group = await session.get(SQLGroup, group_id)
 
-            if not group:
-                raise ResourceNotFoundError
+                if not group:
+                    raise ResourceNotFoundError
 
-            data = data.dict(exclude_unset=True)
+                data = data.dict(exclude_unset=True)
 
-            db_update = {}
+                if "name" in data:
+                    group.name = data["name"]
 
-            if "name" in data:
-                group.name = data["name"]
+                if "permissions" in data:
+                    group.permissions = {**group.permissions, **data["permissions"]}
 
-            if "permissions" in data:
-                group.permissions = {**group.permissions, **data["permissions"]}
-
-            if db_update:
-                group.update(db_update)
+                await session.commit()
+        except IntegrityError:
+            raise ResourceConflictError("Group already exists")
 
         return await self.get(group_id)
 
     async def delete(self, group_id: int) -> None:
         """Delete a group by its id.
-
-        Deletes the group and updates all member user permissions if they are affected
-        by deletion of the group.
 
         :param group_id: the id of the group to delete
         :raises ResourceNotFoundError: if the group is not found
@@ -187,15 +121,14 @@ class GroupsData:
         """
         group = await self.get(group_id)
 
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
-            result = await pg_session.execute(
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
                 delete(SQLGroup).where(SQLGroup.id == group_id),
             )
 
             if not result.rowcount:
                 raise ResourceNotFoundError
+
+            await session.commit()
 
         emit(group, "groups", "delete", Operation.DELETE)

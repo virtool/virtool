@@ -5,11 +5,10 @@ from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, TypeVar
 
 from pymongo.errors import OperationFailure
-from sqlalchemy import ColumnExpressionArgument, or_, select
+from sqlalchemy import ColumnExpressionArgument, or_
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.pg.base import HasLegacyAndModernIDs
-from virtool.users.pg import SQLUser
 
 if TYPE_CHECKING:
     from motor.motor_asyncio import AsyncIOMotorClientSession as ClientSession
@@ -134,77 +133,3 @@ def compose_legacy_id_single_expression(
         return model.id == int(id_)
 
     return model.legacy_id == id_
-
-
-async def resolve_user_id(session: AsyncSession, user_id: int | str) -> int:
-    """Resolve a user ID to its Postgres integer ID.
-
-    Use this within an existing session (e.g., inside both_transactions).
-
-    :param session: an async SQLAlchemy session
-    :param user_id: a user ID (modern int or legacy string)
-    :return: the Postgres integer user ID
-    :raises NoResultFound: if no user is found
-    """
-    if isinstance(user_id, int):
-        return user_id
-
-    if isinstance(user_id, str) and user_id.isdigit():
-        return int(user_id)
-
-    result = await session.execute(
-        select(SQLUser.id).where(SQLUser.legacy_id == user_id),
-    )
-
-    return result.scalar_one()
-
-
-async def get_user_id_single_variants(
-    pg: AsyncEngine, user_id: int | str
-) -> list[int | str]:
-    """Get all ID variants (modern and legacy) for MongoDB queries during migration.
-
-    TODO: Remove this function when all user IDs are migrated away from MongoDB strings.
-
-    :param pg: the PostgreSQL async engine
-    :param user_id: a single user ID (modern int or legacy string)
-    :return: list of ID variants that should match in MongoDB queries
-
-    """
-    async with AsyncSession(pg, expire_on_commit=False) as session:
-        result = await session.execute(
-            select(SQLUser.id, SQLUser.legacy_id).where(
-                compose_legacy_id_single_expression(SQLUser, user_id),
-            ),
-        )
-        user_row = result.first()
-
-        if user_row is None:
-            return [user_id]  # Fallback to original ID
-
-        variants = [user_row.id]
-        if user_row.legacy_id:
-            variants.append(user_row.legacy_id)
-        return variants
-
-
-async def get_user_id_multi_variants(
-    pg: AsyncEngine, user_ids: list[int | str]
-) -> list[int | str]:
-    """Get all ID variants for multiple users for MongoDB queries during migration.
-
-    TODO: Remove this function when all user IDs are migrated away from MongoDB strings.
-
-    :param pg: the PostgreSQL async engine
-    :param user_ids: list of user IDs (modern int or legacy string)
-    :return: flattened list of all ID variants that should match in MongoDB queries
-
-    """
-    if not user_ids:
-        return []
-
-    all_variants = []
-    for user_id in user_ids:
-        variants = await get_user_id_single_variants(pg, user_id)
-        all_variants.extend(variants)
-    return all_variants

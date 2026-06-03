@@ -1,23 +1,31 @@
 import asyncio
+from collections.abc import AsyncIterator
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
+import virtool.utils
 from tests.fixtures.client import ClientSpawner
+from virtool.analyses.sql import SQLAnalysis, SQLAnalysisResult
 from virtool.api.client import UserClient
 from virtool.data.errors import ResourceConflictError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
-from virtool.models.enums import LibraryType, Permission
+from virtool.models.enums import AnalysisWorkflow, LibraryType, Permission
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
-from virtool.pg.utils import get_row_by_id
+from virtool.pg.utils import get_row, get_row_by_id
 from virtool.samples.models import WorkflowState
-from virtool.samples.oas import CreateSampleRequest
+from virtool.samples.oas import CreateAnalysisRequest, CreateSampleRequest
+from virtool.samples.sql import SQLSampleReads
 from virtool.samples.utils import SampleRight
 from virtool.settings.oas import UpdateSettingsRequest
+from virtool.storage.errors import StorageKeyNotFoundError
+from virtool.storage.protocol import StorageBackend
 from virtool.uploads.sql import SQLUpload, UploadType
+from virtool.uploads.utils import upload_file_key
 from virtool.users.oas import UpdateUserRequest
 
 
@@ -145,13 +153,42 @@ class TestCreate:
 
 async def test_finalize(
     data_layer: DataLayer,
+    fake: DataFaker,
     get_sample_ready_false,
+    memory_storage: StorageBackend,
     mongo: Mongo,
+    pg: AsyncEngine,
     snapshot_recent: SnapshotAssertion,
     spawn_client: ClientSpawner,
-    tmp_path,
 ):
-    """Test that sample can be finalized"""
+    """Test that finalizing a sample deletes its upload files from storage."""
+    upload = await fake.uploads.create(user=await fake.users.create())
+
+    upload_row = await get_row_by_id(pg, SQLUpload, upload.id)
+    upload_name_on_disk = upload_row.name_on_disk
+
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLSampleReads(
+                name="reads.fq.gz",
+                name_on_disk="reads_1.fq.gz",
+                sample="test",
+                size=len(b"upload contents"),
+                upload=upload.id,
+                uploaded_at=virtool.utils.timestamp(),
+            ),
+        )
+
+        await session.commit()
+
+    async def _chunks() -> AsyncIterator[bytes]:
+        yield b"upload contents"
+
+    upload_key = upload_file_key(upload_name_on_disk)
+    await memory_storage.write(upload_key, _chunks())
+
+    assert await memory_storage.size(upload_key) == len(b"upload contents")
+
     quality = {
         "bases": [[1543]],
         "composition": [[6372]],
@@ -162,17 +199,14 @@ async def test_finalize(
         "sequences": [7091],
     }
 
-    assert (
-        await data_layer.samples.finalize(
-            "test",
-            quality,
-        )
-    ).dict() == snapshot_recent()
+    sample = await data_layer.samples.finalize("test", quality)
 
-    sample = await data_layer.samples.get("test")
-
+    assert sample.dict() == snapshot_recent()
     assert sample.quality == quality
     assert sample.ready is True
+
+    with pytest.raises(StorageKeyNotFoundError):
+        await memory_storage.size(upload_key)
 
 
 async def test_finalized_already(get_sample_ready_false, data_layer):
@@ -472,3 +506,104 @@ class TestHasResourcesForAnalysisJob:
                 "test_ref",
                 [subtraction_id, "missing"],
             )
+
+
+class TestDelete:
+    """Deleting a sample cascades to its analyses in both Mongo and Postgres."""
+
+    async def _setup(self, fake: DataFaker, mongo: Mongo) -> str:
+        user = await fake.users.create()
+
+        await asyncio.gather(
+            mongo.samples.insert_one(
+                {
+                    "_id": "test_sample",
+                    "all_read": True,
+                    "all_write": True,
+                    "created_at": virtool.utils.timestamp(),
+                    "files": [],
+                    "format": "fastq",
+                    "group": "none",
+                    "group_read": True,
+                    "group_write": True,
+                    "hold": False,
+                    "host": "",
+                    "is_legacy": False,
+                    "isolate": "",
+                    "job": None,
+                    "labels": [],
+                    "library_type": LibraryType.normal.value,
+                    "locale": "",
+                    "name": "Test Sample",
+                    "notes": "",
+                    "nuvs": False,
+                    "pathoscope": True,
+                    "ready": True,
+                    "subtractions": [],
+                    "user": {"id": user.id},
+                    "workflows": {
+                        "aodp": WorkflowState.INCOMPATIBLE.value,
+                        "pathoscope": WorkflowState.COMPLETE.value,
+                        "nuvs": WorkflowState.PENDING.value,
+                    },
+                },
+            ),
+            mongo.indexes.insert_one(
+                {
+                    "_id": "test_index",
+                    "version": 11,
+                    "ready": True,
+                    "reference": {"id": "test_ref"},
+                },
+            ),
+            mongo.references.insert_one(
+                {
+                    "_id": "test_ref",
+                    "archived": False,
+                    "data_type": "genome",
+                    "name": "Test Reference",
+                },
+            ),
+        )
+
+        return user.id
+
+    async def test_deletes_analysis_pg_rows(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        memory_storage: StorageBackend,
+        mongo: Mongo,
+        pg: AsyncEngine,
+    ):
+        """Deleting a sample removes its analyses' Postgres rows and result rows."""
+        user_id = await self._setup(fake, mongo)
+
+        analysis = await data_layer.analyses.create(
+            CreateAnalysisRequest(
+                ml=None,
+                ref_id="test_ref",
+                subtractions=[],
+                workflow=AnalysisWorkflow.nuvs,
+            ),
+            "test_sample",
+            user_id,
+            0,
+        )
+
+        await data_layer.analyses.finalize(analysis.id, {"hits": []})
+
+        assert await get_row(pg, SQLAnalysis, ("legacy_id", analysis.id)) is not None
+
+        await data_layer.samples.delete("test_sample")
+
+        assert await mongo.analyses.find_one({"_id": analysis.id}) is None
+        assert await get_row(pg, SQLAnalysis, ("legacy_id", analysis.id)) is None
+
+        async with AsyncSession(pg) as session:
+            result = await session.execute(
+                select(SQLAnalysisResult).where(
+                    SQLAnalysisResult.analysis_id == analysis.id,
+                ),
+            )
+            assert result.scalar_one_or_none() is None
