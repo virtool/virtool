@@ -122,6 +122,19 @@ class TasksData:
 
             raise ResourceNotFoundError
 
+    @staticmethod
+    def _new_sql_task(task_class: type[BaseTask], context: dict | None) -> SQLTask:
+        """Build an unsaved :class:`SQLTask` for a new task of ``task_class``."""
+        return SQLTask(
+            complete=False,
+            context=context or {},
+            step=task_class.name,
+            count=0,
+            created_at=virtool.utils.timestamp(),
+            progress=0,
+            type=task_class.name,
+        )
+
     @emits(Operation.CREATE)
     async def create(
         self,
@@ -135,15 +148,7 @@ class TasksData:
         :return: the task record
 
         """
-        sql_task = SQLTask(
-            complete=False,
-            context=context or {},
-            step=task_class.name,
-            count=0,
-            created_at=virtool.utils.timestamp(),
-            progress=0,
-            type=task_class.name,
-        )
+        sql_task = self._new_sql_task(task_class, context)
 
         async with AsyncSession(self._pg) as session:
             session.add(sql_task)
@@ -170,6 +175,9 @@ class TasksData:
         :return: the spawned task, or ``None`` if a task was not due or another
             replica held the lock
         """
+        if interval <= 0:
+            raise ValueError("interval must be a positive number of seconds")
+
         async with AsyncSession(self._pg) as session:
             locked = await session.scalar(
                 select(func.pg_try_advisory_xact_lock(func.hashtext(task_class.name)))
@@ -189,15 +197,7 @@ class TasksData:
             if existing_task is not None:
                 return None
 
-            sql_task = SQLTask(
-                complete=False,
-                context={},
-                step=task_class.name,
-                count=0,
-                created_at=virtool.utils.timestamp(),
-                progress=0,
-                type=task_class.name,
-            )
+            sql_task = self._new_sql_task(task_class, None)
 
             session.add(sql_task)
             await session.flush()

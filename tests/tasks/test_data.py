@@ -171,6 +171,16 @@ class TestCreatePeriodic:
         assert task is not None
         assert await _count_tasks(pg, DummyTask.name) == 2
 
+    @pytest.mark.parametrize("interval", [0, -1])
+    async def test_rejects_non_positive_interval(
+        self,
+        interval: int,
+        data_layer: DataLayer,
+    ):
+        """Reject a non-positive interval rather than silently never spawning."""
+        with pytest.raises(ValueError, match="positive number of seconds"):
+            await data_layer.tasks.create_periodic(DummyTask, interval)
+
     async def test_concurrent_callers_spawn_once(
         self,
         data_layer: DataLayer,
