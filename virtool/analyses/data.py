@@ -120,6 +120,23 @@ class AnalysisData(DataLayerDomain):
         self._pg = pg
         self._storage = storage
 
+    async def _resolve_ids(self, analysis_id: int | str):
+        """Resolve the integer id and legacy slug for an analysis by either identifier.
+
+        Accepts the outward-facing integer id or the legacy Mongo slug and returns the
+        row's ``(id, legacy_id)``, or ``None`` if no analysis matches. The slug is still
+        needed for Mongo dual-writes and the string-keyed ``analysis_files``,
+        ``nuvs_blast``, and ``analysis_results`` tables.
+        """
+        async with AsyncSession(self._pg) as session:
+            return (
+                await session.execute(
+                    select(SQLAnalysis.id, SQLAnalysis.legacy_id).where(
+                        compose_legacy_id_single_expression(SQLAnalysis, analysis_id),
+                    ),
+                )
+            ).one_or_none()
+
     async def find(
         self,
         page: int,
@@ -394,12 +411,7 @@ class AnalysisData(DataLayerDomain):
             # Only the jobs API is allowed to delete incomplete analyses.
             raise ResourceConflictError
 
-        async with AsyncSession(self._pg) as session:
-            legacy_id = (
-                await session.execute(
-                    select(SQLAnalysis.legacy_id).where(SQLAnalysis.id == analysis.id),
-                )
-            ).scalar_one()
+        legacy_id = (await self._resolve_ids(analysis.id)).legacy_id
 
         async with both_transactions(self._mongo, self._pg) as (
             mongo_session,
@@ -457,21 +469,14 @@ class AnalysisData(DataLayerDomain):
         :param name: the name of the analysis file
         :return: the new analysis file
         """
-        async with AsyncSession(self._pg) as session:
-            legacy_id = (
-                await session.execute(
-                    select(SQLAnalysis.legacy_id).where(
-                        compose_legacy_id_single_expression(SQLAnalysis, analysis_id),
-                    ),
-                )
-            ).scalar_one_or_none()
+        ids = await self._resolve_ids(analysis_id)
 
-        if legacy_id is None:
+        if ids is None:
             raise ResourceNotFoundError
 
         analysis_file = await create_analysis_file(
             self._pg,
-            legacy_id,
+            ids.legacy_id,
             analysis_format,
             name,
         )
@@ -495,7 +500,7 @@ class AnalysisData(DataLayerDomain):
             SQLAnalysisFile,
         )
 
-        return AnalysisFile(**analysis_file)
+        return AnalysisFile(**{**analysis_file, "analysis": ids.id})
 
     async def download_file(
         self,

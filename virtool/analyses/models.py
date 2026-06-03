@@ -63,7 +63,7 @@ class AnalysisMinimal(BaseModel):
 
 
 class AnalysisFile(BaseModel):
-    analysis: str
+    analysis: int
     description: str | None = None
     format: str
     id: int
@@ -83,7 +83,7 @@ class Analysis(AnalysisMinimal):
                 "created_at": "2022-08-15T17:42:35.979000Z",
                 "files": [
                     {
-                        "analysis": "ofv7rp4v",
+                        "analysis": 3145,
                         "description": None,
                         "format": "tsv",
                         "id": 3145,

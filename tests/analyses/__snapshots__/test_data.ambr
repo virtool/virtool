@@ -331,7 +331,7 @@
 # ---
 # name: test_upload_file
   dict({
-    'analysis': 'bf1b993c',
+    'analysis': 1,
     'description': None,
     'format': 'fasta',
     'id': 1,
