@@ -277,6 +277,12 @@ Team ID: `76cf3c46-c5d9-4df4-b457-0fc053d402f7`
 New issues should use the "Backend" label. Choose an appropriate status — don't
 default to "Backlog". Bugs should go to "Todo".
 
+### Issue Naming
+
+- Capitalize issue titles.
+- Keep Conventional Commit types and scopes out of titles (e.g. write "Fix
+  sample creation" not "fix(samples): blah").
+
 When using sub-agents to interact with Linear:
 - Never update issue comments or status unless explicitly asked.
 - Never create issues unless explicitly asked.
