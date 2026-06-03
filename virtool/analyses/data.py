@@ -59,6 +59,7 @@ from virtool.utils import base_processor, wait_for_checks
 logger = get_logger("analyses")
 
 FIND_COLUMNS = (
+    SQLAnalysis.id,
     SQLAnalysis.legacy_id,
     SQLAnalysis.created_at,
     SQLAnalysis.updated_at,
@@ -82,11 +83,15 @@ def _row_to_document(row, *, include_results: bool) -> dict:
     """Shape a ``SQLAnalysis`` row into the Mongo-like document the transforms and
     formatters expect.
 
-    The legacy id is used as ``_id`` so responses stay compatible with the Mongo
-    string ids still present in URLs. ``base_processor`` later renames it to ``id``.
+    The integer ``id`` is the outward-facing identifier; ``base_processor`` later
+    renames ``_id`` to ``id``. The legacy Mongo slug is carried in ``legacy_id`` for
+    internal consumers (storage keys, Mongo dual-writes, and string-keyed SQL tables
+    such as ``analysis_files`` and ``nuvs_blast``) that have not yet been migrated off
+    the slug.
     """
     document = {
-        "_id": row.legacy_id,
+        "_id": row.id,
+        "legacy_id": row.legacy_id,
         "created_at": row.created_at,
         "updated_at": row.updated_at,
         "workflow": row.workflow,
@@ -210,7 +215,9 @@ class AnalysisData(DataLayerDomain):
 
         await wait_for_checks(check_if_analysis_modified(if_modified_since, document))
 
-        document = await attach_analysis_files(self._pg, analysis_id, document)
+        document = await attach_analysis_files(
+            self._pg, document["legacy_id"], document
+        )
 
         if document["ready"]:
             document["results"] = await virtool.analyses.format.format_analysis(
@@ -219,7 +226,7 @@ class AnalysisData(DataLayerDomain):
                 self._pg,
                 workflow=document["workflow"],
                 results=document["results"],
-                legacy_id=document["_id"],
+                legacy_id=document["legacy_id"],
                 sample_id=document["sample"]["id"],
             )
 
@@ -387,32 +394,39 @@ class AnalysisData(DataLayerDomain):
             # Only the jobs API is allowed to delete incomplete analyses.
             raise ResourceConflictError
 
+        async with AsyncSession(self._pg) as session:
+            legacy_id = (
+                await session.execute(
+                    select(SQLAnalysis.legacy_id).where(SQLAnalysis.id == analysis.id),
+                )
+            ).scalar_one()
+
         async with both_transactions(self._mongo, self._pg) as (
             mongo_session,
             pg_session,
         ):
             await self._mongo.analyses.delete_one(
-                {"_id": analysis.id},
+                {"_id": legacy_id},
                 session=mongo_session,
             )
 
             await pg_session.execute(
                 delete(SQLAnalysisResult).where(
-                    SQLAnalysisResult.analysis_id == analysis_id,
+                    SQLAnalysisResult.analysis_id == legacy_id,
                 ),
             )
 
             await pg_session.execute(
-                delete(SQLAnalysis).where(SQLAnalysis.legacy_id == analysis_id),
+                delete(SQLAnalysis).where(SQLAnalysis.id == analysis.id),
             )
 
         for key, exc in await delete_prefix(
             self._storage,
-            f"samples/{analysis.sample.id}/analysis/{analysis_id}/",
+            f"samples/{analysis.sample.id}/analysis/{legacy_id}/",
         ):
             logger.error(
                 "storage cleanup failed; file orphaned",
-                analysis_id=analysis_id,
+                analysis_id=analysis.id,
                 sample_id=analysis.sample.id,
                 key=key,
                 error=repr(exc),
@@ -443,14 +457,21 @@ class AnalysisData(DataLayerDomain):
         :param name: the name of the analysis file
         :return: the new analysis file
         """
-        document = await self._mongo.analyses.find_one(analysis_id)
+        async with AsyncSession(self._pg) as session:
+            legacy_id = (
+                await session.execute(
+                    select(SQLAnalysis.legacy_id).where(
+                        compose_legacy_id_single_expression(SQLAnalysis, analysis_id),
+                    ),
+                )
+            ).scalar_one_or_none()
 
-        if document is None:
+        if legacy_id is None:
             raise ResourceNotFoundError
 
         analysis_file = await create_analysis_file(
             self._pg,
-            analysis_id,
+            legacy_id,
             analysis_format,
             name,
         )
@@ -562,6 +583,7 @@ class AnalysisData(DataLayerDomain):
             analysis = (
                 await session.execute(
                     select(
+                        SQLAnalysis.legacy_id,
                         SQLAnalysis.workflow,
                         SQLAnalysis.ready,
                         SQLAnalysis.results,
@@ -573,6 +595,8 @@ class AnalysisData(DataLayerDomain):
 
         if analysis is None:
             raise ResourceNotFoundError()
+
+        legacy_id = analysis.legacy_id
 
         await wait_for_checks(
             check_if_analysis_is_nuvs(analysis.workflow),
@@ -586,13 +610,13 @@ class AnalysisData(DataLayerDomain):
         ):
             await pg_session.execute(
                 delete(SQLNuVsBlast)
-                .where(SQLNuVsBlast.analysis_id == analysis_id)
+                .where(SQLNuVsBlast.analysis_id == legacy_id)
                 .where(SQLNuVsBlast.sequence_index == sequence_index),
             )
             await pg_session.flush()
 
             blast = SQLNuVsBlast(
-                analysis_id=analysis_id,
+                analysis_id=legacy_id,
                 created_at=timestamp,
                 last_checked_at=timestamp,
                 ready=False,
@@ -607,13 +631,13 @@ class AnalysisData(DataLayerDomain):
                 self._mongo,
                 mongo_session,
                 pg_session,
-                analysis_id,
+                legacy_id,
                 timestamp,
             )
 
             await self.data.tasks.create(
                 BLASTTask,
-                {"analysis_id": analysis_id, "sequence_index": sequence_index},
+                {"analysis_id": legacy_id, "sequence_index": sequence_index},
             )
 
             blast_data = blast.to_dict()
@@ -633,7 +657,12 @@ class AnalysisData(DataLayerDomain):
         async with AsyncSession(self._pg) as session:
             row = (
                 await session.execute(
-                    select(SQLAnalysis.ready, SQLAnalysis.sample).where(
+                    select(
+                        SQLAnalysis.id,
+                        SQLAnalysis.legacy_id,
+                        SQLAnalysis.ready,
+                        SQLAnalysis.sample,
+                    ).where(
                         compose_legacy_id_single_expression(SQLAnalysis, analysis_id),
                     ),
                 )
@@ -653,19 +682,19 @@ class AnalysisData(DataLayerDomain):
         ):
             await pg_session.execute(
                 insert(SQLAnalysisResult).values(
-                    analysis_id=analysis_id,
+                    analysis_id=row.legacy_id,
                     results=results,
                 ),
             )
 
             await pg_session.execute(
                 update(SQLAnalysis)
-                .where(SQLAnalysis.legacy_id == analysis_id)
+                .where(SQLAnalysis.id == row.id)
                 .values(ready=True, results=results, updated_at=updated_at),
             )
 
             await self._mongo.analyses.find_one_and_update(
-                {"_id": analysis_id},
+                {"_id": row.legacy_id},
                 {"$set": {"results": "sql", "ready": True, "updated_at": updated_at}},
                 session=mongo_session,
             )

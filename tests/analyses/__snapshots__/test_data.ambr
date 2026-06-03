@@ -37,7 +37,7 @@
   dict({
     'files': list([
     ]),
-    'id': 'bf1b993c',
+    'id': 1,
     'index': dict({
       'id': 'test_index',
       'version': 11,
@@ -118,7 +118,7 @@
   dict({
     'files': list([
     ]),
-    'id': 'bf1b993c',
+    'id': 1,
     'index': dict({
       'id': 'test_index',
       'version': 11,
@@ -177,7 +177,7 @@
     'documents': list([
       dict({
         'created_at': 'approximately_now_datetime',
-        'id': 'fb085f7f',
+        'id': 2,
         'index': dict({
           'id': 'test_index',
           'version': 11,
@@ -233,7 +233,7 @@
     'documents': list([
       dict({
         'created_at': 'approximately_now_datetime',
-        'id': '7cf872dc',
+        'id': 3,
         'index': dict({
           'id': 'test_index',
           'version': 11,
@@ -278,7 +278,7 @@
       }),
       dict({
         'created_at': 'approximately_now_datetime',
-        'id': 'fb085f7f',
+        'id': 2,
         'index': dict({
           'id': 'test_index',
           'version': 11,

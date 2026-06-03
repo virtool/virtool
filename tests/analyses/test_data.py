@@ -141,6 +141,7 @@ async def test_find(
 async def test_create(
     data_layer: DataLayer,
     mongo: Mongo,
+    pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     setup_sample: str,
 ):
@@ -161,7 +162,8 @@ async def test_create(
 
     assert analysis == snapshot(name="obj", exclude=props("created_at", "updated_at"))
 
-    assert await mongo.analyses.find_one({"_id": analysis.id}) == snapshot(
+    row = await get_row(pg, SQLAnalysis, ("id", analysis.id))
+    assert await mongo.analyses.find_one({"_id": row.legacy_id}) == snapshot(
         name="mongo",
         exclude=props("created_at", "updated_at"),
     )
@@ -170,6 +172,7 @@ async def test_create(
 async def test_create_analysis_id(
     data_layer: DataLayer,
     mongo: Mongo,
+    pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     setup_sample: str,
 ):
@@ -190,7 +193,8 @@ async def test_create_analysis_id(
 
     assert analysis == snapshot(name="obj", exclude=props("created_at", "updated_at"))
 
-    assert await mongo.analyses.find_one({"_id": analysis.id}) == snapshot(
+    row = await get_row(pg, SQLAnalysis, ("id", analysis.id))
+    assert await mongo.analyses.find_one({"_id": row.legacy_id}) == snapshot(
         name="mongo",
         exclude=props("created_at", "updated_at"),
     )
@@ -223,11 +227,11 @@ class TestCreate:
             0,
         )
 
-        document = await mongo.analyses.find_one({"_id": analysis.id})
-        row = await get_row(pg, SQLAnalysis, ("legacy_id", analysis.id))
+        row = await get_row(pg, SQLAnalysis, ("id", analysis.id))
+        document = await mongo.analyses.find_one({"_id": row.legacy_id})
 
         assert row is not None
-        assert isinstance(row.id, int)
+        assert row.id == analysis.id
         assert row.legacy_id == document["_id"]
         assert row.workflow == document["workflow"]
         assert row.ready is False
@@ -260,7 +264,7 @@ class TestCreate:
             0,
         )
 
-        row = await get_row(pg, SQLAnalysis, ("legacy_id", analysis.id))
+        row = await get_row(pg, SQLAnalysis, ("id", analysis.id))
 
         assert row.subtractions == []
 
@@ -319,13 +323,13 @@ class TestFinalize:
             0,
         )
 
-        created = await get_row(pg, SQLAnalysis, ("legacy_id", analysis.id))
+        created = await get_row(pg, SQLAnalysis, ("id", analysis.id))
 
         results = {"hits": [{"index": 0, "sequence": "ACGT"}]}
 
         await data_layer.analyses.finalize(analysis.id, results)
 
-        row = await get_row(pg, SQLAnalysis, ("legacy_id", analysis.id))
+        row = await get_row(pg, SQLAnalysis, ("id", analysis.id))
 
         assert row.ready is True
         assert row.results == results
@@ -334,12 +338,12 @@ class TestFinalize:
         async with AsyncSession(pg) as session:
             result = await session.execute(
                 select(SQLAnalysisResult.results).where(
-                    SQLAnalysisResult.analysis_id == analysis.id,
+                    SQLAnalysisResult.analysis_id == created.legacy_id,
                 ),
             )
             assert result.scalar_one() == results
 
-        document = await mongo.analyses.find_one({"_id": analysis.id})
+        document = await mongo.analyses.find_one({"_id": created.legacy_id})
 
         assert document["ready"] is True
         assert document["results"] == "sql"
@@ -384,14 +388,14 @@ class TestFinalize:
         with pytest.raises(RuntimeError):
             await data_layer.analyses.finalize(analysis.id, {"hits": []})
 
-        row = await get_row(pg, SQLAnalysis, ("legacy_id", analysis.id))
+        row = await get_row(pg, SQLAnalysis, ("id", analysis.id))
         assert row.ready is False
         assert row.results is None
 
         async with AsyncSession(pg) as session:
             result = await session.execute(
                 select(SQLAnalysisResult).where(
-                    SQLAnalysisResult.analysis_id == analysis.id,
+                    SQLAnalysisResult.analysis_id == row.legacy_id,
                 ),
             )
             assert result.scalars().first() is None
@@ -415,10 +419,12 @@ class TestDelete:
             0,
         )
 
+        row = await get_row(pg, SQLAnalysis, ("id", analysis.id))
+
         await data_layer.analyses.delete(analysis.id, jobs_api_flag=True)
 
-        assert await mongo.analyses.find_one({"_id": analysis.id}) is None
-        assert await get_row(pg, SQLAnalysis, ("legacy_id", analysis.id)) is None
+        assert await mongo.analyses.find_one({"_id": row.legacy_id}) is None
+        assert await get_row(pg, SQLAnalysis, ("id", analysis.id)) is None
 
     async def test_rolls_back_when_mongo_delete_fails(
         self,
@@ -445,7 +451,7 @@ class TestDelete:
         with pytest.raises(RuntimeError):
             await data_layer.analyses.delete(analysis.id, jobs_api_flag=True)
 
-        assert await get_row(pg, SQLAnalysis, ("legacy_id", analysis.id)) is not None
+        assert await get_row(pg, SQLAnalysis, ("id", analysis.id)) is not None
 
 
 async def test_get_without_if_modified_since(

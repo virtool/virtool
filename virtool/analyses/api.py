@@ -73,6 +73,10 @@ class AnalysisView(PydanticView):
 
         Fetches the details of an analysis.
 
+        The analysis is identified by its integer `id`. The legacy Mongo string id is
+        still accepted transitionally and resolved to the same analysis; support for it
+        will be removed once the `legacy_id` bridge is dropped.
+
         Status Codes:
             200: Successful operation
             304: Not modified

@@ -19,7 +19,7 @@ def create_analyses_routes(
         async def get(self):
             id_ = self.request.match_info["analysis_id"]
 
-            if id_ == data.analysis.id:
+            if id_ == str(data.analysis.id):
                 return json_response(
                     data.analysis.dict(), status=200, dumps=custom_dumps
                 )
@@ -29,7 +29,7 @@ def create_analyses_routes(
         async def patch(self):
             analysis_id = self.request.match_info["analysis_id"]
 
-            if analysis_id != data.analysis.id:
+            if analysis_id != str(data.analysis.id):
                 return generate_not_found()
 
             results = (await self.request.json())["results"]
@@ -41,7 +41,7 @@ def create_analyses_routes(
         async def delete(self):
             analysis_id = self.request.match_info["analysis_id"]
 
-            if analysis_id != data.analysis.id:
+            if analysis_id != str(data.analysis.id):
                 return generate_not_found()
 
             if data.analysis.ready is True:
