@@ -1,8 +1,12 @@
+import asyncio
+from datetime import timedelta
+
 import pytest
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy.assertion import SnapshotAssertion
 
+import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.jobs.tasks import JobsTimeoutTask
@@ -107,6 +111,80 @@ class TestComplete:
         """Test that completing a non-existent task raises ResourceNotFoundError."""
         with pytest.raises(ResourceNotFoundError):
             await data_layer.tasks.complete(999)
+
+
+async def _count_tasks(pg: AsyncEngine, task_type: str) -> int:
+    async with AsyncSession(pg) as session:
+        return await session.scalar(
+            select(func.count()).select_from(SQLTask).filter_by(type=task_type)
+        )
+
+
+class TestCreatePeriodic:
+    async def test_spawns_when_none_exists(
+        self,
+        data_layer: DataLayer,
+        pg: AsyncEngine,
+    ):
+        """Spawn a task when no recent task of the type exists."""
+        task = await data_layer.tasks.create_periodic(DummyTask, 600)
+
+        assert task is not None
+        assert task.type == DummyTask.name
+        assert await _count_tasks(pg, DummyTask.name) == 1
+
+    async def test_skips_when_recent_exists(
+        self,
+        data_layer: DataLayer,
+        pg: AsyncEngine,
+    ):
+        """Do not spawn when a task was created within the interval."""
+        await data_layer.tasks.create(DummyTask, {})
+
+        task = await data_layer.tasks.create_periodic(DummyTask, 600)
+
+        assert task is None
+        assert await _count_tasks(pg, DummyTask.name) == 1
+
+    async def test_spawns_when_existing_is_stale(
+        self,
+        data_layer: DataLayer,
+        pg: AsyncEngine,
+    ):
+        """Spawn when the most recent task is older than the interval."""
+        async with AsyncSession(pg) as session:
+            session.add(
+                SQLTask(
+                    complete=True,
+                    context={},
+                    count=0,
+                    created_at=virtool.utils.timestamp() - timedelta(seconds=700),
+                    progress=100,
+                    step=DummyTask.name,
+                    type=DummyTask.name,
+                )
+            )
+            await session.commit()
+
+        task = await data_layer.tasks.create_periodic(DummyTask, 600)
+
+        assert task is not None
+        assert await _count_tasks(pg, DummyTask.name) == 2
+
+    async def test_concurrent_callers_spawn_once(
+        self,
+        data_layer: DataLayer,
+        pg: AsyncEngine,
+    ):
+        """Only one of many concurrent callers spawns the task."""
+        results = await asyncio.gather(
+            *(data_layer.tasks.create_periodic(DummyTask, 600) for _ in range(8))
+        )
+
+        spawned = [task for task in results if task is not None]
+
+        assert len(spawned) == 1
+        assert await _count_tasks(pg, DummyTask.name) == 1
 
 
 class TestAcquire:

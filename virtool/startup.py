@@ -202,7 +202,7 @@ async def startup_periodic_tasks(app: App) -> None:
         (SampleWorkflowsUpdateTask, 3600),
     ]
 
-    spawner = PeriodicTaskSpawner(app["pg"], app["data"].tasks)
+    spawner = PeriodicTaskSpawner(app["data"].tasks)
     task = asyncio.create_task(spawner.run(periodic_tasks))
     app.setdefault("background_tasks", []).append(task)
 
