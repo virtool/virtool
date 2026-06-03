@@ -10,11 +10,12 @@ from sqlalchemy import insert, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from assets.revisions.rev_1nl7v191h0ba_copy_analyses_to_postgres import upgrade
+from assets.revisions.rev_1nl7v191h0ba_copy_analyses_to_postgres import (
+    required_alembic_revision,
+    upgrade,
+)
 from virtool.analyses.sql import SQLAnalysisResult
 from virtool.migration.ctx import MigrationContext
-
-ALEMBIC_REVISION = "1e6490edc217"
 
 
 @pytest.fixture
@@ -25,7 +26,7 @@ def static_datetime() -> datetime:
 @pytest.fixture
 async def setup_user(ctx: MigrationContext, apply_alembic: Callable) -> int:
     """Create a user in PostgreSQL using raw SQL and return their integer ID."""
-    await asyncio.to_thread(apply_alembic, ALEMBIC_REVISION)
+    await asyncio.to_thread(apply_alembic, required_alembic_revision)
 
     async with AsyncSession(ctx.pg) as session:
         result = await session.execute(
@@ -400,6 +401,25 @@ class TestUpgrade:
         )
 
         with pytest.raises(ValueError, match="file-backed results"):
+            await upgrade(ctx)
+
+    async def test_unexpected_results_value_raises(
+        self,
+        ctx: MigrationContext,
+        setup_user: int,
+        static_datetime: datetime,
+    ):
+        """A document with an unrecognized results marker aborts loudly."""
+        await ctx.mongo.analyses.insert_one(
+            make_analysis_document(
+                analysis_id="bad_marker_analysis",
+                user_id=setup_user,
+                created_at=static_datetime,
+                results="unknown_marker",
+            ),
+        )
+
+        with pytest.raises(ValueError, match="unexpected results value"):
             await upgrade(ctx)
 
     async def test_unknown_user_raises(

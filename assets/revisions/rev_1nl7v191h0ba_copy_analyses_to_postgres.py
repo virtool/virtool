@@ -37,6 +37,12 @@ async def upgrade(ctx: MigrationContext) -> None:
     failure part-way through keeps the rows already written rather than rolling
     back the entire collection.
 
+    The document ``_id`` values are snapshotted up front so the rest of the run
+    fetches one document at a time by id, rather than holding a single Mongo
+    cursor open for the whole migration. With large documents that each take real
+    time to write, a long-lived cursor would risk the server idle/lifetime
+    timeout.
+
     Documents already present in Postgres (by ``legacy_id``) are skipped, and the
     insert uses ``ON CONFLICT (legacy_id) DO NOTHING`` as a second line of
     defence, so the migration is safe to re-run after an interruption.
@@ -55,11 +61,22 @@ async def upgrade(ctx: MigrationContext) -> None:
             count=len(existing_legacy_ids),
         )
 
+        analysis_ids = [
+            document["_id"]
+            async for document in ctx.mongo.analyses.find({}, projection=["_id"])
+        ]
+
         migrated_count = 0
         skipped_count = 0
 
-        async for document in ctx.mongo.analyses.find():
-            if document["_id"] in existing_legacy_ids:
+        for analysis_id in analysis_ids:
+            if analysis_id in existing_legacy_ids:
+                skipped_count += 1
+                continue
+
+            document = await ctx.mongo.analyses.find_one({"_id": analysis_id})
+
+            if document is None:
                 skipped_count += 1
                 continue
 
