@@ -45,7 +45,6 @@ class WorkflowCache:
                 logger.info("cache miss", key=key)
                 return CacheMiss(key)
 
-        self._check_target_dir(target)
         restored_path = await extract_tar_to_dir(archive_path, target)
 
         logger.info("cache hit", key=key)
@@ -72,14 +71,6 @@ class WorkflowCache:
 
     def _make_base_path(self) -> None:
         self._path.mkdir(parents=True, exist_ok=True)
-
-    @staticmethod
-    def _check_target_dir(target: Path) -> None:
-        if not target.exists():
-            return
-
-        if not target.is_dir():
-            raise NotADirectoryError(target)
 
 
 @fixture

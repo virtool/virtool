@@ -3,14 +3,6 @@ import tarfile
 from pathlib import Path
 
 
-def _add_path_to_archive(source: Path, archive: tarfile.TarFile) -> None:
-    if source.is_file() or source.is_dir():
-        archive.add(source, arcname=source.name)
-        return
-
-    raise FileNotFoundError(source)
-
-
 def _check_archive(archive: tarfile.TarFile, directory: Path) -> Path:
     top_level_names = set()
 
@@ -49,9 +41,12 @@ async def extract_tar_to_dir(archive_path: Path, directory: Path) -> Path:
 
 async def write_path_as_tar(source: Path, archive_path: Path) -> None:
     def write() -> None:
+        if not source.is_file() and not source.is_dir():
+            raise FileNotFoundError(source)
+
         archive_path.parent.mkdir(parents=True, exist_ok=True)
 
         with tarfile.open(archive_path, mode="w") as archive:
-            _add_path_to_archive(source, archive)
+            archive.add(source, arcname=source.name)
 
     await asyncio.to_thread(write)
