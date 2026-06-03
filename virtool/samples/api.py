@@ -454,6 +454,7 @@ class AnalysesView(PydanticView):
             409: Subtractions do not exist
         """
         mongo = get_mongo_from_req(self.request)
+        pg: AsyncEngine = self.request.app["pg"]
 
         try:
             if not await check_rights(mongo, sample_id, self.request["client"]):
@@ -478,7 +479,7 @@ class AnalysesView(PydanticView):
             0,
         )
 
-        await recalculate_workflow_tags(mongo, sample_id)
+        await recalculate_workflow_tags(mongo, pg, sample_id)
 
         return json_response(
             analysis,

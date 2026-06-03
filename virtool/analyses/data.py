@@ -415,7 +415,7 @@ class AnalysisData(DataLayerDomain):
                 error=repr(exc),
             )
 
-        await recalculate_workflow_tags(self._mongo, analysis.sample.id)
+        await recalculate_workflow_tags(self._mongo, self._pg, analysis.sample.id)
 
         emit(
             await self.data.samples.get(analysis.sample.id),
@@ -656,7 +656,7 @@ class AnalysisData(DataLayerDomain):
                 session=mongo_session,
             )
 
-        await recalculate_workflow_tags(self._mongo, sample_id)
+        await recalculate_workflow_tags(self._mongo, self._pg, sample_id)
 
         analysis, sample = await asyncio.gather(
             self.get(analysis_id, None),

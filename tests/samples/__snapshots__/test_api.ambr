@@ -2297,38 +2297,32 @@
     'documents': list([
       dict({
         'created_at': '2015-10-06T20:00:00Z',
-        'id': 'test_1',
+        'id': 'test_3',
         'index': dict({
           'id': 'foo',
           'version': 2,
         }),
-        'job': dict({
-          'created_at': '2015-10-06T20:00:00Z',
-          'id': 1,
-          'progress': 0,
-          'state': 'running',
-          'user': dict({
-            'handle': 'myersmitchell',
-            'id': 2,
-          }),
-          'workflow': 'pathoscope',
-        }),
+        'job': None,
         'ml': None,
         'ready': True,
         'reference': dict({
           'data_type': 'genome',
-          'id': 'baz',
-          'name': 'Baz',
+          'id': 'foo',
+          'name': 'Foo',
         }),
         'sample': dict({
           'id': 'test',
         }),
         'subtractions': list([
+          dict({
+            'id': 'foo',
+            'name': 'Malus domestica',
+          }),
         ]),
         'updated_at': '2015-10-06T20:00:00Z',
         'user': dict({
-          'handle': 'myersmitchell',
-          'id': 2,
+          'handle': 'modonnell',
+          'id': 3,
         }),
         'workflow': 'pathoscope',
       }),
@@ -2365,32 +2359,38 @@
       }),
       dict({
         'created_at': '2015-10-06T20:00:00Z',
-        'id': 'test_3',
+        'id': 'test_1',
         'index': dict({
           'id': 'foo',
           'version': 2,
         }),
-        'job': None,
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 1,
+          'progress': 0,
+          'state': 'running',
+          'user': dict({
+            'handle': 'myersmitchell',
+            'id': 2,
+          }),
+          'workflow': 'pathoscope',
+        }),
         'ml': None,
         'ready': True,
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
-          'name': 'Foo',
+          'id': 'baz',
+          'name': 'Baz',
         }),
         'sample': dict({
           'id': 'test',
         }),
         'subtractions': list([
-          dict({
-            'id': 'foo',
-            'name': 'Malus domestica',
-          }),
         ]),
         'updated_at': '2015-10-06T20:00:00Z',
         'user': dict({
-          'handle': 'modonnell',
-          'id': 3,
+          'handle': 'myersmitchell',
+          'id': 2,
         }),
         'workflow': 'pathoscope',
       }),

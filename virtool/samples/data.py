@@ -580,7 +580,7 @@ class SamplesData(DataLayerDomain):
         for chunk in chunk_list(sample_ids, 50):
             await gather(
                 *[
-                    recalculate_workflow_tags(self._mongo, sample_id)
+                    recalculate_workflow_tags(self._mongo, self._pg, sample_id)
                     for sample_id in chunk
                 ],
             )
