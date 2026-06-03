@@ -213,11 +213,14 @@ class AnalysisData(DataLayerDomain):
         document = await attach_analysis_files(self._pg, analysis_id, document)
 
         if document["ready"]:
-            document = await virtool.analyses.format.format_analysis(
+            document["results"] = await virtool.analyses.format.format_analysis(
                 self._storage,
                 self._mongo,
                 self._pg,
-                document,
+                workflow=document["workflow"],
+                results=document["results"],
+                legacy_id=document["_id"],
+                sample_id=document["sample"]["id"],
             )
 
         transforms = [
@@ -503,18 +506,21 @@ class AnalysisData(DataLayerDomain):
         :return: formatted file and file content type
         """
         async with AsyncSession(self._pg) as session:
-            row = (
+            analysis = (
                 await session.execute(
-                    select(SQLAnalysis).where(
+                    select(
+                        SQLAnalysis.workflow,
+                        SQLAnalysis.results,
+                        SQLAnalysis.legacy_id,
+                        SQLAnalysis.sample,
+                    ).where(
                         compose_legacy_id_single_expression(SQLAnalysis, analysis_id),
                     ),
                 )
-            ).scalar_one_or_none()
+            ).one_or_none()
 
-        if row is None:
+        if analysis is None:
             raise ResourceNotFoundError()
-
-        document = _row_to_document(row, include_results=True)
 
         if extension == "xlsx":
             return (
@@ -522,7 +528,10 @@ class AnalysisData(DataLayerDomain):
                     self._storage,
                     self._mongo,
                     self._pg,
-                    document,
+                    results=analysis.results,
+                    workflow=analysis.workflow,
+                    sample_id=analysis.sample,
+                    legacy_id=analysis.legacy_id,
                 ),
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
@@ -532,7 +541,10 @@ class AnalysisData(DataLayerDomain):
                 self._storage,
                 self._mongo,
                 self._pg,
-                document,
+                results=analysis.results,
+                workflow=analysis.workflow,
+                sample_id=analysis.sample,
+                legacy_id=analysis.legacy_id,
             ),
             "text/csv",
         )

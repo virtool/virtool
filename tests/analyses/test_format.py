@@ -30,21 +30,15 @@ async def test_load_results(loadable: bool):
 
     result = await load_results(
         storage,
-        {
-            "_id": "foo",
-            "results": "file" if loadable else {"baz": "foo"},
-            "sample": {"id": "bar"},
-        },
+        results="file" if loadable else {"baz": "foo"},
+        legacy_id="foo",
+        sample_id="bar",
     )
 
     if loadable:
-        assert result == {"_id": "foo", "results": results, "sample": {"id": "bar"}}
+        assert result == results
     else:
-        assert result == {
-            "_id": "foo",
-            "results": {"baz": "foo"},
-            "sample": {"id": "bar"},
-        }
+        assert result == {"baz": "foo"}
 
 
 @pytest.mark.parametrize(
@@ -196,12 +190,17 @@ async def test_format_analysis(
 
     storage = MemoryStorageProvider()
     pg = mocker.Mock()
-    document = {}
+    results = {"hits": []}
 
-    if workflow:
-        document["workflow"] = workflow
-
-    coroutine = virtool.analyses.format.format_analysis(storage, mongo, pg, document)
+    coroutine = virtool.analyses.format.format_analysis(
+        storage,
+        mongo,
+        pg,
+        workflow=workflow,
+        results=results,
+        legacy_id="test_analysis",
+        sample_id="test_sample",
+    )
 
     if workflow is None or workflow == "foobar":
         with pytest.raises(ValueError) as err:
@@ -219,9 +218,22 @@ async def test_format_analysis(
         }
 
         if workflow == "nuvs":
-            m_format_nuvs.assert_called_with(storage, mongo, document)
+            m_format_nuvs.assert_called_with(
+                storage,
+                mongo,
+                results=results,
+                legacy_id="test_analysis",
+                sample_id="test_sample",
+            )
             assert not m_format_pathoscope.called
 
         elif workflow == "pathoscope":
-            m_format_pathoscope.assert_called_with(storage, mongo, pg, document)
+            m_format_pathoscope.assert_called_with(
+                storage,
+                mongo,
+                pg,
+                results=results,
+                legacy_id="test_analysis",
+                sample_id="test_sample",
+            )
             assert not m_format_nuvs.called
