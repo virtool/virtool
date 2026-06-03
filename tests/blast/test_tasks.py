@@ -1,9 +1,10 @@
 import asyncio
 
 from pytest_mock import MockerFixture
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
+from virtool.analyses.sql import SQLAnalysis
 from virtool.blast.task import BLASTTask
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
@@ -34,29 +35,52 @@ async def test_task(
         ),
     )
 
-    await mongo.analyses.insert_one(
-        {
-            "_id": "analysis",
-            "created_at": static_time.datetime,
-            "ready": True,
-            "reference": {"id": "reference", "name": "Reference"},
-            "results": {
-                "hits": [
-                    {
-                        "index": 5,
-                        "sequence": "ATAGAGAACTGTACTAGCTGATCGATCTGACGTAGCAC",
-                        "orfs": [],
-                    },
-                ],
+    results = {
+        "hits": [
+            {
+                "index": 5,
+                "sequence": "ATAGAGAACTGTACTAGCTGATCGATCTGACGTAGCAC",
+                "orfs": [],
             },
-            "sample": {"id": "sample"},
-            "subtractions": [],
-            "user": {"id": user.id},
-            "workflow": "nuvs",
-            "job": {"id": "1"},
-            "index": {"id": "1", "version": "1"},
-        },
+        ],
+    }
+
+    await asyncio.gather(
+        mongo.indexes.insert_one({"_id": "1", "version": 1}),
+        mongo.analyses.insert_one(
+            {
+                "_id": "analysis",
+                "created_at": static_time.datetime,
+                "ready": True,
+                "reference": {"id": "reference", "name": "Reference"},
+                "results": results,
+                "sample": {"id": "sample"},
+                "subtractions": [],
+                "user": {"id": user.id},
+                "workflow": "nuvs",
+                "job": {"id": "1"},
+                "index": {"id": "1", "version": 1},
+            },
+        ),
     )
+
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLAnalysis(
+                legacy_id="analysis",
+                created_at=static_time.datetime,
+                updated_at=static_time.datetime,
+                workflow="nuvs",
+                ready=True,
+                results=results,
+                sample="sample",
+                reference="reference",
+                index="1",
+                subtractions=[],
+                user_id=user.id,
+            ),
+        )
+        await session.commit()
 
     html = """
     <!--QBlastInfoBegin
