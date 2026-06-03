@@ -42,7 +42,7 @@ from virtool.indexes.transforms import AttachIndexTransform
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.ml.transforms import AttachMLTransform
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_new_id, get_one_field
+from virtool.mongo.utils import get_new_id
 from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.samples.db import recalculate_workflow_tags
@@ -336,12 +336,17 @@ class AnalysisData(DataLayerDomain):
         :param right: the right to check for
         :return: boolean value
         """
-        sample = await get_one_field(self._mongo.analyses, "sample", analysis_id)
+        async with AsyncSession(self._pg) as session:
+            sample_id = (
+                await session.execute(
+                    select(SQLAnalysis.sample).where(
+                        compose_legacy_id_single_expression(SQLAnalysis, analysis_id),
+                    ),
+                )
+            ).scalar_one_or_none()
 
-        if sample is None:
+        if sample_id is None:
             raise ResourceNotFoundError
-
-        sample_id = sample["id"]
 
         sample = await self._mongo.samples.find_one(
             {"_id": sample_id},
@@ -497,20 +502,19 @@ class AnalysisData(DataLayerDomain):
         :param extension: the file extension
         :return: formatted file and file content type
         """
-        document = await self._mongo.analyses.find_one(analysis_id)
-
-        if document["results"] == "sql":
-            async with AsyncSession(self._pg) as session:
-                result = await session.execute(
-                    select(SQLAnalysisResult.results).where(
-                        SQLAnalysisResult.analysis_id == analysis_id,
+        async with AsyncSession(self._pg) as session:
+            row = (
+                await session.execute(
+                    select(SQLAnalysis).where(
+                        compose_legacy_id_single_expression(SQLAnalysis, analysis_id),
                     ),
                 )
+            ).scalar_one_or_none()
 
-                document["results"] = result.scalars().one()
-
-        if not document:
+        if row is None:
             raise ResourceNotFoundError()
+
+        document = _row_to_document(row, include_results=True)
 
         if extension == "xlsx":
             return (
@@ -542,20 +546,19 @@ class AnalysisData(DataLayerDomain):
         """
         timestamp = virtool.utils.timestamp()
 
-        document = await self._mongo.analyses.find_one(
-            {"_id": analysis_id},
-            ["ready", "workflow", "results", "sample"],
-        )
-
-        if document["results"] == "sql":
-            async with AsyncSession(self._pg) as session:
-                result = await session.execute(
-                    select(SQLAnalysisResult.results).where(
-                        SQLAnalysisResult.analysis_id == analysis_id,
+        async with AsyncSession(self._pg) as session:
+            row = (
+                await session.execute(
+                    select(SQLAnalysis).where(
+                        compose_legacy_id_single_expression(SQLAnalysis, analysis_id),
                     ),
                 )
+            ).scalar_one_or_none()
 
-                document["results"] = result.scalars().one()
+        if row is None:
+            raise ResourceNotFoundError()
+
+        document = _row_to_document(row, include_results=True)
 
         await wait_for_checks(
             check_if_analysis_is_nuvs(document["workflow"]),
@@ -613,13 +616,22 @@ class AnalysisData(DataLayerDomain):
         """
         updated_at = virtool.utils.timestamp()
 
-        document = await self._mongo.analyses.find_one({"_id": analysis_id}, ["ready"])
+        async with AsyncSession(self._pg) as session:
+            row = (
+                await session.execute(
+                    select(SQLAnalysis.ready, SQLAnalysis.sample).where(
+                        compose_legacy_id_single_expression(SQLAnalysis, analysis_id),
+                    ),
+                )
+            ).one_or_none()
 
-        if not document:
+        if row is None:
             raise ResourceNotFoundError
 
-        if document.get("ready"):
+        if row.ready:
             raise ResourceConflictError
+
+        sample_id = row.sample
 
         async with both_transactions(self._mongo, self._pg) as (
             mongo_session,
@@ -638,13 +650,11 @@ class AnalysisData(DataLayerDomain):
                 .values(ready=True, results=results, updated_at=updated_at),
             )
 
-            document = await self._mongo.analyses.find_one_and_update(
+            await self._mongo.analyses.find_one_and_update(
                 {"_id": analysis_id},
                 {"$set": {"results": "sql", "ready": True, "updated_at": updated_at}},
                 session=mongo_session,
             )
-
-        sample_id = document["sample"]["id"]
 
         await recalculate_workflow_tags(self._mongo, sample_id)
 

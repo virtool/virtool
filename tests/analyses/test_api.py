@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 from pytest_mock import MockerFixture
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
@@ -603,7 +604,9 @@ class TestDownloadAnalysisResult:
 )
 async def test_blast(
     error,
+    fake: DataFaker,
     mongo: Mongo,
+    pg: AsyncEngine,
     spawn_client: ClientSpawner,
     resp_is,
     snapshot,
@@ -617,6 +620,8 @@ async def test_blast(
         authenticated=True,
         base_url="https://virtool.example.com",
     )
+
+    user = await fake.users.create()
 
     if error != "404_analysis":
         analysis_document = {
@@ -656,6 +661,24 @@ async def test_blast(
             )
 
         await mongo.analyses.insert_one(analysis_document)
+
+        async with AsyncSession(pg) as session:
+            session.add(
+                SQLAnalysis(
+                    legacy_id="foobar",
+                    created_at=static_time.datetime,
+                    updated_at=static_time.datetime,
+                    workflow=analysis_document["workflow"],
+                    ready=analysis_document["ready"],
+                    results=analysis_document["results"],
+                    sample=analysis_document["sample"]["id"],
+                    reference="ref",
+                    index="index",
+                    subtractions=[],
+                    user_id=user.id,
+                ),
+            )
+            await session.commit()
 
     await client.put("/analyses/foobar/5/blast", {})
 
@@ -807,6 +830,7 @@ class TestFinalize:
         self,
         fake: DataFaker,
         mongo: Mongo,
+        pg: AsyncEngine,
         spawn_job_client: JobClientSpawner,
         static_time: StaticTime,
     ):
@@ -822,6 +846,14 @@ class TestFinalize:
                 },
             },
         )
+
+        async with AsyncSession(pg) as session:
+            await session.execute(
+                update(SQLAnalysis)
+                .where(SQLAnalysis.legacy_id == "analysis1")
+                .values(ready=True),
+            )
+            await session.commit()
 
         resp = await client.patch(
             "/analyses/analysis1",
