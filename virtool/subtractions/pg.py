@@ -67,5 +67,6 @@ class SQLSubtractionFile(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String)
     subtraction = Column(String)
+    subtraction_id = Column(BigInteger, ForeignKey("subtractions.id"), nullable=True)
     type = Column(Enum(SubtractionType))
     size = Column(BigInteger)
