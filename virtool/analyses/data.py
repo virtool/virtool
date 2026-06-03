@@ -549,11 +549,15 @@ class AnalysisData(DataLayerDomain):
         async with AsyncSession(self._pg) as session:
             analysis = (
                 await session.execute(
-                    select(SQLAnalysis).where(
+                    select(
+                        SQLAnalysis.workflow,
+                        SQLAnalysis.ready,
+                        SQLAnalysis.results,
+                    ).where(
                         compose_legacy_id_single_expression(SQLAnalysis, analysis_id),
                     ),
                 )
-            ).scalar_one_or_none()
+            ).one_or_none()
 
         if analysis is None:
             raise ResourceNotFoundError()
