@@ -337,5 +337,12 @@
       'name': 'switch analyses to integer id with legacy_id',
       'revision': '1e6490edc217',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 49,
+      'name': 'copy analyses to postgres',
+      'revision': '1nl7v191h0ba',
+    }),
   ])
 # ---
