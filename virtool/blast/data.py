@@ -104,7 +104,7 @@ class BLASTData(DataLayerDomain):
         analysis = await self.data.analyses.get(analysis_id, None)
 
         sequence = find_nuvs_sequence_by_index(
-            analysis.dict(by_alias=True), sequence_index
+            analysis.dict(by_alias=True)["results"], sequence_index
         )
 
         html = await fetch_ncbi_blast_html(self._client, sequence)

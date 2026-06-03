@@ -547,7 +547,7 @@ class AnalysisData(DataLayerDomain):
         timestamp = virtool.utils.timestamp()
 
         async with AsyncSession(self._pg) as session:
-            row = (
+            analysis = (
                 await session.execute(
                     select(SQLAnalysis).where(
                         compose_legacy_id_single_expression(SQLAnalysis, analysis_id),
@@ -555,15 +555,13 @@ class AnalysisData(DataLayerDomain):
                 )
             ).scalar_one_or_none()
 
-        if row is None:
+        if analysis is None:
             raise ResourceNotFoundError()
 
-        document = _row_to_document(row, include_results=True)
-
         await wait_for_checks(
-            check_if_analysis_is_nuvs(document["workflow"]),
-            check_if_analysis_is_running(document["ready"]),
-            check_analysis_nuvs_sequence(document, sequence_index),
+            check_if_analysis_is_nuvs(analysis.workflow),
+            check_if_analysis_is_running(analysis.ready),
+            check_analysis_nuvs_sequence(analysis.results, sequence_index),
         )
 
         async with both_transactions(self._mongo, self._pg) as (

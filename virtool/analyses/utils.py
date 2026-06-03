@@ -46,19 +46,19 @@ async def attach_analysis_files(
 
 
 def find_nuvs_sequence_by_index(
-    document: dict[str, Any],
+    results: dict[str, Any],
     sequence_index: int,
 ) -> str | None:
-    """Get a sequence from a NuVs analysis document by its sequence index.
+    """Get a sequence from a NuVs analysis results dict by its sequence index.
 
-    :param document: a NuVs analysis document
+    :param results: a NuVs analysis results dict
     :param sequence_index: the index of the sequence to get
     :return: a NuVs sequence
 
     """
     sequences = [
         result["sequence"]
-        for result in document["results"]["hits"]
+        for result in results["hits"]
         if result["index"] == int(sequence_index)
     ]
 
