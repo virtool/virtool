@@ -1,11 +1,15 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from http import HTTPStatus
 from pathlib import Path
+from typing import Any
+from urllib.parse import quote
 
 import aiofiles
 from aiohttp import BasicAuth, ClientSession, ClientTimeout
 from structlog import get_logger
 
+from virtool.api.custom_json import dump_string
 from virtool.workflow.api.utils import (
     decode_json_response,
     raise_exception_by_status_code,
@@ -134,6 +138,42 @@ class WorkflowAPIClient:
                 return await decode_json_response(resp)
             except ValueError:
                 return None
+
+    @retry
+    async def get_cache(self, key: str, dest: Path) -> None:
+        path = self._get_cache_path(key)
+
+        async with self.http.get(f"{self.jobs_api_connection_string}{path}") as resp:
+            if resp.status != HTTPStatus.OK:
+                await raise_exception_by_status_code(resp)
+
+            async with aiofiles.open(dest, "wb") as f:
+                async for chunk in resp.content.iter_chunked(API_CHUNK_SIZE):
+                    await f.write(chunk)
+
+    @retry
+    async def put_cache(
+        self,
+        key: str,
+        path: Path,
+        params: dict[str, Any] | None = None,
+    ) -> bool:
+        with path.open("rb") as fileobj:
+            async with self.http.put(
+                f"{self.jobs_api_connection_string}{self._get_cache_path(key)}",
+                data=fileobj,
+                headers={
+                    "Content-Length": str(path.stat().st_size),
+                    "Content-Type": "application/octet-stream",
+                },
+                params={"params": dump_string(params or {})},
+            ) as resp:
+                await raise_exception_by_status_code(resp)
+                return resp.status == HTTPStatus.CREATED
+
+    @staticmethod
+    def _get_cache_path(key: str) -> str:
+        return f"/caches/{quote(key, safe='')}"
 
 
 @asynccontextmanager
