@@ -1,6 +1,10 @@
 from pytest_mock import MockerFixture
 
-from tests.fixtures.client import ClientSpawner, JobClientSpawner
+from tests.fixtures.client import (
+    ClientSpawner,
+    JobClientSpawner,
+    TaskRunnerClientSpawner,
+)
 from virtool.health.models import Readiness, ReadinessChecks
 
 
@@ -73,6 +77,29 @@ class TestJobsServer:
 
     async def test_ready(self, spawn_job_client: JobClientSpawner):
         client = await spawn_job_client()
+
+        resp = await client.get("/health/ready")
+
+        assert resp.status == 200
+        assert await resp.json() == {
+            "ready": True,
+            "checks": {"mongodb": True, "postgres": True},
+        }
+
+
+class TestTaskRunner:
+    """The endpoints are also served, unauthenticated, by the task runner."""
+
+    async def test_live(self, spawn_task_runner_client: TaskRunnerClientSpawner):
+        client = await spawn_task_runner_client()
+
+        resp = await client.get("/health/live")
+
+        assert resp.status == 200
+        assert await resp.json() == {"status": "alive"}
+
+    async def test_ready(self, spawn_task_runner_client: TaskRunnerClientSpawner):
+        client = await spawn_task_runner_client()
 
         resp = await client.get("/health/ready")
 

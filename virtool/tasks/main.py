@@ -3,6 +3,7 @@ import aiohttp.web
 from aiohttp.web import Application
 from structlog import get_logger
 
+import virtool.health.api
 from virtool.api.accept import accept_middleware
 from virtool.api.errors import error_middleware
 from virtool.config.cls import TaskRunnerConfig, TaskSpawnerConfig
@@ -30,8 +31,8 @@ from virtool.tasks.startup import (
 )
 
 
-def run_task_runner(config: TaskRunnerConfig) -> None:
-    """Run the task runner service.
+async def create_app(config: TaskRunnerConfig) -> Application:
+    """Create the :class:`aiohttp.web.Application` for the task runner process.
 
     :param config: the task runner configuration object
     """
@@ -41,6 +42,7 @@ def run_task_runner(config: TaskRunnerConfig) -> None:
     app["mode"] = "task_runner"
 
     app.add_routes([aiohttp.web.view("/", TaskServicesRootView)])
+    app.add_routes(virtool.health.api.routes)
 
     app.on_startup.extend(
         [
@@ -64,7 +66,15 @@ def run_task_runner(config: TaskRunnerConfig) -> None:
         ],
     )
 
-    aiohttp.web.run_app(app=app, host=config.host, port=config.port)
+    return app
+
+
+def run_task_runner(config: TaskRunnerConfig) -> None:
+    """Run the task runner service.
+
+    :param config: the task runner configuration object
+    """
+    aiohttp.web.run_app(app=create_app(config), host=config.host, port=config.port)
 
 
 def run_task_spawner(config: TaskSpawnerConfig) -> None:
