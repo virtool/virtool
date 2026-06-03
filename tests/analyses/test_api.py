@@ -12,7 +12,7 @@ from tests.fixtures.analysis import seed_analysis
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from tests.fixtures.response import RespIs
 from virtool.analyses.files import create_analysis_file
-from virtool.analyses.sql import SQLAnalysis, SQLAnalysisFile, SQLAnalysisResult
+from virtool.analyses.sql import SQLAnalysis, SQLAnalysisFile
 from virtool.fake.next import DataFaker
 from virtool.jobs.models import Job, JobState
 from virtool.mongo.core import Mongo
@@ -817,12 +817,9 @@ class TestFinalize:
 
     async def test_ok(
         self,
-        fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         spawn_job_client: JobClientSpawner,
-        static_time: StaticTime,
     ):
         client = await spawn_job_client(authenticated=True)
 
@@ -834,15 +831,14 @@ class TestFinalize:
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
-        document, row = await asyncio.gather(
-            mongo.analyses.find_one(),
-            get_row_by_id(pg, SQLAnalysisResult, 1),
-        )
+        async with AsyncSession(pg) as session:
+            row = (
+                await session.execute(
+                    select(SQLAnalysis).where(SQLAnalysis.legacy_id == "analysis1"),
+                )
+            ).scalar_one()
 
-        assert document == snapshot
-        assert document["ready"] is True
-
-        assert row.analysis_id == "analysis1"
+        assert row.ready is True
         assert row.results == {"result": "TEST_RESULT", "hits": []}
 
     async def test_not_found(self, spawn_job_client):
