@@ -11,9 +11,10 @@ from aiohttp.web import RouteTableDef
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.jobs.main
+import virtool.tasks.main
 from virtool.api.custom_json import dump_string
 from virtool.app import create_app
-from virtool.config.cls import ServerConfig
+from virtool.config.cls import ServerConfig, TaskRunnerConfig
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
@@ -573,5 +574,59 @@ def spawn_job_client(
             client.app["flags"] = FeatureFlags(flags)
 
         return client
+
+    return func
+
+
+class TaskRunnerClientSpawner(Protocol):
+    """A protocol describing a function that spawns a task runner test client.
+
+    The fixture :func:`spawn_task_runner_client` returns a function that conforms to
+    this protocol.
+    """
+
+    async def __call__(self) -> VirtoolTestClient:
+        """Spawn a test client for the task runner app.
+
+        :return: the test client
+        """
+        ...
+
+
+@pytest.fixture
+def spawn_task_runner_client(
+    aiohttp_client,
+    memory_storage,
+    mongo: Mongo,
+    mongo_connection_string,
+    mongo_name: str,
+    pg: AsyncEngine,
+    pg_connection_string: str,
+    mocker,
+) -> TaskRunnerClientSpawner:
+    """A factory method for creating an aiohttp client backed by the task runner app."""
+
+    async def func():
+        mocker.patch("virtool.startup.connect_pg", return_value=pg)
+        mocker.patch(
+            "virtool.startup.create_storage_backend",
+            return_value=memory_storage,
+        )
+
+        app = await virtool.tasks.main.create_app(
+            TaskRunnerConfig(
+                base_url="",
+                host="localhost",
+                mongodb_connection_string=f"{mongo_connection_string}/{mongo_name}?authSource=admin",
+                no_revision_check=True,
+                port=9950,
+                postgres_connection_string=pg_connection_string,
+                sentry_dsn="",
+                storage_backend="s3",
+                storage_s3_bucket="test-bucket",
+            ),
+        )
+
+        return await aiohttp_client(app, auto_decompress=False)
 
     return func
