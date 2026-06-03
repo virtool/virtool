@@ -7,7 +7,6 @@ from datetime import datetime
 import arrow
 import pytest
 from sqlalchemy import insert, text
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from assets.revisions.rev_1nl7v191h0ba_copy_analyses_to_postgres import (
@@ -50,14 +49,14 @@ async def setup_user(ctx: MigrationContext, apply_alembic: Callable) -> int:
 
 def make_analysis_document(
     analysis_id: str,
-    user_id: int,
+    user_id: int | str,
     created_at: datetime,
     *,
     workflow: str = "pathoscope",
     ready: bool = True,
     results: dict | str | None = None,
     subtractions: list | None = None,
-    job_id: int | None = None,
+    job_id: int | str | None = None,
     ml: int | None = None,
 ) -> dict:
     """Create a MongoDB analysis document for testing."""
@@ -328,6 +327,98 @@ class TestUpgrade:
 
         assert stored == job_id
 
+    async def test_job_legacy_id_mapping(
+        self,
+        ctx: MigrationContext,
+        setup_user: int,
+        static_datetime: datetime,
+    ):
+        """A legacy string job id resolves to the job's integer primary key."""
+        async with AsyncSession(ctx.pg) as session:
+            job_id = (
+                await session.execute(
+                    text("""
+                        INSERT INTO jobs (legacy_id, workflow, state, user_id, created_at)
+                        VALUES ('legacy_job_abc', 'pathoscope', 'succeeded', :user_id, :now)
+                        RETURNING id
+                    """),
+                    {"user_id": setup_user, "now": static_datetime},
+                )
+            ).scalar_one()
+            await session.commit()
+
+        await ctx.mongo.analyses.insert_one(
+            make_analysis_document(
+                analysis_id="legacy_job_analysis",
+                user_id=setup_user,
+                created_at=static_datetime,
+                job_id="legacy_job_abc",
+            ),
+        )
+
+        await upgrade(ctx)
+
+        async with AsyncSession(ctx.pg) as session:
+            stored = (
+                await session.execute(
+                    text(
+                        "SELECT job_id FROM analyses WHERE legacy_id = 'legacy_job_analysis'"
+                    ),
+                )
+            ).scalar_one()
+
+        assert stored == job_id
+
+    async def test_user_legacy_id_mapping(
+        self,
+        ctx: MigrationContext,
+        setup_user: int,
+        static_datetime: datetime,
+    ):
+        """A legacy string user id resolves to the user's integer primary key."""
+        await ctx.mongo.analyses.insert_one(
+            make_analysis_document(
+                analysis_id="legacy_user_analysis",
+                user_id="legacy_user_123",
+                created_at=static_datetime,
+            ),
+        )
+
+        await upgrade(ctx)
+
+        async with AsyncSession(ctx.pg) as session:
+            stored = (
+                await session.execute(
+                    text(
+                        "SELECT user_id FROM analyses WHERE legacy_id = 'legacy_user_analysis'"
+                    ),
+                )
+            ).scalar_one()
+
+        assert stored == setup_user
+
+    async def test_unknown_job_raises(
+        self,
+        ctx: MigrationContext,
+        setup_user: int,
+        static_datetime: datetime,
+    ):
+        """A document referencing a job absent from Postgres aborts loudly."""
+        await ctx.mongo.analyses.insert_one(
+            make_analysis_document(
+                analysis_id="orphan_job_analysis",
+                user_id=setup_user,
+                created_at=static_datetime,
+                job_id="missing_job",
+            ),
+        )
+
+        with pytest.raises(
+            ValueError,
+            match=r"Analysis orphan_job_analysis references unknown job",
+        ):
+            await upgrade(ctx)
+
     async def test_idempotent_rerun(
         self,
         ctx: MigrationContext,
@@ -428,7 +519,7 @@ class TestUpgrade:
         setup_user: int,
         static_datetime: datetime,
     ):
-        """A document referencing an unknown user violates the foreign key."""
+        """A document referencing a user absent from Postgres aborts loudly."""
         await ctx.mongo.analyses.insert_one(
             make_analysis_document(
                 analysis_id="orphan_analysis",
@@ -437,7 +528,10 @@ class TestUpgrade:
             ),
         )
 
-        with pytest.raises(IntegrityError):
+        with pytest.raises(
+            ValueError,
+            match=r"Analysis orphan_analysis references unknown user",
+        ):
             await upgrade(ctx)
 
     @pytest.mark.usefixtures("setup_user")
