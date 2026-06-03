@@ -54,7 +54,7 @@ class SQLSubtraction(Base):
     deleted: Mapped[bool] = mapped_column(Boolean, default=False)
     ready: Mapped[bool] = mapped_column(Boolean, default=False)
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
-    job_id: Mapped[int | None] = mapped_column(ForeignKey("jobs.id"), index=True)
+    job_id: Mapped[int | None] = mapped_column(ForeignKey("jobs.id"))
     upload_id: Mapped[int | None] = mapped_column(ForeignKey("uploads.id"))
 
 

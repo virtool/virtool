@@ -39,9 +39,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["job_id"], ["jobs.id"]),
         sa.ForeignKeyConstraint(["upload_id"], ["uploads.id"]),
     )
-    op.create_index(op.f("ix_subtractions_job_id"), "subtractions", ["job_id"])
 
 
 def downgrade() -> None:
-    op.drop_index(op.f("ix_subtractions_job_id"), table_name="subtractions")
     op.drop_table("subtractions")
