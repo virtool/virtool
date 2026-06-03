@@ -1,4 +1,19 @@
-from sqlalchemy import BigInteger, Column, Enum, Integer, String, UniqueConstraint
+from datetime import datetime
+
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    Column,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Identity,
+    Integer,
+    String,
+    UniqueConstraint,
+)
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import Mapped, mapped_column
 
 from virtool.pg.base import Base
 from virtool.pg.utils import SQLEnum
@@ -9,6 +24,38 @@ class SubtractionType(str, SQLEnum):
 
     fasta = "fasta"
     bowtie2 = "bowtie2"
+
+
+class SQLSubtraction(Base):
+    """SQL model for subtraction metadata.
+
+    Column naming convention mirrors :class:`virtool.analyses.sql.SQLAnalysis`:
+
+    - A bare column holds a legacy Mongo string id and has no foreign key,
+      because the referenced collection has not been migrated to Postgres.
+    - An ``{entity}_id`` column is a real foreign key to an existing SQL table.
+
+    ``legacy_id`` is the Mongo ``_id`` and is nullable so subtractions created
+    natively in Postgres can omit it, matching the convention on ``analyses``,
+    ``jobs``, ``users``, and ``groups``. The Mongo ``space`` field is
+    intentionally dropped.
+    """
+
+    __tablename__ = "subtractions"
+    __table_args__ = (UniqueConstraint("job_id"),)
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    legacy_id: Mapped[str | None] = mapped_column(unique=True)
+    name: Mapped[str]
+    nickname: Mapped[str] = mapped_column(default="")
+    count: Mapped[int | None]
+    gc: Mapped[dict | None] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+    deleted: Mapped[bool] = mapped_column(Boolean, default=False)
+    ready: Mapped[bool] = mapped_column(Boolean, default=False)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
+    job_id: Mapped[int | None] = mapped_column(ForeignKey("jobs.id"))
+    upload_id: Mapped[int | None] = mapped_column(ForeignKey("uploads.id"))
 
 
 class SQLSubtractionFile(Base):

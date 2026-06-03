@@ -344,5 +344,12 @@
       'name': 'copy analyses to postgres',
       'revision': '1nl7v191h0ba',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 50,
+      'name': 'create subtractions table',
+      'revision': 'f4624eb353b7',
+    }),
   ])
 # ---
