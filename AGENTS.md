@@ -151,7 +151,6 @@ IDs — let alembic generate them so the chain stays consistent.
 - `virtool server api` - Main API server (port 9950)
 - `virtool server jobs` - Jobs API server
 - `virtool tasks runner` - Task runner
-- `virtool tasks spawner` - Task scheduler
 
 ### Data Layer
 
@@ -241,8 +240,8 @@ configuration for weeks before anyone notices.
   `app.get("key")` (which returns `None`).
 - Don't add production fallbacks to make tests easier. Tests pass explicit
   doubles (in-memory backends, tmp paths). Production code stays strict.
-- When adding a new aiohttp entry point (API server, jobs server, task runner,
-  task spawner), audit `on_startup` against the other entry points. A missing
+- When adding a new aiohttp entry point (API server, jobs server, task runner),
+  audit `on_startup` against the other entry points. A missing
   `startup_*` is a wiring bug, not a runtime "use a sensible default" moment.
 - Config values that have no safe default should validate at load time and
   raise. Don't silently coerce empty strings, `None`, or missing env vars to

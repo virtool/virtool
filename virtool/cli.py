@@ -12,7 +12,6 @@ from virtool.config.cls import (
     MigrationConfig,
     ServerConfig,
     TaskRunnerConfig,
-    TaskSpawnerConfig,
     WorkflowConfig,
 )
 from virtool.config.options import (
@@ -37,7 +36,7 @@ from virtool.migration.apply import apply
 from virtool.migration.create import create_revision
 from virtool.migration.depend import depend
 from virtool.migration.show import show_revisions
-from virtool.tasks.main import run_task_runner, run_task_spawner
+from virtool.tasks.main import run_task_runner
 from virtool.workflow.runtime.run import start_runtime
 
 logger = get_logger("config")
@@ -171,20 +170,6 @@ def start_task_runner(dev: bool, **kwargs) -> None:
     logger.info("starting tasks runner")
 
     run_task_runner(TaskRunnerConfig(**kwargs, base_url=""))
-
-
-@tasks.command("spawner")
-@address_options
-@dev_option
-@postgres_connection_string_option
-@sentry_dsn_option
-def tasks_spawner(dev: bool, **kwargs) -> None:
-    """Schedule all periodically run tasks on hardcoded schedules"""
-    configure_logging(bool(kwargs["sentry_dsn"]))
-
-    logger.info("starting task spawner")
-
-    run_task_spawner(TaskSpawnerConfig(**kwargs, base_url=""))
 
 
 @cli.group("workflow")

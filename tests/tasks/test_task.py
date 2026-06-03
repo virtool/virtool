@@ -1,17 +1,13 @@
 import os
 from asyncio import to_thread
-from datetime import timedelta
-from math import isclose
 from tempfile import TemporaryDirectory
 
-import arrow
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.layer import DataLayer
 from virtool.pg.utils import get_row_by_id
-from virtool.tasks.spawner import PeriodicTask, TaskSpawnerService
 from virtool.tasks.sql import SQLTask
 from virtool.tasks.task import BaseTask
 from virtool.utils import get_temp_dir
@@ -143,59 +139,3 @@ async def test_progress_handler_set_error(task: BaseTask, pg: AsyncEngine):
 
     await tracker.set_error("GenericError")
     assert (await get_row_by_id(pg, SQLTask, 1)).error == "GenericError"
-
-
-async def test_register(pg: AsyncEngine, data_layer: DataLayer):
-    await data_layer.tasks.create(DummyBaseTask)
-    await data_layer.tasks.create(DummyTask)
-    await data_layer.tasks.create(DummyBaseTask)
-
-    last_run_task = (await data_layer.tasks.find())[0]
-
-    task_spawner_service = TaskSpawnerService(pg, data_layer)
-
-    tasks = [(DummyBaseTask, 10), (DummyTask, 15)]
-
-    await task_spawner_service.register(tasks)
-
-    assert isclose(
-        (
-            (
-                task_spawner_service.registered[0].last_triggered
-                - last_run_task.created_at
-            ).total_seconds()
-        ),
-        0,
-        abs_tol=0.8,
-    )
-
-
-async def test_check_or_spawn_task(pg: AsyncEngine, data_layer: DataLayer):
-    """First case workflow that the task has spawned, second case ensures that it does not"""
-    task_spawner_service = TaskSpawnerService(pg, data_layer.tasks)
-
-    # This time should trigger a spawn as it is greater than the interval.
-    long_last_triggered = (arrow.utcnow() - timedelta(seconds=180)).naive
-
-    task_spawner_service.registered.append(
-        PeriodicTask(DummyTask, interval=60, last_triggered=long_last_triggered)
-    )
-
-    spawned_task = await task_spawner_service.check_or_spawn_task(
-        task_spawner_service.registered[0]
-    )
-
-    assert spawned_task.last_triggered != long_last_triggered
-
-    # This time should prevent a task being spawned as it is less than the interval.
-    short_last_triggered = (arrow.utcnow() - timedelta(seconds=20)).naive
-
-    task_spawner_service.registered.append(
-        PeriodicTask(DummyBaseTask, interval=60, last_triggered=short_last_triggered)
-    )
-
-    not_spawned_task = await task_spawner_service.check_or_spawn_task(
-        task_spawner_service.registered[1]
-    )
-
-    assert not_spawned_task.last_triggered == short_last_triggered

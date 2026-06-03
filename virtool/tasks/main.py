@@ -1,12 +1,11 @@
 import aiohttp
 import aiohttp.web
 from aiohttp.web import Application
-from structlog import get_logger
 
 import virtool.health.api
 from virtool.api.accept import accept_middleware
 from virtool.api.errors import error_middleware
-from virtool.config.cls import TaskRunnerConfig, TaskSpawnerConfig
+from virtool.config.cls import TaskRunnerConfig
 from virtool.shutdown import (
     shutdown_executors,
     shutdown_http_client,
@@ -24,11 +23,6 @@ from virtool.startup import (
     startup_version,
 )
 from virtool.tasks.api import TaskServicesRootView
-from virtool.tasks.startup import (
-    startup_data_layer_for_spawner,
-    startup_databases_for_spawner,
-    startup_task_spawner,
-)
 
 
 async def create_app(config: TaskRunnerConfig) -> Application:
@@ -75,41 +69,3 @@ def run_task_runner(config: TaskRunnerConfig) -> None:
     :param config: the task runner configuration object
     """
     aiohttp.web.run_app(app=create_app(config), host=config.host, port=config.port)
-
-
-def run_task_spawner(config: TaskSpawnerConfig) -> None:
-    """Run the task spawner service.
-
-    :param config: the task spawner configuration object
-    """
-    logger = get_logger("spawner")
-    logger.warning(
-        "Task spawner is deprecated. Task spawning has moved to API servers. "
-        "This standalone spawner will be removed in a future version."
-    )
-
-    app = Application(middlewares=[accept_middleware, error_middleware])
-
-    app["config"] = config
-    app["mode"] = "task_spawner"
-
-    app.add_routes([aiohttp.web.view("/", TaskServicesRootView)])
-
-    app.on_startup.extend(
-        [
-            startup_version,
-            startup_sentry,
-            startup_http_client_session,
-            startup_databases_for_spawner,
-            startup_events,
-            startup_data_layer_for_spawner,
-            startup_executors,
-            startup_task_spawner,
-        ],
-    )
-
-    app.on_shutdown.extend(
-        [shutdown_http_client, shutdown_executors, shutdown_scheduler],
-    )
-
-    aiohttp.web.run_app(app=app, host=config.host, port=config.port)
