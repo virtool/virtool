@@ -52,7 +52,9 @@ async def upgrade(ctx: MigrationContext) -> None:
     defence, so the migration is safe to re-run after an interruption.
 
     Fails loudly on any document it cannot faithfully map: an unresolvable
-    ``user`` or ``job`` reference raises, and a ``"file"`` results marker raises.
+    ``user`` reference raises, and a ``"file"`` results marker raises. A
+    referenced ``job`` that no longer exists is backfilled as ``NULL`` (jobs
+    used to be deletable) and logged, rather than failing the migration.
     """
     async with AsyncSession(ctx.pg) as session:
         existing_result = await session.execute(
@@ -191,8 +193,15 @@ async def _resolve_job_id(
 ) -> int | None:
     """Resolve a document's ``job`` reference to a Postgres ``jobs.id``.
 
-    Returns ``None`` when the document has no job. Raises if a job is referenced
-    but not present in Postgres, rather than silently dropping the association.
+    Returns ``None`` when the document has no job. Also returns ``None`` when a
+    job is referenced but no longer exists in Postgres: jobs used to be
+    deletable, so legacy analyses can reference a job that has since been
+    removed. ``NULL`` is the truthful mapping for such a dangling reference.
+    These orphans are logged so the migration leaves an audit trail, distinct
+    from the silent legitimate no-job case.
+
+    New analyses always have a job (one is created at analysis-creation time and
+    its id is stored), so this nullability only ever applies to backfilled rows.
     """
     job = document.get("job")
 
@@ -204,8 +213,11 @@ async def _resolve_job_id(
     job_id = await _resolve_id(session, SQLJob, reference, cache)
 
     if job_id is None:
-        msg = f"Analysis {document['_id']} references unknown job {reference!r}"
-        raise ValueError(msg)
+        logger.warning(
+            "analysis references a job that no longer exists; backfilling null job_id",
+            analysis_id=document["_id"],
+            job=reference,
+        )
 
     return job_id
 
