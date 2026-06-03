@@ -9,7 +9,7 @@ from structlog import get_logger
 import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
-from virtool.tasks.models import Task
+from virtool.tasks.models import Task, TaskCounts
 from virtool.tasks.oas import UpdateTaskRequest
 from virtool.tasks.sql import SQLTask
 from virtool.tasks.task import BaseTask
@@ -40,6 +40,35 @@ class TasksData:
                 .scalars()
                 .all()
             ]
+
+    async def get_counts(self) -> TaskCounts:
+        """Get counts of active tasks for autoscaling.
+
+        ``queued`` mirrors the filter used by :meth:`acquire` and is the primary
+        scaling signal. ``running`` covers acquired-but-unfinished tasks. Both are
+        bounded by outstanding work and served by the ``idx_tasks_active`` partial
+        index, so the query cost does not grow with the table's history of
+        completed or failed tasks.
+
+        :return: the active task counts
+
+        """
+        async with AsyncSession(self._pg) as session:
+            result = await session.execute(
+                select(SQLTask.acquired_at.is_(None), func.count())
+                .where(SQLTask.complete.is_(False), SQLTask.error.is_(None))
+                .group_by(SQLTask.acquired_at.is_(None)),
+            )
+
+        counts = TaskCounts()
+
+        for unacquired, count in result.all():
+            if unacquired:
+                counts.queued = count
+            else:
+                counts.running = count
+
+        return counts
 
     async def get(self, task_id: int) -> Task:
         """Get the task corresponding with passed "task_id".

@@ -5,10 +5,11 @@ from aiohttp_pydantic.oas.typing import r200, r400
 
 from virtool.api.custom_json import json_response
 from virtool.api.errors import APINotFound
+from virtool.api.policy import PublicRoutePolicy, policy
 from virtool.api.routes import Routes
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.tasks.models import Task
+from virtool.tasks.models import Task, TaskCounts
 
 routes = Routes()
 
@@ -31,6 +32,27 @@ class TaskServicesRootView(PydanticView):
             pass
 
         return json_response({"version": version})
+
+
+@routes.jobs_api.view("/tasks/counts")
+class TasksCountsView(PydanticView):
+    """Active task counts for KEDA autoscaling.
+
+    Registered on the internal jobs API only. Privacy relies on network
+    isolation, so the route is intentionally absent from the public API.
+    """
+
+    @policy(PublicRoutePolicy)
+    async def get(self) -> r200[TaskCounts]:
+        """Get active task counts.
+
+        Returns the number of queued and running tasks for an in-cluster
+        autoscaler to poll.
+
+        Status Codes:
+            200: Successful operation
+        """
+        return json_response(await get_data_from_req(self.request).tasks.get_counts())
 
 
 @routes.view("/tasks")
