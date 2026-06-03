@@ -1,10 +1,13 @@
 import pytest
 from aiohttp.test_utils import make_mocked_request
 from pytest_mock import MockerFixture
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner
+from virtool.analyses.sql import SQLAnalysis
 from virtool.data.utils import get_data_from_app
+from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
 from virtool.samples.db import (
     compose_sample_workflow_query,
@@ -15,6 +18,7 @@ from virtool.samples.db import (
     recalculate_workflow_tags,
 )
 from virtool.samples.utils import calculate_workflow_tags
+from virtool.utils import timestamp
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
@@ -58,54 +62,59 @@ class TestCalculateWorkflowTags:
         assert tags == {"pathoscope": path_tag, "nuvs": nuvs_tag}
 
 
-async def test_recalculate_workflow_tags(mocker: MockerFixture, mongo: Mongo):
+async def test_recalculate_workflow_tags(
+    fake: DataFaker,
+    mocker: MockerFixture,
+    mongo: Mongo,
+    pg: AsyncEngine,
+):
+    user = await fake.users.create()
+
     await mongo.samples.insert_one({"_id": "test", "pathoscope": False, "nuvs": False})
 
-    analysis_documents = [
-        {
-            "_id": "test_1",
-            "workflow": "pathoscope",
-            "ready": "ip",
-            "sample": {"id": "test"},
-        },
-        {
-            "_id": "test_2",
-            "workflow": "pathoscope",
-            "ready": True,
-            "sample": {"id": "test"},
-        },
-        {
-            "_id": "test_3",
-            "workflow": "nuvs",
-            "ready": True,
-            "sample": {"id": "test"},
-        },
-    ]
+    def make_row(legacy_id: str, sample: str, workflow: str, *, ready: bool):
+        return SQLAnalysis(
+            legacy_id=legacy_id,
+            created_at=timestamp(),
+            updated_at=timestamp(),
+            workflow=workflow,
+            ready=ready,
+            sample=sample,
+            reference="ref",
+            index="index",
+            subtractions=[],
+            user_id=user.id,
+        )
 
-    await mongo.analyses.insert_many(
-        analysis_documents
-        + [
-            {
-                "_id": "test_4",
-                "sample": {"id": "foobar"},
-                "workflow": "pathoscope",
-                "ready": True,
-            },
-        ],
-        session=None,
-    )
+    async with AsyncSession(pg) as session:
+        session.add_all(
+            [
+                make_row("test_1", "test", "pathoscope", ready=False),
+                make_row("test_2", "test", "pathoscope", ready=True),
+                make_row("test_3", "test", "nuvs", ready=True),
+                # Belongs to another sample and must be excluded.
+                make_row("test_4", "foobar", "pathoscope", ready=True),
+            ],
+        )
+        await session.commit()
 
     m = mocker.patch(
         "virtool.samples.utils.calculate_workflow_tags",
         return_value={"pathoscope": True, "nuvs": "ip"},
     )
 
-    await recalculate_workflow_tags(mongo, "test")
+    await recalculate_workflow_tags(mongo, pg, "test")
 
-    for document in analysis_documents:
-        del document["sample"]
+    expected = [
+        {"workflow": "pathoscope", "ready": False},
+        {"workflow": "pathoscope", "ready": True},
+        {"workflow": "nuvs", "ready": True},
+    ]
 
-    assert m.call_args[0][0] == analysis_documents
+    def key(analysis: dict) -> tuple:
+        return analysis["workflow"], analysis["ready"]
+
+    assert sorted(m.call_args[0][0], key=key) == sorted(expected, key=key)
 
     assert await mongo.samples.find_one() == {
         "_id": "test",

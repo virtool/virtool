@@ -43,6 +43,9 @@ async def check_if_analysis_is_running(ready: bool) -> None:
         raise ResourceConflictError("Analysis is still running")
 
 
-async def check_analysis_nuvs_sequence(document, sequence_index) -> None:
-    if find_nuvs_sequence_by_index(document, sequence_index) is None:
+async def check_analysis_nuvs_sequence(
+    results: dict,
+    sequence_index: int,
+) -> None:
+    if find_nuvs_sequence_by_index(results, sequence_index) is None:
         raise ResourceNotFoundError()
