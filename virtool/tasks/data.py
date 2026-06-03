@@ -123,7 +123,7 @@ class TasksData:
             raise ResourceNotFoundError
 
     @staticmethod
-    def _new_sql_task(task_class: type[BaseTask], context: dict | None) -> SQLTask:
+    def _create_sql_task(task_class: type[BaseTask], context: dict | None) -> SQLTask:
         """Build an unsaved :class:`SQLTask` for a new task of ``task_class``."""
         return SQLTask(
             complete=False,
@@ -148,7 +148,7 @@ class TasksData:
         :return: the task record
 
         """
-        sql_task = self._new_sql_task(task_class, context)
+        sql_task = self._create_sql_task(task_class, context)
 
         async with AsyncSession(self._pg) as session:
             session.add(sql_task)
@@ -197,7 +197,7 @@ class TasksData:
             if existing_task is not None:
                 return None
 
-            sql_task = self._new_sql_task(task_class, None)
+            sql_task = self._create_sql_task(task_class, None)
 
             session.add(sql_task)
             await session.flush()
