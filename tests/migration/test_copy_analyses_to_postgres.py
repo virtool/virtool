@@ -413,7 +413,10 @@ class TestUpgrade:
             ),
         )
 
-        with pytest.raises(ValueError, match="unknown job"):
+        with pytest.raises(
+            ValueError,
+            match=r"Analysis orphan_job_analysis references unknown job",
+        ):
             await upgrade(ctx)
 
     async def test_idempotent_rerun(
@@ -525,7 +528,10 @@ class TestUpgrade:
             ),
         )
 
-        with pytest.raises(ValueError, match="unknown user"):
+        with pytest.raises(
+            ValueError,
+            match=r"Analysis orphan_analysis references unknown user",
+        ):
             await upgrade(ctx)
 
     @pytest.mark.usefixtures("setup_user")

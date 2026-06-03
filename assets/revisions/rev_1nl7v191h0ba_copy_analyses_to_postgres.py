@@ -15,6 +15,7 @@ from virtool.analyses.sql import SQLAnalysis, SQLAnalysisResult
 from virtool.data.topg import compose_legacy_id_single_expression
 from virtool.jobs.pg import SQLJob
 from virtool.migration import MigrationContext
+from virtool.pg.base import Base
 from virtool.users.pg import SQLUser
 
 logger = get_logger("migration")
@@ -72,6 +73,9 @@ async def upgrade(ctx: MigrationContext) -> None:
         migrated_count = 0
         skipped_count = 0
 
+        user_id_cache: dict[int | str, int | None] = {}
+        job_id_cache: dict[int | str, int | None] = {}
+
         for analysis_id in analysis_ids:
             if analysis_id in existing_legacy_ids:
                 skipped_count += 1
@@ -84,8 +88,8 @@ async def upgrade(ctx: MigrationContext) -> None:
                 continue
 
             results = await _resolve_results(session, document)
-            user_id = await _resolve_user_id(session, document)
-            job_id = await _resolve_job_id(session, document)
+            user_id = await _resolve_user_id(session, document, user_id_cache)
+            job_id = await _resolve_job_id(session, document, job_id_cache)
 
             await session.execute(
                 insert(SQLAnalysis)
@@ -132,21 +136,46 @@ def _build_values(
     }
 
 
-async def _resolve_user_id(session: AsyncSession, document: dict) -> int:
-    """Resolve a document's ``user`` reference to a Postgres ``users.id``.
+async def _resolve_id(
+    session: AsyncSession,
+    model: type[Base],
+    reference: int | str,
+    cache: dict[int | str, int | None],
+) -> int | None:
+    """Resolve a Mongo reference to a Postgres primary key, memoising results.
 
-    The Mongo reference may be a legacy string id or a modern integer id. Raises
-    if the referenced user is not present in Postgres.
+    The reference may be a legacy string id or a modern integer id. The resolved
+    id (or ``None`` if no row matches) is cached by reference so that analyses
+    sharing the same user or job do not each issue a query.
     """
-    reference = document["user"]["id"]
+    if reference in cache:
+        return cache[reference]
 
-    user_id = (
+    resolved = (
         await session.execute(
-            select(SQLUser.id).where(
-                compose_legacy_id_single_expression(SQLUser, reference),
+            select(model.id).where(
+                compose_legacy_id_single_expression(model, reference),
             ),
         )
     ).scalar_one_or_none()
+
+    cache[reference] = resolved
+
+    return resolved
+
+
+async def _resolve_user_id(
+    session: AsyncSession,
+    document: dict,
+    cache: dict[int | str, int | None],
+) -> int:
+    """Resolve a document's ``user`` reference to a Postgres ``users.id``.
+
+    Raises if the referenced user is not present in Postgres.
+    """
+    reference = document["user"]["id"]
+
+    user_id = await _resolve_id(session, SQLUser, reference, cache)
 
     if user_id is None:
         msg = f"Analysis {document['_id']} references unknown user {reference!r}"
@@ -155,12 +184,15 @@ async def _resolve_user_id(session: AsyncSession, document: dict) -> int:
     return user_id
 
 
-async def _resolve_job_id(session: AsyncSession, document: dict) -> int | None:
+async def _resolve_job_id(
+    session: AsyncSession,
+    document: dict,
+    cache: dict[int | str, int | None],
+) -> int | None:
     """Resolve a document's ``job`` reference to a Postgres ``jobs.id``.
 
-    Returns ``None`` when the document has no job. The Mongo reference may be a
-    legacy string id or a modern integer id. Raises if a job is referenced but
-    not present in Postgres, rather than silently dropping the association.
+    Returns ``None`` when the document has no job. Raises if a job is referenced
+    but not present in Postgres, rather than silently dropping the association.
     """
     job = document.get("job")
 
@@ -169,13 +201,7 @@ async def _resolve_job_id(session: AsyncSession, document: dict) -> int | None:
 
     reference = job["id"]
 
-    job_id = (
-        await session.execute(
-            select(SQLJob.id).where(
-                compose_legacy_id_single_expression(SQLJob, reference),
-            ),
-        )
-    ).scalar_one_or_none()
+    job_id = await _resolve_id(session, SQLJob, reference, cache)
 
     if job_id is None:
         msg = f"Analysis {document['_id']} references unknown job {reference!r}"
