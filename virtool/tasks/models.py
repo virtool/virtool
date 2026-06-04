@@ -39,3 +39,15 @@ class Task(TaskDetailedNested):
 
 
 TaskMinimal = Task
+
+
+class TaskCounts(BaseModel):
+    """Counts of active tasks for autoscaling.
+
+    Only states an autoscaler acts on are exposed. Terminal tasks (complete or
+    failed) are excluded because they accumulate unbounded and are irrelevant to
+    replica count.
+    """
+
+    queued: int = 0
+    running: int = 0
