@@ -143,3 +143,25 @@
     }),
   })
 # ---
+# name: test_finalize[pg]
+  dict({
+    'count': 1,
+    'created_at': 'approximately_now_datetime',
+    'deleted': False,
+    'gc': dict({
+      'a': 0.2,
+      'c': 0.2,
+      'g': 0.2,
+      'n': 0.2,
+      't': 0.2,
+    }),
+    'id': 1,
+    'job_id': 1,
+    'legacy_id': 'bf1b993c',
+    'name': 'foo',
+    'nickname': 'bar',
+    'ready': True,
+    'upload_id': 1,
+    'user_id': 1,
+  })
+# ---
