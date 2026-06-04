@@ -5,7 +5,7 @@ from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING
 
 from multidict import MultiDictProxy
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
@@ -16,6 +16,7 @@ from virtool.api.utils import compose_regex_query
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emits
+from virtool.data.topg import both_transactions
 from virtool.data.transforms import apply_transforms
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.utils import get_one_field
@@ -36,7 +37,7 @@ from virtool.subtractions.oas import (
     FinalizeSubtractionRequest,
     UpdateSubtractionRequest,
 )
-from virtool.subtractions.pg import SQLSubtractionFile
+from virtool.subtractions.pg import SQLSubtraction, SQLSubtractionFile
 from virtool.subtractions.utils import (
     FILES,
     check_subtraction_file_type,
@@ -203,25 +204,48 @@ class SubtractionsData(DataLayerDomain):
             0,
         )
 
-        document = await self._mongo.subtraction.insert_one(
-            {
-                "_id": new_subtraction_id,
-                "count": None,
-                "created_at": virtool.utils.timestamp(),
-                "deleted": False,
-                "file": {"id": upload.id, "name": upload.name},
-                "gc": None,
-                "job": {"id": job.id},
-                "name": data.name,
-                "nickname": data.nickname,
-                "ready": False,
-                "space": {"id": space_id},
-                "upload": data.upload_id,
-                "user": {"id": user_id},
-            },
-        )
+        created_at = virtool.utils.timestamp()
 
-        return await self.get(document["_id"])
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            await self._mongo.subtraction.insert_one(
+                {
+                    "_id": new_subtraction_id,
+                    "count": None,
+                    "created_at": created_at,
+                    "deleted": False,
+                    "file": {"id": upload.id, "name": upload.name},
+                    "gc": None,
+                    "job": {"id": job.id},
+                    "name": data.name,
+                    "nickname": data.nickname,
+                    "ready": False,
+                    "space": {"id": space_id},
+                    "upload": data.upload_id,
+                    "user": {"id": user_id},
+                },
+                session=mongo_session,
+            )
+
+            pg_session.add(
+                SQLSubtraction(
+                    legacy_id=new_subtraction_id,
+                    name=data.name,
+                    nickname=data.nickname,
+                    count=None,
+                    gc=None,
+                    created_at=created_at,
+                    deleted=False,
+                    ready=False,
+                    user_id=user_id,
+                    job_id=job.id,
+                    upload_id=data.upload_id,
+                ),
+            )
+
+        return await self.get(new_subtraction_id)
 
     async def get(self, subtraction_id: str) -> Subtraction:
         """Get a subtraction by its id."""
@@ -277,34 +301,55 @@ class SubtractionsData(DataLayerDomain):
     ) -> Subtraction:
         data = data.dict(exclude_unset=True)
 
-        update = {}
+        values = {}
 
         if "name" in data:
-            update["name"] = data["name"]
+            values["name"] = data["name"]
 
         if "nickname" in data:
-            update["nickname"] = data["nickname"]
+            values["nickname"] = data["nickname"]
 
-        document = await self._mongo.subtraction.find_one_and_update(
-            {"_id": subtraction_id},
-            {"$set": update},
-        )
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            document = await self._mongo.subtraction.find_one_and_update(
+                {"_id": subtraction_id},
+                {"$set": values},
+                session=mongo_session,
+            )
 
-        if document is None:
-            raise ResourceNotFoundError
+            if document is None:
+                raise ResourceNotFoundError
+
+            if values:
+                await pg_session.execute(
+                    update(SQLSubtraction)
+                    .where(SQLSubtraction.legacy_id == subtraction_id)
+                    .values(**values),
+                )
 
         return await self.get(subtraction_id)
 
     async def delete(self, subtraction_id: str):
-        async with self._mongo.create_session() as session:
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
             update_result = await self._mongo.subtraction.update_one(
                 {"_id": subtraction_id, "deleted": False},
                 {"$set": {"deleted": True}},
-                session=session,
+                session=mongo_session,
             )
 
             if update_result.modified_count == 0:
                 raise ResourceNotFoundError
+
+            await pg_session.execute(
+                update(SQLSubtraction)
+                .where(SQLSubtraction.legacy_id == subtraction_id)
+                .values(deleted=True),
+            )
 
             async def _delete_files():
                 return await delete_prefix(
@@ -312,7 +357,7 @@ class SubtractionsData(DataLayerDomain):
                 )
 
             _, failures = await asyncio.gather(
-                unlink_default_subtractions(self._mongo, subtraction_id, session),
+                unlink_default_subtractions(self._mongo, subtraction_id, mongo_session),
                 _delete_files(),
             )
 
@@ -346,15 +391,26 @@ class SubtractionsData(DataLayerDomain):
         if ready:
             raise ResourceConflictError("Subtraction has already been finalized")
 
-        subtraction = await self._mongo.subtraction.update_one(
-            {"_id": subtraction_id},
-            {"$set": {**data.dict(), "ready": True}},
-        )
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            result = await self._mongo.subtraction.update_one(
+                {"_id": subtraction_id},
+                {"$set": {**data.dict(), "ready": True}},
+                session=mongo_session,
+            )
 
-        if subtraction:
-            return await self.get(subtraction_id)
+            if result.matched_count == 0:
+                raise ResourceNotFoundError
 
-        raise ResourceNotFoundError
+            await pg_session.execute(
+                update(SQLSubtraction)
+                .where(SQLSubtraction.legacy_id == subtraction_id)
+                .values(**data.dict(), ready=True),
+            )
+
+        return await self.get(subtraction_id)
 
     async def upload_file(
         self,
