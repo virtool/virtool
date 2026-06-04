@@ -88,7 +88,7 @@ class HmmsData(DataLayerDomain):
         document = await self._mongo.status.find_one("hmm")
 
         document["updating"] = (
-            len(document["updates"]) > 1 and document["updates"][-1]["ready"]
+            bool(document["updates"]) and not document["updates"][-1]["ready"]
         )
 
         if installed := document.get("installed"):

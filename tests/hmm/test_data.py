@@ -19,7 +19,21 @@ async def test_get_status(
         {
             "_id": "hmm",
             "updating": False,
-            "updates": [{"id": 231}],
+            "updates": [
+                {
+                    "body": "- remove some annotations that didn't have corresponding profiles",
+                    "created_at": static_time.datetime,
+                    "filename": "vthmm.tar.gz",
+                    "html_url": "https://github.com/virtool/virtool-hmm/releases/tag/v0.2.1",
+                    "id": 1230982,
+                    "name": "v0.2.1",
+                    "newer": False,
+                    "published_at": static_time.datetime,
+                    "ready": True,
+                    "size": 85904451,
+                    "user": {"id": user.id},
+                },
+            ],
             "installed": {
                 "body": "- remove some annotations that didn't have corresponding profiles",
                 "created_at": static_time.datetime,
@@ -52,6 +66,64 @@ async def test_get_status(
     )
 
     assert await data_layer.hmms.get_status() == snapshot
+
+
+class TestGetStatusUpdatingFlag:
+    """``updating`` is derived from the latest entry in ``updates``.
+
+    It is ``True`` exactly when ``updates`` is non-empty and the latest entry
+    has ``ready: False`` — matching the install lock in ``install_update`` that
+    refuses to start when any ``updates.ready`` is ``False``. The pre-fix
+    derivation ignored the first install and inverted the ``ready`` check
+    (VIR-2445).
+    """
+
+    @staticmethod
+    async def _insert_status(mongo, updates: list[dict]) -> None:
+        await mongo.status.insert_one(
+            {
+                "_id": "hmm",
+                "updates": updates,
+                "installed": None,
+                "release": None,
+                "errors": [],
+            },
+        )
+
+    async def test_single_in_progress_update(self, data_layer, mongo):
+        """A lone unfinished update reports ``updating: True``."""
+        await self._insert_status(mongo, [{"id": 1, "ready": False}])
+
+        status = await data_layer.hmms.get_status()
+
+        assert status.updating is True
+
+    async def test_latest_in_progress_update(self, data_layer, mongo):
+        """A finished update followed by an unfinished one reports ``True``."""
+        await self._insert_status(
+            mongo,
+            [{"id": 1, "ready": True}, {"id": 2, "ready": False}],
+        )
+
+        status = await data_layer.hmms.get_status()
+
+        assert status.updating is True
+
+    async def test_latest_completed_update(self, data_layer, mongo):
+        """A latest finished update reports ``updating: False``."""
+        await self._insert_status(mongo, [{"id": 1, "ready": True}])
+
+        status = await data_layer.hmms.get_status()
+
+        assert status.updating is False
+
+    async def test_no_updates(self, data_layer, mongo):
+        """An empty ``updates`` list reports ``updating: False``."""
+        await self._insert_status(mongo, [])
+
+        status = await data_layer.hmms.get_status()
+
+        assert status.updating is False
 
 
 async def _drain(stream) -> bytes:
