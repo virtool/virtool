@@ -137,13 +137,12 @@ class CachesData(DataLayerDomain):
         candidates: list[CacheEvictionCandidate],
     ) -> set[int]:
         """Delete cache storage objects, then remove their cache rows."""
-        storage_deleted_ids = []
+        cache_ids = [candidate.id for candidate in candidates]
 
         for candidate in candidates:
             await self._storage.delete(candidate.storage_key)
-            storage_deleted_ids.append(candidate.id)
 
-        if not storage_deleted_ids:
+        if not cache_ids:
             return set()
 
         async with AsyncSession(self._pg) as session:
@@ -152,7 +151,7 @@ class CachesData(DataLayerDomain):
                 for row in (
                     await session.execute(
                         delete(SQLCache)
-                        .where(SQLCache.id.in_(storage_deleted_ids))
+                        .where(SQLCache.id.in_(cache_ids))
                         .returning(SQLCache.id),
                     )
                 )
