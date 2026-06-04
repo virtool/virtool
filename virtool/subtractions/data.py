@@ -1,4 +1,3 @@
-import asyncio
 import math
 from asyncio import CancelledError
 from collections.abc import AsyncGenerator
@@ -309,6 +308,9 @@ class SubtractionsData(DataLayerDomain):
         if "nickname" in data:
             values["nickname"] = data["nickname"]
 
+        if not values:
+            return await self.get(subtraction_id)
+
         async with both_transactions(self._mongo, self._pg) as (
             mongo_session,
             pg_session,
@@ -322,12 +324,11 @@ class SubtractionsData(DataLayerDomain):
             if document is None:
                 raise ResourceNotFoundError
 
-            if values:
-                await pg_session.execute(
-                    update(SQLSubtraction)
-                    .where(SQLSubtraction.legacy_id == subtraction_id)
-                    .values(**values),
-                )
+            await pg_session.execute(
+                update(SQLSubtraction)
+                .where(SQLSubtraction.legacy_id == subtraction_id)
+                .values(**values),
+            )
 
         return await self.get(subtraction_id)
 
@@ -351,15 +352,13 @@ class SubtractionsData(DataLayerDomain):
                 .values(deleted=True),
             )
 
-            async def _delete_files():
-                return await delete_prefix(
-                    self._storage, subtraction_prefix(subtraction_id)
-                )
-
-            _, failures = await asyncio.gather(
-                unlink_default_subtractions(self._mongo, subtraction_id, mongo_session),
-                _delete_files(),
+            await unlink_default_subtractions(
+                self._mongo, subtraction_id, mongo_session
             )
+
+        failures = await delete_prefix(
+            self._storage, subtraction_prefix(subtraction_id)
+        )
 
         for key, exc in failures:
             logger.error(
