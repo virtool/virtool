@@ -14,6 +14,7 @@ from assets.revisions.rev_ztd04qgecm9a_copy_subtractions_to_postgres import (
     upgrade,
 )
 from virtool.migration.ctx import MigrationContext
+from virtool.utils import timestamp
 
 
 @pytest.fixture
@@ -39,7 +40,7 @@ async def setup_user(ctx: MigrationContext, apply_alembic: Callable) -> int:
                 )
                 RETURNING id
             """),
-            {"now": arrow.utcnow().naive, "password": b"hashed_password"},
+            {"now": timestamp(), "password": b"hashed_password"},
         )
         user_id = result.scalar_one()
         await session.commit()
