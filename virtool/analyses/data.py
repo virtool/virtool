@@ -238,13 +238,10 @@ class AnalysisData(DataLayerDomain):
 
         if document["ready"]:
             document["results"] = await virtool.analyses.format.format_analysis(
-                self._storage,
                 self._mongo,
                 self._pg,
                 workflow=document["workflow"],
                 results=document["results"],
-                legacy_id=document["legacy_id"],
-                sample_id=document["sample"]["id"],
             )
 
         transforms = [
@@ -513,26 +510,21 @@ class AnalysisData(DataLayerDomain):
         if extension == "xlsx":
             return (
                 await virtool.analyses.format.format_analysis_to_excel(
-                    self._storage,
                     self._mongo,
                     self._pg,
                     results=analysis.results,
                     workflow=analysis.workflow,
                     sample_id=analysis.sample,
-                    legacy_id=analysis.legacy_id,
                 ),
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
 
         return (
             await virtool.analyses.format.format_analysis_to_csv(
-                self._storage,
                 self._mongo,
                 self._pg,
                 results=analysis.results,
                 workflow=analysis.workflow,
-                sample_id=analysis.sample,
-                legacy_id=analysis.legacy_id,
             ),
             "text/csv",
         )

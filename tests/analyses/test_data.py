@@ -263,7 +263,7 @@ class TestFinalize:
         """Finalize marks the Postgres row ready and stores the results."""
         m_format_analysis = mocker.patch(
             "virtool.analyses.format.format_analysis",
-            side_effect=lambda _storage, _mongo, _pg, *, results, **_: results,
+            side_effect=lambda _mongo, _pg, *, results, **_: results,
         )
 
         analysis = await data_layer.analyses.create(
@@ -288,13 +288,10 @@ class TestFinalize:
         # The PostgreSQL engine must be threaded through to format_analysis so it can
         # resolve Postgres-stored history diffs.
         m_format_analysis.assert_called_with(
-            ANY,
             mongo,
             pg,
             workflow=ANY,
             results=ANY,
-            legacy_id=ANY,
-            sample_id=ANY,
         )
 
 

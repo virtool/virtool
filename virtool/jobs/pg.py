@@ -66,6 +66,13 @@ class SQLJob(Base):
 
 
 class SQLJobAnalysis(Base):
+    """Links a job to the analysis it created.
+
+    No longer written: analyses now reference their job directly via
+    ``SQLAnalysis.job_id``. The model and ``job_analyses`` table are retained
+    pending their drop in VIR-2438.
+    """
+
     __tablename__ = "job_analyses"
 
     job_id: Mapped[int] = mapped_column(ForeignKey("jobs.id"), primary_key=True)

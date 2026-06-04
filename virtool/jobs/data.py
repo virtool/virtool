@@ -27,7 +27,6 @@ from virtool.jobs.models import (
 )
 from virtool.jobs.pg import (
     SQLJob,
-    SQLJobAnalysis,
     SQLJobIndex,
     SQLJobSample,
     SQLJobSubtraction,
@@ -218,16 +217,6 @@ class JobsData:
                     SQLJobSubtraction(
                         job_id=sql_job.id,
                         subtraction_id=job_args["subtraction_id"],
-                    ),
-                )
-            elif (
-                workflow in ("aodp", "iimi", "nuvs", "pathoscope")
-                and "analysis_id" in job_args
-            ):
-                session.add(
-                    SQLJobAnalysis(
-                        job_id=sql_job.id,
-                        analysis_id=job_args["analysis_id"],
                     ),
                 )
 
