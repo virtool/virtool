@@ -4,13 +4,15 @@ from pathlib import Path
 
 import pytest
 from pytest_mock import MockerFixture
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
+from tests.fixtures.analysis import seed_analysis
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from tests.fixtures.response import RespIs
 from virtool.analyses.files import create_analysis_file
-from virtool.analyses.sql import SQLAnalysisFile, SQLAnalysisResult
+from virtool.analyses.sql import SQLAnalysis, SQLAnalysisFile
 from virtool.fake.next import DataFaker
 from virtool.jobs.models import Job, JobState
 from virtool.mongo.core import Mongo
@@ -39,6 +41,7 @@ async def test_find(
     fake: DataFaker,
     mocker: MockerFixture,
     mongo: Mongo,
+    pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
     static_time,
@@ -76,54 +79,53 @@ async def test_find(
         mongo.subtraction.insert_one(
             {"_id": "foo", "name": "Malus domestica", "nickname": "Apple"},
         ),
-        mongo.analyses.insert_many(
-            [
-                {
-                    "_id": "test_1",
-                    "workflow": "pathoscope",
-                    "created_at": static_time.datetime,
-                    "ready": True,
-                    "job": {"id": job.id},
-                    "index": {"version": 2, "id": "foo"},
-                    "user": {"id": user_1.id},
-                    "sample": {"id": "test"},
-                    "reference": {"id": "baz"},
-                    "results": {"hits": []},
-                    "subtractions": [],
-                    "foobar": True,
-                },
-                {
-                    "_id": "test_2",
-                    "workflow": "pathoscope",
-                    "created_at": static_time.datetime,
-                    "ready": True,
-                    "job": {"id": job.id},
-                    "index": {"version": 2, "id": "foo"},
-                    "user": {"id": user_1.id},
-                    "sample": {"id": "test"},
-                    "reference": {"id": "baz"},
-                    "results": {"hits": []},
-                    "subtractions": ["foo"],
-                    "foobar": True,
-                },
-                {
-                    "_id": "test_3",
-                    "workflow": "pathoscope",
-                    "created_at": static_time.datetime,
-                    "ready": True,
-                    "job": None,
-                    "index": {"version": 2, "id": "foo"},
-                    "user": {"id": user_1.id},
-                    "sample": {"id": "test"},
-                    "reference": {"id": "foo"},
-                    "results": {"hits": []},
-                    "subtractions": [],
-                    "foobar": False,
-                },
-            ],
-            session=None,
-        ),
     )
+
+    for document in [
+        {
+            "_id": "test_1",
+            "workflow": "pathoscope",
+            "created_at": static_time.datetime,
+            "ready": True,
+            "job": {"id": job.id},
+            "index": {"version": 2, "id": "foo"},
+            "user": {"id": user_1.id},
+            "sample": {"id": "test"},
+            "reference": {"id": "baz"},
+            "results": {"hits": []},
+            "subtractions": [],
+            "foobar": True,
+        },
+        {
+            "_id": "test_2",
+            "workflow": "pathoscope",
+            "created_at": static_time.datetime,
+            "ready": True,
+            "job": {"id": job.id},
+            "index": {"version": 2, "id": "foo"},
+            "user": {"id": user_1.id},
+            "sample": {"id": "test"},
+            "reference": {"id": "baz"},
+            "results": {"hits": []},
+            "subtractions": ["foo"],
+            "foobar": True,
+        },
+        {
+            "_id": "test_3",
+            "workflow": "pathoscope",
+            "created_at": static_time.datetime,
+            "ready": True,
+            "job": None,
+            "index": {"version": 2, "id": "foo"},
+            "user": {"id": user_1.id},
+            "sample": {"id": "test"},
+            "reference": {"id": "foo"},
+            "results": {"hits": []},
+            "subtractions": [],
+            "foobar": False,
+        },
+    ]:
+        await seed_analysis(mongo, pg, document)
 
     resp = await client.get("/analyses")
 
@@ -186,24 +188,24 @@ async def test_get(
         )
 
     if error != "404_analysis":
-        await asyncio.gather(
-            mongo.analyses.insert_one(
-                {
-                    "_id": "foobar",
-                    "created_at": static_time.datetime,
-                    "index": {"version": 3, "id": "bar"},
-                    "job": {"id": job.id},
-                    "ready": True,
-                    "reference": {"id": "baz"},
-                    "results": {"hits": []},
-                    "sample": {"id": "baz"},
-                    "subtractions": ["plum", "apple"],
-                    "user": {"id": user_1.id},
-                    "workflow": "pathoscope",
-                },
-            ),
-            create_analysis_file(pg, "foobar", "fasta", "reference.fa"),
+        await seed_analysis(
+            mongo,
+            pg,
+            {
+                "_id": "foobar",
+                "created_at": static_time.datetime,
+                "index": {"version": 3, "id": "bar"},
+                "job": {"id": job.id},
+                "ready": True,
+                "reference": {"id": "baz"},
+                "results": {"hits": []},
+                "sample": {"id": "baz"},
+                "subtractions": ["plum", "apple"],
+                "user": {"id": user_1.id},
+                "workflow": "pathoscope",
+            },
         )
+        await create_analysis_file(pg, "foobar", "fasta", "reference.fa")
 
     resp = await client.get("/analyses/foobar")
 
@@ -250,29 +252,97 @@ async def test_get_archived_reference(
                 "user": {"id": user.id},
             },
         ),
-        mongo.analyses.insert_one(
-            {
-                "_id": "foobar",
-                "created_at": static_time.datetime,
-                "index": {"version": 3, "id": "bar"},
-                "job": {"id": job.id},
-                "ready": True,
-                "reference": {"id": "baz"},
-                "results": {"hits": []},
-                "sample": {"id": "baz"},
-                "subtractions": [],
-                "user": {"id": user.id},
-                "workflow": "pathoscope",
-            },
-        ),
-        create_analysis_file(pg, "foobar", "fasta", "reference.fa"),
     )
+
+    await seed_analysis(
+        mongo,
+        pg,
+        {
+            "_id": "foobar",
+            "created_at": static_time.datetime,
+            "index": {"version": 3, "id": "bar"},
+            "job": {"id": job.id},
+            "ready": True,
+            "reference": {"id": "baz"},
+            "results": {"hits": []},
+            "sample": {"id": "baz"},
+            "subtractions": [],
+            "user": {"id": user.id},
+            "workflow": "pathoscope",
+        },
+    )
+    await create_analysis_file(pg, "foobar", "fasta", "reference.fa")
 
     resp = await client.get("/analyses/foobar")
 
     assert resp.status == HTTPStatus.OK
     body = await resp.json()
     assert body["reference"] == {"id": "baz", "data_type": "genome", "name": "Baz"}
+
+
+async def test_get_by_integer_id(
+    fake: DataFaker,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    spawn_client: ClientSpawner,
+    static_time: StaticTime,
+):
+    """An analysis resolves by its integer id, the new outward-facing identifier, and
+    the response emits that integer id rather than the legacy Mongo slug.
+    """
+    client = await spawn_client(authenticated=True)
+
+    user = await fake.users.create()
+    job = await fake.jobs.create(user=user, state=JobState.SUCCEEDED)
+
+    await asyncio.gather(
+        mongo.references.insert_one(
+            {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
+        ),
+        mongo.samples.insert_one(
+            {
+                "_id": "baz",
+                "all_read": True,
+                "all_write": False,
+                "group": "tech",
+                "group_read": True,
+                "group_write": True,
+                "labels": [],
+                "subtractions": [],
+                "user": {"id": user.id},
+            },
+        ),
+    )
+
+    await seed_analysis(
+        mongo,
+        pg,
+        {
+            "_id": "legacy_slug",
+            "created_at": static_time.datetime,
+            "index": {"version": 3, "id": "bar"},
+            "job": {"id": job.id},
+            "ready": True,
+            "reference": {"id": "baz"},
+            "results": {"hits": []},
+            "sample": {"id": "baz"},
+            "subtractions": [],
+            "user": {"id": user.id},
+            "workflow": "pathoscope",
+        },
+    )
+
+    async with AsyncSession(pg) as session:
+        analysis_id = (
+            await session.execute(
+                select(SQLAnalysis.id).where(SQLAnalysis.legacy_id == "legacy_slug"),
+            )
+        ).scalar_one()
+
+    resp = await client.get(f"/analyses/{analysis_id}")
+
+    assert resp.status == HTTPStatus.OK
+    assert (await resp.json())["id"] == analysis_id
 
 
 @pytest.mark.parametrize("ready", [True, False])
@@ -309,21 +379,24 @@ async def test_get_304(
                 "user": {"id": user.id},
             },
         ),
-        mongo.analyses.insert_one(
-            {
-                "_id": "foobar",
-                "created_at": static_time.datetime,
-                "ready": ready,
-                "job": {"id": "test"},
-                "index": {"version": 3, "id": "bar"},
-                "workflow": "pathoscope",
-                "results": {"hits": []},
-                "sample": {"id": "baz"},
-                "reference": {"id": "baz"},
-                "subtractions": ["plum", "apple"],
-                "user": {"id": user.id},
-            },
-        ),
+    )
+
+    await seed_analysis(
+        mongo,
+        pg,
+        {
+            "_id": "foobar",
+            "created_at": static_time.datetime,
+            "ready": ready,
+            "job": {"id": "test"},
+            "index": {"version": 3, "id": "bar"},
+            "workflow": "pathoscope",
+            "results": {"hits": []},
+            "sample": {"id": "baz"},
+            "reference": {"id": "baz"},
+            "subtractions": ["plum", "apple"],
+            "user": {"id": user.id},
+        },
     )
 
     await create_analysis_file(pg, "foobar", "fasta", "reference.fa")
@@ -341,6 +414,7 @@ async def test_remove(
     error: str | None,
     fake: DataFaker,
     mongo: Mongo,
+    pg: AsyncEngine,
     resp_is,
     spawn_client: ClientSpawner,
     static_time,
@@ -388,7 +462,9 @@ async def test_remove(
         )
 
     if error != "404_analysis":
-        await mongo.analyses.insert_one(
+        await seed_analysis(
+            mongo,
+            pg,
             {
                 "_id": "foobar",
                 "created_at": static_time.datetime,
@@ -423,6 +499,7 @@ async def test_remove(
 @pytest.mark.parametrize("error", [None, 400, 404, 422])
 async def test_upload_file(
     error: str | None,
+    fake: DataFaker,
     get_handle,
     mongo: Mongo,
     pg: AsyncEngine,
@@ -439,8 +516,22 @@ async def test_upload_file(
     format_ = "foo" if error == 400 else "fasta"
 
     if error != 404:
-        await mongo.analyses.insert_one(
-            {"_id": "foobar", "ready": True, "job": {"id": "hello"}},
+        user = await fake.users.create()
+        await seed_analysis(
+            mongo,
+            pg,
+            {
+                "_id": "foobar",
+                "created_at": static_time.datetime,
+                "index": {"id": "bar", "version": 1},
+                "job": {"id": "hello"},
+                "ready": True,
+                "reference": {"id": "baz"},
+                "sample": {"id": "baz"},
+                "subtractions": [],
+                "user": {"id": user.id},
+                "workflow": "pathoscope",
+            },
         )
 
     if error == 422:
@@ -490,10 +581,13 @@ class TestDownloadAnalysisResult:
     async def test_ok(
         self,
         example_path: Path,
+        fake: DataFaker,
         get_handle,
         mongo: Mongo,
+        pg: AsyncEngine,
         spawn_client: ClientSpawner,
         spawn_job_client: JobClientSpawner,
+        static_time: StaticTime,
     ):
         """Test that an uploaded analysis result file can subsequently be downloaded."""
         client, job_client = await asyncio.gather(
@@ -501,8 +595,22 @@ class TestDownloadAnalysisResult:
             spawn_job_client(authenticated=True),
         )
 
-        await mongo.analyses.insert_one(
-            {"_id": "foobar", "ready": True, "job": {"id": "hello"}},
+        user = await fake.users.create()
+        await seed_analysis(
+            mongo,
+            pg,
+            {
+                "_id": "foobar",
+                "created_at": static_time.datetime,
+                "index": {"id": "bar", "version": 1},
+                "job": {"id": "hello"},
+                "ready": True,
+                "reference": {"id": "baz"},
+                "sample": {"id": "baz"},
+                "subtractions": [],
+                "user": {"id": user.id},
+                "workflow": "pathoscope",
+            },
         )
 
         await job_client.put(
@@ -552,7 +660,9 @@ class TestDownloadAnalysisResult:
 )
 async def test_blast(
     error,
+    fake: DataFaker,
     mongo: Mongo,
+    pg: AsyncEngine,
     spawn_client: ClientSpawner,
     resp_is,
     snapshot,
@@ -567,9 +677,12 @@ async def test_blast(
         base_url="https://virtool.example.com",
     )
 
+    user = await fake.users.create()
+
     if error != "404_analysis":
         analysis_document = {
             "_id": "foobar",
+            "created_at": static_time.datetime,
             "workflow": "nuvs",
             "ready": True,
             "results": {
@@ -580,6 +693,10 @@ async def test_blast(
                 ],
             },
             "sample": {"id": "baz"},
+            "reference": {"id": "ref"},
+            "index": {"id": "index", "version": 0},
+            "subtractions": [],
+            "user": {"id": user.id},
         }
 
         if error == "404_sequence":
@@ -604,7 +721,7 @@ async def test_blast(
                 },
             )
 
-        await mongo.analyses.insert_one(analysis_document)
+        await seed_analysis(mongo, pg, analysis_document)
 
     await client.put("/analyses/foobar/5/blast", {})
 
@@ -641,26 +758,17 @@ class TestFinalize:
     user: User
 
     @pytest.fixture(autouse=True)
-    async def _setup(self, fake: DataFaker, mongo: Mongo, static_time: StaticTime):
+    async def _setup(
+        self,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        static_time: StaticTime,
+    ):
         user = await fake.users.create()
         job = await fake.jobs.create(state=JobState.RUNNING, user=user)
 
         await asyncio.gather(
-            mongo.analyses.insert_one(
-                {
-                    "_id": "analysis1",
-                    "sample": {"id": "sample1"},
-                    "created_at": static_time.datetime,
-                    "files": [],
-                    "index": {"version": 2, "id": "foo"},
-                    "job": {"id": job.id},
-                    "ready": False,
-                    "reference": {"id": "baz"},
-                    "subtractions": [],
-                    "user": {"id": user.id},
-                    "workflow": "nuvs",
-                },
-            ),
             mongo.references.insert_one(
                 {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
             ),
@@ -689,14 +797,29 @@ class TestFinalize:
             ),
         )
 
+        await seed_analysis(
+            mongo,
+            pg,
+            {
+                "_id": "analysis1",
+                "sample": {"id": "sample1"},
+                "created_at": static_time.datetime,
+                "files": [],
+                "index": {"version": 2, "id": "foo"},
+                "job": {"id": job.id},
+                "ready": False,
+                "reference": {"id": "baz"},
+                "subtractions": [],
+                "user": {"id": user.id},
+                "workflow": "nuvs",
+            },
+        )
+
     async def test_ok(
         self,
-        fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         spawn_job_client: JobClientSpawner,
-        static_time: StaticTime,
     ):
         client = await spawn_job_client(authenticated=True)
 
@@ -708,15 +831,14 @@ class TestFinalize:
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
-        document, row = await asyncio.gather(
-            mongo.analyses.find_one(),
-            get_row_by_id(pg, SQLAnalysisResult, 1),
-        )
+        async with AsyncSession(pg) as session:
+            row = (
+                await session.execute(
+                    select(SQLAnalysis).where(SQLAnalysis.legacy_id == "analysis1"),
+                )
+            ).scalar_one()
 
-        assert document == snapshot
-        assert document["ready"] is True
-
-        assert row.analysis_id == "analysis1"
+        assert row.ready is True
         assert row.results == {"result": "TEST_RESULT", "hits": []}
 
     async def test_not_found(self, spawn_job_client):
@@ -747,6 +869,7 @@ class TestFinalize:
         self,
         fake: DataFaker,
         mongo: Mongo,
+        pg: AsyncEngine,
         spawn_job_client: JobClientSpawner,
         static_time: StaticTime,
     ):
@@ -762,6 +885,14 @@ class TestFinalize:
                 },
             },
         )
+
+        async with AsyncSession(pg) as session:
+            await session.execute(
+                update(SQLAnalysis)
+                .where(SQLAnalysis.legacy_id == "analysis1")
+                .values(ready=True),
+            )
+            await session.commit()
 
         resp = await client.patch(
             "/analyses/analysis1",

@@ -1,13 +1,15 @@
 """The data layer piece for tasks."""
 
-from sqlalchemy import desc, select, text, update
+from datetime import timedelta
+
+from sqlalchemy import desc, func, select, text, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
 import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
-from virtool.data.events import Operation, emits
-from virtool.tasks.models import Task
+from virtool.data.events import Operation, emit, emits
+from virtool.tasks.models import Task, TaskCounts
 from virtool.tasks.oas import UpdateTaskRequest
 from virtool.tasks.sql import SQLTask
 from virtool.tasks.task import BaseTask
@@ -38,6 +40,30 @@ class TasksData:
                 .scalars()
                 .all()
             ]
+
+    async def get_counts(self) -> TaskCounts:
+        """Get counts of active tasks for autoscaling.
+
+        ``queued`` mirrors the filter used by :meth:`acquire` and is the primary
+        scaling signal. ``running`` covers acquired-but-unfinished tasks. Both are
+        bounded by outstanding work and served by the ``idx_tasks_active`` partial
+        index, so the query cost does not grow with the table's history of
+        completed or failed tasks.
+
+        :return: the active task counts
+
+        """
+        async with AsyncSession(self._pg) as session:
+            queued, running = (
+                await session.execute(
+                    select(
+                        func.count().filter(SQLTask.acquired_at.is_(None)),
+                        func.count().filter(SQLTask.acquired_at.is_not(None)),
+                    ).where(SQLTask.complete.is_(False), SQLTask.error.is_(None)),
+                )
+            ).one()
+
+        return TaskCounts(queued=queued, running=running)
 
     async def get(self, task_id: int) -> Task:
         """Get the task corresponding with passed "task_id".
@@ -120,6 +146,19 @@ class TasksData:
 
             raise ResourceNotFoundError
 
+    @staticmethod
+    def _create_sql_task(task_class: type[BaseTask], context: dict | None) -> SQLTask:
+        """Build an unsaved :class:`SQLTask` for a new task of ``task_class``."""
+        return SQLTask(
+            complete=False,
+            context=context or {},
+            step=task_class.name,
+            count=0,
+            created_at=virtool.utils.timestamp(),
+            progress=0,
+            type=task_class.name,
+        )
+
     @emits(Operation.CREATE)
     async def create(
         self,
@@ -133,21 +172,63 @@ class TasksData:
         :return: the task record
 
         """
-        sql_task = SQLTask(
-            complete=False,
-            context=context or {},
-            step=task_class.name,
-            count=0,
-            created_at=virtool.utils.timestamp(),
-            progress=0,
-            type=task_class.name,
-        )
+        sql_task = self._create_sql_task(task_class, context)
 
         async with AsyncSession(self._pg) as session:
             session.add(sql_task)
             await session.flush()
             task = Task(**sql_task.to_dict())
             await session.commit()
+
+        return task
+
+    async def create_periodic(
+        self,
+        task_class: type[BaseTask],
+        interval: int,
+    ) -> Task | None:
+        """Atomically spawn a periodic task if one is due.
+
+        A Postgres transaction-scoped advisory lock keyed on the task type
+        serializes the decision across API replicas. The lock is held across the
+        recency check and the insert, so only one replica can spawn a given task
+        type per cycle and no duplicate is created.
+
+        :param task_class: the task class to spawn
+        :param interval: the minimum interval in seconds between tasks
+        :return: the spawned task, or ``None`` if a task was not due or another
+            replica held the lock
+        """
+        if interval <= 0:
+            raise ValueError("interval must be a positive number of seconds")
+
+        async with AsyncSession(self._pg) as session:
+            locked = await session.scalar(
+                select(func.pg_try_advisory_xact_lock(func.hashtext(task_class.name)))
+            )
+
+            if not locked:
+                return None
+
+            cutoff_time = virtool.utils.timestamp() - timedelta(seconds=interval)
+
+            existing_task = await session.scalar(
+                select(SQLTask)
+                .filter_by(type=task_class.name)
+                .filter(SQLTask.created_at > cutoff_time)
+            )
+
+            if existing_task is not None:
+                return None
+
+            sql_task = self._create_sql_task(task_class, None)
+
+            session.add(sql_task)
+            await session.flush()
+            task = Task(**sql_task.to_dict())
+            await session.commit()
+
+        emit(task, self.name, "create", Operation.CREATE)
 
         return task
 

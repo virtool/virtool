@@ -344,5 +344,33 @@
       'name': 'copy analyses to postgres',
       'revision': '1nl7v191h0ba',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 50,
+      'name': 'create subtractions table',
+      'revision': 'f4624eb353b7',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 51,
+      'name': 'add subtraction_files subtraction_id',
+      'revision': '895d6315a838',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 52,
+      'name': 'add active tasks index',
+      'revision': 'f95b556b3adc',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 53,
+      'name': 'copy subtractions to postgres',
+      'revision': 'ztd04qgecm9a',
+    }),
   ])
 # ---

@@ -88,8 +88,8 @@ class TestCheckAnalysisIsRunning:
 
 class TestCheckNUVsSequence:
     async def test_ok(self, analysis):
-        assert await check_analysis_nuvs_sequence(analysis, 1) is None
+        assert await check_analysis_nuvs_sequence(analysis["results"], 1) is None
 
     async def test_error(self, analysis):
         with pytest.raises(ResourceNotFoundError):
-            await check_analysis_nuvs_sequence(analysis, 2)
+            await check_analysis_nuvs_sequence(analysis["results"], 2)

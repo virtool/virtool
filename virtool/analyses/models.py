@@ -19,7 +19,7 @@ class AnalysisSample(BaseModel):
 
 class AnalysisMinimal(BaseModel):
     created_at: datetime
-    id: str
+    id: int
     index: IndexNested
     job: JobMinimal | None
     ml: MLModelRelease | None
@@ -43,7 +43,7 @@ class AnalysisMinimal(BaseModel):
             "example": [
                 {
                     "created_at": "2022-05-21T01:28:55.441000Z",
-                    "id": "m9ktiz0i",
+                    "id": 142,
                     "index": {"id": "9c5u6wsq", "version": 13},
                     "job": {"id": "bt8nwg9z"},
                     "ready": True,
@@ -63,7 +63,7 @@ class AnalysisMinimal(BaseModel):
 
 
 class AnalysisFile(BaseModel):
-    analysis: str
+    analysis: int
     description: str | None = None
     format: str
     id: int
@@ -83,7 +83,7 @@ class Analysis(AnalysisMinimal):
                 "created_at": "2022-08-15T17:42:35.979000Z",
                 "files": [
                     {
-                        "analysis": "ofv7rp4v",
+                        "analysis": 3145,
                         "description": None,
                         "format": "tsv",
                         "id": 3145,
@@ -93,7 +93,7 @@ class Analysis(AnalysisMinimal):
                         "uploaded_at": "2022-08-15T17:48:02.467000Z",
                     }
                 ],
-                "id": "ofv7rp4v",
+                "id": 3145,
                 "index": {"id": "u3lm1rk8", "version": 14},
                 "job": {"id": "us3toy8j"},
                 "ready": True,

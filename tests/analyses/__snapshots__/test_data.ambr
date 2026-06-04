@@ -1,124 +1,9 @@
 # serializer version: 1
-# name: test_create[mongo]
-  dict({
-    '_id': 'bf1b993c',
-    'files': list([
-    ]),
-    'index': dict({
-      'id': 'test_index',
-      'version': 11,
-    }),
-    'job': dict({
-      'id': 1,
-    }),
-    'ml': None,
-    'ready': False,
-    'reference': dict({
-      'id': 'test_ref',
-    }),
-    'results': None,
-    'sample': dict({
-      'id': 'test_sample',
-    }),
-    'space': dict({
-      'id': 0,
-    }),
-    'subtractions': list([
-      'subtraction_1',
-      'subtraction_2',
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'workflow': 'nuvs',
-  })
-# ---
 # name: test_create[obj]
   dict({
     'files': list([
     ]),
-    'id': 'bf1b993c',
-    'index': dict({
-      'id': 'test_index',
-      'version': 11,
-    }),
-    'job': dict({
-      'id': 1,
-      'progress': 0,
-      'state': <JobState.PENDING: 'pending'>,
-      'user': dict({
-        'handle': 'leeashley',
-        'id': 1,
-      }),
-      'workflow': <Workflow.NUVS: 'nuvs'>,
-    }),
-    'ml': None,
-    'ready': False,
-    'reference': dict({
-      'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'test_ref',
-      'name': 'Test Reference',
-    }),
-    'results': None,
-    'sample': dict({
-      'id': 'test_sample',
-    }),
-    'subtractions': list([
-      dict({
-        'id': 'subtraction_1',
-        'name': 'Subtraction 1',
-      }),
-      dict({
-        'id': 'subtraction_2',
-        'name': 'Subtraction 2',
-      }),
-    ]),
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 1,
-    }),
-    'workflow': 'nuvs',
-  })
-# ---
-# name: test_create_analysis_id[mongo]
-  dict({
-    '_id': 'bf1b993c',
-    'files': list([
-    ]),
-    'index': dict({
-      'id': 'test_index',
-      'version': 11,
-    }),
-    'job': dict({
-      'id': 1,
-    }),
-    'ml': None,
-    'ready': False,
-    'reference': dict({
-      'id': 'test_ref',
-    }),
-    'results': None,
-    'sample': dict({
-      'id': 'test_sample',
-    }),
-    'space': dict({
-      'id': 0,
-    }),
-    'subtractions': list([
-      'subtraction_1',
-      'subtraction_2',
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'workflow': 'nuvs',
-  })
-# ---
-# name: test_create_analysis_id[obj]
-  dict({
-    'files': list([
-    ]),
-    'id': 'bf1b993c',
+    'id': 1,
     'index': dict({
       'id': 'test_index',
       'version': 11,
@@ -177,7 +62,7 @@
     'documents': list([
       dict({
         'created_at': 'approximately_now_datetime',
-        'id': 'fb085f7f',
+        'id': 2,
         'index': dict({
           'id': 'test_index',
           'version': 11,
@@ -233,7 +118,7 @@
     'documents': list([
       dict({
         'created_at': 'approximately_now_datetime',
-        'id': '7cf872dc',
+        'id': 3,
         'index': dict({
           'id': 'test_index',
           'version': 11,
@@ -278,7 +163,7 @@
       }),
       dict({
         'created_at': 'approximately_now_datetime',
-        'id': 'fb085f7f',
+        'id': 2,
         'index': dict({
           'id': 'test_index',
           'version': 11,
@@ -331,7 +216,7 @@
 # ---
 # name: test_upload_file
   dict({
-    'analysis': 'bf1b993c',
+    'analysis': 1,
     'description': None,
     'format': 'fasta',
     'id': 1,

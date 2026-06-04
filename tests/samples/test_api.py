@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner, VirtoolTestClient
+from virtool.analyses.sql import SQLAnalysis
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
@@ -1043,6 +1044,7 @@ async def test_find_analyses(
     fake: DataFaker,
     snapshot: SnapshotAssertion,
     mongo: Mongo,
+    pg: AsyncEngine,
     spawn_client: ClientSpawner,
     static_time,
 ):
@@ -1078,64 +1080,64 @@ async def test_find_analyses(
             ],
             session=None,
         ),
-        mongo.analyses.insert_many(
-            [
-                {
-                    "_id": "test_1",
-                    "workflow": "pathoscope",
-                    "created_at": static_time.datetime,
-                    "ready": True,
-                    "job": {"id": job.id},
-                    "index": {"version": 2, "id": "foo"},
-                    "reference": {"id": "baz", "name": "Baz"},
-                    "sample": {"id": "test"},
-                    "subtractions": [],
-                    "user": {"id": user_1.id},
-                    "foobar": True,
-                },
-                {
-                    "_id": "test_2",
-                    "workflow": "pathoscope",
-                    "created_at": static_time.datetime,
-                    "ready": True,
-                    "job": {"id": "foo"},
-                    "index": {"version": 2, "id": "foo"},
-                    "user": {"id": user_1.id},
-                    "reference": {"id": "baz", "name": "Baz"},
-                    "sample": {"id": "test"},
-                    "subtractions": ["foo"],
-                    "foobar": True,
-                },
-                {
-                    "_id": "test_3",
-                    "workflow": "pathoscope",
-                    "created_at": static_time.datetime,
-                    "ready": True,
-                    "job": None,
-                    "index": {"version": 2, "id": "foo"},
-                    "reference": {"id": "foo", "name": "Foo"},
-                    "sample": {"id": "test"},
-                    "subtractions": ["foo"],
-                    "user": {"id": user_2.id},
-                    "foobar": False,
-                },
-                {
-                    "_id": "test_4",
-                    "workflow": "pathoscope",
-                    "created_at": static_time.datetime,
-                    "ready": True,
-                    "job": None,
-                    "index": {"version": 2, "id": "foo"},
-                    "reference": {"id": "foo", "name": "Foo"},
-                    "sample": {"id": "test-not-found"},
-                    "subtractions": ["foo"],
-                    "user": {"id": user_2.id},
-                    "foobar": False,
-                },
-            ],
-            session=None,
-        ),
+        mongo.indexes.insert_one({"_id": "foo", "version": 2}),
     )
+
+    async with AsyncSession(pg) as session:
+        session.add_all(
+            [
+                SQLAnalysis(
+                    legacy_id="test_1",
+                    created_at=static_time.datetime,
+                    updated_at=static_time.datetime,
+                    workflow="pathoscope",
+                    ready=True,
+                    sample="test",
+                    reference="baz",
+                    index="foo",
+                    subtractions=[],
+                    user_id=user_1.id,
+                    job_id=job.id,
+                ),
+                SQLAnalysis(
+                    legacy_id="test_2",
+                    created_at=static_time.datetime,
+                    updated_at=static_time.datetime,
+                    workflow="pathoscope",
+                    ready=True,
+                    sample="test",
+                    reference="baz",
+                    index="foo",
+                    subtractions=["foo"],
+                    user_id=user_1.id,
+                ),
+                SQLAnalysis(
+                    legacy_id="test_3",
+                    created_at=static_time.datetime,
+                    updated_at=static_time.datetime,
+                    workflow="pathoscope",
+                    ready=True,
+                    sample="test",
+                    reference="foo",
+                    index="foo",
+                    subtractions=["foo"],
+                    user_id=user_2.id,
+                ),
+                SQLAnalysis(
+                    legacy_id="test_4",
+                    created_at=static_time.datetime,
+                    updated_at=static_time.datetime,
+                    workflow="pathoscope",
+                    ready=True,
+                    sample="test-not-found",
+                    reference="foo",
+                    index="foo",
+                    subtractions=["foo"],
+                    user_id=user_2.id,
+                ),
+            ],
+        )
+        await session.commit()
 
     resp = await client.get("/samples/test/analyses")
 
@@ -1220,7 +1222,7 @@ class TestAnalyze:
         resp = await self._post(analyze_client)
 
         assert resp.status == 201
-        assert resp.headers["Location"] == "/analyses/bf1b993c"
+        assert resp.headers["Location"] == "/analyses/1"
         assert await resp.json() == snapshot
 
     async def test_missing_reference(

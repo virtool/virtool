@@ -2,13 +2,12 @@ import asyncio
 from collections.abc import AsyncIterator
 
 import pytest
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 import virtool.utils
 from tests.fixtures.client import ClientSpawner
-from virtool.analyses.sql import SQLAnalysis, SQLAnalysisResult
+from virtool.analyses.sql import SQLAnalysis
 from virtool.api.client import UserClient
 from virtool.data.errors import ResourceConflictError
 from virtool.data.layer import DataLayer
@@ -576,7 +575,7 @@ class TestDelete:
         mongo: Mongo,
         pg: AsyncEngine,
     ):
-        """Deleting a sample removes its analyses' Postgres rows and result rows."""
+        """Deleting a sample removes its analyses' Postgres rows."""
         user_id = await self._setup(fake, mongo)
 
         analysis = await data_layer.analyses.create(
@@ -593,17 +592,8 @@ class TestDelete:
 
         await data_layer.analyses.finalize(analysis.id, {"hits": []})
 
-        assert await get_row(pg, SQLAnalysis, ("legacy_id", analysis.id)) is not None
+        assert await get_row(pg, SQLAnalysis, ("id", analysis.id)) is not None
 
         await data_layer.samples.delete("test_sample")
 
-        assert await mongo.analyses.find_one({"_id": analysis.id}) is None
-        assert await get_row(pg, SQLAnalysis, ("legacy_id", analysis.id)) is None
-
-        async with AsyncSession(pg) as session:
-            result = await session.execute(
-                select(SQLAnalysisResult).where(
-                    SQLAnalysisResult.analysis_id == analysis.id,
-                ),
-            )
-            assert result.scalar_one_or_none() is None
+        assert await get_row(pg, SQLAnalysis, ("id", analysis.id)) is None

@@ -4,7 +4,7 @@
     'created_at': '2015-10-06T20:00:00Z',
     'files': list([
     ]),
-    'id': 'bf1b993c',
+    'id': 1,
     'index': dict({
       'id': 'test',
       'version': 4,
@@ -2297,7 +2297,69 @@
     'documents': list([
       dict({
         'created_at': '2015-10-06T20:00:00Z',
-        'id': 'test_1',
+        'id': 3,
+        'index': dict({
+          'id': 'foo',
+          'version': 2,
+        }),
+        'job': None,
+        'ml': None,
+        'ready': True,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'foo',
+          'name': 'Foo',
+        }),
+        'sample': dict({
+          'id': 'test',
+        }),
+        'subtractions': list([
+          dict({
+            'id': 'foo',
+            'name': 'Malus domestica',
+          }),
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'handle': 'modonnell',
+          'id': 3,
+        }),
+        'workflow': 'pathoscope',
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 2,
+        'index': dict({
+          'id': 'foo',
+          'version': 2,
+        }),
+        'job': None,
+        'ml': None,
+        'ready': True,
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'baz',
+          'name': 'Baz',
+        }),
+        'sample': dict({
+          'id': 'test',
+        }),
+        'subtractions': list([
+          dict({
+            'id': 'foo',
+            'name': 'Malus domestica',
+          }),
+        ]),
+        'updated_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'handle': 'myersmitchell',
+          'id': 2,
+        }),
+        'workflow': 'pathoscope',
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'id': 1,
         'index': dict({
           'id': 'foo',
           'version': 2,
@@ -2329,68 +2391,6 @@
         'user': dict({
           'handle': 'myersmitchell',
           'id': 2,
-        }),
-        'workflow': 'pathoscope',
-      }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'id': 'test_2',
-        'index': dict({
-          'id': 'foo',
-          'version': 2,
-        }),
-        'job': None,
-        'ml': None,
-        'ready': True,
-        'reference': dict({
-          'data_type': 'genome',
-          'id': 'baz',
-          'name': 'Baz',
-        }),
-        'sample': dict({
-          'id': 'test',
-        }),
-        'subtractions': list([
-          dict({
-            'id': 'foo',
-            'name': 'Malus domestica',
-          }),
-        ]),
-        'updated_at': '2015-10-06T20:00:00Z',
-        'user': dict({
-          'handle': 'myersmitchell',
-          'id': 2,
-        }),
-        'workflow': 'pathoscope',
-      }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'id': 'test_3',
-        'index': dict({
-          'id': 'foo',
-          'version': 2,
-        }),
-        'job': None,
-        'ml': None,
-        'ready': True,
-        'reference': dict({
-          'data_type': 'genome',
-          'id': 'foo',
-          'name': 'Foo',
-        }),
-        'sample': dict({
-          'id': 'test',
-        }),
-        'subtractions': list([
-          dict({
-            'id': 'foo',
-            'name': 'Malus domestica',
-          }),
-        ]),
-        'updated_at': '2015-10-06T20:00:00Z',
-        'user': dict({
-          'handle': 'modonnell',
-          'id': 3,
         }),
         'workflow': 'pathoscope',
       }),

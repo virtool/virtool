@@ -1,12 +1,11 @@
-"""Functions and data to use for formatting Pathoscope and NuVs analysis document.
+"""Functions and data to use for formatting Pathoscope and NuVs analysis results.
 
-Formatted documents are destined for API responses or CSV/Excel formatted file
+Formatted results are destined for API responses or CSV/Excel formatted file
 downloads.
 """
 
 import csv
 import io
-import json
 import statistics
 from asyncio import gather
 from collections import defaultdict
@@ -16,11 +15,9 @@ import openpyxl.styles
 import visvalingamwyatt as vw
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from virtool.analyses.utils import analysis_result_key
 from virtool.history.db import patch_to_version
 from virtool.models.enums import AnalysisWorkflow
 from virtool.otus.utils import format_isolate_name
-from virtool.storage.protocol import StorageBackend
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
@@ -48,45 +45,22 @@ def calculate_median_depths(hits: list[dict]) -> dict[str, int]:
     return {hit["id"]: statistics.median(hit["align"]) for hit in hits}
 
 
-async def load_results(
-    storage: StorageBackend,
-    document: dict[str, Any],
-) -> dict:
-    """Load the analysis results from storage when they were too large for MongoDB.
-
-    The document is returned unmodified if loading from storage is not required.
-
-    :param storage: the storage backend
-    :param document: the document to load results for
-    :return: a complete analysis document
-    """
-    if document["results"] == "file":
-        key = analysis_result_key(document["_id"], document["sample"]["id"])
-
-        chunks = []
-        async for chunk in storage.read(key):
-            chunks.append(chunk)
-
-        return {**document, "results": json.loads(b"".join(chunks))}
-
-    return document
-
-
 async def format_aodp(
     mongo: "Mongo",
     pg: AsyncEngine,
-    document: dict[str, Any],
+    *,
+    results: dict[str, Any],
 ) -> dict[str, Any]:
-    """Format an AODP analysis document by retrieving the detected OTUs and
-    incorporating them into the returned document.
+    """Format AODP analysis results by retrieving the detected OTUs and incorporating
+    them into the returned results.
 
     :param mongo: the application Mongo object
     :param pg: the application PostgreSQL database object
-    :param document: the document to format
-    :return: the formatted document
+    :param results: the results to format
+    :return: the formatted results
 
     """
-    hits = document["results"]["hits"]
+    hits = results["hits"]
 
     patched_otus = await gather_patched_otus(mongo, pg, hits)
 
@@ -103,35 +77,29 @@ async def format_aodp(
                 sequence["hits"] = hits_by_sequence_id[sequence["_id"]]
                 sequence["id"] = sequence.pop("_id")
 
-    return {
-        **document,
-        "results": {**document["results"], "hits": list(patched_otus.values())},
-    }
+    return {**results, "hits": list(patched_otus.values())}
 
 
 async def format_pathoscope(
-    storage: StorageBackend,
     mongo: "Mongo",
     pg: AsyncEngine,
-    document: dict[str, Any],
+    *,
+    results: dict[str, Any],
 ) -> dict[str, Any]:
-    """Format a Pathoscope analysis document by retrieving the detected OTUs and
-    incorporating them into the returned document.
+    """Format Pathoscope analysis results by retrieving the detected OTUs and
+    incorporating them into the returned results.
 
     Calculate metrics for different organizational levels: OTU, isolate, and sequence.
 
-    :param storage: the storage backend
     :param mongo: the application Mongo object
     :param pg: the application PostgreSQL database object
-    :param document: the document to format
-    :return: the formatted document
+    :param results: the results to format
+    :return: the formatted results
 
     """
-    document = await load_results(storage, document)
-
     hits_by_otu = defaultdict(list)
 
-    for hit in document["results"]["hits"]:
+    for hit in results["hits"]:
         otu_id = hit["otu"]["id"]
         otu_version = hit["otu"]["version"]
 
@@ -143,10 +111,7 @@ async def format_pathoscope(
         otu_id, otu_version = otu_specifier
         coros.append(format_pathoscope_hits(mongo, pg, otu_id, otu_version, hits))
 
-    return {
-        **document,
-        "results": {**document["results"], "hits": await gather(*coros)},
-    }
+    return {**results, "hits": await gather(*coros)}
 
 
 async def format_pathoscope_hits(
@@ -234,22 +199,18 @@ def format_pathoscope_sequences(
 
 
 async def format_nuvs(
-    storage: StorageBackend,
     mongo: "Mongo",
-    document: dict[str, Any],
+    *,
+    results: dict[str, Any],
 ) -> dict[str, Any]:
-    """Format a NuVs analysis document by attaching the HMM annotation data to the
-    results.
+    """Format NuVs analysis results by attaching the HMM annotation data to the hits.
 
-    :param storage: the storage backend
     :param mongo: the database object
-    :param document: the document to format
-    :return: the formatted document
+    :param results: the results to format
+    :return: the formatted results
 
     """
-    document = await load_results(storage, document)
-
-    hits = document["results"]["hits"]
+    hits = results["hits"]
 
     hit_ids = list({h["hit"] for s in hits for o in s["orfs"] for h in o["hits"]})
 
@@ -262,34 +223,42 @@ async def format_nuvs(
             for hit in orf["hits"]:
                 hit.update(hmms[hit["hit"]])
 
-    return document
+    return results
 
 
 async def format_analysis_to_excel(
-    storage: StorageBackend,
     mongo: "Mongo",
     pg: AsyncEngine,
-    document: dict[str, Any],
+    *,
+    results: dict[str, Any],
+    workflow: str,
+    sample_id: str,
 ) -> bytes:
-    """Convert a pathoscope analysis document to byte-encoded Excel format for download.
+    """Convert pathoscope analysis results to byte-encoded Excel format for download.
 
-    :param storage: the storage backend
     :param mongo: the database object
     :param pg: the application PostgreSQL database object
-    :param document: the document to format
+    :param results: the results to format
+    :param workflow: the analysis workflow
+    :param sample_id: the id of the parent sample
     :return: the formatted Excel workbook
 
     """
-    depths = calculate_median_depths(document["results"]["hits"])
+    depths = calculate_median_depths(results["hits"])
 
-    formatted = await format_analysis(storage, mongo, pg, document)
+    formatted = await format_analysis(
+        mongo,
+        pg,
+        workflow=workflow,
+        results=results,
+    )
 
     output = io.BytesIO()
 
     wb = openpyxl.Workbook()
     ws = wb.active
 
-    ws.title = f"Pathoscope for {document['sample']['id']}"
+    ws.title = f"Pathoscope for {sample_id}"
 
     header_font = openpyxl.styles.Font(name="Calibri", bold=True)
 
@@ -300,7 +269,7 @@ async def format_analysis_to_excel(
 
     rows = []
 
-    for otu in formatted["results"]["hits"]:
+    for otu in formatted["hits"]:
         for isolate in otu["isolates"]:
             for sequence in isolate["sequences"]:
                 row = [
@@ -328,23 +297,29 @@ async def format_analysis_to_excel(
 
 
 async def format_analysis_to_csv(
-    storage: StorageBackend,
     mongo: "Mongo",
     pg: AsyncEngine,
-    document: dict[str, Any],
+    *,
+    results: dict[str, Any],
+    workflow: str,
 ) -> str:
-    """Convert a pathoscope analysis document to CSV format for download.
+    """Convert pathoscope analysis results to CSV format for download.
 
-    :param storage: the storage backend
     :param mongo: the app mongo object
     :param pg: the application PostgreSQL database object
-    :param document: the document to format
+    :param results: the results to format
+    :param workflow: the analysis workflow
     :return: the formatted CSV data
 
     """
-    depths = calculate_median_depths(document["results"]["hits"])
+    depths = calculate_median_depths(results["hits"])
 
-    formatted = await format_analysis(storage, mongo, pg, document)
+    formatted = await format_analysis(
+        mongo,
+        pg,
+        workflow=workflow,
+        results=results,
+    )
 
     output = io.StringIO()
 
@@ -352,7 +327,7 @@ async def format_analysis_to_csv(
 
     writer.writerow(CSV_HEADERS)
 
-    for otu in formatted["results"]["hits"]:
+    for otu in formatted["hits"]:
         for isolate in otu["isolates"]:
             for sequence in isolate["sequences"]:
                 row = [
@@ -371,36 +346,35 @@ async def format_analysis_to_csv(
 
 
 async def format_analysis(
-    storage: StorageBackend,
     mongo: "Mongo",
     pg: AsyncEngine,
-    document: dict[str, Any],
-) -> dict[str, any]:
-    """Format an analysis document to be returned by the API.
+    *,
+    workflow: str | None,
+    results: dict[str, Any],
+) -> dict[str, Any]:
+    """Format analysis results to be returned by the API.
 
-    :param storage: the storage backend
     :param mongo: the database object
     :param pg: the application PostgreSQL database object
-    :param document: the analysis document to format
-    :return: a formatted document
+    :param workflow: the analysis workflow used to dispatch formatting
+    :param results: the results to format
+    :return: the formatted results
 
     """
-    workflow = document.get("workflow")
-
     if workflow is None:
         raise ValueError("Analysis has no workflow field")
 
     if workflow == AnalysisWorkflow.nuvs.value:
-        return await format_nuvs(storage, mongo, document)
+        return await format_nuvs(mongo, results=results)
 
     if workflow == AnalysisWorkflow.aodp.value:
-        return await format_aodp(mongo, pg, document)
+        return await format_aodp(mongo, pg, results=results)
 
     if "pathoscope" in workflow:
-        return await format_pathoscope(storage, mongo, pg, document)
+        return await format_pathoscope(mongo, pg, results=results)
 
     if workflow == AnalysisWorkflow.iimi.value:
-        return document
+        return results
 
     raise ValueError(f"Unknown workflow: {workflow}")
 

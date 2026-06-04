@@ -6,6 +6,7 @@
       'name': 'subtraction.fq.gz',
       'size': 12345,
       'subtraction': 'foo',
+      'subtraction_id': None,
       'type': 'fasta',
     }),
     dict({
@@ -13,6 +14,7 @@
       'name': 'subtraction.1.bt2',
       'size': 56437,
       'subtraction': 'foo',
+      'subtraction_id': None,
       'type': 'bowtie2',
     }),
     dict({
@@ -20,6 +22,7 @@
       'name': 'subtraction.2.bt2',
       'size': 93845,
       'subtraction': 'foo',
+      'subtraction_id': None,
       'type': 'bowtie2',
     }),
   ])

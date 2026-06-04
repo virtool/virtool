@@ -4,6 +4,7 @@ from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
 
+from tests.fixtures.analysis import seed_analysis
 from virtool.blast.task import BLASTTask
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
@@ -34,27 +35,31 @@ async def test_task(
         ),
     )
 
-    await mongo.analyses.insert_one(
+    results = {
+        "hits": [
+            {
+                "index": 5,
+                "sequence": "ATAGAGAACTGTACTAGCTGATCGATCTGACGTAGCAC",
+                "orfs": [],
+            },
+        ],
+    }
+
+    await seed_analysis(
+        mongo,
+        pg,
         {
             "_id": "analysis",
             "created_at": static_time.datetime,
             "ready": True,
             "reference": {"id": "reference", "name": "Reference"},
-            "results": {
-                "hits": [
-                    {
-                        "index": 5,
-                        "sequence": "ATAGAGAACTGTACTAGCTGATCGATCTGACGTAGCAC",
-                        "orfs": [],
-                    },
-                ],
-            },
+            "results": results,
             "sample": {"id": "sample"},
             "subtractions": [],
             "user": {"id": user.id},
             "workflow": "nuvs",
             "job": {"id": "1"},
-            "index": {"id": "1", "version": "1"},
+            "index": {"id": "1", "version": 1},
         },
     )
 

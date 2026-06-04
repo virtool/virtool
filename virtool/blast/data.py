@@ -1,4 +1,3 @@
-from typing import TYPE_CHECKING
 from zipfile import BadZipFile
 
 from aiohttp import ClientSession
@@ -21,11 +20,7 @@ from virtool.blast.utils import (
 )
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceNotFoundError
-from virtool.data.topg import both_transactions
 from virtool.types import Document
-
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
 
 
 class BLASTData(DataLayerDomain):
@@ -33,9 +28,8 @@ class BLASTData(DataLayerDomain):
 
     name = "blast"
 
-    def __init__(self, client: ClientSession, mongo: "Mongo", pg: AsyncEngine):
+    def __init__(self, client: ClientSession, pg: AsyncEngine):
         self._client = client
-        self._mongo = mongo
         self._pg = pg
 
     async def create_nuvs_blast(
@@ -56,12 +50,9 @@ class BLASTData(DataLayerDomain):
         """
         created_at = virtool.utils.timestamp()
 
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
-            await delete_nuvs_blast(pg_session, analysis_id, sequence_index)
-            await pg_session.flush()
+        async with AsyncSession(self._pg) as session:
+            await delete_nuvs_blast(session, analysis_id, sequence_index)
+            await session.flush()
 
             blast_row = SQLNuVsBlast(
                 analysis_id=analysis_id,
@@ -72,16 +63,10 @@ class BLASTData(DataLayerDomain):
                 updated_at=created_at,
             )
 
-            pg_session.add(blast_row)
-            await pg_session.flush()
+            session.add(blast_row)
+            await session.flush()
 
-            await bump_analysis_updated_at(
-                self._mongo,
-                mongo_session,
-                pg_session,
-                analysis_id,
-                created_at,
-            )
+            await bump_analysis_updated_at(session, analysis_id, created_at)
 
             await self.data.tasks.create(
                 BLASTTask,
@@ -89,6 +74,8 @@ class BLASTData(DataLayerDomain):
             )
 
             blast = NuvsBlast(**blast_row.to_dict())
+
+            await session.commit()
 
         return blast
 
@@ -104,7 +91,7 @@ class BLASTData(DataLayerDomain):
         analysis = await self.data.analyses.get(analysis_id, None)
 
         sequence = find_nuvs_sequence_by_index(
-            analysis.dict(by_alias=True), sequence_index
+            analysis.dict(by_alias=True)["results"], sequence_index
         )
 
         html = await fetch_ncbi_blast_html(self._client, sequence)
@@ -176,11 +163,8 @@ class BLASTData(DataLayerDomain):
             except BadZipFile:
                 error = "Unable to interpret NCBI result"
 
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
-            blast_row = await get_nuvs_blast(pg_session, analysis_id, sequence_index)
+        async with AsyncSession(self._pg) as session:
+            blast_row = await get_nuvs_blast(session, analysis_id, sequence_index)
 
             if blast_row is None:
                 raise ResourceNotFoundError
@@ -195,13 +179,9 @@ class BLASTData(DataLayerDomain):
                     blast_row.result = result
                     blast_row.ready = True
 
-            await bump_analysis_updated_at(
-                self._mongo,
-                mongo_session,
-                pg_session,
-                analysis_id,
-                updated_at,
-            )
+            await bump_analysis_updated_at(session, analysis_id, updated_at)
+
+            await session.commit()
 
         return await self.get_nuvs_blast(analysis_id, sequence_index)
 
@@ -214,21 +194,14 @@ class BLASTData(DataLayerDomain):
         """
         updated_at = virtool.utils.timestamp()
 
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
+        async with AsyncSession(self._pg) as session:
             deleted_count = await delete_nuvs_blast(
-                pg_session, analysis_id, sequence_index
+                session, analysis_id, sequence_index
             )
 
-            await bump_analysis_updated_at(
-                self._mongo,
-                mongo_session,
-                pg_session,
-                analysis_id,
-                updated_at,
-            )
+            await bump_analysis_updated_at(session, analysis_id, updated_at)
+
+            await session.commit()
 
         return deleted_count
 

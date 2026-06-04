@@ -1,6 +1,5 @@
 """Code for working with samples in the database and filesystem."""
 
-import asyncio
 from collections import defaultdict
 from typing import Any
 
@@ -13,6 +12,7 @@ import virtool.errors
 import virtool.mongo.utils
 import virtool.samples.utils
 import virtool.utils
+from virtool.analyses.sql import SQLAnalysis
 from virtool.api.errors import APINotFound
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.errors import DatabaseError
@@ -371,23 +371,28 @@ def derive_workflow_state(analyses: list, library_type) -> dict:
 
 async def recalculate_workflow_tags(
     mongo: "Mongo",
+    pg: AsyncEngine,
     sample_id: str,
     session: AsyncIOMotorClientSession | None = None,
 ) -> None:
     """Recalculate and apply workflow tags (eg. "ip", True) for a given sample.
 
     :param mongo: the application database client
+    :param pg: the application Postgres engine
     :param sample_id: the id of the sample to recalculate tags for
     :param session: an optional MongoDB session to use
     :return: the updated sample document
 
     """
-    analyses, library_type = await asyncio.gather(
-        mongo.analyses.find({"sample.id": sample_id}, ["ready", "workflow"]).to_list(
-            None,
-        ),
-        get_one_field(mongo.samples, "library_type", sample_id),
-    )
+    async with AsyncSession(pg) as pg_session:
+        result = await pg_session.execute(
+            select(SQLAnalysis.ready, SQLAnalysis.workflow).where(
+                SQLAnalysis.sample == sample_id,
+            ),
+        )
+        analyses = [{"ready": row.ready, "workflow": row.workflow} for row in result]
+
+    library_type = await get_one_field(mongo.samples, "library_type", sample_id)
 
     await mongo.samples.update_one(
         {"_id": sample_id},

@@ -206,21 +206,6 @@ class TaskRunnerConfig:
                 )
 
 
-@dataclass
-class TaskSpawnerConfig:
-    """Configuration for the periodic task spawner"""
-
-    base_url: str
-    host: str
-    port: int
-    postgres_connection_string: str
-    sentry_dsn: str
-
-    @property
-    def pg_options(self) -> PgOptions:
-        return PgOptions.from_connection_string(self.postgres_connection_string)
-
-
 class WorkflowConfig(BaseModel):
     """The configuration for a workflow run."""
 
@@ -249,4 +234,4 @@ class WorkflowConfig(BaseModel):
     """The path to a directory where the workflow can store temporary files."""
 
 
-type Config = ServerConfig | TaskRunnerConfig | TaskSpawnerConfig
+type Config = ServerConfig | TaskRunnerConfig

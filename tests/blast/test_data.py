@@ -20,17 +20,10 @@ OLD_TIME = arrow.get("2015-01-01T00:00:00").naive
 
 
 @pytest.fixture
-async def blast_data(mocker, mongo, pg: AsyncEngine, static_time):
-    blast_data = BLASTData(mocker.Mock(spec=ClientSession), mongo, pg)
+async def blast_data(mocker, pg: AsyncEngine, static_time):
+    blast_data = BLASTData(mocker.Mock(spec=ClientSession), pg)
     blast_data.bind_layer(mocker.Mock(spec=DataLayer))
     blast_data.data.tasks = mocker.Mock(spec=TasksData)
-
-    await mongo.analyses.insert_one(
-        {
-            "_id": "analysis",
-            "results": {"hits": [{"sequence_index": 12, "sequence": "ATAGAGACACC"}]},
-        }
-    )
 
     async with AsyncSession(pg) as session:
         task = SQLTask(created_at=static_time.datetime, type="blast")
@@ -205,14 +198,13 @@ async def test_list_by_analysis(blast_data: BLASTData, pg: AsyncEngine, snapshot
 
 
 class TestAnalysisUpdatedAtBump:
-    """Every BLAST mutation bumps the analysis ``updated_at`` in Postgres and Mongo."""
+    """Every BLAST mutation bumps the analysis ``updated_at`` in Postgres."""
 
     async def test_create(
         self,
         blast_data: BLASTData,
         pg: AsyncEngine,
         static_time,
-        mongo,
     ):
         await blast_data.create_nuvs_blast("analysis", 12)
 
@@ -220,23 +212,19 @@ class TestAnalysisUpdatedAtBump:
         assert row.updated_at == static_time.datetime
         assert row.updated_at != OLD_TIME
 
-        mongo_analysis = await mongo.analyses.find_one({"_id": "analysis"})
-        assert mongo_analysis["updated_at"] == row.updated_at
-
     async def test_check(
         self,
         blast_data: BLASTData,
         pg: AsyncEngine,
         static_time,
-        mongo,
         mocker,
     ):
         mocker.patch("virtool.blast.data.check_rid", return_value=False)
 
         await blast_data.create_nuvs_blast("analysis", 12)
 
-        # Reset both backends to an old timestamp so the assertions prove that
-        # ``check_nuvs_blast`` performed the bump, not ``create_nuvs_blast``.
+        # Reset to an old timestamp so the assertions prove that ``check_nuvs_blast``
+        # performed the bump, not ``create_nuvs_blast``.
         async with AsyncSession(pg) as session:
             await session.execute(
                 update(SQLAnalysis)
@@ -245,31 +233,20 @@ class TestAnalysisUpdatedAtBump:
             )
             await session.commit()
 
-        await mongo.analyses.update_one(
-            {"_id": "analysis"}, {"$set": {"updated_at": OLD_TIME}}
-        )
-
         await blast_data.check_nuvs_blast("analysis", 12)
 
         row = await get_row(pg, SQLAnalysis, ("legacy_id", "analysis"))
         assert row.updated_at == static_time.datetime
         assert row.updated_at != OLD_TIME
 
-        mongo_analysis = await mongo.analyses.find_one({"_id": "analysis"})
-        assert mongo_analysis["updated_at"] == row.updated_at
-
     async def test_delete(
         self,
         blast_data: BLASTData,
         pg: AsyncEngine,
         static_time,
-        mongo,
     ):
         await blast_data.delete_nuvs_blast("analysis", 21)
 
         row = await get_row(pg, SQLAnalysis, ("legacy_id", "analysis"))
         assert row.updated_at == static_time.datetime
         assert row.updated_at != OLD_TIME
-
-        mongo_analysis = await mongo.analyses.find_one({"_id": "analysis"})
-        assert mongo_analysis["updated_at"] == row.updated_at

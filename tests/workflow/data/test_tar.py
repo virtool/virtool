@@ -1,0 +1,75 @@
+import io
+import tarfile
+from pathlib import Path
+
+import pytest
+
+from virtool.workflow.data.tar import extract_tar_to_dir, write_path_as_tar
+
+
+class TestWritePathAsTar:
+    async def test_directory_keeps_top_level_name(self, tmp_path: Path):
+        source = tmp_path / "index"
+        nested = source / "nested"
+        nested.mkdir(parents=True)
+        (source / "reference.1.bt2").write_bytes(b"reference")
+        (nested / "reference.2.bt2").write_bytes(b"nested-reference")
+        archive_path = tmp_path / "cache.tar"
+
+        await write_path_as_tar(source, archive_path)
+
+        with tarfile.open(archive_path) as archive:
+            assert sorted(archive.getnames()) == [
+                "index",
+                "index/nested",
+                "index/nested/reference.2.bt2",
+                "index/reference.1.bt2",
+            ]
+
+
+class TestExtractTarToDir:
+    async def test_absolute_path_returns_normalized_restored_path(self, tmp_path: Path):
+        archive_path = tmp_path / "cache.tar"
+        target = tmp_path / "target"
+        payload = b"payload"
+
+        with tarfile.open(archive_path, mode="w") as archive:
+            member = tarfile.TarInfo("/artifact.bin")
+            member.size = len(payload)
+            archive.addfile(member, io.BytesIO(payload))
+
+        restored_path = await extract_tar_to_dir(archive_path, target)
+
+        assert restored_path == target / "artifact.bin"
+        assert restored_path.read_bytes() == payload
+
+    async def test_path_traversal_raises(self, tmp_path: Path):
+        archive_path = tmp_path / "cache.tar"
+        target = tmp_path / "target"
+
+        with tarfile.open(archive_path, mode="w") as archive:
+            member = tarfile.TarInfo("../escape.txt")
+            member.size = 0
+            archive.addfile(member)
+
+        with pytest.raises(tarfile.OutsideDestinationError):
+            await extract_tar_to_dir(archive_path, target)
+
+        assert not (tmp_path / "escape.txt").exists()
+
+    async def test_multiple_top_level_entries_raises(self, tmp_path: Path):
+        archive_path = tmp_path / "cache.tar"
+        target = tmp_path / "target"
+        first = tmp_path / "first.txt"
+        second = tmp_path / "second.txt"
+        first.write_bytes(b"first")
+        second.write_bytes(b"second")
+
+        with tarfile.open(archive_path, mode="w") as archive:
+            archive.add(first, arcname="first.txt")
+            archive.add(second, arcname="second.txt")
+
+        with pytest.raises(ValueError, match="exactly one top-level entry"):
+            await extract_tar_to_dir(archive_path, target)
+
+        assert not target.exists()

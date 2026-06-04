@@ -3,6 +3,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from virtool.analyses.sql import SQLAnalysis
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import (
     Operation,
@@ -22,7 +23,6 @@ from virtool.jobs.models import (
 )
 from virtool.jobs.pg import (
     SQLJob,
-    SQLJobAnalysis,
     SQLJobIndex,
     SQLJobSample,
     SQLJobSubtraction,
@@ -237,14 +237,14 @@ class TestCreatePostgres:
         assert job_subtraction.subtraction_id == "sub_789"
 
     @pytest.mark.parametrize("workflow", ["aodp", "iimi", "nuvs", "pathoscope"])
-    async def test_analysis_join_table(
+    async def test_analysis_id_resolved_from_analysis(
         self,
         workflow: str,
         jobs_data: JobsData,
         fake: DataFaker,
         pg: AsyncEngine,
     ):
-        """Test that analysis jobs write to job_analyses join table."""
+        """``get`` resolves the analysis id from the analysis row linked by job_id."""
         user = await fake.users.create()
 
         job = await jobs_data.create(
@@ -255,20 +255,22 @@ class TestCreatePostgres:
         )
 
         async with AsyncSession(pg) as session:
-            sql_job = (
-                await session.execute(
-                    select(SQLJob).where(SQLJob.id == job.id),
-                )
-            ).scalar()
-
-            job_analysis = (
-                await session.execute(
-                    select(SQLJobAnalysis).where(SQLJobAnalysis.job_id == sql_job.id),
-                )
-            ).scalar()
-
-        assert job_analysis is not None
-        assert job_analysis.analysis_id == "analysis_abc"
+            session.add(
+                SQLAnalysis(
+                    legacy_id="analysis_abc",
+                    created_at=arrow.utcnow().naive,
+                    updated_at=arrow.utcnow().naive,
+                    workflow=workflow,
+                    ready=False,
+                    sample="sample_abc",
+                    reference="ref_abc",
+                    index="index_abc",
+                    subtractions=[],
+                    user_id=user.id,
+                    job_id=job.id,
+                ),
+            )
+            await session.commit()
 
         fetched_job = await jobs_data.get(job.id)
         assert fetched_job.args == {"analysis_id": "analysis_abc"}
