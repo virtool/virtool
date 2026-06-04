@@ -365,5 +365,12 @@
       'name': 'add active tasks index',
       'revision': 'f95b556b3adc',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 53,
+      'name': 'copy subtractions to postgres',
+      'revision': 'ztd04qgecm9a',
+    }),
   ])
 # ---
