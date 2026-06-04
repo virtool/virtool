@@ -9,6 +9,7 @@ from virtool.account.sql import SQLAPIKey
 from virtool.analyses.sql import SQLAnalysisFile
 from virtool.blast.sql import SQLNuVsBlast
 from virtool.groups.pg import SQLGroup
+from virtool.hmm.sql import SQLHMMStatus
 from virtool.indexes.sql import SQLIndexFile
 from virtool.labels.sql import SQLLabel
 from virtool.messages.sql import SQLInstanceMessage
@@ -39,6 +40,7 @@ __models__ = (
     SQLAPIKey,
     SQLAnalysisFile,
     SQLGroup,
+    SQLHMMStatus,
     SQLIndexFile,
     SQLInstanceMessage,
     SQLLabel,
