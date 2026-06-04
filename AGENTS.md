@@ -253,7 +253,8 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org).
 Releases are automated with semantic-release.
 
 - Use imperative mood: "fix bug" not "fixed bug"
-- Scope is optional: `feat:`, `fix:`, `chore(deps):`, etc.
+- Scope is optional. Allowed scopes: `deps` (dependency changes), `migration`
+  (commit adds or modifies a migration). Do not scope by domain.
 - Keep titles concise, lowercase
 - Include a body only when useful; keep it brief
 - Only push or create PRs when asked
