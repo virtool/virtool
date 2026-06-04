@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.caches.pg import SQLCache
@@ -19,12 +19,6 @@ class CacheEvictionCandidate:
     cache_type: str = "cache"
 
 
-@dataclass(frozen=True, slots=True)
-class CacheDeletionTarget:
-    id: int
-    storage_key: str
-
-
 async def _get_total_cache_size(pg: AsyncEngine) -> int:
     """Return the total size of all cache entries."""
     async with AsyncSession(pg) as session:
@@ -33,53 +27,6 @@ async def _get_total_cache_size(pg: AsyncEngine) -> int:
         )
 
     return result.scalar_one()
-
-
-async def get_cache_deletion_targets(
-    pg: AsyncEngine,
-    cache_ids: list[int],
-) -> list[CacheDeletionTarget]:
-    """Return storage deletion targets for cache IDs."""
-    if not cache_ids:
-        return []
-
-    async with AsyncSession(pg) as session:
-        rows = (
-            await session.execute(
-                select(SQLCache.id, SQLCache.storage_key).where(
-                    SQLCache.id.in_(cache_ids),
-                ),
-            )
-        ).all()
-
-    return [
-        CacheDeletionTarget(
-            id=row.id,
-            storage_key=row.storage_key,
-        )
-        for row in rows
-    ]
-
-
-async def bulk_delete_cache(pg: AsyncEngine, cache_ids: list[int]) -> set[int]:
-    """Delete cache rows by ID and return deleted IDs."""
-    if not cache_ids:
-        return set()
-
-    async with AsyncSession(pg) as session:
-        deleted_ids = {
-            row.id
-            for row in (
-                await session.execute(
-                    delete(SQLCache)
-                    .where(SQLCache.id.in_(cache_ids))
-                    .returning(SQLCache.id),
-                )
-            )
-        }
-        await session.commit()
-
-    return deleted_ids
 
 
 async def select_eviction_candidates(

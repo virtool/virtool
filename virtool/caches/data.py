@@ -5,7 +5,7 @@ from collections.abc import AsyncIterator
 from datetime import timedelta
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -13,8 +13,7 @@ from structlog import get_logger
 
 import virtool.utils
 from virtool.caches.db import (
-    bulk_delete_cache,
-    get_cache_deletion_targets,
+    CacheEvictionCandidate,
     select_eviction_candidates,
 )
 from virtool.caches.models import Cache, CacheHit
@@ -133,15 +132,34 @@ class CachesData(DataLayerDomain):
             last_accessed_at=now,
         )
 
-    async def _bulk_delete_cache(self, cache_ids: list[int]) -> set[int]:
+    async def _bulk_delete_cache(
+        self,
+        candidates: list[CacheEvictionCandidate],
+    ) -> set[int]:
         """Delete cache storage objects, then remove their cache rows."""
         storage_deleted_ids = []
 
-        for target in await get_cache_deletion_targets(self._pg, cache_ids):
-            await self._storage.delete(target.storage_key)
-            storage_deleted_ids.append(target.id)
+        for candidate in candidates:
+            await self._storage.delete(candidate.storage_key)
+            storage_deleted_ids.append(candidate.id)
 
-        return await bulk_delete_cache(self._pg, storage_deleted_ids)
+        if not storage_deleted_ids:
+            return set()
+
+        async with AsyncSession(self._pg) as session:
+            deleted_ids = {
+                row.id
+                for row in (
+                    await session.execute(
+                        delete(SQLCache)
+                        .where(SQLCache.id.in_(storage_deleted_ids))
+                        .returning(SQLCache.id),
+                    )
+                )
+            }
+            await session.commit()
+
+        return deleted_ids
 
     async def evict_lru(self) -> None:
         """Evict least-recently used cache entries until storage is under budget."""
@@ -151,9 +169,7 @@ class CachesData(DataLayerDomain):
             self.storage_budget_bytes,
             now - CACHE_EVICTION_GRACE_PERIOD,
         )
-        deleted_ids = await self._bulk_delete_cache(
-            [candidate.id for candidate in candidates],
-        )
+        deleted_ids = await self._bulk_delete_cache(candidates)
 
         for candidate in candidates:
             if candidate.id not in deleted_ids:
