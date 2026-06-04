@@ -6,7 +6,6 @@ downloads.
 
 import csv
 import io
-import json
 import statistics
 from asyncio import gather
 from collections import defaultdict
@@ -16,11 +15,9 @@ import openpyxl.styles
 import visvalingamwyatt as vw
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from virtool.analyses.utils import analysis_result_key
 from virtool.history.db import patch_to_version
 from virtool.models.enums import AnalysisWorkflow
 from virtool.otus.utils import format_isolate_name
-from virtool.storage.protocol import StorageBackend
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
@@ -46,35 +43,6 @@ def calculate_median_depths(hits: list[dict]) -> dict[str, int]:
 
     """
     return {hit["id"]: statistics.median(hit["align"]) for hit in hits}
-
-
-async def load_results(
-    storage: StorageBackend,
-    *,
-    results: dict[str, Any] | str,
-    legacy_id: str,
-    sample_id: str,
-) -> dict:
-    """Load the analysis results from storage when they were too large for MongoDB.
-
-    The results are returned unmodified if loading from storage is not required.
-
-    :param storage: the storage backend
-    :param results: the results payload, or the literal ``"file"`` when offloaded
-    :param legacy_id: the legacy analysis id used to build the storage key
-    :param sample_id: the id of the parent sample used to build the storage key
-    :return: the loaded results dict
-    """
-    if results == "file":
-        key = analysis_result_key(legacy_id, sample_id)
-
-        chunks = []
-        async for chunk in storage.read(key):
-            chunks.append(chunk)
-
-        return json.loads(b"".join(chunks))
-
-    return results
 
 
 async def format_aodp(
@@ -113,35 +81,22 @@ async def format_aodp(
 
 
 async def format_pathoscope(
-    storage: StorageBackend,
     mongo: "Mongo",
     pg: AsyncEngine,
     *,
-    results: dict[str, Any] | str,
-    legacy_id: str,
-    sample_id: str,
+    results: dict[str, Any],
 ) -> dict[str, Any]:
     """Format Pathoscope analysis results by retrieving the detected OTUs and
     incorporating them into the returned results.
 
     Calculate metrics for different organizational levels: OTU, isolate, and sequence.
 
-    :param storage: the storage backend
     :param mongo: the application Mongo object
     :param pg: the application PostgreSQL database object
-    :param results: the results to format, or the literal ``"file"`` when offloaded
-    :param legacy_id: the legacy analysis id used to load offloaded results
-    :param sample_id: the id of the parent sample used to load offloaded results
+    :param results: the results to format
     :return: the formatted results
 
     """
-    results = await load_results(
-        storage,
-        results=results,
-        legacy_id=legacy_id,
-        sample_id=sample_id,
-    )
-
     hits_by_otu = defaultdict(list)
 
     for hit in results["hits"]:
@@ -244,30 +199,17 @@ def format_pathoscope_sequences(
 
 
 async def format_nuvs(
-    storage: StorageBackend,
     mongo: "Mongo",
     *,
-    results: dict[str, Any] | str,
-    legacy_id: str,
-    sample_id: str,
+    results: dict[str, Any],
 ) -> dict[str, Any]:
     """Format NuVs analysis results by attaching the HMM annotation data to the hits.
 
-    :param storage: the storage backend
     :param mongo: the database object
-    :param results: the results to format, or the literal ``"file"`` when offloaded
-    :param legacy_id: the legacy analysis id used to load offloaded results
-    :param sample_id: the id of the parent sample used to load offloaded results
+    :param results: the results to format
     :return: the formatted results
 
     """
-    results = await load_results(
-        storage,
-        results=results,
-        legacy_id=legacy_id,
-        sample_id=sample_id,
-    )
-
     hits = results["hits"]
 
     hit_ids = list({h["hit"] for s in hits for o in s["orfs"] for h in o["hits"]})
@@ -285,44 +227,30 @@ async def format_nuvs(
 
 
 async def format_analysis_to_excel(
-    storage: StorageBackend,
     mongo: "Mongo",
     pg: AsyncEngine,
     *,
-    results: dict[str, Any] | str,
+    results: dict[str, Any],
     workflow: str,
     sample_id: str,
-    legacy_id: str,
 ) -> bytes:
     """Convert pathoscope analysis results to byte-encoded Excel format for download.
 
-    :param storage: the storage backend
     :param mongo: the database object
     :param pg: the application PostgreSQL database object
     :param results: the results to format
     :param workflow: the analysis workflow
     :param sample_id: the id of the parent sample
-    :param legacy_id: the legacy analysis id used to load offloaded results
     :return: the formatted Excel workbook
 
     """
-    loaded_results = await load_results(
-        storage,
-        results=results,
-        legacy_id=legacy_id,
-        sample_id=sample_id,
-    )
-
-    depths = calculate_median_depths(loaded_results["hits"])
+    depths = calculate_median_depths(results["hits"])
 
     formatted = await format_analysis(
-        storage,
         mongo,
         pg,
         workflow=workflow,
-        results=loaded_results,
-        legacy_id=legacy_id,
-        sample_id=sample_id,
+        results=results,
     )
 
     output = io.BytesIO()
@@ -369,44 +297,28 @@ async def format_analysis_to_excel(
 
 
 async def format_analysis_to_csv(
-    storage: StorageBackend,
     mongo: "Mongo",
     pg: AsyncEngine,
     *,
-    results: dict[str, Any] | str,
+    results: dict[str, Any],
     workflow: str,
-    sample_id: str,
-    legacy_id: str,
 ) -> str:
     """Convert pathoscope analysis results to CSV format for download.
 
-    :param storage: the storage backend
     :param mongo: the app mongo object
     :param pg: the application PostgreSQL database object
     :param results: the results to format
     :param workflow: the analysis workflow
-    :param sample_id: the id of the parent sample
-    :param legacy_id: the legacy analysis id used to load offloaded results
     :return: the formatted CSV data
 
     """
-    loaded_results = await load_results(
-        storage,
-        results=results,
-        legacy_id=legacy_id,
-        sample_id=sample_id,
-    )
-
-    depths = calculate_median_depths(loaded_results["hits"])
+    depths = calculate_median_depths(results["hits"])
 
     formatted = await format_analysis(
-        storage,
         mongo,
         pg,
         workflow=workflow,
-        results=loaded_results,
-        legacy_id=legacy_id,
-        sample_id=sample_id,
+        results=results,
     )
 
     output = io.StringIO()
@@ -434,24 +346,18 @@ async def format_analysis_to_csv(
 
 
 async def format_analysis(
-    storage: StorageBackend,
     mongo: "Mongo",
     pg: AsyncEngine,
     *,
     workflow: str | None,
-    results: dict[str, Any] | str,
-    legacy_id: str,
-    sample_id: str,
+    results: dict[str, Any],
 ) -> dict[str, Any]:
     """Format analysis results to be returned by the API.
 
-    :param storage: the storage backend
     :param mongo: the database object
     :param pg: the application PostgreSQL database object
     :param workflow: the analysis workflow used to dispatch formatting
     :param results: the results to format
-    :param legacy_id: the legacy analysis id used to load offloaded results
-    :param sample_id: the id of the parent sample used to load offloaded results
     :return: the formatted results
 
     """
@@ -459,26 +365,13 @@ async def format_analysis(
         raise ValueError("Analysis has no workflow field")
 
     if workflow == AnalysisWorkflow.nuvs.value:
-        return await format_nuvs(
-            storage,
-            mongo,
-            results=results,
-            legacy_id=legacy_id,
-            sample_id=sample_id,
-        )
+        return await format_nuvs(mongo, results=results)
 
     if workflow == AnalysisWorkflow.aodp.value:
         return await format_aodp(mongo, pg, results=results)
 
     if "pathoscope" in workflow:
-        return await format_pathoscope(
-            storage,
-            mongo,
-            pg,
-            results=results,
-            legacy_id=legacy_id,
-            sample_id=sample_id,
-        )
+        return await format_pathoscope(mongo, pg, results=results)
 
     if workflow == AnalysisWorkflow.iimi.value:
         return results
