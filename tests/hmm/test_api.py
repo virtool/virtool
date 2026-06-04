@@ -17,7 +17,21 @@ async def fake_hmm_status(mongo, fake: DataFaker, static_time):
         {
             "_id": "hmm",
             "updating": False,
-            "updates": [{"id": 231}],
+            "updates": [
+                {
+                    "body": "- remove some annotations that didn't have corresponding profiles",
+                    "created_at": static_time.datetime,
+                    "filename": "vthmm.tar.gz",
+                    "html_url": "https://github.com/virtool/virtool-hmm/releases/tag/v0.2.1",
+                    "id": 1230982,
+                    "name": "v0.2.1",
+                    "newer": False,
+                    "published_at": static_time.datetime,
+                    "ready": True,
+                    "size": 85904451,
+                    "user": {"id": user.id},
+                },
+            ],
             "installed": {
                 "body": "- remove some annotations that didn't have corresponding profiles",
                 "created_at": static_time.datetime,
