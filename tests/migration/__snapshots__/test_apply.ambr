@@ -372,5 +372,12 @@
       'name': 'copy subtractions to postgres',
       'revision': 'ztd04qgecm9a',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 54,
+      'name': 'create legacy hmm status table',
+      'revision': 'd12be6ff40c1',
+    }),
   ])
 # ---

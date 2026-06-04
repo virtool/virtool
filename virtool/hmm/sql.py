@@ -18,8 +18,8 @@ class SQLHMMStatus(Base):
     __table_args__ = (CheckConstraint("id = 1", name="ck_legacy_hmm_status_singleton"),)
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
-    errors: Mapped[list] = mapped_column(JSONB, default=list)
+    errors: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
     release: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     installed: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     task_id: Mapped[int | None] = mapped_column(ForeignKey("tasks.id"), nullable=True)
-    updates: Mapped[list] = mapped_column(JSONB, default=list)
+    updates: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
