@@ -11,6 +11,10 @@ services:
       - uv_cache:/tmp/uv_cache
     working_dir: /app
     command: sleep infinity
+    ulimits:
+      nofile:
+        soft: 64000
+        hard: 64000
     depends_on:
       azurite:
         condition: service_healthy

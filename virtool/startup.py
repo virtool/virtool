@@ -5,6 +5,7 @@ from aiohttp import ClientSession, ClientTimeout
 from pymongo.errors import CollectionInvalid
 from structlog import get_logger
 
+from virtool.caches.tasks import LRUCacheEvictionTask
 from virtool.config import get_config_from_app
 from virtool.data.events import EventPublisher
 from virtool.data.layer import create_data_layer
@@ -197,6 +198,7 @@ async def startup_periodic_tasks(app: App) -> None:
     periodic_tasks = [
         (HMMRefreshTask, 600),
         (JobsTimeoutTask, 600),
+        (LRUCacheEvictionTask, 3600),
         (MLModelsSyncTask, 600),
         (ReferenceReleasesRefreshTask, 600),
         (ReferencesCleanTask, 3600),

@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from tests.uploads import backdate_upload
-from virtool.data.errors import ResourceNotFoundError
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.pg.utils import get_row_by_id
@@ -102,6 +102,32 @@ async def test_delete(
         await data_layer.uploads.delete(before.id)
 
 
+async def test_delete_reserved(
+    data_layer: DataLayer,
+    fake: DataFaker,
+    memory_storage: StorageBackend,
+    pg: AsyncEngine,
+):
+    """A reserved upload cannot be deleted while it is in use."""
+    before = await fake.uploads.create(user=await fake.users.create(), reserved=True)
+
+    row = await get_row_by_id(pg, SQLUpload, before.id)
+    key = upload_file_key(row.name_on_disk)
+
+    with pytest.raises(ResourceConflictError):
+        await data_layer.uploads.delete(before.id)
+
+    row = await get_row_by_id(pg, SQLUpload, before.id)
+    assert row.removed is False
+    assert row.removed_at is None
+
+    found = False
+    async for info in memory_storage.list(key):
+        if info.key == key:
+            found = True
+    assert found
+
+
 @pytest.mark.parametrize("multi", [True, False])
 async def test_release(
     multi: bool,
@@ -149,6 +175,12 @@ async def _link_to_sample(pg: AsyncEngine, upload_id: int, sample_id: str) -> No
             ),
         )
         await session.commit()
+
+
+async def _reserved_states(pg: AsyncEngine) -> list[bool]:
+    async with AsyncSession(pg) as session:
+        result = await session.execute(select(SQLUpload).order_by(SQLUpload.id))
+        return [u.reserved for u in result.unique().scalars().all()]
 
 
 class TestReapOrphaned:
@@ -242,6 +274,7 @@ class TestReapOrphaned:
             user=await fake.users.create(), reserved=True
         )
         await backdate_upload(pg, removed.id, OLDER_THAN_THRESHOLD)
+        await data_layer.uploads.release(removed.id)
         await data_layer.uploads.delete(removed.id)
 
         assert await data_layer.uploads.reap_orphaned(THRESHOLD) == 0
@@ -273,3 +306,78 @@ class TestReapOrphaned:
         for survivor in (young, linked, released):
             assert (await get_row_by_id(pg, SQLUpload, survivor.id)).removed is False
             assert await _is_stored(memory_storage, pg, survivor.id)
+
+
+class TestReserve:
+    async def test_single(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        user = await fake.users.create()
+        upload = await fake.uploads.create(user=user)
+
+        async with AsyncSession(pg) as session:
+            await data_layer.uploads.reserve(upload.id, session)
+            await session.commit()
+
+        assert await _reserved_states(pg) == [True]
+
+    async def test_multiple(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        user = await fake.users.create()
+        first = await fake.uploads.create(user=user)
+        second = await fake.uploads.create(user=user)
+        untouched = await fake.uploads.create(user=user)
+
+        async with AsyncSession(pg) as session:
+            await data_layer.uploads.reserve([first.id, second.id], session)
+            await session.commit()
+
+        assert await _reserved_states(pg) == [True, True, False]
+        assert untouched.id
+
+    async def test_already_reserved(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """A conflict is raised and no upload is reserved when one is already taken."""
+        user = await fake.users.create()
+        free = await fake.uploads.create(user=user)
+        reserved = await fake.uploads.create(user=user, reserved=True)
+
+        with pytest.raises(
+            ResourceConflictError,
+            match=r"One or more files are already reserved",
+        ):
+            async with AsyncSession(pg) as session:
+                await data_layer.uploads.reserve([free.id, reserved.id], session)
+                await session.commit()
+
+        assert await _reserved_states(pg) == [False, True]
+
+    async def test_missing(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        user = await fake.users.create()
+        free = await fake.uploads.create(user=user)
+
+        with pytest.raises(
+            ResourceConflictError,
+            match=r"One or more files do not exist",
+        ):
+            async with AsyncSession(pg) as session:
+                await data_layer.uploads.reserve([free.id, 999999], session)
+                await session.commit()
+
+        assert await _reserved_states(pg) == [False]
