@@ -1,6 +1,7 @@
 import math
 import uuid
 from collections.abc import AsyncIterator
+from datetime import timedelta
 from typing import TYPE_CHECKING
 
 from sqlalchemy import func, select, update
@@ -11,6 +12,7 @@ from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.events import Operation, emits
 from virtool.data.transforms import apply_transforms
+from virtool.samples.sql import SQLSampleReads
 from virtool.storage.protocol import StorageBackend
 from virtool.uploads.models import Upload, UploadSearchResult
 from virtool.uploads.sql import SQLUpload, UploadType
@@ -271,6 +273,45 @@ class UploadsData(DataLayerDomain):
             )
 
             await session.commit()
+
+    async def reap_orphaned(self, older_than: timedelta) -> int:
+        """Delete reserved uploads that are not linked to any sample.
+
+        A reserved upload with no ``SQLSampleReads`` row is one that was reserved for a
+        sample that never finished creation. Such uploads are hidden from the selector
+        (``find`` filters ``reserved == False``) and would otherwise be retained
+        forever.
+
+        Only uploads older than ``older_than`` are reaped, so reservations made during
+        an in-flight sample creation are not deleted before their reads link is written.
+
+        :param older_than: the minimum age an upload must reach to be eligible
+        :return: the number of uploads that were reaped
+        """
+        cutoff = virtool.utils.timestamp() - older_than
+
+        async with AsyncSession(self._pg) as session:
+            orphan_ids = (
+                (
+                    await session.execute(
+                        select(SQLUpload.id).where(
+                            SQLUpload.reserved == True,  # skipcq: PTC-W0068,PYL-R1714
+                            SQLUpload.removed == False,  # skipcq: PTC-W0068,PYL-R1714
+                            SQLUpload.created_at < cutoff,
+                            ~select(SQLSampleReads.id)
+                            .where(SQLSampleReads.upload == SQLUpload.id)
+                            .exists(),
+                        ),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+
+        for upload_id in orphan_ids:
+            await self.delete(upload_id)
+
+        return len(orphan_ids)
 
     async def reserve(self, upload_ids: int | list[int]) -> None:
         """Reserve the uploads in `upload_ids`.
