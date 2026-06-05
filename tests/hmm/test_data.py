@@ -14,26 +14,14 @@ from virtool.storage.object import ObjectProvider
 from virtool.tasks.progress import AbstractProgressHandler
 
 
-async def _seed_pg_status(pg, document: dict) -> None:
-    """Mirror a Mongo HMM status singleton into the Postgres singleton."""
-    task = document.get("task")
-
-    async with AsyncSession(pg) as session:
-        session.add(
-            SQLHMMStatus(
-                id=1,
-                errors=document.get("errors", []),
-                installed=document.get("installed"),
-                release=document.get("release"),
-                task_id=task["id"] if task else None,
-                updates=document.get("updates", []),
-            ),
-        )
-        await session.commit()
-
-
 async def test_get_status(
-    config, data_layer, fake: DataFaker, mongo, pg, snapshot, static_time
+    config,
+    data_layer,
+    fake: DataFaker,
+    mongo,
+    seed_pg_hmm_status,
+    snapshot,
+    static_time,
 ):
     """Test that function works when the HMM data are being updated and when they are not."""
     user = await fake.users.create()
@@ -87,7 +75,7 @@ async def test_get_status(
     }
 
     await mongo.status.insert_one(document)
-    await _seed_pg_status(pg, document)
+    await seed_pg_hmm_status(document)
 
     assert await data_layer.hmms.get_status() == snapshot
 
@@ -103,7 +91,7 @@ class TestGetStatusUpdatingFlag:
     """
 
     @staticmethod
-    async def _insert_status(mongo, pg, updates: list[dict]) -> None:
+    async def _insert_status(mongo, seed_pg_hmm_status, updates: list[dict]) -> None:
         document = {
             "_id": "hmm",
             "updates": updates,
@@ -113,21 +101,27 @@ class TestGetStatusUpdatingFlag:
         }
 
         await mongo.status.insert_one(document)
-        await _seed_pg_status(pg, document)
+        await seed_pg_hmm_status(document)
 
-    async def test_single_in_progress_update(self, data_layer, mongo, pg):
+    async def test_single_in_progress_update(
+        self, data_layer, mongo, seed_pg_hmm_status
+    ):
         """A lone unfinished update reports ``updating: True``."""
-        await self._insert_status(mongo, pg, [{"id": 1, "ready": False}])
+        await self._insert_status(
+            mongo, seed_pg_hmm_status, [{"id": 1, "ready": False}]
+        )
 
         status = await data_layer.hmms.get_status()
 
         assert status.updating is True
 
-    async def test_latest_in_progress_update(self, data_layer, mongo, pg):
+    async def test_latest_in_progress_update(
+        self, data_layer, mongo, seed_pg_hmm_status
+    ):
         """A finished update followed by an unfinished one reports ``True``."""
         await self._insert_status(
             mongo,
-            pg,
+            seed_pg_hmm_status,
             [{"id": 1, "ready": True}, {"id": 2, "ready": False}],
         )
 
@@ -135,17 +129,17 @@ class TestGetStatusUpdatingFlag:
 
         assert status.updating is True
 
-    async def test_latest_completed_update(self, data_layer, mongo, pg):
+    async def test_latest_completed_update(self, data_layer, mongo, seed_pg_hmm_status):
         """A latest finished update reports ``updating: False``."""
-        await self._insert_status(mongo, pg, [{"id": 1, "ready": True}])
+        await self._insert_status(mongo, seed_pg_hmm_status, [{"id": 1, "ready": True}])
 
         status = await data_layer.hmms.get_status()
 
         assert status.updating is False
 
-    async def test_no_updates(self, data_layer, mongo, pg):
+    async def test_no_updates(self, data_layer, mongo, seed_pg_hmm_status):
         """An empty ``updates`` list reports ``updating: False``."""
-        await self._insert_status(mongo, pg, [])
+        await self._insert_status(mongo, seed_pg_hmm_status, [])
 
         status = await data_layer.hmms.get_status()
 
@@ -155,10 +149,9 @@ class TestGetStatusUpdatingFlag:
 class TestGetUpdates:
     """``get_updates`` reads ``updates`` from Postgres, newest-first."""
 
-    async def test_returns_updates_newest_first(self, data_layer, mongo, pg):
+    async def test_returns_updates_newest_first(self, data_layer, seed_pg_hmm_status):
         """Stored updates are returned in reverse insertion order."""
-        await _seed_pg_status(
-            pg,
+        await seed_pg_hmm_status(
             {
                 "updates": [
                     {"id": 1, "name": "v0.1.0", "ready": True},
@@ -171,9 +164,9 @@ class TestGetUpdates:
 
         assert [update_["id"] for update_ in updates] == [2, 1]
 
-    async def test_returns_empty_when_no_updates(self, data_layer, pg):
+    async def test_returns_empty_when_no_updates(self, data_layer, seed_pg_hmm_status):
         """A singleton with no updates yields an empty list."""
-        await _seed_pg_status(pg, {"updates": []})
+        await seed_pg_hmm_status({"updates": []})
 
         assert await data_layer.hmms.get_updates() == []
 

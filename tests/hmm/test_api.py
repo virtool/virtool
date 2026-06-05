@@ -2,35 +2,15 @@ import json
 from http import HTTPStatus
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from virtool.fake.next import DataFaker
-from virtool.hmm.sql import SQLHMMStatus
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app
 
 
-async def _seed_pg_status(pg, document: dict) -> None:
-    """Mirror a Mongo HMM status singleton into the Postgres singleton."""
-    task = document.get("task")
-
-    async with AsyncSession(pg) as session:
-        session.add(
-            SQLHMMStatus(
-                id=1,
-                errors=document.get("errors", []),
-                installed=document.get("installed"),
-                release=document.get("release"),
-                task_id=task["id"] if task else None,
-                updates=document.get("updates", []),
-            ),
-        )
-        await session.commit()
-
-
 @pytest.fixture
-async def fake_hmm_status(mongo, pg, fake: DataFaker, static_time):
+async def fake_hmm_status(mongo, seed_pg_hmm_status, fake: DataFaker, static_time):
     user = await fake.users.create()
 
     document = {
@@ -82,7 +62,7 @@ async def fake_hmm_status(mongo, pg, fake: DataFaker, static_time):
     }
 
     await mongo.status.insert_one(document)
-    await _seed_pg_status(pg, document)
+    await seed_pg_hmm_status(document)
 
     return user
 

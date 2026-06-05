@@ -19,6 +19,7 @@ pytest_plugins = (
     "tests.fixtures.documents",
     "tests.fixtures.fake",
     "tests.fixtures.groups",
+    "tests.fixtures.hmm",
     "tests.fixtures.history",
     "tests.fixtures.indexes",
     "tests.fixtures.jobs",
