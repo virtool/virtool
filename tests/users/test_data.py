@@ -1,4 +1,6 @@
 import pytest
+from sqlalchemy import update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.filters import props
@@ -392,3 +394,21 @@ class TestSetAdministratorRole:
         """Test that set_administrator_role raises error for non-existent user."""
         with pytest.raises(ResourceNotFoundError):
             await data_layer.users.set_administrator_role(99999, AdministratorRole.BASE)
+
+    async def test_invalid_value_rejected(
+        self,
+        data_layer: DataLayer,
+        engine: AsyncEngine,
+        fake: DataFaker,
+    ):
+        """Test that the database rejects an administrator role outside the valid set."""
+        user = await fake.users.create()
+
+        with pytest.raises(IntegrityError):
+            async with AsyncSession(engine) as session:
+                await session.execute(
+                    update(SQLUser)
+                    .where(SQLUser.id == user.id)
+                    .values(administrator_role="spaces"),
+                )
+                await session.commit()

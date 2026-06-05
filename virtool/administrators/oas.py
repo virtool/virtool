@@ -53,11 +53,6 @@ class ListRolesResponse(BaseModel):
                     "description": "Manage instance settings.",
                 },
                 {
-                    "id": "spaces",
-                    "name": "Spaces",
-                    "description": "Manage users in any space. Delete any space.",
-                },
-                {
                     "id": "users",
                     "name": "Users",
                     "description": "Create user accounts. Control activation of user accounts.",

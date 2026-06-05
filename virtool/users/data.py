@@ -376,7 +376,6 @@ class UsersData(DataLayerDomain):
                 AdministratorRole.BASE: 1,
                 AdministratorRole.USERS: 2,
                 AdministratorRole.SETTINGS: 2,
-                AdministratorRole.SPACES: 2,
                 AdministratorRole.FULL: 3,
             }
 
