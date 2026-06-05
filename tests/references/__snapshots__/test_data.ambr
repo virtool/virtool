@@ -68,7 +68,6 @@
       'isolate',
       'strain',
     ]),
-    'targets': None,
     'task': None,
     'unbuilt_change_count': 0,
     'updating': None,
@@ -203,7 +202,6 @@
       'strain',
       'isolate',
     ]),
-    'targets': None,
     'updates': list([
       dict({
         'body': 'This is a release.',
@@ -322,7 +320,6 @@
     'restrict_source_types': False,
     'source_types': list([
     ]),
-    'targets': None,
     'task': None,
     'unbuilt_change_count': 0,
     'updating': None,
@@ -396,7 +393,6 @@
     'restrict_source_types': False,
     'source_types': list([
     ]),
-    'targets': None,
     'task': None,
     'unbuilt_change_count': 0,
     'updating': None,
@@ -470,7 +466,6 @@
     'restrict_source_types': False,
     'source_types': list([
     ]),
-    'targets': None,
     'task': None,
     'unbuilt_change_count': 0,
     'updating': None,
@@ -544,7 +539,6 @@
     'restrict_source_types': False,
     'source_types': list([
     ]),
-    'targets': None,
     'task': None,
     'unbuilt_change_count': 0,
     'updating': None,
@@ -618,7 +612,6 @@
     'restrict_source_types': False,
     'source_types': list([
     ]),
-    'targets': None,
     'task': None,
     'unbuilt_change_count': 0,
     'updating': None,
@@ -692,7 +685,6 @@
     'restrict_source_types': False,
     'source_types': list([
     ]),
-    'targets': None,
     'task': None,
     'unbuilt_change_count': 0,
     'updating': None,

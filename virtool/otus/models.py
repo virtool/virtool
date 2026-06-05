@@ -32,7 +32,6 @@ class OTUSequence(BaseModel):
     remote: OTURemote | None
     segment: str | None
     sequence: str
-    target: str | None
 
 
 class Sequence(OTUSequence):

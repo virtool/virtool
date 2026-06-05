@@ -401,10 +401,6 @@ class ReferencesData(DataLayerDomain):
 
         data = data.dict(exclude_unset=True)
 
-        # Setting targets on a reference that is not barcode data is not allowed.
-        if document["data_type"] != "barcode":
-            data.pop("targets", None)
-
         await self._mongo.references.update_one({"_id": ref_id}, {"$set": data})
 
         return await self.get(ref_id)
@@ -1005,7 +1001,6 @@ class ReferencesData(DataLayerDomain):
                 "$set": {
                     "data_type": data.data_type,
                     "organism": data.organism,
-                    "targets": data.targets,
                 },
             },
         )
@@ -1099,7 +1094,6 @@ class ReferencesData(DataLayerDomain):
                 "$set": {
                     "data_type": data.data_type,
                     "organism": data.organism,
-                    "targets": data.targets,
                 },
             },
         )
@@ -1181,7 +1175,7 @@ class ReferencesData(DataLayerDomain):
 
             await self._mongo.references.update_one(
                 {"_id": ref_id},
-                {"$set": {"organism": data.organism, "targets": data.targets}},
+                {"$set": {"organism": data.organism}},
                 session=mongo_session,
             )
 

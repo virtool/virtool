@@ -9,7 +9,7 @@ def mock_create_reference_schema():
     return {
         "name": "Test Viruses",
         "description": "A bunch of viruses used for testing",
-        "data_type": "barcode",
+        "data_type": "genome",
         "organism": "virus",
     }
 

@@ -25,7 +25,6 @@
       'isolate',
       'strain',
     ]),
-    'targets': None,
     'task': None,
     'unbuilt_change_count': 0,
     'updating': None,
@@ -63,7 +62,6 @@
       'isolate',
       'strain',
     ]),
-    'targets': None,
     'task': None,
     'unbuilt_change_count': 0,
     'updating': None,
@@ -107,7 +105,6 @@
       'isolate',
       'strain',
     ]),
-    'targets': None,
     'task': dict({
       'complete': False,
       'created_at': '2015-10-06T20:00:00Z',
@@ -177,7 +174,6 @@
       'isolate',
       'strain',
     ]),
-    'targets': None,
     'task': dict({
       'complete': False,
       'created_at': '2015-10-06T20:00:00Z',
@@ -206,61 +202,10 @@
     ]),
   })
 # ---
-# name: TestCreate.test_ok[barcode][location]
+# name: TestCreate.test_ok[location]
   'https://virtool.example.com/references/v1/bf1b993c'
 # ---
-# name: TestCreate.test_ok[barcode][resp]
-  dict({
-    'archived': False,
-    'cloned_from': None,
-    'contributors': list([
-    ]),
-    'created_at': 'approximately_now_isoformat',
-    'data_type': 'barcode',
-    'description': 'A bunch of viruses used for testing',
-    'groups': list([
-    ]),
-    'id': 'bf1b993c',
-    'imported_from': None,
-    'installed': None,
-    'internal_control': None,
-    'latest_build': None,
-    'name': 'Test Viruses',
-    'organism': 'virus',
-    'otu_count': 0,
-    'release': None,
-    'remotes_from': None,
-    'restrict_source_types': False,
-    'source_types': list([
-      'strain',
-      'isolate',
-    ]),
-    'targets': list([
-    ]),
-    'task': None,
-    'unbuilt_change_count': 0,
-    'updating': None,
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': 'approximately_now_isoformat',
-        'handle': 'leeashley',
-        'id': 1,
-        'modify': True,
-        'modify_otu': True,
-        'remove': True,
-      }),
-    ]),
-  })
-# ---
-# name: TestCreate.test_ok[genome][location]
-  'https://virtool.example.com/references/v1/bf1b993c'
-# ---
-# name: TestCreate.test_ok[genome][resp]
+# name: TestCreate.test_ok[resp]
   dict({
     'archived': False,
     'cloned_from': None,
@@ -286,7 +231,6 @@
       'strain',
       'isolate',
     ]),
-    'targets': None,
     'task': None,
     'unbuilt_change_count': 0,
     'updating': None,
@@ -373,7 +317,6 @@
       'isolate',
       'strain',
     ]),
-    'targets': None,
     'task': dict({
       'complete': False,
       'created_at': '2015-10-06T20:00:00Z',
@@ -773,6 +716,101 @@
     ]),
   })
 # ---
+# name: TestEdit.test_ok[db]
+  dict({
+    '_id': 'foo',
+    'archived': False,
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'groups': list([
+    ]),
+    'internal_control': None,
+    'name': 'Bar',
+    'organism': 'virus',
+    'restrict_source_types': False,
+    'source_types': list([
+      'isolate',
+      'strain',
+    ]),
+    'user': dict({
+      'id': 2,
+    }),
+    'users': list([
+      dict({
+        'build': True,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'id': 3,
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      }),
+      dict({
+        'build': True,
+        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+        'id': 4,
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      }),
+    ]),
+  })
+# ---
+# name: TestEdit.test_ok[resp]
+  dict({
+    'archived': False,
+    'cloned_from': None,
+    'contributors': list([
+    ]),
+    'created_at': '2015-10-06T20:00:00Z',
+    'data_type': 'genome',
+    'description': 'This is a test reference.',
+    'groups': list([
+    ]),
+    'id': 'foo',
+    'imported_from': None,
+    'installed': None,
+    'internal_control': None,
+    'latest_build': None,
+    'name': 'Bar',
+    'organism': 'virus',
+    'otu_count': 0,
+    'release': None,
+    'remotes_from': None,
+    'restrict_source_types': False,
+    'source_types': list([
+      'isolate',
+      'strain',
+    ]),
+    'task': None,
+    'unbuilt_change_count': 0,
+    'updating': None,
+    'user': dict({
+      'handle': 'myersmitchell',
+      'id': 2,
+    }),
+    'users': list([
+      dict({
+        'build': True,
+        'created_at': '2015-10-06T20:00:00Z',
+        'handle': 'modonnell',
+        'id': 3,
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      }),
+      dict({
+        'build': True,
+        'created_at': '2015-10-06T20:00:00Z',
+        'handle': 'garciaregina',
+        'id': 4,
+        'modify': True,
+        'modify_otu': True,
+        'remove': True,
+      }),
+    ]),
+  })
+# ---
 # name: TestFindHistory.test_ok
   dict({
     'documents': list([
@@ -930,7 +968,6 @@
       'isolate',
       'strain',
     ]),
-    'targets': None,
     'task': None,
     'unbuilt_change_count': 0,
     'updating': None,
@@ -986,7 +1023,6 @@
       'isolate',
       'strain',
     ]),
-    'targets': None,
     'task': None,
     'unbuilt_change_count': 0,
     'updating': None,
@@ -1024,7 +1060,6 @@
       'isolate',
       'strain',
     ]),
-    'targets': None,
     'task': None,
     'unbuilt_change_count': 0,
     'updating': None,
@@ -1280,235 +1315,6 @@
     ]),
   })
 # ---
-# name: test_edit[400_duplicates-barcode]
-  list([
-    dict({
-      'in': 'body',
-      'loc': list([
-        'targets',
-      ]),
-      'msg': 'The targets field may not contain duplicate names',
-      'type': 'value_error',
-    }),
-  ])
-# ---
-# name: test_edit[400_duplicates-genome]
-  list([
-    dict({
-      'in': 'body',
-      'loc': list([
-        'targets',
-      ]),
-      'msg': 'The targets field may not contain duplicate names',
-      'type': 'value_error',
-    }),
-  ])
-# ---
-# name: test_edit[None-barcode][db]
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'barcode',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'internal_control': None,
-    'name': 'Bar',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-      'isolate',
-      'strain',
-    ]),
-    'targets': list([
-      dict({
-        'description': '',
-        'name': 'CPN60',
-        'required': True,
-      }),
-    ]),
-    'user': dict({
-      'id': 2,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 3,
-        'modify': True,
-        'modify_otu': True,
-        'remove': True,
-      }),
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 4,
-        'modify': True,
-        'modify_otu': True,
-        'remove': True,
-      }),
-    ]),
-  })
-# ---
-# name: test_edit[None-barcode][resp]
-  dict({
-    'archived': False,
-    'cloned_from': None,
-    'contributors': list([
-    ]),
-    'created_at': '2015-10-06T20:00:00Z',
-    'data_type': 'barcode',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'id': 'foo',
-    'imported_from': None,
-    'installed': None,
-    'internal_control': None,
-    'latest_build': None,
-    'name': 'Bar',
-    'organism': 'virus',
-    'otu_count': 0,
-    'release': None,
-    'remotes_from': None,
-    'restrict_source_types': False,
-    'source_types': list([
-      'isolate',
-      'strain',
-    ]),
-    'targets': list([
-      dict({
-        'description': '',
-        'name': 'CPN60',
-        'required': True,
-      }),
-    ]),
-    'task': None,
-    'unbuilt_change_count': 0,
-    'updating': None,
-    'user': dict({
-      'handle': 'myersmitchell',
-      'id': 2,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': '2015-10-06T20:00:00Z',
-        'handle': 'modonnell',
-        'id': 3,
-        'modify': True,
-        'modify_otu': True,
-        'remove': True,
-      }),
-      dict({
-        'build': True,
-        'created_at': '2015-10-06T20:00:00Z',
-        'handle': 'garciaregina',
-        'id': 4,
-        'modify': True,
-        'modify_otu': True,
-        'remove': True,
-      }),
-    ]),
-  })
-# ---
-# name: test_edit[None-genome][db]
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'internal_control': None,
-    'name': 'Bar',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-      'isolate',
-      'strain',
-    ]),
-    'user': dict({
-      'id': 2,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 3,
-        'modify': True,
-        'modify_otu': True,
-        'remove': True,
-      }),
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 4,
-        'modify': True,
-        'modify_otu': True,
-        'remove': True,
-      }),
-    ]),
-  })
-# ---
-# name: test_edit[None-genome][resp]
-  dict({
-    'archived': False,
-    'cloned_from': None,
-    'contributors': list([
-    ]),
-    'created_at': '2015-10-06T20:00:00Z',
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'id': 'foo',
-    'imported_from': None,
-    'installed': None,
-    'internal_control': None,
-    'latest_build': None,
-    'name': 'Bar',
-    'organism': 'virus',
-    'otu_count': 0,
-    'release': None,
-    'remotes_from': None,
-    'restrict_source_types': False,
-    'source_types': list([
-      'isolate',
-      'strain',
-    ]),
-    'targets': None,
-    'task': None,
-    'unbuilt_change_count': 0,
-    'updating': None,
-    'user': dict({
-      'handle': 'myersmitchell',
-      'id': 2,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': '2015-10-06T20:00:00Z',
-        'handle': 'modonnell',
-        'id': 3,
-        'modify': True,
-        'modify_otu': True,
-        'remove': True,
-      }),
-      dict({
-        'build': True,
-        'created_at': '2015-10-06T20:00:00Z',
-        'handle': 'garciaregina',
-        'id': 4,
-        'modify': True,
-        'modify_otu': True,
-        'remove': True,
-      }),
-    ]),
-  })
-# ---
 # name: test_find[active]
   dict({
     'documents': list([
@@ -1516,7 +1322,7 @@
         'archived': False,
         'cloned_from': None,
         'created_at': '2015-10-06T20:00:00Z',
-        'data_type': 'barcode',
+        'data_type': 'genome',
         'id': 'group_member_active',
         'imported_from': None,
         'installed': None,
@@ -1578,7 +1384,7 @@
         'archived': False,
         'cloned_from': None,
         'created_at': '2015-10-06T20:00:00Z',
-        'data_type': 'barcode',
+        'data_type': 'genome',
         'id': 'user_member_active',
         'imported_from': None,
         'installed': None,
@@ -1664,7 +1470,7 @@
         'archived': False,
         'cloned_from': None,
         'created_at': '2015-10-06T20:00:00Z',
-        'data_type': 'barcode',
+        'data_type': 'genome',
         'id': 'group_member_active',
         'imported_from': None,
         'installed': None,
@@ -1757,7 +1563,7 @@
         'archived': False,
         'cloned_from': None,
         'created_at': '2015-10-06T20:00:00Z',
-        'data_type': 'barcode',
+        'data_type': 'genome',
         'id': 'user_member_active',
         'imported_from': None,
         'installed': None,

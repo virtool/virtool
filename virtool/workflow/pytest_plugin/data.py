@@ -188,7 +188,6 @@ def workflow_data(
     new_sample.ready = False
 
     reference = ReferenceFactory.build()
-    reference.targets = []
 
     index = IndexFactory.build()
     index.reference = ReferenceNested.parse_obj(reference)

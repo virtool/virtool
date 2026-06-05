@@ -429,12 +429,9 @@ class SequencesView(PydanticView):
         ):
             raise APIInsufficientRights()
 
-        if message := await virtool.otus.db.check_sequence_segment_or_target(
+        if message := await virtool.otus.db.check_sequence_segment(
             mongo,
             otu_id,
-            isolate_id,
-            None,
-            ref_id,
             data.dict(),
         ):
             raise APIBadRequest(message)
@@ -448,7 +445,6 @@ class SequencesView(PydanticView):
             self.request["client"].user_id,
             host=data.host,
             segment=data.segment,
-            target=data.target,
         )
 
         location = f"/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence.id}"
@@ -536,12 +532,9 @@ class SequenceView(PydanticView):
         ):
             raise APIInsufficientRights()
 
-        if message := await virtool.otus.db.check_sequence_segment_or_target(
+        if message := await virtool.otus.db.check_sequence_segment(
             mongo,
             otu_id,
-            isolate_id,
-            sequence_id,
-            document["reference"]["id"],
             data.dict(exclude_unset=True),
         ):
             raise APIBadRequest(message)

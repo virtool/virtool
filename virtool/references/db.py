@@ -581,9 +581,6 @@ async def create_document(
         "user": user,
     }
 
-    if data_type == "barcode":
-        document["targets"] = []
-
     return document
 
 

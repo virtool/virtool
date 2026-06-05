@@ -320,53 +320,25 @@ async def update_sequence_segments(
         )
 
 
-async def check_sequence_segment_or_target(
+async def check_sequence_segment(
     mongo: "Mongo",
     otu_id: str,
-    isolate_id: str,
-    sequence_id: str | None,
-    ref_id: str,
     data: dict,
 ) -> str | None:
-    """Check that segment or target field is compatible with the reference.
+    """Check that the segment field is compatible with the parent OTU.
 
-    Returns an error message string if the segment or target provided in `data` is not
-    compatible with the parent reference (target) or OTU (segment).
+    Returns an error message string if the segment provided in `data` is not defined in
+    the parent OTU's schema.
 
     Returns `None` if the check passes.
 
     :param mongo: the application database object
     :param otu_id: the ID of the parent OTU
-    :param isolate_id: the ID of the parent isolate
-    :param sequence_id: the ID of the sequence if one is being edited
-    :param ref_id: the ID of the parent reference
-    :param data: the data dict containing a target or segment value
+    :param data: the data dict containing a segment value
     :return: message or `None` if check passes
 
     """
-    reference = await mongo.references.find_one(ref_id, ["data_type", "targets"])
-
-    if reference["data_type"] == "barcode":
-        target = data.get("target")
-
-        if sequence_id is None and target is None:
-            return "The 'target' field is required for barcode references"
-
-        if target:
-            if target not in {t["name"] for t in reference.get("targets", [])}:
-                return f"Target {target} is not defined for the parent reference"
-
-            used_targets_query = {"otu_id": otu_id, "isolate_id": isolate_id}
-
-            if sequence_id:
-                used_targets_query["_id"] = {"$ne": sequence_id}
-
-            used_targets = await mongo.sequences.distinct("target", used_targets_query)
-
-            if target in used_targets:
-                return f"Target {target} is already used in isolate {isolate_id}"
-
-    if reference["data_type"] == "genome" and data.get("segment"):
+    if data.get("segment"):
         schema = await get_one_field(mongo.otus, "schema", otu_id) or []
 
         segment = data.get("segment")

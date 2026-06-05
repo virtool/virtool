@@ -720,7 +720,6 @@ class OTUData:
         host: str = "",
         segment: str | None = None,
         sequence_id: str | None = None,
-        target: str | None = None,
     ) -> OTUSequence:
         async def func(session: AsyncIOMotorClientSession) -> OTUSequence:
             old = await virtool.otus.db.join(self._mongo, otu_id, session=session)
@@ -734,7 +733,6 @@ class OTUData:
                 "reference": {"id": old["reference"]["id"]},
                 "segment": segment,
                 "sequence": sequence.replace(" ", "").replace("\n", ""),
-                "target": target,
             }
 
             if sequence_id:
@@ -817,7 +815,7 @@ class OTUData:
 
         update = {
             key: data[key]
-            for key in ("accession", "definition", "host", "segment", "target")
+            for key in ("accession", "definition", "host", "segment")
             if key in data
         }
 

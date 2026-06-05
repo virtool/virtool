@@ -1,11 +1,9 @@
-import asyncio
-
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 
 from virtool.otus.db import (
     check_name_and_abbreviation,
-    check_sequence_segment_or_target,
+    check_sequence_segment,
     increment_otu_version,
     join,
 )
@@ -67,69 +65,23 @@ async def test_increment_otu_version(mongo, snapshot):
     assert await mongo.otus.find_one() == snapshot
 
 
-@pytest.mark.parametrize("data_type", ["genome", "barcode"])
-@pytest.mark.parametrize("defined", [True, False])
-@pytest.mark.parametrize("missing", [True, False])
-@pytest.mark.parametrize("used", [True, False])
-@pytest.mark.parametrize("sequence_id", ["boo", "bad", None])
-async def test_check_segment_or_target(
-    data_type, defined, missing, used, sequence_id, mongo
-):
-    """Test that issues with `segment` or `target` fields in sequence editing requests are
-    detected.
+class TestCheckSequenceSegment:
+    """Test that a sequence's segment is validated against the parent OTU's schema."""
 
-    """
-    await asyncio.gather(
-        mongo.otus.insert_one({"_id": "foo", "schema": [{"name": "RNA1"}]}),
-        mongo.references.insert_one(
-            {
-                "_id": "bar",
-                "archived": False,
-                "data_type": data_type,
-                "targets": [{"name": "CPN60"}],
-            }
-        ),
-        mongo.sequences.insert_one(
-            {
-                "_id": "boo",
-                "otu_id": "foo",
-                "isolate_id": "baz",
-                "target": "CPN60" if used else "ITS2",
-            }
-        ),
-    )
+    async def test_defined(self, mongo):
+        await mongo.otus.insert_one({"_id": "foo", "schema": [{"name": "RNA1"}]})
 
-    data = {}
+        assert await check_sequence_segment(mongo, "foo", {"segment": "RNA1"}) is None
 
-    if data_type == "barcode":
-        data["target"] = "CPN60" if defined else "ITS2"
-    else:
-        data["segment"] = "RNA1" if defined else "RNA2"
+    async def test_not_defined(self, mongo):
+        await mongo.otus.insert_one({"_id": "foo", "schema": [{"name": "RNA1"}]})
 
-    if missing:
-        data = {}
+        assert (
+            await check_sequence_segment(mongo, "foo", {"segment": "RNA2"})
+            == "Segment RNA2 is not defined for the parent OTU"
+        )
 
-    message = await check_sequence_segment_or_target(
-        mongo, "foo", "baz", sequence_id, "bar", data
-    )
+    async def test_no_segment(self, mongo):
+        await mongo.otus.insert_one({"_id": "foo", "schema": [{"name": "RNA1"}]})
 
-    # The only case where an error message should be returned for a genome-type
-    # reference.
-    if data_type == "genome" and not missing and not defined:
-        assert message == "Segment RNA2 is not defined for the parent OTU"
-        return
-
-    if data_type == "barcode":
-        if sequence_id is None and missing:
-            assert message == "The 'target' field is required for barcode references"
-            return
-
-        if not missing and not defined:
-            assert message == "Target ITS2 is not defined for the parent reference"
-            return
-
-        if sequence_id != "boo" and not missing and used and data_type == "barcode":
-            assert message == "Target CPN60 is already used in isolate baz"
-            return
-
-    assert message is None
+        assert await check_sequence_segment(mongo, "foo", {}) is None
