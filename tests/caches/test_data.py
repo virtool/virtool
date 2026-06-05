@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.caches.data import (
     CACHE_EVICTION_GRACE_PERIOD,
+    CACHE_EVICTION_STORAGE_DELETE_CONCURRENCY,
     LAST_ACCESSED_REFRESH_INTERVAL,
     _storage_key,
 )
@@ -324,7 +325,7 @@ class TestEvictLRU:
 
         await data_layer.caches.evict_lru()
 
-        assert max_active_deletes == 8
+        assert max_active_deletes == CACHE_EVICTION_STORAGE_DELETE_CONCURRENCY
 
     async def test_storage_delete_failure_prevents_cache_row_deletion(
         self,
