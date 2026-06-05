@@ -82,6 +82,39 @@ async def insert_upload(
     return upload_id
 
 
+async def insert_unknown_user(session: AsyncSession) -> int:
+    """Insert the login-disabled ``unknown`` sentinel user and return its id."""
+    result = await session.execute(
+        text("""
+            INSERT INTO users (
+                handle, legacy_id, active, email, force_reset,
+                invalidate_sessions, last_password_change, password, settings
+            )
+            VALUES (
+                'unknown', NULL, false, '', false,
+                false, :now, :password, '{}'::jsonb
+            )
+            RETURNING id
+        """),
+        {"now": timestamp(), "password": b"unusable"},
+    )
+    user_id = result.scalar_one()
+    await session.commit()
+    return user_id
+
+
+async def insert_fasta_file(session: AsyncSession, subtraction_id: str, size: int):
+    """Insert a FASTA subtraction_files row used as the reconstructed upload size."""
+    await session.execute(
+        text("""
+            INSERT INTO subtraction_files (name, subtraction, type, size)
+            VALUES ('subtraction.fa.gz', :subtraction, 'fasta', :size)
+        """),
+        {"subtraction": subtraction_id, "size": size},
+    )
+    await session.commit()
+
+
 def make_subtraction_document(
     subtraction_id: str,
     user_id: int | str,
@@ -124,6 +157,9 @@ class TestUpgrade:
         static_datetime: datetime,
     ):
         """A document's scalar and json fields map correctly."""
+        async with AsyncSession(ctx.pg) as session:
+            upload_id = await insert_upload(session, setup_user, "subtraction_1.fa.gz")
+
         await ctx.mongo.subtraction.insert_one(
             make_subtraction_document(
                 subtraction_id="subtraction_1",
@@ -131,6 +167,7 @@ class TestUpgrade:
                 created_at=static_datetime,
                 count=42,
                 gc={"a": 0.3, "t": 0.3, "g": 0.2, "c": 0.2},
+                upload=upload_id,
             ),
         )
 
@@ -158,7 +195,7 @@ class TestUpgrade:
         assert row.ready is True
         assert row.user_id == setup_user
         assert row.job_id is None
-        assert row.upload_id is None
+        assert row.upload_id == upload_id
 
     async def test_user_legacy_id_mapping(
         self,
@@ -255,37 +292,39 @@ class TestUpgrade:
 
         assert stored == upload_id
 
-    async def test_no_job_or_upload(
+    async def test_missing_job_is_null(
         self,
         ctx: MigrationContext,
         setup_user: int,
         static_datetime: datetime,
     ):
-        """job_id and upload_id are null when the document has neither."""
+        """job_id is null when the document has no job."""
+        async with AsyncSession(ctx.pg) as session:
+            upload_id = await insert_upload(session, setup_user, "no_job.fa.gz")
+
         await ctx.mongo.subtraction.insert_one(
             make_subtraction_document(
-                subtraction_id="bare_subtraction",
+                subtraction_id="no_job_subtraction",
                 user_id=setup_user,
                 created_at=static_datetime,
                 job_id=None,
-                upload=None,
+                upload=upload_id,
             ),
         )
 
         await upgrade(ctx)
 
         async with AsyncSession(ctx.pg) as session:
-            row = (
+            job_id = (
                 await session.execute(
                     text(
-                        "SELECT job_id, upload_id FROM subtractions "
-                        "WHERE legacy_id = 'bare_subtraction'",
+                        "SELECT job_id FROM subtractions "
+                        "WHERE legacy_id = 'no_job_subtraction'",
                     ),
                 )
-            ).one()
+            ).scalar_one()
 
-        assert row.job_id is None
-        assert row.upload_id is None
+        assert job_id is None
 
     async def test_orphan_user_backfills_null(
         self,
@@ -298,11 +337,15 @@ class TestUpgrade:
         Unlike the analyses backfill, an unresolvable user reference does not abort
         the migration: the row is written with ``user_id = NULL``.
         """
+        async with AsyncSession(ctx.pg) as session:
+            upload_id = await insert_upload(session, setup_user, "orphan_user.fa.gz")
+
         await ctx.mongo.subtraction.insert_one(
             make_subtraction_document(
                 subtraction_id="orphan_user_subtraction",
                 user_id=setup_user + 9999,
                 created_at=static_datetime,
+                upload=upload_id,
             ),
         )
 
@@ -350,13 +393,21 @@ class TestUpgrade:
 
         assert row.job_id is None
 
-    async def test_orphan_upload_backfills_null(
+    async def test_orphan_upload_reconstructs_removed_upload(
         self,
         ctx: MigrationContext,
         setup_user: int,
         static_datetime: datetime,
     ):
-        """A document referencing a deleted upload is written with a null upload_id."""
+        """A deleted upload is rebuilt as a removed upload linked to the subtraction.
+
+        The stand-in upload takes its name from the Mongo ``file`` snapshot, its
+        size from the FASTA ``subtraction_files`` row, and is attributed to the
+        subtraction's own user.
+        """
+        async with AsyncSession(ctx.pg) as session:
+            await insert_fasta_file(session, "orphan_upload_subtraction", 4096)
+
         await ctx.mongo.subtraction.insert_one(
             make_subtraction_document(
                 subtraction_id="orphan_upload_subtraction",
@@ -371,14 +422,75 @@ class TestUpgrade:
         async with AsyncSession(ctx.pg) as session:
             row = (
                 await session.execute(
-                    text(
-                        "SELECT upload_id FROM subtractions "
-                        "WHERE legacy_id = 'orphan_upload_subtraction'",
-                    ),
+                    text("""
+                        SELECT u.name, u.size, u.removed, u.ready, u.type, u.user_id
+                        FROM subtractions s
+                        JOIN uploads u ON s.upload_id = u.id
+                        WHERE s.legacy_id = 'orphan_upload_subtraction'
+                    """),
                 )
             ).one()
 
-        assert row.upload_id is None
+        assert row.name == "subtraction.fa.gz"
+        assert row.size == 4096
+        assert row.removed is True
+        assert row.ready is True
+        assert row.type == "subtraction"
+        assert row.user_id == setup_user
+
+    async def test_orphan_upload_and_user_uses_unknown_sentinel(
+        self,
+        ctx: MigrationContext,
+        setup_user: int,
+        static_datetime: datetime,
+    ):
+        """When the user is also gone, the rebuilt upload goes to the unknown user."""
+        async with AsyncSession(ctx.pg) as session:
+            unknown_user_id = await insert_unknown_user(session)
+
+        await ctx.mongo.subtraction.insert_one(
+            make_subtraction_document(
+                subtraction_id="orphan_both_subtraction",
+                user_id=setup_user + 9999,
+                created_at=static_datetime,
+                upload=999999,
+            ),
+        )
+
+        await upgrade(ctx)
+
+        async with AsyncSession(ctx.pg) as session:
+            upload_user_id = (
+                await session.execute(
+                    text("""
+                        SELECT u.user_id
+                        FROM subtractions s
+                        JOIN uploads u ON s.upload_id = u.id
+                        WHERE s.legacy_id = 'orphan_both_subtraction'
+                    """),
+                )
+            ).scalar_one()
+
+        assert upload_user_id == unknown_user_id
+
+    async def test_orphan_upload_and_user_without_sentinel_raises(
+        self,
+        ctx: MigrationContext,
+        setup_user: int,
+        static_datetime: datetime,
+    ):
+        """A missing ``unknown`` sentinel is a loud failure, not a silent null."""
+        await ctx.mongo.subtraction.insert_one(
+            make_subtraction_document(
+                subtraction_id="orphan_both_no_sentinel",
+                user_id=setup_user + 9999,
+                created_at=static_datetime,
+                upload=999999,
+            ),
+        )
+
+        with pytest.raises(ValueError, match="unknown"):
+            await upgrade(ctx)
 
     async def test_soft_deleted_is_migrated(
         self,

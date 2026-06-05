@@ -1,6 +1,6 @@
 import pytest
 from multidict import MultiDict, MultiDictProxy
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.errors import ResourceNotFoundError
@@ -13,7 +13,7 @@ from virtool.subtractions.oas import (
     UpdateSubtractionRequest,
 )
 from virtool.subtractions.pg import SQLSubtraction
-from virtool.uploads.sql import UploadType
+from virtool.uploads.sql import SQLUpload, UploadType
 
 
 def _empty_query() -> MultiDictProxy:
@@ -66,6 +66,36 @@ class TestFind:
             "cress", False, False, _empty_query()
         )
         assert [d.id for d in by_nickname.documents] == [arabidopsis.id]
+
+    async def test_lists_subtraction_with_removed_upload(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """A subtraction whose source upload is removed still lists with a file.
+
+        Regression for VIR-2478: the read path must not raise when the linked
+        upload is flagged ``removed``, which is how reconstructed uploads for
+        deleted sources are stored.
+        """
+        user = await fake.users.create()
+        upload = await fake.uploads.create(
+            user=user,
+            upload_type=UploadType.subtraction,
+        )
+        subtraction = await fake.subtractions.create(user=user, upload=upload)
+
+        async with AsyncSession(pg) as session:
+            await session.execute(
+                update(SQLUpload).where(SQLUpload.id == upload.id).values(removed=True),
+            )
+            await session.commit()
+
+        result = await data_layer.subtractions.find(None, False, False, _empty_query())
+
+        assert [d.id for d in result.documents] == [subtraction.id]
+        assert result.documents[0].file.id == upload.id
 
     async def test_ready_filter(self, data_layer: DataLayer, fake: DataFaker):
         """``ready=True`` returns only finalized subtractions but counts both."""

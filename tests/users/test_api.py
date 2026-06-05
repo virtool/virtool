@@ -185,6 +185,23 @@ class TestCreate:
 
         await resp_is.bad_request(resp, "Reserved user name: virtool")
 
+    async def test_reserved_unknown_handle(
+        self,
+        fake: DataFaker,
+        resp_is: RespIs,
+        spawn_client: ClientSpawner,
+    ):
+        """The ``unknown`` sentinel handle cannot be claimed by a created user."""
+        client = await spawn_client(administrator=True, authenticated=True)
+
+        await fake.users.create()
+
+        data = {"handle": "Unknown", "password": "hello_world", "force_reset": False}
+
+        resp = await client.post("/users", data)
+
+        await resp_is.bad_request(resp, "Reserved user name: Unknown")
+
 
 class TestUpdate:
     async def test_ok(

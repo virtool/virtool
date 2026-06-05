@@ -4,6 +4,24 @@ import bcrypt
 
 from virtool.models.enums import Permission
 
+UNKNOWN_USER_HANDLE = "unknown"
+"""Handle of the lost-attribution sentinel user.
+
+Stands in for a real user who has since been deleted (e.g. the owner of an
+upload reconstructed during migration).
+"""
+
+VIRTOOL_USER_HANDLE = "virtool"
+"""Handle reserved for system-as-actor uses."""
+
+RESERVED_HANDLES = frozenset({UNKNOWN_USER_HANDLE, VIRTOOL_USER_HANDLE})
+"""Handles that may not be claimed by ordinary users. Compared case-insensitively."""
+
+
+def is_reserved_handle(handle: str) -> bool:
+    """Return whether ``handle`` is reserved for a sentinel user."""
+    return handle.lower() in RESERVED_HANDLES
+
 
 def check_legacy_password(password: str, salt: str, hashed: str) -> bool:
     """Check if a Unicode ``password`` and ``salt`` match a ``hashed`` password from the
