@@ -1,16 +1,22 @@
 """Data-layer domain for cache entries."""
 
+import asyncio
 import uuid
 from collections.abc import AsyncIterator
 from datetime import timedelta
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from structlog import get_logger
 
 import virtool.utils
+from virtool.caches.db import (
+    CacheEvictionCandidate,
+    select_eviction_candidates,
+)
 from virtool.caches.models import Cache, CacheHit
 from virtool.caches.pg import CACHE_KEY_CONSTRAINT, SQLCache
 from virtool.data.domain import DataLayerDomain
@@ -21,6 +27,14 @@ from virtool.storage.protocol import StorageBackend
 LAST_ACCESSED_REFRESH_INTERVAL = timedelta(minutes=5)
 """Minimum interval between ``last_accessed_at`` refreshes."""
 
+CACHE_EVICTION_GRACE_PERIOD = timedelta(hours=1)
+"""Minimum cache age before an entry can be evicted for budget pressure."""
+
+CACHE_EVICTION_STORAGE_DELETE_CONCURRENCY = 8
+"""Maximum number of concurrent storage deletes during cache eviction."""
+
+logger = get_logger("caches.data")
+
 
 def _storage_key(uuid_: str) -> str:
     """Build a storage key under ``caches/v1/``."""
@@ -30,9 +44,15 @@ def _storage_key(uuid_: str) -> str:
 class CachesData(DataLayerDomain):
     name = "caches"
 
-    def __init__(self, pg: AsyncEngine, storage: StorageBackend):
+    def __init__(
+        self,
+        pg: AsyncEngine,
+        storage: StorageBackend,
+        storage_budget_bytes: int,
+    ):
         self._pg = pg
         self._storage = storage
+        self.storage_budget_bytes = storage_budget_bytes
 
     async def get(self, key: str) -> CacheHit:
         """Return the cache entry and lazy payload stream for ``key``.
@@ -115,3 +135,65 @@ class CachesData(DataLayerDomain):
             created_at=now,
             last_accessed_at=now,
         )
+
+    async def _bulk_delete_cache(
+        self,
+        candidates: list[CacheEvictionCandidate],
+    ) -> set[int]:
+        """Delete cache storage objects, then remove their cache rows."""
+        cache_ids = [candidate.id for candidate in candidates]
+
+        if not cache_ids:
+            return set()
+
+        semaphore = asyncio.Semaphore(CACHE_EVICTION_STORAGE_DELETE_CONCURRENCY)
+
+        async def delete_candidate_storage(candidate: CacheEvictionCandidate) -> None:
+            async with semaphore:
+                await self._storage.delete(candidate.storage_key)
+
+        results = await asyncio.gather(
+            *(delete_candidate_storage(candidate) for candidate in candidates),
+            return_exceptions=True,
+        )
+
+        for result in results:
+            if isinstance(result, BaseException):
+                raise result
+
+        async with AsyncSession(self._pg) as session:
+            deleted_ids = {
+                row.id
+                for row in (
+                    await session.execute(
+                        delete(SQLCache)
+                        .where(SQLCache.id.in_(cache_ids))
+                        .returning(SQLCache.id),
+                    )
+                )
+            }
+            await session.commit()
+
+        return deleted_ids
+
+    async def evict_lru(self) -> None:
+        """Evict least-recently used cache entries until storage is under budget."""
+        now = virtool.utils.timestamp()
+        candidates = await select_eviction_candidates(
+            self._pg,
+            self.storage_budget_bytes,
+            now - CACHE_EVICTION_GRACE_PERIOD,
+        )
+        deleted_ids = await self._bulk_delete_cache(candidates)
+
+        for candidate in candidates:
+            if candidate.id not in deleted_ids:
+                continue
+
+            logger.info(
+                "evicted cache entry",
+                key=candidate.key,
+                cache_type=candidate.cache_type,
+                size=candidate.size,
+                age=str(now - candidate.last_accessed_at),
+            )
