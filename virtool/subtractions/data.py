@@ -235,6 +235,36 @@ class SubtractionsData(DataLayerDomain):
 
         return await self.get(new_subtraction_id)
 
+    async def _resolve_ids(self, subtraction_id: int | str) -> tuple[int, str]:
+        """Resolve either id form to the subtraction's ``(id, legacy_id)``.
+
+        Accepts the modern integer id (or its stringified form) or the legacy Mongo
+        slug and returns both identifiers. The integer ``id`` keys the
+        ``SQLSubtraction`` mutations; the legacy slug is still needed for the Mongo
+        dual-write, the string-keyed ``SQLSubtractionFile`` rows, and the storage
+        keys. Mirrors :meth:`virtool.analyses.data.AnalysisData._resolve_ids`.
+
+        :param subtraction_id: a modern integer id or legacy string id
+        :return: the integer id and legacy string id
+        :raises ResourceNotFoundError: if no subtraction matches
+        """
+        async with AsyncSession(self._pg) as session:
+            row = (
+                await session.execute(
+                    select(SQLSubtraction.id, SQLSubtraction.legacy_id).where(
+                        compose_legacy_id_single_expression(
+                            SQLSubtraction,
+                            subtraction_id,
+                        ),
+                    ),
+                )
+            ).one_or_none()
+
+        if row is None:
+            raise ResourceNotFoundError
+
+        return row.id, row.legacy_id
+
     async def get(self, subtraction_id: int | str) -> Subtraction:
         """Get a subtraction by its id."""
         async with AsyncSession(self._pg) as session:
@@ -278,9 +308,11 @@ class SubtractionsData(DataLayerDomain):
     @emits(Operation.UPDATE)
     async def update(
         self,
-        subtraction_id: str,
+        subtraction_id: int | str,
         data: UpdateSubtractionRequest,
     ) -> Subtraction:
+        modern_id, legacy_id = await self._resolve_ids(subtraction_id)
+
         data = data.dict(exclude_unset=True)
 
         values = {}
@@ -292,36 +324,35 @@ class SubtractionsData(DataLayerDomain):
             values["nickname"] = data["nickname"]
 
         if not values:
-            return await self.get(subtraction_id)
+            return await self.get(modern_id)
 
         async with both_transactions(self._mongo, self._pg) as (
             mongo_session,
             pg_session,
         ):
-            document = await self._mongo.subtraction.find_one_and_update(
-                {"_id": subtraction_id},
+            await self._mongo.subtraction.update_one(
+                {"_id": legacy_id},
                 {"$set": values},
                 session=mongo_session,
             )
 
-            if document is None:
-                raise ResourceNotFoundError
-
             await pg_session.execute(
                 update(SQLSubtraction)
-                .where(SQLSubtraction.legacy_id == subtraction_id)
+                .where(SQLSubtraction.id == modern_id)
                 .values(**values),
             )
 
-        return await self.get(subtraction_id)
+        return await self.get(modern_id)
 
-    async def delete(self, subtraction_id: str):
+    async def delete(self, subtraction_id: int | str):
+        modern_id, legacy_id = await self._resolve_ids(subtraction_id)
+
         async with both_transactions(self._mongo, self._pg) as (
             mongo_session,
             pg_session,
         ):
             update_result = await self._mongo.subtraction.update_one(
-                {"_id": subtraction_id, "deleted": False},
+                {"_id": legacy_id, "deleted": False},
                 {"$set": {"deleted": True}},
                 session=mongo_session,
             )
@@ -331,22 +362,18 @@ class SubtractionsData(DataLayerDomain):
 
             await pg_session.execute(
                 update(SQLSubtraction)
-                .where(SQLSubtraction.legacy_id == subtraction_id)
+                .where(SQLSubtraction.id == modern_id)
                 .values(deleted=True),
             )
 
-            await unlink_default_subtractions(
-                self._mongo, subtraction_id, mongo_session
-            )
+            await unlink_default_subtractions(self._mongo, legacy_id, mongo_session)
 
-        failures = await delete_prefix(
-            self._storage, subtraction_prefix(subtraction_id)
-        )
+        failures = await delete_prefix(self._storage, subtraction_prefix(legacy_id))
 
         for key, exc in failures:
             logger.error(
                 "storage cleanup failed; file orphaned",
-                subtraction_id=subtraction_id,
+                subtraction_id=legacy_id,
                 key=key,
                 error=repr(exc),
             )
@@ -356,7 +383,7 @@ class SubtractionsData(DataLayerDomain):
     @emits(Operation.UPDATE)
     async def finalize(
         self,
-        subtraction_id: str,
+        subtraction_id: int | str,
         data: FinalizeSubtractionRequest,
     ) -> Subtraction:
         """Finalize a subtraction.
@@ -368,7 +395,9 @@ class SubtractionsData(DataLayerDomain):
         :param data:
         :return: finalized subtraction
         """
-        ready = await get_one_field(self._mongo.subtraction, "ready", subtraction_id)
+        modern_id, legacy_id = await self._resolve_ids(subtraction_id)
+
+        ready = await get_one_field(self._mongo.subtraction, "ready", legacy_id)
 
         if ready:
             raise ResourceConflictError("Subtraction has already been finalized")
@@ -377,26 +406,23 @@ class SubtractionsData(DataLayerDomain):
             mongo_session,
             pg_session,
         ):
-            result = await self._mongo.subtraction.update_one(
-                {"_id": subtraction_id},
+            await self._mongo.subtraction.update_one(
+                {"_id": legacy_id},
                 {"$set": {**data.dict(), "ready": True}},
                 session=mongo_session,
             )
 
-            if result.matched_count == 0:
-                raise ResourceNotFoundError
-
             await pg_session.execute(
                 update(SQLSubtraction)
-                .where(SQLSubtraction.legacy_id == subtraction_id)
+                .where(SQLSubtraction.id == modern_id)
                 .values(**data.dict(), ready=True),
             )
 
-        return await self.get(subtraction_id)
+        return await self.get(modern_id)
 
     async def upload_file(
         self,
-        subtraction_id: str,
+        subtraction_id: int | str,
         filename: str,
         chunker: AsyncGenerator[bytearray],
     ) -> SubtractionFile:
@@ -414,10 +440,7 @@ class SubtractionsData(DataLayerDomain):
         :param chunker: the multipart reader containing the file content
         :return: the subtraction file resource model
         """
-        document = await self._mongo.subtraction.find_one(subtraction_id)
-
-        if document is None:
-            raise ResourceNotFoundError
+        _, subtraction_id = await self._resolve_ids(subtraction_id)
 
         if filename not in FILES:
             raise ResourceNotFoundError("Unsupported subtraction file name")
@@ -461,10 +484,10 @@ class SubtractionsData(DataLayerDomain):
             download_url=f"{self._base_url}/subtractions/{subtraction_id}/files/{filename}",
         )
 
-    async def get_file(self, subtraction_id: str, filename: str):
-        document = await self._mongo.subtraction.find_one(subtraction_id)
+    async def get_file(self, subtraction_id: int | str, filename: str):
+        _, subtraction_id = await self._resolve_ids(subtraction_id)
 
-        if document is None or filename not in FILES:
+        if filename not in FILES:
             raise ResourceNotFoundError
 
         async with AsyncSession(self._pg) as session:
