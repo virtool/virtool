@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
 from virtool.data.domain import DataLayerDomain
-from virtool.data.errors import ResourceNotFoundError
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emits
 from virtool.data.transforms import apply_transforms
 from virtool.storage.protocol import StorageBackend
@@ -230,6 +230,11 @@ class UploadsData(DataLayerDomain):
 
             if not upload or upload.removed:
                 raise ResourceNotFoundError
+
+            if upload.reserved:
+                raise ResourceConflictError(
+                    "Upload is reserved and in use",
+                )
 
             if upload.reads is not None:
                 upload.reads.clear()
