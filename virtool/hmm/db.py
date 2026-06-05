@@ -4,7 +4,6 @@ import json
 
 import aiohttp.client_exceptions
 from aiohttp import ClientSession
-from sqlalchemy import update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncEngine
 from structlog import get_logger
@@ -13,7 +12,7 @@ import virtool.utils
 from virtool.data.topg import both_transactions
 from virtool.errors import GitHubError
 from virtool.github import get_etag, get_release
-from virtool.hmm.sql import SQLHMMStatus
+from virtool.hmm.sql import HMM_STATUS_ID, SQLHMMStatus
 from virtool.hmm.utils import format_hmm_release
 from virtool.mongo.core import Mongo
 from virtool.types import Document
@@ -97,9 +96,17 @@ async def fetch_and_update_release(
             )
 
             await pg_session.execute(
-                update(SQLHMMStatus)
-                .where(SQLHMMStatus.id == 1)
-                .values(errors=errors, installed=installed),
+                insert(SQLHMMStatus)
+                .values(
+                    id=HMM_STATUS_ID,
+                    errors=errors,
+                    installed=installed,
+                    release=release,
+                )
+                .on_conflict_do_update(
+                    index_elements=[SQLHMMStatus.id],
+                    set_={"errors": errors, "installed": installed},
+                ),
             )
 
         return release
@@ -121,7 +128,7 @@ async def fetch_and_update_release(
 
         await pg_session.execute(
             insert(SQLHMMStatus)
-            .values(id=1, errors=[], installed=installed, release=release)
+            .values(id=HMM_STATUS_ID, errors=[], installed=installed, release=release)
             .on_conflict_do_update(
                 index_elements=[SQLHMMStatus.id],
                 set_={"errors": [], "installed": installed, "release": release},

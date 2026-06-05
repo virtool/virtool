@@ -4,6 +4,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from virtool.pg.base import Base
 
+HMM_STATUS_ID = 1
+"""The fixed primary key of the singleton ``legacy_hmm_status`` row."""
+
 
 class SQLHMMStatus(Base):
     """The singleton row describing the installed HMM data and update state.

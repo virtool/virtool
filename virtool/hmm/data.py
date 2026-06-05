@@ -24,7 +24,7 @@ from virtool.hmm.db import (
     generate_annotations,
 )
 from virtool.hmm.models import HMM, HMMInstalled, HMMSearchResult, HMMStatus
-from virtool.hmm.sql import SQLHMM, SQLHMMStatus
+from virtool.hmm.sql import HMM_STATUS_ID, SQLHMM, SQLHMMStatus
 from virtool.hmm.tasks import HMMInstallTask
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
@@ -147,7 +147,7 @@ class HmmsData(DataLayerDomain):
 
             status = (
                 await pg_session.execute(
-                    select(SQLHMMStatus).where(SQLHMMStatus.id == 1),
+                    select(SQLHMMStatus).where(SQLHMMStatus.id == HMM_STATUS_ID),
                 )
             ).scalar_one_or_none()
 
@@ -180,70 +180,77 @@ class HmmsData(DataLayerDomain):
 
         installed = create_update_subdocument(release, True, user_id)
 
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
-            for annotation in annotations:
-                inserted = await self._mongo.hmm.insert_one(
-                    dict(annotation, hidden=False),
+        wrote_profiles = False
+
+        try:
+            async with both_transactions(self._mongo, self._pg) as (
+                mongo_session,
+                pg_session,
+            ):
+                for annotation in annotations:
+                    inserted = await self._mongo.hmm.insert_one(
+                        dict(annotation, hidden=False),
+                        session=mongo_session,
+                    )
+
+                    pg_session.add(
+                        SQLHMM(
+                            legacy_id=inserted["_id"],
+                            cluster=annotation["cluster"],
+                            count=annotation["count"],
+                            length=annotation["length"],
+                            mean_entropy=annotation["mean_entropy"],
+                            total_entropy=annotation["total_entropy"],
+                            hidden=False,
+                            names=annotation["names"],
+                            families=annotation["families"],
+                            genera=annotation["genera"],
+                            entries=annotation["entries"],
+                        ),
+                    )
+
+                    await tracker.add(1)
+
+                await self._mongo.status.update_one(
+                    {"_id": "hmm", "updates.id": release_id},
+                    {"$set": {"installed": installed, "updates.$.ready": True}},
                     session=mongo_session,
                 )
 
-                pg_session.add(
-                    SQLHMM(
-                        legacy_id=inserted["_id"],
-                        cluster=annotation["cluster"],
-                        count=annotation["count"],
-                        length=annotation["length"],
-                        mean_entropy=annotation["mean_entropy"],
-                        total_entropy=annotation["total_entropy"],
-                        hidden=False,
-                        names=annotation["names"],
-                        families=annotation["families"],
-                        genera=annotation["genera"],
-                        entries=annotation["entries"],
-                    ),
-                )
+                # Mirror the conditional Mongo status update: set ``installed``
+                # and flip the matching update's ``ready`` flag only when the
+                # singleton row exists and carries an update for this release.
+                status = (
+                    await pg_session.execute(
+                        select(SQLHMMStatus).where(SQLHMMStatus.id == HMM_STATUS_ID),
+                    )
+                ).scalar_one_or_none()
 
-                await tracker.add(1)
+                if status is not None and any(
+                    update_.get("id") == release_id for update_ in status.updates
+                ):
+                    status.installed = installed
+                    status.updates = [
+                        {**update_, "ready": True}
+                        if update_.get("id") == release_id
+                        else update_
+                        for update_ in status.updates
+                    ]
 
-            await self._mongo.status.update_one(
-                {"_id": "hmm", "updates.id": release_id},
-                {"$set": {"installed": installed, "updates.$.ready": True}},
-                session=mongo_session,
-            )
-
-            # Mirror the conditional Mongo status update: set ``installed`` and
-            # flip the matching update's ``ready`` flag only when the singleton
-            # row exists and carries an update for this release.
-            status = (
-                await pg_session.execute(
-                    select(SQLHMMStatus).where(SQLHMMStatus.id == 1),
-                )
-            ).scalar_one_or_none()
-
-            if status is not None and any(
-                update_.get("id") == release_id for update_ in status.updates
-            ):
-                status.installed = installed
-                status.updates = [
-                    {**update_, "ready": True}
-                    if update_.get("id") == release_id
-                    else update_
-                    for update_ in status.updates
-                ]
-
-            try:
+                wrote_profiles = True
                 await self._storage.write(HMM_PROFILES_KEY, profile_data)
-            except Exception:
-                # obstore.put_async is not atomic from the caller's
-                # perspective: a failure can leave an incomplete multipart
-                # upload on S3 or a partially written file on disk. Cleanup
-                # keeps a retry from being shadowed by orphaned data. Re-raising
-                # rolls back both database transactions.
+        except Exception:
+            # Clean up the profiles blob on any failure from the write attempt
+            # onward, then re-raise. ``write`` is not atomic from the caller's
+            # perspective: a failure can leave an incomplete multipart upload on
+            # S3 or a partially written file on disk. A commit-time failure when
+            # ``both_transactions`` exits rolls back both databases but leaves a
+            # fully written blob orphaned ahead of them. ``wrote_profiles`` gates
+            # the delete so a failure before the write does not destroy a prior
+            # install's profiles file. ``delete`` is idempotent.
+            if wrote_profiles:
                 await self._storage.delete(HMM_PROFILES_KEY)
-                raise
+            raise
 
     async def download_profiles(self) -> tuple[AsyncIterator[bytes], int]:
         try:
@@ -288,7 +295,7 @@ class HmmsData(DataLayerDomain):
 
             await pg_session.execute(
                 update(SQLHMMStatus)
-                .where(SQLHMMStatus.id == 1)
+                .where(SQLHMMStatus.id == HMM_STATUS_ID)
                 .values(installed=None, task_id=None, updates=[]),
             )
 
