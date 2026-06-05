@@ -3,13 +3,14 @@ from virtool.data.transforms import apply_transforms
 from virtool.fake.next import DataFaker
 from virtool.subtractions.db import (
     AttachSubtractionsTransform,
+    get_missing_subtraction_ids,
     unlink_default_subtractions,
 )
 from virtool.uploads.sql import UploadType
 
 
 class TestAttachSubtractions:
-    async def test_single(self, fake: DataFaker, mongo, snapshot):
+    async def test_single(self, fake: DataFaker, pg, snapshot):
         """Test attaching a single subtraction."""
         user = await fake.users.create()
         upload = await fake.uploads.create(
@@ -26,11 +27,11 @@ class TestAttachSubtractions:
 
         documents = {"id": "sub_1", "subtractions": subtraction_ids}
         result = await apply_transforms(
-            documents, [AttachSubtractionsTransform(mongo)], None
+            documents, [AttachSubtractionsTransform(pg)], pg
         )
         assert result == snapshot
 
-    async def test_multiple(self, fake: DataFaker, mongo, snapshot):
+    async def test_multiple(self, fake: DataFaker, pg, snapshot):
         """Test attaching multiple subtractions."""
         user = await fake.users.create()
         upload = await fake.uploads.create(
@@ -51,9 +52,39 @@ class TestAttachSubtractions:
             {"id": "sub_3", "subtractions": []},
         ]
         result = await apply_transforms(
-            documents, [AttachSubtractionsTransform(mongo)], None
+            documents, [AttachSubtractionsTransform(pg)], pg
         )
         assert result == snapshot
+
+
+class TestGetMissingSubtractionIds:
+    async def test_all_exist(self, fake: DataFaker, pg):
+        """No ids are reported missing when every subtraction exists."""
+        user = await fake.users.create()
+        upload = await fake.uploads.create(
+            user=user, upload_type=UploadType.subtraction, name="foobar.fq.gz"
+        )
+
+        subtraction = await fake.subtractions.create(user=user, upload=upload)
+
+        assert await get_missing_subtraction_ids(pg, [subtraction.id]) == set()
+
+    async def test_some_missing(self, fake: DataFaker, pg):
+        """Only the non-existent ids are returned, unchanged."""
+        user = await fake.users.create()
+        upload = await fake.uploads.create(
+            user=user, upload_type=UploadType.subtraction, name="foobar.fq.gz"
+        )
+
+        subtraction = await fake.subtractions.create(user=user, upload=upload)
+
+        assert await get_missing_subtraction_ids(
+            pg, [subtraction.id, "does_not_exist"]
+        ) == {"does_not_exist"}
+
+    async def test_empty(self, pg):
+        """An empty input yields an empty set without querying."""
+        assert await get_missing_subtraction_ids(pg, []) == set()
 
 
 async def test_get_linked_samples(fake: DataFaker, mongo):

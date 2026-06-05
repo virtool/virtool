@@ -1,8 +1,9 @@
 from motor.motor_asyncio import AsyncIOMotorClientSession
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool.data.errors import ResourceConflictError
-from virtool.mongo.utils import check_missing_ids
 from virtool.samples.utils import check_labels
+from virtool.subtractions.db import get_missing_subtraction_ids
 
 
 async def check_name_is_in_use(
@@ -21,11 +22,9 @@ async def check_name_is_in_use(
 
 
 async def check_subtractions_do_not_exist(
-    db, subtractions: list[str], session: AsyncIOMotorClientSession | None = None
+    pg: AsyncEngine, subtractions: list[str]
 ) -> None:
-    if non_existent_subtractions := await check_missing_ids(
-        db.subtraction, subtractions, session=session
-    ):
+    if non_existent_subtractions := await get_missing_subtraction_ids(pg, subtractions):
         raise ResourceConflictError(
             f"Subtractions do not exist: {','.join(non_existent_subtractions)}"
         )

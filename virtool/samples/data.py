@@ -54,6 +54,7 @@ from virtool.storage.cleanup import delete_prefix
 from virtool.storage.protocol import StorageBackend
 from virtool.subtractions.db import (
     AttachSubtractionsTransform,
+    get_missing_subtraction_ids,
 )
 from virtool.uploads.sql import SQLUpload
 from virtool.uploads.utils import is_gzip_compressed, upload_file_key
@@ -232,7 +233,7 @@ class SamplesData(DataLayerDomain):
                 AttachArtifactsAndReadsTransform(self._pg),
                 AttachJobTransform(self._pg),
                 AttachLabelsTransform(self._pg),
-                AttachSubtractionsTransform(self._mongo),
+                AttachSubtractionsTransform(self._pg),
                 AttachUploadsTransform(self._pg),
                 AttachUserTransform(self._pg),
             ],
@@ -285,7 +286,7 @@ class SamplesData(DataLayerDomain):
         await wait_for_checks(
             check_name_is_in_use(self._mongo, data.name),
             check_labels_do_not_exist(self._pg, data.labels),
-            check_subtractions_do_not_exist(self._mongo, data.subtractions),
+            check_subtractions_do_not_exist(self._pg, data.subtractions),
         )
 
         try:
@@ -496,7 +497,7 @@ class SamplesData(DataLayerDomain):
 
         if "subtractions" in data:
             aws.append(
-                check_subtractions_do_not_exist(self._mongo, data["subtractions"]),
+                check_subtractions_do_not_exist(self._pg, data["subtractions"]),
             )
 
         await wait_for_checks(*aws)
@@ -564,8 +565,8 @@ class SamplesData(DataLayerDomain):
             raise ResourceConflictError("No ready index")
 
         if subtractions is not None:
-            non_existent_subtractions = await virtool.mongo.utils.check_missing_ids(
-                self._mongo.subtraction,
+            non_existent_subtractions = await get_missing_subtraction_ids(
+                self._pg,
                 subtractions,
             )
 

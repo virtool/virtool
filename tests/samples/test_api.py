@@ -1,6 +1,7 @@
 import asyncio
 import gzip
 import io
+from datetime import datetime
 from http import HTTPStatus
 from pathlib import Path
 
@@ -24,6 +25,7 @@ from virtool.samples.fake import create_fake_sample
 from virtool.samples.models import WorkflowState
 from virtool.samples.sql import SQLSampleArtifact, SQLSampleReads
 from virtool.settings.oas import UpdateSettingsRequest
+from virtool.subtractions.pg import SQLSubtraction
 from virtool.users.oas import UpdateUserRequest
 
 
@@ -33,19 +35,14 @@ class MockJobInterface:
 
 
 @pytest.fixture
-async def get_sample_ready_false(fake: DataFaker, mongo: Mongo, static_time):
+async def get_sample_ready_false(
+    fake: DataFaker, mongo: Mongo, insert_subtractions, static_time
+):
     label = await fake.labels.create()
     user = await fake.users.create()
     job = await fake.jobs.create(user, workflow="create_sample")
 
-    await mongo.subtraction.insert_many(
-        [
-            {"_id": "apple", "name": "Apple"},
-            {"_id": "pear", "name": "Pear"},
-            {"_id": "peach", "name": "Peach"},
-        ],
-        session=None,
-    )
+    await insert_subtractions(("apple", "Apple"), ("pear", "Pear"), ("peach", "Peach"))
 
     await mongo.samples.insert_one(
         {
@@ -92,6 +89,7 @@ async def get_sample_ready_false(fake: DataFaker, mongo: Mongo, static_time):
 async def get_sample_data(
     mongo: "Mongo",
     fake: DataFaker,
+    insert_subtractions,
     pg: AsyncEngine,
     static_time,
 ):
@@ -100,14 +98,7 @@ async def get_sample_data(
     job = await fake.jobs.create(user, workflow="create_sample")
 
     await asyncio.gather(
-        mongo.subtraction.insert_many(
-            [
-                {"_id": "apple", "name": "Apple"},
-                {"_id": "pear", "name": "Pear"},
-                {"_id": "peach", "name": "Peach"},
-            ],
-            session=None,
-        ),
+        insert_subtractions(("apple", "Apple"), ("pear", "Pear"), ("peach", "Peach")),
         mongo.samples.insert_one(
             {
                 "_id": "test",
@@ -466,7 +457,7 @@ class TestCreate:
         data_layer: DataLayer,
         fake: DataFaker,
         snapshot_recent,
-        mongo: Mongo,
+        insert_subtractions,
         spawn_client: ClientSpawner,
     ):
         client = await spawn_client(
@@ -497,7 +488,7 @@ class TestCreate:
         label = await fake.labels.create()
         upload = await fake.uploads.create(user=await fake.users.create())
 
-        await mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"})
+        await insert_subtractions(("apple", "Apple"))
 
         data = {
             "files": [upload.id],
@@ -519,6 +510,7 @@ class TestCreate:
         fake: DataFaker,
         snapshot,
         mongo: Mongo,
+        insert_subtractions,
         spawn_client: ClientSpawner,
         static_time,
     ):
@@ -541,7 +533,7 @@ class TestCreate:
                     "ready": True,
                 },
             ),
-            mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
+            insert_subtractions(("apple", "Apple")),
         )
 
         resp = await client.post(
@@ -558,7 +550,7 @@ class TestCreate:
         error: str | None,
         fake: DataFaker,
         resp_is,
-        mongo: Mongo,
+        insert_subtractions,
         spawn_client: ClientSpawner,
     ):
         """Test that when ``force_choice`` is enabled, a request with no group field passed
@@ -579,7 +571,7 @@ class TestCreate:
             get_data_from_app(client.app).settings.update(
                 UpdateSettingsRequest(sample_group="force_choice"),
             ),
-            mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
+            insert_subtractions(("apple", "Apple")),
         )
 
         data = {
@@ -600,7 +592,7 @@ class TestCreate:
         self,
         fake: DataFaker,
         resp_is,
-        mongo: Mongo,
+        insert_subtractions,
         spawn_client: ClientSpawner,
     ):
         client = await spawn_client(
@@ -620,7 +612,7 @@ class TestCreate:
                     sample_group="force_choice",
                 ),
             ),
-            mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
+            insert_subtractions(("apple", "Apple")),
         )
 
         resp = await client.post(
@@ -660,7 +652,7 @@ class TestCreate:
         self,
         one_exists: bool,
         fake: DataFaker,
-        mongo: Mongo,
+        insert_subtractions,
         spawn_client: ClientSpawner,
         resp_is,
     ):
@@ -673,11 +665,7 @@ class TestCreate:
             permissions=[Permission.create_sample],
         )
 
-        await mongo.subtraction.insert_one(
-            {
-                "_id": "apple",
-            },
-        )
+        await insert_subtractions(("apple", "Apple"))
 
         if one_exists:
             upload = await fake.uploads.create(user=await fake.users.create())
@@ -808,6 +796,7 @@ class TestEdit:
         fake: DataFaker,
         snapshot,
         mongo: Mongo,
+        insert_subtractions,
         spawn_client: ClientSpawner,
     ):
         """Test that a ``bad_request`` is returned if the subtraction passed in
@@ -830,7 +819,7 @@ class TestEdit:
                     "user": {"id": user.id},
                 },
             ),
-            mongo.subtraction.insert_one({"_id": "foo", "name": "Foo"}),
+            insert_subtractions(("foo", "Foo")),
         )
 
         resp = await client.patch("/samples/test", {"subtractions": ["foo", "bar"]})
@@ -1044,6 +1033,7 @@ async def test_find_analyses(
     fake: DataFaker,
     snapshot: SnapshotAssertion,
     mongo: Mongo,
+    insert_subtractions,
     pg: AsyncEngine,
     spawn_client: ClientSpawner,
     static_time,
@@ -1070,9 +1060,7 @@ async def test_find_analyses(
     )
 
     await asyncio.gather(
-        mongo.subtraction.insert_one(
-            {"_id": "foo", "name": "Malus domestica", "nickname": "Apple"},
-        ),
+        insert_subtractions(("foo", "Malus domestica")),
         mongo.references.insert_many(
             [
                 {"_id": "foo", "archived": False, "data_type": "genome", "name": "Foo"},
@@ -1185,10 +1173,18 @@ class TestAnalyze:
         )
 
     @staticmethod
-    async def _insert_subtraction(mongo: Mongo) -> None:
-        await mongo.subtraction.insert_one(
-            {"_id": "subtraction_1", "name": "Subtraction 1"},
-        )
+    async def _insert_subtraction(pg: AsyncEngine) -> None:
+        async with AsyncSession(pg) as session:
+            session.add(
+                SQLSubtraction(
+                    legacy_id="subtraction_1",
+                    name="Subtraction 1",
+                    created_at=datetime(2015, 10, 6, 20, 0, 0),
+                    ready=True,
+                ),
+            )
+
+            await session.commit()
 
     @staticmethod
     async def _insert_sample(client: VirtoolTestClient, fake: DataFaker) -> None:
@@ -1211,12 +1207,13 @@ class TestAnalyze:
         analyze_client: VirtoolTestClient,
         fake: DataFaker,
         mongo: Mongo,
+        pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         static_time,
     ):
         await self._insert_reference(mongo)
         await self._insert_index(mongo)
-        await self._insert_subtraction(mongo)
+        await self._insert_subtraction(pg)
         await self._insert_sample(analyze_client, fake)
 
         resp = await self._post(analyze_client)
@@ -1229,11 +1226,11 @@ class TestAnalyze:
         self,
         analyze_client: VirtoolTestClient,
         fake: DataFaker,
-        mongo: Mongo,
+        pg: AsyncEngine,
         resp_is,
         static_time,
     ):
-        await self._insert_subtraction(mongo)
+        await self._insert_subtraction(pg)
         await self._insert_sample(analyze_client, fake)
 
         resp = await self._post(analyze_client)
@@ -1245,12 +1242,13 @@ class TestAnalyze:
         analyze_client: VirtoolTestClient,
         fake: DataFaker,
         mongo: Mongo,
+        pg: AsyncEngine,
         resp_is,
         static_time,
     ):
         await self._insert_reference(mongo, archived=True)
         await self._insert_index(mongo)
-        await self._insert_subtraction(mongo)
+        await self._insert_subtraction(pg)
         await self._insert_sample(analyze_client, fake)
 
         resp = await self._post(analyze_client)
@@ -1262,11 +1260,12 @@ class TestAnalyze:
         analyze_client: VirtoolTestClient,
         fake: DataFaker,
         mongo: Mongo,
+        pg: AsyncEngine,
         resp_is,
         static_time,
     ):
         await self._insert_reference(mongo)
-        await self._insert_subtraction(mongo)
+        await self._insert_subtraction(pg)
         await self._insert_sample(analyze_client, fake)
 
         resp = await self._post(analyze_client)
@@ -1278,12 +1277,13 @@ class TestAnalyze:
         analyze_client: VirtoolTestClient,
         fake: DataFaker,
         mongo: Mongo,
+        pg: AsyncEngine,
         resp_is,
         static_time,
     ):
         await self._insert_reference(mongo)
         await self._insert_index(mongo, ready=False)
-        await self._insert_subtraction(mongo)
+        await self._insert_subtraction(pg)
         await self._insert_sample(analyze_client, fake)
 
         resp = await self._post(analyze_client)
@@ -1310,12 +1310,13 @@ class TestAnalyze:
         self,
         analyze_client: VirtoolTestClient,
         mongo: Mongo,
+        pg: AsyncEngine,
         resp_is,
         static_time,
     ):
         await self._insert_reference(mongo)
         await self._insert_index(mongo)
-        await self._insert_subtraction(mongo)
+        await self._insert_subtraction(pg)
 
         resp = await self._post(analyze_client)
 

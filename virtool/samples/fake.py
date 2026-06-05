@@ -1,5 +1,8 @@
 from pathlib import Path
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from virtool.data.utils import get_data_from_app
 from virtool.example import example_path
 from virtool.fake.wrapper import FakerWrapper
@@ -9,6 +12,7 @@ from virtool.samples.files import create_reads_file
 from virtool.samples.utils import sample_file_key
 from virtool.settings.models import Settings
 from virtool.storage.protocol import STORAGE_CHUNK_SIZE, StorageBackend
+from virtool.subtractions.pg import SQLSubtraction
 from virtool.types import App
 
 SAMPLE_ID_UNPAIRED = "sample_unpaired"
@@ -71,7 +75,14 @@ async def create_fake_sample(
     pg = app["pg"]
     storage: StorageBackend = app["storage"]
 
-    subtraction_ids = [doc["_id"] async for doc in mongo.subtraction.find()][:2]
+    async with AsyncSession(pg) as session:
+        result = await session.execute(
+            select(SQLSubtraction.legacy_id)
+            .where(SQLSubtraction.legacy_id.isnot(None))
+            .limit(2),
+        )
+
+        subtraction_ids = list(result.scalars().all())
 
     if finalized is True:
         if paired:
