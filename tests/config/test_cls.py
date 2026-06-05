@@ -2,7 +2,11 @@ from pathlib import Path
 
 import pytest
 
-from virtool.config.cls import ServerConfig
+from virtool.config.cls import (
+    CACHE_STORAGE_BUDGET,
+    ServerConfig,
+    TaskRunnerConfig,
+)
 
 
 def build_server_config(**overrides) -> ServerConfig:
@@ -44,6 +48,34 @@ class TestFallbackPathValidation:
     def test_valid_directory_ok(self, tmp_path: Path):
         config = build_server_config(storage_fallback_path=tmp_path)
         assert config.storage_fallback_path == tmp_path
+
+
+def build_task_runner_config(**overrides) -> TaskRunnerConfig:
+    defaults = {
+        "base_url": "",
+        "host": "localhost",
+        "mongodb_connection_string": "mongodb://localhost:27017/virtool",
+        "no_revision_check": True,
+        "port": 9950,
+        "postgres_connection_string": "postgresql://virtool:virtool@localhost/virtool",
+        "sentry_dsn": "",
+        "storage_backend": "s3",
+        "storage_s3_bucket": "test-bucket",
+    }
+    defaults.update(overrides)
+    return TaskRunnerConfig(**defaults)
+
+
+def test_cache_storage_budget_default():
+    assert build_server_config().cache_storage_budget == CACHE_STORAGE_BUDGET
+
+
+@pytest.mark.parametrize(
+    "build_config", [build_server_config, build_task_runner_config]
+)
+def test_cache_storage_budget_must_be_positive(build_config):
+    with pytest.raises(ValueError, match="greater than 0"):
+        build_config(cache_storage_budget=0)
 
 
 class TestStorageBackendRequired:
