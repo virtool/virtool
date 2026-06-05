@@ -160,3 +160,22 @@
     'updating': False,
   })
 # ---
+# name: test_list_updates[json]
+  list([
+    dict({
+      'body': "- remove some annotations that didn't have corresponding profiles",
+      'created_at': '2015-10-06T20:00:00Z',
+      'filename': 'vthmm.tar.gz',
+      'html_url': 'https://github.com/virtool/virtool-hmm/releases/tag/v0.2.1',
+      'id': 1230982,
+      'name': 'v0.2.1',
+      'newer': False,
+      'published_at': '2015-10-06T20:00:00Z',
+      'ready': True,
+      'size': 85904451,
+      'user': dict({
+        'id': 1,
+      }),
+    }),
+  ])
+# ---

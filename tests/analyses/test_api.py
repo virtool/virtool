@@ -41,6 +41,7 @@ async def test_find(
     fake: DataFaker,
     mocker: MockerFixture,
     mongo: Mongo,
+    insert_subtractions,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
@@ -76,9 +77,7 @@ async def test_find(
                 "labels": [],
             },
         ),
-        mongo.subtraction.insert_one(
-            {"_id": "foo", "name": "Malus domestica", "nickname": "Apple"},
-        ),
+        insert_subtractions(("foo", "Malus domestica")),
     )
 
     for document in [
@@ -149,6 +148,7 @@ async def test_get(
     error: str | None,
     fake: DataFaker,
     mongo: Mongo,
+    insert_subtractions,
     pg: AsyncEngine,
     resp_is: RespIs,
     snapshot: SnapshotAssertion,
@@ -163,10 +163,7 @@ async def test_get(
     job = await fake.jobs.create(user=user_2, state=JobState.SUCCEEDED)
 
     await asyncio.gather(
-        mongo.subtraction.insert_many(
-            [{"_id": "plum", "name": "Plum"}, {"_id": "apple", "name": "Apple"}],
-            session=None,
-        ),
+        insert_subtractions(("plum", "Plum"), ("apple", "Apple")),
         mongo.references.insert_one(
             {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
         ),
@@ -350,6 +347,7 @@ async def test_get_304(
     ready: bool,
     mongo: Mongo,
     fake: DataFaker,
+    insert_subtractions,
     pg,
     spawn_client: ClientSpawner,
     static_time,
@@ -359,10 +357,7 @@ async def test_get_304(
     user = await fake.users.create()
 
     await asyncio.gather(
-        mongo.subtraction.insert_many(
-            [{"_id": "plum", "name": "Plum"}, {"_id": "apple", "name": "Apple"}],
-            session=None,
-        ),
+        insert_subtractions(("plum", "Plum"), ("apple", "Apple")),
         mongo.references.insert_one(
             {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
         ),
@@ -414,6 +409,7 @@ async def test_remove(
     error: str | None,
     fake: DataFaker,
     mongo: Mongo,
+    insert_subtractions,
     pg: AsyncEngine,
     resp_is,
     spawn_client: ClientSpawner,
@@ -430,10 +426,7 @@ async def test_remove(
         mongo.references.insert_one(
             {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
         ),
-        mongo.subtraction.insert_many(
-            [{"_id": "plum", "name": "Plum"}, {"_id": "apple", "name": "Apple"}],
-            session=None,
-        ),
+        insert_subtractions(("plum", "Plum"), ("apple", "Apple")),
     )
 
     if error != "404_sample":

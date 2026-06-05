@@ -4,14 +4,49 @@ import asyncio
 from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from virtool.data.topg import compose_legacy_id_multi_expression
 from virtool.data.transforms import AbstractTransform
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_one_field
+from virtool.subtractions.pg import SQLSubtraction
 from virtool.subtractions.utils import get_subtraction_files
 from virtool.types import Document
+from virtool.uploads.sql import SQLUpload
 from virtool.utils import base_processor
+
+
+def map_subtraction_row(
+    subtraction: SQLSubtraction,
+    upload: SQLUpload | None,
+) -> Document:
+    """Build a legacy-shaped subtraction document from Postgres rows.
+
+    The returned document mirrors the Mongo document shape that
+    :func:`attach_computed` and the subtraction transforms consume: ``_id`` is the
+    legacy slug, and the ``file``, ``job``, ``upload``, and ``user`` fields carry
+    the reference shapes the ``AttachUploadTransform``, ``AttachJobTransform``, and
+    ``AttachUserTransform`` expect.
+
+    Postgres does not store the ``file`` snapshot, so it is rebuilt from the joined
+    upload row, which is the same upload the subtraction was created against.
+    """
+    return {
+        "_id": subtraction.legacy_id,
+        "count": subtraction.count,
+        "created_at": subtraction.created_at,
+        "file": {"id": upload.id, "name": upload.name} if upload else None,
+        "gc": subtraction.gc,
+        "job": {"id": subtraction.job_id} if subtraction.job_id is not None else None,
+        "name": subtraction.name,
+        "nickname": subtraction.nickname,
+        "ready": subtraction.ready,
+        "upload": subtraction.upload_id,
+        "user": {"id": subtraction.user_id}
+        if subtraction.user_id is not None
+        else None,
+    }
 
 
 def subtraction_processor(document: Document) -> Document:
@@ -28,42 +63,97 @@ class AttachSubtractionsTransform(AbstractTransform):
     contains a list of subtraction IDs.
     """
 
-    def __init__(self, mongo: "Mongo"):
-        self._mongo = mongo
+    def __init__(self, pg: AsyncEngine):
+        self._pg = pg
 
     async def attach_one(self, document: Document, prepared: Any) -> Document:
         return {**document, "subtractions": sorted(prepared, key=lambda x: x["name"])}
 
     async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
-        return [
-            {
-                "id": subtraction_id,
-                "name": await get_one_field(
-                    self._mongo.subtraction,
-                    "name",
-                    subtraction_id,
+        if not document["subtractions"]:
+            return []
+
+        result = await session.execute(
+            select(SQLSubtraction).where(
+                compose_legacy_id_multi_expression(
+                    SQLSubtraction, document["subtractions"]
                 ),
-            }
-            for subtraction_id in document["subtractions"]
-        ]
+            ),
+        )
+
+        lookup = _subtraction_lookup(result.scalars().all())
+
+        return [lookup[s] for s in document["subtractions"]]
 
     async def prepare_many(
         self, documents: list[Document], session: AsyncSession
     ) -> dict[str, list[dict]]:
         subtraction_ids = {s for d in documents for s in d["subtractions"]}
 
-        subtraction_lookup = {
-            d["_id"]: {"id": d["_id"], "name": d["name"]}
-            async for d in self._mongo.subtraction.find(
-                {"_id": {"$in": list(subtraction_ids)}},
-                ["_id", "name"],
+        if subtraction_ids:
+            result = await session.execute(
+                select(SQLSubtraction).where(
+                    compose_legacy_id_multi_expression(SQLSubtraction, subtraction_ids),
+                ),
             )
-        }
 
-        return {
-            d["id"]: [subtraction_lookup[s] for s in d["subtractions"]]
-            for d in documents
-        }
+            lookup = _subtraction_lookup(result.scalars().all())
+        else:
+            lookup = {}
+
+        return {d["id"]: [lookup[s] for s in d["subtractions"]] for d in documents}
+
+
+def _subtraction_lookup(
+    subtractions: list[SQLSubtraction],
+) -> dict[int | str, dict]:
+    """Build a lookup of subtraction reference shapes keyed by both modern integer
+    id and legacy string id.
+
+    Referrers are still string-keyed during the migration, so a referrer that holds
+    a legacy id resolves via ``legacy_id`` while a modern integer id resolves via
+    ``id``. The returned ``{"id", "name"}`` shape mirrors the legacy Mongo output.
+    """
+    return {
+        **{s.id: {"id": s.id, "name": s.name} for s in subtractions},
+        **{
+            s.legacy_id: {"id": s.legacy_id, "name": s.name}
+            for s in subtractions
+            if s.legacy_id is not None
+        },
+    }
+
+
+async def get_missing_subtraction_ids(
+    pg: AsyncEngine,
+    subtraction_ids: list[str | int],
+) -> set[str | int]:
+    """Return the subset of ``subtraction_ids`` that do not exist in Postgres.
+
+    Resolves ids by both legacy string id and modern integer id, returning the
+    offending input ids unchanged so callers can format errors as before.
+    """
+    if not subtraction_ids:
+        return set()
+
+    async with AsyncSession(pg) as session:
+        result = await session.execute(
+            select(SQLSubtraction.id, SQLSubtraction.legacy_id).where(
+                compose_legacy_id_multi_expression(SQLSubtraction, subtraction_ids),
+            ),
+        )
+
+        rows = result.all()
+
+    existing: set[str | int] = set()
+
+    for id_, legacy_id in rows:
+        existing |= {id_, str(id_)}
+
+        if legacy_id is not None:
+            existing.add(legacy_id)
+
+    return set(subtraction_ids) - existing
 
 
 async def attach_computed(

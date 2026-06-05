@@ -3,30 +3,12 @@
 from typing import TYPE_CHECKING, Any
 
 from aiohttp.web import Request
-from motor.motor_asyncio import AsyncIOMotorClientSession, AsyncIOMotorCollection
+from motor.motor_asyncio import AsyncIOMotorClientSession
 
 from virtool.types import App
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
-
-
-async def check_missing_ids(
-    collection: AsyncIOMotorCollection,
-    id_list: list,
-    query: dict | None = None,
-    session: AsyncIOMotorClientSession | None = None,
-) -> set[str]:
-    """Check if all IDs in the ``id_list`` exist in the database.
-
-    :param collection: the Mongo collection to check ``id_list`` against
-    :param id_list: the IDs to check for
-    :param query: a mongodb query
-    :param session: a motor session to use
-    :return: all non-existent IDs
-
-    """
-    return set(id_list) - set(await collection.distinct("_id", query, session=session))
 
 
 def get_mongo_from_app(app: App) -> "Mongo":

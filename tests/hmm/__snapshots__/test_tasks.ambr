@@ -19,6 +19,7 @@
     dict({
       '_id': 'bf1b993c',
       'cluster': 2,
+      'count': 216,
       'entries': list([
         dict({
           'accession': 'NP_040324.1',
@@ -31,8 +32,18 @@
         'Geminiviridae': 235,
         'None': 2,
       }),
+      'genera': dict({
+        'Begomovirus': 198,
+        'None': 37,
+      }),
       'hidden': False,
       'length': 356,
+      'mean_entropy': 0.52,
+      'names': list([
+        'AL1 protein',
+        'replication protein',
+        'AC1',
+      ]),
       'total_entropy': 185.12,
     }),
   ])
