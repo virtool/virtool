@@ -164,7 +164,9 @@ async def generate_annotations(pg: AsyncEngine) -> bytes:
     :return: the annotations as JSON bytes
     """
     async with AsyncSession(pg) as session:
-        rows = (await session.execute(select(SQLHMM))).scalars().all()
+        rows = (
+            (await session.execute(select(SQLHMM).order_by(SQLHMM.id))).scalars().all()
+        )
 
     annotations = [annotation_from_row(row) for row in rows]
 

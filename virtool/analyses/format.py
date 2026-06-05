@@ -236,8 +236,10 @@ async def format_nuvs(
                 "names": row.names,
             }
 
-            hmms[row.legacy_id] = annotation
             hmms[str(row.id)] = annotation
+
+            if row.legacy_id is not None:
+                hmms[row.legacy_id] = annotation
 
     for sequence in hits:
         for orf in sequence["orfs"]:

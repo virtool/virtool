@@ -267,13 +267,11 @@ class GroupsFakerDomain(DataFakerDomain):
 class HMMFakerDomain(DataFakerDomain):
     model = HMM
 
-    async def create(self, mongo: Mongo) -> HMM:
+    async def create(self) -> HMM:
         """Create a new fake hmm.
 
         The annotation is dual-written to Mongo and Postgres so it is visible
         to read paths that have been switched to Postgres.
-
-        :param mongo: the mongo DB connection
 
         :return: a new fake hmm
         """
@@ -300,8 +298,11 @@ class HMMFakerDomain(DataFakerDomain):
             "names": [faker.pystr()],
         }
 
-        async with both_transactions(mongo, self._pg) as (mongo_session, pg_session):
-            await mongo.hmm.insert_one(
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            await self._mongo.hmm.insert_one(
                 {**document, "hidden": False},
                 session=mongo_session,
             )

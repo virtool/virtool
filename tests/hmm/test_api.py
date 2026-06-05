@@ -1,3 +1,4 @@
+import gzip
 import json
 from http import HTTPStatus
 
@@ -75,9 +76,7 @@ async def test_find(
     """Check that a request with no URL parameters returns a list of HMM annotation documents read from Postgres."""
     client = await spawn_client(authenticated=True)
 
-    hmm_document["hidden"] = False
-
-    await seed_pg_hmm(hmm_document)
+    await seed_pg_hmm({**hmm_document, "hidden": False})
 
     resp = await client.get("/hmms")
 
@@ -160,8 +159,6 @@ async def test_get_hmm_annotations(
         assert response.status == HTTPStatus.OK
 
         compressed_bytes = await response.read()
-
-    import gzip
 
     decompressed = gzip.decompress(compressed_bytes)
     hmms = json.loads(decompressed)

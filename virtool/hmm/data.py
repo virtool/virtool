@@ -84,12 +84,12 @@ class HmmsData(DataLayerDomain):
 
     async def find(self, query: MultiDictProxy):
         try:
-            page = int(query["page"])
+            page = max(1, int(query["page"]))
         except (KeyError, ValueError):
             page = 1
 
         try:
-            per_page = int(query["per_page"])
+            per_page = max(1, int(query["per_page"]))
         except (KeyError, ValueError):
             per_page = 25
 
