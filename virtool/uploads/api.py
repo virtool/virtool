@@ -1,15 +1,15 @@
 from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r401, r403, r404
+from aiohttp_pydantic.oas.typing import r200, r201, r204, r401, r403, r404, r409
 from pydantic import Field, conint
 
 from virtool.api.custom_json import json_response
-from virtool.api.errors import APINotFound
+from virtool.api.errors import APIConflict, APINotFound
 from virtool.api.policy import PermissionRoutePolicy, policy
 from virtool.api.routes import Routes
 from virtool.api.streaming import stream_storage_response
 from virtool.authorization.permissions import LegacyPermission
-from virtool.data.errors import ResourceNotFoundError
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.uploads.models import Upload
 from virtool.uploads.sql import UploadType
@@ -107,7 +107,7 @@ class UploadView(PydanticView):
         )
 
     @policy(PermissionRoutePolicy(LegacyPermission.REMOVE_FILE))
-    async def delete(self, upload_id: int, /) -> r204 | r401 | r403 | r404:
+    async def delete(self, upload_id: int, /) -> r204 | r401 | r403 | r404 | r409:
         """Delete an upload.
 
         Deletes an upload using its 'upload id'.
@@ -117,11 +117,14 @@ class UploadView(PydanticView):
             401: Requires authorization
             403: Not permitted
             404: Not found
+            409: Upload is reserved and in use
         """
         try:
             await get_data_from_req(self.request).uploads.delete(upload_id)
         except ResourceNotFoundError:
             raise APINotFound()
+        except ResourceConflictError as err:
+            raise APIConflict(str(err))
 
         return Response(status=204)
 

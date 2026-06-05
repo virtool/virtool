@@ -233,3 +233,13 @@ async def test_delete(fake: DataFaker, resp_is, spawn_client: ClientSpawner):
 
     resp = await client.get("api/uploads/1")
     assert resp.status == 404
+
+
+async def test_delete_reserved(fake: DataFaker, resp_is, spawn_client: ClientSpawner):
+    """`DELETE /uploads/:id` returns 409 when the upload is reserved and in use."""
+    client = await spawn_client(authenticated=True, administrator=True)
+
+    upload = await fake.uploads.create(user=await fake.users.create(), reserved=True)
+
+    resp = await client.delete(f"/uploads/{upload.id}")
+    await resp_is.conflict(resp, "Upload is reserved and in use")

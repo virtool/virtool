@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.data.errors import ResourceNotFoundError
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.pg.utils import get_row_by_id
@@ -86,6 +86,32 @@ async def test_delete(
 
     with pytest.raises(ResourceNotFoundError):
         await data_layer.uploads.delete(before.id)
+
+
+async def test_delete_reserved(
+    data_layer: DataLayer,
+    fake: DataFaker,
+    memory_storage: StorageBackend,
+    pg: AsyncEngine,
+):
+    """A reserved upload cannot be deleted while it is in use."""
+    before = await fake.uploads.create(user=await fake.users.create(), reserved=True)
+
+    row = await get_row_by_id(pg, SQLUpload, before.id)
+    key = upload_file_key(row.name_on_disk)
+
+    with pytest.raises(ResourceConflictError):
+        await data_layer.uploads.delete(before.id)
+
+    row = await get_row_by_id(pg, SQLUpload, before.id)
+    assert row.removed is False
+    assert row.removed_at is None
+
+    found = False
+    async for info in memory_storage.list(key):
+        if info.key == key:
+            found = True
+    assert found
 
 
 @pytest.mark.parametrize("multi", [True, False])
