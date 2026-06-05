@@ -26,6 +26,7 @@ from virtool.storage.factory import create_storage_backend
 from virtool.tasks.periodic import PeriodicTaskSpawner
 from virtool.tasks.runner import TaskRunner
 from virtool.types import App
+from virtool.uploads.tasks import ReapOrphanedUploadsTask
 from virtool.utils import get_http_session_from_app
 from virtool.version import determine_server_version, get_version_from_app
 
@@ -202,6 +203,7 @@ async def startup_periodic_tasks(app: App) -> None:
         (ReferenceReleasesRefreshTask, 600),
         (ReferencesCleanTask, 3600),
         (SampleWorkflowsUpdateTask, 3600),
+        (ReapOrphanedUploadsTask, 86400),
     ]
 
     spawner = PeriodicTaskSpawner(app["data"].tasks)
