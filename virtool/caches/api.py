@@ -52,7 +52,7 @@ class CacheView(PydanticView):
                 params,
             )
         except CacheAlreadyExistsError:
-            logger.warning("cache upload skipped; key already exists", key=key)
+            logger.info("cache upload skipped; key already exists", key=key)
             return Response(status=200)
 
         logger.info("cache put", key=key, size=created.size)
