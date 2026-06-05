@@ -12,9 +12,6 @@ class AdministratorRole(str, Enum):
     SETTINGS = "settings"
     """Manage instance settings."""
 
-    SPACES = "spaces"
-    """Manage users in any space. Delete any space."""
-
     USERS = "users"
     """Create user accounts. Control activation of user accounts."""
 
