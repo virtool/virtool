@@ -142,6 +142,69 @@ class TestCreate:
         )
 
         assert sample == snapshot_recent(name="mongo")
+        assert upload.reserved is True
+
+    async def test_already_reserved(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        spawn_client: ClientSpawner,
+    ):
+        """A reserved file cannot be used to create a sample."""
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_sample],
+        )
+
+        upload = await fake.uploads.create(
+            user=await fake.users.create(),
+            reserved=True,
+        )
+
+        with pytest.raises(ResourceConflictError, match=r"File is already reserved"):
+            await data_layer.samples.create(
+                CreateSampleRequest(files=[upload.id], name="Foobar"),
+                client.user.id,
+                0,
+            )
+
+        assert await mongo.samples.find_one() is None
+
+    async def test_reservation_rolled_back_on_failure(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mocker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        spawn_client: ClientSpawner,
+    ):
+        """A failed sample insert leaves no reserved upload and no sample behind."""
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_sample],
+        )
+
+        upload = await fake.uploads.create(user=await fake.users.create())
+
+        mocker.patch.object(
+            mongo.samples,
+            "insert_one",
+            side_effect=RuntimeError("boom"),
+        )
+
+        with pytest.raises(RuntimeError, match=r"boom"):
+            await data_layer.samples.create(
+                CreateSampleRequest(files=[upload.id], name="Foobar"),
+                client.user.id,
+                0,
+            )
+
+        row = await get_row_by_id(pg, SQLUpload, upload.id)
+        assert row.reserved is False
+        assert await mongo.samples.find_one() is None
 
 
 async def test_finalize(

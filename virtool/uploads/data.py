@@ -277,24 +277,50 @@ class UploadsData(DataLayerDomain):
 
             await session.commit()
 
-    async def reserve(self, upload_ids: int | list[int]) -> None:
-        """Reserve the uploads in `upload_ids`.
+    async def reserve(
+        self,
+        upload_ids: int | list[int],
+        session: AsyncSession,
+    ) -> None:
+        """Reserve the uploads in `upload_ids` within the given session.
 
         The `reserved` field is set to `True`, preventing the uploads from being used
         for sample creation.
 
-        :param upload_ids: List of upload ids
-        """
-        if isinstance(upload_ids, int):
-            query = SQLUpload.id == upload_ids
-        else:
-            query = SQLUpload.id.in_(upload_ids)
+        The requested uploads are validated before any are reserved: if any upload is
+        missing or already reserved, a :class:`ResourceConflictError` is raised and no
+        upload is reserved. The reservation participates in the caller's transaction;
+        it is the caller's responsibility to commit ``session``.
 
-        async with AsyncSession(self._pg) as session:
+        :param upload_ids: an upload id or list of upload ids
+        :param session: the PostgreSQL session to reserve within
+        :raises ResourceConflictError: if any upload is missing or already reserved
+        """
+        ids = {upload_ids} if isinstance(upload_ids, int) else set(upload_ids)
+
+        existing = (
             await session.execute(
-                update(SQLUpload)
-                .where(query)
-                .values(reserved=True)
-                .execution_options(synchronize_session="fetch"),
+                select(SQLUpload.id, SQLUpload.reserved).where(SQLUpload.id.in_(ids)),
             )
-            await session.commit()
+        ).all()
+
+        if ids - {row.id for row in existing}:
+            raise ResourceConflictError("One or more files do not exist")
+
+        if any(row.reserved for row in existing):
+            raise ResourceConflictError("One or more files are already reserved")
+
+        # The conditional update and row-count check guard against a concurrent
+        # request reserving one of these uploads between the check above and here.
+        result = await session.execute(
+            update(SQLUpload)
+            .where(
+                SQLUpload.id.in_(ids),
+                SQLUpload.reserved == False,  # skipcq: PTC-W0068,PYL-R1714
+            )
+            .values(reserved=True)
+            .execution_options(synchronize_session=False),
+        )
+
+        if result.rowcount != len(ids):
+            raise ResourceConflictError("One or more files are already reserved")

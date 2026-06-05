@@ -141,3 +141,84 @@ async def test_release(
         reserved = [u.reserved for u in result.unique().scalars().all()]
 
     assert reserved == [False, True, False] if multi else [True, False, True]
+
+
+async def _reserved_states(pg: AsyncEngine) -> list[bool]:
+    async with AsyncSession(pg) as session:
+        result = await session.execute(select(SQLUpload).order_by(SQLUpload.id))
+        return [u.reserved for u in result.unique().scalars().all()]
+
+
+class TestReserve:
+    async def test_single(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        user = await fake.users.create()
+        upload = await fake.uploads.create(user=user)
+
+        async with AsyncSession(pg) as session:
+            await data_layer.uploads.reserve(upload.id, session)
+            await session.commit()
+
+        assert await _reserved_states(pg) == [True]
+
+    async def test_multiple(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        user = await fake.users.create()
+        first = await fake.uploads.create(user=user)
+        second = await fake.uploads.create(user=user)
+        untouched = await fake.uploads.create(user=user)
+
+        async with AsyncSession(pg) as session:
+            await data_layer.uploads.reserve([first.id, second.id], session)
+            await session.commit()
+
+        assert await _reserved_states(pg) == [True, True, False]
+        assert untouched.id
+
+    async def test_already_reserved(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """A conflict is raised and no upload is reserved when one is already taken."""
+        user = await fake.users.create()
+        free = await fake.uploads.create(user=user)
+        reserved = await fake.uploads.create(user=user, reserved=True)
+
+        with pytest.raises(
+            ResourceConflictError,
+            match=r"One or more files are already reserved",
+        ):
+            async with AsyncSession(pg) as session:
+                await data_layer.uploads.reserve([free.id, reserved.id], session)
+                await session.commit()
+
+        assert await _reserved_states(pg) == [False, True]
+
+    async def test_missing(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        user = await fake.users.create()
+        free = await fake.uploads.create(user=user)
+
+        with pytest.raises(
+            ResourceConflictError,
+            match=r"One or more files do not exist",
+        ):
+            async with AsyncSession(pg) as session:
+                await data_layer.uploads.reserve([free.id, 999999], session)
+                await session.commit()
+
+        assert await _reserved_states(pg) == [False]
