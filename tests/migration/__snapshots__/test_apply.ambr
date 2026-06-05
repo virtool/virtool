@@ -414,5 +414,12 @@
       'name': 'add caches last_accessed_at index',
       'revision': '840040ca7266',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 60,
+      'name': 'convert administrator_role to text',
+      'revision': '997cf9a66f10',
+    }),
   ])
 # ---

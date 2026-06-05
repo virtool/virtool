@@ -395,6 +395,17 @@ class TestSetAdministratorRole:
         with pytest.raises(ResourceNotFoundError):
             await data_layer.users.set_administrator_role(99999, AdministratorRole.BASE)
 
+    async def test_invalid_role_raises(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+    ):
+        """Test that set_administrator_role rejects a role outside the valid set."""
+        user = await fake.users.create()
+
+        with pytest.raises(ResourceConflictError):
+            await data_layer.users.set_administrator_role(user.id, "spaces")
+
     async def test_invalid_value_rejected(
         self,
         data_layer: DataLayer,

@@ -36,10 +36,21 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    # The upgrade remaps 'spaces' -> 'base'. That remap is not reversible: there
+    # is no way to tell which 'base' rows were originally 'spaces', so downgraded
+    # rows keep 'base'.
     op.drop_constraint("administrator_role_valid", "users", type_="check")
 
     op.execute(
         "CREATE TYPE administratorrole AS ENUM "
+        "('full', 'settings', 'spaces', 'users', 'base')",
+    )
+
+    # Coerce any value outside the recreated enum to NULL so the cast cannot fail
+    # on rows written while the column was free-form text.
+    op.execute(
+        "UPDATE users SET administrator_role = NULL "
+        "WHERE administrator_role NOT IN "
         "('full', 'settings', 'spaces', 'users', 'base')",
     )
 

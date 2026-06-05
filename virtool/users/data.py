@@ -233,7 +233,7 @@ class UsersData(DataLayerDomain):
     async def set_administrator_role(
         self,
         user_id: int,
-        role: AdministratorRole,
+        role: AdministratorRole | None,
     ) -> User:
         """Set a user's administrator role.
 
@@ -244,6 +244,12 @@ class UsersData(DataLayerDomain):
         :param role: the administrator role
         :return: the administrator
         """
+        if role is not None:
+            try:
+                role = AdministratorRole(role)
+            except ValueError as err:
+                raise ResourceConflictError("Invalid administrator role") from err
+
         async with AsyncSession(self._pg) as session:
             result = await session.execute(
                 select(SQLUser).where(SQLUser.id == user_id),
