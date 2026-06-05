@@ -13,6 +13,7 @@ from assets.revisions.rev_ld2t6tbwulbd_copy_hmm_status_to_postgres import (
     required_alembic_revision,
     upgrade,
 )
+from virtool.hmm.sql import HMM_STATUS_ID
 from virtool.migration.ctx import MigrationContext
 
 
@@ -79,7 +80,7 @@ class TestUpgrade:
                 )
             ).one()
 
-        assert row.id == 1
+        assert row.id == HMM_STATUS_ID
         assert row.errors == ["boom"]
         assert row.release == release
         assert row.installed == installed
