@@ -102,6 +102,89 @@ class TestFind:
 
         assert result == [{"id": subtraction.id, "name": "foo", "ready": True}]
 
+    async def test_search_escapes_sql_wildcards(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+    ):
+        """Search treats ``%``, ``_``, and ``\\`` as literals, not LIKE wildcards."""
+        user = await fake.users.create()
+        upload = await fake.uploads.create(
+            user=user,
+            upload_type=UploadType.subtraction,
+        )
+
+        async def named(name: str) -> str:
+            subtraction = await fake.subtractions.create(user=user, upload=upload)
+            await data_layer.subtractions.update(
+                subtraction.id,
+                UpdateSubtractionRequest(name=name, nickname=""),
+            )
+            return subtraction.id
+
+        literal_percent = await named("foo%bar")
+        await named("fooXbar")
+        literal_underscore = await named("baz_qux")
+        await named("bazYqux")
+        literal_backslash = await named("qux\\end")
+        await named("quxend")
+
+        percent = await data_layer.subtractions.find(
+            "foo%bar", False, False, _empty_query()
+        )
+        assert [d.id for d in percent.documents] == [literal_percent]
+
+        underscore = await data_layer.subtractions.find(
+            "baz_qux", False, False, _empty_query()
+        )
+        assert [d.id for d in underscore.documents] == [literal_underscore]
+
+        backslash = await data_layer.subtractions.find(
+            "qux\\end", False, False, _empty_query()
+        )
+        assert [d.id for d in backslash.documents] == [literal_backslash]
+
+    async def test_ready_filter_with_search_term(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+    ):
+        """``ready=True`` and a search term compose; counts reflect each filter."""
+        user = await fake.users.create()
+        upload = await fake.uploads.create(
+            user=user,
+            upload_type=UploadType.subtraction,
+        )
+
+        ready_match = await fake.subtractions.create(
+            user=user, upload=upload, finalized=True
+        )
+        await data_layer.subtractions.update(
+            ready_match.id,
+            UpdateSubtractionRequest(name="Arabidopsis thaliana", nickname=""),
+        )
+
+        await fake.subtractions.create(user=user, upload=upload, finalized=True)
+
+        not_ready_match = await fake.subtractions.create(
+            user=user, upload=upload, finalized=False
+        )
+        await data_layer.subtractions.update(
+            not_ready_match.id,
+            UpdateSubtractionRequest(name="Arabidopsis other", nickname=""),
+        )
+
+        await fake.subtractions.create(user=user, upload=upload, finalized=False)
+
+        result = await data_layer.subtractions.find(
+            "arabidopsis", False, True, _empty_query()
+        )
+
+        assert [d.id for d in result.documents] == [ready_match.id]
+        assert result.found_count == 1
+        assert result.ready_count == 2
+        assert result.total_count == 4
+
 
 async def test_finalize(
     fake: DataFaker,
