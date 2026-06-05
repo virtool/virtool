@@ -232,10 +232,6 @@ class TestEvictLRU:
             timedelta(hours=2),
         )
         log_info = mocker.patch("virtool.caches.data.logger.info")
-        mocker.patch(
-            "virtool.caches.data.virtool.utils.timestamp",
-            return_value=static_time.datetime,
-        )
 
         await data_layer.caches.evict_lru()
 
@@ -276,10 +272,6 @@ class TestEvictLRU:
             static_time.datetime,
             timedelta(hours=2),
         )
-        mocker.patch(
-            "virtool.caches.data.virtool.utils.timestamp",
-            return_value=static_time.datetime,
-        )
 
         await data_layer.caches.evict_lru()
 
@@ -312,10 +304,6 @@ class TestEvictLRU:
                 timedelta(hours=2, minutes=index),
             )
 
-        mocker.patch(
-            "virtool.caches.data.virtool.utils.timestamp",
-            return_value=static_time.datetime,
-        )
         real_delete = memory_storage.delete
         active_deletes = 0
         max_active_deletes = 0
@@ -369,10 +357,6 @@ class TestEvictLRU:
 
             await real_delete(key)
 
-        mocker.patch(
-            "virtool.caches.data.virtool.utils.timestamp",
-            return_value=static_time.datetime,
-        )
         mocker.patch.object(memory_storage, "delete", side_effect=delete_storage)
 
         with pytest.raises(StorageError, match="S3 5xx"):
@@ -414,17 +398,13 @@ class TestEvictLRU:
             static_time.datetime,
             timedelta(minutes=10),
         )
-        mocker.patch(
-            "virtool.caches.data.virtool.utils.timestamp",
-            return_value=static_time.datetime,
-        )
 
         await data_layer.caches.evict_lru()
 
         assert await data_layer.caches.get("recent_large")
         assert await data_layer.caches.get("recent_small")
 
-    async def test_db_delete_failure_leaves_recoverable_row_after_storage_delete(
+    async def test_db_delete_failure_can_be_retried_after_storage_delete(
         self,
         data_layer: DataLayer,
         memory_storage: StorageBackend,
@@ -441,18 +421,27 @@ class TestEvictLRU:
             static_time.datetime,
             timedelta(hours=2),
         )
-        mocker.patch(
-            "virtool.caches.data.virtool.utils.timestamp",
-            return_value=static_time.datetime,
-        )
-        mocker.patch.object(
-            AsyncSession,
-            "commit",
-            side_effect=RuntimeError("simulated commit failure"),
-        )
+        real_commit = AsyncSession.commit
+        fail_next_commit = True
+
+        async def commit(session: AsyncSession) -> None:
+            nonlocal fail_next_commit
+
+            if fail_next_commit:
+                fail_next_commit = False
+                raise RuntimeError("simulated commit failure")
+
+            await real_commit(session)
+
+        mocker.patch.object(AsyncSession, "commit", commit)
 
         with pytest.raises(RuntimeError, match="simulated commit failure"):
             await data_layer.caches.evict_lru()
+
+        with pytest.raises(StorageKeyNotFoundError):
+            [chunk async for chunk in memory_storage.read(storage_key)]
+
+        await data_layer.caches.evict_lru()
 
         async with AsyncSession(pg) as session:
             row = (
@@ -461,7 +450,4 @@ class TestEvictLRU:
                 )
             ).scalar_one_or_none()
 
-        assert row is not None
-
-        with pytest.raises(StorageKeyNotFoundError):
-            [chunk async for chunk in memory_storage.read(storage_key)]
+        assert row is None
