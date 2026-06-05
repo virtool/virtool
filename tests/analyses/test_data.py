@@ -20,7 +20,7 @@ from virtool.utils import timestamp
 
 
 @pytest.fixture
-async def setup_sample(mongo: "Mongo", fake: DataFaker) -> str:
+async def setup_sample(mongo: "Mongo", fake: DataFaker, insert_subtractions) -> str:
     user = await fake.users.create()
 
     await asyncio.gather(
@@ -73,18 +73,9 @@ async def setup_sample(mongo: "Mongo", fake: DataFaker) -> str:
                 "name": "Test Reference",
             },
         ),
-        mongo.subtraction.insert_many(
-            [
-                {
-                    "_id": "subtraction_1",
-                    "name": "Subtraction 1",
-                },
-                {
-                    "_id": "subtraction_2",
-                    "name": "Subtraction 2",
-                },
-            ],
-            session=None,
+        insert_subtractions(
+            ("subtraction_1", "Subtraction 1"),
+            ("subtraction_2", "Subtraction 2"),
         ),
     )
     return user.id

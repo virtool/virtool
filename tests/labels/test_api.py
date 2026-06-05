@@ -197,6 +197,7 @@ async def test_remove(
     mock_samples: list[dict],
     snapshot,
     mongo: Mongo,
+    insert_subtractions,
     spawn_client: ClientSpawner,
 ):
     """Test that a label can be deleted to the database at ``DELETE /labels/:label_id``.
@@ -209,10 +210,7 @@ async def test_remove(
     label_2 = await fake.labels.create()
     label_3 = await fake.labels.create()
 
-    await mongo.subtraction.insert_many(
-        [{"_id": "foo", "name": "Foo"}, {"_id": "bar", "name": "Bar"}],
-        session=None,
-    )
+    await insert_subtractions(("foo", "Foo"), ("bar", "Bar"))
 
     mock_samples[0].update({"labels": [label_1.id, label_3.id]})
     mock_samples[1].update({"labels": [label_2.id, label_3.id]})

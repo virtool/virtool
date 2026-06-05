@@ -188,7 +188,7 @@ class AnalysisData(DataLayerDomain):
                 AttachMLTransform(self._pg),
                 AttachJobTransform(self._pg),
                 AttachReferenceTransform(self._mongo),
-                AttachSubtractionsTransform(self._mongo),
+                AttachSubtractionsTransform(self._pg),
                 AttachUserTransform(self._pg),
             ],
             self._pg,
@@ -249,7 +249,7 @@ class AnalysisData(DataLayerDomain):
             AttachJobTransform(self._pg),
             AttachMLTransform(self._pg),
             AttachReferenceTransform(self._mongo),
-            AttachSubtractionsTransform(self._mongo),
+            AttachSubtractionsTransform(self._pg),
             AttachUserTransform(self._pg),
         ]
 

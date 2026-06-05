@@ -29,19 +29,14 @@ from virtool.users.oas import UpdateUserRequest
 
 
 @pytest.fixture
-async def get_sample_ready_false(fake: DataFaker, mongo: Mongo, static_time):
+async def get_sample_ready_false(
+    fake: DataFaker, mongo: Mongo, insert_subtractions, static_time
+):
     label = await fake.labels.create()
     user = await fake.users.create()
     job = await fake.jobs.create(user, workflow="create_sample")
 
-    await mongo.subtraction.insert_many(
-        [
-            {"_id": "apple", "name": "Apple"},
-            {"_id": "pear", "name": "Pear"},
-            {"_id": "peach", "name": "Peach"},
-        ],
-        session=None,
-    )
+    await insert_subtractions(("apple", "Apple"), ("pear", "Pear"), ("peach", "Peach"))
 
     await mongo.samples.insert_one(
         {
@@ -94,6 +89,7 @@ class TestCreate:
         group_setting: str,
         data_layer: DataLayer,
         fake: DataFaker,
+        insert_subtractions,
         pg: AsyncEngine,
         mongo: Mongo,
         snapshot_recent,
@@ -126,9 +122,7 @@ class TestCreate:
         label = await fake.labels.create()
         upload = await fake.uploads.create(user=await fake.users.create())
 
-        await asyncio.gather(
-            mongo.subtraction.insert_one({"_id": "apple", "name": "Apple"}),
-        )
+        await insert_subtractions(("apple", "Apple"))
 
         data = {
             "files": [upload.id],
