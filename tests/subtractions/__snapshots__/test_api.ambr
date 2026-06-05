@@ -843,10 +843,10 @@
           'id': 1,
           'name': 'test.fq.gz',
         }),
-        'id': 'bf1b993c',
+        'id': '7cf872dc',
         'job': dict({
           'created_at': 'approximately_now_isoformat',
-          'id': 1,
+          'id': 3,
           'progress': 0,
           'state': 'pending',
           'user': dict({
@@ -870,10 +870,10 @@
           'id': 1,
           'name': 'test.fq.gz',
         }),
-        'id': '7cf872dc',
+        'id': '3cbb22cc',
         'job': dict({
           'created_at': 'approximately_now_isoformat',
-          'id': 3,
+          'id': 4,
           'progress': 0,
           'state': 'pending',
           'user': dict({

@@ -9,9 +9,43 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.data.transforms import AbstractTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
+from virtool.subtractions.pg import SQLSubtraction
 from virtool.subtractions.utils import get_subtraction_files
 from virtool.types import Document
+from virtool.uploads.sql import SQLUpload
 from virtool.utils import base_processor
+
+
+def map_subtraction_row(
+    subtraction: SQLSubtraction,
+    upload: SQLUpload | None,
+) -> Document:
+    """Build a legacy-shaped subtraction document from Postgres rows.
+
+    The returned document mirrors the Mongo document shape that
+    :func:`attach_computed` and the subtraction transforms consume: ``_id`` is the
+    legacy slug, and the ``file``, ``job``, ``upload``, and ``user`` fields carry
+    the reference shapes the ``AttachUploadTransform``, ``AttachJobTransform``, and
+    ``AttachUserTransform`` expect.
+
+    Postgres does not store the ``file`` snapshot, so it is rebuilt from the joined
+    upload row, which is the same upload the subtraction was created against.
+    """
+    return {
+        "_id": subtraction.legacy_id,
+        "count": subtraction.count,
+        "created_at": subtraction.created_at,
+        "file": {"id": upload.id, "name": upload.name} if upload else None,
+        "gc": subtraction.gc,
+        "job": {"id": subtraction.job_id} if subtraction.job_id is not None else None,
+        "name": subtraction.name,
+        "nickname": subtraction.nickname,
+        "ready": subtraction.ready,
+        "upload": subtraction.upload_id,
+        "user": {"id": subtraction.user_id}
+        if subtraction.user_id is not None
+        else None,
+    }
 
 
 def subtraction_processor(document: Document) -> Document:

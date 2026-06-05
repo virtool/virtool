@@ -4,18 +4,17 @@ from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING
 
 from multidict import MultiDictProxy
-from sqlalchemy import select, update
+from sqlalchemy import func, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
 import virtool.mongo.utils
 import virtool.utils
-from virtool.api.utils import compose_regex_query
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emits
-from virtool.data.topg import both_transactions
+from virtool.data.topg import both_transactions, compose_legacy_id_single_expression
 from virtool.data.transforms import apply_transforms
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.utils import get_one_field
@@ -24,6 +23,7 @@ from virtool.storage.cleanup import delete_prefix
 from virtool.storage.protocol import StorageBackend
 from virtool.subtractions.db import (
     attach_computed,
+    map_subtraction_row,
     unlink_default_subtractions,
 )
 from virtool.subtractions.models import (
@@ -54,6 +54,22 @@ if TYPE_CHECKING:
 logger = get_logger("subtractions")
 
 
+def _compose_subtraction_search_filter(term: str):
+    """Compose a case-insensitive substring match on ``name`` and ``nickname``.
+
+    Mirrors the Mongo ``compose_regex_query`` behaviour the find endpoint used
+    before reading from Postgres: the term is matched literally, so SQL ``LIKE``
+    wildcards in the term are escaped rather than interpreted.
+    """
+    escaped = term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    pattern = f"%{escaped}%"
+
+    return or_(
+        SQLSubtraction.name.ilike(pattern, escape="\\"),
+        SQLSubtraction.nickname.ilike(pattern, escape="\\"),
+    )
+
+
 class SubtractionsData(DataLayerDomain):
     name = "subtractions"
 
@@ -70,106 +86,79 @@ class SubtractionsData(DataLayerDomain):
         self._storage = storage
 
     async def find(self, find: str, short: bool, ready: bool, query: MultiDictProxy):
-        db_query = {}
+        not_deleted = SQLSubtraction.deleted.is_(False)
+
+        filters = [not_deleted]
 
         if find:
-            db_query = compose_regex_query(find, ["name", "nickname"])
+            filters.append(_compose_subtraction_search_filter(find))
 
         if ready:
-            db_query["ready"] = True
+            filters.append(SQLSubtraction.ready.is_(True))
 
         if short:
+            async with AsyncSession(self._pg) as session:
+                rows = (
+                    await session.execute(
+                        select(
+                            SQLSubtraction.legacy_id,
+                            SQLSubtraction.name,
+                            SQLSubtraction.ready,
+                        )
+                        .where(*filters)
+                        .order_by(SQLSubtraction.name, SQLSubtraction.id),
+                    )
+                ).all()
+
             return [
-                base_processor(document)
-                async for document in self._mongo.subtraction.find(
-                    {**db_query, "deleted": False},
-                    ["name", "ready"],
-                ).sort("name")
+                {"id": legacy_id, "name": name, "ready": is_ready}
+                for legacy_id, name, is_ready in rows
             ]
 
         page = int(query.get("page", 1))
         per_page = int(query.get("per_page", 25))
 
-        data = await self._mongo.subtraction.aggregate(
+        async with AsyncSession(self._pg) as session:
+            total_count = await session.scalar(
+                select(func.count()).select_from(SQLSubtraction).where(not_deleted),
+            )
+            ready_count = await session.scalar(
+                select(func.count())
+                .select_from(SQLSubtraction)
+                .where(not_deleted, SQLSubtraction.ready.is_(True)),
+            )
+            found_count = await session.scalar(
+                select(func.count()).select_from(SQLSubtraction).where(*filters),
+            )
+
+            rows = (
+                await session.execute(
+                    select(SQLSubtraction, SQLUpload)
+                    .outerjoin(SQLUpload, SQLSubtraction.upload_id == SQLUpload.id)
+                    .where(*filters)
+                    .order_by(SQLSubtraction.name, SQLSubtraction.id)
+                    .offset(per_page * (page - 1))
+                    .limit(per_page),
+                )
+            ).all()
+
+        documents = await apply_transforms(
             [
-                {"$match": {"deleted": False}},
-                {
-                    "$facet": {
-                        "total_count": [{"$count": "total_count"}],
-                        "ready_count": [
-                            {"$match": {"ready": True}},
-                            {"$count": "ready_count"},
-                        ],
-                        "found_count": [
-                            {"$match": db_query},
-                            {"$count": "found_count"},
-                        ],
-                        "documents": [
-                            {"$match": db_query},
-                            {"$sort": {"name": 1}},
-                            {"$skip": per_page * (page - 1)},
-                            {"$limit": per_page},
-                            {
-                                "$project": {
-                                    "id": "$_id",
-                                    "_id": False,
-                                    "count": True,
-                                    "created_at": True,
-                                    "file": True,
-                                    "ready": True,
-                                    "job": True,
-                                    "name": True,
-                                    "nickname": True,
-                                    "user": True,
-                                    "subtraction_id": True,
-                                    "gc": True,
-                                },
-                            },
-                        ],
-                    },
-                },
-                {
-                    "$project": {
-                        "documents": True,
-                        "total_count": {
-                            "$ifNull": [
-                                {"$arrayElemAt": ["$total_count.total_count", 0]},
-                                0,
-                            ],
-                        },
-                        "found_count": {
-                            "$ifNull": [
-                                {"$arrayElemAt": ["$found_count.found_count", 0]},
-                                0,
-                            ],
-                        },
-                        "ready_count": {
-                            "$ifNull": [
-                                {"$arrayElemAt": ["$ready_count.ready_count", 0]},
-                                0,
-                            ],
-                        },
-                    },
-                },
+                base_processor(map_subtraction_row(subtraction, upload))
+                for subtraction, upload in rows
             ],
-        ).to_list(length=1)
-
-        if len(data) == 0:
-            raise ResourceNotFoundError
-
-        data = data[0]
-
-        data["documents"] = await apply_transforms(
-            [base_processor(d) for d in data["documents"]],
             [AttachJobTransform(self._pg), AttachUserTransform(self._pg)],
             self._pg,
         )
 
         return SubtractionSearchResult(
-            **data,
+            documents=documents,
+            found_count=found_count,
+            total_count=total_count,
+            ready_count=ready_count,
             page=page,
             per_page=per_page,
-            page_count=math.ceil(data["found_count"] / per_page),
+            page_count=math.ceil(found_count / per_page),
         )
 
     @emits(Operation.CREATE)
@@ -246,51 +235,45 @@ class SubtractionsData(DataLayerDomain):
 
         return await self.get(new_subtraction_id)
 
-    async def get(self, subtraction_id: str) -> Subtraction:
+    async def get(self, subtraction_id: int | str) -> Subtraction:
         """Get a subtraction by its id."""
-        result = await self._mongo.subtraction.aggregate(
+        async with AsyncSession(self._pg) as session:
+            row = (
+                await session.execute(
+                    select(SQLSubtraction, SQLUpload)
+                    .outerjoin(SQLUpload, SQLSubtraction.upload_id == SQLUpload.id)
+                    .where(
+                        compose_legacy_id_single_expression(
+                            SQLSubtraction,
+                            subtraction_id,
+                        ),
+                    ),
+                )
+            ).first()
+
+        if row is None:
+            raise ResourceNotFoundError
+
+        subtraction, upload = row
+
+        document = await attach_computed(
+            self._mongo,
+            self._pg,
+            self._base_url,
+            map_subtraction_row(subtraction, upload),
+        )
+
+        document = await apply_transforms(
+            base_processor(document),
             [
-                {"$match": {"_id": subtraction_id}},
-                {
-                    "$project": {
-                        "_id": True,
-                        "count": True,
-                        "created_at": True,
-                        "file": True,
-                        "gc": True,
-                        "ready": True,
-                        "job": True,
-                        "name": True,
-                        "nickname": True,
-                        "upload": True,
-                        "user": True,
-                        "subtraction_id": True,
-                    },
-                },
+                AttachJobTransform(self._pg),
+                AttachUploadTransform(self._pg),
+                AttachUserTransform(self._pg, ignore_errors=True),
             ],
-        ).to_list(length=1)
+            self._pg,
+        )
 
-        if result:
-            document = await attach_computed(
-                self._mongo,
-                self._pg,
-                self._base_url,
-                result[0],
-            )
-
-            document = await apply_transforms(
-                base_processor(document),
-                [
-                    AttachJobTransform(self._pg),
-                    AttachUploadTransform(self._pg),
-                    AttachUserTransform(self._pg, ignore_errors=True),
-                ],
-                self._pg,
-            )
-
-            return Subtraction(**document)
-
-        raise ResourceNotFoundError
+        return Subtraction(**document)
 
     @emits(Operation.UPDATE)
     async def update(
