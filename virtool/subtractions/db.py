@@ -143,9 +143,11 @@ async def get_missing_subtraction_ids(
             ),
         )
 
+        rows = result.all()
+
     existing: set[str | int] = set()
 
-    for id_, legacy_id in result.all():
+    for id_, legacy_id in rows:
         existing |= {id_, str(id_), legacy_id}
 
     return set(subtraction_ids) - existing
