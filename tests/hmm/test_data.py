@@ -14,61 +14,80 @@ from virtool.storage.object import ObjectProvider
 from virtool.tasks.progress import AbstractProgressHandler
 
 
+async def _seed_pg_status(pg, document: dict) -> None:
+    """Mirror a Mongo HMM status singleton into the Postgres singleton."""
+    task = document.get("task")
+
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLHMMStatus(
+                id=1,
+                errors=document.get("errors", []),
+                installed=document.get("installed"),
+                release=document.get("release"),
+                task_id=task["id"] if task else None,
+                updates=document.get("updates", []),
+            ),
+        )
+        await session.commit()
+
+
 async def test_get_status(
-    config, data_layer, fake: DataFaker, mongo, snapshot, static_time
+    config, data_layer, fake: DataFaker, mongo, pg, snapshot, static_time
 ):
     """Test that function works when the HMM data are being updated and when they are not."""
     user = await fake.users.create()
 
-    await mongo.status.insert_one(
-        {
-            "_id": "hmm",
-            "updating": False,
-            "updates": [
-                {
-                    "body": "- remove some annotations that didn't have corresponding profiles",
-                    "created_at": static_time.datetime,
-                    "filename": "vthmm.tar.gz",
-                    "html_url": "https://github.com/virtool/virtool-hmm/releases/tag/v0.2.1",
-                    "id": 1230982,
-                    "name": "v0.2.1",
-                    "newer": False,
-                    "published_at": static_time.datetime,
-                    "ready": True,
-                    "size": 85904451,
-                    "user": {"id": user.id},
-                },
-            ],
-            "installed": {
+    document = {
+        "_id": "hmm",
+        "updating": False,
+        "updates": [
+            {
                 "body": "- remove some annotations that didn't have corresponding profiles",
                 "created_at": static_time.datetime,
-                "filename": "vthmm.tar.gz",
-                "html_url": "https://github.com/virtool/virtool-hmm/releases/tag/v0.2.1",
-                "id": 8472569,
-                "name": "v0.2.1",
-                "newer": True,
-                "published_at": "2017-11-10T19:12:43Z",
-                "ready": True,
-                "size": 85904451,
-                "user": {"id": user.id},
-            },
-            "release": {
-                "body": "- remove some annotations that didn't have corresponding profiles",
-                "content_type": "application/gzip",
-                "download_url": "https://github.com/virtool/virtool-hmm/releases/download/v0.2.1/vthmm.tar.gz",
-                "etag": 'W/"7bd9cdef79c82ab4d7e5cfff394cf81eaddc6f681b8202f2a7bdc65cbcc4aaea"',
                 "filename": "vthmm.tar.gz",
                 "html_url": "https://github.com/virtool/virtool-hmm/releases/tag/v0.2.1",
                 "id": 1230982,
                 "name": "v0.2.1",
                 "newer": False,
                 "published_at": static_time.datetime,
-                "retrieved_at": static_time.datetime,
+                "ready": True,
                 "size": 85904451,
+                "user": {"id": user.id},
             },
-            "errors": [],
+        ],
+        "installed": {
+            "body": "- remove some annotations that didn't have corresponding profiles",
+            "created_at": static_time.datetime,
+            "filename": "vthmm.tar.gz",
+            "html_url": "https://github.com/virtool/virtool-hmm/releases/tag/v0.2.1",
+            "id": 8472569,
+            "name": "v0.2.1",
+            "newer": True,
+            "published_at": "2017-11-10T19:12:43Z",
+            "ready": True,
+            "size": 85904451,
+            "user": {"id": user.id},
         },
-    )
+        "release": {
+            "body": "- remove some annotations that didn't have corresponding profiles",
+            "content_type": "application/gzip",
+            "download_url": "https://github.com/virtool/virtool-hmm/releases/download/v0.2.1/vthmm.tar.gz",
+            "etag": 'W/"7bd9cdef79c82ab4d7e5cfff394cf81eaddc6f681b8202f2a7bdc65cbcc4aaea"',
+            "filename": "vthmm.tar.gz",
+            "html_url": "https://github.com/virtool/virtool-hmm/releases/tag/v0.2.1",
+            "id": 1230982,
+            "name": "v0.2.1",
+            "newer": False,
+            "published_at": static_time.datetime,
+            "retrieved_at": static_time.datetime,
+            "size": 85904451,
+        },
+        "errors": [],
+    }
+
+    await mongo.status.insert_one(document)
+    await _seed_pg_status(pg, document)
 
     assert await data_layer.hmms.get_status() == snapshot
 
@@ -84,29 +103,31 @@ class TestGetStatusUpdatingFlag:
     """
 
     @staticmethod
-    async def _insert_status(mongo, updates: list[dict]) -> None:
-        await mongo.status.insert_one(
-            {
-                "_id": "hmm",
-                "updates": updates,
-                "installed": None,
-                "release": None,
-                "errors": [],
-            },
-        )
+    async def _insert_status(mongo, pg, updates: list[dict]) -> None:
+        document = {
+            "_id": "hmm",
+            "updates": updates,
+            "installed": None,
+            "release": None,
+            "errors": [],
+        }
 
-    async def test_single_in_progress_update(self, data_layer, mongo):
+        await mongo.status.insert_one(document)
+        await _seed_pg_status(pg, document)
+
+    async def test_single_in_progress_update(self, data_layer, mongo, pg):
         """A lone unfinished update reports ``updating: True``."""
-        await self._insert_status(mongo, [{"id": 1, "ready": False}])
+        await self._insert_status(mongo, pg, [{"id": 1, "ready": False}])
 
         status = await data_layer.hmms.get_status()
 
         assert status.updating is True
 
-    async def test_latest_in_progress_update(self, data_layer, mongo):
+    async def test_latest_in_progress_update(self, data_layer, mongo, pg):
         """A finished update followed by an unfinished one reports ``True``."""
         await self._insert_status(
             mongo,
+            pg,
             [{"id": 1, "ready": True}, {"id": 2, "ready": False}],
         )
 
@@ -114,21 +135,47 @@ class TestGetStatusUpdatingFlag:
 
         assert status.updating is True
 
-    async def test_latest_completed_update(self, data_layer, mongo):
+    async def test_latest_completed_update(self, data_layer, mongo, pg):
         """A latest finished update reports ``updating: False``."""
-        await self._insert_status(mongo, [{"id": 1, "ready": True}])
+        await self._insert_status(mongo, pg, [{"id": 1, "ready": True}])
 
         status = await data_layer.hmms.get_status()
 
         assert status.updating is False
 
-    async def test_no_updates(self, data_layer, mongo):
+    async def test_no_updates(self, data_layer, mongo, pg):
         """An empty ``updates`` list reports ``updating: False``."""
-        await self._insert_status(mongo, [])
+        await self._insert_status(mongo, pg, [])
 
         status = await data_layer.hmms.get_status()
 
         assert status.updating is False
+
+
+class TestGetUpdates:
+    """``get_updates`` reads ``updates`` from Postgres, newest-first."""
+
+    async def test_returns_updates_newest_first(self, data_layer, mongo, pg):
+        """Stored updates are returned in reverse insertion order."""
+        await _seed_pg_status(
+            pg,
+            {
+                "updates": [
+                    {"id": 1, "name": "v0.1.0", "ready": True},
+                    {"id": 2, "name": "v0.2.0", "ready": True},
+                ],
+            },
+        )
+
+        updates = await data_layer.hmms.get_updates()
+
+        assert [update_["id"] for update_ in updates] == [2, 1]
+
+    async def test_returns_empty_when_no_updates(self, data_layer, pg):
+        """A singleton with no updates yields an empty list."""
+        await _seed_pg_status(pg, {"updates": []})
+
+        assert await data_layer.hmms.get_updates() == []
 
 
 async def _drain(stream) -> bytes:

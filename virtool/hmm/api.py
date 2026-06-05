@@ -18,7 +18,6 @@ from virtool.data.errors import (
 from virtool.data.utils import get_data_from_req
 from virtool.hmm.models import HMM, HMMInstalled, HMMSearchResult
 from virtool.models.roles import AdministratorRole
-from virtool.mongo.utils import get_mongo_from_req, get_one_field
 
 routes = Routes()
 
@@ -105,10 +104,7 @@ class UpdatesView(PydanticView):
         Status Codes:
             200: Successful operation
         """
-        mongo = get_mongo_from_req(self.request)
-
-        updates = await get_one_field(mongo.status, "updates", "hmm") or []
-        updates.reverse()
+        updates = await get_data_from_req(self.request).hmms.get_updates()
 
         return json_response(updates)
 

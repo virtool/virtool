@@ -5,7 +5,7 @@ from collections.abc import AsyncIterator
 from aiohttp import ClientSession
 from multidict import MultiDictProxy
 from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.data.domain import DataLayerDomain
@@ -27,7 +27,6 @@ from virtool.hmm.models import HMM, HMMInstalled, HMMSearchResult, HMMStatus
 from virtool.hmm.sql import HMM_STATUS_ID, SQLHMM, SQLHMMStatus
 from virtool.hmm.tasks import HMMInstallTask
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_one_field
 from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
 from virtool.tasks.progress import (
@@ -88,13 +87,26 @@ class HmmsData(DataLayerDomain):
         raise ResourceNotFoundError()
 
     async def get_status(self):
-        document = await self._mongo.status.find_one("hmm")
+        async with AsyncSession(self._pg) as session:
+            status = (
+                await session.execute(
+                    select(SQLHMMStatus).where(SQLHMMStatus.id == HMM_STATUS_ID),
+                )
+            ).scalar_one_or_none()
 
-        document["updating"] = (
-            bool(document["updates"]) and not document["updates"][-1]["ready"]
-        )
+        if status is None:
+            raise ResourceNotFoundError
 
-        if installed := document.get("installed"):
+        document = {
+            "errors": status.errors,
+            "release": status.release,
+            "installed": status.installed,
+            "task": {"id": status.task_id} if status.task_id else None,
+            "updates": status.updates,
+            "updating": bool(status.updates) and not status.updates[-1]["ready"],
+        }
+
+        if installed := document["installed"]:
             document["installed"] = await apply_transforms(
                 installed,
                 [AttachUserTransform(self._pg)],
@@ -107,10 +119,33 @@ class HmmsData(DataLayerDomain):
 
         return HMMStatus(**document)
 
+    async def get_updates(self) -> list[dict]:
+        """List the HMM status updates, newest first."""
+        async with AsyncSession(self._pg) as session:
+            updates = (
+                await session.execute(
+                    select(SQLHMMStatus.updates).where(
+                        SQLHMMStatus.id == HMM_STATUS_ID,
+                    ),
+                )
+            ).scalar_one_or_none()
+
+        if not updates:
+            return []
+
+        return list(reversed(updates))
+
     async def install_update(self, user_id: int) -> HMMInstalled:
-        if await self._mongo.status.count_documents(
-            {"_id": "hmm", "updates.ready": False},
-        ):
+        async with AsyncSession(self._pg) as session:
+            updates = (
+                await session.execute(
+                    select(SQLHMMStatus.updates).where(
+                        SQLHMMStatus.id == HMM_STATUS_ID,
+                    ),
+                )
+            ).scalar_one_or_none()
+
+        if updates and any(not update_["ready"] for update_ in updates):
             raise ResourceConflictError("Install already in progress")
 
         await fetch_and_update_release(
@@ -120,7 +155,14 @@ class HmmsData(DataLayerDomain):
             HMM_REPO_SLUG,
         )
 
-        release = await get_one_field(self._mongo.status, "release", "hmm")
+        async with AsyncSession(self._pg) as session:
+            release = (
+                await session.execute(
+                    select(SQLHMMStatus.release).where(
+                        SQLHMMStatus.id == HMM_STATUS_ID,
+                    ),
+                )
+            ).scalar_one_or_none()
 
         if not release:
             raise ResourceError("Target release does not exist")
