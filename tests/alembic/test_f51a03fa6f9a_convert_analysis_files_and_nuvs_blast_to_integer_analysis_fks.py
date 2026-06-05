@@ -9,7 +9,7 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-DOWN_REVISION = "840040ca7266"
+DOWN_REVISION = "997cf9a66f10"
 REVISION = "f51a03fa6f9a"
 
 

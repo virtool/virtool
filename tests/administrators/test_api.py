@@ -340,7 +340,6 @@ class TestAdministratorRoles:
             AdministratorRole.BASE,
             AdministratorRole.USERS,
             AdministratorRole.SETTINGS,
-            AdministratorRole.SPACES,
             None,
         ],
     )

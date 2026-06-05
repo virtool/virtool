@@ -15,7 +15,7 @@ not resolve to an analysis aborts the migration loudly rather than being dropped
 or left NULL.
 
 Revision ID: f51a03fa6f9a
-Revises: 840040ca7266
+Revises: 997cf9a66f10
 Create Date: 2026-06-05 22:41:04.758568+00:00
 
 """
@@ -25,7 +25,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "f51a03fa6f9a"
-down_revision = "840040ca7266"
+down_revision = "997cf9a66f10"
 branch_labels = None
 depends_on = None
 

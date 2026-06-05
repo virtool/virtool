@@ -327,11 +327,6 @@
       'name': 'Settings',
     }),
     dict({
-      'description': 'Manage users in any space. Delete any space.',
-      'id': 'spaces',
-      'name': 'Spaces',
-    }),
-    dict({
       'description': 'Create user accounts. Control activation of user accounts.',
       'id': 'users',
       'name': 'Users',

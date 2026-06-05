@@ -1,12 +1,11 @@
 from datetime import datetime
 
-from sqlalchemy import Enum, ForeignKey, Index, text
+from sqlalchemy import CheckConstraint, ForeignKey, Index, String, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from virtool.groups.pg import SQLGroup
-from virtool.models.roles import AdministratorRole
 from virtool.pg.base import Base
 
 
@@ -42,10 +41,7 @@ class SQLUser(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     active: Mapped[bool] = mapped_column(default=True)
-    administrator_role: Mapped[AdministratorRole | None] = mapped_column(
-        Enum(AdministratorRole, values_callable=lambda obj: [e.value for e in obj]),
-        nullable=True,
-    )
+    administrator_role: Mapped[str | None] = mapped_column(String, nullable=True)
     email: Mapped[str] = mapped_column(default="", nullable=False)
     force_reset: Mapped[bool] = mapped_column(default=False)
     handle: Mapped[str]
@@ -57,6 +53,10 @@ class SQLUser(Base):
 
     __table_args__ = (
         Index("users_handle_lower_unique", text("lower(handle)"), unique=True),
+        CheckConstraint(
+            "administrator_role IN ('full', 'settings', 'users', 'base')",
+            name="administrator_role_valid",
+        ),
     )
 
     user_group_associations: Mapped[list[SQLUserGroup]] = relationship(
