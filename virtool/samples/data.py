@@ -572,7 +572,8 @@ class SamplesData(DataLayerDomain):
 
             if non_existent_subtractions:
                 raise ResourceConflictError(
-                    f"Subtractions do not exist: {','.join(non_existent_subtractions)}",
+                    f"Subtractions do not exist: "
+                    f"{','.join(str(s) for s in non_existent_subtractions)}",
                 )
 
     async def update_sample_workflows(self) -> None:

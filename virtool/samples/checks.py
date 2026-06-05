@@ -26,7 +26,8 @@ async def check_subtractions_do_not_exist(
 ) -> None:
     if non_existent_subtractions := await get_missing_subtraction_ids(pg, subtractions):
         raise ResourceConflictError(
-            f"Subtractions do not exist: {','.join(non_existent_subtractions)}"
+            f"Subtractions do not exist: "
+            f"{','.join(str(s) for s in non_existent_subtractions)}"
         )
 
 

@@ -30,6 +30,10 @@ def insert_subtractions(pg):
 
     Pass ``(legacy_id, name)`` pairs. The created subtractions resolve through the
     ``legacy_id`` column the way string-keyed referrers reference them.
+
+    ``created_at`` is a fixed naive-UTC literal rather than ``static_time`` because
+    that fixture patches the global clock, which would leak into consumers that
+    create entities through the data layer. The value is never surfaced.
     """
 
     async def func(*subtractions: tuple[str, str]) -> None:

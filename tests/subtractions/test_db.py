@@ -1,3 +1,6 @@
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 import virtool.subtractions.db
 from virtool.data.transforms import apply_transforms
 from virtool.fake.next import DataFaker
@@ -6,6 +9,7 @@ from virtool.subtractions.db import (
     get_missing_subtraction_ids,
     unlink_default_subtractions,
 )
+from virtool.subtractions.pg import SQLSubtraction
 from virtool.uploads.sql import UploadType
 
 
@@ -85,6 +89,33 @@ class TestGetMissingSubtractionIds:
     async def test_empty(self, pg):
         """An empty input yields an empty set without querying."""
         assert await get_missing_subtraction_ids(pg, []) == set()
+
+    async def test_resolves_legacy_and_modern_ids(self, fake: DataFaker, pg):
+        """A subtraction resolves by legacy string id, integer id, and the
+        stringified integer id, since referrers may hold any of these forms.
+        """
+        user = await fake.users.create()
+        upload = await fake.uploads.create(
+            user=user, upload_type=UploadType.subtraction, name="foobar.fq.gz"
+        )
+
+        subtraction = await fake.subtractions.create(user=user, upload=upload)
+
+        async with AsyncSession(pg) as session:
+            modern_id, legacy_id = (
+                await session.execute(
+                    select(SQLSubtraction.id, SQLSubtraction.legacy_id).where(
+                        SQLSubtraction.legacy_id == subtraction.id
+                    ),
+                )
+            ).one()
+
+        assert (
+            await get_missing_subtraction_ids(
+                pg, [legacy_id, modern_id, str(modern_id)]
+            )
+            == set()
+        )
 
 
 async def test_get_linked_samples(fake: DataFaker, mongo):
