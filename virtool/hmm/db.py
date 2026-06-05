@@ -4,11 +4,15 @@ import json
 
 import aiohttp.client_exceptions
 from aiohttp import ClientSession
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.ext.asyncio import AsyncEngine
 from structlog import get_logger
 
 import virtool.utils
+from virtool.data.topg import both_transactions
 from virtool.errors import GitHubError
 from virtool.github import get_etag, get_release
+from virtool.hmm.sql import HMM_STATUS_ID, SQLHMMStatus
 from virtool.hmm.utils import format_hmm_release
 from virtool.mongo.core import Mongo
 from virtool.types import Document
@@ -33,13 +37,18 @@ HMMS_PROJECTION = ["_id", "cluster", "names", "count", "families"]
 async def fetch_and_update_release(
     http_client: ClientSession,
     mongo,
+    pg: AsyncEngine,
     slug: str,
     ignore_errors: bool = False,
 ) -> Document:
     """Return the HMM install status document or create one if none exists.
 
+    The status is dual-written to the Mongo ``status`` singleton and the
+    Postgres ``legacy_hmm_status`` singleton in one transaction.
+
     :param mongo: the application mongo client
     :param http_client: the application http client
+    :param pg: the application Postgres client
     :param slug: the slug for the HMM GitHub repo
     :param ignore_errors: ignore possible errors when making GitHub request
     :return: the release
@@ -64,24 +73,6 @@ async def fetch_and_update_release(
         # A 304 indicates the release has not changed and `None` is returned from
         # `get_release()`.
         updated = await get_release(http_client, slug, etag)
-
-        # Release is replace with updated release if an update was found on GitHub.
-        if updated:
-            release = format_hmm_release(updated, release, installed)
-
-        release["retrieved_at"] = virtool.utils.timestamp()
-
-        # Set and empty error list since the update check was successful.
-        await mongo.status.update_one(
-            {"_id": "hmm"},
-            {"$set": {"errors": [], "installed": installed, "release": release}},
-            upsert=True,
-        )
-
-        logger.info("fetched and updated hmm release")
-
-        return release
-
     except (
         aiohttp.client_exceptions.ClientConnectorError,
         GitHubError,
@@ -97,12 +88,56 @@ async def fetch_and_update_release(
         if errors and not ignore_errors:
             raise
 
-        await mongo.status.update_one(
-            {"_id": "hmm"},
-            {"$set": {"errors": errors, "installed": installed}},
-        )
+        async with both_transactions(mongo, pg) as (mongo_session, pg_session):
+            await mongo.status.update_one(
+                {"_id": "hmm"},
+                {"$set": {"errors": errors, "installed": installed}},
+                session=mongo_session,
+            )
+
+            await pg_session.execute(
+                insert(SQLHMMStatus)
+                .values(
+                    id=HMM_STATUS_ID,
+                    errors=errors,
+                    installed=installed,
+                    release=release,
+                )
+                .on_conflict_do_update(
+                    index_elements=[SQLHMMStatus.id],
+                    set_={"errors": errors, "installed": installed},
+                ),
+            )
 
         return release
+
+    # Release is replaced with updated release if an update was found on GitHub.
+    if updated:
+        release = format_hmm_release(updated, release, installed)
+
+    release["retrieved_at"] = virtool.utils.timestamp()
+
+    # Set an empty error list since the update check was successful.
+    async with both_transactions(mongo, pg) as (mongo_session, pg_session):
+        await mongo.status.update_one(
+            {"_id": "hmm"},
+            {"$set": {"errors": [], "installed": installed, "release": release}},
+            upsert=True,
+            session=mongo_session,
+        )
+
+        await pg_session.execute(
+            insert(SQLHMMStatus)
+            .values(id=HMM_STATUS_ID, errors=[], installed=installed, release=release)
+            .on_conflict_do_update(
+                index_elements=[SQLHMMStatus.id],
+                set_={"errors": [], "installed": installed, "release": release},
+            ),
+        )
+
+    logger.info("fetched and updated hmm release")
+
+    return release
 
 
 async def generate_annotations(mongo: Mongo) -> bytes:
