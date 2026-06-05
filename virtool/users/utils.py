@@ -4,13 +4,18 @@ import bcrypt
 
 from virtool.models.enums import Permission
 
-RESERVED_HANDLES = frozenset({"unknown", "virtool"})
-"""Handles that may not be claimed by ordinary users.
+UNKNOWN_USER_HANDLE = "unknown"
+"""Handle of the lost-attribution sentinel user.
 
-``virtool`` is reserved for system-as-actor uses and ``unknown`` for
-lost-attribution sentinels (e.g. uploads whose owning user was deleted).
-Compared case-insensitively.
+Stands in for a real user who has since been deleted (e.g. the owner of an
+upload reconstructed during migration).
 """
+
+VIRTOOL_USER_HANDLE = "virtool"
+"""Handle reserved for system-as-actor uses."""
+
+RESERVED_HANDLES = frozenset({UNKNOWN_USER_HANDLE, VIRTOOL_USER_HANDLE})
+"""Handles that may not be claimed by ordinary users. Compared case-insensitively."""
 
 
 def is_reserved_handle(handle: str) -> bool:

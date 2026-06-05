@@ -17,10 +17,9 @@ from virtool.pg.base import Base
 from virtool.subtractions.pg import SQLSubtraction, SQLSubtractionFile, SubtractionType
 from virtool.uploads.sql import SQLUpload, UploadType
 from virtool.users.pg import SQLUser
+from virtool.users.utils import UNKNOWN_USER_HANDLE
 
 logger = get_logger("migration")
-
-UNKNOWN_USER_HANDLE = "unknown"
 
 
 async def copy_subtractions_to_postgres(ctx: MigrationContext) -> None:
