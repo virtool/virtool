@@ -1,8 +1,8 @@
 from datetime import timedelta
 
-from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from tests.uploads import backdate_upload
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.pg.utils import get_row_by_id
@@ -20,12 +20,9 @@ async def test_reap_orphaned_uploads_task(
     """The task deletes an old, reserved, unlinked upload when run."""
     orphan = await fake.uploads.create(user=await fake.users.create(), reserved=True)
 
+    await backdate_upload(pg, orphan.id, timedelta(days=31))
+
     async with AsyncSession(pg) as session:
-        await session.execute(
-            update(SQLUpload)
-            .where(SQLUpload.id == orphan.id)
-            .values(created_at=timestamp() - timedelta(days=31)),
-        )
         session.add(
             SQLTask(
                 id=1,

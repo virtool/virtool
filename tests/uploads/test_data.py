@@ -2,9 +2,10 @@ from datetime import timedelta
 from pathlib import Path
 
 import pytest
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from tests.uploads import backdate_upload
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
@@ -14,17 +15,6 @@ from virtool.storage.protocol import StorageBackend
 from virtool.uploads.sql import SQLUpload, UploadType
 from virtool.uploads.utils import upload_file_key
 from virtool.utils import timestamp
-
-
-async def _backdate(pg: AsyncEngine, upload_id: int, age: timedelta) -> None:
-    """Set an upload's ``created_at`` to ``age`` in the past."""
-    async with AsyncSession(pg) as session:
-        await session.execute(
-            update(SQLUpload)
-            .where(SQLUpload.id == upload_id)
-            .values(created_at=timestamp() - age),
-        )
-        await session.commit()
 
 
 async def _is_stored(storage: StorageBackend, pg: AsyncEngine, upload_id: int) -> bool:
@@ -175,7 +165,7 @@ class TestReapOrphaned:
         orphan = await fake.uploads.create(
             user=await fake.users.create(), reserved=True
         )
-        await _backdate(pg, orphan.id, OLDER_THAN_THRESHOLD)
+        await backdate_upload(pg, orphan.id, OLDER_THAN_THRESHOLD)
 
         assert await data_layer.uploads.reap_orphaned(THRESHOLD) == 1
 
@@ -215,7 +205,7 @@ class TestReapOrphaned:
         linked = await fake.uploads.create(
             user=await fake.users.create(), reserved=True
         )
-        await _backdate(pg, linked.id, OLDER_THAN_THRESHOLD)
+        await backdate_upload(pg, linked.id, OLDER_THAN_THRESHOLD)
         await _link_to_sample(pg, linked.id, "owning_sample")
 
         assert await data_layer.uploads.reap_orphaned(THRESHOLD) == 0
@@ -233,7 +223,7 @@ class TestReapOrphaned:
     ):
         """An unreserved upload is never reaped, even when old and unlinked."""
         released = await fake.uploads.create(user=await fake.users.create())
-        await _backdate(pg, released.id, OLDER_THAN_THRESHOLD)
+        await backdate_upload(pg, released.id, OLDER_THAN_THRESHOLD)
 
         assert await data_layer.uploads.reap_orphaned(THRESHOLD) == 0
 
@@ -251,7 +241,7 @@ class TestReapOrphaned:
         removed = await fake.uploads.create(
             user=await fake.users.create(), reserved=True
         )
-        await _backdate(pg, removed.id, OLDER_THAN_THRESHOLD)
+        await backdate_upload(pg, removed.id, OLDER_THAN_THRESHOLD)
         await data_layer.uploads.delete(removed.id)
 
         assert await data_layer.uploads.reap_orphaned(THRESHOLD) == 0
@@ -271,9 +261,9 @@ class TestReapOrphaned:
         linked = await fake.uploads.create(user=user, reserved=True)
         released = await fake.uploads.create(user=user)
 
-        await _backdate(pg, orphan.id, OLDER_THAN_THRESHOLD)
-        await _backdate(pg, linked.id, OLDER_THAN_THRESHOLD)
-        await _backdate(pg, released.id, OLDER_THAN_THRESHOLD)
+        await backdate_upload(pg, orphan.id, OLDER_THAN_THRESHOLD)
+        await backdate_upload(pg, linked.id, OLDER_THAN_THRESHOLD)
+        await backdate_upload(pg, released.id, OLDER_THAN_THRESHOLD)
         await _link_to_sample(pg, linked.id, "owning_sample")
 
         assert await data_layer.uploads.reap_orphaned(THRESHOLD) == 1
