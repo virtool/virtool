@@ -67,7 +67,6 @@ class ReferenceSourceOTU(BaseModel):
 class ReferenceSourceData(BaseModel):
     data_type: ReferenceDataType = ReferenceDataType.genome
     organism: str = "Unknown"
-    targets: list[str] | None = None
     otus: list[ReferenceSourceOTU] = Field(min_items=1)
 
     @validator("otus")

@@ -92,7 +92,7 @@ async def test_find(
                 "_id": "other_active",
                 "archived": False,
                 "created_at": static_time.datetime,
-                "data_type": "barcode",
+                "data_type": "genome",
                 "groups": [],
                 "internal_control": None,
                 "name": "Other Active",
@@ -105,7 +105,7 @@ async def test_find(
                 "_id": "user_member_active",
                 "archived": False,
                 "created_at": static_time.datetime,
-                "data_type": "barcode",
+                "data_type": "genome",
                 "groups": [],
                 "internal_control": None,
                 "name": "User Member Active",
@@ -119,7 +119,7 @@ async def test_find(
                 "_id": "group_member_active",
                 "archived": False,
                 "created_at": static_time.datetime,
-                "data_type": "barcode",
+                "data_type": "genome",
                 "groups": [{"id": group.id}],
                 "internal_control": None,
                 "name": "Group Member Active",
@@ -146,7 +146,7 @@ async def test_find(
                 "_id": "other_archived",
                 "archived": True,
                 "created_at": static_time.datetime,
-                "data_type": "barcode",
+                "data_type": "genome",
                 "groups": [],
                 "internal_control": None,
                 "name": "Other Archived",
@@ -252,10 +252,8 @@ class TestGet:
 
 
 class TestCreate:
-    @pytest.mark.parametrize("data_type", ["genome", "barcode"])
     async def test_ok(
         self,
-        data_type,
         data_layer: DataLayer,
         snapshot_recent,
         spawn_client: ClientSpawner,
@@ -277,7 +275,7 @@ class TestCreate:
             {
                 "name": "Test Viruses",
                 "description": "A bunch of viruses used for testing",
-                "data_type": data_type,
+                "data_type": "genome",
                 "organism": "virus",
             },
         )
@@ -427,35 +425,23 @@ class TestCreate:
         )
 
 
-@pytest.mark.parametrize("data_type", ["genome", "barcode"])
-@pytest.mark.parametrize(
-    "error",
-    [None, "403", "404", "400_invalid_input", "400_duplicates"],
-)
-async def test_edit(
-    data_type: str,
-    error: str | None,
-    fake: DataFaker,
-    mocker,
-    resp_is,
-    snapshot,
-    mongo: Mongo,
-    spawn_client: ClientSpawner,
-    static_time,
-):
-    client = await spawn_client(authenticated=True)
+class TestEdit:
+    @staticmethod
+    async def _insert_reference(
+        fake: DataFaker,
+        mongo: Mongo,
+        static_time,
+    ) -> None:
+        user_1 = await fake.users.create()
+        user_2 = await fake.users.create()
+        user_3 = await fake.users.create()
 
-    user_1 = await fake.users.create()
-    user_2 = await fake.users.create()
-    user_3 = await fake.users.create()
-
-    if error != "404":
         await mongo.references.insert_one(
             {
                 "_id": "foo",
                 "archived": False,
                 "created_at": virtool.utils.timestamp(),
-                "data_type": data_type,
+                "data_type": "genome",
                 "name": "Foo",
                 "organism": "virus",
                 "internal_control": None,
@@ -484,57 +470,76 @@ async def test_edit(
             },
         )
 
-    data = {
-        "name": "Bar",
-        "description": "This is a test reference.",
-        "targets": [{"name": "CPN60", "description": "", "required": True}],
-    }
+    async def test_ok(
+        self,
+        fake: DataFaker,
+        mocker,
+        snapshot,
+        mongo: Mongo,
+        spawn_client: ClientSpawner,
+        static_time,
+    ):
+        client = await spawn_client(authenticated=True)
 
-    if error == "400_invalid_input":
-        data["targets"] = [{"description": True}]
+        await self._insert_reference(fake, mongo, static_time)
 
-    if error == "400_duplicates":
-        data["targets"].append(
-            {
-                "name": "CPN60",
-                "description": "This has a duplicate name",
-                "required": False,
-            },
+        mocker.patch(
+            "virtool.references.api.check_right",
+            make_mocked_coro(return_value=True),
         )
 
-    can_modify = error != "403"
+        resp = await client.patch(
+            "/references/v1/foo",
+            {"name": "Bar", "description": "This is a test reference."},
+        )
 
-    mocker.patch(
-        "virtool.references.api.check_right",
-        make_mocked_coro(return_value=can_modify),
-    )
+        assert await resp.json() == snapshot(name="resp")
+        assert await mongo.references.find_one() == snapshot(name="db")
 
-    resp = await client.patch("/references/v1/foo", data)
+    async def test_insufficient_rights(
+        self,
+        fake: DataFaker,
+        mocker,
+        resp_is,
+        mongo: Mongo,
+        spawn_client: ClientSpawner,
+        static_time,
+    ):
+        client = await spawn_client(authenticated=True)
 
-    match error:
-        case None:
-            assert await resp.json() == snapshot(name="resp")
-            assert await mongo.references.find_one() == snapshot(name="db")
+        await self._insert_reference(fake, mongo, static_time)
 
-        case "400_invalid_input":
-            assert resp.status == 400
-            assert await resp.json() == [
-                {
-                    "loc": ["targets", 0, "name"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
-                    "in": "body",
-                },
-            ]
+        mocker.patch(
+            "virtool.references.api.check_right",
+            make_mocked_coro(return_value=False),
+        )
 
-        case "400_duplicates":
-            assert await resp.json() == snapshot
+        resp = await client.patch(
+            "/references/v1/foo",
+            {"name": "Bar", "description": "This is a test reference."},
+        )
 
-        case "403":
-            await resp_is.insufficient_rights(resp)
+        await resp_is.insufficient_rights(resp)
 
-        case "404":
-            await resp_is.not_found(resp)
+    async def test_not_found(
+        self,
+        mocker,
+        resp_is,
+        spawn_client: ClientSpawner,
+    ):
+        client = await spawn_client(authenticated=True)
+
+        mocker.patch(
+            "virtool.references.api.check_right",
+            make_mocked_coro(return_value=True),
+        )
+
+        resp = await client.patch(
+            "/references/v1/foo",
+            {"name": "Bar", "description": "This is a test reference."},
+        )
+
+        await resp_is.not_found(resp)
 
 
 async def test_delete(

@@ -5,7 +5,7 @@ from virtool.models.validators import prevent_none
 from virtool.references.utils import OFFICIAL_REMOTE_SLUG
 
 ALLOWED_REMOTE = [OFFICIAL_REMOTE_SLUG]
-ALLOWED_DATA_TYPE = ["barcode", "genome"]
+ALLOWED_DATA_TYPE = ["genome"]
 
 
 def check_data_type(data_type: str) -> str:
@@ -93,15 +93,6 @@ class CreateReferenceRequest(BaseModel):
         }
 
 
-class ReferenceTargetRequest(BaseModel):
-    name: constr(min_length=1)
-    description: constr(strip_whitespace=True) = Field(default="")
-    required: bool = Field(default=False)
-    length: int | None
-
-    _prevent_none = prevent_none("length")
-
-
 class UpdateReferenceRequest(BaseModel):
     name: constr(strip_whitespace=True, min_length=1) | None = Field(
         description="the virus name",
@@ -121,9 +112,6 @@ class UpdateReferenceRequest(BaseModel):
     source_types: list[constr(strip_whitespace=True, min_length=1)] | None = Field(
         description="source types",
     )
-    targets: list[ReferenceTargetRequest] | None = Field(
-        description="list of target sequences",
-    )
 
     _prevent_none = prevent_none(
         "description",
@@ -132,7 +120,6 @@ class UpdateReferenceRequest(BaseModel):
         "organism",
         "restrict_source_types",
         "source_types",
-        "targets",
     )
 
     class Config:
@@ -143,16 +130,6 @@ class UpdateReferenceRequest(BaseModel):
                 "internal_control": "ah4m5jqz",
             },
         }
-
-    @validator("targets", check_fields=False)
-    def check_targets_name(cls, targets):
-        """Sets `name` to the provided `id` if it is `None`."""
-        names = [t.name for t in targets]
-
-        if len(names) != len(set(names)):
-            raise ValueError("The targets field may not contain duplicate names")
-
-        return targets
 
 
 class ReferenceRightsRequest(BaseModel):

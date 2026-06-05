@@ -14,7 +14,6 @@ class ReferenceClonedFrom(BaseModel):
 
 
 class ReferenceDataType(str, enum.Enum):
-    barcode = "barcode"
     genome = "genome"
 
 
@@ -163,7 +162,6 @@ class Reference(ReferenceMinimal):
     groups: list[ReferenceGroup]
     restrict_source_types: bool
     source_types: list[str]
-    targets: list[dict] | None
     users: list[ReferenceUser]
 
     class Config:
