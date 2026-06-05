@@ -393,5 +393,12 @@
       'name': 'create hmms table',
       'revision': 'd28bebf9934b',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 57,
+      'name': 'copy hmm status to postgres',
+      'revision': 'ld2t6tbwulbd',
+    }),
   ])
 # ---
