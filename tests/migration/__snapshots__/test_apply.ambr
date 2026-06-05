@@ -386,5 +386,12 @@
       'name': 're-backfill subtractions to postgres',
       'revision': 'eta57bpbxmn1',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 56,
+      'name': 'create hmms table',
+      'revision': 'd28bebf9934b',
+    }),
   ])
 # ---
