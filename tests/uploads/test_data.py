@@ -168,7 +168,10 @@ class TestReserve:
         free = await fake.uploads.create(user=user)
         reserved = await fake.uploads.create(user=user, reserved=True)
 
-        with pytest.raises(ResourceConflictError):
+        with pytest.raises(
+            ResourceConflictError,
+            match=r"One or more files are already reserved",
+        ):
             async with AsyncSession(pg) as session:
                 await data_layer.uploads.reserve([free.id, reserved.id], session)
                 await session.commit()
@@ -184,7 +187,10 @@ class TestReserve:
         user = await fake.users.create()
         free = await fake.uploads.create(user=user)
 
-        with pytest.raises(ResourceConflictError):
+        with pytest.raises(
+            ResourceConflictError,
+            match=r"One or more files do not exist",
+        ):
             async with AsyncSession(pg) as session:
                 await data_layer.uploads.reserve([free.id, 999999], session)
                 await session.commit()
