@@ -226,8 +226,10 @@ register it as a revision in `assets/revisions/`:
 - Commit after each document (not in bulk) to bound memory and allow mid-run
   recovery.
 - Resolve cross-domain FKs (e.g. `user_id`, `job_id`) by querying PG. Cache
-  results in a `dict` to avoid N+1 queries. Log a warning and store `NULL` for
-  dangling references — do not fail the migration.
+  results in a `dict` to avoid N+1 queries. For **required** relationships (e.g.
+  `user`), raise if the reference cannot be resolved — do not silently store
+  `NULL`. For relationships that are explicitly optional or were historically
+  deletable (e.g. `job`), log a warning and store `NULL`.
 - After the initial backfill revision ships, add a second "re-backfill" revision
   to catch documents created between the first backfill and the dual-write
   rollout.
@@ -257,8 +259,10 @@ Both stores are now consistent. Move all reads to Postgres.
 Other domains that hold a string reference to this collection must be upgraded
 to integer FKs.
 
-- Write an Alembic migration that changes the column type and resolves existing
-  string values to their integer PK equivalents.
+- Write an Alembic migration that **adds** a nullable integer `*_id` FK column,
+  then backfill the string values to their integer PK equivalents in a downstream
+  revision. Drop the legacy string column in a later cleanup revision after
+  confirming production stability.
 - Update the referencing domain's backfill to write integer IDs.
 - Update any transform or lookup in the referencing domain that previously
   received a string ID.
