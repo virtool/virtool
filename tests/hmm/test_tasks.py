@@ -2,8 +2,10 @@ import json
 import tarfile
 from pathlib import Path
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from virtool.hmm.sql import SQLHMM
 from virtool.hmm.tasks import HMMInstallTask
 from virtool.tasks.sql import SQLTask
 from virtool.utils import get_temp_dir
@@ -11,6 +13,10 @@ from virtool.utils import get_temp_dir
 annotations = [
     {
         "families": {"None": 2, "Geminiviridae": 235},
+        "genera": {"Begomovirus": 198, "None": 37},
+        "names": ["AL1 protein", "replication protein", "AC1"],
+        "count": 216,
+        "mean_entropy": 0.52,
         "total_entropy": 185.12,
         "length": 356,
         "cluster": 2,
@@ -74,3 +80,15 @@ async def test_hmm_install_task(
         [chunk async for chunk in data_layer.hmms._storage.read("hmm/profiles.hmm")]
     )
     assert raw == b"test_profile"
+
+    async with AsyncSession(pg) as session:
+        hmms = (await session.execute(select(SQLHMM))).scalars().all()
+
+    mongo_documents = await mongo.hmm.find().to_list(None)
+
+    assert [hmm.legacy_id for hmm in hmms] == [
+        document["_id"] for document in mongo_documents
+    ]
+    assert [hmm.cluster for hmm in hmms] == [annotations[0]["cluster"]]
+    assert [hmm.names for hmm in hmms] == [annotations[0]["names"]]
+    assert [hmm.genera for hmm in hmms] == [annotations[0]["genera"]]
