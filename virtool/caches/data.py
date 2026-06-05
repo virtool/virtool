@@ -1,5 +1,6 @@
 """Data-layer domain for cache entries."""
 
+import asyncio
 import uuid
 from collections.abc import AsyncIterator
 from datetime import timedelta
@@ -28,6 +29,9 @@ LAST_ACCESSED_REFRESH_INTERVAL = timedelta(minutes=5)
 
 CACHE_EVICTION_GRACE_PERIOD = timedelta(hours=1)
 """Minimum cache age before an entry can be evicted for budget pressure."""
+
+CACHE_EVICTION_STORAGE_DELETE_CONCURRENCY = 8
+"""Maximum number of concurrent storage deletes during cache eviction."""
 
 logger = get_logger("caches.data")
 
@@ -139,11 +143,23 @@ class CachesData(DataLayerDomain):
         """Delete cache storage objects, then remove their cache rows."""
         cache_ids = [candidate.id for candidate in candidates]
 
-        for candidate in candidates:
-            await self._storage.delete(candidate.storage_key)
-
         if not cache_ids:
             return set()
+
+        semaphore = asyncio.Semaphore(CACHE_EVICTION_STORAGE_DELETE_CONCURRENCY)
+
+        async def delete_candidate_storage(candidate: CacheEvictionCandidate) -> None:
+            async with semaphore:
+                await self._storage.delete(candidate.storage_key)
+
+        results = await asyncio.gather(
+            *(delete_candidate_storage(candidate) for candidate in candidates),
+            return_exceptions=True,
+        )
+
+        for result in results:
+            if isinstance(result, BaseException):
+                raise result
 
         async with AsyncSession(self._pg) as session:
             deleted_ids = {

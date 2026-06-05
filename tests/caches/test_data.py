@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import AsyncIterator
 from datetime import datetime, timedelta
 
@@ -14,7 +15,7 @@ from virtool.caches.db import select_eviction_candidates
 from virtool.caches.pg import SQLCache
 from virtool.data.errors import CacheAlreadyExistsError, CacheMissError
 from virtool.data.layer import DataLayer
-from virtool.storage.errors import StorageKeyNotFoundError
+from virtool.storage.errors import StorageError, StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
 
 
@@ -290,6 +291,104 @@ class TestEvictLRU:
 
         with pytest.raises(StorageKeyNotFoundError):
             [chunk async for chunk in memory_storage.read(oldest_storage_key)]
+
+    async def test_parallel_storage_deletes_are_bounded(
+        self,
+        data_layer: DataLayer,
+        memory_storage: StorageBackend,
+        pg: AsyncEngine,
+        mocker,
+        static_time,
+    ):
+        data_layer.caches.storage_budget_bytes = 1
+
+        for index in range(12):
+            await _create_aged_cache(
+                data_layer,
+                pg,
+                f"evicted_{index:02}",
+                10,
+                static_time.datetime,
+                timedelta(hours=2, minutes=index),
+            )
+
+        mocker.patch(
+            "virtool.caches.data.virtool.utils.timestamp",
+            return_value=static_time.datetime,
+        )
+        real_delete = memory_storage.delete
+        active_deletes = 0
+        max_active_deletes = 0
+
+        async def delete_storage(key: str) -> None:
+            nonlocal active_deletes, max_active_deletes
+
+            active_deletes += 1
+            max_active_deletes = max(max_active_deletes, active_deletes)
+
+            try:
+                await asyncio.sleep(0.01)
+                await real_delete(key)
+            finally:
+                active_deletes -= 1
+
+        mocker.patch.object(memory_storage, "delete", side_effect=delete_storage)
+
+        await data_layer.caches.evict_lru()
+
+        assert max_active_deletes == 8
+
+    async def test_storage_delete_failure_prevents_cache_row_deletion(
+        self,
+        data_layer: DataLayer,
+        memory_storage: StorageBackend,
+        pg: AsyncEngine,
+        mocker,
+        static_time,
+    ):
+        data_layer.caches.storage_budget_bytes = 1
+        storage_keys = {
+            key: await _create_aged_cache(
+                data_layer,
+                pg,
+                key,
+                10,
+                static_time.datetime,
+                timedelta(hours=2, minutes=index),
+            )
+            for index, key in enumerate(("failed_delete", "attempted_sibling"))
+        }
+        attempted_keys = []
+        real_delete = memory_storage.delete
+
+        async def delete_storage(key: str) -> None:
+            attempted_keys.append(key)
+
+            if key == storage_keys["failed_delete"]:
+                raise StorageError("S3 5xx")
+
+            await real_delete(key)
+
+        mocker.patch(
+            "virtool.caches.data.virtool.utils.timestamp",
+            return_value=static_time.datetime,
+        )
+        mocker.patch.object(memory_storage, "delete", side_effect=delete_storage)
+
+        with pytest.raises(StorageError, match="S3 5xx"):
+            await data_layer.caches.evict_lru()
+
+        async with AsyncSession(pg) as session:
+            remaining_keys = set(
+                (
+                    await session.execute(
+                        select(SQLCache.key).where(SQLCache.key.in_(storage_keys)),
+                    )
+                ).scalars(),
+            )
+
+        assert remaining_keys == set(storage_keys)
+        assert set(attempted_keys) == set(storage_keys.values())
 
     async def test_grace_window_skips_recent_rows_when_over_budget(
         self,
