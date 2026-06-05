@@ -45,7 +45,7 @@ async def test_task(
         ],
     }
 
-    await seed_analysis(
+    analysis_id = await seed_analysis(
         mongo,
         pg,
         {
@@ -72,7 +72,7 @@ async def test_task(
 
     mocker.patch("virtool.blast.data.fetch_ncbi_blast_html", return_value=html)
 
-    await data_layer.blast.create_nuvs_blast(analysis_id="analysis", sequence_index=5)
+    await data_layer.analyses.blast(analysis_id, 5)
 
     times_called = 0
 
@@ -102,13 +102,13 @@ async def test_task(
     task = BLASTTask(
         1,
         data_layer,
-        {"analysis_id": "analysis", "sequence_index": 5},
+        {"analysis_id": analysis_id, "sequence_index": 5},
         get_temp_dir(),
     )
 
     await task.run()
 
     assert await data_layer.tasks.get(1) == snapshot(name="task")
-    assert await data_layer.blast.get_nuvs_blast("analysis", 5) == snapshot(
+    assert await data_layer.blast.get_nuvs_blast(analysis_id, 5) == snapshot(
         name="blast",
     )

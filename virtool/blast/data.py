@@ -1,7 +1,6 @@
 from zipfile import BadZipFile
 
 from aiohttp import ClientSession
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
@@ -9,8 +8,6 @@ from virtool.analyses.db import bump_analysis_updated_at
 from virtool.analyses.utils import find_nuvs_sequence_by_index
 from virtool.blast.db import delete_nuvs_blast, get_nuvs_blast
 from virtool.blast.models import NuvsBlast
-from virtool.blast.sql import SQLNuVsBlast
-from virtool.blast.task import BLASTTask
 from virtool.blast.utils import (
     check_rid,
     extract_blast_info,
@@ -20,7 +17,6 @@ from virtool.blast.utils import (
 )
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceNotFoundError
-from virtool.types import Document
 
 
 class BLASTData(DataLayerDomain):
@@ -32,54 +28,7 @@ class BLASTData(DataLayerDomain):
         self._client = client
         self._pg = pg
 
-    async def create_nuvs_blast(
-        self, analysis_id: str, sequence_index: int
-    ) -> NuvsBlast:
-        """Create a NuVs BLAST record.
-
-        Nuvs BlAST records are associated with a specific analysis ID and sequence
-        index in a Nuvs result.
-
-        A task will be spawned that runs a BLAST search against NCBI and populates the
-        database with result. The analysis and BLAST records are updated as the task
-        proceeds.
-
-        :param analysis_id: the ID for the analysis to create BLAST for
-        :param sequence_index: the index of the sequence being BLASTed.
-        :return: the dictionary representation of the BLAST record.
-        """
-        created_at = virtool.utils.timestamp()
-
-        async with AsyncSession(self._pg) as session:
-            await delete_nuvs_blast(session, analysis_id, sequence_index)
-            await session.flush()
-
-            blast_row = SQLNuVsBlast(
-                analysis_id=analysis_id,
-                created_at=created_at,
-                last_checked_at=created_at,
-                ready=False,
-                sequence_index=sequence_index,
-                updated_at=created_at,
-            )
-
-            session.add(blast_row)
-            await session.flush()
-
-            await bump_analysis_updated_at(session, analysis_id, created_at)
-
-            await self.data.tasks.create(
-                BLASTTask,
-                {"analysis_id": analysis_id, "sequence_index": sequence_index},
-            )
-
-            blast = NuvsBlast(**blast_row.to_dict())
-
-            await session.commit()
-
-        return blast
-
-    async def initialize_on_ncbi(self, analysis_id: str, sequence_index: int):
+    async def initialize_on_ncbi(self, analysis_id: int, sequence_index: int):
         """Send a request to NCBI to BLAST the passed sequence.
 
         Return the RID and RTOE from the response.
@@ -112,7 +61,7 @@ class BLASTData(DataLayerDomain):
 
         return blast
 
-    async def get_nuvs_blast(self, analysis_id: str, sequence_index: int) -> NuvsBlast:
+    async def get_nuvs_blast(self, analysis_id: int, sequence_index: int) -> NuvsBlast:
         """Get a NuVs BLAST record by its analysis ID and sequence index.
 
         :param analysis_id:
@@ -125,7 +74,7 @@ class BLASTData(DataLayerDomain):
 
     async def check_nuvs_blast(
         self,
-        analysis_id: str,
+        analysis_id: int,
         sequence_index: int,
     ):
         """Sync our BLAST resource with NCBI.
@@ -185,7 +134,7 @@ class BLASTData(DataLayerDomain):
 
         return await self.get_nuvs_blast(analysis_id, sequence_index)
 
-    async def delete_nuvs_blast(self, analysis_id: str, sequence_index: int) -> int:
+    async def delete_nuvs_blast(self, analysis_id: int, sequence_index: int) -> int:
         """Remove a NuVs BLAST record.
 
         :param analysis_id: the analysis the BLAST belongs to
@@ -204,28 +153,3 @@ class BLASTData(DataLayerDomain):
             await session.commit()
 
         return deleted_count
-
-    async def list_by_analysis(self, analysis_id: str) -> list[Document]:
-        """Get all BLAST records associated with an analysis.
-
-        :param analysis_id: the ID of the analysis to list BLASTs for
-        :return: a list of BLAST records
-        """
-        async with AsyncSession(self._pg) as session:
-            result = await session.execute(
-                select(SQLNuVsBlast).where(SQLNuVsBlast.analysis_id == analysis_id)
-            )
-
-            return [
-                {
-                    "id": blast.id,
-                    "created_at": blast.created_at,
-                    "updated_at": blast.updated_at,
-                    "last_checked_at": blast.last_checked_at,
-                    "interval": blast.interval,
-                    "rid": blast.rid,
-                    "ready": blast.ready,
-                    "result": blast.result,
-                }
-                for blast in result.scalars()
-            ]

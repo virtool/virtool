@@ -232,9 +232,7 @@ class AnalysisData(DataLayerDomain):
 
         await wait_for_checks(check_if_analysis_modified(if_modified_since, document))
 
-        document = await attach_analysis_files(
-            self._pg, document["legacy_id"], document
-        )
+        document = await attach_analysis_files(self._pg, document["_id"], document)
 
         if document["ready"]:
             document["results"] = await virtool.analyses.format.format_analysis(
@@ -435,7 +433,7 @@ class AnalysisData(DataLayerDomain):
 
         analysis_file = await create_analysis_file(
             self._pg,
-            ids.legacy_id,
+            ids.id,
             analysis_format,
             name,
         )
@@ -542,7 +540,7 @@ class AnalysisData(DataLayerDomain):
             analysis = (
                 await session.execute(
                     select(
-                        SQLAnalysis.legacy_id,
+                        SQLAnalysis.id,
                         SQLAnalysis.workflow,
                         SQLAnalysis.ready,
                         SQLAnalysis.results,
@@ -555,8 +553,6 @@ class AnalysisData(DataLayerDomain):
         if analysis is None:
             raise ResourceNotFoundError()
 
-        legacy_id = analysis.legacy_id
-
         await wait_for_checks(
             check_if_analysis_is_nuvs(analysis.workflow),
             check_if_analysis_is_running(analysis.ready),
@@ -566,13 +562,13 @@ class AnalysisData(DataLayerDomain):
         async with AsyncSession(self._pg) as session:
             await session.execute(
                 delete(SQLNuVsBlast)
-                .where(SQLNuVsBlast.analysis_id == legacy_id)
+                .where(SQLNuVsBlast.analysis_id == analysis.id)
                 .where(SQLNuVsBlast.sequence_index == sequence_index),
             )
             await session.flush()
 
             blast = SQLNuVsBlast(
-                analysis_id=legacy_id,
+                analysis_id=analysis.id,
                 created_at=timestamp,
                 last_checked_at=timestamp,
                 ready=False,
@@ -583,11 +579,11 @@ class AnalysisData(DataLayerDomain):
             session.add(blast)
             await session.flush()
 
-            await bump_analysis_updated_at(session, legacy_id, timestamp)
+            await bump_analysis_updated_at(session, analysis.id, timestamp)
 
             await self.data.tasks.create(
                 BLASTTask,
-                {"analysis_id": legacy_id, "sequence_index": sequence_index},
+                {"analysis_id": analysis.id, "sequence_index": sequence_index},
             )
 
             blast_data = blast.to_dict()
