@@ -5,8 +5,6 @@ import pytest
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from virtool.fake.next import DataFaker
-from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_mongo_from_app
 
 
 @pytest.fixture
@@ -70,16 +68,16 @@ async def fake_hmm_status(mongo, seed_pg_hmm_status, fake: DataFaker, static_tim
 async def test_find(
     fake_hmm_status,
     snapshot,
-    mongo: Mongo,
+    seed_pg_hmm,
     spawn_client: ClientSpawner,
     hmm_document,
 ):
-    """Check that a request with no URL parameters returns a list of HMM annotation documents."""
+    """Check that a request with no URL parameters returns a list of HMM annotation documents read from Postgres."""
     client = await spawn_client(authenticated=True)
 
     hmm_document["hidden"] = False
 
-    await mongo.hmm.insert_one(hmm_document)
+    await seed_pg_hmm(hmm_document)
 
     resp = await client.get("/hmms")
 
@@ -122,13 +120,13 @@ async def test_list_updates(fake_hmm_status, spawn_client, snapshot):
 async def test_get(
     error,
     snapshot,
-    mongo: Mongo,
+    seed_pg_hmm,
     spawn_client: ClientSpawner,
     hmm_document,
     resp_is,
 ):
     """Check that a ``GET`` request for a valid annotation document results in a response containing that complete
-    document.
+    document read from Postgres.
 
     Check that a `404` is returned if the HMM does not exist.
 
@@ -136,7 +134,7 @@ async def test_get(
     client = await spawn_client(authenticated=True)
 
     if not error:
-        await mongo.hmm.insert_one(hmm_document)
+        await seed_pg_hmm(hmm_document)
 
     resp = await client.get("/hmms/f8666902")
 
@@ -148,12 +146,15 @@ async def test_get(
     assert await resp.json() == snapshot(name="json")
 
 
-async def test_get_hmm_annotations(spawn_job_client: JobClientSpawner):
+async def test_get_hmm_annotations(
+    seed_pg_hmm,
+    spawn_job_client: JobClientSpawner,
+    hmm_document,
+):
+    """The annotations file is regenerated from the Postgres ``hmms`` table."""
     client = await spawn_job_client(authenticated=True)
-    mongo = get_mongo_from_app(client.app)
 
-    await mongo.hmm.insert_one({"_id": "foo"})
-    await mongo.hmm.insert_one({"_id": "bar"})
+    await seed_pg_hmm({**hmm_document, "hidden": False})
 
     async with client.get("/hmms/files/annotations.json.gz") as response:
         assert response.status == HTTPStatus.OK
@@ -165,7 +166,21 @@ async def test_get_hmm_annotations(spawn_job_client: JobClientSpawner):
     decompressed = gzip.decompress(compressed_bytes)
     hmms = json.loads(decompressed)
 
-    assert hmms == [{"id": "foo"}, {"id": "bar"}]
+    assert hmms == [
+        {
+            "id": "f8666902",
+            "cluster": 3463,
+            "count": 4,
+            "length": 199,
+            "mean_entropy": 0.51,
+            "total_entropy": 101.49,
+            "hidden": False,
+            "names": ["ORF-63", "ORF67", "hypothetical protein"],
+            "families": {"Baculoviridae": 3},
+            "genera": {"Alphabaculovirus": 3},
+            "entries": hmm_document["entries"],
+        },
+    ]
 
 
 @pytest.mark.parametrize("file_exists", [True, False])

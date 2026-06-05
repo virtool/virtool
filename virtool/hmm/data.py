@@ -1,25 +1,27 @@
 import asyncio
 import gzip
+import math
 from collections.abc import AsyncIterator
 
 from aiohttp import ClientSession
 from multidict import MultiDictProxy
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.api.utils import compose_regex_query, paginate
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import (
     ResourceConflictError,
     ResourceError,
     ResourceNotFoundError,
 )
-from virtool.data.topg import both_transactions
+from virtool.data.topg import (
+    both_transactions,
+    compose_legacy_id_single_expression,
+)
 from virtool.data.transforms import apply_transforms
 from virtool.github import create_update_subdocument
 from virtool.hmm.db import (
     HMM_REPO_SLUG,
-    HMMS_PROJECTION,
     fetch_and_update_release,
     generate_annotations,
 )
@@ -43,6 +45,28 @@ HMM_ANNOTATIONS_KEY = "hmm/annotations.json.gz"
 """The storage key for the gzipped HMM annotations file."""
 
 
+def _compose_hmm_search_filter(term: str):
+    """Compose a case-insensitive substring match against any of an HMM's names.
+
+    Mirrors the Mongo ``compose_regex_query(term, ["names"])`` behaviour the find
+    endpoint used before reading from Postgres: ``names`` is an array, so the
+    match succeeds when any element contains the term. The term is matched
+    literally, so SQL ``LIKE`` wildcards in it are escaped rather than
+    interpreted.
+    """
+    escaped = term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    pattern = f"%{escaped}%"
+
+    elements = func.jsonb_array_elements_text(SQLHMM.names).table_valued("value")
+
+    return (
+        select(1)
+        .select_from(elements)
+        .where(elements.c.value.ilike(pattern, escape="\\"))
+        .exists()
+    )
+
+
 class HmmsData(DataLayerDomain):
     name = "hmms"
 
@@ -59,32 +83,92 @@ class HmmsData(DataLayerDomain):
         self._storage = storage
 
     async def find(self, query: MultiDictProxy):
-        db_query = {}
+        try:
+            page = int(query["page"])
+        except (KeyError, ValueError):
+            page = 1
+
+        try:
+            per_page = int(query["per_page"])
+        except (KeyError, ValueError):
+            per_page = 25
+
+        not_hidden = SQLHMM.hidden.is_(False)
+
+        filters = [not_hidden]
 
         if term := query.get("find"):
-            db_query.update(compose_regex_query(term, ["names"]))
+            filters.append(_compose_hmm_search_filter(term))
 
         data, status = await asyncio.gather(
-            paginate(
-                self._mongo.hmm,
-                db_query,
-                query,
-                sort="cluster",
-                projection=HMMS_PROJECTION,
-                base_query={"hidden": False},
-            ),
+            self._find(page, per_page, filters, not_hidden),
             self.get_status(),
         )
 
         return HMMSearchResult(**data, status=status)
 
+    async def _find(self, page: int, per_page: int, filters: list, not_hidden) -> dict:
+        async with AsyncSession(self._pg) as session:
+            total_count = await session.scalar(
+                select(func.count()).select_from(SQLHMM).where(not_hidden),
+            )
+            found_count = await session.scalar(
+                select(func.count()).select_from(SQLHMM).where(*filters),
+            )
+
+            rows = (
+                await session.execute(
+                    select(SQLHMM)
+                    .where(*filters)
+                    .order_by(SQLHMM.cluster, SQLHMM.id)
+                    .offset(per_page * (page - 1))
+                    .limit(per_page),
+                )
+            ).scalars()
+
+        return {
+            "documents": [
+                {
+                    "id": row.legacy_id,
+                    "cluster": row.cluster,
+                    "count": row.count,
+                    "families": row.families,
+                    "names": row.names,
+                }
+                for row in rows
+            ],
+            "total_count": total_count,
+            "found_count": found_count,
+            "page_count": math.ceil(found_count / per_page),
+            "per_page": per_page,
+            "page": page,
+        }
+
     async def get(self, hmm_id: str) -> HMM:
-        document = await self._mongo.hmm.find_one({"_id": hmm_id})
+        async with AsyncSession(self._pg) as session:
+            hmm = (
+                await session.execute(
+                    select(SQLHMM).where(
+                        compose_legacy_id_single_expression(SQLHMM, hmm_id),
+                    ),
+                )
+            ).scalar_one_or_none()
 
-        if document:
-            return HMM(**document)
+        if hmm is None:
+            raise ResourceNotFoundError()
 
-        raise ResourceNotFoundError()
+        return HMM(
+            id=hmm.legacy_id,
+            cluster=hmm.cluster,
+            count=hmm.count,
+            length=hmm.length,
+            mean_entropy=hmm.mean_entropy,
+            total_entropy=hmm.total_entropy,
+            names=hmm.names,
+            families=hmm.families,
+            genera=hmm.genera,
+            entries=hmm.entries,
+        )
 
     async def get_status(self):
         async with AsyncSession(self._pg) as session:
@@ -310,7 +394,7 @@ class HmmsData(DataLayerDomain):
         else:
             return self._storage.read(HMM_ANNOTATIONS_KEY), size
 
-        annotations_bytes = await generate_annotations(self._mongo)
+        annotations_bytes = await generate_annotations(self._pg)
         compressed = await asyncio.to_thread(
             gzip.compress,
             annotations_bytes,

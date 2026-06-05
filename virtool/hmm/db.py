@@ -4,19 +4,18 @@ import json
 
 import aiohttp.client_exceptions
 from aiohttp import ClientSession
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
 import virtool.utils
 from virtool.data.topg import both_transactions
 from virtool.errors import GitHubError
 from virtool.github import get_etag, get_release
-from virtool.hmm.sql import HMM_STATUS_ID, SQLHMMStatus
+from virtool.hmm.sql import HMM_STATUS_ID, SQLHMM, SQLHMMStatus
 from virtool.hmm.utils import format_hmm_release
-from virtool.mongo.core import Mongo
 from virtool.types import Document
-from virtool.utils import base_processor
 
 logger = get_logger("hmms")
 
@@ -29,9 +28,6 @@ HMMS_REFRESH_INTERVAL = 600
 There is currently only one version of HMM data and refreshes after the initial install
 of the data do nothing.
 """
-
-HMMS_PROJECTION = ["_id", "cluster", "names", "count", "families"]
-"""A MongoDB projection for HMM document lists."""
 
 
 async def fetch_and_update_release(
@@ -140,12 +136,36 @@ async def fetch_and_update_release(
     return release
 
 
-async def generate_annotations(mongo: Mongo) -> bytes:
+def annotation_from_row(row: SQLHMM) -> Document:
+    """Reconstruct the stored HMM annotation document from a Postgres row.
+
+    The Mongo ``_id`` is exposed as ``id`` so the output matches the document
+    shape that was previously generated from Mongo.
+    """
+    return {
+        "id": row.legacy_id,
+        "cluster": row.cluster,
+        "count": row.count,
+        "length": row.length,
+        "mean_entropy": row.mean_entropy,
+        "total_entropy": row.total_entropy,
+        "hidden": row.hidden,
+        "names": row.names,
+        "families": row.families,
+        "genera": row.genera,
+        "entries": row.entries,
+    }
+
+
+async def generate_annotations(pg: AsyncEngine) -> bytes:
     """Generate the HMM annotations as JSON bytes.
 
-    :param mongo: the app mongo client
+    :param pg: the application Postgres client
     :return: the annotations as JSON bytes
     """
-    annotations = [base_processor(document) async for document in mongo.hmm.find({})]
+    async with AsyncSession(pg) as session:
+        rows = (await session.execute(select(SQLHMM))).scalars().all()
+
+    annotations = [annotation_from_row(row) for row in rows]
 
     return json.dumps(annotations).encode()

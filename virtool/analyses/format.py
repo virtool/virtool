@@ -13,9 +13,12 @@ from typing import TYPE_CHECKING, Any
 
 import openpyxl.styles
 import visvalingamwyatt as vw
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from virtool.data.topg import compose_legacy_id_multi_expression
 from virtool.history.db import patch_to_version
+from virtool.hmm.sql import SQLHMM
 from virtool.models.enums import AnalysisWorkflow
 from virtool.otus.utils import format_isolate_name
 
@@ -199,13 +202,13 @@ def format_pathoscope_sequences(
 
 
 async def format_nuvs(
-    mongo: "Mongo",
+    pg: AsyncEngine,
     *,
     results: dict[str, Any],
 ) -> dict[str, Any]:
     """Format NuVs analysis results by attaching the HMM annotation data to the hits.
 
-    :param mongo: the database object
+    :param pg: the application PostgreSQL database object
     :param results: the results to format
     :return: the formatted results
 
@@ -214,9 +217,27 @@ async def format_nuvs(
 
     hit_ids = list({h["hit"] for s in hits for o in s["orfs"] for h in o["hits"]})
 
-    cursor = mongo.hmm.find({"_id": {"$in": hit_ids}}, ["cluster", "families", "names"])
+    hmms = {}
 
-    hmms = {d.pop("_id"): d async for d in cursor}
+    if hit_ids:
+        async with AsyncSession(pg) as session:
+            rows = (
+                await session.execute(
+                    select(SQLHMM).where(
+                        compose_legacy_id_multi_expression(SQLHMM, hit_ids),
+                    ),
+                )
+            ).scalars()
+
+        for row in rows:
+            annotation = {
+                "cluster": row.cluster,
+                "families": row.families,
+                "names": row.names,
+            }
+
+            hmms[row.legacy_id] = annotation
+            hmms[str(row.id)] = annotation
 
     for sequence in hits:
         for orf in sequence["orfs"]:
@@ -365,7 +386,7 @@ async def format_analysis(
         raise ValueError("Analysis has no workflow field")
 
     if workflow == AnalysisWorkflow.nuvs.value:
-        return await format_nuvs(mongo, results=results)
+        return await format_nuvs(pg, results=results)
 
     if workflow == AnalysisWorkflow.aodp.value:
         return await format_aodp(mongo, pg, results=results)
