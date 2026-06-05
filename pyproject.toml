@@ -35,14 +35,14 @@ dependencies = [
   "click>=8.4.1,<9.0.0",
   "dictdiffer<1.0.0,>=0.9.0",
   "email-validator<3.0.0,>=2.0.0",
-  "faker>=40.19.1",
+  "faker>=40.21.0",
   "motor<4.0.0,>=3.7.1",
   "openpyxl<4.0.0,>=3.1.5",
   "orjson>=3.11.9,<4.0.0",
   "pydantic>=1.10.16,<2",
   "pyyaml<7.0.0,>=6.0.0",
   "semver>=2.13.0,<4.0.0",
-  "sentry-sdk>=2.61.0,<3.0.0",
+  "sentry-sdk>=2.61.1,<3.0.0",
   "sqlalchemy>=2.0.50",
   "structlog-sentry<3.0.0,>=2.1.0",
   "visvalingamwyatt<1.0.0,>=0.1.4",
@@ -101,7 +101,7 @@ ignore-decorators = [
 "tests/**" = ["ANN201", "ANN202", "D205", "S101", "S106"]
 
 [build-system]
-requires = ["uv_build>=0.11.17,<0.12.0"]
+requires = ["uv_build>=0.11.19,<0.12.0"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
@@ -119,7 +119,7 @@ dev = [
   "pytest-structlog<2.0,>=1.1",
   "pytest-timeout<3.0.0,>=2.4.0",
   "pytest-xdist<4.0.0,>=3.7.0",
-  "ruff>=0.15.15,<1.0.0",
+  "ruff>=0.15.16,<1.0.0",
   "snakeviz<3.0.0,>=2.2.0",
   "syrupy>=5.2.0,<6.0.0",
   "ty>=0.0.40",
