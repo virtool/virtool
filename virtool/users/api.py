@@ -26,6 +26,7 @@ from virtool.users.oas import (
     CreateUserRequest,
     UpdateUserRequest,
 )
+from virtool.users.utils import is_reserved_handle
 
 routes = Routes()
 
@@ -96,8 +97,8 @@ class UsersView(PydanticView):
             400: Password does not meet length requirement
             403: Not permitted
         """
-        if data.handle == "virtool":
-            raise APIBadRequest("Reserved user name: virtool")
+        if is_reserved_handle(data.handle):
+            raise APIBadRequest(f"Reserved user name: {data.handle}")
 
         if error := await check_password_length(self.request, password=data.password):
             raise APIBadRequest(error)
@@ -144,8 +145,8 @@ class FirstUserView(PydanticView):
             logger.error("attempted to create first user when users already exist")
             raise APIConflict("Virtool already has at least one user")
 
-        if data.handle == "virtool":
-            raise APIBadRequest("Reserved user name: virtool")
+        if is_reserved_handle(data.handle):
+            raise APIBadRequest(f"Reserved user name: {data.handle}")
 
         if error := await check_password_length(self.request, password=data.password):
             raise APIBadRequest(error)

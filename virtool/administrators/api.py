@@ -27,6 +27,7 @@ from virtool.users.checks import check_password_length
 from virtool.users.models import User
 from virtool.users.oas import CreateUserRequest
 from virtool.users.pg import SQLUser
+from virtool.users.utils import is_reserved_handle
 
 routes = Routes()
 
@@ -99,8 +100,8 @@ class AdminUsersView(PydanticView):
             400: Password does not meet length requirement
             403: Not permitted
         """
-        if data.handle == "virtool":
-            raise APIBadRequest("Reserved user name: virtool")
+        if is_reserved_handle(data.handle):
+            raise APIBadRequest(f"Reserved user name: {data.handle}")
 
         if error := await check_password_length(self.request, password=data.password):
             raise APIBadRequest(error)

@@ -400,5 +400,12 @@
       'name': 'copy hmm status to postgres',
       'revision': 'ld2t6tbwulbd',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 58,
+      'name': 'repair null subtraction upload ids',
+      'revision': 'n2adlt6ch803',
+    }),
   ])
 # ---

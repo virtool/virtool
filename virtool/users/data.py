@@ -220,8 +220,8 @@ class UsersData(DataLayerDomain):
         if await self.check_users_exist():
             raise ResourceConflictError("Virtool already has at least one user")
 
-        if handle == "virtool":
-            raise ResourceConflictError("Reserved user name: virtool")
+        if virtool.users.utils.is_reserved_handle(handle):
+            raise ResourceConflictError(f"Reserved user name: {handle}")
 
         user = await self.create(handle, password)
 
