@@ -177,7 +177,111 @@ or reshape domain results are not precedent for new work.
 ### MongoDB Migration
 
 We are gradually migrating away from MongoDB. New features should use
-PostgreSQL.
+PostgreSQL. When migrating an existing collection, follow the 7-step process
+below. Track each step as a separate Linear issue: "Todo" for steps 1–6,
+"Backlog" for step 7 (permanent drops are deferred until the migration is
+proven stable in production).
+
+#### Step 1 — Create the PostgreSQL table
+
+Generate an Alembic revision (`uv run alembic revision -m "create <name> table"`):
+
+- Primary key: `BigInteger` with `Identity(always=True)`. Never use `Integer`.
+- Always add `legacy_id: String, nullable=True, unique=True`. It stores the
+  Mongo `_id` and must be nullable so future Postgres-native rows don't need one.
+- FK to an already-migrated table: integer FK column (`user_id`, `job_id`) with
+  a `ForeignKeyConstraint`.
+- FK to a not-yet-migrated collection: bare `String` column (no suffix, no FK).
+  Rename and add the FK later in step 5 when that collection is migrated.
+
+Create the SQLAlchemy model in `virtool/<domain>/sql.py` extending `Base`.
+
+#### Step 2 — Dual-write to Mongo and Postgres; Mongo is the read authority
+
+Wrap all writes (create, update, delete) with `both_transactions` from
+`virtool.data.topg`:
+
+```python
+async with both_transactions(self._mongo, self._pg) as (mongo_session, pg_session):
+    await self._mongo.collection.insert_one({...}, session=mongo_session)
+    pg_session.add(SQLModel(legacy_id=mongo_id, ...))
+```
+
+- Write `legacy_id = mongo_id` on every insert.
+- Locate the PG row by `legacy_id` on updates and deletes.
+- Do not commit the PG session inside the context — `both_transactions` commits
+  on clean exit.
+- Use `retry_both_transactions` on write-heavy paths that may hit transient Mongo
+  transaction errors.
+- Reads still come from Mongo at this stage.
+
+#### Step 3 — Backfill existing documents
+
+Write an idempotent backfill function in `virtool/<domain>/migration.py` and
+register it as a revision in `assets/revisions/`:
+
+- Snapshot document IDs up front with a projection-only query, then fetch each
+  document individually inside the loop to avoid cursor timeouts.
+- Use `ON CONFLICT (legacy_id) DO NOTHING` so the function is safe to re-run.
+- Commit after each document (not in bulk) to bound memory and allow mid-run
+  recovery.
+- Resolve cross-domain FKs (e.g. `user_id`, `job_id`) by querying PG. Cache
+  results in a `dict` to avoid N+1 queries. Log a warning and store `NULL` for
+  dangling references — do not fail the migration.
+- After the initial backfill revision ships, add a second "re-backfill" revision
+  to catch documents created between the first backfill and the dual-write
+  rollout.
+
+#### Step 4 — Switch reads to Postgres
+
+Both stores are now consistent. Move all reads to Postgres.
+
+- Single-resource lookups: `compose_legacy_id_single_expression(Model, id_)`.
+- Batch lookups (transforms, validation): `compose_legacy_id_multi_expression(Model, id_list)`.
+- Resources are still addressed externally by their legacy string ID until step 5
+  completes. Keep `legacy_id` as the public identifier.
+- Update transforms that previously queried Mongo to query PG. Build dual-key
+  lookup dicts so both integer and legacy string IDs resolve correctly:
+
+  ```python
+  lookup = {
+      **{row.id: shape(row) for row in rows},
+      **{row.legacy_id: shape(row) for row in rows if row.legacy_id},
+  }
+  ```
+
+- Update cross-domain validation helpers (e.g. `get_missing_*_ids`) to query PG.
+
+#### Step 5 — Update cross-domain references to integer FKs
+
+Other domains that hold a string reference to this collection must be upgraded
+to integer FKs.
+
+- Write an Alembic migration that changes the column type and resolves existing
+  string values to their integer PK equivalents.
+- Update the referencing domain's backfill to write integer IDs.
+- Update any transform or lookup in the referencing domain that previously
+  received a string ID.
+- Once all cross-domain string references are gone, the public-facing ID switches
+  to the integer PK.
+
+#### Step 6 — Remove dead code
+
+- Replace the `both_transactions` dual-write block with a plain `AsyncSession`
+  PG write.
+- Remove all Mongo collection access for this domain.
+- Remove migration helper functions that were only needed during the transition.
+
+#### Step 7 — Drop dead collections and columns (Backlog)
+
+Deferred until the migration has been running in production long enough to be
+confident. Leave these issues in "Backlog" for several months.
+
+- Drop the MongoDB collection.
+- Drop `legacy_id` columns from PG tables (once every cross-domain reference is
+  an integer FK).
+- Remove any other bridge columns, intermediate tables, or fields that were only
+  needed during the transition.
 
 ### Error Handling
 
