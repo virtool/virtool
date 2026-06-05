@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
 from virtool.data.domain import DataLayerDomain
-from virtool.data.errors import ResourceNotFoundError
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emits
 from virtool.data.transforms import apply_transforms
 from virtool.storage.protocol import StorageBackend
@@ -272,24 +272,37 @@ class UploadsData(DataLayerDomain):
 
             await session.commit()
 
-    async def reserve(self, upload_ids: int | list[int]) -> None:
-        """Reserve the uploads in `upload_ids`.
+    async def reserve(
+        self,
+        upload_ids: int | list[int],
+        session: AsyncSession,
+    ) -> None:
+        """Reserve the uploads in `upload_ids` within the given session.
 
         The `reserved` field is set to `True`, preventing the uploads from being used
-        for sample creation.
+        for sample creation. Only uploads that are not already reserved are updated.
 
-        :param upload_ids: List of upload ids
+        The reservation participates in the caller's transaction: it is the caller's
+        responsibility to commit ``session``.
+
+        If any requested upload is missing or already reserved, no upload is reserved
+        and a :class:`ResourceConflictError` is raised.
+
+        :param upload_ids: an upload id or list of upload ids
+        :param session: the PostgreSQL session to reserve within
+        :raises ResourceConflictError: if any upload is missing or already reserved
         """
-        if isinstance(upload_ids, int):
-            query = SQLUpload.id == upload_ids
-        else:
-            query = SQLUpload.id.in_(upload_ids)
+        ids = {upload_ids} if isinstance(upload_ids, int) else set(upload_ids)
 
-        async with AsyncSession(self._pg) as session:
-            await session.execute(
-                update(SQLUpload)
-                .where(query)
-                .values(reserved=True)
-                .execution_options(synchronize_session="fetch"),
+        result = await session.execute(
+            update(SQLUpload)
+            .where(
+                SQLUpload.id.in_(ids),
+                SQLUpload.reserved == False,  # skipcq: PTC-W0068,PYL-R1714
             )
-            await session.commit()
+            .values(reserved=True)
+            .execution_options(synchronize_session=False),
+        )
+
+        if result.rowcount != len(ids):
+            raise ResourceConflictError("One or more files are already reserved")

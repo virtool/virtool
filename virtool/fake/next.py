@@ -472,7 +472,9 @@ class UploadsFakerDomain(DataFakerDomain):
         )
 
         if reserved:
-            await self._layer.uploads.reserve(upload.id)
+            async with AsyncSession(self._pg) as session:
+                await self._layer.uploads.reserve(upload.id, session)
+                await session.commit()
 
         return await self._layer.uploads.get(upload.id)
 

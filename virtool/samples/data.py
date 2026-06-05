@@ -1,6 +1,5 @@
 """The sample data layer domain."""
 
-import asyncio
 import math
 from asyncio import CancelledError, gather
 from collections.abc import AsyncGenerator, AsyncIterator
@@ -295,6 +294,9 @@ class SamplesData(DataLayerDomain):
         except ResourceNotFoundError:
             raise ResourceConflictError("File does not exist")
 
+        if any(upload["reserved"] for upload in uploads):
+            raise ResourceConflictError("File is already reserved")
+
         group = None
 
         # Require a valid ``group`` field if the ``sample_group`` setting is
@@ -321,8 +323,15 @@ class SamplesData(DataLayerDomain):
             if user is not None and user.primary_group is not None:
                 group = user.primary_group.id
 
-        async with self._mongo.create_session() as session:
-            sample_id = _id or await get_new_id(self._mongo.samples, session=session)
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            sample_id = _id or await get_new_id(
+                self._mongo.samples, session=mongo_session
+            )
+
+            await self.data.uploads.reserve(data.files, pg_session)
 
             job = await self.data.jobs.create(
                 "create_sample",
@@ -330,42 +339,39 @@ class SamplesData(DataLayerDomain):
                 user_id,
             )
 
-            document, _ = await asyncio.gather(
-                self._mongo.samples.insert_one(
-                    {
-                        "_id": sample_id,
-                        "all_read": settings.sample_all_read,
-                        "all_write": settings.sample_all_write,
-                        "created_at": virtool.utils.timestamp(),
-                        "format": "fastq",
-                        "group": group,
-                        "group_read": settings.sample_group_read,
-                        "group_write": settings.sample_group_write,
-                        "hold": True,
-                        "host": data.host,
-                        "is_legacy": False,
-                        "isolate": data.isolate,
-                        "job": {"id": job.id},
-                        "labels": data.labels,
-                        "library_type": data.library_type,
-                        "locale": data.locale,
-                        "name": data.name,
-                        "notes": data.notes,
-                        "nuvs": False,
-                        "paired": len(uploads) == 2,
-                        "pathoscope": False,
-                        "quality": None,
-                        "ready": False,
-                        "results": None,
-                        "space": {"id": space_id},
-                        "subtractions": data.subtractions,
-                        "uploads": [{"id": upload["id"]} for upload in uploads],
-                        "user": {"id": user_id},
-                        "workflows": define_initial_workflows(data.library_type),
-                    },
-                    session=session,
-                ),
-                self.data.uploads.reserve(data.files),
+            document = await self._mongo.samples.insert_one(
+                {
+                    "_id": sample_id,
+                    "all_read": settings.sample_all_read,
+                    "all_write": settings.sample_all_write,
+                    "created_at": virtool.utils.timestamp(),
+                    "format": "fastq",
+                    "group": group,
+                    "group_read": settings.sample_group_read,
+                    "group_write": settings.sample_group_write,
+                    "hold": True,
+                    "host": data.host,
+                    "is_legacy": False,
+                    "isolate": data.isolate,
+                    "job": {"id": job.id},
+                    "labels": data.labels,
+                    "library_type": data.library_type,
+                    "locale": data.locale,
+                    "name": data.name,
+                    "notes": data.notes,
+                    "nuvs": False,
+                    "paired": len(uploads) == 2,
+                    "pathoscope": False,
+                    "quality": None,
+                    "ready": False,
+                    "results": None,
+                    "space": {"id": space_id},
+                    "subtractions": data.subtractions,
+                    "uploads": [{"id": upload["id"]} for upload in uploads],
+                    "user": {"id": user_id},
+                    "workflows": define_initial_workflows(data.library_type),
+                },
+                session=mongo_session,
             )
 
         return await self.get(document["_id"])
