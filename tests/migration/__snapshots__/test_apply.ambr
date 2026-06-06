@@ -432,6 +432,13 @@
       'applied_at': datetime,
       'created_at': datetime,
       'id': 62,
+      'name': 'backfill legacy inline history diffs to postgres',
+      'revision': 'an1no64kah8t',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 63,
       'name': 'convert analysis_files and nuvs_blast to integer analysis fks',
       'revision': 'f51a03fa6f9a',
     }),
