@@ -9,6 +9,7 @@ from syrupy import SnapshotAssertion
 import virtool.analyses
 from virtool.analyses.format import (
     CSV_HEADERS,
+    format_nuvs,
     transform_coverage_to_coordinates,
 )
 from virtool.mongo.core import Mongo
@@ -173,17 +174,18 @@ class TestFormatAnalysis:
         )
         m_format_pathoscope = mocker.patch("virtool.analyses.format.format_pathoscope")
 
+        pg = mocker.Mock()
         results = {"hits": []}
 
         formatted = await virtool.analyses.format.format_analysis(
             mongo,
-            mocker.Mock(),
+            pg,
             workflow="nuvs",
             results=results,
         )
 
         assert formatted == {"is_nuvs": True, "is_pathoscope": False}
-        m_format_nuvs.assert_called_with(mongo, results=results)
+        m_format_nuvs.assert_called_with(pg, results=results)
         assert not m_format_pathoscope.called
 
     async def test_pathoscope(self, mocker: MockerFixture, mongo: Mongo):
@@ -207,6 +209,33 @@ class TestFormatAnalysis:
         assert formatted == {"is_nuvs": False, "is_pathoscope": True}
         m_format_pathoscope.assert_called_with(mongo, pg, results=results)
         assert not m_format_nuvs.called
+
+
+class TestFormatNuvs:
+    """``format_nuvs`` enriches hits with HMM annotation data read from Postgres."""
+
+    async def test_enriches_hits_from_postgres(self, pg, seed_pg_hmm, hmm_document):
+        await seed_pg_hmm(hmm_document)
+
+        results = {
+            "hits": [
+                {"orfs": [{"hits": [{"hit": "f8666902", "score": 1.0}]}]},
+            ],
+        }
+
+        formatted = await format_nuvs(pg, results=results)
+
+        hit = formatted["hits"][0]["orfs"][0]["hits"][0]
+
+        assert hit["cluster"] == hmm_document["cluster"]
+        assert hit["families"] == hmm_document["families"]
+        assert hit["names"] == hmm_document["names"]
+        assert hit["score"] == 1.0
+
+    async def test_no_hits_skips_query(self, pg):
+        results = {"hits": []}
+
+        assert await format_nuvs(pg, results=results) == {"hits": []}
 
 
 class TestDownloadResults:
