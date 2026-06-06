@@ -20,15 +20,14 @@ def analysis_result_key(analysis_id: str, sample_id: str) -> str:
 
 async def attach_analysis_files(
     pg: AsyncEngine,
-    analysis_id: str,
+    analysis_id: int,
     document: dict[str, any],
 ) -> dict[str, any]:
     """Get analysis result file details for a specific analysis to attach to analysis
     `GET` response.
 
     :param pg: PostgreSQL AsyncEngine object
-    :param analysis_id: the legacy slug used to look up the still-string-keyed
-        ``analysis_files`` rows
+    :param analysis_id: the integer ID of the analysis whose files to attach
     :param document: The analysis document
     :return: List of file details for each file associated with an analysis
     """
@@ -36,19 +35,21 @@ async def attach_analysis_files(
         results = (
             (
                 await session.execute(
-                    select(SQLAnalysisFile).filter_by(analysis=analysis_id),
+                    select(SQLAnalysisFile).filter_by(analysis_id=analysis_id),
                 )
             )
             .scalars()
             .all()
         )
 
-    return {
-        **document,
-        "files": [
-            {**result.to_dict(), "analysis": document["_id"]} for result in results
-        ],
-    }
+    files = []
+
+    for result in results:
+        file = result.to_dict()
+        file["analysis"] = file.pop("analysis_id")
+        files.append(file)
+
+    return {**document, "files": files}
 
 
 def find_nuvs_sequence_by_index(

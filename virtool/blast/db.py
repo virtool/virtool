@@ -6,7 +6,7 @@ from virtool.blast.sql import SQLNuVsBlast
 
 async def get_nuvs_blast(
     session: AsyncSession,
-    analysis_id: str,
+    analysis_id: int,
     sequence_index: int,
 ) -> SQLNuVsBlast:
     result = await session.scalar(
@@ -20,7 +20,7 @@ async def get_nuvs_blast(
 
 async def delete_nuvs_blast(
     session: AsyncSession,
-    analysis_id: str,
+    analysis_id: int,
     sequence_index: int,
 ) -> int:
     result = await session.execute(

@@ -1,5 +1,6 @@
 from sqlalchemy import (
     JSON,
+    BigInteger,
     Boolean,
     Column,
     DateTime,
@@ -18,7 +19,10 @@ class SQLNuVsBlast(Base):
     __tablename__ = "nuvs_blast"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    analysis_id: Mapped[str]
+    analysis_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("analyses.id", ondelete="CASCADE"),
+    )
     sequence_index = Column(Integer, nullable=False)
     created_at = Column(DateTime, nullable=False)
     updated_at = Column(DateTime, nullable=False)

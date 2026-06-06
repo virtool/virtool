@@ -17,9 +17,7 @@ class AttachNuVsBLAST(AbstractTransform):
 
     async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
         result = await session.execute(
-            select(SQLNuVsBlast).where(
-                SQLNuVsBlast.analysis_id == document["legacy_id"]
-            )
+            select(SQLNuVsBlast).where(SQLNuVsBlast.analysis_id == int(document["id"])),
         )
 
         return {

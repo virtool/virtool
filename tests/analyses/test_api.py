@@ -185,7 +185,7 @@ async def test_get(
         )
 
     if error != "404_analysis":
-        await seed_analysis(
+        analysis_id = await seed_analysis(
             mongo,
             pg,
             {
@@ -202,7 +202,7 @@ async def test_get(
                 "workflow": "pathoscope",
             },
         )
-        await create_analysis_file(pg, "foobar", "fasta", "reference.fa")
+        await create_analysis_file(pg, analysis_id, "fasta", "reference.fa")
 
     resp = await client.get("/analyses/foobar")
 
@@ -251,7 +251,7 @@ async def test_get_archived_reference(
         ),
     )
 
-    await seed_analysis(
+    analysis_id = await seed_analysis(
         mongo,
         pg,
         {
@@ -268,7 +268,7 @@ async def test_get_archived_reference(
             "workflow": "pathoscope",
         },
     )
-    await create_analysis_file(pg, "foobar", "fasta", "reference.fa")
+    await create_analysis_file(pg, analysis_id, "fasta", "reference.fa")
 
     resp = await client.get("/analyses/foobar")
 
@@ -376,7 +376,7 @@ async def test_get_304(
         ),
     )
 
-    await seed_analysis(
+    analysis_id = await seed_analysis(
         mongo,
         pg,
         {
@@ -394,7 +394,7 @@ async def test_get_304(
         },
     )
 
-    await create_analysis_file(pg, "foobar", "fasta", "reference.fa")
+    await create_analysis_file(pg, analysis_id, "fasta", "reference.fa")
 
     resp = await client.get(
         url="/analyses/foobar",
