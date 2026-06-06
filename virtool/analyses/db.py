@@ -1,55 +1,31 @@
 """Work with analyses in the database."""
 
 from datetime import datetime
-from typing import Any
 
-from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from sqlalchemy import update
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from virtool.analyses.sql import SQLAnalysis, SQLAnalysisFile
-from virtool.data.transforms import AbstractTransform
+from virtool.analyses.sql import SQLAnalysis
 from virtool.mongo.core import Mongo
 from virtool.samples.utils import get_sample_rights
-from virtool.types import Document
 
 
 async def bump_analysis_updated_at(
     pg_session: AsyncSession,
-    analysis_id: str,
+    analysis_id: int,
     updated_at: datetime,
 ) -> None:
     """Bump an analysis ``updated_at`` timestamp in Postgres.
 
     :param pg_session: the active Postgres transaction session
-    :param analysis_id: the ID of the analysis to bump
+    :param analysis_id: the integer ID of the analysis to bump
     :param updated_at: the timestamp to set
     """
     await pg_session.execute(
         update(SQLAnalysis)
-        .where(SQLAnalysis.legacy_id == analysis_id)
+        .where(SQLAnalysis.id == analysis_id)
         .values(updated_at=updated_at),
     )
-
-
-class AttachAnalysisFileTransform(AbstractTransform):
-    def __init__(self, pg: AsyncEngine):
-        self._pg = pg
-
-    async def attach_one(self, document: Document, prepared: Any) -> Document:
-        return {**document, "files": prepared}
-
-    async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
-        results = (
-            (
-                await session.execute(
-                    select(SQLAnalysisFile).filter_by(analysis=document["id"]),
-                )
-            )
-            .scalars()
-            .all()
-        )
-
-        return [result.to_dict() for result in results]
 
 
 async def filter_analyses_by_sample_rights(

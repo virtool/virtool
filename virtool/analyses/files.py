@@ -5,7 +5,7 @@ from virtool.analyses.sql import SQLAnalysisFile
 
 async def create_analysis_file(
     pg: AsyncEngine,
-    analysis_id: str,
+    analysis_id: int,
     analysis_format: str,
     name: str,
     size: int = None,
@@ -14,7 +14,7 @@ async def create_analysis_file(
     file.
 
     :param pg: PostgreSQL AsyncEngine object
-    :param analysis_id: ID that corresponds to a parent analysis
+    :param analysis_id: integer ID of the parent analysis
     :param analysis_format: Format of the analysis result file
     :param name: Name of the analysis result file
     :param size: Size of the analysis result file
@@ -23,7 +23,7 @@ async def create_analysis_file(
     async with AsyncSession(pg) as session:
         analysis_file = SQLAnalysisFile(
             name=name,
-            analysis=analysis_id,
+            analysis_id=analysis_id,
             format=analysis_format,
             size=size,
         )

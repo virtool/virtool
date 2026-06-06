@@ -1,7 +1,7 @@
 # serializer version: 1
 # name: test_attach_analysis_files[False]
   dict({
-    '_id': 'foobar',
+    '_id': 1,
     'files': list([
     ]),
     'ready': True,
@@ -9,10 +9,10 @@
 # ---
 # name: test_attach_analysis_files[True]
   dict({
-    '_id': 'foobar',
+    '_id': 1,
     'files': list([
       dict({
-        'analysis': 'foobar',
+        'analysis': 1,
         'description': None,
         'format': 'fasta',
         'id': 1,

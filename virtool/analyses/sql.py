@@ -82,7 +82,11 @@ class SQLAnalysisFile(Base):
     __tablename__ = "analysis_files"
 
     id = Column(Integer, primary_key=True)
-    analysis = Column(String)
+    analysis_id = Column(
+        BigInteger,
+        ForeignKey("analyses.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     description = Column(String)
     format = Column(Enum(AnalysisFormat))
     name = Column(String)
