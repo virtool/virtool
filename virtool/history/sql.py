@@ -1,5 +1,18 @@
-from sqlalchemy import Column, Integer, String
+from datetime import datetime
+
+from sqlalchemy import (
+    BigInteger,
+    Column,
+    DateTime,
+    ForeignKey,
+    Identity,
+    Index,
+    Integer,
+    String,
+    desc,
+)
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import Mapped, mapped_column
 
 from virtool.pg.base import Base
 
@@ -16,3 +29,35 @@ class SQLHistoryDiff(Base):
     id = Column(Integer, primary_key=True)
     change_id = Column(String, unique=True)
     diff = Column(JSONB)
+
+
+class SQLLegacyHistory(Base):
+    """SQL model for the legacy Mongo ``history`` collection.
+
+    This is a faithful 1:1 lift of the Mongo document into Postgres. Nested Mongo
+    fields are flattened into columns:
+
+    - ``otu``/``reference``/``index`` ids are bare string columns with no foreign
+      key, because those collections have not been migrated to Postgres yet.
+    - ``user.id`` becomes a real foreign key to ``users.id``.
+    - ``otu_version`` and ``index_version`` are strings because Mongo stores both
+      integer versions and sentinel values such as ``"removed"`` and ``"unbuilt"``.
+    """
+
+    __tablename__ = "legacy_history"
+    __table_args__ = (
+        Index("ix_legacy_history_otu_id_otu_version", "otu_id", desc("otu_version")),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    legacy_id: Mapped[str | None] = mapped_column(unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+    description: Mapped[str]
+    method_name: Mapped[str]
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"), index=True)
+    otu_id: Mapped[str]
+    otu_name: Mapped[str]
+    otu_version: Mapped[str | None]
+    reference_id: Mapped[str] = mapped_column(index=True)
+    index_id: Mapped[str | None] = mapped_column(index=True)
+    index_version: Mapped[str | None]
