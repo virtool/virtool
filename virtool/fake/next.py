@@ -23,12 +23,14 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
 from virtool.data.layer import DataLayer
+from virtool.data.topg import both_transactions
 from virtool.example import example_path
 from virtool.fake.providers import OrganismProvider, SegmentProvider, SequenceProvider
 from virtool.groups.models import Group
 from virtool.groups.oas import PermissionsUpdate, UpdateGroupRequest
 from virtool.groups.pg import SQLGroup
 from virtool.hmm.models import HMM
+from virtool.hmm.sql import SQLHMM
 from virtool.jobs.models import TERMINAL_JOB_STATES, Job, JobState
 from virtool.jobs.pg import SQLJob
 from virtool.jobs.utils import WORKFLOW_NAMES
@@ -265,37 +267,61 @@ class GroupsFakerDomain(DataFakerDomain):
 class HMMFakerDomain(DataFakerDomain):
     model = HMM
 
-    async def create(self, mongo: Mongo) -> HMM:
+    async def create(self) -> HMM:
         """Create a new fake hmm.
 
-        :param mongo: the mongo DB connection
+        The annotation is dual-written to Mongo and Postgres so it is visible
+        to read paths that have been switched to Postgres.
 
         :return: a new fake hmm
         """
         hmm_id = "".join(self._faker.mongo_id())
         faker = self._faker
 
-        document = await mongo.hmm.insert_one(
-            {
-                "entries": [
-                    {
-                        "accession": faker.pystr(),
-                        "gi": faker.pystr(),
-                        "name": faker.pystr(),
-                        "organism": faker.pystr(),
-                    },
-                ],
-                "genera": {faker.pystr(): faker.pyint()},
-                "length": faker.pyint(),
-                "mean_entropy": faker.pyfloat(),
-                "total_entropy": faker.pyfloat(),
-                "_id": hmm_id,
-                "cluster": faker.pyint(),
-                "count": faker.pyint(),
-                "families": {faker.pystr(): faker.pyint()},
-                "names": [faker.pystr()],
-            },
-        )
+        document = {
+            "entries": [
+                {
+                    "accession": faker.pystr(),
+                    "gi": faker.pystr(),
+                    "name": faker.pystr(),
+                    "organism": faker.pystr(),
+                },
+            ],
+            "genera": {faker.pystr(): faker.pyint()},
+            "length": faker.pyint(),
+            "mean_entropy": faker.pyfloat(),
+            "total_entropy": faker.pyfloat(),
+            "_id": hmm_id,
+            "cluster": faker.pyint(),
+            "count": faker.pyint(),
+            "families": {faker.pystr(): faker.pyint()},
+            "names": [faker.pystr()],
+        }
+
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            await self._mongo.hmm.insert_one(
+                {**document, "hidden": False},
+                session=mongo_session,
+            )
+
+            pg_session.add(
+                SQLHMM(
+                    legacy_id=hmm_id,
+                    cluster=document["cluster"],
+                    count=document["count"],
+                    length=document["length"],
+                    mean_entropy=document["mean_entropy"],
+                    total_entropy=document["total_entropy"],
+                    hidden=False,
+                    names=document["names"],
+                    families=document["families"],
+                    genera=document["genera"],
+                    entries=document["entries"],
+                ),
+            )
 
         return HMM(**document)
 

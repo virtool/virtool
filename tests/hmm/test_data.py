@@ -2,6 +2,7 @@ import gzip
 import json
 
 import pytest
+from multidict import MultiDict, MultiDictProxy
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -224,19 +225,14 @@ class TestDownloadAnnotations:
         assert size == len(b"STORED-ANNOTATIONS")
         assert await _drain(stream) == b"STORED-ANNOTATIONS"
 
-    async def test_regenerates_and_stores_when_missing(self, mongo):
-        """When no object exists, annotations are regenerated from Mongo and stored."""
+    async def test_regenerates_and_stores_when_missing(self, pg, seed_pg_hmm):
+        """When no object exists, annotations are regenerated from Postgres and stored."""
         storage = ObjectProvider.for_memory()
 
-        await mongo.hmm.insert_many(
-            [
-                {"_id": "annotation_alpha", "cluster": 1, "hidden": False},
-                {"_id": "annotation_beta", "cluster": 2, "hidden": False},
-            ],
-            session=None,
-        )
+        await seed_pg_hmm({**ANNOTATION, "_id": "annotation_alpha", "cluster": 1})
+        await seed_pg_hmm({**ANNOTATION, "_id": "annotation_beta", "cluster": 2})
 
-        hmms = HmmsData(None, mongo, None, storage)
+        hmms = HmmsData(None, None, pg, storage)
 
         stream, size = await hmms.download_annotations()
 
@@ -339,6 +335,72 @@ async def _seed_status(mongo, pg, **overrides) -> None:
             ),
         )
         await session.commit()
+
+
+def _query(**params: str) -> MultiDictProxy:
+    return MultiDictProxy(MultiDict(**params))
+
+
+class TestGet:
+    """``get`` reads a single annotation from Postgres by its legacy string id."""
+
+    async def test_reads_from_postgres(self, data_layer, seed_pg_hmm, hmm_document):
+        await seed_pg_hmm(hmm_document)
+
+        hmm = await data_layer.hmms.get("f8666902")
+
+        assert hmm.id == "f8666902"
+        assert hmm.cluster == hmm_document["cluster"]
+        assert hmm.entries == hmm_document["entries"]
+
+    async def test_missing_raises_not_found(self, data_layer, seed_pg_hmm):
+        with pytest.raises(ResourceNotFoundError):
+            await data_layer.hmms.get("does_not_exist")
+
+
+class TestFind:
+    """``find`` lists annotations from Postgres, excluding hidden ones."""
+
+    async def test_reads_from_postgres(
+        self, data_layer, seed_pg_hmm_status, seed_pg_hmm, hmm_document
+    ):
+        await seed_pg_hmm_status({})
+        await seed_pg_hmm({**hmm_document, "hidden": False})
+
+        result = await data_layer.hmms.find(_query())
+
+        assert result.found_count == 1
+        assert result.total_count == 1
+        assert [document.id for document in result.documents] == ["f8666902"]
+
+    async def test_excludes_hidden(
+        self, data_layer, seed_pg_hmm_status, seed_pg_hmm, hmm_document
+    ):
+        await seed_pg_hmm_status({})
+        await seed_pg_hmm({**hmm_document, "_id": "visible", "hidden": False})
+        await seed_pg_hmm({**hmm_document, "_id": "concealed", "hidden": True})
+
+        result = await data_layer.hmms.find(_query())
+
+        assert result.total_count == 1
+        assert [document.id for document in result.documents] == ["visible"]
+
+    async def test_search_filters_by_name(
+        self, data_layer, seed_pg_hmm_status, seed_pg_hmm, hmm_document
+    ):
+        await seed_pg_hmm_status({})
+        await seed_pg_hmm(
+            {**hmm_document, "_id": "polymerase", "names": ["RNA polymerase"]},
+        )
+        await seed_pg_hmm(
+            {**hmm_document, "_id": "capsid", "names": ["capsid protein"]},
+        )
+
+        result = await data_layer.hmms.find(_query(find="polymerase"))
+
+        assert result.found_count == 1
+        assert result.total_count == 2
+        assert [document.id for document in result.documents] == ["polymerase"]
 
 
 class TestInstall:
