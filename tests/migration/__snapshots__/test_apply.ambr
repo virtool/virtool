@@ -449,5 +449,12 @@
       'name': 'create legacy_history table',
       'revision': '743a03e550e0',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 65,
+      'name': 'add subtraction_files subtraction_id name unique constraint',
+      'revision': 'e31c352fd114',
+    }),
   ])
 # ---
