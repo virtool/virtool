@@ -11,11 +11,7 @@
       "Bash(mise run test:down *)",
       "Bash(docker compose *)",
       "Bash(uv run ruff *)",
-      "Bash(uv run pytest *)",
-      "mcp__linear-virtool__get_*",
-      "mcp__linear-virtool__list_*",
-      "mcp__linear-virtool__search_*",
-      "mcp__linear-virtool__extract_images"
+      "Bash(uv run pytest *)"
     ]
   },
   "hooks": {
