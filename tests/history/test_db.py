@@ -209,3 +209,23 @@ async def test_patch_to_version_missing_diff(mongo: Mongo, pg: AsyncEngine):
 
     with pytest.raises(ValueError, match="Missing history_diffs rows.*6116cba1.1"):
         await virtool.history.db.patch_to_version(mongo, pg, "6116cba1", 0)
+
+
+async def test_patch_to_version_inline_diff(mongo: Mongo, pg: AsyncEngine):
+    """A change holding an unbackfilled inline diff raises instead of being treated as
+    a literal diff.
+    """
+    await mongo.history.insert_one(
+        {
+            "_id": "6116cba1.1",
+            "diff": [["change", "version", [0, 1]]],
+            "method_name": "update",
+            "otu": {"id": "6116cba1", "name": "Prunus virus F", "version": 1},
+        },
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Unexpected inline diff for change 6116cba1.1",
+    ):
+        await virtool.history.db.patch_to_version(mongo, pg, "6116cba1", 0)

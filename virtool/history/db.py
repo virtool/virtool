@@ -281,23 +281,28 @@ async def get_most_recent_change(
 async def _resolve_diffs(pg: AsyncEngine, changes: list[Document]) -> dict[str, object]:
     """Resolve the ``diff`` for each change, fetching Postgres-stored diffs in one query.
 
-    Changes created since OTU diffs moved to Postgres store the sentinel string
-    ``"postgres"`` in Mongo and the real diff in ``SQLHistoryDiff``. Older inline diffs
-    are returned as-is.
+    Every change stores the sentinel string ``"postgres"`` in Mongo and the real diff
+    in ``SQLHistoryDiff``. A change whose ``diff`` is anything else is an unbackfilled
+    legacy inline diff and raises ``ValueError``.
 
     :param pg: the application PostgreSQL database object
     :param changes: the change documents to resolve diffs for
     :return: a mapping of change id to resolved diff
+    :raises ValueError: if a change holds an inline diff instead of the ``"postgres"``
+        sentinel
 
     """
     resolved: dict[str, object] = {}
     postgres_change_ids = []
 
     for change in changes:
-        if change["diff"] == "postgres":
-            postgres_change_ids.append(change["_id"])
-        else:
-            resolved[change["_id"]] = change["diff"]
+        if change["diff"] != "postgres":
+            raise ValueError(
+                f"Unexpected inline diff for change {change['_id']}; "
+                "expected 'postgres' sentinel",
+            )
+
+        postgres_change_ids.append(change["_id"])
 
     if postgres_change_ids:
         async with AsyncSession(pg) as session:

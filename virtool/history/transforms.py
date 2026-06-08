@@ -16,13 +16,16 @@ class AttachDiffTransform(AbstractTransform):
         return {**document, "diff": prepared}
 
     async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
-        if document["diff"] == "postgres":
-            result = await session.execute(
-                select(SQLHistoryDiff.diff).where(
-                    SQLHistoryDiff.change_id == document["id"],
-                ),
+        if document["diff"] != "postgres":
+            raise ValueError(
+                f"Unexpected inline diff for change {document['id']}; "
+                "expected 'postgres' sentinel",
             )
 
-            return result.scalar_one()
+        result = await session.execute(
+            select(SQLHistoryDiff.diff).where(
+                SQLHistoryDiff.change_id == document["id"],
+            ),
+        )
 
-        return document["diff"]
+        return result.scalar_one()
