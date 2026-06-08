@@ -1,8 +1,9 @@
 [tasks.test]
 description = "Run Python tests in Docker."
+usage = 'arg "[<pytest_args>...]" help="Arguments passed to pytest"'
 run = [
   "docker compose up -d test",
-  'docker compose exec test uv run pytest {{arg(name="pytest_args", var=true, default="")}}'
+  "docker compose exec test uv run pytest $usage_pytest_args"
 ]
 
 [tasks."test:build"]

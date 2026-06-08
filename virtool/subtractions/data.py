@@ -290,6 +290,7 @@ class SubtractionsData(DataLayerDomain):
             self._mongo,
             self._pg,
             self._base_url,
+            subtraction.id,
             map_subtraction_row(subtraction, upload),
         )
 
@@ -440,20 +441,20 @@ class SubtractionsData(DataLayerDomain):
         :param chunker: the multipart reader containing the file content
         :return: the subtraction file resource model
         """
-        _, subtraction_id = await self._resolve_ids(subtraction_id)
+        modern_id, legacy_id = await self._resolve_ids(subtraction_id)
 
         if filename not in FILES:
             raise ResourceNotFoundError("Unsupported subtraction file name")
 
         file_type = check_subtraction_file_type(filename)
 
-        key = subtraction_file_key(subtraction_id, filename)
+        key = subtraction_file_key(legacy_id, filename)
 
         try:
             async with AsyncSession(self._pg) as session:
                 subtraction_file = SQLSubtractionFile(
                     name=filename,
-                    subtraction=subtraction_id,
+                    subtraction_id=modern_id,
                     type=file_type,
                 )
 
@@ -480,12 +481,12 @@ class SubtractionsData(DataLayerDomain):
             raise
 
         return SubtractionFile(
-            **subtraction_file_dict,
-            download_url=f"{self._base_url}/subtractions/{subtraction_id}/files/{filename}",
+            **{**subtraction_file_dict, "subtraction": legacy_id},
+            download_url=f"{self._base_url}/subtractions/{legacy_id}/files/{filename}",
         )
 
     async def get_file(self, subtraction_id: int | str, filename: str):
-        _, subtraction_id = await self._resolve_ids(subtraction_id)
+        modern_id, legacy_id = await self._resolve_ids(subtraction_id)
 
         if filename not in FILES:
             raise ResourceNotFoundError
@@ -494,7 +495,7 @@ class SubtractionsData(DataLayerDomain):
             result = (
                 await session.execute(
                     select(SQLSubtractionFile).filter_by(
-                        subtraction=subtraction_id,
+                        subtraction_id=modern_id,
                         name=filename,
                     ),
                 )
@@ -505,6 +506,6 @@ class SubtractionsData(DataLayerDomain):
 
         file = result.to_dict()
 
-        key = subtraction_file_key(subtraction_id, filename)
+        key = subtraction_file_key(legacy_id, filename)
 
         return self._storage.read(key), file["size"]

@@ -2,8 +2,10 @@ import asyncio
 from http import HTTPStatus
 
 import pytest
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 from tests.fixtures.client import ClientSpawner
+from virtool.history.db import bulk_insert_diffs
 from virtool.mongo.core import Mongo
 
 
@@ -44,6 +46,7 @@ async def test_get(
     snapshot,
     resp_is,
     mongo: Mongo,
+    pg: AsyncEngine,
     spawn_client: ClientSpawner,
     test_changes,
     static_time,
@@ -51,9 +54,17 @@ async def test_get(
     """Test that a specific history change can be retrieved by its change_id."""
     client = await spawn_client(authenticated=True)
 
+    await bulk_insert_diffs(
+        pg,
+        [{"change_id": c["_id"], "diff": c["diff"]} for c in test_changes],
+    )
+
     await asyncio.gather(
         mongo.history.insert_many(
-            [{**c, "user": {"id": client.user.id}} for c in test_changes],
+            [
+                {**c, "diff": "postgres", "user": {"id": client.user.id}}
+                for c in test_changes
+            ],
             session=None,
         ),
         mongo.references.insert_one(

@@ -5,7 +5,17 @@ backfill revision and the later re-backfill revision. Keeping it here lets both
 revisions share a single implementation instead of duplicating ~300 lines.
 """
 
-from sqlalchemy import func, select, update
+from sqlalchemy import (
+    BigInteger,
+    Column,
+    Enum,
+    MetaData,
+    String,
+    Table,
+    func,
+    select,
+    update,
+)
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from structlog import get_logger
@@ -14,12 +24,26 @@ from virtool.data.topg import compose_legacy_id_single_expression
 from virtool.jobs.pg import SQLJob
 from virtool.migration import MigrationContext
 from virtool.pg.base import Base
-from virtool.subtractions.pg import SQLSubtraction, SQLSubtractionFile, SubtractionType
+from virtool.subtractions.pg import SQLSubtraction, SubtractionType
 from virtool.uploads.sql import SQLUpload, UploadType
 from virtool.users.pg import SQLUser
 from virtool.users.utils import UNKNOWN_USER_HANDLE
 
 logger = get_logger("migration")
+
+# The legacy ``subtraction`` string column was dropped from the
+# ``SQLSubtractionFile`` ORM model when the subtraction_files shuffle was
+# finalized. These revisions run earlier in the migration chain, while the column
+# still exists in the database, so they read it through this frozen table rather
+# than the now-evolved ORM model.
+_legacy_subtraction_files = Table(
+    "subtraction_files",
+    MetaData(),
+    Column("subtraction", String),
+    Column("subtraction_id", BigInteger),
+    Column("size", BigInteger),
+    Column("type", Enum(SubtractionType, name="subtractiontype")),
+)
 
 
 async def copy_subtractions_to_postgres(ctx: MigrationContext) -> None:
@@ -343,10 +367,10 @@ async def _reconstruct_removed_upload(
 
     size = (
         await session.execute(
-            select(SQLSubtractionFile.size)
+            select(_legacy_subtraction_files.c.size)
             .where(
-                SQLSubtractionFile.subtraction == legacy_id,
-                SQLSubtractionFile.type == SubtractionType.fasta,
+                _legacy_subtraction_files.c.subtraction == legacy_id,
+                _legacy_subtraction_files.c.type == SubtractionType.fasta,
             )
             .limit(1),
         )
@@ -456,10 +480,10 @@ async def _backfill_file_subtraction_ids(session: AsyncSession) -> None:
     ``subtraction_id IS NULL`` so re-runs only touch rows not already linked.
     """
     result = await session.execute(
-        update(SQLSubtractionFile)
+        update(_legacy_subtraction_files)
         .where(
-            SQLSubtractionFile.subtraction_id.is_(None),
-            SQLSubtractionFile.subtraction == SQLSubtraction.legacy_id,
+            _legacy_subtraction_files.c.subtraction_id.is_(None),
+            _legacy_subtraction_files.c.subtraction == SQLSubtraction.legacy_id,
         )
         .values(subtraction_id=SQLSubtraction.id),
     )

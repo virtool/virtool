@@ -1,7 +1,7 @@
 """rename legacy_history reference columns to bare names
 
 Revision ID: adea254e2c31
-Revises: 743a03e550e0
+Revises: 482fb0891b9b
 Create Date: 2026-06-08 21:41:56.133138+00:00
 
 """
@@ -10,7 +10,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "adea254e2c31"
-down_revision = "743a03e550e0"
+down_revision = "482fb0891b9b"
 branch_labels = None
 depends_on = None
 

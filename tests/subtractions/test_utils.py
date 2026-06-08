@@ -34,7 +34,7 @@ def test_subtraction_prefix_with_spaces():
 
 
 async def test_get_subtraction_files(snapshot, pg, test_subtraction_files):
-    assert await get_subtraction_files(pg, "foo") == snapshot
+    assert await get_subtraction_files(pg, test_subtraction_files) == snapshot
 
 
 async def test_rename_bowtie_files(tmp_path):

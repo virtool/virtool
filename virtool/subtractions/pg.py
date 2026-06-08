@@ -62,11 +62,14 @@ class SQLSubtractionFile(Base):
     """SQL model to store new subtraction files"""
 
     __tablename__ = "subtraction_files"
-    __table_args__ = (UniqueConstraint("subtraction", "name"),)
+    __table_args__ = (
+        UniqueConstraint(
+            "subtraction_id", "name", name="subtraction_files_subtraction_id_name_key"
+        ),
+    )
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
-    subtraction = Column(String)
-    subtraction_id = Column(BigInteger, ForeignKey("subtractions.id"), nullable=True)
+    subtraction_id = Column(BigInteger, ForeignKey("subtractions.id"), nullable=False)
     type = Column(Enum(SubtractionType))
     size = Column(BigInteger)
