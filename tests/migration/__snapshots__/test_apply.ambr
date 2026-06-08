@@ -456,5 +456,12 @@
       'name': 'add subtraction_files subtraction_id name unique constraint',
       'revision': 'e31c352fd114',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 66,
+      'name': 'finalize subtraction_files shuffle',
+      'revision': '482fb0891b9b',
+    }),
   ])
 # ---
