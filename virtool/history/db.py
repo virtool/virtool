@@ -114,7 +114,7 @@ async def add(
 
     document = prepared.document
     otu_version = document["otu"]["version"]
-    index = document["index"]
+    index_document = document["index"]
 
     diff_row = SQLHistoryDiff(change_id=document["_id"], diff=prepared.diff)
     legacy_row = SQLLegacyHistory(
@@ -123,13 +123,15 @@ async def add(
         description=document["description"],
         method_name=document["method_name"],
         user_id=user_id,
-        otu_id=document["otu"]["id"],
+        otu=document["otu"]["id"],
         otu_name=document["otu"]["name"],
         otu_version=None if otu_version == "removed" else str(otu_version),
-        reference_id=document["reference"]["id"],
-        index_id=None if index["id"] == "unbuilt" else index["id"],
+        reference=document["reference"]["id"],
+        index=None if index_document["id"] == "unbuilt" else index_document["id"],
         index_version=(
-            None if index["version"] == "unbuilt" else str(index["version"])
+            None
+            if index_document["version"] == "unbuilt"
+            else str(index_document["version"])
         ),
     )
 

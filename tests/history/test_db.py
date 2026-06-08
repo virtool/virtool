@@ -151,7 +151,7 @@ class TestAdd:
             ).scalar_one()
 
         assert legacy.otu_version is None
-        assert legacy.index_id is None
+        assert legacy.index is None
         assert legacy.index_version is None
         assert legacy == snapshot(name="legacy_history")
 

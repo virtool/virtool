@@ -449,5 +449,12 @@
       'name': 'create legacy_history table',
       'revision': '743a03e550e0',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 65,
+      'name': 'rename legacy_history reference columns to bare names',
+      'revision': 'adea254e2c31',
+    }),
   ])
 # ---

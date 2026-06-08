@@ -46,7 +46,7 @@ class SQLLegacyHistory(Base):
 
     __tablename__ = "legacy_history"
     __table_args__ = (
-        Index("ix_legacy_history_otu_id_otu_version", "otu_id", desc("otu_version")),
+        Index("ix_legacy_history_otu_otu_version", "otu", desc("otu_version")),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
@@ -55,9 +55,9 @@ class SQLLegacyHistory(Base):
     description: Mapped[str]
     method_name: Mapped[str]
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), index=True)
-    otu_id: Mapped[str]
+    otu: Mapped[str]
     otu_name: Mapped[str]
     otu_version: Mapped[str | None]
-    reference_id: Mapped[str] = mapped_column(index=True)
-    index_id: Mapped[str | None] = mapped_column(index=True)
+    reference: Mapped[str] = mapped_column(index=True)
+    index: Mapped[str | None] = mapped_column(index=True)
     index_version: Mapped[str | None]
