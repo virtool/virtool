@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
 import virtool.utils
-from virtool.data.topg import both_transactions
 from virtool.errors import GitHubError
 from virtool.github import get_etag, get_release
 from virtool.hmm.sql import HMM_STATUS_ID, SQLHMM, SQLHMMStatus
@@ -32,17 +31,14 @@ of the data do nothing.
 
 async def fetch_and_update_release(
     http_client: ClientSession,
-    mongo,
     pg: AsyncEngine,
     slug: str,
     ignore_errors: bool = False,
 ) -> Document:
-    """Return the HMM install status document or create one if none exists.
+    """Return the HMM install status release or create the status row if absent.
 
-    The status is dual-written to the Mongo ``status`` singleton and the
-    Postgres ``legacy_hmm_status`` singleton in one transaction.
+    The status is written to the Postgres ``legacy_hmm_status`` singleton.
 
-    :param mongo: the application mongo client
     :param http_client: the application http client
     :param pg: the application Postgres client
     :param slug: the slug for the HMM GitHub repo
@@ -50,19 +46,24 @@ async def fetch_and_update_release(
     :return: the release
 
     """
-    document = await mongo.status.find_one("hmm", ["installed", "release", "updates"])
+    async with AsyncSession(pg) as session:
+        status = (
+            await session.execute(
+                select(SQLHMMStatus).where(SQLHMMStatus.id == HMM_STATUS_ID),
+            )
+        ).scalar_one_or_none()
 
-    # The latest release stored in the HMM status document.
-    release = document.get("release")
+    # The latest release stored in the HMM status row.
+    release = status.release if status else None
 
     # The ETag for the latest stored release.
     etag = get_etag(release)
 
     # The currently installed release.
-    installed = document.get("installed")
+    installed = status.installed if status else None
 
     if installed is True:
-        installed = document["updates"][0]
+        installed = status.updates[0]
 
     try:
         # The release dict will only be replaced if there is a 200 response from GitHub.
@@ -84,14 +85,8 @@ async def fetch_and_update_release(
         if errors and not ignore_errors:
             raise
 
-        async with both_transactions(mongo, pg) as (mongo_session, pg_session):
-            await mongo.status.update_one(
-                {"_id": "hmm"},
-                {"$set": {"errors": errors, "installed": installed}},
-                session=mongo_session,
-            )
-
-            await pg_session.execute(
+        async with AsyncSession(pg) as session:
+            await session.execute(
                 insert(SQLHMMStatus)
                 .values(
                     id=HMM_STATUS_ID,
@@ -104,6 +99,7 @@ async def fetch_and_update_release(
                     set_={"errors": errors, "installed": installed},
                 ),
             )
+            await session.commit()
 
         return release
 
@@ -114,15 +110,8 @@ async def fetch_and_update_release(
     release["retrieved_at"] = virtool.utils.timestamp()
 
     # Set an empty error list since the update check was successful.
-    async with both_transactions(mongo, pg) as (mongo_session, pg_session):
-        await mongo.status.update_one(
-            {"_id": "hmm"},
-            {"$set": {"errors": [], "installed": installed, "release": release}},
-            upsert=True,
-            session=mongo_session,
-        )
-
-        await pg_session.execute(
+    async with AsyncSession(pg) as session:
+        await session.execute(
             insert(SQLHMMStatus)
             .values(id=HMM_STATUS_ID, errors=[], installed=installed, release=release)
             .on_conflict_do_update(
@@ -130,6 +119,7 @@ async def fetch_and_update_release(
                 set_={"errors": [], "installed": installed, "release": release},
             ),
         )
+        await session.commit()
 
     logger.info("fetched and updated hmm release")
 

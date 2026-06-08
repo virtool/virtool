@@ -14,10 +14,7 @@ from virtool.data.errors import (
     ResourceError,
     ResourceNotFoundError,
 )
-from virtool.data.topg import (
-    both_transactions,
-    compose_legacy_id_single_expression,
-)
+from virtool.data.topg import compose_legacy_id_single_expression
 from virtool.data.transforms import apply_transforms
 from virtool.github import create_update_subdocument
 from virtool.hmm.db import (
@@ -28,7 +25,6 @@ from virtool.hmm.db import (
 from virtool.hmm.models import HMM, HMMInstalled, HMMSearchResult, HMMStatus
 from virtool.hmm.sql import HMM_STATUS_ID, SQLHMM, SQLHMMStatus
 from virtool.hmm.tasks import HMMInstallTask
-from virtool.mongo.core import Mongo
 from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
 from virtool.tasks.progress import (
@@ -37,6 +33,7 @@ from virtool.tasks.progress import (
 )
 from virtool.tasks.transforms import AttachTaskTransform
 from virtool.users.transforms import AttachUserTransform
+from virtool.utils import random_alphanumeric
 
 HMM_PROFILES_KEY = "hmm/profiles.hmm"
 """The storage key for the HMM profiles file."""
@@ -73,12 +70,10 @@ class HmmsData(DataLayerDomain):
     def __init__(
         self,
         client: ClientSession,
-        mongo: Mongo,
         pg: AsyncEngine,
         storage: StorageBackend,
     ):
         self._client = client
-        self._mongo = mongo
         self._pg = pg
         self._storage = storage
 
@@ -234,7 +229,6 @@ class HmmsData(DataLayerDomain):
 
         await fetch_and_update_release(
             self._client,
-            self._mongo,
             self._pg,
             HMM_REPO_SLUG,
         )
@@ -258,21 +252,9 @@ class HmmsData(DataLayerDomain):
 
         update_subdocument = create_update_subdocument(release, False, user_id)
 
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
-            await self._mongo.status.find_one_and_update(
-                {"_id": "hmm"},
-                {
-                    "$set": {"task": {"id": task.id}},
-                    "$push": {"updates": update_subdocument},
-                },
-                session=mongo_session,
-            )
-
+        async with AsyncSession(self._pg) as session:
             status = (
-                await pg_session.execute(
+                await session.execute(
                     select(SQLHMMStatus).where(SQLHMMStatus.id == HMM_STATUS_ID),
                 )
             ).scalar_one_or_none()
@@ -280,6 +262,8 @@ class HmmsData(DataLayerDomain):
             if status is not None:
                 status.task_id = task.id
                 status.updates = [*status.updates, update_subdocument]
+
+            await session.commit()
 
         installed = await apply_transforms(
             {**release, **update_subdocument},
@@ -309,19 +293,11 @@ class HmmsData(DataLayerDomain):
         wrote_profiles = False
 
         try:
-            async with both_transactions(self._mongo, self._pg) as (
-                mongo_session,
-                pg_session,
-            ):
+            async with AsyncSession(self._pg) as session:
                 for annotation in annotations:
-                    inserted = await self._mongo.hmm.insert_one(
-                        dict(annotation, hidden=False),
-                        session=mongo_session,
-                    )
-
-                    pg_session.add(
+                    session.add(
                         SQLHMM(
-                            legacy_id=inserted["_id"],
+                            legacy_id=random_alphanumeric(8, mixed_case=True),
                             cluster=annotation["cluster"],
                             count=annotation["count"],
                             length=annotation["length"],
@@ -337,17 +313,11 @@ class HmmsData(DataLayerDomain):
 
                     await tracker.add(1)
 
-                await self._mongo.status.update_one(
-                    {"_id": "hmm", "updates.id": release_id},
-                    {"$set": {"installed": installed, "updates.$.ready": True}},
-                    session=mongo_session,
-                )
-
-                # Mirror the conditional Mongo status update: set ``installed``
-                # and flip the matching update's ``ready`` flag only when the
-                # singleton row exists and carries an update for this release.
+                # Set ``installed`` and flip the matching update's ``ready``
+                # flag only when the singleton row exists and carries an update
+                # for this release.
                 status = (
-                    await pg_session.execute(
+                    await session.execute(
                         select(SQLHMMStatus).where(SQLHMMStatus.id == HMM_STATUS_ID),
                     )
                 ).scalar_one_or_none()
@@ -365,15 +335,17 @@ class HmmsData(DataLayerDomain):
 
                 wrote_profiles = True
                 await self._storage.write(HMM_PROFILES_KEY, profile_data)
+
+                await session.commit()
         except Exception:
             # Clean up the profiles blob on any failure from the write attempt
             # onward, then re-raise. ``write`` is not atomic from the caller's
             # perspective: a failure can leave an incomplete multipart upload on
-            # S3 or a partially written file on disk. A commit-time failure when
-            # ``both_transactions`` exits rolls back both databases but leaves a
-            # fully written blob orphaned ahead of them. ``wrote_profiles`` gates
-            # the delete so a failure before the write does not destroy a prior
-            # install's profiles file. ``delete`` is idempotent.
+            # S3 or a partially written file on disk. A commit-time failure rolls
+            # back the Postgres transaction but leaves a fully written blob
+            # orphaned ahead of it. ``wrote_profiles`` gates the delete so a
+            # failure before the write does not destroy a prior install's
+            # profiles file. ``delete`` is idempotent.
             if wrote_profiles:
                 await self._storage.delete(HMM_PROFILES_KEY)
             raise
@@ -409,26 +381,17 @@ class HmmsData(DataLayerDomain):
         return self._storage.read(HMM_ANNOTATIONS_KEY), len(compressed)
 
     async def clean_status(self) -> None:
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
-            await self._mongo.status.find_one_and_update(
-                {"_id": "hmm"},
-                {"$set": {"installed": None, "task": None, "updates": []}},
-                session=mongo_session,
-            )
-
-            await pg_session.execute(
+        async with AsyncSession(self._pg) as session:
+            await session.execute(
                 update(SQLHMMStatus)
                 .where(SQLHMMStatus.id == HMM_STATUS_ID)
                 .values(installed=None, task_id=None, updates=[]),
             )
+            await session.commit()
 
     async def update_release(self) -> None:
         await fetch_and_update_release(
             self._client,
-            self._mongo,
             self._pg,
             HMM_REPO_SLUG,
         )

@@ -94,7 +94,7 @@ def create_data_layer(
         GroupsData(pg),
         HealthData(mongo, pg),
         HistoryData(mongo, pg),
-        HmmsData(client, mongo, pg, storage),
+        HmmsData(client, pg, storage),
         IndexData(mongo, config, pg, storage),
         JobsData(pg),
         LabelsData(mongo, pg),
