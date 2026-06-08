@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 import virtool.history.db
-from virtool.history.sql import SQLHistoryDiff
+from virtool.history.sql import SQLHistoryDiff, SQLLegacyHistory
 from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
@@ -21,10 +21,13 @@ class TestAdd:
         pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         static_time,
+        fake,
         test_otu_edit,
-        test_change,
     ):
+        """A change recorded inside a caller-supplied Mongo session dual-writes."""
         old, new = test_otu_edit
+
+        user = await fake.users.create()
 
         async with mongo.create_session() as session:
             change = await virtool.history.db.add(
@@ -34,7 +37,7 @@ class TestAdd:
                 HistoryMethod.edit,
                 old,
                 new,
-                "test",
+                user.id,
                 session,
             )
 
@@ -44,13 +47,21 @@ class TestAdd:
         assert await mongo.history.find_one(change_id) == snapshot
 
         async with AsyncSession(pg) as session:
-            result = await session.execute(
+            diff = await session.execute(
                 select(SQLHistoryDiff.diff).where(
                     SQLHistoryDiff.change_id == change_id,
                 ),
             )
 
-            assert result.scalar_one_or_none() == snapshot
+            assert diff.scalar_one_or_none() == snapshot
+
+            legacy = await session.execute(
+                select(SQLLegacyHistory).where(
+                    SQLLegacyHistory.legacy_id == change_id,
+                ),
+            )
+
+            assert legacy.scalar_one() == snapshot(name="legacy_history")
 
     async def test_create(
         self,
@@ -58,14 +69,17 @@ class TestAdd:
         pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         static_time,
+        fake,
         test_otu_edit,
-        test_change,
     ):
+        """A standalone create dual-writes a normal-version ``legacy_history`` row."""
         # There is no old document because this is a change document for an otu creation
         # operation.
         old = None
 
         new, _ = test_otu_edit
+
+        user = await fake.users.create()
 
         change = await virtool.history.db.add(
             mongo,
@@ -74,29 +88,38 @@ class TestAdd:
             HistoryMethod.create,
             old,
             new,
-            "test",
+            user.id,
         )
 
         assert change == snapshot
         assert await mongo.history.find_one() == snapshot
         assert await get_row_by_id(pg, SQLHistoryDiff, 1) == snapshot
 
+        async with AsyncSession(pg) as session:
+            legacy = await session.execute(
+                select(SQLLegacyHistory).where(
+                    SQLLegacyHistory.legacy_id == change["_id"],
+                ),
+            )
+
+            assert legacy.scalar_one() == snapshot(name="legacy_history")
+
     async def test_remove(
         self,
-        config,
         mongo: Mongo,
         pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         static_time,
+        fake,
         test_otu_edit,
-        test_change,
-        tmp_path,
     ):
-        """Test that the addition of a change due to otu removal inserts the expected change document."""
+        """A ``"removed"`` version normalizes ``otu_version`` to ``NULL``."""
         # There is no new document because this is a change document for a otu removal operation.
         new = None
 
         old, _ = test_otu_edit
+
+        user = await fake.users.create()
 
         change = await virtool.history.db.add(
             mongo,
@@ -105,7 +128,7 @@ class TestAdd:
             HistoryMethod.remove,
             old,
             new,
-            "test",
+            user.id,
         )
 
         assert change == snapshot(name="return_value")
@@ -117,6 +140,20 @@ class TestAdd:
 
         assert diff == snapshot(name="diff")
         assert document == snapshot(name="document")
+
+        async with AsyncSession(pg) as session:
+            legacy = (
+                await session.execute(
+                    select(SQLLegacyHistory).where(
+                        SQLLegacyHistory.legacy_id == change["_id"],
+                    ),
+                )
+            ).scalar_one()
+
+        assert legacy.otu_version is None
+        assert legacy.index_id is None
+        assert legacy.index_version is None
+        assert legacy == snapshot(name="legacy_history")
 
 
 class TestGetMostRecentChange:

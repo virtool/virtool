@@ -13,8 +13,9 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import virtool.otus.db
 import virtool.utils
 from virtool.api.utils import paginate
+from virtool.data.topg import both_transactions
 from virtool.data.transforms import apply_transforms
-from virtool.history.sql import SQLHistoryDiff
+from virtool.history.sql import SQLHistoryDiff, SQLLegacyHistory
 from virtool.history.utils import (
     calculate_diff,
     compose_history_description,
@@ -111,19 +112,40 @@ async def add(
     """
     prepared = prepare_add(method_name, old, new, user_id, description=description)
 
-    async with AsyncSession(pg) as pg_session:
-        await pg_session.execute(
-            insert(SQLHistoryDiff).values(
-                change_id=prepared.document["_id"],
-                diff=prepared.diff,
-            ),
-        )
+    document = prepared.document
+    otu_version = document["otu"]["version"]
+    index = document["index"]
 
-        await mongo.history.insert_one(prepared.document, session=mongo_session)
+    diff_row = SQLHistoryDiff(change_id=document["_id"], diff=prepared.diff)
+    legacy_row = SQLLegacyHistory(
+        legacy_id=document["_id"],
+        created_at=document["created_at"],
+        description=document["description"],
+        method_name=document["method_name"],
+        user_id=user_id,
+        otu_id=document["otu"]["id"],
+        otu_name=document["otu"]["name"],
+        otu_version=None if otu_version == "removed" else str(otu_version),
+        reference_id=document["reference"]["id"],
+        index_id=None if index["id"] == "unbuilt" else index["id"],
+        index_version=(
+            None if index["version"] == "unbuilt" else str(index["version"])
+        ),
+    )
 
-        await pg_session.commit()
+    if mongo_session is None:
+        async with both_transactions(mongo, pg) as (mongo_session, pg_session):
+            pg_session.add(diff_row)
+            pg_session.add(legacy_row)
+            await mongo.history.insert_one(document, session=mongo_session)
+    else:
+        async with AsyncSession(pg) as pg_session:
+            pg_session.add(diff_row)
+            pg_session.add(legacy_row)
+            await mongo.history.insert_one(document, session=mongo_session)
+            await pg_session.commit()
 
-    return {**prepared.document, "diff": prepared.diff}
+    return {**document, "diff": prepared.diff}
 
 
 def prepare_add(
