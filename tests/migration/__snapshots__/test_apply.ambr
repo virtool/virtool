@@ -435,5 +435,12 @@
       'name': 'convert analysis_files and nuvs_blast to integer analysis fks',
       'revision': 'f51a03fa6f9a',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 63,
+      'name': 'create legacy_history table',
+      'revision': '743a03e550e0',
+    }),
   ])
 # ---
