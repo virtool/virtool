@@ -9,12 +9,12 @@ from virtool.utils import file_stats
 
 
 async def create_subtraction_files(
-    pg: AsyncEngine, subtraction_id: str, files: list[str], path: str | Path
+    pg: AsyncEngine, subtraction_id: int, files: list[str], path: str | Path
 ) -> None:
     """Create multiple rows in `subtraction_files` in a single transaction.
 
     :param pg: PostgreSQL AsyncEngine object
-    :param subtraction_id: ID that corresponds to a parent subtraction
+    :param subtraction_id: integer id of the parent subtraction
     :param files: A list of filenames
     :param path: The path to the subtraction files
 
@@ -24,7 +24,7 @@ async def create_subtraction_files(
             [
                 SQLSubtractionFile(
                     name=filename,
-                    subtraction=subtraction_id,
+                    subtraction_id=subtraction_id,
                     type=check_subtraction_file_type(filename),
                     size=(await to_thread(file_stats, path / filename))["size"],
                 )
