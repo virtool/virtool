@@ -27,7 +27,9 @@ class TestIndex:
         index: WFIndex = await scope.instantiate_by_key("index")
 
         assert index.path == work_path / "indexes" / workflow_data.analysis.index.id
+        assert index.fasta_path == index.path / "reference.fa"
         assert index.json_path == index.path / "otus.json"
+        assert index.fasta_path.exists()
 
         assert {p.name for p in index.path.iterdir()} == {
             "otus.json",
