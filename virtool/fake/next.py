@@ -23,7 +23,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
 from virtool.data.layer import DataLayer
-from virtool.data.topg import both_transactions
 from virtool.example import example_path
 from virtool.fake.providers import OrganismProvider, SegmentProvider, SequenceProvider
 from virtool.groups.models import Group
@@ -268,10 +267,7 @@ class HMMFakerDomain(DataFakerDomain):
     model = HMM
 
     async def create(self) -> HMM:
-        """Create a new fake hmm.
-
-        The annotation is dual-written to Mongo and Postgres so it is visible
-        to read paths that have been switched to Postgres.
+        """Create a new fake hmm in Postgres.
 
         :return: a new fake hmm
         """
@@ -298,16 +294,8 @@ class HMMFakerDomain(DataFakerDomain):
             "names": [faker.pystr()],
         }
 
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
-            await self._mongo.hmm.insert_one(
-                {**document, "hidden": False},
-                session=mongo_session,
-            )
-
-            pg_session.add(
+        async with AsyncSession(self._pg) as session:
+            session.add(
                 SQLHMM(
                     legacy_id=hmm_id,
                     cluster=document["cluster"],
@@ -322,6 +310,7 @@ class HMMFakerDomain(DataFakerDomain):
                     entries=document["entries"],
                 ),
             )
+            await session.commit()
 
         return HMM(**document)
 

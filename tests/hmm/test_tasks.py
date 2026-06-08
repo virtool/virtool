@@ -33,7 +33,7 @@ annotations = [
 
 
 async def test_hmm_install_task(
-    data_layer, tmp_path, pg, mongo, static_time, mocker, snapshot
+    data_layer, tmp_path, pg, static_time, mocker, snapshot
 ):
     async with AsyncSession(pg) as session:
         session.add(
@@ -74,7 +74,6 @@ async def test_hmm_install_task(
 
     await task.run()
 
-    assert await mongo.hmm.find().to_list(1) == snapshot(name="mongo_hmms")
     assert await data_layer.tasks.get(1) == snapshot(name="data_layer_task")
     raw = b"".join(
         [chunk async for chunk in data_layer.hmms._storage.read("hmm/profiles.hmm")]
@@ -84,11 +83,7 @@ async def test_hmm_install_task(
     async with AsyncSession(pg) as session:
         hmms = (await session.execute(select(SQLHMM))).scalars().all()
 
-    mongo_documents = await mongo.hmm.find().to_list(None)
-
-    assert [hmm.legacy_id for hmm in hmms] == [
-        document["_id"] for document in mongo_documents
-    ]
+    assert all(isinstance(hmm.legacy_id, str) and hmm.legacy_id for hmm in hmms)
     assert [hmm.cluster for hmm in hmms] == [annotations[0]["cluster"]]
     assert [hmm.names for hmm in hmms] == [annotations[0]["names"]]
     assert [hmm.genera for hmm in hmms] == [annotations[0]["genera"]]
