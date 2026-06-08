@@ -21,11 +21,12 @@
   "hooks": {
     "PostToolUse": [
       {
-        "matcher": "Write(*.py)|Edit(*.py)",
+        "matcher": "Write|Edit",
         "hooks": [
           {
             "type": "command",
             "command": "uv run ruff format $(jq -r '.tool_input.file_path')",
+            "if": "Write(*.py)|Edit(*.py)",
             "timeout": 30,
             "statusMessage": "Formatting with ruff..."
           }
