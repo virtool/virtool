@@ -15,7 +15,7 @@
       "mcp__linear-virtool__get_*",
       "mcp__linear-virtool__list_*",
       "mcp__linear-virtool__search_*",
-      "mcp__linear-virtool__extract_*"
+      "mcp__linear-virtool__extract_images"
     ]
   },
   "hooks": {
