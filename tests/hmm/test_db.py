@@ -1,14 +1,14 @@
 import json
 
 from virtool.hmm.db import generate_annotations
-from virtool.mongo.core import Mongo
 
 
-async def test_generate_annotations(mongo: Mongo):
-    await mongo.hmm.insert_one({"_id": "foo"})
-    await mongo.hmm.insert_one({"_id": "bar"})
+async def test_generate_annotations(pg, seed_pg_hmm, hmm_document):
+    """Annotations are generated from the Postgres ``hmms`` table."""
+    await seed_pg_hmm({**hmm_document, "_id": "foo", "hidden": False})
+    await seed_pg_hmm({**hmm_document, "_id": "bar", "hidden": False})
 
-    result = await generate_annotations(mongo)
+    result = await generate_annotations(pg)
 
     hmms = json.loads(result)
 

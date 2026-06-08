@@ -1,7 +1,7 @@
 """create legacy_history table
 
 Revision ID: 743a03e550e0
-Revises: 997cf9a66f10
+Revises: f51a03fa6f9a
 Create Date: 2026-06-06 00:13:19.076687+00:00
 
 """
@@ -11,7 +11,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "743a03e550e0"
-down_revision = "997cf9a66f10"
+down_revision = "f51a03fa6f9a"
 branch_labels = None
 depends_on = None
 
