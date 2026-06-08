@@ -51,7 +51,6 @@ async def analysis_ids(pg: AsyncEngine, static_time) -> dict[str, int]:
             sample="sample",
             reference="reference",
             index="index",
-            subtractions=[],
             user_id=1,
         )
         other = SQLAnalysis(
@@ -64,7 +63,6 @@ async def analysis_ids(pg: AsyncEngine, static_time) -> dict[str, int]:
             sample="sample",
             reference="reference",
             index="index",
-            subtractions=[],
             user_id=1,
         )
 

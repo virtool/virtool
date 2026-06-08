@@ -8,7 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.filters import props
 
-from virtool.analyses.sql import SQLAnalysis, SQLAnalysisFile
+from virtool.analyses.sql import (
+    SQLAnalysis,
+    SQLAnalysisFile,
+    SQLAnalysisSubtraction,
+)
 from virtool.api.client import UserClient
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
@@ -16,6 +20,7 @@ from virtool.models.enums import AnalysisWorkflow
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row, get_row_by_id
 from virtool.samples.oas import CreateAnalysisRequest
+from virtool.subtractions.pg import SQLSubtraction
 from virtool.utils import timestamp
 
 
@@ -187,10 +192,27 @@ class TestCreate:
         assert row.results is None
         assert row.sample == "test_sample"
         assert row.reference == "test_ref"
-        assert row.subtractions == ["subtraction_1", "subtraction_2"]
         assert row.ml_id is None
         assert row.created_at == row.updated_at
         assert isinstance(row.user_id, int)
+
+        async with AsyncSession(pg) as session:
+            linked = (
+                (
+                    await session.execute(
+                        select(SQLSubtraction.legacy_id)
+                        .join(
+                            SQLAnalysisSubtraction,
+                            SQLAnalysisSubtraction.subtraction_id == SQLSubtraction.id,
+                        )
+                        .where(SQLAnalysisSubtraction.analysis_id == analysis.id),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+
+        assert sorted(linked) == ["subtraction_1", "subtraction_2"]
 
     async def test_subtractions_default_to_list(
         self,
@@ -198,7 +220,7 @@ class TestCreate:
         pg: AsyncEngine,
         setup_sample: str,
     ):
-        """An analysis created without subtractions stores an empty list, not None."""
+        """An analysis created without subtractions links no subtraction rows."""
         analysis = await data_layer.analyses.create(
             CreateAnalysisRequest(
                 ml=None,
@@ -210,9 +232,20 @@ class TestCreate:
             0,
         )
 
-        row = await get_row(pg, SQLAnalysis, ("id", analysis.id))
+        async with AsyncSession(pg) as session:
+            linked = (
+                (
+                    await session.execute(
+                        select(SQLAnalysisSubtraction).where(
+                            SQLAnalysisSubtraction.analysis_id == analysis.id,
+                        ),
+                    )
+                )
+                .scalars()
+                .all()
+            )
 
-        assert row.subtractions == []
+        assert linked == []
 
     async def test_rolls_back_when_pg_write_fails(
         self,

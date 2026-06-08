@@ -82,7 +82,6 @@ async def test_recalculate_workflow_tags(
             sample=sample,
             reference="ref",
             index="index",
-            subtractions=[],
             user_id=user.id,
         )
 

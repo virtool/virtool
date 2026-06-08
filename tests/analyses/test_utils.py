@@ -38,7 +38,6 @@ async def test_attach_analysis_files(
             sample="sample",
             reference="reference",
             index="index",
-            subtractions=[],
             user_id=1,
         )
 

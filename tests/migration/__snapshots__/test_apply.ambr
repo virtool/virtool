@@ -463,5 +463,26 @@
       'name': 'finalize subtraction_files shuffle',
       'revision': '482fb0891b9b',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 67,
+      'name': 'create analysis_subtractions table',
+      'revision': '0536aee705e9',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 68,
+      'name': 'backfill analysis_subtractions from jsonb',
+      'revision': 'eb5cf4abd58a',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 69,
+      'name': 'drop analyses subtractions column',
+      'revision': '869aa923399e',
+    }),
   ])
 # ---
