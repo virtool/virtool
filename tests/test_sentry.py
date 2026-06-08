@@ -6,7 +6,7 @@ from pytest_mock import MockerFixture
 
 from virtool.sentry import (
     DEFAULT_TRACES_SAMPLE_RATE,
-    UNTRACED_PATHS,
+    PATH_TRACES_SAMPLE_RATES,
     configure_sentry,
     traces_sampler,
 )
@@ -50,20 +50,26 @@ class TestConfigureSentry:
 
 
 class TestTracesSampler:
-    """Test the traces_sampler trace-suppression logic."""
+    """Test the traces_sampler trace-throttling logic."""
 
-    def test_untraced_path_is_suppressed(self) -> None:
-        """A high-frequency probe or polling path is never traced."""
+    def test_probe_path_is_suppressed(self) -> None:
+        """A health probe path is never traced."""
         request = MagicMock(path="/health/ready")
 
         assert traces_sampler({"aiohttp_request": request}) == 0.0
 
-    def test_all_untraced_paths_are_suppressed(self) -> None:
-        """Every configured untraced path is suppressed."""
-        for path in UNTRACED_PATHS:
+    def test_count_path_uses_small_rate(self) -> None:
+        """A count-polling path keeps a small sample rate."""
+        request = MagicMock(path="/jobs/counts")
+
+        assert traces_sampler({"aiohttp_request": request}) == 0.01
+
+    def test_throttled_paths_use_configured_rate(self) -> None:
+        """Every configured path is sampled at its rate."""
+        for path, rate in PATH_TRACES_SAMPLE_RATES.items():
             request = MagicMock(path=path)
 
-            assert traces_sampler({"aiohttp_request": request}) == 0.0
+            assert traces_sampler({"aiohttp_request": request}) == rate
 
     def test_other_path_uses_default_rate(self) -> None:
         """A normal request path is sampled at the default rate."""
@@ -78,7 +84,7 @@ class TestTracesSampler:
         assert traces_sampler({}) == DEFAULT_TRACES_SAMPLE_RATE
 
     def test_parent_sampling_decision_is_honoured(self) -> None:
-        """An upstream sampling decision is inherited for traced paths."""
+        """An upstream sampling decision is inherited for non-throttled paths."""
         request = MagicMock(path="/samples")
 
         assert (
@@ -88,8 +94,8 @@ class TestTracesSampler:
             traces_sampler({"aiohttp_request": request, "parent_sampled": True}) == 1.0
         )
 
-    def test_untraced_path_overrides_parent_sampling(self) -> None:
-        """An untraced path is suppressed even when the parent was sampled."""
+    def test_throttled_path_overrides_parent_sampling(self) -> None:
+        """A throttled path uses its rate even when the parent was sampled."""
         request = MagicMock(path="/health/live")
 
         assert (

@@ -11,34 +11,33 @@ from structlog import get_logger
 logger = get_logger("sentry")
 
 DEFAULT_TRACES_SAMPLE_RATE = 0.6
-"""The sample rate applied to transactions that are not explicitly suppressed."""
+"""The sample rate applied to transactions that are not explicitly throttled."""
 
-UNTRACED_PATHS = frozenset(
-    {
-        "/health/live",
-        "/health/ready",
-        "/jobs/counts",
-        "/tasks/counts",
-    },
-)
-"""Request paths that are never traced.
+PATH_TRACES_SAMPLE_RATES = {
+    "/health/live": 0.0,
+    "/health/ready": 0.0,
+    "/jobs/counts": 0.01,
+    "/tasks/counts": 0.01,
+}
+"""Per-path trace sample rates for high-frequency, low-value endpoints.
 
-These are high-frequency, low-value endpoints: orchestrator liveness and readiness
-probes and frontend count polling. Tracing them at the default rate exhausts the
-trace budget without yielding useful performance data.
+These were exhausting the trace budget at the default rate. Orchestrator liveness
+and readiness probes carry no useful performance data and are dropped entirely.
+The count-polling endpoints keep a small rate so occasional slowdowns are still
+visible.
 """
 
 
 def traces_sampler(sampling_context: dict[str, Any]) -> float:
     """Decide the trace sample rate for a transaction.
 
-    Suppress tracing entirely for high-frequency probe and polling endpoints while
-    honouring an upstream sampling decision for everything else.
+    Throttle high-frequency probe and polling endpoints to their configured rate
+    while honouring an upstream sampling decision for everything else.
     """
     request = sampling_context.get("aiohttp_request")
 
-    if request is not None and request.path in UNTRACED_PATHS:
-        return 0.0
+    if request is not None and request.path in PATH_TRACES_SAMPLE_RATES:
+        return PATH_TRACES_SAMPLE_RATES[request.path]
 
     parent_sampled = sampling_context.get("parent_sampled")
 
