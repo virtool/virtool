@@ -220,4 +220,8 @@ def downgrade() -> None:
         """,
     )
 
+    _abort_if_unmapped("analysis_files", "analysis")
+
     op.drop_column("analysis_files", "analysis_id")
+
+    op.alter_column("analysis_files", "analysis", nullable=False)
