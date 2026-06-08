@@ -3,10 +3,17 @@
   dict({
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'description': 'test history',
-    'diff': dict({
-      'foo': 'bar',
-    }),
-    'id': 'baz.2',
+    'diff': list([
+      list([
+        'change',
+        'abbreviation',
+        list([
+          'PVF',
+          'TST',
+        ]),
+      ]),
+    ]),
+    'id': '6116cba1.1',
     'index': None,
     'method_name': <HistoryMethod.create: 'create'>,
     'otu': dict({
