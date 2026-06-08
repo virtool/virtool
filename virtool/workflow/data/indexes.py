@@ -51,7 +51,7 @@ class WFIndex:
         work directory.
 
         """
-        return self.path / "ref.fa"
+        return self.path / "reference.fa"
 
     @property
     def json_path(self) -> Path:
