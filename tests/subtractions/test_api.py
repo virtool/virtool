@@ -2,7 +2,7 @@ from http import HTTPStatus
 from pathlib import Path
 
 import pytest
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy.assertion import SnapshotAssertion
 
@@ -10,7 +10,7 @@ from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from virtool.fake.next import DataFaker
 from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
-from virtool.subtractions.pg import SQLSubtractionFile
+from virtool.subtractions.pg import SQLSubtraction, SQLSubtractionFile
 from virtool.uploads.sql import UploadType
 
 
@@ -558,9 +558,14 @@ class TestDownloadSubtractionFile:
         subtraction = await fake.subtractions.create(user=user, upload=upload)
 
         async with AsyncSession(pg) as session:
+            subtraction_pk = await session.scalar(
+                select(SQLSubtraction.id).where(
+                    SQLSubtraction.legacy_id == subtraction.id,
+                ),
+            )
             await session.execute(
                 delete(SQLSubtractionFile).where(
-                    SQLSubtractionFile.subtraction == subtraction.id,
+                    SQLSubtractionFile.subtraction_id == subtraction_pk,
                 ),
             )
             await session.commit()

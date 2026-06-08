@@ -160,6 +160,7 @@ async def attach_computed(
     mongo: "Mongo",
     pg: AsyncEngine,
     base_url: str,
+    subtraction_pk: int,
     subtraction: dict[str, Any],
 ) -> dict[str, Any]:
     """Attach the ``linked_samples`` and ``files`` fields to the passed subtraction
@@ -171,20 +172,22 @@ async def attach_computed(
     :param mongo: the application MongoDB database
     :param pg: the application Postgres engine
     :param base_url: the base URL the API is being served from
+    :param subtraction_pk: the integer id keying the ``subtraction_files`` rows
     :param subtraction: the subtraction document to attach to
     :return: a new subtraction document with new fields attached
 
     """
-    subtraction_id = subtraction["_id"]
+    legacy_id = subtraction["_id"]
 
     files, linked_samples = await asyncio.gather(
-        get_subtraction_files(pg, subtraction_id),
-        get_linked_samples(mongo, subtraction_id),
+        get_subtraction_files(pg, subtraction_pk),
+        get_linked_samples(mongo, legacy_id),
     )
 
     for file in files:
+        file["subtraction"] = legacy_id
         file["download_url"] = (
-            f"{base_url}/subtractions/{subtraction_id}/files/{file['name']}"
+            f"{base_url}/subtractions/{legacy_id}/files/{file['name']}"
         )
 
     return {**subtraction, "files": files, "linked_samples": linked_samples}

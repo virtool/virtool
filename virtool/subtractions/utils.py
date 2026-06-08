@@ -30,18 +30,18 @@ def check_subtraction_file_type(file_name: str) -> str:
     return "bowtie2"
 
 
-async def get_subtraction_files(pg: AsyncEngine, subtraction_id: str) -> list[dict]:
+async def get_subtraction_files(pg: AsyncEngine, subtraction_id: int) -> list[dict]:
     """Get a list of files associated with the passed subtraction id.
 
     :param pg: PostgreSQL AsyncEngine object
-    :param subtraction_id: the ID of the subtraction_id
+    :param subtraction_id: the integer id of the parent subtraction
     :return: a list of files to be added to subtraction documents
     """
     async with AsyncSession(pg) as session:
         files = (
             (
                 await session.execute(
-                    select(SQLSubtractionFile).filter_by(subtraction=subtraction_id)
+                    select(SQLSubtractionFile).filter_by(subtraction_id=subtraction_id)
                 )
             )
             .scalars()
