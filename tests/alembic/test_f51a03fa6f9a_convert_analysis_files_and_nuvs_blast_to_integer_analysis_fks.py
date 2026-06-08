@@ -5,7 +5,6 @@ from pathlib import Path
 import alembic.command
 import alembic.config
 import arrow
-import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -126,34 +125,46 @@ async def test_upgrade_backfills_integer_fks(
     assert blast_analysis_id == analysis_id
 
 
-async def test_upgrade_aborts_on_orphan_analysis_file(
+async def test_upgrade_deletes_orphan_analysis_file(
     apply_alembic: Callable,
     migration_pg: AsyncEngine,
 ):
-    """An ``analysis_files`` row whose slug resolves to no analysis aborts the run."""
+    """An ``analysis_files`` row whose slug resolves to no analysis is deleted."""
     await asyncio.to_thread(apply_alembic, DOWN_REVISION)
 
     async with AsyncSession(migration_pg) as session:
         await _insert_analysis_file(session, "orphan")
         await session.commit()
 
-    with pytest.raises(RuntimeError, match="could not be mapped"):
-        await asyncio.to_thread(apply_alembic, REVISION)
+    await asyncio.to_thread(apply_alembic, REVISION)
+
+    async with AsyncSession(migration_pg) as session:
+        file_count = (
+            await session.execute(text("SELECT count(*) FROM analysis_files"))
+        ).scalar_one()
+
+    assert file_count == 0
 
 
-async def test_upgrade_aborts_on_orphan_nuvs_blast(
+async def test_upgrade_deletes_orphan_nuvs_blast(
     apply_alembic: Callable,
     migration_pg: AsyncEngine,
 ):
-    """A ``nuvs_blast`` row whose slug resolves to no analysis aborts the run."""
+    """A ``nuvs_blast`` row whose slug resolves to no analysis is deleted."""
     await asyncio.to_thread(apply_alembic, DOWN_REVISION)
 
     async with AsyncSession(migration_pg) as session:
         await _insert_nuvs_blast(session, "orphan", 1)
         await session.commit()
 
-    with pytest.raises(RuntimeError, match="could not be mapped"):
-        await asyncio.to_thread(apply_alembic, REVISION)
+    await asyncio.to_thread(apply_alembic, REVISION)
+
+    async with AsyncSession(migration_pg) as session:
+        blast_count = (
+            await session.execute(text("SELECT count(*) FROM nuvs_blast"))
+        ).scalar_one()
+
+    assert blast_count == 0
 
 
 async def test_cascade_delete_removes_dependents(
