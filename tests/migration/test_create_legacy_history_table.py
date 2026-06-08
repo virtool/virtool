@@ -12,6 +12,7 @@ from virtool.migration.ctx import MigrationContext
 from virtool.utils import timestamp
 
 REVISION = "743a03e550e0"
+RENAME_REVISION = "adea254e2c31"
 
 
 async def insert_user(session: AsyncSession) -> int:
@@ -124,3 +125,78 @@ class TestCreateLegacyHistoryTable:
                     INSERT_HISTORY,
                     {"legacy_id": "otu_1.0", "now": timestamp(), "user_id": 999},
                 )
+
+
+INSERT_HISTORY_BARE = text("""
+    INSERT INTO legacy_history (
+        legacy_id, created_at, description, method_name, user_id,
+        otu, otu_name, otu_version, reference, index, index_version
+    )
+    VALUES (
+        :legacy_id, :now, 'Created Foobar', 'create', :user_id,
+        'otu_1', 'Foobar', '0', 'ref_1', 'unbuilt', 'unbuilt'
+    )
+""")
+
+
+class TestRenameLegacyHistoryReferenceColumns:
+    async def test_renames_columns_to_bare_names(
+        self,
+        ctx: MigrationContext,
+        apply_alembic: Callable,
+    ):
+        await asyncio.to_thread(apply_alembic, RENAME_REVISION)
+
+        async with AsyncSession(ctx.pg) as session:
+            columns = (
+                (
+                    await session.execute(
+                        text(
+                            "SELECT column_name FROM information_schema.columns "
+                            "WHERE table_name = 'legacy_history'",
+                        ),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+
+        assert {"otu", "reference", "index"} <= set(columns)
+        assert not ({"otu_id", "reference_id", "index_id"} & set(columns))
+
+    async def test_accepts_row_via_bare_names(
+        self,
+        ctx: MigrationContext,
+        apply_alembic: Callable,
+    ):
+        await asyncio.to_thread(apply_alembic, RENAME_REVISION)
+
+        async with AsyncSession(ctx.pg) as session:
+            user_id = await insert_user(session)
+            await session.execute(
+                INSERT_HISTORY_BARE,
+                {"legacy_id": "otu_1.0", "now": timestamp(), "user_id": user_id},
+            )
+            await session.commit()
+
+            rows = (
+                (
+                    await session.execute(
+                        text(
+                            "SELECT legacy_id, otu, reference, index "
+                            "FROM legacy_history",
+                        ),
+                    )
+                )
+                .mappings()
+                .all()
+            )
+
+        assert [dict(row) for row in rows] == [
+            {
+                "legacy_id": "otu_1.0",
+                "otu": "otu_1",
+                "reference": "ref_1",
+                "index": "unbuilt",
+            },
+        ]

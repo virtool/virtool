@@ -323,26 +323,35 @@ class AnalysisData(DataLayerDomain):
             ).scalar_one()
 
             if subtractions:
-                subtraction_ids = (
-                    (
-                        await session.execute(
-                            select(SQLSubtraction.id).where(
-                                compose_legacy_id_multi_expression(
-                                    SQLSubtraction, subtractions
-                                ),
+                rows = (
+                    await session.execute(
+                        select(SQLSubtraction.id, SQLSubtraction.legacy_id).where(
+                            compose_legacy_id_multi_expression(
+                                SQLSubtraction, subtractions
                             ),
-                        )
+                        ),
                     )
-                    .scalars()
-                    .all()
-                )
+                ).all()
+
+                resolvable: set[str | int] = set()
+                for subtraction_id, legacy_id in rows:
+                    resolvable |= {subtraction_id, str(subtraction_id)}
+                    if legacy_id is not None:
+                        resolvable.add(legacy_id)
+
+                missing = set(subtractions) - resolvable
+                if missing:
+                    raise ResourceConflictError(
+                        "Subtractions do not exist: "
+                        + ", ".join(str(s) for s in sorted(missing, key=str)),
+                    )
 
                 session.add_all(
                     SQLAnalysisSubtraction(
                         analysis_id=pg_id,
                         subtraction_id=subtraction_id,
                     )
-                    for subtraction_id in subtraction_ids
+                    for subtraction_id, _ in rows
                 )
 
             await session.commit()

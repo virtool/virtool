@@ -67,6 +67,11 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
                 .all()
             )
 
+            if len(subtraction_ids) != len(set(subtractions)):
+                raise AssertionError(
+                    "seed_analysis received unresolved subtraction identifiers",
+                )
+
             session.add_all(
                 SQLAnalysisSubtraction(
                     analysis_id=analysis_id,

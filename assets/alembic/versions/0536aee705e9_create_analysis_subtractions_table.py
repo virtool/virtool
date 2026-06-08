@@ -10,7 +10,7 @@ in-use subtraction cannot be destroyed.
 Backfill and the JSONB column drop are handled by downstream revisions.
 
 Revision ID: 0536aee705e9
-Revises: 482fb0891b9b
+Revises: adea254e2c31
 Create Date: 2026-06-08 22:23:58.639113+00:00
 
 """
@@ -19,7 +19,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision = "0536aee705e9"
-down_revision = "482fb0891b9b"
+down_revision = "adea254e2c31"
 branch_labels = None
 depends_on = None
 
@@ -40,7 +40,16 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("analysis_id", "subtraction_id"),
     )
+    op.create_index(
+        op.f("ix_analysis_subtractions_subtraction_id"),
+        "analysis_subtractions",
+        ["subtraction_id"],
+    )
 
 
 def downgrade() -> None:
+    op.drop_index(
+        op.f("ix_analysis_subtractions_subtraction_id"),
+        table_name="analysis_subtractions",
+    )
     op.drop_table("analysis_subtractions")

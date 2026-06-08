@@ -14,6 +14,7 @@ from virtool.analyses.sql import (
     SQLAnalysisSubtraction,
 )
 from virtool.api.client import UserClient
+from virtool.data.errors import ResourceConflictError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.models.enums import AnalysisWorkflow
@@ -246,6 +247,25 @@ class TestCreate:
             )
 
         assert linked == []
+
+    async def test_unknown_subtraction_raises(
+        self,
+        data_layer: DataLayer,
+        setup_sample: str,
+    ):
+        """Creating an analysis with an unresolvable subtraction is a conflict."""
+        with pytest.raises(ResourceConflictError, match="ghost"):
+            await data_layer.analyses.create(
+                CreateAnalysisRequest(
+                    ml=None,
+                    ref_id="test_ref",
+                    subtractions=["subtraction_1", "ghost"],
+                    workflow=AnalysisWorkflow.nuvs,
+                ),
+                "test_sample",
+                setup_sample,
+                0,
+            )
 
     async def test_rolls_back_when_pg_write_fails(
         self,

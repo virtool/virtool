@@ -81,6 +81,7 @@ class SQLAnalysisSubtraction(Base):
         BigInteger,
         ForeignKey("subtractions.id"),
         primary_key=True,
+        index=True,
     )
 
 

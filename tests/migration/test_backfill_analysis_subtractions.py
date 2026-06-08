@@ -2,7 +2,7 @@
 
 Covers the backfill that resolves the ``analyses.subtractions`` JSONB array to
 integer ``subtractions.id`` rows, the tripwire that guards the column drop, and
-the downgrade that rebuilds the JSONB array from the association table.
+the column drop itself.
 """
 
 import asyncio
@@ -11,12 +11,12 @@ import json
 from collections.abc import Callable
 from pathlib import Path
 
-import arrow
 import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.migration.ctx import MigrationContext
+from virtool.utils import timestamp
 
 CREATE_REVISION = "0536aee705e9"
 BACKFILL_REVISION = "eb5cf4abd58a"
@@ -47,7 +47,7 @@ async def _insert_user(session: AsyncSession) -> int:
                 )
                 RETURNING id
             """),
-            {"now": arrow.utcnow().naive, "pw": b"hashed"},
+            {"now": timestamp(), "pw": b"hashed"},
         )
     ).scalar_one()
 
@@ -64,7 +64,7 @@ async def _insert_subtraction(
                 VALUES (:legacy_id, :name, '', :now, false, true)
                 RETURNING id
             """),
-            {"legacy_id": legacy_id, "name": name, "now": arrow.utcnow().naive},
+            {"legacy_id": legacy_id, "name": name, "now": timestamp()},
         )
     ).scalar_one()
 
@@ -86,7 +86,7 @@ async def _insert_analysis(
                 RETURNING id
             """),
             {
-                "now": arrow.utcnow().naive,
+                "now": timestamp(),
                 "subs": json.dumps(subtractions),
                 "user_id": user_id,
             },
