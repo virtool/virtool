@@ -142,6 +142,7 @@ async def add(
         async with AsyncSession(pg) as pg_session:
             pg_session.add(diff_row)
             pg_session.add(legacy_row)
+            await pg_session.flush()
             await mongo.history.insert_one(document, session=mongo_session)
             await pg_session.commit()
 
