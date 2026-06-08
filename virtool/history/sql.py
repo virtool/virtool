@@ -54,7 +54,7 @@ class SQLLegacyHistory(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime)
     description: Mapped[str]
     method_name: Mapped[str]
-    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"), index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), index=True)
     otu_id: Mapped[str]
     otu_name: Mapped[str]
     otu_version: Mapped[str | None]

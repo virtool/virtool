@@ -24,7 +24,7 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("description", sa.String(), nullable=False),
         sa.Column("method_name", sa.String(), nullable=False),
-        sa.Column("user_id", sa.BigInteger(), nullable=False),
+        sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("otu_id", sa.String(), nullable=False),
         sa.Column("otu_name", sa.String(), nullable=False),
         sa.Column("otu_version", sa.String(), nullable=True),

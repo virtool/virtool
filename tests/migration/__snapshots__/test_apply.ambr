@@ -428,5 +428,12 @@
       'name': 'convert administrator_role to text',
       'revision': '997cf9a66f10',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 62,
+      'name': 'create legacy_history table',
+      'revision': '743a03e550e0',
+    }),
   ])
 # ---
