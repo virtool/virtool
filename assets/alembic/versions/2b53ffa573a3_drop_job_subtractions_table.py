@@ -10,7 +10,7 @@ stored in a dedicated table.
 repopulate it; the relationship is reconstructable from ``subtractions.job_id``.
 
 Revision ID: 2b53ffa573a3
-Revises: 869aa923399e
+Revises: 90330f98cf4e
 Create Date: 2026-06-09 19:06:46.200229+00:00
 
 """
@@ -19,7 +19,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision = "2b53ffa573a3"
-down_revision = "869aa923399e"
+down_revision = "90330f98cf4e"
 branch_labels = None
 depends_on = None
 
