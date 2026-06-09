@@ -34,6 +34,9 @@ def scrub_naive_utc(value: Any) -> Any:
     if isinstance(value, list):
         return [scrub_naive_utc(item) for item in value]
 
+    if isinstance(value, tuple):
+        return tuple(scrub_naive_utc(item) for item in value)
+
     return ensure_naive_utc(value)
 
 
