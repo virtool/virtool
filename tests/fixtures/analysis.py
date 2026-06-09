@@ -1,7 +1,10 @@
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.analyses.sql import SQLAnalysis
+from virtool.analyses.sql import SQLAnalysis, SQLAnalysisSubtraction
+from virtool.data.topg import compose_legacy_id_multi_expression
 from virtool.mongo.core import Mongo
+from virtool.subtractions.pg import SQLSubtraction
 
 
 async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
@@ -18,6 +21,7 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
     index = document["index"]
     job = document.get("job")
     results = document.get("results")
+    subtractions = document.get("subtractions") or []
 
     await mongo.indexes.update_one(
         {"_id": index["id"]},
@@ -38,7 +42,6 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
             sample=document["sample"]["id"],
             reference=document["reference"]["id"],
             index=index["id"],
-            subtractions=document.get("subtractions") or [],
             user_id=document["user"]["id"],
             job_id=job["id"] if job and isinstance(job["id"], int) else None,
             ml_id=document.get("ml"),
@@ -48,6 +51,34 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
         await session.flush()
 
         analysis_id = analysis.id
+
+        if subtractions:
+            subtraction_ids = (
+                (
+                    await session.execute(
+                        select(SQLSubtraction.id).where(
+                            compose_legacy_id_multi_expression(
+                                SQLSubtraction, subtractions
+                            ),
+                        ),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+
+            if len(subtraction_ids) != len(set(subtractions)):
+                raise AssertionError(
+                    "seed_analysis received unresolved subtraction identifiers",
+                )
+
+            session.add_all(
+                SQLAnalysisSubtraction(
+                    analysis_id=analysis_id,
+                    subtraction_id=subtraction_id,
+                )
+                for subtraction_id in subtraction_ids
+            )
 
         await session.commit()
 

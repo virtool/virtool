@@ -265,7 +265,6 @@ class TestCreatePostgres:
                     sample="sample_abc",
                     reference="ref_abc",
                     index="index_abc",
-                    subtractions=[],
                     user_id=user.id,
                     job_id=job.id,
                 ),

@@ -54,11 +54,34 @@ class SQLAnalysis(Base):
     sample: Mapped[str] = mapped_column(index=True)
     reference: Mapped[str]
     index: Mapped[str]
-    subtractions: Mapped[list] = mapped_column(JSONB, default=list)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     job_id: Mapped[int | None] = mapped_column(ForeignKey("jobs.id"), nullable=True)
     ml_id: Mapped[int | None] = mapped_column(
         ForeignKey("ml_model_releases.id"), nullable=True
+    )
+
+
+class SQLAnalysisSubtraction(Base):
+    """Association between an analysis and a subtraction it was run against.
+
+    Replaces the denormalized ``analyses.subtractions`` JSONB array. The
+    ``subtraction_id`` foreign key has no ``ON DELETE`` action, so a subtraction
+    that is still referenced by an analysis cannot be deleted, matching the prior
+    invariant that an in-use subtraction is never destroyed.
+    """
+
+    __tablename__ = "analysis_subtractions"
+
+    analysis_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("analyses.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    subtraction_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("subtractions.id"),
+        primary_key=True,
+        index=True,
     )
 
 

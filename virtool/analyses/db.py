@@ -1,13 +1,79 @@
 """Work with analyses in the database."""
 
 from datetime import datetime
+from typing import Any
 
-from sqlalchemy import update
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.analyses.sql import SQLAnalysis
+from virtool.analyses.sql import SQLAnalysis, SQLAnalysisSubtraction
+from virtool.data.transforms import AbstractTransform
 from virtool.mongo.core import Mongo
 from virtool.samples.utils import get_sample_rights
+from virtool.subtractions.pg import SQLSubtraction
+from virtool.types import Document
+
+
+class AttachAnalysisSubtractionsTransform(AbstractTransform):
+    """Attach ``{id, name}`` subtraction references to analysis documents.
+
+    Subtraction membership is read from the ``analysis_subtractions`` association
+    table. The emitted ``id`` is the subtraction's legacy slug when present and the
+    integer id otherwise, preserving the identifier form clients received before the
+    ``analyses.subtractions`` JSONB column was normalized.
+    """
+
+    def __init__(self, pg: AsyncEngine):
+        self._pg = pg
+
+    async def attach_one(self, document: Document, prepared: Any) -> Document:
+        return {**document, "subtractions": sorted(prepared, key=lambda s: s["name"])}
+
+    async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
+        result = await session.execute(
+            select(SQLSubtraction.id, SQLSubtraction.legacy_id, SQLSubtraction.name)
+            .join(
+                SQLAnalysisSubtraction,
+                SQLAnalysisSubtraction.subtraction_id == SQLSubtraction.id,
+            )
+            .where(SQLAnalysisSubtraction.analysis_id == int(document["id"])),
+        )
+
+        return [
+            {"id": legacy_id or id_, "name": name}
+            for id_, legacy_id, name in result.all()
+        ]
+
+    async def prepare_many(
+        self, documents: list[Document], session: AsyncSession
+    ) -> dict[str, list[dict]]:
+        # ``base_processor`` stringifies the integer analysis id, so map the integer
+        # ``analysis_id`` returned by the query back to the document's string key.
+        document_id_by_int = {int(d["id"]): d["id"] for d in documents}
+
+        grouped: dict[str, list[dict]] = {d["id"]: [] for d in documents}
+
+        if document_id_by_int:
+            result = await session.execute(
+                select(
+                    SQLAnalysisSubtraction.analysis_id,
+                    SQLSubtraction.id,
+                    SQLSubtraction.legacy_id,
+                    SQLSubtraction.name,
+                )
+                .join(
+                    SQLSubtraction,
+                    SQLSubtraction.id == SQLAnalysisSubtraction.subtraction_id,
+                )
+                .where(SQLAnalysisSubtraction.analysis_id.in_(document_id_by_int)),
+            )
+
+            for analysis_id, id_, legacy_id, name in result.all():
+                grouped[document_id_by_int[analysis_id]].append(
+                    {"id": legacy_id or id_, "name": name},
+                )
+
+        return grouped
 
 
 async def bump_analysis_updated_at(

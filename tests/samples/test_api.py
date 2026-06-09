@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner, VirtoolTestClient
-from virtool.analyses.sql import SQLAnalysis
+from virtool.analyses.sql import SQLAnalysis, SQLAnalysisSubtraction
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
@@ -1072,59 +1072,72 @@ async def test_find_analyses(
     )
 
     async with AsyncSession(pg) as session:
+        foo_subtraction_id = (
+            await session.execute(
+                select(SQLSubtraction.id).where(SQLSubtraction.legacy_id == "foo"),
+            )
+        ).scalar_one()
+
+        analyses = [
+            SQLAnalysis(
+                legacy_id="test_1",
+                created_at=static_time.datetime,
+                updated_at=static_time.datetime,
+                workflow="pathoscope",
+                ready=True,
+                sample="test",
+                reference="baz",
+                index="foo",
+                user_id=user_1.id,
+                job_id=job.id,
+            ),
+            SQLAnalysis(
+                legacy_id="test_2",
+                created_at=static_time.datetime,
+                updated_at=static_time.datetime,
+                workflow="pathoscope",
+                ready=True,
+                sample="test",
+                reference="baz",
+                index="foo",
+                user_id=user_1.id,
+            ),
+            SQLAnalysis(
+                legacy_id="test_3",
+                created_at=static_time.datetime,
+                updated_at=static_time.datetime,
+                workflow="pathoscope",
+                ready=True,
+                sample="test",
+                reference="foo",
+                index="foo",
+                user_id=user_2.id,
+            ),
+            SQLAnalysis(
+                legacy_id="test_4",
+                created_at=static_time.datetime,
+                updated_at=static_time.datetime,
+                workflow="pathoscope",
+                ready=True,
+                sample="test-not-found",
+                reference="foo",
+                index="foo",
+                user_id=user_2.id,
+            ),
+        ]
+
+        session.add_all(analyses)
+        await session.flush()
+
         session.add_all(
-            [
-                SQLAnalysis(
-                    legacy_id="test_1",
-                    created_at=static_time.datetime,
-                    updated_at=static_time.datetime,
-                    workflow="pathoscope",
-                    ready=True,
-                    sample="test",
-                    reference="baz",
-                    index="foo",
-                    subtractions=[],
-                    user_id=user_1.id,
-                    job_id=job.id,
-                ),
-                SQLAnalysis(
-                    legacy_id="test_2",
-                    created_at=static_time.datetime,
-                    updated_at=static_time.datetime,
-                    workflow="pathoscope",
-                    ready=True,
-                    sample="test",
-                    reference="baz",
-                    index="foo",
-                    subtractions=["foo"],
-                    user_id=user_1.id,
-                ),
-                SQLAnalysis(
-                    legacy_id="test_3",
-                    created_at=static_time.datetime,
-                    updated_at=static_time.datetime,
-                    workflow="pathoscope",
-                    ready=True,
-                    sample="test",
-                    reference="foo",
-                    index="foo",
-                    subtractions=["foo"],
-                    user_id=user_2.id,
-                ),
-                SQLAnalysis(
-                    legacy_id="test_4",
-                    created_at=static_time.datetime,
-                    updated_at=static_time.datetime,
-                    workflow="pathoscope",
-                    ready=True,
-                    sample="test-not-found",
-                    reference="foo",
-                    index="foo",
-                    subtractions=["foo"],
-                    user_id=user_2.id,
-                ),
-            ],
+            SQLAnalysisSubtraction(
+                analysis_id=analysis.id,
+                subtraction_id=foo_subtraction_id,
+            )
+            for analysis in analyses
+            if analysis.legacy_id in {"test_2", "test_3", "test_4"}
         )
+
         await session.commit()
 
     resp = await client.get("/samples/test/analyses")

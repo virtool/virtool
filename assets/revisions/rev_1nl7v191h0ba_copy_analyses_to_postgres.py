@@ -6,8 +6,9 @@ Date: 2026-06-03 00:10:43.710684
 """
 
 import arrow
+import sqlalchemy as sa
 from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.dialects.postgresql import JSONB, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from structlog import get_logger
 
@@ -30,6 +31,29 @@ virtool_down_revision = None
 
 # Change this if an Alembic revision is required to run this migration.
 required_alembic_revision = "1e6490edc217"
+
+# Frozen ``analyses`` insert target pinned to the schema at
+# ``required_alembic_revision``. Using a literal table rather than the live
+# ``SQLAnalysis`` model keeps this historical copy writing the ``subtractions``
+# JSONB column after the model drops it: the column still exists at this point in
+# the Alembic chain, and a later revision normalizes it into
+# ``analysis_subtractions`` and drops it.
+_analyses_insert_table = sa.table(
+    "analyses",
+    sa.column("legacy_id"),
+    sa.column("created_at"),
+    sa.column("updated_at"),
+    sa.column("workflow"),
+    sa.column("ready"),
+    sa.column("results", JSONB),
+    sa.column("sample"),
+    sa.column("reference"),
+    sa.column("index"),
+    sa.column("subtractions", JSONB),
+    sa.column("user_id"),
+    sa.column("job_id"),
+    sa.column("ml_id"),
+)
 
 
 async def upgrade(ctx: MigrationContext) -> None:
@@ -94,7 +118,7 @@ async def upgrade(ctx: MigrationContext) -> None:
             job_id = await _resolve_job_id(session, document, job_id_cache)
 
             await session.execute(
-                insert(SQLAnalysis)
+                insert(_analyses_insert_table)
                 .values(**_build_values(document, results, user_id, job_id))
                 .on_conflict_do_nothing(index_elements=["legacy_id"]),
             )

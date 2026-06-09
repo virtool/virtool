@@ -16,12 +16,13 @@ from virtool.analyses.checks import (
     check_if_analysis_modified,
 )
 from virtool.analyses.db import (
+    AttachAnalysisSubtractionsTransform,
     bump_analysis_updated_at,
     filter_analyses_by_sample_rights,
 )
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import Analysis, AnalysisFile, AnalysisSearchResult
-from virtool.analyses.sql import SQLAnalysis, SQLAnalysisFile
+from virtool.analyses.sql import SQLAnalysis, SQLAnalysisFile, SQLAnalysisSubtraction
 from virtool.analyses.utils import (
     analysis_file_key,
     attach_analysis_files,
@@ -35,7 +36,10 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.events import Operation, emit, emits
-from virtool.data.topg import compose_legacy_id_single_expression
+from virtool.data.topg import (
+    compose_legacy_id_multi_expression,
+    compose_legacy_id_single_expression,
+)
 from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
 from virtool.indexes.transforms import AttachIndexTransform
@@ -50,9 +54,7 @@ from virtool.samples.oas import CreateAnalysisRequest
 from virtool.samples.utils import get_sample_rights
 from virtool.storage.cleanup import delete_prefix
 from virtool.storage.protocol import StorageBackend
-from virtool.subtractions.db import (
-    AttachSubtractionsTransform,
-)
+from virtool.subtractions.pg import SQLSubtraction
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor, wait_for_checks
 
@@ -68,7 +70,6 @@ FIND_COLUMNS = (
     SQLAnalysis.sample,
     SQLAnalysis.reference,
     SQLAnalysis.index,
-    SQLAnalysis.subtractions,
     SQLAnalysis.user_id,
     SQLAnalysis.job_id,
     SQLAnalysis.ml_id,
@@ -99,8 +100,6 @@ def _row_to_document(row, *, include_results: bool) -> dict:
         "sample": {"id": row.sample},
         "reference": {"id": row.reference},
         "index": {"id": row.index},
-        # Iimi analyses can have ``None`` for subtractions.
-        "subtractions": row.subtractions or [],
         "user": {"id": row.user_id},
         "job": {"id": row.job_id} if row.job_id else None,
         "ml": row.ml_id,
@@ -188,7 +187,7 @@ class AnalysisData(DataLayerDomain):
                 AttachMLTransform(self._pg),
                 AttachJobTransform(self._pg),
                 AttachReferenceTransform(self._mongo),
-                AttachSubtractionsTransform(self._pg),
+                AttachAnalysisSubtractionsTransform(self._pg),
                 AttachUserTransform(self._pg),
             ],
             self._pg,
@@ -247,7 +246,7 @@ class AnalysisData(DataLayerDomain):
             AttachJobTransform(self._pg),
             AttachMLTransform(self._pg),
             AttachReferenceTransform(self._mongo),
-            AttachSubtractionsTransform(self._pg),
+            AttachAnalysisSubtractionsTransform(self._pg),
             AttachUserTransform(self._pg),
         ]
 
@@ -302,23 +301,58 @@ class AnalysisData(DataLayerDomain):
         subtractions = data.subtractions if data.subtractions is not None else []
 
         async with AsyncSession(self._pg) as session:
-            await session.execute(
-                insert(SQLAnalysis).values(
-                    legacy_id=analysis_id,
-                    created_at=created_at,
-                    updated_at=created_at,
-                    workflow=data.workflow.value,
-                    ready=False,
-                    results=None,
-                    sample=sample_id,
-                    reference=data.ref_id,
-                    index=index_id,
-                    subtractions=subtractions,
-                    user_id=user_id,
-                    job_id=job.id,
-                    ml_id=data.ml,
-                ),
-            )
+            pg_id = (
+                await session.execute(
+                    insert(SQLAnalysis)
+                    .values(
+                        legacy_id=analysis_id,
+                        created_at=created_at,
+                        updated_at=created_at,
+                        workflow=data.workflow.value,
+                        ready=False,
+                        results=None,
+                        sample=sample_id,
+                        reference=data.ref_id,
+                        index=index_id,
+                        user_id=user_id,
+                        job_id=job.id,
+                        ml_id=data.ml,
+                    )
+                    .returning(SQLAnalysis.id),
+                )
+            ).scalar_one()
+
+            if subtractions:
+                rows = (
+                    await session.execute(
+                        select(SQLSubtraction.id, SQLSubtraction.legacy_id).where(
+                            compose_legacy_id_multi_expression(
+                                SQLSubtraction, subtractions
+                            ),
+                        ),
+                    )
+                ).all()
+
+                resolvable: set[str | int] = set()
+                for subtraction_id, legacy_id in rows:
+                    resolvable |= {subtraction_id, str(subtraction_id)}
+                    if legacy_id is not None:
+                        resolvable.add(legacy_id)
+
+                missing = set(subtractions) - resolvable
+                if missing:
+                    raise ResourceConflictError(
+                        "Subtractions do not exist: "
+                        + ", ".join(str(s) for s in sorted(missing, key=str)),
+                    )
+
+                session.add_all(
+                    SQLAnalysisSubtraction(
+                        analysis_id=pg_id,
+                        subtraction_id=subtraction_id,
+                    )
+                    for subtraction_id, _ in rows
+                )
 
             await session.commit()
 

@@ -50,7 +50,6 @@ async def test_update_workflows_fields(
                     sample="test_id",
                     reference="ref",
                     index="index",
-                    subtractions=[],
                     user_id=user.id,
                 ),
                 SQLAnalysis(
@@ -62,7 +61,6 @@ async def test_update_workflows_fields(
                     sample="test_id",
                     reference="ref",
                     index="index",
-                    subtractions=[],
                     user_id=user.id,
                 ),
             ],
