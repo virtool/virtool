@@ -29,9 +29,9 @@ from virtool.jobs.pg import (
     SQLJob,
     SQLJobIndex,
     SQLJobSample,
-    SQLJobSubtraction,
 )
 from virtool.jobs.utils import compute_progress
+from virtool.subtractions.pg import SQLSubtraction
 from virtool.types import Document
 from virtool.users.models_base import UserNested
 from virtool.users.pg import SQLUser
@@ -212,14 +212,6 @@ class JobsData:
                 session.add(
                     SQLJobIndex(job_id=sql_job.id, index_id=job_args["index_id"]),
                 )
-            elif workflow == "create_subtraction" and "subtraction_id" in job_args:
-                session.add(
-                    SQLJobSubtraction(
-                        job_id=sql_job.id,
-                        subtraction_id=job_args["subtraction_id"],
-                    ),
-                )
-
             new_id = sql_job.id
             await session.commit()
 
@@ -238,13 +230,13 @@ class JobsData:
                     SQLUser,
                     SQLJobSample.sample_id,
                     SQLJobIndex.index_id,
-                    SQLJobSubtraction.subtraction_id,
+                    SQLSubtraction.id.label("subtraction_id"),
                     SQLAnalysis.legacy_id,
                 )
                 .join(SQLUser, SQLJob.user_id == SQLUser.id)
                 .outerjoin(SQLJobSample, SQLJob.id == SQLJobSample.job_id)
                 .outerjoin(SQLJobIndex, SQLJob.id == SQLJobIndex.job_id)
-                .outerjoin(SQLJobSubtraction, SQLJob.id == SQLJobSubtraction.job_id)
+                .outerjoin(SQLSubtraction, SQLSubtraction.job_id == SQLJob.id)
                 .outerjoin(SQLAnalysis, SQLAnalysis.job_id == SQLJob.id)
                 .where(SQLJob.id == job_id),
             )

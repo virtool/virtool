@@ -5,7 +5,7 @@ Date: 2026-01-07 18:03:11.554276
 """
 
 import arrow
-from sqlalchemy import select
+from sqlalchemy import Column, Integer, MetaData, String, Table, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from structlog import get_logger
 
@@ -15,13 +15,23 @@ from virtool.jobs.pg import (
     SQLJobAnalysis,
     SQLJobIndex,
     SQLJobSample,
-    SQLJobSubtraction,
 )
 from virtool.migration import MigrationContext
 from virtool.users.pg import SQLUser
 from virtool.utils import get_safely
 
 logger = get_logger("migration")
+
+# The ``job_subtractions`` link table was retired once subtractions gained a
+# ``subtractions.job_id`` FK. This revision runs earlier in the chain, while the
+# table still exists, so it writes through this frozen table rather than the
+# now-removed ``SQLJobSubtraction`` ORM model.
+_job_subtractions = Table(
+    "job_subtractions",
+    MetaData(),
+    Column("job_id", Integer),
+    Column("subtraction_id", String),
+)
 
 LEGACY_TO_JOB_STATE: dict[str, JobState] = {
     "cancelled": JobState.CANCELLED,
@@ -169,10 +179,14 @@ async def _migrate_job(
     pg_session.add(sql_job)
     await pg_session.flush()
 
-    _add_job_relationship(pg_session, sql_job.id, job)
+    await _add_job_relationship(pg_session, sql_job.id, job)
 
 
-def _add_job_relationship(pg_session: AsyncSession, job_id: int, job: dict) -> None:
+async def _add_job_relationship(
+    pg_session: AsyncSession,
+    job_id: int,
+    job: dict,
+) -> None:
     """Add the appropriate relationship record based on workflow."""
     workflow = job.get("workflow")
     args = job.get("args", {})
@@ -182,8 +196,11 @@ def _add_job_relationship(pg_session: AsyncSession, job_id: int, job: dict) -> N
     elif workflow == "build_index" and "index_id" in args:
         pg_session.add(SQLJobIndex(job_id=job_id, index_id=args["index_id"]))
     elif workflow == "create_subtraction" and "subtraction_id" in args:
-        pg_session.add(
-            SQLJobSubtraction(job_id=job_id, subtraction_id=args["subtraction_id"]),
+        await pg_session.execute(
+            _job_subtractions.insert().values(
+                job_id=job_id,
+                subtraction_id=args["subtraction_id"],
+            ),
         )
     elif workflow in ("aodp", "nuvs", "pathoscope") and "analysis_id" in args:
         pg_session.add(SQLJobAnalysis(job_id=job_id, analysis_id=args["analysis_id"]))

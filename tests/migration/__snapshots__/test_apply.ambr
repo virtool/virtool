@@ -505,5 +505,12 @@
       'name': 'convert session_type to text',
       'revision': '90330f98cf4e',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 73,
+      'name': 'drop job_subtractions table',
+      'revision': '2b53ffa573a3',
+    }),
   ])
 # ---
