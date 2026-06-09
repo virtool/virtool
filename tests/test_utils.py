@@ -147,6 +147,38 @@ def test_timestamp(mocker):
     assert timestamp == arrow.arrow.Arrow(2017, 10, 6, 20, 0, 0, 612304).naive
 
 
+class TestEnsureNaiveUTC:
+    """Tests for ensure_naive_utc."""
+
+    def test_naive_passthrough(self):
+        value = datetime.datetime(2017, 10, 6, 20, 0, 0)
+        assert virtool.utils.ensure_naive_utc(value) is value
+
+    def test_aware_utc_stripped(self):
+        result = virtool.utils.ensure_naive_utc(
+            datetime.datetime(2017, 10, 6, 20, 0, 0, tzinfo=datetime.UTC),
+        )
+        assert result == datetime.datetime(2017, 10, 6, 20, 0, 0)
+        assert result.tzinfo is None
+
+    def test_aware_non_utc_raises(self):
+        aware = datetime.datetime(
+            2017,
+            10,
+            6,
+            20,
+            0,
+            0,
+            tzinfo=datetime.timezone(datetime.timedelta(hours=-5)),
+        )
+        with pytest.raises(ValueError, match="aware non-UTC datetime"):
+            virtool.utils.ensure_naive_utc(aware)
+
+    def test_non_datetime_passthrough(self):
+        assert virtool.utils.ensure_naive_utc("not a datetime") == "not a datetime"
+        assert virtool.utils.ensure_naive_utc(None) is None
+
+
 @pytest.mark.parametrize(
     "value,result", [("true", True), ("1", True), ("false", False), ("0", False)]
 )

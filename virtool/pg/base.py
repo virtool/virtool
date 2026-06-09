@@ -1,7 +1,10 @@
 from enum import Enum
 from typing import Protocol
 
-from sqlalchemy.orm import DeclarativeBase, Mapped
+from sqlalchemy import DateTime, event
+from sqlalchemy.orm import DeclarativeBase, Mapped, Mapper
+
+from virtool.utils import ensure_naive_utc
 
 
 class Base(DeclarativeBase):
@@ -24,6 +27,31 @@ class Base(DeclarativeBase):
             row[column.name] = value if not isinstance(value, Enum) else value.value
 
         return row
+
+
+def _enforce_naive_utc(mapper: Mapper, _, target: Base) -> None:
+    """Coerce every datetime column to naive UTC before it is persisted.
+
+    Applied to every mapped class via ``before_insert`` and ``before_update`` so the
+    naive-UTC invariant is enforced loudly at the PostgreSQL write boundary.
+    """
+    for attr in mapper.column_attrs:
+        column = attr.columns[0]
+
+        if not isinstance(column.type, DateTime):
+            continue
+
+        value = getattr(target, attr.key, None)
+
+        if value is not None:
+            coerced = ensure_naive_utc(value)
+
+            if coerced is not value:
+                setattr(target, attr.key, coerced)
+
+
+event.listen(Base, "before_insert", _enforce_naive_utc, propagate=True)
+event.listen(Base, "before_update", _enforce_naive_utc, propagate=True)
 
 
 class HasLegacyAndModernIDs(Protocol):

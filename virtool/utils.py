@@ -164,6 +164,37 @@ def random_alphanumeric(
     return random_alphanumeric(length=length, excluded=excluded)
 
 
+def ensure_naive_utc(value: Any) -> Any:
+    """Enforce the naive-UTC datetime invariant at a persistence boundary.
+
+    Virtool datetimes are naive and always represent UTC. This coerces a value to
+    that invariant, failing loudly when it cannot:
+
+    - A naive datetime is assumed to be UTC and returned unchanged.
+    - An aware datetime at UTC offset has its ``tzinfo`` stripped and is returned
+      naive.
+    - An aware datetime at any other offset raises :class:`ValueError`.
+    - Any non-datetime value is returned unchanged, so this can be applied while
+      walking heterogeneous documents.
+
+    :param value: the value to check
+    :return: a naive UTC datetime, or the value unchanged if it is not a datetime
+    :raises ValueError: if the value is an aware datetime not at UTC offset
+    """
+    if not isinstance(value, datetime.datetime):
+        return value
+
+    if value.tzinfo is None:
+        return value
+
+    if value.utcoffset() != datetime.timedelta(0):
+        raise ValueError(
+            f"Expected a naive or UTC datetime, got aware non-UTC datetime: {value!r}",
+        )
+
+    return value.replace(tzinfo=None)
+
+
 def timestamp() -> datetime.datetime:
     """Return a naive datetime object representing the current UTC time.
 
