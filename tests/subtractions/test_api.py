@@ -7,27 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy.assertion import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
+from tests.fixtures.subtractions import resolve_subtraction_pk
 from virtool.fake.next import DataFaker
 from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
 from virtool.subtractions.pg import SQLSubtraction, SQLSubtractionFile
 from virtool.uploads.sql import UploadType
-
-
-async def _subtraction_pk(pg: AsyncEngine, legacy_id: str) -> int:
-    """Resolve a subtraction's integer id from its legacy string id.
-
-    ``samples.subtractions`` holds integer ids, so linked-sample fixtures must
-    reference the subtraction by its ``subtractions.id`` rather than its legacy id.
-
-    Interim: delete once the subtraction public id is an integer (VIR-2535).
-    """
-    async with AsyncSession(pg) as session:
-        return (
-            await session.execute(
-                select(SQLSubtraction.id).where(SQLSubtraction.legacy_id == legacy_id),
-            )
-        ).scalar_one()
 
 
 async def test_find_empty_subtractions(
@@ -139,7 +124,7 @@ async def test_edit(
 
     subtraction = await fake.subtractions.create(user=user, upload=upload)
 
-    subtraction_pk = await _subtraction_pk(pg, subtraction.id)
+    subtraction_pk = await resolve_subtraction_pk(pg, subtraction.id)
 
     await mongo.samples.insert_many(
         [
@@ -438,7 +423,7 @@ class TestRemoveAsJob:
             {
                 "_id": "test",
                 "name": "Test",
-                "subtractions": [await _subtraction_pk(pg, subtraction.id)],
+                "subtractions": [await resolve_subtraction_pk(pg, subtraction.id)],
             },
         )
 
@@ -469,7 +454,7 @@ class TestRemoveAsJob:
             {
                 "_id": "test",
                 "name": "Test",
-                "subtractions": [await _subtraction_pk(pg, subtraction.id)],
+                "subtractions": [await resolve_subtraction_pk(pg, subtraction.id)],
             },
         )
 

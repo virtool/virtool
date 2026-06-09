@@ -2,6 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.subtractions.db
+from tests.fixtures.subtractions import resolve_subtraction_pk
 from virtool.data.transforms import apply_transforms
 from virtool.fake.next import DataFaker
 from virtool.subtractions.db import (
@@ -118,18 +119,6 @@ class TestGetMissingSubtractionIds:
         )
 
 
-async def _resolve_subtraction_id(pg, legacy_id: str) -> int:
-    # Interim: delete once the subtraction public id is an integer (VIR-2535).
-    async with AsyncSession(pg) as session:
-        return (
-            await session.execute(
-                select(SQLSubtraction.id).where(
-                    SQLSubtraction.legacy_id == legacy_id,
-                ),
-            )
-        ).scalar_one()
-
-
 async def test_get_linked_samples(fake: DataFaker, mongo, pg):
     user = await fake.users.create()
     upload = await fake.uploads.create(
@@ -137,7 +126,7 @@ async def test_get_linked_samples(fake: DataFaker, mongo, pg):
     )
     subtraction = await fake.subtractions.create(user=user, upload=upload)
 
-    target = await _resolve_subtraction_id(pg, subtraction.id)
+    target = await resolve_subtraction_pk(pg, subtraction.id)
 
     # Other integer subtraction ids the samples reference; only ``target`` should
     # match. The offsets simply guarantee distinctness from ``target``.
@@ -145,16 +134,31 @@ async def test_get_linked_samples(fake: DataFaker, mongo, pg):
 
     await mongo.samples.insert_many(
         [
-            {"_id": "foo", "name": "Foo", "subtractions": [other_a, target, other_b]},
-            {"_id": "bar", "name": "Bar", "subtractions": [other_c, target, other_a]},
-            {"_id": "baz", "name": "Baz", "subtractions": [other_a]},
+            {
+                "_id": "sample_with_target",
+                "name": "Sample With Target",
+                "subtractions": [other_a, target, other_b],
+            },
+            {
+                "_id": "another_with_target",
+                "name": "Another With Target",
+                "subtractions": [other_c, target, other_a],
+            },
+            {
+                "_id": "sample_without_target",
+                "name": "Sample Without Target",
+                "subtractions": [other_a],
+            },
         ],
         session=None,
     )
 
     samples = await virtool.subtractions.db.get_linked_samples(mongo, target)
 
-    assert samples == [{"id": "foo", "name": "Foo"}, {"id": "bar", "name": "Bar"}]
+    assert samples == [
+        {"id": "sample_with_target", "name": "Sample With Target"},
+        {"id": "another_with_target", "name": "Another With Target"},
+    ]
 
 
 async def test_unlink_default_subtractions(fake: DataFaker, mongo, pg):
@@ -167,15 +171,15 @@ async def test_unlink_default_subtractions(fake: DataFaker, mongo, pg):
 
     subtraction = await fake.subtractions.create(user=user, upload=upload)
 
-    target = await _resolve_subtraction_id(pg, subtraction.id)
+    target = await resolve_subtraction_pk(pg, subtraction.id)
 
     other_a, other_b, other_c = target + 1, target + 2, target + 3
 
     await mongo.samples.insert_many(
         [
-            {"_id": "foo", "subtractions": [other_a, target, other_b]},
-            {"_id": "bar", "subtractions": [target, other_c, other_b]},
-            {"_id": "baz", "subtractions": [target]},
+            {"_id": "sample_keeps_two", "subtractions": [other_a, target, other_b]},
+            {"_id": "sample_keeps_two_alt", "subtractions": [target, other_c, other_b]},
+            {"_id": "sample_becomes_empty", "subtractions": [target]},
         ],
         session=None,
     )
@@ -184,7 +188,7 @@ async def test_unlink_default_subtractions(fake: DataFaker, mongo, pg):
         await unlink_default_subtractions(mongo, target, session)
 
     assert await mongo.samples.find().to_list(None) == [
-        {"_id": "foo", "subtractions": [other_a, other_b]},
-        {"_id": "bar", "subtractions": [other_c, other_b]},
-        {"_id": "baz", "subtractions": []},
+        {"_id": "sample_keeps_two", "subtractions": [other_a, other_b]},
+        {"_id": "sample_keeps_two_alt", "subtractions": [other_c, other_b]},
+        {"_id": "sample_becomes_empty", "subtractions": []},
     ]
