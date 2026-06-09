@@ -34,7 +34,7 @@ class SQLSession(Base):
     token_hash: Mapped[str | None]
     reset_code: Mapped[str | None]
     reset_remember: Mapped[bool | None]
-    session_type: Mapped[SessionType] = mapped_column(String)
+    session_type: Mapped[str] = mapped_column(String)
 
     __table_args__ = (
         CheckConstraint(

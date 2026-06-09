@@ -8,6 +8,8 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from virtool.utils import timestamp
+
 
 def _downgrade(revision: str) -> None:
     """Downgrade to ``revision`` using the SQLALCHEMY_URL set by ``apply_alembic``."""
@@ -22,13 +24,20 @@ async def _insert_session(
     session_id: str,
     session_type: str,
 ) -> None:
+    now = timestamp()
     await session.execute(
         text(
             "INSERT INTO sessions "
             "(session_id, ip, created_at, expires_at, session_type) "
-            "VALUES (:session_id, '127.0.0.1', now(), now(), :session_type)",
+            "VALUES (:session_id, '127.0.0.1', :created_at, :expires_at, "
+            ":session_type)",
         ),
-        {"session_id": session_id, "session_type": session_type},
+        {
+            "session_id": session_id,
+            "created_at": now,
+            "expires_at": now,
+            "session_type": session_type,
+        },
     )
 
 
