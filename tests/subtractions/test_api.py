@@ -14,6 +14,22 @@ from virtool.subtractions.pg import SQLSubtraction, SQLSubtractionFile
 from virtool.uploads.sql import UploadType
 
 
+async def _subtraction_pk(pg: AsyncEngine, legacy_id: str) -> int:
+    """Resolve a subtraction's integer id from its legacy string id.
+
+    ``samples.subtractions`` holds integer ids, so linked-sample fixtures must
+    reference the subtraction by its ``subtractions.id`` rather than its legacy id.
+
+    Interim: delete once the subtraction public id is an integer (VIR-2535).
+    """
+    async with AsyncSession(pg) as session:
+        return (
+            await session.execute(
+                select(SQLSubtraction.id).where(SQLSubtraction.legacy_id == legacy_id),
+            )
+        ).scalar_one()
+
+
 async def test_find_empty_subtractions(
     snapshot,
     spawn_client: ClientSpawner,
@@ -111,6 +127,7 @@ async def test_edit(
     data: dict,
     fake: DataFaker,
     mongo: Mongo,
+    pg: AsyncEngine,
     snapshot_recent: SnapshotAssertion,
     spawn_client: ClientSpawner,
 ):
@@ -122,10 +139,12 @@ async def test_edit(
 
     subtraction = await fake.subtractions.create(user=user, upload=upload)
 
+    subtraction_pk = await _subtraction_pk(pg, subtraction.id)
+
     await mongo.samples.insert_many(
         [
-            {"_id": "12", "name": "Sample 12", "subtractions": [subtraction.id]},
-            {"_id": "22", "name": "Sample 22", "subtractions": [subtraction.id]},
+            {"_id": "12", "name": "Sample 12", "subtractions": [subtraction_pk]},
+            {"_id": "22", "name": "Sample 22", "subtractions": [subtraction_pk]},
         ],
         session=None,
     )
@@ -398,6 +417,7 @@ class TestRemoveAsJob:
         fake: DataFaker,
         spawn_job_client: JobClientSpawner,
         mongo: Mongo,
+        pg: AsyncEngine,
         resp_is,
     ):
         """Verifies that a finalized subtraction cannot be deleted."""
@@ -415,7 +435,11 @@ class TestRemoveAsJob:
         client = await spawn_job_client(authenticated=True)
 
         await mongo.samples.insert_one(
-            {"_id": "test", "name": "Test", "subtractions": [subtraction.id]},
+            {
+                "_id": "test",
+                "name": "Test",
+                "subtractions": [await _subtraction_pk(pg, subtraction.id)],
+            },
         )
 
         resp = await client.delete(f"/subtractions/{subtraction.id}")
@@ -427,6 +451,7 @@ class TestRemoveAsJob:
         fake: DataFaker,
         spawn_job_client: JobClientSpawner,
         mongo: Mongo,
+        pg: AsyncEngine,
         resp_is,
     ):
         """Checks successful deletion of an unfinalized subtraction."""
@@ -441,7 +466,11 @@ class TestRemoveAsJob:
             finalized=False,
         )
         await mongo.samples.insert_one(
-            {"_id": "test", "name": "Test", "subtractions": [subtraction.id]},
+            {
+                "_id": "test",
+                "name": "Test",
+                "subtractions": [await _subtraction_pk(pg, subtraction.id)],
+            },
         )
 
         client = await spawn_job_client(authenticated=True)

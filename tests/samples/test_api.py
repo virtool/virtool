@@ -42,7 +42,9 @@ async def get_sample_ready_false(
     user = await fake.users.create()
     job = await fake.jobs.create(user, workflow="create_sample")
 
-    await insert_subtractions(("apple", "Apple"), ("pear", "Pear"), ("peach", "Peach"))
+    subtractions = await insert_subtractions(
+        ("apple", "Apple"), ("pear", "Pear"), ("peach", "Peach")
+    )
 
     await mongo.samples.insert_one(
         {
@@ -74,7 +76,7 @@ async def get_sample_ready_false(
             "nuvs": False,
             "pathoscope": True,
             "ready": False,
-            "subtractions": ["apple", "pear"],
+            "subtractions": [subtractions["apple"], subtractions["pear"]],
             "user": {"id": user.id},
             "workflows": {
                 "aodp": WorkflowState.INCOMPATIBLE.value,
@@ -97,47 +99,48 @@ async def get_sample_data(
     user = await fake.users.create()
     job = await fake.jobs.create(user, workflow="create_sample")
 
-    await asyncio.gather(
-        insert_subtractions(("apple", "Apple"), ("pear", "Pear"), ("peach", "Peach")),
-        mongo.samples.insert_one(
-            {
-                "_id": "test",
-                "all_read": True,
-                "all_write": True,
-                "created_at": static_time.datetime,
-                "files": [
-                    {
-                        "id": "foo",
-                        "name": "Bar.fq.gz",
-                        "download_url": "/download/samples/files/file_1.fq.gz",
-                    },
-                ],
-                "format": "fastq",
-                "group": "none",
-                "group_read": True,
-                "group_write": True,
-                "hold": False,
-                "host": "",
-                "is_legacy": False,
-                "isolate": "",
-                "job": {"id": job.id},
-                "labels": [label.id],
-                "library_type": LibraryType.normal.value,
-                "locale": "",
-                "name": "Test",
-                "notes": "",
-                "nuvs": False,
-                "pathoscope": True,
-                "ready": True,
-                "subtractions": ["apple", "pear"],
-                "user": {"id": user.id},
-                "workflows": {
-                    "aodp": WorkflowState.INCOMPATIBLE.value,
-                    "pathoscope": WorkflowState.COMPLETE.value,
-                    "nuvs": WorkflowState.PENDING.value,
+    subtractions = await insert_subtractions(
+        ("apple", "Apple"), ("pear", "Pear"), ("peach", "Peach")
+    )
+
+    await mongo.samples.insert_one(
+        {
+            "_id": "test",
+            "all_read": True,
+            "all_write": True,
+            "created_at": static_time.datetime,
+            "files": [
+                {
+                    "id": "foo",
+                    "name": "Bar.fq.gz",
+                    "download_url": "/download/samples/files/file_1.fq.gz",
                 },
+            ],
+            "format": "fastq",
+            "group": "none",
+            "group_read": True,
+            "group_write": True,
+            "hold": False,
+            "host": "",
+            "is_legacy": False,
+            "isolate": "",
+            "job": {"id": job.id},
+            "labels": [label.id],
+            "library_type": LibraryType.normal.value,
+            "locale": "",
+            "name": "Test",
+            "notes": "",
+            "nuvs": False,
+            "pathoscope": True,
+            "ready": True,
+            "subtractions": [subtractions["apple"], subtractions["pear"]],
+            "user": {"id": user.id},
+            "workflows": {
+                "aodp": WorkflowState.INCOMPATIBLE.value,
+                "pathoscope": WorkflowState.COMPLETE.value,
+                "nuvs": WorkflowState.PENDING.value,
             },
-        ),
+        },
     )
 
     async with AsyncSession(pg) as session:
@@ -488,13 +491,13 @@ class TestCreate:
         label = await fake.labels.create()
         upload = await fake.uploads.create(user=await fake.users.create())
 
-        await insert_subtractions(("apple", "Apple"))
+        subtractions = await insert_subtractions(("apple", "Apple"))
 
         data = {
             "files": [upload.id],
             "labels": [label.id],
             "name": "Foobar",
-            "subtractions": ["apple"],
+            "subtractions": [subtractions["apple"]],
         }
 
         if group_setting == "force_choice":
@@ -521,7 +524,7 @@ class TestCreate:
 
         upload = await fake.uploads.create(user=await fake.users.create())
 
-        await asyncio.gather(
+        _, subtractions = await asyncio.gather(
             mongo.samples.insert_one(
                 {
                     "_id": "foobar",
@@ -538,7 +541,11 @@ class TestCreate:
 
         resp = await client.post(
             "/samples",
-            {"name": "Foobar", "files": [upload.id], "subtractions": ["apple"]},
+            {
+                "name": "Foobar",
+                "files": [upload.id],
+                "subtractions": [subtractions["apple"]],
+            },
         )
 
         assert resp.status == 400
@@ -567,7 +574,7 @@ class TestCreate:
 
         upload = await fake.uploads.create(user=await fake.users.create())
 
-        await asyncio.gather(
+        _, subtractions = await asyncio.gather(
             get_data_from_app(client.app).settings.update(
                 UpdateSettingsRequest(sample_group="force_choice"),
             ),
@@ -577,7 +584,7 @@ class TestCreate:
         data = {
             "name": "Foobar",
             "files": [upload.id],
-            "subtractions": ["apple"],
+            "subtractions": [subtractions["apple"]],
         }
 
         if error is None:
@@ -606,7 +613,7 @@ class TestCreate:
 
         upload = await fake.uploads.create(user=await fake.users.create())
 
-        await asyncio.gather(
+        _, subtractions = await asyncio.gather(
             get_data_from_app(client.app).settings.update(
                 UpdateSettingsRequest(
                     sample_group="force_choice",
@@ -620,7 +627,7 @@ class TestCreate:
             {
                 "name": "Foobar",
                 "files": [upload.id],
-                "subtractions": ["apple"],
+                "subtractions": [subtractions["apple"]],
                 "group": 5,
             },
         )
@@ -642,10 +649,10 @@ class TestCreate:
 
         resp = await client.post(
             "/samples",
-            {"name": "Foobar", "files": [upload.id], "subtractions": ["apple"]},
+            {"name": "Foobar", "files": [upload.id], "subtractions": [999]},
         )
 
-        await resp_is.bad_request(resp, "Subtractions do not exist: apple")
+        await resp_is.bad_request(resp, "Subtractions do not exist: 999")
 
     @pytest.mark.parametrize("one_exists", [True, False])
     async def test_file_dne(
@@ -665,7 +672,7 @@ class TestCreate:
             permissions=[Permission.create_sample],
         )
 
-        await insert_subtractions(("apple", "Apple"))
+        subtractions = await insert_subtractions(("apple", "Apple"))
 
         if one_exists:
             upload = await fake.uploads.create(user=await fake.users.create())
@@ -675,7 +682,11 @@ class TestCreate:
 
         resp = await client.post(
             "/samples",
-            {"name": "Foobar", "files": files, "subtractions": ["apple"]},
+            {
+                "name": "Foobar",
+                "files": files,
+                "subtractions": [subtractions["apple"]],
+            },
         )
 
         await resp_is.bad_request(resp, "File does not exist")
@@ -702,15 +713,30 @@ class TestCreate:
 
 
 class TestEdit:
-    async def test_ok(self, get_sample_data, snapshot, spawn_client: ClientSpawner):
+    async def test_ok(
+        self,
+        get_sample_data,
+        pg: AsyncEngine,
+        snapshot,
+        spawn_client: ClientSpawner,
+    ):
         """Test that an existing sample can be edited correctly."""
         client = await spawn_client(administrator=True, authenticated=True)
+
+        async with AsyncSession(pg) as session:
+            peach_id = (
+                await session.execute(
+                    select(SQLSubtraction.id).where(
+                        SQLSubtraction.legacy_id == "peach",
+                    ),
+                )
+            ).scalar_one()
 
         resp = await client.patch(
             "/samples/test",
             {
                 "name": "test_sample",
-                "subtractions": ["peach"],
+                "subtractions": [peach_id],
                 "labels": [1],
                 "notes": "This is a test.",
             },
@@ -807,7 +833,7 @@ class TestEdit:
 
         user = await fake.users.create()
 
-        await asyncio.gather(
+        _, subtractions = await asyncio.gather(
             mongo.samples.insert_one(
                 {
                     "_id": "test",
@@ -815,14 +841,17 @@ class TestEdit:
                     "all_read": True,
                     "all_write": True,
                     "ready": True,
-                    "subtractions": ["apple"],
+                    "subtractions": [],
                     "user": {"id": user.id},
                 },
             ),
             insert_subtractions(("foo", "Foo")),
         )
 
-        resp = await client.patch("/samples/test", {"subtractions": ["foo", "bar"]})
+        resp = await client.patch(
+            "/samples/test",
+            {"subtractions": [subtractions["foo"], 999]},
+        )
 
         assert resp.status == 400
         assert await resp.json() == snapshot(name="json")

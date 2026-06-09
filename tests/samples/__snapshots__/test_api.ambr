@@ -80,8 +80,8 @@
     'pathoscope': True,
     'ready': True,
     'subtractions': list([
-      'apple',
-      'pear',
+      1,
+      2,
     ]),
     'user': dict({
       'id': 1,
@@ -140,8 +140,8 @@
     'pathoscope': True,
     'ready': True,
     'subtractions': list([
-      'apple',
-      'pear',
+      1,
+      2,
     ]),
     'user': dict({
       'id': 1,
@@ -200,8 +200,8 @@
     'pathoscope': True,
     'ready': True,
     'subtractions': list([
-      'apple',
-      'pear',
+      1,
+      2,
     ]),
     'user': dict({
       'id': 1,
@@ -260,8 +260,8 @@
     'pathoscope': True,
     'ready': True,
     'subtractions': list([
-      'apple',
-      'pear',
+      1,
+      2,
     ]),
     'user': dict({
       'id': 1,
@@ -320,8 +320,8 @@
     'pathoscope': True,
     'ready': True,
     'subtractions': list([
-      'apple',
-      'pear',
+      1,
+      2,
     ]),
     'user': dict({
       'id': 1,
@@ -403,7 +403,7 @@
     'ready': False,
     'subtractions': list([
       dict({
-        'id': 'apple',
+        'id': 1,
         'name': 'Apple',
       }),
     ]),
@@ -484,7 +484,7 @@
     'ready': False,
     'subtractions': list([
       dict({
-        'id': 'apple',
+        'id': 1,
         'name': 'Apple',
       }),
     ]),
@@ -569,7 +569,7 @@
     'ready': False,
     'subtractions': list([
       dict({
-        'id': 'apple',
+        'id': 1,
         'name': 'Apple',
       }),
     ]),
@@ -672,7 +672,7 @@
     'ready': True,
     'subtractions': list([
       dict({
-        'id': 'peach',
+        'id': 3,
         'name': 'Peach',
       }),
     ]),
@@ -691,7 +691,7 @@
 # name: TestEdit.test_subtraction_exists[json]
   dict({
     'id': 'bad_request',
-    'message': 'Subtractions do not exist: bar',
+    'message': 'Subtractions do not exist: 999',
   })
 # ---
 # name: TestFinalize.test_quality
@@ -762,11 +762,11 @@
     'ready': True,
     'subtractions': list([
       dict({
-        'id': 'apple',
+        'id': 1,
         'name': 'Apple',
       }),
       dict({
-        'id': 'pear',
+        'id': 2,
         'name': 'Pear',
       }),
     ]),
@@ -1981,11 +1981,11 @@
     'ready': True,
     'subtractions': list([
       dict({
-        'id': 'apple',
+        'id': 1,
         'name': 'Apple',
       }),
       dict({
-        'id': 'pear',
+        'id': 2,
         'name': 'Pear',
       }),
     ]),
@@ -2065,11 +2065,11 @@
     'ready': True,
     'subtractions': list([
       dict({
-        'id': 'apple',
+        'id': 1,
         'name': 'Apple',
       }),
       dict({
-        'id': 'pear',
+        'id': 2,
         'name': 'Pear',
       }),
     ]),
@@ -2159,11 +2159,11 @@
     'ready': True,
     'subtractions': list([
       dict({
-        'id': 'apple',
+        'id': 1,
         'name': 'Apple',
       }),
       dict({
-        'id': 'pear',
+        'id': 2,
         'name': 'Pear',
       }),
     ]),
@@ -2243,11 +2243,11 @@
     'ready': True,
     'subtractions': list([
       dict({
-        'id': 'apple',
+        'id': 1,
         'name': 'Apple',
       }),
       dict({
-        'id': 'pear',
+        'id': 2,
         'name': 'Pear',
       }),
     ]),

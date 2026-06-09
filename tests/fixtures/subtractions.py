@@ -54,19 +54,23 @@ async def test_subtraction_files(pg) -> int:
 
 @pytest.fixture
 def insert_subtractions(pg):
-    """Insert Postgres subtractions keyed by legacy id.
+    """Insert Postgres subtractions and return a ``{legacy_id: id}`` map.
 
-    Pass ``(legacy_id, name)`` pairs. The created subtractions resolve through the
-    ``legacy_id`` column the way string-keyed referrers reference them.
+    Pass ``(legacy_id, name)`` pairs. Subtractions are addressed by their integer
+    ``id`` now that ``samples.subtractions`` holds integers, so the returned map
+    lets callers look up the auto-generated id for each seeded subtraction.
 
     ``created_at`` is a fixed naive-UTC literal rather than ``static_time`` because
     that fixture patches the global clock, which would leak into consumers that
     create entities through the data layer. The value is never surfaced.
     """
 
-    async def func(*subtractions: tuple[str, str]) -> None:
+    # Interim: returns the legacy_id -> integer id map only so callers can address
+    # subtractions by integer while the subtraction public id is still a string.
+    # Revert to returning None after the subtraction id cutover (VIR-2535).
+    async def func(*subtractions: tuple[str, str]) -> dict[str, int]:
         async with AsyncSession(pg) as session:
-            session.add_all(
+            rows = [
                 SQLSubtraction(
                     legacy_id=legacy_id,
                     name=name,
@@ -74,8 +78,15 @@ def insert_subtractions(pg):
                     ready=True,
                 )
                 for legacy_id, name in subtractions
-            )
+            ]
+
+            session.add_all(rows)
+            await session.flush()
+
+            id_map = {row.legacy_id: row.id for row in rows}
 
             await session.commit()
+
+        return id_map
 
     return func

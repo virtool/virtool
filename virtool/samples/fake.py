@@ -77,9 +77,7 @@ async def create_fake_sample(
 
     async with AsyncSession(pg) as session:
         result = await session.execute(
-            select(SQLSubtraction.legacy_id)
-            .where(SQLSubtraction.legacy_id.isnot(None))
-            .limit(2),
+            select(SQLSubtraction.id).limit(2),
         )
 
         subtraction_ids = list(result.scalars().all())

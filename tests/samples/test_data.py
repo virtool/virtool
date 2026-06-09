@@ -36,7 +36,9 @@ async def get_sample_ready_false(
     user = await fake.users.create()
     job = await fake.jobs.create(user, workflow="create_sample")
 
-    await insert_subtractions(("apple", "Apple"), ("pear", "Pear"), ("peach", "Peach"))
+    subtractions = await insert_subtractions(
+        ("apple", "Apple"), ("pear", "Pear"), ("peach", "Peach")
+    )
 
     await mongo.samples.insert_one(
         {
@@ -68,7 +70,7 @@ async def get_sample_ready_false(
             "nuvs": False,
             "pathoscope": True,
             "ready": False,
-            "subtractions": ["apple", "pear"],
+            "subtractions": [subtractions["apple"], subtractions["pear"]],
             "user": {"id": user.id},
             "workflows": {
                 "aodp": WorkflowState.INCOMPATIBLE.value,
@@ -122,13 +124,13 @@ class TestCreate:
         label = await fake.labels.create()
         upload = await fake.uploads.create(user=await fake.users.create())
 
-        await insert_subtractions(("apple", "Apple"))
+        subtractions = await insert_subtractions(("apple", "Apple"))
 
         data = {
             "files": [upload.id],
             "labels": [label.id],
             "name": "Foobar",
-            "subtractions": ["apple"],
+            "subtractions": [subtractions["apple"]],
         }
 
         if group_setting == "force_choice":

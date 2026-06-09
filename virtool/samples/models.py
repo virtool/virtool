@@ -8,7 +8,6 @@ from virtool.models import BaseModel, SearchResult
 from virtool.models.enums import LibraryType
 from virtool.quality.models import Quality
 from virtool.samples.models_base import SampleNested
-from virtool.subtractions.models import SubtractionNested
 from virtool.uploads.models import UploadMinimal
 from virtool.users.models_base import UserNested
 
@@ -18,6 +17,18 @@ class SampleArtifact(BaseModel):
     download_url: str
     name: str
     size: int
+
+
+class SampleSubtraction(BaseModel):
+    """A subtraction referenced by a sample, identified by its integer id.
+
+    Interim model: exists only because the shared ``SubtractionNested.id`` is still
+    a legacy string. Remove and revert ``Sample.subtractions`` to ``SubtractionNested``
+    after the subtraction id cutover (VIR-2535).
+    """
+
+    id: int
+    name: str
 
 
 class WorkflowState(Enum):
@@ -72,7 +83,7 @@ class SampleMinimal(SampleNested):
                     "nuvs": False,
                     "pathoscope": True,
                     "ready": True,
-                    "subtractions": ["0nhpi36p"],
+                    "subtractions": [21],
                     "user": {
                         "administrator": True,
                         "handle": "mrott",
@@ -113,7 +124,7 @@ class Sample(SampleMinimal):
     paired: bool
     quality: Quality | None
     reads: list[Read]
-    subtractions: list[SubtractionNested]
+    subtractions: list[SampleSubtraction]
 
     class Config:
         schema_extra = {
@@ -191,7 +202,7 @@ class Sample(SampleMinimal):
                     },
                 ],
                 "ready": True,
-                "subtractions": [{"id": "0nhpi36p", "name": "Malus domestica"}],
+                "subtractions": [{"id": 21, "name": "Malus domestica"}],
                 "user": {"administrator": True, "handle": "mrott", "id": "ihvze2u9"},
                 "workflows": {
                     "aodp": "incompatible",

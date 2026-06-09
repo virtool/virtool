@@ -181,7 +181,7 @@ async def attach_computed(
 
     files, linked_samples = await asyncio.gather(
         get_subtraction_files(pg, subtraction_pk),
-        get_linked_samples(mongo, legacy_id),
+        get_linked_samples(mongo, subtraction_pk),
     )
 
     for file in files:
@@ -193,11 +193,11 @@ async def attach_computed(
     return {**subtraction, "files": files, "linked_samples": linked_samples}
 
 
-async def get_linked_samples(mongo: "Mongo", subtraction_id: str) -> list[dict]:
+async def get_linked_samples(mongo: "Mongo", subtraction_id: int) -> list[dict]:
     """Find all samples containing given 'subtraction_id' in 'subtractions' field.
 
     :param mongo: the application database client
-    :param subtraction_id: the ID of the subtraction
+    :param subtraction_id: the integer ID of the subtraction
     :return: a list of dicts containing linked samples with 'id' and 'name' field.
 
     """
@@ -212,13 +212,13 @@ async def get_linked_samples(mongo: "Mongo", subtraction_id: str) -> list[dict]:
 
 async def unlink_default_subtractions(
     mongo: "Mongo",
-    subtraction_id: str,
+    subtraction_id: int,
     session: AsyncIOMotorClientSession,
 ) -> None:
     """Remove a subtraction as a default subtraction for samples.
 
     :param mongo: the application mongo object
-    :param subtraction_id: the id of the subtraction to remove
+    :param subtraction_id: the integer id of the subtraction to remove
     :param session: a motor session to use
     """
     await mongo.samples.update_many(
