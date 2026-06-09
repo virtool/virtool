@@ -491,5 +491,12 @@
       'name': 'drop analyses subtractions column',
       'revision': '869aa923399e',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 71,
+      'name': 'backfill samples subtractions to integers',
+      'revision': '24ysb9cwjiv1',
+    }),
   ])
 # ---

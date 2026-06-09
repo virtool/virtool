@@ -367,7 +367,7 @@ class SubtractionsData(DataLayerDomain):
                 .values(deleted=True),
             )
 
-            await unlink_default_subtractions(self._mongo, legacy_id, mongo_session)
+            await unlink_default_subtractions(self._mongo, modern_id, mongo_session)
 
         failures = await delete_prefix(self._storage, subtraction_prefix(legacy_id))
 

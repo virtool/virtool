@@ -22,7 +22,7 @@ async def check_name_is_in_use(
 
 
 async def check_subtractions_do_not_exist(
-    pg: AsyncEngine, subtractions: list[str]
+    pg: AsyncEngine, subtractions: list[int]
 ) -> None:
     if non_existent_subtractions := await get_missing_subtraction_ids(pg, subtractions):
         raise ResourceConflictError(

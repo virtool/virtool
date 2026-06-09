@@ -2,6 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import virtool.subtractions.db
+from tests.fixtures.subtractions import resolve_subtraction_pk
 from virtool.data.transforms import apply_transforms
 from virtool.fake.next import DataFaker
 from virtool.subtractions.db import (
@@ -118,28 +119,49 @@ class TestGetMissingSubtractionIds:
         )
 
 
-async def test_get_linked_samples(fake: DataFaker, mongo):
+async def test_get_linked_samples(fake: DataFaker, mongo, pg):
     user = await fake.users.create()
     upload = await fake.uploads.create(
         user=user, upload_type=UploadType.subtraction, name="foobar.fq.gz"
     )
     subtraction = await fake.subtractions.create(user=user, upload=upload)
 
+    target = await resolve_subtraction_pk(pg, subtraction.id)
+
+    # Other integer subtraction ids the samples reference; only ``target`` should
+    # match. The offsets simply guarantee distinctness from ``target``.
+    other_a, other_b, other_c = target + 1, target + 2, target + 3
+
     await mongo.samples.insert_many(
         [
-            {"_id": "foo", "name": "Foo", "subtractions": ["1", subtraction.id, "3"]},
-            {"_id": "bar", "name": "Bar", "subtractions": ["2", subtraction.id, "8"]},
-            {"_id": "baz", "name": "Baz", "subtractions": ["2"]},
+            {
+                "_id": "sample_with_target",
+                "name": "Sample With Target",
+                "subtractions": [other_a, target, other_b],
+            },
+            {
+                "_id": "another_with_target",
+                "name": "Another With Target",
+                "subtractions": [other_c, target, other_a],
+            },
+            {
+                "_id": "sample_without_target",
+                "name": "Sample Without Target",
+                "subtractions": [other_a],
+            },
         ],
         session=None,
     )
 
-    samples = await virtool.subtractions.db.get_linked_samples(mongo, subtraction.id)
+    samples = await virtool.subtractions.db.get_linked_samples(mongo, target)
 
-    assert samples == [{"id": "foo", "name": "Foo"}, {"id": "bar", "name": "Bar"}]
+    assert samples == [
+        {"id": "sample_with_target", "name": "Sample With Target"},
+        {"id": "another_with_target", "name": "Another With Target"},
+    ]
 
 
-async def test_unlink_default_subtractions(fake: DataFaker, mongo):
+async def test_unlink_default_subtractions(fake: DataFaker, mongo, pg):
     user = await fake.users.create()
     upload = await fake.uploads.create(
         user=user,
@@ -149,20 +171,24 @@ async def test_unlink_default_subtractions(fake: DataFaker, mongo):
 
     subtraction = await fake.subtractions.create(user=user, upload=upload)
 
+    target = await resolve_subtraction_pk(pg, subtraction.id)
+
+    other_a, other_b, other_c = target + 1, target + 2, target + 3
+
     await mongo.samples.insert_many(
         [
-            {"_id": "foo", "subtractions": ["1", subtraction.id, "3"]},
-            {"_id": "bar", "subtractions": [subtraction.id, "5", "8"]},
-            {"_id": "baz", "subtractions": [subtraction.id]},
+            {"_id": "sample_keeps_two", "subtractions": [other_a, target, other_b]},
+            {"_id": "sample_keeps_two_alt", "subtractions": [target, other_c, other_b]},
+            {"_id": "sample_becomes_empty", "subtractions": [target]},
         ],
         session=None,
     )
 
     async with mongo.create_session() as session:
-        await unlink_default_subtractions(mongo, subtraction.id, session)
+        await unlink_default_subtractions(mongo, target, session)
 
     assert await mongo.samples.find().to_list(None) == [
-        {"_id": "foo", "subtractions": ["1", "3"]},
-        {"_id": "bar", "subtractions": ["5", "8"]},
-        {"_id": "baz", "subtractions": []},
+        {"_id": "sample_keeps_two", "subtractions": [other_a, other_b]},
+        {"_id": "sample_keeps_two_alt", "subtractions": [other_c, other_b]},
+        {"_id": "sample_becomes_empty", "subtractions": []},
     ]

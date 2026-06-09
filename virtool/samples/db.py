@@ -237,7 +237,7 @@ async def create_sample(
     group: int | str,
     locale: str,
     library_type: str,
-    subtractions: list[str],
+    subtractions: list[int],
     notes: str,
     labels: list[int],
     user_id: int,

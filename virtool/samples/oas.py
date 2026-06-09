@@ -14,7 +14,7 @@ class CreateSampleRequest(BaseModel):
     group: int | None = None
     locale: constr(strip_whitespace=True) = ""
     library_type: LibraryType = LibraryType.normal
-    subtractions: list = Field(default_factory=list)
+    subtractions: list[int] = Field(default_factory=list)
     files: conlist(item_type=Any, min_items=1, max_items=2)
     notes: str = ""
     labels: list = Field(default_factory=list)
@@ -36,7 +36,7 @@ class UpdateSampleRequest(BaseModel):
     locale: constr(strip_whitespace=True) | None
     notes: constr(strip_whitespace=True) | None
     labels: list | None
-    subtractions: list | None
+    subtractions: list[int] | None
 
     _prevent_none = prevent_none("*")
 

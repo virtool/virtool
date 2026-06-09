@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy.assertion import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
+from tests.fixtures.subtractions import resolve_subtraction_pk
 from virtool.fake.next import DataFaker
 from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
@@ -111,6 +112,7 @@ async def test_edit(
     data: dict,
     fake: DataFaker,
     mongo: Mongo,
+    pg: AsyncEngine,
     snapshot_recent: SnapshotAssertion,
     spawn_client: ClientSpawner,
 ):
@@ -122,10 +124,12 @@ async def test_edit(
 
     subtraction = await fake.subtractions.create(user=user, upload=upload)
 
+    subtraction_pk = await resolve_subtraction_pk(pg, subtraction.id)
+
     await mongo.samples.insert_many(
         [
-            {"_id": "12", "name": "Sample 12", "subtractions": [subtraction.id]},
-            {"_id": "22", "name": "Sample 22", "subtractions": [subtraction.id]},
+            {"_id": "12", "name": "Sample 12", "subtractions": [subtraction_pk]},
+            {"_id": "22", "name": "Sample 22", "subtractions": [subtraction_pk]},
         ],
         session=None,
     )
@@ -398,6 +402,7 @@ class TestRemoveAsJob:
         fake: DataFaker,
         spawn_job_client: JobClientSpawner,
         mongo: Mongo,
+        pg: AsyncEngine,
         resp_is,
     ):
         """Verifies that a finalized subtraction cannot be deleted."""
@@ -415,7 +420,11 @@ class TestRemoveAsJob:
         client = await spawn_job_client(authenticated=True)
 
         await mongo.samples.insert_one(
-            {"_id": "test", "name": "Test", "subtractions": [subtraction.id]},
+            {
+                "_id": "test",
+                "name": "Test",
+                "subtractions": [await resolve_subtraction_pk(pg, subtraction.id)],
+            },
         )
 
         resp = await client.delete(f"/subtractions/{subtraction.id}")
@@ -427,6 +436,7 @@ class TestRemoveAsJob:
         fake: DataFaker,
         spawn_job_client: JobClientSpawner,
         mongo: Mongo,
+        pg: AsyncEngine,
         resp_is,
     ):
         """Checks successful deletion of an unfinalized subtraction."""
@@ -441,7 +451,11 @@ class TestRemoveAsJob:
             finalized=False,
         )
         await mongo.samples.insert_one(
-            {"_id": "test", "name": "Test", "subtractions": [subtraction.id]},
+            {
+                "_id": "test",
+                "name": "Test",
+                "subtractions": [await resolve_subtraction_pk(pg, subtraction.id)],
+            },
         )
 
         client = await spawn_job_client(authenticated=True)

@@ -33,7 +33,7 @@
       'id': 0,
     }),
     'subtractions': list([
-      'apple',
+      1,
     ]),
     'uploads': list([
       dict({
@@ -85,7 +85,7 @@
       'id': 0,
     }),
     'subtractions': list([
-      'apple',
+      1,
     ]),
     'uploads': list([
       dict({
@@ -137,7 +137,7 @@
       'id': 0,
     }),
     'subtractions': list([
-      'apple',
+      1,
     ]),
     'uploads': list([
       dict({
@@ -248,11 +248,11 @@
     'ready': True,
     'subtractions': list([
       dict({
-        'id': 'apple',
+        'id': 1,
         'name': 'Apple',
       }),
       dict({
-        'id': 'pear',
+        'id': 2,
         'name': 'Pear',
       }),
     ]),
