@@ -256,7 +256,24 @@
         'name': 'Pear',
       }),
     ]),
-    'uploads': None,
+    'uploads': list([
+      dict({
+        'created_at': 'not_approximately_now_datetime',
+        'id': 1,
+        'name': 'test.fq.gz',
+        'ready': True,
+        'removed': True,
+        'removed_at': 'not_approximately_now_datetime',
+        'reserved': False,
+        'size': 723988,
+        'type': 'reads',
+        'uploaded_at': 'not_approximately_now_datetime',
+        'user': dict({
+          'handle': 'zwilliams',
+          'id': 2,
+        }),
+      }),
+    ]),
     'user': dict({
       'handle': 'leeashley',
       'id': 1,
