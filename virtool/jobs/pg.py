@@ -100,13 +100,3 @@ class SQLJobSample(Base):
 
     sample_id: Mapped[str]
     """The sample being created."""
-
-
-class SQLJobSubtraction(Base):
-    __tablename__ = "job_subtractions"
-
-    job_id: Mapped[int] = mapped_column(ForeignKey("jobs.id"), primary_key=True)
-    """The job that is creating the subtraction."""
-
-    subtraction_id: Mapped[str]
-    """The subtraction being created."""

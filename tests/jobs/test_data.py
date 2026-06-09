@@ -25,8 +25,8 @@ from virtool.jobs.pg import (
     SQLJob,
     SQLJobIndex,
     SQLJobSample,
-    SQLJobSubtraction,
 )
+from virtool.subtractions.pg import SQLSubtraction
 from virtool.users.models import User
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
@@ -202,39 +202,32 @@ class TestCreatePostgres:
         assert job_index is not None
         assert job_index.index_id == "index_456"
 
-    async def test_subtraction_join_table(
+    async def test_subtraction_id_resolved_from_subtraction(
         self,
         jobs_data: JobsData,
         fake: DataFaker,
         pg: AsyncEngine,
     ):
-        """Test that create_subtraction jobs write to job_subtractions join table."""
+        """``get`` resolves the subtraction id from the subtraction linked by job_id."""
         user = await fake.users.create()
 
-        job = await jobs_data.create(
-            "create_subtraction",
-            {"subtraction_id": "sub_789"},
-            user.id,
-            0,
-        )
+        job = await jobs_data.create("create_subtraction", {}, user.id, 0)
 
         async with AsyncSession(pg) as session:
-            sql_job = (
-                await session.execute(
-                    select(SQLJob).where(SQLJob.id == job.id),
-                )
-            ).scalar()
+            subtraction = SQLSubtraction(
+                legacy_id="sub_789",
+                name="Subtraction 789",
+                created_at=arrow.utcnow().naive,
+                user_id=user.id,
+                job_id=job.id,
+            )
+            session.add(subtraction)
+            await session.flush()
+            subtraction_id = subtraction.id
+            await session.commit()
 
-            job_subtraction = (
-                await session.execute(
-                    select(SQLJobSubtraction).where(
-                        SQLJobSubtraction.job_id == sql_job.id,
-                    ),
-                )
-            ).scalar()
-
-        assert job_subtraction is not None
-        assert job_subtraction.subtraction_id == "sub_789"
+        fetched_job = await jobs_data.get(job.id)
+        assert fetched_job.args == {"subtraction_id": subtraction_id}
 
     @pytest.mark.parametrize("workflow", ["aodp", "iimi", "nuvs", "pathoscope"])
     async def test_analysis_id_resolved_from_analysis(
