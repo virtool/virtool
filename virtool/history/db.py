@@ -123,9 +123,21 @@ async def bulk_insert_history(
 ) -> None:
     """Insert ``history_diffs`` and ``legacy_history`` rows in one transaction.
 
+    ``diff_rows`` and ``documents`` are parallel: ``diff_rows[i]`` must describe
+    the same change as ``documents[i]``. They are validated to be aligned by
+    ``change_id`` before any write, so a misaligned caller fails loudly rather
+    than corrupting history.
+
     Both tables are written in asyncpg-safe chunks within a single Postgres
     transaction so they commit or roll back together.
     """
+    if {row["change_id"] for row in diff_rows} != {
+        document["_id"] for document in documents
+    }:
+        raise ValueError(
+            "diff_rows and documents must describe the same history changes",
+        )
+
     legacy_rows = [_legacy_history_values(document) for document in documents]
 
     async with AsyncSession(pg) as session:

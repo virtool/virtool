@@ -442,7 +442,9 @@ async def test_populate_insert_only_reference_dual_writes_legacy_history(
         rows = (
             (
                 await pg_session.execute(
-                    select(SQLLegacyHistory).order_by(SQLLegacyHistory.legacy_id),
+                    select(SQLLegacyHistory)
+                    .where(SQLLegacyHistory.reference == ref_id)
+                    .order_by(SQLLegacyHistory.legacy_id),
                 )
             )
             .scalars()
