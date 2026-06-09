@@ -23,7 +23,7 @@ from virtool.data.topg import compose_legacy_id_multi_expression
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
-from virtool.history.db import bulk_delete_diffs, bulk_insert_diffs
+from virtool.history.db import bulk_delete_history, bulk_insert_history
 from virtool.models.enums import HistoryMethod
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.utils import get_mongo_from_req
@@ -811,7 +811,11 @@ async def populate_insert_only_reference(
         for insertion in insertions
     ]
 
-    await bulk_insert_diffs(pg, diff_rows)
+    await bulk_insert_history(
+        pg,
+        diff_rows,
+        [insertion.history.document for insertion in insertions],
+    )
 
     try:
         sequences = []
@@ -834,7 +838,7 @@ async def populate_insert_only_reference(
             )
             tg.create_task(mongo.sequences.insert_many(sequences, None))
     except Exception:
-        await bulk_delete_diffs(pg, [row["change_id"] for row in diff_rows])
+        await bulk_delete_history(pg, [row["change_id"] for row in diff_rows])
 
         await asyncio.gather(
             mongo.history.delete_many({"reference.id": reference_id}),

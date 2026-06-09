@@ -8,7 +8,7 @@ from syrupy import SnapshotAssertion
 
 from virtool.api.client import UserClient
 from virtool.fake.next import DataFaker
-from virtool.history.sql import SQLHistoryDiff
+from virtool.history.sql import SQLHistoryDiff, SQLLegacyHistory
 from virtool.models.enums import HistoryMethod
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
@@ -362,10 +362,96 @@ async def test_populate_insert_only_reference_rollback(
     assert await mongo.references.find_one({"_id": ref_id}) is None
 
     async with AsyncSession(pg) as pg_session:
-        count = await pg_session.scalar(
+        diff_count = await pg_session.scalar(
             select(func.count())
             .select_from(SQLHistoryDiff)
             .where(SQLHistoryDiff.change_id.in_(["rbotu001.0", "rbotu002.0"])),
         )
 
-    assert count == 0
+        legacy_count = await pg_session.scalar(
+            select(func.count())
+            .select_from(SQLLegacyHistory)
+            .where(SQLLegacyHistory.legacy_id.in_(["rbotu001.0", "rbotu002.0"])),
+        )
+
+    assert diff_count == 0
+    assert legacy_count == 0
+
+
+async def test_populate_insert_only_reference_dual_writes_legacy_history(
+    fake: DataFaker,
+    mocker: MockerFixture,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    snapshot: SnapshotAssertion,
+    static_time,
+):
+    """A successful bulk insert writes one ``legacy_history`` row per OTU."""
+    user = await fake.users.create()
+    ref_id = "ref_legacy_test"
+
+    mocker.patch(
+        "virtool.references.alot.random_alphanumeric",
+        side_effect=[
+            "lhotu001",
+            "lhiso001",
+            "lhseq001",
+            "lhotu002",
+            "lhiso002",
+            "lhseq002",
+        ],
+    )
+
+    otus = [
+        {
+            "_id": f"remote_{i}",
+            "name": f"OTU {i}",
+            "abbreviation": f"O{i}",
+            "isolates": [
+                {
+                    "id": f"remote_iso_{i}",
+                    "default": True,
+                    "source_type": "isolate",
+                    "source_name": "a",
+                    "sequences": [
+                        {
+                            "_id": f"remote_seq_{i}",
+                            "accession": f"ACC{i}",
+                            "sequence": "ATCG",
+                            "definition": "test",
+                            "host": "h",
+                        },
+                    ],
+                },
+            ],
+        }
+        for i in (1, 2)
+    ]
+
+    await populate_insert_only_reference(
+        static_time.datetime,
+        HistoryMethod.remote,
+        mongo,
+        pg,
+        otus,
+        ref_id,
+        user.id,
+    )
+
+    async with AsyncSession(pg) as pg_session:
+        rows = (
+            (
+                await pg_session.execute(
+                    select(SQLLegacyHistory).order_by(SQLLegacyHistory.legacy_id),
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+    assert [row.legacy_id for row in rows] == ["lhotu001.0", "lhotu002.0"]
+    assert all(row.user_id == user.id for row in rows)
+    assert all(row.reference == ref_id for row in rows)
+    assert all(row.otu_version == "0" for row in rows)
+    assert all(row.index is None and row.index_version is None for row in rows)
+    assert rows == snapshot(name="legacy_history")

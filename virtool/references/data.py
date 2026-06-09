@@ -28,7 +28,11 @@ from virtool.data.transforms import apply_transforms
 from virtool.errors import GitHubError
 from virtool.github import create_update_subdocument, format_release
 from virtool.groups.pg import SQLGroup
-from virtool.history.db import bulk_delete_diffs, bulk_insert_diffs, patch_to_version
+from virtool.history.db import (
+    bulk_delete_history,
+    bulk_insert_history,
+    patch_to_version,
+)
 from virtool.history.models import HistorySearchResult
 from virtool.indexes.models import IndexMinimal, IndexSearchResult
 from virtool.models.enums import HistoryMethod
@@ -1023,7 +1027,11 @@ class ReferencesData(DataLayerDomain):
             for insertion in insertions
         ]
 
-        await bulk_insert_diffs(self._pg, diff_rows)
+        await bulk_insert_history(
+            self._pg,
+            diff_rows,
+            [insertion.history.document for insertion in insertions],
+        )
 
         await tracker.add(1)
 
@@ -1050,7 +1058,7 @@ class ReferencesData(DataLayerDomain):
                     self._mongo.sequences.insert_many(sequences, None),
                 )
         except Exception:
-            await bulk_delete_diffs(self._pg, [row["change_id"] for row in diff_rows])
+            await bulk_delete_history(self._pg, [row["change_id"] for row in diff_rows])
 
             await asyncio.gather(
                 self._mongo.history.delete_many({"reference.id": ref_id}),

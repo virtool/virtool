@@ -52,6 +52,41 @@ asyncpg caps bind parameters per statement at 32767. Each row binds two
 (``change_id`` and ``diff``).
 """
 
+_LEGACY_HISTORY_CHUNK_SIZE = 32767 // 11
+"""Max ``legacy_history`` rows per statement.
+
+asyncpg caps bind parameters per statement at 32767. Each row binds eleven
+columns (see :func:`_legacy_history_values`).
+"""
+
+
+def _legacy_history_values(document: Document) -> dict:
+    """Map a Mongo history ``document`` to ``legacy_history`` column values.
+
+    Applies the sentinel-to-NULL conventions: an ``otu.version`` of ``"removed"``
+    and an ``index`` of ``"unbuilt"`` are stored as ``NULL``.
+    """
+    otu_version = document["otu"]["version"]
+    index_document = document["index"]
+
+    return {
+        "legacy_id": document["_id"],
+        "created_at": document["created_at"],
+        "description": document["description"],
+        "method_name": document["method_name"],
+        "user_id": document["user"]["id"],
+        "otu": document["otu"]["id"],
+        "otu_name": document["otu"]["name"],
+        "otu_version": None if otu_version == "removed" else str(otu_version),
+        "reference": document["reference"]["id"],
+        "index": None if index_document["id"] == "unbuilt" else index_document["id"],
+        "index_version": (
+            None
+            if index_document["version"] == "unbuilt"
+            else str(index_document["version"])
+        ),
+    }
+
 
 async def bulk_insert_diffs(pg: AsyncEngine, rows: list[dict]) -> None:
     """Insert ``rows`` into ``history_diffs`` in asyncpg-safe chunks."""
@@ -76,6 +111,54 @@ async def bulk_delete_diffs(pg: AsyncEngine, change_ids: list[str]) -> None:
                         change_ids[start : start + _HISTORY_DIFF_CHUNK_SIZE],
                     ),
                 ),
+            )
+
+        await session.commit()
+
+
+async def bulk_insert_history(
+    pg: AsyncEngine,
+    diff_rows: list[dict],
+    documents: list[Document],
+) -> None:
+    """Insert ``history_diffs`` and ``legacy_history`` rows in one transaction.
+
+    Both tables are written in asyncpg-safe chunks within a single Postgres
+    transaction so they commit or roll back together.
+    """
+    legacy_rows = [_legacy_history_values(document) for document in documents]
+
+    async with AsyncSession(pg) as session:
+        for start in range(0, len(diff_rows), _HISTORY_DIFF_CHUNK_SIZE):
+            await session.execute(
+                insert(SQLHistoryDiff).values(
+                    diff_rows[start : start + _HISTORY_DIFF_CHUNK_SIZE],
+                ),
+            )
+
+        for start in range(0, len(legacy_rows), _LEGACY_HISTORY_CHUNK_SIZE):
+            await session.execute(
+                insert(SQLLegacyHistory).values(
+                    legacy_rows[start : start + _LEGACY_HISTORY_CHUNK_SIZE],
+                ),
+            )
+
+        await session.commit()
+
+
+async def bulk_delete_history(pg: AsyncEngine, change_ids: list[str]) -> None:
+    """Delete ``history_diffs`` and ``legacy_history`` rows for ``change_ids``.
+
+    Used to compensate the Postgres writes when a paired Mongo bulk insert fails.
+    """
+    async with AsyncSession(pg) as session:
+        for start in range(0, len(change_ids), _HISTORY_DIFF_CHUNK_SIZE):
+            chunk = change_ids[start : start + _HISTORY_DIFF_CHUNK_SIZE]
+            await session.execute(
+                delete(SQLHistoryDiff).where(SQLHistoryDiff.change_id.in_(chunk)),
+            )
+            await session.execute(
+                delete(SQLLegacyHistory).where(SQLLegacyHistory.legacy_id.in_(chunk)),
             )
 
         await session.commit()
@@ -113,27 +196,9 @@ async def add(
     prepared = prepare_add(method_name, old, new, user_id, description=description)
 
     document = prepared.document
-    otu_version = document["otu"]["version"]
-    index_document = document["index"]
 
     diff_row = SQLHistoryDiff(change_id=document["_id"], diff=prepared.diff)
-    legacy_row = SQLLegacyHistory(
-        legacy_id=document["_id"],
-        created_at=document["created_at"],
-        description=document["description"],
-        method_name=document["method_name"],
-        user_id=user_id,
-        otu=document["otu"]["id"],
-        otu_name=document["otu"]["name"],
-        otu_version=None if otu_version == "removed" else str(otu_version),
-        reference=document["reference"]["id"],
-        index=None if index_document["id"] == "unbuilt" else index_document["id"],
-        index_version=(
-            None
-            if index_document["version"] == "unbuilt"
-            else str(index_document["version"])
-        ),
-    )
+    legacy_row = SQLLegacyHistory(**_legacy_history_values(document))
 
     if mongo_session is None:
         async with both_transactions(mongo, pg) as (mongo_session, pg_session):
