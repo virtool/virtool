@@ -498,5 +498,12 @@
       'name': 'backfill samples subtractions to integers',
       'revision': '24ysb9cwjiv1',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 72,
+      'name': 'convert session_type to text',
+      'revision': '90330f98cf4e',
+    }),
   ])
 # ---
