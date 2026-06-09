@@ -230,7 +230,7 @@ class JobsData:
                     SQLUser,
                     SQLJobSample.sample_id,
                     SQLJobIndex.index_id,
-                    SQLSubtraction.id,
+                    SQLSubtraction.id.label("subtraction_id"),
                     SQLAnalysis.legacy_id,
                 )
                 .join(SQLUser, SQLJob.user_id == SQLUser.id)
