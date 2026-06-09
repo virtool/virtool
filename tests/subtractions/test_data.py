@@ -4,10 +4,17 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.errors import ResourceNotFoundError
+from virtool.data.events import (
+    Operation,
+    dangerously_clear_events,
+    dangerously_get_event,
+)
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.jobs.models import Job, Workflow
 from virtool.mongo.core import Mongo
 from virtool.subtractions.oas import (
+    CreateSubtractionRequest,
     FinalizeSubtractionRequest,
     NucleotideComposition,
     UpdateSubtractionRequest,
@@ -26,6 +33,79 @@ async def _modern_id(pg: AsyncEngine, legacy_id: str) -> int:
         return await session.scalar(
             select(SQLSubtraction.id).where(SQLSubtraction.legacy_id == legacy_id),
         )
+
+
+class TestCreate:
+    async def test_links_job_to_subtraction(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """The create job and its subtraction commit together, linked by job_id.
+
+        The job carries no stored ``subtraction_id``; the relationship is derived
+        from ``subtractions.job_id``, so ``jobs.get`` resolves the argument back
+        to the subtraction's integer id.
+        """
+        user = await fake.users.create()
+        upload = await fake.uploads.create(
+            user=user,
+            upload_type=UploadType.subtraction,
+        )
+
+        subtraction = await data_layer.subtractions.create(
+            CreateSubtractionRequest(name="Arabidopsis", upload_id=upload.id),
+            user.id,
+            0,
+        )
+
+        async with AsyncSession(pg) as session:
+            row = (
+                await session.execute(
+                    select(SQLSubtraction.id, SQLSubtraction.job_id).where(
+                        SQLSubtraction.legacy_id == subtraction.id,
+                    ),
+                )
+            ).one()
+
+        subtraction_pg_id, job_id = row
+        assert job_id is not None
+
+        job = await data_layer.jobs.get(job_id)
+        assert job.workflow == Workflow.CREATE_SUBTRACTION
+        assert job.args == {"subtraction_id": subtraction_pg_id}
+
+    async def test_emits_job_create_event(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+    ):
+        """Creating a subtraction emits a jobs-domain create event for its job.
+
+        The event must fire after the job is committed, carrying the full job so
+        the websocket server can refetch and push it.
+        """
+        user = await fake.users.create()
+        upload = await fake.uploads.create(
+            user=user,
+            upload_type=UploadType.subtraction,
+        )
+
+        dangerously_clear_events()
+
+        await data_layer.subtractions.create(
+            CreateSubtractionRequest(name="Arabidopsis", upload_id=upload.id),
+            user.id,
+            0,
+        )
+
+        event = await dangerously_get_event()
+
+        assert event.domain == "jobs"
+        assert event.operation == Operation.CREATE
+        assert isinstance(event.data, Job)
+        assert event.data.workflow == Workflow.CREATE_SUBTRACTION
 
 
 class TestFind:

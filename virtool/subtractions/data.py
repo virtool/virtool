@@ -13,9 +13,10 @@ import virtool.mongo.utils
 import virtool.utils
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
-from virtool.data.events import Operation, emits
+from virtool.data.events import Operation, emit, emits
 from virtool.data.topg import both_transactions, compose_legacy_id_single_expression
 from virtool.data.transforms import apply_transforms
+from virtool.jobs.db import create_job
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import get_row_by_id
@@ -185,19 +186,20 @@ class SubtractionsData(DataLayerDomain):
             self._mongo.subtraction
         )
 
-        job = await self.data.jobs.create(
-            "create_subtraction",
-            {"subtraction_id": new_subtraction_id},
-            user_id,
-            0,
-        )
-
         created_at = virtool.utils.timestamp()
 
         async with both_transactions(self._mongo, self._pg) as (
             mongo_session,
             pg_session,
         ):
+            sql_job = await create_job(
+                pg_session,
+                "create_subtraction",
+                {},
+                user_id,
+            )
+            job_id = sql_job.id
+
             await self._mongo.subtraction.insert_one(
                 {
                     "_id": new_subtraction_id,
@@ -206,7 +208,7 @@ class SubtractionsData(DataLayerDomain):
                     "deleted": False,
                     "file": {"id": upload.id, "name": upload.name},
                     "gc": None,
-                    "job": {"id": job.id},
+                    "job": {"id": job_id},
                     "name": data.name,
                     "nickname": data.nickname,
                     "ready": False,
@@ -228,10 +230,12 @@ class SubtractionsData(DataLayerDomain):
                     deleted=False,
                     ready=False,
                     user_id=user_id,
-                    job_id=job.id,
+                    job_id=job_id,
                     upload_id=data.upload_id,
                 ),
             )
+
+        emit(await self.data.jobs.get(job_id), "jobs", "create", Operation.CREATE)
 
         return await self.get(new_subtraction_id)
 

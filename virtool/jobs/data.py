@@ -11,6 +11,7 @@ from virtool.analyses.sql import SQLAnalysis
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
 from virtool.data.transforms import apply_transforms
+from virtool.jobs.db import create_job
 from virtool.jobs.models import (
     CreateJobClaimRequest,
     Job,
@@ -194,24 +195,7 @@ class JobsData:
         :param space_id: the space that the job belongs to
         """
         async with AsyncSession(self._pg) as session:
-            sql_job = SQLJob(
-                acquired=False,
-                created_at=virtool.utils.timestamp(),
-                state="pending",
-                user_id=user_id,
-                workflow=workflow,
-            )
-            session.add(sql_job)
-            await session.flush()
-
-            if workflow == "create_sample" and "sample_id" in job_args:
-                session.add(
-                    SQLJobSample(job_id=sql_job.id, sample_id=job_args["sample_id"]),
-                )
-            elif workflow == "build_index" and "index_id" in job_args:
-                session.add(
-                    SQLJobIndex(job_id=sql_job.id, index_id=job_args["index_id"]),
-                )
+            sql_job = await create_job(session, workflow, job_args, user_id)
             new_id = sql_job.id
             await session.commit()
 
