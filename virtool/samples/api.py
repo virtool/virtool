@@ -38,7 +38,6 @@ from virtool.groups.pg import SQLGroup
 from virtool.jobs.models import TERMINAL_JOB_STATES
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.utils import get_mongo_from_req
-from virtool.pg.utils import get_rows
 from virtool.samples.db import (
     SAMPLE_RIGHTS_PROJECTION,
     check_rights,
@@ -52,7 +51,6 @@ from virtool.samples.oas import (
     UpdateRightsRequest,
     UpdateSampleRequest,
 )
-from virtool.samples.sql import SQLSampleReads
 from virtool.samples.utils import SampleRight
 from virtool.uploads.utils import (
     multipart_file_chunker,
@@ -363,7 +361,6 @@ async def job_remove(req):
     Only usable in the Jobs API and when samples are unfinalized.
 
     """
-    pg = req.app["pg"]
     mongo = get_mongo_from_req(req)
 
     sample_id = req.match_info["sample_id"]
@@ -391,12 +388,6 @@ async def job_remove(req):
             raise APIBadRequest(
                 f"Cannot delete sample with active job (current state: {job.state.value})"
             )
-
-    reads_files = await get_rows(pg, SQLSampleReads, "sample", sample_id)
-    upload_ids = [upload for reads in reads_files if (upload := reads.upload)]
-
-    if upload_ids:
-        await get_data_from_req(req).uploads.release(upload_ids)
 
     try:
         await get_data_from_req(req).samples.delete(sample_id)
