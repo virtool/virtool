@@ -30,7 +30,7 @@ class Base(DeclarativeBase):
 
 
 def _enforce_naive_utc(mapper: Mapper, _, target: Base) -> None:
-    """Coerce every datetime column to naive UTC before it is persisted.
+    """Reject any aware datetime column before it is persisted.
 
     Applied to every mapped class via ``before_insert`` and ``before_update`` so the
     naive-UTC invariant is enforced loudly at the PostgreSQL write boundary.
@@ -41,13 +41,7 @@ def _enforce_naive_utc(mapper: Mapper, _, target: Base) -> None:
         if not isinstance(column.type, DateTime):
             continue
 
-        value = getattr(target, attr.key, None)
-
-        if value is not None:
-            coerced = ensure_naive_utc(value)
-
-            if coerced is not value:
-                setattr(target, attr.key, coerced)
+        ensure_naive_utc(getattr(target, attr.key, None))
 
 
 event.listen(Base, "before_insert", _enforce_naive_utc, propagate=True)

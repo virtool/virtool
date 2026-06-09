@@ -20,24 +20,25 @@ from virtool.utils import ensure_naive_utc
 def scrub_naive_utc(value: Any) -> Any:
     """Recursively enforce the naive-UTC datetime invariant on a value to be written.
 
-    Walks nested documents and lists, applying :func:`ensure_naive_utc` to every
-    datetime encountered. This covers both plain documents and update specs whose
-    datetimes are nested under operators (e.g. ``$set``).
+    Walks nested documents, lists, and tuples, applying :func:`ensure_naive_utc`
+    to every datetime encountered. This covers both plain documents and update
+    specs whose datetimes are nested under operators (e.g. ``$set``). The value is
+    returned unchanged; aware datetimes fail loudly rather than being coerced.
 
-    :param value: the document, update spec, or sub-value to scrub
-    :return: the value with every datetime coerced to naive UTC
-    :raises ValueError: if any datetime is aware and not at UTC offset
+    :param value: the document, update spec, or sub-value to validate
+    :return: the value unchanged
+    :raises ValueError: if any datetime is aware
     """
     if isinstance(value, dict):
-        return {key: scrub_naive_utc(item) for key, item in value.items()}
+        for item in value.values():
+            scrub_naive_utc(item)
+    elif isinstance(value, (list, tuple)):
+        for item in value:
+            scrub_naive_utc(item)
+    else:
+        ensure_naive_utc(value)
 
-    if isinstance(value, list):
-        return [scrub_naive_utc(item) for item in value]
-
-    if isinstance(value, tuple):
-        return tuple(scrub_naive_utc(item) for item in value)
-
-    return ensure_naive_utc(value)
+    return value
 
 
 class Collection:

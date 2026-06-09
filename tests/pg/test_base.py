@@ -7,15 +7,15 @@ from virtool.tasks.sql import SQLTask
 
 
 class TestEnforceNaiveUTC:
-    """The PostgreSQL write boundary enforces the naive-UTC datetime invariant."""
+    """The PostgreSQL write boundary rejects any aware datetime, naive UTC only."""
 
-    async def test_insert_strips_aware_utc(self, pg: AsyncEngine):
+    async def test_insert_writes_naive(self, pg: AsyncEngine):
         async with AsyncSession(pg) as session:
             session.add(
                 SQLTask(
                     id=1,
                     type="add_subtraction_files",
-                    created_at=datetime(2020, 1, 1, 12, tzinfo=UTC),
+                    created_at=datetime(2020, 1, 1, 12),
                 ),
             )
             await session.commit()
@@ -25,6 +25,19 @@ class TestEnforceNaiveUTC:
 
             assert task.created_at == datetime(2020, 1, 1, 12)
             assert task.created_at.tzinfo is None
+
+    async def test_insert_rejects_aware_utc(self, pg: AsyncEngine):
+        async with AsyncSession(pg) as session:
+            session.add(
+                SQLTask(
+                    id=1,
+                    type="add_subtraction_files",
+                    created_at=datetime(2020, 1, 1, 12, tzinfo=UTC),
+                ),
+            )
+
+            with pytest.raises(ValueError, match="aware datetime"):
+                await session.commit()
 
     async def test_insert_rejects_aware_non_utc(self, pg: AsyncEngine):
         async with AsyncSession(pg) as session:
@@ -38,10 +51,10 @@ class TestEnforceNaiveUTC:
                 ),
             )
 
-            with pytest.raises(ValueError, match="aware non-UTC datetime"):
+            with pytest.raises(ValueError, match="aware datetime"):
                 await session.commit()
 
-    async def test_update_strips_aware_utc(self, pg: AsyncEngine):
+    async def test_update_rejects_aware_utc(self, pg: AsyncEngine):
         async with AsyncSession(pg) as session:
             session.add(
                 SQLTask(
@@ -55,30 +68,6 @@ class TestEnforceNaiveUTC:
         async with AsyncSession(pg) as session:
             task = await session.get(SQLTask, 1)
             task.acquired_at = datetime(2020, 1, 2, 12, tzinfo=UTC)
-            await session.commit()
 
-        async with AsyncSession(pg) as session:
-            task = await session.get(SQLTask, 1)
-
-            assert task.acquired_at == datetime(2020, 1, 2, 12)
-            assert task.acquired_at.tzinfo is None
-
-    async def test_update_rejects_aware_non_utc(self, pg: AsyncEngine):
-        async with AsyncSession(pg) as session:
-            session.add(
-                SQLTask(
-                    id=1,
-                    type="add_subtraction_files",
-                    created_at=datetime(2020, 1, 1, 12),
-                ),
-            )
-            await session.commit()
-
-        async with AsyncSession(pg) as session:
-            task = await session.get(SQLTask, 1)
-            task.acquired_at = datetime(
-                2020, 1, 2, 12, tzinfo=timezone(timedelta(hours=-5))
-            )
-
-            with pytest.raises(ValueError, match="aware non-UTC datetime"):
+            with pytest.raises(ValueError, match="aware datetime"):
                 await session.commit()
