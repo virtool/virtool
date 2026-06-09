@@ -21,11 +21,13 @@ from virtool.fake.next import DataFaker
 from virtool.jobs.models import JobState
 from virtool.models.enums import LibraryType, Permission
 from virtool.mongo.core import Mongo
+from virtool.pg.utils import get_row_by_id
 from virtool.samples.fake import create_fake_sample
 from virtool.samples.models import WorkflowState
 from virtool.samples.sql import SQLSampleArtifact, SQLSampleReads
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.subtractions.pg import SQLSubtraction
+from virtool.uploads.sql import SQLUpload
 from virtool.users.oas import UpdateUserRequest
 
 
@@ -1005,6 +1007,40 @@ class TestDelete:
         resp = await client.delete("/samples/test")
 
         assert resp.status == 204
+
+    async def test_releases_reserved_uploads(
+        self,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        spawn_client: ClientSpawner,
+        static_time,
+    ):
+        """Deleting a sample through the web API releases its reserved uploads."""
+        client = await self.setup_unfinalized_sample_with_job(
+            JobState.FAILED,
+            fake,
+            mongo,
+            spawn_client,
+            static_time,
+        )
+
+        upload = await fake.uploads.create(
+            user=await fake.users.create(),
+            reserved=True,
+        )
+
+        await mongo.samples.update_one(
+            {"_id": "test"},
+            {"$set": {"uploads": [{"id": upload.id}]}},
+        )
+
+        resp = await client.delete("/samples/test")
+
+        assert resp.status == 204
+
+        row = await get_row_by_id(pg, SQLUpload, upload.id)
+        assert row.reserved is False
 
     async def test_unfinalized_with_running_job(
         self,

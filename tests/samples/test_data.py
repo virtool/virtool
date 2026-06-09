@@ -225,6 +225,11 @@ async def test_finalize(
     upload_row = await get_row_by_id(pg, SQLUpload, upload.id)
     upload_name_on_disk = upload_row.name_on_disk
 
+    await mongo.samples.update_one(
+        {"_id": "test"},
+        {"$set": {"uploads": [{"id": upload.id}]}},
+    )
+
     async with AsyncSession(pg) as session:
         session.add(
             SQLSampleReads(
@@ -265,6 +270,69 @@ async def test_finalize(
 
     with pytest.raises(StorageKeyNotFoundError):
         await memory_storage.size(upload_key)
+
+
+async def test_finalize_cleans_up_uploads_without_reads_link(
+    data_layer: DataLayer,
+    fake: DataFaker,
+    get_sample_ready_false,
+    memory_storage: StorageBackend,
+    mongo: Mongo,
+    pg: AsyncEngine,
+):
+    """Finalizing deletes the sample's uploads from storage using its ``uploads`` array.
+
+    The cleanup keys off the sample's ``uploads`` array rather than ``SQLSampleReads``,
+    so the upload file is removed even when the workflow wrote its reads row without an
+    ``upload_id``.
+    """
+    upload = await fake.uploads.create(user=await fake.users.create())
+
+    upload_row = await get_row_by_id(pg, SQLUpload, upload.id)
+    upload_key = upload_file_key(upload_row.name_on_disk)
+
+    await mongo.samples.update_one(
+        {"_id": "test"},
+        {"$set": {"uploads": [{"id": upload.id}]}},
+    )
+
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLSampleReads(
+                name="reads.fq.gz",
+                name_on_disk="reads_1.fq.gz",
+                sample="test",
+                size=len(b"upload contents"),
+                upload=None,
+                uploaded_at=virtool.utils.timestamp(),
+            ),
+        )
+
+        await session.commit()
+
+    async def _chunks() -> AsyncIterator[bytes]:
+        yield b"upload contents"
+
+    await memory_storage.write(upload_key, _chunks())
+
+    await data_layer.samples.finalize(
+        "test",
+        {
+            "bases": [[1543]],
+            "composition": [[6372]],
+            "count": 7069,
+            "encoding": "OuBQPPuwYimrxkNpPWUx",
+            "gc": 34222440,
+            "length": [3237],
+            "sequences": [7091],
+        },
+    )
+
+    with pytest.raises(StorageKeyNotFoundError):
+        await memory_storage.size(upload_key)
+
+    refreshed = await get_row_by_id(pg, SQLUpload, upload.id)
+    assert refreshed.removed is True
 
 
 async def test_finalized_already(get_sample_ready_false, data_layer):
@@ -656,3 +724,32 @@ class TestDelete:
         await data_layer.samples.delete("test_sample")
 
         assert await get_row(pg, SQLAnalysis, ("id", analysis.id)) is None
+
+    async def test_releases_reserved_uploads(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+    ):
+        """Deleting a sample releases the uploads reserved during its creation.
+
+        The reservation is keyed on the sample's own ``uploads`` array, so the upload
+        is released even when no ``SQLSampleReads`` rows have been written yet.
+        """
+        await self._setup(fake, mongo)
+
+        upload = await fake.uploads.create(
+            user=await fake.users.create(),
+            reserved=True,
+        )
+
+        await mongo.samples.update_one(
+            {"_id": "test_sample"},
+            {"$set": {"uploads": [{"id": upload.id}]}},
+        )
+
+        await data_layer.samples.delete("test_sample")
+
+        row = await get_row_by_id(pg, SQLUpload, upload.id)
+        assert row.reserved is False

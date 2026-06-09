@@ -6,7 +6,7 @@ from collections.abc import AsyncGenerator, AsyncIterator
 from typing import Any
 
 from pymongo.results import UpdateResult
-from sqlalchemy import delete, exc, select
+from sqlalchemy import delete, exc, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
@@ -387,6 +387,8 @@ class SamplesData(DataLayerDomain):
         """
         sample = await self.get(sample_id)
 
+        upload_ids = [upload.id for upload in sample.uploads or []]
+
         async with both_transactions(self._mongo, self._pg) as (
             mongo_session,
             pg_session,
@@ -398,6 +400,13 @@ class SamplesData(DataLayerDomain):
                 {"sample.id": sample_id},
                 session=mongo_session,
             )
+
+            if upload_ids:
+                await pg_session.execute(
+                    update(SQLUpload)
+                    .where(SQLUpload.id.in_(upload_ids))
+                    .values(reserved=False),
+                )
 
             await pg_session.execute(
                 delete(SQLAnalysisResult).where(
@@ -450,15 +459,16 @@ class SamplesData(DataLayerDomain):
         if not result.modified_count:
             raise ResourceNotFoundError
 
+        uploads = await get_one_field(self._mongo.samples, "uploads", sample_id) or []
+        upload_ids = [upload["id"] for upload in uploads]
+
         names_on_disk = []
 
         async with AsyncSession(self._pg) as session:
             rows = (
                 (
                     await session.execute(
-                        select(SQLUpload)
-                        .where(SQLSampleReads.sample == sample_id)
-                        .join_from(SQLSampleReads, SQLUpload),
+                        select(SQLUpload).where(SQLUpload.id.in_(upload_ids)),
                     )
                 )
                 .unique()

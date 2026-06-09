@@ -4,8 +4,7 @@ from datetime import datetime
 from enum import Enum
 
 import arrow
-from sqlalchemy import ForeignKey
-from sqlalchemy.dialects.postgresql import ENUM
+from sqlalchemy import CheckConstraint, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from virtool.pg.base import Base
@@ -35,8 +34,13 @@ class SQLSession(Base):
     token_hash: Mapped[str | None]
     reset_code: Mapped[str | None]
     reset_remember: Mapped[bool | None]
-    session_type: Mapped[SessionType] = mapped_column(
-        ENUM(SessionType, name="session_type_enum")
+    session_type: Mapped[str] = mapped_column(String)
+
+    __table_args__ = (
+        CheckConstraint(
+            "session_type IN ('anonymous', 'authenticated', 'reset')",
+            name="session_type_valid",
+        ),
     )
 
     def is_expired(self) -> bool:
