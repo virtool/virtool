@@ -101,21 +101,6 @@ async def bulk_insert_diffs(pg: AsyncEngine, rows: list[dict]) -> None:
         await session.commit()
 
 
-async def bulk_delete_diffs(pg: AsyncEngine, change_ids: list[str]) -> None:
-    """Delete ``history_diffs`` rows for the given ``change_ids`` in chunks."""
-    async with AsyncSession(pg) as session:
-        for start in range(0, len(change_ids), _HISTORY_DIFF_CHUNK_SIZE):
-            await session.execute(
-                delete(SQLHistoryDiff).where(
-                    SQLHistoryDiff.change_id.in_(
-                        change_ids[start : start + _HISTORY_DIFF_CHUNK_SIZE],
-                    ),
-                ),
-            )
-
-        await session.commit()
-
-
 async def bulk_insert_history(
     pg: AsyncEngine,
     diff_rows: list[dict],
