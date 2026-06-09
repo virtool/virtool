@@ -387,8 +387,7 @@ class SamplesData(DataLayerDomain):
         """
         sample = await self.get(sample_id)
 
-        uploads = await get_one_field(self._mongo.samples, "uploads", sample_id) or []
-        upload_ids = [upload["id"] for upload in uploads]
+        upload_ids = [upload.id for upload in sample.uploads or []]
 
         async with both_transactions(self._mongo, self._pg) as (
             mongo_session,
