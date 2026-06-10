@@ -238,7 +238,11 @@ async def test_finalize(
     assert subtraction == snapshot_recent(name="obj")
 
     async with AsyncSession(pg) as session:
-        row = (await session.execute(select(SQLSubtraction))).scalar_one()
+        row = (
+            await session.execute(
+                select(SQLSubtraction).where(SQLSubtraction.id == subtraction.id),
+            )
+        ).scalar_one()
 
     assert row.to_dict() == snapshot_recent(name="pg")
     assert row.legacy_id is None

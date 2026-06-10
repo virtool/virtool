@@ -222,6 +222,7 @@ class SubtractionsData(DataLayerDomain):
                 await session.execute(
                     select(SQLSubtraction.id, SQLSubtraction.legacy_id).where(
                         SQLSubtraction.id == subtraction_id,
+                        SQLSubtraction.deleted.is_(False),
                     ),
                 )
             ).one_or_none()
