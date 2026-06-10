@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import virtool.otus.db
 import virtool.utils
 from virtool.api.utils import paginate
-from virtool.data.topg import both_transactions
+from virtool.data.topg import both_transactions, compose_legacy_id_multi_expression
 from virtool.data.transforms import apply_transforms
 from virtool.history.sql import SQLHistoryDiff, SQLLegacyHistory
 from virtool.history.utils import (
@@ -159,6 +159,31 @@ async def bulk_delete_history(pg: AsyncEngine, change_ids: list[str]) -> None:
             )
 
         await session.commit()
+
+
+async def delete_history(pg_session: AsyncSession, change_ids: list[str]) -> None:
+    """Delete ``history_diffs`` and ``legacy_history`` rows for ``change_ids``.
+
+    Operates within an existing ``pg_session`` so the deletes commit atomically with
+    the paired Mongo deletes in a :func:`both_transactions` context. Unlike
+    :func:`bulk_delete_history`, it does not open or commit its own session.
+    """
+    if not change_ids:
+        return
+
+    for start in range(0, len(change_ids), _HISTORY_DIFF_CHUNK_SIZE):
+        chunk = change_ids[start : start + _HISTORY_DIFF_CHUNK_SIZE]
+        await pg_session.execute(
+            delete(SQLHistoryDiff).where(SQLHistoryDiff.change_id.in_(chunk)),
+        )
+
+    for start in range(0, len(change_ids), _LEGACY_HISTORY_CHUNK_SIZE):
+        chunk = change_ids[start : start + _LEGACY_HISTORY_CHUNK_SIZE]
+        await pg_session.execute(
+            delete(SQLLegacyHistory).where(
+                compose_legacy_id_multi_expression(SQLLegacyHistory, chunk),
+            ),
+        )
 
 
 @dataclass

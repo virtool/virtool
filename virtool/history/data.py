@@ -4,9 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 import virtool.otus.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
+from virtool.data.topg import retry_both_transactions
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
-from virtool.history.db import HISTORY_PROJECTION, patch_to_version
+from virtool.history.db import HISTORY_PROJECTION, delete_history, patch_to_version
 from virtool.history.models import History, HistorySearchResult
 from virtool.history.transforms import AttachDiffTransform
 from virtool.mongo.core import Mongo
@@ -88,26 +89,44 @@ class HistoryData:
                 otu_id,
                 otu_version - 1,
             )
+        except DatabaseError:
+            raise ResourceConflictError()
 
+        async def revert(mongo_session, pg_session) -> None:
             # Remove the old sequences from the collection.
-            await self._mongo.sequences.delete_many({"otu_id": otu_id})
+            await self._mongo.sequences.delete_many(
+                {"otu_id": otu_id},
+                session=mongo_session,
+            )
 
             if patched is None:
-                await self._mongo.otus.delete_one({"_id": otu_id})
+                await self._mongo.otus.delete_one(
+                    {"_id": otu_id},
+                    session=mongo_session,
+                )
             else:
                 patched_otu, sequences = virtool.otus.utils.split(patched)
 
                 # Add the reverted sequences to the collection.
                 for sequence in sequences:
-                    await self._mongo.sequences.insert_one(sequence)
+                    await self._mongo.sequences.insert_one(
+                        sequence,
+                        session=mongo_session,
+                    )
 
                 # Replace existing otu with patched one. If it doesn't exist, insert it.
                 await self._mongo.otus.replace_one(
                     {"_id": otu_id},
                     patched_otu,
                     upsert=True,
+                    session=mongo_session,
                 )
 
-            await self._mongo.history.delete_many({"_id": {"$in": history_to_delete}})
-        except DatabaseError:
-            raise ResourceConflictError()
+            await self._mongo.history.delete_many(
+                {"_id": {"$in": history_to_delete}},
+                session=mongo_session,
+            )
+
+            await delete_history(pg_session, history_to_delete)
+
+        await retry_both_transactions(self._mongo, self._pg, revert)
