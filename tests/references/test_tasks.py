@@ -421,7 +421,7 @@ async def create_reference(
                 context={
                     "name_on_disk": upload_row.name_on_disk,
                     "ref_id": "bar",
-                    "user_id": "test",
+                    "user_id": user.id,
                 },
                 count=0,
                 created_at=static_time.datetime,
