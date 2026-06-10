@@ -326,6 +326,7 @@ class AnalysisData(DataLayerDomain):
                     await session.execute(
                         select(SQLSubtraction.id).where(
                             SQLSubtraction.id.in_(subtractions),
+                            SQLSubtraction.deleted.is_(False),
                         ),
                     )
                 ).all()

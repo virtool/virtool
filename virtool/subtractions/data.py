@@ -197,21 +197,15 @@ class SubtractionsData(DataLayerDomain):
 
             new_subtraction_id = subtraction.id
 
-            await session.commit()
-
-        job = await self.data.jobs.create(
-            "create_subtraction",
-            {"subtraction_id": new_subtraction_id},
-            user_id,
-            0,
-        )
-
-        async with AsyncSession(self._pg) as session:
-            await session.execute(
-                update(SQLSubtraction)
-                .where(SQLSubtraction.id == new_subtraction_id)
-                .values(job_id=job.id),
+            job = await self.data.jobs.create(
+                "create_subtraction",
+                {"subtraction_id": new_subtraction_id},
+                user_id,
+                0,
             )
+
+            subtraction.job_id = job.id
+
             await session.commit()
 
         return await self.get(new_subtraction_id)
@@ -244,7 +238,10 @@ class SubtractionsData(DataLayerDomain):
                 await session.execute(
                     select(SQLSubtraction, SQLUpload)
                     .outerjoin(SQLUpload, SQLSubtraction.upload_id == SQLUpload.id)
-                    .where(SQLSubtraction.id == subtraction_id),
+                    .where(
+                        SQLSubtraction.id == subtraction_id,
+                        SQLSubtraction.deleted.is_(False),
+                    ),
                 )
             ).first()
 
@@ -295,7 +292,10 @@ class SubtractionsData(DataLayerDomain):
         async with AsyncSession(self._pg) as session:
             await session.execute(
                 update(SQLSubtraction)
-                .where(SQLSubtraction.id == subtraction_id)
+                .where(
+                    SQLSubtraction.id == subtraction_id,
+                    SQLSubtraction.deleted.is_(False),
+                )
                 .values(**values),
             )
             await session.commit()
@@ -364,26 +364,30 @@ class SubtractionsData(DataLayerDomain):
         :return: finalized subtraction
         """
         async with AsyncSession(self._pg) as session:
-            row = (
-                await session.execute(
-                    select(SQLSubtraction.ready).where(
-                        SQLSubtraction.id == subtraction_id,
-                    ),
-                )
-            ).one_or_none()
-
-        if row is None:
-            raise ResourceNotFoundError
-
-        if row.ready:
-            raise ResourceConflictError("Subtraction has already been finalized")
-
-        async with AsyncSession(self._pg) as session:
-            await session.execute(
+            result = await session.execute(
                 update(SQLSubtraction)
-                .where(SQLSubtraction.id == subtraction_id)
+                .where(
+                    SQLSubtraction.id == subtraction_id,
+                    SQLSubtraction.deleted.is_(False),
+                    SQLSubtraction.ready.is_(False),
+                )
                 .values(**data.dict(), ready=True),
             )
+
+            if result.rowcount == 0:
+                row = (
+                    await session.execute(
+                        select(SQLSubtraction.deleted).where(
+                            SQLSubtraction.id == subtraction_id,
+                        ),
+                    )
+                ).one_or_none()
+
+                if row is None or row.deleted:
+                    raise ResourceNotFoundError
+
+                raise ResourceConflictError("Subtraction has already been finalized")
+
             await session.commit()
 
         return await self.get(subtraction_id)
@@ -417,21 +421,21 @@ class SubtractionsData(DataLayerDomain):
 
         key = subtraction_file_key(storage_id, filename)
 
-        try:
-            async with AsyncSession(self._pg) as session:
-                subtraction_file = SQLSubtractionFile(
-                    name=filename,
-                    subtraction_id=subtraction_id,
-                    type=file_type,
-                )
+        async with AsyncSession(self._pg) as session:
+            subtraction_file = SQLSubtractionFile(
+                name=filename,
+                subtraction_id=subtraction_id,
+                type=file_type,
+            )
 
-                session.add(subtraction_file)
+            session.add(subtraction_file)
 
-                try:
-                    await session.flush()
-                except IntegrityError:
-                    raise ResourceConflictError("File name already exists")
+            try:
+                await session.flush()
+            except IntegrityError:
+                raise ResourceConflictError("File name already exists")
 
+            try:
                 size = await self._storage.write(key, chunker)
 
                 subtraction_file.size = size
@@ -443,9 +447,9 @@ class SubtractionsData(DataLayerDomain):
                 subtraction_file_dict = subtraction_file.to_dict()
 
                 await session.commit()
-        except (CancelledError, Exception):
-            await self._storage.delete(key)
-            raise
+            except (CancelledError, Exception):
+                await self._storage.delete(key)
+                raise
 
         return SubtractionFile(
             **{**subtraction_file_dict, "subtraction": subtraction_id},

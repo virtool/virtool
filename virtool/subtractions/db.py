@@ -48,15 +48,6 @@ def map_subtraction_row(
     }
 
 
-def subtraction_processor(document: Document) -> Document:
-    """Process a subtraction document for client-side.
-
-    :param document: the subtraction document to process
-    :return: the processed document
-    """
-    return {**base_processor(document), "subtractions": document["subtractions"] or []}
-
-
 class AttachSubtractionsTransform(AbstractTransform):
     """Attach more subtraction detail to a document with a field `subtractions` that
     contains a list of subtraction IDs.
@@ -128,6 +119,7 @@ async def get_missing_subtraction_ids(
         result = await session.execute(
             select(SQLSubtraction.id).where(
                 SQLSubtraction.id.in_(subtraction_ids),
+                SQLSubtraction.deleted.is_(False),
             ),
         )
 
