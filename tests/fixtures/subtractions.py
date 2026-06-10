@@ -1,26 +1,9 @@
 from datetime import datetime
 
 import pytest
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.subtractions.pg import SQLSubtraction, SQLSubtractionFile
-
-
-async def resolve_subtraction_pk(pg: AsyncEngine, legacy_id: str) -> int:
-    """Resolve a subtraction's integer id from its legacy string id.
-
-    ``samples.subtractions`` holds integer ids, so linked-sample fixtures must
-    reference the subtraction by its ``subtractions.id`` rather than its legacy id.
-
-    Interim: delete once the subtraction public id is an integer (VIR-2535).
-    """
-    async with AsyncSession(pg) as session:
-        return (
-            await session.execute(
-                select(SQLSubtraction.id).where(SQLSubtraction.legacy_id == legacy_id),
-            )
-        ).scalar_one()
 
 
 @pytest.fixture

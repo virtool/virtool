@@ -584,7 +584,6 @@ class SubtractionFakerDomain(DataFakerDomain):
                 upload_id=upload.id,
             ),
             user.id,
-            0,
         )
 
         if upload_files:

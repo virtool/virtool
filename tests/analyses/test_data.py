@@ -26,7 +26,20 @@ from virtool.utils import timestamp
 
 
 @pytest.fixture
-async def setup_sample(mongo: "Mongo", fake: DataFaker, insert_subtractions) -> str:
+async def subtraction_ids(insert_subtractions) -> dict[str, int]:
+    """Seed two subtractions and return their ``{legacy_id: integer id}`` map."""
+    return await insert_subtractions(
+        ("subtraction_1", "Subtraction 1"),
+        ("subtraction_2", "Subtraction 2"),
+    )
+
+
+@pytest.fixture
+async def setup_sample(
+    mongo: "Mongo",
+    fake: DataFaker,
+    subtraction_ids: dict[str, int],
+) -> str:
     user = await fake.users.create()
 
     await asyncio.gather(
@@ -79,10 +92,6 @@ async def setup_sample(mongo: "Mongo", fake: DataFaker, insert_subtractions) -> 
                 "name": "Test Reference",
             },
         ),
-        insert_subtractions(
-            ("subtraction_1", "Subtraction 1"),
-            ("subtraction_2", "Subtraction 2"),
-        ),
     )
     return user.id
 
@@ -94,6 +103,7 @@ async def test_find(
     snapshot_recent: SnapshotAssertion,
     mongo: Mongo,
     setup_sample: str,
+    subtraction_ids: dict[str, int],
     mocker,
 ):
     """Tests that all analysis are listed."""
@@ -107,7 +117,10 @@ async def test_find(
         CreateAnalysisRequest(
             ml=None,
             ref_id="test_ref",
-            subtractions=["subtraction_1", "subtraction_2"],
+            subtractions=[
+                subtraction_ids["subtraction_1"],
+                subtraction_ids["subtraction_2"],
+            ],
             workflow=AnalysisWorkflow.nuvs,
         ),
         "test_false",
@@ -120,7 +133,10 @@ async def test_find(
             CreateAnalysisRequest(
                 ml=None,
                 ref_id="test_ref",
-                subtractions=["subtraction_1", "subtraction_2"],
+                subtractions=[
+                    subtraction_ids["subtraction_1"],
+                    subtraction_ids["subtraction_2"],
+                ],
                 workflow=AnalysisWorkflow.nuvs,
             ),
             "test_sample",
@@ -139,6 +155,7 @@ async def test_create(
     data_layer: DataLayer,
     snapshot: SnapshotAssertion,
     setup_sample: str,
+    subtraction_ids: dict[str, int],
 ):
     """Tests that an analysis is created with the expected fields."""
     user_id: str = setup_sample
@@ -147,7 +164,10 @@ async def test_create(
         CreateAnalysisRequest(
             ml=None,
             ref_id="test_ref",
-            subtractions=["subtraction_1", "subtraction_2"],
+            subtractions=[
+                subtraction_ids["subtraction_1"],
+                subtraction_ids["subtraction_2"],
+            ],
             workflow=AnalysisWorkflow.nuvs,
         ),
         "test_sample",
@@ -158,11 +178,14 @@ async def test_create(
     assert analysis == snapshot(name="obj", exclude=props("created_at", "updated_at"))
 
 
-def _create_request() -> CreateAnalysisRequest:
+def _create_request(subtraction_ids: dict[str, int]) -> CreateAnalysisRequest:
     return CreateAnalysisRequest(
         ml=None,
         ref_id="test_ref",
-        subtractions=["subtraction_1", "subtraction_2"],
+        subtractions=[
+            subtraction_ids["subtraction_1"],
+            subtraction_ids["subtraction_2"],
+        ],
         workflow=AnalysisWorkflow.nuvs,
     )
 
@@ -175,10 +198,11 @@ class TestCreate:
         data_layer: DataLayer,
         pg: AsyncEngine,
         setup_sample: str,
+        subtraction_ids: dict[str, int],
     ):
         """The Postgres row reflects the creation request."""
         analysis = await data_layer.analyses.create(
-            _create_request(),
+            _create_request(subtraction_ids),
             "test_sample",
             setup_sample,
             0,
@@ -201,7 +225,7 @@ class TestCreate:
             linked = (
                 (
                     await session.execute(
-                        select(SQLSubtraction.legacy_id)
+                        select(SQLSubtraction.id)
                         .join(
                             SQLAnalysisSubtraction,
                             SQLAnalysisSubtraction.subtraction_id == SQLSubtraction.id,
@@ -213,7 +237,9 @@ class TestCreate:
                 .all()
             )
 
-        assert sorted(linked) == ["subtraction_1", "subtraction_2"]
+        assert sorted(linked) == sorted(
+            [subtraction_ids["subtraction_1"], subtraction_ids["subtraction_2"]],
+        )
 
     async def test_subtractions_default_to_list(
         self,
@@ -252,14 +278,15 @@ class TestCreate:
         self,
         data_layer: DataLayer,
         setup_sample: str,
+        subtraction_ids: dict[str, int],
     ):
         """Creating an analysis with an unresolvable subtraction is a conflict."""
-        with pytest.raises(ResourceConflictError, match="ghost"):
+        with pytest.raises(ResourceConflictError, match="905"):
             await data_layer.analyses.create(
                 CreateAnalysisRequest(
                     ml=None,
                     ref_id="test_ref",
-                    subtractions=["subtraction_1", "ghost"],
+                    subtractions=[subtraction_ids["subtraction_1"], 905],
                     workflow=AnalysisWorkflow.nuvs,
                 ),
                 "test_sample",
@@ -272,6 +299,7 @@ class TestCreate:
         data_layer: DataLayer,
         pg: AsyncEngine,
         setup_sample: str,
+        subtraction_ids: dict[str, int],
         mocker,
     ):
         """A failure writing the Postgres row leaves no analysis behind."""
@@ -282,7 +310,7 @@ class TestCreate:
 
         with pytest.raises(RuntimeError):
             await data_layer.analyses.create(
-                _create_request(),
+                _create_request(subtraction_ids),
                 "test_sample",
                 setup_sample,
                 0,
@@ -302,6 +330,7 @@ class TestFinalize:
         mongo: Mongo,
         pg: AsyncEngine,
         setup_sample: str,
+        subtraction_ids: dict[str, int],
         mocker,
     ):
         """Finalize marks the Postgres row ready and stores the results."""
@@ -311,7 +340,7 @@ class TestFinalize:
         )
 
         analysis = await data_layer.analyses.create(
-            _create_request(),
+            _create_request(subtraction_ids),
             "test_sample",
             setup_sample,
             0,
@@ -347,10 +376,11 @@ class TestDelete:
         data_layer: DataLayer,
         pg: AsyncEngine,
         setup_sample: str,
+        subtraction_ids: dict[str, int],
     ):
         """Delete removes the Postgres row."""
         analysis = await data_layer.analyses.create(
-            _create_request(),
+            _create_request(subtraction_ids),
             "test_sample",
             setup_sample,
             0,
@@ -364,13 +394,17 @@ class TestDelete:
 async def test_get_without_if_modified_since(
     data_layer: DataLayer,
     setup_sample: str,
+    subtraction_ids: dict[str, int],
 ):
     """Test that an analysis can be fetched without an HTTP cache validator."""
     analysis = await data_layer.analyses.create(
         CreateAnalysisRequest(
             ml=None,
             ref_id="test_ref",
-            subtractions=["subtraction_1", "subtraction_2"],
+            subtractions=[
+                subtraction_ids["subtraction_1"],
+                subtraction_ids["subtraction_2"],
+            ],
             workflow=AnalysisWorkflow.nuvs,
         ),
         "test_sample",
@@ -387,6 +421,7 @@ async def test_upload_file(
     data_layer: DataLayer,
     example_path: Path,
     setup_sample: str,
+    subtraction_ids: dict[str, int],
     snapshot_recent: SnapshotAssertion,
     spawn_job_client,
     tmp_path,
@@ -400,7 +435,10 @@ async def test_upload_file(
         CreateAnalysisRequest(
             ml=None,
             ref_id="test_ref",
-            subtractions=["subtraction_1", "subtraction_2"],
+            subtractions=[
+                subtraction_ids["subtraction_1"],
+                subtraction_ids["subtraction_2"],
+            ],
             workflow=AnalysisWorkflow.nuvs,
         ),
         "test_sample",

@@ -29,7 +29,7 @@ class WFSubtraction:
     be used for analysis.
     """
 
-    id: str
+    id: int
     """The unique ID for the subtraction."""
 
     files: list[SubtractionFile]
@@ -76,7 +76,7 @@ class WFSubtraction:
 
 @dataclass
 class WFNewSubtraction:
-    id: str
+    id: int
     """The unique ID for the subtraction."""
 
     delete: Callable[[], Coroutine[None, None, None]]
@@ -138,7 +138,7 @@ async def subtractions(
             gc=subtraction.gc,
             nickname=subtraction.nickname,
             name=subtraction.name,
-            path=subtraction_work_path / subtraction.id,
+            path=subtraction_work_path / str(subtraction.id),
         )
 
         await asyncio.to_thread(subtraction.path.mkdir, parents=True, exist_ok=True)
@@ -186,7 +186,7 @@ async def new_subtraction(
 
     subtraction_ = Subtraction(**subtraction_json)
 
-    subtraction_work_path = work_path / "subtractions" / subtraction_.id
+    subtraction_work_path = work_path / "subtractions" / str(subtraction_.id)
     await asyncio.to_thread(subtraction_work_path.mkdir, parents=True, exist_ok=True)
 
     await uploads.download(upload_id, subtraction_work_path / "subtraction.fa.gz")

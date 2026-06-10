@@ -599,7 +599,7 @@ class TestHasResourcesForAnalysisJob:
         with pytest.raises(ResourceConflictError, match=r"Reference does not exist"):
             await data_layer.samples.has_resources_for_analysis_job(
                 "test_ref",
-                ["subtraction_1"],
+                [1],
             )
 
     async def test_archived_reference(
@@ -626,11 +626,11 @@ class TestHasResourcesForAnalysisJob:
 
         with pytest.raises(
             ResourceConflictError,
-            match=r"^Subtractions do not exist: missing$",
+            match=r"^Subtractions do not exist: 999$",
         ):
             await data_layer.samples.has_resources_for_analysis_job(
                 "test_ref",
-                [subtraction_id, "missing"],
+                [subtraction_id, 999],
             )
 
 

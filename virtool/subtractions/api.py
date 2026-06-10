@@ -64,7 +64,7 @@ class SubtractionsView(PydanticView):
         """
         try:
             subtraction = await get_data_from_req(self.request).subtractions.create(
-                data, self.request["client"].user_id, 0
+                data, self.request["client"].user_id
             )
         except ResourceNotFoundError as err:
             if "Upload does not exist" in str(err):
@@ -79,10 +79,10 @@ class SubtractionsView(PydanticView):
         )
 
 
-@routes.view("/subtractions/{subtraction_id}")
-@routes.jobs_api.get("/subtractions/{subtraction_id}")
+@routes.view("/subtractions/{subtraction_id:\\d+}")
+@routes.jobs_api.get("/subtractions/{subtraction_id:\\d+}")
 class SubtractionView(PydanticView):
-    async def get(self, subtraction_id: str, /) -> r200[Subtraction] | r404:
+    async def get(self, subtraction_id: int, /) -> r200[Subtraction] | r404:
         """Get a subtraction.
 
         Fetches the details of a subtraction.
@@ -103,7 +103,7 @@ class SubtractionView(PydanticView):
 
     @policy(PermissionRoutePolicy(LegacyPermission.MODIFY_SUBTRACTION))
     async def patch(
-        self, subtraction_id: str, /, data: UpdateSubtractionRequest
+        self, subtraction_id: int, /, data: UpdateSubtractionRequest
     ) -> r200[Subtraction] | r400 | r403 | r404:
         """Update a subtraction.
 
@@ -126,7 +126,7 @@ class SubtractionView(PydanticView):
         return json_response(subtraction)
 
     @policy(PermissionRoutePolicy(LegacyPermission.MODIFY_SUBTRACTION))
-    async def delete(self, subtraction_id: str, /) -> r204 | r403 | r404 | r409:
+    async def delete(self, subtraction_id: int, /) -> r204 | r403 | r404 | r409:
         """Delete a subtraction.
 
         Deletes an existing subtraction.
@@ -145,13 +145,13 @@ class SubtractionView(PydanticView):
         raise APINoContent()
 
 
-@routes.jobs_api.put("/subtractions/{subtraction_id}/files/{filename}")
+@routes.jobs_api.put("/subtractions/{subtraction_id:\\d+}/files/{filename}")
 async def upload(req) -> Response:
     """Upload subtraction file.
 
     Uploads a new subtraction file.
     """
-    subtraction_id = req.match_info["subtraction_id"]
+    subtraction_id = int(req.match_info["subtraction_id"])
     filename = req.match_info["filename"]
 
     try:
@@ -175,7 +175,7 @@ async def upload(req) -> Response:
     )
 
 
-@routes.jobs_api.patch("/subtractions/{subtraction_id}")
+@routes.jobs_api.patch("/subtractions/{subtraction_id:\\d+}")
 @schema(
     {
         "gc": {"type": "dict", "required": True},
@@ -192,7 +192,7 @@ async def finalize_subtraction(req: aiohttp.web.Request):
 
     try:
         subtraction = await get_data_from_req(req).subtractions.finalize(
-            req.match_info["subtraction_id"], FinalizeSubtractionRequest(**data)
+            int(req.match_info["subtraction_id"]), FinalizeSubtractionRequest(**data)
         )
     except ResourceConflictError as err:
         raise APIConflict(str(err))
@@ -202,14 +202,14 @@ async def finalize_subtraction(req: aiohttp.web.Request):
     return json_response(subtraction)
 
 
-@routes.jobs_api.delete("/subtractions/{subtraction_id}")
+@routes.jobs_api.delete("/subtractions/{subtraction_id:\\d+}")
 async def job_delete(req: aiohttp.web.Request):
     """Remove a subtraction document.
 
     Only usable in the Jobs API and when subtractions are unfinalized.
 
     """
-    subtraction_id = req.match_info["subtraction_id"]
+    subtraction_id = int(req.match_info["subtraction_id"])
 
     try:
         subtraction = await get_data_from_req(req).subtractions.get(subtraction_id)
@@ -227,10 +227,10 @@ async def job_delete(req: aiohttp.web.Request):
     raise APINoContent()
 
 
-@routes.view("/subtractions/{subtraction_id}/files/{filename}")
-@routes.jobs_api.get("/subtractions/{subtraction_id}/files/{filename}")
+@routes.view("/subtractions/{subtraction_id:\\d+}/files/{filename}")
+@routes.jobs_api.get("/subtractions/{subtraction_id:\\d+}/files/{filename}")
 class SubtractionFileView(PydanticView):
-    async def get(self, subtraction_id: str, filename: str, /) -> r200 | r400 | r404:
+    async def get(self, subtraction_id: int, filename: str, /) -> r200 | r400 | r404:
         """Download a subtraction file.
 
         Downloads a Bowtie2 index or FASTA file for the given subtraction.

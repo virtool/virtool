@@ -20,13 +20,13 @@ def create_subtractions_routes(
 ):
     routes = RouteTableDef()
 
-    @routes.view("/subtractions/{subtraction_id}")
+    @routes.view("/subtractions/{subtraction_id:\\d+}")
     class SubtractionView(View):
         async def get(self):
             """Return the JSON representation of a subtraction that can be used for testing
             analysis fixtures.
             """
-            subtraction_id = self.request.match_info["subtraction_id"]
+            subtraction_id = int(self.request.match_info["subtraction_id"])
 
             if subtraction_id not in (data.subtraction.id, data.new_subtraction.id):
                 return generate_not_found()
@@ -43,7 +43,7 @@ def create_subtractions_routes(
             """Finalize a subtraction with its ``gc`` and ``count`` field with the passed
             data. Set ``ready`` to ``true``.
             """
-            subtraction_id = self.request.match_info["subtraction_id"]
+            subtraction_id = int(self.request.match_info["subtraction_id"])
 
             if subtraction_id != data.new_subtraction.id:
                 return generate_not_found()
@@ -70,7 +70,7 @@ def create_subtractions_routes(
 
         async def delete(self):
             """Delete the subtraction."""
-            subtraction_id = self.request.match_info["subtraction_id"]
+            subtraction_id = int(self.request.match_info["subtraction_id"])
 
             if subtraction_id != data.new_subtraction.id:
                 return generate_not_found()
@@ -85,10 +85,10 @@ def create_subtractions_routes(
 
             return Response(status=204)
 
-    @routes.view("/subtractions/{subtraction_id}/files/{filename}")
+    @routes.view("/subtractions/{subtraction_id:\\d+}/files/{filename}")
     class SubtractionFilesView(View):
         async def get(self):
-            subtraction_id = self.request.match_info["subtraction_id"]
+            subtraction_id = int(self.request.match_info["subtraction_id"])
             filename = self.request.match_info["filename"]
 
             if (

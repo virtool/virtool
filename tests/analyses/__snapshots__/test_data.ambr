@@ -31,11 +31,11 @@
     }),
     'subtractions': list([
       dict({
-        'id': 'subtraction_1',
+        'id': 1,
         'name': 'Subtraction 1',
       }),
       dict({
-        'id': 'subtraction_2',
+        'id': 2,
         'name': 'Subtraction 2',
       }),
     ]),
@@ -90,11 +90,11 @@
         }),
         'subtractions': list([
           dict({
-            'id': 'subtraction_1',
+            'id': 1,
             'name': 'Subtraction 1',
           }),
           dict({
-            'id': 'subtraction_2',
+            'id': 2,
             'name': 'Subtraction 2',
           }),
         ]),
@@ -146,11 +146,11 @@
         }),
         'subtractions': list([
           dict({
-            'id': 'subtraction_1',
+            'id': 1,
             'name': 'Subtraction 1',
           }),
           dict({
-            'id': 'subtraction_2',
+            'id': 2,
             'name': 'Subtraction 2',
           }),
         ]),
@@ -191,11 +191,11 @@
         }),
         'subtractions': list([
           dict({
-            'id': 'subtraction_1',
+            'id': 1,
             'name': 'Subtraction 1',
           }),
           dict({
-            'id': 'subtraction_2',
+            'id': 2,
             'name': 'Subtraction 2',
           }),
         ]),

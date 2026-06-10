@@ -120,7 +120,7 @@
         }),
         'subtractions': list([
           dict({
-            'id': 'foo',
+            'id': 1,
             'name': 'Malus domestica',
           }),
         ]),
@@ -223,11 +223,11 @@
     }),
     'subtractions': list([
       dict({
-        'id': 'apple',
+        'id': 2,
         'name': 'Apple',
       }),
       dict({
-        'id': 'plum',
+        'id': 1,
         'name': 'Plum',
       }),
     ]),
@@ -286,11 +286,11 @@
     }),
     'subtractions': list([
       dict({
-        'id': 'apple',
+        'id': 2,
         'name': 'Apple',
       }),
       dict({
-        'id': 'plum',
+        'id': 1,
         'name': 'Plum',
       }),
     ]),

@@ -21,7 +21,7 @@ class SubtractionFile(BaseModel):
     id: int
     name: str
     size: int
-    subtraction: str
+    subtraction: int
     type: str
 
 
@@ -31,7 +31,7 @@ class SubtractionUpload(BaseModel):
 
 
 class SubtractionNested(BaseModel):
-    id: str
+    id: int
     name: str
 
 
@@ -53,7 +53,7 @@ class SubtractionMinimal(SubtractionNested):
                     "count": 9,
                     "created_at": "2021-12-21T23:52:13.185000Z",
                     "file": {"id": 58, "name": "arabidopsis_thaliana_+_plastids.fa.gz"},
-                    "id": "q0ek30si",
+                    "id": 5,
                     "name": "Arabidopsis thaliana",
                     "nickname": "",
                     "ready": True,
@@ -84,64 +84,64 @@ class Subtraction(SubtractionMinimal):
                 "file": {"id": 58, "name": "arabidopsis_thaliana_+_plastids.fa.gz"},
                 "files": [
                     {
-                        "download_url": "/subtractions/q0ek30si/files/subtraction.1.bt2",
+                        "download_url": "/subtractions/5/files/subtraction.1.bt2",
                         "id": 39,
                         "name": "subtraction.1.bt2",
                         "size": 44200803,
-                        "subtraction": "q0ek30si",
+                        "subtraction": 5,
                         "type": "bowtie2",
                     },
                     {
-                        "download_url": "/subtractions/q0ek30si/files/subtraction.2.bt2",
+                        "download_url": "/subtractions/5/files/subtraction.2.bt2",
                         "id": 37,
                         "name": "subtraction.2.bt2",
                         "size": 30000964,
-                        "subtraction": "q0ek30si",
+                        "subtraction": 5,
                         "type": "bowtie2",
                     },
                     {
-                        "download_url": "/subtractions/q0ek30si/files/subtraction.3.bt2",
+                        "download_url": "/subtractions/5/files/subtraction.3.bt2",
                         "id": 42,
                         "name": "subtraction.3.bt2",
                         "size": 3275,
-                        "subtraction": "q0ek30si",
+                        "subtraction": 5,
                         "type": "bowtie2",
                     },
                     {
-                        "download_url": "/subtractions/q0ek30si/files/subtraction.4.bt2",
+                        "download_url": "/subtractions/5/files/subtraction.4.bt2",
                         "id": 40,
                         "name": "subtraction.4.bt2",
                         "size": 30000958,
-                        "subtraction": "q0ek30si",
+                        "subtraction": 5,
                         "type": "bowtie2",
                     },
                     {
-                        "download_url": "/subtractions/q0ek30si/files/subtraction.fa.gz",
+                        "download_url": "/subtractions/5/files/subtraction.fa.gz",
                         "id": 36,
                         "name": "subtraction.fa.gz",
                         "size": 36160657,
-                        "subtraction": "q0ek30si",
+                        "subtraction": 5,
                         "type": "fasta",
                     },
                     {
-                        "download_url": "/subtractions/q0ek30si/files/subtraction.rev.1.bt2",
+                        "download_url": "/subtractions/5/files/subtraction.rev.1.bt2",
                         "id": 41,
                         "name": "subtraction.rev.1.bt2",
                         "size": 44200803,
-                        "subtraction": "q0ek30si",
+                        "subtraction": 5,
                         "type": "bowtie2",
                     },
                     {
-                        "download_url": "/subtractions/q0ek30si/files/subtraction.rev.2.bt2",
+                        "download_url": "/subtractions/5/files/subtraction.rev.2.bt2",
                         "id": 38,
                         "name": "subtraction.rev.2.bt2",
                         "size": 30000964,
-                        "subtraction": "q0ek30si",
+                        "subtraction": 5,
                         "type": "bowtie2",
                     },
                 ],
                 "gc": {"a": 0.319, "c": 0.18, "g": 0.18, "n": 0.002, "t": 0.319},
-                "id": "q0ek30si",
+                "id": 5,
                 "linked_samples": [
                     {"id": "2izth91q", "name": "21BP074"},
                     {"id": "noni4fpk", "name": "21BP075"},

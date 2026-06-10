@@ -8,6 +8,7 @@ from virtool.models import BaseModel, SearchResult
 from virtool.models.enums import LibraryType
 from virtool.quality.models import Quality
 from virtool.samples.models_base import SampleNested
+from virtool.subtractions.models import SubtractionNested
 from virtool.uploads.models import UploadMinimal
 from virtool.users.models_base import UserNested
 
@@ -17,18 +18,6 @@ class SampleArtifact(BaseModel):
     download_url: str
     name: str
     size: int
-
-
-class SampleSubtraction(BaseModel):
-    """A subtraction referenced by a sample, identified by its integer id.
-
-    Interim model: exists only because the shared ``SubtractionNested.id`` is still
-    a legacy string. Remove and revert ``Sample.subtractions`` to ``SubtractionNested``
-    after the subtraction id cutover (VIR-2535).
-    """
-
-    id: int
-    name: str
 
 
 class WorkflowState(Enum):
@@ -124,7 +113,7 @@ class Sample(SampleMinimal):
     paired: bool
     quality: Quality | None
     reads: list[Read]
-    subtractions: list[SampleSubtraction]
+    subtractions: list[SubtractionNested]
 
     class Config:
         schema_extra = {

@@ -18,9 +18,7 @@ class AttachAnalysisSubtractionsTransform(AbstractTransform):
     """Attach ``{id, name}`` subtraction references to analysis documents.
 
     Subtraction membership is read from the ``analysis_subtractions`` association
-    table. The emitted ``id`` is the subtraction's legacy slug when present and the
-    integer id otherwise, preserving the identifier form clients received before the
-    ``analyses.subtractions`` JSONB column was normalized.
+    table. The emitted ``id`` is always the subtraction's integer id.
     """
 
     def __init__(self, pg: AsyncEngine):
@@ -31,7 +29,7 @@ class AttachAnalysisSubtractionsTransform(AbstractTransform):
 
     async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
         result = await session.execute(
-            select(SQLSubtraction.id, SQLSubtraction.legacy_id, SQLSubtraction.name)
+            select(SQLSubtraction.id, SQLSubtraction.name)
             .join(
                 SQLAnalysisSubtraction,
                 SQLAnalysisSubtraction.subtraction_id == SQLSubtraction.id,
@@ -39,10 +37,7 @@ class AttachAnalysisSubtractionsTransform(AbstractTransform):
             .where(SQLAnalysisSubtraction.analysis_id == int(document["id"])),
         )
 
-        return [
-            {"id": legacy_id or id_, "name": name}
-            for id_, legacy_id, name in result.all()
-        ]
+        return [{"id": id_, "name": name} for id_, name in result.all()]
 
     async def prepare_many(
         self, documents: list[Document], session: AsyncSession
@@ -58,7 +53,6 @@ class AttachAnalysisSubtractionsTransform(AbstractTransform):
                 select(
                     SQLAnalysisSubtraction.analysis_id,
                     SQLSubtraction.id,
-                    SQLSubtraction.legacy_id,
                     SQLSubtraction.name,
                 )
                 .join(
@@ -68,9 +62,9 @@ class AttachAnalysisSubtractionsTransform(AbstractTransform):
                 .where(SQLAnalysisSubtraction.analysis_id.in_(document_id_by_int)),
             )
 
-            for analysis_id, id_, legacy_id, name in result.all():
+            for analysis_id, id_, name in result.all():
                 grouped[document_id_by_int[analysis_id]].append(
-                    {"id": legacy_id or id_, "name": name},
+                    {"id": id_, "name": name},
                 )
 
         return grouped

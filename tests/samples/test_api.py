@@ -1276,7 +1276,7 @@ class TestAnalyze:
             data={
                 "workflow": "pathoscope",
                 "ref_id": "test_ref",
-                "subtractions": ["subtraction_1"],
+                "subtractions": [1],
             },
         )
 
@@ -1382,7 +1382,7 @@ class TestAnalyze:
 
         resp = await self._post(analyze_client)
 
-        await resp_is.conflict(resp, "Subtractions do not exist: subtraction_1")
+        await resp_is.conflict(resp, "Subtractions do not exist: 1")
 
     async def test_missing_sample(
         self,
