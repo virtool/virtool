@@ -40,7 +40,6 @@ class HistoryMethod(str, Enum):
 
 class AnalysisWorkflow(str, Enum):
     aodp = "aodp"
-    iimi = "iimi"
     nuvs = "nuvs"
     pathoscope = "pathoscope"
 
