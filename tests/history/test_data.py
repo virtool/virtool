@@ -117,8 +117,8 @@ async def seed_legacy_history(pg: AsyncEngine, user_id: int) -> None:
                     otu_name="Prunus virus F",
                     otu_version=otu_version,
                     reference="hxn167",
-                    index="unbuilt",
-                    index_version="unbuilt",
+                    index=None,
+                    index_version=None,
                 ),
             )
 
