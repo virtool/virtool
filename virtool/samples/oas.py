@@ -83,7 +83,7 @@ class CreateAnalysisRequest(BaseModel):
 
     ml: int | None
     ref_id: str
-    subtractions: list[str] = Field(default_factory=list)
+    subtractions: list[int] = Field(default_factory=list)
     workflow: AnalysisWorkflow
 
     _prevent_none = prevent_none("subtractions")

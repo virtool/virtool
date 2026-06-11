@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
-from virtool.mongo.core import Mongo
 from virtool.subtractions.oas import (
     FinalizeSubtractionRequest,
     NucleotideComposition,
@@ -18,14 +17,6 @@ from virtool.uploads.sql import SQLUpload, UploadType
 
 def _empty_query() -> MultiDictProxy:
     return MultiDictProxy(MultiDict())
-
-
-async def _modern_id(pg: AsyncEngine, legacy_id: str) -> int:
-    """Look up the integer Postgres id for a subtraction's legacy string id."""
-    async with AsyncSession(pg) as session:
-        return await session.scalar(
-            select(SQLSubtraction.id).where(SQLSubtraction.legacy_id == legacy_id),
-        )
 
 
 class TestFind:
@@ -232,11 +223,10 @@ class TestFind:
 
 async def test_finalize(
     fake: DataFaker,
-    mongo: Mongo,
     pg: AsyncEngine,
     snapshot_recent,
 ):
-    """A finalized subtraction is dual-written to both Mongo and Postgres."""
+    """A finalized subtraction is persisted to Postgres with no legacy id."""
     user = await fake.users.create()
     upload = await fake.uploads.create(
         user=user,
@@ -246,22 +236,25 @@ async def test_finalize(
     subtraction = await fake.subtractions.create(user=user, upload=upload)
 
     assert subtraction == snapshot_recent(name="obj")
-    assert await mongo.subtraction.find_one() == snapshot_recent(name="mongo")
 
     async with AsyncSession(pg) as session:
-        row = (await session.execute(select(SQLSubtraction))).scalar_one()
+        row = (
+            await session.execute(
+                select(SQLSubtraction).where(SQLSubtraction.id == subtraction.id),
+            )
+        ).scalar_one()
 
     assert row.to_dict() == snapshot_recent(name="pg")
-    assert row.legacy_id == subtraction.id
+    assert row.legacy_id is None
 
 
-class TestAddressByModernId:
-    """Single-subtraction lookups resolve a modern integer id as well as the legacy
-    string id. The response ``id`` field still emits the legacy string.
+class TestMutations:
+    """Single-subtraction mutations addressed by the integer id, persisted to
+    Postgres only.
     """
 
-    async def test_get(self, data_layer: DataLayer, fake: DataFaker, pg: AsyncEngine):
-        """``get`` accepts the modern integer id and returns the legacy-shaped model."""
+    async def test_get(self, data_layer: DataLayer, fake: DataFaker):
+        """``get`` returns the subtraction addressed by its integer id."""
         user = await fake.users.create()
         upload = await fake.uploads.create(
             user=user,
@@ -269,17 +262,13 @@ class TestAddressByModernId:
         )
         subtraction = await fake.subtractions.create(user=user, upload=upload)
 
-        by_modern = await data_layer.subtractions.get(
-            await _modern_id(pg, subtraction.id)
-        )
-
-        assert by_modern == subtraction
-        assert by_modern.id == subtraction.id
+        assert await data_layer.subtractions.get(subtraction.id) == subtraction
+        assert isinstance(subtraction.id, int)
 
     async def test_update(
-        self, data_layer: DataLayer, fake: DataFaker, mongo: Mongo, pg: AsyncEngine
+        self, data_layer: DataLayer, fake: DataFaker, pg: AsyncEngine
     ):
-        """``update`` by the modern id writes through to Mongo and Postgres."""
+        """``update`` persists the new name to Postgres."""
         user = await fake.users.create()
         upload = await fake.uploads.create(
             user=user,
@@ -288,20 +277,23 @@ class TestAddressByModernId:
         subtraction = await fake.subtractions.create(user=user, upload=upload)
 
         updated = await data_layer.subtractions.update(
-            await _modern_id(pg, subtraction.id),
+            subtraction.id,
             UpdateSubtractionRequest(name="Malus domestica", nickname="apple"),
         )
 
         assert updated.id == subtraction.id
         assert updated.name == "Malus domestica"
 
-        mongo_document = await mongo.subtraction.find_one({"_id": subtraction.id})
-        assert mongo_document["name"] == "Malus domestica"
+        async with AsyncSession(pg) as session:
+            name = await session.scalar(
+                select(SQLSubtraction.name).where(SQLSubtraction.id == subtraction.id),
+            )
+        assert name == "Malus domestica"
 
     async def test_delete(
-        self, data_layer: DataLayer, fake: DataFaker, mongo: Mongo, pg: AsyncEngine
+        self, data_layer: DataLayer, fake: DataFaker, pg: AsyncEngine
     ):
-        """``delete`` addressed by the modern id soft-deletes in both stores."""
+        """``delete`` soft-deletes the subtraction in Postgres."""
         user = await fake.users.create()
         upload = await fake.uploads.create(
             user=user,
@@ -309,26 +301,21 @@ class TestAddressByModernId:
         )
         subtraction = await fake.subtractions.create(user=user, upload=upload)
 
-        await data_layer.subtractions.delete(await _modern_id(pg, subtraction.id))
+        await data_layer.subtractions.delete(subtraction.id)
 
         result = await data_layer.subtractions.find(None, False, False, _empty_query())
         assert subtraction.id not in [d.id for d in result.documents]
 
-        mongo_document = await mongo.subtraction.find_one({"_id": subtraction.id})
-        assert mongo_document["deleted"] is True
-
         async with AsyncSession(pg) as session:
             deleted = await session.scalar(
                 select(SQLSubtraction.deleted).where(
-                    SQLSubtraction.legacy_id == subtraction.id,
+                    SQLSubtraction.id == subtraction.id,
                 ),
             )
         assert deleted is True
 
-    async def test_finalize(
-        self, data_layer: DataLayer, fake: DataFaker, pg: AsyncEngine
-    ):
-        """``finalize`` addressed by the modern id marks the subtraction ready."""
+    async def test_finalize(self, data_layer: DataLayer, fake: DataFaker):
+        """``finalize`` marks the subtraction ready."""
         user = await fake.users.create()
         upload = await fake.uploads.create(
             user=user,
@@ -339,7 +326,7 @@ class TestAddressByModernId:
         )
 
         finalized = await data_layer.subtractions.finalize(
-            await _modern_id(pg, subtraction.id),
+            subtraction.id,
             FinalizeSubtractionRequest(
                 count=1,
                 gc=NucleotideComposition(**dict.fromkeys("actgn", 0.2)),
@@ -349,31 +336,8 @@ class TestAddressByModernId:
         assert finalized.id == subtraction.id
         assert finalized.ready is True
 
-    async def test_get_file(
-        self, data_layer: DataLayer, fake: DataFaker, pg: AsyncEngine
-    ):
-        """``get_file`` addressed by the modern id streams the same file."""
-        user = await fake.users.create()
-        upload = await fake.uploads.create(
-            user=user,
-            upload_type=UploadType.subtraction,
-        )
-        subtraction = await fake.subtractions.create(user=user, upload=upload)
-
-        _, size = await data_layer.subtractions.get_file(
-            await _modern_id(pg, subtraction.id),
-            "subtraction.1.bt2",
-        )
-
-        _, legacy_size = await data_layer.subtractions.get_file(
-            subtraction.id,
-            "subtraction.1.bt2",
-        )
-
-        assert size == legacy_size
-
-    async def test_missing_modern_id(self, data_layer: DataLayer):
-        """A modern id with no matching row raises ``ResourceNotFoundError``."""
+    async def test_missing_id(self, data_layer: DataLayer):
+        """An integer id with no matching row raises ``ResourceNotFoundError``."""
         with pytest.raises(ResourceNotFoundError):
             await data_layer.subtractions.get(999999)
 

@@ -7,7 +7,6 @@ from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.data.topg import compose_legacy_id_multi_expression
 from virtool.data.transforms import AbstractTransform
 from virtool.mongo.core import Mongo
 from virtool.subtractions.pg import SQLSubtraction
@@ -21,19 +20,19 @@ def map_subtraction_row(
     subtraction: SQLSubtraction,
     upload: SQLUpload | None,
 ) -> Document:
-    """Build a legacy-shaped subtraction document from Postgres rows.
+    """Build a subtraction document from Postgres rows.
 
-    The returned document mirrors the Mongo document shape that
-    :func:`attach_computed` and the subtraction transforms consume: ``_id`` is the
-    legacy slug, and the ``file``, ``job``, ``upload``, and ``user`` fields carry
-    the reference shapes the ``AttachUploadTransform``, ``AttachJobTransform``, and
-    ``AttachUserTransform`` expect.
+    The returned document's ``id`` is the integer primary key, and the ``file``,
+    ``job``, ``upload``, and ``user`` fields carry the reference shapes the
+    ``AttachUploadTransform``, ``AttachJobTransform``, and ``AttachUserTransform``
+    expect. Because ``id`` is already the public identifier, the downstream
+    ``base_processor`` call is a harmless no-op for the id.
 
     Postgres does not store the ``file`` snapshot, so it is rebuilt from the joined
     upload row, which is the same upload the subtraction was created against.
     """
     return {
-        "_id": subtraction.legacy_id,
+        "id": subtraction.id,
         "count": subtraction.count,
         "created_at": subtraction.created_at,
         "file": {"id": upload.id, "name": upload.name} if upload else None,
@@ -47,15 +46,6 @@ def map_subtraction_row(
         if subtraction.user_id is not None
         else None,
     }
-
-
-def subtraction_processor(document: Document) -> Document:
-    """Process a subtraction document for client-side.
-
-    :param document: the subtraction document to process
-    :return: the processed document
-    """
-    return {**base_processor(document), "subtractions": document["subtractions"] or []}
 
 
 class AttachSubtractionsTransform(AbstractTransform):
@@ -75,9 +65,7 @@ class AttachSubtractionsTransform(AbstractTransform):
 
         result = await session.execute(
             select(SQLSubtraction).where(
-                compose_legacy_id_multi_expression(
-                    SQLSubtraction, document["subtractions"]
-                ),
+                SQLSubtraction.id.in_(document["subtractions"]),
             ),
         )
 
@@ -93,7 +81,7 @@ class AttachSubtractionsTransform(AbstractTransform):
         if subtraction_ids:
             result = await session.execute(
                 select(SQLSubtraction).where(
-                    compose_legacy_id_multi_expression(SQLSubtraction, subtraction_ids),
+                    SQLSubtraction.id.in_(subtraction_ids),
                 ),
             )
 
@@ -106,52 +94,38 @@ class AttachSubtractionsTransform(AbstractTransform):
 
 def _subtraction_lookup(
     subtractions: list[SQLSubtraction],
-) -> dict[int | str, dict]:
-    """Build a lookup of subtraction reference shapes keyed by both modern integer
-    id and legacy string id.
+) -> dict[int, dict]:
+    """Build a lookup of subtraction reference shapes keyed by the integer
+    subtraction id.
 
-    Referrers are still string-keyed during the migration, so a referrer that holds
-    a legacy id resolves via ``legacy_id`` while a modern integer id resolves via
-    ``id``. The returned ``{"id", "name"}`` shape mirrors the legacy Mongo output.
+    The returned ``{"id", "name"}`` shape is the reference shape referrers expect.
     """
-    return {
-        **{s.id: {"id": s.id, "name": s.name} for s in subtractions},
-        **{
-            s.legacy_id: {"id": s.legacy_id, "name": s.name}
-            for s in subtractions
-            if s.legacy_id is not None
-        },
-    }
+    return {s.id: {"id": s.id, "name": s.name} for s in subtractions}
 
 
 async def get_missing_subtraction_ids(
     pg: AsyncEngine,
-    subtraction_ids: list[str | int],
-) -> set[str | int]:
+    subtraction_ids: list[int],
+) -> set[int]:
     """Return the subset of ``subtraction_ids`` that do not exist in Postgres.
 
-    Resolves ids by both legacy string id and modern integer id, returning the
-    offending input ids unchanged so callers can format errors as before.
+    Resolves ids by integer id only, returning the offending input ids so callers
+    can format errors.
     """
     if not subtraction_ids:
         return set()
 
     async with AsyncSession(pg) as session:
         result = await session.execute(
-            select(SQLSubtraction.id, SQLSubtraction.legacy_id).where(
-                compose_legacy_id_multi_expression(SQLSubtraction, subtraction_ids),
+            select(SQLSubtraction.id).where(
+                SQLSubtraction.id.in_(subtraction_ids),
+                SQLSubtraction.deleted.is_(False),
             ),
         )
 
         rows = result.all()
 
-    existing: set[str | int] = set()
-
-    for id_, legacy_id in rows:
-        existing |= {id_, str(id_)}
-
-        if legacy_id is not None:
-            existing.add(legacy_id)
+    existing = {id_ for (id_,) in rows}
 
     return set(subtraction_ids) - existing
 
@@ -177,17 +151,15 @@ async def attach_computed(
     :return: a new subtraction document with new fields attached
 
     """
-    legacy_id = subtraction["_id"]
-
     files, linked_samples = await asyncio.gather(
         get_subtraction_files(pg, subtraction_pk),
         get_linked_samples(mongo, subtraction_pk),
     )
 
     for file in files:
-        file["subtraction"] = legacy_id
+        file["subtraction"] = subtraction_pk
         file["download_url"] = (
-            f"{base_url}/subtractions/{legacy_id}/files/{file['name']}"
+            f"{base_url}/subtractions/{subtraction_pk}/files/{file['name']}"
         )
 
     return {**subtraction, "files": files, "linked_samples": linked_samples}

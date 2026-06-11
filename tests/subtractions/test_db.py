@@ -1,8 +1,4 @@
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 import virtool.subtractions.db
-from tests.fixtures.subtractions import resolve_subtraction_pk
 from virtool.data.transforms import apply_transforms
 from virtool.fake.next import DataFaker
 from virtool.subtractions.db import (
@@ -10,7 +6,6 @@ from virtool.subtractions.db import (
     get_missing_subtraction_ids,
     unlink_default_subtractions,
 )
-from virtool.subtractions.pg import SQLSubtraction
 from virtool.uploads.sql import UploadType
 
 
@@ -83,50 +78,23 @@ class TestGetMissingSubtractionIds:
 
         subtraction = await fake.subtractions.create(user=user, upload=upload)
 
-        assert await get_missing_subtraction_ids(
-            pg, [subtraction.id, "does_not_exist"]
-        ) == {"does_not_exist"}
+        assert await get_missing_subtraction_ids(pg, [subtraction.id, 999999]) == {
+            999999
+        }
 
     async def test_empty(self, pg):
         """An empty input yields an empty set without querying."""
         assert await get_missing_subtraction_ids(pg, []) == set()
 
-    async def test_resolves_legacy_and_modern_ids(self, fake: DataFaker, pg):
-        """A subtraction resolves by legacy string id, integer id, and the
-        stringified integer id, since referrers may hold any of these forms.
-        """
-        user = await fake.users.create()
-        upload = await fake.uploads.create(
-            user=user, upload_type=UploadType.subtraction, name="foobar.fq.gz"
-        )
 
-        subtraction = await fake.subtractions.create(user=user, upload=upload)
-
-        async with AsyncSession(pg) as session:
-            modern_id, legacy_id = (
-                await session.execute(
-                    select(SQLSubtraction.id, SQLSubtraction.legacy_id).where(
-                        SQLSubtraction.legacy_id == subtraction.id
-                    ),
-                )
-            ).one()
-
-        assert (
-            await get_missing_subtraction_ids(
-                pg, [legacy_id, modern_id, str(modern_id)]
-            )
-            == set()
-        )
-
-
-async def test_get_linked_samples(fake: DataFaker, mongo, pg):
+async def test_get_linked_samples(fake: DataFaker, mongo):
     user = await fake.users.create()
     upload = await fake.uploads.create(
         user=user, upload_type=UploadType.subtraction, name="foobar.fq.gz"
     )
     subtraction = await fake.subtractions.create(user=user, upload=upload)
 
-    target = await resolve_subtraction_pk(pg, subtraction.id)
+    target = subtraction.id
 
     # Other integer subtraction ids the samples reference; only ``target`` should
     # match. The offsets simply guarantee distinctness from ``target``.
@@ -161,7 +129,7 @@ async def test_get_linked_samples(fake: DataFaker, mongo, pg):
     ]
 
 
-async def test_unlink_default_subtractions(fake: DataFaker, mongo, pg):
+async def test_unlink_default_subtractions(fake: DataFaker, mongo):
     user = await fake.users.create()
     upload = await fake.uploads.create(
         user=user,
@@ -171,7 +139,7 @@ async def test_unlink_default_subtractions(fake: DataFaker, mongo, pg):
 
     subtraction = await fake.subtractions.create(user=user, upload=upload)
 
-    target = await resolve_subtraction_pk(pg, subtraction.id)
+    target = subtraction.id
 
     other_a, other_b, other_c = target + 1, target + 2, target + 3
 

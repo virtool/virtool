@@ -2,16 +2,15 @@ from http import HTTPStatus
 from pathlib import Path
 
 import pytest
-from sqlalchemy import delete, select
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy.assertion import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
-from tests.fixtures.subtractions import resolve_subtraction_pk
 from virtool.fake.next import DataFaker
 from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
-from virtool.subtractions.pg import SQLSubtraction, SQLSubtractionFile
+from virtool.subtractions.pg import SQLSubtractionFile
 from virtool.uploads.sql import UploadType
 
 
@@ -112,7 +111,6 @@ async def test_edit(
     data: dict,
     fake: DataFaker,
     mongo: Mongo,
-    pg: AsyncEngine,
     snapshot_recent: SnapshotAssertion,
     spawn_client: ClientSpawner,
 ):
@@ -124,7 +122,7 @@ async def test_edit(
 
     subtraction = await fake.subtractions.create(user=user, upload=upload)
 
-    subtraction_pk = await resolve_subtraction_pk(pg, subtraction.id)
+    subtraction_pk = subtraction.id
 
     await mongo.samples.insert_many(
         [
@@ -143,7 +141,6 @@ async def test_edit(
 
     assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot_recent
-    assert await mongo.subtraction.find_one() == snapshot_recent
 
 
 @pytest.mark.parametrize("exists", [True, False])
@@ -173,7 +170,7 @@ async def test_delete_as_user(
 
         assert resp.status == 204
     else:
-        resp = await client.delete("subtractions/does_not_exist")
+        resp = await client.delete("subtractions/999999")
         assert resp.status == 404
 
 
@@ -220,7 +217,7 @@ class TestUploadSubtractionFileAsJob:
         client = await spawn_job_client(authenticated=True)
 
         resp = await client.put(
-            f"/subtractions/does_not_exist/files/{self.VALID_SUBTRACTION_FILE_NAME}",
+            f"/subtractions/999999/files/{self.VALID_SUBTRACTION_FILE_NAME}",
             data={"file": bytes(1)},
         )
 
@@ -333,7 +330,7 @@ class TestFinalize:
             "count": 100,
         }
 
-        resp = await client.patch("/subtractions/does_not_exist", json=data)
+        resp = await client.patch("/subtractions/999999", json=data)
 
         assert resp.status == 404
         assert await resp.json() == snapshot
@@ -402,7 +399,6 @@ class TestRemoveAsJob:
         fake: DataFaker,
         spawn_job_client: JobClientSpawner,
         mongo: Mongo,
-        pg: AsyncEngine,
         resp_is,
     ):
         """Verifies that a finalized subtraction cannot be deleted."""
@@ -423,7 +419,7 @@ class TestRemoveAsJob:
             {
                 "_id": "test",
                 "name": "Test",
-                "subtractions": [await resolve_subtraction_pk(pg, subtraction.id)],
+                "subtractions": [subtraction.id],
             },
         )
 
@@ -436,7 +432,6 @@ class TestRemoveAsJob:
         fake: DataFaker,
         spawn_job_client: JobClientSpawner,
         mongo: Mongo,
-        pg: AsyncEngine,
         resp_is,
     ):
         """Checks successful deletion of an unfinalized subtraction."""
@@ -454,7 +449,7 @@ class TestRemoveAsJob:
             {
                 "_id": "test",
                 "name": "Test",
-                "subtractions": [await resolve_subtraction_pk(pg, subtraction.id)],
+                "subtractions": [subtraction.id],
             },
         )
 
@@ -470,7 +465,7 @@ class TestRemoveAsJob:
     ):
         """Ensures proper handling when attempting to delete a non-existent subtraction."""
         client = await spawn_job_client(authenticated=True)
-        resp = await client.delete("subtractions/does_not_exist")
+        resp = await client.delete("subtractions/999999")
 
         assert resp.status == 404
 
@@ -544,10 +539,10 @@ class TestDownloadSubtractionFile:
         await fake.subtractions.create(user=user, upload=upload)
 
         fasta_resp = await client.get(
-            "/subtractions/does_not_exist/files/subtraction.fa.gz",
+            "/subtractions/999999/files/subtraction.fa.gz",
         )
         bowtie_resp = await client.get(
-            "/subtractions/does_not_exist/files/subtraction.1.bt2",
+            "/subtractions/999999/files/subtraction.1.bt2",
         )
 
         assert fasta_resp.status == 404
@@ -571,12 +566,9 @@ class TestDownloadSubtractionFile:
         )
         subtraction = await fake.subtractions.create(user=user, upload=upload)
 
+        subtraction_pk = subtraction.id
+
         async with AsyncSession(pg) as session:
-            subtraction_pk = await session.scalar(
-                select(SQLSubtraction.id).where(
-                    SQLSubtraction.legacy_id == subtraction.id,
-                ),
-            )
             await session.execute(
                 delete(SQLSubtractionFile).where(
                     SQLSubtractionFile.subtraction_id == subtraction_pk,

@@ -1,36 +1,4 @@
 # serializer version: 1
-# name: test_finalize[mongo]
-  dict({
-    '_id': 'bf1b993c',
-    'count': 1,
-    'created_at': 'approximately_now_datetime',
-    'deleted': False,
-    'file': dict({
-      'id': 1,
-      'name': 'malus.fa.gz',
-    }),
-    'gc': dict({
-      'a': 0.2,
-      'c': 0.2,
-      'g': 0.2,
-      'n': 0.2,
-      't': 0.2,
-    }),
-    'job': dict({
-      'id': 1,
-    }),
-    'name': 'foo',
-    'nickname': 'bar',
-    'ready': True,
-    'space': dict({
-      'id': 0,
-    }),
-    'upload': 1,
-    'user': dict({
-      'id': 1,
-    }),
-  })
-# ---
 # name: test_finalize[obj]
   dict({
     'count': 1,
@@ -41,59 +9,59 @@
     }),
     'files': list([
       dict({
-        'download_url': 'https://virtool.example.com/api/subtractions/bf1b993c/files/subtraction.1.bt2',
+        'download_url': 'https://virtool.example.com/api/subtractions/1/files/subtraction.1.bt2',
         'id': 1,
         'name': 'subtraction.1.bt2',
         'size': 44026551,
-        'subtraction': 'bf1b993c',
+        'subtraction': 1,
         'type': 'bowtie2',
       }),
       dict({
-        'download_url': 'https://virtool.example.com/api/subtractions/bf1b993c/files/subtraction.2.bt2',
+        'download_url': 'https://virtool.example.com/api/subtractions/1/files/subtraction.2.bt2',
         'id': 2,
         'name': 'subtraction.2.bt2',
         'size': 29870392,
-        'subtraction': 'bf1b993c',
+        'subtraction': 1,
         'type': 'bowtie2',
       }),
       dict({
-        'download_url': 'https://virtool.example.com/api/subtractions/bf1b993c/files/subtraction.3.bt2',
+        'download_url': 'https://virtool.example.com/api/subtractions/1/files/subtraction.3.bt2',
         'id': 3,
         'name': 'subtraction.3.bt2',
         'size': 3257,
-        'subtraction': 'bf1b993c',
+        'subtraction': 1,
         'type': 'bowtie2',
       }),
       dict({
-        'download_url': 'https://virtool.example.com/api/subtractions/bf1b993c/files/subtraction.4.bt2',
+        'download_url': 'https://virtool.example.com/api/subtractions/1/files/subtraction.4.bt2',
         'id': 4,
         'name': 'subtraction.4.bt2',
         'size': 29870386,
-        'subtraction': 'bf1b993c',
+        'subtraction': 1,
         'type': 'bowtie2',
       }),
       dict({
-        'download_url': 'https://virtool.example.com/api/subtractions/bf1b993c/files/subtraction.fa.gz',
+        'download_url': 'https://virtool.example.com/api/subtractions/1/files/subtraction.fa.gz',
         'id': 5,
         'name': 'subtraction.fa.gz',
         'size': 36461731,
-        'subtraction': 'bf1b993c',
+        'subtraction': 1,
         'type': 'fasta',
       }),
       dict({
-        'download_url': 'https://virtool.example.com/api/subtractions/bf1b993c/files/subtraction.rev.1.bt2',
+        'download_url': 'https://virtool.example.com/api/subtractions/1/files/subtraction.rev.1.bt2',
         'id': 6,
         'name': 'subtraction.rev.1.bt2',
         'size': 44026551,
-        'subtraction': 'bf1b993c',
+        'subtraction': 1,
         'type': 'bowtie2',
       }),
       dict({
-        'download_url': 'https://virtool.example.com/api/subtractions/bf1b993c/files/subtraction.rev.2.bt2',
+        'download_url': 'https://virtool.example.com/api/subtractions/1/files/subtraction.rev.2.bt2',
         'id': 7,
         'name': 'subtraction.rev.2.bt2',
         'size': 29870392,
-        'subtraction': 'bf1b993c',
+        'subtraction': 1,
         'type': 'bowtie2',
       }),
     ]),
@@ -104,7 +72,7 @@
       'n': 0.2,
       't': 0.2,
     }),
-    'id': 'bf1b993c',
+    'id': 1,
     'job': dict({
       'created_at': 'approximately_now_datetime',
       'id': 1,
@@ -157,7 +125,7 @@
     }),
     'id': 1,
     'job_id': 1,
-    'legacy_id': 'bf1b993c',
+    'legacy_id': None,
     'name': 'foo',
     'nickname': 'bar',
     'ready': True,
