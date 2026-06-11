@@ -39,12 +39,12 @@ from virtool.workflow.pytest_plugin.utils import StaticTime
         {"name": "v1.2.2", "ready": True},
         {
             "name": "v1.2.2",
-            "created_at": arrow.get("2020-01-01T21:20:00").datetime,
+            "created_at": arrow.get("2020-01-01T21:20:00").naive,
             "ready": False,
         },
         {
             "name": "v1.2.2",
-            "created_at": arrow.get("2020-01-01T21:00:00").datetime,
+            "created_at": arrow.get("2020-01-01T21:00:00").naive,
             "ready": False,
         },
     ],

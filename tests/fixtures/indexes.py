@@ -13,7 +13,7 @@ def test_indexes(manifest):
         {
             "_id": "ncjqqaax",
             "version": 0,
-            "created_at": arrow.get("2017-12-12T23:14:25.188Z").datetime,
+            "created_at": arrow.get("2017-12-12T23:14:25.188Z").naive,
             "manifest": manifest,
             "has_files": False,
             "reference": {"id": "hxn167"},
