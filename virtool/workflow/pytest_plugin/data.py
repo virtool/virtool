@@ -7,7 +7,6 @@ from pydantic_factories import ModelFactory, Use
 from virtool.analyses.models import Analysis, AnalysisSample
 from virtool.indexes.models import Index, IndexNested
 from virtool.jobs.models import JobMinimal, JobStep, JobWithKey
-from virtool.ml.models import MLModelRelease
 from virtool.quality.models import Quality
 from virtool.references.models import Reference, ReferenceNested
 from virtool.samples.models import Sample
@@ -32,9 +31,6 @@ class WorkflowData:
 
     acquired: bool
     """Whether the fake job has been claimed."""
-
-    ml: MLModelRelease | None
-    """An ML model release used in the active analysis."""
 
     reference: Reference
     """A reference to be used for testing analyses and index creation workflows."""
@@ -85,12 +81,6 @@ def workflow_data(
         timestamp = Use(lambda: static_time.datetime)
 
     JobFactory.seed_random(55)
-
-    class MLFactory(ModelFactory):
-        __model__ = MLModelRelease
-
-        created_at = Use(lambda: static_time.datetime)
-        published_at = Use(lambda: static_time.datetime)
 
     class ReferenceFactory(ModelFactory):
         __model__ = Reference
@@ -198,11 +188,6 @@ def workflow_data(
     new_index.files = []
     new_index.ready = False
 
-    ml: MLModelRelease = MLFactory.build()
-    ml.ready = True
-    ml.model.id = 5
-    ml.id = 231
-
     subtraction = SubtractionFactory.build()
     subtraction.files = [
         SubtractionFile(
@@ -235,7 +220,6 @@ def workflow_data(
         new_index=new_index,
         job=job,
         acquired=False,
-        ml=ml,
         reference=reference,
         sample=sample,
         new_sample=new_sample,

@@ -8,7 +8,6 @@ from pyfixtures import fixture
 from virtool.analyses.models import Analysis, AnalysisSample
 from virtool.indexes.models import IndexNested
 from virtool.jobs.models import Job
-from virtool.ml.models import MLModelRelease
 from virtool.references.models import ReferenceNested
 from virtool.subtractions.models import SubtractionNested
 from virtool.workflow.client import WorkflowAPIClient
@@ -23,7 +22,6 @@ class WFAnalysis:
         api: WorkflowAPIClient,
         analysis_id: str,
         index: IndexNested,
-        ml: MLModelRelease | None,
         reference: ReferenceNested,
         sample: AnalysisSample,
         subtractions: list[SubtractionNested],
@@ -36,9 +34,6 @@ class WFAnalysis:
 
         self.index = index
         """The index being used for the analysis."""
-
-        self.ml = ml
-        """The ML model release being used for the analysis."""
 
         self.reference = reference
         """The reference being used for the analysis."""
@@ -94,7 +89,6 @@ async def analysis(
         api=_api,
         analysis_id=id_,
         index=analysis.index,
-        ml=analysis.ml,
         reference=analysis.reference,
         sample=analysis.sample,
         subtractions=analysis.subtractions,
