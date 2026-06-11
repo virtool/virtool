@@ -3,7 +3,6 @@ from virtool.workflow.data.cache import cache
 from virtool.workflow.data.hmms import hmms
 from virtool.workflow.data.indexes import index
 from virtool.workflow.data.jobs import job, start_step
-from virtool.workflow.data.ml import ml
 from virtool.workflow.data.samples import sample
 from virtool.workflow.data.subtractions import subtractions
 from virtool.workflow.data.uploads import uploads
@@ -14,7 +13,6 @@ __all__ = [
     "hmms",
     "index",
     "job",
-    "ml",
     "sample",
     "start_step",
     "subtractions",
