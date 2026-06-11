@@ -1400,6 +1400,30 @@ class TestAnalyze:
 
         await resp_is.not_found(resp)
 
+    async def test_iimi_rejected(
+        self,
+        analyze_client: VirtoolTestClient,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        static_time,
+    ):
+        await self._insert_reference(mongo)
+        await self._insert_index(mongo)
+        await self._insert_subtraction(pg)
+        await self._insert_sample(analyze_client, fake)
+
+        resp = await analyze_client.post(
+            "/samples/test/analyses",
+            data={
+                "workflow": "iimi",
+                "ref_id": "test_ref",
+                "subtractions": ["subtraction_1"],
+            },
+        )
+
+        assert resp.status == 400
+
 
 class TestUploadArtifact:
     """Test that new artifacts can be uploaded after sample creation using the Jobs API."""

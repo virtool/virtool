@@ -396,9 +396,6 @@ async def format_analysis(
     if "pathoscope" in workflow:
         return await format_pathoscope(mongo, pg, results=results)
 
-    if workflow == AnalysisWorkflow.iimi.value:
-        return results
-
     raise ValueError(f"Unknown workflow: {workflow}")
 
 
