@@ -29,7 +29,6 @@ class MLModelsView(PydanticView):
 
 
 @routes.view("/ml/{model_id}")
-@routes.jobs_api.view("/ml/{model_id}")
 class MLModelView(PydanticView):
     async def get(self, model_id: int, /) -> r200[MLModel] | r404:
         """Get a model.
@@ -44,7 +43,6 @@ class MLModelView(PydanticView):
 
 
 @routes.view("/ml/{model_id}/releases/{release_id}")
-@routes.jobs_api.view("/ml/{model_id}/releases/{release_id}")
 class MLModelReleaseView(PydanticView):
     async def get(self, release_id: int, /) -> r200[MLModelReleaseMinimal] | r404:
         """Get a model release.
@@ -60,7 +58,6 @@ class MLModelReleaseView(PydanticView):
 
 
 @routes.view("/ml/{model_id}/releases/{release_id}/model.tar.gz")
-@routes.jobs_api.view("/ml/{model_id}/releases/{release_id}/model.tar.gz")
 class MLModelFileView(PydanticView):
     async def get(self, release_id: int, /) -> r200[bytes] | r404:
         """Download a model release.

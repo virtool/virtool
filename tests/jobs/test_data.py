@@ -229,7 +229,7 @@ class TestCreatePostgres:
         fetched_job = await jobs_data.get(job.id)
         assert fetched_job.args == {"subtraction_id": subtraction_id}
 
-    @pytest.mark.parametrize("workflow", ["aodp", "iimi", "nuvs", "pathoscope"])
+    @pytest.mark.parametrize("workflow", ["aodp", "nuvs", "pathoscope"])
     async def test_analysis_id_resolved_from_analysis(
         self,
         workflow: str,
