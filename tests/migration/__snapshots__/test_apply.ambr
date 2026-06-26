@@ -512,5 +512,19 @@
       'name': 'drop job_subtractions table',
       'revision': '2b53ffa573a3',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 74,
+      'name': 'convert index file type to text',
+      'revision': 'b82907bcac9d',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 75,
+      'name': 'backfill null index tasks',
+      'revision': 'b4st1kx9mj2q',
+    }),
   ])
 # ---

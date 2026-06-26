@@ -1,8 +1,11 @@
 import asyncio
 import json
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
+import aiofiles
 from pyfixtures import fixture
 from structlog import get_logger
 
@@ -40,26 +43,18 @@ class WFIndex:
     sequence_otu_map: dict[str, str]
     """A dictionary of the OTU IDs for all sequences keyed by their sequence IDs."""
 
-    @property
-    def bowtie_path(self) -> Path:
-        """The path to the Bowtie2 index prefix for the Virtool index."""
-        return self.path / "reference"
+    otu_source: "OTUSource"
+    """The source used to asynchronously iterate indexed OTUs."""
 
     @property
     def fasta_path(self) -> Path:
-        """The path to the complete FASTA file for the reference index in the workflow's
-        work directory.
-
-        """
+        """The path to the FASTA file for legacy analysis workflows."""
         return self.path / "reference.fa"
 
-    @property
-    def json_path(self) -> Path:
-        """The path to the JSON representation of the reference index in the workflow's
-        work directory.
-
-        """
-        return self.path / "otus.json"
+    async def iter_otus(self) -> AsyncIterator[dict[str, Any]]:
+        """Iterate indexed OTUs regardless of the backing artifact format."""
+        async for otu in self.otu_source.iter_otus():
+            yield otu
 
     def get_otu_id_by_sequence_id(self, sequence_id: str) -> str:
         """Get the ID of the parent OTU for the given ``sequence_id``.
@@ -84,6 +79,36 @@ class WFIndex:
             return self.sequence_lengths[sequence_id]
         except KeyError:
             raise ValueError("The sequence_id does not exist in the index")
+
+
+class OTUSource:
+    async def iter_otus(self) -> AsyncIterator[dict[str, Any]]:
+        raise NotImplementedError
+
+
+@dataclass
+class LegacyOTUJsonSource(OTUSource):
+    path: Path
+
+    async def iter_otus(self) -> AsyncIterator[dict[str, Any]]:
+        async with aiofiles.open(self.path) as f:
+            data = json.loads(await f.read())
+
+        otus = data["otus"] if isinstance(data, dict) else data
+
+        for otu in otus:
+            yield otu
+
+
+@dataclass
+class ReferenceNDJSONSource(OTUSource):
+    path: Path
+
+    async def iter_otus(self) -> AsyncIterator[dict[str, Any]]:
+        async with aiofiles.open(self.path) as f:
+            while line := await f.readline():
+                if line.strip():
+                    yield json.loads(line)
 
 
 class WFNewIndex:
@@ -131,10 +156,9 @@ class WFNewIndex:
         - reference.1.bt2
         - reference.2.bt2
         - reference.3.bt2
-        - reference.4.bt4
+        - reference.4.bt2
         - reference.rev.1.bt2
         - reference.rev.2.bt2
-
         :param path: The path to the file.
         :param fmt: The format of the file.
         :param name: An optional name for the file different that its name on disk.
@@ -150,6 +174,31 @@ class WFNewIndex:
     def otus_json_path(self) -> Path:
         """The path to the JSON file of the index's OTUs in the workflow work path."""
         return self.path / "otus.json"
+
+
+async def _load_otu_maps(source: OTUSource) -> tuple[dict[str, int], dict[str, str]]:
+    sequence_lengths = {}
+    sequence_otu_map = {}
+
+    async for otu in source.iter_otus():
+        otu_id = _get_otu_id(otu)
+
+        for isolate in otu["isolates"]:
+            for sequence in isolate["sequences"]:
+                sequence_id = _get_sequence_id(sequence)
+
+                sequence_otu_map[sequence_id] = otu_id
+                sequence_lengths[sequence_id] = len(sequence["sequence"])
+
+    return sequence_lengths, sequence_otu_map
+
+
+def _get_otu_id(otu: dict[str, Any]) -> str:
+    return otu["_id"] if "_id" in otu else otu["id"]
+
+
+def _get_sequence_id(sequence: dict[str, Any]) -> str:
+    return sequence["_id"] if "_id" in sequence else sequence["id"]
 
 
 @fixture
@@ -176,54 +225,48 @@ async def index(
 
     log.info("created index directory")
 
-    for name in (
-        "otus.json.gz",
-        "reference.json.gz",
-        "reference.fa.gz",
-        "reference.1.bt2",
-        "reference.2.bt2",
-        "reference.3.bt2",
-        "reference.4.bt2",
-        "reference.rev.1.bt2",
-        "reference.rev.2.bt2",
-    ):
-        await _api.get_file(f"/indexes/{id_}/files/{name}", index_work_path / name)
-        log.info("downloaded index file", name=name)
+    if any(file.name == "reference.ndjson.gz" for file in index_.files):
+        ndjson_path = index_work_path / "reference.ndjson"
+        await _api.get_file(
+            f"/indexes/{id_}/files/reference.ndjson.gz",
+            index_work_path / "reference.ndjson.gz",
+        )
+        await asyncio.to_thread(
+            decompress_file,
+            index_work_path / "reference.ndjson.gz",
+            ndjson_path,
+            proc,
+        )
 
-    await asyncio.to_thread(
-        decompress_file,
-        index_work_path / "reference.fa.gz",
-        index_work_path / "reference.fa",
-        proc,
-    )
+        otu_source = ReferenceNDJSONSource(ndjson_path)
+        log.info("loaded index OTUs from reference ndjson")
+    else:
+        await _api.get_file(
+            f"/indexes/{id_}/files/reference.fa.gz",
+            index_work_path / "reference.fa.gz",
+        )
+        log.info("downloaded legacy index fasta")
 
-    log.info("decompressed reference fasta")
+        await asyncio.to_thread(
+            decompress_file,
+            index_work_path / "reference.fa.gz",
+            index_work_path / "reference.fa",
+            proc,
+        )
 
-    json_path = index_work_path / "otus.json"
+        compressed_otus_path = index_work_path / "otus.json.gz"
+        await _api.get_file(f"/indexes/{id_}/files/otus.json.gz", compressed_otus_path)
+        await asyncio.to_thread(
+            decompress_file,
+            compressed_otus_path,
+            index_work_path / "otus.json",
+            proc,
+        )
 
-    await asyncio.to_thread(
-        decompress_file,
-        index_work_path / "otus.json.gz",
-        index_work_path / json_path,
-        proc,
-    )
+        otu_source = LegacyOTUJsonSource(index_work_path / "otus.json")
+        log.info("loaded index OTUs from legacy otus json")
 
-    log.info("decompressed reference otus json")
-
-    data = await asyncio.to_thread(lambda: json.loads(json_path.read_text()))
-
-    sequence_lengths = {}
-    sequence_otu_map = {}
-
-    for otu in data:
-        for isolate in otu["isolates"]:
-            for sequence in isolate["sequences"]:
-                sequence_id = sequence["_id"]
-
-                sequence_otu_map[sequence_id] = otu["_id"]
-                sequence_lengths[sequence_id] = len(sequence["sequence"])
-
-    log.info("parsed and loaded maps from otus json")
+    sequence_lengths, sequence_otu_map = await _load_otu_maps(otu_source)
 
     return WFIndex(
         id=id_,
@@ -232,6 +275,7 @@ async def index(
         reference=index_.reference,
         sequence_lengths=sequence_lengths,
         sequence_otu_map=sequence_otu_map,
+        otu_source=otu_source,
     )
 
 

@@ -22,14 +22,19 @@ from virtool.data.events import Operation, emit, emits
 from virtool.data.transforms import apply_transforms
 from virtool.history.db import HISTORY_LIST_PROJECTION
 from virtool.history.models import HistorySearchResult
-from virtool.indexes.checks import check_fasta_file_uploaded, check_index_files_uploaded
+from virtool.indexes.checks import (
+    check_legacy_index_files_uploaded,
+)
 from virtool.indexes.db import (
     INDEX_FILE_NAMES,
+    LEGACY_INDEX_FILE_NAMES,
+    TASK_INDEX_FILE_NAMES,
     lookup_index_otu_counts,
     update_last_indexed_versions,
 )
 from virtool.indexes.models import Index, IndexFile, IndexMinimal, IndexSearchResult
 from virtool.indexes.sql import SQLIndexFile
+from virtool.indexes.transforms import attach_index_build, attach_index_builds
 from virtool.indexes.utils import compose_index_file_key, compose_index_prefix
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
@@ -41,11 +46,49 @@ from virtool.references.transforms import AttachReferenceTransform
 from virtool.storage.cleanup import delete_prefix
 from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
+from virtool.tasks.transforms import AttachTaskTransform
 from virtool.uploads.utils import multipart_file_chunker
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor, wait_for_checks
 
 logger = get_logger("indexes")
+
+
+def _get_index_build_type(document: dict) -> str:
+    job = document["job"] if "job" in document else None
+    task = document["task"]
+
+    if job is not None:
+        job["id"]
+
+    if task is not None:
+        task["id"]
+
+    if (job is None) == (task is None):
+        raise ResourceConflictError(
+            "Index must be backed by exactly one job or task build"
+        )
+
+    return "job" if job is not None else "task"
+
+
+def _get_index_file_names_for_build_type(document: dict) -> tuple[str, ...]:
+    match _get_index_build_type(document):
+        case "job":
+            return LEGACY_INDEX_FILE_NAMES
+        case "task":
+            return TASK_INDEX_FILE_NAMES
+
+
+def _check_index_file_matches_build_type(document: dict, name: str) -> None:
+    if name in _get_index_file_names_for_build_type(document):
+        return
+
+    build_type = _get_index_build_type(document)
+
+    raise ResourceConflictError(
+        f"{name} cannot be uploaded for {build_type}-backed index builds"
+    )
 
 
 class IndexData:
@@ -102,13 +145,16 @@ class IndexData:
             )
         ]
 
-        items = await apply_transforms(
-            items,
-            [
-                AttachJobTransform(self._pg),
-                AttachUserTransform(self._pg),
-            ],
-            self._pg,
+        items = attach_index_builds(
+            await apply_transforms(
+                items,
+                [
+                    AttachJobTransform(self._pg),
+                    AttachTaskTransform(self._pg),
+                    AttachUserTransform(self._pg),
+                ],
+                self._pg,
+            ),
         )
 
         return [IndexMinimal(**item) for item in items]
@@ -153,12 +199,13 @@ class IndexData:
             base_processor(document),
             [
                 AttachJobTransform(self._pg),
+                AttachTaskTransform(self._pg),
                 AttachUserTransform(self._pg),
             ],
             self._pg,
         )
 
-        return Index(**document)
+        return Index(**attach_index_build(document))
 
     async def get_reference(self, index_id: str) -> ReferenceNested:
         """Get a reference associated with an index.
@@ -233,6 +280,16 @@ class IndexData:
         :param multipart: the file reader
         :return: the index file
         """
+        index = await self._mongo.indexes.find_one(
+            {"_id": index_id},
+            ["job", "task"],
+        )
+
+        if index is None:
+            raise ResourceNotFoundError()
+
+        _check_index_file_matches_build_type(index, name)
+
         async with AsyncSession(self._pg) as session:
             index_file = SQLIndexFile(name=name, index=index_id, type=file_type)
 
@@ -315,12 +372,9 @@ class IndexData:
             for f in await get_rows(self._pg, SQLIndexFile, "index", index_id)
         }
 
-        aws = [check_fasta_file_uploaded(results)]
-
-        if data_type == "genome":
-            aws.append(check_index_files_uploaded(results))
-
-        await wait_for_checks(*aws)
+        await wait_for_checks(
+            check_legacy_index_files_uploaded(results, data_type),
+        )
 
         async with self._mongo.create_session() as session:
             await update_last_indexed_versions(self._mongo, ref_id, session)

@@ -16,15 +16,17 @@ import virtool.utils
 from virtool.api.utils import paginate
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.indexes.sql import SQLIndexFile
+from virtool.indexes.transforms import attach_index_builds
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
 from virtool.references.db import compose_archived_filter
 from virtool.references.transforms import AttachReferenceTransform
+from virtool.tasks.transforms import AttachTaskTransform
 from virtool.types import Document
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
-INDEX_FILE_NAMES = (
+LEGACY_INDEX_FILE_NAMES = (
     "reference.fa.gz",
     "reference.json.gz",
     "reference.1.bt2",
@@ -34,6 +36,12 @@ INDEX_FILE_NAMES = (
     "reference.rev.1.bt2",
     "reference.rev.2.bt2",
 )
+
+TASK_INDEX_FILE_NAMES = ("reference.ndjson.gz",)
+
+INDEX_FILE_NAMES = (*LEGACY_INDEX_FILE_NAMES, *TASK_INDEX_FILE_NAMES)
+
+JOBS_API_UPLOAD_INDEX_FILE_NAMES = LEGACY_INDEX_FILE_NAMES
 
 
 class IndexFilesTransform(AbstractTransform):
@@ -122,6 +130,7 @@ async def create(
         "has_json": False,
         "reference": {"id": ref_id},
         "job": {"id": job_id},
+        "task": None,
         "user": {"id": user_id},
     }
 
@@ -199,6 +208,7 @@ async def find(
             "modification_count",
             "modified_count",
             "user",
+            "task",
             "ready",
             "reference",
             "version",
@@ -209,18 +219,24 @@ async def find(
 
     unbuilt_stats = await get_unbuilt_stats(mongo, ref_id)
 
+    documents = [base_processor(d) for d in data["documents"]]
+    transforms = [
+        AttachJobTransform(pg),
+        AttachTaskTransform(pg),
+        AttachReferenceTransform(mongo),
+        AttachUserTransform(pg),
+        IndexCountsTransform(mongo),
+    ]
+
     return {
         **data,
         **unbuilt_stats,
-        "documents": await apply_transforms(
-            [base_processor(d) for d in data["documents"]],
-            [
-                AttachJobTransform(pg),
-                AttachReferenceTransform(mongo),
-                AttachUserTransform(pg),
-                IndexCountsTransform(mongo),
-            ],
-            pg,
+        "documents": attach_index_builds(
+            await apply_transforms(
+                documents,
+                transforms,
+                pg,
+            ),
         ),
     }
 

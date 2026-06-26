@@ -132,16 +132,16 @@ async def test_update_last_indexed_versions(
 async def test_attach_files(snapshot, pg: AsyncEngine):
     index_1 = SQLIndexFile(
         id=1,
-        name="reference.1.bt2",
+        name="reference.fa.gz",
         index="foo",
-        type="bowtie2",
+        type="fasta",
         size=1234567,
     )
     index_2 = SQLIndexFile(
         id=2,
-        name="reference.2.bt2",
+        name="reference.json.gz",
         index="foo",
-        type="bowtie2",
+        type="json",
         size=1234567,
     )
 

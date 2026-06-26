@@ -18,7 +18,7 @@ from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from tests.fixtures.response import RespIs
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
-from virtool.indexes.db import INDEX_FILE_NAMES
+from virtool.indexes.db import LEGACY_INDEX_FILE_NAMES
 from virtool.indexes.files import create_index_file
 from virtool.indexes.sql import SQLIndexFile
 from virtool.indexes.utils import check_index_file_type, compose_index_file_key
@@ -103,6 +103,7 @@ class TestFind:
                         "ready": False,
                         "has_files": True,
                         "job": {"id": job_active_a.id},
+                        "task": None,
                         "reference": {"id": "ref_active_a"},
                         "user": {"id": user.id},
                         "sequence_otu_map": {"seq_1": "otu_1"},
@@ -115,6 +116,7 @@ class TestFind:
                         "ready": False,
                         "has_files": True,
                         "job": {"id": job_active_b.id},
+                        "task": None,
                         "reference": {"id": "ref_active_b"},
                         "user": {"id": user.id},
                         "sequence_otu_map": {"seq_1": "otu_2"},
@@ -127,6 +129,7 @@ class TestFind:
                         "ready": False,
                         "has_files": True,
                         "job": {"id": job_archived.id},
+                        "task": None,
                         "reference": {"id": "ref_archived"},
                         "user": {"id": user.id},
                         "sequence_otu_map": {"seq_1": "otu_5"},
@@ -212,6 +215,7 @@ class TestFind:
                         "ready": True,
                         "has_files": True,
                         "job": {"id": job.id},
+                        "task": None,
                         "reference": {"id": "ref_active_a"},
                         "user": {"id": user.id},
                     },
@@ -223,6 +227,7 @@ class TestFind:
                         "ready": True,
                         "has_files": True,
                         "job": {"id": job.id},
+                        "task": None,
                         "reference": {"id": "ref_active_b"},
                         "user": {"id": user.id},
                     },
@@ -234,6 +239,7 @@ class TestFind:
                         "ready": True,
                         "has_files": True,
                         "job": {"id": job.id},
+                        "task": None,
                         "reference": {"id": "ref_archived"},
                         "user": {"id": user.id},
                     },
@@ -331,6 +337,7 @@ async def test_get(
                 "has_files": True,
                 "user": {"id": user.id},
                 "job": {"id": job.id},
+                "task": None,
             },
         )
 
@@ -627,6 +634,7 @@ async def test_delete_index(
                     "ready": True,
                     "reference": {"id": "foo"},
                     "user": {"id": user.id},
+                    "task": None,
                     "version": 4,
                 },
             ),
@@ -685,8 +693,15 @@ async def test_upload(
             session=None,
         ),
     )
+    job = await fake.jobs.create(user=user, workflow="build_index")
 
-    index = {"_id": "foo", "reference": {"id": "bar"}, "user": {"id": user.id}}
+    index = {
+        "_id": "foo",
+        "reference": {"id": "bar"},
+        "user": {"id": user.id},
+        "job": {"id": job.id},
+        "task": None,
+    }
 
     if error == "409":
         async with AsyncSession(pg) as session:
@@ -699,7 +714,7 @@ async def test_upload(
     url = "/indexes/foo/files"
 
     if error == "404_file":
-        url += "/reference.bt2"
+        url += "/reference.foo.bt2"
     else:
         url += "/reference.1.bt2"
 
@@ -764,7 +779,7 @@ async def test_finalize(
     elif error == "409_fasta":
         files = ["reference.json.gz"]
     else:
-        files = INDEX_FILE_NAMES
+        files = LEGACY_INDEX_FILE_NAMES
 
     if error != "404_reference":
         await mongo.references.insert_one(
@@ -787,6 +802,7 @@ async def test_finalize(
                 "created_at": static_time.datetime,
                 "has_files": True,
                 "job": {"id": job.id},
+                "task": None,
             },
         ),
         # change `version` that should be reflected in `last_indexed_version` after calling

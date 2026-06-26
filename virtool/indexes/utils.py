@@ -11,6 +11,9 @@ def check_index_file_type(file_name: str) -> str:
     if file_name.endswith(".json.gz"):
         return "json"
 
+    if file_name.endswith(".ndjson.gz"):
+        return "ndjson"
+
     return "bowtie2"
 
 

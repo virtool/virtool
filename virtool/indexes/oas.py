@@ -7,6 +7,10 @@ class ListIndexesResponse(IndexSearchResult):
             "example": {
                 "documents": [
                     {
+                        "build": {
+                            "progress": 0,
+                            "status": "pending",
+                        },
                         "version": 1,
                         "created_at": "2015-10-06T20:00:00Z",
                         "ready": False,
@@ -23,6 +27,10 @@ class ListIndexesResponse(IndexSearchResult):
                         "modified_otu_count": 3,
                     },
                     {
+                        "build": {
+                            "progress": 0,
+                            "status": "pending",
+                        },
                         "version": 0,
                         "created_at": "2015-10-06T20:00:00Z",
                         "ready": False,
@@ -57,6 +65,10 @@ class ReadyIndexesResponse(IndexMinimal):
             "example": {
                 "documents": [
                     {
+                        "build": {
+                            "progress": 100,
+                            "status": "succeeded",
+                        },
                         "version": 1,
                         "created_at": "2015-10-06T20:00:00Z",
                         "ready": True,
@@ -73,6 +85,10 @@ class ReadyIndexesResponse(IndexMinimal):
                         "modified_otu_count": 3,
                     },
                     {
+                        "build": {
+                            "progress": 100,
+                            "status": "succeeded",
+                        },
                         "version": 0,
                         "created_at": "2015-10-06T20:00:00Z",
                         "ready": True,

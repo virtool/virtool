@@ -1,25 +1,29 @@
-from sqlalchemy import BigInteger, Column, Enum, Integer, String, UniqueConstraint
+from sqlalchemy import (
+    BigInteger,
+    CheckConstraint,
+    Column,
+    Integer,
+    String,
+    UniqueConstraint,
+)
 
 from virtool.pg.base import Base
-from virtool.pg.utils import SQLEnum
-
-
-class IndexType(str, SQLEnum):
-    """Enumerated type for index file types"""
-
-    json = "json"
-    fasta = "fasta"
-    bowtie2 = "bowtie2"
 
 
 class SQLIndexFile(Base):
     """SQL model to store new index files"""
 
     __tablename__ = "index_files"
-    __table_args__ = (UniqueConstraint("index", "name"),)
+    __table_args__ = (
+        UniqueConstraint("index", "name"),
+        CheckConstraint(
+            "type IN ('json', 'ndjson', 'fasta', 'bowtie2')",
+            name="index_file_type_valid",
+        ),
+    )
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     index = Column(String, nullable=False)
-    type = Column(Enum(IndexType))
+    type = Column(String)
     size = Column(BigInteger)

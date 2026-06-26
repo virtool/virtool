@@ -1,6 +1,10 @@
 # serializer version: 1
 # name: test_finalize
   dict({
+    'build': dict({
+      'progress': 100,
+      'status': 'failed',
+    }),
     'change_count': 0,
     'contributors': list([
     ]),

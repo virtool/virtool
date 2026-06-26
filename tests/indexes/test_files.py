@@ -8,7 +8,7 @@ from virtool.indexes.sql import SQLIndexFile
 async def test_create_index_file(snapshot, pg: AsyncEngine):
     assert (
         await virtool.indexes.files.create_index_file(
-            pg, "foo", "bowtie2", "reference.1.bt2", 9000
+            pg, "foo", "fasta", "reference.fa.gz", 9000
         )
         == snapshot
     )
