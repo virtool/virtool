@@ -562,6 +562,7 @@ class SubtractionFakerDomain(DataFakerDomain):
         self,
         user: User,
         upload: Upload,
+        name: str = "foo",
         finalized: bool = True,
         upload_files: bool = True,
     ) -> Subtraction:
@@ -574,12 +575,13 @@ class SubtractionFakerDomain(DataFakerDomain):
 
         :param user the user
         :param upload the fake upload
+        :param name the subtraction name
         :param finalized whether the subtraction should be finalized
         :return: the created subtraction
         """
         subtraction = await self._layer.subtractions.create(
             CreateSubtractionRequest(
-                name="foo",
+                name=name,
                 nickname="bar",
                 upload_id=upload.id,
             ),

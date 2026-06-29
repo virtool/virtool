@@ -29,15 +29,17 @@ from virtool.users.oas import UpdateUserRequest
 
 
 @pytest.fixture
-async def get_sample_ready_false(
-    fake: DataFaker, mongo: Mongo, insert_subtractions, static_time
-):
+async def get_sample_ready_false(fake: DataFaker, mongo: Mongo, static_time):
     label = await fake.labels.create()
     user = await fake.users.create()
     job = await fake.jobs.create(user, workflow="create_sample")
 
-    subtractions = await insert_subtractions(
-        ("apple", "Apple"), ("pear", "Pear"), ("peach", "Peach")
+    upload = await fake.uploads.create(user=user)
+    apple = await fake.subtractions.create(
+        user=user, upload=upload, name="Apple", upload_files=False, finalized=False
+    )
+    pear = await fake.subtractions.create(
+        user=user, upload=upload, name="Pear", upload_files=False, finalized=False
     )
 
     await mongo.samples.insert_one(
@@ -70,7 +72,7 @@ async def get_sample_ready_false(
             "nuvs": False,
             "pathoscope": True,
             "ready": False,
-            "subtractions": [subtractions["apple"], subtractions["pear"]],
+            "subtractions": [apple.id, pear.id],
             "user": {"id": user.id},
             "workflows": {
                 "aodp": WorkflowState.INCOMPATIBLE.value,
@@ -91,7 +93,6 @@ class TestCreate:
         group_setting: str,
         data_layer: DataLayer,
         fake: DataFaker,
-        insert_subtractions,
         pg: AsyncEngine,
         mongo: Mongo,
         snapshot_recent,
@@ -122,15 +123,18 @@ class TestCreate:
         )
 
         label = await fake.labels.create()
-        upload = await fake.uploads.create(user=await fake.users.create())
+        user = await fake.users.create()
+        upload = await fake.uploads.create(user=user)
 
-        subtractions = await insert_subtractions(("apple", "Apple"))
+        apple = await fake.subtractions.create(
+            user=user, upload=upload, name="Apple", upload_files=False, finalized=False
+        )
 
         data = {
             "files": [upload.id],
             "labels": [label.id],
             "name": "Foobar",
-            "subtractions": [subtractions["apple"]],
+            "subtractions": [apple.id],
         }
 
         if group_setting == "force_choice":
