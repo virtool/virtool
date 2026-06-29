@@ -26,12 +26,25 @@ from virtool.utils import timestamp
 
 
 @pytest.fixture
-async def subtraction_ids(insert_subtractions) -> dict[str, int]:
-    """Seed two subtractions and return their ``{legacy_id: integer id}`` map."""
-    return await insert_subtractions(
-        ("subtraction_1", "Subtraction 1"),
-        ("subtraction_2", "Subtraction 2"),
+async def subtraction_ids(fake: DataFaker) -> dict[str, int]:
+    """Seed two subtractions and return their ``{name slug: integer id}`` map."""
+    user = await fake.users.create()
+    upload = await fake.uploads.create(user=user)
+    first = await fake.subtractions.create(
+        user=user,
+        upload=upload,
+        name="Subtraction 1",
+        upload_files=False,
+        finalized=False,
     )
+    second = await fake.subtractions.create(
+        user=user,
+        upload=upload,
+        name="Subtraction 2",
+        upload_files=False,
+        finalized=False,
+    )
+    return {"subtraction_1": first.id, "subtraction_2": second.id}
 
 
 @pytest.fixture
