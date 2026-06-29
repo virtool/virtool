@@ -182,8 +182,6 @@ async def get_sample_data(
 
     return peach.id
 
-    return user.id
-
 
 @pytest.fixture
 async def find_samples_client(
