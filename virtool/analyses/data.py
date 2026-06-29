@@ -59,6 +59,9 @@ from virtool.utils import base_processor, wait_for_checks
 
 logger = get_logger("analyses")
 
+IIMI_WORKFLOW = "iimi"
+"""Workflow value for iimi analyses, which are hidden from the API ahead of a purge."""
+
 FIND_COLUMNS = (
     SQLAnalysis.id,
     SQLAnalysis.legacy_id,
@@ -155,10 +158,18 @@ class AnalysisData(DataLayerDomain):
         if page > 1:
             skip_count = (page - 1) * per_page
 
-        count_statement = select(func.count()).select_from(SQLAnalysis)
-        statement = select(*FIND_COLUMNS).order_by(
-            SQLAnalysis.created_at.desc(),
-            SQLAnalysis.id.desc(),
+        count_statement = (
+            select(func.count())
+            .select_from(SQLAnalysis)
+            .where(SQLAnalysis.workflow != IIMI_WORKFLOW)
+        )
+        statement = (
+            select(*FIND_COLUMNS)
+            .where(SQLAnalysis.workflow != IIMI_WORKFLOW)
+            .order_by(
+                SQLAnalysis.created_at.desc(),
+                SQLAnalysis.id.desc(),
+            )
         )
 
         if sample_id is not None:
@@ -223,7 +234,7 @@ class AnalysisData(DataLayerDomain):
                 )
             ).scalar_one_or_none()
 
-        if row is None:
+        if row is None or row.workflow == IIMI_WORKFLOW:
             raise ResourceNotFoundError()
 
         document = _row_to_document(row, include_results=True)

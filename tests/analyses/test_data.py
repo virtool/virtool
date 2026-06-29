@@ -8,13 +8,14 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.filters import props
 
+from tests.fixtures.analysis import seed_analysis
 from virtool.analyses.sql import (
     SQLAnalysis,
     SQLAnalysisFile,
     SQLAnalysisSubtraction,
 )
 from virtool.api.client import UserClient
-from virtool.data.errors import ResourceConflictError
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.models.enums import AnalysisWorkflow
@@ -149,6 +150,81 @@ async def test_find(
     assert analyses_found.dict() == snapshot_recent()
     assert analysis_wrong_sample not in analyses_found
     assert analyses_found.total_count == analyses_found.found_count
+
+
+class TestHideIimi:
+    """Iimi analyses are hidden from the data-layer find and get operations ahead of
+    the iimi purge migration.
+    """
+
+    @staticmethod
+    async def _seed_iimi(mongo: Mongo, pg: AsyncEngine, user_id: str) -> int:
+        return await seed_analysis(
+            mongo,
+            pg,
+            {
+                "_id": "iimi_hidden",
+                "workflow": "iimi",
+                "created_at": timestamp(),
+                "ready": True,
+                "job": None,
+                "index": {"id": "test_index", "version": 11},
+                "user": {"id": user_id},
+                "sample": {"id": "test_sample"},
+                "reference": {"id": "test_ref"},
+                "results": {"hits": []},
+                "subtractions": [],
+            },
+        )
+
+    async def test_find_excludes_iimi(
+        self,
+        data_layer: DataLayer,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: str,
+        mocker,
+    ):
+        """An iimi analysis is excluded from both the documents and the counts."""
+        mocker.patch(
+            "virtool.samples.utils.get_sample_rights",
+            return_value=(True, True),
+        )
+        client = mocker.Mock(spec=UserClient)
+        user_id = setup_sample
+
+        visible = await data_layer.analyses.create(
+            CreateAnalysisRequest(
+                ml=None,
+                ref_id="test_ref",
+                subtractions=[],
+                workflow=AnalysisWorkflow.nuvs,
+            ),
+            "test_sample",
+            user_id,
+            0,
+        )
+
+        await self._seed_iimi(mongo, pg, user_id)
+
+        analyses_found = await data_layer.analyses.find(1, 25, client, "test_sample")
+
+        assert [document.id for document in analyses_found.documents] == [visible.id]
+        assert analyses_found.found_count == 1
+        assert analyses_found.total_count == 1
+
+    async def test_get_iimi_not_found(
+        self,
+        data_layer: DataLayer,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: str,
+    ):
+        """Getting an iimi analysis by id raises ``ResourceNotFoundError``."""
+        analysis_id = await self._seed_iimi(mongo, pg, setup_sample)
+
+        with pytest.raises(ResourceNotFoundError):
+            await data_layer.analyses.get(analysis_id)
 
 
 async def test_create(
