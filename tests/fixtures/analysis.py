@@ -44,7 +44,6 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
             index=index["id"],
             user_id=document["user"]["id"],
             job_id=job["id"] if job and isinstance(job["id"], int) else None,
-            ml_id=document.get("ml"),
         )
 
         session.add(analysis)

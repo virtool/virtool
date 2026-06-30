@@ -71,7 +71,6 @@ class ReleaseType(str, Enum):
     """
 
     HMMS = "hmms"
-    ML = "ml"
     REFERENCES = "references"
 
 

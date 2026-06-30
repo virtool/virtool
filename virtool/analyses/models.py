@@ -5,7 +5,6 @@ from pydantic import root_validator
 
 from virtool.indexes.models import IndexNested
 from virtool.jobs.models import JobMinimal
-from virtool.ml.models import MLModelRelease
 from virtool.models import SearchResult
 from virtool.models.base import BaseModel
 from virtool.references.models import ReferenceNested
@@ -22,7 +21,6 @@ class AnalysisMinimal(BaseModel):
     id: int
     index: IndexNested
     job: JobMinimal | None
-    ml: MLModelRelease | None
     ready: bool
     reference: ReferenceNested
     sample: AnalysisSample

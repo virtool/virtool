@@ -8,7 +8,6 @@ from virtool.analyses.data import AnalysisData
 from virtool.blast.data import BLASTData
 from virtool.caches.data import CachesData
 from virtool.config import Config
-from virtool.data.http import HTTPClient
 from virtool.groups.data import GroupsData
 from virtool.health.data import HealthData
 from virtool.history.data import HistoryData
@@ -16,7 +15,6 @@ from virtool.hmm.data import HmmsData
 from virtool.indexes.data import IndexData
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
-from virtool.ml.data import MLData
 from virtool.mongo.core import Mongo
 from virtool.otus.data import OTUData
 from virtool.references.data import ReferencesData
@@ -45,7 +43,6 @@ class DataLayer:
     index: IndexData
     jobs: JobsData
     labels: LabelsData
-    ml: "MLData"
     otus: OTUData
     references: ReferencesData
     samples: SamplesData
@@ -65,7 +62,6 @@ class DataLayer:
         self.references.bind_layer(self)
         self.sessions.bind_layer(self)
         self.account.bind_layer(self)
-        self.ml.bind_layer(self)
 
 
 def create_data_layer(
@@ -84,8 +80,6 @@ def create_data_layer(
     :param storage: the storage backend for file operations
     :return: the application data layer
     """
-    http_client = HTTPClient(client)
-
     return DataLayer(
         AccountData(pg),
         AnalysisData(mongo, pg, storage),
@@ -98,7 +92,6 @@ def create_data_layer(
         IndexData(mongo, config, pg, storage),
         JobsData(pg),
         LabelsData(mongo, pg),
-        MLData(http_client, pg, storage),
         OTUData(mongo, pg),
         ReferencesData(mongo, pg, config, client, storage),
         SamplesData(config, mongo, pg, storage),

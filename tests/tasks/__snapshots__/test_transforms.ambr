@@ -63,8 +63,8 @@
         'id': 2,
         'progress': 0,
         'runner_id': None,
-        'step': 'clean_references',
-        'type': 'clean_references',
+        'step': 'clone_reference',
+        'type': 'clone_reference',
       }),
     }),
     dict({

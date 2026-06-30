@@ -707,7 +707,6 @@ class TestDelete:
 
         analysis = await data_layer.analyses.create(
             CreateAnalysisRequest(
-                ml=None,
                 ref_id="test_ref",
                 subtractions=[],
                 workflow=AnalysisWorkflow.nuvs,
