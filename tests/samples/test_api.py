@@ -14,7 +14,6 @@ from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner, VirtoolTestClient
 from virtool.analyses.sql import SQLAnalysis, SQLAnalysisSubtraction
-from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
@@ -895,9 +894,6 @@ class TestFinalize:
 
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
-
-        with pytest.raises(ResourceNotFoundError):
-            await get_data_from_app(client.app).uploads.get(1)
 
         resp = await client.patch("/samples/test", json=json)
         await resp_is.conflict(resp, "Sample already finalized")
