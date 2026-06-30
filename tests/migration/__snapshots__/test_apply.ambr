@@ -512,5 +512,12 @@
       'name': 'drop job_subtractions table',
       'revision': '2b53ffa573a3',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 74,
+      'name': 'replace uploadtype enum with text check',
+      'revision': 'ed265b939a84',
+    }),
   ])
 # ---

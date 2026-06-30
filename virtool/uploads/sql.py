@@ -22,13 +22,16 @@ class UploadType(str, SQLEnum):
     subtraction = "subtraction"
 
 
+_ALLOWED_UPLOAD_TYPES = ", ".join(repr(value) for value in UploadType.to_list())
+
+
 class SQLUpload(Base):
     """SQL table to store all new uploads"""
 
     __tablename__ = "uploads"
     __table_args__ = (
         CheckConstraint(
-            "type IN ('reference', 'reads', 'subtraction')",
+            f"type IN ({_ALLOWED_UPLOAD_TYPES})",
             name="ck_uploads_type",
         ),
     )
