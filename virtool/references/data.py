@@ -650,6 +650,7 @@ class ReferencesData(DataLayerDomain):
 
         document = await virtool.indexes.db.create(
             self._mongo,
+            self._pg,
             ref_id,
             user_id,
             job.id,
