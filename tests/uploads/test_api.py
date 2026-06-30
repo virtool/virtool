@@ -86,12 +86,12 @@ class TestUpload:
         assert await resp.json() == [
             {
                 "ctx": {
-                    "enum_values": ["hmm", "reference", "reads", "subtraction"],
+                    "enum_values": ["reference", "reads", "subtraction"],
                 },
                 "in": "query string",
                 "loc": ["type"],
                 "msg": (
-                    "value is not a valid enumeration member; permitted: 'hmm', "
+                    "value is not a valid enumeration member; permitted: "
                     "'reference', 'reads', 'subtraction'"
                 ),
                 "type": "type_error.enum",

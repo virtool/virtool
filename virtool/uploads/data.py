@@ -35,7 +35,7 @@ def serialize(upload: SQLUpload) -> dict:
         "reserved": upload.reserved,
         "size": upload.size,
         "space": upload.space,
-        "type": upload.type.value if upload.type is not None else None,
+        "type": upload.type,
         "uploaded_at": upload.uploaded_at,
         "user": {"id": upload.user_id},
     }

@@ -13,6 +13,7 @@ from sqlalchemy import (
     String,
     Table,
     func,
+    literal_column,
     select,
     update,
 )
@@ -25,7 +26,7 @@ from virtool.jobs.pg import SQLJob
 from virtool.migration import MigrationContext
 from virtool.pg.base import Base
 from virtool.subtractions.pg import SQLSubtraction, SubtractionType
-from virtool.uploads.sql import SQLUpload, UploadType
+from virtool.uploads.sql import SQLUpload
 from virtool.users.pg import SQLUser
 from virtool.users.utils import UNKNOWN_USER_HANDLE
 
@@ -387,7 +388,11 @@ async def _reconstruct_removed_upload(
                 removed_at=created_at,
                 reserved=False,
                 size=size,
-                type=UploadType.subtraction,
+                # This revision runs before the enum-to-text migration, so
+                # ``uploads.type`` is still the legacy ``uploadtype`` enum.
+                # An untyped SQL literal lets Postgres coerce it to whichever
+                # column type is present (enum here, text after migration).
+                type=literal_column("'subtraction'"),
                 user_id=user_id,
                 created_at=created_at,
                 uploaded_at=created_at,
