@@ -41,7 +41,6 @@ async def test_find(
     fake: DataFaker,
     mocker: MockerFixture,
     mongo: Mongo,
-    insert_subtractions,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
@@ -55,6 +54,15 @@ async def test_find(
     user_2 = await fake.users.create()
 
     job = await fake.jobs.create(user=user_2)
+
+    upload = await fake.uploads.create(user=user_1)
+    malus = await fake.subtractions.create(
+        user=user_1,
+        upload=upload,
+        name="Malus domestica",
+        upload_files=False,
+        finalized=False,
+    )
 
     await asyncio.gather(
         mongo.references.insert_many(
@@ -77,7 +85,6 @@ async def test_find(
                 "labels": [],
             },
         ),
-        insert_subtractions(("foo", "Malus domestica")),
     )
 
     for document in [
@@ -106,7 +113,7 @@ async def test_find(
             "sample": {"id": "test"},
             "reference": {"id": "baz"},
             "results": {"hits": []},
-            "subtractions": ["foo"],
+            "subtractions": [malus.id],
             "foobar": True,
         },
         {
@@ -148,7 +155,6 @@ async def test_get(
     error: str | None,
     fake: DataFaker,
     mongo: Mongo,
-    insert_subtractions,
     pg: AsyncEngine,
     resp_is: RespIs,
     snapshot: SnapshotAssertion,
@@ -162,11 +168,16 @@ async def test_get(
 
     job = await fake.jobs.create(user=user_2, state=JobState.SUCCEEDED)
 
-    await asyncio.gather(
-        insert_subtractions(("plum", "Plum"), ("apple", "Apple")),
-        mongo.references.insert_one(
-            {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
-        ),
+    upload = await fake.uploads.create(user=user_1)
+    plum = await fake.subtractions.create(
+        user=user_1, upload=upload, name="Plum", upload_files=False, finalized=False
+    )
+    apple = await fake.subtractions.create(
+        user=user_1, upload=upload, name="Apple", upload_files=False, finalized=False
+    )
+
+    await mongo.references.insert_one(
+        {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
     )
 
     if error != "404_sample":
@@ -179,7 +190,7 @@ async def test_get(
                 "group_read": True,
                 "group_write": True,
                 "labels": [],
-                "subtractions": ["apple", "plum"],
+                "subtractions": [apple.id, plum.id],
                 "user": {"id": user_1.id},
             },
         )
@@ -197,7 +208,7 @@ async def test_get(
                 "reference": {"id": "baz"},
                 "results": {"hits": []},
                 "sample": {"id": "baz"},
-                "subtractions": ["plum", "apple"],
+                "subtractions": [plum.id, apple.id],
                 "user": {"id": user_1.id},
                 "workflow": "pathoscope",
             },
@@ -446,7 +457,6 @@ async def test_get_304(
     ready: bool,
     mongo: Mongo,
     fake: DataFaker,
-    insert_subtractions,
     pg,
     spawn_client: ClientSpawner,
     static_time,
@@ -455,8 +465,15 @@ async def test_get_304(
 
     user = await fake.users.create()
 
+    upload = await fake.uploads.create(user=user)
+    plum = await fake.subtractions.create(
+        user=user, upload=upload, name="Plum", upload_files=False, finalized=False
+    )
+    apple = await fake.subtractions.create(
+        user=user, upload=upload, name="Apple", upload_files=False, finalized=False
+    )
+
     await asyncio.gather(
-        insert_subtractions(("plum", "Plum"), ("apple", "Apple")),
         mongo.references.insert_one(
             {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
         ),
@@ -469,7 +486,7 @@ async def test_get_304(
                 "group_read": True,
                 "group_write": True,
                 "labels": [],
-                "subtractions": ["apple", "plum"],
+                "subtractions": [apple.id, plum.id],
                 "user": {"id": user.id},
             },
         ),
@@ -488,7 +505,7 @@ async def test_get_304(
             "results": {"hits": []},
             "sample": {"id": "baz"},
             "reference": {"id": "baz"},
-            "subtractions": ["plum", "apple"],
+            "subtractions": [plum.id, apple.id],
             "user": {"id": user.id},
         },
     )
@@ -508,7 +525,6 @@ async def test_remove(
     error: str | None,
     fake: DataFaker,
     mongo: Mongo,
-    insert_subtractions,
     pg: AsyncEngine,
     resp_is,
     spawn_client: ClientSpawner,
@@ -518,6 +534,14 @@ async def test_remove(
 
     user = await fake.users.create()
 
+    upload = await fake.uploads.create(user=user)
+    plum = await fake.subtractions.create(
+        user=user, upload=upload, name="Plum", upload_files=False, finalized=False
+    )
+    await fake.subtractions.create(
+        user=user, upload=upload, name="Apple", upload_files=False, finalized=False
+    )
+
     await asyncio.gather(
         mongo.indexes.insert_one(
             {"_id": "bar", "version": 3, "reference": {"id": "baz"}},
@@ -525,7 +549,6 @@ async def test_remove(
         mongo.references.insert_one(
             {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
         ),
-        insert_subtractions(("plum", "Plum"), ("apple", "Apple")),
     )
 
     if error != "404_sample":
@@ -565,7 +588,7 @@ async def test_remove(
                 "ready": error != "409",
                 "reference": {"id": "baz"},
                 "sample": {"id": "baz", "name": "Baz"},
-                "subtractions": ["plum"],
+                "subtractions": [plum.id],
                 "user": {"id": user.id},
                 "workflow": "pathoscope",
                 "results": {"hits": []},

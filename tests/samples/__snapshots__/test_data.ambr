@@ -14,7 +14,7 @@
     'is_legacy': False,
     'isolate': '',
     'job': dict({
-      'id': 1,
+      'id': 2,
     }),
     'labels': list([
       1,
@@ -65,7 +65,7 @@
     'is_legacy': False,
     'isolate': '',
     'job': dict({
-      'id': 1,
+      'id': 2,
     }),
     'labels': list([
       1,
@@ -116,7 +116,7 @@
     'is_legacy': False,
     'isolate': '',
     'job': dict({
-      'id': 1,
+      'id': 2,
     }),
     'labels': list([
       1,
@@ -225,7 +225,7 @@
         'size': 15,
         'upload': dict({
           'created_at': 'not_approximately_now_datetime',
-          'id': 1,
+          'id': 2,
           'name': 'test.fq.gz',
           'ready': True,
           'removed': True,
@@ -256,7 +256,7 @@
     'uploads': list([
       dict({
         'created_at': 'not_approximately_now_datetime',
-        'id': 1,
+        'id': 2,
         'name': 'test.fq.gz',
         'ready': True,
         'removed': True,
