@@ -164,6 +164,82 @@ async def test_create_dual_writes_index_assignment(
     assert rows["other_ref_unbuilt"] == (None, None)
 
 
+async def test_create_rolls_back_both_stores_on_failure(
+    mocker: MockerFixture,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    fake,
+    static_time,
+):
+    """A failure during the dual-write rolls back the Mongo writes already issued
+    inside the transaction, leaving neither store with the index assignment.
+    """
+    user = await fake.users.create()
+
+    await asyncio.gather(
+        mongo.references.insert_one({"_id": "built_ref"}),
+        mongo.history.insert_one(
+            {
+                "_id": "ref_unbuilt",
+                "index": {"id": "unbuilt", "version": "unbuilt"},
+                "reference": {"id": "built_ref"},
+            },
+        ),
+    )
+
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLLegacyHistory(
+                legacy_id="ref_unbuilt",
+                created_at=static_time.datetime,
+                description="",
+                method_name="create_otu",
+                user_id=user.id,
+                otu="ref_unbuilt",
+                otu_name="ref_unbuilt",
+                otu_version="0",
+                reference="built_ref",
+                index=None,
+                index_version=None,
+            ),
+        )
+        await session.commit()
+
+    mocker.patch("virtool.references.db.get_manifest", make_mocked_coro("manifest"))
+    mocker.patch(
+        "virtool.indexes.db.update",
+        side_effect=RuntimeError("postgres write failed"),
+    )
+
+    with pytest.raises(RuntimeError, match="postgres write failed"):
+        await virtool.indexes.db.create(
+            mongo,
+            pg,
+            "built_ref",
+            user.id,
+            1,
+            index_id="new_index",
+        )
+
+    assert await mongo.indexes.find_one("new_index") is None
+    assert (await mongo.history.find_one("ref_unbuilt"))["index"] == {
+        "id": "unbuilt",
+        "version": "unbuilt",
+    }
+
+    async with AsyncSession(pg) as session:
+        row = (
+            await session.execute(
+                select(SQLLegacyHistory).where(
+                    SQLLegacyHistory.legacy_id == "ref_unbuilt",
+                ),
+            )
+        ).scalar_one()
+
+    assert row.index is None
+    assert row.index_version is None
+
+
 @pytest.mark.parametrize("exists", [True, False])
 @pytest.mark.parametrize("has_ref", [True, False])
 async def test_get_current_id_and_version(exists, has_ref, test_indexes, mongo):
