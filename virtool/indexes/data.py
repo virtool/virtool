@@ -59,21 +59,20 @@ logger = get_logger("indexes")
 
 
 def _get_index_build_type(document: dict) -> str:
-    job = document["job"] if "job" in document else None
-    task = document["task"]
+    job_id = document["job"]["id"] if document.get("job") is not None else None
+    task_id = document["task"]["id"] if document["task"] is not None else None
 
-    if job is not None:
-        job["id"]
-
-    if task is not None:
-        task["id"]
-
-    if (job is None) == (task is None):
+    if job_id is None and task_id is None:
         raise ResourceConflictError(
             "Index must be backed by exactly one job or task build"
         )
 
-    return "job" if job is not None else "task"
+    if job_id is not None and task_id is not None:
+        raise ResourceConflictError(
+            "Index must be backed by exactly one job or task build"
+        )
+
+    return "job" if job_id is not None else "task"
 
 
 def _get_index_file_names_for_build_type(document: dict) -> tuple[str, ...]:
