@@ -1,9 +1,9 @@
 from sqlalchemy import (
     BigInteger,
     Boolean,
+    CheckConstraint,
     Column,
     DateTime,
-    Enum,
     ForeignKey,
     Integer,
     String,
@@ -17,7 +17,6 @@ from virtool.pg.utils import SQLEnum
 class UploadType(str, SQLEnum):
     """Enumerated type for possible upload types"""
 
-    hmm = "hmm"
     reference = "reference"
     reads = "reads"
     subtraction = "subtraction"
@@ -27,6 +26,12 @@ class SQLUpload(Base):
     """SQL table to store all new uploads"""
 
     __tablename__ = "uploads"
+    __table_args__ = (
+        CheckConstraint(
+            "type IN ('reference', 'reads', 'subtraction')",
+            name="ck_uploads_type",
+        ),
+    )
 
     id: Column = Column(Integer, primary_key=True)
     created_at: Column = Column(DateTime)
@@ -39,6 +44,6 @@ class SQLUpload(Base):
     reserved: Column = Column(Boolean, default=False, nullable=False)
     size: Column = Column(BigInteger)
     space: Mapped[int] = Column(Integer, ForeignKey("spaces.id"), nullable=True)
-    type: Column = Column(Enum(UploadType))
+    type: Column = Column(String)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     uploaded_at: Column = Column(DateTime)
