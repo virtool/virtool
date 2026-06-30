@@ -3,11 +3,13 @@ import asyncio
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 from pytest_mock import MockerFixture
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 import virtool.indexes.db
 from tests.fixtures.client import ClientSpawner
+from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.db import (
     attach_files,
     get_current_id_and_version,
@@ -24,6 +26,7 @@ async def test_create(
     index_id: str | None,
     mocker: MockerFixture,
     mongo: Mongo,
+    pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     static_time,
 ):
@@ -43,6 +46,7 @@ async def test_create(
     assert (
         await virtool.indexes.db.create(
             mongo,
+            pg,
             "foo",
             "test",
             "bar",
@@ -51,6 +55,113 @@ async def test_create(
         == snapshot
     )
     assert await mongo.history.find_one("abc") == snapshot
+
+
+async def test_create_dual_writes_index_assignment(
+    mocker: MockerFixture,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    fake,
+    static_time,
+):
+    """Building an index assigns previously-unbuilt changes for the reference to the
+    new index in both Mongo and Postgres, leaving other references and already-built
+    changes untouched.
+    """
+    user = await fake.users.create()
+
+    await asyncio.gather(
+        mongo.references.insert_one({"_id": "built_ref"}),
+        mongo.indexes.insert_one(
+            {
+                "_id": "prior_index",
+                "reference": {"id": "built_ref"},
+                "version": 0,
+                "ready": True,
+            },
+        ),
+        mongo.history.insert_many(
+            [
+                {
+                    "_id": "ref_unbuilt",
+                    "index": {"id": "unbuilt", "version": "unbuilt"},
+                    "reference": {"id": "built_ref"},
+                },
+                {
+                    "_id": "ref_already_built",
+                    "index": {"id": "prior_index", "version": 0},
+                    "reference": {"id": "built_ref"},
+                },
+                {
+                    "_id": "other_ref_unbuilt",
+                    "index": {"id": "unbuilt", "version": "unbuilt"},
+                    "reference": {"id": "other_ref"},
+                },
+            ],
+            session=None,
+        ),
+    )
+
+    def legacy_row(
+        legacy_id: str, reference: str, index: str | None
+    ) -> SQLLegacyHistory:
+        return SQLLegacyHistory(
+            legacy_id=legacy_id,
+            created_at=static_time.datetime,
+            description="",
+            method_name="create_otu",
+            user_id=user.id,
+            otu=legacy_id,
+            otu_name=legacy_id,
+            otu_version="0",
+            reference=reference,
+            index=index,
+            index_version="0" if index else None,
+        )
+
+    async with AsyncSession(pg) as session:
+        session.add_all(
+            [
+                legacy_row("ref_unbuilt", "built_ref", None),
+                legacy_row("ref_already_built", "built_ref", "prior_index"),
+                legacy_row("other_ref_unbuilt", "other_ref", None),
+            ],
+        )
+        await session.commit()
+
+    mocker.patch("virtool.references.db.get_manifest", make_mocked_coro("manifest"))
+
+    await virtool.indexes.db.create(
+        mongo,
+        pg,
+        "built_ref",
+        user.id,
+        1,
+        index_id="new_index",
+    )
+
+    assert (await mongo.history.find_one("ref_unbuilt"))["index"] == {
+        "id": "new_index",
+        "version": 1,
+    }
+    assert (await mongo.history.find_one("ref_already_built"))["index"] == {
+        "id": "prior_index",
+        "version": 0,
+    }
+    assert (await mongo.history.find_one("other_ref_unbuilt"))["index"] == {
+        "id": "unbuilt",
+        "version": "unbuilt",
+    }
+
+    async with AsyncSession(pg) as session:
+        rows = {
+            row.legacy_id: (row.index, row.index_version)
+            for row in (await session.execute(select(SQLLegacyHistory))).scalars()
+        }
+
+    assert rows["ref_unbuilt"] == ("new_index", "1")
+    assert rows["ref_already_built"] == ("prior_index", "0")
+    assert rows["other_ref_unbuilt"] == (None, None)
 
 
 @pytest.mark.parametrize("exists", [True, False])
