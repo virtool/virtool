@@ -391,9 +391,13 @@ async def test_download_otus_json(
     with gzip.open(otus_json_path, "rt") as f:
         expected = json.load(f)
 
-    m_get_patched_otus = mocker.patch(
-        "virtool.indexes.db.get_patched_otus",
-        make_mocked_coro(expected),
+    async def iter_patched_otus(*_args):
+        for otu in expected:
+            yield otu
+
+    m_iter_patched_otus = mocker.patch(
+        "virtool.indexes.db.iter_patched_otus",
+        side_effect=iter_patched_otus,
     )
 
     client = await spawn_job_client(authenticated=True)
@@ -420,7 +424,7 @@ async def test_download_otus_json(
     assert expected == result
 
     if not file_exists:
-        m_get_patched_otus.assert_called_with(
+        m_iter_patched_otus.assert_called_with(
             get_mongo_from_app(client.app),
             client.app["pg"],
             manifest,

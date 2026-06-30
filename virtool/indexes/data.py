@@ -35,7 +35,11 @@ from virtool.indexes.db import (
 from virtool.indexes.models import Index, IndexFile, IndexMinimal, IndexSearchResult
 from virtool.indexes.sql import SQLIndexFile
 from virtool.indexes.transforms import attach_index_build, attach_index_builds
-from virtool.indexes.utils import compose_index_file_key, compose_index_prefix
+from virtool.indexes.utils import (
+    compose_index_file_key,
+    compose_index_prefix,
+    iter_compressed_reference_ndjson,
+)
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
@@ -248,11 +252,14 @@ class IndexData:
         try:
             size = await self._storage.size(key)
         except StorageKeyNotFoundError:
-            patched_otus = await virtool.indexes.db.get_patched_otus(
-                self._mongo,
-                self._pg,
-                index["manifest"],
-            )
+            patched_otus = [
+                otu
+                async for otu in virtool.indexes.db.iter_patched_otus(
+                    self._mongo,
+                    self._pg,
+                    index["manifest"],
+                )
+            ]
 
             compressed = await asyncio.to_thread(
                 gzip.compress, dump_bytes(patched_otus)
@@ -374,6 +381,66 @@ class IndexData:
 
         await wait_for_checks(
             check_legacy_index_files_uploaded(results, data_type),
+        )
+
+        async with self._mongo.create_session() as session:
+            await update_last_indexed_versions(self._mongo, ref_id, session)
+
+            await self._mongo.indexes.update_one(
+                {"_id": index_id},
+                {"$set": {"ready": True}},
+                session=session,
+            )
+
+        return await self.get(index_id)
+
+    @emits(Operation.UPDATE)
+    async def generate_reference_file(self, index_id: str) -> Index:
+        """Generate the task-backed reference file and mark the index ready."""
+        index = await self._mongo.indexes.find_one(
+            {"_id": index_id},
+            ["manifest", "reference", "job", "task"],
+        )
+
+        if index is None:
+            raise ResourceNotFoundError()
+
+        if _get_index_build_type(index) != "task":
+            raise ResourceConflictError("Index must be backed by a task build")
+
+        try:
+            ref_id = index["reference"]["id"]
+        except KeyError:
+            raise ResourceError("Could not find index reference id")
+
+        reference = await self._mongo.references.find_one(
+            {"_id": ref_id},
+            ["data_type", "name"],
+        )
+
+        if reference is None:
+            raise ResourceNotFoundError()
+
+        reference = ReferenceNested(**reference).dict()
+        file_name = TASK_INDEX_FILE_NAMES[0]
+
+        patched_otus = virtool.indexes.db.iter_patched_otus(
+            self._mongo,
+            self._pg,
+            index["manifest"],
+        )
+
+        size = await self._storage.write(
+            compose_index_file_key(index_id, file_name),
+            iter_compressed_reference_ndjson(reference, patched_otus),
+        )
+
+        await virtool.indexes.db.upsert_index_file(
+            self._pg,
+            index_id,
+            "ndjson",
+            file_name,
+            size,
         )
 
         async with self._mongo.create_session() as session:

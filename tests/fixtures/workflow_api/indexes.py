@@ -18,7 +18,8 @@ from virtool.workflow.pytest_plugin.data import WorkflowData
 READY_INDEX_FILE_NAMES = LEGACY_INDEX_FILE_NAMES
 
 REFERENCE_NDJSON = gzip.compress(
-    b'{"_id":"v2_otu","isolates":[{"id":"v2_isolate","source_type":"isolate",'
+    b'{"type":"reference","id":"hxn167","data_type":"genome","name":"Plant Viruses"}\n'
+    b'{"type":"otu","_id":"v2_otu","isolates":[{"id":"v2_isolate","source_type":"isolate",'
     b'"source_name":"v2","default":true,"sequences":[{"_id":"v2_sequence",'
     b'"sequence":"ACGTAC"}]}]}\n',
 )

@@ -112,6 +112,7 @@
     'reference': dict({
       'id': 'bar',
     }),
+    'task': None,
     'user': dict({
       'id': 1,
     }),

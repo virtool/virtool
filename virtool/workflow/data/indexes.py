@@ -108,7 +108,18 @@ class ReferenceNDJSONSource(OTUSource):
         async with aiofiles.open(self.path) as f:
             while line := await f.readline():
                 if line.strip():
-                    yield json.loads(line)
+                    record = json.loads(line)
+
+                    if record["type"] == "reference":
+                        continue
+
+                    if record["type"] == "otu":
+                        yield record
+                        continue
+
+                    raise ValueError(
+                        f"Unsupported reference NDJSON type: {record['type']}",
+                    )
 
 
 class WFNewIndex:

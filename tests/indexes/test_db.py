@@ -3,6 +3,7 @@ import asyncio
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 from pytest_mock import MockerFixture
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
@@ -12,8 +13,9 @@ from virtool.indexes.db import (
     attach_files,
     get_current_id_and_version,
     get_next_version,
-    get_patched_otus,
+    iter_patched_otus,
     update_last_indexed_versions,
+    upsert_index_file,
 )
 from virtool.indexes.sql import SQLIndexFile
 from virtool.mongo.core import Mongo
@@ -88,27 +90,295 @@ async def test_get_next_version(empty, has_ref, test_indexes, mongo):
     assert await get_next_version(mongo, "hxn167" if has_ref else "foobar") == expected
 
 
-async def test_get_patched_otus(mocker: MockerFixture, mongo: Mongo):
+async def test_iter_patched_otus_starts_when_consumed(
+    mocker: MockerFixture,
+    mongo: Mongo,
+):
+    async def patch_to_version(_mongo, _pg, otu_id, version):
+        return None, {"_id": otu_id, "version": version}, None
+
     m = mocker.patch(
         "virtool.history.db.patch_to_version",
-        make_mocked_coro((None, {"_id": "foo"}, None)),
+        side_effect=patch_to_version,
     )
 
     pg = mocker.Mock()
+    stream = iter_patched_otus(mongo, pg, {"foo": 2, "bar": 10})
 
-    manifest = {"foo": 2, "bar": 10, "baz": 4}
+    assert m.call_count == 0
 
-    patched_otus = await get_patched_otus(mongo, pg, manifest)
+    assert await anext(stream) == {"_id": "foo", "version": 2}
+    assert m.call_args_list[0] == mocker.call(mongo, pg, "foo", 2)
 
-    assert list(patched_otus) == [{"_id": "foo"}, {"_id": "foo"}, {"_id": "foo"}]
+    assert await anext(stream) == {"_id": "bar", "version": 10}
+    assert m.call_args_list[-1] == mocker.call(mongo, pg, "bar", 10)
 
-    m.assert_has_calls(
-        [
-            mocker.call(mongo, pg, "foo", 2),
-            mocker.call(mongo, pg, "bar", 10),
-            mocker.call(mongo, pg, "baz", 4),
-        ],
+    with pytest.raises(StopAsyncIteration):
+        await anext(stream)
+
+    assert m.call_count == 2
+
+
+async def test_iter_patched_otus_preserves_order_when_patches_finish_out_of_order(
+    mocker: MockerFixture,
+    mongo: Mongo,
+):
+    gates = {
+        "slow": asyncio.Event(),
+        "fast": asyncio.Event(),
+    }
+    all_started = asyncio.Event()
+    started = []
+
+    async def patch_to_version(_mongo, _pg, otu_id, version):
+        started.append(otu_id)
+
+        if len(started) == 2:
+            all_started.set()
+
+        await gates[otu_id].wait()
+
+        return None, {"_id": otu_id, "version": version}, None
+
+    mocker.patch(
+        "virtool.history.db.patch_to_version",
+        side_effect=patch_to_version,
     )
+
+    stream = iter_patched_otus(
+        mongo,
+        mocker.Mock(),
+        {"slow": 1, "fast": 2},
+    )
+
+    first = asyncio.create_task(anext(stream))
+
+    await asyncio.wait_for(all_started.wait(), timeout=1)
+
+    gates["fast"].set()
+    await asyncio.sleep(0)
+
+    assert first.done() is False
+
+    gates["slow"].set()
+
+    assert await first == {"_id": "slow", "version": 1}
+    assert await anext(stream) == {"_id": "fast", "version": 2}
+
+    with pytest.raises(StopAsyncIteration):
+        await anext(stream)
+
+
+async def test_iter_patched_otus_limits_concurrent_patches(
+    mocker: MockerFixture,
+    mongo: Mongo,
+):
+    manifest = {f"otu_{i}": i for i in range(26)}
+    gates = {otu_id: asyncio.Event() for otu_id in manifest}
+    initial_patches_started = asyncio.Event()
+    next_patch_started = asyncio.Event()
+    started = []
+
+    async def patch_to_version(_mongo, _pg, otu_id, version):
+        started.append(otu_id)
+
+        if len(started) == 25:
+            initial_patches_started.set()
+
+        if len(started) == 26:
+            next_patch_started.set()
+
+        await gates[otu_id].wait()
+
+        return None, {"_id": otu_id, "version": version}, None
+
+    mocker.patch(
+        "virtool.history.db.patch_to_version",
+        side_effect=patch_to_version,
+    )
+
+    stream = iter_patched_otus(
+        mongo,
+        mocker.Mock(),
+        manifest,
+    )
+
+    first = asyncio.create_task(anext(stream))
+
+    await asyncio.wait_for(initial_patches_started.wait(), timeout=1)
+
+    assert started == [f"otu_{i}" for i in range(25)]
+
+    gates["otu_24"].set()
+    await asyncio.wait_for(next_patch_started.wait(), timeout=1)
+
+    assert started == [f"otu_{i}" for i in range(26)]
+
+    gates["otu_0"].set()
+
+    assert await first == {"_id": "otu_0", "version": 0}
+
+    await stream.aclose()
+
+
+async def test_iter_patched_otus_limits_scheduled_lookahead(
+    mocker: MockerFixture,
+    mongo: Mongo,
+):
+    manifest = {f"otu_{i}": i for i in range(101)}
+    gates = {otu_id: asyncio.Event() for otu_id in manifest}
+    started_25 = asyncio.Event()
+    started_100 = asyncio.Event()
+    started_101 = asyncio.Event()
+    started = []
+
+    async def patch_to_version(_mongo, _pg, otu_id, version):
+        started.append(otu_id)
+
+        if len(started) == 25:
+            started_25.set()
+
+        if len(started) == 100:
+            started_100.set()
+
+        if len(started) == 101:
+            started_101.set()
+
+        await gates[otu_id].wait()
+
+        return None, {"_id": otu_id, "version": version}, None
+
+    mocker.patch(
+        "virtool.history.db.patch_to_version",
+        side_effect=patch_to_version,
+    )
+
+    stream = iter_patched_otus(
+        mongo,
+        mocker.Mock(),
+        manifest,
+    )
+
+    first = asyncio.create_task(anext(stream))
+
+    await asyncio.wait_for(started_25.wait(), timeout=1)
+
+    assert started == [f"otu_{i}" for i in range(25)]
+
+    async def release_started_otus_until(target_count: int) -> None:
+        next_to_release = 1
+
+        while len(started) < target_count:
+            for i in range(next_to_release, len(started)):
+                gates[f"otu_{i}"].set()
+
+            next_to_release = len(started)
+            await asyncio.sleep(0)
+
+    await asyncio.wait_for(release_started_otus_until(100), timeout=1)
+    await asyncio.wait_for(started_100.wait(), timeout=1)
+
+    for _ in range(3):
+        await asyncio.sleep(0)
+
+    assert started == [f"otu_{i}" for i in range(100)]
+    assert started_101.is_set() is False
+
+    gates["otu_0"].set()
+
+    assert await first == {"_id": "otu_0", "version": 0}
+
+    second = asyncio.create_task(anext(stream))
+
+    await asyncio.wait_for(started_101.wait(), timeout=1)
+
+    assert await second == {"_id": "otu_1", "version": 1}
+
+    await stream.aclose()
+
+
+async def test_upsert_index_file_creates_row(pg: AsyncEngine):
+    async with AsyncSession(pg) as session:
+        assert (
+            await session.execute(
+                select(SQLIndexFile).filter_by(
+                    index="foo",
+                    name="reference.ndjson.gz",
+                ),
+            )
+        ).scalar_one_or_none() is None
+
+    assert await upsert_index_file(
+        pg,
+        "foo",
+        "ndjson",
+        "reference.ndjson.gz",
+        9000,
+    ) == {
+        "id": 1,
+        "index": "foo",
+        "name": "reference.ndjson.gz",
+        "size": 9000,
+        "type": "ndjson",
+    }
+
+    async with AsyncSession(pg) as session:
+        row = (
+            await session.execute(
+                select(SQLIndexFile).filter_by(
+                    index="foo",
+                    name="reference.ndjson.gz",
+                ),
+            )
+        ).scalar_one()
+
+    assert row.to_dict() == {
+        "id": 1,
+        "index": "foo",
+        "name": "reference.ndjson.gz",
+        "size": 9000,
+        "type": "ndjson",
+    }
+
+
+async def test_upsert_index_file_updates_existing_row(pg: AsyncEngine):
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLIndexFile(
+                index="foo",
+                name="reference.ndjson.gz",
+                size=1,
+                type="json",
+            ),
+        )
+        await session.commit()
+
+    assert await upsert_index_file(
+        pg,
+        "foo",
+        "ndjson",
+        "reference.ndjson.gz",
+        9000,
+    ) == {
+        "id": 1,
+        "index": "foo",
+        "name": "reference.ndjson.gz",
+        "size": 9000,
+        "type": "ndjson",
+    }
+
+    async with AsyncSession(pg) as session:
+        rows = (
+            (
+                await session.execute(
+                    select(SQLIndexFile).filter_by(index="foo"),
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+    assert len(rows) == 1
 
 
 async def test_update_last_indexed_versions(

@@ -79,6 +79,7 @@ class TestIndex:
         }
         assert otus == [
             {
+                "type": "otu",
                 "_id": "v2_otu",
                 "isolates": [
                     {
