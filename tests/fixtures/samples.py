@@ -39,12 +39,12 @@ async def mock_samples(fake: DataFaker, mock_sample, static_time):
             **mock_sample,
             "user": {"id": user_2.id},
             "_id": "foo",
-            "created_at": arrow.get(static_time.datetime).shift(hours=1).datetime,
+            "created_at": arrow.get(static_time.datetime).shift(hours=1).naive,
         },
         {
             **mock_sample,
             "user": {"id": user_3.id},
             "_id": "bar",
-            "created_at": arrow.get(static_time.datetime).shift(hours=2).datetime,
+            "created_at": arrow.get(static_time.datetime).shift(hours=2).naive,
         },
     ]

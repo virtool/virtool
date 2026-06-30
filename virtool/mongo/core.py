@@ -14,6 +14,31 @@ from pymongo.errors import DuplicateKeyError
 from virtool.mongo.identifier import AbstractIdProvider
 from virtool.mongo.utils import id_exists
 from virtool.types import Document, Projection
+from virtool.utils import ensure_naive_utc
+
+
+def scrub_naive_utc(value: Any) -> Any:
+    """Recursively enforce the naive-UTC datetime invariant on a value to be written.
+
+    Walks nested documents, lists, and tuples, applying :func:`ensure_naive_utc`
+    to every datetime encountered. This covers both plain documents and update
+    specs whose datetimes are nested under operators (e.g. ``$set``). The value is
+    returned unchanged; aware datetimes fail loudly rather than being coerced.
+
+    :param value: the document, update spec, or sub-value to validate
+    :return: the value unchanged
+    :raises ValueError: if any datetime is aware
+    """
+    if isinstance(value, dict):
+        for item in value.values():
+            scrub_naive_utc(item)
+    elif isinstance(value, (list, tuple)):
+        for item in value:
+            scrub_naive_utc(item)
+    else:
+        ensure_naive_utc(value)
+
+    return value
 
 
 class Collection:
@@ -41,9 +66,39 @@ class Collection:
         self.find_one = self._collection.find_one
         self.find = self._collection.find
         self.rename = self._collection.rename
-        self.replace_one = self._collection.replace_one
-        self.update_many = self._collection.update_many
-        self.update_one = self._collection.update_one
+
+    async def replace_one(
+        self,
+        filter: dict,
+        replacement: Document,
+        *args: Any,
+        **kwargs: Any,
+    ):
+        """Replace a single document, enforcing the naive-UTC datetime invariant."""
+        return await self._collection.replace_one(
+            filter,
+            scrub_naive_utc(replacement),
+            *args,
+            **kwargs,
+        )
+
+    async def update_one(self, filter: dict, update: dict, *args: Any, **kwargs: Any):
+        """Update a single document, enforcing the naive-UTC datetime invariant."""
+        return await self._collection.update_one(
+            filter,
+            scrub_naive_utc(update),
+            *args,
+            **kwargs,
+        )
+
+    async def update_many(self, filter: dict, update: dict, *args: Any, **kwargs: Any):
+        """Update many documents, enforcing the naive-UTC datetime invariant."""
+        return await self._collection.update_many(
+            filter,
+            scrub_naive_utc(update),
+            *args,
+            **kwargs,
+        )
 
     async def find_one_and_update(
         self,
@@ -65,7 +120,7 @@ class Collection:
         """
         document = await self._collection.find_one_and_update(
             query,
-            update,
+            scrub_naive_utc(update),
             projection=projection,
             return_document=ReturnDocument.AFTER,
             upsert=upsert,
@@ -92,6 +147,8 @@ class Collection:
         :return: the inserted document
 
         """
+        document = scrub_naive_utc(document)
+
         if "_id" in document:
             await self._collection.insert_one(document, session=session)
             inserted = document
@@ -111,7 +168,10 @@ class Collection:
         documents: list[Document],
         session: AsyncIOMotorClientSession,
     ):
-        inserted = await self._bulk_set_document_ids(documents, session=session)
+        inserted = await self._bulk_set_document_ids(
+            [scrub_naive_utc(document) for document in documents],
+            session=session,
+        )
 
         await self._collection.insert_many(inserted, session=session)
 
