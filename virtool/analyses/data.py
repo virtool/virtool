@@ -43,7 +43,6 @@ from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
 from virtool.indexes.transforms import AttachIndexTransform
 from virtool.jobs.transforms import AttachJobTransform
-from virtool.ml.transforms import AttachMLTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_new_id
 from virtool.pg.utils import delete_row, get_row_by_id
@@ -59,6 +58,9 @@ from virtool.utils import base_processor, wait_for_checks
 
 logger = get_logger("analyses")
 
+IIMI_WORKFLOW = "iimi"
+"""Workflow value for iimi analyses, which are hidden from the API ahead of a purge."""
+
 FIND_COLUMNS = (
     SQLAnalysis.id,
     SQLAnalysis.legacy_id,
@@ -71,7 +73,6 @@ FIND_COLUMNS = (
     SQLAnalysis.index,
     SQLAnalysis.user_id,
     SQLAnalysis.job_id,
-    SQLAnalysis.ml_id,
 )
 """The ``SQLAnalysis`` columns selected for list views.
 
@@ -101,7 +102,6 @@ def _row_to_document(row, *, include_results: bool) -> dict:
         "index": {"id": row.index},
         "user": {"id": row.user_id},
         "job": {"id": row.job_id} if row.job_id else None,
-        "ml": row.ml_id,
     }
 
     if include_results:
@@ -155,10 +155,18 @@ class AnalysisData(DataLayerDomain):
         if page > 1:
             skip_count = (page - 1) * per_page
 
-        count_statement = select(func.count()).select_from(SQLAnalysis)
-        statement = select(*FIND_COLUMNS).order_by(
-            SQLAnalysis.created_at.desc(),
-            SQLAnalysis.id.desc(),
+        count_statement = (
+            select(func.count())
+            .select_from(SQLAnalysis)
+            .where(SQLAnalysis.workflow != IIMI_WORKFLOW)
+        )
+        statement = (
+            select(*FIND_COLUMNS)
+            .where(SQLAnalysis.workflow != IIMI_WORKFLOW)
+            .order_by(
+                SQLAnalysis.created_at.desc(),
+                SQLAnalysis.id.desc(),
+            )
         )
 
         if sample_id is not None:
@@ -183,7 +191,6 @@ class AnalysisData(DataLayerDomain):
             [base_processor(d) for d in documents],
             [
                 AttachIndexTransform(self._mongo),
-                AttachMLTransform(self._pg),
                 AttachJobTransform(self._pg),
                 AttachReferenceTransform(self._mongo),
                 AttachAnalysisSubtractionsTransform(self._pg),
@@ -223,7 +230,7 @@ class AnalysisData(DataLayerDomain):
                 )
             ).scalar_one_or_none()
 
-        if row is None:
+        if row is None or row.workflow == IIMI_WORKFLOW:
             raise ResourceNotFoundError()
 
         document = _row_to_document(row, include_results=True)
@@ -243,7 +250,6 @@ class AnalysisData(DataLayerDomain):
         transforms = [
             AttachIndexTransform(self._mongo),
             AttachJobTransform(self._pg),
-            AttachMLTransform(self._pg),
             AttachReferenceTransform(self._mongo),
             AttachAnalysisSubtractionsTransform(self._pg),
             AttachUserTransform(self._pg),
@@ -315,7 +321,6 @@ class AnalysisData(DataLayerDomain):
                         index=index_id,
                         user_id=user_id,
                         job_id=job.id,
-                        ml_id=data.ml,
                     )
                     .returning(SQLAnalysis.id),
                 )

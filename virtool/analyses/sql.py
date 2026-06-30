@@ -56,9 +56,6 @@ class SQLAnalysis(Base):
     index: Mapped[str]
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     job_id: Mapped[int | None] = mapped_column(ForeignKey("jobs.id"), nullable=True)
-    ml_id: Mapped[int | None] = mapped_column(
-        ForeignKey("ml_model_releases.id"), nullable=True
-    )
 
 
 class SQLAnalysisSubtraction(Base):

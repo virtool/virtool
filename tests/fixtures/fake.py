@@ -1,10 +1,6 @@
-from pathlib import Path
-
 import pytest
-from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from virtool.data.http import HTTPClient
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.fake.wrapper import FakerWrapper
@@ -25,8 +21,6 @@ def app(config, data_layer: DataLayer, mongo: Mongo, pg: AsyncEngine):
 @pytest.fixture
 def fake(
     data_layer: DataLayer,
-    example_path: Path,
-    mocker: MockerFixture,
     mongo: Mongo,
     pg: AsyncEngine,
 ):
@@ -43,11 +37,4 @@ def fake(
 
             assert await data_layer.jobs.get(job.id) == job
     """
-    model_bytes = (example_path / "ml/model.tar.gz").read_bytes()
-
-    async def fake_stream(url):
-        yield model_bytes
-
-    mocker.patch.object(HTTPClient, "stream", side_effect=fake_stream)
-
     return DataFaker(data_layer, mongo, pg)

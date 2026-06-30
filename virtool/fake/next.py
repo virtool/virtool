@@ -34,8 +34,6 @@ from virtool.jobs.models import TERMINAL_JOB_STATES, Job, JobState
 from virtool.jobs.pg import SQLJob
 from virtool.jobs.utils import WORKFLOW_NAMES
 from virtool.labels.models import Label
-from virtool.ml.models import MLModel
-from virtool.ml.tasks import MLModelsSyncTask
 from virtool.models.enums import Molecule
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
@@ -46,7 +44,6 @@ from virtool.references.tasks import (
     ReferenceReleasesRefreshTask,
     ReferencesCleanTask,
 )
-from virtool.releases import ReleaseManifestItem
 from virtool.subtractions.models import Subtraction
 from virtool.subtractions.oas import (
     CreateSubtractionRequest,
@@ -134,7 +131,6 @@ class DataFaker:
         self.hmm = HMMFakerDomain(self)
         self.jobs = JobsFakerDomain(self)
         self.labels = LabelsFakerDomain(self)
-        self.ml = MLFakerDomain(self)
         self.otus = OTUsFakerDomain(self)
         self.subtractions = SubtractionFakerDomain(self)
         self.tasks = TasksFakerDomain(self)
@@ -330,43 +326,6 @@ class LabelsFakerDomain(DataFakerDomain):
         )
 
 
-class MLFakerDomain(DataFakerDomain):
-    model = MLModel
-
-    async def populate(self):
-        """Populate the ML model collection with fake data."""
-        return await self._layer.ml.load(
-            {
-                "ml-plant-viruses": [
-                    self.create_release_manifest_item() for _ in range(3)
-                ],
-                "ml-insect-viruses": [
-                    self.create_release_manifest_item() for _ in range(3)
-                ],
-            },
-        )
-
-    def create_release_manifest_item(self) -> ReleaseManifestItem:
-        """Create a fake release manifest item like you would receive from the
-        www.virtool.ca releases endpoints
-
-        """
-        return ReleaseManifestItem(
-            id=self._faker.pyint(),
-            body=self._faker.paragraph(),
-            content_type=self._faker.pystr(),
-            download_url=self._faker.url(),
-            filename=self._faker.pystr(),
-            html_url=self._faker.url(),
-            name=self._faker.pystr(),
-            prerelease=self._faker.pybool(),
-            published_at=self._faker.date_time(
-                end_datetime=datetime.datetime(2025, 11, 1)
-            ),
-            size=self._faker.pyint(),
-        )
-
-
 class OTUsFakerDomain(DataFakerDomain):
     model = OTU
 
@@ -434,7 +393,6 @@ class TasksFakerDomain(DataFakerDomain):
             self._faker.random_element(
                 [
                     ReferenceReleasesRefreshTask,
-                    MLModelsSyncTask,
                     CloneReferenceTask,
                     ReferencesCleanTask,
                 ],
@@ -562,6 +520,7 @@ class SubtractionFakerDomain(DataFakerDomain):
         self,
         user: User,
         upload: Upload,
+        name: str = "foo",
         finalized: bool = True,
         upload_files: bool = True,
     ) -> Subtraction:
@@ -574,12 +533,13 @@ class SubtractionFakerDomain(DataFakerDomain):
 
         :param user the user
         :param upload the fake upload
+        :param name the subtraction name
         :param finalized whether the subtraction should be finalized
         :return: the created subtraction
         """
         subtraction = await self._layer.subtractions.create(
             CreateSubtractionRequest(
-                name="foo",
+                name=name,
                 nickname="bar",
                 upload_id=upload.id,
             ),

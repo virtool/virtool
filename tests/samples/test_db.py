@@ -121,7 +121,6 @@ async def test_recalculate_workflow_tags(
         "nuvs": "ip",
         "workflows": {
             "aodp": "incompatible",
-            "iimi": "none",
             "nuvs": "complete",
             "pathoscope": "complete",
         },
@@ -166,7 +165,6 @@ class TestDeriveWorkflowStates:
         expected_workflow_states = {
             "workflows": {
                 "aodp": "incompatible",
-                "iimi": "none",
                 "nuvs": "none",
                 "pathoscope": "none",
             },
@@ -198,7 +196,6 @@ class TestDeriveWorkflowStates:
         assert derive_workflow_state(documents, library_type) == {
             "workflows": {
                 "aodp": final_workflow_state,
-                "iimi": "incompatible",
                 "nuvs": "incompatible",
                 "pathoscope": "incompatible",
             },

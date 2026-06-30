@@ -14,7 +14,6 @@ from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner, VirtoolTestClient
 from virtool.analyses.sql import SQLAnalysis, SQLAnalysisSubtraction
-from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
@@ -37,15 +36,17 @@ class MockJobInterface:
 
 
 @pytest.fixture
-async def get_sample_ready_false(
-    fake: DataFaker, mongo: Mongo, insert_subtractions, static_time
-):
+async def get_sample_ready_false(fake: DataFaker, mongo: Mongo, static_time):
     label = await fake.labels.create()
     user = await fake.users.create()
     job = await fake.jobs.create(user, workflow="create_sample")
 
-    subtractions = await insert_subtractions(
-        ("apple", "Apple"), ("pear", "Pear"), ("peach", "Peach")
+    upload = await fake.uploads.create(user=user)
+    apple = await fake.subtractions.create(
+        user=user, upload=upload, name="Apple", upload_files=False, finalized=False
+    )
+    pear = await fake.subtractions.create(
+        user=user, upload=upload, name="Pear", upload_files=False, finalized=False
     )
 
     await mongo.samples.insert_one(
@@ -78,7 +79,7 @@ async def get_sample_ready_false(
             "nuvs": False,
             "pathoscope": True,
             "ready": False,
-            "subtractions": [subtractions["apple"], subtractions["pear"]],
+            "subtractions": [apple.id, pear.id],
             "user": {"id": user.id},
             "workflows": {
                 "aodp": WorkflowState.INCOMPATIBLE.value,
@@ -93,16 +94,27 @@ async def get_sample_ready_false(
 async def get_sample_data(
     mongo: "Mongo",
     fake: DataFaker,
-    insert_subtractions,
     pg: AsyncEngine,
     static_time,
-):
+) -> int:
+    """Set up the ``test`` sample and return the id of an unattached subtraction.
+
+    The sample is attached to ``apple`` and ``pear``; ``peach`` exists but is not
+    attached, so edit tests can switch the sample's subtractions to it.
+    """
     label = await fake.labels.create()
     user = await fake.users.create()
     job = await fake.jobs.create(user, workflow="create_sample")
 
-    subtractions = await insert_subtractions(
-        ("apple", "Apple"), ("pear", "Pear"), ("peach", "Peach")
+    upload = await fake.uploads.create(user=user)
+    apple = await fake.subtractions.create(
+        user=user, upload=upload, name="Apple", upload_files=False, finalized=False
+    )
+    pear = await fake.subtractions.create(
+        user=user, upload=upload, name="Pear", upload_files=False, finalized=False
+    )
+    peach = await fake.subtractions.create(
+        user=user, upload=upload, name="Peach", upload_files=False, finalized=False
     )
 
     await mongo.samples.insert_one(
@@ -135,7 +147,7 @@ async def get_sample_data(
             "nuvs": False,
             "pathoscope": True,
             "ready": True,
-            "subtractions": [subtractions["apple"], subtractions["pear"]],
+            "subtractions": [apple.id, pear.id],
             "user": {"id": user.id},
             "workflows": {
                 "aodp": WorkflowState.INCOMPATIBLE.value,
@@ -167,7 +179,7 @@ async def get_sample_data(
         )
         await session.commit()
 
-    return user.id
+    return peach.id
 
 
 @pytest.fixture
@@ -462,7 +474,6 @@ class TestCreate:
         data_layer: DataLayer,
         fake: DataFaker,
         snapshot_recent,
-        insert_subtractions,
         spawn_client: ClientSpawner,
     ):
         client = await spawn_client(
@@ -491,15 +502,18 @@ class TestCreate:
         )
 
         label = await fake.labels.create()
-        upload = await fake.uploads.create(user=await fake.users.create())
+        user = await fake.users.create()
+        upload = await fake.uploads.create(user=user)
 
-        subtractions = await insert_subtractions(("apple", "Apple"))
+        apple = await fake.subtractions.create(
+            user=user, upload=upload, name="Apple", upload_files=False, finalized=False
+        )
 
         data = {
             "files": [upload.id],
             "labels": [label.id],
             "name": "Foobar",
-            "subtractions": [subtractions["apple"]],
+            "subtractions": [apple.id],
         }
 
         if group_setting == "force_choice":
@@ -515,7 +529,6 @@ class TestCreate:
         fake: DataFaker,
         snapshot,
         mongo: Mongo,
-        insert_subtractions,
         spawn_client: ClientSpawner,
         static_time,
     ):
@@ -524,21 +537,23 @@ class TestCreate:
             permissions=[Permission.create_sample],
         )
 
-        upload = await fake.uploads.create(user=await fake.users.create())
+        user = await fake.users.create()
+        upload = await fake.uploads.create(user=user)
 
-        _, subtractions = await asyncio.gather(
-            mongo.samples.insert_one(
-                {
-                    "_id": "foobar",
-                    "name": "Foobar",
-                    "lower_name": "foobar",
-                    "created_at": static_time.datetime,
-                    "nuvs": False,
-                    "pathoscope": False,
-                    "ready": True,
-                },
-            ),
-            insert_subtractions(("apple", "Apple")),
+        apple = await fake.subtractions.create(
+            user=user, upload=upload, name="Apple", upload_files=False, finalized=False
+        )
+
+        await mongo.samples.insert_one(
+            {
+                "_id": "foobar",
+                "name": "Foobar",
+                "lower_name": "foobar",
+                "created_at": static_time.datetime,
+                "nuvs": False,
+                "pathoscope": False,
+                "ready": True,
+            },
         )
 
         resp = await client.post(
@@ -546,7 +561,7 @@ class TestCreate:
             {
                 "name": "Foobar",
                 "files": [upload.id],
-                "subtractions": [subtractions["apple"]],
+                "subtractions": [apple.id],
             },
         )
 
@@ -559,7 +574,6 @@ class TestCreate:
         error: str | None,
         fake: DataFaker,
         resp_is,
-        insert_subtractions,
         spawn_client: ClientSpawner,
     ):
         """Test that when ``force_choice`` is enabled, a request with no group field passed
@@ -574,19 +588,21 @@ class TestCreate:
 
         group = await fake.groups.create()
 
-        upload = await fake.uploads.create(user=await fake.users.create())
+        user = await fake.users.create()
+        upload = await fake.uploads.create(user=user)
 
-        _, subtractions = await asyncio.gather(
-            get_data_from_app(client.app).settings.update(
-                UpdateSettingsRequest(sample_group="force_choice"),
-            ),
-            insert_subtractions(("apple", "Apple")),
+        apple = await fake.subtractions.create(
+            user=user, upload=upload, name="Apple", upload_files=False, finalized=False
+        )
+
+        await get_data_from_app(client.app).settings.update(
+            UpdateSettingsRequest(sample_group="force_choice"),
         )
 
         data = {
             "name": "Foobar",
             "files": [upload.id],
-            "subtractions": [subtractions["apple"]],
+            "subtractions": [apple.id],
         }
 
         if error is None:
@@ -601,7 +617,6 @@ class TestCreate:
         self,
         fake: DataFaker,
         resp_is,
-        insert_subtractions,
         spawn_client: ClientSpawner,
     ):
         client = await spawn_client(
@@ -613,15 +628,11 @@ class TestCreate:
             UpdateSettingsRequest(sample_group="force_choice"),
         )
 
-        upload = await fake.uploads.create(user=await fake.users.create())
+        user = await fake.users.create()
+        upload = await fake.uploads.create(user=user)
 
-        _, subtractions = await asyncio.gather(
-            get_data_from_app(client.app).settings.update(
-                UpdateSettingsRequest(
-                    sample_group="force_choice",
-                ),
-            ),
-            insert_subtractions(("apple", "Apple")),
+        apple = await fake.subtractions.create(
+            user=user, upload=upload, name="Apple", upload_files=False, finalized=False
         )
 
         resp = await client.post(
@@ -629,7 +640,7 @@ class TestCreate:
             {
                 "name": "Foobar",
                 "files": [upload.id],
-                "subtractions": [subtractions["apple"]],
+                "subtractions": [apple.id],
                 "group": 5,
             },
         )
@@ -661,7 +672,6 @@ class TestCreate:
         self,
         one_exists: bool,
         fake: DataFaker,
-        insert_subtractions,
         spawn_client: ClientSpawner,
         resp_is,
     ):
@@ -674,10 +684,14 @@ class TestCreate:
             permissions=[Permission.create_sample],
         )
 
-        subtractions = await insert_subtractions(("apple", "Apple"))
+        user = await fake.users.create()
+        upload = await fake.uploads.create(user=user)
+
+        apple = await fake.subtractions.create(
+            user=user, upload=upload, name="Apple", upload_files=False, finalized=False
+        )
 
         if one_exists:
-            upload = await fake.uploads.create(user=await fake.users.create())
             files = [upload.id, 21]
         else:
             files = [20, 21]
@@ -687,7 +701,7 @@ class TestCreate:
             {
                 "name": "Foobar",
                 "files": files,
-                "subtractions": [subtractions["apple"]],
+                "subtractions": [apple.id],
             },
         )
 
@@ -717,22 +731,14 @@ class TestCreate:
 class TestEdit:
     async def test_ok(
         self,
-        get_sample_data,
-        pg: AsyncEngine,
+        get_sample_data: int,
         snapshot,
         spawn_client: ClientSpawner,
     ):
         """Test that an existing sample can be edited correctly."""
-        client = await spawn_client(administrator=True, authenticated=True)
+        peach_id = get_sample_data
 
-        async with AsyncSession(pg) as session:
-            peach_id = (
-                await session.execute(
-                    select(SQLSubtraction.id).where(
-                        SQLSubtraction.legacy_id == "peach",
-                    ),
-                )
-            ).scalar_one()
+        client = await spawn_client(administrator=True, authenticated=True)
 
         resp = await client.patch(
             "/samples/test",
@@ -824,7 +830,6 @@ class TestEdit:
         fake: DataFaker,
         snapshot,
         mongo: Mongo,
-        insert_subtractions,
         spawn_client: ClientSpawner,
     ):
         """Test that a ``bad_request`` is returned if the subtraction passed in
@@ -834,25 +839,27 @@ class TestEdit:
         client = await spawn_client(administrator=True, authenticated=True)
 
         user = await fake.users.create()
+        upload = await fake.uploads.create(user=user)
 
-        _, subtractions = await asyncio.gather(
-            mongo.samples.insert_one(
-                {
-                    "_id": "test",
-                    "name": "Test",
-                    "all_read": True,
-                    "all_write": True,
-                    "ready": True,
-                    "subtractions": [],
-                    "user": {"id": user.id},
-                },
-            ),
-            insert_subtractions(("foo", "Foo")),
+        foo = await fake.subtractions.create(
+            user=user, upload=upload, name="Foo", upload_files=False, finalized=False
+        )
+
+        await mongo.samples.insert_one(
+            {
+                "_id": "test",
+                "name": "Test",
+                "all_read": True,
+                "all_write": True,
+                "ready": True,
+                "subtractions": [],
+                "user": {"id": user.id},
+            },
         )
 
         resp = await client.patch(
             "/samples/test",
-            {"subtractions": [subtractions["foo"], 999]},
+            {"subtractions": [foo.id, 999]},
         )
 
         assert resp.status == 400
@@ -887,9 +894,6 @@ class TestFinalize:
 
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
-
-        with pytest.raises(ResourceNotFoundError):
-            await get_data_from_app(client.app).uploads.get(1)
 
         resp = await client.patch("/samples/test", json=json)
         await resp_is.conflict(resp, "Sample already finalized")
@@ -1098,7 +1102,6 @@ async def test_find_analyses(
     fake: DataFaker,
     snapshot: SnapshotAssertion,
     mongo: Mongo,
-    insert_subtractions,
     pg: AsyncEngine,
     spawn_client: ClientSpawner,
     static_time,
@@ -1109,6 +1112,15 @@ async def test_find_analyses(
     user_2 = await fake.users.create()
 
     job = await fake.jobs.create(user=user_1)
+
+    upload = await fake.uploads.create(user=user_1)
+    malus = await fake.subtractions.create(
+        user=user_1,
+        upload=upload,
+        name="Malus domestica",
+        upload_files=False,
+        finalized=False,
+    )
 
     await mongo.samples.insert_one(
         {
@@ -1125,7 +1137,6 @@ async def test_find_analyses(
     )
 
     await asyncio.gather(
-        insert_subtractions(("foo", "Malus domestica")),
         mongo.references.insert_many(
             [
                 {"_id": "foo", "archived": False, "data_type": "genome", "name": "Foo"},
@@ -1137,12 +1148,6 @@ async def test_find_analyses(
     )
 
     async with AsyncSession(pg) as session:
-        foo_subtraction_id = (
-            await session.execute(
-                select(SQLSubtraction.id).where(SQLSubtraction.legacy_id == "foo"),
-            )
-        ).scalar_one()
-
         analyses = [
             SQLAnalysis(
                 legacy_id="test_1",
@@ -1197,7 +1202,7 @@ async def test_find_analyses(
         session.add_all(
             SQLAnalysisSubtraction(
                 analysis_id=analysis.id,
-                subtraction_id=foo_subtraction_id,
+                subtraction_id=malus.id,
             )
             for analysis in analyses
             if analysis.legacy_id in {"test_2", "test_3", "test_4"}

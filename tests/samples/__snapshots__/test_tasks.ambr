@@ -8,7 +8,6 @@
       'pathoscope': 'ip',
       'workflows': dict({
         'aodp': 'incompatible',
-        'iimi': 'none',
         'nuvs': 'pending',
         'pathoscope': 'pending',
       }),
@@ -24,7 +23,6 @@
       'pathoscope': True,
       'workflows': dict({
         'aodp': 'incompatible',
-        'iimi': 'none',
         'nuvs': 'pending',
         'pathoscope': 'complete',
       }),

@@ -1,7 +1,7 @@
 """convert index file type to text
 
 Revision ID: b82907bcac9d
-Revises: 2b53ffa573a3
+Revises: ed265b939a84
 Create Date: 2026-06-19 23:56:44.136717+00:00
 
 """
@@ -10,7 +10,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "b82907bcac9d"
-down_revision = "2b53ffa573a3"
+down_revision = "ed265b939a84"
 branch_labels = None
 depends_on = None
 

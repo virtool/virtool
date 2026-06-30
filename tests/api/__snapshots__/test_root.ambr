@@ -43,10 +43,6 @@
         'doc': 'https://www.virtool.ca/docs/api/labels',
         'url': '/labels',
       }),
-      'ml': dict({
-        'doc': 'https://www.virtool.ca/docs/api/ml',
-        'url': '/ml',
-      }),
       'otus': dict({
         'doc': 'https://www.virtool.ca/docs/api/otus',
         'url': '/otus',
@@ -128,10 +124,6 @@
         'doc': 'https://www.virtool.ca/docs/api/labels',
         'url': '/labels',
       }),
-      'ml': dict({
-        'doc': 'https://www.virtool.ca/docs/api/ml',
-        'url': '/ml',
-      }),
       'otus': dict({
         'doc': 'https://www.virtool.ca/docs/api/otus',
         'url': '/otus',
@@ -212,10 +204,6 @@
       'labels': dict({
         'doc': 'https://www.virtool.ca/docs/api/labels',
         'url': '/labels',
-      }),
-      'ml': dict({
-        'doc': 'https://www.virtool.ca/docs/api/ml',
-        'url': '/ml',
       }),
       'otus': dict({
         'doc': 'https://www.virtool.ca/docs/api/otus',

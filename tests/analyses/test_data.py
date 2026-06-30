@@ -8,13 +8,14 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.filters import props
 
+from tests.fixtures.analysis import seed_analysis
 from virtool.analyses.sql import (
     SQLAnalysis,
     SQLAnalysisFile,
     SQLAnalysisSubtraction,
 )
 from virtool.api.client import UserClient
-from virtool.data.errors import ResourceConflictError
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.models.enums import AnalysisWorkflow
@@ -26,12 +27,25 @@ from virtool.utils import timestamp
 
 
 @pytest.fixture
-async def subtraction_ids(insert_subtractions) -> dict[str, int]:
-    """Seed two subtractions and return their ``{legacy_id: integer id}`` map."""
-    return await insert_subtractions(
-        ("subtraction_1", "Subtraction 1"),
-        ("subtraction_2", "Subtraction 2"),
+async def subtraction_ids(fake: DataFaker) -> dict[str, int]:
+    """Seed two subtractions and return their ``{name slug: integer id}`` map."""
+    user = await fake.users.create()
+    upload = await fake.uploads.create(user=user)
+    first = await fake.subtractions.create(
+        user=user,
+        upload=upload,
+        name="Subtraction 1",
+        upload_files=False,
+        finalized=False,
     )
+    second = await fake.subtractions.create(
+        user=user,
+        upload=upload,
+        name="Subtraction 2",
+        upload_files=False,
+        finalized=False,
+    )
+    return {"subtraction_1": first.id, "subtraction_2": second.id}
 
 
 @pytest.fixture
@@ -115,7 +129,6 @@ async def test_find(
 
     analysis_wrong_sample = await data_layer.analyses.create(
         CreateAnalysisRequest(
-            ml=None,
             ref_id="test_ref",
             subtractions=[
                 subtraction_ids["subtraction_1"],
@@ -131,7 +144,6 @@ async def test_find(
     for _ in range(number_of_analyses):
         await data_layer.analyses.create(
             CreateAnalysisRequest(
-                ml=None,
                 ref_id="test_ref",
                 subtractions=[
                     subtraction_ids["subtraction_1"],
@@ -151,6 +163,80 @@ async def test_find(
     assert analyses_found.total_count == analyses_found.found_count
 
 
+class TestHideIimi:
+    """Iimi analyses are hidden from the data-layer find and get operations ahead of
+    the iimi purge migration.
+    """
+
+    @staticmethod
+    async def _seed_iimi(mongo: Mongo, pg: AsyncEngine, user_id: str) -> int:
+        return await seed_analysis(
+            mongo,
+            pg,
+            {
+                "_id": "iimi_hidden",
+                "workflow": "iimi",
+                "created_at": timestamp(),
+                "ready": True,
+                "job": None,
+                "index": {"id": "test_index", "version": 11},
+                "user": {"id": user_id},
+                "sample": {"id": "test_sample"},
+                "reference": {"id": "test_ref"},
+                "results": {"hits": []},
+                "subtractions": [],
+            },
+        )
+
+    async def test_find_excludes_iimi(
+        self,
+        data_layer: DataLayer,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: str,
+        mocker,
+    ):
+        """An iimi analysis is excluded from both the documents and the counts."""
+        mocker.patch(
+            "virtool.samples.utils.get_sample_rights",
+            return_value=(True, True),
+        )
+        client = mocker.Mock(spec=UserClient)
+        user_id = setup_sample
+
+        visible = await data_layer.analyses.create(
+            CreateAnalysisRequest(
+                ref_id="test_ref",
+                subtractions=[],
+                workflow=AnalysisWorkflow.nuvs,
+            ),
+            "test_sample",
+            user_id,
+            0,
+        )
+
+        await self._seed_iimi(mongo, pg, user_id)
+
+        analyses_found = await data_layer.analyses.find(1, 25, client, "test_sample")
+
+        assert [document.id for document in analyses_found.documents] == [visible.id]
+        assert analyses_found.found_count == 1
+        assert analyses_found.total_count == 1
+
+    async def test_get_iimi_not_found(
+        self,
+        data_layer: DataLayer,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: str,
+    ):
+        """Getting an iimi analysis by id raises ``ResourceNotFoundError``."""
+        analysis_id = await self._seed_iimi(mongo, pg, setup_sample)
+
+        with pytest.raises(ResourceNotFoundError):
+            await data_layer.analyses.get(analysis_id)
+
+
 async def test_create(
     data_layer: DataLayer,
     snapshot: SnapshotAssertion,
@@ -162,7 +248,6 @@ async def test_create(
 
     analysis = await data_layer.analyses.create(
         CreateAnalysisRequest(
-            ml=None,
             ref_id="test_ref",
             subtractions=[
                 subtraction_ids["subtraction_1"],
@@ -180,7 +265,6 @@ async def test_create(
 
 def _create_request(subtraction_ids: dict[str, int]) -> CreateAnalysisRequest:
     return CreateAnalysisRequest(
-        ml=None,
         ref_id="test_ref",
         subtractions=[
             subtraction_ids["subtraction_1"],
@@ -217,7 +301,6 @@ class TestCreate:
         assert row.results is None
         assert row.sample == "test_sample"
         assert row.reference == "test_ref"
-        assert row.ml_id is None
         assert row.created_at == row.updated_at
         assert isinstance(row.user_id, int)
 
@@ -250,7 +333,6 @@ class TestCreate:
         """An analysis created without subtractions links no subtraction rows."""
         analysis = await data_layer.analyses.create(
             CreateAnalysisRequest(
-                ml=None,
                 ref_id="test_ref",
                 workflow=AnalysisWorkflow.nuvs,
             ),
@@ -284,7 +366,6 @@ class TestCreate:
         with pytest.raises(ResourceConflictError, match="905"):
             await data_layer.analyses.create(
                 CreateAnalysisRequest(
-                    ml=None,
                     ref_id="test_ref",
                     subtractions=[subtraction_ids["subtraction_1"], 905],
                     workflow=AnalysisWorkflow.nuvs,
@@ -399,7 +480,6 @@ async def test_get_without_if_modified_since(
     """Test that an analysis can be fetched without an HTTP cache validator."""
     analysis = await data_layer.analyses.create(
         CreateAnalysisRequest(
-            ml=None,
             ref_id="test_ref",
             subtractions=[
                 subtraction_ids["subtraction_1"],
@@ -433,7 +513,6 @@ async def test_upload_file(
 
     analysis = await data_layer.analyses.create(
         CreateAnalysisRequest(
-            ml=None,
             ref_id="test_ref",
             subtractions=[
                 subtraction_ids["subtraction_1"],
