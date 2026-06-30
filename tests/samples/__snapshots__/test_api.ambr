@@ -20,7 +20,6 @@
       }),
       'workflow': 'pathoscope',
     }),
-    'ml': None,
     'ready': False,
     'reference': dict({
       'data_type': 'genome',
@@ -2303,7 +2302,6 @@
           'version': 2,
         }),
         'job': None,
-        'ml': None,
         'ready': True,
         'reference': dict({
           'data_type': 'genome',
@@ -2334,7 +2332,6 @@
           'version': 2,
         }),
         'job': None,
-        'ml': None,
         'ready': True,
         'reference': dict({
           'data_type': 'genome',
@@ -2375,7 +2372,6 @@
           }),
           'workflow': 'pathoscope',
         }),
-        'ml': None,
         'ready': True,
         'reference': dict({
           'data_type': 'genome',

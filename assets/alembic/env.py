@@ -13,7 +13,6 @@ from virtool.hmm.sql import SQLHMMStatus
 from virtool.indexes.sql import SQLIndexFile
 from virtool.labels.sql import SQLLabel
 from virtool.messages.sql import SQLInstanceMessage
-from virtool.ml.pg import SQLMLModel, SQLMLModelRelease
 from virtool.pg.base import Base
 from virtool.samples.sql import SQLSampleArtifact, SQLSampleReads
 from virtool.sessions.models import SQLSession
@@ -44,8 +43,6 @@ __models__ = (
     SQLIndexFile,
     SQLInstanceMessage,
     SQLLabel,
-    SQLMLModel,
-    SQLMLModelRelease,
     SQLNuVsBlast,
     SQLSampleArtifact,
     SQLSampleReads,

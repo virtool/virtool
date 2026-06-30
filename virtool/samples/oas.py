@@ -81,7 +81,6 @@ class UpdateRightsRequest(BaseModel):
 class CreateAnalysisRequest(BaseModel):
     """Request body for creating a new analysis."""
 
-    ml: int | None
     ref_id: str
     subtractions: list[int] = Field(default_factory=list)
     workflow: AnalysisWorkflow

@@ -9,7 +9,6 @@ from virtool.api.errors import APINotFound
 
 class FlagName(Enum):
     ADMINISTRATOR_ROLES = "ADMINISTRATOR_ROLES"
-    ML_MODELS = "ML_MODELS"
 
 
 class FeatureFlags:
@@ -18,7 +17,6 @@ class FeatureFlags:
     def __init__(self, overrides: list[FlagName]):
         self._flags = {
             FlagName.ADMINISTRATOR_ROLES: True,
-            FlagName.ML_MODELS: False,
         }
 
         for flag_name, flag_value in self._flags.items():

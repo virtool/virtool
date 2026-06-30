@@ -116,7 +116,6 @@ async def test_find(
 
     analysis_wrong_sample = await data_layer.analyses.create(
         CreateAnalysisRequest(
-            ml=None,
             ref_id="test_ref",
             subtractions=[
                 subtraction_ids["subtraction_1"],
@@ -132,7 +131,6 @@ async def test_find(
     for _ in range(number_of_analyses):
         await data_layer.analyses.create(
             CreateAnalysisRequest(
-                ml=None,
                 ref_id="test_ref",
                 subtractions=[
                     subtraction_ids["subtraction_1"],
@@ -195,7 +193,6 @@ class TestHideIimi:
 
         visible = await data_layer.analyses.create(
             CreateAnalysisRequest(
-                ml=None,
                 ref_id="test_ref",
                 subtractions=[],
                 workflow=AnalysisWorkflow.nuvs,
@@ -238,7 +235,6 @@ async def test_create(
 
     analysis = await data_layer.analyses.create(
         CreateAnalysisRequest(
-            ml=None,
             ref_id="test_ref",
             subtractions=[
                 subtraction_ids["subtraction_1"],
@@ -256,7 +252,6 @@ async def test_create(
 
 def _create_request(subtraction_ids: dict[str, int]) -> CreateAnalysisRequest:
     return CreateAnalysisRequest(
-        ml=None,
         ref_id="test_ref",
         subtractions=[
             subtraction_ids["subtraction_1"],
@@ -293,7 +288,6 @@ class TestCreate:
         assert row.results is None
         assert row.sample == "test_sample"
         assert row.reference == "test_ref"
-        assert row.ml_id is None
         assert row.created_at == row.updated_at
         assert isinstance(row.user_id, int)
 
@@ -326,7 +320,6 @@ class TestCreate:
         """An analysis created without subtractions links no subtraction rows."""
         analysis = await data_layer.analyses.create(
             CreateAnalysisRequest(
-                ml=None,
                 ref_id="test_ref",
                 workflow=AnalysisWorkflow.nuvs,
             ),
@@ -360,7 +353,6 @@ class TestCreate:
         with pytest.raises(ResourceConflictError, match="905"):
             await data_layer.analyses.create(
                 CreateAnalysisRequest(
-                    ml=None,
                     ref_id="test_ref",
                     subtractions=[subtraction_ids["subtraction_1"], 905],
                     workflow=AnalysisWorkflow.nuvs,
@@ -475,7 +467,6 @@ async def test_get_without_if_modified_since(
     """Test that an analysis can be fetched without an HTTP cache validator."""
     analysis = await data_layer.analyses.create(
         CreateAnalysisRequest(
-            ml=None,
             ref_id="test_ref",
             subtractions=[
                 subtraction_ids["subtraction_1"],
@@ -509,7 +500,6 @@ async def test_upload_file(
 
     analysis = await data_layer.analyses.create(
         CreateAnalysisRequest(
-            ml=None,
             ref_id="test_ref",
             subtractions=[
                 subtraction_ids["subtraction_1"],

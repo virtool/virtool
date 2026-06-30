@@ -43,7 +43,6 @@ from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
 from virtool.indexes.transforms import AttachIndexTransform
 from virtool.jobs.transforms import AttachJobTransform
-from virtool.ml.transforms import AttachMLTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_new_id
 from virtool.pg.utils import delete_row, get_row_by_id
@@ -74,7 +73,6 @@ FIND_COLUMNS = (
     SQLAnalysis.index,
     SQLAnalysis.user_id,
     SQLAnalysis.job_id,
-    SQLAnalysis.ml_id,
 )
 """The ``SQLAnalysis`` columns selected for list views.
 
@@ -104,7 +102,6 @@ def _row_to_document(row, *, include_results: bool) -> dict:
         "index": {"id": row.index},
         "user": {"id": row.user_id},
         "job": {"id": row.job_id} if row.job_id else None,
-        "ml": row.ml_id,
     }
 
     if include_results:
@@ -194,7 +191,6 @@ class AnalysisData(DataLayerDomain):
             [base_processor(d) for d in documents],
             [
                 AttachIndexTransform(self._mongo),
-                AttachMLTransform(self._pg),
                 AttachJobTransform(self._pg),
                 AttachReferenceTransform(self._mongo),
                 AttachAnalysisSubtractionsTransform(self._pg),
@@ -254,7 +250,6 @@ class AnalysisData(DataLayerDomain):
         transforms = [
             AttachIndexTransform(self._mongo),
             AttachJobTransform(self._pg),
-            AttachMLTransform(self._pg),
             AttachReferenceTransform(self._mongo),
             AttachAnalysisSubtractionsTransform(self._pg),
             AttachUserTransform(self._pg),
@@ -326,7 +321,6 @@ class AnalysisData(DataLayerDomain):
                         index=index_id,
                         user_id=user_id,
                         job_id=job.id,
-                        ml_id=data.ml,
                     )
                     .returning(SQLAnalysis.id),
                 )

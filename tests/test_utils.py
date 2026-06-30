@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 import os
-import shutil
+import tarfile
 from pathlib import Path
 
 import arrow
@@ -68,24 +68,17 @@ class TestCoerceToCoroutineFunction:
         assert result == 20
 
 
-def test_decompress_tgz(example_path: Path, tmp_path: Path):
+def test_decompress_tgz(tmp_path: Path):
     """Test the decompress_tgz successfully decompresses and unpacks a tar."""
-    shutil.copy(example_path / "ml" / "model.tar.gz", tmp_path)
+    (tmp_path / "member.txt").write_text("content")
 
-    decompress_tgz(tmp_path / "model.tar.gz", tmp_path / "de")
+    with tarfile.open(tmp_path / "archive.tar.gz", "w:gz") as tar:
+        tar.add(tmp_path / "member.txt", arcname="nested/member.txt")
 
-    assert {p.name for p in tmp_path.iterdir()} == {"model.tar.gz", "de"}
+    decompress_tgz(tmp_path / "archive.tar.gz", tmp_path / "de")
 
-    assert {p.name for p in (tmp_path / "de").iterdir()} == {"model"}
-
-    assert {p.name for p in (tmp_path / "de" / "model").iterdir()} == {
-        "mappability_profile.rds",
-        "nucleotide_info.csv",
-        "reference.json.gz",
-        "trained_rf.rds",
-        "trained_xgb.rds",
-        "virus_segments.rds",
-    }
+    assert {p.name for p in (tmp_path / "de").iterdir()} == {"nested"}
+    assert (tmp_path / "de" / "nested" / "member.txt").read_text() == "content"
 
 
 def test_generate_key(mocker):

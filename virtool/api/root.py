@@ -36,7 +36,6 @@ async def get(req):
             "indexes": {"url": "/indexes", "doc": f"{API_URL_ROOT}/indexes"},
             "jobs": {"url": "/jobs", "doc": f"{API_URL_ROOT}/jobs"},
             "labels": {"url": "/labels", "doc": f"{API_URL_ROOT}/labels"},
-            "ml": {"url": "/ml", "doc": f"{API_URL_ROOT}/ml"},
             "otus": {"url": "/otus", "doc": f"{API_URL_ROOT}/otus"},
             "references": {"url": "/references", "doc": f"{API_URL_ROOT}/refs"},
             "samples": {"url": "/samples", "doc": f"{API_URL_ROOT}/samples"},

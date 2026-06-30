@@ -13,7 +13,6 @@ from virtool.data.utils import get_data_from_app
 from virtool.hmm.tasks import HMMRefreshTask
 from virtool.jobs.tasks import JobsTimeoutTask
 from virtool.migration.pg import check_data_revision_version
-from virtool.ml.tasks import MLModelsSyncTask
 from virtool.mongo.connect import connect_mongo
 from virtool.mongo.migrate import migrate_status
 from virtool.mongo.utils import get_mongo_from_app
@@ -199,7 +198,6 @@ async def startup_periodic_tasks(app: App) -> None:
         (HMMRefreshTask, 600),
         (JobsTimeoutTask, 600),
         (LRUCacheEvictionTask, 3600),
-        (MLModelsSyncTask, 600),
         (ReferenceReleasesRefreshTask, 600),
         (ReferencesCleanTask, 3600),
         (SampleWorkflowsUpdateTask, 3600),
