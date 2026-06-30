@@ -58,12 +58,49 @@ def _validate_cache_storage_budget(cache_storage_budget: int) -> None:
         raise ValueError("cache_storage_budget must be greater than 0")
 
 
+def _validate_storage_backend(
+    config: "MigrationConfig | ServerConfig | TaskRunnerConfig",
+) -> None:
+    """Validate the ``storage_*`` fields shared by every service config.
+
+    Mirrors the requirements ``build_primary_backend`` relies on: an S3 backend
+    needs a bucket and complete (or absent) credentials; an Azure backend needs
+    an account and container.
+    """
+    if config.storage_backend == "s3":
+        if not config.storage_s3_bucket:
+            raise ValueError("storage_backend=s3 requires --storage-s3-bucket")
+
+        _validate_s3_credentials(
+            config.storage_s3_access_key_id,
+            config.storage_s3_secret_access_key,
+        )
+
+    if config.storage_backend == "azure":
+        if not config.storage_azure_account:
+            raise ValueError("storage_backend=azure requires --storage-azure-account")
+        if not config.storage_azure_container:
+            raise ValueError(
+                "storage_backend=azure requires --storage-azure-container",
+            )
+
+
 @dataclass
 class MigrationConfig:
     """Configuration for the migration service."""
 
     mongodb_connection_string: str
     postgres_connection_string: str
+    storage_backend: StorageBackendName
+    storage_s3_bucket: str = ""
+    storage_s3_region: str = ""
+    storage_s3_endpoint: str = ""
+    storage_s3_access_key_id: str = ""
+    storage_s3_secret_access_key: str = ""
+    storage_azure_account: str = ""
+    storage_azure_container: str = ""
+    storage_azure_access_key: str = ""
+    storage_azure_endpoint: str = ""
 
     @property
     def mongodb_name(self) -> str:
@@ -77,6 +114,9 @@ class MigrationConfig:
     @property
     def pg_options(self):
         return PgOptions.from_connection_string(self.postgres_connection_string)
+
+    def __post_init__(self):
+        _validate_storage_backend(self)
 
 
 @dataclass
@@ -122,26 +162,7 @@ class ServerConfig:
 
         _validate_cache_storage_budget(self.cache_storage_budget)
 
-        if self.storage_backend == "s3" and not self.storage_s3_bucket:
-            raise ValueError(
-                "storage_backend=s3 requires --storage-s3-bucket",
-            )
-
-        if self.storage_backend == "s3":
-            _validate_s3_credentials(
-                self.storage_s3_access_key_id,
-                self.storage_s3_secret_access_key,
-            )
-
-        if self.storage_backend == "azure":
-            if not self.storage_azure_account:
-                raise ValueError(
-                    "storage_backend=azure requires --storage-azure-account",
-                )
-            if not self.storage_azure_container:
-                raise ValueError(
-                    "storage_backend=azure requires --storage-azure-container",
-                )
+        _validate_storage_backend(self)
 
 
 @dataclass
@@ -184,26 +205,7 @@ class TaskRunnerConfig:
 
         _validate_cache_storage_budget(self.cache_storage_budget)
 
-        if self.storage_backend == "s3" and not self.storage_s3_bucket:
-            raise ValueError(
-                "storage_backend=s3 requires --storage-s3-bucket",
-            )
-
-        if self.storage_backend == "s3":
-            _validate_s3_credentials(
-                self.storage_s3_access_key_id,
-                self.storage_s3_secret_access_key,
-            )
-
-        if self.storage_backend == "azure":
-            if not self.storage_azure_account:
-                raise ValueError(
-                    "storage_backend=azure requires --storage-azure-account",
-                )
-            if not self.storage_azure_container:
-                raise ValueError(
-                    "storage_backend=azure requires --storage-azure-container",
-                )
+        _validate_storage_backend(self)
 
 
 class WorkflowConfig(BaseModel):

@@ -124,6 +124,7 @@ def migration() -> None:
 @migration.command("apply")
 @mongodb_connection_string_option
 @postgres_connection_string_option
+@storage_options
 def migration_apply(**kwargs) -> None:
     """Apply all pending migrations."""
     configure_logging(False)

@@ -28,6 +28,7 @@ from virtool.pg.utils import (
     PgOptions,
     get_sqlalchemy_url,
 )
+from virtool.storage.protocol import StorageBackend
 
 
 @pytest.fixture
@@ -119,15 +120,24 @@ def migration_config(
     return MigrationConfig(
         mongodb_connection_string=f"{mongo_connection_string}/{migration_mongo_name}?authSource=admin",
         postgres_connection_string=migration_pg_connection_string,
+        storage_backend="s3",
+        storage_s3_bucket="test",
     )
 
 
 @pytest.fixture
 async def ctx(
-    migration_config: MigrationConfig, migration_mongo_name: str
+    migration_config: MigrationConfig,
+    migration_mongo_name: str,
+    memory_storage: StorageBackend,
 ) -> MigrationContext:
-    """A migration context for testing backed by test instances of backing services."""
+    """A migration context for testing backed by test instances of backing services.
+
+    The object-storage backend is replaced with an in-memory provider so
+    revisions that delete on-disk files can be exercised without a real bucket.
+    """
     ctx = await create_migration_context(migration_config)
+    ctx.storage = memory_storage
     yield ctx
     await ctx.mongo.client.drop_database(
         ctx.mongo.client.get_database(migration_mongo_name)
