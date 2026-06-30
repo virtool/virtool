@@ -519,5 +519,12 @@
       'name': 'replace uploadtype enum with text check',
       'revision': 'ed265b939a84',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 75,
+      'name': 'purge iimi analyses',
+      'revision': 'icp41e0o5dwn',
+    }),
   ])
 # ---
