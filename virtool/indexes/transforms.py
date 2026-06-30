@@ -13,49 +13,6 @@ if TYPE_CHECKING:
 PROJECTION = ["_id", "version"]
 
 
-def attach_index_build(document: Document) -> Document:
-    """Attach the UI-facing index build summary to an index document."""
-    return {**document, "build": compose_index_build(document)}
-
-
-def attach_index_builds(documents: list[Document]) -> list[Document]:
-    """Attach UI-facing build summaries to index documents."""
-    return [attach_index_build(document) for document in documents]
-
-
-def compose_index_build(document: Document) -> Document | None:
-    task = document["task"]
-
-    if task:
-        return {
-            "progress": task["progress"],
-            "status": _compose_task_status(task),
-        }
-
-    job = document["job"]
-
-    if job:
-        return {
-            "progress": job["progress"],
-            "status": job["state"],
-        }
-
-    return None
-
-
-def _compose_task_status(task: Document) -> str:
-    if task["error"]:
-        return "failed"
-
-    if task["complete"]:
-        return "succeeded"
-
-    if task["acquired_at"] or task["progress"] > 0:
-        return "running"
-
-    return "pending"
-
-
 class AttachIndexTransform(AbstractTransform):
     """Attach a nested ``{id, version}`` to documents with an ``index.id`` field.
 

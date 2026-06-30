@@ -16,12 +16,10 @@ import virtool.utils
 from virtool.api.utils import paginate
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.indexes.sql import SQLIndexFile
-from virtool.indexes.transforms import attach_index_builds
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
 from virtool.references.db import compose_archived_filter
 from virtool.references.transforms import AttachReferenceTransform
-from virtool.tasks.transforms import AttachTaskTransform
 from virtool.types import Document
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
@@ -222,7 +220,6 @@ async def find(
     documents = [base_processor(d) for d in data["documents"]]
     transforms = [
         AttachJobTransform(pg),
-        AttachTaskTransform(pg),
         AttachReferenceTransform(mongo),
         AttachUserTransform(pg),
         IndexCountsTransform(mongo),
@@ -231,12 +228,10 @@ async def find(
     return {
         **data,
         **unbuilt_stats,
-        "documents": attach_index_builds(
-            await apply_transforms(
-                documents,
-                transforms,
-                pg,
-            ),
+        "documents": await apply_transforms(
+            documents,
+            transforms,
+            pg,
         ),
     }
 

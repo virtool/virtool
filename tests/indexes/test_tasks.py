@@ -148,7 +148,7 @@ async def test_create_index_task_writes_only_ndjson_and_finalizes(
     assert index["ready"] is True
 
     response = await data_layer.index.get("task_index")
-    assert response.build.dict() == {"progress": 100, "status": "succeeded"}
+    assert response.ready is True
 
     otu = await mongo.otus.find_one(test_otu["_id"])
     assert otu["last_indexed_version"] == 1
@@ -211,14 +211,14 @@ async def test_create_index_task_updates_existing_index_file_row(
     )
 
 
-async def test_create_index_task_failure_is_visible_in_build(
+async def test_create_index_task_failure_leaves_index_unready(
     data_layer: DataLayer,
     fake: DataFaker,
     mocker: MockerFixture,
     mongo: Mongo,
     static_time: StaticTime,
 ):
-    """A failed task-backed build is visible through the index build field."""
+    """A failed task-backed build leaves the index unready."""
     task_id = await _create_task_backed_index(
         data_layer,
         fake,
@@ -243,4 +243,3 @@ async def test_create_index_task_failure_is_visible_in_build(
 
     index = await data_layer.index.get("task_index")
     assert index.ready is False
-    assert index.build.dict() == {"progress": 0, "status": "failed"}

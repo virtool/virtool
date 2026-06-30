@@ -25,10 +25,6 @@
 # ---
 # name: TestCreate.test[True][json]
   dict({
-    'build': dict({
-      'progress': 0,
-      'status': 'pending',
-    }),
     'change_count': 1,
     'contributors': list([
       dict({
@@ -81,10 +77,6 @@
     'change_count': 12,
     'documents': list([
       dict({
-        'build': dict({
-          'progress': 100,
-          'status': 'cancelled',
-        }),
         'change_count': 4,
         'created_at': '2015-10-06T20:00:00Z',
         'has_files': True,
@@ -114,10 +106,6 @@
         'version': 1,
       }),
       dict({
-        'build': dict({
-          'progress': 0,
-          'status': 'running',
-        }),
         'change_count': 2,
         'created_at': '2015-10-06T20:00:00Z',
         'has_files': True,
@@ -161,10 +149,6 @@
     'change_count': 12,
     'documents': list([
       dict({
-        'build': dict({
-          'progress': 0,
-          'status': 'running',
-        }),
         'change_count': 0,
         'created_at': '2015-10-06T20:00:00Z',
         'has_files': True,
@@ -208,10 +192,6 @@
     'change_count': 12,
     'documents': list([
       dict({
-        'build': dict({
-          'progress': 100,
-          'status': 'cancelled',
-        }),
         'change_count': 4,
         'created_at': '2015-10-06T20:00:00Z',
         'has_files': True,
@@ -241,10 +221,6 @@
         'version': 1,
       }),
       dict({
-        'build': dict({
-          'progress': 0,
-          'status': 'running',
-        }),
         'change_count': 2,
         'created_at': '2015-10-06T20:00:00Z',
         'has_files': True,
@@ -274,10 +250,6 @@
         'version': 0,
       }),
       dict({
-        'build': dict({
-          'progress': 0,
-          'status': 'running',
-        }),
         'change_count': 0,
         'created_at': '2015-10-06T20:00:00Z',
         'has_files': True,
@@ -319,10 +291,6 @@
 # name: TestFind.test_ready[active]
   list([
     dict({
-      'build': dict({
-        'progress': 100,
-        'status': 'failed',
-      }),
       'change_count': 0,
       'created_at': '2015-10-06T20:00:00Z',
       'has_files': True,
@@ -352,10 +320,6 @@
       'version': 0,
     }),
     dict({
-      'build': dict({
-        'progress': 100,
-        'status': 'failed',
-      }),
       'change_count': 0,
       'created_at': '2015-10-06T22:00:00Z',
       'has_files': True,
@@ -389,10 +353,6 @@
 # name: TestFind.test_ready[archived]
   list([
     dict({
-      'build': dict({
-        'progress': 100,
-        'status': 'failed',
-      }),
       'change_count': 0,
       'created_at': '2015-10-07T00:00:00Z',
       'has_files': True,
@@ -426,10 +386,6 @@
 # name: TestFind.test_ready[default]
   list([
     dict({
-      'build': dict({
-        'progress': 100,
-        'status': 'failed',
-      }),
       'change_count': 0,
       'created_at': '2015-10-06T20:00:00Z',
       'has_files': True,
@@ -459,10 +415,6 @@
       'version': 0,
     }),
     dict({
-      'build': dict({
-        'progress': 100,
-        'status': 'failed',
-      }),
       'change_count': 0,
       'created_at': '2015-10-06T22:00:00Z',
       'has_files': True,
@@ -492,10 +444,6 @@
       'version': 1,
     }),
     dict({
-      'build': dict({
-        'progress': 100,
-        'status': 'failed',
-      }),
       'change_count': 0,
       'created_at': '2015-10-07T00:00:00Z',
       'has_files': True,
@@ -546,10 +494,6 @@
 # ---
 # name: test_finalize[None]
   dict({
-    'build': dict({
-      'progress': 100,
-      'status': 'failed',
-    }),
     'change_count': 0,
     'contributors': list([
     ]),
@@ -786,10 +730,6 @@
 # ---
 # name: test_get[None]
   dict({
-    'build': dict({
-      'progress': 100,
-      'status': 'cancelled',
-    }),
     'change_count': 2,
     'contributors': list([
       dict({

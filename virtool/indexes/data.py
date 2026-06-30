@@ -34,7 +34,6 @@ from virtool.indexes.db import (
 )
 from virtool.indexes.models import Index, IndexFile, IndexMinimal, IndexSearchResult
 from virtool.indexes.sql import SQLIndexFile
-from virtool.indexes.transforms import attach_index_build, attach_index_builds
 from virtool.indexes.utils import (
     compose_index_file_key,
     compose_index_prefix,
@@ -50,7 +49,6 @@ from virtool.references.transforms import AttachReferenceTransform
 from virtool.storage.cleanup import delete_prefix
 from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
-from virtool.tasks.transforms import AttachTaskTransform
 from virtool.uploads.utils import multipart_file_chunker
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor, wait_for_checks
@@ -148,16 +146,13 @@ class IndexData:
             )
         ]
 
-        items = attach_index_builds(
-            await apply_transforms(
-                items,
-                [
-                    AttachJobTransform(self._pg),
-                    AttachTaskTransform(self._pg),
-                    AttachUserTransform(self._pg),
-                ],
-                self._pg,
-            ),
+        items = await apply_transforms(
+            items,
+            [
+                AttachJobTransform(self._pg),
+                AttachUserTransform(self._pg),
+            ],
+            self._pg,
         )
 
         return [IndexMinimal(**item) for item in items]
@@ -202,13 +197,12 @@ class IndexData:
             base_processor(document),
             [
                 AttachJobTransform(self._pg),
-                AttachTaskTransform(self._pg),
                 AttachUserTransform(self._pg),
             ],
             self._pg,
         )
 
-        return Index(**attach_index_build(document))
+        return Index(**document)
 
     async def get_reference(self, index_id: str) -> ReferenceNested:
         """Get a reference associated with an index.
