@@ -15,7 +15,7 @@ from virtool.api.streaming import stream_storage_response
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.history.models import HistorySearchResult
-from virtool.indexes.db import INDEX_FILE_NAMES
+from virtool.indexes.db import INDEX_FILE_NAMES, JOBS_API_UPLOAD_INDEX_FILE_NAMES
 from virtool.indexes.models import Index, IndexSearchResult
 from virtool.indexes.oas import (
     ListIndexesResponse,
@@ -191,6 +191,9 @@ async def upload(req):
     if name not in INDEX_FILE_NAMES:
         raise APINotFound("Index file not found")
 
+    if name not in JOBS_API_UPLOAD_INDEX_FILE_NAMES:
+        raise APIConflict(f"{name} cannot be uploaded through the Jobs API")
+
     try:
         await get_data_from_req(req).index.get_reference(index_id)
     except ResourceNotFoundError:
@@ -202,8 +205,10 @@ async def upload(req):
         index_file = await get_data_from_req(req).index.upload_file(
             index_id, file_type, name, req.multipart
         )
-    except ResourceConflictError:
-        raise APIConflict("File name already exists")
+    except ResourceNotFoundError:
+        raise APINotFound("Index file not found")
+    except ResourceConflictError as err:
+        raise APIConflict(str(err) or "File name already exists")
 
     return json_response(
         index_file,

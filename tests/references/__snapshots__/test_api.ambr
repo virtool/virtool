@@ -1171,6 +1171,10 @@
 # ---
 # name: test_create_index[True]
   dict({
+    'build': dict({
+      'progress': 0,
+      'status': 'pending',
+    }),
     'change_count': 1,
     'contributors': list([
       dict({
@@ -1232,6 +1236,7 @@
     'reference': dict({
       'id': 'foo',
     }),
+    'task': None,
     'user': dict({
       'id': 1,
     }),

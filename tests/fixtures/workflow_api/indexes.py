@@ -1,24 +1,27 @@
+import gzip
 from pathlib import Path
 
-from aiohttp.web import FileResponse, RouteTableDef, View, json_response
+from aiohttp.web import FileResponse, Response, RouteTableDef, View, json_response
 
 from tests.fixtures.workflow_api.utils import (
     custom_dumps,
     generate_not_found,
 )
+from virtool.indexes.db import (
+    INDEX_FILE_NAMES,
+    JOBS_API_UPLOAD_INDEX_FILE_NAMES,
+    LEGACY_INDEX_FILE_NAMES,
+)
 from virtool.indexes.models import IndexFile
 from virtool.workflow.pytest_plugin.data import WorkflowData
 
-INDEX_FILE_NAMES = (
-    "otus.json.gz",
-    "reference.fa.gz",
-    "reference.json.gz",
-    "reference.1.bt2",
-    "reference.2.bt2",
-    "reference.3.bt2",
-    "reference.4.bt2",
-    "reference.rev.1.bt2",
-    "reference.rev.2.bt2",
+READY_INDEX_FILE_NAMES = LEGACY_INDEX_FILE_NAMES
+
+REFERENCE_NDJSON = gzip.compress(
+    b'{"type":"reference","id":"hxn167","data_type":"genome","name":"Plant Viruses"}\n'
+    b'{"type":"otu","_id":"v2_otu","isolates":[{"id":"v2_isolate","source_type":"isolate",'
+    b'"source_name":"v2","default":true,"sequences":[{"_id":"v2_sequence",'
+    b'"sequence":"ACGTAC"}]}]}\n',
 )
 
 
@@ -53,12 +56,28 @@ def create_indexes_routes(
             if index_id != data.new_index.id:
                 return generate_not_found()
 
-            if missing_files := set(INDEX_FILE_NAMES) - set(_uploaded_files):
+            if data.new_index.reference.data_type == "genome":
+                required_files = [
+                    file_name
+                    for file_name in LEGACY_INDEX_FILE_NAMES
+                    if file_name != "reference.json.gz"
+                ]
+            else:
+                required_files = ["reference.fa.gz"]
+            missing_files = [
+                file_name
+                for file_name in required_files
+                if file_name not in _uploaded_files
+            ]
+
+            if missing_files:
                 return json_response(
                     {
                         "id": "conflict",
-                        "message": f"Reference requires that all Bowtie2 index files have been uploaded. "
-                        f"Missing files: {', '.join(sorted(missing_files))}",
+                        "message": (
+                            "Job-backed index builds require all legacy index files. "
+                            f"missing files: {', '.join(missing_files)}"
+                        ),
                     },
                     status=409,
                 )
@@ -73,9 +92,36 @@ def create_indexes_routes(
             index_id = self.request.match_info["index_id"]
             filename = self.request.match_info["filename"]
 
-            if (index_id == data.index.id and filename in INDEX_FILE_NAMES) or (
-                index_id == data.new_index.id and filename == "otus.json.gz"
+            if filename == "otus.json.gz" and index_id in (
+                data.index.id,
+                data.new_index.id,
             ):
+                return FileResponse(
+                    example_path / "indexes" / filename,
+                    headers={
+                        "Content-Disposition": f"attachment; filename='{filename}'",
+                        "Content-Type": "application/octet-stream",
+                    },
+                )
+
+            if index_id == data.index.id:
+                available_files = {file.name for file in data.index.files}
+
+                if not available_files:
+                    available_files = set(READY_INDEX_FILE_NAMES)
+
+                if filename not in available_files:
+                    return generate_not_found()
+
+                if filename == "reference.ndjson.gz":
+                    return Response(
+                        body=REFERENCE_NDJSON,
+                        headers={
+                            "Content-Disposition": f"attachment; filename='{filename}'",
+                            "Content-Type": "application/octet-stream",
+                        },
+                    )
+
                 return FileResponse(
                     example_path / "indexes" / filename,
                     headers={
@@ -97,6 +143,17 @@ def create_indexes_routes(
                         "message": "Index file not found",
                     },
                     status=404,
+                )
+
+            if filename not in JOBS_API_UPLOAD_INDEX_FILE_NAMES:
+                message = f"{filename} cannot be uploaded through the Jobs API"
+
+                return json_response(
+                    {
+                        "id": "conflict",
+                        "message": message,
+                    },
+                    status=409,
                 )
 
             index_file = await read_file_from_multipart(

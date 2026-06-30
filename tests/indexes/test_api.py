@@ -18,7 +18,7 @@ from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from tests.fixtures.response import RespIs
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
-from virtool.indexes.db import INDEX_FILE_NAMES
+from virtool.indexes.db import LEGACY_INDEX_FILE_NAMES
 from virtool.indexes.files import create_index_file
 from virtool.indexes.sql import SQLIndexFile
 from virtool.indexes.utils import check_index_file_type, compose_index_file_key
@@ -103,6 +103,7 @@ class TestFind:
                         "ready": False,
                         "has_files": True,
                         "job": {"id": job_active_a.id},
+                        "task": None,
                         "reference": {"id": "ref_active_a"},
                         "user": {"id": user.id},
                         "sequence_otu_map": {"seq_1": "otu_1"},
@@ -115,6 +116,7 @@ class TestFind:
                         "ready": False,
                         "has_files": True,
                         "job": {"id": job_active_b.id},
+                        "task": None,
                         "reference": {"id": "ref_active_b"},
                         "user": {"id": user.id},
                         "sequence_otu_map": {"seq_1": "otu_2"},
@@ -127,6 +129,7 @@ class TestFind:
                         "ready": False,
                         "has_files": True,
                         "job": {"id": job_archived.id},
+                        "task": None,
                         "reference": {"id": "ref_archived"},
                         "user": {"id": user.id},
                         "sequence_otu_map": {"seq_1": "otu_5"},
@@ -212,6 +215,7 @@ class TestFind:
                         "ready": True,
                         "has_files": True,
                         "job": {"id": job.id},
+                        "task": None,
                         "reference": {"id": "ref_active_a"},
                         "user": {"id": user.id},
                     },
@@ -223,6 +227,7 @@ class TestFind:
                         "ready": True,
                         "has_files": True,
                         "job": {"id": job.id},
+                        "task": None,
                         "reference": {"id": "ref_active_b"},
                         "user": {"id": user.id},
                     },
@@ -234,6 +239,7 @@ class TestFind:
                         "ready": True,
                         "has_files": True,
                         "job": {"id": job.id},
+                        "task": None,
                         "reference": {"id": "ref_archived"},
                         "user": {"id": user.id},
                     },
@@ -331,6 +337,7 @@ async def test_get(
                 "has_files": True,
                 "user": {"id": user.id},
                 "job": {"id": job.id},
+                "task": None,
             },
         )
 
@@ -384,9 +391,13 @@ async def test_download_otus_json(
     with gzip.open(otus_json_path, "rt") as f:
         expected = json.load(f)
 
-    m_get_patched_otus = mocker.patch(
-        "virtool.indexes.db.get_patched_otus",
-        make_mocked_coro(expected),
+    async def iter_patched_otus(*_args):
+        for otu in expected:
+            yield otu
+
+    m_iter_patched_otus = mocker.patch(
+        "virtool.indexes.db.iter_patched_otus",
+        side_effect=iter_patched_otus,
     )
 
     client = await spawn_job_client(authenticated=True)
@@ -413,7 +424,7 @@ async def test_download_otus_json(
     assert expected == result
 
     if not file_exists:
-        m_get_patched_otus.assert_called_with(
+        m_iter_patched_otus.assert_called_with(
             get_mongo_from_app(client.app),
             client.app["pg"],
             manifest,
@@ -627,6 +638,7 @@ async def test_delete_index(
                     "ready": True,
                     "reference": {"id": "foo"},
                     "user": {"id": user.id},
+                    "task": None,
                     "version": 4,
                 },
             ),
@@ -685,8 +697,15 @@ async def test_upload(
             session=None,
         ),
     )
+    job = await fake.jobs.create(user=user, workflow="build_index")
 
-    index = {"_id": "foo", "reference": {"id": "bar"}, "user": {"id": user.id}}
+    index = {
+        "_id": "foo",
+        "reference": {"id": "bar"},
+        "user": {"id": user.id},
+        "job": {"id": job.id},
+        "task": None,
+    }
 
     if error == "409":
         async with AsyncSession(pg) as session:
@@ -699,7 +718,7 @@ async def test_upload(
     url = "/indexes/foo/files"
 
     if error == "404_file":
-        url += "/reference.bt2"
+        url += "/reference.foo.bt2"
     else:
         url += "/reference.1.bt2"
 
@@ -742,6 +761,57 @@ async def test_upload(
         ).scalar() == snapshot
 
 
+async def test_upload_job_backed_index_with_missing_task(
+    example_path: Path,
+    fake: DataFaker,
+    memory_storage: StorageBackend,
+    mongo: Mongo,
+    spawn_job_client: JobClientSpawner,
+):
+    client = await spawn_job_client(authenticated=True)
+
+    path = example_path / "indexes" / "reference.1.bt2"
+
+    user, _ = await asyncio.gather(
+        fake.users.create(),
+        mongo.references.insert_one(
+            {"_id": "bar", "archived": False, "data_type": "genome", "name": "Bar"},
+        ),
+    )
+    job = await fake.jobs.create(user=user, workflow="build_index")
+
+    await mongo.indexes.insert_one(
+        {
+            "_id": "foo",
+            "reference": {"id": "bar"},
+            "user": {"id": user.id},
+            "job": {"id": job.id},
+        },
+    )
+
+    with path.open("rb") as file:
+        resp = await client.put(
+            "/indexes/foo/files/reference.1.bt2",
+            data={"file": file},
+        )
+
+    assert resp.status == 201
+
+    body = await resp.json()
+
+    assert body["index"] == "foo"
+    assert body["name"] == "reference.1.bt2"
+    assert await mongo.indexes.find_one("foo", ["task"]) == {"_id": "foo"}
+
+    chunks = [
+        chunk
+        async for chunk in memory_storage.read(
+            compose_index_file_key("foo", "reference.1.bt2"),
+        )
+    ]
+    assert b"".join(chunks) == path.read_bytes()
+
+
 @pytest.mark.parametrize("error", [None, "409_genome", "409_fasta", "404_reference"])
 async def test_finalize(
     error: str | None,
@@ -764,7 +834,7 @@ async def test_finalize(
     elif error == "409_fasta":
         files = ["reference.json.gz"]
     else:
-        files = INDEX_FILE_NAMES
+        files = LEGACY_INDEX_FILE_NAMES
 
     if error != "404_reference":
         await mongo.references.insert_one(
@@ -787,6 +857,7 @@ async def test_finalize(
                 "created_at": static_time.datetime,
                 "has_files": True,
                 "job": {"id": job.id},
+                "task": None,
             },
         ),
         # change `version` that should be reflected in `last_indexed_version` after calling

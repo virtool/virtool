@@ -1,62 +1,10 @@
 # serializer version: 1
-# name: test_error[status]
-  list([
-    dict({
-      'error': None,
-      'progress': 0,
-      'stage': 'raise_error',
-      'state': 'running',
-      'step_description': 'Raise and error for testing purposes.',
-      'step_name': 'Raise Error',
-    }),
-    dict({
-      'error': dict({
-        'details': list([
-        ]),
-        'type': 'ValueError',
-      }),
-      'progress': 0,
-      'stage': 'raise_error',
-      'state': 'failed',
-      'step_description': 'Raise and error for testing purposes.',
-      'step_name': 'Raise Error',
-    }),
-  ])
-# ---
 # name: test_error[step_starts]
   list([
     dict({
       'description': 'Raise and error for testing purposes.',
       'id': 'raise_error',
       'name': 'Raise Error',
-    }),
-  ])
-# ---
-# name: test_ok[status]
-  list([
-    dict({
-      'error': None,
-      'progress': 0,
-      'stage': 'first',
-      'state': 'running',
-      'step_description': 'Description of First.',
-      'step_name': 'First',
-    }),
-    dict({
-      'error': None,
-      'progress': 50,
-      'stage': 'second',
-      'state': 'running',
-      'step_description': 'Description of Second.',
-      'step_name': 'Second',
-    }),
-    dict({
-      'error': None,
-      'progress': 100,
-      'stage': '',
-      'state': 'succeeded',
-      'step_description': '',
-      'step_name': '',
     }),
   ])
 # ---

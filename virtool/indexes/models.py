@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from virtool.jobs.models import JobMinimal
 from virtool.models import SearchResult
@@ -12,7 +13,13 @@ class IndexNested(BaseModel):
     version: int
 
 
+class IndexBuild(BaseModel):
+    status: Literal["cancelled", "failed", "pending", "running", "succeeded"]
+    progress: int
+
+
 class IndexMinimal(IndexNested):
+    build: IndexBuild | None
     change_count: int
     created_at: datetime
     has_files: bool
@@ -25,6 +32,10 @@ class IndexMinimal(IndexNested):
     class Config:
         schema_extra = {
             "example": {
+                "build": {
+                    "progress": 0,
+                    "status": "pending",
+                },
                 "change_count": 0,
                 "created_at": "2015-10-06T20:00:00Z",
                 "has_files": True,
@@ -67,6 +78,10 @@ class Index(IndexMinimal):
     class Config:
         schema_extra = {
             "example": {
+                "build": {
+                    "progress": 0,
+                    "status": "pending",
+                },
                 "version": 0,
                 "created_at": "2015-10-06T20:00:00Z",
                 "ready": False,

@@ -31,6 +31,7 @@ async def test_finalize(
                 "version": 2,
                 "created_at": static_time.datetime,
                 "job": {"id": job.id},
+                "task": None,
                 "has_files": True,
                 "manifest": {},
             },
