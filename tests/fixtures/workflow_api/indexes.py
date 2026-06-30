@@ -56,11 +56,14 @@ def create_indexes_routes(
             if index_id != data.new_index.id:
                 return generate_not_found()
 
-            required_files = [
-                file_name
-                for file_name in LEGACY_INDEX_FILE_NAMES
-                if file_name != "reference.json.gz"
-            ]
+            if data.new_index.reference.data_type == "genome":
+                required_files = [
+                    file_name
+                    for file_name in LEGACY_INDEX_FILE_NAMES
+                    if file_name != "reference.json.gz"
+                ]
+            else:
+                required_files = ["reference.fa.gz"]
             missing_files = [
                 file_name
                 for file_name in required_files

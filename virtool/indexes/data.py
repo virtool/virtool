@@ -60,7 +60,7 @@ logger = get_logger("indexes")
 
 def _get_index_build_type(document: dict) -> str:
     job_id = document["job"]["id"] if document.get("job") is not None else None
-    task_id = document["task"]["id"] if document["task"] is not None else None
+    task_id = document["task"]["id"] if document.get("task") is not None else None
 
     if job_id is None and task_id is None:
         raise ResourceConflictError(

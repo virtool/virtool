@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from virtool.jobs.models import JobMinimal
 from virtool.models import SearchResult
@@ -13,7 +14,7 @@ class IndexNested(BaseModel):
 
 
 class IndexBuild(BaseModel):
-    status: str
+    status: Literal["cancelled", "failed", "pending", "running", "succeeded"]
     progress: int
 
 

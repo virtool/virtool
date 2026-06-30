@@ -761,6 +761,57 @@ async def test_upload(
         ).scalar() == snapshot
 
 
+async def test_upload_job_backed_index_with_missing_task(
+    example_path: Path,
+    fake: DataFaker,
+    memory_storage: StorageBackend,
+    mongo: Mongo,
+    spawn_job_client: JobClientSpawner,
+):
+    client = await spawn_job_client(authenticated=True)
+
+    path = example_path / "indexes" / "reference.1.bt2"
+
+    user, _ = await asyncio.gather(
+        fake.users.create(),
+        mongo.references.insert_one(
+            {"_id": "bar", "archived": False, "data_type": "genome", "name": "Bar"},
+        ),
+    )
+    job = await fake.jobs.create(user=user, workflow="build_index")
+
+    await mongo.indexes.insert_one(
+        {
+            "_id": "foo",
+            "reference": {"id": "bar"},
+            "user": {"id": user.id},
+            "job": {"id": job.id},
+        },
+    )
+
+    with path.open("rb") as file:
+        resp = await client.put(
+            "/indexes/foo/files/reference.1.bt2",
+            data={"file": file},
+        )
+
+    assert resp.status == 201
+
+    body = await resp.json()
+
+    assert body["index"] == "foo"
+    assert body["name"] == "reference.1.bt2"
+    assert await mongo.indexes.find_one("foo", ["task"]) == {"_id": "foo"}
+
+    chunks = [
+        chunk
+        async for chunk in memory_storage.read(
+            compose_index_file_key("foo", "reference.1.bt2"),
+        )
+    ]
+    assert b"".join(chunks) == path.read_bytes()
+
+
 @pytest.mark.parametrize("error", [None, "409_genome", "409_fasta", "404_reference"])
 async def test_finalize(
     error: str | None,

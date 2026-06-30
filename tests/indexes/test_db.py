@@ -173,7 +173,8 @@ async def test_iter_patched_otus_limits_concurrent_patches(
     mocker: MockerFixture,
     mongo: Mongo,
 ):
-    manifest = {f"otu_{i}": i for i in range(26)}
+    concurrency = 3
+    manifest = {f"otu_{i}": i for i in range(concurrency + 1)}
     gates = {otu_id: asyncio.Event() for otu_id in manifest}
     initial_patches_started = asyncio.Event()
     next_patch_started = asyncio.Event()
@@ -182,10 +183,10 @@ async def test_iter_patched_otus_limits_concurrent_patches(
     async def patch_to_version(_mongo, _pg, otu_id, version):
         started.append(otu_id)
 
-        if len(started) == 25:
+        if len(started) == concurrency:
             initial_patches_started.set()
 
-        if len(started) == 26:
+        if len(started) == concurrency + 1:
             next_patch_started.set()
 
         await gates[otu_id].wait()
@@ -201,18 +202,19 @@ async def test_iter_patched_otus_limits_concurrent_patches(
         mongo,
         mocker.Mock(),
         manifest,
+        concurrency=concurrency,
     )
 
     first = asyncio.create_task(anext(stream))
 
     await asyncio.wait_for(initial_patches_started.wait(), timeout=1)
 
-    assert started == [f"otu_{i}" for i in range(25)]
+    assert started == [f"otu_{i}" for i in range(concurrency)]
 
-    gates["otu_24"].set()
+    gates[f"otu_{concurrency - 1}"].set()
     await asyncio.wait_for(next_patch_started.wait(), timeout=1)
 
-    assert started == [f"otu_{i}" for i in range(26)]
+    assert started == [f"otu_{i}" for i in range(concurrency + 1)]
 
     gates["otu_0"].set()
 
@@ -225,24 +227,26 @@ async def test_iter_patched_otus_limits_scheduled_lookahead(
     mocker: MockerFixture,
     mongo: Mongo,
 ):
-    manifest = {f"otu_{i}": i for i in range(101)}
+    concurrency = 2
+    window_size = 5
+    manifest = {f"otu_{i}": i for i in range(window_size + 1)}
     gates = {otu_id: asyncio.Event() for otu_id in manifest}
-    started_25 = asyncio.Event()
-    started_100 = asyncio.Event()
-    started_101 = asyncio.Event()
+    initial_patches_started = asyncio.Event()
+    window_started = asyncio.Event()
+    beyond_window_started = asyncio.Event()
     started = []
 
     async def patch_to_version(_mongo, _pg, otu_id, version):
         started.append(otu_id)
 
-        if len(started) == 25:
-            started_25.set()
+        if len(started) == concurrency:
+            initial_patches_started.set()
 
-        if len(started) == 100:
-            started_100.set()
+        if len(started) == window_size:
+            window_started.set()
 
-        if len(started) == 101:
-            started_101.set()
+        if len(started) == window_size + 1:
+            beyond_window_started.set()
 
         await gates[otu_id].wait()
 
@@ -257,13 +261,15 @@ async def test_iter_patched_otus_limits_scheduled_lookahead(
         mongo,
         mocker.Mock(),
         manifest,
+        concurrency=concurrency,
+        window_size=window_size,
     )
 
     first = asyncio.create_task(anext(stream))
 
-    await asyncio.wait_for(started_25.wait(), timeout=1)
+    await asyncio.wait_for(initial_patches_started.wait(), timeout=1)
 
-    assert started == [f"otu_{i}" for i in range(25)]
+    assert started == [f"otu_{i}" for i in range(concurrency)]
 
     async def release_started_otus_until(target_count: int) -> None:
         next_to_release = 1
@@ -275,14 +281,14 @@ async def test_iter_patched_otus_limits_scheduled_lookahead(
             next_to_release = len(started)
             await asyncio.sleep(0)
 
-    await asyncio.wait_for(release_started_otus_until(100), timeout=1)
-    await asyncio.wait_for(started_100.wait(), timeout=1)
+    await asyncio.wait_for(release_started_otus_until(window_size), timeout=1)
+    await asyncio.wait_for(window_started.wait(), timeout=1)
 
     for _ in range(3):
         await asyncio.sleep(0)
 
-    assert started == [f"otu_{i}" for i in range(100)]
-    assert started_101.is_set() is False
+    assert started == [f"otu_{i}" for i in range(window_size)]
+    assert beyond_window_started.is_set() is False
 
     gates["otu_0"].set()
 
@@ -290,7 +296,7 @@ async def test_iter_patched_otus_limits_scheduled_lookahead(
 
     second = asyncio.create_task(anext(stream))
 
-    await asyncio.wait_for(started_101.wait(), timeout=1)
+    await asyncio.wait_for(beyond_window_started.wait(), timeout=1)
 
     assert await second == {"_id": "otu_1", "version": 1}
 

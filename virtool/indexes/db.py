@@ -338,16 +338,19 @@ async def iter_patched_otus(
     mongo: "Mongo",
     pg: AsyncEngine,
     manifest: dict[str, int],
+    *,
+    concurrency: int = 25,
+    window_size: int = 100,
 ) -> AsyncIterator[dict]:
     """Iterate joined OTUs patched to the versions in the manifest.
 
     :param mongo: the application mongodb client
     :param pg: the application PostgreSQL database object
     :param manifest: the manifest
+    :param concurrency: the maximum number of OTUs to patch concurrently
+    :param window_size: the maximum number of scheduled OTUs ahead of the next yield
 
     """
-    concurrency = 25
-    window_size = 100
     items = list(enumerate(manifest.items()))
     next_to_schedule = 0
     next_to_yield = 0

@@ -13,14 +13,14 @@ async def iter_compressed_reference_ndjson(
     compressor = zlib.compressobj(wbits=31)
 
     chunk = compressor.compress(
-        dump_bytes({"type": "reference", **reference}) + b"\n",
+        dump_bytes({**reference, "type": "reference"}) + b"\n",
     )
 
     if chunk:
         yield chunk
 
     async for otu in otus:
-        chunk = compressor.compress(dump_bytes({"type": "otu", **otu}) + b"\n")
+        chunk = compressor.compress(dump_bytes({**otu, "type": "otu"}) + b"\n")
 
         if chunk:
             yield chunk
