@@ -18,7 +18,6 @@ from virtool.data.topg import compose_legacy_id_single_expression
 from virtool.data.transforms import apply_transforms
 from virtool.github import create_update_subdocument
 from virtool.hmm.db import (
-    HMM_REPO_SLUG,
     fetch_and_update_release,
     generate_annotations,
 )
@@ -230,7 +229,6 @@ class HmmsData(DataLayerDomain):
         await fetch_and_update_release(
             self._client,
             self._pg,
-            HMM_REPO_SLUG,
         )
 
         async with AsyncSession(self._pg) as session:
@@ -393,5 +391,4 @@ class HmmsData(DataLayerDomain):
         await fetch_and_update_release(
             self._client,
             self._pg,
-            HMM_REPO_SLUG,
         )
