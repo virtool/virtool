@@ -346,6 +346,19 @@ def prepare_add(
     )
 
 
+def coerce_otu_version(otu_version: str | None) -> int | str:
+    """Reverse the ``legacy_history.otu_version`` sentinel-to-NULL convention.
+
+    A ``NULL`` ``otu_version`` becomes the ``"removed"`` sentinel and a stringified
+    numeric version is coerced back to an ``int`` so the reconstructed value matches
+    the historical Mongo representation.
+    """
+    if otu_version is None:
+        return "removed"
+
+    return int(otu_version) if otu_version.isdigit() else otu_version
+
+
 def legacy_history_document(row: SQLLegacyHistory, handle: str) -> Document:
     """Reconstruct a ``HISTORY_LIST_PROJECTION`` document from a ``legacy_history`` row.
 
@@ -357,12 +370,7 @@ def legacy_history_document(row: SQLLegacyHistory, handle: str) -> Document:
     The ``handle`` comes from a join on ``users`` so the nested user is fully populated
     without a follow-up transform.
     """
-    if row.otu_version is None:
-        otu_version: int | str = "removed"
-    else:
-        otu_version = (
-            int(row.otu_version) if row.otu_version.isdigit() else row.otu_version
-        )
+    otu_version = coerce_otu_version(row.otu_version)
 
     if row.index is None:
         index = {"id": "unbuilt", "version": "unbuilt"}
@@ -639,20 +647,17 @@ async def get_most_recent_change(pg: AsyncEngine, otu_id: str) -> Document | Non
     if row is None:
         return None
 
-    if row.otu_version is None:
-        otu_version: int | str = "removed"
-    else:
-        otu_version = (
-            int(row.otu_version) if row.otu_version.isdigit() else row.otu_version
-        )
-
     return {
         "_id": row.legacy_id,
         "created_at": row.created_at,
         "description": row.description,
         "method_name": row.method_name,
         "user": {"id": row.user_id},
-        "otu": {"id": row.otu, "name": row.otu_name, "version": otu_version},
+        "otu": {
+            "id": row.otu,
+            "name": row.otu_name,
+            "version": coerce_otu_version(row.otu_version),
+        },
     }
 
 
@@ -739,15 +744,41 @@ async def patch_to_version(
 
     patched = deepcopy(current)
 
-    # Collect the changes to revert, sorted by descending version.
+    async with AsyncSession(pg) as session:
+        rows = (
+            (
+                await session.execute(
+                    select(SQLLegacyHistory)
+                    .where(SQLLegacyHistory.otu == otu_id)
+                    .order_by(
+                        cast(SQLLegacyHistory.otu_version, Integer)
+                        .desc()
+                        .nulls_first(),
+                        SQLLegacyHistory.id.desc(),
+                    ),
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+    # Collect the changes to revert, sorted by descending version. Iterate the
+    # ordered rows and stop at the first change at or below the target version,
+    # preserving the terminating break of the legacy Mongo cursor.
     changes_to_revert = []
 
-    async for change in mongo.history.find(
-        {"otu.id": otu_id},
-        sort=[("otu.version", -1)],
-    ):
-        if change["otu"]["version"] == "removed" or change["otu"]["version"] > version:
-            changes_to_revert.append(change)
+    for row in rows:
+        otu_version = coerce_otu_version(row.otu_version)
+
+        if otu_version == "removed" or otu_version > version:
+            changes_to_revert.append(
+                {
+                    "_id": row.legacy_id,
+                    "diff": "postgres",
+                    "method_name": row.method_name,
+                    "otu": {"version": otu_version},
+                },
+            )
         else:
             break
 
