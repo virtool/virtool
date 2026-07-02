@@ -2,6 +2,7 @@ import datetime
 from dataclasses import asdict
 
 import arrow
+import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy.matchers import path_type
 
@@ -11,6 +12,7 @@ from virtool.migration.pg import SQLRevision, list_applied_revisions
 from virtool.migration.show import load_all_revisions
 
 
+@pytest.mark.timeout(30)
 async def test_apply_revisions(
     migration_config: MigrationConfig, migration_pg: AsyncEngine, snapshot
 ):

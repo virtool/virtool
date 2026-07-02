@@ -547,5 +547,19 @@
       'name': 'copy history to postgres',
       'revision': 'iltemfg2gul8',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 79,
+      'name': 'drop ml model tables',
+      'revision': '14c5bc110756',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 80,
+      'name': 'delete ml model blobs',
+      'revision': 't15v503oih88',
+    }),
   ])
 # ---
