@@ -4,6 +4,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 import virtool.history.db
 import virtool.otus.utils
@@ -219,6 +220,7 @@ async def bulk_join_documents(
 
 async def join_and_format(
     mongo: "Mongo",
+    pg: AsyncEngine,
     otu_id: str,
     joined: dict | None = None,
     issues: dict | bool | None = False,
@@ -229,6 +231,7 @@ async def join_and_format(
     format the joined otu into a format that can be directly returned to API clients.
 
     :param mongo: the application database client
+    :param pg: the application PostgreSQL database object
     :param otu_id: the id of the otu to join
     :param joined:
     :param issues: an object describing issues in the otu
@@ -240,7 +243,7 @@ async def join_and_format(
     if not joined:
         return None
 
-    most_recent_change = await virtool.history.db.get_most_recent_change(mongo, otu_id)
+    most_recent_change = await virtool.history.db.get_most_recent_change(pg, otu_id)
 
     if issues is False:
         issues = await verify(mongo, otu_id)

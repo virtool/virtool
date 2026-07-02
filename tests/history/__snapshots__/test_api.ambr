@@ -115,7 +115,7 @@
     'id': '6116cba1.1',
     'index': dict({
       'id': 'unbuilt',
-      'version': 1,
+      'version': 'unbuilt',
     }),
     'method_name': 'edit',
     'otu': dict({

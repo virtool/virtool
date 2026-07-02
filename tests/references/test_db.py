@@ -8,7 +8,7 @@ from syrupy import SnapshotAssertion
 
 from virtool.api.client import UserClient
 from virtool.fake.next import DataFaker
-from virtool.history.sql import SQLHistoryDiff, SQLLegacyHistory
+from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.models.enums import HistoryMethod
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
@@ -364,8 +364,8 @@ async def test_populate_insert_only_reference_rollback(
     async with AsyncSession(pg) as pg_session:
         diff_count = await pg_session.scalar(
             select(func.count())
-            .select_from(SQLHistoryDiff)
-            .where(SQLHistoryDiff.change_id.in_(["rbotu001.0", "rbotu002.0"])),
+            .select_from(SQLLegacyHistoryDiff)
+            .where(SQLLegacyHistoryDiff.change_id.in_(["rbotu001.0", "rbotu002.0"])),
         )
 
         legacy_count = await pg_session.scalar(

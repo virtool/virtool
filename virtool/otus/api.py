@@ -164,8 +164,9 @@ class IsolatesView(PydanticView):
 
         """
         mongo = get_mongo_from_req(self.request)
+        pg: AsyncEngine = self.request.app["pg"]
 
-        document = await virtool.otus.db.join_and_format(mongo, otu_id)
+        document = await virtool.otus.db.join_and_format(mongo, pg, otu_id)
 
         if not document:
             raise APINotFound()

@@ -2,7 +2,7 @@ import asyncio
 from http import HTTPStatus
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from yarl import URL
 
@@ -11,6 +11,8 @@ from tests.fixtures.response import RespIs
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.history.db import legacy_history_values
+from virtool.history.sql import SQLLegacyHistory
 from virtool.models.enums import HistoryMethod, Molecule
 from virtool.mongo.core import Mongo
 from virtool.otus.models import OTU, OTUIsolate, OTUSegment, OTUSequence
@@ -221,6 +223,7 @@ class TestEdit:
         check_ref_right,
         fake: DataFaker,
         mongo: Mongo,
+        pg: AsyncEngine,
         spawn_client: ClientSpawner,
         resp_is: RespIs,
         snapshot: SnapshotAssertion,
@@ -233,14 +236,18 @@ class TestEdit:
 
         user = await fake.users.create()
 
+        change = {**test_change, "user": {"id": user.id}, "_id": "6116cba1.0"}
+
         await asyncio.gather(
             mongo.otus.insert_one(test_otu),
             mongo.references.insert_one(test_ref),
             mongo.sequences.insert_one(test_sequence),
-            mongo.history.insert_one(
-                {**test_change, "user": {"id": user.id}, "_id": "6116cba1.0"},
-            ),
+            mongo.history.insert_one(change),
         )
+
+        async with AsyncSession(pg) as session:
+            session.add(SQLLegacyHistory(**legacy_history_values(change)))
+            await session.commit()
 
         resp = await client.patch(f"/otus/{test_otu['_id']}", data)
 

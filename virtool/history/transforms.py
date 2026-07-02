@@ -3,8 +3,9 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from virtool.data.topg import compose_legacy_id_single_expression
 from virtool.data.transforms import AbstractTransform
-from virtool.history.sql import SQLHistoryDiff
+from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.types import Document
 
 
@@ -16,15 +17,14 @@ class AttachDiffTransform(AbstractTransform):
         return {**document, "diff": prepared}
 
     async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
-        if document["diff"] != "postgres":
-            raise ValueError(
-                f"Unexpected inline diff for change {document['id']}; "
-                "expected 'postgres' sentinel",
-            )
-
         result = await session.execute(
-            select(SQLHistoryDiff.diff).where(
-                SQLHistoryDiff.change_id == document["id"],
+            select(SQLLegacyHistoryDiff.diff)
+            .join(
+                SQLLegacyHistory,
+                SQLLegacyHistoryDiff.history_id == SQLLegacyHistory.id,
+            )
+            .where(
+                compose_legacy_id_single_expression(SQLLegacyHistory, document["id"]),
             ),
         )
 

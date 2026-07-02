@@ -561,5 +561,12 @@
       'name': 'delete ml model blobs',
       'revision': 't15v503oih88',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 81,
+      'name': 're-key history diffs to legacy_history_diff',
+      'revision': 'a329dfd5ba23',
+    }),
   ])
 # ---

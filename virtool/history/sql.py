@@ -17,17 +17,22 @@ from sqlalchemy.orm import Mapped, mapped_column
 from virtool.pg.base import Base
 
 
-class SQLHistoryDiff(Base):
+class SQLLegacyHistoryDiff(Base):
     """A SQL model for storing history diffs.
 
     This is a temporary table and should be removed after history has been completely
     reimplemented in Postgres.
+
+    Diffs are keyed by ``history_id``, an integer foreign key to ``legacy_history.id``.
+    The old string ``change_id`` column is retained during the migration and dropped in
+    a later cleanup revision.
     """
 
-    __tablename__ = "history_diffs"
+    __tablename__ = "legacy_history_diff"
 
     id = Column(Integer, primary_key=True)
     change_id = Column(String, unique=True)
+    history_id = Column(BigInteger, ForeignKey("legacy_history.id"), unique=True)
     diff = Column(JSONB)
 
 

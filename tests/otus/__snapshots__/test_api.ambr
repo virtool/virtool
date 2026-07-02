@@ -2638,12 +2638,12 @@
     'last_indexed_version': 0,
     'most_recent_change': dict({
       'created_at': '2015-10-06T20:00:00Z',
-      'description': 'Edited Prunus virus E',
-      'id': '6116cba1.0',
+      'description': 'Changed name to Prunus virus F and changed abbreviation to PVF2 and modified schema',
+      'id': '6116cba1.1',
       'method_name': 'edit',
       'user': dict({
-        'handle': 'myersmitchell',
-        'id': 2,
+        'handle': 'leeashley',
+        'id': 1,
       }),
     }),
     'name': 'Prunus virus F',
@@ -2686,12 +2686,12 @@
     'last_indexed_version': 0,
     'most_recent_change': dict({
       'created_at': '2015-10-06T20:00:00Z',
-      'description': 'Edited Prunus virus E',
-      'id': '6116cba1.0',
+      'description': 'Changed name to Prunus virus G and changed abbreviation to PVF and modified schema',
+      'id': '6116cba1.1',
       'method_name': 'edit',
       'user': dict({
-        'handle': 'myersmitchell',
-        'id': 2,
+        'handle': 'leeashley',
+        'id': 1,
       }),
     }),
     'name': 'Prunus virus G',

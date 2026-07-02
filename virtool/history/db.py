@@ -13,9 +13,12 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.otus.db
 import virtool.utils
-from virtool.data.topg import both_transactions, compose_legacy_id_multi_expression
+from virtool.data.topg import (
+    both_transactions,
+    compose_legacy_id_multi_expression,
+)
 from virtool.data.transforms import apply_transforms
-from virtool.history.sql import SQLHistoryDiff, SQLLegacyHistory
+from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.history.utils import (
     calculate_diff,
     compose_history_description,
@@ -45,11 +48,11 @@ HISTORY_LIST_PROJECTION = [
 HISTORY_PROJECTION = [*HISTORY_LIST_PROJECTION, "diff"]
 """A MongoDB projection for history that includes the ``diff`` field."""
 
-_HISTORY_DIFF_CHUNK_SIZE = 32767 // 2
-"""Max ``history_diffs`` rows per statement.
+_HISTORY_DIFF_CHUNK_SIZE = 32767 // 3
+"""Max ``legacy_history_diff`` rows per statement.
 
-asyncpg caps bind parameters per statement at 32767. Each row binds two
-(``change_id`` and ``diff``).
+asyncpg caps bind parameters per statement at 32767. Each row binds three
+(``change_id``, ``history_id``, and ``diff``).
 """
 
 _LEGACY_HISTORY_CHUNK_SIZE = 32767 // 11
@@ -89,12 +92,46 @@ def legacy_history_values(document: Document) -> dict:
 
 
 async def bulk_insert_diffs(pg: AsyncEngine, rows: list[dict]) -> None:
-    """Insert ``rows`` into ``history_diffs`` in asyncpg-safe chunks."""
+    """Insert ``rows`` into ``legacy_history_diff`` in asyncpg-safe chunks.
+
+    Each row's ``history_id`` foreign key is resolved from the ``legacy_history``
+    row whose ``legacy_id`` matches the row's ``change_id``. A ``change_id`` with no
+    matching ``legacy_history`` row raises, mirroring the foreign key constraint.
+    """
+    if not rows:
+        return
+
+    change_ids = [row["change_id"] for row in rows]
+
     async with AsyncSession(pg) as session:
-        for start in range(0, len(rows), _HISTORY_DIFF_CHUNK_SIZE):
+        history_ids: dict[str, int] = {}
+
+        for start in range(0, len(change_ids), _LEGACY_HISTORY_CHUNK_SIZE):
+            chunk = change_ids[start : start + _LEGACY_HISTORY_CHUNK_SIZE]
+            result = await session.execute(
+                select(SQLLegacyHistory.id, SQLLegacyHistory.legacy_id).where(
+                    compose_legacy_id_multi_expression(SQLLegacyHistory, chunk),
+                ),
+            )
+
+            for id_, legacy_id in result.all():
+                history_ids[legacy_id] = id_
+
+        missing = [
+            change_id for change_id in change_ids if change_id not in history_ids
+        ]
+
+        if missing:
+            raise ValueError(
+                f"No legacy_history rows for changes: {', '.join(missing)}",
+            )
+
+        values = [{**row, "history_id": history_ids[row["change_id"]]} for row in rows]
+
+        for start in range(0, len(values), _HISTORY_DIFF_CHUNK_SIZE):
             await session.execute(
-                insert(SQLHistoryDiff).values(
-                    rows[start : start + _HISTORY_DIFF_CHUNK_SIZE],
+                insert(SQLLegacyHistoryDiff).values(
+                    values[start : start + _HISTORY_DIFF_CHUNK_SIZE],
                 ),
             )
 
@@ -126,17 +163,26 @@ async def bulk_insert_history(
     legacy_rows = [legacy_history_values(document) for document in documents]
 
     async with AsyncSession(pg) as session:
-        for start in range(0, len(diff_rows), _HISTORY_DIFF_CHUNK_SIZE):
-            await session.execute(
-                insert(SQLHistoryDiff).values(
-                    diff_rows[start : start + _HISTORY_DIFF_CHUNK_SIZE],
-                ),
-            )
+        history_ids: dict[str, int] = {}
 
         for start in range(0, len(legacy_rows), _LEGACY_HISTORY_CHUNK_SIZE):
+            result = await session.execute(
+                insert(SQLLegacyHistory)
+                .values(legacy_rows[start : start + _LEGACY_HISTORY_CHUNK_SIZE])
+                .returning(SQLLegacyHistory.id, SQLLegacyHistory.legacy_id),
+            )
+
+            for id_, legacy_id in result.all():
+                history_ids[legacy_id] = id_
+
+        diff_values = [
+            {**row, "history_id": history_ids[row["change_id"]]} for row in diff_rows
+        ]
+
+        for start in range(0, len(diff_values), _HISTORY_DIFF_CHUNK_SIZE):
             await session.execute(
-                insert(SQLLegacyHistory).values(
-                    legacy_rows[start : start + _LEGACY_HISTORY_CHUNK_SIZE],
+                insert(SQLLegacyHistoryDiff).values(
+                    diff_values[start : start + _HISTORY_DIFF_CHUNK_SIZE],
                 ),
             )
 
@@ -152,7 +198,9 @@ async def bulk_delete_history(pg: AsyncEngine, change_ids: list[str]) -> None:
         for start in range(0, len(change_ids), _HISTORY_DIFF_CHUNK_SIZE):
             chunk = change_ids[start : start + _HISTORY_DIFF_CHUNK_SIZE]
             await session.execute(
-                delete(SQLHistoryDiff).where(SQLHistoryDiff.change_id.in_(chunk)),
+                delete(SQLLegacyHistoryDiff).where(
+                    SQLLegacyHistoryDiff.change_id.in_(chunk),
+                ),
             )
             await session.execute(
                 delete(SQLLegacyHistory).where(SQLLegacyHistory.legacy_id.in_(chunk)),
@@ -174,7 +222,9 @@ async def delete_history(pg_session: AsyncSession, change_ids: list[str]) -> Non
     for start in range(0, len(change_ids), _HISTORY_DIFF_CHUNK_SIZE):
         chunk = change_ids[start : start + _HISTORY_DIFF_CHUNK_SIZE]
         await pg_session.execute(
-            delete(SQLHistoryDiff).where(SQLHistoryDiff.change_id.in_(chunk)),
+            delete(SQLLegacyHistoryDiff).where(
+                SQLLegacyHistoryDiff.change_id.in_(chunk),
+            ),
         )
 
     for start in range(0, len(change_ids), _LEGACY_HISTORY_CHUNK_SIZE):
@@ -219,18 +269,22 @@ async def add(
 
     document = prepared.document
 
-    diff_row = SQLHistoryDiff(change_id=document["_id"], diff=prepared.diff)
+    diff_row = SQLLegacyHistoryDiff(change_id=document["_id"], diff=prepared.diff)
     legacy_row = SQLLegacyHistory(**legacy_history_values(document))
 
     if mongo_session is None:
         async with both_transactions(mongo, pg) as (mongo_session, pg_session):
-            pg_session.add(diff_row)
             pg_session.add(legacy_row)
+            await pg_session.flush()
+            diff_row.history_id = legacy_row.id
+            pg_session.add(diff_row)
             await mongo.history.insert_one(document, session=mongo_session)
     else:
         async with AsyncSession(pg) as pg_session:
-            pg_session.add(diff_row)
             pg_session.add(legacy_row)
+            await pg_session.flush()
+            diff_row.history_id = legacy_row.id
+            pg_session.add(diff_row)
             await pg_session.flush()
             await mongo.history.insert_one(document, session=mongo_session)
             await pg_session.commit()
@@ -472,39 +526,58 @@ async def get_contributors(
     ]
 
 
-async def get_most_recent_change(
-    mongo: "Mongo",
-    otu_id: str,
-    session: AsyncIOMotorClientSession | None = None,
-) -> Document:
+async def get_most_recent_change(pg: AsyncEngine, otu_id: str) -> Document | None:
     """Get the most recent change for the otu identified by the passed ``otu_id``.
 
-    :param mongo: the application database client
+    Reads from the ``legacy_history`` table, returning the change with the highest
+    ``otu_version``. A ``NULL`` ``otu_version`` marks a ``"removed"`` change and sorts
+    first, matching the descending Mongo sort it replaces. The returned document
+    mirrors the historical Mongo projection so callers can attach user data and format
+    it unchanged.
+
+    :param pg: the application PostgreSQL database object
     :param otu_id: the target otu_id
-    :param session: a Motor session to use for database operations
-    :return: the most recent change document
+    :return: the most recent change document, or ``None`` if the otu has no history
 
     """
-    return await mongo.history.find_one(
-        {"otu.id": otu_id},
-        [
-            "_id",
-            "description",
-            "method_name",
-            "user",
-            "otu",
-            "created_at",
-        ],
-        sort=[("otu.version", -1)],
-        session=session,
-    )
+    async with AsyncSession(pg) as session:
+        row = (
+            await session.execute(
+                select(SQLLegacyHistory)
+                .where(SQLLegacyHistory.otu == otu_id)
+                .order_by(
+                    cast(SQLLegacyHistory.otu_version, Integer).desc().nulls_first(),
+                    SQLLegacyHistory.id.desc(),
+                )
+                .limit(1),
+            )
+        ).scalar_one_or_none()
+
+    if row is None:
+        return None
+
+    if row.otu_version is None:
+        otu_version: int | str = "removed"
+    else:
+        otu_version = (
+            int(row.otu_version) if row.otu_version.isdigit() else row.otu_version
+        )
+
+    return {
+        "_id": row.legacy_id,
+        "created_at": row.created_at,
+        "description": row.description,
+        "method_name": row.method_name,
+        "user": {"id": row.user_id},
+        "otu": {"id": row.otu, "name": row.otu_name, "version": otu_version},
+    }
 
 
 async def _resolve_diffs(pg: AsyncEngine, changes: list[Document]) -> dict[str, object]:
     """Resolve the ``diff`` for each change, fetching Postgres-stored diffs in one query.
 
     Every change stores the sentinel string ``"postgres"`` in Mongo and the real diff
-    in ``SQLHistoryDiff``. A change whose ``diff`` is anything else is an unbackfilled
+    in ``SQLLegacyHistoryDiff``. A change whose ``diff`` is anything else is an unbackfilled
     legacy inline diff and raises ``ValueError``.
 
     :param pg: the application PostgreSQL database object
@@ -529,13 +602,21 @@ async def _resolve_diffs(pg: AsyncEngine, changes: list[Document]) -> dict[str, 
     if postgres_change_ids:
         async with AsyncSession(pg) as session:
             result = await session.execute(
-                select(SQLHistoryDiff.change_id, SQLHistoryDiff.diff).where(
-                    SQLHistoryDiff.change_id.in_(postgres_change_ids),
+                select(SQLLegacyHistory.legacy_id, SQLLegacyHistoryDiff.diff)
+                .join(
+                    SQLLegacyHistoryDiff,
+                    SQLLegacyHistoryDiff.history_id == SQLLegacyHistory.id,
+                )
+                .where(
+                    compose_legacy_id_multi_expression(
+                        SQLLegacyHistory,
+                        postgres_change_ids,
+                    ),
                 ),
             )
 
-            for change_id, diff in result.all():
-                resolved[change_id] = diff
+            for legacy_id, diff in result.all():
+                resolved[legacy_id] = diff
 
         missing = [
             change_id for change_id in postgres_change_ids if change_id not in resolved
@@ -543,7 +624,7 @@ async def _resolve_diffs(pg: AsyncEngine, changes: list[Document]) -> dict[str, 
 
         if missing:
             raise ValueError(
-                f"Missing history_diffs rows for changes: {', '.join(missing)}",
+                f"Missing legacy_history_diff rows for changes: {', '.join(missing)}",
             )
 
     return resolved

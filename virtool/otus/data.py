@@ -62,7 +62,7 @@ class OTUData:
         :param otu_id: the ID of the OTU to get
         :return: the OTU
         """
-        document = await virtool.otus.db.join_and_format(self._mongo, otu_id)
+        document = await virtool.otus.db.join_and_format(self._mongo, self._pg, otu_id)
 
         if document is None:
             raise ResourceNotFoundError
@@ -74,7 +74,7 @@ class OTUData:
                 self._pg,
             ),
             virtool.history.db.get_most_recent_change(
-                self._mongo,
+                self._pg,
                 otu_id,
             ),
         )
@@ -548,6 +548,7 @@ class OTUData:
 
         complete = await virtool.otus.db.join_and_format(
             self._mongo,
+            self._pg,
             otu_id,
             joined=new,
         )

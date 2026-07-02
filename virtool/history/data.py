@@ -1,18 +1,23 @@
 from typing import Any
 
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.otus.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
-from virtool.data.topg import retry_both_transactions
+from virtool.data.topg import (
+    compose_legacy_id_single_expression,
+    retry_both_transactions,
+)
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
-from virtool.history.db import HISTORY_PROJECTION, delete_history, patch_to_version
+from virtool.history.db import delete_history, legacy_history_document, patch_to_version
 from virtool.history.models import History, HistorySearchResult
+from virtool.history.sql import SQLLegacyHistory
 from virtool.history.transforms import AttachDiffTransform
 from virtool.mongo.core import Mongo
 from virtool.references.transforms import AttachReferenceTransform
-from virtool.users.transforms import AttachUserTransform
+from virtool.users.pg import SQLUser
 from virtool.utils import base_processor
 
 
@@ -39,21 +44,35 @@ class HistoryData:
         :param change_id: the ID of the change.
         :return: the change
         """
-        document = await self._mongo.history.find_one(change_id, HISTORY_PROJECTION)
+        async with AsyncSession(self._pg) as session:
+            row = (
+                await session.execute(
+                    select(SQLLegacyHistory, SQLUser.handle)
+                    .join(SQLUser, SQLLegacyHistory.user_id == SQLUser.id)
+                    .where(
+                        compose_legacy_id_single_expression(
+                            SQLLegacyHistory,
+                            change_id,
+                        ),
+                    ),
+                )
+            ).first()
 
-        if document:
-            document = await apply_transforms(
-                base_processor(document),
-                [
-                    AttachDiffTransform(self._pg),
-                    AttachReferenceTransform(self._mongo),
-                    AttachUserTransform(self._pg),
-                ],
-                self._pg,
-            )
-            return History(**document)
+        if row is None:
+            raise ResourceNotFoundError()
 
-        raise ResourceNotFoundError()
+        legacy_row, handle = row
+
+        document = await apply_transforms(
+            base_processor(legacy_history_document(legacy_row, handle)),
+            [
+                AttachDiffTransform(self._pg),
+                AttachReferenceTransform(self._mongo),
+            ],
+            self._pg,
+        )
+
+        return History(**document)
 
     async def delete(self, change_id: str) -> None:
         """Delete a change given its ID.

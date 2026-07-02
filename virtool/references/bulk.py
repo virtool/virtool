@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.history.db import legacy_history_values, prepare_add
-from virtool.history.sql import SQLHistoryDiff, SQLLegacyHistory
+from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.mongo.core import Collection, Mongo
 from virtool.mongo.identifier import AbstractIdProvider
 from virtool.otus.db import bulk_join_ids, bulk_join_query
@@ -175,18 +175,27 @@ class OTUDataBuffer(BaseDataBuffer):
             session: AsyncIOMotorClientSession,
         ):
             async with pg_lock:
-                await pg_session.execute(
-                    insert(SQLHistoryDiff).values(
-                        [
-                            {"change_id": change.data.id, "diff": change.data.diff}
-                            for change in change_buffer
-                        ],
-                    ),
-                )
-                await pg_session.execute(
-                    insert(SQLLegacyHistory).values(
+                result = await pg_session.execute(
+                    insert(SQLLegacyHistory)
+                    .values(
                         [
                             legacy_history_values(change.data.document)
+                            for change in change_buffer
+                        ],
+                    )
+                    .returning(SQLLegacyHistory.id, SQLLegacyHistory.legacy_id),
+                )
+
+                history_ids = {legacy_id: id_ for id_, legacy_id in result.all()}
+
+                await pg_session.execute(
+                    insert(SQLLegacyHistoryDiff).values(
+                        [
+                            {
+                                "change_id": change.data.id,
+                                "history_id": history_ids[change.data.id],
+                                "diff": change.data.diff,
+                            }
                             for change in change_buffer
                         ],
                     ),

@@ -1,8 +1,10 @@
 import datetime
 
 import pytest
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from virtool.history.db import bulk_insert_diffs
+from virtool.history.db import bulk_insert_diffs, legacy_history_values
+from virtool.history.sql import SQLLegacyHistory
 
 
 @pytest.fixture
@@ -101,8 +103,10 @@ def test_otu_edit():
 
 
 @pytest.fixture
-def create_mock_history(mongo, pg):
+def create_mock_history(fake, mongo, pg):
     async def func(remove):
+        user = await fake.users.create()
+
         documents = [
             {
                 "_id": "6116cba1.0",
@@ -267,8 +271,19 @@ def create_mock_history(mongo, pg):
 
             await mongo.otus.insert_one(otu)
 
-        # Mirror production: store the real diff in Postgres and only the
-        # "postgres" sentinel in Mongo.
+        # Mirror the production dual-write: one legacy_history row per change, the
+        # real diff in Postgres keyed by history_id, and only the "postgres" sentinel
+        # in Mongo.
+        async with AsyncSession(pg) as session:
+            for document in documents:
+                session.add(
+                    SQLLegacyHistory(
+                        **legacy_history_values({**document, "user": {"id": user.id}}),
+                    ),
+                )
+
+            await session.commit()
+
         await bulk_insert_diffs(
             pg,
             [

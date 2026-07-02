@@ -14,7 +14,10 @@
       ]),
     ]),
     'id': '6116cba1.1',
-    'index': None,
+    'index': dict({
+      'id': 'unbuilt',
+      'version': 'unbuilt',
+    }),
     'method_name': <HistoryMethod.create: 'create'>,
     'otu': dict({
       'id': '6116cba1',
