@@ -70,9 +70,9 @@ class SQLLegacySample(Base):
     - ``BigInteger`` primary key with ``Identity(always=True)``.
     - ``legacy_id`` holds the Mongo ``_id`` and is nullable so samples created
       natively in Postgres can omit it.
-    - ``user_id`` and ``job_id`` are real integer foreign keys because ``users``
-      and ``jobs`` are already migrated. ``group`` is kept as a nullable string
-      because groups are not yet normalized into this schema.
+    - ``user_id``, ``job_id``, and ``group_id`` are real integer foreign keys
+      because ``users``, ``jobs``, and ``groups`` are already migrated. All three
+      are nullable.
 
     The Mongo ``workflows``, ``nuvs``, and ``pathoscope`` fields are intentionally
     omitted; workflow state is derived on read. ``labels`` and ``subtractions``
@@ -98,7 +98,7 @@ class SQLLegacySample(Base):
             "group_read",
             postgresql_where=text("group_read = true"),
         ),
-        Index("ix_legacy_samples_group", "group"),
+        Index("ix_legacy_samples_group_id", "group_id"),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
@@ -110,7 +110,7 @@ class SQLLegacySample(Base):
     notes: Mapped[str] = mapped_column(default="")
     library_type: Mapped[str]
     format: Mapped[str] = mapped_column(default="fastq")
-    group: Mapped[str | None]
+    group_id: Mapped[int | None] = mapped_column(ForeignKey("groups.id"))
     quality: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(DateTime)
     paired: Mapped[bool] = mapped_column(Boolean, default=False)

@@ -29,7 +29,7 @@ def upgrade() -> None:
         sa.Column("notes", sa.String(), nullable=False),
         sa.Column("library_type", sa.String(), nullable=False),
         sa.Column("format", sa.String(), nullable=False),
-        sa.Column("group", sa.String(), nullable=True),
+        sa.Column("group_id", sa.Integer(), nullable=True),
         sa.Column("quality", JSONB(), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("paired", sa.Boolean(), nullable=False),
@@ -46,6 +46,7 @@ def upgrade() -> None:
         sa.UniqueConstraint("legacy_id"),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"]),
         sa.ForeignKeyConstraint(["job_id"], ["jobs.id"]),
+        sa.ForeignKeyConstraint(["group_id"], ["groups.id"]),
     )
     op.create_index(
         "ix_legacy_samples_user_id_created_at",
@@ -64,7 +65,7 @@ def upgrade() -> None:
         ["group_read"],
         postgresql_where=sa.text("group_read = true"),
     )
-    op.create_index("ix_legacy_samples_group", "legacy_samples", ["group"])
+    op.create_index("ix_legacy_samples_group_id", "legacy_samples", ["group_id"])
 
     op.create_table(
         "legacy_sample_labels",
@@ -88,7 +89,7 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_table("legacy_sample_subtractions")
     op.drop_table("legacy_sample_labels")
-    op.drop_index("ix_legacy_samples_group", table_name="legacy_samples")
+    op.drop_index("ix_legacy_samples_group_id", table_name="legacy_samples")
     op.drop_index("ix_legacy_samples_group_read", table_name="legacy_samples")
     op.drop_index("ix_legacy_samples_all_read", table_name="legacy_samples")
     op.drop_index("ix_legacy_samples_user_id_created_at", table_name="legacy_samples")
