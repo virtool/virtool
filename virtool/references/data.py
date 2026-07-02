@@ -340,7 +340,7 @@ class ReferencesData(DataLayerDomain):
             users,
             unbuilt_count,
         ) = await asyncio.gather(
-            get_contributors(self._mongo, self._pg, ref_id),
+            get_contributors(self._pg, ref_id),
             get_internal_control(self._mongo, internal_control_id, ref_id),
             get_latest_build(self._mongo, self._pg, ref_id),
             get_otu_count(self._mongo, ref_id),
@@ -590,16 +590,12 @@ class ReferencesData(DataLayerDomain):
         if not await self._mongo.references.count_documents({"_id": ref_id}):
             raise ResourceNotFoundError()
 
-        base_query = {"reference.id": ref_id}
-
-        search_query = {}
-        if unbuilt is True:
-            search_query["index.id"] = "unbuilt"
-        elif unbuilt is False:
-            search_query["index.id"] = {"$ne": "unbuilt"}
-
         data = await virtool.history.db.find(
-            self._mongo, self._pg, search_query, query, base_query
+            self._mongo,
+            self._pg,
+            query,
+            reference_id=ref_id,
+            unbuilt=unbuilt,
         )
 
         return HistorySearchResult(**data)

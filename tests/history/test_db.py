@@ -7,11 +7,98 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 import virtool.history.db
+from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLHistoryDiff, SQLLegacyHistory
 from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.workflow.pytest_plugin.utils import StaticTime
+
+
+async def add_contribution(
+    pg: AsyncEngine,
+    change_id: str,
+    user_id: int,
+    reference: str,
+    index: str | None = None,
+) -> None:
+    """Insert a single ``legacy_history`` row for contributor-counting tests."""
+    async with AsyncSession(pg) as session:
+        otu_id, otu_version = change_id.split(".")
+        session.add(
+            SQLLegacyHistory(
+                legacy_id=change_id,
+                created_at=datetime.datetime(2017, 7, 12, 16, 0, 50),
+                description="Description",
+                method_name="update",
+                user_id=user_id,
+                otu=otu_id,
+                otu_name="Prunus virus F",
+                otu_version=otu_version,
+                reference=reference,
+                index=index,
+                index_version=None if index is None else "1",
+            ),
+        )
+        await session.commit()
+
+
+class TestGetContributors:
+    async def test_by_reference(
+        self,
+        fake: DataFaker,
+        pg: AsyncEngine,
+        snapshot: SnapshotAssertion,
+    ):
+        """Contributions are grouped and counted per user, scoped to the reference."""
+        prolific = await fake.users.create()
+        occasional = await fake.users.create()
+        other_reference_only = await fake.users.create()
+
+        await add_contribution(pg, "otu_a.0", prolific.id, "reference_a")
+        await add_contribution(pg, "otu_a.1", prolific.id, "reference_a")
+        await add_contribution(pg, "otu_b.0", occasional.id, "reference_a")
+        await add_contribution(pg, "otu_c.0", other_reference_only.id, "reference_b")
+
+        contributors = await virtool.history.db.get_contributors(
+            pg,
+            reference_id="reference_a",
+        )
+
+        assert contributors == snapshot
+
+    async def test_by_index(
+        self,
+        fake: DataFaker,
+        pg: AsyncEngine,
+        snapshot: SnapshotAssertion,
+    ):
+        """Only changes included in the requested built index are counted."""
+        builder = await fake.users.create()
+
+        await add_contribution(
+            pg, "otu_a.0", builder.id, "reference_a", index="index_1"
+        )
+        await add_contribution(
+            pg, "otu_a.1", builder.id, "reference_a", index="index_1"
+        )
+        await add_contribution(
+            pg, "otu_b.0", builder.id, "reference_a", index="index_2"
+        )
+
+        contributors = await virtool.history.db.get_contributors(
+            pg,
+            index_id="index_1",
+        )
+
+        assert contributors == snapshot
+
+    async def test_empty(self, pg: AsyncEngine):
+        """A reference with no history yields no contributors."""
+        assert (
+            await virtool.history.db.get_contributors(pg, reference_id="reference_a")
+            == []
+        )
 
 
 class TestAdd:

@@ -2,16 +2,18 @@ import asyncio
 from http import HTTPStatus
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from tests.fixtures.client import ClientSpawner
-from virtool.history.db import bulk_insert_diffs
+from virtool.history.db import bulk_insert_diffs, legacy_history_values
+from virtool.history.sql import SQLLegacyHistory
 from virtool.mongo.core import Mongo
 
 
 async def test_find(
     snapshot,
     mongo: Mongo,
+    pg: AsyncEngine,
     spawn_client: ClientSpawner,
     test_changes,
     static_time,
@@ -19,20 +21,22 @@ async def test_find(
     """Test that a list of processed change documents are returned with a ``200`` status."""
     client = await spawn_client(authenticated=True)
 
-    await asyncio.gather(
-        mongo.references.insert_one(
-            {
-                "_id": "hxn167",
-                "archived": False,
-                "data_type": "genome",
-                "name": "Reference A",
-            },
-        ),
-        mongo.history.insert_many(
-            [{**c, "user": {"id": client.user.id}} for c in test_changes],
-            session=None,
-        ),
+    changes = [{**c, "user": {"id": client.user.id}} for c in test_changes]
+
+    await mongo.references.insert_one(
+        {
+            "_id": "hxn167",
+            "archived": False,
+            "data_type": "genome",
+            "name": "Reference A",
+        },
     )
+
+    async with AsyncSession(pg) as session:
+        for change in changes:
+            session.add(SQLLegacyHistory(**legacy_history_values(change)))
+
+        await session.commit()
 
     resp = await client.get("/history")
 

@@ -14,6 +14,7 @@ from tests.fixtures.client import ClientSpawner, VirtoolTestClient
 from tests.fixtures.response import RespIs
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.history.sql import SQLLegacyHistory
 from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app, get_one_field
@@ -1130,6 +1131,7 @@ async def test_create_index(
     mocker,
     resp_is,
     mongo: Mongo,
+    pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
     static_time,
@@ -1156,6 +1158,24 @@ async def test_create_index(
             },
         ),
     )
+
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLLegacyHistory(
+                legacy_id="history_1",
+                created_at=static_time.datetime,
+                description="Description",
+                method_name="create",
+                user_id=user.id,
+                otu="otu_1",
+                otu_name="Tobacco mosaic virus",
+                otu_version="0",
+                reference="foo",
+                index=None,
+                index_version=None,
+            ),
+        )
+        await session.commit()
 
     m_create_manifest = mocker.patch(
         "virtool.references.db.get_manifest",

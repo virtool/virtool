@@ -1,18 +1,18 @@
 """Work with OTU history in the database."""
 
+import math
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import dictdiffer
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from sqlalchemy import delete, select
+from sqlalchemy import Integer, cast, delete, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.otus.db
 import virtool.utils
-from virtool.api.utils import paginate
 from virtool.data.topg import both_transactions, compose_legacy_id_multi_expression
 from virtool.data.transforms import apply_transforms
 from virtool.history.sql import SQLHistoryDiff, SQLLegacyHistory
@@ -24,7 +24,7 @@ from virtool.history.utils import (
 from virtool.models.enums import HistoryMethod
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
-from virtool.users.transforms import AttachUserTransform
+from virtool.users.pg import SQLUser
 from virtool.utils import base_processor
 
 if TYPE_CHECKING:
@@ -292,73 +292,179 @@ def prepare_add(
     )
 
 
-async def find(
-    mongo: "Mongo",
-    pg: "AsyncEngine",
-    mongo_query: Document,
-    req_query,
-    base_query: Document | None = None,
-):
-    data = await paginate(
-        mongo.history,
-        mongo_query,
-        req_query,
-        base_query=base_query,
-        sort="otu.version",
-        projection=HISTORY_LIST_PROJECTION,
-        reverse=True,
-    )
+def legacy_history_document(row: SQLLegacyHistory, handle: str) -> Document:
+    """Reconstruct a ``HISTORY_LIST_PROJECTION`` document from a ``legacy_history`` row.
+
+    Reverses the sentinel-to-NULL conventions applied by :func:`legacy_history_values`:
+    a ``NULL`` ``otu_version`` becomes the ``"removed"`` sentinel and a ``NULL`` ``index``
+    becomes the ``"unbuilt"`` sentinel. Stringified numeric versions are coerced back to
+    integers so the resource shape matches the historical Mongo representation.
+
+    The ``handle`` comes from a join on ``users`` so the nested user is fully populated
+    without a follow-up transform.
+    """
+    if row.otu_version is None:
+        otu_version: int | str = "removed"
+    else:
+        otu_version = (
+            int(row.otu_version) if row.otu_version.isdigit() else row.otu_version
+        )
+
+    if row.index is None:
+        index = {"id": "unbuilt", "version": "unbuilt"}
+    else:
+        index_version = row.index_version
+
+        if index_version is not None and index_version.isdigit():
+            index_version = int(index_version)
+
+        index = {"id": row.index, "version": index_version}
 
     return {
-        **data,
-        "documents": await apply_transforms(
-            [base_processor(d) for d in data["documents"]],
-            [AttachReferenceTransform(mongo), AttachUserTransform(pg)],
-            pg,
-        ),
+        "_id": row.legacy_id,
+        "created_at": row.created_at,
+        "description": row.description,
+        "method_name": row.method_name,
+        "otu": {"id": row.otu, "name": row.otu_name, "version": otu_version},
+        "reference": {"id": row.reference},
+        "index": index,
+        "user": {"id": row.user_id, "handle": handle},
     }
 
 
-async def get_contributors(mongo: "Mongo", pg: AsyncEngine, query: dict) -> list[dict]:
-    """Return list of contributors and their contribution count for a specific set of
-    history.
+async def find(
+    mongo: "Mongo",
+    pg: AsyncEngine,
+    req_query,
+    reference_id: str | None = None,
+    unbuilt: bool | None = None,
+) -> dict:
+    """List history changes from the ``legacy_history`` table.
 
-    :param mongo: the application database client
-    :param pg: the PostgreSQL engine for user lookups
-    :param query: a query to filter scanned history by
-    :return: a list of contributors to the scanned history changes
+    Changes are sorted by ``otu_version`` descending with a deterministic ``id``
+    tiebreaker so pagination is stable. ``reference_id`` scopes both the returned page
+    and the ``total_count``; ``unbuilt`` is a tri-state search filter on whether the
+    change is included in a built index (``index`` is ``NULL`` when unbuilt).
 
+    :param mongo: the application database client, used to attach reference data
+    :param pg: the application PostgreSQL database object
+    :param req_query: the raw request query, used to derive ``page`` and ``per_page``
+    :param reference_id: restrict changes to a single reference
+    :param unbuilt: ``True`` for unbuilt changes only, ``False`` for built changes only
+    :return: a search result including the matched change documents
     """
-    from sqlalchemy import select
+    try:
+        page = int(req_query["page"])
+    except (KeyError, ValueError):
+        page = 1
 
-    from virtool.users.pg import SQLUser
+    try:
+        per_page = int(req_query["per_page"])
+    except (KeyError, ValueError):
+        per_page = 25
 
-    cursor = mongo.history.aggregate(
-        [{"$match": query}, {"$group": {"_id": "$user.id", "count": {"$sum": 1}}}],
-    )
+    base_filters = []
 
-    contributors = [{"id": c["_id"], "count": c["count"]} async for c in cursor]
+    if reference_id is not None:
+        base_filters.append(SQLLegacyHistory.reference == reference_id)
 
-    if not contributors:
-        return []
+    search_filters = list(base_filters)
 
-    user_ids = [c["id"] for c in contributors]
+    if unbuilt is True:
+        search_filters.append(SQLLegacyHistory.index.is_(None))
+    elif unbuilt is False:
+        search_filters.append(SQLLegacyHistory.index.isnot(None))
 
     async with AsyncSession(pg) as session:
-        result = await session.execute(
-            select(SQLUser.id, SQLUser.handle).where(SQLUser.id.in_(user_ids)),
+        total_count = await session.scalar(
+            select(func.count()).select_from(SQLLegacyHistory).where(*base_filters),
         )
 
-        user_rows = result.all()
+        found_count = await session.scalar(
+            select(func.count()).select_from(SQLLegacyHistory).where(*search_filters),
+        )
 
-    users = {row.id: {"id": row.id, "handle": row.handle} for row in user_rows}
+        rows = (
+            await session.execute(
+                select(SQLLegacyHistory, SQLUser.handle)
+                .join(SQLUser, SQLLegacyHistory.user_id == SQLUser.id)
+                .where(*search_filters)
+                .order_by(
+                    cast(SQLLegacyHistory.otu_version, Integer).desc().nulls_first(),
+                    SQLLegacyHistory.id.desc(),
+                )
+                .offset(per_page * (page - 1))
+                .limit(per_page),
+            )
+        ).all()
+
+    documents = await apply_transforms(
+        [base_processor(legacy_history_document(row, handle)) for row, handle in rows],
+        [AttachReferenceTransform(mongo)],
+        pg,
+    )
+
+    return {
+        "documents": documents,
+        "total_count": total_count,
+        "found_count": found_count,
+        "page_count": math.ceil(found_count / per_page),
+        "per_page": per_page,
+        "page": page,
+    }
+
+
+async def get_contributors(
+    pg: AsyncEngine,
+    reference_id: str | None = None,
+    index_id: str | None = None,
+) -> list[dict]:
+    """Return a list of contributors and their contribution count for a set of history.
+
+    The set is scoped by ``reference_id`` or ``index_id``. Contribution counts are
+    aggregated in Postgres by ``user_id`` and joined to user handles. A change whose
+    user cannot be resolved is reported as the ``"Unknown User"`` fallback.
+
+    :param pg: the application PostgreSQL database object
+    :param reference_id: restrict contributions to a single reference
+    :param index_id: restrict contributions to a single built index
+    :return: a list of contributors to the scanned history changes
+    """
+    filters = []
+
+    if reference_id is not None:
+        filters.append(SQLLegacyHistory.reference == reference_id)
+
+    if index_id is not None:
+        filters.append(SQLLegacyHistory.index == index_id)
+
+    async with AsyncSession(pg) as session:
+        counts = (
+            await session.execute(
+                select(SQLLegacyHistory.user_id, func.count())
+                .where(*filters)
+                .group_by(SQLLegacyHistory.user_id)
+                .order_by(SQLLegacyHistory.user_id),
+            )
+        ).all()
+
+        if not counts:
+            return []
+
+        users = {
+            row.id: {"id": row.id, "handle": row.handle}
+            for row in (
+                await session.execute(
+                    select(SQLUser.id, SQLUser.handle).where(
+                        SQLUser.id.in_([user_id for user_id, _ in counts]),
+                    ),
+                )
+            ).all()
+        }
 
     return [
-        {
-            **users.get(c["id"], {"id": -1, "handle": "Unknown User"}),
-            "count": c["count"],
-        }
-        for c in contributors
+        {**users.get(user_id, {"id": -1, "handle": "Unknown User"}), "count": count}
+        for user_id, count in counts
     ]
 
 
