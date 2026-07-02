@@ -526,5 +526,12 @@
       'name': 'purge iimi analyses',
       'revision': 'icp41e0o5dwn',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 76,
+      'name': 'create legacy_samples table',
+      'revision': 'edacc4a083f1',
+    }),
   ])
 # ---
