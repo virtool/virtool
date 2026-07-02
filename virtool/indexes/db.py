@@ -7,6 +7,7 @@ from typing import Any
 
 import pymongo
 from motor.motor_asyncio import AsyncIOMotorClientSession
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.history.db
@@ -14,7 +15,9 @@ import virtool.pg.utils
 import virtool.references.db
 import virtool.utils
 from virtool.api.utils import paginate
+from virtool.data.topg import both_transactions
 from virtool.data.transforms import AbstractTransform, apply_transforms
+from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.sql import SQLIndexFile
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
@@ -92,7 +95,8 @@ class IndexCountsTransform(AbstractTransform):
 
 
 async def create(
-    mongo,
+    mongo: "Mongo",
+    pg: AsyncEngine,
     ref_id: str,
     user_id: int,
     job_id: int,
@@ -102,6 +106,7 @@ async def create(
     index.
 
     :param mongo: the application database client
+    :param pg: the application Postgres client
     :param ref_id: the ID of the reference to create index for
     :param user_id: the ID of the current user
     :param job_id: the ID of the job
@@ -128,13 +133,22 @@ async def create(
     if index_id:
         document["_id"] = index_id
 
-    async with mongo.create_session() as mongo_session:
+    async with both_transactions(mongo, pg) as (mongo_session, pg_session):
         document = await mongo.indexes.insert_one(document, session=mongo_session)
 
         await mongo.history.update_many(
             {"index.id": "unbuilt", "reference.id": ref_id},
             {"$set": {"index": {"id": document["_id"], "version": index_version}}},
             session=mongo_session,
+        )
+
+        await pg_session.execute(
+            update(SQLLegacyHistory)
+            .where(
+                SQLLegacyHistory.reference == ref_id,
+                SQLLegacyHistory.index.is_(None),
+            )
+            .values(index=document["_id"], index_version=str(index_version)),
         )
 
     return document
