@@ -104,19 +104,18 @@ async def bulk_insert_diffs(pg: AsyncEngine, rows: list[dict]) -> None:
     change_ids = [row["change_id"] for row in rows]
 
     async with AsyncSession(pg) as session:
-        history_ids = {
-            legacy_id: id_
-            for id_, legacy_id in (
-                await session.execute(
-                    select(SQLLegacyHistory.id, SQLLegacyHistory.legacy_id).where(
-                        compose_legacy_id_multi_expression(
-                            SQLLegacyHistory,
-                            change_ids,
-                        ),
-                    ),
-                )
-            ).all()
-        }
+        history_ids: dict[str, int] = {}
+
+        for start in range(0, len(change_ids), _LEGACY_HISTORY_CHUNK_SIZE):
+            chunk = change_ids[start : start + _LEGACY_HISTORY_CHUNK_SIZE]
+            result = await session.execute(
+                select(SQLLegacyHistory.id, SQLLegacyHistory.legacy_id).where(
+                    compose_legacy_id_multi_expression(SQLLegacyHistory, chunk),
+                ),
+            )
+
+            for id_, legacy_id in result.all():
+                history_ids[legacy_id] = id_
 
         missing = [
             change_id for change_id in change_ids if change_id not in history_ids
