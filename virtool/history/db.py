@@ -661,6 +661,22 @@ async def get_most_recent_change(pg: AsyncEngine, otu_id: str) -> Document | Non
     }
 
 
+def _change_to_revert(row: SQLLegacyHistory) -> Document:
+    """Build the minimal change document that :func:`patch_to_version` reverts.
+
+    The shape mirrors the fields the revert loop and :func:`_resolve_diffs` read from a
+    Mongo history document: ``_id``, the ``"postgres"`` diff sentinel, ``method_name``,
+    and the coerced ``otu.version``. Keeping this construction in one place stops it from
+    silently drifting from what :func:`_resolve_diffs` expects.
+    """
+    return {
+        "_id": row.legacy_id,
+        "diff": "postgres",
+        "method_name": row.method_name,
+        "otu": {"version": coerce_otu_version(row.otu_version)},
+    }
+
+
 async def _resolve_diffs(pg: AsyncEngine, changes: list[Document]) -> dict[str, object]:
     """Resolve the ``diff`` for each change, fetching Postgres-stored diffs in one query.
 
@@ -744,43 +760,29 @@ async def patch_to_version(
 
     patched = deepcopy(current)
 
-    async with AsyncSession(pg) as session:
-        rows = (
-            (
-                await session.execute(
-                    select(SQLLegacyHistory)
-                    .where(SQLLegacyHistory.otu == otu_id)
-                    .order_by(
-                        cast(SQLLegacyHistory.otu_version, Integer)
-                        .desc()
-                        .nulls_first(),
-                        SQLLegacyHistory.id.desc(),
-                    ),
-                )
-            )
-            .scalars()
-            .all()
-        )
-
-    # Collect the changes to revert, sorted by descending version. Iterate the
-    # ordered rows and stop at the first change at or below the target version,
-    # preserving the terminating break of the legacy Mongo cursor.
+    # Collect the changes to revert, sorted by descending version. Stream the ordered
+    # rows and stop at the first change at or below the target version, preserving the
+    # early break of the legacy Mongo cursor so a heavily-edited otu never loads its
+    # whole history.
     changes_to_revert = []
 
-    for row in rows:
-        otu_version = coerce_otu_version(row.otu_version)
+    async with AsyncSession(pg) as session:
+        result = await session.stream_scalars(
+            select(SQLLegacyHistory)
+            .where(SQLLegacyHistory.otu == otu_id)
+            .order_by(
+                cast(SQLLegacyHistory.otu_version, Integer).desc().nulls_first(),
+                SQLLegacyHistory.id.desc(),
+            ),
+        )
 
-        if otu_version == "removed" or otu_version > version:
-            changes_to_revert.append(
-                {
-                    "_id": row.legacy_id,
-                    "diff": "postgres",
-                    "method_name": row.method_name,
-                    "otu": {"version": otu_version},
-                },
-            )
-        else:
-            break
+        async for row in result:
+            otu_version = coerce_otu_version(row.otu_version)
+
+            if otu_version == "removed" or otu_version > version:
+                changes_to_revert.append(_change_to_revert(row))
+            else:
+                break
 
     diffs = await _resolve_diffs(pg, changes_to_revert)
 
