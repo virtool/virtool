@@ -5,10 +5,10 @@
       dict({
         'created_at': '2015-10-06T20:00:00Z',
         'description': 'Edited Prunus virus E',
-        'id': '6116cba1.1',
+        'id': 'foobar.2',
         'index': dict({
           'id': 'unbuilt',
-          'version': 1,
+          'version': 'unbuilt',
         }),
         'method_name': 'edit',
         'otu': dict({
@@ -32,7 +32,7 @@
         'id': 'foobar.1',
         'index': dict({
           'id': 'unbuilt',
-          'version': 1,
+          'version': 'unbuilt',
         }),
         'method_name': 'edit',
         'otu': dict({
@@ -53,10 +53,10 @@
       dict({
         'created_at': '2015-10-06T20:00:00Z',
         'description': 'Edited Prunus virus E',
-        'id': 'foobar.2',
+        'id': '6116cba1.1',
         'index': dict({
           'id': 'unbuilt',
-          'version': 1,
+          'version': 'unbuilt',
         }),
         'method_name': 'edit',
         'otu': dict({

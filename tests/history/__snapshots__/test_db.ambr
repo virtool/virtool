@@ -273,6 +273,29 @@
     }),
   })
 # ---
+# name: TestGetContributors.test_by_index
+  list([
+    dict({
+      'count': 2,
+      'handle': 'leeashley',
+      'id': 1,
+    }),
+  ])
+# ---
+# name: TestGetContributors.test_by_reference
+  list([
+    dict({
+      'count': 2,
+      'handle': 'leeashley',
+      'id': 1,
+    }),
+    dict({
+      'count': 1,
+      'handle': 'zclark',
+      'id': 2,
+    }),
+  ])
+# ---
 # name: TestGetMostRecentChange.test_ok
   dict({
     '_id': '6116cba1.2',

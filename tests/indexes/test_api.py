@@ -18,6 +18,7 @@ from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from tests.fixtures.response import RespIs
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.db import INDEX_FILE_NAMES
 from virtool.indexes.files import create_index_file
 from virtool.indexes.sql import SQLIndexFile
@@ -361,10 +362,9 @@ async def test_get(
         assert await resp.json() == snapshot
 
         # Check that get_contributors was called with correct parameter types
-        call_args = m_get_contributors.call_args[0]
-        assert isinstance(call_args[0], Mongo)
-        assert isinstance(call_args[1], AsyncEngine)
-        assert call_args[2] == {"index.id": "foobar"}
+        call_args = m_get_contributors.call_args
+        assert isinstance(call_args.args[0], AsyncEngine)
+        assert call_args.kwargs == {"index_id": "foobar"}
         m_get_otus.assert_called_with(ANY, "foobar")
     else:
         await resp_is.not_found(resp)
@@ -428,6 +428,7 @@ class TestCreate:
         fake: DataFaker,
         mocker: MockerFixture,
         mongo: Mongo,
+        pg: AsyncEngine,
         resp_is: RespIs,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
@@ -454,6 +455,24 @@ class TestCreate:
                 },
             ),
         )
+
+        async with AsyncSession(pg) as session:
+            session.add(
+                SQLLegacyHistory(
+                    legacy_id="history_1",
+                    created_at=static_time.datetime,
+                    description="Description",
+                    method_name="create",
+                    user_id=user.id,
+                    otu="otu_1",
+                    otu_name="Tobacco mosaic virus",
+                    otu_version="0",
+                    reference="foo",
+                    index=None,
+                    index_version=None,
+                ),
+            )
+            await session.commit()
 
         m_create_manifest = mocker.patch(
             "virtool.references.db.get_manifest",

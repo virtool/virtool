@@ -864,16 +864,16 @@
       }),
       dict({
         'created_at': 'approximately_now_isoformat',
-        'description': 'Created Tobacco mosaic virus (TMV)',
-        'id': 'fb085f7f.0',
+        'description': 'Created Cucumber mosaic virus',
+        'id': '3cbb22cc.0',
         'index': dict({
           'id': 'unbuilt',
           'version': 'unbuilt',
         }),
         'method_name': 'create',
         'otu': dict({
-          'id': 'fb085f7f',
-          'name': 'Tobacco mosaic virus',
+          'id': '3cbb22cc',
+          'name': 'Cucumber mosaic virus',
           'version': 0,
         }),
         'reference': dict({
@@ -912,16 +912,16 @@
       }),
       dict({
         'created_at': 'approximately_now_isoformat',
-        'description': 'Created Cucumber mosaic virus',
-        'id': '3cbb22cc.0',
+        'description': 'Created Tobacco mosaic virus (TMV)',
+        'id': 'fb085f7f.0',
         'index': dict({
           'id': 'unbuilt',
           'version': 'unbuilt',
         }),
         'method_name': 'create',
         'otu': dict({
-          'id': '3cbb22cc',
-          'name': 'Cucumber mosaic virus',
+          'id': 'fb085f7f',
+          'name': 'Tobacco mosaic virus',
           'version': 0,
         }),
         'reference': dict({
