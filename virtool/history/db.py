@@ -56,11 +56,11 @@ _LEGACY_HISTORY_CHUNK_SIZE = 32767 // 11
 """Max ``legacy_history`` rows per statement.
 
 asyncpg caps bind parameters per statement at 32767. Each row binds eleven
-columns (see :func:`_legacy_history_values`).
+columns (see :func:`legacy_history_values`).
 """
 
 
-def _legacy_history_values(document: Document) -> dict:
+def legacy_history_values(document: Document) -> dict:
     """Map a Mongo history ``document`` to ``legacy_history`` column values.
 
     Applies the sentinel-to-NULL conventions: an ``otu.version`` of ``"removed"``
@@ -123,7 +123,7 @@ async def bulk_insert_history(
             "diff_rows and documents must describe the same history changes",
         )
 
-    legacy_rows = [_legacy_history_values(document) for document in documents]
+    legacy_rows = [legacy_history_values(document) for document in documents]
 
     async with AsyncSession(pg) as session:
         for start in range(0, len(diff_rows), _HISTORY_DIFF_CHUNK_SIZE):
@@ -220,7 +220,7 @@ async def add(
     document = prepared.document
 
     diff_row = SQLHistoryDiff(change_id=document["_id"], diff=prepared.diff)
-    legacy_row = SQLLegacyHistory(**_legacy_history_values(document))
+    legacy_row = SQLLegacyHistory(**legacy_history_values(document))
 
     if mongo_session is None:
         async with both_transactions(mongo, pg) as (mongo_session, pg_session):
