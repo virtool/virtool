@@ -23,7 +23,13 @@ from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.samples.fake import create_fake_sample
 from virtool.samples.models import WorkflowState
-from virtool.samples.sql import SQLSampleArtifact, SQLSampleReads
+from virtool.samples.sql import (
+    SQLLegacySample,
+    SQLLegacySampleLabel,
+    SQLLegacySampleSubtraction,
+    SQLSampleArtifact,
+    SQLSampleReads,
+)
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.subtractions.pg import SQLSubtraction
 from virtool.uploads.sql import SQLUpload
@@ -158,8 +164,41 @@ async def get_sample_data(
     )
 
     async with AsyncSession(pg) as session:
+        legacy = SQLLegacySample(
+            legacy_id="test",
+            name="Test",
+            host="",
+            isolate="",
+            locale="",
+            notes="",
+            library_type=LibraryType.normal.value,
+            format="fastq",
+            quality=None,
+            created_at=static_time.datetime,
+            ready=True,
+            hold=False,
+            is_legacy=False,
+            all_read=True,
+            all_write=True,
+            group_read=True,
+            group_write=True,
+            user_id=user.id,
+            job_id=job.id,
+        )
+        session.add(legacy)
+        await session.flush()
+
         session.add_all(
             [
+                SQLLegacySampleLabel(sample_id=legacy.id, label_id=label.id),
+                SQLLegacySampleSubtraction(
+                    sample_id=legacy.id,
+                    subtraction_id=apple.id,
+                ),
+                SQLLegacySampleSubtraction(
+                    sample_id=legacy.id,
+                    subtraction_id=pear.id,
+                ),
                 SQLSampleArtifact(
                     name="reference.fa.gz",
                     sample="test",

@@ -96,11 +96,83 @@
   dict({
     'all_read': True,
     'all_write': True,
+    'artifacts': list([
+      dict({
+        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'id': 1,
+        'name': 'reference.fa.gz',
+        'size': 34879234,
+      }),
+    ]),
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
     'group': None,
     'group_read': True,
     'group_write': True,
-    'user': dict({
+    'hold': False,
+    'host': '',
+    'id': 'test',
+    'is_legacy': False,
+    'isolate': '',
+    'job': dict({
+      'created_at': '2015-10-06T20:00:00Z',
       'id': 1,
+      'progress': 100,
+      'state': 'failed',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+      'workflow': 'create_sample',
+    }),
+    'labels': list([
+      dict({
+        'color': '#629f70',
+        'description': 'American whole magazine truth stop whose.',
+        'id': 1,
+        'name': 'Three',
+      }),
+    ]),
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': True,
+    'quality': None,
+    'reads': list([
+      dict({
+        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'id': 1,
+        'name': 'reads_1.fq.gz',
+        'name_on_disk': 'reads_1.fq.gz',
+        'sample': 'test',
+        'size': 2903109210,
+        'upload': None,
+        'uploaded_at': '2015-10-06T20:00:00Z',
+      }),
+    ]),
+    'ready': True,
+    'subtractions': list([
+      dict({
+        'id': 1,
+        'name': 'Apple',
+      }),
+      dict({
+        'id': 2,
+        'name': 'Pear',
+      }),
+    ]),
+    'uploads': None,
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 1,
+    }),
+    'workflows': dict({
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
     }),
   })
 # ---
@@ -156,11 +228,87 @@
   dict({
     'all_read': False,
     'all_write': False,
-    'group': 1,
+    'artifacts': list([
+      dict({
+        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'id': 1,
+        'name': 'reference.fa.gz',
+        'size': 34879234,
+      }),
+    ]),
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': dict({
+      'id': 1,
+      'legacy_id': None,
+      'name': 'arboriculturists',
+    }),
     'group_read': False,
     'group_write': False,
-    'user': dict({
+    'hold': False,
+    'host': '',
+    'id': 'test',
+    'is_legacy': False,
+    'isolate': '',
+    'job': dict({
+      'created_at': '2015-10-06T20:00:00Z',
       'id': 1,
+      'progress': 100,
+      'state': 'failed',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+      'workflow': 'create_sample',
+    }),
+    'labels': list([
+      dict({
+        'color': '#629f70',
+        'description': 'American whole magazine truth stop whose.',
+        'id': 1,
+        'name': 'Three',
+      }),
+    ]),
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': True,
+    'quality': None,
+    'reads': list([
+      dict({
+        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'id': 1,
+        'name': 'reads_1.fq.gz',
+        'name_on_disk': 'reads_1.fq.gz',
+        'sample': 'test',
+        'size': 2903109210,
+        'upload': None,
+        'uploaded_at': '2015-10-06T20:00:00Z',
+      }),
+    ]),
+    'ready': True,
+    'subtractions': list([
+      dict({
+        'id': 1,
+        'name': 'Apple',
+      }),
+      dict({
+        'id': 2,
+        'name': 'Pear',
+      }),
+    ]),
+    'uploads': None,
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 1,
+    }),
+    'workflows': dict({
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
     }),
   })
 # ---
@@ -216,11 +364,83 @@
   dict({
     'all_read': False,
     'all_write': False,
-    'group': 'none',
+    'artifacts': list([
+      dict({
+        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'id': 1,
+        'name': 'reference.fa.gz',
+        'size': 34879234,
+      }),
+    ]),
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': None,
     'group_read': True,
     'group_write': True,
-    'user': dict({
+    'hold': False,
+    'host': '',
+    'id': 'test',
+    'is_legacy': False,
+    'isolate': '',
+    'job': dict({
+      'created_at': '2015-10-06T20:00:00Z',
       'id': 1,
+      'progress': 100,
+      'state': 'failed',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+      'workflow': 'create_sample',
+    }),
+    'labels': list([
+      dict({
+        'color': '#629f70',
+        'description': 'American whole magazine truth stop whose.',
+        'id': 1,
+        'name': 'Three',
+      }),
+    ]),
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': True,
+    'quality': None,
+    'reads': list([
+      dict({
+        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'id': 1,
+        'name': 'reads_1.fq.gz',
+        'name_on_disk': 'reads_1.fq.gz',
+        'sample': 'test',
+        'size': 2903109210,
+        'upload': None,
+        'uploaded_at': '2015-10-06T20:00:00Z',
+      }),
+    ]),
+    'ready': True,
+    'subtractions': list([
+      dict({
+        'id': 1,
+        'name': 'Apple',
+      }),
+      dict({
+        'id': 2,
+        'name': 'Pear',
+      }),
+    ]),
+    'uploads': None,
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 1,
+    }),
+    'workflows': dict({
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
     }),
   })
 # ---
@@ -276,11 +496,87 @@
   dict({
     'all_read': True,
     'all_write': True,
-    'group': 1,
+    'artifacts': list([
+      dict({
+        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'id': 1,
+        'name': 'reference.fa.gz',
+        'size': 34879234,
+      }),
+    ]),
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': dict({
+      'id': 1,
+      'legacy_id': None,
+      'name': 'arboriculturists',
+    }),
     'group_read': True,
     'group_write': True,
-    'user': dict({
+    'hold': False,
+    'host': '',
+    'id': 'test',
+    'is_legacy': False,
+    'isolate': '',
+    'job': dict({
+      'created_at': '2015-10-06T20:00:00Z',
       'id': 1,
+      'progress': 100,
+      'state': 'failed',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+      'workflow': 'create_sample',
+    }),
+    'labels': list([
+      dict({
+        'color': '#629f70',
+        'description': 'American whole magazine truth stop whose.',
+        'id': 1,
+        'name': 'Three',
+      }),
+    ]),
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': True,
+    'quality': None,
+    'reads': list([
+      dict({
+        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'id': 1,
+        'name': 'reads_1.fq.gz',
+        'name_on_disk': 'reads_1.fq.gz',
+        'sample': 'test',
+        'size': 2903109210,
+        'upload': None,
+        'uploaded_at': '2015-10-06T20:00:00Z',
+      }),
+    ]),
+    'ready': True,
+    'subtractions': list([
+      dict({
+        'id': 1,
+        'name': 'Apple',
+      }),
+      dict({
+        'id': 2,
+        'name': 'Pear',
+      }),
+    ]),
+    'uploads': None,
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 1,
+    }),
+    'workflows': dict({
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
     }),
   })
 # ---
@@ -336,11 +632,83 @@
   dict({
     'all_read': True,
     'all_write': True,
-    'group': 'none',
+    'artifacts': list([
+      dict({
+        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'id': 1,
+        'name': 'reference.fa.gz',
+        'size': 34879234,
+      }),
+    ]),
+    'created_at': '2015-10-06T20:00:00Z',
+    'format': 'fastq',
+    'group': None,
     'group_read': False,
     'group_write': False,
-    'user': dict({
+    'hold': False,
+    'host': '',
+    'id': 'test',
+    'is_legacy': False,
+    'isolate': '',
+    'job': dict({
+      'created_at': '2015-10-06T20:00:00Z',
       'id': 1,
+      'progress': 100,
+      'state': 'failed',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+      'workflow': 'create_sample',
+    }),
+    'labels': list([
+      dict({
+        'color': '#629f70',
+        'description': 'American whole magazine truth stop whose.',
+        'id': 1,
+        'name': 'Three',
+      }),
+    ]),
+    'library_type': 'normal',
+    'locale': '',
+    'name': 'Test',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': True,
+    'quality': None,
+    'reads': list([
+      dict({
+        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'id': 1,
+        'name': 'reads_1.fq.gz',
+        'name_on_disk': 'reads_1.fq.gz',
+        'sample': 'test',
+        'size': 2903109210,
+        'upload': None,
+        'uploaded_at': '2015-10-06T20:00:00Z',
+      }),
+    ]),
+    'ready': True,
+    'subtractions': list([
+      dict({
+        'id': 1,
+        'name': 'Apple',
+      }),
+      dict({
+        'id': 2,
+        'name': 'Pear',
+      }),
+    ]),
+    'uploads': None,
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 1,
+    }),
+    'workflows': dict({
+      'aodp': 'incompatible',
+      'nuvs': 'pending',
+      'pathoscope': 'complete',
     }),
   })
 # ---
