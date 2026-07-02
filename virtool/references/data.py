@@ -34,6 +34,7 @@ from virtool.history.db import (
     patch_to_version,
 )
 from virtool.history.models import HistorySearchResult
+from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.models import IndexMinimal, IndexSearchResult
 from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
@@ -346,7 +347,7 @@ class ReferencesData(DataLayerDomain):
             get_otu_count(self._mongo, ref_id),
             get_reference_groups(self._pg, document),
             get_reference_users(self._mongo, self._pg, document),
-            get_unbuilt_count(self._mongo, ref_id),
+            get_unbuilt_count(self._pg, ref_id),
         )
 
         document.update(
@@ -548,6 +549,7 @@ class ReferencesData(DataLayerDomain):
         if await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
             data = await virtool.otus.db.find(
                 self._mongo,
+                self._pg,
                 term,
                 query,
                 verified,
@@ -629,10 +631,19 @@ class ReferencesData(DataLayerDomain):
         ):
             raise ResourceError("There are unverified OTUs")
 
-        if not await self._mongo.history.count_documents(
-            {"reference.id": ref_id, "index.id": "unbuilt"},
-            limit=1,
-        ):
+        async with AsyncSession(self._pg) as session:
+            has_unbuilt = await session.scalar(
+                select(
+                    select(SQLLegacyHistory.id)
+                    .where(
+                        SQLLegacyHistory.reference == ref_id,
+                        SQLLegacyHistory.index.is_(None),
+                    )
+                    .exists(),
+                ),
+            )
+
+        if not has_unbuilt:
             raise ResourceError("There are no unbuilt changes")
 
         index_id = await virtool.mongo.utils.get_new_id(self._mongo.indexes)

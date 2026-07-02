@@ -4,13 +4,15 @@ from collections.abc import Mapping
 from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy import distinct, func, select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.history.db
 import virtool.otus.utils
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
+from virtool.history.sql import SQLLegacyHistory
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.references.transforms import AttachReferenceTransform
@@ -68,6 +70,7 @@ async def check_name_and_abbreviation(
 
 async def find(
     mongo: "Mongo",
+    pg: AsyncEngine,
     term: str | None,
     req_query: Mapping,
     verified: bool | None,
@@ -101,14 +104,17 @@ async def find(
         None,  # pg parameter - not needed for AttachReferenceTransform
     )
 
-    history_query = {"index.id": "unbuilt"}
+    history_filters = [SQLLegacyHistory.index.is_(None)]
 
     if ref_id:
-        history_query["reference.id"] = ref_id
+        history_filters.append(SQLLegacyHistory.reference == ref_id)
 
-    data["modified_count"] = len(
-        await mongo.history.distinct("otu.name", history_query),
-    )
+    async with AsyncSession(pg) as session:
+        data["modified_count"] = await session.scalar(
+            select(func.count(distinct(SQLLegacyHistory.otu_name))).where(
+                *history_filters,
+            ),
+        )
 
     return data
 

@@ -2805,6 +2805,130 @@
     'sequence': 'GATGGACGAATGCGAGCGGAAGTGRCAATGAGHTCBHGAAWTAAGHGCACATGACKCAYGATCGCAAGAATTTCGGBCCCCTGATTATTTAGATACTVAAGMTGGTGTACCTGGAACATGAACGNAGAATACTKGGAAANCAAAGGACGACTCNGCACTGACCCCTCGGGNCGCMAGGTTCGCATTGCGCYAATGTGGGCTTCAAGCCATGTRTHGDCTGAGGTCTCTGGTTAMTGTSCAGCAGGTACCAGACATGCAGGAAGCMCDGTGBTTGBVAGNATTATCBRATACCGTGGCCCCWAGTAAATABGTTCGTTTAGTAGTTCAACGRGTGMTACCGTAATBTGCTCACTTAAACTATCGCTGATTKCTTTCCCTABRTTWAAAACAGMATABTCTCAGTGTCAAHTCTGACBCTCATCATGGTGTGCAAATCAGGGAGTACAABCGRTTCAAATCCTCGACCCBTACGATTNGHGAWKTTAATCTRACATGTTCGAMATAATVTCGGTAGRACGTGGTTAGGGGTAGCCCGTCTCTAATTAATACCAACCATCGTCAAGTGTGTCTCGTTCACTYTCTATGAGACGCGTBTAGTTNARCGGGCCCTACGATAGNACTATTDCTGCTGRATTTCCAACTCGGAANAAYCGDTATTCACKCACCTBCAGGGCGAATATTSATGTGCCTTAACACTCATAWTGTCAKTATCGGTAGCGHGGCAWACCCGGATGAWBGGGCGTGACGCATGTCGCTCCCAGTGSACTCACCMATATATNTGGMNGGCTGTAVGSTCCGAGAGGCAATTTCTTAGCTTAGYCCTCASTGCACCSCCTTTAGGTTCTTGTAACGGGTCAYCGGRTHAATGAGCTAGTCTGGGGAATATTTTGTTTCGATTCCGGCTCCTGTKAAGTAGCCTGBATANCTAAGCAGYGGGGCGGGTAGGAATGTGGCCYGTACACGTWAGCGCGYAGAACAGACCTTTGCAKAATCACGGYCGAKMTTCCTTGCACTWAAAATGGTGGGCGCTGKACGATADACGBATSGAGAGSMTABCTTCTDTATTCTGACGGAAATAAKCAAGGTCGGKTATACTAGTTYTCKATTCCCGGTCGTCCGATGGHTACCACAKGGATATCCAGTGTTACATTAAATACCCGATGAAAAACRCTGGGYGGTACDCATGCTYTTCTTTAHACCHGAGGCCCTGAAAATGTGTGCGTACGGCGACANTCTGTCKATATGCTTGACTCCTTTTTCYCBCCTACGTTACACCAATGCGACTGGGTCVTATBKATTGDGATAGCGTCGATGTGCTTHGGTARAAMGMTTGHCCMNGATTTCACTWGTAGTTGAAGAWACAGCYACGCCTCKTTCAAHABATTTCACTAAAAGAA',
   })
 # ---
+# name: TestListHistory.test_ok
+  list([
+    dict({
+      'created_at': 'approximately_now_isoformat',
+      'description': 'Created new sequence NC_772442 in Isolate Important',
+      'id': 'bf1b993c.4',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'create_sequence',
+      'otu': dict({
+        'id': 'bf1b993c',
+        'name': 'Pepper bunchy top virus',
+        'version': 4,
+      }),
+      'reference': dict({
+        'data_type': 'genome',
+        'id': 'hxn167',
+        'name': 'Reference A',
+      }),
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+    }),
+    dict({
+      'created_at': 'approximately_now_isoformat',
+      'description': 'Created new sequence NC_688181 in Isolate Important',
+      'id': 'bf1b993c.3',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'create_sequence',
+      'otu': dict({
+        'id': 'bf1b993c',
+        'name': 'Pepper bunchy top virus',
+        'version': 3,
+      }),
+      'reference': dict({
+        'data_type': 'genome',
+        'id': 'hxn167',
+        'name': 'Reference A',
+      }),
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+    }),
+    dict({
+      'created_at': 'approximately_now_isoformat',
+      'description': 'Created new sequence VC280715 in Isolate Important',
+      'id': 'bf1b993c.2',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'create_sequence',
+      'otu': dict({
+        'id': 'bf1b993c',
+        'name': 'Pepper bunchy top virus',
+        'version': 2,
+      }),
+      'reference': dict({
+        'data_type': 'genome',
+        'id': 'hxn167',
+        'name': 'Reference A',
+      }),
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+    }),
+    dict({
+      'created_at': 'approximately_now_isoformat',
+      'description': 'Added Isolate Important as default',
+      'id': 'bf1b993c.1',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'add_isolate',
+      'otu': dict({
+        'id': 'bf1b993c',
+        'name': 'Pepper bunchy top virus',
+        'version': 1,
+      }),
+      'reference': dict({
+        'data_type': 'genome',
+        'id': 'hxn167',
+        'name': 'Reference A',
+      }),
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+    }),
+    dict({
+      'created_at': 'approximately_now_isoformat',
+      'description': 'Created Pepper bunchy top virus (PBTV)',
+      'id': 'bf1b993c.0',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'create',
+      'otu': dict({
+        'id': 'bf1b993c',
+        'name': 'Pepper bunchy top virus',
+        'version': 0,
+      }),
+      'reference': dict({
+        'data_type': 'genome',
+        'id': 'hxn167',
+        'name': 'Reference A',
+      }),
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+    }),
+  ])
+# ---
 # name: TestListIsolates.test_ok[json]
   list([
     dict({

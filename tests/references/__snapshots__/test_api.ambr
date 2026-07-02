@@ -1201,6 +1201,11 @@
     }),
     'modified_otu_count': 0,
     'otus': list([
+      dict({
+        'change_count': 1,
+        'id': 'otu_1',
+        'name': 'Tobacco mosaic virus',
+      }),
     ]),
     'ready': False,
     'reference': dict({

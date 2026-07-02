@@ -18,6 +18,7 @@ from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from tests.fixtures.response import RespIs
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.history.db import legacy_history_values
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.db import INDEX_FILE_NAMES
 from virtool.indexes.files import create_index_file
@@ -46,6 +47,7 @@ class TestFind:
         fake: DataFaker,
         mocker: MockerFixture,
         mongo: Mongo,
+        pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
         static_time: StaticTime,
@@ -159,6 +161,37 @@ class TestFind:
                 session=None,
             ),
         )
+
+        index_references = {
+            "idx_active_a": "ref_active_a",
+            "idx_active_b": "ref_active_b",
+        }
+
+        async with AsyncSession(pg) as session:
+            session.add_all(
+                SQLLegacyHistory(
+                    legacy_id=legacy_id,
+                    created_at=static_time.datetime,
+                    description="Description",
+                    method_name="edit",
+                    user_id=user.id,
+                    otu=otu_id,
+                    otu_name=otu_id,
+                    otu_version="0",
+                    reference=index_references[index_id],
+                    index=index_id,
+                    index_version="0",
+                )
+                for legacy_id, index_id, otu_id in (
+                    ("0", "idx_active_a", "otu_1"),
+                    ("1", "idx_active_b", "otu_1"),
+                    ("2", "idx_active_a", "otu_2"),
+                    ("3", "idx_active_a", "otu_1"),
+                    ("4", "idx_active_a", "otu_3"),
+                    ("5", "idx_active_b", "otu_4"),
+                )
+            )
+            await session.commit()
 
         mocker.patch(
             "virtool.indexes.db.get_unbuilt_stats",
@@ -543,6 +576,7 @@ async def test_find_history(
     static_time,
     snapshot,
     mongo: Mongo,
+    pg: AsyncEngine,
     spawn_client: ClientSpawner,
     resp_is,
 ):
@@ -554,52 +588,51 @@ async def test_find_history(
     user_1 = await fake.users.create()
     user_2 = await fake.users.create()
 
+    history_documents = [
+        {
+            "_id": "zxbbvngc.0",
+            "created_at": static_time.datetime,
+            "reference": {"id": "foo"},
+            "otu": {"version": 0, "name": "Test", "id": "zxbbvngc"},
+            "user": {"id": user_1.id},
+            "description": "Added Unnamed Isolate as default",
+            "method_name": "add_isolate",
+            "index": {"version": 0, "id": "foobar"},
+        },
+        {
+            "_id": "zxbbvngc.1",
+            "created_at": static_time.datetime,
+            "reference": {"id": "foo"},
+            "otu": {"version": 1, "name": "Test", "id": "zxbbvngc"},
+            "user": {"id": user_1.id},
+            "description": "Added Unnamed Isolate as default",
+            "method_name": "add_isolate",
+            "index": {"version": 0, "id": "foobar"},
+        },
+        {
+            "_id": "zxbbvngc.2",
+            "created_at": static_time.datetime,
+            "reference": {"id": "foo"},
+            "otu": {"version": 2, "name": "Test", "id": "zxbbvngc"},
+            "user": {"id": user_2.id},
+            "description": "Added Unnamed Isolate as default",
+            "method_name": "add_isolate",
+            "index": {"version": 0, "id": "foobar"},
+        },
+        {
+            "_id": "kjs8sa99.3",
+            "created_at": static_time.datetime,
+            "reference": {"id": "foo"},
+            "otu": {"version": 3, "name": "Foo", "id": "kjs8sa99"},
+            "user": {"id": user_1.id},
+            "description": "Edited sequence wrta20tr in Islolate chilli-CR",
+            "method_name": "edit_sequence",
+            "index": {"version": 0, "id": "foobar"},
+        },
+    ]
+
     await asyncio.gather(
-        mongo.history.insert_many(
-            [
-                {
-                    "_id": "zxbbvngc.0",
-                    "created_at": static_time.datetime,
-                    "reference": {"id": "foo"},
-                    "otu": {"version": 0, "name": "Test", "id": "zxbbvngc"},
-                    "user": {"id": user_1.id},
-                    "description": "Added Unnamed Isolate as default",
-                    "method_name": "add_isolate",
-                    "index": {"version": 0, "id": "foobar"},
-                },
-                {
-                    "_id": "zxbbvngc.1",
-                    "created_at": static_time.datetime,
-                    "reference": {"id": "foo"},
-                    "otu": {"version": 1, "name": "Test", "id": "zxbbvngc"},
-                    "user": {"id": user_1.id},
-                    "description": "Added Unnamed Isolate as default",
-                    "method_name": "add_isolate",
-                    "index": {"version": 0, "id": "foobar"},
-                },
-                {
-                    "_id": "zxbbvngc.2",
-                    "created_at": static_time.datetime,
-                    "reference": {"id": "foo"},
-                    "otu": {"version": 2, "name": "Test", "id": "zxbbvngc"},
-                    "user": {"id": user_2.id},
-                    "description": "Added Unnamed Isolate as default",
-                    "method_name": "add_isolate",
-                    "index": {"version": 0, "id": "foobar"},
-                },
-                {
-                    "_id": "kjs8sa99.3",
-                    "created_at": static_time.datetime,
-                    "reference": {"id": "foo"},
-                    "otu": {"version": 3, "name": "Foo", "id": "kjs8sa99"},
-                    "user": {"id": user_1.id},
-                    "description": "Edited sequence wrta20tr in Islolate chilli-CR",
-                    "method_name": "edit_sequence",
-                    "index": {"version": 0, "id": "foobar"},
-                },
-            ],
-            session=None,
-        ),
+        mongo.history.insert_many(history_documents, session=None),
         mongo.references.insert_many(
             [
                 {"_id": "bar", "archived": False, "data_type": "genome", "name": "Bar"},
@@ -608,6 +641,13 @@ async def test_find_history(
             session=None,
         ),
     )
+
+    async with AsyncSession(pg) as session:
+        session.add_all(
+            SQLLegacyHistory(**legacy_history_values(document))
+            for document in history_documents
+        )
+        await session.commit()
 
     resp = await client.get("/indexes/foobar/history")
 

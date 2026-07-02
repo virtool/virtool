@@ -7,7 +7,7 @@ from typing import Any
 
 import pymongo
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from sqlalchemy import update
+from sqlalchemy import Integer, cast, distinct, func, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.history.db
@@ -73,25 +73,25 @@ class IndexFilesTransform(AbstractTransform):
 
 
 class IndexCountsTransform(AbstractTransform):
-    """Attaches modification counts to index documents based on OTU collection
-    queries.
-    """
-
-    def __init__(self, mongo: "Mongo"):
-        self._mongo = mongo
+    """Attaches modification counts to index documents from the legacy history table."""
 
     async def attach_one(self, document: Document, prepared: Any) -> Document:
         return {**document, **prepared}
 
     async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
-        query = {"index.id": document["id"]}
+        change_count, modified_otu_count = (
+            await session.execute(
+                select(
+                    func.count(),
+                    func.count(distinct(SQLLegacyHistory.otu)),
+                ).where(SQLLegacyHistory.index == document["id"]),
+            )
+        ).one()
 
-        change_count, otu_ids = await asyncio.gather(
-            self._mongo.history.count_documents(query),
-            self._mongo.history.distinct("otu.id", query),
-        )
-
-        return {"change_count": change_count, "modified_otu_count": len(otu_ids)}
+        return {
+            "change_count": change_count,
+            "modified_otu_count": modified_otu_count,
+        }
 
 
 async def create(
@@ -221,7 +221,7 @@ async def find(
         sort="version",
     )
 
-    unbuilt_stats = await get_unbuilt_stats(mongo, ref_id)
+    unbuilt_stats = await get_unbuilt_stats(mongo, pg, ref_id)
 
     return {
         **data,
@@ -232,7 +232,7 @@ async def find(
                 AttachJobTransform(pg),
                 AttachReferenceTransform(mongo),
                 AttachUserTransform(pg),
-                IndexCountsTransform(mongo),
+                IndexCountsTransform(),
             ],
             pg,
         ),
@@ -263,33 +263,46 @@ async def get_current_id_and_version(
     return document["_id"], document["version"]
 
 
-async def get_otus(mongo: "Mongo", index_id: str) -> list[dict]:
+async def get_otus(pg: AsyncEngine, index_id: str) -> list[dict]:
     """Return a list of otus and number of changes for a specific index.
 
-    :param mongo: the application database client
+    The OTU name is taken from the change with the highest ``otu_version``, mirroring
+    the Mongo aggregation's ``$first`` after sorting by version descending. OTUs whose
+    latest change has no name are excluded.
+
+    :param pg: the application PostgreSQL database object
     :param index_id: the id of the index to get otus for
 
     :return: a list of otus modified in the index
 
     """
-    pipeline = [
-        {"$match": {"index.id": index_id}},
-        {"$sort": {"otu.id": 1, "otu.version": -1}},
-        {
-            "$group": {
-                "_id": "$otu.id",
-                "name": {"$first": "$otu.name"},
-                "count": {"$sum": 1},
-            },
-        },
-        {"$match": {"name": {"$ne": None}}},
-        {"$sort": {"name": 1}},
-    ]
+    async with AsyncSession(pg) as session:
+        rows = (
+            await session.execute(
+                select(
+                    SQLLegacyHistory.otu,
+                    SQLLegacyHistory.otu_name,
+                    func.count()
+                    .over(partition_by=SQLLegacyHistory.otu)
+                    .label("change_count"),
+                )
+                .where(SQLLegacyHistory.index == index_id)
+                .distinct(SQLLegacyHistory.otu)
+                .order_by(
+                    SQLLegacyHistory.otu,
+                    cast(SQLLegacyHistory.otu_version, Integer).desc().nulls_last(),
+                ),
+            )
+        ).all()
 
-    return [
-        {"id": otu["_id"], "name": otu["name"], "change_count": otu["count"]}
-        async for otu in mongo.history.aggregate(pipeline)
-    ]
+    return sorted(
+        (
+            {"id": row.otu, "name": row.otu_name, "change_count": row.change_count}
+            for row in rows
+            if row.otu_name is not None
+        ),
+        key=lambda otu: otu["name"],
+    )
 
 
 async def get_next_version(mongo: "Mongo", ref_id: str) -> int:
@@ -304,31 +317,44 @@ async def get_next_version(mongo: "Mongo", ref_id: str) -> int:
     return await mongo.indexes.count_documents({"reference.id": ref_id, "ready": True})
 
 
-async def get_unbuilt_stats(mongo: "Mongo", ref_id: str | None = None) -> dict:
+async def get_unbuilt_stats(
+    mongo: "Mongo",
+    pg: AsyncEngine,
+    ref_id: str | None = None,
+) -> dict:
     """Get the number of unbuilt changes and number of OTUs affected by those changes.
 
-    Used to populate the metadata for an index find request.Can search against a
+    Used to populate the metadata for an index find request. Can search against a
     specific reference or all references.
 
     :param mongo: the application mongodb client
+    :param pg: the application PostgreSQL database object
     :param ref_id: the ref id to search unbuilt changes for
 
     :return: the change count and modified OTU count
 
     """
     ref_query = {}
+    history_filters = [SQLLegacyHistory.index.is_(None)]
 
     if ref_id:
         ref_query["reference.id"] = ref_id
+        history_filters.append(SQLLegacyHistory.reference == ref_id)
 
-    history_query = {**ref_query, "index.id": "unbuilt"}
+    async with AsyncSession(pg) as session:
+        change_count, modified_otu_count = (
+            await session.execute(
+                select(
+                    func.count(),
+                    func.count(distinct(SQLLegacyHistory.otu)),
+                ).where(*history_filters),
+            )
+        ).one()
 
     return {
         "total_otu_count": await mongo.otus.count_documents(ref_query),
-        "change_count": await mongo.history.count_documents(history_query),
-        "modified_otu_count": len(
-            await mongo.history.distinct("otu.id", history_query),
-        ),
+        "change_count": change_count,
+        "modified_otu_count": modified_otu_count,
     }
 
 

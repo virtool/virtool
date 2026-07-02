@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import Integer, cast, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.otus.utils
@@ -12,7 +12,7 @@ from virtool.data.topg import (
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
 from virtool.history.db import delete_history, legacy_history_document, patch_to_version
-from virtool.history.models import History, HistorySearchResult
+from virtool.history.models import History, HistoryMinimal, HistorySearchResult
 from virtool.history.sql import SQLLegacyHistory
 from virtool.history.transforms import AttachDiffTransform
 from virtool.mongo.core import Mongo
@@ -37,6 +37,44 @@ class HistoryData:
         documents = await virtool.history.db.find(self._mongo, self._pg, req_query)
 
         return HistorySearchResult(**documents)
+
+    async def list_by_otu(self, otu_id: str) -> list[HistoryMinimal]:
+        """List all changes affecting a single OTU.
+
+        Changes are read from the ``legacy_history`` table and sorted by OTU version
+        descending with a deterministic ``id`` tiebreaker.
+
+        :param otu_id: the ID of the OTU
+        :return: the OTU's changes
+        """
+        if not await self._mongo.otus.count_documents({"_id": otu_id}, limit=1):
+            raise ResourceNotFoundError()
+
+        async with AsyncSession(self._pg) as session:
+            rows = (
+                await session.execute(
+                    select(SQLLegacyHistory, SQLUser.handle)
+                    .join(SQLUser, SQLLegacyHistory.user_id == SQLUser.id)
+                    .where(SQLLegacyHistory.otu == otu_id)
+                    .order_by(
+                        cast(SQLLegacyHistory.otu_version, Integer)
+                        .desc()
+                        .nulls_first(),
+                        SQLLegacyHistory.id.desc(),
+                    ),
+                )
+            ).all()
+
+        documents = await apply_transforms(
+            [
+                base_processor(legacy_history_document(row, handle))
+                for row, handle in rows
+            ],
+            [AttachReferenceTransform(self._mongo)],
+            self._pg,
+        )
+
+        return [HistoryMinimal(**document) for document in documents]
 
     async def get(self, change_id: str) -> History:
         """Get a change by its ID.

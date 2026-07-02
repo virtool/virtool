@@ -57,6 +57,42 @@ class TestGet:
         await resp_is.not_found(resp)
 
 
+class TestListHistory:
+    async def test_ok(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        snapshot_recent: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+        test_ref: dict,
+    ):
+        """Test that an OTU's history is listed from Postgres."""
+        client = await spawn_client(authenticated=True)
+
+        await asyncio.gather(
+            fake.users.create(),
+            mongo.references.insert_one({**test_ref}),
+        )
+
+        user = await data_layer.users.get(client.user.id)
+
+        otu = await fake.otus.create(test_ref["_id"], user=user)
+
+        resp = await client.get(f"/otus/{otu.id}/history")
+
+        assert resp.status == HTTPStatus.OK
+        assert await resp.json() == snapshot_recent
+
+    async def test_not_found(self, spawn_client: ClientSpawner, resp_is: RespIs):
+        """Test that listing history for a non-existent OTU results in a ``404``."""
+        client = await spawn_client(authenticated=True)
+
+        resp = await client.get("/otus/foobar/history")
+
+        await resp_is.not_found(resp)
+
+
 class TestEdit:
     @pytest.mark.parametrize(
         ("data", "existing_abbreviation", "description"),
