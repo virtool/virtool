@@ -18,7 +18,7 @@ name = "copy history to postgres"
 created_at = arrow.get("2026-07-02 16:12:31.701659")
 revision_id = "iltemfg2gul8"
 
-alembic_down_revision = "edacc4a083f1"
+alembic_down_revision = "95ca6fc2a5db"
 virtool_down_revision = None
 
 # Change this if an Alembic revision is required to run this migration.
