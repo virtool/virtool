@@ -100,6 +100,14 @@ class TestGetContributors:
             == []
         )
 
+    async def test_requires_scope(self, pg: AsyncEngine):
+        """An unscoped call raises instead of aggregating the whole table."""
+        with pytest.raises(
+            ValueError,
+            match="get_contributors requires a reference_id or index_id",
+        ):
+            await virtool.history.db.get_contributors(pg)
+
 
 class TestAdd:
     async def test_edit(

@@ -429,7 +429,11 @@ async def get_contributors(
     :param reference_id: restrict contributions to a single reference
     :param index_id: restrict contributions to a single built index
     :return: a list of contributors to the scanned history changes
+    :raises ValueError: if neither ``reference_id`` nor ``index_id`` is provided
     """
+    if reference_id is None and index_id is None:
+        raise ValueError("get_contributors requires a reference_id or index_id")
+
     filters = []
 
     if reference_id is not None:
