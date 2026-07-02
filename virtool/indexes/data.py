@@ -11,7 +11,6 @@ from structlog import get_logger
 import virtool.history.db
 import virtool.indexes.db
 from virtool.api.custom_json import dump_bytes
-from virtool.api.utils import compose_regex_query, paginate
 from virtool.config import Config
 from virtool.data.errors import (
     ResourceConflictError,
@@ -20,7 +19,6 @@ from virtool.data.errors import (
 )
 from virtool.data.events import Operation, emit, emits
 from virtool.data.transforms import apply_transforms
-from virtool.history.db import HISTORY_LIST_PROJECTION
 from virtool.history.models import HistorySearchResult
 from virtool.indexes.checks import check_fasta_file_uploaded, check_index_files_uploaded
 from virtool.indexes.db import (
@@ -37,7 +35,6 @@ from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import get_rows
 from virtool.references.db import compose_archived_filter, lookup_nested_reference_by_id
 from virtool.references.models import ReferenceNested
-from virtool.references.transforms import AttachReferenceTransform
 from virtool.storage.cleanup import delete_prefix
 from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
@@ -136,7 +133,7 @@ class IndexData:
 
         contributors, otus = await asyncio.gather(
             virtool.history.db.get_contributors(self._pg, index_id=index_id),
-            virtool.indexes.db.get_otus(self._mongo, index_id),
+            virtool.indexes.db.get_otus(self._pg, index_id),
         )
 
         document.update({"contributors": contributors, "otus": otus})
@@ -344,24 +341,12 @@ class IndexData:
         if not await self._mongo.indexes.count_documents({"_id": index_id}):
             raise ResourceNotFoundError()
 
-        db_query = {"index.id": index_id}
-
-        if term := req_query.get("term"):
-            db_query.update(compose_regex_query(term, ["otu.name", "user.id"]))
-
-        data = await paginate(
-            self._mongo.history,
-            db_query,
-            req_query,
-            sort=[("otu.name", 1), ("otu.version", -1)],
-            projection=HISTORY_LIST_PROJECTION,
-            reverse=True,
-        )
-
-        data["documents"] = await apply_transforms(
-            [base_processor(d) for d in data["documents"]],
-            [AttachReferenceTransform(self._mongo), AttachUserTransform(self._pg)],
+        data = await virtool.history.db.find_by_index(
+            self._mongo,
             self._pg,
+            index_id,
+            req_query,
+            req_query.get("term"),
         )
 
         return HistorySearchResult(**data)

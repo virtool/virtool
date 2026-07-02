@@ -54,7 +54,7 @@ class OTUData:
         self, query: Mapping, term: str | None, verified: bool | None
     ) -> dict[str, Any] | list[dict | None]:
         """Find OTUs matching the given query."""
-        return await virtool.otus.db.find(self._mongo, term, query, verified)
+        return await virtool.otus.db.find(self._mongo, self._pg, term, query, verified)
 
     async def get(self, otu_id: str) -> OTU:
         """Get a single OTU by ID.

@@ -10,7 +10,7 @@ from aiohttp.web import Request
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo import DeleteMany, DeleteOne, UpdateOne
 from semver import VersionInfo
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 
@@ -24,6 +24,7 @@ from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
 from virtool.history.db import bulk_delete_history, bulk_insert_history
+from virtool.history.sql import SQLLegacyHistory
 from virtool.models.enums import HistoryMethod
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.utils import get_mongo_from_req
@@ -73,7 +74,7 @@ async def processor(mongo: "Mongo", pg: AsyncEngine, document: Document) -> Docu
     latest_build, otu_count, unbuilt_count = await asyncio.gather(
         get_latest_build(mongo, pg, ref_id),
         get_otu_count(mongo, ref_id),
-        get_unbuilt_count(mongo, ref_id),
+        get_unbuilt_count(pg, ref_id),
     )
 
     document.update(
@@ -486,17 +487,23 @@ async def get_otu_count(mongo: "Mongo", ref_id: str) -> int:
     return await mongo.otus.count_documents({"reference.id": ref_id})
 
 
-async def get_unbuilt_count(mongo: "Mongo", ref_id: str) -> int:
+async def get_unbuilt_count(pg: AsyncEngine, ref_id: str) -> int:
     """Return a count of unbuilt history changes associated with a given `ref_id`.
 
-    :param mongo: the application database client
+    :param pg: the application PostgreSQL database object
     :param ref_id: the id of the ref to count unbuilt changes for
     :return: the number of unbuilt changes
 
     """
-    return await mongo.history.count_documents(
-        {"reference.id": ref_id, "index.id": "unbuilt"},
-    )
+    async with AsyncSession(pg) as session:
+        return await session.scalar(
+            select(func.count())
+            .select_from(SQLLegacyHistory)
+            .where(
+                SQLLegacyHistory.reference == ref_id,
+                SQLLegacyHistory.index.is_(None),
+            ),
+        )
 
 
 async def create_clone(

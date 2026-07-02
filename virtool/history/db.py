@@ -468,6 +468,89 @@ async def find(
     }
 
 
+async def find_by_index(
+    mongo: "Mongo",
+    pg: AsyncEngine,
+    index_id: str,
+    req_query,
+    term: str | None = None,
+) -> dict:
+    """List the history changes included in a single index build.
+
+    Changes are read from the ``legacy_history`` table, filtered to ``index_id`` and
+    optionally a search ``term`` matched against the OTU name. They are sorted by OTU
+    name ascending then OTU version descending, mirroring the legacy Mongo query.
+
+    The legacy Mongo query also matched ``term`` against ``user.id``, but that field is
+    now an integer foreign key and never matched the case-insensitive regex, so only the
+    OTU name is searched here.
+
+    ``total_count`` reflects every change in the table, mirroring the unscoped
+    ``base_query`` the previous Mongo implementation passed to ``paginate``.
+
+    :param mongo: the application database client, used to attach reference data
+    :param pg: the application PostgreSQL database object
+    :param index_id: restrict changes to a single index build
+    :param req_query: the raw request query, used to derive ``page`` and ``per_page``
+    :param term: an optional term matched against the OTU name
+    :return: a search result including the matched change documents
+    """
+    try:
+        page = int(req_query["page"])
+    except (KeyError, ValueError):
+        page = 1
+
+    try:
+        per_page = int(req_query["per_page"])
+    except (KeyError, ValueError):
+        per_page = 25
+
+    search_filters = [SQLLegacyHistory.index == index_id]
+
+    if term:
+        search_filters.append(
+            SQLLegacyHistory.otu_name.icontains(term, autoescape=True)
+        )
+
+    async with AsyncSession(pg) as session:
+        total_count = await session.scalar(
+            select(func.count()).select_from(SQLLegacyHistory),
+        )
+
+        found_count = await session.scalar(
+            select(func.count()).select_from(SQLLegacyHistory).where(*search_filters),
+        )
+
+        rows = (
+            await session.execute(
+                select(SQLLegacyHistory, SQLUser.handle)
+                .join(SQLUser, SQLLegacyHistory.user_id == SQLUser.id)
+                .where(*search_filters)
+                .order_by(
+                    SQLLegacyHistory.otu_name.asc(),
+                    cast(SQLLegacyHistory.otu_version, Integer).desc().nulls_last(),
+                )
+                .offset(per_page * (page - 1))
+                .limit(per_page),
+            )
+        ).all()
+
+    documents = await apply_transforms(
+        [base_processor(legacy_history_document(row, handle)) for row, handle in rows],
+        [AttachReferenceTransform(mongo)],
+        pg,
+    )
+
+    return {
+        "documents": documents,
+        "total_count": total_count,
+        "found_count": found_count,
+        "page_count": math.ceil(found_count / per_page),
+        "per_page": per_page,
+        "page": page,
+    }
+
+
 async def get_contributors(
     pg: AsyncEngine,
     reference_id: str | None = None,

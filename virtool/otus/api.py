@@ -14,9 +14,7 @@ from virtool.api.errors import (
 )
 from virtool.api.routes import Routes
 from virtool.data.errors import ResourceNotFoundError
-from virtool.data.transforms import apply_transforms
 from virtool.data.utils import get_data_from_req
-from virtool.history.db import HISTORY_LIST_PROJECTION
 from virtool.mongo.utils import get_mongo_from_req, get_one_field
 from virtool.otus.db import SEQUENCE_PROJECTION
 from virtool.otus.models import OTU, OTUIsolate, OTUSequence, Sequence
@@ -28,7 +26,6 @@ from virtool.otus.oas import (
     UpdateSequenceRequest,
 )
 from virtool.otus.utils import evaluate_changes, find_isolate
-from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
 routes = Routes()
@@ -592,26 +589,14 @@ async def list_history(req):
 
     Lists an OTU's history.
     """
-    mongo = get_mongo_from_req(req)
-    pg: AsyncEngine = req.app["pg"]
-
     otu_id = req.match_info["otu_id"]
 
-    if not await mongo.otus.count_documents({"_id": otu_id}, limit=1):
+    try:
+        changes = await get_data_from_req(req).history.list_by_otu(otu_id)
+    except ResourceNotFoundError:
         raise APINotFound()
 
-    documents = await mongo.history.find(
-        {"otu.id": otu_id},
-        projection=HISTORY_LIST_PROJECTION,
-    ).to_list(None)
-
-    return json_response(
-        await apply_transforms(
-            [base_processor(d) for d in documents],
-            [AttachUserTransform(pg, ignore_errors=True)],
-            pg,
-        ),
-    )
+    return json_response(changes)
 
 
 @routes.put("/otus/{otu_id}/isolates/{isolate_id}/default")
