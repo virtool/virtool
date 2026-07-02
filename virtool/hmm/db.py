@@ -2,27 +2,26 @@
 
 import json
 
-import aiohttp.client_exceptions
-from aiohttp import ClientSession
+from aiohttp import ClientConnectorError, ClientSession
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
 import virtool.utils
-from virtool.errors import GitHubError
-from virtool.github import get_etag, get_release
 from virtool.hmm.sql import HMM_STATUS_ID, SQLHMM, SQLHMMStatus
 from virtool.hmm.utils import format_hmm_release
+from virtool.releases import (
+    GetReleaseError,
+    ReleaseType,
+    fetch_release_manifest_from_virtool,
+)
 from virtool.types import Document
 
 logger = get_logger("hmms")
 
-HMM_REPO_SLUG = "virtool/virtool-hmm"
-"""The GitHub slug for the canonical HMM data repository."""
-
 HMMS_REFRESH_INTERVAL = 600
-"""How frequently the HMMs should be refreshed from the GitHub repository.
+"""How frequently the HMMs should be refreshed from the www.virtool.ca manifest.
 
 There is currently only one version of HMM data and refreshes after the initial install
 of the data do nothing.
@@ -32,7 +31,6 @@ of the data do nothing.
 async def fetch_and_update_release(
     http_client: ClientSession,
     pg: AsyncEngine,
-    slug: str,
     ignore_errors: bool = False,
 ) -> Document:
     """Return the HMM install status release or create the status row if absent.
@@ -41,8 +39,7 @@ async def fetch_and_update_release(
 
     :param http_client: the application http client
     :param pg: the application Postgres client
-    :param slug: the slug for the HMM GitHub repo
-    :param ignore_errors: ignore possible errors when making GitHub request
+    :param ignore_errors: ignore possible errors when fetching the manifest
     :return: the release
 
     """
@@ -56,9 +53,6 @@ async def fetch_and_update_release(
     # The latest release stored in the HMM status row.
     release = status.release if status else None
 
-    # The ETag for the latest stored release.
-    etag = get_etag(release)
-
     # The currently installed release.
     installed = status.installed if status else None
 
@@ -66,21 +60,21 @@ async def fetch_and_update_release(
         installed = status.updates[0]
 
     try:
-        # The release dict will only be replaced if there is a 200 response from GitHub.
-        # A 304 indicates the release has not changed and `None` is returned from
-        # `get_release()`.
-        updated = await get_release(http_client, slug, etag)
-    except (
-        aiohttp.client_exceptions.ClientConnectorError,
-        GitHubError,
-    ) as err:
+        manifest = await fetch_release_manifest_from_virtool(
+            http_client,
+            ReleaseType.HMMS,
+        )
+
+        # The newest release is the first item in the manifest list.
+        updated = manifest["virtool-hmm"][0] if manifest else None
+    except (ClientConnectorError, GetReleaseError) as err:
         errors = []
 
         if "ClientConnectorError" in str(err):
-            errors = ["Could not reach GitHub"]
+            errors = ["Could not reach Virtool.ca"]
 
         if "404" in str(err):
-            errors = ["GitHub repository or release does not exist"]
+            errors = ["Release does not exist"]
 
         if errors and not ignore_errors:
             raise
@@ -103,7 +97,7 @@ async def fetch_and_update_release(
 
         return release
 
-    # Release is replaced with updated release if an update was found on GitHub.
+    # Release is replaced with the updated release if a newer one was found.
     if updated:
         release = format_hmm_release(updated, release, installed)
 

@@ -47,7 +47,6 @@ async def fake_hmm_status(mongo, seed_pg_hmm_status, fake: DataFaker, static_tim
             "body": "- remove some annotations that didn't have corresponding profiles",
             "content_type": "application/gzip",
             "download_url": "https://github.com/virtool/virtool-hmm/releases/download/v0.2.1/vthmm.tar.gz",
-            "etag": 'W/"7bd9cdef79c82ab4d7e5cfff394cf81eaddc6f681b8202f2a7bdc65cbcc4aaea"',
             "filename": "vthmm.tar.gz",
             "html_url": "https://github.com/virtool/virtool-hmm/releases/tag/v0.2.1",
             "id": 1230982,
