@@ -111,7 +111,7 @@ async def find(
 
     async with AsyncSession(pg) as session:
         data["modified_count"] = await session.scalar(
-            select(func.count(distinct(SQLLegacyHistory.otu_name))).where(
+            select(func.count(distinct(SQLLegacyHistory.otu))).where(
                 *history_filters,
             ),
         )
