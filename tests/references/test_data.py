@@ -3,12 +3,16 @@ import datetime
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 from pytest_mock import MockerFixture
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.history.db import legacy_history_values
+from virtool.history.sql import SQLLegacyHistory
 from virtool.mongo.core import Mongo
 from virtool.references.bulk import BulkOTUUpdater
 from virtool.references.models import ReferenceDataType
@@ -1431,6 +1435,84 @@ class TestUpdateRemoteReference:
         )
 
         await self._assert(ref_id, mongo, snapshot)
+
+    async def test_dual_writes_legacy_history(
+        self,
+        populated_reference: tuple,
+        data_layer: DataLayer,
+        mocker: MockerFixture,
+        mongo: Mongo,
+        pg: AsyncEngine,
+    ):
+        """Every history document written by a remote reference update is dual-written
+        to the ``legacy_history`` table, one Postgres row per Mongo document with the
+        canonical column mapping.
+
+        The update exercises create (otu_r4), update (otu_r1), and remove (otu_r3, whose
+        ``otu_version`` sentinel maps to ``NULL``) so the mapping is covered across every
+        history method.
+        """
+        ref_id, user_id, update_release = populated_reference
+
+        await self._run_update(
+            data_layer,
+            mocker,
+            ref_id,
+            user_id,
+            update_release,
+            otus=[
+                _make_otu_r1(name="OTU One Renamed", abbreviation="OOR"),
+                _make_otu_r2(),
+                # otu_r3 omitted -> removed
+                ReferenceSourceOTU(
+                    _id="otu_r4",
+                    name="OTU Four",
+                    abbreviation="OF",
+                    isolates=[
+                        ReferenceSourceIsolate(
+                            id="iso_r4",
+                            default=True,
+                            source_type="strain",
+                            source_name="New",
+                            sequences=[
+                                ReferenceSourceSequence(
+                                    _id="seq_r4",
+                                    accession="NC_000006",
+                                    definition="Sequence 4",
+                                    sequence="GGGGGGGGGGGGGGGG",
+                                    host="None",
+                                )
+                            ],
+                        )
+                    ],
+                ),
+            ],
+        )
+
+        documents = await mongo.history.find({"reference.id": ref_id}).to_list(None)
+
+        async with AsyncSession(pg) as session:
+            rows = (
+                (
+                    await session.execute(
+                        select(SQLLegacyHistory).where(
+                            SQLLegacyHistory.reference == ref_id,
+                        ),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+
+        rows_by_legacy_id = {row.legacy_id: row for row in rows}
+
+        assert rows_by_legacy_id.keys() == {document["_id"] for document in documents}
+
+        for document in documents:
+            expected = legacy_history_values(document)
+            row = rows_by_legacy_id[document["_id"]]
+
+            assert {column: getattr(row, column) for column in expected} == expected
 
     async def test_update_fails(
         self,
