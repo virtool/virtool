@@ -65,8 +65,10 @@ async def fetch_and_update_release(
             ReleaseType.HMMS,
         )
 
-        # The newest release is the first item in the manifest list.
-        updated = manifest["virtool-hmm"][0] if manifest else None
+        # The newest release is the first item in the manifest list. Treat a
+        # missing key or empty list as "no update" and keep the stored release.
+        releases = manifest.get("virtool-hmm") if manifest else None
+        updated = releases[0] if releases else None
     except (ClientConnectorError, GetReleaseError) as err:
         errors = []
 

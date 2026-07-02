@@ -542,6 +542,41 @@ class TestUpdateRelease:
         assert pg_status["errors"] == []
         assert pg_status["release"]["id"] == RELEASE["id"]
 
+    @pytest.mark.parametrize(
+        "manifest",
+        [None, {}, {"virtool-hmm": []}],
+        ids=["none", "missing_key", "empty_list"],
+    )
+    async def test_empty_manifest_preserves_stored_release(
+        self, data_layer, manifest, mocker, pg
+    ):
+        """A manifest with no HMM release keeps the stored release and clears errors."""
+        mocker.patch(
+            "virtool.hmm.db.fetch_release_manifest_from_virtool",
+            mocker.AsyncMock(return_value=manifest),
+        )
+
+        await _seed_status(pg, errors=["stale error"])
+
+        await data_layer.hmms.update_release()
+
+        pg_status = await _read_pg_status(pg)
+
+        assert pg_status["errors"] == []
+        assert pg_status["release"]["id"] == RELEASE["id"]
+
+    async def test_fatal_error_propagates(self, data_layer, mocker, pg):
+        """A fatal fetch error is raised rather than silently swallowed."""
+        mocker.patch(
+            "virtool.hmm.db.fetch_release_manifest_from_virtool",
+            mocker.AsyncMock(side_effect=GetReleaseError("404 not found")),
+        )
+
+        await _seed_status(pg)
+
+        with pytest.raises(GetReleaseError):
+            await data_layer.hmms.update_release()
+
 
 class TestInstallUpdate:
     """``install_update`` writes the queued update to Postgres."""
