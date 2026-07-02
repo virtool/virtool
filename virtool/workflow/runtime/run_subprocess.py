@@ -106,7 +106,7 @@ async def _run_subprocess(
         try:
             stderr_tail.append(line.decode())
         except UnicodeDecodeError:
-            stderr_tail.append(str(line))
+            stderr_tail.append(line.decode(errors="backslashreplace"))
 
     if stderr_handler:
 
