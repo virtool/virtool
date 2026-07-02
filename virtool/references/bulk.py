@@ -7,8 +7,8 @@ from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from virtool.history.db import prepare_add
-from virtool.history.sql import SQLHistoryDiff
+from virtool.history.db import legacy_history_values, prepare_add
+from virtool.history.sql import SQLHistoryDiff, SQLLegacyHistory
 from virtool.mongo.core import Collection, Mongo
 from virtool.mongo.identifier import AbstractIdProvider
 from virtool.otus.db import bulk_join_ids, bulk_join_query
@@ -179,6 +179,14 @@ class OTUDataBuffer(BaseDataBuffer):
                     insert(SQLHistoryDiff).values(
                         [
                             {"change_id": change.data.id, "diff": change.data.diff}
+                            for change in change_buffer
+                        ],
+                    ),
+                )
+                await pg_session.execute(
+                    insert(SQLLegacyHistory).values(
+                        [
+                            legacy_history_values(change.data.document)
                             for change in change_buffer
                         ],
                     ),
