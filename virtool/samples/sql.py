@@ -131,7 +131,7 @@ class SQLLegacySampleLabel(Base):
     __tablename__ = "legacy_sample_labels"
 
     sample_id: Mapped[int] = mapped_column(
-        ForeignKey("legacy_samples.id"), primary_key=True
+        BigInteger, ForeignKey("legacy_samples.id"), primary_key=True
     )
     label_id: Mapped[int] = mapped_column(ForeignKey("labels.id"), primary_key=True)
 
@@ -142,8 +142,8 @@ class SQLLegacySampleSubtraction(Base):
     __tablename__ = "legacy_sample_subtractions"
 
     sample_id: Mapped[int] = mapped_column(
-        ForeignKey("legacy_samples.id"), primary_key=True
+        BigInteger, ForeignKey("legacy_samples.id"), primary_key=True
     )
     subtraction_id: Mapped[int] = mapped_column(
-        ForeignKey("subtractions.id"), primary_key=True
+        BigInteger, ForeignKey("subtractions.id"), primary_key=True
     )
