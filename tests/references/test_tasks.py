@@ -13,7 +13,7 @@ from syrupy.matchers import path_type
 
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
-from virtool.history.sql import SQLHistoryDiff
+from virtool.history.sql import SQLLegacyHistoryDiff
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.references.db import get_manifest
@@ -191,8 +191,8 @@ def assert_reference_created(
             diff_rows = (
                 (
                     await pg_session.execute(
-                        select(SQLHistoryDiff).where(
-                            SQLHistoryDiff.change_id.in_(change_ids),
+                        select(SQLLegacyHistoryDiff).where(
+                            SQLLegacyHistoryDiff.change_id.in_(change_ids),
                         ),
                     )
                 )

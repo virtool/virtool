@@ -8,7 +8,7 @@ from syrupy import SnapshotAssertion
 
 import virtool.history.db
 from virtool.fake.next import DataFaker
-from virtool.history.sql import SQLHistoryDiff, SQLLegacyHistory
+from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
@@ -143,8 +143,8 @@ class TestAdd:
 
         async with AsyncSession(pg) as session:
             diff = await session.execute(
-                select(SQLHistoryDiff.diff).where(
-                    SQLHistoryDiff.change_id == change_id,
+                select(SQLLegacyHistoryDiff.diff).where(
+                    SQLLegacyHistoryDiff.change_id == change_id,
                 ),
             )
 
@@ -188,7 +188,7 @@ class TestAdd:
 
         assert change == snapshot
         assert await mongo.history.find_one() == snapshot
-        assert await get_row_by_id(pg, SQLHistoryDiff, 1) == snapshot
+        assert await get_row_by_id(pg, SQLLegacyHistoryDiff, 1) == snapshot
 
         async with AsyncSession(pg) as session:
             legacy = await session.execute(
@@ -229,7 +229,7 @@ class TestAdd:
         assert change == snapshot(name="return_value")
 
         diff, document = await asyncio.gather(
-            get_row_by_id(pg, SQLHistoryDiff, 1),
+            get_row_by_id(pg, SQLLegacyHistoryDiff, 1),
             mongo.history.find_one(),
         )
 
@@ -254,54 +254,57 @@ class TestAdd:
 class TestGetMostRecentChange:
     async def test_ok(
         self,
-        mongo: Mongo,
+        fake: DataFaker,
+        pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         static_time: StaticTime,
     ):
-        """Test that the most recent change document for the given otu is returned."""
+        """The change with the highest ``otu_version`` for the otu is returned."""
+        user = await fake.users.create()
+
         delta = datetime.timedelta(3)
 
-        await mongo.history.insert_many(
-            [
-                {
-                    "_id": "6116cba1.1",
-                    "description": "Description",
-                    "method_name": "update",
-                    "created_at": static_time.datetime - delta,
-                    "user": {"id": "test"},
-                    "otu": {"id": "6116cba1", "name": "Prunus virus F", "version": 1},
-                    "index": {"id": "unbuilt"},
-                },
-                {
-                    "_id": "6116cba1.2",
-                    "description": "Description number 2",
-                    "method_name": "update",
-                    "created_at": static_time.datetime,
-                    "user": {"id": "test"},
-                    "otu": {"id": "6116cba1", "name": "Prunus virus F", "version": 2},
-                    "index": {"id": "unbuilt"},
-                },
-            ],
-            session=None,
-        )
+        async with AsyncSession(pg) as session:
+            session.add_all(
+                [
+                    SQLLegacyHistory(
+                        legacy_id="6116cba1.1",
+                        created_at=static_time.datetime - delta,
+                        description="Description",
+                        method_name="update",
+                        user_id=user.id,
+                        otu="6116cba1",
+                        otu_name="Prunus virus F",
+                        otu_version="1",
+                        reference="hxn167",
+                        index=None,
+                        index_version=None,
+                    ),
+                    SQLLegacyHistory(
+                        legacy_id="6116cba1.2",
+                        created_at=static_time.datetime,
+                        description="Description number 2",
+                        method_name="update",
+                        user_id=user.id,
+                        otu="6116cba1",
+                        otu_name="Prunus virus F",
+                        otu_version="2",
+                        reference="hxn167",
+                        index=None,
+                        index_version=None,
+                    ),
+                ],
+            )
 
-        return_value = await virtool.history.db.get_most_recent_change(
-            mongo,
-            "6116cba1",
-        )
+            await session.commit()
+
+        return_value = await virtool.history.db.get_most_recent_change(pg, "6116cba1")
+
         assert return_value == snapshot
 
-    async def test_does_not_exist(self, mongo: Mongo):
-        """Test that `None` is returned when no change document exists for the given
-        otu.
-        """
-        assert (
-            await virtool.history.db.get_most_recent_change(
-                mongo,
-                "6116cba1",
-            )
-            is None
-        )
+    async def test_does_not_exist(self, pg: AsyncEngine):
+        """``None`` is returned when the otu has no history."""
+        assert await virtool.history.db.get_most_recent_change(pg, "6116cba1") is None
 
 
 @pytest.mark.parametrize("remove", [True, False])
@@ -327,8 +330,8 @@ async def test_patch_to_version(
 
 
 async def test_patch_to_version_missing_diff(mongo: Mongo, pg: AsyncEngine):
-    """A change with the ``"postgres"`` sentinel but no ``SQLHistoryDiff`` row raises a
-    clear error instead of failing later with a ``KeyError``.
+    """A change with the ``"postgres"`` sentinel but no ``SQLLegacyHistoryDiff`` row
+    raises a clear error instead of failing later with a ``KeyError``.
     """
     await mongo.history.insert_one(
         {
@@ -339,7 +342,10 @@ async def test_patch_to_version_missing_diff(mongo: Mongo, pg: AsyncEngine):
         },
     )
 
-    with pytest.raises(ValueError, match="Missing history_diffs rows.*6116cba1.1"):
+    with pytest.raises(
+        ValueError,
+        match="Missing legacy_history_diff rows.*6116cba1.1",
+    ):
         await virtool.history.db.patch_to_version(mongo, pg, "6116cba1", 0)
 
 

@@ -8,19 +8,34 @@ sentinel, so the two stores converge and reads can later be served from Postgres
 alone.
 """
 
-from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy import Column, MetaData, String, Table, select
+from sqlalchemy.dialects.postgresql import JSONB, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from structlog import get_logger
 
 from virtool.history.db import legacy_history_values
-from virtool.history.sql import SQLHistoryDiff, SQLLegacyHistory
+from virtool.history.sql import SQLLegacyHistory
 from virtool.migration import MigrationContext
 from virtool.users.pg import SQLUser
 
 logger = get_logger("migration")
 
 POSTGRES_SENTINEL = "postgres"
+
+_history_diffs_at_backfill = Table(
+    "history_diffs",
+    MetaData(),
+    Column("change_id", String),
+    Column("diff", JSONB),
+)
+"""Point-in-time definition of the diff table as it existed when this backfill runs.
+
+The backfill is ordered before the revision that renames ``history_diffs`` to
+``legacy_history_diff`` and adds the ``history_id`` foreign key, so it must target the
+table by its contemporary name rather than the current ORM model. The rename revision
+later carries these rows forward and backfills ``history_id`` by joining ``change_id``
+to ``legacy_history.legacy_id``.
+"""
 
 
 async def backfill_inline_history_diffs(ctx: MigrationContext) -> None:
@@ -84,7 +99,7 @@ async def backfill_inline_history_diffs(ctx: MigrationContext) -> None:
                 continue
 
             await session.execute(
-                insert(SQLHistoryDiff)
+                insert(_history_diffs_at_backfill)
                 .values(change_id=change_id, diff=diff)
                 .on_conflict_do_nothing(index_elements=["change_id"]),
             )

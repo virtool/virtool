@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.history.db import prepare_add
-from virtool.history.sql import SQLHistoryDiff
+from virtool.history.sql import SQLLegacyHistoryDiff
 from virtool.mongo.core import Collection, Mongo
 from virtool.mongo.identifier import AbstractIdProvider
 from virtool.otus.db import bulk_join_ids, bulk_join_query
@@ -176,7 +176,7 @@ class OTUDataBuffer(BaseDataBuffer):
         ):
             async with pg_lock:
                 await pg_session.execute(
-                    insert(SQLHistoryDiff).values(
+                    insert(SQLLegacyHistoryDiff).values(
                         [
                             {"change_id": change.data.id, "diff": change.data.diff}
                             for change in change_buffer

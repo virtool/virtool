@@ -58,6 +58,18 @@ async def test_get(
     """Test that a specific history change can be retrieved by its change_id."""
     client = await spawn_client(authenticated=True)
 
+    async with AsyncSession(pg) as session:
+        for change in test_changes:
+            session.add(
+                SQLLegacyHistory(
+                    **legacy_history_values(
+                        {**change, "user": {"id": client.user.id}},
+                    ),
+                ),
+            )
+
+        await session.commit()
+
     await bulk_insert_diffs(
         pg,
         [{"change_id": c["_id"], "diff": c["diff"]} for c in test_changes],
