@@ -2,6 +2,7 @@
 
 import asyncio
 from asyncio.subprocess import Process
+from collections import deque
 from collections.abc import Callable, Coroutine
 from contextlib import suppress
 from pathlib import Path
@@ -97,16 +98,28 @@ async def _run_subprocess(
 
     stdout = asyncio.subprocess.PIPE if stdout_handler else asyncio.subprocess.DEVNULL
 
+    stderr_tail: deque[str] = deque(maxlen=20)
+
+    def _capture_stderr(line: bytes) -> None:
+        line = line.rstrip()
+
+        try:
+            stderr_tail.append(line.decode())
+        except UnicodeDecodeError:
+            stderr_tail.append(line.decode(errors="backslashreplace"))
+
     if stderr_handler:
 
         async def _stderr_handler(line):
             stderr_logger(line)
+            _capture_stderr(line)
             await stderr_handler(line)
 
     else:
 
         async def _stderr_handler(line):
             stderr_logger(line)
+            _capture_stderr(line)
 
     process = await asyncio.create_subprocess_exec(
         *(str(arg) for arg in command),
@@ -153,6 +166,7 @@ async def _run_subprocess(
         raise SubprocessFailedError(
             command=command,
             return_code=process.returncode,
+            stderr="\n".join(stderr_tail),
         )
 
     log.info(
