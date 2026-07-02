@@ -533,5 +533,12 @@
       'name': 'create legacy_samples table',
       'revision': 'edacc4a083f1',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 77,
+      'name': 'drop analyses ml_id column',
+      'revision': '95ca6fc2a5db',
+    }),
   ])
 # ---
