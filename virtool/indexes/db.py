@@ -92,6 +92,39 @@ class IndexCountsTransform(AbstractTransform):
             "modified_otu_count": modified_otu_count,
         }
 
+    async def prepare_many(
+        self, documents: list[Document], session: AsyncSession
+    ) -> Any:
+        index_ids = [document["id"] for document in documents]
+
+        rows = (
+            await session.execute(
+                select(
+                    SQLLegacyHistory.index,
+                    func.count(),
+                    func.count(distinct(SQLLegacyHistory.otu)),
+                )
+                .where(SQLLegacyHistory.index.in_(index_ids))
+                .group_by(SQLLegacyHistory.index),
+            )
+        ).all()
+
+        counts = {
+            index: {
+                "change_count": change_count,
+                "modified_otu_count": modified_otu_count,
+            }
+            for index, change_count, modified_otu_count in rows
+        }
+
+        return {
+            index_id: counts.get(
+                index_id,
+                {"change_count": 0, "modified_otu_count": 0},
+            )
+            for index_id in index_ids
+        }
+
 
 async def create(
     mongo: "Mongo",
@@ -457,45 +490,3 @@ async def attach_files(pg: AsyncEngine, base_url: str, document: dict) -> dict:
         )
 
     return {**document, "files": files}
-
-
-def lookup_index_otu_counts(local_field: str = "index.id") -> list[dict]:
-    """Create a mongoDB aggregation pipeline step to look up index otu counts.
-
-    :param local_field: index id field to look up
-    :return: mongoDB aggregation steps for use in an aggregation pipeline
-    """
-    return [
-        {
-            "$lookup": {
-                "from": "history",
-                "let": {"index_id": f"${local_field}"},
-                "pipeline": [
-                    {"$match": {"$expr": {"$eq": ["$index.id", "$$index_id"]}}},
-                    {"$sort": {"_id": 1}},
-                    {
-                        "$group": {
-                            "_id": None,
-                            "change_count": {"$sum": 1},
-                            "modified_otu_count": {"$addToSet": "$otu.id"},
-                        },
-                    },
-                    {
-                        "$project": {
-                            "_id": False,
-                            "change_count": True,
-                            "modified_otu_count": {"$size": "$modified_otu_count"},
-                        },
-                    },
-                ],
-                "as": "counts",
-            },
-        },
-        {"$set": {"counts": {"$first": "$counts"}}},
-        {"$set": {"change_count": {"$ifNull": ["$counts.change_count", 0]}}},
-        {
-            "$set": {
-                "modified_otu_count": {"$ifNull": ["$counts.modified_otu_count", 0]},
-            },
-        },
-    ]

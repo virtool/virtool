@@ -14,7 +14,6 @@ from virtool.api.pagination import Page, PerPage
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.history.models import History, HistorySearchResult
-from virtool.mongo.utils import get_mongo_from_req, get_one_field
 
 routes = virtool.api.routes.Routes()
 
@@ -69,15 +68,16 @@ class ChangeView(PydanticView):
             404: Not found
             409: Not unbuilt
         """
-        reference = await get_one_field(
-            get_mongo_from_req(self.request).history,
-            "reference",
-            change_id,
-        )
+        try:
+            reference_id = await get_data_from_req(
+                self.request,
+            ).history.get_reference_id(change_id)
+        except ResourceNotFoundError:
+            raise APINotFound()
 
-        if reference is not None and not await virtool.references.db.check_right(
+        if not await virtool.references.db.check_right(
             self.request,
-            reference["id"],
+            reference_id,
             "modify_otu",
         ):
             raise APIInsufficientRights()

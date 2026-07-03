@@ -52,7 +52,7 @@
       'bar': 2,
       'foo': 1,
     }),
-    'modified_otu_count': 0,
+    'modified_otu_count': 1,
     'otus': list([
       dict({
         'change_count': 1,

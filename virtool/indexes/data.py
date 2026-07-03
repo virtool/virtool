@@ -2,7 +2,7 @@ import asyncio
 import gzip
 from collections.abc import AsyncIterator
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
@@ -17,12 +17,14 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.events import Operation, emit, emits
+from virtool.data.topg import retry_both_transactions
 from virtool.data.transforms import apply_transforms
 from virtool.history.models import HistorySearchResult
+from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.checks import check_fasta_file_uploaded, check_index_files_uploaded
 from virtool.indexes.db import (
     INDEX_FILE_NAMES,
-    lookup_index_otu_counts,
+    IndexCountsTransform,
     update_last_indexed_versions,
 )
 from virtool.indexes.models import Index, IndexFile, IndexMinimal, IndexSearchResult
@@ -93,9 +95,7 @@ class IndexData:
                         },
                     },
                     *lookup_nested_reference_by_id(local_field="reference.id"),
-                    *lookup_index_otu_counts(local_field="_id"),
                     {"$sort": {"created_at": 1}},
-                    {"$project": {"counts": False}},
                 ],
             )
         ]
@@ -105,6 +105,7 @@ class IndexData:
             [
                 AttachJobTransform(self._pg),
                 AttachUserTransform(self._pg),
+                IndexCountsTransform(),
             ],
             self._pg,
         )
@@ -121,9 +122,7 @@ class IndexData:
             [
                 {"$match": {"_id": index_id}},
                 *lookup_nested_reference_by_id(local_field="reference.id"),
-                *lookup_index_otu_counts(local_field="_id"),
                 {"$sort": {"created_at": 1}},
-                {"$project": {"counts": False}},
             ],
         ).to_list(length=1)
 
@@ -150,6 +149,7 @@ class IndexData:
             [
                 AttachJobTransform(self._pg),
                 AttachUserTransform(self._pg),
+                IndexCountsTransform(),
             ],
             self._pg,
         )
@@ -368,7 +368,7 @@ class IndexData:
         if not index:
             raise ResourceNotFoundError
 
-        async with self._mongo.create_session() as mongo_session:
+        async def remove(mongo_session, pg_session) -> None:
             delete_result = await self._mongo.indexes.delete_one(
                 {"_id": index_id},
                 session=mongo_session,
@@ -377,16 +377,19 @@ class IndexData:
             if delete_result.deleted_count == 0:
                 raise ResourceNotFoundError
 
-            index_change_ids = await self._mongo.history.distinct(
-                "_id",
-                {"index.id": index_id},
-            )
-
             await self._mongo.history.update_many(
-                {"_id": {"$in": index_change_ids}},
+                {"index.id": index_id},
                 {"$set": {"index": {"id": "unbuilt", "version": "unbuilt"}}},
                 session=mongo_session,
             )
+
+            await pg_session.execute(
+                update(SQLLegacyHistory)
+                .where(SQLLegacyHistory.index == index_id)
+                .values(index=None, index_version=None),
+            )
+
+        await retry_both_transactions(self._mongo, self._pg, remove)
 
         for key, exc in await delete_prefix(
             self._storage, compose_index_prefix(index_id)

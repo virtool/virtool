@@ -324,6 +324,7 @@ async def test_get(
     error: str | None,
     fake: DataFaker,
     mocker: MockerFixture,
+    pg: AsyncEngine,
     resp_is: RespIs,
     snapshot: SnapshotAssertion,
     mongo: Mongo,
@@ -350,6 +351,29 @@ async def test_get(
             session=None,
         ),
     )
+
+    async with AsyncSession(pg) as session:
+        session.add_all(
+            SQLLegacyHistory(
+                legacy_id=legacy_id,
+                created_at=static_time.datetime,
+                description="Description",
+                method_name="edit",
+                user_id=user.id,
+                otu=otu_id,
+                otu_name=otu_id,
+                otu_version="0",
+                reference="bar",
+                index=index_id,
+                index_version="0",
+            )
+            for legacy_id, index_id, otu_id in (
+                ("0", "foobar", "foo"),
+                ("1", "foobar", "baz"),
+                ("2", "bar", "bat"),
+            )
+        )
+        await session.commit()
 
     job = await fake.jobs.create(user=user, workflow="build_index")
 
