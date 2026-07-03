@@ -17,28 +17,11 @@ from virtool.references.db import (
     compose_archived_filter,
     compose_rights_filter,
     create_document,
-    fetch_and_update_release,
     get_manifest,
     get_reference_groups,
     populate_insert_only_reference,
 )
 from virtool.references.models import ReferenceRights
-from virtool.startup import startup_http_client_session
-
-
-@pytest.fixture
-async def fake_app():
-    version = "v1.2.3"
-
-    app = {"version": version}
-
-    yield app
-
-    # Close real session created in `test_startup_executors()`.
-    try:
-        await app["client"].close()
-    except TypeError:
-        pass
 
 
 @pytest.mark.parametrize("is_administrator", [True, False])
@@ -161,25 +144,6 @@ async def test_create_manifest(mongo: Mongo, test_otu: dict):
         "foo": 5,
         "bar": 11,
     }
-
-
-async def test_fetch_and_update_release(mongo: Mongo, fake_app, snapshot, static_time):
-    await startup_http_client_session(fake_app)
-
-    await mongo.references.insert_one(
-        {
-            "_id": "fake_ref_id",
-            "archived": False,
-            "installed": {"name": "1.0.0-fake-install"},
-            "release": {"name": "1.0.0-fake-release"},
-            "remotes_from": {"slug": "virtool/ref-plant-viruses"},
-        },
-    )
-
-    assert (
-        await fetch_and_update_release(mongo, fake_app["client"], "fake_ref_id", False)
-        == snapshot
-    )
 
 
 async def test_get_reference_groups(

@@ -8,8 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from virtool.data.errors import ResourceNotFoundError
 from virtool.fake.next import DataFaker
 from virtool.hmm.data import HMM_ANNOTATIONS_KEY, HMM_PROFILES_KEY, HmmsData
+from virtool.hmm.releases import GetReleaseError
 from virtool.hmm.sql import SQLHMM, SQLHMMStatus
-from virtool.releases import GetReleaseError
 from virtool.storage.object import ObjectProvider
 from virtool.tasks.progress import AbstractProgressHandler
 

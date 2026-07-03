@@ -17,7 +17,7 @@ from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
 from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_mongo_from_app, get_one_field
+from virtool.mongo.utils import get_one_field
 from virtool.otus.oas import (
     CreateOTURequest,
 )
@@ -26,7 +26,6 @@ from virtool.references.oas import CreateReferenceRequest, CreateReferenceUserRe
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.tasks.sql import SQLTask
 from virtool.users.oas import UpdateUserRequest
-from virtool.utils import get_http_session_from_app
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
@@ -374,57 +373,6 @@ class TestCreate:
         assert resp.headers["Location"] == snapshot(name="location")
         assert await resp.json() == snapshot(name="resp")
 
-    async def test_remote(
-        self,
-        mocker,
-        spawn_client: ClientSpawner,
-        snapshot: SnapshotAssertion,
-        static_time,
-    ):
-        mocker.patch(
-            "virtool.github.get_release",
-            make_mocked_coro(
-                {
-                    "id": 11447367,
-                    "name": "v0.1.1",
-                    "body": "#### Fixed\n- fixed uploading to GitHub releases in `.travis.yml`",
-                    "etag": 'W/"mock_etag"',
-                    "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.1",
-                    "published_at": "2018-06-12T19:20:57Z",
-                    "assets": [
-                        {
-                            "name": "reference.json.gz",
-                            "size": 3695872,
-                            "browser_download_url": "https://github.com/virtool/ref-plant-viruses/releases/download/v0.1.1/reference.json.gz",
-                            "content_type": "application/gzip",
-                        },
-                    ],
-                }
-            ),
-        )
-
-        client = await spawn_client(
-            authenticated=True,
-            permissions=[Permission.create_ref],
-        )
-
-        resp = await client.post(
-            "/references/v1",
-            {
-                "name": "Test Remote",
-                "organism": "viruses",
-                "data_type": "genome",
-                "remote_from": "virtool/ref-plant-viruses",
-            },
-        )
-
-        assert resp.status == 201
-        assert resp.headers["Location"] == snapshot(name="location")
-        assert await resp.json() == snapshot(
-            matcher=path_type({".*etag": (str,)}, regex=True),
-            name="resp",
-        )
-
 
 class TestEdit:
     @staticmethod
@@ -594,192 +542,6 @@ async def test_delete(
     assert await mongo.references.count_documents({}) == 0
     assert await resp.text() == ""
     assert resp.status == 204
-
-
-@pytest.mark.parametrize("error", [None, "400", "404"])
-async def test_get_release(
-    error,
-    mocker,
-    mongo: Mongo,
-    spawn_client,
-    resp_is,
-    snapshot,
-):
-    client = await spawn_client(authenticated=True)
-
-    if error != "404":
-        document = {
-            "_id": "foo",
-            "release": {
-                "id": 11449913,
-                "name": "v0.1.2",
-                "body": "#### Changed\r\n- add new isolates to Cucurbit chlorotic yellows virus",
-                "etag": 'W/"b7e8a7fb0fbe0cade0d6a86c9e0d4549"',
-                "filename": "reference.json.gz",
-                "size": 3699729,
-                "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.2",
-                "download_url": "https://github.com/virtool/ref-plant-viruses/releases/download/v0.1.2/reference.json.gz",
-                "published_at": "2018-06-12T21:52:33Z",
-                "content_type": "application/gzip",
-                "retrieved_at": "2018-06-14T19:52:17.465000Z",
-                "newer": True,
-            },
-            "remotes_from": {"slug": "virtool/virtool"},
-        }
-
-        if error == "400":
-            del document["remotes_from"]
-
-        await mongo.references.insert_one(document)
-
-    m_fetch_and_update_release = mocker.patch(
-        "virtool.references.db.fetch_and_update_release",
-        make_mocked_coro(
-            {
-                "id": 11449913,
-                "name": "v0.1.2",
-                "body": "#### Changed\r\n- add new isolates to Cucurbit chlorotic yellows virus",
-                "etag": 'W/"b7e8a7fb0fbe0cade0d6a86c9e0d4549"',
-                "filename": "reference.json.gz",
-                "size": 3699729,
-                "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.2",
-                "download_url": "https://github.com/virtool/ref-plant-viruses/releases/download/v0.1.2/reference.json.gz",
-                "published_at": "2018-06-12T21:52:33Z",
-                "content_type": "application/gzip",
-                "retrieved_at": "2018-06-14T19:52:17.465000Z",
-                "newer": True,
-            },
-        ),
-    )
-
-    resp = await client.get("/references/v1/foo/release")
-
-    if error == "400":
-        await resp_is.bad_request(resp, "Not a remote reference")
-        return
-
-    if error == "404":
-        await resp_is.not_found(resp)
-        return
-
-    assert resp.status == HTTPStatus.OK
-
-    assert await resp.json() == snapshot(
-        matcher=path_type({".*etag": (str,)}, regex=True),
-    )
-
-    m_fetch_and_update_release.assert_called_with(
-        get_mongo_from_app(client.app),
-        get_http_session_from_app(client.app),
-        "foo",
-    )
-
-
-@pytest.mark.parametrize("empty", [True, False])
-async def test_list_updates(
-    empty,
-    fake: DataFaker,
-    mocker,
-    spawn_client,
-    id_exists,
-    resp_is,
-    snapshot,
-):
-    client = await spawn_client(authenticated=True)
-
-    user = await fake.users.create()
-
-    m_get_one_field = mocker.patch(
-        "virtool.mongo.utils.get_one_field",
-        make_mocked_coro(
-            None
-            if empty
-            else [
-                {
-                    "id": 11447367,
-                    "created_at": "2018-06-14T18:37:54.242000Z",
-                    "name": "v0.1.1",
-                    "body": "#### Fixed\r\n- fixed uploading to GitHub releases in `.travis.yml`",
-                    "filename": "reference.json.gz",
-                    "size": 3695872,
-                    "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.1",
-                    "published_at": "2018-06-12T19:20:57Z",
-                    "ready": True,
-                    "user": {
-                        "administrator": user.administrator_role is not None,
-                        "handle": user.handle,
-                        "id": user.id,
-                    },
-                    "newer": True,
-                },
-            ],
-        ),
-    )
-
-    resp = await client.get("/references/v1/foo/updates")
-
-    id_exists.assert_called_with(ANY, "foo")
-
-    if not id_exists:
-        await resp_is.not_found(resp)
-        return
-
-    assert resp.status == HTTPStatus.OK
-    assert await resp.json() == snapshot
-
-    m_get_one_field.assert_called_with(ANY, "updates", "foo")
-
-
-@pytest.mark.parametrize("error", [None, "400", "404"])
-async def test_update(
-    error: str | None,
-    check_ref_right,
-    resp_is: RespIs,
-    mongo: Mongo,
-    snapshot_recent: SnapshotAssertion,
-    spawn_client: ClientSpawner,
-):
-    client = await spawn_client(authenticated=True)
-
-    if error != "404":
-        reference = {
-            "_id": "foo",
-            "release": None,
-        }
-
-        if error != "400":
-            reference["release"] = {
-                "id": 10742520,
-                "name": "v0.3.0",
-                "body": "Lorem ipsum",
-                "etag": 'W/"ef123d746a33f88ee44203d3ca6bc2f7"',
-                "filename": "reference.json.gz",
-                "size": 3709091,
-                "html_url": "https://api.github.com/repos/virtool/virtool-database/releases/10742520",
-                "download_url": "https://github.com/virtool/virtool-database/releases/download/v0.3.0/reference.json.gz",
-                "published_at": "2018-04-26T19:35:33Z",
-                "content_type": "application/gzip",
-                "newer": True,
-                "retrieved_at": "2018-04-14T19:52:17.465000Z",
-            }
-
-        await mongo.references.insert_one(reference)
-
-    resp = await client.post("/references/v1/foo/updates", {})
-
-    if not check_ref_right:
-        await resp_is.insufficient_rights(resp)
-    elif error == "400":
-        await resp_is.bad_request(resp, "No release available")
-    elif error == "404":
-        await resp_is.not_found(resp)
-    else:
-        assert resp.status == 201
-        assert await resp.json() == snapshot_recent(
-            name="json",
-            matcher=path_type({".*etag": (str,)}, regex=True),
-        )
-        assert await get_one_field(mongo.references, "task", "foo") == {"id": 1}
 
 
 def _archive_reference_doc(user_id: int, *, archived: bool, official: bool = False):
@@ -1805,20 +1567,6 @@ class TestArchivedReferenceRejectsWrites:
                 "internal_control": None,
                 "name": "Foo",
                 "organism": "virus",
-                "release": {
-                    "id": 10742520,
-                    "name": "v0.3.0",
-                    "body": "Lorem ipsum",
-                    "etag": 'W/"ef123d746a33f88ee44203d3ca6bc2f7"',
-                    "filename": "reference.json.gz",
-                    "size": 3709091,
-                    "html_url": "https://example.com",
-                    "download_url": "https://example.com/reference.json.gz",
-                    "published_at": "2018-04-26T19:35:33Z",
-                    "content_type": "application/gzip",
-                    "newer": True,
-                    "retrieved_at": "2018-04-14T19:52:17.465000Z",
-                },
                 "restrict_source_types": False,
                 "source_types": ["isolate", "strain"],
                 "user": {"id": client.user.id},
@@ -1888,23 +1636,6 @@ class TestArchivedReferenceRejectsWrites:
         )
 
         resp = await client.post(f"/references/v1/{ref_id}/indexes", {})
-
-        await resp_is.conflict(resp, "Reference is archived")
-
-    async def test_create_update(
-        self,
-        archived_ref: tuple[VirtoolTestClient, str],
-        mocker,
-        resp_is: RespIs,
-    ):
-        client, ref_id = archived_ref
-
-        mocker.patch(
-            "virtool.references.db.check_right",
-            make_mocked_coro(return_value=True),
-        )
-
-        resp = await client.post(f"/references/v1/{ref_id}/updates", {})
 
         await resp_is.conflict(resp, "Reference is archived")
 

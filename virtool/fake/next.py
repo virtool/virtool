@@ -39,11 +39,7 @@ from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.otus.models import OTU, OTUSegment
 from virtool.otus.oas import CreateOTURequest
-from virtool.references.tasks import (
-    CloneReferenceTask,
-    ReferenceReleasesRefreshTask,
-    ReferencesCleanTask,
-)
+from virtool.references.tasks import CloneReferenceTask
 from virtool.subtractions.models import Subtraction
 from virtool.subtractions.oas import (
     CreateSubtractionRequest,
@@ -390,13 +386,7 @@ class TasksFakerDomain(DataFakerDomain):
         :return: a new fake task
         """
         return await self._layer.tasks.create(
-            self._faker.random_element(
-                [
-                    ReferenceReleasesRefreshTask,
-                    CloneReferenceTask,
-                    ReferencesCleanTask,
-                ],
-            ),
+            CloneReferenceTask,
             {},
         )
 

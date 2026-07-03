@@ -18,8 +18,6 @@
     'name': 'Foo',
     'organism': 'virus',
     'otu_count': 0,
-    'release': None,
-    'remotes_from': None,
     'restrict_source_types': False,
     'source_types': list([
       'isolate',
@@ -55,8 +53,6 @@
     'name': 'Foo',
     'organism': 'virus',
     'otu_count': 0,
-    'release': None,
-    'remotes_from': None,
     'restrict_source_types': False,
     'source_types': list([
       'isolate',
@@ -98,8 +94,6 @@
     'name': 'Test 1',
     'organism': 'virus',
     'otu_count': 0,
-    'release': None,
-    'remotes_from': None,
     'restrict_source_types': False,
     'source_types': list([
       'isolate',
@@ -167,8 +161,6 @@
     'name': 'Test Viruses',
     'organism': '',
     'otu_count': 0,
-    'release': None,
-    'remotes_from': None,
     'restrict_source_types': False,
     'source_types': list([
       'isolate',
@@ -224,8 +216,6 @@
     'name': 'Test Viruses',
     'organism': 'virus',
     'otu_count': 0,
-    'release': None,
-    'remotes_from': None,
     'restrict_source_types': False,
     'source_types': list([
       'strain',
@@ -242,100 +232,6 @@
       dict({
         'build': True,
         'created_at': 'approximately_now_isoformat',
-        'handle': 'leeashley',
-        'id': 1,
-        'modify': True,
-        'modify_otu': True,
-        'remove': True,
-      }),
-    ]),
-  })
-# ---
-# name: TestCreate.test_remote[location]
-  '/references/v1/bf1b993c'
-# ---
-# name: TestCreate.test_remote[resp]
-  dict({
-    'archived': False,
-    'cloned_from': None,
-    'contributors': list([
-    ]),
-    'created_at': '2015-10-06T20:00:00Z',
-    'data_type': 'genome',
-    'description': 'The official plant virus reference from the Virtool developers',
-    'groups': list([
-    ]),
-    'id': 'bf1b993c',
-    'imported_from': None,
-    'installed': dict({
-      'body': '''
-        #### Fixed
-        - fixed uploading to GitHub releases in `.travis.yml`
-      ''',
-      'created_at': '2015-10-06T20:00:00Z',
-      'filename': 'reference.json.gz',
-      'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.1',
-      'id': 11447367,
-      'name': 'v0.1.1',
-      'newer': False,
-      'published_at': '2018-06-12T19:20:57Z',
-      'ready': False,
-      'size': 3695872,
-      'user': dict({
-        'handle': 'leeashley',
-        'id': 1,
-      }),
-    }),
-    'internal_control': None,
-    'latest_build': None,
-    'name': 'Plant Viruses',
-    'organism': 'Test Remote',
-    'otu_count': 0,
-    'release': dict({
-      'body': '''
-        #### Fixed
-        - fixed uploading to GitHub releases in `.travis.yml`
-      ''',
-      'content_type': 'application/gzip',
-      'download_url': 'https://github.com/virtool/ref-plant-viruses/releases/download/v0.1.1/reference.json.gz',
-      'filename': 'reference.json.gz',
-      'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.1',
-      'id': 11447367,
-      'name': 'v0.1.1',
-      'newer': False,
-      'published_at': '2018-06-12T19:20:57Z',
-      'retrieved_at': '2015-10-06T20:00:00Z',
-      'size': 3695872,
-    }),
-    'remotes_from': dict({
-      'errors': list([
-      ]),
-      'slug': 'virtool/ref-plant-viruses',
-    }),
-    'restrict_source_types': False,
-    'source_types': list([
-      'isolate',
-      'strain',
-    ]),
-    'task': dict({
-      'complete': False,
-      'created_at': '2015-10-06T20:00:00Z',
-      'error': None,
-      'id': 1,
-      'progress': 0,
-      'step': 'remote_reference',
-      'type': 'remote_reference',
-    }),
-    'unbuilt_change_count': 0,
-    'updating': None,
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': '2015-10-06T20:00:00Z',
         'handle': 'leeashley',
         'id': 1,
         'modify': True,
@@ -775,8 +671,6 @@
     'name': 'Bar',
     'organism': 'virus',
     'otu_count': 0,
-    'release': None,
-    'remotes_from': None,
     'restrict_source_types': False,
     'source_types': list([
       'isolate',
@@ -961,8 +855,6 @@
     'name': 'Bar',
     'organism': 'virus',
     'otu_count': 0,
-    'release': None,
-    'remotes_from': None,
     'restrict_source_types': False,
     'source_types': list([
       'isolate',
@@ -1016,8 +908,6 @@
     'name': 'Foo',
     'organism': 'virus',
     'otu_count': 0,
-    'release': None,
-    'remotes_from': None,
     'restrict_source_types': False,
     'source_types': list([
       'isolate',
@@ -1053,8 +943,6 @@
     'name': 'Foo',
     'organism': 'virus',
     'otu_count': 0,
-    'release': None,
-    'remotes_from': None,
     'restrict_source_types': False,
     'source_types': list([
       'isolate',
@@ -1336,8 +1224,6 @@
         'name': 'Group Member Active',
         'organism': 'virus',
         'otu_count': 0,
-        'release': None,
-        'remotes_from': None,
         'task': dict({
           'complete': False,
           'created_at': '2015-10-06T20:00:00Z',
@@ -1367,8 +1253,6 @@
         'name': 'Owned Active',
         'organism': 'virus',
         'otu_count': 0,
-        'release': None,
-        'remotes_from': None,
         'task': dict({
           'complete': True,
           'created_at': '2015-10-06T20:00:00Z',
@@ -1398,8 +1282,6 @@
         'name': 'User Member Active',
         'organism': 'virus',
         'otu_count': 0,
-        'release': None,
-        'remotes_from': None,
         'task': dict({
           'complete': False,
           'created_at': '2015-10-06T20:00:00Z',
@@ -1418,7 +1300,6 @@
       }),
     ]),
     'found_count': 3,
-    'official_installed': False,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
@@ -1441,8 +1322,6 @@
         'name': 'Owned Archived',
         'organism': 'virus',
         'otu_count': 0,
-        'release': None,
-        'remotes_from': None,
         'task': dict({
           'complete': True,
           'created_at': '2015-10-06T20:00:00Z',
@@ -1461,7 +1340,6 @@
       }),
     ]),
     'found_count': 1,
-    'official_installed': False,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
@@ -1484,8 +1362,6 @@
         'name': 'Group Member Active',
         'organism': 'virus',
         'otu_count': 0,
-        'release': None,
-        'remotes_from': None,
         'task': dict({
           'complete': False,
           'created_at': '2015-10-06T20:00:00Z',
@@ -1515,8 +1391,6 @@
         'name': 'Owned Active',
         'organism': 'virus',
         'otu_count': 0,
-        'release': None,
-        'remotes_from': None,
         'task': dict({
           'complete': True,
           'created_at': '2015-10-06T20:00:00Z',
@@ -1546,8 +1420,6 @@
         'name': 'Owned Archived',
         'organism': 'virus',
         'otu_count': 0,
-        'release': None,
-        'remotes_from': None,
         'task': dict({
           'complete': True,
           'created_at': '2015-10-06T20:00:00Z',
@@ -1577,8 +1449,6 @@
         'name': 'User Member Active',
         'organism': 'virus',
         'otu_count': 0,
-        'release': None,
-        'remotes_from': None,
         'task': dict({
           'complete': False,
           'created_at': '2015-10-06T20:00:00Z',
@@ -1597,7 +1467,6 @@
       }),
     ]),
     'found_count': 4,
-    'official_installed': False,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
@@ -1950,66 +1819,6 @@
     'page_count': 1,
     'per_page': 25,
     'total_count': 2,
-  })
-# ---
-# name: test_get_release[None]
-  dict({
-    'body': '''
-      #### Changed
-      - add new isolates to Cucurbit chlorotic yellows virus
-    ''',
-    'content_type': 'application/gzip',
-    'download_url': 'https://github.com/virtool/ref-plant-viruses/releases/download/v0.1.2/reference.json.gz',
-    'filename': 'reference.json.gz',
-    'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.2',
-    'id': 11449913,
-    'name': 'v0.1.2',
-    'newer': True,
-    'published_at': '2018-06-12T21:52:33Z',
-    'retrieved_at': '2018-06-14T19:52:17.465000Z',
-    'size': 3699729,
-  })
-# ---
-# name: test_list_updates[True-False]
-  list([
-    dict({
-      'body': '''
-        #### Fixed
-        - fixed uploading to GitHub releases in `.travis.yml`
-      ''',
-      'created_at': '2018-06-14T18:37:54.242000Z',
-      'filename': 'reference.json.gz',
-      'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.1',
-      'id': 11447367,
-      'name': 'v0.1.1',
-      'newer': True,
-      'published_at': '2018-06-12T19:20:57Z',
-      'ready': True,
-      'size': 3695872,
-      'user': dict({
-        'handle': 'myersmitchell',
-        'id': 2,
-      }),
-    }),
-  ])
-# ---
-# name: test_list_updates[True-True]
-  list([
-  ])
-# ---
-# name: test_update[True-None][json]
-  dict({
-    'body': 'Lorem ipsum',
-    'content_type': 'application/gzip',
-    'download_url': 'https://github.com/virtool/virtool-database/releases/download/v0.3.0/reference.json.gz',
-    'filename': 'reference.json.gz',
-    'html_url': 'https://api.github.com/repos/virtool/virtool-database/releases/10742520',
-    'id': 10742520,
-    'name': 'v0.3.0',
-    'newer': True,
-    'published_at': '2018-04-26T19:35:33Z',
-    'retrieved_at': '2018-04-14T19:52:17.465000Z',
-    'size': 3709091,
   })
 # ---
 # name: test_update_group[None][mongo]

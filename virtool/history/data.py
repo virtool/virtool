@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, cast, select
+from sqlalchemy import Integer, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.otus.utils
@@ -164,14 +164,32 @@ class HistoryData:
 
             otu_id, otu_version = change_id.split(".")
 
-            if otu_version != "removed":
-                otu_version = int(otu_version)
+            if otu_version == "removed":
+                # Reverting a removal restores the OTU to the version it held just
+                # before it was removed, i.e. its highest numbered change. The
+                # removal change itself carries a NULL ``otu_version`` and is always
+                # reverted by ``patch_to_version``.
+                async with AsyncSession(self._pg) as session:
+                    target_version = (
+                        await session.execute(
+                            select(
+                                func.max(
+                                    cast(SQLLegacyHistory.otu_version, Integer),
+                                ),
+                            ).where(
+                                SQLLegacyHistory.otu == otu_id,
+                                SQLLegacyHistory.otu_version.is_not(None),
+                            ),
+                        )
+                    ).scalar_one()
+            else:
+                target_version = int(otu_version) - 1
 
             _, patched, history_to_delete = await patch_to_version(
                 self._mongo,
                 self._pg,
                 otu_id,
-                otu_version - 1,
+                target_version,
             )
         except DatabaseError:
             raise ResourceConflictError()

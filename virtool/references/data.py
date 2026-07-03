@@ -1,9 +1,6 @@
 import asyncio
-from datetime import datetime, timedelta
 
-import arrow
-from aiohttp import ClientConnectionError, ClientConnectorError, ClientSession
-from semver import VersionInfo
+from aiohttp import ClientSession
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -19,13 +16,9 @@ from virtool.data.errors import (
     ResourceConflictError,
     ResourceError,
     ResourceNotFoundError,
-    ResourceRemoteError,
 )
 from virtool.data.events import Operation, emit, emits
-from virtool.data.topg import both_transactions
 from virtool.data.transforms import apply_transforms
-from virtool.errors import GitHubError
-from virtool.github import create_update_subdocument, format_release
 from virtool.groups.pg import SQLGroup
 from virtool.history.db import (
     bulk_delete_history,
@@ -37,16 +30,14 @@ from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.models import IndexMinimal, IndexSearchResult
 from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_mongo_from_app, get_one_field
+from virtool.mongo.utils import get_one_field
 from virtool.otus.models import OTU, OTUSearchResult
 from virtool.otus.oas import CreateOTURequest
 from virtool.pg.utils import get_row_by_id
 from virtool.references.alot import prepare_otu_insertion
-from virtool.references.bulk import BulkOTUUpdater
 from virtool.references.db import (
     compose_archived_filter,
     compose_rights_filter,
-    fetch_and_update_release,
     get_contributors,
     get_internal_control,
     get_latest_build,
@@ -61,8 +52,6 @@ from virtool.references.db import (
 from virtool.references.models import (
     Reference,
     ReferenceGroup,
-    ReferenceInstalled,
-    ReferenceRelease,
     ReferenceSearchResult,
     ReferenceUser,
 )
@@ -76,8 +65,6 @@ from virtool.references.oas import (
 from virtool.references.tasks import (
     CloneReferenceTask,
     ImportReferenceTask,
-    RemoteReferenceTask,
-    UpdateRemoteReferenceTask,
 )
 from virtool.references.transforms import AttachImportedFromTransform
 from virtool.references.utils import OFFICIAL_REMOTE_SLUG, RIGHTS, ReferenceSourceData
@@ -91,7 +78,7 @@ from virtool.types import Document
 from virtool.uploads.sql import SQLUpload
 from virtool.users.pg import SQLUser
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import get_http_session_from_app, get_safely
+from virtool.utils import get_safely
 
 
 class ReferencesData(DataLayerDomain):
@@ -182,26 +169,20 @@ class ReferencesData(DataLayerDomain):
             for document in data["documents"]
         ]
 
-        documents, remote_slug_count = await asyncio.gather(
-            apply_transforms(
-                documents,
-                [
-                    AttachUserTransform(self._pg),
-                    AttachImportedFromTransform(self._mongo, self._pg),
-                    AttachTaskTransform(self._pg),
-                ],
-                self._pg,
-            ),
-            self._mongo.references.count_documents(
-                {"remotes_from.slug": OFFICIAL_REMOTE_SLUG},
-            ),
+        documents = await apply_transforms(
+            documents,
+            [
+                AttachUserTransform(self._pg),
+                AttachImportedFromTransform(self._mongo, self._pg),
+                AttachTaskTransform(self._pg),
+            ],
+            self._pg,
         )
 
         return ReferenceSearchResult(
             **{
                 **data,
                 "documents": documents,
-                "official_installed": remote_slug_count > 0,
             },
         )
 
@@ -262,49 +243,6 @@ class ReferencesData(DataLayerDomain):
             }
 
             task = await self.data.tasks.create(ImportReferenceTask, context=context)
-
-            document["task"] = {"id": task.id}
-
-        elif data.remote_from:
-            try:
-                release = await virtool.github.get_release(
-                    self._client,
-                    data.remote_from,
-                    release_id=data.release_id,
-                )
-
-            except ClientConnectionError:
-                raise ResourceRemoteError("Could not reach GitHub")
-
-            except GitHubError as err:
-                if "404" in str(err):
-                    raise ResourceRemoteError(
-                        "Could not retrieve latest GitHub release",
-                    )
-
-                raise
-
-            release = format_release(release)
-            release["newer"] = False
-
-            document = await virtool.references.db.create_remote(
-                self._mongo,
-                settings,
-                data.name,
-                release,
-                data.remote_from,
-                user_id,
-                data.data_type,
-            )
-
-            context = {
-                "release": release,
-                "ref_id": document["_id"],
-                "created_at": document["created_at"],
-                "user_id": user_id,
-            }
-
-            task = await self.data.tasks.create(RemoteReferenceTask, context=context)
 
             document["task"] = {"id": task.id}
 
@@ -457,88 +395,6 @@ class ReferencesData(DataLayerDomain):
         await self._mongo.references.delete_one({"_id": ref_id})
 
         emit(reference, "references", "delete", Operation.DELETE)
-
-    async def get_release(self, ref_id: str, app) -> ReferenceRelease:
-        if not await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
-            raise ResourceNotFoundError()
-
-        if not await self._mongo.references.count_documents(
-            {"_id": ref_id, "remotes_from": {"$exists": True}},
-        ):
-            raise ResourceConflictError("Not a remote reference")
-        try:
-            release = await virtool.references.db.fetch_and_update_release(
-                get_mongo_from_app(app),
-                get_http_session_from_app(app),
-                ref_id,
-            )
-        except ClientConnectorError:
-            raise ResourceRemoteError("Could not reach GitHub")
-
-        if release is None:
-            raise ResourceRemoteError("Release repository does not exist on GitHub")
-
-        return ReferenceRelease(**release)
-
-    async def get_updates(self, ref_id: str) -> list[ReferenceInstalled]:
-        if not await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
-            raise ResourceNotFoundError()
-
-        updates = await virtool.mongo.utils.get_one_field(
-            self._mongo.references,
-            "updates",
-            ref_id,
-        )
-
-        if updates is not None:
-            updates.reverse()
-            return [ReferenceInstalled(**update) for update in updates]
-
-        return []
-
-    async def create_update(
-        self,
-        ref_id: str,
-        user_id: int,
-    ) -> ReferenceRelease:
-        await self._require_not_archived(ref_id)
-
-        document = await self._mongo.references.find_one(ref_id, ["release"])
-
-        if document is None:
-            raise ResourceNotFoundError()
-
-        if document.get("release") is None:
-            raise ResourceError("No release available")
-
-        created_at = virtool.utils.timestamp()
-
-        task = await self.data.tasks.create(
-            UpdateRemoteReferenceTask,
-            context={
-                "created_at": created_at,
-                "ref_id": ref_id,
-                "release": document["release"],
-                "user_id": user_id,
-            },
-        )
-
-        subdocument = create_update_subdocument(
-            document["release"],
-            False,
-            user_id,
-            created_at,
-        )
-
-        await self._mongo.references.update_one(
-            {"_id": ref_id},
-            {
-                "$push": {"updates": subdocument},
-                "$set": {"task": {"id": task.id}, "updating": True},
-            },
-        )
-
-        return ReferenceRelease(**{**document["release"], **subdocument})
 
     async def find_otus(
         self,
@@ -1092,214 +948,3 @@ class ReferencesData(DataLayerDomain):
             "populate_imported_reference",
             Operation.UPDATE,
         )
-
-    async def populate_remote_reference(
-        self,
-        ref_id: str,
-        data: ReferenceSourceData,
-        user_id: int,
-        release: Document,
-        progress_handler: TaskProgressHandler,
-    ) -> None:
-        tracker = AccumulatingProgressHandlerWrapper(progress_handler, 4)
-
-        created_at: datetime = await get_one_field(
-            self._mongo.references,
-            "created_at",
-            ref_id,
-        )
-
-        await tracker.add(1)
-
-        await self._mongo.references.update_one(
-            {"_id": ref_id},
-            {
-                "$set": {
-                    "data_type": data.data_type,
-                    "organism": data.organism,
-                },
-            },
-        )
-
-        await tracker.add(1)
-
-        await populate_insert_only_reference(
-            created_at,
-            HistoryMethod.remote,
-            self._mongo,
-            self._pg,
-            [otu.dict(by_alias=True) for otu in data.otus],
-            ref_id,
-            user_id,
-        )
-
-        await tracker.add(1)
-
-        await self._mongo.references.update_one(
-            {"_id": ref_id, "updates.id": release["id"]},
-            {
-                "$set": {
-                    "installed": create_update_subdocument(release, True, user_id),
-                    "updates.$.ready": True,
-                    "updating": False,
-                },
-            },
-        )
-
-        await tracker.add(1)
-
-        emit(
-            await self.get(ref_id),
-            "references",
-            "populate_remote_reference",
-            Operation.UPDATE,
-        )
-
-    async def update_remote_reference(
-        self,
-        ref_id: str,
-        data: ReferenceSourceData,
-        release: Document,
-        user_id: int,
-        progress_handler,
-    ) -> None:
-        """Update a remote reference to a newer version.
-
-        * Update reference metadata.
-        * Insert new OTUs.
-        * Update existing OTUs that have changed.
-        * Delete OTUs in the database that don't exist in the update.
-        * Create history.
-
-        """
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
-            created_at: datetime = await get_one_field(
-                self._mongo.references,
-                "created_at",
-                ref_id,
-            )
-
-            to_delete = await self._mongo.otus.distinct(
-                "_id",
-                {
-                    "reference.id": ref_id,
-                    "remote.id": {"$nin": list({otu.id for otu in data.otus})},
-                },
-                session=mongo_session,
-            )
-
-            tracker = AccumulatingProgressHandlerWrapper(
-                progress_handler,
-                len(data.otus) + len(to_delete),
-            )
-
-            await self._mongo.references.update_one(
-                {"_id": ref_id},
-                {"$set": {"organism": data.organism}},
-                session=mongo_session,
-            )
-
-            bulk_updater = BulkOTUUpdater(
-                self._mongo,
-                pg_session,
-                ref_id,
-                user_id,
-                created_at,
-                tracker,
-                mongo_session,
-            )
-
-            bulk_updater.bulk_upsert([otu.dict(by_alias=True) for otu in data.otus])
-
-            for otu_id in to_delete:
-                await bulk_updater.delete(otu_id)
-
-            await bulk_updater.finish()
-
-            await self._mongo.references.update_one(
-                {"_id": ref_id, "updates.id": release["id"]},
-                {
-                    "$set": {
-                        "installed": create_update_subdocument(release, True, user_id),
-                        "updates.$.ready": True,
-                        "updating": False,
-                        "release.newer": False,
-                    },
-                },
-                session=mongo_session,
-            )
-
-        emit(
-            await self.get(ref_id),
-            "references",
-            "update_remote_reference",
-            Operation.UPDATE,
-        )
-
-    async def clean_all(self) -> None:
-        """Clean corrupt updates from reference update lists.
-
-        If the installed version is earlier than the last update, the last update is
-        removed.
-
-        """
-        async for reference in self._mongo.references.find(
-            {"remotes_from": {"$exists": True}},
-            ["installed", "task", "updates"],
-        ):
-            if len(reference["updates"]) == 0:
-                continue
-
-            latest_update = reference["updates"][-1]
-
-            if latest_update["ready"]:
-                continue
-
-            try:
-                raw_version = reference["installed"]["name"].lstrip("v")
-            except (KeyError, TypeError):
-                continue
-
-            installed_version = VersionInfo.parse(raw_version)
-
-            latest_update_version = VersionInfo.parse(latest_update["name"].lstrip("v"))
-
-            if latest_update_version <= installed_version:
-                continue
-
-            if arrow.utcnow() - arrow.get(latest_update["created_at"]) > timedelta(
-                minutes=15,
-            ):
-                await self._mongo.references.update_one(
-                    {"_id": reference["_id"]},
-                    {"$pop": {"updates": -1}, "$set": {"updating": False}},
-                )
-
-                emit(
-                    await self.get(reference["_id"]),
-                    "references",
-                    "clean_all",
-                    Operation.UPDATE,
-                )
-
-    async def fetch_and_update_reference_releases(self) -> None:
-        for ref_id in await self._mongo.references.distinct(
-            "_id",
-            {"remotes_from": {"$exists": True}},
-        ):
-            await fetch_and_update_release(
-                self._mongo,
-                self._client,
-                ref_id,
-                ignore_errors=True,
-            )
-
-            emit(
-                await self.get(ref_id),
-                "references",
-                "fetch_and_update_reference_releases",
-                Operation.UPDATE,
-            )
