@@ -14,14 +14,12 @@ from aiohttp_pydantic.oas.typing import (
     r403,
     r404,
     r409,
-    r502,
 )
 from pydantic import Field
 
 import virtool.references.db
 from virtool.api.custom_json import json_response
 from virtool.api.errors import (
-    APIBadGateway,
     APIBadRequest,
     APIConflict,
     APIInsufficientRights,
@@ -36,7 +34,6 @@ from virtool.data.errors import (
     ResourceConflictError,
     ResourceError,
     ResourceNotFoundError,
-    ResourceRemoteError,
 )
 from virtool.data.utils import get_data_from_req
 from virtool.history.models import HistorySearchResult
@@ -49,8 +46,6 @@ from virtool.references.db import check_right
 from virtool.references.models import (
     Reference,
     ReferenceGroup,
-    ReferenceInstalled,
-    ReferenceRelease,
     ReferenceSearchResult,
     ReferenceUser,
 )
@@ -112,7 +107,7 @@ class ReferencesView(PydanticView):
     async def post(
         self,
         data: CreateReferenceRequest,
-    ) -> r200[Reference] | r400 | r403 | r502:
+    ) -> r200[Reference] | r400 | r403:
         """Create a reference.
 
         Creates an empty reference.
@@ -121,7 +116,6 @@ class ReferencesView(PydanticView):
             200: Successful operation
             400: Source reference does not exist
             403: Not permitted
-            502: Could not reach GitHub
         """
         try:
             reference = await get_data_from_req(self.request).references.create(
@@ -133,13 +127,6 @@ class ReferencesView(PydanticView):
                 err,
             ):
                 raise APIBadRequest(str(err))
-
-            raise
-        except ResourceRemoteError as err:
-            if "Could not reach GitHub" in str(
-                err,
-            ) or "Could not retrieve latest GitHub release" in str(err):
-                raise APIBadGateway(str(err))
 
             raise
 
@@ -226,86 +213,6 @@ class ReferenceView(PydanticView):
             raise APINotFound()
 
         return Response(status=204)
-
-
-@routes.view("/references/v1/{ref_id}/release")
-class ReferenceReleaseView(PydanticView):
-    async def get(self, ref_id: str, /) -> r200[ReferenceRelease]:
-        """Get latest update.
-
-        Fetches the latest remote reference update from GitHub.
-
-        Also updates the reference document. This is the only way of doing so without
-        waiting for an automatic refresh every 10 minutes.
-
-        Status Codes:
-            200: Successful operation
-
-        """
-        try:
-            release = await get_data_from_req(self.request).references.get_release(
-                ref_id,
-                self.request.app,
-            )
-        except ResourceNotFoundError:
-            raise APINotFound()
-        except ResourceConflictError as err:
-            raise APIBadRequest(str(err))
-        except ResourceRemoteError as err:
-            raise APIBadGateway(str(err))
-
-        return json_response(release)
-
-
-@routes.view("/references/v1/{ref_id}/updates")
-class ReferenceUpdatesView(PydanticView):
-    async def get(self, ref_id: str, /) -> r200[ReferenceInstalled]:
-        """List updates.
-
-        Lists all updates made to the reference.
-
-        Status Codes:
-            200: Successful operation
-        """
-        try:
-            updates = await get_data_from_req(self.request).references.get_updates(
-                ref_id,
-            )
-        except ResourceNotFoundError:
-            raise APINotFound()
-
-        return json_response(updates)
-
-    async def post(
-        self,
-        ref_id: str,
-        /,
-    ) -> r201[ReferenceRelease] | r403 | r404:
-        """Update a reference.
-
-        Updates the reference to the last version of the linked remote reference.
-
-        Status Codes:
-            201: Successful operation
-            403: Insufficient rights
-            404: Not found
-        """
-        if not await virtool.references.db.check_right(self.request, ref_id, "modify"):
-            raise APIInsufficientRights()
-
-        try:
-            update = await get_data_from_req(self.request).references.create_update(
-                ref_id,
-                self.request["client"].user_id,
-            )
-        except ResourceNotFoundError:
-            raise APINotFound()
-        except ResourceConflictError as err:
-            raise APIConflict(str(err))
-        except ResourceError as err:
-            raise APIBadRequest(str(err))
-
-        return json_response(update, status=201)
 
 
 @routes.view("/references/v1/{ref_id}/archive")
