@@ -124,6 +124,32 @@ class TestDelete:
         assert await legacy_history_ids(pg) == ["6116cba1.0", "6116cba1.1"]
         assert await history_diff_ids(pg) == ["6116cba1.0", "6116cba1.1"]
 
+    async def test_removed(
+        self,
+        create_mock_history,
+        mongo: Mongo,
+        pg: AsyncEngine,
+    ):
+        """Reverting a ``.removed`` change deletes only the removal and restores the
+        OTU to the version it held before it was removed.
+        """
+        await create_mock_history(True)
+
+        await HistoryData(mongo, pg).delete("6116cba1.removed")
+
+        remaining = [
+            change["_id"] for change in await mongo.history.find().to_list(None)
+        ]
+        assert sorted(remaining) == MOCK_HISTORY_CHANGE_IDS
+
+        assert await legacy_history_ids(pg) == MOCK_HISTORY_CHANGE_IDS
+        assert await history_diff_ids(pg) == MOCK_HISTORY_CHANGE_IDS
+
+        otu = await mongo.otus.find_one("6116cba1")
+        assert otu is not None
+        assert otu["version"] == 3
+        assert otu["name"] == "Test Virus"
+
     async def test_rollback_preserves_postgres(
         self,
         create_mock_history,
