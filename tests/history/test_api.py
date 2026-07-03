@@ -1,47 +1,52 @@
-import asyncio
 from http import HTTPStatus
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner
-from virtool.history.db import bulk_insert_diffs, legacy_history_values
-from virtool.history.sql import SQLLegacyHistory
+from virtool.data.layer import DataLayer
 from virtool.mongo.core import Mongo
+from virtool.otus.oas import CreateOTURequest
+from virtool.references.models import ReferenceDataType
+from virtool.references.oas import CreateReferenceRequest
 
 
 async def test_find(
-    snapshot,
-    mongo: Mongo,
-    pg: AsyncEngine,
+    snapshot_recent: SnapshotAssertion,
+    data_layer: DataLayer,
     spawn_client: ClientSpawner,
-    test_changes,
-    static_time,
 ):
-    """Test that a list of processed change documents are returned with a ``200`` status."""
+    """The global list returns processed change documents produced by real edits."""
     client = await spawn_client(authenticated=True)
 
-    changes = [{**c, "user": {"id": client.user.id}} for c in test_changes]
-
-    await mongo.references.insert_one(
-        {
-            "_id": "hxn167",
-            "archived": False,
-            "data_type": "genome",
-            "name": "Reference A",
-        },
+    reference = await data_layer.references.create(
+        CreateReferenceRequest(
+            name="Test Reference",
+            organism="virus",
+            data_type=ReferenceDataType.genome,
+        ),
+        client.user.id,
     )
 
-    async with AsyncSession(pg) as session:
-        for change in changes:
-            session.add(SQLLegacyHistory(**legacy_history_values(change)))
+    await data_layer.otus.create(
+        reference.id,
+        CreateOTURequest(name="Tobacco mosaic virus", abbreviation="TMV"),
+        client.user.id,
+    )
 
-        await session.commit()
+    await data_layer.otus.create(
+        reference.id,
+        CreateOTURequest(name="Potato virus X", abbreviation="PVX"),
+        client.user.id,
+    )
 
     resp = await client.get("/history")
 
     assert resp.status == HTTPStatus.OK
-    assert await resp.json() == snapshot
+
+    body = await resp.json()
+    assert len(body["documents"]) == body["found_count"] == body["total_count"] == 2
+    assert body == snapshot_recent
 
 
 class TestFindValidation:
@@ -76,65 +81,45 @@ class TestFindValidation:
         assert resp.status == HTTPStatus.BAD_REQUEST
 
 
-@pytest.mark.parametrize("error", [None, "404"])
-async def test_get(
-    error,
-    snapshot,
-    resp_is,
-    mongo: Mongo,
-    pg: AsyncEngine,
-    spawn_client: ClientSpawner,
-    test_changes,
-    static_time,
-):
-    """Test that a specific history change can be retrieved by its change_id."""
-    client = await spawn_client(authenticated=True)
+class TestGet:
+    """Retrieve a single change document by its change id."""
 
-    async with AsyncSession(pg) as session:
-        for change in test_changes:
-            session.add(
-                SQLLegacyHistory(
-                    **legacy_history_values(
-                        {**change, "user": {"id": client.user.id}},
-                    ),
-                ),
-            )
+    async def test_ok(
+        self,
+        snapshot_recent: SnapshotAssertion,
+        data_layer: DataLayer,
+        spawn_client: ClientSpawner,
+    ):
+        """A change produced by a real OTU creation is returned with its diff."""
+        client = await spawn_client(authenticated=True)
 
-        await session.commit()
+        reference = await data_layer.references.create(
+            CreateReferenceRequest(
+                name="Test Reference",
+                organism="virus",
+                data_type=ReferenceDataType.genome,
+            ),
+            client.user.id,
+        )
 
-    await bulk_insert_diffs(
-        pg,
-        [{"change_id": c["_id"], "diff": c["diff"]} for c in test_changes],
-    )
+        otu = await data_layer.otus.create(
+            reference.id,
+            CreateOTURequest(name="Tobacco mosaic virus", abbreviation="TMV"),
+            client.user.id,
+        )
 
-    await asyncio.gather(
-        mongo.history.insert_many(
-            [
-                {**c, "diff": "postgres", "user": {"id": client.user.id}}
-                for c in test_changes
-            ],
-            session=None,
-        ),
-        mongo.references.insert_one(
-            {
-                "_id": "hxn167",
-                "archived": False,
-                "data_type": "genome",
-                "name": "Reference A",
-            },
-        ),
-    )
+        resp = await client.get(f"/history/{otu.id}.0")
 
-    change_id = "baz.1" if error else "6116cba1.1"
+        assert resp.status == HTTPStatus.OK
+        assert await resp.json() == snapshot_recent
 
-    resp = await client.get(f"/history/{change_id}")
+    async def test_not_found(self, resp_is, spawn_client: ClientSpawner):
+        """An unknown change id returns a ``404``."""
+        client = await spawn_client(authenticated=True)
 
-    if error:
+        resp = await client.get("/history/missing.1")
+
         await resp_is.not_found(resp)
-        return
-
-    assert resp.status == HTTPStatus.OK
-    assert await resp.json() == snapshot
 
 
 @pytest.mark.parametrize("error", [None, "404"])

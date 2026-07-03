@@ -1,137 +1,103 @@
 # serializer version: 1
-# name: test_find
+# name: TestGet.test_ok
   dict({
-    'documents': list([
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'description': 'Edited Prunus virus E',
-        'id': 'foobar.2',
-        'index': dict({
-          'id': 'unbuilt',
-          'version': 'unbuilt',
-        }),
-        'method_name': 'edit',
-        'otu': dict({
-          'id': '6116cba1',
-          'name': 'Prunus virus F',
-          'version': 1,
-        }),
-        'reference': dict({
-          'data_type': 'genome',
-          'id': 'hxn167',
-          'name': 'Reference A',
-        }),
-        'user': dict({
-          'handle': 'leeashley',
-          'id': 1,
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'description': 'Edited Prunus virus E',
-        'id': 'foobar.1',
-        'index': dict({
-          'id': 'unbuilt',
-          'version': 'unbuilt',
-        }),
-        'method_name': 'edit',
-        'otu': dict({
-          'id': '6116cba1',
-          'name': 'Prunus virus F',
-          'version': 1,
-        }),
-        'reference': dict({
-          'data_type': 'genome',
-          'id': 'hxn167',
-          'name': 'Reference A',
-        }),
-        'user': dict({
-          'handle': 'leeashley',
-          'id': 1,
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'description': 'Edited Prunus virus E',
-        'id': '6116cba1.1',
-        'index': dict({
-          'id': 'unbuilt',
-          'version': 'unbuilt',
-        }),
-        'method_name': 'edit',
-        'otu': dict({
-          'id': '6116cba1',
-          'name': 'Prunus virus F',
-          'version': 1,
-        }),
-        'reference': dict({
-          'data_type': 'genome',
-          'id': 'hxn167',
-          'name': 'Reference A',
-        }),
-        'user': dict({
-          'handle': 'leeashley',
-          'id': 1,
-        }),
-      }),
-    ]),
-    'found_count': 3,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  })
-# ---
-# name: test_get[None]
-  dict({
-    'created_at': '2015-10-06T20:00:00Z',
-    'description': 'Edited Prunus virus E',
-    'diff': list([
-      list([
-        'change',
-        'abbreviation',
-        list([
-          'PVF',
-          '',
-        ]),
+    'created_at': 'approximately_now_isoformat',
+    'description': 'Created Tobacco mosaic virus (TMV)',
+    'diff': dict({
+      '_id': 'fb085f7f',
+      'abbreviation': 'TMV',
+      'isolates': list([
       ]),
-      list([
-        'change',
-        'name',
-        list([
-          'Prunus virus F',
-          'Prunus virus E',
-        ]),
+      'last_indexed_version': None,
+      'lower_name': 'tobacco mosaic virus',
+      'name': 'Tobacco mosaic virus',
+      'reference': dict({
+        'id': 'bf1b993c',
+      }),
+      'schema': list([
       ]),
-      list([
-        'change',
-        'version',
-        list([
-          0,
-          1,
-        ]),
-      ]),
-    ]),
-    'id': '6116cba1.1',
+      'verified': False,
+      'version': 0,
+    }),
+    'id': 'fb085f7f.0',
     'index': dict({
       'id': 'unbuilt',
       'version': 'unbuilt',
     }),
-    'method_name': 'edit',
+    'method_name': 'create',
     'otu': dict({
-      'id': '6116cba1',
-      'name': 'Prunus virus F',
-      'version': 1,
+      'id': 'fb085f7f',
+      'name': 'Tobacco mosaic virus',
+      'version': 0,
     }),
     'reference': dict({
       'data_type': 'genome',
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Test Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
       'id': 1,
     }),
+  })
+# ---
+# name: test_find
+  dict({
+    'documents': list([
+      dict({
+        'created_at': 'approximately_now_isoformat',
+        'description': 'Created Potato virus X (PVX)',
+        'id': '7cf872dc.0',
+        'index': dict({
+          'id': 'unbuilt',
+          'version': 'unbuilt',
+        }),
+        'method_name': 'create',
+        'otu': dict({
+          'id': '7cf872dc',
+          'name': 'Potato virus X',
+          'version': 0,
+        }),
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'bf1b993c',
+          'name': 'Test Reference',
+        }),
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 1,
+        }),
+      }),
+      dict({
+        'created_at': 'approximately_now_isoformat',
+        'description': 'Created Tobacco mosaic virus (TMV)',
+        'id': 'fb085f7f.0',
+        'index': dict({
+          'id': 'unbuilt',
+          'version': 'unbuilt',
+        }),
+        'method_name': 'create',
+        'otu': dict({
+          'id': 'fb085f7f',
+          'name': 'Tobacco mosaic virus',
+          'version': 0,
+        }),
+        'reference': dict({
+          'data_type': 'genome',
+          'id': 'bf1b993c',
+          'name': 'Test Reference',
+        }),
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 1,
+        }),
+      }),
+    ]),
+    'found_count': 2,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 2,
   })
 # ---
 # name: test_revert[True-False-None]

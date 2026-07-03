@@ -2,69 +2,20 @@ import pytest
 from pytest_mock import MockerFixture
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from syrupy import SnapshotAssertion
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.fake.next import DataFaker
 from virtool.history.data import HistoryData
-from virtool.history.db import bulk_insert_diffs
 from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.mongo.core import Mongo
 
 
-async def test_get(
-    fake: DataFaker,
-    mongo: Mongo,
-    pg: AsyncEngine,
-    snapshot: SnapshotAssertion,
-    static_time,
-):
-    """A change is read from ``legacy_history`` with its diff and reference attached."""
-    user = await fake.users.create()
-
-    async with AsyncSession(pg) as session:
-        session.add(
-            SQLLegacyHistory(
-                legacy_id="6116cba1.1",
-                created_at=static_time.datetime,
-                description="test history",
-                method_name="create",
-                user_id=user.id,
-                otu="6116cba1",
-                otu_name="Prunus virus F",
-                otu_version="1",
-                reference="hxn167",
-                index=None,
-                index_version=None,
-            ),
-        )
-
-        await session.commit()
-
-    await bulk_insert_diffs(
-        pg,
-        [
-            {
-                "change_id": "6116cba1.1",
-                "diff": [["change", "abbreviation", ["PVF", "TST"]]],
-            },
-        ],
-    )
-
-    await mongo.references.insert_one(
-        {
-            "_id": "hxn167",
-            "archived": False,
-            "data_type": "genome",
-            "name": "Reference A",
-        },
-    )
-
-    assert await HistoryData(mongo, pg).get("6116cba1.1") == snapshot
-
-
 async def test_get_not_found(mongo: Mongo, pg: AsyncEngine):
-    """A change id with no ``legacy_history`` row raises ``ResourceNotFoundError``."""
+    """A change id with no ``legacy_history`` row raises ``ResourceNotFoundError``.
+
+    The happy path is covered end-to-end by the detail endpoint test in
+    ``tests/history/test_api.py``.
+    """
     with pytest.raises(ResourceNotFoundError):
         await HistoryData(mongo, pg).get("6116cba1.1")
 
@@ -157,11 +108,6 @@ class TestDelete:
 
         with pytest.raises(RuntimeError, match="boom"):
             await HistoryData(mongo, pg).delete("6116cba1.2")
-
-        remaining = [
-            change["_id"] for change in await mongo.history.find().to_list(None)
-        ]
-        assert sorted(remaining) == MOCK_HISTORY_CHANGE_IDS
 
         assert await legacy_history_ids(pg) == MOCK_HISTORY_CHANGE_IDS
         assert await history_diff_ids(pg) == MOCK_HISTORY_CHANGE_IDS

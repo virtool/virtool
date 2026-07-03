@@ -323,7 +323,6 @@ class TestFind:
 async def test_get(
     error: str | None,
     fake: DataFaker,
-    mocker: MockerFixture,
     pg: AsyncEngine,
     resp_is: RespIs,
     snapshot: SnapshotAssertion,
@@ -331,25 +330,19 @@ async def test_get(
     spawn_client: ClientSpawner,
     static_time: StaticTime,
 ):
+    """The index detail aggregates real contributors and modified OTUs from history.
+
+    Contributors and OTU change counts are computed by ``get_contributors`` and
+    ``get_otus`` over the ``legacy_history`` rows scoped to the requested index. Rows
+    belonging to another index must not leak into either aggregation.
+    """
     client = await spawn_client(authenticated=True)
 
-    user = await fake.users.create()
+    prolific = await fake.users.create()
+    occasional = await fake.users.create()
 
-    await asyncio.gather(
-        mongo.references.insert_many(
-            [
-                {"_id": "bar", "archived": False, "data_type": "genome", "name": "Bar"},
-            ],
-            session=None,
-        ),
-        mongo.history.insert_many(
-            [
-                {"_id": "0", "index": {"id": "foobar"}, "otu": {"id": "foo"}},
-                {"_id": "1", "index": {"id": "foobar"}, "otu": {"id": "baz"}},
-                {"_id": "2", "index": {"id": "bar"}, "otu": {"id": "bat"}},
-            ],
-            session=None,
-        ),
+    await mongo.references.insert_one(
+        {"_id": "bar", "archived": False, "data_type": "genome", "name": "Bar"},
     )
 
     async with AsyncSession(pg) as session:
@@ -359,23 +352,24 @@ async def test_get(
                 created_at=static_time.datetime,
                 description="Description",
                 method_name="edit",
-                user_id=user.id,
+                user_id=user_id,
                 otu=otu_id,
-                otu_name=otu_id,
-                otu_version="0",
+                otu_name=otu_name,
+                otu_version=otu_version,
                 reference="bar",
                 index=index_id,
                 index_version="0",
             )
-            for legacy_id, index_id, otu_id in (
-                ("0", "foobar", "foo"),
-                ("1", "foobar", "baz"),
-                ("2", "bar", "bat"),
+            for legacy_id, index_id, otu_id, otu_name, otu_version, user_id in (
+                ("tmv.0", "foobar", "tmv", "Tobacco mosaic virus", "0", prolific.id),
+                ("tmv.1", "foobar", "tmv", "Tobacco mosaic virus", "1", prolific.id),
+                ("pvx.0", "foobar", "pvx", "Potato virus X", "0", occasional.id),
+                ("other.0", "other", "other", "Other virus", "0", occasional.id),
             )
         )
         await session.commit()
 
-    job = await fake.jobs.create(user=user, workflow="build_index")
+    job = await fake.jobs.create(user=prolific, workflow="build_index")
 
     if not error:
         await mongo.indexes.insert_one(
@@ -387,42 +381,16 @@ async def test_get(
                 "reference": {"id": "bar"},
                 "manifest": {"foo": 2},
                 "has_files": True,
-                "user": {"id": user.id},
+                "user": {"id": prolific.id},
                 "job": {"id": job.id},
             },
         )
-
-    m_get_contributors = mocker.patch(
-        "virtool.history.db.get_contributors",
-        make_mocked_coro(
-            [
-                {"id": 1, "count": 1, "handle": "fred"},
-                {"id": 2, "count": 3, "handle": "ian"},
-            ],
-        ),
-    )
-
-    m_get_otus = mocker.patch(
-        "virtool.indexes.db.get_otus",
-        make_mocked_coro(
-            [
-                {"id": "kjs8sa99", "name": "Foo", "change_count": 1},
-                {"id": "zxbbvngc", "name": "Test", "change_count": 3},
-            ],
-        ),
-    )
 
     resp = await client.get("/indexes/foobar")
 
     if error is None:
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
-
-        # Check that get_contributors was called with correct parameter types
-        call_args = m_get_contributors.call_args
-        assert isinstance(call_args.args[0], AsyncEngine)
-        assert call_args.kwargs == {"index_id": "foobar"}
-        m_get_otus.assert_called_with(ANY, "foobar")
     else:
         await resp_is.not_found(resp)
 

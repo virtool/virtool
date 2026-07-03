@@ -271,9 +271,8 @@ def create_mock_history(fake, mongo, pg):
 
             await mongo.otus.insert_one(otu)
 
-        # Mirror the production dual-write: one legacy_history row per change, the
-        # real diff in Postgres keyed by history_id, and only the "postgres" sentinel
-        # in Mongo.
+        # One legacy_history row per change with the real diff in Postgres keyed by
+        # history_id. History is Postgres-only, so nothing is written to Mongo.
         async with AsyncSession(pg) as session:
             for document in documents:
                 session.add(
@@ -291,11 +290,6 @@ def create_mock_history(fake, mongo, pg):
                 for document in documents
             ],
         )
-
-        for document in documents:
-            document["diff"] = "postgres"
-
-        await mongo.history.insert_many(documents, session=None)
 
         return otu
 
