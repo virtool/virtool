@@ -54,38 +54,6 @@ class ReferenceContributor(UserNested):
     count: int
 
 
-class ReferenceInstalled(BaseModel):
-    body: str
-    created_at: datetime
-    filename: str
-    html_url: str
-    id: int
-    name: str
-    newer: bool
-    published_at: datetime
-    ready: bool
-    size: int
-    user: UserNested
-
-    class Config:
-        schema_extra = {
-            "example": [
-                {
-                    "id": 11447367,
-                    "name": "v0.1.1",
-                    "body": "#### Fixed\r\n- fixed uploading to GitHub releases in `.travis.yml`",
-                    "filename": "reference.json.gz",
-                    "size": 3695872,
-                    "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.1",
-                    "published_at": "2018-06-12T19:20:57Z",
-                    "created_at": "2018-06-14T18:37:54.242000Z",
-                    "user": {"id": "igboyes"},
-                    "ready": True,
-                },
-            ],
-        }
-
-
 class ReferenceBuild(BaseModel):
     created_at: datetime
     id: str
@@ -105,14 +73,12 @@ class ReferenceMinimal(ReferenceNested):
     cloned_from: ReferenceClonedFrom | None = None
     created_at: datetime
     imported_from: UploadMinimal | None = None
-    installed: ReferenceInstalled | None = None
     internal_control: str | None
     latest_build: ReferenceBuild | None
     organism: str
     otu_count: int
     task: TaskDetailedNested | None
     unbuilt_change_count: int
-    updating: bool | None = None
     user: UserNested
 
 

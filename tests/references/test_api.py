@@ -544,8 +544,8 @@ async def test_delete(
     assert resp.status == 204
 
 
-def _archive_reference_doc(user_id: int, *, archived: bool, official: bool = False):
-    document = {
+def _archive_reference_doc(user_id: int, *, archived: bool):
+    return {
         "_id": "foo",
         "archived": archived,
         "created_at": virtool.utils.timestamp(),
@@ -560,11 +560,6 @@ def _archive_reference_doc(user_id: int, *, archived: bool, official: bool = Fal
         "user": {"id": user_id},
         "users": [],
     }
-
-    if official:
-        document["remotes_from"] = {"slug": "virtool/ref-plant-viruses", "errors": []}
-
-    return document
 
 
 class TestArchive:
@@ -597,34 +592,6 @@ class TestArchive:
         assert body["archived"] is True
         assert body == snapshot_recent(name="resp")
         assert await get_one_field(mongo.references, "archived", "foo") is True
-
-    async def test_official_conflict(
-        self,
-        fake: DataFaker,
-        mocker,
-        mongo: Mongo,
-        resp_is: RespIs,
-        spawn_client: ClientSpawner,
-    ):
-        client = await spawn_client(authenticated=True)
-        user = await fake.users.create()
-
-        await mongo.references.insert_one(
-            _archive_reference_doc(user.id, archived=False, official=True),
-        )
-
-        mocker.patch(
-            "virtool.references.api.check_right",
-            make_mocked_coro(return_value=True),
-        )
-
-        resp = await client.post("/references/v1/foo/archive", {})
-
-        await resp_is.conflict(
-            resp,
-            "Cannot archive the official plant viruses reference",
-        )
-        assert await get_one_field(mongo.references, "archived", "foo") is False
 
     async def test_insufficient_rights(
         self,

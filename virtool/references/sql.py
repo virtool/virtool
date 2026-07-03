@@ -24,6 +24,10 @@ class SQLReference(Base):
     (re-derived as the constant ``"genome"`` at serialization), and
     ``internal_control``. The denormalized ``cloned_from.name`` snapshot is not
     stored; only ``cloned_from_id`` is kept and the name is re-derived via join.
+
+    The remote-reference fields are all dropped now that the release-check /
+    install / update flow is retired: ``release``, ``remotes_from``,
+    ``installed``, ``updates`` and ``updating``.
     """
 
     __tablename__ = "legacy_references"
@@ -37,17 +41,12 @@ class SQLReference(Base):
     archived: Mapped[bool] = mapped_column(Boolean, default=False)
     restrict_source_types: Mapped[bool] = mapped_column(Boolean, default=False)
     source_types: Mapped[list] = mapped_column(JSONB, nullable=False)
-    updating: Mapped[bool | None]
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
     upload_id: Mapped[int | None] = mapped_column(ForeignKey("uploads.id"))
     cloned_from_id: Mapped[int | None] = mapped_column(
         ForeignKey("legacy_references.id")
     )
     task_id: Mapped[int | None] = mapped_column(ForeignKey("tasks.id"))
-    release: Mapped[dict | None] = mapped_column(JSONB)
-    installed: Mapped[dict | None] = mapped_column(JSONB)
-    remotes_from: Mapped[dict | None] = mapped_column(JSONB)
-    updates: Mapped[list | None] = mapped_column(JSONB)
 
 
 class SQLReferenceGroup(Base):
