@@ -386,11 +386,7 @@ class TasksFakerDomain(DataFakerDomain):
         :return: a new fake task
         """
         return await self._layer.tasks.create(
-            self._faker.random_element(
-                [
-                    CloneReferenceTask,
-                ],
-            ),
+            CloneReferenceTask,
             {},
         )
 
