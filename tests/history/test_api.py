@@ -169,5 +169,4 @@ async def test_revert(
     await resp_is.no_content(resp)
 
     assert await mongo.otus.find_one() == snapshot
-    assert await mongo.history.find().to_list(None) == snapshot
     assert await mongo.sequences.find().to_list(None) == snapshot

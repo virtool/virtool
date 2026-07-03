@@ -3,14 +3,14 @@ import datetime
 from pathlib import Path
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
 
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
-from virtool.history.sql import SQLLegacyHistoryDiff
+from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.references.db import get_manifest
@@ -35,11 +35,10 @@ def assert_reference_created(
     async def func(
         query: dict | None = None,
     ):
-        references, otus, sequences, history = await asyncio.gather(
+        references, otus, sequences = await asyncio.gather(
             mongo.references.find_one("foo"),
             mongo.otus.find(query or {}, sort=[("name", 1)]).to_list(None),
             mongo.sequences.find(query or {}, sort=[("accession", 1)]).to_list(None),
-            mongo.history.find(query or {}, sort=[("otu.name", 1)]).to_list(None),
         )
 
         assert references == snapshot(name="ref")
@@ -66,14 +65,20 @@ def assert_reference_created(
             ),
         )
 
-        assert history == snapshot(
-            name="history",
-            matcher=path_type(
-                {".*_id": (str,), r".*\d\.id": (str,), ".*otu.id": (str,)}, regex=True
-            ),
-        )
+        async with AsyncSession(pg) as pg_session:
+            history_rows = (
+                (
+                    await pg_session.execute(
+                        select(SQLLegacyHistory).order_by(SQLLegacyHistory.otu_name),
+                    )
+                )
+                .scalars()
+                .all()
+            )
 
-        change_ids = [doc["_id"] for doc in history]
+        assert len(history_rows) == len(otus)
+
+        change_ids = [row.legacy_id for row in history_rows]
 
         async with AsyncSession(pg) as pg_session:
             diff_rows = (
@@ -299,7 +304,16 @@ async def test_clone_reference_task(
 
         await session.commit()
 
-    assert await mongo.history.count_documents({}) == 20
+    async def count_history(reference: str | None = None) -> int:
+        query = select(func.count()).select_from(SQLLegacyHistory)
+
+        if reference is not None:
+            query = query.where(SQLLegacyHistory.reference == reference)
+
+        async with AsyncSession(pg) as session:
+            return await session.scalar(query)
+
+    assert await count_history() == 20
     assert await mongo.otus.count_documents({}) == 20
 
     task_instance = await CloneReferenceTask.from_task_id(data_layer, 1)
@@ -315,5 +329,5 @@ async def test_clone_reference_task(
     # Make sure OTU count is sum of source and destination references.
     assert len(otus) == 40
 
-    assert await mongo.history.count_documents({}) == 40
-    assert await mongo.history.count_documents({"reference.id": "foo"}) == 20
+    assert await count_history() == 40
+    assert await count_history("foo") == 20

@@ -713,20 +713,6 @@ async def test_delete_index(
                     "version": 4,
                 },
             ),
-            mongo.history.insert_many(
-                [
-                    {
-                        "_id": _id,
-                        "index": {
-                            "id": index_id,
-                            "version": "test_version",
-                        },
-                        "user": {"id": user.id},
-                    }
-                    for _id in ("history1", "history2", "history3")
-                ],
-                session=None,
-            ),
         )
 
     response = await client.delete(f"/indexes/{index_id}")
@@ -735,8 +721,7 @@ async def test_delete_index(
         assert error == response.status
     else:
         assert response.status == 204
-        async for doc in mongo.history.find({"index.id": index_id}):
-            assert doc["index"]["id"] == doc["index"]["version"] == "unbuilt"
+        assert await mongo.indexes.find_one(index_id) is None
 
 
 @pytest.mark.parametrize("error", [None, "409", "404_index", "404_file"])

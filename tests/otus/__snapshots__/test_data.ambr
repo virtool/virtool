@@ -279,30 +279,6 @@
     'version': 1,
   })
 # ---
-# name: test_set_default.2
-  dict({
-    '_id': '6116cba1.1',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'description': 'Set Isolate A as default',
-    'diff': 'postgres',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
-    'method_name': 'set_as_default',
-    'otu': dict({
-      'id': '6116cba1',
-      'name': 'Prunus virus F',
-      'version': 1,
-    }),
-    'reference': dict({
-      'id': 'hxn167',
-    }),
-    'user': dict({
-      'id': 1,
-    }),
-  })
-# ---
 # name: test_update[history]
   dict({
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),

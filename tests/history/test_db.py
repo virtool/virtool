@@ -1,4 +1,3 @@
-import asyncio
 import datetime
 
 import pytest
@@ -112,34 +111,29 @@ class TestGetContributors:
 class TestAdd:
     async def test_edit(
         self,
-        mongo: Mongo,
         pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         static_time,
         fake,
         test_otu_edit,
     ):
-        """A change recorded inside a caller-supplied Mongo session dual-writes."""
+        """An edit writes a normal-version ``legacy_history`` row and its diff."""
         old, new = test_otu_edit
 
         user = await fake.users.create()
 
-        async with mongo.create_session() as session:
-            change = await virtool.history.db.add(
-                mongo,
-                pg,
-                "This is a description",
-                HistoryMethod.edit,
-                old,
-                new,
-                user.id,
-                session,
-            )
+        change = await virtool.history.db.add(
+            pg,
+            "This is a description",
+            HistoryMethod.edit,
+            old,
+            new,
+            user.id,
+        )
 
         change_id = change["_id"]
 
         assert change == snapshot
-        assert await mongo.history.find_one(change_id) == snapshot
 
         async with AsyncSession(pg) as session:
             diff = await session.execute(
@@ -160,14 +154,13 @@ class TestAdd:
 
     async def test_create(
         self,
-        mongo: Mongo,
         pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         static_time,
         fake,
         test_otu_edit,
     ):
-        """A standalone create dual-writes a normal-version ``legacy_history`` row."""
+        """A standalone create writes a normal-version ``legacy_history`` row."""
         # There is no old document because this is a change document for an otu creation
         # operation.
         old = None
@@ -177,7 +170,6 @@ class TestAdd:
         user = await fake.users.create()
 
         change = await virtool.history.db.add(
-            mongo,
             pg,
             f"Created {new['name']}",
             HistoryMethod.create,
@@ -187,7 +179,6 @@ class TestAdd:
         )
 
         assert change == snapshot
-        assert await mongo.history.find_one() == snapshot
         assert await get_row_by_id(pg, SQLLegacyHistoryDiff, 1) == snapshot
 
         async with AsyncSession(pg) as session:
@@ -201,7 +192,6 @@ class TestAdd:
 
     async def test_remove(
         self,
-        mongo: Mongo,
         pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         static_time,
@@ -217,7 +207,6 @@ class TestAdd:
         user = await fake.users.create()
 
         change = await virtool.history.db.add(
-            mongo,
             pg,
             f"Removed {old['name']}",
             HistoryMethod.remove,
@@ -228,13 +217,9 @@ class TestAdd:
 
         assert change == snapshot(name="return_value")
 
-        diff, document = await asyncio.gather(
-            get_row_by_id(pg, SQLLegacyHistoryDiff, 1),
-            mongo.history.find_one(),
-        )
+        diff = await get_row_by_id(pg, SQLLegacyHistoryDiff, 1)
 
         assert diff == snapshot(name="diff")
-        assert document == snapshot(name="document")
 
         async with AsyncSession(pg) as session:
             legacy = (

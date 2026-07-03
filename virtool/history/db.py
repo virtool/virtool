@@ -6,17 +6,13 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import dictdiffer
-from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy import Integer, cast, delete, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.otus.db
 import virtool.utils
-from virtool.data.topg import (
-    both_transactions,
-    compose_legacy_id_multi_expression,
-)
+from virtool.data.topg import compose_legacy_id_multi_expression
 from virtool.data.transforms import apply_transforms
 from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.history.utils import (
@@ -32,21 +28,6 @@ from virtool.utils import base_processor
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
-
-HISTORY_LIST_PROJECTION = [
-    "_id",
-    "description",
-    "method_name",
-    "created_at",
-    "index",
-    "otu",
-    "reference",
-    "user",
-]
-"""A MongoDB projection for history for listing purposes."""
-
-HISTORY_PROJECTION = [*HISTORY_LIST_PROJECTION, "diff"]
-"""A MongoDB projection for history that includes the ``diff`` field."""
 
 _HISTORY_DIFF_CHUNK_SIZE = 32767 // 3
 """Max ``legacy_history_diff`` rows per statement.
@@ -213,7 +194,7 @@ async def delete_history(pg_session: AsyncSession, change_ids: list[str]) -> Non
     """Delete ``history_diffs`` and ``legacy_history`` rows for ``change_ids``.
 
     Operates within an existing ``pg_session`` so the deletes commit atomically with
-    the paired Mongo deletes in a :func:`both_transactions` context. Unlike
+    the paired Mongo writes in the surrounding transaction context. Unlike
     :func:`bulk_delete_history`, it does not open or commit its own session.
     """
     if not change_ids:
@@ -244,18 +225,15 @@ class PreparedChange:
 
 
 async def add(
-    mongo: "Mongo",
     pg: AsyncEngine,
     description: str,
     method_name: HistoryMethod,
     old: dict | None,
     new: dict | None,
     user_id: int,
-    mongo_session: AsyncIOMotorClientSession | None = None,
 ) -> dict:
     """Add a change document to the history collection.
 
-    :param mongo: the application database object
     :param pg: the application PostgreSQL database object
     :param method_name: the name of the handler method that executed the change
     :param old: the otu document prior to the change
@@ -272,22 +250,12 @@ async def add(
     diff_row = SQLLegacyHistoryDiff(change_id=document["_id"], diff=prepared.diff)
     legacy_row = SQLLegacyHistory(**legacy_history_values(document))
 
-    if mongo_session is None:
-        async with both_transactions(mongo, pg) as (mongo_session, pg_session):
-            pg_session.add(legacy_row)
-            await pg_session.flush()
-            diff_row.history_id = legacy_row.id
-            pg_session.add(diff_row)
-            await mongo.history.insert_one(document, session=mongo_session)
-    else:
-        async with AsyncSession(pg) as pg_session:
-            pg_session.add(legacy_row)
-            await pg_session.flush()
-            diff_row.history_id = legacy_row.id
-            pg_session.add(diff_row)
-            await pg_session.flush()
-            await mongo.history.insert_one(document, session=mongo_session)
-            await pg_session.commit()
+    async with AsyncSession(pg) as pg_session:
+        pg_session.add(legacy_row)
+        await pg_session.flush()
+        diff_row.history_id = legacy_row.id
+        pg_session.add(diff_row)
+        await pg_session.commit()
 
     return {**document, "diff": prepared.diff}
 
@@ -360,7 +328,7 @@ def coerce_otu_version(otu_version: str | None) -> int | str:
 
 
 def legacy_history_document(row: SQLLegacyHistory, handle: str) -> Document:
-    """Reconstruct a ``HISTORY_LIST_PROJECTION`` document from a ``legacy_history`` row.
+    """Reconstruct a history list document from a ``legacy_history`` row.
 
     Reverses the sentinel-to-NULL conventions applied by :func:`legacy_history_values`:
     a ``NULL`` ``otu_version`` becomes the ``"removed"`` sentinel and a ``NULL`` ``index``

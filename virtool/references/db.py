@@ -534,12 +534,6 @@ async def populate_insert_only_reference(
 
         async with asyncio.TaskGroup() as tg:
             tg.create_task(
-                mongo.history.insert_many(
-                    [insertion.history.document for insertion in insertions],
-                    None,
-                ),
-            )
-            tg.create_task(
                 mongo.otus.insert_many(
                     [insertion.otu for insertion in insertions],
                     None,
@@ -550,7 +544,6 @@ async def populate_insert_only_reference(
         await bulk_delete_history(pg, [row["change_id"] for row in diff_rows])
 
         await asyncio.gather(
-            mongo.history.delete_many({"reference.id": reference_id}),
             mongo.sequences.delete_many({"reference.id": reference_id}),
             mongo.otus.delete_many({"reference.id": reference_id}),
         )

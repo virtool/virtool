@@ -139,26 +139,6 @@ class TestDelete:
                     "manifest": {},
                 },
             ),
-            mongo.history.insert_many(
-                [
-                    {
-                        "_id": "otu_a.0",
-                        "index": {"id": "deleted_index", "version": 4},
-                        "user": {"id": user.id},
-                    },
-                    {
-                        "_id": "otu_b.0",
-                        "index": {"id": "deleted_index", "version": 4},
-                        "user": {"id": user.id},
-                    },
-                    {
-                        "_id": "otu_c.0",
-                        "index": {"id": "other_index", "version": 2},
-                        "user": {"id": user.id},
-                    },
-                ],
-                session=None,
-            ),
         )
 
         async with AsyncSession(pg) as session:
@@ -210,14 +190,6 @@ class TestDelete:
         await data_layer.index.delete("deleted_index")
 
         assert await mongo.indexes.find_one("deleted_index") is None
-
-        async for doc in mongo.history.find({"_id": {"$in": ["otu_a.0", "otu_b.0"]}}):
-            assert doc["index"] == {"id": "unbuilt", "version": "unbuilt"}
-
-        assert (await mongo.history.find_one("otu_c.0"))["index"] == {
-            "id": "other_index",
-            "version": 2,
-        }
 
         async with AsyncSession(pg) as session:
             rows = {
