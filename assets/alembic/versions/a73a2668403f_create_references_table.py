@@ -31,7 +31,7 @@ def upgrade() -> None:
         sa.Column("source_types", JSONB(), nullable=False),
         sa.Column("user_id", sa.Integer(), nullable=True),
         sa.Column("upload_id", sa.Integer(), nullable=True),
-        sa.Column("cloned_from_id", sa.Integer(), nullable=True),
+        sa.Column("cloned_from_id", sa.BigInteger(), nullable=True),
         sa.Column("task_id", sa.Integer(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("legacy_id"),
@@ -42,7 +42,7 @@ def upgrade() -> None:
     )
     op.create_table(
         "legacy_reference_groups",
-        sa.Column("reference_id", sa.Integer(), nullable=False),
+        sa.Column("reference_id", sa.BigInteger(), nullable=False),
         sa.Column("group_id", sa.Integer(), nullable=False),
         sa.Column("build", sa.Boolean(), nullable=False),
         sa.Column("modify", sa.Boolean(), nullable=False),
@@ -55,7 +55,7 @@ def upgrade() -> None:
     )
     op.create_table(
         "legacy_reference_users",
-        sa.Column("reference_id", sa.Integer(), nullable=False),
+        sa.Column("reference_id", sa.BigInteger(), nullable=False),
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("build", sa.Boolean(), nullable=False),
         sa.Column("modify", sa.Boolean(), nullable=False),

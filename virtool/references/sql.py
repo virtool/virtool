@@ -44,7 +44,7 @@ class SQLReference(Base):
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
     upload_id: Mapped[int | None] = mapped_column(ForeignKey("uploads.id"))
     cloned_from_id: Mapped[int | None] = mapped_column(
-        ForeignKey("legacy_references.id")
+        BigInteger, ForeignKey("legacy_references.id")
     )
     task_id: Mapped[int | None] = mapped_column(ForeignKey("tasks.id"))
 
@@ -55,7 +55,7 @@ class SQLReferenceGroup(Base):
     __tablename__ = "legacy_reference_groups"
 
     reference_id: Mapped[int] = mapped_column(
-        ForeignKey("legacy_references.id"), primary_key=True
+        BigInteger, ForeignKey("legacy_references.id"), primary_key=True
     )
     group_id: Mapped[int] = mapped_column(ForeignKey("groups.id"), primary_key=True)
     build: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -71,7 +71,7 @@ class SQLReferenceUser(Base):
     __tablename__ = "legacy_reference_users"
 
     reference_id: Mapped[int] = mapped_column(
-        ForeignKey("legacy_references.id"), primary_key=True
+        BigInteger, ForeignKey("legacy_references.id"), primary_key=True
     )
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
     build: Mapped[bool] = mapped_column(Boolean, default=False)
