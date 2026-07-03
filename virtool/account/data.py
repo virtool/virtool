@@ -8,14 +8,11 @@ import virtool.utils
 from virtool.account.models import Account, AccountSettings, APIKey
 from virtool.account.oas import (
     CreateKeyRequest,
-    CreateLoginRequest,
-    ResetPasswordRequest,
     UpdateAccountRequest,
     UpdateKeyRequest,
     UpdateSettingsRequest,
 )
 from virtool.account.sql import SQLAPIKey
-from virtool.administrators.oas import UpdateUserRequest
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.models.sessions import Session
@@ -386,94 +383,3 @@ class AccountData(DataLayerDomain):
                 raise ResourceNotFoundError
 
             await session.commit()
-
-    async def login(self, data: CreateLoginRequest) -> int:
-        """Create a new session for the user with `username`.
-
-        :param data: the login data
-        :return: user_id
-        """
-        # When `remember` is set, the session will last for 1 month instead of the
-        # 1-hour default
-
-        # Re-render the login page with an error message if the username doesn't
-        # correlate to a user_id value in
-        # the database and/or password are invalid.
-        try:
-            user = await self.data.users.get_by_handle(data.handle)
-        except ResourceNotFoundError:
-            raise ResourceError()
-
-        if not await self.data.users.validate_password(user.id, data.password):
-            raise ResourceError()
-
-        return user.id
-
-    async def get_reset_session(
-        self,
-        ip: str,
-        user_id: int,
-        session_id: str,
-        remember: bool,
-    ) -> tuple[Session, str]:
-        """Check if user password should be reset and return a reset code if it
-        should be.
-
-        :param ip: the ip address of the requesting client
-        :param user_id: the login session ID
-        :param session_id: the id of the session getting the reset code
-        :param remember: boolean indicating whether the sessions should be remembered
-        """
-        async with AsyncSession(self._pg) as session:
-            result = await session.execute(
-                select(SQLUser.force_reset).where(SQLUser.id == user_id)
-            )
-            force_reset = result.scalar_one_or_none()
-
-        if force_reset:
-            await self.data.sessions.delete(session_id)
-            return await self.data.sessions.create_reset(ip, user_id, remember)
-
-        raise ResourceError
-
-    async def logout(self, old_session_id: str, ip: str) -> Session:
-        """Invalidates the requesting session, effectively logging out the user.
-
-        :param old_session_id: the ID of the old session
-        :param ip: the ip address of the client
-        :return: the session_id, session, and session token
-        """
-        await self.data.sessions.delete(old_session_id)
-        return await self.data.sessions.create_anonymous(ip)
-
-    async def reset(
-        self,
-        session_id: str,
-        data: ResetPasswordRequest,
-        ip: str,
-    ) -> tuple[Session, str]:
-        """Resets the password for a session user.
-
-        :param session_id: the ID of the session to reset
-        :param data: the data needed to reset session
-        :param ip: the ip address of the client
-        """
-        session = await self.data.sessions.get_reset(session_id, data.reset_code)
-
-        if await self.data.users.validate_password(
-            session.reset.user_id, data.password
-        ):
-            raise ResourceError("Cannot reuse current password")
-
-        await self.data.sessions.delete_by_user(session.reset.user_id)
-
-        await self.data.users.update(
-            session.reset.user_id,
-            UpdateUserRequest(force_reset=False, password=data.password),
-        )
-
-        return await self.data.sessions.create_authenticated(
-            ip,
-            session.reset.user_id,
-            remember=session.reset.remember,
-        )
