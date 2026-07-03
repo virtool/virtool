@@ -1,5 +1,3 @@
-from typing import Any
-
 from sqlalchemy import Integer, cast, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -28,13 +26,14 @@ class HistoryData:
         self._mongo = mongo
         self._pg = pg
 
-    async def find(self, req_query: Any) -> HistorySearchResult:
+    async def find(self, page: int, per_page: int) -> HistorySearchResult:
         """List all change documents.
 
-        :param req_query: the request query
+        :param page: the one-indexed page number to return
+        :param per_page: the number of documents to return per page
         :return: a list of all documents
         """
-        documents = await virtool.history.db.find(self._mongo, self._pg, req_query)
+        documents = await virtool.history.db.find(self._mongo, self._pg, page, per_page)
 
         return HistorySearchResult(**documents)
 

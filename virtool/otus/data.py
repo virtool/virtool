@@ -1,7 +1,6 @@
 """The data layer domain for OTUs."""
 
 import asyncio
-from collections.abc import Mapping
 from copy import deepcopy
 from typing import Any
 
@@ -51,10 +50,12 @@ class OTUData:
         self._pg = pg
 
     async def find(
-        self, query: Mapping, term: str | None, verified: bool | None
+        self, page: int, per_page: int, term: str | None, verified: bool | None
     ) -> dict[str, Any] | list[dict | None]:
         """Find OTUs matching the given query."""
-        return await virtool.otus.db.find(self._mongo, self._pg, term, query, verified)
+        return await virtool.otus.db.find(
+            self._mongo, self._pg, term, page, per_page, verified
+        )
 
     async def get(self, otu_id: str) -> OTU:
         """Get a single OTU by ID.

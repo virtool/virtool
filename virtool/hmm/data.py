@@ -4,7 +4,6 @@ import math
 from collections.abc import AsyncIterator
 
 from aiohttp import ClientSession
-from multidict import MultiDictProxy
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -76,22 +75,12 @@ class HmmsData(DataLayerDomain):
         self._pg = pg
         self._storage = storage
 
-    async def find(self, query: MultiDictProxy):
-        try:
-            page = max(1, int(query["page"]))
-        except (KeyError, ValueError):
-            page = 1
-
-        try:
-            per_page = max(1, int(query["per_page"]))
-        except (KeyError, ValueError):
-            per_page = 25
-
+    async def find(self, page: int, per_page: int, term: str | None = None):
         not_hidden = SQLHMM.hidden.is_(False)
 
         filters = [not_hidden]
 
-        if term := query.get("find"):
+        if term:
             filters.append(_compose_hmm_search_filter(term))
 
         data, status = await asyncio.gather(

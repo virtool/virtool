@@ -28,6 +28,7 @@ from virtool.api.errors import (
     APINoContent,
     APINotFound,
 )
+from virtool.api.pagination import Page, PerPage
 from virtool.api.policy import PermissionRoutePolicy, policy
 from virtool.api.routes import Routes
 from virtool.authorization.permissions import LegacyPermission
@@ -76,6 +77,8 @@ class ReferencesView(PydanticView):
     async def get(
         self,
         find: str | None = None,
+        page: Page = 1,
+        per_page: PerPage = 25,
         archived: bool | None = Field(
             default=None,
             description=(
@@ -98,7 +101,8 @@ class ReferencesView(PydanticView):
             self.request["client"].user_id,
             self.request["client"].administrator_role == AdministratorRole.FULL,
             self.request["client"].groups,
-            self.request.query,
+            page,
+            per_page,
             archived,
         )
 
@@ -372,13 +376,16 @@ class ReferenceOTUsView(PydanticView):
         /,
         find: str | None,
         verified: bool | None,
-    ) -> r200[OTUSearchResult] | r404:
+        page: Page = 1,
+        per_page: PerPage = 25,
+    ) -> r200[OTUSearchResult] | r400 | r404:
         """Find OTUs.
 
         Lists OTUs by name or abbreviation. Results are paginated.
 
         Status Codes:
             200: Successful operation
+            400: Invalid query
             404: Not found
         """
         try:
@@ -386,7 +393,8 @@ class ReferenceOTUsView(PydanticView):
                 find,
                 verified,
                 ref_id,
-                self.request.query,
+                page,
+                per_page,
             )
         except ResourceNotFoundError:
             raise APINotFound()
@@ -438,20 +446,24 @@ class ReferenceHistoryView(PydanticView):
             default=None,
             description="Filter by build status",
         ),
-    ) -> r200[HistorySearchResult] | r404:
+        page: Page = 1,
+        per_page: PerPage = 25,
+    ) -> r200[HistorySearchResult] | r400 | r404:
         """List history.
 
         Lists changes made to OTUs in the reference.
 
         Status Codes:
             200: Successful operation
+            400: Invalid query
             404: Not found
         """
         try:
             data = await get_data_from_req(self.request).references.find_history(
                 ref_id,
                 unbuilt,
-                self.request.query,
+                page,
+                per_page,
             )
         except ResourceNotFoundError:
             raise APINotFound()
@@ -461,19 +473,27 @@ class ReferenceHistoryView(PydanticView):
 
 @routes.view("/references/v1/{ref_id}/indexes")
 class ReferenceIndexesView(PydanticView):
-    async def get(self, ref_id: str, /) -> r200[ListIndexesResponse] | r404:
+    async def get(
+        self,
+        ref_id: str,
+        /,
+        page: Page = 1,
+        per_page: PerPage = 25,
+    ) -> r200[ListIndexesResponse] | r400 | r404:
         """List indexes.
 
         Lists indexes that have been created for the reference.
 
         Status Codes:
             200: Successful operation
+            400: Invalid query
             404: Not found
         """
         try:
             data = await get_data_from_req(self.request).references.find_indexes(
                 ref_id,
-                self.request.query,
+                page,
+                per_page,
             )
         except ResourceNotFoundError:
             raise APINotFound

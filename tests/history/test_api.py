@@ -44,6 +44,38 @@ async def test_find(
     assert await resp.json() == snapshot
 
 
+class TestFindValidation:
+    """Out-of-range pagination query params are rejected at the API boundary.
+
+    ``page`` and ``per_page`` are validated by the shared ``Page``/``PerPage``
+    constrained types, so invalid values return ``400`` before reaching the
+    pagination math rather than raising or silently falling back to defaults.
+    """
+
+    @pytest.mark.parametrize(
+        "query",
+        [
+            "page=0",
+            "page=-1",
+            "page=notanumber",
+            "per_page=0",
+            "per_page=-1",
+            "per_page=101",
+            "per_page=notanumber",
+        ],
+    )
+    async def test_rejects_invalid(
+        self,
+        query: str,
+        spawn_client: ClientSpawner,
+    ):
+        client = await spawn_client(authenticated=True)
+
+        resp = await client.get(f"/history?{query}")
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
+
+
 @pytest.mark.parametrize("error", [None, "404"])
 async def test_get(
     error,

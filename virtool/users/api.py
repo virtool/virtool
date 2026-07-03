@@ -6,6 +6,7 @@ from structlog import get_logger
 import virtool.api.authentication
 from virtool.api.custom_json import json_response
 from virtool.api.errors import APIBadRequest, APIConflict, APINotFound
+from virtool.api.pagination import Page, PerPage
 from virtool.api.policy import (
     AdministratorRoutePolicy,
     PublicRoutePolicy,
@@ -46,7 +47,9 @@ class UsersView(PydanticView):
         find: str | None = Field(
             description="Filter by partial matches to user handles.",
         ),
-    ) -> r200[User]:
+        page: Page = 1,
+        per_page: PerPage = 25,
+    ) -> r200[User] | r400:
         """Find users.
 
         Find all Virtool users.
@@ -59,10 +62,8 @@ class UsersView(PydanticView):
 
         Status Codes:
             200: Successful operation
+            400: Invalid query
         """
-        page = int(self.request.query.get("page", 1))
-        per_page = int(self.request.query.get("per_page", 25))
-
         result = await get_data_from_req(self.request).users.find(
             page=page,
             per_page=per_page,

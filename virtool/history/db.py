@@ -389,7 +389,8 @@ def legacy_history_document(row: SQLLegacyHistory, handle: str) -> Document:
 async def find(
     mongo: "Mongo",
     pg: AsyncEngine,
-    req_query,
+    page: int,
+    per_page: int,
     reference_id: str | None = None,
     unbuilt: bool | None = None,
 ) -> dict:
@@ -402,21 +403,12 @@ async def find(
 
     :param mongo: the application database client, used to attach reference data
     :param pg: the application PostgreSQL database object
-    :param req_query: the raw request query, used to derive ``page`` and ``per_page``
+    :param page: the one-indexed page number to return
+    :param per_page: the number of documents to return per page
     :param reference_id: restrict changes to a single reference
     :param unbuilt: ``True`` for unbuilt changes only, ``False`` for built changes only
     :return: a search result including the matched change documents
     """
-    try:
-        page = int(req_query["page"])
-    except (KeyError, ValueError):
-        page = 1
-
-    try:
-        per_page = int(req_query["per_page"])
-    except (KeyError, ValueError):
-        per_page = 25
-
     base_filters = []
 
     if reference_id is not None:
@@ -472,7 +464,8 @@ async def find_by_index(
     mongo: "Mongo",
     pg: AsyncEngine,
     index_id: str,
-    req_query,
+    page: int,
+    per_page: int,
     term: str | None = None,
 ) -> dict:
     """List the history changes included in a single index build.
@@ -491,20 +484,11 @@ async def find_by_index(
     :param mongo: the application database client, used to attach reference data
     :param pg: the application PostgreSQL database object
     :param index_id: restrict changes to a single index build
-    :param req_query: the raw request query, used to derive ``page`` and ``per_page``
+    :param page: the one-indexed page number to return
+    :param per_page: the number of documents to return per page
     :param term: an optional term matched against the OTU name
     :return: a search result including the matched change documents
     """
-    try:
-        page = int(req_query["page"])
-    except (KeyError, ValueError):
-        page = 1
-
-    try:
-        per_page = int(req_query["per_page"])
-    except (KeyError, ValueError):
-        per_page = 25
-
     search_filters = [SQLLegacyHistory.index == index_id]
 
     if term:
