@@ -24,7 +24,7 @@ from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.checks import check_fasta_file_uploaded, check_index_files_uploaded
 from virtool.indexes.db import (
     INDEX_FILE_NAMES,
-    lookup_index_otu_counts,
+    IndexCountsTransform,
     update_last_indexed_versions,
 )
 from virtool.indexes.models import Index, IndexFile, IndexMinimal, IndexSearchResult
@@ -95,9 +95,7 @@ class IndexData:
                         },
                     },
                     *lookup_nested_reference_by_id(local_field="reference.id"),
-                    *lookup_index_otu_counts(local_field="_id"),
                     {"$sort": {"created_at": 1}},
-                    {"$project": {"counts": False}},
                 ],
             )
         ]
@@ -107,6 +105,7 @@ class IndexData:
             [
                 AttachJobTransform(self._pg),
                 AttachUserTransform(self._pg),
+                IndexCountsTransform(),
             ],
             self._pg,
         )
@@ -123,9 +122,7 @@ class IndexData:
             [
                 {"$match": {"_id": index_id}},
                 *lookup_nested_reference_by_id(local_field="reference.id"),
-                *lookup_index_otu_counts(local_field="_id"),
                 {"$sort": {"created_at": 1}},
-                {"$project": {"counts": False}},
             ],
         ).to_list(length=1)
 
@@ -152,6 +149,7 @@ class IndexData:
             [
                 AttachJobTransform(self._pg),
                 AttachUserTransform(self._pg),
+                IndexCountsTransform(),
             ],
             self._pg,
         )
