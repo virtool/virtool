@@ -92,6 +92,39 @@ class IndexCountsTransform(AbstractTransform):
             "modified_otu_count": modified_otu_count,
         }
 
+    async def prepare_many(
+        self, documents: list[Document], session: AsyncSession
+    ) -> Any:
+        index_ids = [document["id"] for document in documents]
+
+        rows = (
+            await session.execute(
+                select(
+                    SQLLegacyHistory.index,
+                    func.count(),
+                    func.count(distinct(SQLLegacyHistory.otu)),
+                )
+                .where(SQLLegacyHistory.index.in_(index_ids))
+                .group_by(SQLLegacyHistory.index),
+            )
+        ).all()
+
+        counts = {
+            index: {
+                "change_count": change_count,
+                "modified_otu_count": modified_otu_count,
+            }
+            for index, change_count, modified_otu_count in rows
+        }
+
+        return {
+            index_id: counts.get(
+                index_id,
+                {"change_count": 0, "modified_otu_count": 0},
+            )
+            for index_id in index_ids
+        }
+
 
 async def create(
     mongo: "Mongo",
