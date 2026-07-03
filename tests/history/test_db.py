@@ -329,18 +329,40 @@ async def test_patch_to_version(
     assert reverted_change_ids == snapshot(name="reverted_change_ids")
 
 
-async def test_patch_to_version_missing_diff(mongo: Mongo, pg: AsyncEngine):
-    """A change with the ``"postgres"`` sentinel but no ``SQLLegacyHistoryDiff`` row
-    raises a clear error instead of failing later with a ``KeyError``.
+async def test_patch_to_version_intermediate(
+    create_mock_history,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    snapshot: SnapshotAssertion,
+):
+    """Patching to an intermediate version reverts only the changes above it, stopping
+    at the first change at or below the target version.
     """
-    await mongo.history.insert_one(
-        {
-            "_id": "6116cba1.1",
-            "diff": "postgres",
-            "method_name": "update",
-            "otu": {"id": "6116cba1", "name": "Prunus virus F", "version": 1},
-        },
+    await create_mock_history(remove=False)
+
+    current, patched, reverted_change_ids = await virtool.history.db.patch_to_version(
+        mongo,
+        pg,
+        "6116cba1",
+        2,
     )
+
+    assert reverted_change_ids == ["6116cba1.3"]
+    assert current == snapshot(name="current")
+    assert patched == snapshot(name="patched")
+
+
+async def test_patch_to_version_missing_diff(
+    fake: DataFaker,
+    mongo: Mongo,
+    pg: AsyncEngine,
+):
+    """A ``legacy_history`` change with no matching ``SQLLegacyHistoryDiff`` row raises
+    a clear error instead of failing later with a ``KeyError``.
+    """
+    user = await fake.users.create()
+
+    await add_contribution(pg, "6116cba1.1", user.id, "hxn167")
 
     with pytest.raises(
         ValueError,
@@ -349,21 +371,15 @@ async def test_patch_to_version_missing_diff(mongo: Mongo, pg: AsyncEngine):
         await virtool.history.db.patch_to_version(mongo, pg, "6116cba1", 0)
 
 
-async def test_patch_to_version_inline_diff(mongo: Mongo, pg: AsyncEngine):
+async def test_resolve_diffs_inline_diff(pg: AsyncEngine):
     """A change holding an unbackfilled inline diff raises instead of being treated as
     a literal diff.
     """
-    await mongo.history.insert_one(
-        {
-            "_id": "6116cba1.1",
-            "diff": [["change", "version", [0, 1]]],
-            "method_name": "update",
-            "otu": {"id": "6116cba1", "name": "Prunus virus F", "version": 1},
-        },
-    )
-
     with pytest.raises(
         ValueError,
         match="Unexpected inline diff for change 6116cba1.1",
     ):
-        await virtool.history.db.patch_to_version(mongo, pg, "6116cba1", 0)
+        await virtool.history.db._resolve_diffs(
+            pg,
+            [{"_id": "6116cba1.1", "diff": [["change", "version", [0, 1]]]}],
+        )
