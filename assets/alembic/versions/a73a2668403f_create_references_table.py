@@ -19,7 +19,7 @@ depends_on = None
 
 def upgrade() -> None:
     op.create_table(
-        "references",
+        "legacy_references",
         sa.Column("id", sa.BigInteger(), sa.Identity(always=True), nullable=False),
         sa.Column("legacy_id", sa.String(), nullable=True),
         sa.Column("name", sa.String(), nullable=False),
@@ -42,11 +42,11 @@ def upgrade() -> None:
         sa.UniqueConstraint("legacy_id"),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"]),
         sa.ForeignKeyConstraint(["upload_id"], ["uploads.id"]),
-        sa.ForeignKeyConstraint(["cloned_from_id"], ["references.id"]),
+        sa.ForeignKeyConstraint(["cloned_from_id"], ["legacy_references.id"]),
         sa.ForeignKeyConstraint(["task_id"], ["tasks.id"]),
     )
     op.create_table(
-        "reference_groups",
+        "legacy_reference_groups",
         sa.Column("reference_id", sa.Integer(), nullable=False),
         sa.Column("group_id", sa.Integer(), nullable=False),
         sa.Column("build", sa.Boolean(), nullable=False),
@@ -55,11 +55,11 @@ def upgrade() -> None:
         sa.Column("remove", sa.Boolean(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint("reference_id", "group_id"),
-        sa.ForeignKeyConstraint(["reference_id"], ["references.id"]),
+        sa.ForeignKeyConstraint(["reference_id"], ["legacy_references.id"]),
         sa.ForeignKeyConstraint(["group_id"], ["groups.id"]),
     )
     op.create_table(
-        "reference_users",
+        "legacy_reference_users",
         sa.Column("reference_id", sa.Integer(), nullable=False),
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("build", sa.Boolean(), nullable=False),
@@ -68,12 +68,12 @@ def upgrade() -> None:
         sa.Column("remove", sa.Boolean(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint("reference_id", "user_id"),
-        sa.ForeignKeyConstraint(["reference_id"], ["references.id"]),
+        sa.ForeignKeyConstraint(["reference_id"], ["legacy_references.id"]),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"]),
     )
 
 
 def downgrade() -> None:
-    op.drop_table("reference_users")
-    op.drop_table("reference_groups")
-    op.drop_table("references")
+    op.drop_table("legacy_reference_users")
+    op.drop_table("legacy_reference_groups")
+    op.drop_table("legacy_references")

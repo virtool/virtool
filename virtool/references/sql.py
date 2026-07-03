@@ -26,7 +26,7 @@ class SQLReference(Base):
     stored; only ``cloned_from_id`` is kept and the name is re-derived via join.
     """
 
-    __tablename__ = "references"
+    __tablename__ = "legacy_references"
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
     legacy_id: Mapped[str | None] = mapped_column(unique=True)
@@ -40,7 +40,9 @@ class SQLReference(Base):
     updating: Mapped[bool | None]
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
     upload_id: Mapped[int | None] = mapped_column(ForeignKey("uploads.id"))
-    cloned_from_id: Mapped[int | None] = mapped_column(ForeignKey("references.id"))
+    cloned_from_id: Mapped[int | None] = mapped_column(
+        ForeignKey("legacy_references.id")
+    )
     task_id: Mapped[int | None] = mapped_column(ForeignKey("tasks.id"))
     release: Mapped[dict | None] = mapped_column(JSONB)
     installed: Mapped[dict | None] = mapped_column(JSONB)
@@ -51,10 +53,10 @@ class SQLReference(Base):
 class SQLReferenceGroup(Base):
     """SQL model for a group's rights on a reference."""
 
-    __tablename__ = "reference_groups"
+    __tablename__ = "legacy_reference_groups"
 
     reference_id: Mapped[int] = mapped_column(
-        ForeignKey("references.id"), primary_key=True
+        ForeignKey("legacy_references.id"), primary_key=True
     )
     group_id: Mapped[int] = mapped_column(ForeignKey("groups.id"), primary_key=True)
     build: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -67,10 +69,10 @@ class SQLReferenceGroup(Base):
 class SQLReferenceUser(Base):
     """SQL model for a user's rights on a reference."""
 
-    __tablename__ = "reference_users"
+    __tablename__ = "legacy_reference_users"
 
     reference_id: Mapped[int] = mapped_column(
-        ForeignKey("references.id"), primary_key=True
+        ForeignKey("legacy_references.id"), primary_key=True
     )
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
     build: Mapped[bool] = mapped_column(Boolean, default=False)

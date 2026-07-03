@@ -152,7 +152,7 @@ async def engine(
 @pytest.fixture
 async def pg(engine: AsyncEngine):
     async with AsyncSession(engine) as session:
-        tables = ",".join(f'"{table.name}"' for table in Base.metadata.sorted_tables)
+        tables = ",".join(table.name for table in Base.metadata.sorted_tables)
 
         await session.execute(
             text(
