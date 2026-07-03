@@ -740,6 +740,7 @@ class SamplesData(DataLayerDomain):
 
         if "group" in data:
             scalars["group_id"] = group_id
+            data["group"] = group_id
 
         async def apply(mongo_session, pg_session) -> None:
             result = await self._mongo.samples.update_one(
