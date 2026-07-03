@@ -1199,7 +1199,7 @@
       'bar': 5,
       'foo': 2,
     }),
-    'modified_otu_count': 0,
+    'modified_otu_count': 1,
     'otus': list([
       dict({
         'change_count': 1,
