@@ -299,23 +299,6 @@ async def create_sample(
     return base_processor(document)
 
 
-async def get_sample_owner(mongo: "Mongo", sample_id: str) -> str | None:
-    """A Shortcut function for getting the owner user id of a sample given its
-    ``sample_id``.
-
-    :param mongo: the application database client
-    :param sample_id: the id of the sample to get the owner for
-    :return: the id of the owner user
-
-    """
-    document = await mongo.samples.find_one(sample_id, ["user"])
-
-    if document:
-        return document["user"]["id"]
-
-    return None
-
-
 def define_initial_workflows(library_type) -> dict[str, str]:
     """Checks for incompatibility workflow states
 

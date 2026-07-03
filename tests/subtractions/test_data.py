@@ -2,9 +2,13 @@ import pytest
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from tests.fixtures.client import ClientSpawner
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.models.enums import Permission
+from virtool.samples.oas import CreateSampleRequest
+from virtool.samples.sql import SQLLegacySample, SQLLegacySampleSubtraction
 from virtool.subtractions.oas import (
     FinalizeSubtractionRequest,
     NucleotideComposition,
@@ -296,6 +300,78 @@ class TestMutations:
                 ),
             )
         assert deleted is True
+
+    async def test_delete_unlinks_sample_subtraction_rows(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+        spawn_client: ClientSpawner,
+    ):
+        """``delete`` removes the sample's ``legacy_sample_subtractions`` join rows."""
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_sample],
+        )
+
+        user = await fake.users.create()
+        sample_upload = await fake.uploads.create(user=user)
+        subtraction_upload = await fake.uploads.create(
+            user=user,
+            upload_type=UploadType.subtraction,
+        )
+        subtraction = await fake.subtractions.create(
+            user=user,
+            upload=subtraction_upload,
+        )
+
+        sample = await data_layer.samples.create(
+            CreateSampleRequest(
+                files=[sample_upload.id],
+                name="With Subtraction",
+                subtractions=[subtraction.id],
+            ),
+            client.user.id,
+            0,
+        )
+
+        async with AsyncSession(pg) as session:
+            legacy = (
+                await session.execute(
+                    select(SQLLegacySample).where(
+                        SQLLegacySample.legacy_id == sample.id,
+                    ),
+                )
+            ).scalar_one()
+
+            before = (
+                (
+                    await session.execute(
+                        select(SQLLegacySampleSubtraction.subtraction_id).where(
+                            SQLLegacySampleSubtraction.sample_id == legacy.id,
+                        ),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+        assert before == [subtraction.id]
+
+        await data_layer.subtractions.delete(subtraction.id)
+
+        async with AsyncSession(pg) as session:
+            after = (
+                (
+                    await session.execute(
+                        select(SQLLegacySampleSubtraction.subtraction_id).where(
+                            SQLLegacySampleSubtraction.sample_id == legacy.id,
+                        ),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+        assert after == []
 
     async def test_finalize(self, data_layer: DataLayer, fake: DataFaker):
         """``finalize`` marks the subtraction ready."""

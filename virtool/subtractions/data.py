@@ -3,7 +3,7 @@ from asyncio import CancelledError
 from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING
 
-from sqlalchemy import func, or_, select, update
+from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
@@ -16,12 +16,12 @@ from virtool.data.topg import both_transactions
 from virtool.data.transforms import apply_transforms
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.pg.utils import get_row_by_id
+from virtool.samples.sql import SQLLegacySampleSubtraction
 from virtool.storage.cleanup import delete_prefix
 from virtool.storage.protocol import StorageBackend
 from virtool.subtractions.db import (
     attach_computed,
     map_subtraction_row,
-    unlink_default_subtractions,
 )
 from virtool.subtractions.models import (
     Subtraction,
@@ -82,7 +82,14 @@ class SubtractionsData(DataLayerDomain):
         self._pg = pg
         self._storage = storage
 
-    async def find(self, find: str, short: bool, ready: bool, page: int, per_page: int):
+    async def find(
+        self,
+        find: str | None,
+        short: bool,
+        ready: bool,
+        page: int,
+        per_page: int,
+    ):
         not_deleted = SQLSubtraction.deleted.is_(False)
 
         filters = [not_deleted]
@@ -325,10 +332,16 @@ class SubtractionsData(DataLayerDomain):
                 .values(deleted=True),
             )
 
-            await unlink_default_subtractions(
-                self._mongo,
-                subtraction_id,
-                mongo_session,
+            # Unlink this subtraction as a default subtraction on any samples.
+            await self._mongo.samples.update_many(
+                {"subtractions": subtraction_id},
+                {"$pull": {"subtractions": subtraction_id}},
+                session=mongo_session,
+            )
+            await pg_session.execute(
+                delete(SQLLegacySampleSubtraction).where(
+                    SQLLegacySampleSubtraction.subtraction_id == subtraction_id,
+                ),
             )
 
             deleted_count = result.rowcount
