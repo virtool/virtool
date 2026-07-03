@@ -2,7 +2,7 @@ import asyncio
 import gzip
 from collections.abc import AsyncIterator
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
@@ -17,8 +17,10 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.events import Operation, emit, emits
+from virtool.data.topg import both_transactions
 from virtool.data.transforms import apply_transforms
 from virtool.history.models import HistorySearchResult
+from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.checks import check_fasta_file_uploaded, check_index_files_uploaded
 from virtool.indexes.db import (
     INDEX_FILE_NAMES,
@@ -368,7 +370,10 @@ class IndexData:
         if not index:
             raise ResourceNotFoundError
 
-        async with self._mongo.create_session() as mongo_session:
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
             delete_result = await self._mongo.indexes.delete_one(
                 {"_id": index_id},
                 session=mongo_session,
@@ -377,15 +382,16 @@ class IndexData:
             if delete_result.deleted_count == 0:
                 raise ResourceNotFoundError
 
-            index_change_ids = await self._mongo.history.distinct(
-                "_id",
-                {"index.id": index_id},
-            )
-
             await self._mongo.history.update_many(
-                {"_id": {"$in": index_change_ids}},
+                {"index.id": index_id},
                 {"$set": {"index": {"id": "unbuilt", "version": "unbuilt"}}},
                 session=mongo_session,
+            )
+
+            await pg_session.execute(
+                update(SQLLegacyHistory)
+                .where(SQLLegacyHistory.index == index_id)
+                .values(index=None, index_version=None),
             )
 
         for key, exc in await delete_prefix(
