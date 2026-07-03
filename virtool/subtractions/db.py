@@ -3,7 +3,6 @@
 import asyncio
 from typing import Any
 
-from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -180,21 +179,3 @@ async def get_linked_samples(mongo: "Mongo", subtraction_id: int) -> list[dict]:
             ["_id", "name"],
         )
     ]
-
-
-async def unlink_default_subtractions(
-    mongo: "Mongo",
-    subtraction_id: int,
-    session: AsyncIOMotorClientSession,
-) -> None:
-    """Remove a subtraction as a default subtraction for samples.
-
-    :param mongo: the application mongo object
-    :param subtraction_id: the integer id of the subtraction to remove
-    :param session: a motor session to use
-    """
-    await mongo.samples.update_many(
-        {"subtractions": subtraction_id},
-        {"$pull": {"subtractions": subtraction_id}},
-        session=session,
-    )

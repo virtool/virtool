@@ -1,9 +1,10 @@
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
+from virtool.data.topg import both_transactions
 from virtool.data.transforms import apply_transforms
 from virtool.labels.models import Label, LabelMinimal
 from virtool.labels.oas import UpdateLabelRequest
@@ -11,6 +12,7 @@ from virtool.labels.sql import SQLLabel
 from virtool.labels.transforms import AttachSampleCountsTransform
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_generic
+from virtool.samples.sql import SQLLegacySampleLabel
 
 
 class LabelsData:
@@ -137,15 +139,13 @@ class LabelsData:
 
         :param label_id: ID of the label to delete
         """
-        label = await self.get(label_id)
-
-        async with (
-            AsyncSession(
-                self._pg,
-            ) as session,
-            self._mongo.create_session() as mongo_session,
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
         ):
-            result = await session.execute(select(SQLLabel).filter_by(id=label_id))
+            result = await pg_session.execute(
+                select(SQLLabel).filter_by(id=label_id),
+            )
             label = result.scalar()
 
             if label is None:
@@ -157,7 +157,12 @@ class LabelsData:
                 session=mongo_session,
             )
 
-            await session.delete(label)
-            await session.commit()
+            await pg_session.execute(
+                delete(SQLLegacySampleLabel).where(
+                    SQLLegacySampleLabel.label_id == label_id,
+                ),
+            )
+
+            await pg_session.delete(label)
 
         emit(label, "labels", "delete", Operation.DELETE)

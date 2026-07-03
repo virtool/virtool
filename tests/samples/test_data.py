@@ -1,7 +1,9 @@
 import asyncio
 from collections.abc import AsyncIterator
+from datetime import timedelta
 
 import pytest
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
@@ -9,7 +11,7 @@ import virtool.utils
 from tests.fixtures.client import ClientSpawner
 from virtool.analyses.sql import SQLAnalysis
 from virtool.api.client import UserClient
-from virtool.data.errors import ResourceConflictError
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.models.enums import AnalysisWorkflow, LibraryType, Permission
@@ -17,8 +19,17 @@ from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row, get_row_by_id
 from virtool.samples.models import WorkflowState
-from virtool.samples.oas import CreateAnalysisRequest, CreateSampleRequest
-from virtool.samples.sql import SQLSampleReads
+from virtool.samples.oas import (
+    CreateAnalysisRequest,
+    CreateSampleRequest,
+    UpdateSampleRequest,
+)
+from virtool.samples.sql import (
+    SQLLegacySample,
+    SQLLegacySampleLabel,
+    SQLLegacySampleSubtraction,
+    SQLSampleReads,
+)
 from virtool.samples.utils import SampleRight
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.storage.errors import StorageKeyNotFoundError
@@ -29,7 +40,12 @@ from virtool.users.oas import UpdateUserRequest
 
 
 @pytest.fixture
-async def get_sample_ready_false(fake: DataFaker, mongo: Mongo, static_time):
+async def get_sample_ready_false(
+    fake: DataFaker,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    static_time,
+):
     label = await fake.labels.create()
     user = await fake.users.create()
     job = await fake.jobs.create(user, workflow="create_sample")
@@ -81,6 +97,37 @@ async def get_sample_ready_false(fake: DataFaker, mongo: Mongo, static_time):
             },
         },
     )
+
+    async with AsyncSession(pg) as session:
+        legacy = SQLLegacySample(
+            legacy_id="test",
+            name="Test",
+            library_type=LibraryType.normal.value,
+            format="fastq",
+            quality=None,
+            created_at=static_time.datetime,
+            ready=False,
+            hold=False,
+            is_legacy=False,
+            all_read=True,
+            all_write=True,
+            group_read=True,
+            group_write=True,
+            user_id=user.id,
+            job_id=job.id,
+        )
+        session.add(legacy)
+        await session.flush()
+
+        session.add(SQLLegacySampleLabel(sample_id=legacy.id, label_id=label.id))
+        session.add(
+            SQLLegacySampleSubtraction(sample_id=legacy.id, subtraction_id=apple.id),
+        )
+        session.add(
+            SQLLegacySampleSubtraction(sample_id=legacy.id, subtraction_id=pear.id),
+        )
+
+        await session.commit()
 
 
 class TestCreate:
@@ -149,6 +196,60 @@ class TestCreate:
 
         assert sample == snapshot_recent(name="mongo")
         assert upload.reserved is True
+
+        async with AsyncSession(pg) as session:
+            legacy = (
+                await session.execute(
+                    select(SQLLegacySample).where(
+                        SQLLegacySample.legacy_id == sample["_id"],
+                    ),
+                )
+            ).scalar_one()
+
+            label_ids = (
+                (
+                    await session.execute(
+                        select(SQLLegacySampleLabel.label_id).where(
+                            SQLLegacySampleLabel.sample_id == legacy.id,
+                        ),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+
+            subtraction_ids = (
+                (
+                    await session.execute(
+                        select(SQLLegacySampleSubtraction.subtraction_id).where(
+                            SQLLegacySampleSubtraction.sample_id == legacy.id,
+                        ),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+
+        assert legacy.name == sample["name"]
+        assert legacy.library_type == sample["library_type"]
+        # Mongo truncates datetimes to millisecond precision while Postgres keeps
+        # microseconds, so the same source timestamp differs sub-millisecond.
+        assert abs(legacy.created_at - sample["created_at"]) < timedelta(
+            milliseconds=1,
+        )
+        assert legacy.user_id == sample["user"]["id"]
+        assert legacy.job_id == sample["job"]["id"]
+        assert legacy.ready is sample["ready"]
+        assert legacy.hold is sample["hold"]
+        assert legacy.all_read is sample["all_read"]
+        assert legacy.all_write is sample["all_write"]
+        assert legacy.group_read is sample["group_read"]
+        assert legacy.group_write is sample["group_write"]
+        assert legacy.group_id == (
+            sample["group"] if isinstance(sample["group"], int) else None
+        )
+        assert set(label_ids) == set(sample["labels"])
+        assert set(subtraction_ids) == set(sample["subtractions"])
 
     async def test_already_reserved(
         self,
@@ -271,6 +372,16 @@ async def test_finalize(
     assert sample.dict() == snapshot_recent()
     assert sample.quality == quality
     assert sample.ready is True
+
+    async with AsyncSession(pg) as session:
+        legacy = (
+            await session.execute(
+                select(SQLLegacySample).where(SQLLegacySample.legacy_id == "test"),
+            )
+        ).scalar_one()
+
+    assert legacy.ready is True
+    assert legacy.quality == quality
 
     with pytest.raises(StorageKeyNotFoundError):
         await memory_storage.size(upload_key)
@@ -638,6 +749,376 @@ class TestHasResourcesForAnalysisJob:
             )
 
 
+class TestUpdate:
+    """Updating a sample reconciles its ``legacy_samples`` row and join rows."""
+
+    @staticmethod
+    async def _create_sample(
+        data_layer: DataLayer,
+        fake: DataFaker,
+        user_id: int,
+        *,
+        labels: list[int] | None = None,
+        subtractions: list[int] | None = None,
+    ):
+        upload = await fake.uploads.create(user=await fake.users.create())
+
+        return await data_layer.samples.create(
+            CreateSampleRequest(
+                files=[upload.id],
+                labels=labels or [],
+                name="Original",
+                subtractions=subtractions or [],
+            ),
+            user_id,
+            0,
+        )
+
+    @staticmethod
+    async def _get_label_ids(pg: AsyncEngine, sample_id: str) -> set[int]:
+        async with AsyncSession(pg) as session:
+            legacy = (
+                await session.execute(
+                    select(SQLLegacySample).where(
+                        SQLLegacySample.legacy_id == sample_id,
+                    ),
+                )
+            ).scalar_one()
+
+            return set(
+                (
+                    await session.execute(
+                        select(SQLLegacySampleLabel.label_id).where(
+                            SQLLegacySampleLabel.sample_id == legacy.id,
+                        ),
+                    )
+                )
+                .scalars()
+                .all(),
+            )
+
+    @staticmethod
+    async def _get_subtraction_ids(pg: AsyncEngine, sample_id: str) -> set[int]:
+        async with AsyncSession(pg) as session:
+            legacy = (
+                await session.execute(
+                    select(SQLLegacySample).where(
+                        SQLLegacySample.legacy_id == sample_id,
+                    ),
+                )
+            ).scalar_one()
+
+            return set(
+                (
+                    await session.execute(
+                        select(SQLLegacySampleSubtraction.subtraction_id).where(
+                            SQLLegacySampleSubtraction.sample_id == legacy.id,
+                        ),
+                    )
+                )
+                .scalars()
+                .all(),
+            )
+
+    async def test_scalars(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        spawn_client: ClientSpawner,
+    ):
+        """Scalar fields update both the Mongo doc and the ``legacy_samples`` row."""
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_sample],
+        )
+
+        sample = await self._create_sample(data_layer, fake, client.user.id)
+
+        await data_layer.samples.update(
+            sample.id,
+            UpdateSampleRequest(name="Renamed", notes="Updated notes"),
+        )
+
+        document = await mongo.samples.find_one({"_id": sample.id})
+        assert document["name"] == "Renamed"
+        assert document["notes"] == "Updated notes"
+
+        async with AsyncSession(pg) as session:
+            legacy = (
+                await session.execute(
+                    select(SQLLegacySample).where(
+                        SQLLegacySample.legacy_id == sample.id,
+                    ),
+                )
+            ).scalar_one()
+
+        assert legacy.name == "Renamed"
+        assert legacy.notes == "Updated notes"
+
+    async def test_labels_reconciled(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+        spawn_client: ClientSpawner,
+    ):
+        """Replacing labels leaves exactly the new set of ``legacy_sample_labels``."""
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_sample],
+        )
+
+        keep = await fake.labels.create()
+        drop = await fake.labels.create()
+        add = await fake.labels.create()
+
+        sample = await self._create_sample(
+            data_layer,
+            fake,
+            client.user.id,
+            labels=[keep.id, drop.id],
+        )
+
+        assert await self._get_label_ids(pg, sample.id) == {keep.id, drop.id}
+
+        await data_layer.samples.update(
+            sample.id,
+            UpdateSampleRequest(labels=[keep.id, add.id]),
+        )
+
+        assert await self._get_label_ids(pg, sample.id) == {keep.id, add.id}
+
+    async def test_subtractions_reconciled(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+        spawn_client: ClientSpawner,
+    ):
+        """Replacing subtractions leaves exactly the new set of join rows."""
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_sample],
+        )
+
+        user = await fake.users.create()
+        upload = await fake.uploads.create(user=user)
+
+        keep = await fake.subtractions.create(
+            user=user,
+            upload=upload,
+            name="Keep",
+            upload_files=False,
+            finalized=False,
+        )
+        drop = await fake.subtractions.create(
+            user=user,
+            upload=upload,
+            name="Drop",
+            upload_files=False,
+            finalized=False,
+        )
+        add = await fake.subtractions.create(
+            user=user,
+            upload=upload,
+            name="Add",
+            upload_files=False,
+            finalized=False,
+        )
+
+        sample = await self._create_sample(
+            data_layer,
+            fake,
+            client.user.id,
+            subtractions=[keep.id, drop.id],
+        )
+
+        assert await self._get_subtraction_ids(pg, sample.id) == {keep.id, drop.id}
+
+        await data_layer.samples.update(
+            sample.id,
+            UpdateSampleRequest(subtractions=[keep.id, add.id]),
+        )
+
+        assert await self._get_subtraction_ids(pg, sample.id) == {keep.id, add.id}
+
+    async def test_labels_without_legacy_row(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        spawn_client: ClientSpawner,
+    ):
+        """A label update on a sample lacking a ``legacy_samples`` row still succeeds.
+
+        Samples created before the dual-write rollout have no ``legacy_samples`` row
+        until the backfill runs, so join reconciliation must tolerate its absence and
+        still apply the Mongo write.
+        """
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_sample],
+        )
+
+        label = await fake.labels.create()
+        sample = await self._create_sample(data_layer, fake, client.user.id)
+
+        async with AsyncSession(pg) as session:
+            legacy = (
+                await session.execute(
+                    select(SQLLegacySample).where(
+                        SQLLegacySample.legacy_id == sample.id,
+                    ),
+                )
+            ).scalar_one()
+
+            await session.execute(
+                delete(SQLLegacySampleLabel).where(
+                    SQLLegacySampleLabel.sample_id == legacy.id,
+                ),
+            )
+            await session.execute(
+                delete(SQLLegacySampleSubtraction).where(
+                    SQLLegacySampleSubtraction.sample_id == legacy.id,
+                ),
+            )
+            await session.delete(legacy)
+            await session.commit()
+
+        await data_layer.samples.update(
+            sample.id,
+            UpdateSampleRequest(labels=[label.id]),
+        )
+
+        document = await mongo.samples.find_one({"_id": sample.id})
+        assert document["labels"] == [label.id]
+
+        async with AsyncSession(pg) as session:
+            assert (
+                await session.execute(
+                    select(SQLLegacySample).where(
+                        SQLLegacySample.legacy_id == sample.id,
+                    ),
+                )
+            ).scalar_one_or_none() is None
+
+
+class TestGetOwnerId:
+    async def test_ok(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        spawn_client: ClientSpawner,
+    ):
+        """The owner user id is returned for an existing sample."""
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_sample],
+        )
+
+        upload = await fake.uploads.create(user=await fake.users.create())
+        sample = await data_layer.samples.create(
+            CreateSampleRequest(files=[upload.id], name="Owned"),
+            client.user.id,
+            0,
+        )
+
+        assert await data_layer.samples.get_owner_id(sample.id) == client.user.id
+
+    async def test_missing(self, data_layer: DataLayer):
+        """``None`` is returned when the sample does not exist."""
+        assert await data_layer.samples.get_owner_id("nonexistent") is None
+
+
+class TestUpdateRights:
+    async def test_dual_writes_legacy_sample(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        spawn_client: ClientSpawner,
+    ):
+        """Rights updates hit both the Mongo doc and the ``legacy_samples`` row."""
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_sample],
+        )
+
+        group = await fake.groups.create()
+
+        upload = await fake.uploads.create(user=await fake.users.create())
+        sample = await data_layer.samples.create(
+            CreateSampleRequest(files=[upload.id], name="Rights"),
+            client.user.id,
+            0,
+        )
+
+        await data_layer.samples.update_rights(
+            sample.id,
+            {
+                "group": group.id,
+                "group_read": False,
+                "group_write": False,
+                "all_read": False,
+                "all_write": False,
+            },
+        )
+
+        document = await mongo.samples.find_one({"_id": sample.id})
+        assert document["group"] == group.id
+        assert document["all_read"] is False
+        assert document["group_read"] is False
+
+        async with AsyncSession(pg) as session:
+            legacy = (
+                await session.execute(
+                    select(SQLLegacySample).where(
+                        SQLLegacySample.legacy_id == sample.id,
+                    ),
+                )
+            ).scalar_one()
+
+        assert legacy.group_id == group.id
+        assert legacy.all_read is False
+        assert legacy.all_write is False
+        assert legacy.group_read is False
+        assert legacy.group_write is False
+
+    async def test_missing_group(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        spawn_client: ClientSpawner,
+    ):
+        """Assigning a nonexistent group raises ``ResourceConflictError``."""
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_sample],
+        )
+
+        upload = await fake.uploads.create(user=await fake.users.create())
+        sample = await data_layer.samples.create(
+            CreateSampleRequest(files=[upload.id], name="Rights"),
+            client.user.id,
+            0,
+        )
+
+        with pytest.raises(ResourceConflictError, match=r"Group does not exist"):
+            await data_layer.samples.update_rights(sample.id, {"group": 999999})
+
+    async def test_missing_sample(self, data_layer: DataLayer):
+        """Updating rights on a missing sample raises ``ResourceNotFoundError``."""
+        with pytest.raises(ResourceNotFoundError):
+            await data_layer.samples.update_rights(
+                "nonexistent",
+                {"all_read": False},
+            )
+
+
 class TestDelete:
     """Deleting a sample cascades to its analyses in both Mongo and Postgres."""
 
@@ -756,3 +1237,77 @@ class TestDelete:
 
         row = await get_row_by_id(pg, SQLUpload, upload.id)
         assert row.reserved is False
+
+    async def test_removes_legacy_sample_and_join_rows(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        spawn_client: ClientSpawner,
+    ):
+        """Deleting a sample removes its ``legacy_samples`` row and join rows."""
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_sample],
+        )
+
+        label = await fake.labels.create()
+        user = await fake.users.create()
+        upload = await fake.uploads.create(user=user)
+        apple = await fake.subtractions.create(
+            user=user,
+            upload=upload,
+            name="Apple",
+            upload_files=False,
+            finalized=False,
+        )
+
+        sample = await data_layer.samples.create(
+            CreateSampleRequest(
+                files=[upload.id],
+                labels=[label.id],
+                name="Foobar",
+                subtractions=[apple.id],
+            ),
+            client.user.id,
+            0,
+        )
+
+        async with AsyncSession(pg) as session:
+            legacy = (
+                await session.execute(
+                    select(SQLLegacySample).where(
+                        SQLLegacySample.legacy_id == sample.id,
+                    ),
+                )
+            ).scalar_one()
+
+        await data_layer.samples.delete(sample.id)
+
+        async with AsyncSession(pg) as session:
+            assert (
+                await session.execute(
+                    select(SQLLegacySample).where(
+                        SQLLegacySample.legacy_id == sample.id,
+                    ),
+                )
+            ).scalar_one_or_none() is None
+
+            assert (
+                await session.execute(
+                    select(SQLLegacySampleLabel).where(
+                        SQLLegacySampleLabel.sample_id == legacy.id,
+                    ),
+                )
+            ).scalars().all() == []
+
+            assert (
+                await session.execute(
+                    select(SQLLegacySampleSubtraction).where(
+                        SQLLegacySampleSubtraction.sample_id == legacy.id,
+                    ),
+                )
+            ).scalars().all() == []
+
+        assert await mongo.samples.find_one() is None

@@ -14,7 +14,6 @@ from virtool.samples.db import (
     create_sample,
     define_initial_workflows,
     derive_workflow_state,
-    get_sample_owner,
     recalculate_workflow_tags,
 )
 from virtool.samples.utils import calculate_workflow_tags
@@ -200,24 +199,6 @@ class TestDeriveWorkflowStates:
                 "pathoscope": "incompatible",
             },
         }
-
-
-class TestGetSampleOwner:
-    async def test(self, mongo):
-        """Test that the correct owner id is returned given a sample id."""
-        await mongo.samples.insert_many(
-            [
-                {"_id": "test", "user": {"id": "foobar"}},
-                {"_id": "baz", "user": {"id": "fred"}},
-            ],
-            session=None,
-        )
-
-        assert await get_sample_owner(mongo, "test") == "foobar"
-
-    async def test_none(self, mongo):
-        """Test that ``None`` is returned if the sample id does not exist."""
-        assert await get_sample_owner(mongo, "foobar") is None
 
 
 async def test_create_sample(
