@@ -111,6 +111,29 @@ class HistoryData:
 
         return History(**document)
 
+    async def get_reference_id(self, change_id: str) -> str:
+        """Get the id of the reference a change belongs to.
+
+        :param change_id: the ID of the change
+        :return: the reference ID
+        """
+        async with AsyncSession(self._pg) as session:
+            reference = (
+                await session.execute(
+                    select(SQLLegacyHistory.reference).where(
+                        compose_legacy_id_single_expression(
+                            SQLLegacyHistory,
+                            change_id,
+                        ),
+                    ),
+                )
+            ).scalar_one_or_none()
+
+        if reference is None:
+            raise ResourceNotFoundError()
+
+        return reference
+
     async def delete(self, change_id: str) -> None:
         """Delete a change given its ID.
 
