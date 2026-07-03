@@ -59,6 +59,9 @@ async def upgrade(ctx: MigrationContext) -> None:
 
 
 def _coerce_group_id(value: int | str, group_map: dict[str, int]) -> int | None:
+    if isinstance(value, int):
+        return value
+
     if value == "none":
         return None
 
@@ -75,15 +78,31 @@ async def _backfill_sample_groups(
 ) -> None:
     collection = mongo["samples"]
 
+    sample_ids = [
+        doc["_id"]
+        async for doc in collection.find(
+            {"group": {"$type": "string"}},
+            projection={"_id": 1},
+        )
+    ]
+
     migrated = 0
 
-    async for doc in collection.find(
-        {"group": {"$type": "string"}},
-        projection={"group": 1},
-    ):
+    for sample_id in sample_ids:
+        doc = await collection.find_one({"_id": sample_id}, projection={"group": 1})
+
+        if doc is None:
+            continue
+
+        try:
+            group_id = _coerce_group_id(doc["group"], group_map)
+        except ValueError as exc:
+            msg = f"Failed to coerce group id for sample {sample_id!r}: {exc}"
+            raise ValueError(msg) from exc
+
         await collection.update_one(
-            {"_id": doc["_id"]},
-            {"$set": {"group": _coerce_group_id(doc["group"], group_map)}},
+            {"_id": sample_id},
+            {"$set": {"group": group_id}},
         )
         migrated += 1
 
