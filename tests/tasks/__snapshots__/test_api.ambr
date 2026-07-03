@@ -9,8 +9,8 @@
     'error': None,
     'file_size': None,
     'progress': 0,
-    'step': 'refresh_reference_releases',
-    'type': 'refresh_reference_releases',
+    'step': 'clone_reference',
+    'type': 'clone_reference',
   })
 # ---
 # name: test_find
@@ -38,8 +38,8 @@
       'file_size': None,
       'id': 2,
       'progress': 0,
-      'step': 'clean_references',
-      'type': 'clean_references',
+      'step': 'clone_reference',
+      'type': 'clone_reference',
     }),
     dict({
       'complete': False,
@@ -51,8 +51,8 @@
       'file_size': None,
       'id': 1,
       'progress': 0,
-      'step': 'refresh_reference_releases',
-      'type': 'refresh_reference_releases',
+      'step': 'clone_reference',
+      'type': 'clone_reference',
     }),
   ])
 # ---
