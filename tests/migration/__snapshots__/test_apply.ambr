@@ -575,5 +575,12 @@
       'name': 'create references table',
       'revision': 'a73a2668403f',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 83,
+      'name': 'backfill samples group ids to integers',
+      'revision': 'bfzcj3gxn2dd',
+    }),
   ])
 # ---

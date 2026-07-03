@@ -1088,6 +1088,34 @@ class TestUpdateRights:
         assert legacy.group_read is False
         assert legacy.group_write is False
 
+    async def test_legacy_group_persists_as_integer(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        spawn_client: ClientSpawner,
+    ):
+        """A legacy string group is resolved to an integer id in the Mongo doc."""
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_sample],
+        )
+
+        group = await fake.groups.create(legacy_id="legacy_owner")
+
+        upload = await fake.uploads.create(user=await fake.users.create())
+        sample = await data_layer.samples.create(
+            CreateSampleRequest(files=[upload.id], name="Rights"),
+            client.user.id,
+            0,
+        )
+
+        await data_layer.samples.update_rights(sample.id, {"group": "legacy_owner"})
+
+        document = await mongo.samples.find_one({"_id": sample.id})
+        assert document["group"] == group.id
+        assert isinstance(document["group"], int)
+
     async def test_missing_group(
         self,
         data_layer: DataLayer,
