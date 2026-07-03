@@ -155,19 +155,28 @@ class TestDelete:
         fake: DataFaker,
         mongo: Mongo,
         pg: AsyncEngine,
+        static_time,
     ):
         """A change included in a build is not revertible."""
         user = await fake.users.create()
 
-        await mongo.history.insert_one(
-            {
-                "_id": "6116cba1.1",
-                "index": {"id": "index_1", "version": 2},
-                "reference": {"id": "hxn167"},
-                "user": {"id": user.id},
-                "otu": {"id": "6116cba1", "name": "Prunus virus F", "version": 1},
-            },
-        )
+        async with AsyncSession(pg) as session:
+            session.add(
+                SQLLegacyHistory(
+                    legacy_id="6116cba1.1",
+                    created_at=static_time.datetime,
+                    description="Edited Prunus virus F",
+                    method_name="edit",
+                    user_id=user.id,
+                    otu="6116cba1",
+                    otu_name="Prunus virus F",
+                    otu_version="1",
+                    reference="hxn167",
+                    index="index_1",
+                    index_version="2",
+                ),
+            )
+            await session.commit()
 
         with pytest.raises(ResourceConflictError):
             await HistoryData(mongo, pg).delete("6116cba1.1")

@@ -118,18 +118,23 @@ class HistoryData:
 
         :param change_id: the ID of the document to delete
         """
-        document = await self._mongo.history.find_one(change_id, ["reference"])
+        async with AsyncSession(self._pg) as session:
+            row = (
+                await session.execute(
+                    select(SQLLegacyHistory).where(
+                        compose_legacy_id_single_expression(
+                            SQLLegacyHistory,
+                            change_id,
+                        ),
+                    ),
+                )
+            ).scalar_one_or_none()
 
-        if not document:
+        if row is None:
             raise ResourceNotFoundError()
 
         try:
-            change = await self._mongo.history.find_one({"_id": change_id}, ["index"])
-
-            if (
-                change["index"]["id"] != "unbuilt"
-                or change["index"]["version"] != "unbuilt"
-            ):
+            if row.index is not None:
                 raise DatabaseError(
                     "Change is included in a build an not revertible",
                 )
