@@ -55,30 +55,6 @@
   })
 # ---
 # name: TestAdd.test_create.1
-  dict({
-    '_id': '6116cba1.0',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'description': 'Created Prunus virus F',
-    'diff': 'postgres',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
-    'method_name': 'create',
-    'otu': dict({
-      'id': '6116cba1',
-      'name': 'Prunus virus F',
-      'version': 0,
-    }),
-    'reference': dict({
-      'id': 'hxn167',
-    }),
-    'user': dict({
-      'id': 1,
-    }),
-  })
-# ---
-# name: TestAdd.test_create.2
   <SQLLegacyHistoryDiff(id=1, change_id=6116cba1.0, history_id=1, diff={'_id': '6116cba1', 'name': 'Prunus virus F', 'schema': [], 'version': 0, 'imported': True, 'isolates': [{'default': True, 'sequences': [{'_id': 'KX269872', 'host': 'sweet cherry', 'segment': None, 'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC', 'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.', 'isolate_id': 'cab8b360'}], 'isolate_id': 'cab8b360', 'source_name': '8816-v2', 'source_type': 'isolate'}], 'reference': {'id': 'hxn167'}, 'lower_name': 'prunus virus f', 'abbreviation': 'PVF', 'last_indexed_version': 0})>
 # ---
 # name: TestAdd.test_create[legacy_history]
@@ -134,30 +110,6 @@
   })
 # ---
 # name: TestAdd.test_edit.1
-  dict({
-    '_id': '6116cba1.1',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'description': 'This is a description',
-    'diff': 'postgres',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
-    'method_name': 'edit',
-    'otu': dict({
-      'id': '6116cba1',
-      'name': 'Prunus virus F',
-      'version': 1,
-    }),
-    'reference': dict({
-      'id': 'hxn167',
-    }),
-    'user': dict({
-      'id': 1,
-    }),
-  })
-# ---
-# name: TestAdd.test_edit.2
   list([
     list([
       'change',
@@ -190,30 +142,6 @@
 # ---
 # name: TestAdd.test_remove[diff]
   <SQLLegacyHistoryDiff(id=1, change_id=6116cba1.removed, history_id=1, diff={'_id': '6116cba1', 'name': 'Prunus virus F', 'schema': [], 'version': 0, 'imported': True, 'isolates': [{'default': True, 'sequences': [{'_id': 'KX269872', 'host': 'sweet cherry', 'segment': None, 'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC', 'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.', 'isolate_id': 'cab8b360'}], 'isolate_id': 'cab8b360', 'source_name': '8816-v2', 'source_type': 'isolate'}], 'reference': {'id': 'hxn167'}, 'lower_name': 'prunus virus f', 'abbreviation': 'PVF', 'last_indexed_version': 0})>
-# ---
-# name: TestAdd.test_remove[document]
-  dict({
-    '_id': '6116cba1.removed',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'description': 'Removed Prunus virus F',
-    'diff': 'postgres',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
-    'method_name': 'remove',
-    'otu': dict({
-      'id': '6116cba1',
-      'name': 'Prunus virus F',
-      'version': 'removed',
-    }),
-    'reference': dict({
-      'id': 'hxn167',
-    }),
-    'user': dict({
-      'id': 1,
-    }),
-  })
 # ---
 # name: TestAdd.test_remove[legacy_history]
   <SQLLegacyHistory(id=1, legacy_id=6116cba1.removed, created_at=2015-10-06 20:00:00, description=Removed Prunus virus F, method_name=remove, user_id=1, otu=6116cba1, otu_name=Prunus virus F, otu_version=None, reference=hxn167, index=None, index_version=None)>

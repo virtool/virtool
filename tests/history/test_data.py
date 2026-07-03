@@ -103,23 +103,18 @@ async def history_diff_ids(pg: AsyncEngine) -> list[str]:
 
 
 class TestDelete:
-    async def test_dual_write(
+    async def test_delete(
         self,
         create_mock_history,
         mongo: Mongo,
         pg: AsyncEngine,
     ):
-        """Reverting a change deletes the reverted rows from Mongo, ``legacy_history``
-        and ``legacy_history_diff`` together.
+        """Reverting a change deletes the reverted ``legacy_history`` and
+        ``legacy_history_diff`` rows together.
         """
         await create_mock_history(False)
 
         await HistoryData(mongo, pg).delete("6116cba1.2")
-
-        remaining = [
-            change["_id"] for change in await mongo.history.find().to_list(None)
-        ]
-        assert sorted(remaining) == ["6116cba1.0", "6116cba1.1"]
 
         assert await legacy_history_ids(pg) == ["6116cba1.0", "6116cba1.1"]
         assert await history_diff_ids(pg) == ["6116cba1.0", "6116cba1.1"]
@@ -136,11 +131,6 @@ class TestDelete:
         await create_mock_history(True)
 
         await HistoryData(mongo, pg).delete("6116cba1.removed")
-
-        remaining = [
-            change["_id"] for change in await mongo.history.find().to_list(None)
-        ]
-        assert sorted(remaining) == MOCK_HISTORY_CHANGE_IDS
 
         assert await legacy_history_ids(pg) == MOCK_HISTORY_CHANGE_IDS
         assert await history_diff_ids(pg) == MOCK_HISTORY_CHANGE_IDS

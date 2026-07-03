@@ -377,12 +377,6 @@ class IndexData:
             if delete_result.deleted_count == 0:
                 raise ResourceNotFoundError
 
-            await self._mongo.history.update_many(
-                {"index.id": index_id},
-                {"$set": {"index": {"id": "unbuilt", "version": "unbuilt"}}},
-                session=mongo_session,
-            )
-
             await pg_session.execute(
                 update(SQLLegacyHistory)
                 .where(SQLLegacyHistory.index == index_id)

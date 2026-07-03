@@ -136,7 +136,6 @@ async def test_set_default(
     )
 
     assert await mongo.otus.find_one() == snapshot
-    assert await mongo.history.find_one() == snapshot
 
 
 async def test_get_sequence_fasta(mongo, data_layer, test_otu, test_sequence):

@@ -2,6 +2,7 @@ import asyncio
 from http import HTTPStatus
 
 import pytest
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from yarl import URL
@@ -278,7 +279,6 @@ class TestEdit:
             mongo.otus.insert_one(test_otu),
             mongo.references.insert_one(test_ref),
             mongo.sequences.insert_one(test_sequence),
-            mongo.history.insert_one(change),
         )
 
         async with AsyncSession(pg) as session:
@@ -289,7 +289,13 @@ class TestEdit:
 
         if check_ref_right:
             assert resp.status == HTTPStatus.OK
-            assert await mongo.history.count_documents({}) == 1 + change_count
+
+            async with AsyncSession(pg) as session:
+                history_count = await session.scalar(
+                    select(func.count()).select_from(SQLLegacyHistory),
+                )
+
+            assert history_count == 1 + change_count
             assert await resp.json() == snapshot(name="json")
         else:
             await resp_is.insufficient_rights(resp)

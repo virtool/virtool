@@ -168,12 +168,6 @@ async def create(
     async with both_transactions(mongo, pg) as (mongo_session, pg_session):
         document = await mongo.indexes.insert_one(document, session=mongo_session)
 
-        await mongo.history.update_many(
-            {"index.id": "unbuilt", "reference.id": ref_id},
-            {"$set": {"index": {"id": document["_id"], "version": index_version}}},
-            session=mongo_session,
-        )
-
         await pg_session.execute(
             update(SQLLegacyHistory)
             .where(

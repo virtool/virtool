@@ -275,17 +275,9 @@ async def test_populate_insert_only_reference_rollback(
         for i in (1, 2)
     ]
 
-    history_done = asyncio.Event()
     otus_done = asyncio.Event()
 
-    real_history_insert_many = mongo.history.insert_many
     real_otus_insert_many = mongo.otus.insert_many
-
-    async def wrapped_history_insert_many(documents, session):
-        try:
-            return await real_history_insert_many(documents, session)
-        finally:
-            history_done.set()
 
     async def wrapped_otus_insert_many(documents, session):
         try:
@@ -294,16 +286,12 @@ async def test_populate_insert_only_reference_rollback(
             otus_done.set()
 
     async def fail_sequences_insert_many(documents, session):
-        # Wait for the sibling inserts to actually land so the rollback has
+        # Wait for the sibling OTU insert to actually land so the rollback has
         # real Mongo state to clean up — otherwise the test would pass
         # trivially against empty collections.
-        await asyncio.wait_for(
-            asyncio.gather(history_done.wait(), otus_done.wait()),
-            timeout=5.0,
-        )
+        await asyncio.wait_for(otus_done.wait(), timeout=5.0)
         raise RuntimeError("forced mongo failure")
 
-    mocker.patch.object(mongo.history, "insert_many", wrapped_history_insert_many)
     mocker.patch.object(mongo.otus, "insert_many", wrapped_otus_insert_many)
     mocker.patch.object(mongo.sequences, "insert_many", fail_sequences_insert_many)
 
@@ -321,7 +309,6 @@ async def test_populate_insert_only_reference_rollback(
     assert excinfo.group_contains(RuntimeError, match="forced mongo failure")
 
     assert await mongo.otus.count_documents({"reference.id": ref_id}) == 0
-    assert await mongo.history.count_documents({"reference.id": ref_id}) == 0
     assert await mongo.sequences.count_documents({"reference.id": ref_id}) == 0
     assert await mongo.references.find_one({"_id": ref_id}) is None
 
@@ -342,7 +329,7 @@ async def test_populate_insert_only_reference_rollback(
     assert legacy_count == 0
 
 
-async def test_populate_insert_only_reference_dual_writes_legacy_history(
+async def test_populate_insert_only_reference_writes_legacy_history(
     fake: DataFaker,
     mocker: MockerFixture,
     mongo: Mongo,

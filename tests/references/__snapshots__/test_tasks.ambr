@@ -1,448 +1,4 @@
 # serializer version: 1
-# name: test_import_reference_task[history]
-  list([
-    dict({
-      '_id': str,
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'description': 'Imported Habenaria mosaic virus (HaMV)',
-      'diff': 'postgres',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'import',
-      'otu': dict({
-        'id': str,
-        'name': 'Habenaria mosaic virus',
-        'version': 0,
-      }),
-      'reference': dict({
-        'id': 'foo',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
-    }),
-    dict({
-      '_id': str,
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'description': 'Imported Hardenbergia virus A (HarVA)',
-      'diff': 'postgres',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'import',
-      'otu': dict({
-        'id': str,
-        'name': 'Hardenbergia virus A',
-        'version': 0,
-      }),
-      'reference': dict({
-        'id': 'foo',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
-    }),
-    dict({
-      '_id': str,
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'description': 'Imported Helenium virus S',
-      'diff': 'postgres',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'import',
-      'otu': dict({
-        'id': str,
-        'name': 'Helenium virus S',
-        'version': 0,
-      }),
-      'reference': dict({
-        'id': 'foo',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
-    }),
-    dict({
-      '_id': str,
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'description': 'Imported Helicoverpa zea nudivirus 2 (HzNV-2)',
-      'diff': 'postgres',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'import',
-      'otu': dict({
-        'id': str,
-        'name': 'Helicoverpa zea nudivirus 2',
-        'version': 0,
-      }),
-      'reference': dict({
-        'id': 'foo',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
-    }),
-    dict({
-      '_id': str,
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'description': 'Imported Helleborus net necrosis virus (HeNNV)',
-      'diff': 'postgres',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'import',
-      'otu': dict({
-        'id': str,
-        'name': 'Helleborus net necrosis virus',
-        'version': 0,
-      }),
-      'reference': dict({
-        'id': 'foo',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
-    }),
-    dict({
-      '_id': str,
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'description': 'Imported Hibbertia virus Y (HiVY)',
-      'diff': 'postgres',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'import',
-      'otu': dict({
-        'id': str,
-        'name': 'Hibbertia virus Y',
-        'version': 0,
-      }),
-      'reference': dict({
-        'id': 'foo',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
-    }),
-    dict({
-      '_id': str,
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'description': 'Imported Hibiscus chlorotic ringspot virus (HCRSV)',
-      'diff': 'postgres',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'import',
-      'otu': dict({
-        'id': str,
-        'name': 'Hibiscus chlorotic ringspot virus',
-        'version': 0,
-      }),
-      'reference': dict({
-        'id': 'foo',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
-    }),
-    dict({
-      '_id': str,
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'description': 'Imported Hibiscus golden mosaic virus',
-      'diff': 'postgres',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'import',
-      'otu': dict({
-        'id': str,
-        'name': 'Hibiscus golden mosaic virus',
-        'version': 0,
-      }),
-      'reference': dict({
-        'id': 'foo',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
-    }),
-    dict({
-      '_id': str,
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'description': 'Imported Hibiscus green spot virus (HGSV)',
-      'diff': 'postgres',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'import',
-      'otu': dict({
-        'id': str,
-        'name': 'Hibiscus green spot virus',
-        'version': 0,
-      }),
-      'reference': dict({
-        'id': 'foo',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
-    }),
-    dict({
-      '_id': str,
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'description': 'Imported Hibiscus-infecting cilevirus',
-      'diff': 'postgres',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'import',
-      'otu': dict({
-        'id': str,
-        'name': 'Hibiscus-infecting cilevirus',
-        'version': 0,
-      }),
-      'reference': dict({
-        'id': 'foo',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
-    }),
-    dict({
-      '_id': str,
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'description': 'Imported Hollyhock yellow vein mosaic Islamabad virus',
-      'diff': 'postgres',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'import',
-      'otu': dict({
-        'id': str,
-        'name': 'Hollyhock yellow vein mosaic Islamabad virus',
-        'version': 0,
-      }),
-      'reference': dict({
-        'id': 'foo',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
-    }),
-    dict({
-      '_id': str,
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'description': 'Imported Hollyhock yellow vein virus',
-      'diff': 'postgres',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'import',
-      'otu': dict({
-        'id': str,
-        'name': 'Hollyhock yellow vein virus',
-        'version': 0,
-      }),
-      'reference': dict({
-        'id': 'foo',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
-    }),
-    dict({
-      '_id': str,
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'description': 'Imported Hollyhock yellow vein virus associated symptomless alphasatellite',
-      'diff': 'postgres',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'import',
-      'otu': dict({
-        'id': str,
-        'name': 'Hollyhock yellow vein virus associated symptomless alphasatellite',
-        'version': 0,
-      }),
-      'reference': dict({
-        'id': 'foo',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
-    }),
-    dict({
-      '_id': str,
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'description': 'Imported Honeysuckle yellow vein Japan betasatellite (HYVJB)',
-      'diff': 'postgres',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'import',
-      'otu': dict({
-        'id': str,
-        'name': 'Honeysuckle yellow vein Japan betasatellite',
-        'version': 0,
-      }),
-      'reference': dict({
-        'id': 'foo',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
-    }),
-    dict({
-      '_id': str,
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'description': 'Imported Honeysuckle yellow vein beta-[Japan:Fukui:2001] (HYVB-Japan)',
-      'diff': 'postgres',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'import',
-      'otu': dict({
-        'id': str,
-        'name': 'Honeysuckle yellow vein beta-[Japan:Fukui:2001]',
-        'version': 0,
-      }),
-      'reference': dict({
-        'id': 'foo',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
-    }),
-    dict({
-      '_id': str,
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'description': 'Imported Hop latent virus (HpLV)',
-      'diff': 'postgres',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'import',
-      'otu': dict({
-        'id': str,
-        'name': 'Hop latent virus',
-        'version': 0,
-      }),
-      'reference': dict({
-        'id': 'foo',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
-    }),
-    dict({
-      '_id': str,
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'description': 'Imported Hosta virus X (HVX)',
-      'diff': 'postgres',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'import',
-      'otu': dict({
-        'id': str,
-        'name': 'Hosta virus X',
-        'version': 0,
-      }),
-      'reference': dict({
-        'id': 'foo',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
-    }),
-    dict({
-      '_id': str,
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'description': 'Imported Hot pepper endornavirus',
-      'diff': 'postgres',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'import',
-      'otu': dict({
-        'id': str,
-        'name': 'Hot pepper endornavirus',
-        'version': 0,
-      }),
-      'reference': dict({
-        'id': 'foo',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
-    }),
-    dict({
-      '_id': str,
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'description': 'Imported Hoya chlorotic spot virus',
-      'diff': 'postgres',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'import',
-      'otu': dict({
-        'id': str,
-        'name': 'Hoya chlorotic spot virus',
-        'version': 0,
-      }),
-      'reference': dict({
-        'id': 'foo',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
-    }),
-    dict({
-      '_id': str,
-      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-      'description': 'Imported Hypericum japonicum associated circular DNA',
-      'diff': 'postgres',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
-      'method_name': 'import',
-      'otu': dict({
-        'id': str,
-        'name': 'Hypericum japonicum associated circular DNA',
-        'version': 0,
-      }),
-      'reference': dict({
-        'id': 'foo',
-      }),
-      'user': dict({
-        'id': 1,
-      }),
-    }),
-  ])
-# ---
 # name: test_import_reference_task[history_diffs]
   list([
     dict({
@@ -1112,6 +668,49 @@
             None,
             dict({
               '_id': str,
+              'abbreviation': 'HYVB-Japan',
+              'created_at': '2015-10-06T20:00:00Z',
+              'imported': True,
+              'isolates': list([
+                dict({
+                  'default': True,
+                  'id': str,
+                  'source_name': 'Fukui',
+                  'source_type': 'isolate',
+                }),
+              ]),
+              'issues': None,
+              'last_indexed_version': None,
+              'lower_name': 'honeysuckle yellow vein beta-[japan:fukui:2001]',
+              'name': 'Honeysuckle yellow vein beta-[Japan:Fukui:2001]',
+              'reference': dict({
+                'id': 'foo',
+              }),
+              'remote': dict({
+                'id': '51c5d911',
+              }),
+              'schema': list([
+              ]),
+              'user': dict({
+                'id': 1,
+              }),
+              'verified': True,
+              'version': 0,
+            }),
+          ]),
+        ]),
+      ]),
+    }),
+    dict({
+      'change_id': str,
+      'diff': list([
+        list([
+          'change',
+          '',
+          list([
+            None,
+            dict({
+              '_id': str,
               'abbreviation': 'HYVJB',
               'created_at': '2015-10-06T20:00:00Z',
               'imported': True,
@@ -1141,49 +740,6 @@
                 }),
               ]),
               'taxid': None,
-              'user': dict({
-                'id': 1,
-              }),
-              'verified': True,
-              'version': 0,
-            }),
-          ]),
-        ]),
-      ]),
-    }),
-    dict({
-      'change_id': str,
-      'diff': list([
-        list([
-          'change',
-          '',
-          list([
-            None,
-            dict({
-              '_id': str,
-              'abbreviation': 'HYVB-Japan',
-              'created_at': '2015-10-06T20:00:00Z',
-              'imported': True,
-              'isolates': list([
-                dict({
-                  'default': True,
-                  'id': str,
-                  'source_name': 'Fukui',
-                  'source_type': 'isolate',
-                }),
-              ]),
-              'issues': None,
-              'last_indexed_version': None,
-              'lower_name': 'honeysuckle yellow vein beta-[japan:fukui:2001]',
-              'name': 'Honeysuckle yellow vein beta-[Japan:Fukui:2001]',
-              'reference': dict({
-                'id': 'foo',
-              }),
-              'remote': dict({
-                'id': '51c5d911',
-              }),
-              'schema': list([
-              ]),
               'user': dict({
                 'id': 1,
               }),

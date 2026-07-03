@@ -224,11 +224,6 @@ class HistoryData:
                     session=mongo_session,
                 )
 
-            await self._mongo.history.delete_many(
-                {"_id": {"$in": history_to_delete}},
-                session=mongo_session,
-            )
-
             await delete_history(pg_session, history_to_delete)
 
         await retry_both_transactions(self._mongo, self._pg, revert)

@@ -895,12 +895,6 @@ class ReferencesData(DataLayerDomain):
 
             async with asyncio.TaskGroup() as tg:
                 tg.create_task(
-                    self._mongo.history.insert_many(
-                        [insertion.history.document for insertion in insertions],
-                        None,
-                    ),
-                )
-                tg.create_task(
                     self._mongo.otus.insert_many(
                         [insertion.otu for insertion in insertions],
                         None,
@@ -913,7 +907,6 @@ class ReferencesData(DataLayerDomain):
             await bulk_delete_history(self._pg, [row["change_id"] for row in diff_rows])
 
             await asyncio.gather(
-                self._mongo.history.delete_many({"reference.id": ref_id}),
                 self._mongo.sequences.delete_many({"reference.id": ref_id}),
                 self._mongo.otus.delete_many({"reference.id": ref_id}),
             )

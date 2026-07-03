@@ -30,16 +30,7 @@ async def test_create(
     snapshot: SnapshotAssertion,
     static_time,
 ):
-    await asyncio.gather(
-        mongo.references.insert_one({"_id": "foo"}),
-        mongo.history.insert_one(
-            {
-                "_id": "abc",
-                "index": {"id": "unbuilt", "version": "unbuilt"},
-                "reference": {"id": "foo"},
-            },
-        ),
-    )
+    await mongo.references.insert_one({"_id": "foo"})
 
     mocker.patch("virtool.references.db.get_manifest", make_mocked_coro("manifest"))
 
@@ -54,10 +45,9 @@ async def test_create(
         )
         == snapshot
     )
-    assert await mongo.history.find_one("abc") == snapshot
 
 
-async def test_create_dual_writes_index_assignment(
+async def test_create_assigns_index_in_postgres(
     mocker: MockerFixture,
     mongo: Mongo,
     pg: AsyncEngine,
@@ -65,7 +55,7 @@ async def test_create_dual_writes_index_assignment(
     static_time,
 ):
     """Building an index assigns previously-unbuilt changes for the reference to the
-    new index in both Mongo and Postgres, leaving other references and already-built
+    new index in ``legacy_history``, leaving other references and already-built
     changes untouched.
     """
     user = await fake.users.create()
@@ -79,26 +69,6 @@ async def test_create_dual_writes_index_assignment(
                 "version": 0,
                 "ready": True,
             },
-        ),
-        mongo.history.insert_many(
-            [
-                {
-                    "_id": "ref_unbuilt",
-                    "index": {"id": "unbuilt", "version": "unbuilt"},
-                    "reference": {"id": "built_ref"},
-                },
-                {
-                    "_id": "ref_already_built",
-                    "index": {"id": "prior_index", "version": 0},
-                    "reference": {"id": "built_ref"},
-                },
-                {
-                    "_id": "other_ref_unbuilt",
-                    "index": {"id": "unbuilt", "version": "unbuilt"},
-                    "reference": {"id": "other_ref"},
-                },
-            ],
-            session=None,
         ),
     )
 
@@ -140,19 +110,6 @@ async def test_create_dual_writes_index_assignment(
         index_id="new_index",
     )
 
-    assert (await mongo.history.find_one("ref_unbuilt"))["index"] == {
-        "id": "new_index",
-        "version": 1,
-    }
-    assert (await mongo.history.find_one("ref_already_built"))["index"] == {
-        "id": "prior_index",
-        "version": 0,
-    }
-    assert (await mongo.history.find_one("other_ref_unbuilt"))["index"] == {
-        "id": "unbuilt",
-        "version": "unbuilt",
-    }
-
     async with AsyncSession(pg) as session:
         rows = {
             row.legacy_id: (row.index, row.index_version)
@@ -171,21 +128,12 @@ async def test_create_rolls_back_both_stores_on_failure(
     fake,
     static_time,
 ):
-    """A failure during the dual-write rolls back the Mongo writes already issued
+    """A failure during the index build rolls back the Mongo index insert issued
     inside the transaction, leaving neither store with the index assignment.
     """
     user = await fake.users.create()
 
-    await asyncio.gather(
-        mongo.references.insert_one({"_id": "built_ref"}),
-        mongo.history.insert_one(
-            {
-                "_id": "ref_unbuilt",
-                "index": {"id": "unbuilt", "version": "unbuilt"},
-                "reference": {"id": "built_ref"},
-            },
-        ),
-    )
+    await mongo.references.insert_one({"_id": "built_ref"})
 
     async with AsyncSession(pg) as session:
         session.add(
@@ -222,10 +170,6 @@ async def test_create_rolls_back_both_stores_on_failure(
         )
 
     assert await mongo.indexes.find_one("new_index") is None
-    assert (await mongo.history.find_one("ref_unbuilt"))["index"] == {
-        "id": "unbuilt",
-        "version": "unbuilt",
-    }
 
     async with AsyncSession(pg) as session:
         row = (
