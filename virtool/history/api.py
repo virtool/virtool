@@ -1,5 +1,5 @@
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r204, r403, r404, r409, r422
+from aiohttp_pydantic.oas.typing import r200, r204, r400, r403, r404, r409
 
 import virtool.api.routes
 import virtool.references.db
@@ -10,6 +10,7 @@ from virtool.api.errors import (
     APINoContent,
     APINotFound,
 )
+from virtool.api.pagination import Page, PerPage
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.history.models import History, HistorySearchResult
@@ -20,18 +21,20 @@ routes = virtool.api.routes.Routes()
 
 @routes.view("/history")
 class ChangesView(PydanticView):
-    async def get(self) -> r200[HistorySearchResult] | r422:
+    async def get(
+        self,
+        page: Page = 1,
+        per_page: PerPage = 25,
+    ) -> r200[HistorySearchResult] | r400:
         """List history.
 
         Returns a list of change documents.
 
         Status Codes:
             200: Successful Operation
-            422: Invalid query
+            400: Invalid query
         """
-        data = await get_data_from_req(self.request).history.find(
-            req_query=self.request.query,
-        )
+        data = await get_data_from_req(self.request).history.find(page, per_page)
 
         return json_response(data)
 

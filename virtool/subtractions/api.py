@@ -5,6 +5,7 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404, r409
 
 from virtool.api.custom_json import json_response
 from virtool.api.errors import APIBadRequest, APIConflict, APINoContent, APINotFound
+from virtool.api.pagination import Page, PerPage
 from virtool.api.policy import PermissionRoutePolicy, policy
 from virtool.api.routes import Routes
 from virtool.api.schema import schema
@@ -25,8 +26,13 @@ routes = Routes()
 @routes.view("/subtractions")
 class SubtractionsView(PydanticView):
     async def get(
-        self, find: str | None, short: bool = False, ready: bool = False
-    ) -> r200[SubtractionSearchResult]:
+        self,
+        find: str | None,
+        short: bool = False,
+        ready: bool = False,
+        page: Page = 1,
+        per_page: PerPage = 25,
+    ) -> r200[SubtractionSearchResult] | r400:
         """Find subtractions.
 
         Lists subtractions by their `name` or `nickname` by providing a `term` as a
@@ -38,9 +44,10 @@ class SubtractionsView(PydanticView):
 
         Status Codes:
             200: Successful operation
+            400: Invalid query
         """
         search_result = await get_data_from_req(self.request).subtractions.find(
-            find, short, ready, self.request.query
+            find, short, ready, page, per_page
         )
 
         return json_response(search_result)

@@ -2,7 +2,6 @@
 
 import asyncio
 import asyncio.tasks
-from collections.abc import Mapping
 from typing import Any
 
 import pymongo
@@ -157,17 +156,19 @@ async def create(
 async def find(
     mongo: "Mongo",
     pg: AsyncEngine,
-    req_query: Mapping,
+    page: int,
+    per_page: int,
     ref_id: str | None = None,
     archived: bool | None = None,
 ) -> dict:
-    """Find an index document matching the `req_query`
+    """Find index documents.
 
     When ``ref_id`` is given, ``archived`` is ignored — the reference is
     already chosen, so its lifecycle state is fixed.
 
     :param mongo: the application database client
-    :param req_query: the request object
+    :param page: the one-indexed page number to return
+    :param per_page: the number of documents to return per page
     :param ref_id: the id of the reference
     :param archived: lifecycle filter on the index's reference; see
         :func:`virtool.references.db.compose_archived_filter`
@@ -202,7 +203,8 @@ async def find(
     data = await paginate(
         mongo.indexes,
         mongo_query,
-        req_query,
+        page,
+        per_page,
         base_query=base_query,
         projection=[
             "_id",

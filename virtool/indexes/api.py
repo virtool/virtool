@@ -10,6 +10,7 @@ from virtool.api.errors import (
     APINoContent,
     APINotFound,
 )
+from virtool.api.pagination import Page, PerPage
 from virtool.api.routes import Routes
 from virtool.api.streaming import stream_storage_response
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
@@ -35,6 +36,8 @@ class IndexesView(PydanticView):
             default=False,
             description="Return only indexes that are ready for use in analysis.",
         ),
+        page: Page = 1,
+        per_page: PerPage = 25,
         archived: bool | None = Field(
             default=None,
             description=(
@@ -54,7 +57,7 @@ class IndexesView(PydanticView):
             400: Invalid query
         """
         data = await get_data_from_req(self.request).index.find(
-            ready, self.request.query, archived=archived
+            ready, page, per_page, archived=archived
         )
 
         if isinstance(data, IndexSearchResult):
@@ -233,19 +236,27 @@ async def finalize(req):
 
 @routes.view("/indexes/{index_id}/history")
 class IndexHistoryView(PydanticView):
-    async def get(self, index_id: str, /) -> r200[HistorySearchResult] | r404:
+    async def get(
+        self,
+        index_id: str,
+        /,
+        term: str | None = None,
+        page: Page = 1,
+        per_page: PerPage = 25,
+    ) -> r200[HistorySearchResult] | r400 | r404:
         """List history.
 
         Lists history changes for a specific index.
 
         Status Codes:
             200: Successful operation
+            400: Invalid query
             404: Not found
 
         """
         try:
             data = await get_data_from_req(self.request).index.find_changes(
-                index_id, self.request.query
+                index_id, page, per_page, term
             )
         except ResourceNotFoundError:
             raise APINotFound()

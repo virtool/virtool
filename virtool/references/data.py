@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 
 import arrow
 from aiohttp import ClientConnectionError, ClientConnectorError, ClientSession
-from multidict import MultiDictProxy
 from semver import VersionInfo
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -154,7 +153,8 @@ class ReferencesData(DataLayerDomain):
         user_id: int,
         administrator: bool,
         groups: list[int | str],
-        query: MultiDictProxy,
+        page: int,
+        per_page: int,
         archived: bool | None = None,
     ) -> ReferenceSearchResult:
         """Find references."""
@@ -171,7 +171,8 @@ class ReferencesData(DataLayerDomain):
         data = await paginate(
             self._mongo.references,
             mongo_query,
-            query,
+            page,
+            per_page,
             sort="name",
             base_query=base_query,
         )
@@ -544,14 +545,16 @@ class ReferencesData(DataLayerDomain):
         term: str | None,
         verified: bool | None,
         ref_id: str | None,
-        query,
+        page: int,
+        per_page: int,
     ) -> OTUSearchResult:
         if await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
             data = await virtool.otus.db.find(
                 self._mongo,
                 self._pg,
                 term,
-                query,
+                page,
+                per_page,
                 verified,
                 ref_id,
             )
@@ -587,7 +590,8 @@ class ReferencesData(DataLayerDomain):
         self,
         ref_id: str,
         unbuilt: bool | None,
-        query,
+        page: int,
+        per_page: int,
     ) -> HistorySearchResult:
         if not await self._mongo.references.count_documents({"_id": ref_id}):
             raise ResourceNotFoundError()
@@ -595,19 +599,22 @@ class ReferencesData(DataLayerDomain):
         data = await virtool.history.db.find(
             self._mongo,
             self._pg,
-            query,
+            page,
+            per_page,
             reference_id=ref_id,
             unbuilt=unbuilt,
         )
 
         return HistorySearchResult(**data)
 
-    async def find_indexes(self, ref_id: str, query) -> IndexSearchResult:
+    async def find_indexes(
+        self, ref_id: str, page: int, per_page: int
+    ) -> IndexSearchResult:
         if not await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
             raise ResourceNotFoundError()
 
         data = await virtool.indexes.db.find(
-            self._mongo, self._pg, query, ref_id=ref_id
+            self._mongo, self._pg, page, per_page, ref_id=ref_id
         )
 
         return IndexSearchResult(**data)

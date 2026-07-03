@@ -2,7 +2,6 @@ import asyncio
 import gzip
 from collections.abc import AsyncIterator
 
-from multidict import MultiDictProxy
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -59,20 +58,22 @@ class IndexData:
     async def find(
         self,
         ready: bool,
-        query: MultiDictProxy,
+        page: int,
+        per_page: int,
         archived: bool | None = None,
     ) -> list[IndexMinimal] | IndexSearchResult:
         """List all indexes.
 
-        :param ready: the request object
-        :param query: the request query object
+        :param ready: return only indexes that are ready for use in analysis
+        :param page: the one-indexed page number to return
+        :param per_page: the number of documents to return per page
         :param archived: lifecycle filter on the index's reference; see
             :func:`virtool.references.db.compose_archived_filter`
         :return: a list of all index documents
         """
         if not ready:
             data = await virtool.indexes.db.find(
-                self._mongo, self._pg, query, archived=archived
+                self._mongo, self._pg, page, per_page, archived=archived
             )
             return IndexSearchResult(**data)
 
@@ -331,11 +332,16 @@ class IndexData:
     async def find_changes(
         self,
         index_id: str,
-        req_query: MultiDictProxy[str],
+        page: int,
+        per_page: int,
+        term: str | None = None,
     ) -> HistorySearchResult:
         """Find the virus changes that are included in a given index build.
+
         :param index_id: the index ID
-        :param req_query: the request query object
+        :param page: the one-indexed page number to return
+        :param per_page: the number of documents to return per page
+        :param term: an optional term matched against the OTU name
         :return: the changes
         """
         if not await self._mongo.indexes.count_documents({"_id": index_id}):
@@ -345,8 +351,9 @@ class IndexData:
             self._mongo,
             self._pg,
             index_id,
-            req_query,
-            req_query.get("term"),
+            page,
+            per_page,
+            term,
         )
 
         return HistorySearchResult(**data)

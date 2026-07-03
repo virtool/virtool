@@ -7,6 +7,7 @@ from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r502
 
 from virtool.api.custom_json import json_response
 from virtool.api.errors import APIBadGateway, APIConflict, APINotFound
+from virtool.api.pagination import Page, PerPage
 from virtool.api.policy import AdministratorRoutePolicy, policy
 from virtool.api.routes import Routes
 from virtool.data.errors import (
@@ -24,7 +25,12 @@ routes = Routes()
 
 @routes.view("/hmms")
 class HMMsView(PydanticView):
-    async def get(self) -> r200[HMMSearchResult]:
+    async def get(
+        self,
+        find: str | None = None,
+        page: Page = 1,
+        per_page: PerPage = 25,
+    ) -> r200[HMMSearchResult] | r400:
         """Find HMMs.
 
         Lists profile hidden Markov model (HMM) annotations that are used in Virtool for
@@ -39,9 +45,10 @@ class HMMsView(PydanticView):
 
         Status Codes:
             200: Successful operation
+            400: Invalid query
         """
         search_results = await get_data_from_req(self.request).hmms.find(
-            self.request.query,
+            page, per_page, find
         )
 
         return json_response(search_results)

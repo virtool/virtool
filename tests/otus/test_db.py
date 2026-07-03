@@ -145,7 +145,7 @@ class TestFindModifiedCount:
             ],
         )
 
-        data = await find(mongo, pg, None, {}, None)
+        data = await find(mongo, pg, None, 1, 25, None)
 
         assert data["modified_count"] == 2
 
@@ -169,6 +169,6 @@ class TestFindModifiedCount:
             ],
         )
 
-        data = await find(mongo, pg, None, {}, None)
+        data = await find(mongo, pg, None, 1, 25, None)
 
         assert data["modified_count"] == 1

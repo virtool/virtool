@@ -2,7 +2,6 @@ import gzip
 import json
 
 import pytest
-from multidict import MultiDict, MultiDictProxy
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -333,10 +332,6 @@ async def _seed_status(pg, **overrides) -> None:
         await session.commit()
 
 
-def _query(**params: str) -> MultiDictProxy:
-    return MultiDictProxy(MultiDict(**params))
-
-
 class TestGet:
     """``get`` reads a single annotation from Postgres by its legacy string id."""
 
@@ -363,7 +358,7 @@ class TestFind:
         await seed_pg_hmm_status({})
         await seed_pg_hmm({**hmm_document, "hidden": False})
 
-        result = await data_layer.hmms.find(_query())
+        result = await data_layer.hmms.find(1, 25)
 
         assert result.found_count == 1
         assert result.total_count == 1
@@ -376,7 +371,7 @@ class TestFind:
         await seed_pg_hmm({**hmm_document, "_id": "visible", "hidden": False})
         await seed_pg_hmm({**hmm_document, "_id": "concealed", "hidden": True})
 
-        result = await data_layer.hmms.find(_query())
+        result = await data_layer.hmms.find(1, 25)
 
         assert result.total_count == 1
         assert [document.id for document in result.documents] == ["visible"]
@@ -392,7 +387,7 @@ class TestFind:
             {**hmm_document, "_id": "capsid", "names": ["capsid protein"]},
         )
 
-        result = await data_layer.hmms.find(_query(find="polymerase"))
+        result = await data_layer.hmms.find(1, 25, "polymerase")
 
         assert result.found_count == 1
         assert result.total_count == 2

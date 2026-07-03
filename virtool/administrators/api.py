@@ -13,6 +13,7 @@ from virtool.administrators.oas import (
 )
 from virtool.api.custom_json import json_response
 from virtool.api.errors import APIBadRequest, APIForbidden, APINotFound
+from virtool.api.pagination import Page, PerPage
 from virtool.api.policy import AdministratorRoutePolicy, policy
 from virtool.api.routes import Routes
 from virtool.data.errors import (
@@ -58,26 +59,17 @@ class AdminUsersView(PydanticView):
         active: bool = True,
         administrator: bool | None = None,
         term: str | None = None,
-    ) -> r200[ListAdministratorResponse]:
+        page: Page = 1,
+        per_page: PerPage = 25,
+    ) -> r200[ListAdministratorResponse] | r400:
         """Find users.
 
         Returns a paginated list of users.
 
         Status Codes:
             200: Successful operation
+            400: Invalid query
         """
-        url_query = self.request.query
-
-        try:
-            page = int(url_query["page"])
-        except (KeyError, ValueError):
-            page = 1
-
-        try:
-            per_page = int(url_query["per_page"])
-        except (KeyError, ValueError):
-            per_page = 25
-
         return json_response(
             await get_data_from_req(self.request).users.find(
                 page,

@@ -3,7 +3,6 @@ from asyncio import CancelledError
 from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING
 
-from multidict import MultiDictProxy
 from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -83,7 +82,14 @@ class SubtractionsData(DataLayerDomain):
         self._pg = pg
         self._storage = storage
 
-    async def find(self, find: str, short: bool, ready: bool, query: MultiDictProxy):
+    async def find(
+        self,
+        find: str | None,
+        short: bool,
+        ready: bool,
+        page: int,
+        per_page: int,
+    ):
         not_deleted = SQLSubtraction.deleted.is_(False)
 
         filters = [not_deleted]
@@ -112,9 +118,6 @@ class SubtractionsData(DataLayerDomain):
                 {"id": id_, "name": name, "ready": is_ready}
                 for id_, name, is_ready in rows
             ]
-
-        page = int(query.get("page", 1))
-        per_page = int(query.get("per_page", 25))
 
         async with AsyncSession(self._pg) as session:
             total_count = await session.scalar(

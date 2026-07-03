@@ -1,6 +1,5 @@
 """Work with OTUs in the database."""
 
-from collections.abc import Mapping
 from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
@@ -72,7 +71,8 @@ async def find(
     mongo: "Mongo",
     pg: AsyncEngine,
     term: str | None,
-    req_query: Mapping,
+    page: int,
+    per_page: int,
     verified: bool | None,
     ref_id: str | None = None,
 ) -> dict[str, Any] | list[dict | None]:
@@ -92,7 +92,8 @@ async def find(
     data = await paginate(
         mongo.otus,
         mongo_query,
-        req_query,
+        page,
+        per_page,
         base_query=base_query,
         sort="name",
         projection=["_id", "abbreviation", "name", "reference", "verified", "version"],
