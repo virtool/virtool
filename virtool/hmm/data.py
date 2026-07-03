@@ -15,7 +15,7 @@ from virtool.data.errors import (
 )
 from virtool.data.topg import compose_legacy_id_single_expression
 from virtool.data.transforms import apply_transforms
-from virtool.github import create_update_subdocument
+from virtool.hmm.utils import create_update_subdocument
 from virtool.hmm.db import (
     fetch_and_update_release,
     generate_annotations,
