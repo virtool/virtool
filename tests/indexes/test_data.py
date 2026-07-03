@@ -111,8 +111,8 @@ class TestDelete:
         pg: AsyncEngine,
         static_time,
     ):
-        """Deleting an index resets its change records to the unbuilt sentinel in
-        both Mongo and Postgres, leaving changes built into other indexes alone.
+        """Deleting an index resets its ``legacy_history`` change records to the
+        unbuilt sentinel, leaving changes built into other indexes alone.
         """
         user = await fake.users.create()
         job = await fake.jobs.create(user=user)

@@ -45,7 +45,7 @@ columns (see :func:`legacy_history_values`).
 
 
 def legacy_history_values(document: Document) -> dict:
-    """Map a Mongo history ``document`` to ``legacy_history`` column values.
+    """Map a history change ``document`` to ``legacy_history`` column values.
 
     Applies the sentinel-to-NULL conventions: an ``otu.version`` of ``"removed"``
     and an ``index`` of ``"unbuilt"`` are stored as ``NULL``.
@@ -232,7 +232,7 @@ async def add(
     new: dict | None,
     user_id: int,
 ) -> dict:
-    """Add a change document to the history collection.
+    """Add a change document to ``legacy_history``.
 
     :param pg: the application PostgreSQL database object
     :param method_name: the name of the handler method that executed the change
@@ -267,7 +267,7 @@ def prepare_add(
     user_id: int,
     description: str = "",
 ) -> PreparedChange:
-    """Add a change document to the history collection.
+    """Add a change document to ``legacy_history``.
 
     :param method_name: the name of the method that executed the change
     :param old: the otu document prior to the change
@@ -617,7 +617,7 @@ def _change_to_revert(row: SQLLegacyHistory) -> Document:
     """Build the minimal change document that :func:`patch_to_version` reverts.
 
     The shape mirrors the fields the revert loop and :func:`_resolve_diffs` read from a
-    Mongo history document: ``_id``, the ``"postgres"`` diff sentinel, ``method_name``,
+    history change document: ``_id``, the ``"postgres"`` diff sentinel, ``method_name``,
     and the coerced ``otu.version``. Keeping this construction in one place stops it from
     silently drifting from what :func:`_resolve_diffs` expects.
     """
