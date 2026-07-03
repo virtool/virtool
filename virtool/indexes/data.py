@@ -17,7 +17,7 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.events import Operation, emit, emits
-from virtool.data.topg import both_transactions
+from virtool.data.topg import retry_both_transactions
 from virtool.data.transforms import apply_transforms
 from virtool.history.models import HistorySearchResult
 from virtool.history.sql import SQLLegacyHistory
@@ -368,10 +368,7 @@ class IndexData:
         if not index:
             raise ResourceNotFoundError
 
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
+        async def remove(mongo_session, pg_session) -> None:
             delete_result = await self._mongo.indexes.delete_one(
                 {"_id": index_id},
                 session=mongo_session,
@@ -391,6 +388,8 @@ class IndexData:
                 .where(SQLLegacyHistory.index == index_id)
                 .values(index=None, index_version=None),
             )
+
+        await retry_both_transactions(self._mongo, self._pg, remove)
 
         for key, exc in await delete_prefix(
             self._storage, compose_index_prefix(index_id)
