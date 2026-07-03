@@ -62,16 +62,7 @@ async def processor(mongo: "Mongo", pg: AsyncEngine, document: Document) -> Docu
         },
     )
 
-    try:
-        installed = document.pop("updates")[-1]
-    except (KeyError, IndexError):
-        installed = None
-
-    if installed:
-        installed = await apply_transforms(installed, [AttachUserTransform(pg)], pg)
-
     document["id"] = ref_id
-    document["installed"] = installed
 
     return document
 

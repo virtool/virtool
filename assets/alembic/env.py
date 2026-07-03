@@ -14,6 +14,11 @@ from virtool.indexes.sql import SQLIndexFile
 from virtool.labels.sql import SQLLabel
 from virtool.messages.sql import SQLInstanceMessage
 from virtool.pg.base import Base
+from virtool.references.sql import (
+    SQLReference,
+    SQLReferenceGroup,
+    SQLReferenceUser,
+)
 from virtool.samples.sql import SQLSampleArtifact, SQLSampleReads
 from virtool.sessions.models import SQLSession
 from virtool.settings.sql import SQLSettings
@@ -44,6 +49,9 @@ __models__ = (
     SQLInstanceMessage,
     SQLLabel,
     SQLNuVsBlast,
+    SQLReference,
+    SQLReferenceGroup,
+    SQLReferenceUser,
     SQLSampleArtifact,
     SQLSampleReads,
     SQLSession,

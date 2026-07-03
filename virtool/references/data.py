@@ -67,7 +67,7 @@ from virtool.references.tasks import (
     ImportReferenceTask,
 )
 from virtool.references.transforms import AttachImportedFromTransform
-from virtool.references.utils import OFFICIAL_REMOTE_SLUG, RIGHTS, ReferenceSourceData
+from virtool.references.utils import RIGHTS, ReferenceSourceData
 from virtool.storage.protocol import StorageBackend
 from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
@@ -307,20 +307,6 @@ class ReferencesData(DataLayerDomain):
             self._pg,
         )
 
-        try:
-            installed: dict | None = document.pop("updates")[-1]
-        except (KeyError, IndexError):
-            installed = None
-
-        if installed:
-            installed = await apply_transforms(
-                installed,
-                [AttachUserTransform(self._pg)],
-                self._pg,
-            )
-
-        document["installed"] = installed
-
         document = await apply_transforms(
             document,
             [AttachImportedFromTransform(self._mongo, self._pg)],
@@ -356,11 +342,6 @@ class ReferencesData(DataLayerDomain):
 
         if document is None:
             raise ResourceNotFoundError()
-
-        if get_safely(document, "remotes_from", "slug") == OFFICIAL_REMOTE_SLUG:
-            raise ResourceConflictError(
-                "Cannot archive the official plant viruses reference",
-            )
 
         if not document.get("archived", False):
             await self._mongo.references.update_one(

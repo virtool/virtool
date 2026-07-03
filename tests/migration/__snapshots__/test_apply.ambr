@@ -568,5 +568,12 @@
       'name': 're-key history diffs to legacy_history_diff',
       'revision': 'a329dfd5ba23',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 82,
+      'name': 'create references table',
+      'revision': 'a73a2668403f',
+    }),
   ])
 # ---
