@@ -116,7 +116,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -181,7 +180,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -226,7 +224,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -597,7 +594,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -629,7 +625,6 @@
         'id': 3,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
       dict({
         'build': True,
@@ -637,7 +632,6 @@
         'id': 4,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -679,7 +673,6 @@
         'id': 3,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
       dict({
         'build': True,
@@ -688,7 +681,6 @@
         'id': 4,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -861,7 +853,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
       dict({
         'build': False,
@@ -870,7 +861,6 @@
         'id': 2,
         'modify': False,
         'modify_otu': False,
-        'remove': False,
       }),
     ]),
   })
@@ -949,7 +939,6 @@
     'id': 2,
     'modify': True,
     'modify_otu': True,
-    'remove': False,
   })
 # ---
 # name: TestUpdateUser.test_ok.1
@@ -976,7 +965,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
       dict({
         'build': False,
@@ -984,7 +972,6 @@
         'id': 2,
         'modify': True,
         'modify_otu': True,
-        'remove': False,
       }),
     ]),
   })
@@ -998,7 +985,6 @@
     'modify': True,
     'modify_otu': False,
     'name': 'gaffers',
-    'remove': False,
   })
 # ---
 # name: test_create_group[None].1
@@ -1015,7 +1001,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
       dict({
         'build': False,
@@ -1024,7 +1009,6 @@
         'legacy_id': None,
         'modify': True,
         'modify_otu': False,
-        'remove': False,
       }),
     ]),
     'name': 'Test',
@@ -1037,57 +1021,6 @@
     }),
     'users': list([
     ]),
-  })
-# ---
-# name: test_create_index[True]
-  dict({
-    'change_count': 1,
-    'contributors': list([
-      dict({
-        'count': 1,
-        'handle': 'myersmitchell',
-        'id': 2,
-      }),
-    ]),
-    'created_at': '2015-10-06T20:00:00Z',
-    'files': list([
-    ]),
-    'has_files': True,
-    'id': 'bf1b993c',
-    'job': dict({
-      'created_at': '2015-10-06T20:00:00Z',
-      'id': 1,
-      'progress': 0,
-      'state': 'pending',
-      'user': dict({
-        'handle': 'leeashley',
-        'id': 1,
-      }),
-      'workflow': 'build_index',
-    }),
-    'manifest': dict({
-      'bar': 5,
-      'foo': 2,
-    }),
-    'modified_otu_count': 1,
-    'otus': list([
-      dict({
-        'change_count': 1,
-        'id': 'otu_1',
-        'name': 'Tobacco mosaic virus',
-      }),
-    ]),
-    'ready': False,
-    'reference': dict({
-      'data_type': 'genome',
-      'id': 'foo',
-      'name': 'Foo',
-    }),
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 1,
-    }),
-    'version': 0,
   })
 # ---
 # name: test_create_index[True].1
@@ -1137,7 +1070,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
       dict({
         'build': False,
@@ -1145,7 +1077,6 @@
         'id': 2,
         'modify': True,
         'modify_otu': False,
-        'remove': False,
       }),
     ]),
   })
@@ -1158,7 +1089,6 @@
     'id': 2,
     'modify': True,
     'modify_otu': False,
-    'remove': False,
   })
 # ---
 # name: test_delete_group[None]
@@ -1801,7 +1731,6 @@
         'id': 1,
         'modify': False,
         'modify_otu': True,
-        'remove': False,
       }),
     ]),
     'name': 'Test',
@@ -1819,7 +1748,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -1833,6 +1761,5 @@
     'modify': False,
     'modify_otu': True,
     'name': 'musicians',
-    'remove': False,
   })
 # ---

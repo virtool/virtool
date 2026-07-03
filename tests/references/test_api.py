@@ -353,7 +353,6 @@ class TestCreate:
                         "created_at": static_time.datetime,
                         "modify": True,
                         "modify_otu": True,
-                        "remove": True,
                     },
                 ],
             },
@@ -405,7 +404,6 @@ class TestEdit:
                         "created_at": static_time.datetime,
                         "modify": True,
                         "modify_otu": True,
-                        "remove": True,
                     },
                     {
                         "id": user_3.id,
@@ -413,7 +411,6 @@ class TestEdit:
                         "build": True,
                         "modify": True,
                         "modify_otu": True,
-                        "remove": True,
                     },
                 ],
             },
@@ -489,59 +486,6 @@ class TestEdit:
         )
 
         await resp_is.not_found(resp)
-
-
-async def test_delete(
-    fake: DataFaker,
-    mongo: Mongo,
-    spawn_client: ClientSpawner,
-    static_time,
-):
-    client = await spawn_client(authenticated=True)
-
-    user_1 = await fake.users.create()
-    user_2 = await fake.users.create()
-
-    await mongo.references.insert_one(
-        {
-            "_id": "foo",
-            "archived": False,
-            "created_at": virtool.utils.timestamp(),
-            "data_type": "genome",
-            "description": "This is a test reference.",
-            "groups": [],
-            "internal_control": None,
-            "name": "Foo",
-            "organism": "virus",
-            "restrict_source_types": False,
-            "source_types": ["isolate", "strain"],
-            "user": {"id": user_1.id},
-            "users": [
-                {
-                    "id": client.user.id,
-                    "build": True,
-                    "created_at": static_time.datetime,
-                    "modify": True,
-                    "modify_otu": True,
-                    "remove": True,
-                },
-                {
-                    "id": user_2.id,
-                    "build": True,
-                    "created_at": static_time.datetime,
-                    "modify": True,
-                    "modify_otu": True,
-                    "remove": True,
-                },
-            ],
-        },
-    )
-
-    resp = await client.delete("/references/v1/foo")
-
-    assert await mongo.references.count_documents({}) == 0
-    assert await resp.text() == ""
-    assert resp.status == 204
 
 
 def _archive_reference_doc(user_id: int, *, archived: bool):
@@ -747,7 +691,6 @@ class TestCreateOTU:
                             "created_at": static_time.datetime,
                             "modify": True,
                             "modify_otu": True,
-                            "remove": True,
                         },
                     ],
                 },
@@ -828,7 +771,6 @@ class TestCreateOTU:
                             "created_at": static_time.datetime,
                             "modify": True,
                             "modify_otu": True,
-                            "remove": True,
                         },
                     ],
                 },
@@ -969,7 +911,6 @@ async def test_create_user(
                 "created_at": static_time.datetime,
                 "modify": True,
                 "modify_otu": True,
-                "remove": True,
             },
         ],
     }
@@ -984,7 +925,6 @@ async def test_create_user(
                 "created_at": static_time.datetime,
                 "modify": True,
                 "modify_otu": True,
-                "remove": True,
             },
         )
 
@@ -1047,7 +987,6 @@ async def test_create_group(
                         "created_at": static_time.datetime,
                         "modify": True,
                         "modify_otu": True,
-                        "remove": True,
                     },
                 ],
                 "name": "Test",
@@ -1111,7 +1050,6 @@ class TestUpdateUser:
                         "created_at": static_time.datetime,
                         "modify": True,
                         "modify_otu": True,
-                        "remove": True,
                     },
                     {
                         "id": self.user.id,
@@ -1119,7 +1057,6 @@ class TestUpdateUser:
                         "created_at": static_time.datetime,
                         "modify": False,
                         "modify_otu": True,
-                        "remove": False,
                     },
                 ],
             },
@@ -1184,7 +1121,6 @@ async def test_update_group(
                         "created_at": static_time.datetime,
                         "modify": False,
                         "modify_otu": False,
-                        "remove": False,
                     },
                 ],
                 "name": "Test",
@@ -1199,7 +1135,6 @@ async def test_update_group(
                         "created_at": static_time.datetime,
                         "modify": True,
                         "modify_otu": True,
-                        "remove": True,
                     },
                 ],
             },
@@ -1252,7 +1187,6 @@ class TestDeleteUser:
                         "created_at": static_time.datetime,
                         "modify": True,
                         "modify_otu": True,
-                        "remove": True,
                     },
                     {
                         "id": self.user.id,
@@ -1260,7 +1194,6 @@ class TestDeleteUser:
                         "created_at": static_time.datetime,
                         "modify": False,
                         "modify_otu": False,
-                        "remove": False,
                     },
                 ],
             },
@@ -1311,7 +1244,6 @@ async def test_delete_group(
                         "created_at": static_time.datetime,
                         "modify": False,
                         "modify_otu": False,
-                        "remove": False,
                     },
                 ],
                 "name": "Test",
@@ -1326,7 +1258,6 @@ async def test_delete_group(
                         "created_at": static_time.datetime,
                         "modify": True,
                         "modify_otu": True,
-                        "remove": True,
                     },
                 ],
             },
@@ -1544,7 +1475,6 @@ class TestArchivedReferenceRejectsWrites:
                         "created_at": static_time.datetime,
                         "modify": True,
                         "modify_otu": True,
-                        "remove": True,
                     },
                 ],
             },
@@ -1637,7 +1567,6 @@ async def test_archived_reference_allows_user_rights_update(
                     "created_at": static_time.datetime,
                     "modify": True,
                     "modify_otu": True,
-                    "remove": True,
                 },
             ],
         },

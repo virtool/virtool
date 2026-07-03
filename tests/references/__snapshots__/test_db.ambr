@@ -8,7 +8,6 @@
       'modify': False,
       'modify_otu': False,
       'name': 'musicians',
-      'remove': False,
     }),
     dict({
       'build': False,
@@ -17,7 +16,6 @@
       'modify': True,
       'modify_otu': True,
       'name': 'architects',
-      'remove': True,
     }),
   ])
 # ---
