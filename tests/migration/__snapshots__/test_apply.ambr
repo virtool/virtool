@@ -586,6 +586,13 @@
       'applied_at': datetime,
       'created_at': datetime,
       'id': 84,
+      'name': 'copy samples to postgres',
+      'revision': '4wxjh2cjere5',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 85,
       'name': 'drop remove from reference rights tables',
       'revision': '425ac8573f1c',
     }),
