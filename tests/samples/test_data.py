@@ -336,11 +336,18 @@ async def test_finalize(
     )
 
     async with AsyncSession(pg) as session:
+        legacy_sample_id = (
+            await session.execute(
+                select(SQLLegacySample.id).where(SQLLegacySample.legacy_id == "test"),
+            )
+        ).scalar_one()
+
         session.add(
             SQLSampleReads(
                 name="reads.fq.gz",
                 name_on_disk="reads_1.fq.gz",
                 sample="test",
+                sample_id=legacy_sample_id,
                 size=len(b"upload contents"),
                 upload=upload.id,
                 uploaded_at=virtool.utils.timestamp(),

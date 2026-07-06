@@ -36,6 +36,32 @@ from virtool.uploads.sql import SQLUpload
 from virtool.users.oas import UpdateUserRequest
 
 
+async def _ensure_legacy_sample_id(session: AsyncSession, legacy_id: str) -> int:
+    """Insert a ``legacy_samples`` row for ``legacy_id`` if absent and return its id.
+
+    Sample file rows are keyed by an integer FK to ``legacy_samples``, so tests that
+    insert artifact/reads rows directly need a parent legacy sample to point at.
+    """
+    sample_id = (
+        await session.execute(
+            select(SQLLegacySample.id).where(SQLLegacySample.legacy_id == legacy_id),
+        )
+    ).scalar()
+
+    if sample_id is None:
+        sample = SQLLegacySample(
+            legacy_id=legacy_id,
+            name=legacy_id,
+            library_type=LibraryType.normal.value,
+            created_at=datetime(2015, 10, 6, 20, 0),
+        )
+        session.add(sample)
+        await session.flush()
+        sample_id = sample.id
+
+    return sample_id
+
+
 class MockJobInterface:
     def __init__(self):
         self.enqueue = make_mocked_coro()
@@ -202,6 +228,7 @@ async def get_sample_data(
                 SQLSampleArtifact(
                     name="reference.fa.gz",
                     sample="test",
+                    sample_id=legacy.id,
                     type="fasta",
                     name_on_disk="reference.fa.gz",
                     size=34879234,
@@ -210,6 +237,7 @@ async def get_sample_data(
                     name="reads_1.fq.gz",
                     name_on_disk="reads_1.fq.gz",
                     sample="test",
+                    sample_id=legacy.id,
                     size=2903109210,
                     uploaded_at=static_time.datetime,
                     upload=None,
@@ -1486,8 +1514,11 @@ class TestUploadArtifact:
     """Test that new artifacts can be uploaded after sample creation using the Jobs API."""
 
     @staticmethod
-    async def _insert_sample(mongo: Mongo) -> None:
+    async def _insert_sample(mongo: Mongo, pg: AsyncEngine) -> None:
         await mongo.samples.insert_one({"_id": "test", "ready": True})
+        async with AsyncSession(pg) as session:
+            await _ensure_legacy_sample_id(session, "test")
+            await session.commit()
 
     @staticmethod
     async def _post(
@@ -1505,12 +1536,13 @@ class TestUploadArtifact:
         example_path: Path,
         memory_storage,
         mongo: Mongo,
+        pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         spawn_job_client: JobClientSpawner,
         static_time,
     ):
         client = await spawn_job_client(authenticated=True)
-        await self._insert_sample(mongo)
+        await self._insert_sample(mongo, pg)
 
         resp = await self._post(
             client, example_path / "sample" / "reads_1.fq.gz", "fastq"
@@ -1526,12 +1558,13 @@ class TestUploadArtifact:
         self,
         example_path: Path,
         mongo: Mongo,
+        pg: AsyncEngine,
         resp_is,
         spawn_job_client: JobClientSpawner,
         static_time,
     ):
         client = await spawn_job_client(authenticated=True)
-        await self._insert_sample(mongo)
+        await self._insert_sample(mongo, pg)
 
         resp = await self._post(
             client, example_path / "sample" / "reads_1.fq.gz", "foo"
@@ -1543,12 +1576,13 @@ class TestUploadArtifact:
         self,
         example_path: Path,
         mongo: Mongo,
+        pg: AsyncEngine,
         resp_is,
         spawn_job_client: JobClientSpawner,
         static_time,
     ):
         client = await spawn_job_client(authenticated=True)
-        await self._insert_sample(mongo)
+        await self._insert_sample(mongo, pg)
 
         path = example_path / "sample" / "reads_1.fq.gz"
 
@@ -1569,6 +1603,7 @@ class TestUploadReads:
         example_path: Path,
         memory_storage,
         mongo: Mongo,
+        pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         spawn_job_client: JobClientSpawner,
     ):
@@ -1583,6 +1618,10 @@ class TestUploadReads:
                 "ready": True,
             },
         )
+
+        async with AsyncSession(pg) as session:
+            await _ensure_legacy_sample_id(session, "test")
+            await session.commit()
 
         resp_1 = await client.put(
             "/samples/test/reads/reads_1.fq.gz",
@@ -1717,6 +1756,7 @@ class TestDownloadReads:
                 SQLSampleReads(
                     id=1,
                     sample="foo",
+                    sample_id=await _ensure_legacy_sample_id(session, "foo"),
                     name=file_name,
                     name_on_disk=file_name,
                     size=size,
@@ -1856,6 +1896,7 @@ class TestDownloadArtifact:
                 SQLSampleArtifact(
                     id=1,
                     sample="foo",
+                    sample_id=await _ensure_legacy_sample_id(session, "foo"),
                     name="fastqc.txt",
                     name_on_disk="fastqc.txt",
                     type="fastq",
