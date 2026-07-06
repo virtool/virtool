@@ -3,12 +3,10 @@
 TODO: Drop support for string group ids when we fully migrate to SQL.
 """
 
-from aiohttp.web_response import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import (
     r200,
     r201,
-    r202,
     r204,
     r400,
     r403,
@@ -58,13 +56,6 @@ from virtool.references.oas import (
 )
 
 routes = Routes()
-
-RIGHTS_SCHEMA = {
-    "build": {"type": "boolean"},
-    "modify": {"type": "boolean"},
-    "modify_otu": {"type": "boolean"},
-    "remove": {"type": "boolean"},
-}
 
 
 @routes.view("/references/v1")
@@ -191,28 +182,6 @@ class ReferenceView(PydanticView):
             raise APIConflict(str(err))
 
         return json_response(reference)
-
-    async def delete(self, ref_id: str, /) -> r202 | r403 | r404:
-        """Delete a reference.
-
-        Deletes a reference and its associated OTUs, history, and indexes. Deleting a
-        reference does not break dependent analyses and other resources.
-
-        Status Codes:
-            202: Accepted
-            403: Insufficient rights
-            404: Not found
-
-        """
-        try:
-            await get_data_from_req(self.request).references.remove(
-                ref_id,
-                self.request,
-            )
-        except ResourceNotFoundError:
-            raise APINotFound()
-
-        return Response(status=204)
 
 
 @routes.view("/references/v1/{ref_id}/archive")

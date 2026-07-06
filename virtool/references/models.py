@@ -20,7 +20,6 @@ class ReferenceRights(BaseModel):
     build: bool
     modify: bool
     modify_otu: bool
-    remove: bool
 
 
 class ReferenceGroup(ReferenceRights):
@@ -38,7 +37,6 @@ class ReferenceGroup(ReferenceRights):
                     "id": 5,
                     "modify": False,
                     "modify_otu": True,
-                    "remove": False,
                 },
             ],
         }
@@ -131,7 +129,6 @@ class Reference(ReferenceMinimal):
                         "id": "sidney",
                         "modify": False,
                         "modify_otu": False,
-                        "remove": False,
                     },
                 ],
                 "id": "d19exr83",
@@ -163,7 +160,6 @@ class Reference(ReferenceMinimal):
                         "id": "igboyes",
                         "modify": True,
                         "modify_otu": True,
-                        "remove": True,
                     },
                 ],
             },
@@ -189,7 +185,6 @@ class ReferenceSearchResult(SearchResult):
                                 "id": "sidney",
                                 "modify": False,
                                 "modify_otu": False,
-                                "remove": False,
                             },
                         ],
                         "id": "d19exr83",
@@ -217,7 +212,6 @@ class ReferenceSearchResult(SearchResult):
                                 "id": "igboyes",
                                 "modify": True,
                                 "modify_otu": True,
-                                "remove": True,
                             },
                         ],
                     },

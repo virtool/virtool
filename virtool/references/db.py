@@ -430,7 +430,6 @@ async def create_document(
                 "modify": True,
                 "modify_otu": True,
                 "created_at": created_at,
-                "remove": True,
             }
         ]
 

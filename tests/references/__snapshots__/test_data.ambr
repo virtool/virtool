@@ -14,7 +14,6 @@
         'legacy_id': None,
         'modify': False,
         'modify_otu': True,
-        'remove': False,
       }),
     ]),
     'internal_control': None,
@@ -39,7 +38,6 @@
     'modify': False,
     'modify_otu': True,
     'name': 'haematologists',
-    'remove': False,
   })
 # ---
 # name: TestCreateUser.test_ok[reference]
@@ -79,7 +77,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
       dict({
         'build': True,
@@ -88,7 +85,6 @@
         'id': 2,
         'modify': False,
         'modify_otu': True,
-        'remove': False,
       }),
     ]),
   })
@@ -101,7 +97,6 @@
     'id': 2,
     'modify': False,
     'modify_otu': True,
-    'remove': False,
   })
 # ---
 # name: TestDeleteGroup.test_ok
@@ -183,7 +178,6 @@
         'id': 2,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -212,7 +206,6 @@
         'id': 2,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -252,7 +245,6 @@
         'id': 2,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -281,7 +273,6 @@
         'id': 2,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -321,7 +312,6 @@
         'id': 2,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -350,7 +340,6 @@
         'id': 2,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -390,7 +379,6 @@
         'id': 2,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -419,7 +407,6 @@
         'id': 2,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -459,7 +446,6 @@
         'id': 2,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -488,7 +474,6 @@
         'id': 2,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -528,7 +513,6 @@
         'id': 2,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -557,7 +541,6 @@
         'id': 2,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -576,7 +559,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': False,
       }),
     ]),
     'internal_control': None,
@@ -601,7 +583,6 @@
     'modify': True,
     'modify_otu': True,
     'name': 'haematologists',
-    'remove': False,
   })
 # ---
 # name: TestUpdateUser.test_ok[mongo]
@@ -629,7 +610,6 @@
         'id': 2,
         'modify': True,
         'modify_otu': True,
-        'remove': False,
       }),
     ]),
   })
@@ -642,7 +622,6 @@
     'id': 2,
     'modify': False,
     'modify_otu': False,
-    'remove': False,
   })
 # ---
 # name: TestUpdateUser.test_ok[obj_2]
@@ -653,6 +632,5 @@
     'id': 2,
     'modify': True,
     'modify_otu': True,
-    'remove': False,
   })
 # ---

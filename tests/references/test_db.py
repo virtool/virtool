@@ -52,7 +52,6 @@ async def test_check_right(
         build=False,
         modify=False,
         modify_otu=True,
-        remove=False,
     ).dict()
 
     await mongo.references.insert_one(
@@ -165,14 +164,12 @@ async def test_get_reference_groups(
                         "build": False,
                         "modify": False,
                         "modify_otu": False,
-                        "remove": False,
                     },
                     {
                         "id": group_2.legacy_id,
                         "build": False,
                         "modify": True,
                         "modify_otu": True,
-                        "remove": True,
                     },
                 ],
             },
@@ -209,7 +206,6 @@ async def test_create_document_owner_user(
         "modify": True,
         "modify_otu": True,
         "created_at": static_time.datetime,
-        "remove": True,
     }
 
 
