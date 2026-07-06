@@ -210,25 +210,6 @@ class UsersData(DataLayerDomain):
 
         return await self.get(user_id)
 
-    async def create_first(self, handle: str, password: str) -> User:
-        """Create the first instance user.
-
-        :param handle: the user handle
-        :param password: the password
-        :return: the user created
-        """
-        if await self.check_users_exist():
-            raise ResourceConflictError("Virtool already has at least one user")
-
-        if virtool.users.utils.is_reserved_handle(handle):
-            raise ResourceConflictError(f"Reserved user name: {handle}")
-
-        user = await self.create(handle, password)
-
-        await self.set_administrator_role(user.id, AdministratorRole.FULL)
-
-        return await self.get(user.id)
-
     @emits(Operation.UPDATE)
     async def set_administrator_role(
         self,

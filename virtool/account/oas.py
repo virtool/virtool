@@ -2,7 +2,6 @@ from pydantic import BaseModel, Field, constr, root_validator, validator
 
 from virtool.account.models import APIKey, check_email
 from virtool.groups.oas import PermissionsUpdate
-from virtool.logs import log_deprecated_field
 from virtool.models.enums import QuickAnalyzeWorkflow
 from virtool.models.validators import prevent_none
 
@@ -121,70 +120,3 @@ class UpdateKeyRequest(BaseModel):
         schema_extra = {"example": {"permissions": {"modify_subtraction": True}}}
 
     _prevent_none = prevent_none("*")
-
-
-class CreateLoginRequest(BaseModel):
-    handle: constr(min_length=1) = Field(description="account handle")
-    password: constr(min_length=1) = Field(description="account password")
-    remember: bool | None = Field(
-        default=False,
-        description="value determining whether the session will last for 1 month or "
-        "1 hour",
-    )
-
-    @root_validator(pre=True)
-    def convert_username_to_handle(cls, values):
-        """Convert username to handle for backward compatibility.
-
-        TODO: Remove this validator once username support is deprecated.
-        """
-        handle = values.get("handle")
-        username = values.get("username")
-
-        if username:
-            log_deprecated_field("username", cls)
-
-        if handle and username:
-            # If both provided, ignore username
-            values.pop("username", None)
-        elif username and not handle:
-            # If only username provided, convert to handle
-            values["handle"] = values.pop("username")
-
-        return values
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "handle": "foobar",
-                "password": "p@ssword123",
-                "remember": False,
-            }
-        }
-
-    _prevent_none = prevent_none("*")
-
-
-class LoginResponse(BaseModel):
-    class Config:
-        schema_extra = {"example": {"reset": False}}
-
-
-class ResetPasswordRequest(BaseModel):
-    password: str
-    reset_code: str
-
-    _prevent_none = prevent_none("*")
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "password": "p@ssword123",
-                "reset_code": "4bcda8b3bcaf5f84cc6e26a3d23a6179f29d356e43c9ced1b6de0d8f4946555e",
-            }
-        }
-
-
-class AccountResetPasswordResponse(BaseModel):
-    class Config:
-        schema_extra = {"example": {"login": False, "reset": False}}

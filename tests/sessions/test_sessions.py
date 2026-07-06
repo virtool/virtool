@@ -22,20 +22,13 @@ async def test_expired_session_cleanup(data_layer, fake: DataFaker, pg):
     session_auth, token = await data_layer.sessions.create_authenticated(
         "2.2.2.2", user.id, remember=False
     )
-    session_reset, code = await data_layer.sessions.create_reset(
-        "3.3.3.3", user.id, remember=False
-    )
 
     # Set expiration times to the past using SQLAlchemy
     past_time = arrow.utcnow().naive - timedelta(minutes=1)
     async with AsyncSession(pg) as session:
         await session.execute(
             update(SQLSession)
-            .where(
-                SQLSession.session_id.in_(
-                    [session_anon.id, session_auth.id, session_reset.id]
-                )
-            )
+            .where(SQLSession.session_id.in_([session_anon.id, session_auth.id]))
             .values(expires_at=past_time)
         )
         await session.commit()
@@ -47,16 +40,11 @@ async def test_expired_session_cleanup(data_layer, fake: DataFaker, pg):
     with pytest.raises(ResourceNotFoundError):
         await data_layer.sessions.get_authenticated(session_auth.id, token)
 
-    with pytest.raises(ResourceNotFoundError):
-        await data_layer.sessions.get_reset(session_reset.id, code)
-
     # Verify sessions were deleted from database
     async with AsyncSession(pg) as session:
         result = await session.execute(
             select(SQLSession).where(
-                SQLSession.session_id.in_(
-                    [session_anon.id, session_auth.id, session_reset.id]
-                )
+                SQLSession.session_id.in_([session_anon.id, session_auth.id])
             )
         )
         remaining_sessions = result.fetchall()
@@ -159,69 +147,6 @@ async def test_concurrent_deletion_and_access(data_layer, fake: DataFaker):
         assert results[1].id == session.id
 
 
-class TestCheckSessionIsAuthenticated:
-    async def test_ok(self, data_layer, fake: DataFaker):
-        """Test that check returns True for valid authenticated session."""
-        user = await fake.users.create()
-        session, _ = await data_layer.sessions.create_authenticated(
-            "1.1.1.1", user.id, remember=False
-        )
-
-        assert (
-            await data_layer.sessions.check_session_is_authenticated(session.id) is True
-        )
-
-    async def test_expired_session(self, data_layer, fake: DataFaker, pg):
-        """Test that check returns False for expired authenticated session."""
-        user = await fake.users.create()
-        session, _ = await data_layer.sessions.create_authenticated(
-            "1.1.1.1", user.id, remember=False
-        )
-
-        # Expire the session
-        past_time = arrow.utcnow().naive - timedelta(minutes=1)
-        async with AsyncSession(pg) as db_session:
-            await db_session.execute(
-                update(SQLSession)
-                .where(SQLSession.session_id == session.id)
-                .values(expires_at=past_time)
-            )
-            await db_session.commit()
-
-        assert (
-            await data_layer.sessions.check_session_is_authenticated(session.id)
-            is False
-        )
-
-    async def test_nonexistent_session(self, data_layer):
-        """Test that check returns False for non-existent session."""
-        assert (
-            await data_layer.sessions.check_session_is_authenticated("invalid_session")
-            is False
-        )
-
-    async def test_anonymous_session(self, data_layer):
-        """Test that check returns False for anonymous session."""
-        session = await data_layer.sessions.create_anonymous("1.1.1.1")
-
-        assert (
-            await data_layer.sessions.check_session_is_authenticated(session.id)
-            is False
-        )
-
-    async def test_reset_session(self, data_layer, fake: DataFaker):
-        """Test that check returns False for reset session."""
-        user = await fake.users.create()
-        session, _ = await data_layer.sessions.create_reset(
-            "1.1.1.1", user.id, remember=False
-        )
-
-        assert (
-            await data_layer.sessions.check_session_is_authenticated(session.id)
-            is False
-        )
-
-
 class TestAuthenticated:
     async def test_get_and_create(
         self,
@@ -273,20 +198,6 @@ class TestAuthenticated:
 
         with pytest.raises(ResourceNotFoundError) as err:
             await data_layer.sessions.get_authenticated(session.id, "invalid_token")
-            assert str(err) == "Session not found"
-
-    async def test_reset_session(self, data_layer, fake: DataFaker, snapshot):
-        """Test that a reset session cannot be retrieved using get_authenticated."""
-        user = await fake.users.create()
-
-        session, code = await data_layer.sessions.create_reset(
-            "1.1.1.1",
-            user.id,
-            False,
-        )
-
-        with pytest.raises(ResourceNotFoundError) as err:
-            await data_layer.sessions.get_authenticated(session.id, code)
             assert str(err) == "Session not found"
 
     async def test_remember_true_expiration(self, data_layer, fake: DataFaker, pg):
@@ -367,111 +278,6 @@ class TestAnonymous:
             await data_layer.sessions.get_anonymous(session.id)
             assert str(err) == "Session not found"
 
-    async def test_reset_session(self, data_layer, fake: DataFaker, snapshot):
-        """Test that an exception is raised when and we attempt to get a session that is
-        actually a reset session instead of an anonymous one.
-        """
-        user = await fake.users.create()
-
-        session, _ = await data_layer.sessions.create_reset("1.1.1.1", user.id, False)
-
-        with pytest.raises(ResourceNotFoundError) as err:
-            await data_layer.sessions.get_anonymous(session.id)
-            assert str(err) == "Session not found"
-
-
-class TestReset:
-    async def test_create_and_get(
-        self,
-        data_layer,
-        fake: DataFaker,
-        snapshot,
-    ):
-        """Test that a reset session can be created and retrieved using its ID and reset
-        code.
-        """
-        user = await fake.users.create()
-
-        created_session, reset_code = await data_layer.sessions.create_reset(
-            "1.1.1.1",
-            user.id,
-            remember=True,
-        )
-
-        session = await data_layer.sessions.get_reset(created_session.id, reset_code)
-
-        assert session == snapshot(
-            matcher=path_type({"id": (str,), "created_at": (datetime,)}),
-        )
-
-        assert session.id == created_session.id
-
-    async def test_no_session(self, data_layer, fake):
-        """Test that ``ResourceNotFound`` is raised when the session doesn't exist."""
-        user = await fake.users.create()
-
-        session, reset_code = await data_layer.sessions.create_reset(
-            "1.1.1.1",
-            user.id,
-            remember=True,
-        )
-
-        await data_layer.sessions.delete(session.id)
-
-        with pytest.raises(ResourceNotFoundError) as err:
-            await data_layer.sessions.get_reset(session.id, reset_code)
-            assert str(err) == "Session not found"
-
-    async def test_invalid_reset_code(self, data_layer, fake):
-        """Test that ``ResourceNotFound`` is raised when the provided reset code is invalid
-        for the session.
-        """
-        user = await fake.users.create()
-
-        session, _ = await data_layer.sessions.create_reset(
-            "1.1.1.1",
-            user.id,
-            remember=True,
-        )
-
-        with pytest.raises(ResourceNotFoundError) as err:
-            await data_layer.sessions.get_reset(session.id, "invalid_code")
-            assert str(err) == "Invalid reset code"
-
-    async def test_remember_flag_true(self, data_layer, fake: DataFaker, pg):
-        """Test that reset session stores remember=True correctly."""
-        user = await fake.users.create()
-        session, _ = await data_layer.sessions.create_reset(
-            "1.1.1.1", user.id, remember=True
-        )
-
-        async with AsyncSession(pg) as db_session:
-            result = await db_session.execute(
-                select(SQLSession).where(SQLSession.session_id == session.id)
-            )
-            sql_session = result.scalar()
-            assert sql_session.reset_remember is True
-
-        # Verify the session model also has it
-        assert session.reset.remember is True
-
-    async def test_remember_flag_false(self, data_layer, fake: DataFaker, pg):
-        """Test that reset session stores remember=False correctly."""
-        user = await fake.users.create()
-        session, _ = await data_layer.sessions.create_reset(
-            "1.1.1.1", user.id, remember=False
-        )
-
-        async with AsyncSession(pg) as db_session:
-            result = await db_session.execute(
-                select(SQLSession).where(SQLSession.session_id == session.id)
-            )
-            sql_session = result.scalar()
-            assert sql_session.reset_remember is False
-
-        # Verify the session model also has it
-        assert session.reset.remember is False
-
 
 async def test_delete(
     data_layer: DataLayer,
@@ -487,25 +293,18 @@ async def test_delete(
         user.id,
         remember=True,
     )
-    session_reset, reset_code = await data_layer.sessions.create_reset(
-        "3.3.3.3",
-        user.id,
-        remember=True,
-    )
 
     # Make sure get method don't raise ``ResourceNotFound``.
     assert all(
         await asyncio.gather(
             data_layer.sessions.get_anonymous(session_anonymous.id),
             data_layer.sessions.get_authenticated(session_authenticated.id, token),
-            data_layer.sessions.get_reset(session_reset.id, reset_code),
         ),
     )
 
     await asyncio.gather(
         data_layer.sessions.delete(session_anonymous.id),
         data_layer.sessions.delete(session_authenticated.id),
-        data_layer.sessions.delete(session_reset.id),
     )
 
     # Now, make sure get methods do raise ``ResourceNotFound``.
@@ -514,6 +313,3 @@ async def test_delete(
 
     with pytest.raises(ResourceNotFoundError):
         await data_layer.sessions.get_authenticated(session_authenticated.id, token)
-
-    with pytest.raises(ResourceNotFoundError):
-        await data_layer.sessions.get_reset(session_reset.id, reset_code)

@@ -5,9 +5,6 @@ session or API key making the requests.
 
 """
 
-from contextlib import suppress
-
-from aiohttp.web import Response
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r404
 
@@ -15,19 +12,14 @@ import virtool.api.authentication
 import virtool.api.routes
 from virtool.account.models import Account, AccountSettings, APIKey
 from virtool.account.oas import (
-    AccountResetPasswordResponse,
     CreateAPIKeyResponse,
     CreateKeyRequest,
-    CreateLoginRequest,
-    LoginResponse,
-    ResetPasswordRequest,
     UpdateAccountRequest,
     UpdateKeyRequest,
     UpdateSettingsRequest,
 )
 from virtool.api.custom_json import json_response
 from virtool.api.errors import APIBadRequest, APINoContent, APINotFound
-from virtool.api.policy import PublicRoutePolicy, policy
 from virtool.api.utils import set_session_id_cookie, set_session_token_cookie
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
@@ -259,130 +251,3 @@ class KeyView(PydanticView):
             raise APINotFound()
 
         raise APINoContent()
-
-
-@routes.view("/account/login")
-class LoginView(PydanticView):
-    @policy(PublicRoutePolicy)
-    async def post(self, data: CreateLoginRequest) -> r201[LoginResponse] | r400:
-        """Login.
-
-        Logs in using the passed credentials.
-
-        This creates a new session for the user with `username`. The session ID and
-        token are returned in cookies.
-
-        Status Codes:
-            201: Successful operation
-            400: Invalid input
-        """
-        session_id = self.request["client"].session_id
-        ip = virtool.api.authentication.get_ip(self.request)
-
-        try:
-            user_id = await get_data_from_req(self.request).account.login(data)
-        except ResourceError:
-            raise APIBadRequest("Invalid handle or password.")
-
-        session = None
-        reset_code = None
-
-        with suppress(ResourceError):
-            session, reset_code = await get_data_from_req(
-                self.request
-            ).account.get_reset_session(ip, user_id, session_id, data.remember)
-
-        if reset_code:
-            resp = json_response(
-                {
-                    "reset": True,
-                    "reset_code": reset_code,
-                },
-                status=200,
-            )
-            set_session_id_cookie(resp, session.id)
-            return resp
-
-        if session_id is not None:
-            await get_data_from_req(self.request).sessions.delete(session_id)
-
-        session, token = await get_data_from_req(
-            self.request
-        ).sessions.create_authenticated(
-            ip,
-            user_id,
-            data.remember,
-        )
-
-        resp = json_response({"reset": False}, status=201)
-
-        set_session_id_cookie(resp, session.id)
-        set_session_token_cookie(resp, token)
-
-        return resp
-
-
-@routes.view("/account/logout")
-class LogoutView(PydanticView):
-    @policy(PublicRoutePolicy)
-    async def get(self) -> r204:
-        """Logout.
-
-        Logs out the user by invalidating the session associated with the user agent. A
-        new unauthenticated session ID is returned in cookies.
-
-        Status Codes:
-            204: Successful operation
-        """
-        session = await get_data_from_req(self.request).account.logout(
-            self.request["client"].session_id,
-            virtool.api.authentication.get_ip(self.request),
-        )
-
-        resp = Response(status=200)
-
-        set_session_id_cookie(resp, session.id)
-        resp.del_cookie("session_token")
-
-        return resp
-
-
-@routes.view("/account/reset")
-class ResetView(PydanticView):
-    @policy(PublicRoutePolicy)
-    async def post(
-        self, data: ResetPasswordRequest
-    ) -> r200[AccountResetPasswordResponse] | r400:
-        """Reset password.
-
-        Resets the password for the account associated with the requesting session.
-
-        Status Codes:
-            200: Successful operation
-            400: Invalid input
-        """
-        if error := await check_password_length(self.request, data.password):
-            raise APIBadRequest(error)
-
-        try:
-            session, token = await get_data_from_req(self.request).account.reset(
-                self.request["client"].session_id,
-                data,
-                virtool.api.authentication.get_ip(self.request),
-            )
-        except ResourceNotFoundError:
-            raise APIBadRequest("Invalid session")
-        except ResourceError as e:
-            raise APIBadRequest(str(e))
-
-        try:
-            self.request["client"].authorize(session, is_api=False)
-        except AttributeError:
-            pass
-
-        resp = json_response({"login": False, "reset": False}, status=200)
-
-        set_session_id_cookie(resp, session.id)
-        set_session_token_cookie(resp, token)
-
-        return resp

@@ -19,15 +19,3 @@
     'reset': None,
   })
 # ---
-# name: TestReset.test_create_and_get
-  dict({
-    'authentication': None,
-    'created_at': datetime,
-    'id': str,
-    'ip': '1.1.1.1',
-    'reset': dict({
-      'remember': True,
-      'user_id': 1,
-    }),
-  })
-# ---
