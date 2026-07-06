@@ -266,7 +266,7 @@ async def _resolve_job_id(
     """
     job = document.get("job")
 
-    if not job:
+    if not job or "id" not in job:
         return None
 
     reference = job["id"]
