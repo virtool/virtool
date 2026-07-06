@@ -39,7 +39,6 @@ from virtool.references.db import (
     compose_archived_filter,
     compose_rights_filter,
     get_contributors,
-    get_internal_control,
     get_latest_build,
     get_manifest,
     get_otu_count,
@@ -78,7 +77,6 @@ from virtool.types import Document
 from virtool.uploads.sql import SQLUpload
 from virtool.users.pg import SQLUser
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import get_safely
 
 
 class ReferencesData(DataLayerDomain):
@@ -269,11 +267,8 @@ class ReferencesData(DataLayerDomain):
         if not document:
             raise ResourceNotFoundError
 
-        internal_control_id = get_safely(document, "internal_control", "id")
-
         (
             contributors,
-            internal_control,
             latest_build,
             otu_count,
             groups,
@@ -281,7 +276,6 @@ class ReferencesData(DataLayerDomain):
             unbuilt_count,
         ) = await asyncio.gather(
             get_contributors(self._pg, ref_id),
-            get_internal_control(self._mongo, internal_control_id, ref_id),
             get_latest_build(self._mongo, self._pg, ref_id),
             get_otu_count(self._mongo, ref_id),
             get_reference_groups(self._pg, document),
@@ -293,7 +287,6 @@ class ReferencesData(DataLayerDomain):
             {
                 "contributors": contributors,
                 "groups": groups,
-                "internal_control": internal_control or None,
                 "latest_build": latest_build,
                 "otu_count": otu_count,
                 "unbuilt_change_count": unbuilt_count,

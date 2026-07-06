@@ -269,34 +269,6 @@ async def get_contributors(pg, ref_id: str) -> list[Document] | None:
     return await virtool.history.db.get_contributors(pg, reference_id=ref_id)
 
 
-async def get_internal_control(
-    mongo: "Mongo",
-    internal_control_id: str | None,
-    ref_id: str,
-) -> Document | None:
-    """Return a minimal dict describing the ref internal control given a `otu_id`.
-
-    :param mongo: the application database client
-    :param internal_control_id: the id of the otu to create a minimal dict for
-    :param ref_id: the id of the reference to look for the control OTU in
-    :return: a minimal dict describing the ref internal control
-
-    """
-    if internal_control_id is None:
-        return None
-
-    name = await virtool.mongo.utils.get_one_field(
-        mongo.otus,
-        "name",
-        {"_id": internal_control_id, "reference.id": ref_id},
-    )
-
-    if name is None:
-        return None
-
-    return {"id": internal_control_id, "name": name}
-
-
 async def get_latest_build(
     mongo: "Mongo", pg: AsyncEngine, ref_id: str
 ) -> Document | None:
@@ -442,7 +414,6 @@ async def create_document(
         "description": description,
         "name": name,
         "organism": organism,
-        "internal_control": None,
         "restrict_source_types": False,
         "source_types": settings.default_source_types,
         "space": {"id": 0},

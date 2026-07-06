@@ -73,7 +73,6 @@ class ReferenceMinimal(ReferenceNested):
     cloned_from: ReferenceClonedFrom | None = None
     created_at: datetime
     imported_from: UploadMinimal | None = None
-    internal_control: str | None
     latest_build: ReferenceBuild | None
     organism: str
     otu_count: int
@@ -135,7 +134,6 @@ class Reference(ReferenceMinimal):
                     },
                 ],
                 "id": "d19exr83",
-                "internal_control": None,
                 "latest_build": {
                     "created_at": "2022-07-05T17:41:51.857000Z",
                     "has_json": False,
@@ -193,7 +191,6 @@ class ReferenceSearchResult(SearchResult):
                             },
                         ],
                         "id": "d19exr83",
-                        "internal_control": None,
                         "latest_build": {
                             "created_at": "2022-07-05T17:41:51.857000Z",
                             "has_json": False,

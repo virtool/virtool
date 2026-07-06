@@ -67,9 +67,6 @@ class UpdateReferenceRequest(BaseModel):
     description: constr(strip_whitespace=True) | None = Field(
         description="a longer description for the reference",
     )
-    internal_control: str | None = Field(
-        description="set the OTU identified by the passed id as the internal control for the reference",
-    )
     organism: constr(strip_whitespace=True) | None = Field(
         description="the organism",
     )
@@ -82,7 +79,6 @@ class UpdateReferenceRequest(BaseModel):
 
     _prevent_none = prevent_none(
         "description",
-        "internal_control",
         "name",
         "organism",
         "restrict_source_types",
@@ -94,7 +90,6 @@ class UpdateReferenceRequest(BaseModel):
             "example": {
                 "name": "Regulated Pests",
                 "organism": "phytoplasma",
-                "internal_control": "ah4m5jqz",
             },
         }
 

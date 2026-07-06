@@ -146,7 +146,6 @@ async def test_import_reference_task(
             "created_at": static_time.datetime,
             "data_type": "genome",
             "description": "A test reference",
-            "internal_control": None,
             "user": {
                 "id": user.id,
             },
@@ -271,7 +270,6 @@ async def test_clone_reference_task(
             "created_at": static_time.datetime,
             "data_type": "genome",
             "description": "A test reference",
-            "internal_control": None,
             "groups": [],
             "name": "Test",
             "organism": "virus",
