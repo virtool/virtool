@@ -404,6 +404,23 @@ class TestCreate:
                 0,
             )
 
+    async def test_unknown_sample_raises(
+        self,
+        data_layer: DataLayer,
+        setup_sample: str,
+        subtraction_ids: dict[str, int],
+    ):
+        """Creating an analysis for a sample with no ``legacy_samples`` row is a
+        conflict.
+        """
+        with pytest.raises(ResourceConflictError, match="Sample does not exist"):
+            await data_layer.analyses.create(
+                _create_request(subtraction_ids),
+                "unknown_sample",
+                setup_sample,
+                0,
+            )
+
     async def test_rolls_back_when_pg_write_fails(
         self,
         data_layer: DataLayer,
