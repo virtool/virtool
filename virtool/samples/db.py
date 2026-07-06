@@ -14,7 +14,7 @@ import virtool.samples.utils
 import virtool.utils
 from virtool.analyses.sql import SQLAnalysis
 from virtool.api.errors import APINotFound
-from virtool.data.topg import compose_legacy_id_single_expression
+from virtool.data.topg import compose_legacy_id_subquery
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
@@ -370,9 +370,7 @@ async def recalculate_workflow_tags(
         result = await pg_session.execute(
             select(SQLAnalysis.ready, SQLAnalysis.workflow).where(
                 SQLAnalysis.sample_id
-                == select(SQLLegacySample.id)
-                .where(compose_legacy_id_single_expression(SQLLegacySample, sample_id))
-                .scalar_subquery(),
+                == compose_legacy_id_subquery(SQLLegacySample, sample_id),
             ),
         )
         analyses = [{"ready": row.ready, "workflow": row.workflow} for row in result]

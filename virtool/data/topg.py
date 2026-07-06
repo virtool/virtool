@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, TypeVar
 
 from pymongo.errors import OperationFailure
-from sqlalchemy import ColumnExpressionArgument, or_
+from sqlalchemy import ColumnExpressionArgument, ScalarSelect, or_, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.pg.base import HasLegacyAndModernIDs
@@ -133,3 +133,46 @@ def compose_legacy_id_single_expression(
         return model.id == int(id_)
 
     return model.legacy_id == id_
+
+
+def compose_legacy_id_subquery(
+    model: HasLegacyAndModernIDs,
+    id_: int | str,
+) -> ScalarSelect:
+    """Build a scalar subquery resolving a legacy (str) or modern (int) resource id to
+    the integer ``id`` of the matching row in ``model``.
+
+    Use this to filter or join on a not-yet-migrated FK column (eg. a legacy Mongo
+    string id) against a table that has already been migrated to Postgres.
+
+    :param model: the SQLAlchemy model to query
+    :param id_: a single legacy or modern id
+    :return: a scalar subquery yielding the matching integer id
+
+    """
+    return (
+        select(model.id)
+        .where(compose_legacy_id_single_expression(model, id_))
+        .scalar_subquery()
+    )
+
+
+async def resolve_legacy_id(
+    session: AsyncSession,
+    model: HasLegacyAndModernIDs,
+    id_: int | str,
+) -> int | None:
+    """Resolve a legacy (str) or modern (int) resource id to the integer ``id`` of the
+    matching row in ``model``.
+
+    :param session: an active Postgres session
+    :param model: the SQLAlchemy model to query
+    :param id_: a single legacy or modern id
+    :return: the matching integer id, or ``None`` if no row matches
+
+    """
+    return (
+        await session.execute(
+            select(model.id).where(compose_legacy_id_single_expression(model, id_)),
+        )
+    ).scalar_one_or_none()

@@ -38,6 +38,8 @@ from virtool.data.errors import (
 from virtool.data.events import Operation, emit, emits
 from virtool.data.topg import (
     compose_legacy_id_single_expression,
+    compose_legacy_id_subquery,
+    resolve_legacy_id,
 )
 from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
@@ -171,13 +173,7 @@ class AnalysisData(DataLayerDomain):
         )
 
         if sample_id is not None:
-            sample_subquery = (
-                select(SQLLegacySample.id)
-                .where(
-                    compose_legacy_id_single_expression(SQLLegacySample, sample_id),
-                )
-                .scalar_subquery()
-            )
+            sample_subquery = compose_legacy_id_subquery(SQLLegacySample, sample_id)
             count_statement = count_statement.where(
                 SQLAnalysis.sample_id == sample_subquery,
             )
@@ -316,16 +312,7 @@ class AnalysisData(DataLayerDomain):
         subtractions = data.subtractions if data.subtractions is not None else []
 
         async with AsyncSession(self._pg) as session:
-            sample_pg_id = (
-                await session.execute(
-                    select(SQLLegacySample.id).where(
-                        compose_legacy_id_single_expression(
-                            SQLLegacySample,
-                            sample_id,
-                        ),
-                    ),
-                )
-            ).scalar_one_or_none()
+            sample_pg_id = await resolve_legacy_id(session, SQLLegacySample, sample_id)
 
             if sample_pg_id is None:
                 raise ResourceConflictError("Sample does not exist")
