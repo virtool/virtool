@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.analyses.sql import SQLAnalysis
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.samples.sql import SQLLegacySample
 from virtool.samples.tasks import (
     SampleWorkflowsUpdateTask,
 )
@@ -39,6 +40,16 @@ async def test_update_workflows_fields(
     )
 
     async with AsyncSession(pg) as session:
+        legacy_sample = SQLLegacySample(
+            legacy_id="test_id",
+            name="Test Sample",
+            library_type="normal",
+            created_at=timestamp(),
+            user_id=user.id,
+        )
+        session.add(legacy_sample)
+        await session.flush()
+
         session.add_all(
             [
                 SQLAnalysis(
@@ -48,6 +59,7 @@ async def test_update_workflows_fields(
                     workflow="pathoscope",
                     ready=ready,
                     sample="test_id",
+                    sample_id=legacy_sample.id,
                     reference="ref",
                     index="index",
                     user_id=user.id,
@@ -59,6 +71,7 @@ async def test_update_workflows_fields(
                     workflow="nuvs",
                     ready=False,
                     sample="test_id",
+                    sample_id=legacy_sample.id,
                     reference="ref",
                     index="index",
                     user_id=user.id,

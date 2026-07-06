@@ -603,5 +603,19 @@
       'name': 'require reference user and drop rights created_at',
       'revision': 'fe83de8410d3',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 87,
+      'name': 'add analyses sample_id',
+      'revision': '1f4e528c2149',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 88,
+      'name': 'backfill analyses sample ids to integers',
+      'revision': 'b4qhmbisvbn3',
+    }),
   ])
 # ---

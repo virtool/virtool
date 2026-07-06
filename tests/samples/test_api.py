@@ -1187,6 +1187,16 @@ async def test_find_analyses(
     )
 
     async with AsyncSession(pg) as session:
+        legacy_sample = SQLLegacySample(
+            legacy_id="test",
+            name="Test Sample",
+            library_type="normal",
+            created_at=static_time.datetime,
+            user_id=user_1.id,
+        )
+        session.add(legacy_sample)
+        await session.flush()
+
         analyses = [
             SQLAnalysis(
                 legacy_id="test_1",
@@ -1195,6 +1205,7 @@ async def test_find_analyses(
                 workflow="pathoscope",
                 ready=True,
                 sample="test",
+                sample_id=legacy_sample.id,
                 reference="baz",
                 index="foo",
                 user_id=user_1.id,
@@ -1207,6 +1218,7 @@ async def test_find_analyses(
                 workflow="pathoscope",
                 ready=True,
                 sample="test",
+                sample_id=legacy_sample.id,
                 reference="baz",
                 index="foo",
                 user_id=user_1.id,
@@ -1218,6 +1230,7 @@ async def test_find_analyses(
                 workflow="pathoscope",
                 ready=True,
                 sample="test",
+                sample_id=legacy_sample.id,
                 reference="foo",
                 index="foo",
                 user_id=user_2.id,

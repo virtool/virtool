@@ -493,21 +493,23 @@ class SamplesData(DataLayerDomain):
                     .values(reserved=False),
                 )
 
+            legacy_sample_id = select(SQLLegacySample.id).where(
+                SQLLegacySample.legacy_id == sample_id,
+            )
+
             await pg_session.execute(
                 delete(SQLAnalysisResult).where(
                     SQLAnalysisResult.analysis_id.in_(
                         select(SQLAnalysis.legacy_id).where(
-                            SQLAnalysis.sample == sample_id,
+                            SQLAnalysis.sample_id.in_(legacy_sample_id),
                         ),
                     ),
                 ),
             )
             await pg_session.execute(
-                delete(SQLAnalysis).where(SQLAnalysis.sample == sample_id),
-            )
-
-            legacy_sample_id = select(SQLLegacySample.id).where(
-                SQLLegacySample.legacy_id == sample_id,
+                delete(SQLAnalysis).where(
+                    SQLAnalysis.sample_id.in_(legacy_sample_id),
+                ),
             )
 
             await pg_session.execute(

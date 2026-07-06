@@ -14,13 +14,14 @@ import virtool.samples.utils
 import virtool.utils
 from virtool.analyses.sql import SQLAnalysis
 from virtool.api.errors import APINotFound
+from virtool.data.topg import compose_legacy_id_single_expression
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.samples.models import WorkflowState
-from virtool.samples.sql import SQLSampleArtifact, SQLSampleReads
+from virtool.samples.sql import SQLLegacySample, SQLSampleArtifact, SQLSampleReads
 from virtool.settings.models import Settings
 from virtool.types import Document
 from virtool.uploads.data import serialize as serialize_upload
@@ -368,7 +369,10 @@ async def recalculate_workflow_tags(
     async with AsyncSession(pg) as pg_session:
         result = await pg_session.execute(
             select(SQLAnalysis.ready, SQLAnalysis.workflow).where(
-                SQLAnalysis.sample == sample_id,
+                SQLAnalysis.sample_id
+                == select(SQLLegacySample.id)
+                .where(compose_legacy_id_single_expression(SQLLegacySample, sample_id))
+                .scalar_subquery(),
             ),
         )
         analyses = [{"ready": row.ready, "workflow": row.workflow} for row in result]

@@ -1150,8 +1150,22 @@ class TestUpdateRights:
 class TestDelete:
     """Deleting a sample cascades to its analyses in both Mongo and Postgres."""
 
-    async def _setup(self, fake: DataFaker, mongo: Mongo) -> str:
+    async def _setup(self, fake: DataFaker, mongo: Mongo, pg: AsyncEngine) -> str:
         user = await fake.users.create()
+
+        async with AsyncSession(pg) as session:
+            session.add(
+                SQLLegacySample(
+                    legacy_id="test_sample",
+                    name="Test Sample",
+                    library_type=LibraryType.normal.value,
+                    created_at=virtool.utils.timestamp(),
+                    user_id=user.id,
+                    all_read=True,
+                    all_write=True,
+                ),
+            )
+            await session.commit()
 
         await asyncio.gather(
             mongo.samples.insert_one(
@@ -1216,7 +1230,7 @@ class TestDelete:
         pg: AsyncEngine,
     ):
         """Deleting a sample removes its analyses' Postgres rows."""
-        user_id = await self._setup(fake, mongo)
+        user_id = await self._setup(fake, mongo, pg)
 
         analysis = await data_layer.analyses.create(
             CreateAnalysisRequest(
@@ -1249,7 +1263,7 @@ class TestDelete:
         The reservation is keyed on the sample's own ``uploads`` array, so the upload
         is released even when no ``SQLSampleReads`` rows have been written yet.
         """
-        await self._setup(fake, mongo)
+        await self._setup(fake, mongo, pg)
 
         upload = await fake.uploads.create(
             user=await fake.users.create(),
