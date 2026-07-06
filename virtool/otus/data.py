@@ -354,18 +354,9 @@ class OTUData:
             return None
 
         async def func(session: AsyncIOMotorClientSession) -> DeleteResult | None:
-            _, delete_result, _ = await asyncio.gather(
+            _, delete_result = await asyncio.gather(
                 self._mongo.sequences.delete_many({"otu_id": otu_id}, session=session),
                 self._mongo.otus.delete_one({"_id": otu_id}, session=session),
-                # Unset the reference internal_control if it is the OTU being removed.
-                self._mongo.references.update_one(
-                    {
-                        "_id": joined["reference"]["id"],
-                        "internal_control.id": joined["_id"],
-                    },
-                    {"$set": {"internal_control": None}},
-                    session=session,
-                ),
             )
 
             description = compose_remove_description(joined)

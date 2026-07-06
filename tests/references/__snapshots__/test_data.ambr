@@ -16,7 +16,6 @@
         'modify_otu': True,
       }),
     ]),
-    'internal_control': None,
     'name': 'Foo',
     'organism': 'virus',
     'restrict_source_types': False,
@@ -53,7 +52,6 @@
     ]),
     'id': 'bf1b993c',
     'imported_from': None,
-    'internal_control': None,
     'latest_build': None,
     'name': 'Example',
     'organism': '',
@@ -108,7 +106,6 @@
     'description': 'This is a test reference.',
     'groups': list([
     ]),
-    'internal_control': None,
     'name': 'Foo',
     'organism': 'virus',
     'restrict_source_types': False,
@@ -130,7 +127,6 @@
     'description': 'This is a test reference.',
     'groups': list([
     ]),
-    'internal_control': None,
     'name': 'Foo',
     'organism': 'virus',
     'restrict_source_types': False,
@@ -140,408 +136,6 @@
       'id': 1,
     }),
     'users': list([
-    ]),
-  })
-# ---
-# name: TestUpdate.test_control[-False]
-  dict({
-    'archived': False,
-    'cloned_from': None,
-    'contributors': list([
-    ]),
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': <ReferenceDataType.genome: 'genome'>,
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'id': 'foo',
-    'imported_from': None,
-    'internal_control': None,
-    'latest_build': None,
-    'name': 'Tester',
-    'organism': 'virus',
-    'otu_count': 0,
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'task': None,
-    'unbuilt_change_count': 0,
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'handle': 'zclark',
-        'id': 2,
-        'modify': True,
-        'modify_otu': True,
-      }),
-    ]),
-  })
-# ---
-# name: TestUpdate.test_control[-False].1
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'internal_control': '',
-    'name': 'Tester',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'id': 2,
-        'modify': True,
-        'modify_otu': True,
-      }),
-    ]),
-  })
-# ---
-# name: TestUpdate.test_control[-True]
-  dict({
-    'archived': False,
-    'cloned_from': None,
-    'contributors': list([
-    ]),
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': <ReferenceDataType.genome: 'genome'>,
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'id': 'foo',
-    'imported_from': None,
-    'internal_control': None,
-    'latest_build': None,
-    'name': 'Tester',
-    'organism': 'virus',
-    'otu_count': 0,
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'task': None,
-    'unbuilt_change_count': 0,
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'handle': 'zclark',
-        'id': 2,
-        'modify': True,
-        'modify_otu': True,
-      }),
-    ]),
-  })
-# ---
-# name: TestUpdate.test_control[-True].1
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'internal_control': '',
-    'name': 'Tester',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'id': 2,
-        'modify': True,
-        'modify_otu': True,
-      }),
-    ]),
-  })
-# ---
-# name: TestUpdate.test_control[None-False]
-  dict({
-    'archived': False,
-    'cloned_from': None,
-    'contributors': list([
-    ]),
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': <ReferenceDataType.genome: 'genome'>,
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'id': 'foo',
-    'imported_from': None,
-    'internal_control': None,
-    'latest_build': None,
-    'name': 'Tester',
-    'organism': 'virus',
-    'otu_count': 0,
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'task': None,
-    'unbuilt_change_count': 0,
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'handle': 'zclark',
-        'id': 2,
-        'modify': True,
-        'modify_otu': True,
-      }),
-    ]),
-  })
-# ---
-# name: TestUpdate.test_control[None-False].1
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'internal_control': None,
-    'name': 'Tester',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'id': 2,
-        'modify': True,
-        'modify_otu': True,
-      }),
-    ]),
-  })
-# ---
-# name: TestUpdate.test_control[None-True]
-  dict({
-    'archived': False,
-    'cloned_from': None,
-    'contributors': list([
-    ]),
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': <ReferenceDataType.genome: 'genome'>,
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'id': 'foo',
-    'imported_from': None,
-    'internal_control': None,
-    'latest_build': None,
-    'name': 'Tester',
-    'organism': 'virus',
-    'otu_count': 0,
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'task': None,
-    'unbuilt_change_count': 0,
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'handle': 'zclark',
-        'id': 2,
-        'modify': True,
-        'modify_otu': True,
-      }),
-    ]),
-  })
-# ---
-# name: TestUpdate.test_control[None-True].1
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'internal_control': None,
-    'name': 'Tester',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'id': 2,
-        'modify': True,
-        'modify_otu': True,
-      }),
-    ]),
-  })
-# ---
-# name: TestUpdate.test_control[baz-False]
-  dict({
-    'archived': False,
-    'cloned_from': None,
-    'contributors': list([
-    ]),
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': <ReferenceDataType.genome: 'genome'>,
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'id': 'foo',
-    'imported_from': None,
-    'internal_control': None,
-    'latest_build': None,
-    'name': 'Tester',
-    'organism': 'virus',
-    'otu_count': 0,
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'task': None,
-    'unbuilt_change_count': 0,
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'handle': 'zclark',
-        'id': 2,
-        'modify': True,
-        'modify_otu': True,
-      }),
-    ]),
-  })
-# ---
-# name: TestUpdate.test_control[baz-False].1
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'internal_control': 'baz',
-    'name': 'Tester',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'id': 2,
-        'modify': True,
-        'modify_otu': True,
-      }),
-    ]),
-  })
-# ---
-# name: TestUpdate.test_control[baz-True]
-  dict({
-    'archived': False,
-    'cloned_from': None,
-    'contributors': list([
-    ]),
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': <ReferenceDataType.genome: 'genome'>,
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'id': 'foo',
-    'imported_from': None,
-    'internal_control': None,
-    'latest_build': None,
-    'name': 'Tester',
-    'organism': 'virus',
-    'otu_count': 0,
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'task': None,
-    'unbuilt_change_count': 0,
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'handle': 'zclark',
-        'id': 2,
-        'modify': True,
-        'modify_otu': True,
-      }),
-    ]),
-  })
-# ---
-# name: TestUpdate.test_control[baz-True].1
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'internal_control': 'baz',
-    'name': 'Tester',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'id': 2,
-        'modify': True,
-        'modify_otu': True,
-      }),
     ]),
   })
 # ---
@@ -561,7 +155,6 @@
         'modify_otu': True,
       }),
     ]),
-    'internal_control': None,
     'name': 'Foo',
     'organism': 'virus',
     'restrict_source_types': False,
@@ -594,7 +187,6 @@
     'description': 'This is a test reference.',
     'groups': list([
     ]),
-    'internal_control': None,
     'name': 'Foo',
     'organism': 'virus',
     'restrict_source_types': False,
