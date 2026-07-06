@@ -1,14 +1,28 @@
+from datetime import datetime
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
+from virtool.models.enums import LibraryType
 from virtool.samples.files import create_reads_file
-from virtool.samples.sql import SQLSampleReads
+from virtool.samples.sql import SQLLegacySample, SQLSampleReads
 
 
 async def test_create_reads_file(
     pg: AsyncEngine, snapshot: SnapshotAssertion, static_time
 ):
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLLegacySample(
+                legacy_id="sample_1",
+                name="sample_1",
+                library_type=LibraryType.normal.value,
+                created_at=datetime(2015, 10, 6, 20, 0),
+            ),
+        )
+        await session.commit()
+
     await create_reads_file(
         pg,
         123456,
@@ -18,6 +32,7 @@ async def test_create_reads_file(
     )
 
     async with AsyncSession(pg) as session:
-        assert (
-            await session.execute(select(SQLSampleReads).filter_by(id=1))
-        ).scalar() == snapshot
+        reads = (await session.execute(select(SQLSampleReads).filter_by(id=1))).scalar()
+
+    assert reads == snapshot
+    assert reads.sample_id is not None
