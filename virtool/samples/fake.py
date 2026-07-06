@@ -9,7 +9,7 @@ from virtool.fake.wrapper import FakerWrapper
 from virtool.mongo.utils import get_mongo_from_app
 from virtool.samples.db import create_sample
 from virtool.samples.files import create_reads_file
-from virtool.samples.sql import SQLLegacySample
+from virtool.samples.sql import SQLLegacySample, SQLLegacySampleSubtraction
 from virtool.samples.utils import sample_file_key
 from virtool.settings.models import Settings
 from virtool.storage.protocol import STORAGE_CHUNK_SIZE, StorageBackend
@@ -138,19 +138,38 @@ async def create_fake_sample(
     )
 
     async with AsyncSession(pg) as session:
-        session.add(
-            SQLLegacySample(
-                legacy_id=document["id"],
-                name=document["name"],
-                library_type=document["library_type"],
-                created_at=document["created_at"],
-                user_id=user_id,
-                all_read=document["all_read"],
-                all_write=document["all_write"],
-                group_read=document["group_read"],
-                group_write=document["group_write"],
-            ),
+        sample = SQLLegacySample(
+            legacy_id=document["id"],
+            name=document["name"],
+            host=document["host"],
+            isolate=document["isolate"],
+            locale=document["locale"],
+            notes=document["notes"],
+            library_type=document["library_type"],
+            format=document["format"],
+            quality=document["quality"],
+            created_at=document["created_at"],
+            paired=document["paired"],
+            ready=document["ready"],
+            hold=document["hold"],
+            is_legacy=document["is_legacy"],
+            all_read=document["all_read"],
+            all_write=document["all_write"],
+            group_read=document["group_read"],
+            group_write=document["group_write"],
+            user_id=user_id,
         )
+        session.add(sample)
+        await session.flush()
+
+        for subtraction_id in document["subtractions"]:
+            session.add(
+                SQLLegacySampleSubtraction(
+                    sample_id=sample.id,
+                    subtraction_id=subtraction_id,
+                ),
+            )
+
         await session.commit()
 
     if finalized is True:

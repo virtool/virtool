@@ -168,6 +168,76 @@ class AttachUploadsTransform(AbstractTransform):
         }
 
 
+MONGO_SAMPLE_FIELDS = ["nuvs", "pathoscope", "uploads", "workflows"]
+
+
+def _mongo_sample_fields(document: Document) -> dict[str, Any]:
+    return {
+        "nuvs": document["nuvs"],
+        "pathoscope": document["pathoscope"],
+        "uploads": document.get("uploads"),
+        "workflows": document["workflows"],
+    }
+
+
+class AttachMongoSampleFieldsTransform(AbstractTransform):
+    """Attach the sample fields still sourced from MongoDB.
+
+    Sample metadata is now read from Postgres, but the workflow tags (``nuvs``,
+    ``pathoscope``, ``workflows``) and the reserved ``uploads`` array are not stored
+    there. This transform bridges them from Mongo so read responses are unchanged.
+
+    It must run before :class:`~virtool.samples.db.AttachUploadsTransform`, which
+    enriches the bridged ``uploads`` array with upload details from Postgres.
+
+    Temporary: deriving the workflow fields from analyses on read, moving the
+    ``?workflows=`` filter into SQL, and migrating ``uploads`` are tracked in
+    VIR-2525, which removes this transform and its Mongo read.
+    """
+
+    def __init__(self, mongo: Mongo):
+        self._mongo = mongo
+
+    async def attach_one(self, document: Document, prepared: Any) -> Document:
+        return {**document, **prepared}
+
+    async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
+        mongo_document = await self._mongo.samples.find_one(
+            {"_id": document["id"]},
+            MONGO_SAMPLE_FIELDS,
+        )
+
+        if mongo_document is None:
+            raise KeyError(f"Sample missing from Mongo: {document['id']}")
+
+        return _mongo_sample_fields(mongo_document)
+
+    async def prepare_many(
+        self,
+        documents: list[Document],
+        session: AsyncSession,
+    ) -> dict[str, dict[str, Any]]:
+        sample_ids = [document["id"] for document in documents]
+
+        mongo_documents = {
+            mongo_document["_id"]: mongo_document
+            async for mongo_document in self._mongo.samples.find(
+                {"_id": {"$in": sample_ids}},
+                MONGO_SAMPLE_FIELDS,
+            )
+        }
+
+        missing = set(sample_ids) - mongo_documents.keys()
+
+        if missing:
+            raise KeyError(f"Samples missing from Mongo: {missing}")
+
+        return {
+            document["id"]: _mongo_sample_fields(mongo_documents[document["id"]])
+            for document in documents
+        }
+
+
 async def check_rights_error_check(
     db,
     sample_id: str | None,
