@@ -1603,6 +1603,7 @@ class TestUploadReads:
         example_path: Path,
         memory_storage,
         mongo: Mongo,
+        pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         spawn_job_client: JobClientSpawner,
     ):
@@ -1617,6 +1618,10 @@ class TestUploadReads:
                 "ready": True,
             },
         )
+
+        async with AsyncSession(pg) as session:
+            await _ensure_legacy_sample_id(session, "test")
+            await session.commit()
 
         resp_1 = await client.put(
             "/samples/test/reads/reads_1.fq.gz",

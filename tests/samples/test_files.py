@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
@@ -36,3 +37,17 @@ async def test_create_reads_file(
 
     assert reads == snapshot
     assert reads.sample_id is not None
+
+
+async def test_create_reads_file_unknown_sample_raises(pg: AsyncEngine):
+    """Creating a reads file for a sample with no ``legacy_samples`` row is a
+    data-integrity error and must fail loudly rather than store a NULL sample_id.
+    """
+    with pytest.raises(ValueError, match="No legacy_samples row for sample"):
+        await create_reads_file(
+            pg,
+            123456,
+            "reads_1.fq.gz",
+            "reads_1.fq.gz",
+            "missing_sample",
+        )
