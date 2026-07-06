@@ -617,5 +617,12 @@
       'name': 'backfill analyses sample ids to integers',
       'revision': 'b4qhmbisvbn3',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 89,
+      'name': 'copy references to postgres',
+      'revision': 't4u44jre75a0',
+    }),
   ])
 # ---
