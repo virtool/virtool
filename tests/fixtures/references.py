@@ -41,7 +41,6 @@ def reference(static_time):
         "description": "",
         "name": "Original",
         "organism": "virus",
-        "internal_control": None,
         "restrict_source_types": False,
         "source_types": ["isolate", "strain"],
         "groups": [],

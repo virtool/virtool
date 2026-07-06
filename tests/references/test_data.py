@@ -1,5 +1,4 @@
 import pytest
-from aiohttp.test_utils import make_mocked_coro
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
@@ -10,71 +9,7 @@ from virtool.references.oas import (
     CreateReferenceRequest,
     CreateReferenceUserRequest,
     ReferenceRightsRequest,
-    UpdateReferenceRequest,
 )
-
-
-class TestUpdate:
-    @pytest.mark.parametrize("control_exists", [True, False])
-    @pytest.mark.parametrize("control_id", [None, "", "baz"])
-    async def test_control(
-        self,
-        control_exists: bool,
-        control_id: str | None,
-        data_layer: DataLayer,
-        fake: DataFaker,
-        mocker,
-        mongo: Mongo,
-        snapshot,
-        static_time,
-    ):
-        """Test that the `internal_control` field is correctly set with various `internal_control` input value and the case
-        where the internal control ID refers to a non-existent OTU.
-        The field should only be set when the input value is truthy and the control ID exists.
-        """
-        user_1 = await fake.users.create()
-        user_2 = await fake.users.create()
-
-        await mongo.references.insert_one(
-            {
-                "_id": "foo",
-                "archived": False,
-                "created_at": static_time.datetime,
-                "data_type": "genome",
-                "description": "This is a test reference.",
-                "groups": [],
-                "internal_control": None,
-                "name": "Foo",
-                "organism": "virus",
-                "restrict_source_types": False,
-                "source_types": [],
-                "user": {"id": user_1.id},
-                "users": [
-                    {
-                        "id": user_2.id,
-                        "build": True,
-                        "modify": True,
-                        "modify_otu": True,
-                    },
-                ],
-            },
-        )
-
-        update = UpdateReferenceRequest(
-            name="Tester",
-            description="This is a test reference.",
-        )
-
-        if control_id is not None:
-            update.internal_control = control_id
-
-        mocker.patch(
-            "virtool.references.db.get_internal_control",
-            make_mocked_coro({"id": "baz"} if control_exists else None),
-        )
-
-        assert await data_layer.references.update("foo", update) == snapshot
-        assert await mongo.references.find_one() == snapshot
 
 
 class TestCreateUser:
@@ -128,7 +63,6 @@ class TestCreateUser:
                 "data_type": "genome",
                 "description": "This is a test reference.",
                 "groups": [],
-                "internal_control": None,
                 "name": "Foo",
                 "organism": "virus",
                 "restrict_source_types": False,
@@ -180,7 +114,6 @@ class TestCreateUser:
                 "data_type": "genome",
                 "description": "This is a test reference.",
                 "groups": [],
-                "internal_control": None,
                 "name": "Foo",
                 "organism": "virus",
                 "restrict_source_types": False,
@@ -220,7 +153,6 @@ class TestUpdateUser:
                 "data_type": "genome",
                 "description": "This is a test reference.",
                 "groups": [],
-                "internal_control": None,
                 "name": "Foo",
                 "organism": "virus",
                 "restrict_source_types": False,
@@ -280,7 +212,6 @@ class TestUpdateUser:
                     "data_type": "genome",
                     "description": "This is a test reference.",
                     "groups": [],
-                    "internal_control": None,
                     "name": "Foo",
                     "organism": "virus",
                     "restrict_source_types": False,
@@ -321,7 +252,6 @@ class TestDeleteUser:
                 "data_type": "genome",
                 "description": "This is a test reference.",
                 "groups": [],
-                "internal_control": None,
                 "name": "Foo",
                 "organism": "virus",
                 "restrict_source_types": False,
@@ -372,7 +302,6 @@ class TestDeleteUser:
                     "data_type": "genome",
                     "description": "This is a test reference.",
                     "groups": [],
-                    "internal_control": None,
                     "name": "Foo",
                     "organism": "virus",
                     "restrict_source_types": False,
@@ -407,7 +336,6 @@ class TestCreateGroup:
                 "data_type": "genome",
                 "description": "This is a test reference.",
                 "groups": [],
-                "internal_control": None,
                 "name": "Foo",
                 "organism": "virus",
                 "restrict_source_types": False,
@@ -478,7 +406,6 @@ class TestCreateGroup:
                 "data_type": "genome",
                 "description": "This is a test reference.",
                 "groups": [],
-                "internal_control": None,
                 "name": "Foo",
                 "organism": "virus",
                 "restrict_source_types": False,
@@ -526,7 +453,6 @@ class TestUpdateGroup:
                         "modify_otu": True,
                     },
                 ],
-                "internal_control": None,
                 "name": "Foo",
                 "organism": "virus",
                 "restrict_source_types": False,
@@ -571,7 +497,6 @@ class TestUpdateGroup:
                     "data_type": "genome",
                     "description": "This is a test reference.",
                     "groups": [],
-                    "internal_control": None,
                     "name": "Foo",
                     "organism": "virus",
                     "restrict_source_types": False,
@@ -620,7 +545,6 @@ class TestDeleteGroup:
                         "modify_otu": True,
                     },
                 ],
-                "internal_control": None,
                 "name": "Foo",
                 "organism": "virus",
                 "restrict_source_types": False,
@@ -663,7 +587,6 @@ class TestDeleteGroup:
                     "data_type": "genome",
                     "description": "This is a test reference.",
                     "groups": [],
-                    "internal_control": None,
                     "name": "Foo",
                     "organism": "virus",
                     "restrict_source_types": False,
