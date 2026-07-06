@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import pymongo
 from aiohttp.web import Request
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 
@@ -24,6 +24,11 @@ from virtool.models.enums import HistoryMethod
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.utils import get_mongo_from_req
 from virtool.references.alot import prepare_otu_insertion
+from virtool.references.sql import (
+    SQLReference,
+    SQLReferenceGroup,
+    SQLReferenceUser,
+)
 from virtool.settings.models import Settings
 from virtool.types import Document
 from virtool.users.transforms import AttachUserTransform
@@ -519,6 +524,33 @@ async def populate_insert_only_reference(
         )
 
         await mongo.references.delete_one({"_id": reference_id})
+
+        async with AsyncSession(pg) as session:
+            sql_reference_id = (
+                await session.execute(
+                    select(SQLReference.id).where(
+                        SQLReference.legacy_id == reference_id,
+                    ),
+                )
+            ).scalar_one_or_none()
+
+            if sql_reference_id is not None:
+                await session.execute(
+                    delete(SQLReferenceUser).where(
+                        SQLReferenceUser.reference_id == sql_reference_id,
+                    ),
+                )
+                await session.execute(
+                    delete(SQLReferenceGroup).where(
+                        SQLReferenceGroup.reference_id == sql_reference_id,
+                    ),
+                )
+                await session.execute(
+                    delete(SQLReference).where(SQLReference.id == sql_reference_id),
+                )
+
+            await session.commit()
+
         raise
 
 
