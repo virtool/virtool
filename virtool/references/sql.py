@@ -41,7 +41,7 @@ class SQLReference(Base):
     archived: Mapped[bool] = mapped_column(Boolean, default=False)
     restrict_source_types: Mapped[bool] = mapped_column(Boolean, default=False)
     source_types: Mapped[list] = mapped_column(JSONB, nullable=False)
-    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     upload_id: Mapped[int | None] = mapped_column(ForeignKey("uploads.id"))
     cloned_from_id: Mapped[int | None] = mapped_column(
         BigInteger, ForeignKey("legacy_references.id")
@@ -61,7 +61,6 @@ class SQLReferenceGroup(Base):
     build: Mapped[bool] = mapped_column(Boolean, default=False)
     modify: Mapped[bool] = mapped_column(Boolean, default=False)
     modify_otu: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime)
 
 
 class SQLReferenceUser(Base):
@@ -76,4 +75,3 @@ class SQLReferenceUser(Base):
     build: Mapped[bool] = mapped_column(Boolean, default=False)
     modify: Mapped[bool] = mapped_column(Boolean, default=False)
     modify_otu: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime)

@@ -1,5 +1,4 @@
 import asyncio
-from datetime import datetime
 
 from aiohttp import ClientSession
 from sqlalchemy import delete, select, update
@@ -340,7 +339,6 @@ class ReferencesData(DataLayerDomain):
                     build=member.get("build", False),
                     modify=member.get("modify", False),
                     modify_otu=member.get("modify_otu", False),
-                    created_at=member["created_at"],
                 ),
             )
 
@@ -352,7 +350,6 @@ class ReferencesData(DataLayerDomain):
                     build=member.get("build", False),
                     modify=member.get("modify", False),
                     modify_otu=member.get("modify_otu", False),
-                    created_at=member["created_at"],
                 ),
             )
 
@@ -382,14 +379,12 @@ class ReferencesData(DataLayerDomain):
         reference_pk: int,
         member_id: int,
         rights: dict,
-        created_at: datetime,
     ) -> None:
         """Upsert a reference rights child row on its composite key."""
         await pg_session.execute(
             pg_insert(model)
             .values(
                 reference_id=reference_pk,
-                created_at=created_at,
                 **{member_column: member_id},
                 **rights,
             )
@@ -766,7 +761,6 @@ class ReferencesData(DataLayerDomain):
                     reference_pk,
                     group.id,
                     rights,
-                    created_at,
                 )
 
         reference = await self.get(ref_id)
@@ -855,7 +849,6 @@ class ReferencesData(DataLayerDomain):
                             reference_pk,
                             row.id,
                             rights,
-                            group.get("created_at") or virtool.utils.timestamp(),
                         )
 
                 emit(
@@ -985,7 +978,6 @@ class ReferencesData(DataLayerDomain):
                     reference_pk,
                     user_row.id,
                     rights,
-                    created_at,
                 )
 
         emit(await self.get(ref_id), "references", "create_user", Operation.UPDATE)
@@ -1035,7 +1027,6 @@ class ReferencesData(DataLayerDomain):
                             reference_pk,
                             user_id,
                             rights,
-                            user.get("created_at") or virtool.utils.timestamp(),
                         )
 
                 emit(
