@@ -358,13 +358,18 @@ class TestUpgrade:
         with pytest.raises(ValueError, match="does not exist in postgres"):
             await upgrade(ctx)
 
-    async def test_missing_rights_group_raises(
+    async def test_missing_rights_group_skipped(
         self,
         ctx: MigrationContext,
         setup_user: int,
         static_datetime: datetime,
     ):
-        """A rights member group missing from postgres aborts the migration."""
+        """A rights member group deleted from postgres is skipped, not fatal.
+
+        Groups can be deleted without scrubbing the grant from the reference
+        document, so a stale grant must not abort the whole backfill. The reference
+        is still written, just without the dangling group row.
+        """
         await ctx.mongo.references.insert_one(
             make_reference_document(
                 "orphan_rights_group",
@@ -374,8 +379,21 @@ class TestUpgrade:
             ),
         )
 
-        with pytest.raises(ValueError, match="does not exist in postgres"):
-            await upgrade(ctx)
+        await upgrade(ctx)
+
+        async with AsyncSession(ctx.pg) as session:
+            reference_pk = await get_reference_pk(session, "orphan_rights_group")
+            group_count = (
+                await session.execute(
+                    text(
+                        "SELECT COUNT(*) FROM legacy_reference_groups "
+                        "WHERE reference_id = :reference_id",
+                    ),
+                    {"reference_id": reference_pk},
+                )
+            ).scalar_one()
+
+        assert group_count == 0
 
     async def test_cloned_from_resolved(
         self,
@@ -508,6 +526,76 @@ class TestUpgrade:
                     text(
                         "SELECT task_id FROM legacy_references "
                         "WHERE legacy_id = 'orphan_task_reference'",
+                    ),
+                )
+            ).scalar_one()
+
+        assert task_id is None
+
+    async def test_absent_cloned_from_field_is_safe(
+        self,
+        ctx: MigrationContext,
+        setup_user: int,
+        static_datetime: datetime,
+    ):
+        """A non-clone reference with no cloned_from field survives the second pass.
+
+        Documents created by ``create_document`` carry no ``cloned_from`` key at
+        all, so the second pass must not assume the field is present.
+        """
+        document = make_reference_document(
+            "plain_reference",
+            setup_user,
+            static_datetime,
+        )
+        del document["cloned_from"]
+
+        await ctx.mongo.references.insert_one(document)
+
+        await upgrade(ctx)
+
+        async with AsyncSession(ctx.pg) as session:
+            cloned_from_id = (
+                await session.execute(
+                    text(
+                        "SELECT cloned_from_id FROM legacy_references "
+                        "WHERE legacy_id = 'plain_reference'",
+                    ),
+                )
+            ).scalar_one()
+
+        assert cloned_from_id is None
+
+    async def test_non_numeric_task_id_is_null(
+        self,
+        ctx: MigrationContext,
+        setup_user: int,
+        static_datetime: datetime,
+    ):
+        """A non-integer task id is nulled rather than aborting the backfill.
+
+        ``tasks`` has no legacy_id column, so resolving a non-numeric string id
+        would raise; it is treated as a dangling reference instead.
+        """
+        await ctx.mongo.references.insert_one(
+            {
+                **make_reference_document(
+                    "legacy_task_reference",
+                    setup_user,
+                    static_datetime,
+                ),
+                "task": {"id": "legacy_task_abc"},
+            },
+        )
+
+        await upgrade(ctx)
+
+        async with AsyncSession(ctx.pg) as session:
+            task_id = (
+                await session.execute(
+                    text(
+                        "SELECT task_id FROM legacy_references "
+                        "WHERE legacy_id = 'legacy_task_reference'",
                     ),
                 )
             ).scalar_one()

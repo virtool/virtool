@@ -52,11 +52,13 @@ async def copy_references_to_postgres(ctx: MigrationContext) -> None:
     ``compose_legacy_id_single_expression`` tolerates both legacy string ids and
     the integer ids written since those collections were migrated:
 
-    - ``user`` is required. A reference that references a user missing from
-      Postgres raises, rather than being backfilled with a null owner.
-    - Every ``users`` and ``groups`` rights member is required. A member that no
-      longer resolves to a Postgres row raises, matching the not-null foreign key
-      on the join tables.
+    - ``user`` is required, both as the reference owner and as a ``users`` rights
+      member, because users are never hard-deleted (only deactivated). A reference
+      that references a user missing from Postgres raises, rather than being
+      backfilled with a null owner or a dropped grant.
+    - ``groups`` rights members are best-effort. Groups can be deleted without
+      scrubbing the grant from the reference document, so a member that no longer
+      resolves is logged and skipped rather than aborting the migration.
     - ``upload`` (``imported_from``) and ``task`` are optional. A dangling
       reference is backfilled as ``NULL`` and logged with a warning.
 
@@ -160,10 +162,12 @@ async def _insert_rights_rows(
 ) -> None:
     """Insert the user and group rights rows for a reference.
 
-    Each member's id is resolved to a Postgres primary key. The rights join tables
-    have a not-null foreign key, so a member that no longer resolves raises rather
-    than being skipped. Each insert uses ``ON CONFLICT DO NOTHING`` so a re-run
-    over an interrupted document adds only the rows that are missing.
+    User grants are required: users are never hard-deleted, so a ``users`` member
+    that does not resolve raises. Group grants are best-effort: a group can be
+    deleted without scrubbing the grant from the reference document, so a
+    ``groups`` member that does not resolve is logged and skipped. Each insert uses
+    ``ON CONFLICT DO NOTHING`` so a re-run over an interrupted document adds only
+    the rows that are missing.
     """
     for member in document.get("users") or []:
         user_id = await _resolve_rights_member_id(
@@ -188,14 +192,16 @@ async def _insert_rights_rows(
         )
 
     for member in document.get("groups") or []:
-        group_id = await _resolve_rights_member_id(
-            session,
-            SQLGroup,
-            member["id"],
-            group_id_cache,
-            document["_id"],
-            "group",
-        )
+        group_id = await _resolve_id(session, SQLGroup, member["id"], group_id_cache)
+
+        if group_id is None:
+            logger.warning(
+                "reference grants rights to a group that no longer exists; "
+                "skipping grant",
+                reference_id=document["_id"],
+                group=member["id"],
+            )
+            continue
 
         await session.execute(
             insert(SQLReferenceGroup)
@@ -228,7 +234,10 @@ async def _backfill_cloned_from_ids(
         {"cloned_from": {"$ne": None}},
         projection=["_id", "cloned_from"],
     ):
-        cloned_from = document["cloned_from"]
+        cloned_from = document.get("cloned_from")
+
+        if not cloned_from:
+            continue
 
         cloned_from_id = (
             await session.execute(
@@ -366,6 +375,11 @@ async def _resolve_task_id(
     Returns ``None`` when the reference has no task, and also when a task is
     referenced but no longer exists in Postgres. Dangling references are logged so
     the migration leaves an audit trail, distinct from the legitimate no-task case.
+
+    ``tasks`` was born in Postgres with integer ids and has no ``legacy_id``
+    column, so a non-integer task reference can never resolve and would make
+    ``compose_legacy_id_single_expression`` raise. Such a value is treated as a
+    dangling reference and nulled rather than aborting the backfill.
     """
     task = document.get("task")
 
@@ -373,6 +387,17 @@ async def _resolve_task_id(
         return None
 
     reference = task["id"]
+
+    if not isinstance(reference, int) and not (
+        isinstance(reference, str) and reference.isdigit()
+    ):
+        logger.warning(
+            "reference references a task with a non-integer id; "
+            "backfilling null task_id",
+            reference_id=document["_id"],
+            task=reference,
+        )
+        return None
 
     task_id = await _resolve_id(session, SQLTask, reference, cache)
 
@@ -395,11 +420,11 @@ async def _resolve_rights_member_id(
     reference_id: str,
     kind: str,
 ) -> int:
-    """Resolve a rights member's id to a Postgres primary key, raising if missing.
+    """Resolve a required rights member's id to a Postgres primary key.
 
-    The rights join tables have a not-null foreign key, so a ``users`` or
-    ``groups`` member that no longer resolves to a Postgres row raises rather than
-    being skipped or backfilled as ``NULL``.
+    Used for ``users`` grants, which must always resolve because users are never
+    hard-deleted. A member that does not resolve raises rather than being skipped
+    or backfilled as ``NULL``, matching the not-null foreign key on the join table.
     """
     resolved = await _resolve_id(session, model, reference, cache)
 
