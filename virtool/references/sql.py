@@ -20,9 +20,9 @@ class SQLReference(Base):
     natively in Postgres can omit it. Outbound foreign keys are ``Integer`` to
     match the serial primary key width of the already-migrated targets.
 
-    Several Mongo fields are intentionally dropped: ``space``, ``data_type``
-    (re-derived as the constant ``"genome"`` at serialization), and
-    ``internal_control``. The denormalized ``cloned_from.name`` snapshot is not
+    Several Mongo fields are intentionally dropped: ``space`` and ``data_type``
+    (re-derived as the constant ``"genome"`` at serialization). The denormalized
+    ``cloned_from.name`` snapshot is not
     stored; only ``cloned_from_id`` is kept and the name is re-derived via join.
 
     The remote-reference fields are all dropped now that the release-check /
