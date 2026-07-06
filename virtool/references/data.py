@@ -1211,9 +1211,29 @@ class ReferencesData(DataLayerDomain):
             await self._mongo.references.delete_one({"_id": ref_id})
 
             async with AsyncSession(self._pg) as session:
-                await session.execute(
-                    delete(SQLReference).where(SQLReference.legacy_id == ref_id),
-                )
+                reference_id = (
+                    await session.execute(
+                        select(SQLReference.id).where(
+                            SQLReference.legacy_id == ref_id,
+                        ),
+                    )
+                ).scalar_one_or_none()
+
+                if reference_id is not None:
+                    await session.execute(
+                        delete(SQLReferenceUser).where(
+                            SQLReferenceUser.reference_id == reference_id,
+                        ),
+                    )
+                    await session.execute(
+                        delete(SQLReferenceGroup).where(
+                            SQLReferenceGroup.reference_id == reference_id,
+                        ),
+                    )
+                    await session.execute(
+                        delete(SQLReference).where(SQLReference.id == reference_id),
+                    )
+
                 await session.commit()
 
             raise

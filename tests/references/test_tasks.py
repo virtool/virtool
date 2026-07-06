@@ -14,7 +14,7 @@ from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.references.db import get_manifest
-from virtool.references.sql import SQLReference
+from virtool.references.sql import SQLReference, SQLReferenceUser
 from virtool.references.tasks import (
     CloneReferenceTask,
     ImportReferenceTask,
@@ -385,15 +385,24 @@ class TestImportReferenceDualWrite:
             )
 
             async with AsyncSession(pg) as session:
+                reference = SQLReference(
+                    legacy_id="foo",
+                    name="Test",
+                    description="A test reference",
+                    organism="",
+                    created_at=static_time.datetime,
+                    source_types=[],
+                    user_id=user.id,
+                )
+                session.add(reference)
+                await session.flush()
                 session.add(
-                    SQLReference(
-                        legacy_id="foo",
-                        name="Test",
-                        description="A test reference",
-                        organism="",
-                        created_at=static_time.datetime,
-                        source_types=[],
+                    SQLReferenceUser(
+                        reference_id=reference.id,
                         user_id=user.id,
+                        build=True,
+                        modify=True,
+                        modify_otu=True,
                     ),
                 )
                 session.add(
@@ -492,15 +501,24 @@ class TestCloneReferenceDualWrite:
         )
 
         async with AsyncSession(pg) as session:
+            reference = SQLReference(
+                legacy_id="foo",
+                name="Test",
+                description="A test reference",
+                organism="virus",
+                created_at=static_time.datetime,
+                source_types=[],
+                user_id=user.id,
+            )
+            session.add(reference)
+            await session.flush()
             session.add(
-                SQLReference(
-                    legacy_id="foo",
-                    name="Test",
-                    description="A test reference",
-                    organism="virus",
-                    created_at=static_time.datetime,
-                    source_types=[],
+                SQLReferenceUser(
+                    reference_id=reference.id,
                     user_id=user.id,
+                    build=True,
+                    modify=True,
+                    modify_otu=True,
                 ),
             )
             session.add(
@@ -515,7 +533,7 @@ class TestCloneReferenceDualWrite:
                     count=0,
                     progress=0,
                     step="load_file",
-                    type="import_reference",
+                    type="clone_reference",
                     created_at=static_time.datetime,
                 ),
             )
