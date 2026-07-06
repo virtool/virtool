@@ -32,6 +32,7 @@ from virtool.data.topg import (
     both_transactions,
     compose_legacy_id_multi_expression,
     compose_legacy_id_single_expression,
+    compose_legacy_id_subquery,
     retry_both_transactions,
 )
 from virtool.data.transforms import apply_transforms
@@ -646,6 +647,16 @@ class SamplesData(DataLayerDomain):
                 ),
             )
             await pg_session.execute(
+                delete(SQLSampleArtifact).where(
+                    SQLSampleArtifact.sample == sample_id,
+                ),
+            )
+            await pg_session.execute(
+                delete(SQLSampleReads).where(
+                    SQLSampleReads.sample == sample_id,
+                ),
+            )
+            await pg_session.execute(
                 delete(SQLLegacySample).where(
                     SQLLegacySample.legacy_id == sample_id,
                 ),
@@ -1083,9 +1094,10 @@ class SamplesData(DataLayerDomain):
         async with AsyncSession(self._pg) as session:
             row = (
                 await session.execute(
-                    select(SQLSampleReads).filter_by(
-                        sample=sample_id,
-                        name=filename,
+                    select(SQLSampleReads).where(
+                        SQLSampleReads.sample_id
+                        == compose_legacy_id_subquery(SQLLegacySample, sample_id),
+                        SQLSampleReads.name == filename,
                     ),
                 )
             ).scalar()
@@ -1108,9 +1120,10 @@ class SamplesData(DataLayerDomain):
         async with AsyncSession(self._pg) as session:
             result = (
                 await session.execute(
-                    select(SQLSampleArtifact).filter_by(
-                        sample=sample_id,
-                        name=filename,
+                    select(SQLSampleArtifact).where(
+                        SQLSampleArtifact.sample_id
+                        == compose_legacy_id_subquery(SQLLegacySample, sample_id),
+                        SQLSampleArtifact.name == filename,
                     ),
                 )
             ).scalar()

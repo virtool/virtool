@@ -83,38 +83,6 @@ async def create_fake_sample(
 
         subtraction_ids = list(result.scalars().all())
 
-    if finalized is True:
-        if paired:
-            for n in (1, 2):
-                file_path = example_path / "sample" / f"reads_{n}.fq.gz"
-
-                await copy_reads_file(
-                    storage,
-                    file_path,
-                    f"reads_{n}.fq.gz",
-                    sample_id,
-                )
-
-                await create_reads_file(
-                    pg,
-                    file_path.stat().st_size,
-                    f"reads_{n}.fq.gz",
-                    f"reads_{n}.fq.gz",
-                    sample_id,
-                )
-        else:
-            file_path = example_path / "sample" / "reads_1.fq.gz"
-
-            await copy_reads_file(storage, file_path, "reads_1.fq.gz", sample_id)
-
-            await create_reads_file(
-                pg,
-                file_path.stat().st_size,
-                "reads_1.fq.gz",
-                "reads_1.fq.gz",
-                sample_id,
-            )
-
     settings = Settings()
     settings.sample_group_read = True
     settings.sample_group_write = True
@@ -173,6 +141,37 @@ async def create_fake_sample(
         await session.commit()
 
     if finalized is True:
+        if paired:
+            for n in (1, 2):
+                file_path = example_path / "sample" / f"reads_{n}.fq.gz"
+
+                await copy_reads_file(
+                    storage,
+                    file_path,
+                    f"reads_{n}.fq.gz",
+                    sample_id,
+                )
+
+                await create_reads_file(
+                    pg,
+                    file_path.stat().st_size,
+                    f"reads_{n}.fq.gz",
+                    f"reads_{n}.fq.gz",
+                    sample_id,
+                )
+        else:
+            file_path = example_path / "sample" / "reads_1.fq.gz"
+
+            await copy_reads_file(storage, file_path, "reads_1.fq.gz", sample_id)
+
+            await create_reads_file(
+                pg,
+                file_path.stat().st_size,
+                "reads_1.fq.gz",
+                "reads_1.fq.gz",
+                sample_id,
+            )
+
         await get_data_from_app(app).samples.finalize(
             sample_id=sample_id,
             quality=await create_fake_quality(fake),

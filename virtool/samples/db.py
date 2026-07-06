@@ -49,16 +49,21 @@ class AttachArtifactsAndReadsTransform(AbstractTransform):
 
     async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
         sample_id = document["id"]
+        sample_subquery = compose_legacy_id_subquery(SQLLegacySample, sample_id)
 
         artifacts = (
             await session.execute(
-                select(SQLSampleArtifact).filter_by(sample=sample_id),
+                select(SQLSampleArtifact).where(
+                    SQLSampleArtifact.sample_id == sample_subquery,
+                ),
             )
         ).scalars()
 
         reads_files = (
             await session.execute(
-                select(SQLSampleReads).filter_by(sample=sample_id),
+                select(SQLSampleReads).where(
+                    SQLSampleReads.sample_id == sample_subquery,
+                ),
             )
         ).scalars()
 

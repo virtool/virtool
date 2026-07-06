@@ -36,10 +36,14 @@ class SQLSampleArtifact(Base):
     """SQL model to store sample artifacts"""
 
     __tablename__ = "sample_artifacts"
-    __table_args__ = (UniqueConstraint("sample", "name"),)
+    __table_args__ = (
+        UniqueConstraint("sample", "name"),
+        UniqueConstraint("sample_id", "name"),
+    )
 
     id = Column(Integer, primary_key=True)
     sample = Column(String, nullable=False)
+    sample_id = Column(BigInteger, ForeignKey("legacy_samples.id"))
     name = Column(String, nullable=False)
     name_on_disk = Column(String)
     size = Column(BigInteger)
@@ -51,10 +55,14 @@ class SQLSampleReads(Base):
     """SQL model to store new sample reads files"""
 
     __tablename__ = "sample_reads"
-    __table_args__ = (UniqueConstraint("sample", "name"),)
+    __table_args__ = (
+        UniqueConstraint("sample", "name"),
+        UniqueConstraint("sample_id", "name"),
+    )
 
     id = Column(Integer, primary_key=True)
     sample = Column(String, nullable=False)
+    sample_id = Column(BigInteger, ForeignKey("legacy_samples.id"))
     name = Column(String(length=13), nullable=False)
     name_on_disk = Column(String, nullable=False)
     size = Column(BigInteger)
