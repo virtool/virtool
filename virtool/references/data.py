@@ -1137,15 +1137,26 @@ class ReferencesData(DataLayerDomain):
             3,
         )
 
-        await self._mongo.references.update_one(
-            {"_id": ref_id},
-            {
-                "$set": {
-                    "data_type": data.data_type,
-                    "organism": data.organism,
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            await self._mongo.references.update_one(
+                {"_id": ref_id},
+                {
+                    "$set": {
+                        "data_type": data.data_type,
+                        "organism": data.organism,
+                    },
                 },
-            },
-        )
+                session=mongo_session,
+            )
+
+            await pg_session.execute(
+                update(SQLReference)
+                .where(SQLReference.legacy_id == ref_id)
+                .values(organism=data.organism),
+            )
 
         await tracker.add(1)
 
@@ -1198,6 +1209,13 @@ class ReferencesData(DataLayerDomain):
             )
 
             await self._mongo.references.delete_one({"_id": ref_id})
+
+            async with AsyncSession(self._pg) as session:
+                await session.execute(
+                    delete(SQLReference).where(SQLReference.legacy_id == ref_id),
+                )
+                await session.commit()
+
             raise
 
         await tracker.add(1)
