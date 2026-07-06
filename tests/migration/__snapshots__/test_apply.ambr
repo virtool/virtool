@@ -621,6 +621,13 @@
       'applied_at': datetime,
       'created_at': datetime,
       'id': 89,
+      'name': 'copy references to postgres',
+      'revision': 't4u44jre75a0',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 90,
       'name': 'add sample_id to sample files',
       'revision': 'c980043c0c89',
     }),
