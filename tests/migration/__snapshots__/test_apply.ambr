@@ -596,5 +596,12 @@
       'name': 'drop remove from reference rights tables',
       'revision': '425ac8573f1c',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 86,
+      'name': 'require reference user and drop rights created_at',
+      'revision': 'fe83de8410d3',
+    }),
   ])
 # ---
