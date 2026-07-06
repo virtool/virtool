@@ -38,6 +38,8 @@ from virtool.data.errors import (
 from virtool.data.events import Operation, emit, emits
 from virtool.data.topg import (
     compose_legacy_id_single_expression,
+    compose_legacy_id_subquery,
+    resolve_legacy_id,
 )
 from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
@@ -49,6 +51,7 @@ from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.oas import CreateAnalysisRequest
+from virtool.samples.sql import SQLLegacySample
 from virtool.samples.utils import get_sample_rights
 from virtool.storage.cleanup import delete_prefix
 from virtool.storage.protocol import StorageBackend
@@ -170,8 +173,11 @@ class AnalysisData(DataLayerDomain):
         )
 
         if sample_id is not None:
-            count_statement = count_statement.where(SQLAnalysis.sample == sample_id)
-            statement = statement.where(SQLAnalysis.sample == sample_id)
+            sample_subquery = compose_legacy_id_subquery(SQLLegacySample, sample_id)
+            count_statement = count_statement.where(
+                SQLAnalysis.sample_id == sample_subquery,
+            )
+            statement = statement.where(SQLAnalysis.sample_id == sample_subquery)
 
         async with AsyncSession(self._pg) as session:
             total_count = (await session.execute(count_statement)).scalar_one()
@@ -306,6 +312,11 @@ class AnalysisData(DataLayerDomain):
         subtractions = data.subtractions if data.subtractions is not None else []
 
         async with AsyncSession(self._pg) as session:
+            sample_pg_id = await resolve_legacy_id(session, SQLLegacySample, sample_id)
+
+            if sample_pg_id is None:
+                raise ResourceConflictError("Sample does not exist")
+
             pg_id = (
                 await session.execute(
                     insert(SQLAnalysis)
@@ -317,6 +328,7 @@ class AnalysisData(DataLayerDomain):
                         ready=False,
                         results=None,
                         sample=sample_id,
+                        sample_id=sample_pg_id,
                         reference=data.ref_id,
                         index=index_id,
                         user_id=user_id,

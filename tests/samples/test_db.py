@@ -1,6 +1,7 @@
 import pytest
 from aiohttp.test_utils import make_mocked_request
 from pytest_mock import MockerFixture
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
@@ -16,6 +17,7 @@ from virtool.samples.db import (
     derive_workflow_state,
     recalculate_workflow_tags,
 )
+from virtool.samples.sql import SQLLegacySample
 from virtool.samples.utils import calculate_workflow_tags
 from virtool.utils import timestamp
 from virtool.workflow.pytest_plugin.utils import StaticTime
@@ -71,27 +73,47 @@ async def test_recalculate_workflow_tags(
 
     await mongo.samples.insert_one({"_id": "test", "pathoscope": False, "nuvs": False})
 
-    def make_row(legacy_id: str, sample: str, workflow: str, *, ready: bool):
-        return SQLAnalysis(
+    def make_legacy_sample(legacy_id: str) -> SQLLegacySample:
+        return SQLLegacySample(
             legacy_id=legacy_id,
+            name=legacy_id,
+            library_type="normal",
             created_at=timestamp(),
-            updated_at=timestamp(),
-            workflow=workflow,
-            ready=ready,
-            sample=sample,
-            reference="ref",
-            index="index",
             user_id=user.id,
         )
 
     async with AsyncSession(pg) as session:
+        session.add_all(
+            [make_legacy_sample("test"), make_legacy_sample("other")],
+        )
+        await session.flush()
+
+        sample_ids = {
+            row.legacy_id: row.id
+            for row in (await session.execute(select(SQLLegacySample))).scalars()
+        }
+
+        def make_row(legacy_id: str, sample: str, workflow: str, *, ready: bool):
+            return SQLAnalysis(
+                legacy_id=legacy_id,
+                created_at=timestamp(),
+                updated_at=timestamp(),
+                workflow=workflow,
+                ready=ready,
+                sample=sample,
+                sample_id=sample_ids[sample],
+                reference="ref",
+                index="index",
+                user_id=user.id,
+            )
+
         session.add_all(
             [
                 make_row("test_1", "test", "pathoscope", ready=False),
                 make_row("test_2", "test", "pathoscope", ready=True),
                 make_row("test_3", "test", "nuvs", ready=True),
                 # Belongs to another sample and must be excluded.
-                make_row("test_4", "foobar", "pathoscope", ready=True),
+                make_row("test_4", "other", "pathoscope", ready=True),
             ],
         )
         await session.commit()

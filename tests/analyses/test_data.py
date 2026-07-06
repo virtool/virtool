@@ -22,6 +22,7 @@ from virtool.models.enums import AnalysisWorkflow
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row, get_row_by_id
 from virtool.samples.oas import CreateAnalysisRequest
+from virtool.samples.sql import SQLLegacySample
 from virtool.subtractions.pg import SQLSubtraction
 from virtool.utils import timestamp
 
@@ -51,10 +52,25 @@ async def subtraction_ids(fake: DataFaker) -> dict[str, int]:
 @pytest.fixture
 async def setup_sample(
     mongo: "Mongo",
+    pg: AsyncEngine,
     fake: DataFaker,
     subtraction_ids: dict[str, int],
 ) -> str:
     user = await fake.users.create()
+
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLLegacySample(
+                legacy_id="test_sample",
+                name="Test Sample",
+                library_type="normal",
+                created_at=timestamp(),
+                user_id=user.id,
+                all_read=True,
+                all_write=True,
+            ),
+        )
+        await session.commit()
 
     await asyncio.gather(
         mongo.samples.insert_one(
@@ -116,6 +132,7 @@ async def test_find(
     data_layer: DataLayer,
     snapshot_recent: SnapshotAssertion,
     mongo: Mongo,
+    pg: AsyncEngine,
     setup_sample: str,
     subtraction_ids: dict[str, int],
     mocker,
@@ -126,6 +143,18 @@ async def test_find(
     user_id = setup_sample
 
     await mongo.samples.insert_one({"_id": "test_false", "name": "Test False"})
+
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLLegacySample(
+                legacy_id="test_false",
+                name="Test False",
+                library_type="normal",
+                created_at=timestamp(),
+                user_id=user_id,
+            ),
+        )
+        await session.commit()
 
     analysis_wrong_sample = await data_layer.analyses.create(
         CreateAnalysisRequest(
@@ -371,6 +400,23 @@ class TestCreate:
                     workflow=AnalysisWorkflow.nuvs,
                 ),
                 "test_sample",
+                setup_sample,
+                0,
+            )
+
+    async def test_unknown_sample_raises(
+        self,
+        data_layer: DataLayer,
+        setup_sample: str,
+        subtraction_ids: dict[str, int],
+    ):
+        """Creating an analysis for a sample with no ``legacy_samples`` row is a
+        conflict.
+        """
+        with pytest.raises(ResourceConflictError, match="Sample does not exist"):
+            await data_layer.analyses.create(
+                _create_request(subtraction_ids),
+                "unknown_sample",
                 setup_sample,
                 0,
             )

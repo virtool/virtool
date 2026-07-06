@@ -9,6 +9,7 @@ from virtool.fake.wrapper import FakerWrapper
 from virtool.mongo.utils import get_mongo_from_app
 from virtool.samples.db import create_sample
 from virtool.samples.files import create_reads_file
+from virtool.samples.sql import SQLLegacySample
 from virtool.samples.utils import sample_file_key
 from virtool.settings.models import Settings
 from virtool.storage.protocol import STORAGE_CHUNK_SIZE, StorageBackend
@@ -120,7 +121,7 @@ async def create_fake_sample(
     settings.sample_all_read = True
     settings.sample_all_write = True
 
-    await create_sample(
+    document = await create_sample(
         _id=sample_id,
         mongo=mongo,
         name=f"Fake {sample_id.upper()}",
@@ -135,6 +136,22 @@ async def create_fake_sample(
         group="none",
         settings=settings,
     )
+
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLLegacySample(
+                legacy_id=document["id"],
+                name=document["name"],
+                library_type=document["library_type"],
+                created_at=document["created_at"],
+                user_id=user_id,
+                all_read=document["all_read"],
+                all_write=document["all_write"],
+                group_read=document["group_read"],
+                group_write=document["group_write"],
+            ),
+        )
+        await session.commit()
 
     if finalized is True:
         await get_data_from_app(app).samples.finalize(
