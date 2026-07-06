@@ -15,7 +15,6 @@ from virtool.data.errors import (
 )
 from virtool.data.topg import compose_legacy_id_single_expression
 from virtool.data.transforms import apply_transforms
-from virtool.hmm.utils import create_update_subdocument
 from virtool.hmm.db import (
     fetch_and_update_release,
     generate_annotations,
@@ -23,6 +22,7 @@ from virtool.hmm.db import (
 from virtool.hmm.models import HMM, HMMInstalled, HMMSearchResult, HMMStatus
 from virtool.hmm.sql import HMM_STATUS_ID, SQLHMM, SQLHMMStatus
 from virtool.hmm.tasks import HMMInstallTask
+from virtool.hmm.utils import create_update_subdocument
 from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
 from virtool.tasks.progress import (

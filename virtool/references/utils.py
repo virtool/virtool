@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, validator
 from virtool.references.models import ReferenceDataType
 from virtool.storage.protocol import StorageBackend
 
-RIGHTS = ["build", "modify", "modify_otu", "remove"]
+RIGHTS = ["build", "modify", "modify_otu"]
 
 
 class ReferenceSourceDataError(Exception):

@@ -1,5 +1,3 @@
-import hashlib
-
 import bcrypt
 
 from virtool.models.enums import Permission
@@ -10,35 +8,6 @@ UNKNOWN_USER_HANDLE = "unknown"
 Stands in for a real user who has since been deleted (e.g. the owner of an
 upload reconstructed during migration).
 """
-
-VIRTOOL_USER_HANDLE = "virtool"
-"""Handle reserved for system-as-actor uses."""
-
-RESERVED_HANDLES = frozenset({UNKNOWN_USER_HANDLE, VIRTOOL_USER_HANDLE})
-"""Handles that may not be claimed by ordinary users. Compared case-insensitively."""
-
-
-def is_reserved_handle(handle: str) -> bool:
-    """Return whether ``handle`` is reserved for a sentinel user."""
-    return handle.lower() in RESERVED_HANDLES
-
-
-def check_legacy_password(password: str, salt: str, hashed: str) -> bool:
-    """Check if a Unicode ``password`` and ``salt`` match a ``hashed`` password from the
-    database.
-
-    This is for use only with legacy SHA512 hashed passwords. New password hash with
-    :func:`.hash_password` will be hashed using bcrypt.
-
-    :param password: the password to check
-    :param salt: a salt
-    :param hashed: the hashed password from the database
-    :return: success of test
-    """
-    return (
-        hashed
-        == hashlib.sha512(salt.encode("utf-8") + password.encode("utf-8")).hexdigest()
-    )
 
 
 def check_password(password: str, hashed: bytes) -> bool:

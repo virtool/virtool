@@ -582,5 +582,12 @@
       'name': 'backfill samples group ids to integers',
       'revision': 'bfzcj3gxn2dd',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 84,
+      'name': 'drop remove from reference rights tables',
+      'revision': '425ac8573f1c',
+    }),
   ])
 # ---

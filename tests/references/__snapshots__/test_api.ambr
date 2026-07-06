@@ -113,7 +113,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -177,7 +176,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -221,7 +219,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -592,7 +589,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -623,7 +619,6 @@
         'id': 3,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
       dict({
         'build': True,
@@ -631,7 +626,6 @@
         'id': 4,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -672,7 +666,6 @@
         'id': 3,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
       dict({
         'build': True,
@@ -681,7 +674,6 @@
         'id': 4,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -853,7 +845,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
       dict({
         'build': False,
@@ -862,7 +853,6 @@
         'id': 2,
         'modify': False,
         'modify_otu': False,
-        'remove': False,
       }),
     ]),
   })
@@ -939,7 +929,6 @@
     'id': 2,
     'modify': True,
     'modify_otu': True,
-    'remove': False,
   })
 # ---
 # name: TestUpdateUser.test_ok.1
@@ -966,7 +955,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
       dict({
         'build': False,
@@ -974,7 +962,6 @@
         'id': 2,
         'modify': True,
         'modify_otu': True,
-        'remove': False,
       }),
     ]),
   })
@@ -988,7 +975,6 @@
     'modify': True,
     'modify_otu': False,
     'name': 'gaffers',
-    'remove': False,
   })
 # ---
 # name: test_create_group[None].1
@@ -1005,7 +991,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
       dict({
         'build': False,
@@ -1014,7 +999,6 @@
         'legacy_id': None,
         'modify': True,
         'modify_otu': False,
-        'remove': False,
       }),
     ]),
     'name': 'Test',
@@ -1127,7 +1111,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
       dict({
         'build': False,
@@ -1135,7 +1118,6 @@
         'id': 2,
         'modify': True,
         'modify_otu': False,
-        'remove': False,
       }),
     ]),
   })
@@ -1148,7 +1130,6 @@
     'id': 2,
     'modify': True,
     'modify_otu': False,
-    'remove': False,
   })
 # ---
 # name: test_delete_group[None]
@@ -1175,7 +1156,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -1783,7 +1763,6 @@
         'id': 1,
         'modify': False,
         'modify_otu': True,
-        'remove': False,
       }),
     ]),
     'name': 'Test',
@@ -1801,7 +1780,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -1815,6 +1793,5 @@
     'modify': False,
     'modify_otu': True,
     'name': 'musicians',
-    'remove': False,
   })
 # ---

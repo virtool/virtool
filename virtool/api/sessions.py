@@ -8,7 +8,6 @@ from virtool.data.errors import (
 )
 from virtool.data.utils import get_data_from_req
 from virtool.models.sessions import Session
-from virtool.utils import get_safely
 
 
 @web.middleware
@@ -40,12 +39,6 @@ async def get_session(req: Request) -> Session | None:
         if session_id:
             if session_token:
                 return await sessions_data.get_authenticated(session_id, session_token)
-
-            if req.path == "/account/reset":
-                body = await req.json()
-                reset_code = get_safely(body, "reset_code")
-
-                return await sessions_data.get_reset(session_id, reset_code)
 
             return await sessions_data.get_anonymous(session_id)
     except ResourceNotFoundError:

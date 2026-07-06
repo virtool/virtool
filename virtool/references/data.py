@@ -360,16 +360,6 @@ class ReferencesData(DataLayerDomain):
 
         return await self.get(ref_id)
 
-    async def remove(self, ref_id: str, req) -> None:
-        if not await virtool.references.db.check_right(req, ref_id, "remove"):
-            raise APIInsufficientRights()
-
-        reference = await self.get(ref_id)
-
-        await self._mongo.references.delete_one({"_id": ref_id})
-
-        emit(reference, "references", "delete", Operation.DELETE)
-
     async def find_otus(
         self,
         term: str | None,
@@ -555,7 +545,6 @@ class ReferencesData(DataLayerDomain):
             "legacy_id": group.legacy_id,
             "modify": data.modify or False,
             "modify_otu": data.modify_otu or False,
-            "remove": data.remove or False,
         }
 
         await self._mongo.references.update_one(
@@ -707,7 +696,6 @@ class ReferencesData(DataLayerDomain):
             "created_at": virtool.utils.timestamp(),
             "modify": data.modify or False,
             "modify_otu": data.modify_otu or False,
-            "remove": data.remove or False,
         }
 
         await self._mongo.references.update_one(

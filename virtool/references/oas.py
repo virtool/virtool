@@ -104,7 +104,6 @@ class ReferenceRightsRequest(BaseModel):
     modify_otu: bool | None = Field(
         description="allow members to modify the reference’s member OTUs",
     )
-    remove: bool | None = Field(description="allow members to remove the reference")
 
     class Config:
         schema_extra = {"example": {"build": True, "modify": True}}

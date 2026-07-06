@@ -7,10 +7,6 @@
         'doc': 'https://www.virtool.ca/docs/api/account',
         'url': '/account',
       }),
-      'admin': dict({
-        'doc': 'https://www.virtool.ca/docs/api/admin',
-        'url': '/admin',
-      }),
       'analyses': dict({
         'doc': 'https://www.virtool.ca/docs/api/analyses',
         'url': '/analyses',
@@ -38,10 +34,6 @@
       'jobs': dict({
         'doc': 'https://www.virtool.ca/docs/api/jobs',
         'url': '/jobs',
-      }),
-      'labels': dict({
-        'doc': 'https://www.virtool.ca/docs/api/labels',
-        'url': '/labels',
       }),
       'otus': dict({
         'doc': 'https://www.virtool.ca/docs/api/otus',
@@ -88,10 +80,6 @@
         'doc': 'https://www.virtool.ca/docs/api/account',
         'url': '/account',
       }),
-      'admin': dict({
-        'doc': 'https://www.virtool.ca/docs/api/admin',
-        'url': '/admin',
-      }),
       'analyses': dict({
         'doc': 'https://www.virtool.ca/docs/api/analyses',
         'url': '/analyses',
@@ -119,10 +107,6 @@
       'jobs': dict({
         'doc': 'https://www.virtool.ca/docs/api/jobs',
         'url': '/jobs',
-      }),
-      'labels': dict({
-        'doc': 'https://www.virtool.ca/docs/api/labels',
-        'url': '/labels',
       }),
       'otus': dict({
         'doc': 'https://www.virtool.ca/docs/api/otus',
@@ -169,10 +153,6 @@
         'doc': 'https://www.virtool.ca/docs/api/account',
         'url': '/account',
       }),
-      'admin': dict({
-        'doc': 'https://www.virtool.ca/docs/api/admin',
-        'url': '/admin',
-      }),
       'analyses': dict({
         'doc': 'https://www.virtool.ca/docs/api/analyses',
         'url': '/analyses',
@@ -200,10 +180,6 @@
       'jobs': dict({
         'doc': 'https://www.virtool.ca/docs/api/jobs',
         'url': '/jobs',
-      }),
-      'labels': dict({
-        'doc': 'https://www.virtool.ca/docs/api/labels',
-        'url': '/labels',
       }),
       'otus': dict({
         'doc': 'https://www.virtool.ca/docs/api/otus',

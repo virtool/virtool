@@ -61,7 +61,6 @@ class SQLReferenceGroup(Base):
     build: Mapped[bool] = mapped_column(Boolean, default=False)
     modify: Mapped[bool] = mapped_column(Boolean, default=False)
     modify_otu: Mapped[bool] = mapped_column(Boolean, default=False)
-    remove: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime)
 
 
@@ -77,5 +76,4 @@ class SQLReferenceUser(Base):
     build: Mapped[bool] = mapped_column(Boolean, default=False)
     modify: Mapped[bool] = mapped_column(Boolean, default=False)
     modify_otu: Mapped[bool] = mapped_column(Boolean, default=False)
-    remove: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime)
