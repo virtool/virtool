@@ -9,12 +9,12 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
 import virtool.utils
-from virtool.hmm.sql import HMM_STATUS_ID, SQLHMM, SQLHMMStatus
 from virtool.hmm.releases import (
     GetReleaseError,
     ReleaseType,
     fetch_release_manifest_from_virtool,
 )
+from virtool.hmm.sql import HMM_STATUS_ID, SQLHMM, SQLHMMStatus
 from virtool.hmm.utils import format_hmm_release
 from virtool.types import Document
 
