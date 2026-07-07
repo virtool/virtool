@@ -33,8 +33,8 @@ name = "backfill reference ids to integers"
 created_at = arrow.get("2026-07-06 23:05:46.057817")
 revision_id = "xgqo66avrcdh"
 
-alembic_down_revision = "91b32f49a8b2"
-virtool_down_revision = None
+alembic_down_revision = None
+virtool_down_revision = "0uwpffz8adx0"
 
 # Change this if an Alembic revision is required to run this migration.
 required_alembic_revision = None

@@ -642,6 +642,13 @@
       'applied_at': datetime,
       'created_at': datetime,
       'id': 92,
+      'name': 'purge orphaned references',
+      'revision': '0uwpffz8adx0',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 93,
       'name': 'backfill reference ids to integers',
       'revision': 'xgqo66avrcdh',
     }),
