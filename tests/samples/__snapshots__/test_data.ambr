@@ -193,7 +193,7 @@
     'notes': '',
     'nuvs': False,
     'paired': False,
-    'pathoscope': True,
+    'pathoscope': False,
     'quality': dict({
       'bases': list([
         list([
@@ -277,8 +277,8 @@
     }),
     'workflows': dict({
       'aodp': <WorkflowState.INCOMPATIBLE: 'incompatible'>,
-      'nuvs': <WorkflowState.PENDING: 'pending'>,
-      'pathoscope': <WorkflowState.COMPLETE: 'complete'>,
+      'nuvs': <WorkflowState.NONE: 'none'>,
+      'pathoscope': <WorkflowState.NONE: 'none'>,
     }),
   })
 # ---

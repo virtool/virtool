@@ -1,226 +1,12 @@
 import pytest
-from aiohttp.test_utils import make_mocked_request
 from pytest_mock import MockerFixture
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner
-from virtool.analyses.sql import SQLAnalysis
 from virtool.data.utils import get_data_from_app
-from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
-from virtool.samples.db import (
-    compose_sample_workflow_query,
-    create_sample,
-    define_initial_workflows,
-    derive_workflow_state,
-    recalculate_workflow_tags,
-)
-from virtool.samples.sql import SQLLegacySample
-from virtool.samples.utils import calculate_workflow_tags
-from virtool.utils import timestamp
+from virtool.samples.db import compose_sample_workflow_filter, create_sample
 from virtool.workflow.pytest_plugin.utils import StaticTime
-
-
-class TestCalculateWorkflowTags:
-    @pytest.mark.parametrize(
-        ("path_ready", "path_tag"),
-        [
-            ([False, False], "ip"),
-            ([True, False], True),
-            ([False, True], True),
-            ([True, True], True),
-        ],
-    )
-    @pytest.mark.parametrize(
-        ("nuvs_ready", "nuvs_tag"),
-        [
-            ([False, False], "ip"),
-            ([True, False], True),
-            ([False, True], True),
-            ([True, True], True),
-        ],
-    )
-    def test(self, path_ready, path_tag, nuvs_ready, nuvs_tag):
-        """Test that the function returns the correct update dict for every
-        combination of pathoscope and nuvs ready states.
-        """
-        index = 0
-
-        path_ready_1, path_ready_2 = path_ready
-        nuvs_ready_1, nuvs_ready_2 = nuvs_ready
-
-        documents = [
-            {"_id": index, "ready": path_ready_1, "workflow": "pathoscope"},
-            {"_id": index, "ready": path_ready_2, "workflow": "pathoscope"},
-            {"_id": index, "ready": nuvs_ready_1, "workflow": "nuvs"},
-            {"_id": index, "ready": nuvs_ready_2, "workflow": "nuvs"},
-        ]
-
-        tags = calculate_workflow_tags(documents)
-
-        assert tags == {"pathoscope": path_tag, "nuvs": nuvs_tag}
-
-
-async def test_recalculate_workflow_tags(
-    fake: DataFaker,
-    mocker: MockerFixture,
-    mongo: Mongo,
-    pg: AsyncEngine,
-):
-    user = await fake.users.create()
-
-    await mongo.samples.insert_one({"_id": "test", "pathoscope": False, "nuvs": False})
-
-    def make_legacy_sample(legacy_id: str) -> SQLLegacySample:
-        return SQLLegacySample(
-            legacy_id=legacy_id,
-            name=legacy_id,
-            library_type="normal",
-            created_at=timestamp(),
-            user_id=user.id,
-        )
-
-    async with AsyncSession(pg) as session:
-        session.add_all(
-            [make_legacy_sample("test"), make_legacy_sample("other")],
-        )
-        await session.flush()
-
-        sample_ids = {
-            row.legacy_id: row.id
-            for row in (await session.execute(select(SQLLegacySample))).scalars()
-        }
-
-        def make_row(legacy_id: str, sample: str, workflow: str, *, ready: bool):
-            return SQLAnalysis(
-                legacy_id=legacy_id,
-                created_at=timestamp(),
-                updated_at=timestamp(),
-                workflow=workflow,
-                ready=ready,
-                sample=sample,
-                sample_id=sample_ids[sample],
-                reference="ref",
-                index="index",
-                user_id=user.id,
-            )
-
-        session.add_all(
-            [
-                make_row("test_1", "test", "pathoscope", ready=False),
-                make_row("test_2", "test", "pathoscope", ready=True),
-                make_row("test_3", "test", "nuvs", ready=True),
-                # Belongs to another sample and must be excluded.
-                make_row("test_4", "other", "pathoscope", ready=True),
-            ],
-        )
-        await session.commit()
-
-    m = mocker.patch(
-        "virtool.samples.utils.calculate_workflow_tags",
-        return_value={"pathoscope": True, "nuvs": "ip"},
-    )
-
-    await recalculate_workflow_tags(mongo, pg, "test")
-
-    expected = [
-        {"workflow": "pathoscope", "ready": False},
-        {"workflow": "pathoscope", "ready": True},
-        {"workflow": "nuvs", "ready": True},
-    ]
-
-    def key(analysis: dict) -> tuple:
-        return analysis["workflow"], analysis["ready"]
-
-    assert sorted(m.call_args[0][0], key=key) == sorted(expected, key=key)
-
-    assert await mongo.samples.find_one() == {
-        "_id": "test",
-        "pathoscope": True,
-        "nuvs": "ip",
-        "workflows": {
-            "aodp": "incompatible",
-            "nuvs": "complete",
-            "pathoscope": "complete",
-        },
-    }
-
-
-class TestDeriveWorkflowStates:
-    @pytest.mark.parametrize("library_type", ["amplicon", "normal", "srna", "other"])
-    def test_define_initial_workflows(self, library_type, snapshot):
-        """Test that initial workflow states are correctly defined."""
-        workflow_states = define_initial_workflows(library_type=library_type)
-        assert workflow_states == snapshot
-
-    @pytest.mark.parametrize("workflow_name", ["nuvs", "pathoscope"])
-    @pytest.mark.parametrize(
-        ("analysis_states", "final_workflow_state"),
-        [
-            ((False, False), "pending"),
-            ((True, False), "complete"),
-            ((False, True), "complete"),
-            ((True, True), "complete"),
-        ],
-    )
-    def test_derive_workflow_states(
-        self,
-        workflow_name: str,
-        analysis_states: tuple[bool, bool],
-        final_workflow_state: str,
-    ):
-        """Test that workflows are set to complete and pending as expected."""
-        index = 0
-        library_type = "other"
-        ready_1, ready_2 = analysis_states
-
-        documents = [
-            {"_id": index, "ready": ready_1, "workflow": workflow_name},
-            {"_id": index, "ready": ready_2, "workflow": workflow_name},
-        ]
-
-        final_workflow_states = derive_workflow_state(documents, library_type)
-
-        expected_workflow_states = {
-            "workflows": {
-                "aodp": "incompatible",
-                "nuvs": "none",
-                "pathoscope": "none",
-            },
-        }
-
-        expected_workflow_states["workflows"][workflow_name] = final_workflow_state
-
-        assert final_workflow_states == expected_workflow_states
-
-    @pytest.mark.parametrize(
-        ("analysis_states", "final_workflow_state"),
-        [
-            ([False, False], "pending"),
-            ([True, False], "complete"),
-            ([False, True], "complete"),
-            ([True, True], "complete"),
-        ],
-    )
-    def test_derive_aodp_workflow_states(self, analysis_states, final_workflow_state):
-        index = 0
-        library_type = "amplicon"
-        ready_1, ready_2 = analysis_states
-
-        documents = [
-            {"_id": index, "ready": ready_1, "workflow": "aodp"},
-            {"_id": index, "ready": ready_2, "workflow": "aodp"},
-        ]
-
-        assert derive_workflow_state(documents, library_type) == {
-            "workflows": {
-                "aodp": final_workflow_state,
-                "nuvs": "incompatible",
-                "pathoscope": "incompatible",
-            },
-        }
 
 
 async def test_create_sample(
@@ -256,38 +42,36 @@ async def test_create_sample(
     assert await mongo.samples.find_one() == snapshot
 
 
-class TestComposeWorkflowQuery:
+class TestComposeSampleWorkflowFilter:
     @pytest.mark.parametrize(
         "workflows",
         [
-            ["pathoscope:ready", "foo:pending", "foo:none"],
-            ["pathoscope:ready", " foo:pending", "foo:none"],
+            ["pathoscope:ready"],
+            ["pathoscope:ready", "nuvs:pending", "nuvs:none"],
+            ["pathoscope:bar", "pathoscope:ready"],
         ],
-        ids=["single", "multiple"],
+        ids=["single", "multiple", "some_invalid"],
     )
-    def test(self, workflows):
-        """Test that the workflow query is composed of a single `workflows` parameter as well as
-        two.
-
-        """
-        result = compose_sample_workflow_query(workflows)
-
-        assert len(result) == 2
-        assert result["pathoscope"]["$in"] == [True]
-        assert set(result["foo"]["$in"]) == {False, "ip"}
+    def test_valid(self, workflows: list[str]):
+        """A parseable query yields a predicate."""
+        assert compose_sample_workflow_filter(workflows) is not None
 
     def test_empty(self):
-        """Check that `None` is returned when there is no `workflows` parameter."""
-        req = make_mocked_request("GET", "/samples?find=foo")
-
-        assert compose_sample_workflow_query(req.query) is None
-
-    def test_some_conditions_invalid(self):
-        """Check that an invalid condition doesn't make it into the query."""
-        assert compose_sample_workflow_query(
-            ["pathoscope:bar", "pathoscope:ready"],
-        ) == {"pathoscope": {"$in": [True]}}
+        """An empty query yields no predicate."""
+        assert compose_sample_workflow_filter([]) is None
 
     def test_all_conditions_invalid(self):
-        """Check that if no valid conditions are found, `None` is returned."""
-        assert compose_sample_workflow_query(["pathoscope:bar"]) is None
+        """A query with only invalid conditions yields no predicate."""
+        assert compose_sample_workflow_filter(["pathoscope:bar"]) is None
+
+    def test_unknown_workflow_dropped(self):
+        """An unknown workflow name yields no predicate rather than a NOT EXISTS.
+
+        A ``none`` condition on a bogus workflow would otherwise match nearly every
+        sample; it must be ignored like any other unrecognised filter.
+        """
+        assert compose_sample_workflow_filter(["nuuvs:none"]) is None
+        assert (
+            compose_sample_workflow_filter(["nuuvs:none", "pathoscope:ready"])
+            is not None
+        )
