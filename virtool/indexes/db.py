@@ -14,13 +14,14 @@ import virtool.pg.utils
 import virtool.references.db
 import virtool.utils
 from virtool.api.utils import paginate
-from virtool.data.topg import both_transactions
+from virtool.data.topg import both_transactions, compose_legacy_id_subquery
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.sql import SQLIndexFile
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
 from virtool.references.db import compose_archived_filter
+from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.transforms import AttachUserTransform
@@ -147,7 +148,7 @@ async def create(
     """
     index_version, manifest = await asyncio.gather(
         get_next_version(mongo, ref_id),
-        virtool.references.db.get_manifest(mongo, ref_id),
+        virtool.references.db.get_manifest(mongo, pg, ref_id),
     )
 
     document = {
@@ -171,7 +172,8 @@ async def create(
         await pg_session.execute(
             update(SQLLegacyHistory)
             .where(
-                SQLLegacyHistory.reference == ref_id,
+                SQLLegacyHistory.reference_id
+                == compose_legacy_id_subquery(SQLReference, ref_id),
                 SQLLegacyHistory.index.is_(None),
             )
             .values(index=document["_id"], index_version=str(index_version)),
@@ -368,7 +370,10 @@ async def get_unbuilt_stats(
 
     if ref_id:
         ref_query["reference.id"] = ref_id
-        history_filters.append(SQLLegacyHistory.reference == ref_id)
+        history_filters.append(
+            SQLLegacyHistory.reference_id
+            == compose_legacy_id_subquery(SQLReference, ref_id),
+        )
 
     async with AsyncSession(pg) as session:
         change_count, modified_otu_count = (

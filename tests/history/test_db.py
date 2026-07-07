@@ -358,6 +358,35 @@ async def test_patch_to_version(
     assert reverted_change_ids == snapshot(name="reverted_change_ids")
 
 
+def test_stamp_reference():
+    """Stamping overwrites ``reference.id`` on the OTU and every nested sequence with
+    the authoritative integer id, replacing whatever stale value a diff carried.
+    """
+    otu = {
+        "_id": "6116cba1",
+        "reference": {"id": "hxn167"},
+        "isolates": [
+            {
+                "id": "cab8b360",
+                "sequences": [
+                    {"_id": "KX269872", "reference": {"id": "hxn167"}},
+                    {"_id": "KX269873", "reference": {"id": "hxn167"}},
+                ],
+            },
+            {"id": "bcb8b361", "sequences": [{"_id": "KX269874"}]},
+        ],
+    }
+
+    virtool.history.db._stamp_reference(otu, 42)
+
+    assert otu["reference"] == {"id": 42}
+    assert [
+        sequence["reference"]
+        for isolate in otu["isolates"]
+        for sequence in isolate["sequences"]
+    ] == [{"id": 42}, {"id": 42}, {"id": 42}]
+
+
 async def test_patch_to_version_intermediate(
     create_mock_history,
     mongo: Mongo,

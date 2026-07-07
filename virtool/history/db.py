@@ -41,11 +41,11 @@ asyncpg caps bind parameters per statement at 32767. Each row binds three
 (``change_id``, ``history_id``, and ``diff``).
 """
 
-_LEGACY_HISTORY_CHUNK_SIZE = 32767 // 12
+_LEGACY_HISTORY_CHUNK_SIZE = 32767 // 11
 """Max ``legacy_history`` rows per statement.
 
-asyncpg caps bind parameters per statement at 32767. Each row binds twelve
-columns: the eleven from :func:`legacy_history_values` plus the resolved
+asyncpg caps bind parameters per statement at 32767. Each row binds eleven
+columns: the ten from :func:`legacy_history_values` plus the resolved
 ``reference_id``.
 """
 
@@ -68,7 +68,6 @@ def legacy_history_values(document: Document) -> dict:
         "otu": document["otu"]["id"],
         "otu_name": document["otu"]["name"],
         "otu_version": None if otu_version == "removed" else str(otu_version),
-        "reference": document["reference"]["id"],
         "index": None if index_document["id"] == "unbuilt" else index_document["id"],
         "index_version": (
             None
@@ -152,32 +151,38 @@ async def bulk_insert_history(
 
     legacy_rows = [legacy_history_values(document) for document in documents]
 
-    async with AsyncSession(pg) as session:
-        reference_legacy_ids = {row["reference"] for row in legacy_rows}
+    embedded_reference_ids = {document["reference"]["id"] for document in documents}
 
-        reference_id_map = {
-            legacy_id: id_
-            for id_, legacy_id in (
+    async with AsyncSession(pg) as session:
+        rows = (
+            (
                 await session.execute(
                     select(SQLReference.id, SQLReference.legacy_id).where(
                         compose_legacy_id_multi_expression(
                             SQLReference,
-                            reference_legacy_ids,
+                            embedded_reference_ids,
                         ),
                     ),
                 )
             ).all()
+            if embedded_reference_ids
+            else []
+        )
+
+        reference_id_map: dict[int | str, int] = {
+            **{id_: id_ for id_, _ in rows},
+            **{legacy_id: id_ for id_, legacy_id in rows if legacy_id is not None},
         }
 
-        unresolved = reference_legacy_ids - reference_id_map.keys()
+        unresolved = embedded_reference_ids - reference_id_map.keys()
 
         if unresolved:
             raise ValueError(
-                f"References not found in postgres: {sorted(unresolved)}",
+                f"References not found in postgres: {sorted(unresolved, key=str)}",
             )
 
-        for row in legacy_rows:
-            row["reference_id"] = reference_id_map[row["reference"]]
+        for row, document in zip(legacy_rows, documents, strict=True):
+            row["reference_id"] = reference_id_map[document["reference"]["id"]]
 
         history_ids: dict[str, int] = {}
 
@@ -402,7 +407,7 @@ def legacy_history_document(row: SQLLegacyHistory, handle: str) -> Document:
         "description": row.description,
         "method_name": row.method_name,
         "otu": {"id": row.otu, "name": row.otu_name, "version": otu_version},
-        "reference": {"id": row.reference},
+        "reference": {"id": row.reference_id},
         "index": index,
         "user": {"id": row.user_id, "handle": handle},
     }
@@ -665,6 +670,21 @@ async def get_most_recent_change(pg: AsyncEngine, otu_id: str) -> Document | Non
     }
 
 
+def _stamp_reference(otu: Document, reference_id: int | str) -> None:
+    """Overwrite the embedded ``reference.id`` on a joined OTU and all of its sequences.
+
+    A joined OTU reconstructed from a diff carries whatever ``reference.id`` was stored
+    in that historical snapshot, which may be a stale legacy string. Because an OTU's
+    parent reference never changes, the authoritative id is restamped here so patched
+    OTUs and their sequences carry the current (integer) reference.
+    """
+    otu["reference"] = {"id": reference_id}
+
+    for isolate in otu.get("isolates", []):
+        for sequence in isolate.get("sequences", []):
+            sequence["reference"] = {"id": reference_id}
+
+
 def _change_to_revert(row: SQLLegacyHistory) -> Document:
     """Build the minimal change document that :func:`patch_to_version` reverts.
 
@@ -769,6 +789,7 @@ async def patch_to_version(
     # early break of the legacy Mongo cursor so a heavily-edited otu never loads its
     # whole history.
     changes_to_revert = []
+    reference_id_from_history: int | str | None = None
 
     async with AsyncSession(pg) as session:
         result = await session.stream_scalars(
@@ -781,6 +802,9 @@ async def patch_to_version(
         )
 
         async for row in result:
+            if reference_id_from_history is None:
+                reference_id_from_history = row.reference_id or row.reference
+
             otu_version = coerce_otu_version(row.otu_version)
 
             if otu_version == "removed" or otu_version > version:
@@ -802,6 +826,16 @@ async def patch_to_version(
 
         else:
             patched = dictdiffer.patch(dictdiffer.swap(diff), patched)
+
+    if patched:
+        # An OTU's parent reference is immutable, so the authoritative id is the live
+        # OTU's when it still exists, falling back to the history rows for an OTU that
+        # was removed and no longer has a live document.
+        reference_id = (
+            current["reference"]["id"] if current else reference_id_from_history
+        )
+
+        _stamp_reference(patched, reference_id)
 
     if current == {}:
         current = None

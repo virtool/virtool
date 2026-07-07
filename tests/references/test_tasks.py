@@ -9,6 +9,7 @@ from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
 
 from virtool.data.layer import DataLayer
+from virtool.data.topg import compose_legacy_id_subquery
 from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.mongo.core import Mongo
@@ -278,7 +279,7 @@ async def test_clone_reference_task(
     pg: AsyncEngine,
     static_time: StaticTime,
 ):
-    manifest = await get_manifest(mongo, create_reference)
+    manifest = await get_manifest(mongo, pg, create_reference)
 
     assert len(manifest) == 20
 
@@ -337,7 +338,10 @@ async def test_clone_reference_task(
         query = select(func.count()).select_from(SQLLegacyHistory)
 
         if reference is not None:
-            query = query.where(SQLLegacyHistory.reference == reference)
+            query = query.where(
+                SQLLegacyHistory.reference_id
+                == compose_legacy_id_subquery(SQLReference, reference),
+            )
 
         async with AsyncSession(pg) as session:
             return await session.scalar(query)
@@ -509,7 +513,7 @@ class TestCloneReferenceDualWrite:
         static_time: StaticTime,
     ):
         """A failed clone insertion rolls back the Postgres reference row."""
-        manifest = await get_manifest(mongo, create_reference)
+        manifest = await get_manifest(mongo, pg, create_reference)
 
         user = await fake.users.create()
 

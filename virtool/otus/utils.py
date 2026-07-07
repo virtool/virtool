@@ -67,6 +67,23 @@ def find_isolate(isolates: list[dict], isolate_id: str) -> dict:
     return next((isolate for isolate in isolates if isolate["id"] == isolate_id), None)
 
 
+def strip_sequence_references(isolate: Document) -> Document:
+    """Drop the parent-reference field from an isolate's nested sequences.
+
+    A sequence inherits its reference from the parent OTU, so the OTU isolate and
+    sequence resource shapes omit it (see ``OTUSequence``). Joined isolates carry the
+    reference embedded in each Mongo sequence document; strip it before returning an
+    isolate resource so the embedded ``reference.id`` is never surfaced directly.
+    """
+    return {
+        **isolate,
+        "sequences": [
+            {key: value for key, value in sequence.items() if key != "reference"}
+            for sequence in isolate.get("sequences", [])
+        ],
+    }
+
+
 def format_otu(
     joined: Document | None,
     issues: Document | bool | None = False,

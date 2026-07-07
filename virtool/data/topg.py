@@ -176,3 +176,30 @@ async def resolve_legacy_id(
             select(model.id).where(compose_legacy_id_single_expression(model, id_)),
         )
     ).scalar_one_or_none()
+
+
+async def compose_legacy_id_mongo_match(
+    pg: AsyncEngine,
+    model: HasLegacyAndModernIDs,
+    id_: int | str,
+) -> dict:
+    """Build a Mongo match value for an embedded reference that may hold either the
+    legacy string id or the integer primary key of ``model``.
+
+    While a collection is mid-migration, embedded ids may be stored as the legacy
+    Mongo string or as the integer ``model`` primary key, so both forms must match.
+
+    :param pg: the application PostgreSQL engine
+    :param model: the SQLAlchemy model the embedded id points at
+    :param id_: a single legacy or modern id
+    :return: a Mongo ``$in`` match value covering both id forms
+    """
+    async with AsyncSession(pg) as session:
+        resolved = await resolve_legacy_id(session, model, id_)
+
+    values: list[int | str] = [id_]
+
+    if resolved is not None and resolved != id_:
+        values.append(resolved)
+
+    return {"$in": values}

@@ -44,9 +44,9 @@ class SQLLegacyHistory(Base):
 
     - ``otu``/``index`` ids are bare string columns with no foreign key, because
       those collections have not been migrated to Postgres yet.
-    - ``reference`` is mid-migration: the legacy Mongo string is retained
-      alongside the new ``reference_id`` foreign key while readers move over. The
-      bare ``reference`` column is dropped in a later cleanup revision.
+    - ``reference`` is mid-migration: the legacy Mongo string column is no longer
+      written now that ``reference_id`` is the source of truth, and it is nullable
+      until it is dropped in a later cleanup revision.
     - ``user.id`` becomes a real foreign key to ``users.id``.
     - ``otu_version`` and ``index_version`` are strings because Mongo stores both
       integer versions and sentinel values such as ``"removed"`` and ``"unbuilt"``.
@@ -66,7 +66,7 @@ class SQLLegacyHistory(Base):
     otu: Mapped[str]
     otu_name: Mapped[str]
     otu_version: Mapped[str | None]
-    reference: Mapped[str] = mapped_column(index=True)
+    reference: Mapped[str | None] = mapped_column(index=True, nullable=True)
     reference_id: Mapped[int | None] = mapped_column(
         BigInteger,
         ForeignKey("legacy_references.id"),

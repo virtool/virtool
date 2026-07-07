@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 from virtool.api.client import UserClient
+from virtool.data.topg import compose_legacy_id_subquery
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.models.enums import HistoryMethod
@@ -149,7 +150,7 @@ class TestComposeRightsFilter:
         }
 
 
-async def test_create_manifest(mongo: Mongo, test_otu: dict):
+async def test_create_manifest(mongo: Mongo, pg: AsyncEngine, test_otu: dict):
     await mongo.otus.insert_many(
         [
             test_otu,
@@ -160,7 +161,7 @@ async def test_create_manifest(mongo: Mongo, test_otu: dict):
         session=None,
     )
 
-    assert await get_manifest(mongo, "hxn167") == {
+    assert await get_manifest(mongo, pg, "hxn167") == {
         "6116cba1": 0,
         "foo": 5,
         "bar": 11,
@@ -416,7 +417,10 @@ async def test_populate_insert_only_reference_writes_legacy_history(
             (
                 await pg_session.execute(
                     select(SQLLegacyHistory)
-                    .where(SQLLegacyHistory.reference == ref_id)
+                    .where(
+                        SQLLegacyHistory.reference_id
+                        == compose_legacy_id_subquery(SQLReference, ref_id),
+                    )
                     .order_by(SQLLegacyHistory.legacy_id),
                 )
             )
@@ -426,7 +430,7 @@ async def test_populate_insert_only_reference_writes_legacy_history(
 
     assert [row.legacy_id for row in rows] == ["lhotu001.0", "lhotu002.0"]
     assert all(row.user_id == user.id for row in rows)
-    assert all(row.reference == ref_id for row in rows)
+    assert all(row.reference is None and row.reference_id is not None for row in rows)
     assert all(row.otu_version == "0" for row in rows)
     assert all(row.index is None and row.index_version is None for row in rows)
     assert rows == snapshot(name="legacy_history")

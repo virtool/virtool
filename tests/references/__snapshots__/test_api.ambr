@@ -236,7 +236,7 @@
       'lower_name': 'tobacco mosaic virus',
       'name': 'Tobacco mosaic virus',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'schema': list([
       ]),
@@ -350,7 +350,7 @@
       'lower_name': 'tobacco mosaic virus',
       'name': 'Tobacco mosaic virus',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'schema': list([
       ]),
@@ -464,7 +464,7 @@
       'lower_name': 'tobacco mosaic virus',
       'name': 'Tobacco mosaic virus',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'schema': list([
       ]),

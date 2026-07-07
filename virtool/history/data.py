@@ -111,16 +111,16 @@ class HistoryData:
 
         return History(**document)
 
-    async def get_reference_id(self, change_id: str) -> str:
+    async def get_reference_id(self, change_id: str) -> int:
         """Get the id of the reference a change belongs to.
 
         :param change_id: the ID of the change
-        :return: the reference ID
+        :return: the integer reference ID
         """
         async with AsyncSession(self._pg) as session:
-            reference = (
+            reference_id = (
                 await session.execute(
-                    select(SQLLegacyHistory.reference).where(
+                    select(SQLLegacyHistory.reference_id).where(
                         compose_legacy_id_single_expression(
                             SQLLegacyHistory,
                             change_id,
@@ -129,10 +129,10 @@ class HistoryData:
                 )
             ).scalar_one_or_none()
 
-        if reference is None:
+        if reference_id is None:
             raise ResourceNotFoundError()
 
-        return reference
+        return reference_id
 
     async def delete(self, change_id: str) -> None:
         """Delete a change given its ID.

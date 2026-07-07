@@ -77,6 +77,7 @@ class OTUView(PydanticView):
 
         """
         mongo = get_mongo_from_req(self.request)
+        pg: AsyncEngine = self.request.app["pg"]
 
         # Get existing complete otu record, at the same time ensuring it exists. Send a
         # ``404`` if not.
@@ -110,6 +111,7 @@ class OTUView(PydanticView):
         # Make sure new name or abbreviation are not already in use.
         if message := await virtool.otus.db.check_name_and_abbreviation(
             mongo,
+            pg,
             ref_id,
             name,
             abbreviation,
@@ -182,6 +184,7 @@ class IsolatesView(PydanticView):
 
         """
         mongo = get_mongo_from_req(self.request)
+        pg: AsyncEngine = self.request.app["pg"]
 
         reference = await get_one_field(mongo.otus, "reference", otu_id)
 
@@ -200,6 +203,7 @@ class IsolatesView(PydanticView):
         # All source types are stored in lower case.
         if not await virtool.references.db.check_source_type(
             mongo,
+            pg,
             reference["id"],
             source_type,
         ):
@@ -269,7 +273,7 @@ class IsolateView(PydanticView):
             base_processor(sequence)
             async for sequence in mongo.sequences.find(
                 {"otu_id": otu_id, "isolate_id": isolate_id},
-                {"otu_id": False, "isolate_id": False},
+                {"otu_id": False, "isolate_id": False, "reference": False},
             )
         ]
 
@@ -288,6 +292,7 @@ class IsolateView(PydanticView):
 
         """
         mongo = get_mongo_from_req(self.request)
+        pg: AsyncEngine = self.request.app["pg"]
 
         reference = await get_one_field(
             mongo.otus,
@@ -317,6 +322,7 @@ class IsolateView(PydanticView):
 
             if not await virtool.references.db.check_source_type(
                 mongo,
+                pg,
                 ref_id,
                 source_type,
             ):

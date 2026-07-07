@@ -659,5 +659,19 @@
       'name': 'complete update_sample_workflows task rows',
       'revision': '0fhc2sfnpu9v',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 95,
+      'name': 'make legacy history reference nullable',
+      'revision': '48aa4cef7b47',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 96,
+      'name': 'backfill embedded reference ids to integers',
+      'revision': 'a5hg3lbp6rz1',
+    }),
   ])
 # ---

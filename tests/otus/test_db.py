@@ -24,13 +24,13 @@ from virtool.otus.db import (
     ids=["name_exists", "abbreviation_exists", "both_exist", "neither exist"],
 )
 async def test_check_name_and_abbreviation(
-    name, abbreviation, return_value, mongo, test_otu
+    name, abbreviation, return_value, mongo, pg, test_otu
 ):
     """Test that the function works properly for all possible inputs."""
     await mongo.otus.insert_one(test_otu)
 
     assert (
-        await check_name_and_abbreviation(mongo, "hxn167", name, abbreviation)
+        await check_name_and_abbreviation(mongo, pg, "hxn167", name, abbreviation)
         == return_value
     )
 

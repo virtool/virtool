@@ -19,6 +19,7 @@ from virtool.indexes.db import (
 )
 from virtool.indexes.sql import SQLIndexFile
 from virtool.mongo.core import Mongo
+from virtool.references.sql import SQLReference
 
 
 @pytest.mark.parametrize("index_id", [None, "abc"])
@@ -73,7 +74,7 @@ async def test_create_assigns_index_in_postgres(
     )
 
     def legacy_row(
-        legacy_id: str, reference: str, index: str | None
+        legacy_id: str, reference_id: int, index: str | None
     ) -> SQLLegacyHistory:
         return SQLLegacyHistory(
             legacy_id=legacy_id,
@@ -84,17 +85,36 @@ async def test_create_assigns_index_in_postgres(
             otu=legacy_id,
             otu_name=legacy_id,
             otu_version="0",
-            reference=reference,
+            reference_id=reference_id,
             index=index,
             index_version="0" if index else None,
         )
 
     async with AsyncSession(pg) as session:
+        built_ref = SQLReference(
+            legacy_id="built_ref",
+            name="built_ref",
+            description="",
+            created_at=static_time.datetime,
+            source_types=[],
+            user_id=user.id,
+        )
+        other_ref = SQLReference(
+            legacy_id="other_ref",
+            name="other_ref",
+            description="",
+            created_at=static_time.datetime,
+            source_types=[],
+            user_id=user.id,
+        )
+        session.add_all([built_ref, other_ref])
+        await session.flush()
+
         session.add_all(
             [
-                legacy_row("ref_unbuilt", "built_ref", None),
-                legacy_row("ref_already_built", "built_ref", "prior_index"),
-                legacy_row("other_ref_unbuilt", "other_ref", None),
+                legacy_row("ref_unbuilt", built_ref.id, None),
+                legacy_row("ref_already_built", built_ref.id, "prior_index"),
+                legacy_row("other_ref_unbuilt", other_ref.id, None),
             ],
         )
         await session.commit()
