@@ -14,7 +14,6 @@ from virtool.jobs.pg import (
     SQLJob,
     SQLJobAnalysis,
     SQLJobIndex,
-    SQLJobSample,
 )
 from virtool.migration import MigrationContext
 from virtool.users.pg import SQLUser
@@ -191,9 +190,11 @@ async def _add_job_relationship(
     workflow = job.get("workflow")
     args = job.get("args", {})
 
-    if workflow == "create_sample" and "sample_id" in args:
-        pg_session.add(SQLJobSample(job_id=job_id, sample_id=args["sample_id"]))
-    elif workflow == "build_index" and "index_id" in args:
+    # ``create_sample`` jobs are intentionally not linked here. The sample→job
+    # link is reconstructed from ``legacy_samples.job_id`` when samples are
+    # copied to Postgres, and the retired ``job_samples`` table is no longer
+    # written (see VIR-2530 / VIR-2607).
+    if workflow == "build_index" and "index_id" in args:
         pg_session.add(SQLJobIndex(job_id=job_id, index_id=args["index_id"]))
     elif workflow == "create_subtraction" and "subtraction_id" in args:
         await pg_session.execute(

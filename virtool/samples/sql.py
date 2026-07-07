@@ -80,7 +80,9 @@ class SQLLegacySample(Base):
       natively in Postgres can omit it.
     - ``user_id``, ``job_id``, and ``group_id`` are real integer foreign keys
       because ``users``, ``jobs``, and ``groups`` are already migrated. All three
-      are nullable.
+      are nullable. ``job_id`` is unique: a create_sample job produces exactly one
+      sample, so the reverse lookup from a job to its sample is 1:1 and replaces
+      the retired ``job_samples`` link table.
 
     The Mongo ``workflows``, ``nuvs``, and ``pathoscope`` fields are intentionally
     omitted; workflow state is derived on read. ``labels`` and ``subtractions``
@@ -107,6 +109,7 @@ class SQLLegacySample(Base):
             postgresql_where=text("group_read = true"),
         ),
         Index("ix_legacy_samples_group_id", "group_id"),
+        UniqueConstraint("job_id"),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)

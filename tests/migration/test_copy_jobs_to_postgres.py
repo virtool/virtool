@@ -201,37 +201,6 @@ class TestUpgrade:
             assert result.scalar_one() == 1
 
     @pytest.mark.usefixtures("setup_user")
-    async def test_relationship_sample(
-        self,
-        ctx: MigrationContext,
-        static_datetime: datetime,
-    ):
-        """Test that create_sample jobs create job_samples records."""
-        await ctx.mongo.jobs.insert_one(
-            make_job_document(
-                job_id="sample_job",
-                user_id="legacy_user_123",
-                workflow="create_sample",
-                state="complete",
-                created_at=static_datetime,
-                args={"sample_id": "sample_789"},
-            ),
-        )
-
-        await upgrade(ctx)
-
-        async with AsyncSession(ctx.pg) as session:
-            result = await session.execute(
-                text("""
-                    SELECT js.sample_id
-                    FROM job_samples js
-                    JOIN jobs j ON js.job_id = j.id
-                    WHERE j.legacy_id = 'sample_job'
-                """),
-            )
-            assert result.scalar_one() == "sample_789"
-
-    @pytest.mark.usefixtures("setup_user")
     async def test_relationship_index(
         self,
         ctx: MigrationContext,

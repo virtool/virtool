@@ -6,7 +6,7 @@ written now that ``reference_id`` is the source of truth. New rows leave it
 revision.
 
 Revision ID: 48aa4cef7b47
-Revises: 91b32f49a8b2
+Revises: df76f45e6f0e
 Create Date: 2026-07-07 21:14:06.497689+00:00
 
 """
@@ -16,7 +16,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "48aa4cef7b47"
-down_revision = "91b32f49a8b2"
+down_revision = "df76f45e6f0e"
 branch_labels = None
 depends_on = None
 
