@@ -645,5 +645,12 @@
       'name': 'backfill reference ids to integers',
       'revision': 'xgqo66avrcdh',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 93,
+      'name': 'delete update_sample_workflows task rows',
+      'revision': '0fhc2sfnpu9v',
+    }),
   ])
 # ---
