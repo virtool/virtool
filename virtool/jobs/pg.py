@@ -8,7 +8,7 @@ resources.
 
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, ForeignKey, String
+from sqlalchemy import BigInteger, CheckConstraint, ForeignKey, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -98,5 +98,12 @@ class SQLJobSample(Base):
     job_id: Mapped[int] = mapped_column(ForeignKey("jobs.id"), primary_key=True)
     """The job that is creating the sample."""
 
-    sample_id: Mapped[str]
+    sample: Mapped[str]
+    """The legacy Mongo ``_id`` of the sample being created."""
+
+    sample_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("legacy_samples.id"),
+        nullable=True,
+    )
     """The sample being created."""

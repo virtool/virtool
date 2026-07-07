@@ -645,5 +645,12 @@
       'name': 'backfill reference ids to integers',
       'revision': 'xgqo66avrcdh',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 93,
+      'name': 'rename job_samples sample_id and add integer fk',
+      'revision': '9f47a12a8ef6',
+    }),
   ])
 # ---

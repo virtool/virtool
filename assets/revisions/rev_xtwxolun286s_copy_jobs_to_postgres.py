@@ -14,7 +14,6 @@ from virtool.jobs.pg import (
     SQLJob,
     SQLJobAnalysis,
     SQLJobIndex,
-    SQLJobSample,
 )
 from virtool.migration import MigrationContext
 from virtool.users.pg import SQLUser
@@ -31,6 +30,17 @@ _job_subtractions = Table(
     MetaData(),
     Column("job_id", Integer),
     Column("subtraction_id", String),
+)
+
+# ``job_samples.sample_id`` was later renamed to ``sample`` (and a new integer
+# ``sample_id`` FK added). This revision runs earlier in the chain, while the
+# column is still the legacy sample string named ``sample_id``, so it writes
+# through this frozen table rather than the evolved ``SQLJobSample`` model.
+_job_samples = Table(
+    "job_samples",
+    MetaData(),
+    Column("job_id", Integer),
+    Column("sample_id", String),
 )
 
 LEGACY_TO_JOB_STATE: dict[str, JobState] = {
@@ -192,7 +202,12 @@ async def _add_job_relationship(
     args = job.get("args", {})
 
     if workflow == "create_sample" and "sample_id" in args:
-        pg_session.add(SQLJobSample(job_id=job_id, sample_id=args["sample_id"]))
+        await pg_session.execute(
+            _job_samples.insert().values(
+                job_id=job_id,
+                sample_id=args["sample_id"],
+            ),
+        )
     elif workflow == "build_index" and "index_id" in args:
         pg_session.add(SQLJobIndex(job_id=job_id, index_id=args["index_id"]))
     elif workflow == "create_subtraction" and "subtraction_id" in args:

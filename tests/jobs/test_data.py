@@ -26,6 +26,7 @@ from virtool.jobs.pg import (
     SQLJobIndex,
     SQLJobSample,
 )
+from virtool.samples.sql import SQLLegacySample
 from virtool.subtractions.pg import SQLSubtraction
 from virtool.users.models import User
 from virtool.workflow.pytest_plugin.utils import StaticTime
@@ -144,7 +145,12 @@ class TestCreatePostgres:
         fake: DataFaker,
         pg: AsyncEngine,
     ):
-        """Test that create_sample jobs write to job_samples join table."""
+        """Test that create_sample jobs write the legacy sample string.
+
+        The integer ``sample_id`` foreign key is left ``NULL`` on the write path
+        and populated later by the backfill; the write path only records the
+        legacy Mongo sample string in ``sample``.
+        """
         user = await fake.users.create()
 
         job = await jobs_data.create(
@@ -168,7 +174,52 @@ class TestCreatePostgres:
             ).scalar()
 
         assert job_sample is not None
-        assert job_sample.sample_id == "sample_123"
+        assert job_sample.sample == "sample_123"
+        assert job_sample.sample_id is None
+
+    async def test_get_prefers_integer_sample_id(
+        self,
+        jobs_data: JobsData,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """Test that get() reads the integer sample foreign key once backfilled.
+
+        Until the backfill runs, ``sample_id`` is NULL and get() falls back to
+        the legacy ``sample`` string; once populated, get() returns the integer
+        primary key.
+        """
+        user = await fake.users.create()
+
+        job = await jobs_data.create(
+            "create_sample",
+            {"sample_id": "mapped_sample"},
+            user.id,
+            0,
+        )
+
+        assert (await jobs_data.get(job.id)).args["sample_id"] == "mapped_sample"
+
+        async with AsyncSession(pg) as session:
+            sample = SQLLegacySample(
+                legacy_id="mapped_sample",
+                name="mapped_sample",
+                library_type="normal",
+                created_at=arrow.utcnow().naive,
+            )
+            session.add(sample)
+            await session.flush()
+            sample_pk = sample.id
+
+            job_sample = (
+                await session.execute(
+                    select(SQLJobSample).where(SQLJobSample.job_id == job.id),
+                )
+            ).scalar()
+            job_sample.sample_id = sample_pk
+            await session.commit()
+
+        assert (await jobs_data.get(job.id)).args["sample_id"] == sample_pk
 
     async def test_index_join_table(
         self,

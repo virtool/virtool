@@ -206,7 +206,7 @@ class JobsData:
 
             if workflow == "create_sample" and "sample_id" in job_args:
                 session.add(
-                    SQLJobSample(job_id=sql_job.id, sample_id=job_args["sample_id"]),
+                    SQLJobSample(job_id=sql_job.id, sample=job_args["sample_id"]),
                 )
             elif workflow == "build_index" and "index_id" in job_args:
                 session.add(
@@ -229,6 +229,7 @@ class JobsData:
                     SQLJob,
                     SQLUser,
                     SQLJobSample.sample_id,
+                    SQLJobSample.sample,
                     SQLJobIndex.index_id,
                     SQLSubtraction.id.label("subtraction_id"),
                     SQLAnalysis.legacy_id,
@@ -245,12 +246,14 @@ class JobsData:
         if row is None:
             raise ResourceNotFoundError
 
-        sql_job, sql_user, sample_id, index_id, subtraction_id, analysis_id = row
+        sql_job, sql_user, sample_id, sample, index_id, subtraction_id, analysis_id = (
+            row
+        )
 
         args = {
             field: value
             for field, value in (
-                ("sample_id", sample_id),
+                ("sample_id", sample_id if sample_id is not None else sample),
                 ("index_id", index_id),
                 ("subtraction_id", subtraction_id),
                 ("analysis_id", analysis_id),
