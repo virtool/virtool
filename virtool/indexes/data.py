@@ -247,8 +247,6 @@ class IndexData:
             )
 
             index_file.size = size
-            index_file.uploaded_at = virtool.utils.timestamp()
-            index_file.ready = True
 
             index_file_dict = index_file.to_dict()
 
