@@ -1,32 +1,4 @@
 # serializer version: 1
-# name: TestDeriveWorkflowStates.test_define_initial_workflows[amplicon]
-  dict({
-    'aodp': 'none',
-    'nuvs': 'incompatible',
-    'pathoscope': 'incompatible',
-  })
-# ---
-# name: TestDeriveWorkflowStates.test_define_initial_workflows[normal]
-  dict({
-    'aodp': 'incompatible',
-    'nuvs': 'none',
-    'pathoscope': 'none',
-  })
-# ---
-# name: TestDeriveWorkflowStates.test_define_initial_workflows[other]
-  dict({
-    'aodp': 'incompatible',
-    'nuvs': 'none',
-    'pathoscope': 'none',
-  })
-# ---
-# name: TestDeriveWorkflowStates.test_define_initial_workflows[srna]
-  dict({
-    'aodp': 'incompatible',
-    'nuvs': 'none',
-    'pathoscope': 'none',
-  })
-# ---
 # name: test_create_sample
   dict({
     'all_read': True,
@@ -47,20 +19,13 @@
     'locale': '',
     'name': 'foo',
     'notes': 'test',
-    'nuvs': False,
     'paired': False,
-    'pathoscope': False,
     'quality': None,
     'ready': False,
     'subtractions': list([
     ]),
     'user': dict({
       'id': 'bob',
-    }),
-    'workflows': dict({
-      'aodp': 'incompatible',
-      'nuvs': 'none',
-      'pathoscope': 'none',
     }),
   })
 # ---
@@ -84,20 +49,13 @@
     'locale': '',
     'name': 'foo',
     'notes': 'test',
-    'nuvs': False,
     'paired': False,
-    'pathoscope': False,
     'quality': None,
     'ready': False,
     'subtractions': list([
     ]),
     'user': dict({
       'id': 'bob',
-    }),
-    'workflows': dict({
-      'aodp': 'incompatible',
-      'nuvs': 'none',
-      'pathoscope': 'none',
     }),
   })
 # ---

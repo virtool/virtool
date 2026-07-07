@@ -51,11 +51,10 @@ from virtool.samples.checks import (
 )
 from virtool.samples.db import (
     AttachArtifactsAndReadsTransform,
-    AttachMongoSampleFieldsTransform,
+    AttachMongoUploadsTransform,
     AttachUploadsTransform,
-    compose_sample_workflow_query,
-    define_initial_workflows,
-    recalculate_workflow_tags,
+    DeriveWorkflowTagsTransform,
+    compose_sample_workflow_filter,
 )
 from virtool.samples.files import (
     create_artifact_file,
@@ -71,7 +70,12 @@ from virtool.samples.sql import (
     SQLSampleArtifact,
     SQLSampleReads,
 )
-from virtool.samples.utils import SampleRight, sample_file_key, sample_prefix
+from virtool.samples.utils import (
+    SampleRight,
+    define_initial_workflows,
+    sample_file_key,
+    sample_prefix,
+)
 from virtool.storage.cleanup import delete_prefix
 from virtool.storage.protocol import StorageBackend
 from virtool.subtractions.db import (
@@ -82,7 +86,7 @@ from virtool.uploads.sql import SQLUpload
 from virtool.uploads.utils import is_gzip_compressed, upload_file_key
 from virtool.users.pg import SQLUser
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import chunk_list, wait_for_checks
+from virtool.utils import wait_for_checks
 
 logger = get_logger("samples")
 
@@ -214,17 +218,10 @@ class SamplesData(DataLayerDomain):
             )
 
         if workflows:
-            # The workflow tags are not yet stored in Postgres. Resolve the matching
-            # sample ids from Mongo and constrain the Postgres query by them. Moving
-            # this filter into SQL is tracked in VIR-2525.
-            workflow_query = compose_sample_workflow_query(workflows)
+            workflow_filter = compose_sample_workflow_filter(workflows)
 
-            if workflow_query is not None:
-                matching_ids = await self._mongo.samples.distinct(
-                    "_id",
-                    workflow_query,
-                )
-                filters.append(SQLLegacySample.legacy_id.in_(matching_ids))
+            if workflow_filter is not None:
+                filters.append(workflow_filter)
 
         async with AsyncSession(self._pg) as session:
             total_count = await session.scalar(
@@ -262,7 +259,8 @@ class SamplesData(DataLayerDomain):
                 for row in rows
             ],
             [
-                AttachMongoSampleFieldsTransform(self._mongo),
+                AttachMongoUploadsTransform(self._mongo),
+                DeriveWorkflowTagsTransform(),
                 AttachJobTransform(self._pg),
                 AttachLabelsTransform(self._pg),
                 AttachUploadsTransform(self._pg),
@@ -397,7 +395,8 @@ class SamplesData(DataLayerDomain):
         document = await apply_transforms(
             _map_sample_row(row, label_ids, subtraction_ids),
             [
-                AttachMongoSampleFieldsTransform(self._mongo),
+                AttachMongoUploadsTransform(self._mongo),
+                DeriveWorkflowTagsTransform(),
                 AttachArtifactsAndReadsTransform(self._pg),
                 AttachJobTransform(self._pg),
                 AttachLabelsTransform(self._pg),
@@ -577,9 +576,14 @@ class SamplesData(DataLayerDomain):
                     "locale": data.locale,
                     "name": data.name,
                     "notes": data.notes,
+                    # ``nuvs``, ``pathoscope`` and ``workflows`` are now derived on
+                    # read and no longer maintained here. Their initial values are
+                    # still written so replicas from the previous release, which
+                    # read these fields directly, do not 500 on samples created
+                    # mid rolling-deploy. Remove once every reader derives on read.
                     "nuvs": False,
-                    "paired": len(uploads) == 2,
                     "pathoscope": False,
+                    "paired": len(uploads) == 2,
                     "quality": None,
                     "ready": False,
                     "results": None,
@@ -989,17 +993,6 @@ class SamplesData(DataLayerDomain):
                     f"Subtractions do not exist: "
                     f"{','.join(str(s) for s in non_existent_subtractions)}",
                 )
-
-    async def update_sample_workflows(self) -> None:
-        sample_ids = await self._mongo.samples.distinct("_id")
-
-        for chunk in chunk_list(sample_ids, 50):
-            await gather(
-                *[
-                    recalculate_workflow_tags(self._mongo, self._pg, sample_id)
-                    for sample_id in chunk
-                ],
-            )
 
     async def upload_artifact(
         self,

@@ -139,7 +139,7 @@
     'notes': '',
     'nuvs': False,
     'paired': False,
-    'pathoscope': True,
+    'pathoscope': False,
     'quality': None,
     'reads': list([
       dict({
@@ -171,8 +171,8 @@
     }),
     'workflows': dict({
       'aodp': 'incompatible',
-      'nuvs': 'pending',
-      'pathoscope': 'complete',
+      'nuvs': 'none',
+      'pathoscope': 'none',
     }),
   })
 # ---
@@ -275,7 +275,7 @@
     'notes': '',
     'nuvs': False,
     'paired': False,
-    'pathoscope': True,
+    'pathoscope': False,
     'quality': None,
     'reads': list([
       dict({
@@ -307,8 +307,8 @@
     }),
     'workflows': dict({
       'aodp': 'incompatible',
-      'nuvs': 'pending',
-      'pathoscope': 'complete',
+      'nuvs': 'none',
+      'pathoscope': 'none',
     }),
   })
 # ---
@@ -407,7 +407,7 @@
     'notes': '',
     'nuvs': False,
     'paired': False,
-    'pathoscope': True,
+    'pathoscope': False,
     'quality': None,
     'reads': list([
       dict({
@@ -439,8 +439,8 @@
     }),
     'workflows': dict({
       'aodp': 'incompatible',
-      'nuvs': 'pending',
-      'pathoscope': 'complete',
+      'nuvs': 'none',
+      'pathoscope': 'none',
     }),
   })
 # ---
@@ -543,7 +543,7 @@
     'notes': '',
     'nuvs': False,
     'paired': False,
-    'pathoscope': True,
+    'pathoscope': False,
     'quality': None,
     'reads': list([
       dict({
@@ -575,8 +575,8 @@
     }),
     'workflows': dict({
       'aodp': 'incompatible',
-      'nuvs': 'pending',
-      'pathoscope': 'complete',
+      'nuvs': 'none',
+      'pathoscope': 'none',
     }),
   })
 # ---
@@ -675,7 +675,7 @@
     'notes': '',
     'nuvs': False,
     'paired': False,
-    'pathoscope': True,
+    'pathoscope': False,
     'quality': None,
     'reads': list([
       dict({
@@ -707,8 +707,8 @@
     }),
     'workflows': dict({
       'aodp': 'incompatible',
-      'nuvs': 'pending',
-      'pathoscope': 'complete',
+      'nuvs': 'none',
+      'pathoscope': 'none',
     }),
   })
 # ---
@@ -1022,7 +1022,7 @@
     'notes': 'This is a test.',
     'nuvs': False,
     'paired': False,
-    'pathoscope': True,
+    'pathoscope': False,
     'quality': None,
     'reads': list([
       dict({
@@ -1050,8 +1050,8 @@
     }),
     'workflows': dict({
       'aodp': 'incompatible',
-      'nuvs': 'pending',
-      'pathoscope': 'complete',
+      'nuvs': 'none',
+      'pathoscope': 'none',
     }),
   })
 # ---
@@ -1102,7 +1102,7 @@
     'notes': '',
     'nuvs': False,
     'paired': False,
-    'pathoscope': True,
+    'pathoscope': False,
     'quality': dict({
       'bases': list([
         list([
@@ -1144,8 +1144,8 @@
     }),
     'workflows': dict({
       'aodp': 'incompatible',
-      'nuvs': 'pending',
-      'pathoscope': 'complete',
+      'nuvs': 'none',
+      'pathoscope': 'none',
     }),
   })
 # ---
@@ -1179,8 +1179,8 @@
         }),
         'workflows': dict({
           'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
+          'nuvs': 'incompatible',
+          'pathoscope': 'incompatible',
         }),
       }),
       dict({
@@ -1225,9 +1225,9 @@
           'id': 1,
         }),
         'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
+          'aodp': 'incompatible',
+          'nuvs': 'complete',
+          'pathoscope': 'complete',
         }),
       }),
       dict({
@@ -1256,7 +1256,7 @@
           'id': 2,
         }),
         'workflows': dict({
-          'aodp': 'none',
+          'aodp': 'incompatible',
           'nuvs': 'none',
           'pathoscope': 'none',
         }),
@@ -1299,8 +1299,8 @@
         }),
         'workflows': dict({
           'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
+          'nuvs': 'incompatible',
+          'pathoscope': 'incompatible',
         }),
       }),
     ]),
@@ -1341,8 +1341,8 @@
         }),
         'workflows': dict({
           'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
+          'nuvs': 'incompatible',
+          'pathoscope': 'incompatible',
         }),
       }),
       dict({
@@ -1387,9 +1387,9 @@
           'id': 1,
         }),
         'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
+          'aodp': 'incompatible',
+          'nuvs': 'complete',
+          'pathoscope': 'complete',
         }),
       }),
     ]),
@@ -1441,8 +1441,8 @@
         }),
         'workflows': dict({
           'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
+          'nuvs': 'incompatible',
+          'pathoscope': 'incompatible',
         }),
       }),
       dict({
@@ -1487,9 +1487,9 @@
           'id': 1,
         }),
         'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
+          'aodp': 'incompatible',
+          'nuvs': 'complete',
+          'pathoscope': 'complete',
         }),
       }),
     ]),
@@ -1529,7 +1529,7 @@
           'id': 2,
         }),
         'workflows': dict({
-          'aodp': 'none',
+          'aodp': 'incompatible',
           'nuvs': 'none',
           'pathoscope': 'none',
         }),
@@ -1572,8 +1572,8 @@
         }),
         'workflows': dict({
           'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
+          'nuvs': 'incompatible',
+          'pathoscope': 'incompatible',
         }),
       }),
       dict({
@@ -1618,9 +1618,9 @@
           'id': 1,
         }),
         'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
+          'aodp': 'incompatible',
+          'nuvs': 'complete',
+          'pathoscope': 'complete',
         }),
       }),
       dict({
@@ -1649,7 +1649,7 @@
           'id': 2,
         }),
         'workflows': dict({
-          'aodp': 'none',
+          'aodp': 'incompatible',
           'nuvs': 'none',
           'pathoscope': 'none',
         }),
@@ -1692,8 +1692,8 @@
         }),
         'workflows': dict({
           'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
+          'nuvs': 'incompatible',
+          'pathoscope': 'incompatible',
         }),
       }),
       dict({
@@ -1738,9 +1738,9 @@
           'id': 1,
         }),
         'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
+          'aodp': 'incompatible',
+          'nuvs': 'complete',
+          'pathoscope': 'complete',
         }),
       }),
       dict({
@@ -1769,7 +1769,7 @@
           'id': 2,
         }),
         'workflows': dict({
-          'aodp': 'none',
+          'aodp': 'incompatible',
           'nuvs': 'none',
           'pathoscope': 'none',
         }),
@@ -1827,9 +1827,9 @@
           'id': 1,
         }),
         'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
+          'aodp': 'incompatible',
+          'nuvs': 'complete',
+          'pathoscope': 'complete',
         }),
       }),
       dict({
@@ -1858,7 +1858,7 @@
           'id': 2,
         }),
         'workflows': dict({
-          'aodp': 'none',
+          'aodp': 'incompatible',
           'nuvs': 'none',
           'pathoscope': 'none',
         }),
@@ -1901,8 +1901,8 @@
         }),
         'workflows': dict({
           'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
+          'nuvs': 'incompatible',
+          'pathoscope': 'incompatible',
         }),
       }),
     ]),
@@ -1943,8 +1943,8 @@
         }),
         'workflows': dict({
           'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
+          'nuvs': 'incompatible',
+          'pathoscope': 'incompatible',
         }),
       }),
       dict({
@@ -1989,9 +1989,9 @@
           'id': 1,
         }),
         'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
+          'aodp': 'incompatible',
+          'nuvs': 'complete',
+          'pathoscope': 'complete',
         }),
       }),
       dict({
@@ -2020,7 +2020,7 @@
           'id': 2,
         }),
         'workflows': dict({
-          'aodp': 'none',
+          'aodp': 'incompatible',
           'nuvs': 'none',
           'pathoscope': 'none',
         }),
@@ -2078,9 +2078,9 @@
           'id': 1,
         }),
         'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
+          'aodp': 'incompatible',
+          'nuvs': 'complete',
+          'pathoscope': 'complete',
         }),
       }),
     ]),
@@ -2094,37 +2094,6 @@
 # name: TestFind.test_workflows[workflows2]
   dict({
     'documents': list([
-      dict({
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          }),
-        ]),
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'uploads': None,
-        'user': dict({
-          'handle': 'zclark',
-          'id': 2,
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
       dict({
         'created_at': '2015-10-06T21:00:00Z',
         'host': '',
@@ -2167,9 +2136,9 @@
           'id': 1,
         }),
         'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
+          'aodp': 'incompatible',
+          'nuvs': 'complete',
+          'pathoscope': 'complete',
         }),
       }),
       dict({
@@ -2198,13 +2167,13 @@
           'id': 2,
         }),
         'workflows': dict({
-          'aodp': 'none',
+          'aodp': 'incompatible',
           'nuvs': 'none',
           'pathoscope': 'none',
         }),
       }),
     ]),
-    'found_count': 3,
+    'found_count': 2,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
@@ -2212,6 +2181,90 @@
   })
 # ---
 # name: TestFind.test_workflows[workflows3]
+  dict({
+    'documents': list([
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': '72bb8b31',
+        'isolate': 'Test',
+        'job': None,
+        'labels': list([
+          dict({
+            'color': '#78bc72',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Add',
+          }),
+        ]),
+        'library_type': 'srna',
+        'name': '16GVP043',
+        'notes': 'This is a good sample.',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'uploads': None,
+        'user': dict({
+          'handle': 'zclark',
+          'id': 2,
+        }),
+        'workflows': dict({
+          'aodp': 'incompatible',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        }),
+      }),
+    ]),
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  })
+# ---
+# name: TestFind.test_workflows[workflows4]
+  dict({
+    'documents': list([
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': '72bb8b31',
+        'isolate': 'Test',
+        'job': None,
+        'labels': list([
+          dict({
+            'color': '#78bc72',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Add',
+          }),
+        ]),
+        'library_type': 'srna',
+        'name': '16GVP043',
+        'notes': 'This is a good sample.',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'uploads': None,
+        'user': dict({
+          'handle': 'zclark',
+          'id': 2,
+        }),
+        'workflows': dict({
+          'aodp': 'incompatible',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        }),
+      }),
+    ]),
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  })
+# ---
+# name: TestFind.test_workflows[workflows5]
   dict({
     'documents': list([
       dict({
@@ -2241,43 +2294,12 @@
         }),
         'workflows': dict({
           'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'host': '',
-        'id': '72bb8b31',
-        'isolate': 'Test',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#78bc72',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Add',
-          }),
-        ]),
-        'library_type': 'srna',
-        'name': '16GVP043',
-        'notes': 'This is a good sample.',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'uploads': None,
-        'user': dict({
-          'handle': 'zclark',
-          'id': 2,
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'none',
-          'pathoscope': 'none',
+          'nuvs': 'incompatible',
+          'pathoscope': 'incompatible',
         }),
       }),
     ]),
-    'found_count': 2,
+    'found_count': 1,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
@@ -2331,7 +2353,7 @@
     'notes': '',
     'nuvs': False,
     'paired': False,
-    'pathoscope': True,
+    'pathoscope': False,
     'quality': None,
     'reads': list([
       dict({
@@ -2363,8 +2385,8 @@
     }),
     'workflows': dict({
       'aodp': 'incompatible',
-      'nuvs': 'pending',
-      'pathoscope': 'complete',
+      'nuvs': 'none',
+      'pathoscope': 'none',
     }),
   })
 # ---
@@ -2415,7 +2437,7 @@
     'notes': '',
     'nuvs': False,
     'paired': False,
-    'pathoscope': True,
+    'pathoscope': False,
     'quality': None,
     'reads': list([
       dict({
@@ -2447,8 +2469,8 @@
     }),
     'workflows': dict({
       'aodp': 'incompatible',
-      'nuvs': 'pending',
-      'pathoscope': 'complete',
+      'nuvs': 'none',
+      'pathoscope': 'none',
     }),
   })
 # ---
@@ -2509,7 +2531,7 @@
     'notes': '',
     'nuvs': False,
     'paired': False,
-    'pathoscope': True,
+    'pathoscope': False,
     'quality': None,
     'reads': list([
       dict({
@@ -2541,8 +2563,8 @@
     }),
     'workflows': dict({
       'aodp': 'incompatible',
-      'nuvs': 'pending',
-      'pathoscope': 'complete',
+      'nuvs': 'none',
+      'pathoscope': 'none',
     }),
   })
 # ---
@@ -2593,7 +2615,7 @@
     'notes': '',
     'nuvs': False,
     'paired': False,
-    'pathoscope': True,
+    'pathoscope': False,
     'quality': None,
     'reads': list([
       dict({
@@ -2625,8 +2647,8 @@
     }),
     'workflows': dict({
       'aodp': 'incompatible',
-      'nuvs': 'pending',
-      'pathoscope': 'complete',
+      'nuvs': 'none',
+      'pathoscope': 'none',
     }),
   })
 # ---

@@ -18,7 +18,6 @@ from virtool.mongo.migrate import migrate_status
 from virtool.mongo.utils import get_mongo_from_app
 from virtool.pg.utils import connect_pg
 from virtool.routes import setup_routes
-from virtool.samples.tasks import SampleWorkflowsUpdateTask
 from virtool.sentry import configure_sentry
 from virtool.storage.factory import create_storage_backend
 from virtool.tasks.periodic import PeriodicTaskSpawner
@@ -197,7 +196,6 @@ async def startup_periodic_tasks(app: App) -> None:
         (HMMRefreshTask, 600),
         (JobsTimeoutTask, 600),
         (LRUCacheEvictionTask, 3600),
-        (SampleWorkflowsUpdateTask, 3600),
         (ReapOrphanedUploadsTask, 86400),
     ]
 

@@ -3,8 +3,7 @@
 from collections import defaultdict
 from typing import Any
 
-from motor.motor_asyncio import AsyncIOMotorClientSession
-from sqlalchemy import select
+from sqlalchemy import and_, exists, func, not_, or_, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from yarl import URL
 
@@ -13,14 +12,13 @@ import virtool.mongo.utils
 import virtool.samples.utils
 import virtool.utils
 from virtool.analyses.sql import SQLAnalysis
+from virtool.analyses.utils import WORKFLOW_NAMES
 from virtool.api.errors import APINotFound
 from virtool.data.topg import compose_legacy_id_subquery
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_one_field
-from virtool.samples.models import WorkflowState
 from virtool.samples.sql import SQLLegacySample, SQLSampleArtifact, SQLSampleReads
 from virtool.settings.models import Settings
 from virtool.types import Document
@@ -173,62 +171,48 @@ class AttachUploadsTransform(AbstractTransform):
         }
 
 
-MONGO_SAMPLE_FIELDS = ["nuvs", "pathoscope", "uploads", "workflows"]
+MONGO_UPLOADS_FIELD = ["uploads"]
 
 
-def _mongo_sample_fields(document: Document) -> dict[str, Any]:
-    return {
-        "nuvs": document["nuvs"],
-        "pathoscope": document["pathoscope"],
-        "uploads": document.get("uploads"),
-        "workflows": document["workflows"],
-    }
+class AttachMongoUploadsTransform(AbstractTransform):
+    """Attach the reserved ``uploads`` array still sourced from MongoDB.
 
-
-class AttachMongoSampleFieldsTransform(AbstractTransform):
-    """Attach the sample fields still sourced from MongoDB.
-
-    Sample metadata is now read from Postgres, but the workflow tags (``nuvs``,
-    ``pathoscope``, ``workflows``) and the reserved ``uploads`` array are not stored
-    there. This transform bridges them from Mongo so read responses are unchanged.
+    Sample metadata is read from Postgres, but the ``uploads`` array is not stored
+    there yet. This transform bridges it from Mongo so read responses are unchanged.
 
     It must run before :class:`~virtool.samples.db.AttachUploadsTransform`, which
     enriches the bridged ``uploads`` array with upload details from Postgres.
-
-    Temporary: deriving the workflow fields from analyses on read, moving the
-    ``?workflows=`` filter into SQL, and migrating ``uploads`` are tracked in
-    VIR-2525, which removes this transform and its Mongo read.
     """
 
     def __init__(self, mongo: Mongo):
         self._mongo = mongo
 
     async def attach_one(self, document: Document, prepared: Any) -> Document:
-        return {**document, **prepared}
+        return {**document, "uploads": prepared}
 
     async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
         mongo_document = await self._mongo.samples.find_one(
             {"_id": document["id"]},
-            MONGO_SAMPLE_FIELDS,
+            MONGO_UPLOADS_FIELD,
         )
 
         if mongo_document is None:
             raise KeyError(f"Sample missing from Mongo: {document['id']}")
 
-        return _mongo_sample_fields(mongo_document)
+        return mongo_document.get("uploads")
 
     async def prepare_many(
         self,
         documents: list[Document],
         session: AsyncSession,
-    ) -> dict[str, dict[str, Any]]:
+    ) -> dict[str, Any]:
         sample_ids = [document["id"] for document in documents]
 
         mongo_documents = {
             mongo_document["_id"]: mongo_document
             async for mongo_document in self._mongo.samples.find(
                 {"_id": {"$in": sample_ids}},
-                MONGO_SAMPLE_FIELDS,
+                MONGO_UPLOADS_FIELD,
             )
         }
 
@@ -238,7 +222,70 @@ class AttachMongoSampleFieldsTransform(AbstractTransform):
             raise KeyError(f"Samples missing from Mongo: {missing}")
 
         return {
-            document["id"]: _mongo_sample_fields(mongo_documents[document["id"]])
+            document["id"]: mongo_documents[document["id"]].get("uploads")
+            for document in documents
+        }
+
+
+class DeriveWorkflowTagsTransform(AbstractTransform):
+    """Derive the ``nuvs``, ``pathoscope`` and ``workflows`` tags from analyses.
+
+    The tags were formerly stored on the Mongo sample document and recalculated on
+    every analysis change. They are now derived on read from the Postgres
+    ``analyses`` table, keyed by the integer ``sample_id`` foreign key.
+
+    A page's tags are computed with a single ``GROUP BY`` query bounded to the page's
+    sample ids, so the aggregation never scans the whole table.
+    """
+
+    async def attach_one(self, document: Document, prepared: Any) -> Document:
+        return {**document, **prepared}
+
+    async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
+        rows = await session.execute(
+            select(SQLAnalysis.workflow, func.bool_or(SQLAnalysis.ready))
+            .where(
+                SQLAnalysis.sample_id
+                == compose_legacy_id_subquery(SQLLegacySample, document["id"]),
+            )
+            .group_by(SQLAnalysis.workflow),
+        )
+
+        ready_by_workflow = {workflow: ready for workflow, ready in rows}
+
+        return virtool.samples.utils.encode_workflow_tags(
+            ready_by_workflow,
+            document["library_type"],
+        )
+
+    async def prepare_many(
+        self,
+        documents: list[Document],
+        session: AsyncSession,
+    ) -> dict[str, dict[str, Any]]:
+        sample_ids = [document["id"] for document in documents]
+
+        rows = await session.execute(
+            select(
+                SQLLegacySample.legacy_id,
+                SQLAnalysis.workflow,
+                func.bool_or(SQLAnalysis.ready),
+            )
+            .join(SQLAnalysis, SQLAnalysis.sample_id == SQLLegacySample.id)
+            .where(SQLLegacySample.legacy_id.in_(sample_ids))
+            .group_by(SQLLegacySample.legacy_id, SQLAnalysis.workflow),
+        )
+
+        ready_by_sample: dict[str, dict[str, bool]] = defaultdict(dict)
+
+        for legacy_id, workflow, ready in rows:
+            ready_by_sample[legacy_id][workflow] = ready
+
+        return {
+            document["id"]: virtool.samples.utils.encode_workflow_tags(
+                ready_by_sample.get(document["id"], {}),
+                document["library_type"],
+            )
             for document in documents
         }
 
@@ -272,37 +319,104 @@ async def check_rights(db, sample_id: str | None, client, write: bool = True) ->
     return has_read and (write is False or has_write)
 
 
-def compose_sample_workflow_query(workflows: list[str]) -> dict[str, dict] | None:
-    """Compose a MongoDB query for filtering samples by completed workflow.
+WORKFLOW_CONDITIONS = ("none", "pending", "ready")
 
-    :param workflows:
-    :return: a MongoDB query for filtering by workflow
 
+def _exists_analysis(workflow: str, ready: bool | None = None):
+    """Build a correlated ``EXISTS`` on analyses for the current sample row.
+
+    Restricts to ``workflow`` and, when ``ready`` is given, to analyses in that
+    ready state. Correlates against the enclosing ``SQLLegacySample`` query.
     """
-    workflow_query = defaultdict(set)
+    conditions = [
+        SQLAnalysis.sample_id == SQLLegacySample.id,
+        SQLAnalysis.workflow == workflow,
+    ]
+
+    if ready is not None:
+        conditions.append(SQLAnalysis.ready.is_(ready))
+
+    return exists().where(and_(*conditions))
+
+
+def _workflow_compatible(workflow: str):
+    """Predicate selecting samples whose library type is compatible with ``workflow``.
+
+    Mirrors :func:`define_initial_workflows`: ``aodp`` is only compatible with
+    ``amplicon`` libraries; ``nuvs`` and ``pathoscope`` only with non-amplicon
+    libraries. An incompatible workflow always encodes to ``"incompatible"``, so no
+    condition — ``none`` least of all — should match such a sample.
+    """
+    if workflow == "aodp":
+        return SQLLegacySample.library_type == "amplicon"
+
+    return SQLLegacySample.library_type != "amplicon"
+
+
+def _compose_workflow_condition_filter(workflow: str, condition: str):
+    """Translate a single ``workflow:condition`` pair into a semi-join predicate.
+
+    Mirrors the legacy tag encoding: ``ready`` matches a completed analysis,
+    ``pending`` matches an unfinished analysis with none completed, and ``none``
+    matches a workflow with no analyses. Every condition is additionally
+    constrained to samples whose library type makes the workflow compatible, so an
+    ``incompatible`` workflow (e.g. ``aodp`` on a normal library) never matches.
+    """
+    if condition == "ready":
+        predicate = _exists_analysis(workflow, ready=True)
+    elif condition == "pending":
+        predicate = and_(
+            _exists_analysis(workflow),
+            not_(_exists_analysis(workflow, ready=True)),
+        )
+    else:
+        predicate = not_(_exists_analysis(workflow))
+
+    return and_(_workflow_compatible(workflow), predicate)
+
+
+def compose_sample_workflow_filter(workflows: list[str]):
+    """Compose a Postgres predicate for filtering samples by workflow tag.
+
+    Each ``workflow:condition`` pair becomes a correlated ``EXISTS`` semi-join on
+    the analyses table. Conditions for the same workflow are ORed; different
+    workflows are ANDed. The predicate is applied before ``LIMIT`` and the count so
+    ``found_count`` is correct. Returns ``None`` when nothing parses.
+
+    Pairs with an unknown workflow name or condition are ignored, matching the
+    "unrecognised filter is dropped" behaviour of the old Mongo query. This also
+    avoids the ``none`` condition on a bogus workflow compiling to a ``NOT EXISTS``
+    that matches almost every sample.
+
+    :param workflows: the raw ``?workflows=`` query values
+    :return: a SQLAlchemy predicate, or ``None``
+    """
+    conditions_by_workflow = defaultdict(set)
 
     for workflow_query_string in workflows:
         for pair in workflow_query_string.split(" "):
-            pair = pair.split(":")
+            parts = pair.split(":")
 
-            if len(pair) == 2:
-                workflow, condition = pair
-                condition = convert_workflow_condition(condition)
+            if len(parts) == 2:
+                workflow, condition = parts
 
-                if condition is not None:
-                    workflow_query[workflow].add(condition)
+                if workflow in WORKFLOW_NAMES and condition in WORKFLOW_CONDITIONS:
+                    conditions_by_workflow[workflow].add(condition)
 
-    if any(workflow_query):
-        return {
-            workflow: {"$in": list(conditions)}
-            for workflow, conditions in workflow_query.items()
-        }
+    if not conditions_by_workflow:
+        return None
 
-    return None
-
-
-def convert_workflow_condition(condition: str) -> dict | None:
-    return {"none": False, "pending": "ip", "ready": True}.get(condition)
+    return and_(
+        *[
+            or_(
+                *[
+                    _compose_workflow_condition_filter(workflow, condition)
+                    for condition in conditions
+                ],
+            )
+            for workflow, conditions in conditions_by_workflow.items()
+        ],
+    )
 
 
 async def create_sample(
@@ -348,8 +462,6 @@ async def create_sample(
             "name": name,
             "host": host,
             "isolate": isolate,
-            "nuvs": False,
-            "pathoscope": False,
             "created_at": virtool.utils.timestamp(),
             "is_legacy": False,
             "format": "fastq",
@@ -367,101 +479,11 @@ async def create_sample(
             "user": {"id": user_id},
             "group": group,
             "locale": locale,
-            "workflows": define_initial_workflows(library_type),
             "paired": paired,
         },
     )
 
     return base_processor(document)
-
-
-def define_initial_workflows(library_type) -> dict[str, str]:
-    """Checks for incompatibility workflow states
-
-    :param library_type: to check for compatability
-    :return: initial workflow states
-
-    """
-    if library_type == "amplicon":
-        return {
-            "aodp": WorkflowState.NONE.value,
-            "nuvs": WorkflowState.INCOMPATIBLE.value,
-            "pathoscope": WorkflowState.INCOMPATIBLE.value,
-        }
-
-    return {
-        "aodp": WorkflowState.INCOMPATIBLE.value,
-        "nuvs": WorkflowState.NONE.value,
-        "pathoscope": WorkflowState.NONE.value,
-    }
-
-
-def derive_workflow_state(analyses: list, library_type) -> dict:
-    """Derive a workflow state dictionary for the passed analyses and library_type.
-
-    Workflows that are incompatible with the library type are set to "incompatible".
-
-    :param analyses: the analyses for the sample
-    :param library_type: for compatability check
-    :return: workflow state of a sample
-
-    """
-    workflow_states = define_initial_workflows(library_type)
-
-    for analysis in analyses:
-        workflow_name = analysis["workflow"]
-
-        if workflow_states[workflow_name] in (
-            WorkflowState.COMPLETE.value,
-            WorkflowState.INCOMPATIBLE.value,
-        ):
-            continue
-
-        workflow_states[workflow_name] = (
-            WorkflowState.COMPLETE.value
-            if analysis["ready"]
-            else WorkflowState.PENDING.value
-        )
-
-    return {"workflows": workflow_states}
-
-
-async def recalculate_workflow_tags(
-    mongo: "Mongo",
-    pg: AsyncEngine,
-    sample_id: str,
-    session: AsyncIOMotorClientSession | None = None,
-) -> None:
-    """Recalculate and apply workflow tags (eg. "ip", True) for a given sample.
-
-    :param mongo: the application database client
-    :param pg: the application Postgres engine
-    :param sample_id: the id of the sample to recalculate tags for
-    :param session: an optional MongoDB session to use
-    :return: the updated sample document
-
-    """
-    async with AsyncSession(pg) as pg_session:
-        result = await pg_session.execute(
-            select(SQLAnalysis.ready, SQLAnalysis.workflow).where(
-                SQLAnalysis.sample_id
-                == compose_legacy_id_subquery(SQLLegacySample, sample_id),
-            ),
-        )
-        analyses = [{"ready": row.ready, "workflow": row.workflow} for row in result]
-
-    library_type = await get_one_field(mongo.samples, "library_type", sample_id)
-
-    await mongo.samples.update_one(
-        {"_id": sample_id},
-        {
-            "$set": {
-                **virtool.samples.utils.calculate_workflow_tags(analyses),
-                **derive_workflow_state(analyses, library_type),
-            },
-        },
-        session=session,
-    )
 
 
 async def validate_force_choice_group(pg: AsyncEngine, data: dict) -> str | None:
