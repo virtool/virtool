@@ -23,9 +23,7 @@
     'locale': '',
     'name': 'Foobar',
     'notes': '',
-    'nuvs': False,
     'paired': False,
-    'pathoscope': False,
     'quality': None,
     'ready': False,
     'results': None,
@@ -42,11 +40,6 @@
     ]),
     'user': dict({
       'id': 1,
-    }),
-    'workflows': dict({
-      'aodp': 'incompatible',
-      'nuvs': 'none',
-      'pathoscope': 'none',
     }),
   })
 # ---
@@ -74,9 +67,7 @@
     'locale': '',
     'name': 'Foobar',
     'notes': '',
-    'nuvs': False,
     'paired': False,
-    'pathoscope': False,
     'quality': None,
     'ready': False,
     'results': None,
@@ -93,11 +84,6 @@
     ]),
     'user': dict({
       'id': 1,
-    }),
-    'workflows': dict({
-      'aodp': 'incompatible',
-      'nuvs': 'none',
-      'pathoscope': 'none',
     }),
   })
 # ---
@@ -125,9 +111,7 @@
     'locale': '',
     'name': 'Foobar',
     'notes': '',
-    'nuvs': False,
     'paired': False,
-    'pathoscope': False,
     'quality': None,
     'ready': False,
     'results': None,
@@ -144,11 +128,6 @@
     ]),
     'user': dict({
       'id': 1,
-    }),
-    'workflows': dict({
-      'aodp': 'incompatible',
-      'nuvs': 'none',
-      'pathoscope': 'none',
     }),
   })
 # ---
@@ -193,7 +172,7 @@
     'notes': '',
     'nuvs': False,
     'paired': False,
-    'pathoscope': True,
+    'pathoscope': False,
     'quality': dict({
       'bases': list([
         list([
@@ -277,8 +256,8 @@
     }),
     'workflows': dict({
       'aodp': <WorkflowState.INCOMPATIBLE: 'incompatible'>,
-      'nuvs': <WorkflowState.PENDING: 'pending'>,
-      'pathoscope': <WorkflowState.COMPLETE: 'complete'>,
+      'nuvs': <WorkflowState.NONE: 'none'>,
+      'pathoscope': <WorkflowState.NONE: 'none'>,
     }),
   })
 # ---

@@ -49,7 +49,6 @@ from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_new_id
 from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.references.transforms import AttachReferenceTransform
-from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.oas import CreateAnalysisRequest
 from virtool.samples.sql import SQLLegacySample
 from virtool.samples.utils import get_sample_rights
@@ -446,12 +445,10 @@ class AnalysisData(DataLayerDomain):
                 error=repr(exc),
             )
 
-        await recalculate_workflow_tags(self._mongo, self._pg, analysis.sample.id)
-
         emit(
             await self.data.samples.get(analysis.sample.id),
             "samples",
-            "recalculate_workflow_tags",
+            "update",
             Operation.UPDATE,
         )
         emit(analysis, "analyses", "delete", Operation.DELETE)
@@ -678,8 +675,6 @@ class AnalysisData(DataLayerDomain):
 
             await session.commit()
 
-        await recalculate_workflow_tags(self._mongo, self._pg, sample_id)
-
         analysis, sample = await asyncio.gather(
             self.get(analysis_id, None),
             self.data.samples.get(sample_id),
@@ -688,7 +683,7 @@ class AnalysisData(DataLayerDomain):
         emit(
             sample,
             "samples",
-            "recalculate_workflow_tags",
+            "update",
             Operation.UPDATE,
         )
 

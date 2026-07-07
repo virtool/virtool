@@ -7,7 +7,6 @@ from aiohttp.web import (
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404, r409
 from pydantic import Field, conint, constr
-from sqlalchemy.ext.asyncio import AsyncEngine
 from structlog import get_logger
 
 from virtool.analyses.models import AnalysisMinimal
@@ -36,10 +35,7 @@ from virtool.errors import DatabaseError
 from virtool.jobs.models import TERMINAL_JOB_STATES
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.utils import get_mongo_from_req
-from virtool.samples.db import (
-    check_rights,
-    recalculate_workflow_tags,
-)
+from virtool.samples.db import check_rights
 from virtool.samples.models import Sample, SampleSearchResult
 from virtool.samples.oas import (
     CreateAnalysisRequest,
@@ -428,7 +424,6 @@ class AnalysesView(PydanticView):
             409: Subtractions do not exist
         """
         mongo = get_mongo_from_req(self.request)
-        pg: AsyncEngine = self.request.app["pg"]
 
         try:
             if not await check_rights(mongo, sample_id, self.request["client"]):
@@ -452,8 +447,6 @@ class AnalysesView(PydanticView):
             self.request["client"].user_id,
             0,
         )
-
-        await recalculate_workflow_tags(mongo, pg, sample_id)
 
         return json_response(
             analysis,

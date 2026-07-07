@@ -365,15 +365,11 @@ async def find_samples_client(
             "library_type": "normal",
             "name": "16GVP042",
             "notes": "",
-            "nuvs": True,
-            "pathoscope": True,
             "ready": True,
             "user": {"id": user_1.id},
-            "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
         },
         {
             "user": {"id": user_2.id},
-            "nuvs": False,
             "host": "",
             "foobar": True,
             "isolate": "Test",
@@ -382,16 +378,13 @@ async def find_samples_client(
             "_id": "72bb8b31",
             "job": None,
             "name": "16GVP043",
-            "pathoscope": False,
             "all_read": True,
             "ready": True,
             "labels": [label_1.id],
             "notes": "This is a good sample.",
-            "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
         },
         {
             "user": {"id": user_2.id},
-            "nuvs": False,
             "host": "",
             "library_type": "amplicon",
             "notes": "",
@@ -402,18 +395,36 @@ async def find_samples_client(
             "_id": "cb400e6d",
             "job": None,
             "name": "16SPP044",
-            "pathoscope": False,
             "all_read": True,
             "labels": [label_3.id],
-            "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
         },
     ]
 
     await mongo.samples.insert_many(documents, session=None)
 
     async with AsyncSession(pg) as session:
-        for document in documents:
-            await insert_pg_sample(session, document)
+        samples = {
+            document["_id"]: await insert_pg_sample(session, document)
+            for document in documents
+        }
+
+        # ``beb1eb10`` has completed nuvs and pathoscope analyses so its workflow
+        # tags derive to ready; the other samples have no analyses.
+        for workflow in ("nuvs", "pathoscope"):
+            session.add(
+                SQLAnalysis(
+                    legacy_id=f"beb1eb10_{workflow}",
+                    created_at=static_time.datetime,
+                    updated_at=static_time.datetime,
+                    workflow=workflow,
+                    ready=True,
+                    sample="beb1eb10",
+                    sample_id=samples["beb1eb10"].id,
+                    reference="ref",
+                    index="index",
+                    user_id=user_1.id,
+                ),
+            )
 
         await session.commit()
 
