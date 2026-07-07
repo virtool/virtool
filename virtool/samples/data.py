@@ -27,7 +27,7 @@ from virtool.api.client import UserClient
 from virtool.config.cls import Config
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
-from virtool.data.events import Operation, emits
+from virtool.data.events import Operation, emit, emits
 from virtool.data.topg import (
     both_transactions,
     compose_legacy_id_multi_expression,
@@ -550,7 +550,12 @@ class SamplesData(DataLayerDomain):
 
             await self.data.uploads.reserve(data.files, pg_session)
 
-            job = await self.data.jobs.create(
+            # Create the job inside the sample's transaction so the job and its
+            # sample commit atomically. The job's ``sample_id`` argument is
+            # derived from ``legacy_samples.job_id`` on read, so the job must not
+            # become claimable before its sample row exists.
+            job_id = await self.data.jobs.create_in_session(
+                pg_session,
                 "create_sample",
                 {"sample_id": sample_id},
                 user_id,
@@ -570,7 +575,7 @@ class SamplesData(DataLayerDomain):
                     "host": data.host,
                     "is_legacy": False,
                     "isolate": data.isolate,
-                    "job": {"id": job.id},
+                    "job": {"id": job_id},
                     "labels": data.labels,
                     "library_type": data.library_type,
                     "locale": data.locale,
@@ -597,6 +602,8 @@ class SamplesData(DataLayerDomain):
             )
 
             await self._write_legacy_sample(pg_session, document)
+
+        emit(await self.data.jobs.get(job_id), "jobs", "create", Operation.CREATE)
 
         return await self.get(document["_id"])
 

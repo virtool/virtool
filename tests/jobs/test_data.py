@@ -161,6 +161,34 @@ class TestCreatePostgres:
 
         assert (await jobs_data.get(job.id)).args == {}
 
+    async def test_create_in_session_defers_commit(
+        self,
+        jobs_data: JobsData,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """``create_in_session`` adds the job without committing the caller's session.
+
+        The job is invisible to other transactions until the caller commits, so a
+        create_sample job can be created atomically with its sample.
+        """
+        user = await fake.users.create()
+
+        async with AsyncSession(pg) as session:
+            job_id = await jobs_data.create_in_session(
+                session,
+                "create_sample",
+                {"sample_id": "sample_123"},
+                user.id,
+            )
+
+            async with AsyncSession(pg) as probe:
+                assert await probe.get(SQLJob, job_id) is None
+
+            await session.commit()
+
+        assert (await jobs_data.get(job_id)).workflow == Workflow.CREATE_SAMPLE
+
     async def test_sample_id_resolved_from_legacy_sample(
         self,
         jobs_data: JobsData,
