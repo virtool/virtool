@@ -22,6 +22,28 @@ from virtool.references.db import (
     populate_insert_only_reference,
 )
 from virtool.references.models import ReferenceRights
+from virtool.references.sql import SQLReference
+
+
+async def seed_reference(
+    pg: AsyncEngine,
+    legacy_id: str,
+    user_id: int,
+    created_at,
+) -> None:
+    """Insert a ``legacy_references`` row so history writes can resolve its FK."""
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLReference(
+                legacy_id=legacy_id,
+                name=legacy_id,
+                description="",
+                created_at=created_at,
+                source_types=[],
+                user_id=user_id,
+            ),
+        )
+        await session.commit()
 
 
 @pytest.mark.parametrize("is_administrator", [True, False])
@@ -223,6 +245,8 @@ async def test_populate_insert_only_reference_rollback(
     user = await fake.users.create()
     ref_id = "ref_rollback_test"
 
+    await seed_reference(pg, ref_id, user.id, static_time.datetime)
+
     await mongo.references.insert_one(
         {
             "_id": ref_id,
@@ -336,6 +360,8 @@ async def test_populate_insert_only_reference_writes_legacy_history(
     """A successful bulk insert writes one ``legacy_history`` row per OTU."""
     user = await fake.users.create()
     ref_id = "ref_legacy_test"
+
+    await seed_reference(pg, ref_id, user.id, static_time.datetime)
 
     mocker.patch(
         "virtool.references.alot.random_alphanumeric",

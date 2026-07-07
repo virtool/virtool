@@ -14,7 +14,10 @@ import virtool.history.db
 import virtool.mongo.utils
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
-from virtool.data.topg import compose_legacy_id_multi_expression
+from virtool.data.topg import (
+    compose_legacy_id_multi_expression,
+    compose_legacy_id_single_expression,
+)
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
@@ -29,6 +32,7 @@ from virtool.references.sql import (
     SQLReferenceGroup,
     SQLReferenceUser,
 )
+from virtool.references.utils import reference_values
 from virtool.settings.models import Settings
 from virtool.types import Document
 from virtool.users.transforms import AttachUserTransform
@@ -37,6 +41,74 @@ from virtool.utils import base_processor
 if TYPE_CHECKING:
     from virtool.api.client import UserClient
     from virtool.mongo.core import Mongo
+
+
+async def write_legacy_reference(
+    pg_session: AsyncSession,
+    document: Document,
+) -> None:
+    """Insert a ``legacy_references`` row and its seeded rights from a Mongo reference
+    ``document`` into the open Postgres session.
+
+    ``cloned_from`` holds the source reference's legacy id, which is resolved to its
+    Postgres primary key. If the source has no Postgres row yet, the foreign key is left
+    ``NULL`` for the backfill to fill in later.
+    """
+    cloned_from = document.get("cloned_from")
+
+    cloned_from_id = None
+
+    if cloned_from is not None:
+        cloned_from_id = (
+            await pg_session.execute(
+                select(SQLReference.id).where(
+                    compose_legacy_id_single_expression(
+                        SQLReference,
+                        cloned_from["id"],
+                    ),
+                ),
+            )
+        ).scalar_one_or_none()
+
+    user = document.get("user")
+    imported_from = document.get("imported_from")
+    task = document.get("task")
+
+    reference = SQLReference(
+        **reference_values(
+            document,
+            user_id=user["id"] if user else None,
+            upload_id=imported_from["id"] if imported_from else None,
+            cloned_from_id=cloned_from_id,
+            task_id=task["id"] if task else None,
+        ),
+    )
+
+    pg_session.add(reference)
+
+    await pg_session.flush()
+
+    for member in document.get("users", []):
+        pg_session.add(
+            SQLReferenceUser(
+                reference_id=reference.id,
+                user_id=member["id"],
+                build=member.get("build", False),
+                modify=member.get("modify", False),
+                modify_otu=member.get("modify_otu", False),
+            ),
+        )
+
+    for member in document.get("groups", []):
+        pg_session.add(
+            SQLReferenceGroup(
+                reference_id=reference.id,
+                group_id=member["id"],
+                build=member.get("build", False),
+                modify=member.get("modify", False),
+                modify_otu=member.get("modify_otu", False),
+            ),
+        )
 
 
 async def processor(mongo: "Mongo", pg: AsyncEngine, document: Document) -> Document:

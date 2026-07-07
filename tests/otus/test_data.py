@@ -6,7 +6,6 @@ TODO: Use `fake` fixture.
 
 """
 
-import asyncio
 from asyncio import gather
 
 import pytest
@@ -14,7 +13,6 @@ from syrupy import SnapshotAssertion
 
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
-from virtool.mongo.core import Mongo
 from virtool.otus.oas import CreateOTURequest, UpdateOTURequest
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
@@ -31,15 +29,13 @@ async def test_create(
     data: CreateOTURequest,
     data_layer: DataLayer,
     fake: DataFaker,
-    mongo: Mongo,
     snapshot: SnapshotAssertion,
     static_time: StaticTime,
-    test_ref: dict,
 ):
     user = await fake.users.create()
-    await mongo.references.insert_one(test_ref)
+    reference = await fake.references.create(user=user)
 
-    otu = await data_layer.otus.create(test_ref["_id"], data, user.id)
+    otu = await data_layer.otus.create(reference.id, data, user.id)
 
     assert otu == snapshot(name="return_value")
 
@@ -82,17 +78,13 @@ async def test_get_fasta(mongo, snapshot, test_otu, test_sequence, data_layer):
 async def test_update(
     data_layer: DataLayer,
     fake: DataFaker,
-    mongo: Mongo,
     snapshot: SnapshotAssertion,
     static_time: StaticTime,
-    test_ref: dict,
 ):
-    user, _ = await asyncio.gather(
-        fake.users.create(),
-        mongo.references.insert_one(test_ref),
-    )
+    user = await fake.users.create()
+    reference = await fake.references.create(user=user)
 
-    otu = await fake.otus.create(test_ref["_id"], user)
+    otu = await fake.otus.create(reference.id, user)
 
     updated_otu = await data_layer.otus.update(
         otu.id,
@@ -123,7 +115,9 @@ async def test_set_default(
     data_layer,
 ):
     user = await fake.users.create()
+    reference = await fake.references.create(user=user)
 
+    test_otu["reference"] = {"id": reference.id}
     test_otu["isolates"].append(
         {"default": False, "id": "bar", "source_type": "isolate", "source_name": "A"},
     )

@@ -21,6 +21,7 @@ from virtool.jobs.models import JobState
 from virtool.models.enums import LibraryType, Permission
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
+from virtool.references.models import Reference
 from virtool.samples.fake import create_fake_sample
 from virtool.samples.models import WorkflowState
 from virtool.samples.sql import (
@@ -1314,22 +1315,16 @@ class TestAnalyze:
         return client
 
     @staticmethod
-    async def _insert_reference(mongo: Mongo, *, archived: bool = False) -> None:
-        await mongo.references.insert_one(
-            {
-                "_id": "test_ref",
-                "archived": archived,
-                "data_type": "genome",
-                "name": "Test Reference",
-            },
-        )
+    async def _insert_reference(fake: DataFaker) -> Reference:
+        user = await fake.users.create()
+        return await fake.references.create(user=user, name="Test Reference")
 
     @staticmethod
-    async def _insert_index(mongo: Mongo, *, ready: bool = True) -> None:
+    async def _insert_index(mongo: Mongo, ref_id: str, *, ready: bool = True) -> None:
         await mongo.indexes.insert_one(
             {
                 "_id": "test",
-                "reference": {"id": "test_ref"},
+                "reference": {"id": ref_id},
                 "ready": ready,
                 "version": 4,
             },
@@ -1355,12 +1350,12 @@ class TestAnalyze:
         await create_fake_sample(client.app, "test", user.id, finalized=True)
 
     @staticmethod
-    async def _post(client: VirtoolTestClient):
+    async def _post(client: VirtoolTestClient, ref_id: str):
         return await client.post(
             "/samples/test/analyses",
             data={
                 "workflow": "pathoscope",
-                "ref_id": "test_ref",
+                "ref_id": ref_id,
                 "subtractions": [1],
             },
         )
@@ -1374,12 +1369,12 @@ class TestAnalyze:
         snapshot: SnapshotAssertion,
         static_time,
     ):
-        await self._insert_reference(mongo)
-        await self._insert_index(mongo)
+        reference = await self._insert_reference(fake)
+        await self._insert_index(mongo, reference.id)
         await self._insert_subtraction(pg)
         await self._insert_sample(analyze_client, fake)
 
-        resp = await self._post(analyze_client)
+        resp = await self._post(analyze_client, reference.id)
 
         assert resp.status == 201
         assert resp.headers["Location"] == "/analyses/1"
@@ -1396,25 +1391,27 @@ class TestAnalyze:
         await self._insert_subtraction(pg)
         await self._insert_sample(analyze_client, fake)
 
-        resp = await self._post(analyze_client)
+        resp = await self._post(analyze_client, "does_not_exist")
 
         await resp_is.conflict(resp, "Reference does not exist")
 
     async def test_archived_reference(
         self,
         analyze_client: VirtoolTestClient,
+        data_layer: DataLayer,
         fake: DataFaker,
         mongo: Mongo,
         pg: AsyncEngine,
         resp_is,
         static_time,
     ):
-        await self._insert_reference(mongo, archived=True)
-        await self._insert_index(mongo)
+        reference = await self._insert_reference(fake)
+        await data_layer.references.archive(reference.id)
+        await self._insert_index(mongo, reference.id)
         await self._insert_subtraction(pg)
         await self._insert_sample(analyze_client, fake)
 
-        resp = await self._post(analyze_client)
+        resp = await self._post(analyze_client, reference.id)
 
         await resp_is.conflict(resp, "Reference is archived")
 
@@ -1427,11 +1424,11 @@ class TestAnalyze:
         resp_is,
         static_time,
     ):
-        await self._insert_reference(mongo)
+        reference = await self._insert_reference(fake)
         await self._insert_subtraction(pg)
         await self._insert_sample(analyze_client, fake)
 
-        resp = await self._post(analyze_client)
+        resp = await self._post(analyze_client, reference.id)
 
         await resp_is.conflict(resp, "No ready index")
 
@@ -1444,12 +1441,12 @@ class TestAnalyze:
         resp_is,
         static_time,
     ):
-        await self._insert_reference(mongo)
-        await self._insert_index(mongo, ready=False)
+        reference = await self._insert_reference(fake)
+        await self._insert_index(mongo, reference.id, ready=False)
         await self._insert_subtraction(pg)
         await self._insert_sample(analyze_client, fake)
 
-        resp = await self._post(analyze_client)
+        resp = await self._post(analyze_client, reference.id)
 
         await resp_is.conflict(resp, "No ready index")
 
@@ -1461,27 +1458,28 @@ class TestAnalyze:
         resp_is,
         static_time,
     ):
-        await self._insert_reference(mongo)
-        await self._insert_index(mongo)
+        reference = await self._insert_reference(fake)
+        await self._insert_index(mongo, reference.id)
         await self._insert_sample(analyze_client, fake)
 
-        resp = await self._post(analyze_client)
+        resp = await self._post(analyze_client, reference.id)
 
         await resp_is.conflict(resp, "Subtractions do not exist: 1")
 
     async def test_missing_sample(
         self,
         analyze_client: VirtoolTestClient,
+        fake: DataFaker,
         mongo: Mongo,
         pg: AsyncEngine,
         resp_is,
         static_time,
     ):
-        await self._insert_reference(mongo)
-        await self._insert_index(mongo)
+        reference = await self._insert_reference(fake)
+        await self._insert_index(mongo, reference.id)
         await self._insert_subtraction(pg)
 
-        resp = await self._post(analyze_client)
+        resp = await self._post(analyze_client, reference.id)
 
         await resp_is.not_found(resp)
 
@@ -1493,8 +1491,8 @@ class TestAnalyze:
         pg: AsyncEngine,
         static_time,
     ):
-        await self._insert_reference(mongo)
-        await self._insert_index(mongo)
+        reference = await self._insert_reference(fake)
+        await self._insert_index(mongo, reference.id)
         await self._insert_subtraction(pg)
         await self._insert_sample(analyze_client, fake)
 
@@ -1502,7 +1500,7 @@ class TestAnalyze:
             "/samples/test/analyses",
             data={
                 "workflow": "iimi",
-                "ref_id": "test_ref",
+                "ref_id": reference.id,
                 "subtractions": ["subtraction_1"],
             },
         )

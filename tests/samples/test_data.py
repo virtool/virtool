@@ -1157,8 +1157,14 @@ class TestUpdateRights:
 class TestDelete:
     """Deleting a sample cascades to its analyses in both Mongo and Postgres."""
 
-    async def _setup(self, fake: DataFaker, mongo: Mongo, pg: AsyncEngine) -> str:
+    async def _setup(
+        self,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+    ) -> tuple[str, str]:
         user = await fake.users.create()
+        reference = await fake.references.create(user=user, name="Test Reference")
 
         async with AsyncSession(pg) as session:
             session.add(
@@ -1213,20 +1219,12 @@ class TestDelete:
                     "_id": "test_index",
                     "version": 11,
                     "ready": True,
-                    "reference": {"id": "test_ref"},
-                },
-            ),
-            mongo.references.insert_one(
-                {
-                    "_id": "test_ref",
-                    "archived": False,
-                    "data_type": "genome",
-                    "name": "Test Reference",
+                    "reference": {"id": reference.id},
                 },
             ),
         )
 
-        return user.id
+        return user.id, reference.id
 
     async def test_deletes_analysis_pg_rows(
         self,
@@ -1237,11 +1235,11 @@ class TestDelete:
         pg: AsyncEngine,
     ):
         """Deleting a sample removes its analyses' Postgres rows."""
-        user_id = await self._setup(fake, mongo, pg)
+        user_id, ref_id = await self._setup(fake, mongo, pg)
 
         analysis = await data_layer.analyses.create(
             CreateAnalysisRequest(
-                ref_id="test_ref",
+                ref_id=ref_id,
                 subtractions=[],
                 workflow=AnalysisWorkflow.nuvs,
             ),

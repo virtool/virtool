@@ -48,6 +48,7 @@ from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_new_id
 from virtool.pg.utils import delete_row, get_row_by_id
+from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.oas import CreateAnalysisRequest
@@ -317,6 +318,15 @@ class AnalysisData(DataLayerDomain):
             if sample_pg_id is None:
                 raise ResourceConflictError("Sample does not exist")
 
+            reference_pg_id = await resolve_legacy_id(
+                session,
+                SQLReference,
+                data.ref_id,
+            )
+
+            if reference_pg_id is None:
+                raise ResourceConflictError("Reference does not exist")
+
             pg_id = (
                 await session.execute(
                     insert(SQLAnalysis)
@@ -330,6 +340,7 @@ class AnalysisData(DataLayerDomain):
                         sample=sample_id,
                         sample_id=sample_pg_id,
                         reference=data.ref_id,
+                        reference_id=reference_pg_id,
                         index=index_id,
                         user_id=user_id,
                         job_id=job.id,

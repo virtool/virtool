@@ -155,6 +155,16 @@ async def test_import_reference_task(
 
     async with AsyncSession(pg) as session:
         session.add(
+            SQLReference(
+                legacy_id="foo",
+                name="foo",
+                description="",
+                created_at=static_time.datetime,
+                source_types=[],
+                user_id=user.id,
+            ),
+        )
+        session.add(
             SQLTask(
                 id=1,
                 complete=False,
@@ -206,6 +216,16 @@ async def create_reference(
     )
 
     async with AsyncSession(pg) as session:
+        session.add(
+            SQLReference(
+                legacy_id="bar",
+                name="bar",
+                description="",
+                created_at=static_time.datetime,
+                source_types=[],
+                user_id=user.id,
+            ),
+        )
         session.add(
             SQLTask(
                 id=2,
@@ -284,6 +304,16 @@ async def test_clone_reference_task(
     )
 
     async with AsyncSession(pg) as session:
+        session.add(
+            SQLReference(
+                legacy_id="foo",
+                name="foo",
+                description="",
+                created_at=static_time.datetime,
+                source_types=[],
+                user_id=user.id,
+            ),
+        )
         session.add(
             SQLTask(
                 id=1,

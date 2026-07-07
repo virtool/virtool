@@ -42,8 +42,11 @@ class SQLLegacyHistory(Base):
     This is a faithful 1:1 lift of the Mongo document into Postgres. Nested Mongo
     fields are flattened into columns:
 
-    - ``otu``/``reference``/``index`` ids are bare string columns with no foreign
-      key, because those collections have not been migrated to Postgres yet.
+    - ``otu``/``index`` ids are bare string columns with no foreign key, because
+      those collections have not been migrated to Postgres yet.
+    - ``reference`` is mid-migration: the legacy Mongo string is retained
+      alongside the new ``reference_id`` foreign key while readers move over. The
+      bare ``reference`` column is dropped in a later cleanup revision.
     - ``user.id`` becomes a real foreign key to ``users.id``.
     - ``otu_version`` and ``index_version`` are strings because Mongo stores both
       integer versions and sentinel values such as ``"removed"`` and ``"unbuilt"``.
@@ -64,5 +67,11 @@ class SQLLegacyHistory(Base):
     otu_name: Mapped[str]
     otu_version: Mapped[str | None]
     reference: Mapped[str] = mapped_column(index=True)
+    reference_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("legacy_references.id"),
+        nullable=True,
+        index=True,
+    )
     index: Mapped[str | None] = mapped_column(index=True)
     index_version: Mapped[str | None]

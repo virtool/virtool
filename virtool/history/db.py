@@ -12,7 +12,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.otus.db
 import virtool.utils
-from virtool.data.topg import compose_legacy_id_multi_expression
+from virtool.data.topg import (
+    compose_legacy_id_multi_expression,
+    compose_legacy_id_subquery,
+    resolve_legacy_id,
+)
 from virtool.data.transforms import apply_transforms
 from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.history.utils import (
@@ -21,6 +25,7 @@ from virtool.history.utils import (
     derive_otu_information,
 )
 from virtool.models.enums import HistoryMethod
+from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.pg import SQLUser
@@ -36,11 +41,12 @@ asyncpg caps bind parameters per statement at 32767. Each row binds three
 (``change_id``, ``history_id``, and ``diff``).
 """
 
-_LEGACY_HISTORY_CHUNK_SIZE = 32767 // 11
+_LEGACY_HISTORY_CHUNK_SIZE = 32767 // 12
 """Max ``legacy_history`` rows per statement.
 
-asyncpg caps bind parameters per statement at 32767. Each row binds eleven
-columns (see :func:`legacy_history_values`).
+asyncpg caps bind parameters per statement at 32767. Each row binds twelve
+columns: the eleven from :func:`legacy_history_values` plus the resolved
+``reference_id``.
 """
 
 
@@ -141,9 +147,38 @@ async def bulk_insert_history(
             "diff_rows and documents must describe the same history changes",
         )
 
+    if not documents:
+        return
+
     legacy_rows = [legacy_history_values(document) for document in documents]
 
     async with AsyncSession(pg) as session:
+        reference_legacy_ids = {row["reference"] for row in legacy_rows}
+
+        reference_id_map = {
+            legacy_id: id_
+            for id_, legacy_id in (
+                await session.execute(
+                    select(SQLReference.id, SQLReference.legacy_id).where(
+                        compose_legacy_id_multi_expression(
+                            SQLReference,
+                            reference_legacy_ids,
+                        ),
+                    ),
+                )
+            ).all()
+        }
+
+        unresolved = reference_legacy_ids - reference_id_map.keys()
+
+        if unresolved:
+            raise ValueError(
+                f"References not found in postgres: {sorted(unresolved)}",
+            )
+
+        for row in legacy_rows:
+            row["reference_id"] = reference_id_map[row["reference"]]
+
         history_ids: dict[str, int] = {}
 
         for start in range(0, len(legacy_rows), _LEGACY_HISTORY_CHUNK_SIZE):
@@ -251,6 +286,17 @@ async def add(
     legacy_row = SQLLegacyHistory(**legacy_history_values(document))
 
     async with AsyncSession(pg) as pg_session:
+        reference_id = document["reference"]["id"]
+
+        legacy_row.reference_id = await resolve_legacy_id(
+            pg_session,
+            SQLReference,
+            reference_id,
+        )
+
+        if legacy_row.reference_id is None:
+            raise ValueError(f"Reference {reference_id!r} not found in postgres")
+
         pg_session.add(legacy_row)
         await pg_session.flush()
         diff_row.history_id = legacy_row.id
@@ -388,7 +434,10 @@ async def find(
     base_filters = []
 
     if reference_id is not None:
-        base_filters.append(SQLLegacyHistory.reference == reference_id)
+        base_filters.append(
+            SQLLegacyHistory.reference_id
+            == compose_legacy_id_subquery(SQLReference, reference_id),
+        )
 
     search_filters = list(base_filters)
 
@@ -534,7 +583,10 @@ async def get_contributors(
     filters = []
 
     if reference_id is not None:
-        filters.append(SQLLegacyHistory.reference == reference_id)
+        filters.append(
+            SQLLegacyHistory.reference_id
+            == compose_legacy_id_subquery(SQLReference, reference_id),
+        )
 
     if index_id is not None:
         filters.append(SQLLegacyHistory.index == index_id)
