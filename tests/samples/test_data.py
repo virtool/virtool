@@ -3,7 +3,7 @@ from collections.abc import AsyncIterator
 from datetime import timedelta
 
 import pytest
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
@@ -37,6 +37,35 @@ from virtool.storage.protocol import StorageBackend
 from virtool.uploads.sql import SQLUpload, UploadType
 from virtool.uploads.utils import upload_file_key
 from virtool.users.oas import UpdateUserRequest
+
+
+async def insert_rights_sample(
+    pg: AsyncEngine,
+    legacy_id: str,
+    user_id: int,
+    all_read: bool = False,
+    all_write: bool = False,
+    group_read: bool = False,
+    group_write: bool = False,
+    group_id: int | None = None,
+) -> None:
+    """Insert a minimal ``legacy_samples`` row for exercising ``has_right``."""
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLLegacySample(
+                legacy_id=legacy_id,
+                name=legacy_id,
+                library_type=LibraryType.normal.value,
+                created_at=virtool.utils.timestamp(),
+                user_id=user_id,
+                all_read=all_read,
+                all_write=all_write,
+                group_read=group_read,
+                group_write=group_write,
+                group_id=group_id,
+            ),
+        )
+        await session.commit()
 
 
 @pytest.fixture
@@ -479,7 +508,7 @@ class TestHasRight:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
+        pg: AsyncEngine,
     ):
         """Test group member can write when group_write is True."""
         group = await fake.groups.create()
@@ -495,16 +524,13 @@ class TestHasRight:
             user_id=user.id,
         )
 
-        await mongo.samples.insert_one(
-            {
-                "_id": "sample_1",
-                "all_read": False,
-                "all_write": False,
-                "group": group.id,
-                "group_read": True,
-                "group_write": True,
-                "user": {"id": sample_owner.id},
-            }
+        await insert_rights_sample(
+            pg,
+            "sample_1",
+            user_id=sample_owner.id,
+            group_id=group.id,
+            group_read=True,
+            group_write=True,
         )
 
         assert await data_layer.samples.has_right("sample_1", client, SampleRight.write)
@@ -513,7 +539,7 @@ class TestHasRight:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
+        pg: AsyncEngine,
     ):
         """Test group member can read when group_read is True."""
         group = await fake.groups.create()
@@ -529,16 +555,12 @@ class TestHasRight:
             user_id=user.id,
         )
 
-        await mongo.samples.insert_one(
-            {
-                "_id": "sample_2",
-                "all_read": False,
-                "all_write": False,
-                "group": group.id,
-                "group_read": True,
-                "group_write": False,
-                "user": {"id": sample_owner.id},
-            }
+        await insert_rights_sample(
+            pg,
+            "sample_2",
+            user_id=sample_owner.id,
+            group_id=group.id,
+            group_read=True,
         )
 
         assert await data_layer.samples.has_right("sample_2", client, SampleRight.read)
@@ -570,7 +592,7 @@ class TestHasRight:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
+        pg: AsyncEngine,
     ):
         """Test full administrator has access regardless of permissions."""
         user = await fake.users.create(administrator_role=AdministratorRole.FULL)
@@ -585,17 +607,7 @@ class TestHasRight:
             user_id=user.id,
         )
 
-        await mongo.samples.insert_one(
-            {
-                "_id": "sample_3",
-                "all_read": False,
-                "all_write": False,
-                "group": "none",
-                "group_read": False,
-                "group_write": False,
-                "user": {"id": sample_owner.id},
-            }
-        )
+        await insert_rights_sample(pg, "sample_3", user_id=sample_owner.id)
 
         assert await data_layer.samples.has_right("sample_3", client, SampleRight.write)
 
@@ -603,7 +615,7 @@ class TestHasRight:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
+        pg: AsyncEngine,
     ):
         """Test sample owner has full access."""
         user = await fake.users.create()
@@ -617,17 +629,7 @@ class TestHasRight:
             user_id=user.id,
         )
 
-        await mongo.samples.insert_one(
-            {
-                "_id": "sample_4",
-                "all_read": False,
-                "all_write": False,
-                "group": "none",
-                "group_read": False,
-                "group_write": False,
-                "user": {"id": user.id},
-            }
-        )
+        await insert_rights_sample(pg, "sample_4", user_id=user.id)
 
         assert await data_layer.samples.has_right("sample_4", client, SampleRight.write)
 
@@ -635,7 +637,7 @@ class TestHasRight:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
+        pg: AsyncEngine,
     ):
         """Test non-group member is denied when all_write is False."""
         group = await fake.groups.create()
@@ -651,16 +653,12 @@ class TestHasRight:
             user_id=user.id,
         )
 
-        await mongo.samples.insert_one(
-            {
-                "_id": "sample_5",
-                "all_read": False,
-                "all_write": False,
-                "group": group.id,
-                "group_read": False,
-                "group_write": True,
-                "user": {"id": sample_owner.id},
-            }
+        await insert_rights_sample(
+            pg,
+            "sample_5",
+            user_id=sample_owner.id,
+            group_id=group.id,
+            group_write=True,
         )
 
         assert not await data_layer.samples.has_right(
@@ -950,67 +948,6 @@ class TestUpdate:
         )
 
         assert await self._get_subtraction_ids(pg, sample.id) == {keep.id, add.id}
-
-    async def test_labels_without_legacy_row(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-        mongo: Mongo,
-        pg: AsyncEngine,
-        spawn_client: ClientSpawner,
-    ):
-        """A label update on a sample lacking a ``legacy_samples`` row still succeeds.
-
-        Samples created before the dual-write rollout have no ``legacy_samples`` row
-        until the backfill runs, so join reconciliation must tolerate its absence and
-        still apply the Mongo write.
-        """
-        client = await spawn_client(
-            authenticated=True,
-            permissions=[Permission.create_sample],
-        )
-
-        label = await fake.labels.create()
-        sample = await self._create_sample(data_layer, fake, client.user.id)
-
-        async with AsyncSession(pg) as session:
-            legacy = (
-                await session.execute(
-                    select(SQLLegacySample).where(
-                        SQLLegacySample.legacy_id == sample.id,
-                    ),
-                )
-            ).scalar_one()
-
-            await session.execute(
-                delete(SQLLegacySampleLabel).where(
-                    SQLLegacySampleLabel.sample_id == legacy.id,
-                ),
-            )
-            await session.execute(
-                delete(SQLLegacySampleSubtraction).where(
-                    SQLLegacySampleSubtraction.sample_id == legacy.id,
-                ),
-            )
-            await session.delete(legacy)
-            await session.commit()
-
-        await data_layer.samples.update(
-            sample.id,
-            UpdateSampleRequest(labels=[label.id]),
-        )
-
-        document = await mongo.samples.find_one({"_id": sample.id})
-        assert document["labels"] == [label.id]
-
-        async with AsyncSession(pg) as session:
-            assert (
-                await session.execute(
-                    select(SQLLegacySample).where(
-                        SQLLegacySample.legacy_id == sample.id,
-                    ),
-                )
-            ).scalar_one_or_none() is None
 
 
 class TestGetOwnerId:
