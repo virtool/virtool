@@ -22,6 +22,8 @@ from virtool.data.events import Operation, emit, emits
 from virtool.data.topg import (
     both_transactions,
     compose_legacy_id_single_expression,
+    compose_legacy_id_subquery,
+    resolve_legacy_id,
     retry_both_transactions,
 )
 from virtool.data.transforms import apply_transforms
@@ -43,6 +45,7 @@ from virtool.pg.utils import get_row_by_id
 from virtool.references.alot import prepare_otu_insertion
 from virtool.references.db import (
     compose_archived_filter,
+    compose_reference_id_match,
     compose_rights_filter,
     get_contributors,
     get_latest_build,
@@ -214,7 +217,7 @@ class ReferencesData(DataLayerDomain):
             ):
                 raise ResourceNotFoundError("Source reference does not exist")
 
-            manifest = await get_manifest(self._mongo, data.clone_from)
+            manifest = await get_manifest(self._mongo, self._pg, data.clone_from)
 
             document = await virtool.references.db.create_clone(
                 self._mongo,
@@ -358,7 +361,7 @@ class ReferencesData(DataLayerDomain):
         ) = await asyncio.gather(
             get_contributors(self._pg, ref_id),
             get_latest_build(self._mongo, self._pg, ref_id),
-            get_otu_count(self._mongo, ref_id),
+            get_otu_count(self._mongo, self._pg, ref_id),
             get_reference_groups(self._pg, document),
             get_reference_users(self._mongo, self._pg, document),
             get_unbuilt_count(self._pg, ref_id),
@@ -510,6 +513,7 @@ class ReferencesData(DataLayerDomain):
         # they are.
         if message := await virtool.otus.db.check_name_and_abbreviation(
             self._mongo,
+            self._pg,
             ref_id,
             data.name,
             data.abbreviation,
@@ -567,7 +571,10 @@ class ReferencesData(DataLayerDomain):
             raise ResourceConflictError("Index build already in progress")
 
         if await self._mongo.otus.count_documents(
-            {"reference.id": ref_id, "verified": False},
+            {
+                "reference.id": await compose_reference_id_match(self._pg, ref_id),
+                "verified": False,
+            },
             limit=1,
         ):
             raise ResourceError("There are unverified OTUs")
@@ -577,7 +584,8 @@ class ReferencesData(DataLayerDomain):
                 select(
                     select(SQLLegacyHistory.id)
                     .where(
-                        SQLLegacyHistory.reference == ref_id,
+                        SQLLegacyHistory.reference_id
+                        == compose_legacy_id_subquery(SQLReference, ref_id),
                         SQLLegacyHistory.index.is_(None),
                     )
                     .exists(),
@@ -1093,12 +1101,18 @@ class ReferencesData(DataLayerDomain):
 
         await tracker.add(1)
 
+        async with AsyncSession(self._pg) as session:
+            reference_pk = await resolve_legacy_id(session, SQLReference, ref_id)
+
+        if reference_pk is None:
+            raise ResourceConflictError(f"Reference {ref_id!r} not found in postgres")
+
         insertions = [
             prepare_otu_insertion(
                 created_at,
                 HistoryMethod.import_otu,
                 otu.dict(by_alias=True),
-                ref_id,
+                reference_pk,
                 user_id,
             )
             for otu in data.otus
@@ -1136,9 +1150,11 @@ class ReferencesData(DataLayerDomain):
         except Exception:
             await bulk_delete_history(self._pg, [row["change_id"] for row in diff_rows])
 
+            reference_id_match = await compose_reference_id_match(self._pg, ref_id)
+
             await asyncio.gather(
-                self._mongo.sequences.delete_many({"reference.id": ref_id}),
-                self._mongo.otus.delete_many({"reference.id": ref_id}),
+                self._mongo.sequences.delete_many({"reference.id": reference_id_match}),
+                self._mongo.otus.delete_many({"reference.id": reference_id_match}),
             )
 
             await self._mongo.references.delete_one({"_id": ref_id})

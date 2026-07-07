@@ -803,6 +803,7 @@ class TestCreateOTU:
             # Abbreviation defaults to empty string for OTU creation.
             m_check_name_and_abbreviation.assert_called_with(
                 ANY,
+                ANY,
                 "foo",
                 "Tobacco mosaic virus",
                 "TMV",
@@ -848,6 +849,17 @@ async def test_create_index(
     )
 
     async with AsyncSession(pg) as session:
+        reference = SQLReference(
+            legacy_id="foo",
+            name="Foo",
+            description="",
+            created_at=static_time.datetime,
+            source_types=[],
+            user_id=user.id,
+        )
+        session.add(reference)
+        await session.flush()
+
         session.add(
             SQLLegacyHistory(
                 legacy_id="history_1",
@@ -858,7 +870,7 @@ async def test_create_index(
                 otu="otu_1",
                 otu_name="Tobacco mosaic virus",
                 otu_version="0",
-                reference="foo",
+                reference_id=reference.id,
                 index=None,
                 index_version=None,
             ),
@@ -883,7 +895,7 @@ async def test_create_index(
     assert await resp.json() == snapshot
     assert await mongo.indexes.find_one() == snapshot
 
-    m_create_manifest.assert_called_with(ANY, "foo")
+    m_create_manifest.assert_called_with(ANY, ANY, "foo")
 
 
 @pytest.mark.parametrize("error", [None, "400_dne", "400_exists", "404"])

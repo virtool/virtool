@@ -9,11 +9,16 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import virtool.history.db
 import virtool.otus.utils
 from virtool.api.utils import compose_regex_query, paginate
+from virtool.data.topg import (
+    compose_legacy_id_mongo_match,
+    compose_legacy_id_subquery,
+)
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
 from virtool.history.sql import SQLLegacyHistory
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
+from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.utils import base_processor, to_bool
@@ -33,6 +38,7 @@ SEQUENCE_PROJECTION = (
 
 async def check_name_and_abbreviation(
     mongo: "Mongo",
+    pg: AsyncEngine,
     ref_id: str,
     name: str | None = None,
     abbreviation: str | None = None,
@@ -42,18 +48,21 @@ async def check_name_and_abbreviation(
     Returns an error message if the ``name`` or ``abbreviation`` are already in use.
 
     :param mongo: the application database client
+    :param pg: the application PostgreSQL engine
     :param ref_id: the id of the reference to check in
     :param name: an OTU name
     :param abbreviation: an OTU abbreviation
 
     """
+    reference_id_match = await compose_legacy_id_mongo_match(pg, SQLReference, ref_id)
+
     name_exists = name and await mongo.otus.count_documents(
-        {"lower_name": name.lower(), "reference.id": ref_id},
+        {"lower_name": name.lower(), "reference.id": reference_id_match},
         limit=1,
     )
 
     abbreviation_exists = abbreviation and await mongo.otus.count_documents(
-        {"abbreviation": abbreviation, "reference.id": ref_id},
+        {"abbreviation": abbreviation, "reference.id": reference_id_match},
         limit=1,
     )
 
@@ -87,7 +96,11 @@ async def find(
     base_query = None
 
     if ref_id is not None:
-        base_query = {"reference.id": ref_id}
+        base_query = {
+            "reference.id": await compose_legacy_id_mongo_match(
+                pg, SQLReference, ref_id
+            ),
+        }
 
     data = await paginate(
         mongo.otus,
@@ -102,13 +115,16 @@ async def find(
     data["documents"] = await apply_transforms(
         [base_processor(d) for d in data["documents"]],
         [AttachReferenceTransform(mongo)],
-        None,  # pg parameter - not needed for AttachReferenceTransform
+        pg,
     )
 
     history_filters = [SQLLegacyHistory.index.is_(None)]
 
     if ref_id:
-        history_filters.append(SQLLegacyHistory.reference == ref_id)
+        history_filters.append(
+            SQLLegacyHistory.reference_id
+            == compose_legacy_id_subquery(SQLReference, ref_id),
+        )
 
     async with AsyncSession(pg) as session:
         data["modified_count"] = await session.scalar(

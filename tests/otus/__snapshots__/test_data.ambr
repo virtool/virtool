@@ -12,7 +12,7 @@
       'lower_name': 'tobacco mosaic virus',
       'name': 'Tobacco mosaic virus',
       'reference': dict({
-        'id': 'bf1b993c',
+        'id': 1,
       }),
       'schema': list([
       ]),
@@ -126,7 +126,7 @@
       'lower_name': 'prunus virus a',
       'name': 'Prunus virus A',
       'reference': dict({
-        'id': 'bf1b993c',
+        'id': 1,
       }),
       'schema': list([
       ]),

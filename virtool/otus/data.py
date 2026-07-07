@@ -6,12 +6,13 @@ from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from pymongo.results import DeleteResult
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.history.db
 import virtool.otus.db
 import virtool.otus.utils
 from virtool.data.errors import ResourceNotFoundError
+from virtool.data.topg import resolve_legacy_id
 from virtool.data.transforms import apply_transforms
 from virtool.history.utils import (
     compose_create_description,
@@ -33,7 +34,9 @@ from virtool.otus.utils import (
     format_fasta_entry,
     format_fasta_filename,
     format_isolate_name,
+    strip_sequence_references,
 )
+from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.transforms import AttachUserTransform
@@ -234,6 +237,11 @@ class OTUData:
         :param user_id: the ID of the creating user
         :return: the OTU
         """
+        async with AsyncSession(self._pg) as session:
+            reference_pk = await resolve_legacy_id(session, SQLReference, ref_id)
+
+        if reference_pk is None:
+            raise ResourceNotFoundError("Reference does not exist")
 
         async def func(session: AsyncIOMotorClientSession) -> Document:
             document_ = await self._mongo.otus.insert_one(
@@ -245,7 +253,7 @@ class OTUData:
                     "lower_name": data.name.lower(),
                     "isolates": [],
                     "version": 0,
-                    "reference": {"id": ref_id},
+                    "reference": {"id": reference_pk},
                     "schema": data.dict()["otu_schema"],
                 },
                 session=session,
@@ -535,7 +543,7 @@ class OTUData:
             joined=new,
         )
 
-        return find_isolate(complete["isolates"], isolate_id)
+        return strip_sequence_references(find_isolate(complete["isolates"], isolate_id))
 
     async def set_isolate_as_default(
         self,
@@ -567,7 +575,9 @@ class OTUData:
             # If the default isolate will be unchanged, immediately return the existing
             # isolate.
             if isolate["default"]:
-                return find_isolate(old["isolates"], isolate_id)
+                return strip_sequence_references(
+                    find_isolate(old["isolates"], isolate_id),
+                )
 
             # Set ``default`` to ``False`` for all existing isolates if the new one
             # should be default.
@@ -606,7 +616,9 @@ class OTUData:
                 user_id,
             )
 
-            return find_isolate(new["isolates"], isolate_id)
+            return strip_sequence_references(
+                find_isolate(new["isolates"], isolate_id),
+            )
 
         return await self._mongo.with_transaction(func)
 

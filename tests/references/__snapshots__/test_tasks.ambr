@@ -27,7 +27,7 @@
               'lower_name': 'habenaria mosaic virus',
               'name': 'Habenaria mosaic virus',
               'reference': dict({
-                'id': 'foo',
+                'id': 1,
               }),
               'remote': dict({
                 'id': 'a89b6529',
@@ -76,7 +76,7 @@
               'lower_name': 'hardenbergia virus a',
               'name': 'Hardenbergia virus A',
               'reference': dict({
-                'id': 'foo',
+                'id': 1,
               }),
               'remote': dict({
                 'id': '0b9f16ba',
@@ -125,7 +125,7 @@
               'lower_name': 'helenium virus s',
               'name': 'Helenium virus S',
               'reference': dict({
-                'id': 'foo',
+                'id': 1,
               }),
               'remote': dict({
                 'id': '2oafytcq',
@@ -174,7 +174,7 @@
               'lower_name': 'helicoverpa zea nudivirus 2',
               'name': 'Helicoverpa zea nudivirus 2',
               'reference': dict({
-                'id': 'foo',
+                'id': 1,
               }),
               'remote': dict({
                 'id': '6bb1fe0b',
@@ -223,7 +223,7 @@
               'lower_name': 'helleborus net necrosis virus',
               'name': 'Helleborus net necrosis virus',
               'reference': dict({
-                'id': 'foo',
+                'id': 1,
               }),
               'remote': dict({
                 'id': 'c85dca33',
@@ -272,7 +272,7 @@
               'lower_name': 'hibbertia virus y',
               'name': 'Hibbertia virus Y',
               'reference': dict({
-                'id': 'foo',
+                'id': 1,
               }),
               'remote': dict({
                 'id': '579c7055',
@@ -321,7 +321,7 @@
               'lower_name': 'hibiscus chlorotic ringspot virus',
               'name': 'Hibiscus chlorotic ringspot virus',
               'reference': dict({
-                'id': 'foo',
+                'id': 1,
               }),
               'remote': dict({
                 'id': '0716c1e1',
@@ -370,7 +370,7 @@
               'lower_name': 'hibiscus golden mosaic virus',
               'name': 'Hibiscus golden mosaic virus',
               'reference': dict({
-                'id': 'foo',
+                'id': 1,
               }),
               'remote': dict({
                 'id': 'rpz4bwux',
@@ -424,7 +424,7 @@
               'lower_name': 'hibiscus green spot virus',
               'name': 'Hibiscus green spot virus',
               'reference': dict({
-                'id': 'foo',
+                'id': 1,
               }),
               'remote': dict({
                 'id': '400ab879',
@@ -483,7 +483,7 @@
               'lower_name': 'hibiscus-infecting cilevirus',
               'name': 'Hibiscus-infecting cilevirus',
               'reference': dict({
-                'id': 'foo',
+                'id': 1,
               }),
               'remote': dict({
                 'id': 'xxv54nax',
@@ -537,7 +537,7 @@
               'lower_name': 'hollyhock yellow vein mosaic islamabad virus',
               'name': 'Hollyhock yellow vein mosaic Islamabad virus',
               'reference': dict({
-                'id': 'foo',
+                'id': 1,
               }),
               'remote': dict({
                 'id': 'kqpzbw0s',
@@ -586,7 +586,7 @@
               'lower_name': 'hollyhock yellow vein virus',
               'name': 'Hollyhock yellow vein virus',
               'reference': dict({
-                'id': 'foo',
+                'id': 1,
               }),
               'remote': dict({
                 'id': 'qe8afugr',
@@ -635,7 +635,7 @@
               'lower_name': 'hollyhock yellow vein virus associated symptomless alphasatellite',
               'name': 'Hollyhock yellow vein virus associated symptomless alphasatellite',
               'reference': dict({
-                'id': 'foo',
+                'id': 1,
               }),
               'remote': dict({
                 'id': '4ydohve6',
@@ -684,7 +684,7 @@
               'lower_name': 'honeysuckle yellow vein beta-[japan:fukui:2001]',
               'name': 'Honeysuckle yellow vein beta-[Japan:Fukui:2001]',
               'reference': dict({
-                'id': 'foo',
+                'id': 1,
               }),
               'remote': dict({
                 'id': '51c5d911',
@@ -727,7 +727,7 @@
               'lower_name': 'honeysuckle yellow vein japan betasatellite',
               'name': 'Honeysuckle yellow vein Japan betasatellite',
               'reference': dict({
-                'id': 'foo',
+                'id': 1,
               }),
               'remote': dict({
                 'id': '9457c8c7',
@@ -788,7 +788,7 @@
               'lower_name': 'hop latent virus',
               'name': 'Hop latent virus',
               'reference': dict({
-                'id': 'foo',
+                'id': 1,
               }),
               'remote': dict({
                 'id': 'b67008d3',
@@ -837,7 +837,7 @@
               'lower_name': 'hosta virus x',
               'name': 'Hosta virus X',
               'reference': dict({
-                'id': 'foo',
+                'id': 1,
               }),
               'remote': dict({
                 'id': '41915321',
@@ -886,7 +886,7 @@
               'lower_name': 'hot pepper endornavirus',
               'name': 'Hot pepper endornavirus',
               'reference': dict({
-                'id': 'foo',
+                'id': 1,
               }),
               'remote': dict({
                 'id': '898l72tb',
@@ -935,7 +935,7 @@
               'lower_name': 'hoya chlorotic spot virus',
               'name': 'Hoya chlorotic spot virus',
               'reference': dict({
-                'id': 'foo',
+                'id': 1,
               }),
               'remote': dict({
                 'id': 'q1gu14xk',
@@ -984,7 +984,7 @@
               'lower_name': 'hypericum japonicum associated circular dna',
               'name': 'Hypericum japonicum associated circular DNA',
               'reference': dict({
-                'id': 'foo',
+                'id': 1,
               }),
               'remote': dict({
                 'id': 'lliyqfxq',
@@ -1029,7 +1029,7 @@
       'lower_name': 'habenaria mosaic virus',
       'name': 'Habenaria mosaic virus',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'a89b6529',
@@ -1066,7 +1066,7 @@
       'lower_name': 'hardenbergia virus a',
       'name': 'Hardenbergia virus A',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': '0b9f16ba',
@@ -1103,7 +1103,7 @@
       'lower_name': 'helenium virus s',
       'name': 'Helenium virus S',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': '2oafytcq',
@@ -1140,7 +1140,7 @@
       'lower_name': 'helicoverpa zea nudivirus 2',
       'name': 'Helicoverpa zea nudivirus 2',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': '6bb1fe0b',
@@ -1177,7 +1177,7 @@
       'lower_name': 'helleborus net necrosis virus',
       'name': 'Helleborus net necrosis virus',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'c85dca33',
@@ -1214,7 +1214,7 @@
       'lower_name': 'hibbertia virus y',
       'name': 'Hibbertia virus Y',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': '579c7055',
@@ -1251,7 +1251,7 @@
       'lower_name': 'hibiscus chlorotic ringspot virus',
       'name': 'Hibiscus chlorotic ringspot virus',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': '0716c1e1',
@@ -1288,7 +1288,7 @@
       'lower_name': 'hibiscus golden mosaic virus',
       'name': 'Hibiscus golden mosaic virus',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'rpz4bwux',
@@ -1330,7 +1330,7 @@
       'lower_name': 'hibiscus green spot virus',
       'name': 'Hibiscus green spot virus',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': '400ab879',
@@ -1377,7 +1377,7 @@
       'lower_name': 'hibiscus-infecting cilevirus',
       'name': 'Hibiscus-infecting cilevirus',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'xxv54nax',
@@ -1419,7 +1419,7 @@
       'lower_name': 'hollyhock yellow vein mosaic islamabad virus',
       'name': 'Hollyhock yellow vein mosaic Islamabad virus',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'kqpzbw0s',
@@ -1456,7 +1456,7 @@
       'lower_name': 'hollyhock yellow vein virus',
       'name': 'Hollyhock yellow vein virus',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'qe8afugr',
@@ -1493,7 +1493,7 @@
       'lower_name': 'hollyhock yellow vein virus associated symptomless alphasatellite',
       'name': 'Hollyhock yellow vein virus associated symptomless alphasatellite',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': '4ydohve6',
@@ -1530,7 +1530,7 @@
       'lower_name': 'honeysuckle yellow vein japan betasatellite',
       'name': 'Honeysuckle yellow vein Japan betasatellite',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': '9457c8c7',
@@ -1567,7 +1567,7 @@
       'lower_name': 'honeysuckle yellow vein beta-[japan:fukui:2001]',
       'name': 'Honeysuckle yellow vein beta-[Japan:Fukui:2001]',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': '51c5d911',
@@ -1610,7 +1610,7 @@
       'lower_name': 'hop latent virus',
       'name': 'Hop latent virus',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'b67008d3',
@@ -1647,7 +1647,7 @@
       'lower_name': 'hosta virus x',
       'name': 'Hosta virus X',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': '41915321',
@@ -1684,7 +1684,7 @@
       'lower_name': 'hot pepper endornavirus',
       'name': 'Hot pepper endornavirus',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': '898l72tb',
@@ -1721,7 +1721,7 @@
       'lower_name': 'hoya chlorotic spot virus',
       'name': 'Hoya chlorotic spot virus',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'q1gu14xk',
@@ -1758,7 +1758,7 @@
       'lower_name': 'hypericum japonicum associated circular dna',
       'name': 'Hypericum japonicum associated circular DNA',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'lliyqfxq',
@@ -1802,7 +1802,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'ytoqdj4v',
@@ -1818,7 +1818,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': '8f6riell',
@@ -1834,7 +1834,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': '7oecw8v8',
@@ -1850,7 +1850,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'tb4gv082',
@@ -1866,7 +1866,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'serde0oy',
@@ -1882,7 +1882,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'ixnaodb8',
@@ -1898,7 +1898,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'njbw70pe',
@@ -1914,7 +1914,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': '6as0dk9c',
@@ -1930,7 +1930,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': '6w0q5jkz',
@@ -1946,7 +1946,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'l2stoigw',
@@ -1962,7 +1962,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'ylepjkkv',
@@ -1978,7 +1978,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': '5sj8ym53',
@@ -1994,7 +1994,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'szgiszci',
@@ -2010,7 +2010,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'rgefxbk7',
@@ -2026,7 +2026,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'vfh8af9s',
@@ -2042,7 +2042,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'smlsc3gg',
@@ -2058,7 +2058,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'atfrq1dt',
@@ -2074,7 +2074,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': '094dt4el',
@@ -2090,7 +2090,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'b883j09c',
@@ -2106,7 +2106,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'ks6fguqk',
@@ -2122,7 +2122,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'mcn9f1o2',
@@ -2138,7 +2138,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'cnnjrcr2',
@@ -2154,7 +2154,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'qk8gfpl1',
@@ -2170,7 +2170,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'ci08oefl',
@@ -2186,7 +2186,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': '3fuqka79',
@@ -2202,7 +2202,7 @@
       'isolate_id': str,
       'otu_id': str,
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'remote': dict({
         'id': 'svdno1q7',

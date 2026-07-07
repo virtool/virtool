@@ -26,6 +26,7 @@ from virtool.indexes.sql import SQLIndexFile
 from virtool.indexes.utils import check_index_file_type, compose_index_file_key
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app
+from virtool.references.sql import SQLReference
 from virtool.storage.protocol import StorageBackend
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
@@ -482,6 +483,17 @@ class TestCreate:
         )
 
         async with AsyncSession(pg) as session:
+            reference = SQLReference(
+                legacy_id="foo",
+                name="Foo",
+                description="",
+                created_at=static_time.datetime,
+                source_types=[],
+                user_id=user.id,
+            )
+            session.add(reference)
+            await session.flush()
+
             session.add(
                 SQLLegacyHistory(
                     legacy_id="history_1",
@@ -492,7 +504,7 @@ class TestCreate:
                     otu="otu_1",
                     otu_name="Tobacco mosaic virus",
                     otu_version="0",
-                    reference="foo",
+                    reference_id=reference.id,
                     index=None,
                     index_version=None,
                 ),
@@ -518,7 +530,7 @@ class TestCreate:
 
         assert index == snapshot(name="index")
 
-        m_create_manifest.assert_called_with(ANY, "foo")
+        m_create_manifest.assert_called_with(ANY, ANY, "foo")
 
     @pytest.mark.parametrize(
         "error",
@@ -635,8 +647,22 @@ async def test_find_history(
     )
 
     async with AsyncSession(pg) as session:
+        reference = SQLReference(
+            legacy_id="foo",
+            name="Foo",
+            description="",
+            created_at=static_time.datetime,
+            source_types=[],
+            user_id=user_1.id,
+        )
+        session.add(reference)
+        await session.flush()
+
         session.add_all(
-            SQLLegacyHistory(**legacy_history_values(document))
+            SQLLegacyHistory(
+                **legacy_history_values(document),
+                reference_id=reference.id,
+            )
             for document in history_documents
         )
         await session.commit()

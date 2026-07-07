@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.history.db import bulk_insert_diffs, legacy_history_values
 from virtool.history.sql import SQLLegacyHistory
+from virtool.references.sql import SQLReference
 
 
 @pytest.fixture
@@ -274,10 +275,22 @@ def create_mock_history(fake, mongo, pg):
         # One legacy_history row per change with the real diff in Postgres keyed by
         # history_id. History is Postgres-only, so nothing is written to Mongo.
         async with AsyncSession(pg) as session:
+            reference = SQLReference(
+                legacy_id="hxn167",
+                name="Reference A",
+                description="",
+                created_at=datetime.datetime(2017, 7, 12, 16, 0, 50),
+                source_types=[],
+                user_id=user.id,
+            )
+            session.add(reference)
+            await session.flush()
+
             for document in documents:
                 session.add(
                     SQLLegacyHistory(
                         **legacy_history_values({**document, "user": {"id": user.id}}),
+                        reference_id=reference.id,
                     ),
                 )
 

@@ -15,8 +15,11 @@ import virtool.mongo.utils
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.topg import (
+    compose_legacy_id_mongo_match,
     compose_legacy_id_multi_expression,
     compose_legacy_id_single_expression,
+    compose_legacy_id_subquery,
+    resolve_legacy_id,
 )
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
@@ -41,6 +44,39 @@ from virtool.utils import base_processor
 if TYPE_CHECKING:
     from virtool.api.client import UserClient
     from virtool.mongo.core import Mongo
+
+
+async def compose_reference_id_match(pg: AsyncEngine, ref_id: int | str) -> dict:
+    """Build a Mongo match value for an embedded ``reference.id``.
+
+    While the ``references`` migration is in progress, ``otus`` and ``sequences``
+    documents may carry either the legacy Mongo string id or the integer
+    ``legacy_references`` primary key, so both forms must match.
+    """
+    return await compose_legacy_id_mongo_match(pg, SQLReference, ref_id)
+
+
+async def resolve_reference_legacy_id(pg: AsyncEngine, ref_id: int | str) -> str:
+    """Return the legacy Mongo string id for a reference.
+
+    ``references`` still live in Mongo keyed by their legacy string ``_id`` while
+    ``otus`` and ``sequences`` may already embed the integer
+    ``legacy_references`` primary key. Callers that hold an embedded id and need
+    to reach the Mongo ``references`` document resolve it here. A legacy string id
+    passes through unchanged.
+    """
+    if isinstance(ref_id, str):
+        return ref_id
+
+    async with AsyncSession(pg) as session:
+        legacy_id = await session.scalar(
+            select(SQLReference.legacy_id).where(SQLReference.id == ref_id),
+        )
+
+    if legacy_id is None:
+        raise ResourceNotFoundError
+
+    return legacy_id
 
 
 async def write_legacy_reference(
@@ -127,7 +163,7 @@ async def processor(mongo: "Mongo", pg: AsyncEngine, document: Document) -> Docu
 
     latest_build, otu_count, unbuilt_count = await asyncio.gather(
         get_latest_build(mongo, pg, ref_id),
-        get_otu_count(mongo, ref_id),
+        get_otu_count(mongo, pg, ref_id),
         get_unbuilt_count(pg, ref_id),
     )
 
@@ -222,11 +258,14 @@ async def get_reference_users(
     ]
 
 
-async def check_right(req: Request, ref_id: str, right: str) -> bool:
+async def check_right(req: Request, ref_id: int | str, right: str) -> bool:
     client: UserClient = req["client"]
 
     if client.administrator_role == AdministratorRole.FULL:
         return True
+
+    if isinstance(ref_id, int):
+        ref_id = await resolve_reference_legacy_id(req.app["pg"], ref_id)
 
     reference = await get_mongo_from_req(req).references.find_one(
         ref_id,
@@ -255,15 +294,23 @@ async def check_right(req: Request, ref_id: str, right: str) -> bool:
     return any(group[right] and group["id"] in client.groups for group in groups)
 
 
-async def check_source_type(mongo: "Mongo", ref_id: str, source_type: str) -> bool:
+async def check_source_type(
+    mongo: "Mongo",
+    pg: AsyncEngine,
+    ref_id: int | str,
+    source_type: str,
+) -> bool:
     """Check `source_type` is valid based on the reference configuration.
 
     :param mongo: the application MongoDB client
+    :param pg: the application PostgreSQL engine
     :param ref_id: the reference context
     :param source_type: the source type to check
     :return: source type is valid
 
     """
+    ref_id = await resolve_reference_legacy_id(pg, ref_id)
+
     document = await mongo.references.find_one(
         ref_id,
         ["restrict_source_types", "source_types"],
@@ -371,13 +418,14 @@ async def get_latest_build(
         )
 
 
-async def get_manifest(mongo: "Mongo", ref_id: str) -> Document:
+async def get_manifest(mongo: "Mongo", pg: AsyncEngine, ref_id: str) -> Document:
     """Generate a dict of otu document version numbers keyed by the document id.
 
     This is used to make sure only changes made at the time the index rebuild was
     started are included in the build.
 
     :param mongo: the application database client
+    :param pg: the application PostgreSQL engine
     :param ref_id: the id of the reference to get the current index for
     :return: a manifest of otu ids and versions
 
@@ -385,21 +433,24 @@ async def get_manifest(mongo: "Mongo", ref_id: str) -> Document:
     return {
         document["_id"]: document["version"]
         async for document in mongo.otus.find(
-            {"reference.id": ref_id},
+            {"reference.id": await compose_reference_id_match(pg, ref_id)},
             ["version"],
         )
     }
 
 
-async def get_otu_count(mongo: "Mongo", ref_id: str) -> int:
+async def get_otu_count(mongo: "Mongo", pg: AsyncEngine, ref_id: str) -> int:
     """Get the number of OTUs associated with the given `ref_id`.
 
     :param mongo: the application database client
+    :param pg: the application PostgreSQL engine
     :param ref_id: the id of the reference to get the current index for
     :return: the OTU count
 
     """
-    return await mongo.otus.count_documents({"reference.id": ref_id})
+    return await mongo.otus.count_documents(
+        {"reference.id": await compose_reference_id_match(pg, ref_id)},
+    )
 
 
 async def get_unbuilt_count(pg: AsyncEngine, ref_id: str) -> int:
@@ -415,7 +466,8 @@ async def get_unbuilt_count(pg: AsyncEngine, ref_id: str) -> int:
             select(func.count())
             .select_from(SQLLegacyHistory)
             .where(
-                SQLLegacyHistory.reference == ref_id,
+                SQLLegacyHistory.reference_id
+                == compose_legacy_id_subquery(SQLReference, ref_id),
                 SQLLegacyHistory.index.is_(None),
             ),
         )
@@ -551,12 +603,18 @@ async def populate_insert_only_reference(
     reference_id: str,
     user_id: int,
 ) -> None:
+    async with AsyncSession(pg) as session:
+        reference_pk = await resolve_legacy_id(session, SQLReference, reference_id)
+
+    if reference_pk is None:
+        raise ValueError(f"Reference {reference_id!r} not found in postgres")
+
     insertions = [
         prepare_otu_insertion(
             created_at,
             history_method,
             otu,
-            reference_id,
+            reference_pk,
             user_id,
         )
         for otu in otus
@@ -590,9 +648,11 @@ async def populate_insert_only_reference(
     except Exception:
         await bulk_delete_history(pg, [row["change_id"] for row in diff_rows])
 
+        reference_id_match = await compose_reference_id_match(pg, reference_id)
+
         await asyncio.gather(
-            mongo.sequences.delete_many({"reference.id": reference_id}),
-            mongo.otus.delete_many({"reference.id": reference_id}),
+            mongo.sequences.delete_many({"reference.id": reference_id_match}),
+            mongo.otus.delete_many({"reference.id": reference_id_match}),
         )
 
         await mongo.references.delete_one({"_id": reference_id})

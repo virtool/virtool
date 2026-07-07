@@ -14,13 +14,14 @@ import virtool.pg.utils
 import virtool.references.db
 import virtool.utils
 from virtool.api.utils import paginate
-from virtool.data.topg import both_transactions
+from virtool.data.topg import both_transactions, compose_legacy_id_subquery
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.sql import SQLIndexFile
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
-from virtool.references.db import compose_archived_filter
+from virtool.references.db import compose_archived_filter, compose_reference_id_match
+from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.transforms import AttachUserTransform
@@ -147,7 +148,7 @@ async def create(
     """
     index_version, manifest = await asyncio.gather(
         get_next_version(mongo, ref_id),
-        virtool.references.db.get_manifest(mongo, ref_id),
+        virtool.references.db.get_manifest(mongo, pg, ref_id),
     )
 
     document = {
@@ -171,7 +172,8 @@ async def create(
         await pg_session.execute(
             update(SQLLegacyHistory)
             .where(
-                SQLLegacyHistory.reference == ref_id,
+                SQLLegacyHistory.reference_id
+                == compose_legacy_id_subquery(SQLReference, ref_id),
                 SQLLegacyHistory.index.is_(None),
             )
             .values(index=document["_id"], index_version=str(index_version)),
@@ -367,8 +369,11 @@ async def get_unbuilt_stats(
     history_filters = [SQLLegacyHistory.index.is_(None)]
 
     if ref_id:
-        ref_query["reference.id"] = ref_id
-        history_filters.append(SQLLegacyHistory.reference == ref_id)
+        ref_query["reference.id"] = await compose_reference_id_match(pg, ref_id)
+        history_filters.append(
+            SQLLegacyHistory.reference_id
+            == compose_legacy_id_subquery(SQLReference, ref_id),
+        )
 
     async with AsyncSession(pg) as session:
         change_count, modified_otu_count = (
@@ -418,14 +423,16 @@ async def get_patched_otus(
 
 async def update_last_indexed_versions(
     mongo: "Mongo",
+    pg: AsyncEngine,
     ref_id: str,
     session: AsyncIOMotorClientSession,
 ) -> None:
     """Update the `last_indexed_version` field for OTUs associated with `ref_id`
 
     :param mongo: the application mongo client
-    :param session: the motor session to use
+    :param pg: the application Postgres client
     :param ref_id: the id of the reference whose otus should be updated
+    :param session: the motor session to use
 
     """
     pipeline = [
@@ -437,7 +444,12 @@ async def update_last_indexed_versions(
                 "comp": {"$cmp": ["$version", "$last_indexed_version"]},
             },
         },
-        {"$match": {"reference.id": ref_id, "comp": {"$ne": 0}}},
+        {
+            "$match": {
+                "reference.id": await compose_reference_id_match(pg, ref_id),
+                "comp": {"$ne": 0},
+            },
+        },
         {"$group": {"_id": "$version", "id_list": {"$addToSet": "$_id"}}},
     ]
 

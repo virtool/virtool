@@ -317,7 +317,7 @@ class IndexData:
         await wait_for_checks(*aws)
 
         async with self._mongo.create_session() as session:
-            await update_last_indexed_versions(self._mongo, ref_id, session)
+            await update_last_indexed_versions(self._mongo, self._pg, ref_id, session)
 
             await self._mongo.indexes.update_one(
                 {"_id": index_id},

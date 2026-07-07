@@ -187,6 +187,10 @@ async def copy_history_to_postgres(ctx: MigrationContext) -> None:
 
             values = legacy_history_values(document)
             values["user_id"] = user_id
+            # The live write path no longer stores the legacy reference string, but
+            # this backfill runs before ``reference_id`` exists and a downstream
+            # revision resolves ``reference_id`` from it, so it is written here.
+            values["reference"] = document["reference"]["id"]
 
             await session.execute(
                 insert(SQLLegacyHistory)
