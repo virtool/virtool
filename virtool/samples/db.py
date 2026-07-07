@@ -12,6 +12,7 @@ import virtool.mongo.utils
 import virtool.samples.utils
 import virtool.utils
 from virtool.analyses.sql import SQLAnalysis
+from virtool.analyses.utils import WORKFLOW_NAMES
 from virtool.api.errors import APINotFound
 from virtool.data.topg import compose_legacy_id_subquery
 from virtool.data.transforms import AbstractTransform, apply_transforms
@@ -365,6 +366,11 @@ def compose_sample_workflow_filter(workflows: list[str]):
     workflows are ANDed. The predicate is applied before ``LIMIT`` and the count so
     ``found_count`` is correct. Returns ``None`` when nothing parses.
 
+    Pairs with an unknown workflow name or condition are ignored, matching the
+    "unrecognised filter is dropped" behaviour of the old Mongo query. This also
+    avoids the ``none`` condition on a bogus workflow compiling to a ``NOT EXISTS``
+    that matches almost every sample.
+
     :param workflows: the raw ``?workflows=`` query values
     :return: a SQLAlchemy predicate, or ``None``
     """
@@ -377,7 +383,7 @@ def compose_sample_workflow_filter(workflows: list[str]):
             if len(parts) == 2:
                 workflow, condition = parts
 
-                if condition in WORKFLOW_CONDITIONS:
+                if workflow in WORKFLOW_NAMES and condition in WORKFLOW_CONDITIONS:
                     conditions_by_workflow[workflow].add(condition)
 
     if not conditions_by_workflow:

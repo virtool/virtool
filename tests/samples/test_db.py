@@ -63,3 +63,15 @@ class TestComposeSampleWorkflowFilter:
     def test_all_conditions_invalid(self):
         """A query with only invalid conditions yields no predicate."""
         assert compose_sample_workflow_filter(["pathoscope:bar"]) is None
+
+    def test_unknown_workflow_dropped(self):
+        """An unknown workflow name yields no predicate rather than a NOT EXISTS.
+
+        A ``none`` condition on a bogus workflow would otherwise match nearly every
+        sample; it must be ignored like any other unrecognised filter.
+        """
+        assert compose_sample_workflow_filter(["nuuvs:none"]) is None
+        assert (
+            compose_sample_workflow_filter(["nuuvs:none", "pathoscope:ready"])
+            is not None
+        )
