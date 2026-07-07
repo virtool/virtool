@@ -23,10 +23,32 @@ from virtool.otus.oas import (
 )
 from virtool.references.models import ReferenceDataType
 from virtool.references.oas import CreateReferenceRequest, CreateReferenceUserRequest
+from virtool.references.sql import SQLReference
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.tasks.sql import SQLTask
 from virtool.users.oas import UpdateUserRequest
 from virtool.workflow.pytest_plugin.utils import StaticTime
+
+
+async def seed_pg_reference(
+    pg: AsyncEngine,
+    legacy_id: str,
+    user_id: int,
+    created_at,
+) -> None:
+    """Insert a ``legacy_references`` row so OTU history writes can resolve its FK."""
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLReference(
+                legacy_id=legacy_id,
+                name=legacy_id,
+                description="",
+                created_at=created_at,
+                source_types=[],
+                user_id=user_id,
+            ),
+        )
+        await session.commit()
 
 
 @pytest.mark.parametrize(
@@ -654,6 +676,7 @@ class TestCreateOTU:
         error: str | None,
         data_layer: DataLayer,
         mongo: Mongo,
+        pg: AsyncEngine,
         resp_is: RespIs,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
@@ -668,6 +691,7 @@ class TestCreateOTU:
         )
 
         if error != "404":
+            await seed_pg_reference(pg, "foo", client.user.id, static_time.datetime)
             await mongo.references.insert_one(
                 {
                     "_id": "foo",
@@ -734,6 +758,7 @@ class TestCreateOTU:
         mocker,
         resp_is,
         mongo: Mongo,
+        pg: AsyncEngine,
         spawn_client: ClientSpawner,
         static_time,
     ):
@@ -749,6 +774,7 @@ class TestCreateOTU:
         client = await spawn_client(authenticated=True)
 
         if error != "404":
+            await seed_pg_reference(pg, "foo", client.user.id, static_time.datetime)
             await mongo.references.insert_one(
                 {
                     "_id": "foo",

@@ -53,6 +53,7 @@ from virtool.references.db import (
     get_unbuilt_count,
     populate_insert_only_reference,
     processor,
+    write_legacy_reference,
 )
 from virtool.references.models import (
     Reference,
@@ -77,7 +78,7 @@ from virtool.references.tasks import (
     ImportReferenceTask,
 )
 from virtool.references.transforms import AttachImportedFromTransform
-from virtool.references.utils import RIGHTS, ReferenceSourceData, reference_values
+from virtool.references.utils import RIGHTS, ReferenceSourceData
 from virtool.storage.protocol import StorageBackend
 from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
@@ -277,79 +278,11 @@ class ReferencesData(DataLayerDomain):
 
         async def persist(mongo_session, pg_session) -> None:
             await self._mongo.references.insert_one(document, session=mongo_session)
-            await self._write_legacy_reference(pg_session, document)
+            await write_legacy_reference(pg_session, document)
 
         await retry_both_transactions(self._mongo, self._pg, persist)
 
         return await self.get(document["_id"])
-
-    async def _write_legacy_reference(
-        self,
-        pg_session: AsyncSession,
-        document: Document,
-    ) -> None:
-        """Insert a ``legacy_references`` row and its seeded rights from a Mongo
-        reference ``document`` into the open Postgres session.
-
-        ``cloned_from`` holds the source reference's legacy id, which is resolved
-        to its Postgres primary key. If the source has no Postgres row yet, the
-        foreign key is left ``NULL`` for the backfill to fill in later.
-        """
-        cloned_from = document.get("cloned_from")
-
-        cloned_from_id = None
-
-        if cloned_from is not None:
-            cloned_from_id = (
-                await pg_session.execute(
-                    select(SQLReference.id).where(
-                        compose_legacy_id_single_expression(
-                            SQLReference,
-                            cloned_from["id"],
-                        ),
-                    ),
-                )
-            ).scalar_one_or_none()
-
-        user = document.get("user")
-        imported_from = document.get("imported_from")
-        task = document.get("task")
-
-        reference = SQLReference(
-            **reference_values(
-                document,
-                user_id=user["id"] if user else None,
-                upload_id=imported_from["id"] if imported_from else None,
-                cloned_from_id=cloned_from_id,
-                task_id=task["id"] if task else None,
-            ),
-        )
-
-        pg_session.add(reference)
-
-        await pg_session.flush()
-
-        for member in document.get("users", []):
-            pg_session.add(
-                SQLReferenceUser(
-                    reference_id=reference.id,
-                    user_id=member["id"],
-                    build=member.get("build", False),
-                    modify=member.get("modify", False),
-                    modify_otu=member.get("modify_otu", False),
-                ),
-            )
-
-        for member in document.get("groups", []):
-            pg_session.add(
-                SQLReferenceGroup(
-                    reference_id=reference.id,
-                    group_id=member["id"],
-                    build=member.get("build", False),
-                    modify=member.get("modify", False),
-                    modify_otu=member.get("modify_otu", False),
-                ),
-            )
 
     async def _resolve_reference_pk(
         self,

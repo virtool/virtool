@@ -1,5 +1,6 @@
 import asyncio
 from pathlib import Path
+from typing import NamedTuple
 from unittest.mock import ANY
 
 import pytest
@@ -49,14 +50,22 @@ async def subtraction_ids(fake: DataFaker) -> dict[str, int]:
     return {"subtraction_1": first.id, "subtraction_2": second.id}
 
 
+class SampleSetup(NamedTuple):
+    """Identifiers for the sample and reference seeded by ``setup_sample``."""
+
+    user_id: str
+    reference_id: str
+
+
 @pytest.fixture
 async def setup_sample(
     mongo: "Mongo",
     pg: AsyncEngine,
     fake: DataFaker,
     subtraction_ids: dict[str, int],
-) -> str:
+) -> SampleSetup:
     user = await fake.users.create()
+    reference = await fake.references.create(user=user, name="Test Reference")
 
     async with AsyncSession(pg) as session:
         session.add(
@@ -111,19 +120,11 @@ async def setup_sample(
                 "_id": "test_index",
                 "version": 11,
                 "ready": True,
-                "reference": {"id": "test_ref"},
-            },
-        ),
-        mongo.references.insert_one(
-            {
-                "_id": "test_ref",
-                "archived": False,
-                "data_type": "genome",
-                "name": "Test Reference",
+                "reference": {"id": reference.id},
             },
         ),
     )
-    return user.id
+    return SampleSetup(user_id=user.id, reference_id=reference.id)
 
 
 @pytest.mark.parametrize("number_of_analyses", [0, 1, 2])
@@ -133,14 +134,14 @@ async def test_find(
     snapshot_recent: SnapshotAssertion,
     mongo: Mongo,
     pg: AsyncEngine,
-    setup_sample: str,
+    setup_sample: SampleSetup,
     subtraction_ids: dict[str, int],
     mocker,
 ):
     """Tests that all analysis are listed."""
     mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
     client = mocker.Mock(spec=UserClient)
-    user_id = setup_sample
+    user_id = setup_sample.user_id
 
     await mongo.samples.insert_one({"_id": "test_false", "name": "Test False"})
 
@@ -158,7 +159,7 @@ async def test_find(
 
     analysis_wrong_sample = await data_layer.analyses.create(
         CreateAnalysisRequest(
-            ref_id="test_ref",
+            ref_id=setup_sample.reference_id,
             subtractions=[
                 subtraction_ids["subtraction_1"],
                 subtraction_ids["subtraction_2"],
@@ -173,7 +174,7 @@ async def test_find(
     for _ in range(number_of_analyses):
         await data_layer.analyses.create(
             CreateAnalysisRequest(
-                ref_id="test_ref",
+                ref_id=setup_sample.reference_id,
                 subtractions=[
                     subtraction_ids["subtraction_1"],
                     subtraction_ids["subtraction_2"],
@@ -198,7 +199,7 @@ class TestHideIimi:
     """
 
     @staticmethod
-    async def _seed_iimi(mongo: Mongo, pg: AsyncEngine, user_id: str) -> int:
+    async def _seed_iimi(mongo: Mongo, pg: AsyncEngine, setup: SampleSetup) -> int:
         return await seed_analysis(
             mongo,
             pg,
@@ -209,9 +210,9 @@ class TestHideIimi:
                 "ready": True,
                 "job": None,
                 "index": {"id": "test_index", "version": 11},
-                "user": {"id": user_id},
+                "user": {"id": setup.user_id},
                 "sample": {"id": "test_sample"},
-                "reference": {"id": "test_ref"},
+                "reference": {"id": setup.reference_id},
                 "results": {"hits": []},
                 "subtractions": [],
             },
@@ -222,7 +223,7 @@ class TestHideIimi:
         data_layer: DataLayer,
         mongo: Mongo,
         pg: AsyncEngine,
-        setup_sample: str,
+        setup_sample: SampleSetup,
         mocker,
     ):
         """An iimi analysis is excluded from both the documents and the counts."""
@@ -231,11 +232,11 @@ class TestHideIimi:
             return_value=(True, True),
         )
         client = mocker.Mock(spec=UserClient)
-        user_id = setup_sample
+        user_id = setup_sample.user_id
 
         visible = await data_layer.analyses.create(
             CreateAnalysisRequest(
-                ref_id="test_ref",
+                ref_id=setup_sample.reference_id,
                 subtractions=[],
                 workflow=AnalysisWorkflow.nuvs,
             ),
@@ -244,7 +245,7 @@ class TestHideIimi:
             0,
         )
 
-        await self._seed_iimi(mongo, pg, user_id)
+        await self._seed_iimi(mongo, pg, setup_sample)
 
         analyses_found = await data_layer.analyses.find(1, 25, client, "test_sample")
 
@@ -257,7 +258,7 @@ class TestHideIimi:
         data_layer: DataLayer,
         mongo: Mongo,
         pg: AsyncEngine,
-        setup_sample: str,
+        setup_sample: SampleSetup,
     ):
         """Getting an iimi analysis by id raises ``ResourceNotFoundError``."""
         analysis_id = await self._seed_iimi(mongo, pg, setup_sample)
@@ -269,15 +270,15 @@ class TestHideIimi:
 async def test_create(
     data_layer: DataLayer,
     snapshot: SnapshotAssertion,
-    setup_sample: str,
+    setup_sample: SampleSetup,
     subtraction_ids: dict[str, int],
 ):
     """Tests that an analysis is created with the expected fields."""
-    user_id: str = setup_sample
+    user_id: str = setup_sample.user_id
 
     analysis = await data_layer.analyses.create(
         CreateAnalysisRequest(
-            ref_id="test_ref",
+            ref_id=setup_sample.reference_id,
             subtractions=[
                 subtraction_ids["subtraction_1"],
                 subtraction_ids["subtraction_2"],
@@ -292,9 +293,12 @@ async def test_create(
     assert analysis == snapshot(name="obj", exclude=props("created_at", "updated_at"))
 
 
-def _create_request(subtraction_ids: dict[str, int]) -> CreateAnalysisRequest:
+def _create_request(
+    subtraction_ids: dict[str, int],
+    ref_id: str,
+) -> CreateAnalysisRequest:
     return CreateAnalysisRequest(
-        ref_id="test_ref",
+        ref_id=ref_id,
         subtractions=[
             subtraction_ids["subtraction_1"],
             subtraction_ids["subtraction_2"],
@@ -310,14 +314,14 @@ class TestCreate:
         self,
         data_layer: DataLayer,
         pg: AsyncEngine,
-        setup_sample: str,
+        setup_sample: SampleSetup,
         subtraction_ids: dict[str, int],
     ):
         """The Postgres row reflects the creation request."""
         analysis = await data_layer.analyses.create(
-            _create_request(subtraction_ids),
+            _create_request(subtraction_ids, setup_sample.reference_id),
             "test_sample",
-            setup_sample,
+            setup_sample.user_id,
             0,
         )
 
@@ -329,7 +333,7 @@ class TestCreate:
         assert row.ready is False
         assert row.results is None
         assert row.sample == "test_sample"
-        assert row.reference == "test_ref"
+        assert row.reference == setup_sample.reference_id
         assert row.created_at == row.updated_at
         assert isinstance(row.user_id, int)
 
@@ -357,16 +361,16 @@ class TestCreate:
         self,
         data_layer: DataLayer,
         pg: AsyncEngine,
-        setup_sample: str,
+        setup_sample: SampleSetup,
     ):
         """An analysis created without subtractions links no subtraction rows."""
         analysis = await data_layer.analyses.create(
             CreateAnalysisRequest(
-                ref_id="test_ref",
+                ref_id=setup_sample.reference_id,
                 workflow=AnalysisWorkflow.nuvs,
             ),
             "test_sample",
-            setup_sample,
+            setup_sample.user_id,
             0,
         )
 
@@ -388,26 +392,26 @@ class TestCreate:
     async def test_unknown_subtraction_raises(
         self,
         data_layer: DataLayer,
-        setup_sample: str,
+        setup_sample: SampleSetup,
         subtraction_ids: dict[str, int],
     ):
         """Creating an analysis with an unresolvable subtraction is a conflict."""
         with pytest.raises(ResourceConflictError, match="905"):
             await data_layer.analyses.create(
                 CreateAnalysisRequest(
-                    ref_id="test_ref",
+                    ref_id=setup_sample.reference_id,
                     subtractions=[subtraction_ids["subtraction_1"], 905],
                     workflow=AnalysisWorkflow.nuvs,
                 ),
                 "test_sample",
-                setup_sample,
+                setup_sample.user_id,
                 0,
             )
 
     async def test_unknown_sample_raises(
         self,
         data_layer: DataLayer,
-        setup_sample: str,
+        setup_sample: SampleSetup,
         subtraction_ids: dict[str, int],
     ):
         """Creating an analysis for a sample with no ``legacy_samples`` row is a
@@ -415,9 +419,33 @@ class TestCreate:
         """
         with pytest.raises(ResourceConflictError, match="Sample does not exist"):
             await data_layer.analyses.create(
-                _create_request(subtraction_ids),
+                _create_request(subtraction_ids, setup_sample.reference_id),
                 "unknown_sample",
-                setup_sample,
+                setup_sample.user_id,
+                0,
+            )
+
+    async def test_unknown_reference_raises(
+        self,
+        data_layer: DataLayer,
+        setup_sample: SampleSetup,
+        subtraction_ids: dict[str, int],
+    ):
+        """Creating an analysis for a reference with no ``legacy_references`` row is a
+        conflict.
+        """
+        with pytest.raises(ResourceConflictError, match="Reference does not exist"):
+            await data_layer.analyses.create(
+                CreateAnalysisRequest(
+                    ref_id="unknown_ref",
+                    subtractions=[
+                        subtraction_ids["subtraction_1"],
+                        subtraction_ids["subtraction_2"],
+                    ],
+                    workflow=AnalysisWorkflow.nuvs,
+                ),
+                "test_sample",
+                setup_sample.user_id,
                 0,
             )
 
@@ -425,7 +453,7 @@ class TestCreate:
         self,
         data_layer: DataLayer,
         pg: AsyncEngine,
-        setup_sample: str,
+        setup_sample: SampleSetup,
         subtraction_ids: dict[str, int],
         mocker,
     ):
@@ -437,9 +465,9 @@ class TestCreate:
 
         with pytest.raises(RuntimeError):
             await data_layer.analyses.create(
-                _create_request(subtraction_ids),
+                _create_request(subtraction_ids, setup_sample.reference_id),
                 "test_sample",
-                setup_sample,
+                setup_sample.user_id,
                 0,
             )
 
@@ -456,7 +484,7 @@ class TestFinalize:
         data_layer: DataLayer,
         mongo: Mongo,
         pg: AsyncEngine,
-        setup_sample: str,
+        setup_sample: SampleSetup,
         subtraction_ids: dict[str, int],
         mocker,
     ):
@@ -467,9 +495,9 @@ class TestFinalize:
         )
 
         analysis = await data_layer.analyses.create(
-            _create_request(subtraction_ids),
+            _create_request(subtraction_ids, setup_sample.reference_id),
             "test_sample",
-            setup_sample,
+            setup_sample.user_id,
             0,
         )
 
@@ -502,14 +530,14 @@ class TestDelete:
         self,
         data_layer: DataLayer,
         pg: AsyncEngine,
-        setup_sample: str,
+        setup_sample: SampleSetup,
         subtraction_ids: dict[str, int],
     ):
         """Delete removes the Postgres row."""
         analysis = await data_layer.analyses.create(
-            _create_request(subtraction_ids),
+            _create_request(subtraction_ids, setup_sample.reference_id),
             "test_sample",
-            setup_sample,
+            setup_sample.user_id,
             0,
         )
 
@@ -520,13 +548,13 @@ class TestDelete:
 
 async def test_get_without_if_modified_since(
     data_layer: DataLayer,
-    setup_sample: str,
+    setup_sample: SampleSetup,
     subtraction_ids: dict[str, int],
 ):
     """Test that an analysis can be fetched without an HTTP cache validator."""
     analysis = await data_layer.analyses.create(
         CreateAnalysisRequest(
-            ref_id="test_ref",
+            ref_id=setup_sample.reference_id,
             subtractions=[
                 subtraction_ids["subtraction_1"],
                 subtraction_ids["subtraction_2"],
@@ -534,7 +562,7 @@ async def test_get_without_if_modified_since(
             workflow=AnalysisWorkflow.nuvs,
         ),
         "test_sample",
-        setup_sample,
+        setup_sample.user_id,
         0,
     )
 
@@ -546,7 +574,7 @@ async def test_get_without_if_modified_since(
 async def test_upload_file(
     data_layer: DataLayer,
     example_path: Path,
-    setup_sample: str,
+    setup_sample: SampleSetup,
     subtraction_ids: dict[str, int],
     snapshot_recent: SnapshotAssertion,
     spawn_job_client,
@@ -555,11 +583,11 @@ async def test_upload_file(
     """Test that an analysis result file is properly uploaded and a row is inserted into
     the `analysis_files` SQL table.
     """
-    user_id = setup_sample
+    user_id = setup_sample.user_id
 
     analysis = await data_layer.analyses.create(
         CreateAnalysisRequest(
-            ref_id="test_ref",
+            ref_id=setup_sample.reference_id,
             subtractions=[
                 subtraction_ids["subtraction_1"],
                 subtraction_ids["subtraction_2"],

@@ -11,7 +11,38 @@ from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
+from virtool.references.sql import SQLReference
 from virtool.workflow.pytest_plugin.utils import StaticTime
+
+
+async def ensure_reference(
+    session: AsyncSession,
+    legacy_id: str,
+    user_id: int,
+) -> int:
+    """Return the integer id of the ``legacy_references`` row for ``legacy_id``,
+    creating it if it does not yet exist.
+    """
+    reference_id = (
+        await session.execute(
+            select(SQLReference.id).where(SQLReference.legacy_id == legacy_id),
+        )
+    ).scalar_one_or_none()
+
+    if reference_id is None:
+        reference = SQLReference(
+            legacy_id=legacy_id,
+            name=legacy_id,
+            description="",
+            created_at=datetime.datetime(2017, 7, 12, 16, 0, 50),
+            source_types=[],
+            user_id=user_id,
+        )
+        session.add(reference)
+        await session.flush()
+        reference_id = reference.id
+
+    return reference_id
 
 
 async def add_contribution(
@@ -35,6 +66,7 @@ async def add_contribution(
                 otu_name="Prunus virus F",
                 otu_version=otu_version,
                 reference=reference,
+                reference_id=await ensure_reference(session, reference, user_id),
                 index=index,
                 index_version=None if index is None else "1",
             ),
@@ -122,6 +154,10 @@ class TestAdd:
 
         user = await fake.users.create()
 
+        async with AsyncSession(pg) as session:
+            await ensure_reference(session, "hxn167", user.id)
+            await session.commit()
+
         change = await virtool.history.db.add(
             pg,
             "This is a description",
@@ -169,6 +205,10 @@ class TestAdd:
 
         user = await fake.users.create()
 
+        async with AsyncSession(pg) as session:
+            await ensure_reference(session, "hxn167", user.id)
+            await session.commit()
+
         change = await virtool.history.db.add(
             pg,
             f"Created {new['name']}",
@@ -205,6 +245,10 @@ class TestAdd:
         old, _ = test_otu_edit
 
         user = await fake.users.create()
+
+        async with AsyncSession(pg) as session:
+            await ensure_reference(session, "hxn167", user.id)
+            await session.commit()
 
         change = await virtool.history.db.add(
             pg,
