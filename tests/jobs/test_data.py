@@ -24,7 +24,6 @@ from virtool.jobs.models import (
 from virtool.jobs.pg import (
     SQLJob,
     SQLJobIndex,
-    SQLJobSample,
 )
 from virtool.samples.sql import SQLLegacySample
 from virtool.subtractions.pg import SQLSubtraction
@@ -56,7 +55,7 @@ async def test_create(
 
     user = await fake.users.create()
 
-    job = await jobs_data.create("create_sample", {"sample_id": "foo"}, user.id, 0)
+    job = await jobs_data.create("build_index", {"index_id": "foo"}, user.id, 0)
 
     assert job == snapshot
 
@@ -139,17 +138,42 @@ class TestCreatePostgres:
         assert sql_job.acquired is False
         assert sql_job.created_at == static_time.datetime
 
-    async def test_sample_join_table(
+    async def test_create_does_not_link_sample(
         self,
         jobs_data: JobsData,
         fake: DataFaker,
         pg: AsyncEngine,
     ):
-        """Test that create_sample jobs write the legacy sample string.
+        """``create`` no longer writes a ``job_samples`` row for create_sample jobs.
 
-        The integer ``sample_id`` foreign key is left ``NULL`` on the write path
-        and populated later by the backfill; the write path only records the
-        legacy Mongo sample string in ``sample``.
+        The sample→job link is owned by the sample via ``legacy_samples.job_id``,
+        so a freshly created job has no sample until its sample is written and
+        points back at it.
+        """
+        user = await fake.users.create()
+
+        job = await jobs_data.create(
+            "create_sample",
+            {"sample_id": "sample_123"},
+            user.id,
+            0,
+        )
+
+        assert (await jobs_data.get(job.id)).args == {}
+
+    async def test_sample_id_resolved_from_legacy_sample(
+        self,
+        jobs_data: JobsData,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """``get`` resolves the sample from the legacy sample linked by job_id.
+
+        Unlike subtractions and analyses, which expose the integer id, the sample
+        reference is exposed as the legacy Mongo string so the create_sample
+        workflow can address the sample over the jobs API, whose endpoints still
+        resolve samples by their Mongo ``_id``. The public flip to the integer PK
+        is VIR-2529.
         """
         user = await fake.users.create()
 
@@ -161,66 +185,19 @@ class TestCreatePostgres:
         )
 
         async with AsyncSession(pg) as session:
-            sql_job = (
-                await session.execute(
-                    select(SQLJob).where(SQLJob.id == job.id),
-                )
-            ).scalar()
-
-            job_sample = (
-                await session.execute(
-                    select(SQLJobSample).where(SQLJobSample.job_id == sql_job.id),
-                )
-            ).scalar()
-
-        assert job_sample is not None
-        assert job_sample.sample == "sample_123"
-        assert job_sample.sample_id is None
-
-    async def test_get_returns_legacy_sample_string(
-        self,
-        jobs_data: JobsData,
-        fake: DataFaker,
-        pg: AsyncEngine,
-    ):
-        """Test that get() exposes the legacy sample string, not the integer FK.
-
-        The create_sample workflow addresses the sample over the jobs API, which
-        resolves samples by their Mongo ``_id``, so ``args["sample_id"]`` must
-        stay the legacy string even after the integer ``sample_id`` foreign key
-        is populated by the backfill.
-        """
-        user = await fake.users.create()
-
-        job = await jobs_data.create(
-            "create_sample",
-            {"sample_id": "mapped_sample"},
-            user.id,
-            0,
-        )
-
-        assert (await jobs_data.get(job.id)).args["sample_id"] == "mapped_sample"
-
-        async with AsyncSession(pg) as session:
-            sample = SQLLegacySample(
-                legacy_id="mapped_sample",
-                name="mapped_sample",
-                library_type="normal",
-                created_at=arrow.utcnow().naive,
+            session.add(
+                SQLLegacySample(
+                    legacy_id="sample_123",
+                    name="Sample 123",
+                    library_type="normal",
+                    created_at=arrow.utcnow().naive,
+                    job_id=job.id,
+                ),
             )
-            session.add(sample)
-            await session.flush()
-            sample_pk = sample.id
-
-            job_sample = (
-                await session.execute(
-                    select(SQLJobSample).where(SQLJobSample.job_id == job.id),
-                )
-            ).scalar()
-            job_sample.sample_id = sample_pk
             await session.commit()
 
-        assert (await jobs_data.get(job.id)).args["sample_id"] == "mapped_sample"
+        fetched_job = await jobs_data.get(job.id)
+        assert fetched_job.args == {"sample_id": "sample_123"}
 
     async def test_index_join_table(
         self,

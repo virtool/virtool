@@ -663,8 +663,8 @@
       'applied_at': datetime,
       'created_at': datetime,
       'id': 95,
-      'name': 'rename job_samples sample_id and add integer fk',
-      'revision': '9f47a12a8ef6',
+      'name': 'add legacy_samples job_id unique constraint',
+      'revision': 'df76f45e6f0e',
     }),
   ])
 # ---

@@ -8,7 +8,7 @@ resources.
 
 from datetime import datetime
 
-from sqlalchemy import BigInteger, CheckConstraint, ForeignKey, String
+from sqlalchemy import CheckConstraint, ForeignKey, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -93,21 +93,18 @@ class SQLJobIndex(Base):
 
 
 class SQLJobSample(Base):
+    """Links a job to the sample it created.
+
+    No longer written: the sample references its job directly via
+    ``legacy_samples.job_id``, and ``JobsData.get`` resolves the sample through
+    that reverse foreign key. The model and ``job_samples`` table are retained
+    pending their drop in VIR-2607.
+    """
+
     __tablename__ = "job_samples"
 
     job_id: Mapped[int] = mapped_column(ForeignKey("jobs.id"), primary_key=True)
-    """The job that is creating the sample."""
+    """The job that created the sample."""
 
-    sample: Mapped[str]
-    """The legacy Mongo ``_id`` of the sample being created."""
-
-    sample_id: Mapped[int | None] = mapped_column(
-        BigInteger,
-        ForeignKey("legacy_samples.id", ondelete="SET NULL"),
-        nullable=True,
-    )
-    """The sample being created.
-
-    A ``create_sample`` job outlives the sample it created, so the reference is
-    cleared rather than cascaded when the sample is deleted.
-    """
+    sample_id: Mapped[str]
+    """The legacy Mongo ``_id`` of the sample that was created."""

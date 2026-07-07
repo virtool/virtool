@@ -28,9 +28,9 @@ from virtool.jobs.models import (
 from virtool.jobs.pg import (
     SQLJob,
     SQLJobIndex,
-    SQLJobSample,
 )
 from virtool.jobs.utils import compute_progress
+from virtool.samples.sql import SQLLegacySample
 from virtool.subtractions.pg import SQLSubtraction
 from virtool.types import Document
 from virtool.users.models_base import UserNested
@@ -204,11 +204,7 @@ class JobsData:
             session.add(sql_job)
             await session.flush()
 
-            if workflow == "create_sample" and "sample_id" in job_args:
-                session.add(
-                    SQLJobSample(job_id=sql_job.id, sample=job_args["sample_id"]),
-                )
-            elif workflow == "build_index" and "index_id" in job_args:
+            if workflow == "build_index" and "index_id" in job_args:
                 session.add(
                     SQLJobIndex(job_id=sql_job.id, index_id=job_args["index_id"]),
                 )
@@ -228,13 +224,13 @@ class JobsData:
                 select(
                     SQLJob,
                     SQLUser,
-                    SQLJobSample.sample,
+                    SQLLegacySample.legacy_id.label("sample_id"),
                     SQLJobIndex.index_id,
                     SQLSubtraction.id.label("subtraction_id"),
                     SQLAnalysis.legacy_id,
                 )
                 .join(SQLUser, SQLJob.user_id == SQLUser.id)
-                .outerjoin(SQLJobSample, SQLJob.id == SQLJobSample.job_id)
+                .outerjoin(SQLLegacySample, SQLLegacySample.job_id == SQLJob.id)
                 .outerjoin(SQLJobIndex, SQLJob.id == SQLJobIndex.job_id)
                 .outerjoin(SQLSubtraction, SQLSubtraction.job_id == SQLJob.id)
                 .outerjoin(SQLAnalysis, SQLAnalysis.job_id == SQLJob.id)
@@ -245,17 +241,20 @@ class JobsData:
         if row is None:
             raise ResourceNotFoundError
 
-        sql_job, sql_user, sample, index_id, subtraction_id, analysis_id = row
+        sql_job, sql_user, sample_id, index_id, subtraction_id, analysis_id = row
 
-        # ``sample_id`` is exposed as the legacy sample string, not the integer
-        # ``SQLJobSample.sample_id`` foreign key. The create_sample workflow uses
-        # this value to address the sample over the jobs API, whose endpoints
-        # still resolve samples by their Mongo ``_id``. The public identifier
-        # flips to the integer primary key in VIR-2529.
+        # The create_sample job's sample is resolved through the reverse
+        # ``legacy_samples.job_id`` foreign key rather than a ``job_samples`` link
+        # row. ``sample_id`` is exposed as the legacy sample string
+        # (``legacy_samples.legacy_id``), not the integer ``legacy_samples.id``
+        # primary key: the create_sample workflow uses this value to address the
+        # sample over the jobs API, whose endpoints still resolve samples by their
+        # Mongo ``_id``. The public identifier flips to the integer primary key in
+        # VIR-2529.
         args = {
             field: value
             for field, value in (
-                ("sample_id", sample),
+                ("sample_id", sample_id),
                 ("index_id", index_id),
                 ("subtraction_id", subtraction_id),
                 ("analysis_id", analysis_id),

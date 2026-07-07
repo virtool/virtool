@@ -32,17 +32,6 @@ _job_subtractions = Table(
     Column("subtraction_id", String),
 )
 
-# ``job_samples.sample_id`` was later renamed to ``sample`` (and a new integer
-# ``sample_id`` FK added). This revision runs earlier in the chain, while the
-# column is still the legacy sample string named ``sample_id``, so it writes
-# through this frozen table rather than the evolved ``SQLJobSample`` model.
-_job_samples = Table(
-    "job_samples",
-    MetaData(),
-    Column("job_id", Integer),
-    Column("sample_id", String),
-)
-
 LEGACY_TO_JOB_STATE: dict[str, JobState] = {
     "cancelled": JobState.CANCELLED,
     "complete": JobState.SUCCEEDED,
@@ -201,14 +190,11 @@ async def _add_job_relationship(
     workflow = job.get("workflow")
     args = job.get("args", {})
 
-    if workflow == "create_sample" and "sample_id" in args:
-        await pg_session.execute(
-            _job_samples.insert().values(
-                job_id=job_id,
-                sample_id=args["sample_id"],
-            ),
-        )
-    elif workflow == "build_index" and "index_id" in args:
+    # ``create_sample`` jobs are intentionally not linked here. The sample→job
+    # link is reconstructed from ``legacy_samples.job_id`` when samples are
+    # copied to Postgres, and the retired ``job_samples`` table is no longer
+    # written (see VIR-2530 / VIR-2607).
+    if workflow == "build_index" and "index_id" in args:
         pg_session.add(SQLJobIndex(job_id=job_id, index_id=args["index_id"]))
     elif workflow == "create_subtraction" and "subtraction_id" in args:
         await pg_session.execute(
