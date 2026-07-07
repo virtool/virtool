@@ -23,7 +23,7 @@
     'ready': False,
     'reference': dict({
       'data_type': 'genome',
-      'id': 'test_ref',
+      'id': 'bf1b993c',
       'name': 'Test Reference',
     }),
     'results': None,

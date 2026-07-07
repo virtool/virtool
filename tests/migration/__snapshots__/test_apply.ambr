@@ -631,5 +631,19 @@
       'name': 'add sample_id to sample files',
       'revision': 'c980043c0c89',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 91,
+      'name': 'add reference_id to analyses and legacy_history',
+      'revision': '91b32f49a8b2',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 92,
+      'name': 'backfill reference ids to integers',
+      'revision': 'xgqo66avrcdh',
+    }),
   ])
 # ---

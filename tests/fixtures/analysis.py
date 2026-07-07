@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.analyses.sql import SQLAnalysis, SQLAnalysisSubtraction
 from virtool.data.topg import compose_legacy_id_multi_expression
 from virtool.mongo.core import Mongo
+from virtool.references.sql import SQLReference
 from virtool.samples.sql import SQLLegacySample
 from virtool.subtractions.pg import SQLSubtraction
 
@@ -33,6 +34,7 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
     await mongo.analyses.insert_one(document)
 
     sample = document["sample"]
+    reference = document["reference"]
 
     async with AsyncSession(pg) as session:
         sample_pg_id = (
@@ -55,6 +57,27 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
             await session.flush()
             sample_pg_id = legacy_sample.id
 
+        reference_pg_id = (
+            await session.execute(
+                select(SQLReference.id).where(
+                    SQLReference.legacy_id == reference["id"],
+                ),
+            )
+        ).scalar_one_or_none()
+
+        if reference_pg_id is None:
+            legacy_reference = SQLReference(
+                legacy_id=reference["id"],
+                name=reference.get("name", reference["id"]),
+                description="",
+                created_at=document["created_at"],
+                source_types=[],
+                user_id=document["user"]["id"],
+            )
+            session.add(legacy_reference)
+            await session.flush()
+            reference_pg_id = legacy_reference.id
+
         analysis = SQLAnalysis(
             legacy_id=document["_id"],
             created_at=document["created_at"],
@@ -64,7 +87,8 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
             results=results if isinstance(results, dict) else None,
             sample=sample["id"],
             sample_id=sample_pg_id,
-            reference=document["reference"]["id"],
+            reference=reference["id"],
+            reference_id=reference_pg_id,
             index=index["id"],
             user_id=document["user"]["id"],
             job_id=job["id"] if job and isinstance(job["id"], int) else None,
