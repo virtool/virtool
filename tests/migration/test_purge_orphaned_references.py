@@ -301,6 +301,30 @@ class TestPurgeOrphanedReferences:
 
         assert surviving == ["gone.1", "gone.2"]
 
+    @pytest.mark.usefixtures("user_id")
+    async def test_ignores_documents_without_reference_id(
+        self,
+        ctx: MigrationContext,
+    ):
+        """A null or missing reference.id is never treated as an orphan."""
+        await ctx.mongo.references.insert_one({"_id": "live"})
+        await ctx.mongo.otus.insert_many(
+            [
+                otu_doc("live", "otu_live"),
+                {"_id": "otu_null_ref", "reference": {"id": None}},
+                {"_id": "otu_no_ref"},
+            ],
+        )
+
+        await upgrade(ctx)
+
+        assert sorted(await ctx.mongo.otus.distinct("_id")) == [
+            "otu_live",
+            "otu_no_ref",
+            "otu_null_ref",
+        ]
+        assert await ctx.mongo.deleted_otus.distinct("_id") == []
+
     async def test_no_orphans_is_noop(
         self,
         ctx: MigrationContext,

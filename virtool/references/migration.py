@@ -528,7 +528,12 @@ async def _find_orphaned_reference_ids(ctx: MigrationContext) -> list[str]:
     otu_refs = set(await ctx.mongo.otus.distinct("reference.id"))
     index_refs = set(await ctx.mongo.indexes.distinct("reference.id"))
 
-    return sorted((history_refs | otu_refs | index_refs) - existing)
+    orphaned = (history_refs | otu_refs | index_refs) - existing
+
+    # Drop null/empty ids: a ``{"$in": [None]}`` archive query would otherwise
+    # match every document with a null or missing ``reference.id`` and sweep them
+    # into the deleted collections.
+    return sorted(reference for reference in orphaned if reference)
 
 
 async def _archive_and_delete(
