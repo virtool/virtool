@@ -264,6 +264,7 @@ async def test_get_patched_otus(mocker: MockerFixture, mongo: Mongo):
 
 async def test_update_last_indexed_versions(
     mongo: Mongo,
+    pg: AsyncEngine,
     spawn_client: ClientSpawner,
     test_otu,
 ):
@@ -273,7 +274,7 @@ async def test_update_last_indexed_versions(
     await mongo.otus.insert_one(test_otu)
 
     async with mongo.create_session() as session:
-        await update_last_indexed_versions(mongo, "hxn167", session)
+        await update_last_indexed_versions(mongo, pg, "hxn167", session)
 
     document = await mongo.otus.find_one({"reference.id": "hxn167"})
 

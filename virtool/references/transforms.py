@@ -91,7 +91,9 @@ class AttachReferenceTransform(AbstractTransform):
         session: AsyncSession,
     ) -> dict[str, Document | None]:
         reference_ids = {get_safely(d, "reference", "id") for d in documents}
-        reference_ids.discard(None)
+
+        if None in reference_ids:
+            raise ValueError("Missing reference id")
 
         legacy_id_map = await _resolve_legacy_reference_ids(session, reference_ids)
 
@@ -109,8 +111,6 @@ class AttachReferenceTransform(AbstractTransform):
                 PROJECTION,
             )
         }
-
-        reference_lookup[None] = None
 
         prepared: dict[str, Document | None] = {}
 

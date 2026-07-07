@@ -20,7 +20,7 @@ from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.sql import SQLIndexFile
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
-from virtool.references.db import compose_archived_filter
+from virtool.references.db import compose_archived_filter, compose_reference_id_match
 from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
@@ -369,7 +369,7 @@ async def get_unbuilt_stats(
     history_filters = [SQLLegacyHistory.index.is_(None)]
 
     if ref_id:
-        ref_query["reference.id"] = ref_id
+        ref_query["reference.id"] = await compose_reference_id_match(pg, ref_id)
         history_filters.append(
             SQLLegacyHistory.reference_id
             == compose_legacy_id_subquery(SQLReference, ref_id),
@@ -423,14 +423,16 @@ async def get_patched_otus(
 
 async def update_last_indexed_versions(
     mongo: "Mongo",
+    pg: AsyncEngine,
     ref_id: str,
     session: AsyncIOMotorClientSession,
 ) -> None:
     """Update the `last_indexed_version` field for OTUs associated with `ref_id`
 
     :param mongo: the application mongo client
-    :param session: the motor session to use
+    :param pg: the application Postgres client
     :param ref_id: the id of the reference whose otus should be updated
+    :param session: the motor session to use
 
     """
     pipeline = [
@@ -442,7 +444,12 @@ async def update_last_indexed_versions(
                 "comp": {"$cmp": ["$version", "$last_indexed_version"]},
             },
         },
-        {"$match": {"reference.id": ref_id, "comp": {"$ne": 0}}},
+        {
+            "$match": {
+                "reference.id": await compose_reference_id_match(pg, ref_id),
+                "comp": {"$ne": 0},
+            },
+        },
         {"$group": {"_id": "$version", "id_list": {"$addToSet": "$_id"}}},
     ]
 
