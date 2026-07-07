@@ -237,9 +237,6 @@ class DeriveWorkflowTagsTransform(AbstractTransform):
     sample ids, so the aggregation never scans the whole table.
     """
 
-    def __init__(self, pg: AsyncEngine):
-        self._pg = pg
-
     async def attach_one(self, document: Document, prepared: Any) -> Document:
         return {**document, **prepared}
 

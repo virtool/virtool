@@ -255,7 +255,7 @@ class SamplesData(DataLayerDomain):
             ],
             [
                 AttachMongoUploadsTransform(self._mongo),
-                DeriveWorkflowTagsTransform(self._pg),
+                DeriveWorkflowTagsTransform(),
                 AttachJobTransform(self._pg),
                 AttachLabelsTransform(self._pg),
                 AttachUploadsTransform(self._pg),
@@ -391,7 +391,7 @@ class SamplesData(DataLayerDomain):
             _map_sample_row(row, label_ids, subtraction_ids),
             [
                 AttachMongoUploadsTransform(self._mongo),
-                DeriveWorkflowTagsTransform(self._pg),
+                DeriveWorkflowTagsTransform(),
                 AttachArtifactsAndReadsTransform(self._pg),
                 AttachJobTransform(self._pg),
                 AttachLabelsTransform(self._pg),
