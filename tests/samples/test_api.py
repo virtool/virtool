@@ -8,7 +8,7 @@ from pathlib import Path
 import arrow
 import pytest
 from aiohttp.test_utils import make_mocked_coro
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
@@ -35,6 +35,81 @@ from virtool.settings.oas import UpdateSettingsRequest
 from virtool.subtractions.pg import SQLSubtraction
 from virtool.uploads.sql import SQLUpload
 from virtool.users.oas import UpdateUserRequest
+
+
+async def insert_pg_sample(
+    session: AsyncSession,
+    document: dict,
+    group_id: int | None = None,
+) -> SQLLegacySample:
+    """Insert the ``legacy_samples`` row and label join rows mirroring a Mongo sample.
+
+    Sample reads are served from Postgres, so tests that seed Mongo directly must seed
+    the matching Postgres rows too.
+    """
+    created_at = document["created_at"]
+
+    if created_at.tzinfo is not None:
+        created_at = created_at.replace(tzinfo=None)
+
+    sample = SQLLegacySample(
+        legacy_id=document["_id"],
+        name=document["name"],
+        host=document.get("host", ""),
+        isolate=document.get("isolate", ""),
+        locale=document.get("locale", ""),
+        notes=document.get("notes", ""),
+        library_type=document["library_type"],
+        format=document.get("format", "fastq"),
+        group_id=group_id,
+        quality=document.get("quality"),
+        created_at=created_at,
+        paired=document.get("paired", False),
+        ready=document.get("ready", False),
+        hold=document.get("hold", True),
+        is_legacy=document.get("is_legacy", False),
+        all_read=document.get("all_read", False),
+        all_write=document.get("all_write", False),
+        group_read=document.get("group_read", False),
+        group_write=document.get("group_write", False),
+        user_id=document["user"]["id"],
+        job_id=document["job"]["id"] if document.get("job") else None,
+    )
+
+    session.add(sample)
+    await session.flush()
+
+    for label_id in document.get("labels", []):
+        session.add(SQLLegacySampleLabel(sample_id=sample.id, label_id=label_id))
+
+    for subtraction_id in document.get("subtractions", []):
+        session.add(
+            SQLLegacySampleSubtraction(
+                sample_id=sample.id,
+                subtraction_id=subtraction_id,
+            ),
+        )
+
+    return sample
+
+
+async def update_pg_sample_rights(
+    pg: AsyncEngine,
+    legacy_id: str,
+    **values,
+) -> None:
+    """Apply a rights change to the Postgres ``legacy_samples`` row for a test.
+
+    Read paths resolve rights from Postgres, so tests that mutate rights in Mongo must
+    mirror the change here.
+    """
+    async with AsyncSession(pg) as session:
+        await session.execute(
+            update(SQLLegacySample)
+            .where(SQLLegacySample.legacy_id == legacy_id)
+            .values(**values),
+        )
+        await session.commit()
 
 
 async def _ensure_legacy_sample_id(session: AsyncSession, legacy_id: str) -> int:
@@ -69,7 +144,12 @@ class MockJobInterface:
 
 
 @pytest.fixture
-async def get_sample_ready_false(fake: DataFaker, mongo: Mongo, static_time):
+async def get_sample_ready_false(
+    fake: DataFaker,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    static_time,
+):
     label = await fake.labels.create()
     user = await fake.users.create()
     job = await fake.jobs.create(user, workflow="create_sample")
@@ -82,45 +162,49 @@ async def get_sample_ready_false(fake: DataFaker, mongo: Mongo, static_time):
         user=user, upload=upload, name="Pear", upload_files=False, finalized=False
     )
 
-    await mongo.samples.insert_one(
-        {
-            "_id": "test",
-            "all_read": True,
-            "all_write": True,
-            "created_at": static_time.datetime,
-            "files": [
-                {
-                    "id": "foo",
-                    "name": "Bar.fq.gz",
-                    "download_url": "/download/samples/files/file_1.fq.gz",
-                },
-            ],
-            "format": "fastq",
-            "group": "none",
-            "group_read": True,
-            "group_write": True,
-            "hold": False,
-            "host": "",
-            "is_legacy": False,
-            "isolate": "",
-            "job": {"id": job.id},
-            "labels": [label.id],
-            "library_type": LibraryType.normal.value,
-            "locale": "",
-            "name": "Test",
-            "notes": "",
-            "nuvs": False,
-            "pathoscope": True,
-            "ready": False,
-            "subtractions": [apple.id, pear.id],
-            "user": {"id": user.id},
-            "workflows": {
-                "aodp": WorkflowState.INCOMPATIBLE.value,
-                "pathoscope": WorkflowState.COMPLETE.value,
-                "nuvs": WorkflowState.PENDING.value,
+    document = {
+        "_id": "test",
+        "all_read": True,
+        "all_write": True,
+        "created_at": static_time.datetime,
+        "files": [
+            {
+                "id": "foo",
+                "name": "Bar.fq.gz",
+                "download_url": "/download/samples/files/file_1.fq.gz",
             },
+        ],
+        "format": "fastq",
+        "group": "none",
+        "group_read": True,
+        "group_write": True,
+        "hold": False,
+        "host": "",
+        "is_legacy": False,
+        "isolate": "",
+        "job": {"id": job.id},
+        "labels": [label.id],
+        "library_type": LibraryType.normal.value,
+        "locale": "",
+        "name": "Test",
+        "notes": "",
+        "nuvs": False,
+        "pathoscope": True,
+        "ready": False,
+        "subtractions": [apple.id, pear.id],
+        "user": {"id": user.id},
+        "workflows": {
+            "aodp": WorkflowState.INCOMPATIBLE.value,
+            "pathoscope": WorkflowState.COMPLETE.value,
+            "nuvs": WorkflowState.PENDING.value,
         },
-    )
+    }
+
+    await mongo.samples.insert_one(document)
+
+    async with AsyncSession(pg) as session:
+        await insert_pg_sample(session, document)
+        await session.commit()
 
 
 @pytest.fixture
@@ -254,6 +338,7 @@ async def get_sample_data(
 async def find_samples_client(
     fake: DataFaker,
     mongo: Mongo,
+    pg: AsyncEngine,
     spawn_client: ClientSpawner,
     static_time,
 ):
@@ -268,65 +353,70 @@ async def find_samples_client(
 
     client = await spawn_client(authenticated=True)
 
-    await mongo.samples.insert_many(
-        [
-            {
-                "_id": "beb1eb10",
-                "all_read": True,
-                "created_at": arrow.get(static_time.datetime).shift(hours=1).datetime,
-                "foobar": True,
-                "host": "",
-                "isolate": "Thing",
-                "job": {"id": job.id},
-                "labels": [label_1.id, label_2.id],
-                "library_type": "normal",
-                "name": "16GVP042",
-                "notes": "",
-                "nuvs": True,
-                "pathoscope": True,
-                "ready": True,
-                "user": {"id": user_1.id},
-                "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
-            },
-            {
-                "user": {"id": user_2.id},
-                "nuvs": False,
-                "host": "",
-                "foobar": True,
-                "isolate": "Test",
-                "library_type": "srna",
-                "created_at": arrow.get(static_time.datetime).datetime,
-                "_id": "72bb8b31",
-                "job": None,
-                "name": "16GVP043",
-                "pathoscope": False,
-                "all_read": True,
-                "ready": True,
-                "labels": [label_1.id],
-                "notes": "This is a good sample.",
-                "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
-            },
-            {
-                "user": {"id": user_2.id},
-                "nuvs": False,
-                "host": "",
-                "library_type": "amplicon",
-                "notes": "",
-                "foobar": True,
-                "ready": True,
-                "isolate": "",
-                "created_at": arrow.get(static_time.datetime).shift(hours=2).datetime,
-                "_id": "cb400e6d",
-                "job": None,
-                "name": "16SPP044",
-                "pathoscope": False,
-                "all_read": True,
-                "labels": [label_3.id],
-                "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
-            },
-        ],
-        session=None,
-    )
+    documents = [
+        {
+            "_id": "beb1eb10",
+            "all_read": True,
+            "created_at": arrow.get(static_time.datetime).shift(hours=1).datetime,
+            "foobar": True,
+            "host": "",
+            "isolate": "Thing",
+            "job": {"id": job.id},
+            "labels": [label_1.id, label_2.id],
+            "library_type": "normal",
+            "name": "16GVP042",
+            "notes": "",
+            "nuvs": True,
+            "pathoscope": True,
+            "ready": True,
+            "user": {"id": user_1.id},
+            "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
+        },
+        {
+            "user": {"id": user_2.id},
+            "nuvs": False,
+            "host": "",
+            "foobar": True,
+            "isolate": "Test",
+            "library_type": "srna",
+            "created_at": arrow.get(static_time.datetime).datetime,
+            "_id": "72bb8b31",
+            "job": None,
+            "name": "16GVP043",
+            "pathoscope": False,
+            "all_read": True,
+            "ready": True,
+            "labels": [label_1.id],
+            "notes": "This is a good sample.",
+            "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
+        },
+        {
+            "user": {"id": user_2.id},
+            "nuvs": False,
+            "host": "",
+            "library_type": "amplicon",
+            "notes": "",
+            "foobar": True,
+            "ready": True,
+            "isolate": "",
+            "created_at": arrow.get(static_time.datetime).shift(hours=2).datetime,
+            "_id": "cb400e6d",
+            "job": None,
+            "name": "16SPP044",
+            "pathoscope": False,
+            "all_read": True,
+            "labels": [label_3.id],
+            "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
+        },
+    ]
+
+    await mongo.samples.insert_many(documents, session=None)
+
+    async with AsyncSession(pg) as session:
+        for document in documents:
+            await insert_pg_sample(session, document)
+
+        await session.commit()
 
     return client
 
@@ -434,6 +524,7 @@ class TestGet:
         get_sample_data,
         snapshot: SnapshotAssertion,
         mongo: Mongo,
+        pg: AsyncEngine,
         spawn_client: ClientSpawner,
     ):
         """Test that a sample can be retrieved by its owner."""
@@ -450,6 +541,14 @@ class TestGet:
                 },
             },
         )
+        await update_pg_sample_rights(
+            pg,
+            "test",
+            all_read=False,
+            group_read=False,
+            group_id=None,
+            user_id=client.user.id,
+        )
 
         resp = await client.get("/samples/test")
 
@@ -462,6 +561,7 @@ class TestGet:
         get_sample_data,
         snapshot: SnapshotAssertion,
         mongo: Mongo,
+        pg: AsyncEngine,
         spawn_client: ClientSpawner,
     ):
         """Test that a sample can be retrieved any user when ``all_read`` is ``True`` on
@@ -482,6 +582,14 @@ class TestGet:
                 },
             },
         )
+        await update_pg_sample_rights(
+            pg,
+            "test",
+            all_read=True,
+            group_read=False,
+            group_id=None,
+            user_id=user.id,
+        )
 
         resp = await client.get("/samples/test")
 
@@ -495,6 +603,7 @@ class TestGet:
         fake: DataFaker,
         get_sample_data,
         mongo: Mongo,
+        pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
@@ -523,6 +632,15 @@ class TestGet:
                     "user": {"id": user.id},
                 },
             },
+        )
+        await update_pg_sample_rights(
+            pg,
+            "test",
+            all_read=False,
+            all_write=False,
+            group_read=True,
+            group_id=group.id,
+            user_id=user.id,
         )
 
         resp = await client.get("/samples/test")
