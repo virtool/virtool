@@ -5,13 +5,15 @@ is kept here rather than inline in the revision so it can be unit tested and
 reused.
 """
 
-from sqlalchemy import select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from structlog import get_logger
 
+from virtool.analyses.sql import SQLAnalysis
 from virtool.data.topg import compose_legacy_id_single_expression
 from virtool.groups.pg import SQLGroup
+from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.migration import MigrationContext
 from virtool.pg.base import Base
 from virtool.references.sql import (
@@ -410,6 +412,162 @@ async def _resolve_task_id(
         )
 
     return task_id
+
+
+async def purge_orphaned_references(ctx: MigrationContext) -> None:
+    """Purge data belonging to references whose Mongo document was deleted.
+
+    A handful of reference documents were deleted from Mongo without cascading to
+    their OTU, sequence, index, and history data. Those orphaned children were
+    never copied to Postgres -- :func:`copy_references_to_postgres` only copies
+    references still present in Mongo -- so the reference-id backfill cannot
+    resolve them and aborts. This removes the orphaned data at the root.
+
+    OTUs, sequences, and indexes are moved out of the live
+    ``otus``/``sequences``/``indexes`` collections into
+    ``deleted_otus``/``deleted_sequences``/``deleted_indexes`` and then deleted, so
+    they are recoverable but no longer visible to the application or to the pending
+    OTU/sequence/index migrations. The orphaned ``legacy_history`` rows (and their
+    diffs) are deleted from Postgres so the strict backfill resolves cleanly. The
+    Mongo ``history`` collection is left untouched: nothing reads it any more, and
+    it doubles as an untouched archive of the deleted history.
+
+    Before deleting anything, the function verifies that no analysis depends on an
+    orphaned reference. An analysis records the one reference it ran against in the
+    non-null ``reference`` column and its results are reference-scoped, so a
+    non-empty result here means real dependents and the purge aborts rather than
+    destroying data an analysis needs.
+
+    The function is idempotent. The orphan set is computed from the surviving Mongo
+    ``history``/``otus`` reference ids minus the ``references`` collection (both
+    left intact by this purge), and the archival ``$merge`` and every delete are
+    safe to re-run after an interruption.
+    """
+    orphaned = await _find_orphaned_reference_ids(ctx)
+
+    if not orphaned:
+        logger.info("no orphaned references found")
+        return
+
+    logger.info("found orphaned references", orphaned=orphaned)
+
+    async with AsyncSession(ctx.pg) as session:
+        dependents = (
+            await session.execute(
+                select(SQLAnalysis.reference, func.count())
+                .where(SQLAnalysis.reference.in_(orphaned))
+                .group_by(SQLAnalysis.reference),
+            )
+        ).all()
+
+        if dependents:
+            counts = dict(dependents)
+            msg = (
+                "refusing to purge orphaned references with analysis dependents: "
+                f"{counts}"
+            )
+            raise ValueError(msg)
+
+        history_ids = (
+            (
+                await session.execute(
+                    select(SQLLegacyHistory.id).where(
+                        SQLLegacyHistory.reference.in_(orphaned),
+                    ),
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        if history_ids:
+            await session.execute(
+                delete(SQLLegacyHistoryDiff).where(
+                    SQLLegacyHistoryDiff.history_id.in_(history_ids),
+                ),
+            )
+            await session.execute(
+                delete(SQLLegacyHistory).where(SQLLegacyHistory.id.in_(history_ids)),
+            )
+
+        await session.commit()
+
+    otus_moved = await _archive_and_delete(ctx, "otus", "deleted_otus", orphaned)
+    sequences_moved = await _archive_and_delete(
+        ctx,
+        "sequences",
+        "deleted_sequences",
+        orphaned,
+    )
+    indexes_moved = await _archive_and_delete(
+        ctx,
+        "indexes",
+        "deleted_indexes",
+        orphaned,
+    )
+
+    logger.info(
+        "purged orphaned reference data",
+        references=len(orphaned),
+        legacy_history_rows=len(history_ids),
+        otus=otus_moved,
+        sequences=sequences_moved,
+        indexes=indexes_moved,
+    )
+
+
+async def _find_orphaned_reference_ids(ctx: MigrationContext) -> list[str]:
+    """Return reference ids used by Mongo history/otus/indexes but since deleted.
+
+    The reference document is gone from the ``references`` collection, but its
+    ``reference.id`` still appears on surviving ``history``, ``otus``, and
+    ``indexes`` documents.
+    """
+    existing = set(await ctx.mongo.references.distinct("_id"))
+    history_refs = set(await ctx.mongo.history.distinct("reference.id"))
+    otu_refs = set(await ctx.mongo.otus.distinct("reference.id"))
+    index_refs = set(await ctx.mongo.indexes.distinct("reference.id"))
+
+    return sorted((history_refs | otu_refs | index_refs) - existing)
+
+
+async def _archive_and_delete(
+    ctx: MigrationContext,
+    collection: str,
+    archive: str,
+    orphaned: list[str],
+) -> int:
+    """Move a collection's orphaned documents into an archive, then delete them.
+
+    The archival ``$merge`` copies matching documents into ``archive`` keyed by
+    ``_id`` (replacing any already-archived copy), then the originals are deleted
+    from the live collection. Both steps run server-side, so memory stays bounded
+    regardless of how many documents match, and both are safe to re-run: a re-run
+    re-copies any documents a prior interrupted run archived but failed to delete.
+    """
+    query = {"reference.id": {"$in": orphaned}}
+
+    await (
+        ctx.mongo[collection]
+        .aggregate(
+            [
+                {"$match": query},
+                {
+                    "$merge": {
+                        "into": archive,
+                        "on": "_id",
+                        "whenMatched": "replace",
+                        "whenNotMatched": "insert",
+                    },
+                },
+            ],
+        )
+        .to_list(length=None)
+    )
+
+    result = await ctx.mongo[collection].delete_many(query)
+
+    return result.deleted_count
 
 
 async def _resolve_rights_member_id(
