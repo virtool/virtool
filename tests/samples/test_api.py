@@ -496,6 +496,13 @@ class TestFind:
             ["nuvs:ready", "pathoscope:ready"],
             ["pathoscope:ready", "pathoscope:none"],
             ["nuvs:none", "pathoscope:none", "pathoscope:ready"],
+            # ``nuvs`` is incompatible with the amplicon sample, so ``nuvs:none``
+            # matches only the srna sample, never the amplicon one.
+            ["nuvs:none"],
+            # ``aodp`` is only compatible with amplicon libraries, so ``aodp:none``
+            # matches the amplicon sample alone rather than every sample lacking an
+            # aodp analysis.
+            ["aodp:none"],
         ],
     )
     async def test_workflows(

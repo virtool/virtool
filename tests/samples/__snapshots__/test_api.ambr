@@ -2095,37 +2095,6 @@
   dict({
     'documents': list([
       dict({
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 'cb400e6d',
-        'isolate': '',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          }),
-        ]),
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'uploads': None,
-        'user': dict({
-          'handle': 'zclark',
-          'id': 2,
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'incompatible',
-          'pathoscope': 'incompatible',
-        }),
-      }),
-      dict({
         'created_at': '2015-10-06T21:00:00Z',
         'host': '',
         'id': 'beb1eb10',
@@ -2204,7 +2173,7 @@
         }),
       }),
     ]),
-    'found_count': 3,
+    'found_count': 2,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
@@ -2212,6 +2181,90 @@
   })
 # ---
 # name: TestFind.test_workflows[workflows3]
+  dict({
+    'documents': list([
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': '72bb8b31',
+        'isolate': 'Test',
+        'job': None,
+        'labels': list([
+          dict({
+            'color': '#78bc72',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Add',
+          }),
+        ]),
+        'library_type': 'srna',
+        'name': '16GVP043',
+        'notes': 'This is a good sample.',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'uploads': None,
+        'user': dict({
+          'handle': 'zclark',
+          'id': 2,
+        }),
+        'workflows': dict({
+          'aodp': 'incompatible',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        }),
+      }),
+    ]),
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  })
+# ---
+# name: TestFind.test_workflows[workflows4]
+  dict({
+    'documents': list([
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': '72bb8b31',
+        'isolate': 'Test',
+        'job': None,
+        'labels': list([
+          dict({
+            'color': '#78bc72',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Add',
+          }),
+        ]),
+        'library_type': 'srna',
+        'name': '16GVP043',
+        'notes': 'This is a good sample.',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'uploads': None,
+        'user': dict({
+          'handle': 'zclark',
+          'id': 2,
+        }),
+        'workflows': dict({
+          'aodp': 'incompatible',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        }),
+      }),
+    ]),
+    'found_count': 1,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  })
+# ---
+# name: TestFind.test_workflows[workflows5]
   dict({
     'documents': list([
       dict({
@@ -2245,39 +2298,8 @@
           'pathoscope': 'incompatible',
         }),
       }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'host': '',
-        'id': '72bb8b31',
-        'isolate': 'Test',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#78bc72',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Add',
-          }),
-        ]),
-        'library_type': 'srna',
-        'name': '16GVP043',
-        'notes': 'This is a good sample.',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'uploads': None,
-        'user': dict({
-          'handle': 'zclark',
-          'id': 2,
-        }),
-        'workflows': dict({
-          'aodp': 'incompatible',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
     ]),
-    'found_count': 2,
+    'found_count': 1,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
