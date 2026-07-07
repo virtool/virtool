@@ -23,7 +23,9 @@
     'locale': '',
     'name': 'Foobar',
     'notes': '',
+    'nuvs': False,
     'paired': False,
+    'pathoscope': False,
     'quality': None,
     'ready': False,
     'results': None,
@@ -40,6 +42,11 @@
     ]),
     'user': dict({
       'id': 1,
+    }),
+    'workflows': dict({
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
     }),
   })
 # ---
@@ -67,7 +74,9 @@
     'locale': '',
     'name': 'Foobar',
     'notes': '',
+    'nuvs': False,
     'paired': False,
+    'pathoscope': False,
     'quality': None,
     'ready': False,
     'results': None,
@@ -84,6 +93,11 @@
     ]),
     'user': dict({
       'id': 1,
+    }),
+    'workflows': dict({
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
     }),
   })
 # ---
@@ -111,7 +125,9 @@
     'locale': '',
     'name': 'Foobar',
     'notes': '',
+    'nuvs': False,
     'paired': False,
+    'pathoscope': False,
     'quality': None,
     'ready': False,
     'results': None,
@@ -128,6 +144,11 @@
     ]),
     'user': dict({
       'id': 1,
+    }),
+    'workflows': dict({
+      'aodp': 'incompatible',
+      'nuvs': 'none',
+      'pathoscope': 'none',
     }),
   })
 # ---

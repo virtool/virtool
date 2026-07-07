@@ -70,7 +70,12 @@ from virtool.samples.sql import (
     SQLSampleArtifact,
     SQLSampleReads,
 )
-from virtool.samples.utils import SampleRight, sample_file_key, sample_prefix
+from virtool.samples.utils import (
+    SampleRight,
+    define_initial_workflows,
+    sample_file_key,
+    sample_prefix,
+)
 from virtool.storage.cleanup import delete_prefix
 from virtool.storage.protocol import StorageBackend
 from virtool.subtractions.db import (
@@ -571,6 +576,13 @@ class SamplesData(DataLayerDomain):
                     "locale": data.locale,
                     "name": data.name,
                     "notes": data.notes,
+                    # ``nuvs``, ``pathoscope`` and ``workflows`` are now derived on
+                    # read and no longer maintained here. Their initial values are
+                    # still written so replicas from the previous release, which
+                    # read these fields directly, do not 500 on samples created
+                    # mid rolling-deploy. Remove once every reader derives on read.
+                    "nuvs": False,
+                    "pathoscope": False,
                     "paired": len(uploads) == 2,
                     "quality": None,
                     "ready": False,
@@ -579,6 +591,7 @@ class SamplesData(DataLayerDomain):
                     "subtractions": data.subtractions,
                     "uploads": [{"id": upload["id"]} for upload in uploads],
                     "user": {"id": user_id},
+                    "workflows": define_initial_workflows(data.library_type),
                 },
                 session=mongo_session,
             )
