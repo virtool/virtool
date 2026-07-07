@@ -103,7 +103,11 @@ class SQLJobSample(Base):
 
     sample_id: Mapped[int | None] = mapped_column(
         BigInteger,
-        ForeignKey("legacy_samples.id"),
+        ForeignKey("legacy_samples.id", ondelete="SET NULL"),
         nullable=True,
     )
-    """The sample being created."""
+    """The sample being created.
+
+    A ``create_sample`` job outlives the sample it created, so the reference is
+    cleared rather than cascaded when the sample is deleted.
+    """

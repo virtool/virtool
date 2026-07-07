@@ -9,7 +9,9 @@ by the sample-file tables.
 The migration:
 
 - renames the legacy string column ``sample_id`` to ``sample``,
-- adds a nullable ``sample_id BIGINT REFERENCES legacy_samples(id)`` column,
+- adds a nullable ``sample_id BIGINT REFERENCES legacy_samples(id)`` column with
+  ``ON DELETE SET NULL`` (a ``create_sample`` job outlives its deleted sample,
+  so the reference is cleared rather than blocking the sample delete),
 - backfills ``sample_id`` with a single set-based UPDATE joining the legacy
   ``sample`` string to ``legacy_samples.legacy_id``.
 
@@ -41,7 +43,7 @@ def upgrade() -> None:
         sa.Column(
             "sample_id",
             sa.BigInteger(),
-            sa.ForeignKey("legacy_samples.id"),
+            sa.ForeignKey("legacy_samples.id", ondelete="SET NULL"),
             nullable=True,
         ),
     )

@@ -97,6 +97,24 @@ async def _fetch_sample_id(ctx: MigrationContext, job_id: int) -> int | None:
         return result.scalar_one()
 
 
+async def _fetch_sample(ctx: MigrationContext, job_id: int) -> str | None:
+    async with AsyncSession(ctx.pg) as session:
+        result = await session.execute(
+            text("SELECT sample FROM job_samples WHERE job_id = :job_id"),
+            {"job_id": job_id},
+        )
+        return result.scalar_one()
+
+
+async def _delete_legacy_sample(ctx: MigrationContext, sample_id: int) -> None:
+    async with AsyncSession(ctx.pg) as session:
+        await session.execute(
+            text("DELETE FROM legacy_samples WHERE id = :id"),
+            {"id": sample_id},
+        )
+        await session.commit()
+
+
 @pytest.fixture
 async def _at_previous_revision(apply_alembic: Callable) -> None:
     await asyncio.to_thread(apply_alembic, PREVIOUS_REVISION)
@@ -117,6 +135,32 @@ class TestBackfill:
         await asyncio.to_thread(apply_alembic, REVISION)
 
         assert await _fetch_sample_id(ctx, job_id) == sample_id
+        assert await _fetch_sample(ctx, job_id) == "mapped_sample"
+
+    async def test_deleting_sample_nulls_reference(
+        self,
+        ctx: MigrationContext,
+        _at_previous_revision: None,
+        apply_alembic: Callable,
+    ):
+        """Deleting a backfilled sample clears the reference instead of blocking.
+
+        The ``sample_id`` foreign key uses ``ON DELETE SET NULL`` so a
+        ``create_sample`` job row survives the deletion of the sample it created;
+        the legacy ``sample`` string is left intact.
+        """
+        user_id = await _insert_user(ctx)
+        job_id = await _insert_job(ctx, user_id)
+        sample_id = await _insert_legacy_sample(ctx, "mapped_sample")
+        await _insert_job_sample(ctx, job_id, "mapped_sample")
+
+        await asyncio.to_thread(apply_alembic, REVISION)
+        assert await _fetch_sample_id(ctx, job_id) == sample_id
+
+        await _delete_legacy_sample(ctx, sample_id)
+
+        assert await _fetch_sample_id(ctx, job_id) is None
+        assert await _fetch_sample(ctx, job_id) == "mapped_sample"
 
     async def test_unmapped_row_stays_null(
         self,

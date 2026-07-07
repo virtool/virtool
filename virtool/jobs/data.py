@@ -228,7 +228,6 @@ class JobsData:
                 select(
                     SQLJob,
                     SQLUser,
-                    SQLJobSample.sample_id,
                     SQLJobSample.sample,
                     SQLJobIndex.index_id,
                     SQLSubtraction.id.label("subtraction_id"),
@@ -246,14 +245,17 @@ class JobsData:
         if row is None:
             raise ResourceNotFoundError
 
-        sql_job, sql_user, sample_id, sample, index_id, subtraction_id, analysis_id = (
-            row
-        )
+        sql_job, sql_user, sample, index_id, subtraction_id, analysis_id = row
 
+        # ``sample_id`` is exposed as the legacy sample string, not the integer
+        # ``SQLJobSample.sample_id`` foreign key. The create_sample workflow uses
+        # this value to address the sample over the jobs API, whose endpoints
+        # still resolve samples by their Mongo ``_id``. The public identifier
+        # flips to the integer primary key in VIR-2529.
         args = {
             field: value
             for field, value in (
-                ("sample_id", sample_id if sample_id is not None else sample),
+                ("sample_id", sample),
                 ("index_id", index_id),
                 ("subtraction_id", subtraction_id),
                 ("analysis_id", analysis_id),

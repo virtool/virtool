@@ -177,17 +177,18 @@ class TestCreatePostgres:
         assert job_sample.sample == "sample_123"
         assert job_sample.sample_id is None
 
-    async def test_get_prefers_integer_sample_id(
+    async def test_get_returns_legacy_sample_string(
         self,
         jobs_data: JobsData,
         fake: DataFaker,
         pg: AsyncEngine,
     ):
-        """Test that get() reads the integer sample foreign key once backfilled.
+        """Test that get() exposes the legacy sample string, not the integer FK.
 
-        Until the backfill runs, ``sample_id`` is NULL and get() falls back to
-        the legacy ``sample`` string; once populated, get() returns the integer
-        primary key.
+        The create_sample workflow addresses the sample over the jobs API, which
+        resolves samples by their Mongo ``_id``, so ``args["sample_id"]`` must
+        stay the legacy string even after the integer ``sample_id`` foreign key
+        is populated by the backfill.
         """
         user = await fake.users.create()
 
@@ -219,7 +220,7 @@ class TestCreatePostgres:
             job_sample.sample_id = sample_pk
             await session.commit()
 
-        assert (await jobs_data.get(job.id)).args["sample_id"] == sample_pk
+        assert (await jobs_data.get(job.id)).args["sample_id"] == "mapped_sample"
 
     async def test_index_join_table(
         self,
