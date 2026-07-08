@@ -50,17 +50,17 @@ async def test_upgrade(
     await migration_pg.dispose()
 
     async with AsyncSession(migration_pg) as session:
-        await _insert_index_file(session, "reference.ndjson.gz", "ndjson")
+        await _insert_index_file(session, "index.sqlite.gz", "sqlite")
         await session.commit()
 
         result = await session.execute(
             text("SELECT name, type FROM index_files ORDER BY name"),
         )
         assert result.all() == [
+            ("index.sqlite.gz", "sqlite"),
             ("reference.1.bt2", "bowtie2"),
             ("reference.fa.gz", "fasta"),
             ("reference.json.gz", "json"),
-            ("reference.ndjson.gz", "ndjson"),
         ]
 
         column_type = await session.execute(
@@ -89,7 +89,7 @@ async def test_downgrade(
     await asyncio.to_thread(apply_alembic, REVISION)
 
     async with AsyncSession(migration_pg) as session:
-        await _insert_index_file(session, "reference.ndjson.gz", "ndjson")
+        await _insert_index_file(session, "index.sqlite.gz", "sqlite")
         await session.commit()
 
     await asyncio.to_thread(_downgrade, DOWN_REVISION)
@@ -100,7 +100,7 @@ async def test_downgrade(
         result = await session.execute(
             text("SELECT name, type::text FROM index_files ORDER BY name"),
         )
-        assert result.all() == [("reference.ndjson.gz", "json")]
+        assert result.all() == [("index.sqlite.gz", "json")]
 
         column_type = await session.execute(
             text(

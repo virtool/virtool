@@ -1,5 +1,6 @@
-import gzip
+import asyncio
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from aiohttp.web import FileResponse, Response, RouteTableDef, View, json_response
 
@@ -12,17 +13,82 @@ from virtool.indexes.db import (
     JOBS_API_UPLOAD_INDEX_FILE_NAMES,
     LEGACY_INDEX_FILE_NAMES,
 )
+from virtool.indexes.index_sqlite import (
+    COMPRESSED_INDEX_SQLITE_FILE_NAME,
+    INDEX_SQLITE_FILE_NAME,
+    create_index_sqlite,
+)
 from virtool.indexes.models import IndexFile
+from virtool.utils import compress_file
 from virtool.workflow.pytest_plugin.data import WorkflowData
 
 READY_INDEX_FILE_NAMES = LEGACY_INDEX_FILE_NAMES
 
-REFERENCE_NDJSON = gzip.compress(
-    b'{"type":"reference","id":"hxn167","data_type":"genome","name":"Plant Viruses"}\n'
-    b'{"type":"otu","_id":"v2_otu","isolates":[{"id":"v2_isolate","source_type":"isolate",'
-    b'"source_name":"v2","default":true,"sequences":[{"_id":"v2_sequence",'
-    b'"sequence":"ACGTAC"}]}]}\n',
-)
+
+async def _create_index_sqlite_gz() -> bytes:
+    async def _iter_otus():
+        yield {
+            "_id": "sqlite_otu",
+            "abbreviation": "SQL",
+            "isolates": [
+                {
+                    "default": True,
+                    "id": "sqlite_isolate",
+                    "sequences": [
+                        {
+                            "_id": "sqlite_sequence",
+                            "accession": "SQL123",
+                            "definition": "SQLite fixture sequence",
+                            "host": "",
+                            "segment": None,
+                            "sequence": "ACGTAC",
+                        },
+                    ],
+                    "source_name": "sqlite",
+                    "source_type": "isolate",
+                },
+                {
+                    "default": False,
+                    "id": "sqlite_other_isolate",
+                    "sequences": [
+                        {
+                            "_id": "sqlite_other_sequence",
+                            "accession": "SQL456",
+                            "definition": "SQLite non-default sequence",
+                            "host": "",
+                            "segment": None,
+                            "sequence": "TTTTAA",
+                        },
+                    ],
+                    "source_name": "sqlite other",
+                    "source_type": "isolate",
+                },
+            ],
+            "name": "SQLite OTU",
+            "schema": [],
+            "taxid": None,
+            "version": 1,
+        }
+
+    with TemporaryDirectory() as temp_dir:
+        path = Path(temp_dir)
+        sqlite_path = path / INDEX_SQLITE_FILE_NAME
+        compressed_path = path / COMPRESSED_INDEX_SQLITE_FILE_NAME
+
+        await create_index_sqlite(
+            sqlite_path,
+            {
+                "_id": "hxn167",
+                "created_at": "2026-01-15T19:55:34.203324Z",
+                "data_type": "genome",
+                "name": "Plant Viruses",
+                "organism": "virus",
+            },
+            _iter_otus(),
+        )
+        await asyncio.to_thread(compress_file, sqlite_path, compressed_path)
+
+        return await asyncio.to_thread(compressed_path.read_bytes)
 
 
 def create_indexes_routes(
@@ -113,9 +179,9 @@ def create_indexes_routes(
                 if filename not in available_files:
                     return generate_not_found()
 
-                if filename == "reference.ndjson.gz":
+                if filename == COMPRESSED_INDEX_SQLITE_FILE_NAME:
                     return Response(
-                        body=REFERENCE_NDJSON,
+                        body=await _create_index_sqlite_gz(),
                         headers={
                             "Content-Disposition": f"attachment; filename='{filename}'",
                             "Content-Type": "application/octet-stream",

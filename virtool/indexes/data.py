@@ -1,6 +1,7 @@
 import asyncio
 import gzip
 from collections.abc import AsyncIterator
+from pathlib import Path
 
 from multidict import MultiDictProxy
 from sqlalchemy import select
@@ -32,12 +33,17 @@ from virtool.indexes.db import (
     lookup_index_otu_counts,
     update_last_indexed_versions,
 )
+from virtool.indexes.index_sqlite import (
+    COMPRESSED_INDEX_SQLITE_FILE_NAME,
+    INDEX_SQLITE_FILE_NAME,
+    create_index_sqlite,
+)
 from virtool.indexes.models import Index, IndexFile, IndexMinimal, IndexSearchResult
 from virtool.indexes.sql import SQLIndexFile
 from virtool.indexes.utils import (
     compose_index_file_key,
     compose_index_prefix,
-    iter_compressed_reference_ndjson,
+    iter_file_chunks,
 )
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
@@ -51,7 +57,7 @@ from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
 from virtool.uploads.utils import multipart_file_chunker
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import base_processor, wait_for_checks
+from virtool.utils import base_processor, compress_file, wait_for_checks
 
 logger = get_logger("indexes")
 
@@ -388,8 +394,8 @@ class IndexData:
         return await self.get(index_id)
 
     @emits(Operation.UPDATE)
-    async def generate_reference_file(self, index_id: str) -> Index:
-        """Generate the task-backed reference file and mark the index ready."""
+    async def generate_index_file(self, index_id: str, work_path: Path) -> Index:
+        """Generate the task-backed index SQLite artifact and mark the index ready."""
         index = await self._mongo.indexes.find_one(
             {"_id": index_id},
             ["manifest", "reference", "job", "task"],
@@ -408,14 +414,15 @@ class IndexData:
 
         reference = await self._mongo.references.find_one(
             {"_id": ref_id},
-            ["data_type", "name"],
+            ["created_at", "data_type", "name", "organism"],
         )
 
         if reference is None:
             raise ResourceNotFoundError()
 
-        reference = ReferenceNested(**reference).dict()
-        file_name = TASK_INDEX_FILE_NAMES[0]
+        file_name = COMPRESSED_INDEX_SQLITE_FILE_NAME
+        sqlite_path = work_path / INDEX_SQLITE_FILE_NAME
+        compressed_sqlite_path = work_path / COMPRESSED_INDEX_SQLITE_FILE_NAME
 
         patched_otus = virtool.indexes.db.iter_patched_otus(
             self._mongo,
@@ -423,27 +430,48 @@ class IndexData:
             index["manifest"],
         )
 
+        await create_index_sqlite(sqlite_path, reference, patched_otus)
+        await asyncio.to_thread(compress_file, sqlite_path, compressed_sqlite_path)
+
+        key = compose_index_file_key(index_id, file_name)
+
         size = await self._storage.write(
-            compose_index_file_key(index_id, file_name),
-            iter_compressed_reference_ndjson(reference, patched_otus),
+            key,
+            iter_file_chunks(compressed_sqlite_path),
         )
 
-        await virtool.indexes.db.upsert_index_file(
-            self._pg,
-            index_id,
-            "ndjson",
-            file_name,
-            size,
-        )
-
-        async with self._mongo.create_session() as session:
-            await update_last_indexed_versions(self._mongo, ref_id, session)
-
-            await self._mongo.indexes.update_one(
-                {"_id": index_id},
-                {"$set": {"ready": True}},
-                session=session,
+        try:
+            await virtool.indexes.db.upsert_index_file(
+                self._pg,
+                index_id,
+                "sqlite",
+                file_name,
+                size,
             )
+
+            async with self._mongo.create_session() as session:
+                await update_last_indexed_versions(self._mongo, ref_id, session)
+
+                await self._mongo.indexes.update_one(
+                    {"_id": index_id},
+                    {"$set": {"ready": True}},
+                    session=session,
+                )
+        except BaseException:
+            await self._storage.delete(key)
+
+            async with AsyncSession(self._pg) as session:
+                row = (
+                    await session.execute(
+                        select(SQLIndexFile).filter_by(index=index_id, name=file_name),
+                    )
+                ).scalar_one_or_none()
+
+                if row is not None:
+                    await session.delete(row)
+                    await session.commit()
+
+            raise
 
         return await self.get(index_id)
 

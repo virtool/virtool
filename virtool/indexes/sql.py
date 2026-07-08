@@ -17,7 +17,7 @@ class SQLIndexFile(Base):
     __table_args__ = (
         UniqueConstraint("index", "name"),
         CheckConstraint(
-            "type IN ('json', 'ndjson', 'fasta', 'bowtie2')",
+            "type IN ('json', 'sqlite', 'fasta', 'bowtie2')",
             name="index_file_type_valid",
         ),
     )

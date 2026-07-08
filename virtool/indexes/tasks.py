@@ -27,5 +27,8 @@ class CreateIndexTask(BaseTask):
         self.steps = [self.build_index]
 
     async def build_index(self) -> None:
-        """Generate the reference artifact and mark the index ready."""
-        await self.data.index.generate_reference_file(self.context["index_id"])
+        """Generate the index artifact and mark the index ready."""
+        await self.data.index.generate_index_file(
+            self.context["index_id"],
+            self.temp_path,
+        )

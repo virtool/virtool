@@ -25,7 +25,7 @@ def upgrade() -> None:
     op.create_check_constraint(
         "index_file_type_valid",
         "index_files",
-        "type IN ('json', 'ndjson', 'fasta', 'bowtie2')",
+        "type IN ('json', 'sqlite', 'fasta', 'bowtie2')",
     )
 
 
@@ -34,7 +34,7 @@ def downgrade() -> None:
 
     op.execute("CREATE TYPE indextype AS ENUM ('json', 'fasta', 'bowtie2')")
 
-    op.execute("UPDATE index_files SET type = 'json' WHERE type = 'ndjson'")
+    op.execute("UPDATE index_files SET type = 'json' WHERE type = 'sqlite'")
 
     op.execute(
         "ALTER TABLE index_files ALTER COLUMN type TYPE indextype "

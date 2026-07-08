@@ -1,0 +1,170 @@
+"""Tests for index SQLite artifact creation and connections."""
+
+from pathlib import Path
+
+import pytest
+from sqlalchemy import select
+
+from virtool.indexes.index_sqlite import (
+    INDEX_SQLITE_FILE_NAME,
+    connect_index_sqlite,
+    create_index_sqlite,
+    otu_schema_table,
+    otus_table,
+    sequences_table,
+)
+
+OTU_VERSION = 3
+
+
+def _reference() -> dict:
+    return {
+        "_id": "reference",
+        "created_at": "2026-01-15T19:55:34.203324Z",
+        "data_type": "genome",
+        "name": "0.1.1",
+        "organism": "",
+    }
+
+
+def _sequence(segment: str) -> dict:
+    return {
+        "_id": f"sequence_{segment.replace(' ', '_').lower()}",
+        "accession": "NC_010317",
+        "definition": f"Abaca bunchy top virus {segment}",
+        "host": "Musa sp.",
+        "segment": segment,
+        "sequence": "ACGT",
+    }
+
+
+def _otu(
+    segments: tuple[str, ...] = ("DNA A", "DNA B"),
+    *,
+    required_b: bool = True,
+) -> dict:
+    return {
+        "_id": "otu",
+        "abbreviation": "ABTV",
+        "isolates": [
+            {
+                "default": True,
+                "id": "isolate",
+                "sequences": [_sequence(segment) for segment in segments],
+                "source_name": "Q767",
+                "source_type": "isolate",
+            },
+        ],
+        "name": "Abaca bunchy top virus",
+        "schema": [
+            {
+                "molecule": "dsDNA",
+                "name": "DNA A",
+                "required": True,
+            },
+            {
+                "molecule": "dsDNA",
+                "name": "DNA B",
+                "required": required_b,
+            },
+        ],
+        "taxid": 1,
+        "version": OTU_VERSION,
+    }
+
+
+async def test_create_index_sqlite_writes_schema_and_sequences(tmp_path: Path):
+    """It writes normalized schema and sequence rows."""
+
+    async def iter_otus():
+        yield _otu()
+
+    sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
+
+    await create_index_sqlite(sqlite_path, _reference(), iter_otus())
+
+    with connect_index_sqlite(sqlite_path) as connection:
+        otu_row = connection.execute(select(otus_table)).mappings().one()
+        schema_rows = connection.execute(select(otu_schema_table)).all()
+        sequence_rows = (
+            connection.execute(
+                select(sequences_table).order_by(sequences_table.c.segment),
+            )
+            .mappings()
+            .all()
+        )
+
+    assert otu_row["version"] == OTU_VERSION
+    assert [(row.name, row.molecule, row.required) for row in schema_rows] == [
+        ("DNA A", "dsDNA", 1),
+        ("DNA B", "dsDNA", 1),
+    ]
+    assert "otu_id" not in sequence_rows[0]
+    assert [row["segment"] for row in sequence_rows] == ["DNA A", "DNA B"]
+
+
+async def test_connect_index_sqlite_enables_foreign_keys(tmp_path: Path):
+    """It enables foreign key enforcement on new connections."""
+
+    async def iter_otus():
+        yield _otu()
+
+    sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
+
+    await create_index_sqlite(sqlite_path, _reference(), iter_otus())
+
+    with connect_index_sqlite(sqlite_path) as connection:
+        assert connection.exec_driver_sql("PRAGMA foreign_keys").scalar() == 1
+
+
+async def test_create_index_sqlite_rejects_sequence_segment_outside_otu_schema(
+    tmp_path: Path,
+):
+    """It rejects sequence segments not defined in the OTU schema."""
+
+    async def iter_otus():
+        yield _otu(segments=("DNA A", "DNA B", "DNA C"))
+
+    with pytest.raises(ValueError, match="is not in OTU otu schema"):
+        await create_index_sqlite(
+            tmp_path / INDEX_SQLITE_FILE_NAME,
+            _reference(),
+            iter_otus(),
+        )
+
+
+async def test_create_index_sqlite_rejects_missing_required_isolate_segment(
+    tmp_path: Path,
+):
+    """It rejects isolates missing sequences for required schema entries."""
+
+    async def iter_otus():
+        yield _otu(segments=("DNA A",))
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            r"Isolate isolate in OTU otu is missing required sequence "
+            r"segment\(s\): 'DNA B'"
+        ),
+    ):
+        await create_index_sqlite(
+            tmp_path / INDEX_SQLITE_FILE_NAME,
+            _reference(),
+            iter_otus(),
+        )
+
+
+async def test_create_index_sqlite_allows_missing_optional_isolate_segment(
+    tmp_path: Path,
+):
+    """It allows isolates to omit sequences for optional schema entries."""
+
+    async def iter_otus():
+        yield _otu(segments=("DNA A",), required_b=False)
+
+    await create_index_sqlite(
+        tmp_path / INDEX_SQLITE_FILE_NAME,
+        _reference(),
+        iter_otus(),
+    )

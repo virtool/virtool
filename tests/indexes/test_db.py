@@ -309,7 +309,7 @@ async def test_upsert_index_file_creates_row(pg: AsyncEngine):
             await session.execute(
                 select(SQLIndexFile).filter_by(
                     index="foo",
-                    name="reference.ndjson.gz",
+                    name="index.sqlite.gz",
                 ),
             )
         ).scalar_one_or_none() is None
@@ -317,15 +317,15 @@ async def test_upsert_index_file_creates_row(pg: AsyncEngine):
     assert await upsert_index_file(
         pg,
         "foo",
-        "ndjson",
-        "reference.ndjson.gz",
+        "sqlite",
+        "index.sqlite.gz",
         9000,
     ) == {
         "id": 1,
         "index": "foo",
-        "name": "reference.ndjson.gz",
+        "name": "index.sqlite.gz",
         "size": 9000,
-        "type": "ndjson",
+        "type": "sqlite",
     }
 
     async with AsyncSession(pg) as session:
@@ -333,7 +333,7 @@ async def test_upsert_index_file_creates_row(pg: AsyncEngine):
             await session.execute(
                 select(SQLIndexFile).filter_by(
                     index="foo",
-                    name="reference.ndjson.gz",
+                    name="index.sqlite.gz",
                 ),
             )
         ).scalar_one()
@@ -341,9 +341,9 @@ async def test_upsert_index_file_creates_row(pg: AsyncEngine):
     assert row.to_dict() == {
         "id": 1,
         "index": "foo",
-        "name": "reference.ndjson.gz",
+        "name": "index.sqlite.gz",
         "size": 9000,
-        "type": "ndjson",
+        "type": "sqlite",
     }
 
 
@@ -352,7 +352,7 @@ async def test_upsert_index_file_updates_existing_row(pg: AsyncEngine):
         session.add(
             SQLIndexFile(
                 index="foo",
-                name="reference.ndjson.gz",
+                name="index.sqlite.gz",
                 size=1,
                 type="json",
             ),
@@ -362,15 +362,15 @@ async def test_upsert_index_file_updates_existing_row(pg: AsyncEngine):
     assert await upsert_index_file(
         pg,
         "foo",
-        "ndjson",
-        "reference.ndjson.gz",
+        "sqlite",
+        "index.sqlite.gz",
         9000,
     ) == {
         "id": 1,
         "index": "foo",
-        "name": "reference.ndjson.gz",
+        "name": "index.sqlite.gz",
         "size": 9000,
-        "type": "ndjson",
+        "type": "sqlite",
     }
 
     async with AsyncSession(pg) as session:

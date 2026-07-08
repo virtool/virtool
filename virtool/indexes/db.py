@@ -35,7 +35,7 @@ LEGACY_INDEX_FILE_NAMES = (
     "reference.rev.2.bt2",
 )
 
-TASK_INDEX_FILE_NAMES = ("reference.ndjson.gz",)
+TASK_INDEX_FILE_NAMES = ("index.sqlite.gz",)
 
 INDEX_FILE_NAMES = (*LEGACY_INDEX_FILE_NAMES, *TASK_INDEX_FILE_NAMES)
 
