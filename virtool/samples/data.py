@@ -70,6 +70,7 @@ from virtool.samples.sql import (
     SQLLegacySampleSubtraction,
     SQLSampleArtifact,
     SQLSampleReads,
+    SQLSampleUpload,
 )
 from virtool.samples.utils import (
     SampleRight,
@@ -484,6 +485,16 @@ class SamplesData(DataLayerDomain):
             document["subtractions"],
         )
 
+        for index, upload in enumerate(document["uploads"]):
+            pg_session.add(
+                SQLSampleUpload(
+                    sample=document["_id"],
+                    sample_id=sample.id,
+                    upload_id=upload["id"],
+                    index=index,
+                ),
+            )
+
     @staticmethod
     def _add_legacy_sample_join_rows(
         pg_session: AsyncSession,
@@ -690,6 +701,14 @@ class SamplesData(DataLayerDomain):
             await pg_session.execute(
                 delete(SQLLegacySampleSubtraction).where(
                     SQLLegacySampleSubtraction.sample_id == sample_pk,
+                ),
+            )
+            await pg_session.execute(
+                delete(SQLSampleUpload).where(
+                    or_(
+                        SQLSampleUpload.sample_id == sample_pk,
+                        SQLSampleUpload.sample == legacy_id,
+                    ),
                 ),
             )
             await pg_session.execute(
