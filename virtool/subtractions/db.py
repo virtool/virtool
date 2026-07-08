@@ -7,12 +7,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.transforms import AbstractTransform
-from virtool.mongo.core import Mongo
+from virtool.samples.sql import SQLLegacySample, SQLLegacySampleSubtraction
 from virtool.subtractions.pg import SQLSubtraction
 from virtool.subtractions.utils import get_subtraction_files
 from virtool.types import Document
 from virtool.uploads.sql import SQLUpload
-from virtool.utils import base_processor
 
 
 def map_subtraction_row(
@@ -130,7 +129,6 @@ async def get_missing_subtraction_ids(
 
 
 async def attach_computed(
-    mongo: "Mongo",
     pg: AsyncEngine,
     base_url: str,
     subtraction_pk: int,
@@ -139,10 +137,8 @@ async def attach_computed(
     """Attach the ``linked_samples`` and ``files`` fields to the passed subtraction
     document.
 
-    Queries MongoDB and SQL to find the required data. Returns a new document
-    dictionary.
+    Queries Postgres to find the required data. Returns a new document dictionary.
 
-    :param mongo: the application MongoDB database
     :param pg: the application Postgres engine
     :param base_url: the base URL the API is being served from
     :param subtraction_pk: the integer id keying the ``subtraction_files`` rows
@@ -152,7 +148,7 @@ async def attach_computed(
     """
     files, linked_samples = await asyncio.gather(
         get_subtraction_files(pg, subtraction_pk),
-        get_linked_samples(mongo, subtraction_pk),
+        get_linked_samples(pg, subtraction_pk),
     )
 
     for file in files:
@@ -164,18 +160,25 @@ async def attach_computed(
     return {**subtraction, "files": files, "linked_samples": linked_samples}
 
 
-async def get_linked_samples(mongo: "Mongo", subtraction_id: int) -> list[dict]:
-    """Find all samples containing given 'subtraction_id' in 'subtractions' field.
+async def get_linked_samples(pg: AsyncEngine, subtraction_id: int) -> list[dict]:
+    """Find all samples linked to the given ``subtraction_id``.
 
-    :param mongo: the application database client
+    :param pg: the application Postgres engine
     :param subtraction_id: the integer ID of the subtraction
     :return: a list of dicts containing linked samples with 'id' and 'name' field.
 
     """
-    return [
-        base_processor(d)
-        async for d in mongo.samples.find(
-            {"subtractions": subtraction_id},
-            ["_id", "name"],
-        )
-    ]
+    async with AsyncSession(pg) as session:
+        rows = (
+            await session.execute(
+                select(SQLLegacySample.id, SQLLegacySample.name)
+                .join(
+                    SQLLegacySampleSubtraction,
+                    SQLLegacySampleSubtraction.sample_id == SQLLegacySample.id,
+                )
+                .where(SQLLegacySampleSubtraction.subtraction_id == subtraction_id)
+                .order_by(SQLLegacySample.id),
+            )
+        ).all()
+
+    return [{"id": row.id, "name": row.name} for row in rows]

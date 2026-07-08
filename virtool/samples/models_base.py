@@ -4,7 +4,7 @@ from virtool.models.base import BaseModel
 class SampleID(BaseModel):
     """A base model for samples that only includes the 'id' field."""
 
-    id: str
+    id: int
     """The unique identifier for the sample"""
 
 

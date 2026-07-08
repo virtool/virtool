@@ -117,10 +117,12 @@ def _map_sample_minimal_row(
 ) -> dict[str, Any]:
     """Shape a ``SQLLegacySample`` row into the ``SampleMinimal`` transform input.
 
-    The public id stays the legacy Mongo string until the integer PK flip (VIR-2529).
+    ``legacy_id`` is carried for transforms that still bridge data from Mongo, which
+    is keyed on the Mongo ``_id``. It is ignored by the ``SampleMinimal`` model.
     """
     return {
-        "id": row.legacy_id,
+        "id": row.id,
+        "legacy_id": row.legacy_id,
         "name": row.name,
         "created_at": row.created_at,
         "host": row.host,
@@ -193,6 +195,25 @@ class SamplesData(DataLayerDomain):
         self._mongo = mongo
         self._pg = pg
         self._storage = storage
+
+    async def _resolve_ids(self, sample_id: int | str) -> tuple[int, str | None] | None:
+        """Resolve a sample's integer primary key and legacy Mongo id from either form.
+
+        Accepts the outward-facing integer id or the legacy Mongo string. The legacy
+        string is still required for Mongo dual-writes and storage keys, which remain
+        keyed on the Mongo ``_id`` until the samples migration completes.
+
+        :param sample_id: the integer primary key or legacy string id of the sample
+        :return: the row's ``(id, legacy_id)``, or ``None`` if no sample matches
+        """
+        async with AsyncSession(self._pg) as session:
+            return (
+                await session.execute(
+                    select(SQLLegacySample.id, SQLLegacySample.legacy_id).where(
+                        compose_legacy_id_single_expression(SQLLegacySample, sample_id),
+                    ),
+                )
+            ).one_or_none()
 
     async def find(
         self,
@@ -331,7 +352,7 @@ class SamplesData(DataLayerDomain):
 
         return or_(*rights_filter)
 
-    async def get(self, sample_id: str) -> Sample:
+    async def get(self, sample_id: int | str) -> Sample:
         """Get a sample by its id.
 
         :param sample_id: the id of the sample
@@ -609,13 +630,20 @@ class SamplesData(DataLayerDomain):
         return await self.get(document["_id"])
 
     @emits(Operation.DELETE)
-    async def delete(self, sample_id: str) -> Sample:
+    async def delete(self, sample_id: int | str) -> Sample:
         """Delete the sample identified by ``sample_id`` and all its analyses.
 
         :param sample_id: the id of the sample to delete
         :return: the mongodb deletion result
 
         """
+        resolved = await self._resolve_ids(sample_id)
+
+        if resolved is None:
+            raise ResourceNotFoundError
+
+        sample_pk, legacy_id = resolved
+
         sample = await self.get(sample_id)
 
         upload_ids = [upload.id for upload in sample.uploads or []]
@@ -625,10 +653,10 @@ class SamplesData(DataLayerDomain):
             pg_session,
         ):
             result = await self._mongo.samples.delete_one(
-                {"_id": sample_id}, session=mongo_session
+                {"_id": legacy_id}, session=mongo_session
             )
             await self._mongo.analyses.delete_many(
-                {"sample.id": sample_id},
+                {"sample.id": legacy_id},
                 session=mongo_session,
             )
 
@@ -639,58 +667,60 @@ class SamplesData(DataLayerDomain):
                     .values(reserved=False),
                 )
 
-            legacy_sample_id = select(SQLLegacySample.id).where(
-                SQLLegacySample.legacy_id == sample_id,
-            )
-
             await pg_session.execute(
                 delete(SQLAnalysisResult).where(
                     SQLAnalysisResult.analysis_id.in_(
                         select(SQLAnalysis.legacy_id).where(
-                            SQLAnalysis.sample_id.in_(legacy_sample_id),
+                            SQLAnalysis.sample_id == sample_pk,
                         ),
                     ),
                 ),
             )
             await pg_session.execute(
                 delete(SQLAnalysis).where(
-                    SQLAnalysis.sample_id.in_(legacy_sample_id),
+                    SQLAnalysis.sample_id == sample_pk,
                 ),
             )
 
             await pg_session.execute(
                 delete(SQLLegacySampleLabel).where(
-                    SQLLegacySampleLabel.sample_id.in_(legacy_sample_id),
+                    SQLLegacySampleLabel.sample_id == sample_pk,
                 ),
             )
             await pg_session.execute(
                 delete(SQLLegacySampleSubtraction).where(
-                    SQLLegacySampleSubtraction.sample_id.in_(legacy_sample_id),
+                    SQLLegacySampleSubtraction.sample_id == sample_pk,
                 ),
             )
             await pg_session.execute(
                 delete(SQLSampleArtifact).where(
-                    SQLSampleArtifact.sample == sample_id,
+                    or_(
+                        SQLSampleArtifact.sample_id == sample_pk,
+                        SQLSampleArtifact.sample == legacy_id,
+                    ),
                 ),
             )
             await pg_session.execute(
                 delete(SQLSampleReads).where(
-                    SQLSampleReads.sample == sample_id,
+                    or_(
+                        SQLSampleReads.sample_id == sample_pk,
+                        SQLSampleReads.sample == legacy_id,
+                    ),
                 ),
             )
             await pg_session.execute(
                 delete(SQLLegacySample).where(
-                    SQLLegacySample.legacy_id == sample_id,
+                    SQLLegacySample.id == sample_pk,
                 ),
             )
 
         if result.deleted_count:
             for key, exc in await delete_prefix(
-                self._storage, sample_prefix(sample_id)
+                self._storage, sample_prefix(legacy_id)
             ):
                 logger.error(
                     "storage cleanup failed; file orphaned",
-                    sample_id=sample_id,
+                    sample_id=legacy_id,
                     key=key,
                     error=repr(exc),
                 )
@@ -702,7 +732,7 @@ class SamplesData(DataLayerDomain):
     @emits(Operation.UPDATE, name="finalize")
     async def finalize(
         self,
-        sample_id: str,
+        sample_id: int | str,
         quality: dict[str, Any],
     ) -> Sample:
         """Finalize a sample by setting a ``quality`` field and ``ready`` to ``True``.
@@ -711,7 +741,14 @@ class SamplesData(DataLayerDomain):
         :param quality: a dict containing quality data
         :return: the sample after finalizing
         """
-        if await get_one_field(self._mongo.samples, "ready", sample_id):
+        resolved = await self._resolve_ids(sample_id)
+
+        if resolved is None:
+            raise ResourceNotFoundError
+
+        sample_pk, legacy_id = resolved
+
+        if await get_one_field(self._mongo.samples, "ready", legacy_id):
             raise ResourceConflictError("Sample already finalized")
 
         async with both_transactions(self._mongo, self._pg) as (
@@ -719,7 +756,7 @@ class SamplesData(DataLayerDomain):
             pg_session,
         ):
             result: UpdateResult = await self._mongo.samples.update_one(
-                {"_id": sample_id},
+                {"_id": legacy_id},
                 {"$set": {"quality": quality, "ready": True}},
                 session=mongo_session,
             )
@@ -729,11 +766,11 @@ class SamplesData(DataLayerDomain):
 
             await pg_session.execute(
                 update(SQLLegacySample)
-                .where(SQLLegacySample.legacy_id == sample_id)
+                .where(SQLLegacySample.id == sample_pk)
                 .values(quality=quality, ready=True),
             )
 
-        uploads = await get_one_field(self._mongo.samples, "uploads", sample_id) or []
+        uploads = await get_one_field(self._mongo.samples, "uploads", legacy_id) or []
         upload_ids = [upload["id"] for upload in uploads]
 
         names_on_disk = []
@@ -765,7 +802,7 @@ class SamplesData(DataLayerDomain):
         return await self.get(sample_id)
 
     @emits(Operation.UPDATE)
-    async def update(self, sample_id: str, data: UpdateSampleRequest) -> Sample:
+    async def update(self, sample_id: int | str, data: UpdateSampleRequest) -> Sample:
         """Update the sample identified by ``sample_id``.
 
         :param sample_id: the id of the sample to update
@@ -773,13 +810,20 @@ class SamplesData(DataLayerDomain):
         :return: the updated sample
 
         """
+        resolved = await self._resolve_ids(sample_id)
+
+        if resolved is None:
+            raise ResourceNotFoundError
+
+        sample_pk, legacy_id = resolved
+
         data = data.dict(exclude_unset=True)
 
         aws = []
 
         if "name" in data:
             aws.append(
-                check_name_is_in_use(self._mongo, data["name"], sample_id=sample_id),
+                check_name_is_in_use(self._mongo, data["name"], sample_id=legacy_id),
             )
 
         if "labels" in data:
@@ -800,7 +844,7 @@ class SamplesData(DataLayerDomain):
 
         async def apply(mongo_session, pg_session) -> None:
             await self._mongo.samples.update_one(
-                {"_id": sample_id},
+                {"_id": legacy_id},
                 {"$set": data},
                 session=mongo_session,
             )
@@ -808,22 +852,11 @@ class SamplesData(DataLayerDomain):
             if scalars:
                 await pg_session.execute(
                     update(SQLLegacySample)
-                    .where(SQLLegacySample.legacy_id == sample_id)
+                    .where(SQLLegacySample.id == sample_pk)
                     .values(**scalars),
                 )
 
             if "labels" not in data and "subtractions" not in data:
-                return
-
-            sample_pk = (
-                await pg_session.execute(
-                    select(SQLLegacySample.id).where(
-                        SQLLegacySample.legacy_id == sample_id,
-                    ),
-                )
-            ).scalar_one_or_none()
-
-            if sample_pk is None:
                 return
 
             if "labels" in data:
@@ -851,26 +884,35 @@ class SamplesData(DataLayerDomain):
 
         return await self.get(sample_id)
 
-    async def get_owner_id(self, sample_id: str) -> int | None:
+    async def get_owner_id(self, sample_id: int | str) -> int | None:
         """Return the owner user id of a sample, or ``None`` if it does not exist.
 
         :param sample_id: the id of the sample
         :return: the owner user id
         """
-        document = await self._mongo.samples.find_one(sample_id, ["user"])
+        async with AsyncSession(self._pg) as session:
+            return (
+                await session.execute(
+                    select(SQLLegacySample.user_id).where(
+                        compose_legacy_id_single_expression(SQLLegacySample, sample_id),
+                    ),
+                )
+            ).scalar_one_or_none()
 
-        if document:
-            return document["user"]["id"]
-
-        return None
-
-    async def update_rights(self, sample_id: str, data: dict[str, Any]) -> Sample:
+    async def update_rights(self, sample_id: int | str, data: dict[str, Any]) -> Sample:
         """Update the rights settings of the sample identified by ``sample_id``.
 
         :param sample_id: the id of the sample to update
         :param data: the rights fields to update
         :return: the updated sample
         """
+        resolved = await self._resolve_ids(sample_id)
+
+        if resolved is None:
+            raise ResourceNotFoundError
+
+        sample_pk, legacy_id = resolved
+
         group_id = None
 
         if "group" in data and data["group"] is not None:
@@ -902,7 +944,7 @@ class SamplesData(DataLayerDomain):
 
         async def apply(mongo_session, pg_session) -> None:
             result = await self._mongo.samples.update_one(
-                {"_id": sample_id},
+                {"_id": legacy_id},
                 {"$set": data},
                 session=mongo_session,
             )
@@ -913,7 +955,7 @@ class SamplesData(DataLayerDomain):
             if scalars:
                 await pg_session.execute(
                     update(SQLLegacySample)
-                    .where(SQLLegacySample.legacy_id == sample_id)
+                    .where(SQLLegacySample.id == sample_pk)
                     .values(**scalars),
                 )
 
@@ -923,7 +965,7 @@ class SamplesData(DataLayerDomain):
 
     async def has_right(
         self,
-        sample_id: str,
+        sample_id: int | str,
         client: UserClient,
         right: SampleRight,
     ) -> bool:
@@ -1084,12 +1126,9 @@ class SamplesData(DataLayerDomain):
 
     async def get_reads_file(
         self,
-        sample_id: str,
+        sample_id: int | str,
         filename: str,
     ) -> tuple[AsyncIterator[bytes], int, str]:
-        if not await self._mongo.samples.find_one(sample_id):
-            raise ResourceNotFoundError
-
         async with AsyncSession(self._pg) as session:
             row = (
                 await session.execute(
@@ -1104,18 +1143,15 @@ class SamplesData(DataLayerDomain):
         if row is None:
             raise ResourceNotFoundError
 
-        key = sample_file_key(sample_id, filename)
+        key = sample_file_key(row.sample, filename)
 
         return self._storage.read(key), row.size, filename
 
     async def get_artifact_file(
         self,
-        sample_id: str,
+        sample_id: int | str,
         filename: str,
     ) -> tuple[AsyncIterator[bytes], int]:
-        if not await self._mongo.samples.find_one(sample_id):
-            raise ResourceNotFoundError
-
         async with AsyncSession(self._pg) as session:
             result = (
                 await session.execute(
@@ -1131,6 +1167,6 @@ class SamplesData(DataLayerDomain):
             raise ResourceNotFoundError
 
         artifact = result.to_dict()
-        key = sample_file_key(sample_id, artifact["name_on_disk"])
+        key = sample_file_key(result.sample, artifact["name_on_disk"])
 
         return self._storage.read(key), result.size

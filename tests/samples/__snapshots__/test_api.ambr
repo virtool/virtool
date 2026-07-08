@@ -28,7 +28,7 @@
     }),
     'results': None,
     'sample': dict({
-      'id': 'test',
+      'id': 1,
     }),
     'subtractions': list([
       dict({
@@ -98,7 +98,7 @@
     'all_write': True,
     'artifacts': list([
       dict({
-        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'download_url': '/samples/1/artifacts/reference.fa.gz',
         'id': 1,
         'name': 'reference.fa.gz',
         'size': 34879234,
@@ -111,7 +111,7 @@
     'group_write': True,
     'hold': False,
     'host': '',
-    'id': 'test',
+    'id': 1,
     'is_legacy': False,
     'isolate': '',
     'job': dict({
@@ -143,11 +143,11 @@
     'quality': None,
     'reads': list([
       dict({
-        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'download_url': '/samples/1/reads/reads_1.fq.gz',
         'id': 1,
         'name': 'reads_1.fq.gz',
         'name_on_disk': 'reads_1.fq.gz',
-        'sample': 'test',
+        'sample': 1,
         'size': 2903109210,
         'upload': None,
         'uploaded_at': '2015-10-06T20:00:00Z',
@@ -230,7 +230,7 @@
     'all_write': False,
     'artifacts': list([
       dict({
-        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'download_url': '/samples/1/artifacts/reference.fa.gz',
         'id': 1,
         'name': 'reference.fa.gz',
         'size': 34879234,
@@ -247,7 +247,7 @@
     'group_write': False,
     'hold': False,
     'host': '',
-    'id': 'test',
+    'id': 1,
     'is_legacy': False,
     'isolate': '',
     'job': dict({
@@ -279,11 +279,11 @@
     'quality': None,
     'reads': list([
       dict({
-        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'download_url': '/samples/1/reads/reads_1.fq.gz',
         'id': 1,
         'name': 'reads_1.fq.gz',
         'name_on_disk': 'reads_1.fq.gz',
-        'sample': 'test',
+        'sample': 1,
         'size': 2903109210,
         'upload': None,
         'uploaded_at': '2015-10-06T20:00:00Z',
@@ -366,7 +366,7 @@
     'all_write': False,
     'artifacts': list([
       dict({
-        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'download_url': '/samples/1/artifacts/reference.fa.gz',
         'id': 1,
         'name': 'reference.fa.gz',
         'size': 34879234,
@@ -379,7 +379,7 @@
     'group_write': True,
     'hold': False,
     'host': '',
-    'id': 'test',
+    'id': 1,
     'is_legacy': False,
     'isolate': '',
     'job': dict({
@@ -411,11 +411,11 @@
     'quality': None,
     'reads': list([
       dict({
-        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'download_url': '/samples/1/reads/reads_1.fq.gz',
         'id': 1,
         'name': 'reads_1.fq.gz',
         'name_on_disk': 'reads_1.fq.gz',
-        'sample': 'test',
+        'sample': 1,
         'size': 2903109210,
         'upload': None,
         'uploaded_at': '2015-10-06T20:00:00Z',
@@ -498,7 +498,7 @@
     'all_write': True,
     'artifacts': list([
       dict({
-        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'download_url': '/samples/1/artifacts/reference.fa.gz',
         'id': 1,
         'name': 'reference.fa.gz',
         'size': 34879234,
@@ -515,7 +515,7 @@
     'group_write': True,
     'hold': False,
     'host': '',
-    'id': 'test',
+    'id': 1,
     'is_legacy': False,
     'isolate': '',
     'job': dict({
@@ -547,11 +547,11 @@
     'quality': None,
     'reads': list([
       dict({
-        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'download_url': '/samples/1/reads/reads_1.fq.gz',
         'id': 1,
         'name': 'reads_1.fq.gz',
         'name_on_disk': 'reads_1.fq.gz',
-        'sample': 'test',
+        'sample': 1,
         'size': 2903109210,
         'upload': None,
         'uploaded_at': '2015-10-06T20:00:00Z',
@@ -634,7 +634,7 @@
     'all_write': True,
     'artifacts': list([
       dict({
-        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'download_url': '/samples/1/artifacts/reference.fa.gz',
         'id': 1,
         'name': 'reference.fa.gz',
         'size': 34879234,
@@ -647,7 +647,7 @@
     'group_write': False,
     'hold': False,
     'host': '',
-    'id': 'test',
+    'id': 1,
     'is_legacy': False,
     'isolate': '',
     'job': dict({
@@ -679,11 +679,11 @@
     'quality': None,
     'reads': list([
       dict({
-        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'download_url': '/samples/1/reads/reads_1.fq.gz',
         'id': 1,
         'name': 'reads_1.fq.gz',
         'name_on_disk': 'reads_1.fq.gz',
-        'sample': 'test',
+        'sample': 1,
         'size': 2903109210,
         'upload': None,
         'uploaded_at': '2015-10-06T20:00:00Z',
@@ -735,7 +735,7 @@
     'group_write': True,
     'hold': True,
     'host': '',
-    'id': 'bf1b993c',
+    'id': 1,
     'is_legacy': False,
     'isolate': '',
     'job': dict({
@@ -816,7 +816,7 @@
     'group_write': True,
     'hold': True,
     'host': '',
-    'id': 'bf1b993c',
+    'id': 1,
     'is_legacy': False,
     'isolate': '',
     'job': dict({
@@ -901,7 +901,7 @@
     'group_write': True,
     'hold': True,
     'host': '',
-    'id': 'bf1b993c',
+    'id': 1,
     'is_legacy': False,
     'isolate': '',
     'job': dict({
@@ -981,7 +981,7 @@
     'all_write': True,
     'artifacts': list([
       dict({
-        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'download_url': '/samples/1/artifacts/reference.fa.gz',
         'id': 1,
         'name': 'reference.fa.gz',
         'size': 34879234,
@@ -994,7 +994,7 @@
     'group_write': True,
     'hold': False,
     'host': '',
-    'id': 'test',
+    'id': 1,
     'is_legacy': False,
     'isolate': '',
     'job': dict({
@@ -1026,11 +1026,11 @@
     'quality': None,
     'reads': list([
       dict({
-        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'download_url': '/samples/1/reads/reads_1.fq.gz',
         'id': 1,
         'name': 'reads_1.fq.gz',
         'name_on_disk': 'reads_1.fq.gz',
-        'sample': 'test',
+        'sample': 1,
         'size': 2903109210,
         'upload': None,
         'uploaded_at': '2015-10-06T20:00:00Z',
@@ -1074,7 +1074,7 @@
     'group_write': True,
     'hold': False,
     'host': '',
-    'id': 'test',
+    'id': 1,
     'is_legacy': False,
     'isolate': '',
     'job': dict({
@@ -1155,7 +1155,7 @@
       dict({
         'created_at': '2015-10-06T22:00:00Z',
         'host': '',
-        'id': 'cb400e6d',
+        'id': 3,
         'isolate': '',
         'job': None,
         'labels': list([
@@ -1186,7 +1186,7 @@
       dict({
         'created_at': '2015-10-06T21:00:00Z',
         'host': '',
-        'id': 'beb1eb10',
+        'id': 1,
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
@@ -1233,7 +1233,7 @@
       dict({
         'created_at': '2015-10-06T20:00:00Z',
         'host': '',
-        'id': '72bb8b31',
+        'id': 2,
         'isolate': 'Test',
         'job': None,
         'labels': list([
@@ -1275,7 +1275,7 @@
       dict({
         'created_at': '2015-10-06T22:00:00Z',
         'host': '',
-        'id': 'cb400e6d',
+        'id': 3,
         'isolate': '',
         'job': None,
         'labels': list([
@@ -1317,7 +1317,7 @@
       dict({
         'created_at': '2015-10-06T22:00:00Z',
         'host': '',
-        'id': 'cb400e6d',
+        'id': 3,
         'isolate': '',
         'job': None,
         'labels': list([
@@ -1348,7 +1348,7 @@
       dict({
         'created_at': '2015-10-06T21:00:00Z',
         'host': '',
-        'id': 'beb1eb10',
+        'id': 1,
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
@@ -1417,7 +1417,7 @@
       dict({
         'created_at': '2015-10-06T22:00:00Z',
         'host': '',
-        'id': 'cb400e6d',
+        'id': 3,
         'isolate': '',
         'job': None,
         'labels': list([
@@ -1448,7 +1448,7 @@
       dict({
         'created_at': '2015-10-06T21:00:00Z',
         'host': '',
-        'id': 'beb1eb10',
+        'id': 1,
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
@@ -1506,7 +1506,7 @@
       dict({
         'created_at': '2015-10-06T20:00:00Z',
         'host': '',
-        'id': '72bb8b31',
+        'id': 2,
         'isolate': 'Test',
         'job': None,
         'labels': list([
@@ -1548,7 +1548,7 @@
       dict({
         'created_at': '2015-10-06T22:00:00Z',
         'host': '',
-        'id': 'cb400e6d',
+        'id': 3,
         'isolate': '',
         'job': None,
         'labels': list([
@@ -1579,7 +1579,7 @@
       dict({
         'created_at': '2015-10-06T21:00:00Z',
         'host': '',
-        'id': 'beb1eb10',
+        'id': 1,
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
@@ -1626,7 +1626,7 @@
       dict({
         'created_at': '2015-10-06T20:00:00Z',
         'host': '',
-        'id': '72bb8b31',
+        'id': 2,
         'isolate': 'Test',
         'job': None,
         'labels': list([
@@ -1668,7 +1668,7 @@
       dict({
         'created_at': '2015-10-06T22:00:00Z',
         'host': '',
-        'id': 'cb400e6d',
+        'id': 3,
         'isolate': '',
         'job': None,
         'labels': list([
@@ -1699,7 +1699,7 @@
       dict({
         'created_at': '2015-10-06T21:00:00Z',
         'host': '',
-        'id': 'beb1eb10',
+        'id': 1,
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
@@ -1746,7 +1746,7 @@
       dict({
         'created_at': '2015-10-06T20:00:00Z',
         'host': '',
-        'id': '72bb8b31',
+        'id': 2,
         'isolate': 'Test',
         'job': None,
         'labels': list([
@@ -1788,7 +1788,7 @@
       dict({
         'created_at': '2015-10-06T21:00:00Z',
         'host': '',
-        'id': 'beb1eb10',
+        'id': 1,
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
@@ -1835,7 +1835,7 @@
       dict({
         'created_at': '2015-10-06T20:00:00Z',
         'host': '',
-        'id': '72bb8b31',
+        'id': 2,
         'isolate': 'Test',
         'job': None,
         'labels': list([
@@ -1877,7 +1877,7 @@
       dict({
         'created_at': '2015-10-06T22:00:00Z',
         'host': '',
-        'id': 'cb400e6d',
+        'id': 3,
         'isolate': '',
         'job': None,
         'labels': list([
@@ -1919,7 +1919,7 @@
       dict({
         'created_at': '2015-10-06T22:00:00Z',
         'host': '',
-        'id': 'cb400e6d',
+        'id': 3,
         'isolate': '',
         'job': None,
         'labels': list([
@@ -1950,7 +1950,7 @@
       dict({
         'created_at': '2015-10-06T21:00:00Z',
         'host': '',
-        'id': 'beb1eb10',
+        'id': 1,
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
@@ -1997,7 +1997,7 @@
       dict({
         'created_at': '2015-10-06T20:00:00Z',
         'host': '',
-        'id': '72bb8b31',
+        'id': 2,
         'isolate': 'Test',
         'job': None,
         'labels': list([
@@ -2039,7 +2039,7 @@
       dict({
         'created_at': '2015-10-06T21:00:00Z',
         'host': '',
-        'id': 'beb1eb10',
+        'id': 1,
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
@@ -2097,7 +2097,7 @@
       dict({
         'created_at': '2015-10-06T21:00:00Z',
         'host': '',
-        'id': 'beb1eb10',
+        'id': 1,
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
@@ -2144,7 +2144,7 @@
       dict({
         'created_at': '2015-10-06T20:00:00Z',
         'host': '',
-        'id': '72bb8b31',
+        'id': 2,
         'isolate': 'Test',
         'job': None,
         'labels': list([
@@ -2186,7 +2186,7 @@
       dict({
         'created_at': '2015-10-06T20:00:00Z',
         'host': '',
-        'id': '72bb8b31',
+        'id': 2,
         'isolate': 'Test',
         'job': None,
         'labels': list([
@@ -2228,7 +2228,7 @@
       dict({
         'created_at': '2015-10-06T20:00:00Z',
         'host': '',
-        'id': '72bb8b31',
+        'id': 2,
         'isolate': 'Test',
         'job': None,
         'labels': list([
@@ -2270,7 +2270,7 @@
       dict({
         'created_at': '2015-10-06T22:00:00Z',
         'host': '',
-        'id': 'cb400e6d',
+        'id': 3,
         'isolate': '',
         'job': None,
         'labels': list([
@@ -2312,7 +2312,7 @@
     'all_write': True,
     'artifacts': list([
       dict({
-        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'download_url': '/samples/1/artifacts/reference.fa.gz',
         'id': 1,
         'name': 'reference.fa.gz',
         'size': 34879234,
@@ -2325,7 +2325,7 @@
     'group_write': True,
     'hold': False,
     'host': '',
-    'id': 'test',
+    'id': 1,
     'is_legacy': False,
     'isolate': '',
     'job': dict({
@@ -2357,11 +2357,11 @@
     'quality': None,
     'reads': list([
       dict({
-        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'download_url': '/samples/1/reads/reads_1.fq.gz',
         'id': 1,
         'name': 'reads_1.fq.gz',
         'name_on_disk': 'reads_1.fq.gz',
-        'sample': 'test',
+        'sample': 1,
         'size': 2903109210,
         'upload': None,
         'uploaded_at': '2015-10-06T20:00:00Z',
@@ -2396,7 +2396,7 @@
     'all_write': True,
     'artifacts': list([
       dict({
-        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'download_url': '/samples/1/artifacts/reference.fa.gz',
         'id': 1,
         'name': 'reference.fa.gz',
         'size': 34879234,
@@ -2409,7 +2409,7 @@
     'group_write': True,
     'hold': False,
     'host': '',
-    'id': 'test',
+    'id': 1,
     'is_legacy': False,
     'isolate': '',
     'job': dict({
@@ -2441,11 +2441,11 @@
     'quality': None,
     'reads': list([
       dict({
-        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'download_url': '/samples/1/reads/reads_1.fq.gz',
         'id': 1,
         'name': 'reads_1.fq.gz',
         'name_on_disk': 'reads_1.fq.gz',
-        'sample': 'test',
+        'sample': 1,
         'size': 2903109210,
         'upload': None,
         'uploaded_at': '2015-10-06T20:00:00Z',
@@ -2486,7 +2486,7 @@
     'all_write': False,
     'artifacts': list([
       dict({
-        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'download_url': '/samples/1/artifacts/reference.fa.gz',
         'id': 1,
         'name': 'reference.fa.gz',
         'size': 34879234,
@@ -2503,7 +2503,7 @@
     'group_write': True,
     'hold': False,
     'host': '',
-    'id': 'test',
+    'id': 1,
     'is_legacy': False,
     'isolate': '',
     'job': dict({
@@ -2535,11 +2535,11 @@
     'quality': None,
     'reads': list([
       dict({
-        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'download_url': '/samples/1/reads/reads_1.fq.gz',
         'id': 1,
         'name': 'reads_1.fq.gz',
         'name_on_disk': 'reads_1.fq.gz',
-        'sample': 'test',
+        'sample': 1,
         'size': 2903109210,
         'upload': None,
         'uploaded_at': '2015-10-06T20:00:00Z',
@@ -2574,7 +2574,7 @@
     'all_write': True,
     'artifacts': list([
       dict({
-        'download_url': '/samples/test/artifacts/reference.fa.gz',
+        'download_url': '/samples/1/artifacts/reference.fa.gz',
         'id': 1,
         'name': 'reference.fa.gz',
         'size': 34879234,
@@ -2587,7 +2587,7 @@
     'group_write': True,
     'hold': False,
     'host': '',
-    'id': 'test',
+    'id': 1,
     'is_legacy': False,
     'isolate': '',
     'job': dict({
@@ -2619,11 +2619,11 @@
     'quality': None,
     'reads': list([
       dict({
-        'download_url': '/samples/test/reads/reads_1.fq.gz',
+        'download_url': '/samples/1/reads/reads_1.fq.gz',
         'id': 1,
         'name': 'reads_1.fq.gz',
         'name_on_disk': 'reads_1.fq.gz',
-        'sample': 'test',
+        'sample': 1,
         'size': 2903109210,
         'upload': None,
         'uploaded_at': '2015-10-06T20:00:00Z',
@@ -2700,7 +2700,7 @@
           'name': 'Foo',
         }),
         'sample': dict({
-          'id': 'test',
+          'id': 1,
         }),
         'subtractions': list([
           dict({
@@ -2730,7 +2730,7 @@
           'name': 'Baz',
         }),
         'sample': dict({
-          'id': 'test',
+          'id': 1,
         }),
         'subtractions': list([
           dict({
@@ -2770,7 +2770,7 @@
           'name': 'Baz',
         }),
         'sample': dict({
-          'id': 'test',
+          'id': 1,
         }),
         'subtractions': list([
         ]),

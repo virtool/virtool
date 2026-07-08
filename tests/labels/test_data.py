@@ -53,7 +53,7 @@ class TestDelete:
             legacy = (
                 await session.execute(
                     select(SQLLegacySample).where(
-                        SQLLegacySample.legacy_id == sample.id,
+                        SQLLegacySample.id == sample.id,
                     ),
                 )
             ).scalar_one()
@@ -83,6 +83,6 @@ class TestDelete:
                 )
             ).scalar_one_or_none() is None
 
-        stored = await mongo.samples.find_one({"_id": sample.id})
+        stored = await mongo.samples.find_one({"_id": legacy.legacy_id})
 
         assert label.id not in stored["labels"]
