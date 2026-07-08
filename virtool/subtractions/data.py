@@ -255,7 +255,6 @@ class SubtractionsData(DataLayerDomain):
         subtraction, upload = row
 
         document = await attach_computed(
-            self._mongo,
             self._pg,
             self._base_url,
             subtraction.id,

@@ -165,7 +165,7 @@
     'group_write': True,
     'hold': False,
     'host': '',
-    'id': 'test',
+    'id': 1,
     'is_legacy': False,
     'isolate': '',
     'job': dict({
@@ -217,11 +217,11 @@
     }),
     'reads': list([
       dict({
-        'download_url': '/samples/test/reads/reads.fq.gz',
+        'download_url': '/samples/1/reads/reads.fq.gz',
         'id': 1,
         'name': 'reads.fq.gz',
         'name_on_disk': 'reads_1.fq.gz',
-        'sample': 'test',
+        'sample': 1,
         'size': 15,
         'upload': dict({
           'created_at': 'not_approximately_now_datetime',

@@ -13,7 +13,7 @@ class FindAnalysesResponse(AnalysisSearchResult):
                         "job": {"id": "us3toy8j"},
                         "ready": True,
                         "reference": {"id": "d19exr83", "name": "New Plant Viruses"},
-                        "sample": {"id": "7tu8c5m5"},
+                        "sample": {"id": 5678},
                         "subtractions": [{"id": "1sk885at", "name": "Vitis vinifera"}],
                         "updated_at": "2022-08-15T17:42:35.979000Z",
                         "user": {

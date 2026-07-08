@@ -780,12 +780,12 @@ class TestUpdate:
         )
 
     @staticmethod
-    async def _get_label_ids(pg: AsyncEngine, sample_id: str) -> set[int]:
+    async def _get_label_ids(pg: AsyncEngine, sample_id: int) -> set[int]:
         async with AsyncSession(pg) as session:
             legacy = (
                 await session.execute(
                     select(SQLLegacySample).where(
-                        SQLLegacySample.legacy_id == sample_id,
+                        SQLLegacySample.id == sample_id,
                     ),
                 )
             ).scalar_one()
@@ -803,12 +803,12 @@ class TestUpdate:
             )
 
     @staticmethod
-    async def _get_subtraction_ids(pg: AsyncEngine, sample_id: str) -> set[int]:
+    async def _get_subtraction_ids(pg: AsyncEngine, sample_id: int) -> set[int]:
         async with AsyncSession(pg) as session:
             legacy = (
                 await session.execute(
                     select(SQLLegacySample).where(
-                        SQLLegacySample.legacy_id == sample_id,
+                        SQLLegacySample.id == sample_id,
                     ),
                 )
             ).scalar_one()
@@ -846,7 +846,7 @@ class TestUpdate:
             UpdateSampleRequest(name="Renamed", notes="Updated notes"),
         )
 
-        document = await mongo.samples.find_one({"_id": sample.id})
+        document = await mongo.samples.find_one()
         assert document["name"] == "Renamed"
         assert document["notes"] == "Updated notes"
 
@@ -854,7 +854,7 @@ class TestUpdate:
             legacy = (
                 await session.execute(
                     select(SQLLegacySample).where(
-                        SQLLegacySample.legacy_id == sample.id,
+                        SQLLegacySample.id == sample.id,
                     ),
                 )
             ).scalar_one()
@@ -1012,7 +1012,7 @@ class TestUpdateRights:
             },
         )
 
-        document = await mongo.samples.find_one({"_id": sample.id})
+        document = await mongo.samples.find_one()
         assert document["group"] == group.id
         assert document["all_read"] is False
         assert document["group_read"] is False
@@ -1021,7 +1021,7 @@ class TestUpdateRights:
             legacy = (
                 await session.execute(
                     select(SQLLegacySample).where(
-                        SQLLegacySample.legacy_id == sample.id,
+                        SQLLegacySample.id == sample.id,
                     ),
                 )
             ).scalar_one()
@@ -1056,7 +1056,7 @@ class TestUpdateRights:
 
         await data_layer.samples.update_rights(sample.id, {"group": "legacy_owner"})
 
-        document = await mongo.samples.find_one({"_id": sample.id})
+        document = await mongo.samples.find_one()
         assert document["group"] == group.id
         assert isinstance(document["group"], int)
 
@@ -1262,7 +1262,7 @@ class TestDelete:
             legacy = (
                 await session.execute(
                     select(SQLLegacySample).where(
-                        SQLLegacySample.legacy_id == sample.id,
+                        SQLLegacySample.id == sample.id,
                     ),
                 )
             ).scalar_one()
@@ -1273,7 +1273,7 @@ class TestDelete:
             assert (
                 await session.execute(
                     select(SQLLegacySample).where(
-                        SQLLegacySample.legacy_id == sample.id,
+                        SQLLegacySample.id == sample.id,
                     ),
                 )
             ).scalar_one_or_none() is None

@@ -22,10 +22,12 @@ def create_samples_routes(
             """Get the JSON representation of a sample."""
             sample_id = self.request.match_info["sample_id"]
 
-            if sample_id not in (data.sample.id, data.new_sample.id):
+            if sample_id not in (str(data.sample.id), str(data.new_sample.id)):
                 return generate_not_found()
 
-            sample = data.sample if sample_id == data.sample.id else data.new_sample
+            sample = (
+                data.sample if sample_id == str(data.sample.id) else data.new_sample
+            )
 
             return json_response(sample.dict(), status=200, dumps=custom_dumps)
 
@@ -33,7 +35,7 @@ def create_samples_routes(
             """Finalize a new sample."""
             sample_id = self.request.match_info["sample_id"]
 
-            if sample_id != data.new_sample.id:
+            if sample_id != str(data.new_sample.id):
                 return generate_not_found()
 
             if data.new_sample.ready:
@@ -53,7 +55,7 @@ def create_samples_routes(
             sample_id = self.request.match_info["sample_id"]
 
             try:
-                new_sample_id = data.new_sample.id
+                new_sample_id = str(data.new_sample.id)
             except AttributeError:
                 new_sample_id = None
 
@@ -80,7 +82,7 @@ def create_samples_routes(
             filename = self.request.match_info["filename"]
             safe_filename = Path(filename).name
 
-            if sample_id != data.sample.id:
+            if sample_id != str(data.sample.id):
                 return generate_not_found()
 
             tempdir = Path(tempfile.mkdtemp())
@@ -93,7 +95,7 @@ def create_samples_routes(
         async def post(self):
             sample_id = self.request.match_info["sample_id"]
 
-            if sample_id != data.sample.id:
+            if sample_id != str(data.sample.id):
                 return generate_not_found()
 
             multipart = await self.request.multipart()
@@ -112,7 +114,7 @@ def create_samples_routes(
             filename = self.request.match_info["filename"]
             id_ = self.request.match_info["sample_id"]
 
-            if id_ != data.sample.id or filename not in (
+            if id_ != str(data.sample.id) or filename not in (
                 "reads_1.fq.gz",
                 "reads_2.fq.gz",
             ):
@@ -130,7 +132,7 @@ def create_samples_routes(
             id_ = self.request.match_info["sample_id"]
             name = self.request.match_info["filename"]
 
-            if id_ != data.new_sample.id:
+            if id_ != str(data.new_sample.id):
                 return generate_not_found()
 
             multipart = await self.request.multipart()
