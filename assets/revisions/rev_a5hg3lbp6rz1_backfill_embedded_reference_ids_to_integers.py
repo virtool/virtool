@@ -1,10 +1,9 @@
-"""Convert the embedded ``reference.id`` in otus, sequences, and history to integers.
+"""Convert the embedded ``reference.id`` in otus and sequences to integers.
 
 References now live in Postgres as ``legacy_references`` with an integer ``id``
-and a permanent ``legacy_id`` (the old Mongo string id). The Mongo ``otus``,
-``sequences``, and top-level ``history`` documents each embed a ``reference``
-subdocument whose ``id`` must hold the integer ``legacy_references.id`` rather
-than the legacy string.
+and a permanent ``legacy_id`` (the old Mongo string id). The Mongo ``otus`` and
+``sequences`` documents each embed a ``reference`` subdocument whose ``id`` must
+hold the integer ``legacy_references.id`` rather than the legacy string.
 
 This revision rewrites ``reference.id`` on every such document, resolving legacy
 string ids to their integer ``legacy_references.id`` via
@@ -12,10 +11,13 @@ string ids to their integer ``legacy_references.id`` via
 filter skips documents already holding an integer, so the revision is idempotent
 and safe to re-run.
 
-The ``legacy_history_diff`` stored on history documents is intentionally left
-untouched -- ``patch_to_version`` overlays the authoritative reference onto a
-reconstructed OTU at read time, so the reference embedded in the diff is
-irrelevant.
+The Mongo ``history`` collection is intentionally excluded. The orphan-purge
+revision (``0uwpffz8adx0``) leaves ``history`` untouched as an archive of deleted
+history, so it still holds ``reference.id`` values for references that no longer
+exist in Postgres. Nothing reads those embedded ids -- ``patch_to_version``
+overlays the authoritative reference (sourced from ``legacy_history``) onto a
+reconstructed OTU at read time -- so rewriting them would buy nothing while
+forcing the strict resolution below to abort on every orphan.
 
 Unresolved string ids raise loudly rather than being dropped or stored as
 ``NULL`` -- a document referencing a reference that no longer exists in Postgres
@@ -51,7 +53,7 @@ virtool_down_revision = None
 # Change this if an Alembic revision is required to run this migration.
 required_alembic_revision = None
 
-COLLECTIONS = ("otus", "sequences", "history")
+COLLECTIONS = ("otus", "sequences")
 
 
 async def upgrade(ctx: MigrationContext) -> None:
