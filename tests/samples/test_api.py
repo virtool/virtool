@@ -921,6 +921,27 @@ class TestCreate:
 
         await resp_is.bad_request(resp, "File does not exist")
 
+    async def test_duplicate_file(
+        self,
+        fake: DataFaker,
+        spawn_client: ClientSpawner,
+        resp_is,
+    ):
+        """Test that the same upload cannot be passed twice in ``files``."""
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_sample],
+        )
+
+        upload = await fake.uploads.create(user=await fake.users.create())
+
+        resp = await client.post(
+            "/samples",
+            {"name": "Foobar", "files": [upload.id, upload.id]},
+        )
+
+        await resp_is.bad_request(resp, "File is duplicated")
+
     async def test_label_dne(
         self,
         fake: DataFaker,

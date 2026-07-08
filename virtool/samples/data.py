@@ -537,6 +537,9 @@ class SamplesData(DataLayerDomain):
             check_subtractions_do_not_exist(self._pg, data.subtractions),
         )
 
+        if len(set(data.files)) != len(data.files):
+            raise ResourceConflictError("File is duplicated")
+
         try:
             uploads = [
                 (await self.data.uploads.get(file_)).dict() for file_ in data.files
