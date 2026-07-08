@@ -687,5 +687,12 @@
       'name': 'backfill embedded index reference ids to integers',
       'revision': 'tr3p2obxndjm',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 99,
+      'name': 'compare reference rights',
+      'revision': 'td1a0rtqlp32',
+    }),
   ])
 # ---
