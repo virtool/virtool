@@ -78,16 +78,29 @@ async def _backfill_embedded_reference(
 ) -> None:
     collection = mongo["indexes"]
 
+    index_ids = [
+        doc["_id"]
+        async for doc in collection.find(
+            {"reference.id": {"$type": "string"}},
+            projection={"_id": 1},
+        )
+    ]
+
     migrated = 0
 
-    async for doc in collection.find(
-        {"reference.id": {"$type": "string"}},
-        projection={"reference": 1},
-    ):
+    for index_id in index_ids:
+        doc = await collection.find_one(
+            {"_id": index_id},
+            projection={"reference": 1},
+        )
+
+        if doc is None or not isinstance(doc["reference"]["id"], str):
+            continue
+
         reference_id = _coerce_reference_id(doc["reference"]["id"], reference_map)
 
         await collection.update_one(
-            {"_id": doc["_id"]},
+            {"_id": index_id},
             {"$set": {"reference.id": reference_id}},
         )
         migrated += 1
