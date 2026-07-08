@@ -5,8 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
+from virtool.data.topg import both_transactions
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
+from virtool.references.db import write_legacy_reference
 from virtool.references.oas import (
     CreateReferenceGroupRequest,
     CreateReferenceRequest,
@@ -19,6 +21,13 @@ from virtool.references.sql import (
     SQLReferenceGroup,
     SQLReferenceUser,
 )
+
+
+async def insert_reference(mongo: Mongo, pg: AsyncEngine, document: dict) -> None:
+    """Insert a reference into Mongo and mirror it (row and rights) into Postgres."""
+    async with both_transactions(mongo, pg) as (mongo_session, pg_session):
+        await mongo.references.insert_one(document, session=mongo_session)
+        await write_legacy_reference(pg_session, document)
 
 
 async def _reference_pk(pg: AsyncEngine, ref_id: str) -> int:
@@ -790,6 +799,7 @@ class TestCreateGroup:
         data_layer: DataLayer,
         fake: DataFaker,
         mongo: Mongo,
+        pg: AsyncEngine,
         snapshot,
         static_time,
     ):
@@ -797,7 +807,9 @@ class TestCreateGroup:
         user = await fake.users.create()
         group = await fake.groups.create()
 
-        await mongo.references.insert_one(
+        await insert_reference(
+            mongo,
+            pg,
             {
                 "_id": "foo",
                 "archived": False,
