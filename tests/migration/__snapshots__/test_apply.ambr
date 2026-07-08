@@ -694,5 +694,12 @@
       'name': 'compare reference rights',
       'revision': 'td1a0rtqlp32',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 100,
+      'name': 'create sample uploads table',
+      'revision': '1ffbe2dcb108',
+    }),
   ])
 # ---

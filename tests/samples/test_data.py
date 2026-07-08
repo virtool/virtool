@@ -30,6 +30,7 @@ from virtool.samples.sql import (
     SQLLegacySampleLabel,
     SQLLegacySampleSubtraction,
     SQLSampleReads,
+    SQLSampleUpload,
 )
 from virtool.samples.utils import SampleRight
 from virtool.settings.oas import UpdateSettingsRequest
@@ -259,6 +260,22 @@ class TestCreate:
                 .scalars()
                 .all()
             )
+
+            sample_uploads = (
+                (
+                    await session.execute(
+                        select(SQLSampleUpload)
+                        .where(SQLSampleUpload.sample_id == legacy.id)
+                        .order_by(SQLSampleUpload.index),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+
+        assert [(row.sample, row.upload_id, row.index) for row in sample_uploads] == [
+            (sample["_id"], u["id"], i) for i, u in enumerate(sample["uploads"])
+        ]
 
         assert legacy.name == sample["name"]
         assert legacy.library_type == sample["library_type"]
@@ -1324,6 +1341,14 @@ class TestDelete:
                 )
             ).scalar_one()
 
+            assert (
+                await session.execute(
+                    select(SQLSampleUpload).where(
+                        SQLSampleUpload.sample_id == legacy.id,
+                    ),
+                )
+            ).scalars().all() != []
+
         await data_layer.samples.delete(sample.id)
 
         async with AsyncSession(pg) as session:
@@ -1347,6 +1372,14 @@ class TestDelete:
                 await session.execute(
                     select(SQLLegacySampleSubtraction).where(
                         SQLLegacySampleSubtraction.sample_id == legacy.id,
+                    ),
+                )
+            ).scalars().all() == []
+
+            assert (
+                await session.execute(
+                    select(SQLSampleUpload).where(
+                        SQLSampleUpload.sample_id == legacy.id,
                     ),
                 )
             ).scalars().all() == []

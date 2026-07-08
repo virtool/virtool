@@ -70,6 +70,19 @@ class SQLSampleReads(Base):
     uploaded_at = Column(DateTime)
 
 
+class SQLSampleUpload(Base):
+    """SQL model linking a sample to its input uploads."""
+
+    __tablename__ = "sample_uploads"
+    __table_args__ = (UniqueConstraint("upload_id"),)
+
+    id = Column(BigInteger, Identity(always=True), primary_key=True)
+    sample = Column(String, nullable=False)
+    sample_id = Column(BigInteger, ForeignKey("legacy_samples.id"))
+    upload_id = Column(Integer, ForeignKey("uploads.id"), nullable=False)
+    index = Column(Integer, nullable=False)
+
+
 class SQLLegacySample(Base):
     """SQL model for sample metadata.
 
