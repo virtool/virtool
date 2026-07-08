@@ -23,6 +23,7 @@ from virtool.indexes.sql import SQLIndexFile
 from virtool.indexes.tasks import CreateIndexTask
 from virtool.indexes.utils import compose_index_file_key
 from virtool.mongo.core import Mongo
+from virtool.references.sql import SQLReference
 from virtool.storage.protocol import StorageBackend
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
@@ -33,6 +34,7 @@ async def _create_task_backed_index(
     manifest: dict[str, int],
     mongo: Mongo,
     static_time: StaticTime,
+    reference_id: int | str = "hxn167",
 ) -> int:
     user = await fake.users.create()
 
@@ -57,7 +59,7 @@ async def _create_task_backed_index(
             "job": None,
             "manifest": manifest,
             "ready": False,
-            "reference": {"id": "hxn167"},
+            "reference": {"id": reference_id},
             "task": {"id": task.id},
             "user": {"id": user.id},
             "version": 0,
@@ -170,6 +172,56 @@ async def test_create_index_task_writes_only_compressed_sqlite_and_finalizes(
 
     otu = await mongo.otus.find_one(test_otu["_id"])
     assert otu["last_indexed_version"] == 1
+
+
+async def test_create_index_task_resolves_integer_reference_id(
+    data_layer: DataLayer,
+    fake: DataFaker,
+    memory_storage: StorageBackend,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    static_time: StaticTime,
+    test_otu: dict,
+    test_sequence: dict,
+):
+    """A task-backed build resolves an integer embedded reference id to Mongo."""
+    user = await fake.users.create()
+
+    async with AsyncSession(pg) as session:
+        reference = SQLReference(
+            legacy_id="hxn167",
+            name="Test Reference",
+            description="",
+            created_at=static_time.datetime,
+            source_types=[],
+            user_id=user.id,
+        )
+        session.add(reference)
+        await session.flush()
+        reference_pk = reference.id
+        await session.commit()
+
+    manifest = await _insert_indexed_otu(mongo, test_otu, test_sequence)
+    task_id = await _create_task_backed_index(
+        data_layer,
+        fake,
+        manifest,
+        mongo,
+        static_time,
+        reference_pk,
+    )
+
+    await (await CreateIndexTask.from_task_id(data_layer, task_id)).run()
+
+    task = await data_layer.tasks.get(task_id)
+    index = await mongo.indexes.find_one("task_index")
+
+    assert task.complete is True
+    assert task.error is None
+    assert index["ready"] is True
+    assert [info.key async for info in memory_storage.list("indexes/task_index/")] == [
+        compose_index_file_key("task_index", COMPRESSED_INDEX_SQLITE_FILE_NAME)
+    ]
 
 
 async def test_create_index_task_updates_existing_index_file_row(

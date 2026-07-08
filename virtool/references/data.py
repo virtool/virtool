@@ -565,7 +565,10 @@ class ReferencesData(DataLayerDomain):
         await self._require_not_archived(ref_id)
 
         if await self._mongo.indexes.count_documents(
-            {"reference.id": ref_id, "ready": False},
+            {
+                "reference.id": await compose_reference_id_match(self._pg, ref_id),
+                "ready": False,
+            },
             limit=1,
         ):
             raise ResourceConflictError("Index build already in progress")

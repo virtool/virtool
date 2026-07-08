@@ -18,6 +18,7 @@ from virtool.models.enums import AnalysisWorkflow, LibraryType, Permission
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row, get_row_by_id
+from virtool.references.sql import SQLReference
 from virtool.samples.models import WorkflowState
 from virtool.samples.oas import (
     CreateAnalysisRequest,
@@ -711,6 +712,62 @@ class TestHasResourcesForAnalysisJob:
             await data_layer.samples.has_resources_for_analysis_job(
                 "test_ref",
                 [subtraction_id],
+            )
+            is None
+        )
+
+    async def test_ok_migrated_reference(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+    ):
+        """A ready index embedding the integer reference id is still matched."""
+        user = await fake.users.create()
+        upload = await fake.uploads.create(
+            user=user,
+            upload_type=UploadType.subtraction,
+        )
+
+        async with AsyncSession(pg) as session:
+            reference = SQLReference(
+                legacy_id="test_ref",
+                name="Test Reference",
+                description="",
+                created_at=virtool.utils.timestamp(),
+                source_types=[],
+                user_id=user.id,
+            )
+            session.add(reference)
+            await session.flush()
+            reference_pk = reference.id
+            await session.commit()
+
+        _, _, subtraction = await asyncio.gather(
+            mongo.references.insert_one(
+                {
+                    "_id": "test_ref",
+                    "archived": False,
+                    "data_type": "genome",
+                    "name": "Test Reference",
+                },
+            ),
+            mongo.indexes.insert_one(
+                {
+                    "_id": "test_index",
+                    "reference": {"id": reference_pk},
+                    "ready": True,
+                    "version": 1,
+                },
+            ),
+            fake.subtractions.create(user=user, upload=upload),
+        )
+
+        assert (
+            await data_layer.samples.has_resources_for_analysis_job(
+                "test_ref",
+                [subtraction.id],
             )
             is None
         )

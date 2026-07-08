@@ -37,7 +37,7 @@
     'manifest': 'manifest',
     'ready': False,
     'reference': dict({
-      'id': 'foo',
+      'id': 1,
     }),
     'task': None,
     'user': dict({
@@ -58,7 +58,7 @@
     'manifest': 'manifest',
     'ready': False,
     'reference': dict({
-      'id': 'foo',
+      'id': 1,
     }),
     'task': None,
     'user': dict({

@@ -46,8 +46,12 @@ from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import get_rows
-from virtool.references.db import compose_archived_filter, lookup_nested_reference_by_id
+from virtool.references.db import (
+    compose_reference_ids_match,
+    resolve_reference_legacy_id,
+)
 from virtool.references.models import ReferenceNested
+from virtool.references.transforms import AttachReferenceTransform
 from virtool.storage.cleanup import delete_prefix
 from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
@@ -134,15 +138,13 @@ class IndexData:
                     {
                         "$match": {
                             "ready": True,
-                            "reference.id": {
-                                "$in": await self._mongo.references.distinct(
-                                    "_id",
-                                    compose_archived_filter(archived),
-                                ),
-                            },
+                            "reference.id": await compose_reference_ids_match(
+                                self._pg,
+                                self._mongo,
+                                archived,
+                            ),
                         },
                     },
-                    *lookup_nested_reference_by_id(local_field="reference.id"),
                     {"$sort": {"created_at": 1}},
                 ],
             )
@@ -152,6 +154,7 @@ class IndexData:
             items,
             [
                 AttachJobTransform(self._pg),
+                AttachReferenceTransform(self._mongo),
                 AttachUserTransform(self._pg),
                 IndexCountsTransform(),
             ],
@@ -169,7 +172,6 @@ class IndexData:
         result = await self._mongo.indexes.aggregate(
             [
                 {"$match": {"_id": index_id}},
-                *lookup_nested_reference_by_id(local_field="reference.id"),
                 {"$sort": {"created_at": 1}},
             ],
         ).to_list(length=1)
@@ -196,6 +198,7 @@ class IndexData:
             base_processor(document),
             [
                 AttachJobTransform(self._pg),
+                AttachReferenceTransform(self._mongo),
                 AttachUserTransform(self._pg),
                 IndexCountsTransform(),
             ],
@@ -218,7 +221,12 @@ class IndexData:
 
         if reference_field and (
             reference := await self._mongo.references.find_one(
-                {"_id": reference_field["id"]},
+                {
+                    "_id": await resolve_reference_legacy_id(
+                        self._pg,
+                        reference_field["id"],
+                    ),
+                },
                 ["data_type", "name"],
             )
         ):
@@ -360,7 +368,11 @@ class IndexData:
         except KeyError:
             raise ResourceError("Could not find index reference id")
 
-        data_type = await get_one_field(self._mongo.references, "data_type", ref_id)
+        data_type = await get_one_field(
+            self._mongo.references,
+            "data_type",
+            await resolve_reference_legacy_id(self._pg, ref_id),
+        )
 
         if data_type is None:
             raise ResourceNotFoundError
@@ -404,8 +416,10 @@ class IndexData:
         except KeyError:
             raise ResourceError("Could not find index reference id")
 
+        legacy_ref_id = await resolve_reference_legacy_id(self._pg, ref_id)
+
         reference = await self._mongo.references.find_one(
-            {"_id": ref_id},
+            {"_id": legacy_ref_id},
             ["created_at", "data_type", "name", "organism"],
         )
 
