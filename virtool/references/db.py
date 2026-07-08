@@ -17,7 +17,6 @@ from virtool.data.errors import ResourceNotFoundError
 from virtool.data.topg import (
     compose_legacy_id_mongo_match,
     compose_legacy_id_multi_expression,
-    compose_legacy_id_multi_mongo_match,
     compose_legacy_id_single_expression,
     compose_legacy_id_subquery,
     resolve_legacy_id,
@@ -428,29 +427,15 @@ async def check_source_type(
     return True
 
 
-def compose_archived_filter(archived: bool | None) -> dict:
-    """Compose a Mongo filter on ``references.archived`` for the project-wide
-    ``bool | None`` lifecycle convention.
-
-    - ``None`` (default): no constraint → ``{}`` (both states)
-    - ``True``: only archived references → ``{"archived": True}``
-    - ``False``: only active references → ``{"archived": False}``
-
-    :param archived: lifecycle filter mode
-    :return: a Mongo filter dict for the ``archived`` field
-
-    """
-    if archived is None:
-        return {}
-    return {"archived": archived}
-
-
 async def compose_reference_ids_match(
     pg: AsyncEngine,
-    mongo: "Mongo",
     archived: bool | None = None,
 ) -> dict:
     """Build a Mongo ``reference.id`` match for the references matching ``archived``.
+
+    The lifecycle filter follows the project-wide ``bool | None`` convention: ``None``
+    places no constraint, ``True`` selects archived references and ``False`` selects
+    active ones.
 
     ``indexes`` documents embed either the legacy Mongo string reference id or the
     integer ``legacy_references`` primary key during the migration, so both forms
@@ -458,16 +443,20 @@ async def compose_reference_ids_match(
     filters on the index list, which scope indexes to references that still exist.
 
     :param pg: the application PostgreSQL engine
-    :param mongo: the application database client
-    :param archived: lifecycle filter mode; see :func:`compose_archived_filter`
+    :param archived: lifecycle filter mode
     :return: a Mongo ``$in`` match value covering both id forms
     """
-    legacy_ids = await mongo.references.distinct(
-        "_id",
-        compose_archived_filter(archived),
-    )
+    query = select(SQLReference.id, SQLReference.legacy_id)
 
-    return await compose_legacy_id_multi_mongo_match(pg, SQLReference, legacy_ids)
+    if archived is not None:
+        query = query.where(SQLReference.archived == archived)
+
+    async with AsyncSession(pg) as session:
+        rows = (await session.execute(query)).all()
+
+    return {
+        "$in": [value for row in rows for value in row if value is not None],
+    }
 
 
 async def get_contributors(pg, ref_id: str) -> list[Document] | None:
