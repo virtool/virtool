@@ -147,19 +147,84 @@ async def write_legacy_reference(
         )
 
 
-async def processor(mongo: "Mongo", pg: AsyncEngine, document: Document) -> Document:
-    """Process a reference document to a form that can be expressed in a list.
+def map_reference_minimal(
+    row: SQLReference,
+    cloned_from: Document | None,
+) -> Document:
+    """Shape a ``legacy_references`` row into the base reference document consumed by
+    the ``ReferenceMinimal`` model and the read transforms.
 
-    Used ``attach_computed`` for complete representations of the reference.
+    ``data_type`` is emitted as the constant ``"genome"`` because the column is
+    dropped from Postgres. The integer foreign keys are shaped into the nested
+    ``{"id": ...}`` forms the ``AttachUserTransform``, ``AttachTaskTransform`` and
+    ``AttachImportedFromTransform`` transforms expect. ``cloned_from`` is resolved by
+    the caller via :func:`get_cloned_from_lookup`.
+
+    The public ``id`` remains the legacy Mongo string id for this migration step; the
+    integer primary key cutover happens later.
+
+    :param row: a ``legacy_references`` row
+    :param cloned_from: the resolved nested cloned-from doc, or ``None``
+    :return: the base reference document
+    """
+    return {
+        "id": row.legacy_id,
+        "name": row.name,
+        "organism": row.organism,
+        "created_at": row.created_at,
+        "archived": row.archived,
+        "data_type": "genome",
+        "cloned_from": cloned_from,
+        "imported_from": {"id": row.upload_id} if row.upload_id is not None else None,
+        "task": {"id": row.task_id} if row.task_id is not None else None,
+        "user": row.user_id,
+    }
+
+
+async def get_cloned_from_lookup(
+    session: AsyncSession,
+    rows: list[SQLReference],
+) -> dict[int, Document]:
+    """Map each source ``cloned_from_id`` in ``rows`` to its nested cloned-from doc.
+
+    The denormalized ``cloned_from.name`` snapshot is not stored in Postgres; the
+    source reference's current ``name`` is re-derived here via its primary key. The
+    nested ``id`` remains the source's legacy Mongo string id, matching the
+    pre-migration response shape.
+
+    :param session: an active Postgres session
+    :param rows: the reference rows whose ``cloned_from`` docs are needed
+    :return: a mapping of source primary key to nested cloned-from doc
+    """
+    source_ids = {row.cloned_from_id for row in rows if row.cloned_from_id is not None}
+
+    if not source_ids:
+        return {}
+
+    result = await session.execute(
+        select(SQLReference.id, SQLReference.legacy_id, SQLReference.name).where(
+            SQLReference.id.in_(source_ids),
+        ),
+    )
+
+    return {id_: {"id": legacy_id, "name": name} for id_, legacy_id, name in result}
+
+
+async def processor(
+    mongo: "Mongo",
+    pg: AsyncEngine,
+    row: SQLReference,
+    cloned_from: Document | None,
+) -> Document:
+    """Process a reference row into the ``ReferenceMinimal`` document shape.
 
     :param mongo: the application Mongo client
     :param pg: the application PostgreSQL engine
-    :param document: the document to process
+    :param row: the ``legacy_references`` row to process
+    :param cloned_from: the resolved nested cloned-from doc, or ``None``
     :return: the processed document
     """
-    document = base_processor(document)
-
-    ref_id = document["id"]
+    ref_id = row.legacy_id
 
     latest_build, otu_count, unbuilt_count = await asyncio.gather(
         get_latest_build(mongo, pg, ref_id),
@@ -167,20 +232,19 @@ async def processor(mongo: "Mongo", pg: AsyncEngine, document: Document) -> Docu
         get_unbuilt_count(pg, ref_id),
     )
 
-    document.update(
-        {
-            "latest_build": latest_build,
-            "otu_count": otu_count,
-            "unbuilt_change_count": unbuilt_count,
-        },
-    )
-
-    document["id"] = ref_id
-
-    return document
+    return {
+        **map_reference_minimal(row, cloned_from),
+        "latest_build": latest_build,
+        "otu_count": otu_count,
+        "unbuilt_change_count": unbuilt_count,
+    }
 
 
-async def get_reference_groups(pg: AsyncEngine, document: Document) -> list[Document]:
+async def get_reference_groups(
+    pg: AsyncEngine,
+    reference_pk: int,
+    created_at: datetime.datetime,
+) -> list[Document]:
     """Get a detailed list of groups that have access to the specified reference.
 
     Membership and rights are read from the ``legacy_reference_groups`` child
@@ -189,20 +253,12 @@ async def get_reference_groups(pg: AsyncEngine, document: Document) -> list[Docu
     in Postgres.
 
     :param pg: the application Postgres engine
-    :param document: the reference document
+    :param reference_pk: the reference primary key
+    :param created_at: the reference's creation timestamp
     :return: a list of group data dictionaries
 
     """
     async with AsyncSession(pg) as session:
-        reference_pk = await session.scalar(
-            select(SQLReference.id).where(
-                compose_legacy_id_single_expression(SQLReference, document["_id"]),
-            ),
-        )
-
-        if reference_pk is None:
-            return []
-
         rows = (
             await session.execute(
                 select(
@@ -227,13 +283,17 @@ async def get_reference_groups(pg: AsyncEngine, document: Document) -> list[Docu
             "build": row.build,
             "modify": row.modify,
             "modify_otu": row.modify_otu,
-            "created_at": document["created_at"],
+            "created_at": created_at,
         }
         for row in rows
     ]
 
 
-async def get_reference_users(pg: AsyncEngine, document: Document) -> list[Document]:
+async def get_reference_users(
+    pg: AsyncEngine,
+    reference_pk: int,
+    created_at: datetime.datetime,
+) -> list[Document]:
     """Get a detailed list of users that have access to the specified reference.
 
     Membership and rights are read from the ``legacy_reference_users`` child
@@ -242,22 +302,14 @@ async def get_reference_users(pg: AsyncEngine, document: Document) -> list[Docum
     in Postgres.
 
     :param pg: the application PostgreSQL engine
-    :param document: the reference document
+    :param reference_pk: the reference primary key
+    :param created_at: the reference's creation timestamp
     :return: a list of user data dictionaries
 
     """
     from virtool.users.pg import SQLUser
 
     async with AsyncSession(pg) as session:
-        reference_pk = await session.scalar(
-            select(SQLReference.id).where(
-                compose_legacy_id_single_expression(SQLReference, document["_id"]),
-            ),
-        )
-
-        if reference_pk is None:
-            return []
-
         rows = (
             await session.execute(
                 select(
@@ -280,7 +332,7 @@ async def get_reference_users(pg: AsyncEngine, document: Document) -> list[Docum
             "build": row.build,
             "modify": row.modify,
             "modify_otu": row.modify_otu,
-            "created_at": document["created_at"],
+            "created_at": created_at,
         }
         for row in rows
     ]
@@ -416,38 +468,6 @@ async def compose_reference_ids_match(
     )
 
     return await compose_legacy_id_multi_mongo_match(pg, SQLReference, legacy_ids)
-
-
-def compose_rights_filter(
-    user_id: int,
-    administrator: bool,
-    groups: list[int | str],
-) -> dict:
-    """Compose a Mongo filter restricting reference results to those the
-    requesting user has read rights to.
-
-    Administrators bypass the filter and receive an empty dict.
-
-    :param user_id: the id of the user requesting the search
-    :param administrator: the administrator flag of the user requesting the search
-    :param groups: the id group membership of the user requesting the search
-    :return: a Mongo filter dict; empty for administrators
-
-    """
-    if administrator:
-        return {}
-
-    user_queries = [
-        {"users.id": user_id},
-        {"user.id": user_id},
-    ]
-
-    return {
-        "$or": [
-            {"groups.id": {"$in": groups}},
-            *user_queries,
-        ],
-    }
 
 
 async def get_contributors(pg, ref_id: str) -> list[Document] | None:

@@ -23,6 +23,7 @@ from virtool.models.enums import LibraryType, Permission
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.references.models import Reference
+from virtool.references.sql import SQLReference
 from virtool.samples.fake import create_fake_sample
 from virtool.samples.models import WorkflowState
 from virtool.samples.sql import (
@@ -1401,6 +1402,18 @@ async def test_find_analyses(
     )
 
     async with AsyncSession(pg) as session:
+        session.add_all(
+            SQLReference(
+                legacy_id=legacy_id,
+                name=name,
+                description="",
+                created_at=static_time.datetime,
+                source_types=[],
+                user_id=user_1.id,
+            )
+            for legacy_id, name in (("foo", "Foo"), ("baz", "Baz"))
+        )
+
         legacy_sample = SQLLegacySample(
             legacy_id="test",
             name="Test Sample",

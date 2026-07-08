@@ -17,7 +17,6 @@ from virtool.mongo.core import Mongo
 from virtool.references.db import (
     check_right,
     compose_archived_filter,
-    compose_rights_filter,
     create_document,
     get_manifest,
     get_reference_groups,
@@ -410,35 +409,6 @@ class TestComposeArchivedFilter:
         assert compose_archived_filter(archived) == expected
 
 
-class TestComposeRightsFilter:
-    """The user-rights facet of the references find query."""
-
-    def test_administrator(self):
-        """Administrators bypass the rights filter."""
-        assert (
-            compose_rights_filter(
-                user_id=7,
-                administrator=True,
-                groups=["foo"],
-            )
-            == {}
-        )
-
-    def test_non_administrator(self):
-        """Non-administrators get an ``$or`` over their group and user id."""
-        assert compose_rights_filter(
-            user_id=7,
-            administrator=False,
-            groups=["foo"],
-        ) == {
-            "$or": [
-                {"groups.id": {"$in": ["foo"]}},
-                {"users.id": 7},
-                {"user.id": 7},
-            ],
-        }
-
-
 async def test_create_manifest(mongo: Mongo, pg: AsyncEngine, test_otu: dict):
     await mongo.otus.insert_many(
         [
@@ -468,7 +438,7 @@ async def test_get_reference_groups(
     group_1 = await fake.groups.create()
     group_2 = await fake.groups.create(legacy_id="group_2")
 
-    await seed_reference_rights(
+    reference_pk = await seed_reference_rights(
         pg,
         legacy_id="ref_groups",
         owner_id=owner.id,
@@ -480,11 +450,7 @@ async def test_get_reference_groups(
     )
 
     assert (
-        await get_reference_groups(
-            pg,
-            {"_id": "ref_groups", "created_at": static_time.datetime},
-        )
-        == snapshot
+        await get_reference_groups(pg, reference_pk, static_time.datetime) == snapshot
     )
 
 

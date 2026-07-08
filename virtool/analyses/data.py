@@ -199,7 +199,7 @@ class AnalysisData(DataLayerDomain):
             [
                 AttachIndexTransform(self._mongo),
                 AttachJobTransform(self._pg),
-                AttachReferenceTransform(self._mongo),
+                AttachReferenceTransform(self._pg),
                 AttachAnalysisSubtractionsTransform(self._pg),
                 AttachUserTransform(self._pg),
             ],
@@ -257,7 +257,7 @@ class AnalysisData(DataLayerDomain):
         transforms = [
             AttachIndexTransform(self._mongo),
             AttachJobTransform(self._pg),
-            AttachReferenceTransform(self._mongo),
+            AttachReferenceTransform(self._pg),
             AttachAnalysisSubtractionsTransform(self._pg),
             AttachUserTransform(self._pg),
         ]

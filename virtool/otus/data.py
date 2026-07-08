@@ -74,7 +74,7 @@ class OTUData:
         document, most_recent_change = await asyncio.gather(
             apply_transforms(
                 document,
-                [AttachReferenceTransform(self._mongo)],
+                [AttachReferenceTransform(self._pg)],
                 self._pg,
             ),
             virtool.history.db.get_most_recent_change(
@@ -785,7 +785,7 @@ class OTUData:
         ):
             document = await apply_transforms(
                 base_processor(document),
-                [AttachReferenceTransform(self._mongo)],
+                [AttachReferenceTransform(self._pg)],
                 self._pg,
             )
             return Sequence(**document)
