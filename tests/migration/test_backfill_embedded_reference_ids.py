@@ -71,7 +71,7 @@ class TestEmbeddedReferenceIdsBackfill:
         setup_references: dict[str, int],
     ):
         """The embedded ``reference.id`` string resolves to the integer id on
-        otu, sequence, and history documents alike.
+        otu and sequence documents alike.
         """
         ref_a = setup_references["ref_a_legacy"]
 
@@ -81,20 +81,34 @@ class TestEmbeddedReferenceIdsBackfill:
         await ctx.mongo.sequences.insert_one(
             {"_id": "sequence_a", "reference": {"id": "ref_a_legacy"}},
         )
-        await ctx.mongo.history.insert_one(
-            {"_id": "otu_a.0", "reference": {"id": "ref_a_legacy"}},
-        )
 
         await upgrade(ctx)
 
         for collection, doc_id in (
             ("otus", "otu_a"),
             ("sequences", "sequence_a"),
-            ("history", "otu_a.0"),
         ):
             doc = await ctx.mongo[collection].find_one({"_id": doc_id})
             assert doc["reference"]["id"] == ref_a
             assert isinstance(doc["reference"]["id"], int)
+
+    @pytest.mark.usefixtures("setup_references")
+    async def test_leaves_history_untouched(
+        self,
+        ctx: MigrationContext,
+    ):
+        """The ``history`` collection is excluded, so an orphaned embedded
+        ``reference.id`` left there by the orphan purge neither raises nor is
+        rewritten.
+        """
+        await ctx.mongo.history.insert_one(
+            {"_id": "otu_orphan.0", "reference": {"id": "orphaned_reference"}},
+        )
+
+        await upgrade(ctx)
+
+        doc = await ctx.mongo.history.find_one({"_id": "otu_orphan.0"})
+        assert doc["reference"]["id"] == "orphaned_reference"
 
     async def test_leaves_other_reference_fields_intact(
         self,
