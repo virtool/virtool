@@ -46,18 +46,6 @@
     'version': 0,
   })
 # ---
-# name: test_create[None].1
-  dict({
-    '_id': 'abc',
-    'index': dict({
-      'id': 'bf1b993c',
-      'version': 0,
-    }),
-    'reference': dict({
-      'id': 'foo',
-    }),
-  })
-# ---
 # name: test_create[abc]
   dict({
     '_id': 'abc',
@@ -77,17 +65,5 @@
       'id': 'test',
     }),
     'version': 0,
-  })
-# ---
-# name: test_create[abc].1
-  dict({
-    '_id': 'abc',
-    'index': dict({
-      'id': 'abc',
-      'version': 0,
-    }),
-    'reference': dict({
-      'id': 'foo',
-    }),
   })
 # ---

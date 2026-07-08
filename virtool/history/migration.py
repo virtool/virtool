@@ -8,16 +8,34 @@ sentinel, so the two stores converge and reads can later be served from Postgres
 alone.
 """
 
-from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy import Column, MetaData, String, Table, select
+from sqlalchemy.dialects.postgresql import JSONB, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from structlog import get_logger
 
-from virtool.history.sql import SQLHistoryDiff
+from virtool.history.db import legacy_history_values
+from virtool.history.sql import SQLLegacyHistory
 from virtool.migration import MigrationContext
+from virtool.users.pg import SQLUser
 
 logger = get_logger("migration")
 
 POSTGRES_SENTINEL = "postgres"
+
+_history_diffs_at_backfill = Table(
+    "history_diffs",
+    MetaData(),
+    Column("change_id", String),
+    Column("diff", JSONB),
+)
+"""Point-in-time definition of the diff table as it existed when this backfill runs.
+
+The backfill is ordered before the revision that renames ``history_diffs`` to
+``legacy_history_diff`` and adds the ``history_id`` foreign key, so it must target the
+table by its contemporary name rather than the current ORM model. The rename revision
+later carries these rows forward and backfills ``history_id`` by joining ``change_id``
+to ``legacy_history.legacy_id``.
+"""
 
 
 async def backfill_inline_history_diffs(ctx: MigrationContext) -> None:
@@ -81,7 +99,7 @@ async def backfill_inline_history_diffs(ctx: MigrationContext) -> None:
                 continue
 
             await session.execute(
-                insert(SQLHistoryDiff)
+                insert(_history_diffs_at_backfill)
                 .values(change_id=change_id, diff=diff)
                 .on_conflict_do_nothing(index_elements=["change_id"]),
             )
@@ -99,3 +117,121 @@ async def backfill_inline_history_diffs(ctx: MigrationContext) -> None:
             migrated=migrated_count,
             skipped=skipped_count,
         )
+
+
+async def copy_history_to_postgres(ctx: MigrationContext) -> None:
+    """Backfill every Mongo ``history`` document into the ``legacy_history`` table.
+
+    One row is written per Mongo document, so the Postgres row count matches the
+    Mongo document count exactly. The field mapping -- including the sentinel-to-NULL
+    conventions for ``otu.version``, ``index.id``, and ``index.version`` -- is shared
+    with the live dual-write through :func:`legacy_history_values`, so the two paths
+    can never drift.
+
+    The document ``_id`` values are snapshotted up front with a projection-only query,
+    then each document is fetched individually inside the loop, so the run never holds
+    a single cursor open for the whole collection.
+
+    Documents already present in Postgres (by ``legacy_id``) are skipped, and the
+    insert uses ``ON CONFLICT (legacy_id) DO NOTHING`` as a second line of defence, so
+    the backfill is safe to re-run after an interruption. Each document is committed
+    individually to bound memory and keep the rows already written on a failure
+    part-way through.
+
+    A history change always has an author, so ``user`` is required: the document's
+    ``user.id`` is resolved to a Postgres ``users.id`` and the migration raises if it
+    cannot be resolved rather than storing ``NULL``. Modern integer ids are used
+    directly (the foreign key enforces their existence); legacy string ids are
+    resolved through a cached ``legacy_id`` map.
+    """
+    async with AsyncSession(ctx.pg) as session:
+        existing_result = await session.execute(
+            select(SQLLegacyHistory.legacy_id).where(
+                SQLLegacyHistory.legacy_id.isnot(None),
+            ),
+        )
+        existing_legacy_ids = {row[0] for row in existing_result}
+
+        logger.info(
+            "found existing legacy history in postgres",
+            count=len(existing_legacy_ids),
+        )
+
+        user_result = await session.execute(
+            select(SQLUser.id, SQLUser.legacy_id).where(SQLUser.legacy_id.isnot(None)),
+        )
+        user_id_map = {row.legacy_id: row.id for row in user_result}
+
+        logger.info("built user ID map", count=len(user_id_map))
+
+        change_ids = [
+            document["_id"]
+            async for document in ctx.mongo.history.find({}, projection=["_id"])
+        ]
+
+        migrated_count = 0
+        skipped_count = 0
+
+        for change_id in change_ids:
+            if change_id in existing_legacy_ids:
+                skipped_count += 1
+                continue
+
+            document = await ctx.mongo.history.find_one({"_id": change_id})
+
+            if document is None:
+                skipped_count += 1
+                continue
+
+            user_id = _resolve_user_id(document, user_id_map)
+
+            values = legacy_history_values(document)
+            values["user_id"] = user_id
+            # The live write path no longer stores the legacy reference string, but
+            # this backfill runs before ``reference_id`` exists and a downstream
+            # revision resolves ``reference_id`` from it, so it is written here.
+            values["reference"] = document["reference"]["id"]
+
+            await session.execute(
+                insert(SQLLegacyHistory)
+                .values(**values)
+                .on_conflict_do_nothing(index_elements=["legacy_id"]),
+            )
+            await session.commit()
+
+            migrated_count += 1
+
+        logger.info(
+            "legacy history backfill complete",
+            migrated=migrated_count,
+            skipped=skipped_count,
+        )
+
+
+def _resolve_user_id(document: dict, user_id_map: dict[str, int]) -> int:
+    """Resolve a history document's ``user.id`` to a Postgres ``users.id``.
+
+    A modern integer id is used directly; a legacy string id is looked up in
+    ``user_id_map``. Raises if the document has no user or the reference cannot be
+    resolved -- ``legacy_history.user_id`` is required and must never be ``NULL``.
+    """
+    change_id = document["_id"]
+
+    user = document.get("user")
+
+    if user is None or user.get("id") is None:
+        msg = f"History document {change_id} has no user"
+        raise ValueError(msg)
+
+    reference = user["id"]
+
+    if isinstance(reference, int):
+        return reference
+
+    pg_user_id = user_id_map.get(reference)
+
+    if pg_user_id is None:
+        msg = f"User {reference} not found in postgres for history document {change_id}"
+        raise ValueError(msg)
+
+    return pg_user_id

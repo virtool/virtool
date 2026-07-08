@@ -14,19 +14,41 @@ from tests.fixtures.client import ClientSpawner, VirtoolTestClient
 from tests.fixtures.response import RespIs
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.history.sql import SQLLegacyHistory
 from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_mongo_from_app, get_one_field
+from virtool.mongo.utils import get_one_field
 from virtool.otus.oas import (
     CreateOTURequest,
 )
 from virtool.references.models import ReferenceDataType
 from virtool.references.oas import CreateReferenceRequest, CreateReferenceUserRequest
+from virtool.references.sql import SQLReference
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.tasks.sql import SQLTask
 from virtool.users.oas import UpdateUserRequest
-from virtool.utils import get_http_session_from_app
 from virtool.workflow.pytest_plugin.utils import StaticTime
+
+
+async def seed_pg_reference(
+    pg: AsyncEngine,
+    legacy_id: str,
+    user_id: int,
+    created_at,
+) -> None:
+    """Insert a ``legacy_references`` row so OTU history writes can resolve its FK."""
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLReference(
+                legacy_id=legacy_id,
+                name=legacy_id,
+                description="",
+                created_at=created_at,
+                source_types=[],
+                user_id=user_id,
+            ),
+        )
+        await session.commit()
 
 
 @pytest.mark.parametrize(
@@ -81,7 +103,6 @@ async def test_find(
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "groups": [],
-                "internal_control": None,
                 "name": "Owned Active",
                 "organism": "virus",
                 "restrict_source_types": False,
@@ -94,7 +115,6 @@ async def test_find(
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "groups": [],
-                "internal_control": None,
                 "name": "Other Active",
                 "organism": "virus",
                 "restrict_source_types": True,
@@ -107,7 +127,6 @@ async def test_find(
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "groups": [],
-                "internal_control": None,
                 "name": "User Member Active",
                 "organism": "virus",
                 "restrict_source_types": True,
@@ -121,7 +140,6 @@ async def test_find(
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "groups": [{"id": group.id}],
-                "internal_control": None,
                 "name": "Group Member Active",
                 "organism": "virus",
                 "restrict_source_types": True,
@@ -135,7 +153,6 @@ async def test_find(
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "groups": [],
-                "internal_control": None,
                 "name": "Owned Archived",
                 "organism": "virus",
                 "restrict_source_types": False,
@@ -148,7 +165,6 @@ async def test_find(
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "groups": [],
-                "internal_control": None,
                 "name": "Other Archived",
                 "organism": "virus",
                 "restrict_source_types": True,
@@ -341,7 +357,6 @@ class TestCreate:
                 "data_type": "genome",
                 "name": "Foo",
                 "organism": "virus",
-                "internal_control": None,
                 "restrict_source_types": False,
                 "source_types": ["isolate", "strain"],
                 "user": {"id": user_1.id},
@@ -353,7 +368,6 @@ class TestCreate:
                         "created_at": static_time.datetime,
                         "modify": True,
                         "modify_otu": True,
-                        "remove": True,
                     },
                 ],
             },
@@ -372,57 +386,6 @@ class TestCreate:
         assert resp.status == 201
         assert resp.headers["Location"] == snapshot(name="location")
         assert await resp.json() == snapshot(name="resp")
-
-    async def test_remote(
-        self,
-        mocker,
-        spawn_client: ClientSpawner,
-        snapshot: SnapshotAssertion,
-        static_time,
-    ):
-        mocker.patch(
-            "virtool.github.get_release",
-            make_mocked_coro(
-                {
-                    "id": 11447367,
-                    "name": "v0.1.1",
-                    "body": "#### Fixed\n- fixed uploading to GitHub releases in `.travis.yml`",
-                    "etag": 'W/"mock_etag"',
-                    "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.1",
-                    "published_at": "2018-06-12T19:20:57Z",
-                    "assets": [
-                        {
-                            "name": "reference.json.gz",
-                            "size": 3695872,
-                            "browser_download_url": "https://github.com/virtool/ref-plant-viruses/releases/download/v0.1.1/reference.json.gz",
-                            "content_type": "application/gzip",
-                        },
-                    ],
-                }
-            ),
-        )
-
-        client = await spawn_client(
-            authenticated=True,
-            permissions=[Permission.create_ref],
-        )
-
-        resp = await client.post(
-            "/references/v1",
-            {
-                "name": "Test Remote",
-                "organism": "viruses",
-                "data_type": "genome",
-                "remote_from": "virtool/ref-plant-viruses",
-            },
-        )
-
-        assert resp.status == 201
-        assert resp.headers["Location"] == snapshot(name="location")
-        assert await resp.json() == snapshot(
-            matcher=path_type({".*etag": (str,)}, regex=True),
-            name="resp",
-        )
 
 
 class TestEdit:
@@ -444,7 +407,6 @@ class TestEdit:
                 "data_type": "genome",
                 "name": "Foo",
                 "organism": "virus",
-                "internal_control": None,
                 "restrict_source_types": False,
                 "source_types": ["isolate", "strain"],
                 "user": {"id": user_1.id},
@@ -456,7 +418,6 @@ class TestEdit:
                         "created_at": static_time.datetime,
                         "modify": True,
                         "modify_otu": True,
-                        "remove": True,
                     },
                     {
                         "id": user_3.id,
@@ -464,7 +425,6 @@ class TestEdit:
                         "build": True,
                         "modify": True,
                         "modify_otu": True,
-                        "remove": True,
                     },
                 ],
             },
@@ -542,254 +502,14 @@ class TestEdit:
         await resp_is.not_found(resp)
 
 
-async def test_delete(
-    fake: DataFaker,
-    mongo: Mongo,
-    spawn_client: ClientSpawner,
-    static_time,
-):
-    client = await spawn_client(authenticated=True)
-
-    user_1 = await fake.users.create()
-    user_2 = await fake.users.create()
-
-    await mongo.references.insert_one(
-        {
-            "_id": "foo",
-            "archived": False,
-            "created_at": virtool.utils.timestamp(),
-            "data_type": "genome",
-            "description": "This is a test reference.",
-            "groups": [],
-            "internal_control": None,
-            "name": "Foo",
-            "organism": "virus",
-            "restrict_source_types": False,
-            "source_types": ["isolate", "strain"],
-            "user": {"id": user_1.id},
-            "users": [
-                {
-                    "id": client.user.id,
-                    "build": True,
-                    "created_at": static_time.datetime,
-                    "modify": True,
-                    "modify_otu": True,
-                    "remove": True,
-                },
-                {
-                    "id": user_2.id,
-                    "build": True,
-                    "created_at": static_time.datetime,
-                    "modify": True,
-                    "modify_otu": True,
-                    "remove": True,
-                },
-            ],
-        },
-    )
-
-    resp = await client.delete("/references/v1/foo")
-
-    assert await mongo.references.count_documents({}) == 0
-    assert await resp.text() == ""
-    assert resp.status == 204
-
-
-@pytest.mark.parametrize("error", [None, "400", "404"])
-async def test_get_release(
-    error,
-    mocker,
-    mongo: Mongo,
-    spawn_client,
-    resp_is,
-    snapshot,
-):
-    client = await spawn_client(authenticated=True)
-
-    if error != "404":
-        document = {
-            "_id": "foo",
-            "release": {
-                "id": 11449913,
-                "name": "v0.1.2",
-                "body": "#### Changed\r\n- add new isolates to Cucurbit chlorotic yellows virus",
-                "etag": 'W/"b7e8a7fb0fbe0cade0d6a86c9e0d4549"',
-                "filename": "reference.json.gz",
-                "size": 3699729,
-                "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.2",
-                "download_url": "https://github.com/virtool/ref-plant-viruses/releases/download/v0.1.2/reference.json.gz",
-                "published_at": "2018-06-12T21:52:33Z",
-                "content_type": "application/gzip",
-                "retrieved_at": "2018-06-14T19:52:17.465000Z",
-                "newer": True,
-            },
-            "remotes_from": {"slug": "virtool/virtool"},
-        }
-
-        if error == "400":
-            del document["remotes_from"]
-
-        await mongo.references.insert_one(document)
-
-    m_fetch_and_update_release = mocker.patch(
-        "virtool.references.db.fetch_and_update_release",
-        make_mocked_coro(
-            {
-                "id": 11449913,
-                "name": "v0.1.2",
-                "body": "#### Changed\r\n- add new isolates to Cucurbit chlorotic yellows virus",
-                "etag": 'W/"b7e8a7fb0fbe0cade0d6a86c9e0d4549"',
-                "filename": "reference.json.gz",
-                "size": 3699729,
-                "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.2",
-                "download_url": "https://github.com/virtool/ref-plant-viruses/releases/download/v0.1.2/reference.json.gz",
-                "published_at": "2018-06-12T21:52:33Z",
-                "content_type": "application/gzip",
-                "retrieved_at": "2018-06-14T19:52:17.465000Z",
-                "newer": True,
-            },
-        ),
-    )
-
-    resp = await client.get("/references/v1/foo/release")
-
-    if error == "400":
-        await resp_is.bad_request(resp, "Not a remote reference")
-        return
-
-    if error == "404":
-        await resp_is.not_found(resp)
-        return
-
-    assert resp.status == HTTPStatus.OK
-
-    assert await resp.json() == snapshot(
-        matcher=path_type({".*etag": (str,)}, regex=True),
-    )
-
-    m_fetch_and_update_release.assert_called_with(
-        get_mongo_from_app(client.app),
-        get_http_session_from_app(client.app),
-        "foo",
-    )
-
-
-@pytest.mark.parametrize("empty", [True, False])
-async def test_list_updates(
-    empty,
-    fake: DataFaker,
-    mocker,
-    spawn_client,
-    id_exists,
-    resp_is,
-    snapshot,
-):
-    client = await spawn_client(authenticated=True)
-
-    user = await fake.users.create()
-
-    m_get_one_field = mocker.patch(
-        "virtool.mongo.utils.get_one_field",
-        make_mocked_coro(
-            None
-            if empty
-            else [
-                {
-                    "id": 11447367,
-                    "created_at": "2018-06-14T18:37:54.242000Z",
-                    "name": "v0.1.1",
-                    "body": "#### Fixed\r\n- fixed uploading to GitHub releases in `.travis.yml`",
-                    "filename": "reference.json.gz",
-                    "size": 3695872,
-                    "html_url": "https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.1",
-                    "published_at": "2018-06-12T19:20:57Z",
-                    "ready": True,
-                    "user": {
-                        "administrator": user.administrator_role is not None,
-                        "handle": user.handle,
-                        "id": user.id,
-                    },
-                    "newer": True,
-                },
-            ],
-        ),
-    )
-
-    resp = await client.get("/references/v1/foo/updates")
-
-    id_exists.assert_called_with(ANY, "foo")
-
-    if not id_exists:
-        await resp_is.not_found(resp)
-        return
-
-    assert resp.status == HTTPStatus.OK
-    assert await resp.json() == snapshot
-
-    m_get_one_field.assert_called_with(ANY, "updates", "foo")
-
-
-@pytest.mark.parametrize("error", [None, "400", "404"])
-async def test_update(
-    error: str | None,
-    check_ref_right,
-    resp_is: RespIs,
-    mongo: Mongo,
-    snapshot_recent: SnapshotAssertion,
-    spawn_client: ClientSpawner,
-):
-    client = await spawn_client(authenticated=True)
-
-    if error != "404":
-        reference = {
-            "_id": "foo",
-            "release": None,
-        }
-
-        if error != "400":
-            reference["release"] = {
-                "id": 10742520,
-                "name": "v0.3.0",
-                "body": "Lorem ipsum",
-                "etag": 'W/"ef123d746a33f88ee44203d3ca6bc2f7"',
-                "filename": "reference.json.gz",
-                "size": 3709091,
-                "html_url": "https://api.github.com/repos/virtool/virtool-database/releases/10742520",
-                "download_url": "https://github.com/virtool/virtool-database/releases/download/v0.3.0/reference.json.gz",
-                "published_at": "2018-04-26T19:35:33Z",
-                "content_type": "application/gzip",
-                "newer": True,
-                "retrieved_at": "2018-04-14T19:52:17.465000Z",
-            }
-
-        await mongo.references.insert_one(reference)
-
-    resp = await client.post("/references/v1/foo/updates", {})
-
-    if not check_ref_right:
-        await resp_is.insufficient_rights(resp)
-    elif error == "400":
-        await resp_is.bad_request(resp, "No release available")
-    elif error == "404":
-        await resp_is.not_found(resp)
-    else:
-        assert resp.status == 201
-        assert await resp.json() == snapshot_recent(
-            name="json",
-            matcher=path_type({".*etag": (str,)}, regex=True),
-        )
-        assert await get_one_field(mongo.references, "task", "foo") == {"id": 1}
-
-
-def _archive_reference_doc(user_id: int, *, archived: bool, official: bool = False):
-    document = {
+def _archive_reference_doc(user_id: int, *, archived: bool):
+    return {
         "_id": "foo",
         "archived": archived,
         "created_at": virtool.utils.timestamp(),
         "data_type": "genome",
         "description": "",
         "groups": [],
-        "internal_control": None,
         "name": "Foo",
         "organism": "virus",
         "restrict_source_types": False,
@@ -797,11 +517,6 @@ def _archive_reference_doc(user_id: int, *, archived: bool, official: bool = Fal
         "user": {"id": user_id},
         "users": [],
     }
-
-    if official:
-        document["remotes_from"] = {"slug": "virtool/ref-plant-viruses", "errors": []}
-
-    return document
 
 
 class TestArchive:
@@ -834,34 +549,6 @@ class TestArchive:
         assert body["archived"] is True
         assert body == snapshot_recent(name="resp")
         assert await get_one_field(mongo.references, "archived", "foo") is True
-
-    async def test_official_conflict(
-        self,
-        fake: DataFaker,
-        mocker,
-        mongo: Mongo,
-        resp_is: RespIs,
-        spawn_client: ClientSpawner,
-    ):
-        client = await spawn_client(authenticated=True)
-        user = await fake.users.create()
-
-        await mongo.references.insert_one(
-            _archive_reference_doc(user.id, archived=False, official=True),
-        )
-
-        mocker.patch(
-            "virtool.references.api.check_right",
-            make_mocked_coro(return_value=True),
-        )
-
-        resp = await client.post("/references/v1/foo/archive", {})
-
-        await resp_is.conflict(
-            resp,
-            "Cannot archive the official plant viruses reference",
-        )
-        assert await get_one_field(mongo.references, "archived", "foo") is False
 
     async def test_insufficient_rights(
         self,
@@ -989,6 +676,7 @@ class TestCreateOTU:
         error: str | None,
         data_layer: DataLayer,
         mongo: Mongo,
+        pg: AsyncEngine,
         resp_is: RespIs,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
@@ -1003,6 +691,7 @@ class TestCreateOTU:
         )
 
         if error != "404":
+            await seed_pg_reference(pg, "foo", client.user.id, static_time.datetime)
             await mongo.references.insert_one(
                 {
                     "_id": "foo",
@@ -1017,7 +706,6 @@ class TestCreateOTU:
                             "created_at": static_time.datetime,
                             "modify": True,
                             "modify_otu": True,
-                            "remove": True,
                         },
                     ],
                 },
@@ -1070,6 +758,7 @@ class TestCreateOTU:
         mocker,
         resp_is,
         mongo: Mongo,
+        pg: AsyncEngine,
         spawn_client: ClientSpawner,
         static_time,
     ):
@@ -1085,6 +774,7 @@ class TestCreateOTU:
         client = await spawn_client(authenticated=True)
 
         if error != "404":
+            await seed_pg_reference(pg, "foo", client.user.id, static_time.datetime)
             await mongo.references.insert_one(
                 {
                     "_id": "foo",
@@ -1098,7 +788,6 @@ class TestCreateOTU:
                             "created_at": static_time.datetime,
                             "modify": True,
                             "modify_otu": True,
-                            "remove": True,
                         },
                     ],
                 },
@@ -1113,6 +802,7 @@ class TestCreateOTU:
             assert resp.status == 201
             # Abbreviation defaults to empty string for OTU creation.
             m_check_name_and_abbreviation.assert_called_with(
+                ANY,
                 ANY,
                 "foo",
                 "Tobacco mosaic virus",
@@ -1130,6 +820,7 @@ async def test_create_index(
     mocker,
     resp_is,
     mongo: Mongo,
+    pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
     static_time,
@@ -1157,6 +848,35 @@ async def test_create_index(
         ),
     )
 
+    async with AsyncSession(pg) as session:
+        reference = SQLReference(
+            legacy_id="foo",
+            name="Foo",
+            description="",
+            created_at=static_time.datetime,
+            source_types=[],
+            user_id=user.id,
+        )
+        session.add(reference)
+        await session.flush()
+
+        session.add(
+            SQLLegacyHistory(
+                legacy_id="history_1",
+                created_at=static_time.datetime,
+                description="Description",
+                method_name="create",
+                user_id=user.id,
+                otu="otu_1",
+                otu_name="Tobacco mosaic virus",
+                otu_version="0",
+                reference_id=reference.id,
+                index=None,
+                index_version=None,
+            ),
+        )
+        await session.commit()
+
     m_create_manifest = mocker.patch(
         "virtool.references.db.get_manifest",
         new=make_mocked_coro({"foo": 2, "bar": 5}),
@@ -1175,7 +895,7 @@ async def test_create_index(
     assert await resp.json() == snapshot
     assert await mongo.indexes.find_one() == snapshot
 
-    m_create_manifest.assert_called_with(ANY, "foo")
+    m_create_manifest.assert_called_with(ANY, ANY, "foo")
 
 
 @pytest.mark.parametrize("error", [None, "400_dne", "400_exists", "404"])
@@ -1220,7 +940,6 @@ async def test_create_user(
                 "created_at": static_time.datetime,
                 "modify": True,
                 "modify_otu": True,
-                "remove": True,
             },
         ],
     }
@@ -1235,7 +954,6 @@ async def test_create_user(
                 "created_at": static_time.datetime,
                 "modify": True,
                 "modify_otu": True,
-                "remove": True,
             },
         )
 
@@ -1298,7 +1016,6 @@ async def test_create_group(
                         "created_at": static_time.datetime,
                         "modify": True,
                         "modify_otu": True,
-                        "remove": True,
                     },
                 ],
                 "name": "Test",
@@ -1362,7 +1079,6 @@ class TestUpdateUser:
                         "created_at": static_time.datetime,
                         "modify": True,
                         "modify_otu": True,
-                        "remove": True,
                     },
                     {
                         "id": self.user.id,
@@ -1370,7 +1086,6 @@ class TestUpdateUser:
                         "created_at": static_time.datetime,
                         "modify": False,
                         "modify_otu": True,
-                        "remove": False,
                     },
                 ],
             },
@@ -1435,7 +1150,6 @@ async def test_update_group(
                         "created_at": static_time.datetime,
                         "modify": False,
                         "modify_otu": False,
-                        "remove": False,
                     },
                 ],
                 "name": "Test",
@@ -1450,7 +1164,6 @@ async def test_update_group(
                         "created_at": static_time.datetime,
                         "modify": True,
                         "modify_otu": True,
-                        "remove": True,
                     },
                 ],
             },
@@ -1503,7 +1216,6 @@ class TestDeleteUser:
                         "created_at": static_time.datetime,
                         "modify": True,
                         "modify_otu": True,
-                        "remove": True,
                     },
                     {
                         "id": self.user.id,
@@ -1511,7 +1223,6 @@ class TestDeleteUser:
                         "created_at": static_time.datetime,
                         "modify": False,
                         "modify_otu": False,
-                        "remove": False,
                     },
                 ],
             },
@@ -1562,7 +1273,6 @@ async def test_delete_group(
                         "created_at": static_time.datetime,
                         "modify": False,
                         "modify_otu": False,
-                        "remove": False,
                     },
                 ],
                 "name": "Test",
@@ -1577,7 +1287,6 @@ async def test_delete_group(
                         "created_at": static_time.datetime,
                         "modify": True,
                         "modify_otu": True,
-                        "remove": True,
                     },
                 ],
             },
@@ -1782,23 +1491,8 @@ class TestArchivedReferenceRejectsWrites:
                 "created_at": static_time.datetime,
                 "data_type": "genome",
                 "groups": [],
-                "internal_control": None,
                 "name": "Foo",
                 "organism": "virus",
-                "release": {
-                    "id": 10742520,
-                    "name": "v0.3.0",
-                    "body": "Lorem ipsum",
-                    "etag": 'W/"ef123d746a33f88ee44203d3ca6bc2f7"',
-                    "filename": "reference.json.gz",
-                    "size": 3709091,
-                    "html_url": "https://example.com",
-                    "download_url": "https://example.com/reference.json.gz",
-                    "published_at": "2018-04-26T19:35:33Z",
-                    "content_type": "application/gzip",
-                    "newer": True,
-                    "retrieved_at": "2018-04-14T19:52:17.465000Z",
-                },
                 "restrict_source_types": False,
                 "source_types": ["isolate", "strain"],
                 "user": {"id": client.user.id},
@@ -1809,7 +1503,6 @@ class TestArchivedReferenceRejectsWrites:
                         "created_at": static_time.datetime,
                         "modify": True,
                         "modify_otu": True,
-                        "remove": True,
                     },
                 ],
             },
@@ -1871,23 +1564,6 @@ class TestArchivedReferenceRejectsWrites:
 
         await resp_is.conflict(resp, "Reference is archived")
 
-    async def test_create_update(
-        self,
-        archived_ref: tuple[VirtoolTestClient, str],
-        mocker,
-        resp_is: RespIs,
-    ):
-        client, ref_id = archived_ref
-
-        mocker.patch(
-            "virtool.references.db.check_right",
-            make_mocked_coro(return_value=True),
-        )
-
-        resp = await client.post(f"/references/v1/{ref_id}/updates", {})
-
-        await resp_is.conflict(resp, "Reference is archived")
-
 
 async def test_archived_reference_allows_user_rights_update(
     fake: DataFaker,
@@ -1919,7 +1595,6 @@ async def test_archived_reference_allows_user_rights_update(
                     "created_at": static_time.datetime,
                     "modify": True,
                     "modify_otu": True,
-                    "remove": True,
                 },
             ],
         },

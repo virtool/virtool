@@ -12,14 +12,10 @@
     ]),
     'id': 'foo',
     'imported_from': None,
-    'installed': None,
-    'internal_control': None,
     'latest_build': None,
     'name': 'Foo',
     'organism': 'virus',
     'otu_count': 0,
-    'release': None,
-    'remotes_from': None,
     'restrict_source_types': False,
     'source_types': list([
       'isolate',
@@ -27,7 +23,6 @@
     ]),
     'task': None,
     'unbuilt_change_count': 0,
-    'updating': None,
     'user': dict({
       'handle': 'myersmitchell',
       'id': 2,
@@ -49,14 +44,10 @@
     ]),
     'id': 'foo',
     'imported_from': None,
-    'installed': None,
-    'internal_control': None,
     'latest_build': None,
     'name': 'Foo',
     'organism': 'virus',
     'otu_count': 0,
-    'release': None,
-    'remotes_from': None,
     'restrict_source_types': False,
     'source_types': list([
       'isolate',
@@ -64,7 +55,6 @@
     ]),
     'task': None,
     'unbuilt_change_count': 0,
-    'updating': None,
     'user': dict({
       'handle': 'myersmitchell',
       'id': 2,
@@ -92,14 +82,10 @@
     ]),
     'id': 'bf1b993c',
     'imported_from': None,
-    'installed': None,
-    'internal_control': None,
     'latest_build': None,
     'name': 'Test 1',
     'organism': 'virus',
     'otu_count': 0,
-    'release': None,
-    'remotes_from': None,
     'restrict_source_types': False,
     'source_types': list([
       'isolate',
@@ -115,7 +101,6 @@
       'type': 'clone_reference',
     }),
     'unbuilt_change_count': 0,
-    'updating': None,
     'user': dict({
       'handle': 'leeashley',
       'id': 1,
@@ -128,7 +113,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -161,14 +145,10 @@
         'id': 1,
       }),
     }),
-    'installed': None,
-    'internal_control': None,
     'latest_build': None,
     'name': 'Test Viruses',
     'organism': '',
     'otu_count': 0,
-    'release': None,
-    'remotes_from': None,
     'restrict_source_types': False,
     'source_types': list([
       'isolate',
@@ -184,7 +164,6 @@
       'type': 'import_reference',
     }),
     'unbuilt_change_count': 0,
-    'updating': None,
     'user': dict({
       'handle': 'leeashley',
       'id': 1,
@@ -197,7 +176,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -218,14 +196,10 @@
     ]),
     'id': 'bf1b993c',
     'imported_from': None,
-    'installed': None,
-    'internal_control': None,
     'latest_build': None,
     'name': 'Test Viruses',
     'organism': 'virus',
     'otu_count': 0,
-    'release': None,
-    'remotes_from': None,
     'restrict_source_types': False,
     'source_types': list([
       'strain',
@@ -233,7 +207,6 @@
     ]),
     'task': None,
     'unbuilt_change_count': 0,
-    'updating': None,
     'user': dict({
       'handle': 'leeashley',
       'id': 1,
@@ -246,101 +219,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
-      }),
-    ]),
-  })
-# ---
-# name: TestCreate.test_remote[location]
-  '/references/v1/bf1b993c'
-# ---
-# name: TestCreate.test_remote[resp]
-  dict({
-    'archived': False,
-    'cloned_from': None,
-    'contributors': list([
-    ]),
-    'created_at': '2015-10-06T20:00:00Z',
-    'data_type': 'genome',
-    'description': 'The official plant virus reference from the Virtool developers',
-    'groups': list([
-    ]),
-    'id': 'bf1b993c',
-    'imported_from': None,
-    'installed': dict({
-      'body': '''
-        #### Fixed
-        - fixed uploading to GitHub releases in `.travis.yml`
-      ''',
-      'created_at': '2015-10-06T20:00:00Z',
-      'filename': 'reference.json.gz',
-      'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.1',
-      'id': 11447367,
-      'name': 'v0.1.1',
-      'newer': False,
-      'published_at': '2018-06-12T19:20:57Z',
-      'ready': False,
-      'size': 3695872,
-      'user': dict({
-        'handle': 'leeashley',
-        'id': 1,
-      }),
-    }),
-    'internal_control': None,
-    'latest_build': None,
-    'name': 'Plant Viruses',
-    'organism': 'Test Remote',
-    'otu_count': 0,
-    'release': dict({
-      'body': '''
-        #### Fixed
-        - fixed uploading to GitHub releases in `.travis.yml`
-      ''',
-      'content_type': 'application/gzip',
-      'download_url': 'https://github.com/virtool/ref-plant-viruses/releases/download/v0.1.1/reference.json.gz',
-      'filename': 'reference.json.gz',
-      'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.1',
-      'id': 11447367,
-      'name': 'v0.1.1',
-      'newer': False,
-      'published_at': '2018-06-12T19:20:57Z',
-      'retrieved_at': '2015-10-06T20:00:00Z',
-      'size': 3695872,
-    }),
-    'remotes_from': dict({
-      'errors': list([
-      ]),
-      'slug': 'virtool/ref-plant-viruses',
-    }),
-    'restrict_source_types': False,
-    'source_types': list([
-      'isolate',
-      'strain',
-    ]),
-    'task': dict({
-      'complete': False,
-      'created_at': '2015-10-06T20:00:00Z',
-      'error': None,
-      'id': 1,
-      'progress': 0,
-      'step': 'remote_reference',
-      'type': 'remote_reference',
-    }),
-    'unbuilt_change_count': 0,
-    'updating': None,
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': '2015-10-06T20:00:00Z',
-        'handle': 'leeashley',
-        'id': 1,
-        'modify': True,
-        'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -358,7 +236,7 @@
       'lower_name': 'tobacco mosaic virus',
       'name': 'Tobacco mosaic virus',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'schema': list([
       ]),
@@ -472,7 +350,7 @@
       'lower_name': 'tobacco mosaic virus',
       'name': 'Tobacco mosaic virus',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'schema': list([
       ]),
@@ -586,7 +464,7 @@
       'lower_name': 'tobacco mosaic virus',
       'name': 'Tobacco mosaic virus',
       'reference': dict({
-        'id': 'foo',
+        'id': 1,
       }),
       'schema': list([
       ]),
@@ -711,7 +589,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -725,7 +602,6 @@
     'description': 'This is a test reference.',
     'groups': list([
     ]),
-    'internal_control': None,
     'name': 'Bar',
     'organism': 'virus',
     'restrict_source_types': False,
@@ -743,7 +619,6 @@
         'id': 3,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
       dict({
         'build': True,
@@ -751,7 +626,6 @@
         'id': 4,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -769,14 +643,10 @@
     ]),
     'id': 'foo',
     'imported_from': None,
-    'installed': None,
-    'internal_control': None,
     'latest_build': None,
     'name': 'Bar',
     'organism': 'virus',
     'otu_count': 0,
-    'release': None,
-    'remotes_from': None,
     'restrict_source_types': False,
     'source_types': list([
       'isolate',
@@ -784,7 +654,6 @@
     ]),
     'task': None,
     'unbuilt_change_count': 0,
-    'updating': None,
     'user': dict({
       'handle': 'myersmitchell',
       'id': 2,
@@ -797,7 +666,6 @@
         'id': 3,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
       dict({
         'build': True,
@@ -806,7 +674,6 @@
         'id': 4,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -864,16 +731,16 @@
       }),
       dict({
         'created_at': 'approximately_now_isoformat',
-        'description': 'Created Tobacco mosaic virus (TMV)',
-        'id': 'fb085f7f.0',
+        'description': 'Created Cucumber mosaic virus',
+        'id': '3cbb22cc.0',
         'index': dict({
           'id': 'unbuilt',
           'version': 'unbuilt',
         }),
         'method_name': 'create',
         'otu': dict({
-          'id': 'fb085f7f',
-          'name': 'Tobacco mosaic virus',
+          'id': '3cbb22cc',
+          'name': 'Cucumber mosaic virus',
           'version': 0,
         }),
         'reference': dict({
@@ -912,16 +779,16 @@
       }),
       dict({
         'created_at': 'approximately_now_isoformat',
-        'description': 'Created Cucumber mosaic virus',
-        'id': '3cbb22cc.0',
+        'description': 'Created Tobacco mosaic virus (TMV)',
+        'id': 'fb085f7f.0',
         'index': dict({
           'id': 'unbuilt',
           'version': 'unbuilt',
         }),
         'method_name': 'create',
         'otu': dict({
-          'id': '3cbb22cc',
-          'name': 'Cucumber mosaic virus',
+          'id': 'fb085f7f',
+          'name': 'Tobacco mosaic virus',
           'version': 0,
         }),
         'reference': dict({
@@ -955,14 +822,10 @@
     ]),
     'id': 'bf1b993c',
     'imported_from': None,
-    'installed': None,
-    'internal_control': None,
     'latest_build': None,
     'name': 'Bar',
     'organism': 'virus',
     'otu_count': 0,
-    'release': None,
-    'remotes_from': None,
     'restrict_source_types': False,
     'source_types': list([
       'isolate',
@@ -970,7 +833,6 @@
     ]),
     'task': None,
     'unbuilt_change_count': 0,
-    'updating': None,
     'user': dict({
       'handle': 'leeashley',
       'id': 1,
@@ -983,7 +845,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
       dict({
         'build': False,
@@ -992,7 +853,6 @@
         'id': 2,
         'modify': False,
         'modify_otu': False,
-        'remove': False,
       }),
     ]),
   })
@@ -1010,14 +870,10 @@
     ]),
     'id': 'foo',
     'imported_from': None,
-    'installed': None,
-    'internal_control': None,
     'latest_build': None,
     'name': 'Foo',
     'organism': 'virus',
     'otu_count': 0,
-    'release': None,
-    'remotes_from': None,
     'restrict_source_types': False,
     'source_types': list([
       'isolate',
@@ -1025,7 +881,6 @@
     ]),
     'task': None,
     'unbuilt_change_count': 0,
-    'updating': None,
     'user': dict({
       'handle': 'myersmitchell',
       'id': 2,
@@ -1047,14 +902,10 @@
     ]),
     'id': 'foo',
     'imported_from': None,
-    'installed': None,
-    'internal_control': None,
     'latest_build': None,
     'name': 'Foo',
     'organism': 'virus',
     'otu_count': 0,
-    'release': None,
-    'remotes_from': None,
     'restrict_source_types': False,
     'source_types': list([
       'isolate',
@@ -1062,7 +913,6 @@
     ]),
     'task': None,
     'unbuilt_change_count': 0,
-    'updating': None,
     'user': dict({
       'handle': 'myersmitchell',
       'id': 2,
@@ -1079,7 +929,6 @@
     'id': 2,
     'modify': True,
     'modify_otu': True,
-    'remove': False,
   })
 # ---
 # name: TestUpdateUser.test_ok.1
@@ -1106,7 +955,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
       dict({
         'build': False,
@@ -1114,7 +962,6 @@
         'id': 2,
         'modify': True,
         'modify_otu': True,
-        'remove': False,
       }),
     ]),
   })
@@ -1128,7 +975,6 @@
     'modify': True,
     'modify_otu': False,
     'name': 'gaffers',
-    'remove': False,
   })
 # ---
 # name: test_create_group[None].1
@@ -1145,7 +991,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
       dict({
         'build': False,
@@ -1154,7 +999,6 @@
         'legacy_id': None,
         'modify': True,
         'modify_otu': False,
-        'remove': False,
       }),
     ]),
     'name': 'Test',
@@ -1203,8 +1047,13 @@
       'bar': 5,
       'foo': 2,
     }),
-    'modified_otu_count': 0,
+    'modified_otu_count': 1,
     'otus': list([
+      dict({
+        'change_count': 1,
+        'id': 'otu_1',
+        'name': 'Tobacco mosaic virus',
+      }),
     ]),
     'ready': False,
     'reference': dict({
@@ -1267,7 +1116,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
       dict({
         'build': False,
@@ -1275,7 +1123,6 @@
         'id': 2,
         'modify': True,
         'modify_otu': False,
-        'remove': False,
       }),
     ]),
   })
@@ -1288,7 +1135,6 @@
     'id': 2,
     'modify': True,
     'modify_otu': False,
-    'remove': False,
   })
 # ---
 # name: test_delete_group[None]
@@ -1315,7 +1161,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -1330,14 +1175,10 @@
         'data_type': 'genome',
         'id': 'group_member_active',
         'imported_from': None,
-        'installed': None,
-        'internal_control': None,
         'latest_build': None,
         'name': 'Group Member Active',
         'organism': 'virus',
         'otu_count': 0,
-        'release': None,
-        'remotes_from': None,
         'task': dict({
           'complete': False,
           'created_at': '2015-10-06T20:00:00Z',
@@ -1348,7 +1189,6 @@
           'type': 'import_reference',
         }),
         'unbuilt_change_count': 0,
-        'updating': None,
         'user': dict({
           'handle': 'brandonberry',
           'id': 2,
@@ -1361,14 +1201,10 @@
         'data_type': 'genome',
         'id': 'owned_active',
         'imported_from': None,
-        'installed': None,
-        'internal_control': None,
         'latest_build': None,
         'name': 'Owned Active',
         'organism': 'virus',
         'otu_count': 0,
-        'release': None,
-        'remotes_from': None,
         'task': dict({
           'complete': True,
           'created_at': '2015-10-06T20:00:00Z',
@@ -1379,7 +1215,6 @@
           'type': 'clone_reference',
         }),
         'unbuilt_change_count': 0,
-        'updating': None,
         'user': dict({
           'handle': 'leeashley',
           'id': 1,
@@ -1392,14 +1227,10 @@
         'data_type': 'genome',
         'id': 'user_member_active',
         'imported_from': None,
-        'installed': None,
-        'internal_control': None,
         'latest_build': None,
         'name': 'User Member Active',
         'organism': 'virus',
         'otu_count': 0,
-        'release': None,
-        'remotes_from': None,
         'task': dict({
           'complete': False,
           'created_at': '2015-10-06T20:00:00Z',
@@ -1410,7 +1241,6 @@
           'type': 'import_reference',
         }),
         'unbuilt_change_count': 0,
-        'updating': None,
         'user': dict({
           'handle': 'brandonberry',
           'id': 2,
@@ -1418,7 +1248,6 @@
       }),
     ]),
     'found_count': 3,
-    'official_installed': False,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
@@ -1435,14 +1264,10 @@
         'data_type': 'genome',
         'id': 'owned_archived',
         'imported_from': None,
-        'installed': None,
-        'internal_control': None,
         'latest_build': None,
         'name': 'Owned Archived',
         'organism': 'virus',
         'otu_count': 0,
-        'release': None,
-        'remotes_from': None,
         'task': dict({
           'complete': True,
           'created_at': '2015-10-06T20:00:00Z',
@@ -1453,7 +1278,6 @@
           'type': 'clone_reference',
         }),
         'unbuilt_change_count': 0,
-        'updating': None,
         'user': dict({
           'handle': 'leeashley',
           'id': 1,
@@ -1461,7 +1285,6 @@
       }),
     ]),
     'found_count': 1,
-    'official_installed': False,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
@@ -1478,14 +1301,10 @@
         'data_type': 'genome',
         'id': 'group_member_active',
         'imported_from': None,
-        'installed': None,
-        'internal_control': None,
         'latest_build': None,
         'name': 'Group Member Active',
         'organism': 'virus',
         'otu_count': 0,
-        'release': None,
-        'remotes_from': None,
         'task': dict({
           'complete': False,
           'created_at': '2015-10-06T20:00:00Z',
@@ -1496,7 +1315,6 @@
           'type': 'import_reference',
         }),
         'unbuilt_change_count': 0,
-        'updating': None,
         'user': dict({
           'handle': 'brandonberry',
           'id': 2,
@@ -1509,14 +1327,10 @@
         'data_type': 'genome',
         'id': 'owned_active',
         'imported_from': None,
-        'installed': None,
-        'internal_control': None,
         'latest_build': None,
         'name': 'Owned Active',
         'organism': 'virus',
         'otu_count': 0,
-        'release': None,
-        'remotes_from': None,
         'task': dict({
           'complete': True,
           'created_at': '2015-10-06T20:00:00Z',
@@ -1527,7 +1341,6 @@
           'type': 'clone_reference',
         }),
         'unbuilt_change_count': 0,
-        'updating': None,
         'user': dict({
           'handle': 'leeashley',
           'id': 1,
@@ -1540,14 +1353,10 @@
         'data_type': 'genome',
         'id': 'owned_archived',
         'imported_from': None,
-        'installed': None,
-        'internal_control': None,
         'latest_build': None,
         'name': 'Owned Archived',
         'organism': 'virus',
         'otu_count': 0,
-        'release': None,
-        'remotes_from': None,
         'task': dict({
           'complete': True,
           'created_at': '2015-10-06T20:00:00Z',
@@ -1558,7 +1367,6 @@
           'type': 'clone_reference',
         }),
         'unbuilt_change_count': 0,
-        'updating': None,
         'user': dict({
           'handle': 'leeashley',
           'id': 1,
@@ -1571,14 +1379,10 @@
         'data_type': 'genome',
         'id': 'user_member_active',
         'imported_from': None,
-        'installed': None,
-        'internal_control': None,
         'latest_build': None,
         'name': 'User Member Active',
         'organism': 'virus',
         'otu_count': 0,
-        'release': None,
-        'remotes_from': None,
         'task': dict({
           'complete': False,
           'created_at': '2015-10-06T20:00:00Z',
@@ -1589,7 +1393,6 @@
           'type': 'import_reference',
         }),
         'unbuilt_change_count': 0,
-        'updating': None,
         'user': dict({
           'handle': 'brandonberry',
           'id': 2,
@@ -1597,7 +1400,6 @@
       }),
     ]),
     'found_count': 4,
-    'official_installed': False,
     'page': 1,
     'page_count': 1,
     'per_page': 25,
@@ -1952,66 +1754,6 @@
     'total_count': 2,
   })
 # ---
-# name: test_get_release[None]
-  dict({
-    'body': '''
-      #### Changed
-      - add new isolates to Cucurbit chlorotic yellows virus
-    ''',
-    'content_type': 'application/gzip',
-    'download_url': 'https://github.com/virtool/ref-plant-viruses/releases/download/v0.1.2/reference.json.gz',
-    'filename': 'reference.json.gz',
-    'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.2',
-    'id': 11449913,
-    'name': 'v0.1.2',
-    'newer': True,
-    'published_at': '2018-06-12T21:52:33Z',
-    'retrieved_at': '2018-06-14T19:52:17.465000Z',
-    'size': 3699729,
-  })
-# ---
-# name: test_list_updates[True-False]
-  list([
-    dict({
-      'body': '''
-        #### Fixed
-        - fixed uploading to GitHub releases in `.travis.yml`
-      ''',
-      'created_at': '2018-06-14T18:37:54.242000Z',
-      'filename': 'reference.json.gz',
-      'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v0.1.1',
-      'id': 11447367,
-      'name': 'v0.1.1',
-      'newer': True,
-      'published_at': '2018-06-12T19:20:57Z',
-      'ready': True,
-      'size': 3695872,
-      'user': dict({
-        'handle': 'myersmitchell',
-        'id': 2,
-      }),
-    }),
-  ])
-# ---
-# name: test_list_updates[True-True]
-  list([
-  ])
-# ---
-# name: test_update[True-None][json]
-  dict({
-    'body': 'Lorem ipsum',
-    'content_type': 'application/gzip',
-    'download_url': 'https://github.com/virtool/virtool-database/releases/download/v0.3.0/reference.json.gz',
-    'filename': 'reference.json.gz',
-    'html_url': 'https://api.github.com/repos/virtool/virtool-database/releases/10742520',
-    'id': 10742520,
-    'name': 'v0.3.0',
-    'newer': True,
-    'published_at': '2018-04-26T19:35:33Z',
-    'retrieved_at': '2018-04-14T19:52:17.465000Z',
-    'size': 3709091,
-  })
-# ---
 # name: test_update_group[None][mongo]
   dict({
     '_id': 'foo',
@@ -2026,7 +1768,6 @@
         'id': 1,
         'modify': False,
         'modify_otu': True,
-        'remove': False,
       }),
     ]),
     'name': 'Test',
@@ -2044,7 +1785,6 @@
         'id': 1,
         'modify': True,
         'modify_otu': True,
-        'remove': True,
       }),
     ]),
   })
@@ -2058,6 +1798,5 @@
     'modify': False,
     'modify_otu': True,
     'name': 'musicians',
-    'remove': False,
   })
 # ---

@@ -2,14 +2,13 @@ import gzip
 import json
 
 import pytest
-from multidict import MultiDict, MultiDictProxy
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.data.errors import ResourceNotFoundError
-from virtool.errors import GitHubError
 from virtool.fake.next import DataFaker
 from virtool.hmm.data import HMM_ANNOTATIONS_KEY, HMM_PROFILES_KEY, HmmsData
+from virtool.hmm.releases import GetReleaseError
 from virtool.hmm.sql import SQLHMM, SQLHMMStatus
 from virtool.storage.object import ObjectProvider
 from virtool.tasks.progress import AbstractProgressHandler
@@ -62,7 +61,6 @@ async def test_get_status(
             "body": "- remove some annotations that didn't have corresponding profiles",
             "content_type": "application/gzip",
             "download_url": "https://github.com/virtool/virtool-hmm/releases/download/v0.2.1/vthmm.tar.gz",
-            "etag": 'W/"7bd9cdef79c82ab4d7e5cfff394cf81eaddc6f681b8202f2a7bdc65cbcc4aaea"',
             "filename": "vthmm.tar.gz",
             "html_url": "https://github.com/virtool/virtool-hmm/releases/tag/v0.2.1",
             "id": 1230982,
@@ -334,10 +332,6 @@ async def _seed_status(pg, **overrides) -> None:
         await session.commit()
 
 
-def _query(**params: str) -> MultiDictProxy:
-    return MultiDictProxy(MultiDict(**params))
-
-
 class TestGet:
     """``get`` reads a single annotation from Postgres by its legacy string id."""
 
@@ -364,7 +358,7 @@ class TestFind:
         await seed_pg_hmm_status({})
         await seed_pg_hmm({**hmm_document, "hidden": False})
 
-        result = await data_layer.hmms.find(_query())
+        result = await data_layer.hmms.find(1, 25)
 
         assert result.found_count == 1
         assert result.total_count == 1
@@ -377,7 +371,7 @@ class TestFind:
         await seed_pg_hmm({**hmm_document, "_id": "visible", "hidden": False})
         await seed_pg_hmm({**hmm_document, "_id": "concealed", "hidden": True})
 
-        result = await data_layer.hmms.find(_query())
+        result = await data_layer.hmms.find(1, 25)
 
         assert result.total_count == 1
         assert [document.id for document in result.documents] == ["visible"]
@@ -393,7 +387,7 @@ class TestFind:
             {**hmm_document, "_id": "capsid", "names": ["capsid protein"]},
         )
 
-        result = await data_layer.hmms.find(_query(find="polymerase"))
+        result = await data_layer.hmms.find(1, 25, "polymerase")
 
         assert result.found_count == 1
         assert result.total_count == 2
@@ -498,20 +492,19 @@ class TestUpdateRelease:
     async def test_creates_postgres_singleton_when_absent(self, data_layer, mocker, pg):
         """A successful fetch upserts the Postgres singleton from nothing."""
         mocker.patch(
-            "virtool.hmm.db.get_release",
+            "virtool.hmm.db.fetch_release_manifest_from_virtool",
             mocker.AsyncMock(
                 return_value={
-                    "id": 1,
-                    "name": "v1.0.0",
-                    "body": "release notes",
-                    "etag": "etag-value",
-                    "html_url": "https://github.com/virtool/virtool-hmm/releases/tag/v1.0.0",
-                    "published_at": "2017-11-10T19:12:43Z",
-                    "assets": [
+                    "virtool-hmm": [
                         {
-                            "name": "vthmm.tar.gz",
+                            "id": 1,
+                            "name": "v1.0.0",
+                            "body": "release notes",
+                            "filename": "vthmm.tar.gz",
                             "size": 100,
-                            "browser_download_url": "https://example.com/vthmm.tar.gz",
+                            "html_url": "https://github.com/virtool/virtool-hmm/releases/tag/v1.0.0",
+                            "download_url": "https://example.com/vthmm.tar.gz",
+                            "published_at": "2017-11-10T19:12:43Z",
                             "content_type": "application/gzip",
                         },
                     ],
@@ -529,10 +522,10 @@ class TestUpdateRelease:
         assert pg_status["installed"] is None
 
     async def test_error_path_updates_existing_singleton(self, data_layer, mocker, pg):
-        """A non-fatal GitHub error clears errors without touching the release."""
+        """A non-fatal fetch error clears errors without touching the release."""
         mocker.patch(
-            "virtool.hmm.db.get_release",
-            mocker.AsyncMock(side_effect=GitHubError("boom")),
+            "virtool.hmm.db.fetch_release_manifest_from_virtool",
+            mocker.AsyncMock(side_effect=GetReleaseError("boom")),
         )
 
         await _seed_status(pg, errors=["stale error"])
@@ -544,13 +537,48 @@ class TestUpdateRelease:
         assert pg_status["errors"] == []
         assert pg_status["release"]["id"] == RELEASE["id"]
 
+    @pytest.mark.parametrize(
+        "manifest",
+        [None, {}, {"virtool-hmm": []}],
+        ids=["none", "missing_key", "empty_list"],
+    )
+    async def test_empty_manifest_preserves_stored_release(
+        self, data_layer, manifest, mocker, pg
+    ):
+        """A manifest with no HMM release keeps the stored release and clears errors."""
+        mocker.patch(
+            "virtool.hmm.db.fetch_release_manifest_from_virtool",
+            mocker.AsyncMock(return_value=manifest),
+        )
+
+        await _seed_status(pg, errors=["stale error"])
+
+        await data_layer.hmms.update_release()
+
+        pg_status = await _read_pg_status(pg)
+
+        assert pg_status["errors"] == []
+        assert pg_status["release"]["id"] == RELEASE["id"]
+
+    async def test_fatal_error_propagates(self, data_layer, mocker, pg):
+        """A fatal fetch error is raised rather than silently swallowed."""
+        mocker.patch(
+            "virtool.hmm.db.fetch_release_manifest_from_virtool",
+            mocker.AsyncMock(side_effect=GetReleaseError("404 not found")),
+        )
+
+        await _seed_status(pg)
+
+        with pytest.raises(GetReleaseError):
+            await data_layer.hmms.update_release()
+
 
 class TestInstallUpdate:
     """``install_update`` writes the queued update to Postgres."""
 
     async def test_pushes_update(self, data_layer, fake, mocker, pg):
         mocker.patch(
-            "virtool.hmm.db.get_release",
+            "virtool.hmm.db.fetch_release_manifest_from_virtool",
             mocker.AsyncMock(return_value=None),
         )
 

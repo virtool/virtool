@@ -5,26 +5,6 @@ from virtool.users.utils import Permission
 
 
 @pytest.mark.parametrize(
-    "password,salt,result",
-    [
-        ("hello_world", "6rn1x86nnlqfj5bqg1n5qhcd", True),
-        ("bye_world", "6rn1x86nnlqfj5bqg1n5qhcd", False),
-        ("hello_world", "abc1x86nnlqfj5bqg1n5q123", False),
-    ],
-    ids=["success", "failure_password", "failure_salt"],
-)
-def test_check_legacy_password(password, salt, result):
-    assert (
-        virtool.users.utils.check_legacy_password(
-            password,
-            salt,
-            "33a733347cdb47634252e5964b26c116494ad7fe1c0bde2f8120fe73d0d01a2993251b4a5b07050c996c01ace6ec26cb155a1e0d7e712e5ca9a5c4aaa16b5ac5",
-        )
-        is result
-    )
-
-
-@pytest.mark.parametrize(
     "password,hashed,result",
     [
         (

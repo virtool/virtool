@@ -1,11 +1,14 @@
 import pytest
-from multidict import MultiDict, MultiDictProxy
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from tests.fixtures.client import ClientSpawner
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.models.enums import Permission
+from virtool.samples.oas import CreateSampleRequest
+from virtool.samples.sql import SQLLegacySample, SQLLegacySampleSubtraction
 from virtool.subtractions.oas import (
     FinalizeSubtractionRequest,
     NucleotideComposition,
@@ -13,10 +16,6 @@ from virtool.subtractions.oas import (
 )
 from virtool.subtractions.pg import SQLSubtraction
 from virtool.uploads.sql import SQLUpload, UploadType
-
-
-def _empty_query() -> MultiDictProxy:
-    return MultiDictProxy(MultiDict())
 
 
 class TestFind:
@@ -46,16 +45,12 @@ class TestFind:
             UpdateSubtractionRequest(name="Malus domestica", nickname="apple"),
         )
 
-        by_name = await data_layer.subtractions.find(
-            "MALUS", False, False, _empty_query()
-        )
+        by_name = await data_layer.subtractions.find("MALUS", False, False, 1, 25)
         assert [d.id for d in by_name.documents] == [malus.id]
         assert by_name.found_count == 1
         assert by_name.total_count == 2
 
-        by_nickname = await data_layer.subtractions.find(
-            "cress", False, False, _empty_query()
-        )
+        by_nickname = await data_layer.subtractions.find("cress", False, False, 1, 25)
         assert [d.id for d in by_nickname.documents] == [arabidopsis.id]
 
     async def test_lists_subtraction_with_removed_upload(
@@ -83,7 +78,7 @@ class TestFind:
             )
             await session.commit()
 
-        result = await data_layer.subtractions.find(None, False, False, _empty_query())
+        result = await data_layer.subtractions.find(None, False, False, 1, 25)
 
         assert [d.id for d in result.documents] == [subtraction.id]
         assert result.documents[0].file.id == upload.id
@@ -99,7 +94,7 @@ class TestFind:
         ready = await fake.subtractions.create(user=user, upload=upload, finalized=True)
         await fake.subtractions.create(user=user, upload=upload, finalized=False)
 
-        result = await data_layer.subtractions.find(None, False, True, _empty_query())
+        result = await data_layer.subtractions.find(None, False, True, 1, 25)
 
         assert [d.id for d in result.documents] == [ready.id]
         assert result.found_count == 1
@@ -118,7 +113,7 @@ class TestFind:
         removed = await fake.subtractions.create(user=user, upload=upload)
         await data_layer.subtractions.delete(removed.id)
 
-        result = await data_layer.subtractions.find(None, False, False, _empty_query())
+        result = await data_layer.subtractions.find(None, False, False, 1, 25)
 
         assert [d.id for d in result.documents] == [kept.id]
         assert result.total_count == 1
@@ -133,7 +128,7 @@ class TestFind:
 
         subtraction = await fake.subtractions.create(user=user, upload=upload)
 
-        result = await data_layer.subtractions.find(None, True, False, _empty_query())
+        result = await data_layer.subtractions.find(None, True, False, 1, 25)
 
         assert result == [{"id": subtraction.id, "name": "foo", "ready": True}]
 
@@ -164,19 +159,13 @@ class TestFind:
         literal_backslash = await named("qux\\end")
         await named("quxend")
 
-        percent = await data_layer.subtractions.find(
-            "foo%bar", False, False, _empty_query()
-        )
+        percent = await data_layer.subtractions.find("foo%bar", False, False, 1, 25)
         assert [d.id for d in percent.documents] == [literal_percent]
 
-        underscore = await data_layer.subtractions.find(
-            "baz_qux", False, False, _empty_query()
-        )
+        underscore = await data_layer.subtractions.find("baz_qux", False, False, 1, 25)
         assert [d.id for d in underscore.documents] == [literal_underscore]
 
-        backslash = await data_layer.subtractions.find(
-            "qux\\end", False, False, _empty_query()
-        )
+        backslash = await data_layer.subtractions.find("qux\\end", False, False, 1, 25)
         assert [d.id for d in backslash.documents] == [literal_backslash]
 
     async def test_ready_filter_with_search_term(
@@ -211,9 +200,7 @@ class TestFind:
 
         await fake.subtractions.create(user=user, upload=upload, finalized=False)
 
-        result = await data_layer.subtractions.find(
-            "arabidopsis", False, True, _empty_query()
-        )
+        result = await data_layer.subtractions.find("arabidopsis", False, True, 1, 25)
 
         assert [d.id for d in result.documents] == [ready_match.id]
         assert result.found_count == 1
@@ -303,7 +290,7 @@ class TestMutations:
 
         await data_layer.subtractions.delete(subtraction.id)
 
-        result = await data_layer.subtractions.find(None, False, False, _empty_query())
+        result = await data_layer.subtractions.find(None, False, False, 1, 25)
         assert subtraction.id not in [d.id for d in result.documents]
 
         async with AsyncSession(pg) as session:
@@ -313,6 +300,78 @@ class TestMutations:
                 ),
             )
         assert deleted is True
+
+    async def test_delete_unlinks_sample_subtraction_rows(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+        spawn_client: ClientSpawner,
+    ):
+        """``delete`` removes the sample's ``legacy_sample_subtractions`` join rows."""
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_sample],
+        )
+
+        user = await fake.users.create()
+        sample_upload = await fake.uploads.create(user=user)
+        subtraction_upload = await fake.uploads.create(
+            user=user,
+            upload_type=UploadType.subtraction,
+        )
+        subtraction = await fake.subtractions.create(
+            user=user,
+            upload=subtraction_upload,
+        )
+
+        sample = await data_layer.samples.create(
+            CreateSampleRequest(
+                files=[sample_upload.id],
+                name="With Subtraction",
+                subtractions=[subtraction.id],
+            ),
+            client.user.id,
+            0,
+        )
+
+        async with AsyncSession(pg) as session:
+            legacy = (
+                await session.execute(
+                    select(SQLLegacySample).where(
+                        SQLLegacySample.legacy_id == sample.id,
+                    ),
+                )
+            ).scalar_one()
+
+            before = (
+                (
+                    await session.execute(
+                        select(SQLLegacySampleSubtraction.subtraction_id).where(
+                            SQLLegacySampleSubtraction.sample_id == legacy.id,
+                        ),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+        assert before == [subtraction.id]
+
+        await data_layer.subtractions.delete(subtraction.id)
+
+        async with AsyncSession(pg) as session:
+            after = (
+                (
+                    await session.execute(
+                        select(SQLLegacySampleSubtraction.subtraction_id).where(
+                            SQLLegacySampleSubtraction.sample_id == legacy.id,
+                        ),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+        assert after == []
 
     async def test_finalize(self, data_layer: DataLayer, fake: DataFaker):
         """``finalize`` marks the subtraction ready."""

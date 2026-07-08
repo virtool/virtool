@@ -75,6 +75,22 @@ async def test_subprocess_failed(run_subprocess: RunSubprocess):
     await run_subprocess(["ls"])
 
 
+async def test_subprocess_failed_includes_stderr(run_subprocess: RunSubprocess):
+    """Test that the raised error message folds in the failing command's stderr."""
+    command = ["bash", "-c", "echo bowtie2-build failed >&2; exit 1"]
+
+    with pytest.raises(SubprocessFailedError) as excinfo:
+        await run_subprocess(command)
+
+    message = str(excinfo.value)
+
+    assert message.startswith(
+        f"Subprocess failed with exit code 1: {' '.join(command)}"
+    )
+    assert "\nstderr:\n" in message
+    assert message.rstrip().endswith("bowtie2-build failed")
+
+
 @pytest.mark.timeout(45)
 @pytest.mark.parametrize("cancel", [True, False])
 async def test_terminated_by_cancellation(

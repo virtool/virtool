@@ -3,8 +3,7 @@ import gzip
 from collections.abc import AsyncIterator
 from pathlib import Path
 
-from multidict import MultiDictProxy
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
@@ -12,7 +11,6 @@ from structlog import get_logger
 import virtool.history.db
 import virtool.indexes.db
 from virtool.api.custom_json import dump_bytes
-from virtool.api.utils import compose_regex_query, paginate
 from virtool.config import Config
 from virtool.data.errors import (
     ResourceConflictError,
@@ -20,17 +18,16 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.events import Operation, emit, emits
+from virtool.data.topg import retry_both_transactions
 from virtool.data.transforms import apply_transforms
-from virtool.history.db import HISTORY_LIST_PROJECTION
 from virtool.history.models import HistorySearchResult
-from virtool.indexes.checks import (
-    check_legacy_index_files_uploaded,
-)
+from virtool.history.sql import SQLLegacyHistory
+from virtool.indexes.checks import check_legacy_index_files_uploaded
 from virtool.indexes.db import (
     INDEX_FILE_NAMES,
     LEGACY_INDEX_FILE_NAMES,
     TASK_INDEX_FILE_NAMES,
-    lookup_index_otu_counts,
+    IndexCountsTransform,
     update_last_indexed_versions,
 )
 from virtool.indexes.index_sqlite import (
@@ -51,7 +48,6 @@ from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import get_rows
 from virtool.references.db import compose_archived_filter, lookup_nested_reference_by_id
 from virtool.references.models import ReferenceNested
-from virtool.references.transforms import AttachReferenceTransform
 from virtool.storage.cleanup import delete_prefix
 from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
@@ -112,20 +108,22 @@ class IndexData:
     async def find(
         self,
         ready: bool,
-        query: MultiDictProxy,
+        page: int,
+        per_page: int,
         archived: bool | None = None,
     ) -> list[IndexMinimal] | IndexSearchResult:
         """List all indexes.
 
-        :param ready: the request object
-        :param query: the request query object
+        :param ready: return only indexes that are ready for use in analysis
+        :param page: the one-indexed page number to return
+        :param per_page: the number of documents to return per page
         :param archived: lifecycle filter on the index's reference; see
             :func:`virtool.references.db.compose_archived_filter`
         :return: a list of all index documents
         """
         if not ready:
             data = await virtool.indexes.db.find(
-                self._mongo, self._pg, query, archived=archived
+                self._mongo, self._pg, page, per_page, archived=archived
             )
             return IndexSearchResult(**data)
 
@@ -145,9 +143,7 @@ class IndexData:
                         },
                     },
                     *lookup_nested_reference_by_id(local_field="reference.id"),
-                    *lookup_index_otu_counts(local_field="_id"),
                     {"$sort": {"created_at": 1}},
-                    {"$project": {"counts": False}},
                 ],
             )
         ]
@@ -157,6 +153,7 @@ class IndexData:
             [
                 AttachJobTransform(self._pg),
                 AttachUserTransform(self._pg),
+                IndexCountsTransform(),
             ],
             self._pg,
         )
@@ -173,9 +170,7 @@ class IndexData:
             [
                 {"$match": {"_id": index_id}},
                 *lookup_nested_reference_by_id(local_field="reference.id"),
-                *lookup_index_otu_counts(local_field="_id"),
                 {"$sort": {"created_at": 1}},
-                {"$project": {"counts": False}},
             ],
         ).to_list(length=1)
 
@@ -185,10 +180,8 @@ class IndexData:
         document = result[0]
 
         contributors, otus = await asyncio.gather(
-            virtool.history.db.get_contributors(
-                self._mongo, self._pg, {"index.id": index_id}
-            ),
-            virtool.indexes.db.get_otus(self._mongo, index_id),
+            virtool.history.db.get_contributors(self._pg, index_id=index_id),
+            virtool.indexes.db.get_otus(self._pg, index_id),
         )
 
         document.update({"contributors": contributors, "otus": otus})
@@ -204,6 +197,7 @@ class IndexData:
             [
                 AttachJobTransform(self._pg),
                 AttachUserTransform(self._pg),
+                IndexCountsTransform(),
             ],
             self._pg,
         )
@@ -314,8 +308,6 @@ class IndexData:
             )
 
             index_file.size = size
-            index_file.uploaded_at = virtool.utils.timestamp()
-            index_file.ready = True
 
             index_file_dict = index_file.to_dict()
 
@@ -383,7 +375,7 @@ class IndexData:
         )
 
         async with self._mongo.create_session() as session:
-            await update_last_indexed_versions(self._mongo, ref_id, session)
+            await update_last_indexed_versions(self._mongo, self._pg, ref_id, session)
 
             await self._mongo.indexes.update_one(
                 {"_id": index_id},
@@ -450,7 +442,12 @@ class IndexData:
             )
 
             async with self._mongo.create_session() as session:
-                await update_last_indexed_versions(self._mongo, ref_id, session)
+                await update_last_indexed_versions(
+                    self._mongo,
+                    self._pg,
+                    ref_id,
+                    session,
+                )
 
                 await self._mongo.indexes.update_one(
                     {"_id": index_id},
@@ -478,34 +475,28 @@ class IndexData:
     async def find_changes(
         self,
         index_id: str,
-        req_query: MultiDictProxy[str],
+        page: int,
+        per_page: int,
+        term: str | None = None,
     ) -> HistorySearchResult:
         """Find the virus changes that are included in a given index build.
+
         :param index_id: the index ID
-        :param req_query: the request query object
+        :param page: the one-indexed page number to return
+        :param per_page: the number of documents to return per page
+        :param term: an optional term matched against the OTU name
         :return: the changes
         """
         if not await self._mongo.indexes.count_documents({"_id": index_id}):
             raise ResourceNotFoundError()
 
-        db_query = {"index.id": index_id}
-
-        if term := req_query.get("term"):
-            db_query.update(compose_regex_query(term, ["otu.name", "user.id"]))
-
-        data = await paginate(
-            self._mongo.history,
-            db_query,
-            req_query,
-            sort=[("otu.name", 1), ("otu.version", -1)],
-            projection=HISTORY_LIST_PROJECTION,
-            reverse=True,
-        )
-
-        data["documents"] = await apply_transforms(
-            [base_processor(d) for d in data["documents"]],
-            [AttachReferenceTransform(self._mongo), AttachUserTransform(self._pg)],
+        data = await virtool.history.db.find_by_index(
+            self._mongo,
             self._pg,
+            index_id,
+            page,
+            per_page,
+            term,
         )
 
         return HistorySearchResult(**data)
@@ -520,7 +511,7 @@ class IndexData:
         if not index:
             raise ResourceNotFoundError
 
-        async with self._mongo.create_session() as mongo_session:
+        async def remove(mongo_session, pg_session) -> None:
             delete_result = await self._mongo.indexes.delete_one(
                 {"_id": index_id},
                 session=mongo_session,
@@ -529,16 +520,13 @@ class IndexData:
             if delete_result.deleted_count == 0:
                 raise ResourceNotFoundError
 
-            index_change_ids = await self._mongo.history.distinct(
-                "_id",
-                {"index.id": index_id},
+            await pg_session.execute(
+                update(SQLLegacyHistory)
+                .where(SQLLegacyHistory.index == index_id)
+                .values(index=None, index_version=None),
             )
 
-            await self._mongo.history.update_many(
-                {"_id": {"$in": index_change_ids}},
-                {"$set": {"index": {"id": "unbuilt", "version": "unbuilt"}}},
-                session=mongo_session,
-            )
+        await retry_both_transactions(self._mongo, self._pg, remove)
 
         for key, exc in await delete_prefix(
             self._storage, compose_index_prefix(index_id)

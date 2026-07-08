@@ -1,24 +1,4 @@
 # serializer version: 1
-# name: test_fetch_and_update_release
-  dict({
-    'body': '''
-      * Added many new isolates for existing viruses.
-      * Added many new viruses.
-      * Fixed naming for many viruses and isolates.
-      * Removed all viruses with non-plant hosts.
-    ''',
-    'content_type': 'application/gzip',
-    'download_url': 'https://github.com/virtool/ref-plant-viruses/releases/download/v1.5.0/reference.json.gz',
-    'filename': 'v1.5.0',
-    'html_url': 'https://github.com/virtool/ref-plant-viruses/releases/tag/v1.5.0',
-    'id': 79005111,
-    'name': 'v1.5.0',
-    'newer': True,
-    'published_at': '2022-10-04T22:47:33Z',
-    'retrieved_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'size': 6449861,
-  })
-# ---
 # name: test_get_reference_groups
   list([
     dict({
@@ -28,7 +8,6 @@
       'modify': False,
       'modify_otu': False,
       'name': 'musicians',
-      'remove': False,
     }),
     dict({
       'build': False,
@@ -37,13 +16,12 @@
       'modify': True,
       'modify_otu': True,
       'name': 'architects',
-      'remove': True,
     }),
   ])
 # ---
-# name: test_populate_insert_only_reference_dual_writes_legacy_history[legacy_history]
+# name: test_populate_insert_only_reference_writes_legacy_history[legacy_history]
   list([
-    <SQLLegacyHistory(id=1, legacy_id=lhotu001.0, created_at=2015-10-06 20:00:00, description=Remoted OTU 1 (O1), method_name=remote, user_id=1, otu=lhotu001, otu_name=OTU 1, otu_version=0, reference=ref_legacy_test, index=None, index_version=None)>,
-    <SQLLegacyHistory(id=2, legacy_id=lhotu002.0, created_at=2015-10-06 20:00:00, description=Remoted OTU 2 (O2), method_name=remote, user_id=1, otu=lhotu002, otu_name=OTU 2, otu_version=0, reference=ref_legacy_test, index=None, index_version=None)>,
+    <SQLLegacyHistory(id=1, legacy_id=lhotu001.0, created_at=2015-10-06 20:00:00, description=Remoted OTU 1 (O1), method_name=remote, user_id=1, otu=lhotu001, otu_name=OTU 1, otu_version=0, reference=None, reference_id=1, index=None, index_version=None)>,
+    <SQLLegacyHistory(id=2, legacy_id=lhotu002.0, created_at=2015-10-06 20:00:00, description=Remoted OTU 2 (O2), method_name=remote, user_id=1, otu=lhotu002, otu_name=OTU 2, otu_version=0, reference=None, reference_id=1, index=None, index_version=None)>,
   ])
 # ---

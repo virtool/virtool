@@ -38,6 +38,8 @@ from virtool.data.errors import (
 from virtool.data.events import Operation, emit, emits
 from virtool.data.topg import (
     compose_legacy_id_single_expression,
+    compose_legacy_id_subquery,
+    resolve_legacy_id,
 )
 from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
@@ -46,9 +48,10 @@ from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_new_id
 from virtool.pg.utils import delete_row, get_row_by_id
+from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
-from virtool.samples.db import recalculate_workflow_tags
 from virtool.samples.oas import CreateAnalysisRequest
+from virtool.samples.sql import SQLLegacySample
 from virtool.samples.utils import get_sample_rights
 from virtool.storage.cleanup import delete_prefix
 from virtool.storage.protocol import StorageBackend
@@ -170,8 +173,11 @@ class AnalysisData(DataLayerDomain):
         )
 
         if sample_id is not None:
-            count_statement = count_statement.where(SQLAnalysis.sample == sample_id)
-            statement = statement.where(SQLAnalysis.sample == sample_id)
+            sample_subquery = compose_legacy_id_subquery(SQLLegacySample, sample_id)
+            count_statement = count_statement.where(
+                SQLAnalysis.sample_id == sample_subquery,
+            )
+            statement = statement.where(SQLAnalysis.sample_id == sample_subquery)
 
         async with AsyncSession(self._pg) as session:
             total_count = (await session.execute(count_statement)).scalar_one()
@@ -306,6 +312,20 @@ class AnalysisData(DataLayerDomain):
         subtractions = data.subtractions if data.subtractions is not None else []
 
         async with AsyncSession(self._pg) as session:
+            sample_pg_id = await resolve_legacy_id(session, SQLLegacySample, sample_id)
+
+            if sample_pg_id is None:
+                raise ResourceConflictError("Sample does not exist")
+
+            reference_pg_id = await resolve_legacy_id(
+                session,
+                SQLReference,
+                data.ref_id,
+            )
+
+            if reference_pg_id is None:
+                raise ResourceConflictError("Reference does not exist")
+
             pg_id = (
                 await session.execute(
                     insert(SQLAnalysis)
@@ -317,7 +337,9 @@ class AnalysisData(DataLayerDomain):
                         ready=False,
                         results=None,
                         sample=sample_id,
+                        sample_id=sample_pg_id,
                         reference=data.ref_id,
+                        reference_id=reference_pg_id,
                         index=index_id,
                         user_id=user_id,
                         job_id=job.id,
@@ -434,12 +456,10 @@ class AnalysisData(DataLayerDomain):
                 error=repr(exc),
             )
 
-        await recalculate_workflow_tags(self._mongo, self._pg, analysis.sample.id)
-
         emit(
             await self.data.samples.get(analysis.sample.id),
             "samples",
-            "recalculate_workflow_tags",
+            "update",
             Operation.UPDATE,
         )
         emit(analysis, "analyses", "delete", Operation.DELETE)
@@ -666,8 +686,6 @@ class AnalysisData(DataLayerDomain):
 
             await session.commit()
 
-        await recalculate_workflow_tags(self._mongo, self._pg, sample_id)
-
         analysis, sample = await asyncio.gather(
             self.get(analysis_id, None),
             self.data.samples.get(sample_id),
@@ -676,7 +694,7 @@ class AnalysisData(DataLayerDomain):
         emit(
             sample,
             "samples",
-            "recalculate_workflow_tags",
+            "update",
             Operation.UPDATE,
         )
 

@@ -2,6 +2,7 @@ import datetime
 from dataclasses import asdict
 
 import arrow
+import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy.matchers import path_type
 
@@ -11,6 +12,7 @@ from virtool.migration.pg import SQLRevision, list_applied_revisions
 from virtool.migration.show import load_all_revisions
 
 
+@pytest.mark.timeout(30)
 async def test_apply_revisions(
     migration_config: MigrationConfig, migration_pg: AsyncEngine, snapshot
 ):
@@ -78,6 +80,7 @@ async def test_apply_revisions_with_missing_last_applied(
         assert any(r.revision == revision.id for r in applied)
 
 
+@pytest.mark.timeout(30)
 async def test_apply_fills_in_missed_earlier_revision(
     migration_config: MigrationConfig,
     migration_pg: AsyncEngine,
@@ -88,7 +91,9 @@ async def test_apply_fills_in_missed_earlier_revision(
     Recording only the head revision simulates a history where revisions were
     applied out of order: every earlier revision is unrecorded. The position-based
     scan used to skip all of them because they sort before the recorded head; now
-    each unrecorded revision is filled in.
+    each unrecorded revision is filled in. Because every earlier revision is applied
+    from a fresh database, this exercises the whole migration chain and needs the same
+    generous timeout as :func:`test_apply_revisions`.
     """
     all_revisions = load_all_revisions()
     head = all_revisions[-1]

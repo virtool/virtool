@@ -2,8 +2,25 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
-from virtool.samples.sql import SQLSampleArtifact, SQLSampleReads
+from virtool.data.topg import compose_legacy_id_subquery, resolve_legacy_id
+from virtool.samples.sql import SQLLegacySample, SQLSampleArtifact, SQLSampleReads
 from virtool.uploads.sql import SQLUpload
+
+
+async def _resolve_sample_id(session: AsyncSession, sample: str) -> int:
+    """Resolve a sample's Mongo id to its ``legacy_samples`` integer primary key.
+
+    A sample file's parent sample is a required relationship, so a sample that
+    has not been backfilled into Postgres is a data-integrity error rather than a
+    row to store with a ``NULL`` ``sample_id``.
+    """
+    sample_id = await resolve_legacy_id(session, SQLLegacySample, sample)
+
+    if sample_id is None:
+        msg = f"No legacy_samples row for sample {sample!r}"
+        raise ValueError(msg)
+
+    return sample_id
 
 
 async def get_existing_reads(pg: AsyncEngine, sample_id: str) -> list[str]:
@@ -15,7 +32,10 @@ async def get_existing_reads(pg: AsyncEngine, sample_id: str) -> list[str]:
     """
     async with AsyncSession(pg) as session:
         result = await session.execute(
-            select(SQLSampleReads).filter_by(sample=sample_id),
+            select(SQLSampleReads).where(
+                SQLSampleReads.sample_id
+                == compose_legacy_id_subquery(SQLLegacySample, sample_id),
+            ),
         )
 
     return [row.name for row in result.scalars().all()]
@@ -42,6 +62,7 @@ async def create_artifact_file(
             name=name,
             name_on_disk=name_on_disk,
             sample=sample,
+            sample_id=await _resolve_sample_id(session, sample),
             type=artifact_type,
             uploaded_at=virtool.utils.timestamp(),
         )
@@ -78,6 +99,7 @@ async def create_reads_file(
     async with AsyncSession(pg) as session:
         reads = SQLSampleReads(
             sample=sample_id,
+            sample_id=await _resolve_sample_id(session, sample_id),
             name=name,
             name_on_disk=name_on_disk,
             size=size,

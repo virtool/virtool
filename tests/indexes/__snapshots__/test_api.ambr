@@ -53,8 +53,13 @@
       'bar': 2,
       'foo': 1,
     }),
-    'modified_otu_count': 0,
+    'modified_otu_count': 1,
     'otus': list([
+      dict({
+        'change_count': 1,
+        'id': 'otu_1',
+        'name': 'Tobacco mosaic virus',
+      }),
     ]),
     'ready': False,
     'reference': dict({
@@ -730,17 +735,17 @@
 # ---
 # name: test_get[None]
   dict({
-    'change_count': 2,
+    'change_count': 3,
     'contributors': list([
       dict({
-        'count': 1,
-        'handle': 'fred',
-        'id': 1,
+        'count': 2,
+        'handle': 'myersmitchell',
+        'id': 2,
       }),
       dict({
-        'count': 3,
-        'handle': 'ian',
-        'id': 2,
+        'count': 1,
+        'handle': 'modonnell',
+        'id': 3,
       }),
     ]),
     'created_at': '2015-10-06T20:00:00Z',
@@ -751,8 +756,8 @@
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
       'id': 1,
-      'progress': 100,
-      'state': 'cancelled',
+      'progress': 0,
+      'state': 'running',
       'user': dict({
         'handle': 'myersmitchell',
         'id': 2,
@@ -766,13 +771,13 @@
     'otus': list([
       dict({
         'change_count': 1,
-        'id': 'kjs8sa99',
-        'name': 'Foo',
+        'id': 'pvx',
+        'name': 'Potato virus X',
       }),
       dict({
-        'change_count': 3,
-        'id': 'zxbbvngc',
-        'name': 'Test',
+        'change_count': 2,
+        'id': 'tmv',
+        'name': 'Tobacco mosaic virus',
       }),
     ]),
     'ready': False,

@@ -17,17 +17,22 @@ from sqlalchemy.orm import Mapped, mapped_column
 from virtool.pg.base import Base
 
 
-class SQLHistoryDiff(Base):
+class SQLLegacyHistoryDiff(Base):
     """A SQL model for storing history diffs.
 
     This is a temporary table and should be removed after history has been completely
     reimplemented in Postgres.
+
+    Diffs are keyed by ``history_id``, an integer foreign key to ``legacy_history.id``.
+    The old string ``change_id`` column is retained during the migration and dropped in
+    a later cleanup revision.
     """
 
-    __tablename__ = "history_diffs"
+    __tablename__ = "legacy_history_diff"
 
     id = Column(Integer, primary_key=True)
     change_id = Column(String, unique=True)
+    history_id = Column(BigInteger, ForeignKey("legacy_history.id"), unique=True)
     diff = Column(JSONB)
 
 
@@ -37,8 +42,11 @@ class SQLLegacyHistory(Base):
     This is a faithful 1:1 lift of the Mongo document into Postgres. Nested Mongo
     fields are flattened into columns:
 
-    - ``otu``/``reference``/``index`` ids are bare string columns with no foreign
-      key, because those collections have not been migrated to Postgres yet.
+    - ``otu``/``index`` ids are bare string columns with no foreign key, because
+      those collections have not been migrated to Postgres yet.
+    - ``reference`` is mid-migration: the legacy Mongo string column is no longer
+      written now that ``reference_id`` is the source of truth, and it is nullable
+      until it is dropped in a later cleanup revision.
     - ``user.id`` becomes a real foreign key to ``users.id``.
     - ``otu_version`` and ``index_version`` are strings because Mongo stores both
       integer versions and sentinel values such as ``"removed"`` and ``"unbuilt"``.
@@ -58,6 +66,12 @@ class SQLLegacyHistory(Base):
     otu: Mapped[str]
     otu_name: Mapped[str]
     otu_version: Mapped[str | None]
-    reference: Mapped[str] = mapped_column(index=True)
+    reference: Mapped[str | None] = mapped_column(index=True, nullable=True)
+    reference_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("legacy_references.id"),
+        nullable=True,
+        index=True,
+    )
     index: Mapped[str | None] = mapped_column(index=True)
     index_version: Mapped[str | None]

@@ -18,12 +18,15 @@ from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from tests.fixtures.response import RespIs
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.history.db import legacy_history_values
+from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.db import LEGACY_INDEX_FILE_NAMES
 from virtool.indexes.files import create_index_file
 from virtool.indexes.sql import SQLIndexFile
 from virtool.indexes.utils import check_index_file_type, compose_index_file_key
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app
+from virtool.references.sql import SQLReference
 from virtool.storage.protocol import StorageBackend
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
@@ -45,6 +48,7 @@ class TestFind:
         fake: DataFaker,
         mocker: MockerFixture,
         mongo: Mongo,
+        pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
         static_time: StaticTime,
@@ -161,6 +165,37 @@ class TestFind:
                 session=None,
             ),
         )
+
+        index_references = {
+            "idx_active_a": "ref_active_a",
+            "idx_active_b": "ref_active_b",
+        }
+
+        async with AsyncSession(pg) as session:
+            session.add_all(
+                SQLLegacyHistory(
+                    legacy_id=legacy_id,
+                    created_at=static_time.datetime,
+                    description="Description",
+                    method_name="edit",
+                    user_id=user.id,
+                    otu=otu_id,
+                    otu_name=otu_id,
+                    otu_version="0",
+                    reference=index_references[index_id],
+                    index=index_id,
+                    index_version="0",
+                )
+                for legacy_id, index_id, otu_id in (
+                    ("0", "idx_active_a", "otu_1"),
+                    ("1", "idx_active_b", "otu_1"),
+                    ("2", "idx_active_a", "otu_2"),
+                    ("3", "idx_active_a", "otu_1"),
+                    ("4", "idx_active_a", "otu_3"),
+                    ("5", "idx_active_b", "otu_4"),
+                )
+            )
+            await session.commit()
 
         mocker.patch(
             "virtool.indexes.db.get_unbuilt_stats",
@@ -295,35 +330,53 @@ class TestFind:
 async def test_get(
     error: str | None,
     fake: DataFaker,
-    mocker: MockerFixture,
+    pg: AsyncEngine,
     resp_is: RespIs,
     snapshot: SnapshotAssertion,
     mongo: Mongo,
     spawn_client: ClientSpawner,
     static_time: StaticTime,
 ):
+    """The index detail aggregates real contributors and modified OTUs from history.
+
+    Contributors and OTU change counts are computed by ``get_contributors`` and
+    ``get_otus`` over the ``legacy_history`` rows scoped to the requested index. Rows
+    belonging to another index must not leak into either aggregation.
+    """
     client = await spawn_client(authenticated=True)
 
-    user = await fake.users.create()
+    prolific = await fake.users.create()
+    occasional = await fake.users.create()
 
-    await asyncio.gather(
-        mongo.references.insert_many(
-            [
-                {"_id": "bar", "archived": False, "data_type": "genome", "name": "Bar"},
-            ],
-            session=None,
-        ),
-        mongo.history.insert_many(
-            [
-                {"_id": "0", "index": {"id": "foobar"}, "otu": {"id": "foo"}},
-                {"_id": "1", "index": {"id": "foobar"}, "otu": {"id": "baz"}},
-                {"_id": "2", "index": {"id": "bar"}, "otu": {"id": "bat"}},
-            ],
-            session=None,
-        ),
+    await mongo.references.insert_one(
+        {"_id": "bar", "archived": False, "data_type": "genome", "name": "Bar"},
     )
 
-    job = await fake.jobs.create(user=user, workflow="build_index")
+    async with AsyncSession(pg) as session:
+        session.add_all(
+            SQLLegacyHistory(
+                legacy_id=legacy_id,
+                created_at=static_time.datetime,
+                description="Description",
+                method_name="edit",
+                user_id=user_id,
+                otu=otu_id,
+                otu_name=otu_name,
+                otu_version=otu_version,
+                reference="bar",
+                index=index_id,
+                index_version="0",
+            )
+            for legacy_id, index_id, otu_id, otu_name, otu_version, user_id in (
+                ("tmv.0", "foobar", "tmv", "Tobacco mosaic virus", "0", prolific.id),
+                ("tmv.1", "foobar", "tmv", "Tobacco mosaic virus", "1", prolific.id),
+                ("pvx.0", "foobar", "pvx", "Potato virus X", "0", occasional.id),
+                ("other.0", "other", "other", "Other virus", "0", occasional.id),
+            )
+        )
+        await session.commit()
+
+    job = await fake.jobs.create(user=prolific, workflow="build_index")
 
     if not error:
         await mongo.indexes.insert_one(
@@ -335,44 +388,17 @@ async def test_get(
                 "reference": {"id": "bar"},
                 "manifest": {"foo": 2},
                 "has_files": True,
-                "user": {"id": user.id},
+                "user": {"id": prolific.id},
                 "job": {"id": job.id},
                 "task": None,
             },
         )
-
-    m_get_contributors = mocker.patch(
-        "virtool.history.db.get_contributors",
-        make_mocked_coro(
-            [
-                {"id": 1, "count": 1, "handle": "fred"},
-                {"id": 2, "count": 3, "handle": "ian"},
-            ],
-        ),
-    )
-
-    m_get_otus = mocker.patch(
-        "virtool.indexes.db.get_otus",
-        make_mocked_coro(
-            [
-                {"id": "kjs8sa99", "name": "Foo", "change_count": 1},
-                {"id": "zxbbvngc", "name": "Test", "change_count": 3},
-            ],
-        ),
-    )
 
     resp = await client.get("/indexes/foobar")
 
     if error is None:
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
-
-        # Check that get_contributors was called with correct parameter types
-        call_args = m_get_contributors.call_args[0]
-        assert isinstance(call_args[0], Mongo)
-        assert isinstance(call_args[1], AsyncEngine)
-        assert call_args[2] == {"index.id": "foobar"}
-        m_get_otus.assert_called_with(ANY, "foobar")
     else:
         await resp_is.not_found(resp)
 
@@ -439,6 +465,7 @@ class TestCreate:
         fake: DataFaker,
         mocker: MockerFixture,
         mongo: Mongo,
+        pg: AsyncEngine,
         resp_is: RespIs,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
@@ -466,6 +493,35 @@ class TestCreate:
             ),
         )
 
+        async with AsyncSession(pg) as session:
+            reference = SQLReference(
+                legacy_id="foo",
+                name="Foo",
+                description="",
+                created_at=static_time.datetime,
+                source_types=[],
+                user_id=user.id,
+            )
+            session.add(reference)
+            await session.flush()
+
+            session.add(
+                SQLLegacyHistory(
+                    legacy_id="history_1",
+                    created_at=static_time.datetime,
+                    description="Description",
+                    method_name="create",
+                    user_id=user.id,
+                    otu="otu_1",
+                    otu_name="Tobacco mosaic virus",
+                    otu_version="0",
+                    reference_id=reference.id,
+                    index=None,
+                    index_version=None,
+                ),
+            )
+            await session.commit()
+
         m_create_manifest = mocker.patch(
             "virtool.references.db.get_manifest",
             new=make_mocked_coro({"foo": 1, "bar": 2}),
@@ -485,7 +541,7 @@ class TestCreate:
 
         assert index == snapshot(name="index")
 
-        m_create_manifest.assert_called_with(ANY, "foo")
+        m_create_manifest.assert_called_with(ANY, ANY, "foo")
 
     @pytest.mark.parametrize(
         "error",
@@ -535,6 +591,7 @@ async def test_find_history(
     static_time,
     snapshot,
     mongo: Mongo,
+    pg: AsyncEngine,
     spawn_client: ClientSpawner,
     resp_is,
 ):
@@ -546,52 +603,51 @@ async def test_find_history(
     user_1 = await fake.users.create()
     user_2 = await fake.users.create()
 
+    history_documents = [
+        {
+            "_id": "zxbbvngc.0",
+            "created_at": static_time.datetime,
+            "reference": {"id": "foo"},
+            "otu": {"version": 0, "name": "Test", "id": "zxbbvngc"},
+            "user": {"id": user_1.id},
+            "description": "Added Unnamed Isolate as default",
+            "method_name": "add_isolate",
+            "index": {"version": 0, "id": "foobar"},
+        },
+        {
+            "_id": "zxbbvngc.1",
+            "created_at": static_time.datetime,
+            "reference": {"id": "foo"},
+            "otu": {"version": 1, "name": "Test", "id": "zxbbvngc"},
+            "user": {"id": user_1.id},
+            "description": "Added Unnamed Isolate as default",
+            "method_name": "add_isolate",
+            "index": {"version": 0, "id": "foobar"},
+        },
+        {
+            "_id": "zxbbvngc.2",
+            "created_at": static_time.datetime,
+            "reference": {"id": "foo"},
+            "otu": {"version": 2, "name": "Test", "id": "zxbbvngc"},
+            "user": {"id": user_2.id},
+            "description": "Added Unnamed Isolate as default",
+            "method_name": "add_isolate",
+            "index": {"version": 0, "id": "foobar"},
+        },
+        {
+            "_id": "kjs8sa99.3",
+            "created_at": static_time.datetime,
+            "reference": {"id": "foo"},
+            "otu": {"version": 3, "name": "Foo", "id": "kjs8sa99"},
+            "user": {"id": user_1.id},
+            "description": "Edited sequence wrta20tr in Islolate chilli-CR",
+            "method_name": "edit_sequence",
+            "index": {"version": 0, "id": "foobar"},
+        },
+    ]
+
     await asyncio.gather(
-        mongo.history.insert_many(
-            [
-                {
-                    "_id": "zxbbvngc.0",
-                    "created_at": static_time.datetime,
-                    "reference": {"id": "foo"},
-                    "otu": {"version": 0, "name": "Test", "id": "zxbbvngc"},
-                    "user": {"id": user_1.id},
-                    "description": "Added Unnamed Isolate as default",
-                    "method_name": "add_isolate",
-                    "index": {"version": 0, "id": "foobar"},
-                },
-                {
-                    "_id": "zxbbvngc.1",
-                    "created_at": static_time.datetime,
-                    "reference": {"id": "foo"},
-                    "otu": {"version": 1, "name": "Test", "id": "zxbbvngc"},
-                    "user": {"id": user_1.id},
-                    "description": "Added Unnamed Isolate as default",
-                    "method_name": "add_isolate",
-                    "index": {"version": 0, "id": "foobar"},
-                },
-                {
-                    "_id": "zxbbvngc.2",
-                    "created_at": static_time.datetime,
-                    "reference": {"id": "foo"},
-                    "otu": {"version": 2, "name": "Test", "id": "zxbbvngc"},
-                    "user": {"id": user_2.id},
-                    "description": "Added Unnamed Isolate as default",
-                    "method_name": "add_isolate",
-                    "index": {"version": 0, "id": "foobar"},
-                },
-                {
-                    "_id": "kjs8sa99.3",
-                    "created_at": static_time.datetime,
-                    "reference": {"id": "foo"},
-                    "otu": {"version": 3, "name": "Foo", "id": "kjs8sa99"},
-                    "user": {"id": user_1.id},
-                    "description": "Edited sequence wrta20tr in Islolate chilli-CR",
-                    "method_name": "edit_sequence",
-                    "index": {"version": 0, "id": "foobar"},
-                },
-            ],
-            session=None,
-        ),
+        mongo.history.insert_many(history_documents, session=None),
         mongo.references.insert_many(
             [
                 {"_id": "bar", "archived": False, "data_type": "genome", "name": "Bar"},
@@ -600,6 +656,27 @@ async def test_find_history(
             session=None,
         ),
     )
+
+    async with AsyncSession(pg) as session:
+        reference = SQLReference(
+            legacy_id="foo",
+            name="Foo",
+            description="",
+            created_at=static_time.datetime,
+            source_types=[],
+            user_id=user_1.id,
+        )
+        session.add(reference)
+        await session.flush()
+
+        session.add_all(
+            SQLLegacyHistory(
+                **legacy_history_values(document),
+                reference_id=reference.id,
+            )
+            for document in history_documents
+        )
+        await session.commit()
 
     resp = await client.get("/indexes/foobar/history")
 
@@ -642,20 +719,6 @@ async def test_delete_index(
                     "version": 4,
                 },
             ),
-            mongo.history.insert_many(
-                [
-                    {
-                        "_id": _id,
-                        "index": {
-                            "id": index_id,
-                            "version": "test_version",
-                        },
-                        "user": {"id": user.id},
-                    }
-                    for _id in ("history1", "history2", "history3")
-                ],
-                session=None,
-            ),
         )
 
     response = await client.delete(f"/indexes/{index_id}")
@@ -664,8 +727,7 @@ async def test_delete_index(
         assert error == response.status
     else:
         assert response.status == 204
-        async for doc in mongo.history.find({"index.id": index_id}):
-            assert doc["index"]["id"] == doc["index"]["version"] == "unbuilt"
+        assert await mongo.indexes.find_one(index_id) is None
 
 
 @pytest.mark.parametrize("error", [None, "409", "404_index", "404_file"])

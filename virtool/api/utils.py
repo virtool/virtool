@@ -72,7 +72,8 @@ def compose_regex_query(
 async def paginate(
     collection,
     mongo_query: dict | MultiDictProxy[str],
-    url_query: dict | MultiDictProxy[str],
+    page: int,
+    per_page: int,
     base_query: dict | None = None,
     projection: Projection | None = None,
     reverse: bool = False,
@@ -86,8 +87,9 @@ async def paginate(
     from user input such as search terms and filter options. This documents matching
     query will count toward the returned `found_count`.
 
-    The `url_query` is the raw query from the request URL. This value is used to derive
-    the `page` and `per_page` numbers used in paging the search results.
+    The `page` and `per_page` values control paging of the search results. They are
+    validated at the API boundary, so this function trusts them without bounds
+    checking.
 
     The `base_query` is affects the `total_count` of documents in the collection
     returned to the API client. An example where this is used is only ever returning
@@ -105,7 +107,8 @@ async def paginate(
 
     :param collection: the database collection
     :param mongo_query: a query derived from user supplied - affects found count
-    :param url_query: the raw URL query; used to get the `page` and `page_count` values
+    :param page: the one-indexed page number to return
+    :param per_page: the number of documents to return per page
     :param sort: a field to sort by
     :param projection: the projection to apply to the returned documents
     :param base_query: a query always applied to the search
@@ -113,16 +116,6 @@ async def paginate(
     :return: a search result including a list of matched documents
 
     """
-    try:
-        page = int(url_query["page"])
-    except (KeyError, ValueError):
-        page = 1
-
-    try:
-        per_page = int(url_query["per_page"])
-    except (KeyError, ValueError):
-        per_page = 25
-
     base_query = base_query or {}
 
     if isinstance(sort, str):

@@ -1,12 +1,13 @@
 """Work with indexes in the database."""
 
 import asyncio
-from collections.abc import AsyncIterator, Mapping
+import asyncio.tasks
+from collections.abc import AsyncIterator
 from typing import Any
 
 import pymongo
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from sqlalchemy import select
+from sqlalchemy import Integer, cast, distinct, func, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.history.db
@@ -14,11 +15,14 @@ import virtool.pg.utils
 import virtool.references.db
 import virtool.utils
 from virtool.api.utils import paginate
+from virtool.data.topg import both_transactions, compose_legacy_id_subquery
 from virtool.data.transforms import AbstractTransform, apply_transforms
+from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.sql import SQLIndexFile
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
-from virtool.references.db import compose_archived_filter
+from virtool.references.db import compose_archived_filter, compose_reference_id_match
+from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.transforms import AttachUserTransform
@@ -76,29 +80,63 @@ class IndexFilesTransform(AbstractTransform):
 
 
 class IndexCountsTransform(AbstractTransform):
-    """Attaches modification counts to index documents based on OTU collection
-    queries.
-    """
-
-    def __init__(self, mongo: "Mongo"):
-        self._mongo = mongo
+    """Attaches modification counts to index documents from the legacy history table."""
 
     async def attach_one(self, document: Document, prepared: Any) -> Document:
         return {**document, **prepared}
 
     async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
-        query = {"index.id": document["id"]}
+        change_count, modified_otu_count = (
+            await session.execute(
+                select(
+                    func.count(),
+                    func.count(distinct(SQLLegacyHistory.otu)),
+                ).where(SQLLegacyHistory.index == document["id"]),
+            )
+        ).one()
 
-        change_count, otu_ids = await asyncio.gather(
-            self._mongo.history.count_documents(query),
-            self._mongo.history.distinct("otu.id", query),
-        )
+        return {
+            "change_count": change_count,
+            "modified_otu_count": modified_otu_count,
+        }
 
-        return {"change_count": change_count, "modified_otu_count": len(otu_ids)}
+    async def prepare_many(
+        self, documents: list[Document], session: AsyncSession
+    ) -> Any:
+        index_ids = [document["id"] for document in documents]
+
+        rows = (
+            await session.execute(
+                select(
+                    SQLLegacyHistory.index,
+                    func.count(),
+                    func.count(distinct(SQLLegacyHistory.otu)),
+                )
+                .where(SQLLegacyHistory.index.in_(index_ids))
+                .group_by(SQLLegacyHistory.index),
+            )
+        ).all()
+
+        counts = {
+            index: {
+                "change_count": change_count,
+                "modified_otu_count": modified_otu_count,
+            }
+            for index, change_count, modified_otu_count in rows
+        }
+
+        return {
+            index_id: counts.get(
+                index_id,
+                {"change_count": 0, "modified_otu_count": 0},
+            )
+            for index_id in index_ids
+        }
 
 
 async def create(
-    mongo,
+    mongo: "Mongo",
+    pg: AsyncEngine,
     ref_id: str,
     user_id: int,
     job_id: int,
@@ -108,6 +146,7 @@ async def create(
     index.
 
     :param mongo: the application database client
+    :param pg: the application Postgres client
     :param ref_id: the ID of the reference to create index for
     :param user_id: the ID of the current user
     :param job_id: the ID of the job
@@ -116,7 +155,7 @@ async def create(
     """
     index_version, manifest = await asyncio.gather(
         get_next_version(mongo, ref_id),
-        virtool.references.db.get_manifest(mongo, ref_id),
+        virtool.references.db.get_manifest(mongo, pg, ref_id),
     )
 
     document = {
@@ -135,13 +174,17 @@ async def create(
     if index_id:
         document["_id"] = index_id
 
-    async with mongo.create_session() as mongo_session:
+    async with both_transactions(mongo, pg) as (mongo_session, pg_session):
         document = await mongo.indexes.insert_one(document, session=mongo_session)
 
-        await mongo.history.update_many(
-            {"index.id": "unbuilt", "reference.id": ref_id},
-            {"$set": {"index": {"id": document["_id"], "version": index_version}}},
-            session=mongo_session,
+        await pg_session.execute(
+            update(SQLLegacyHistory)
+            .where(
+                SQLLegacyHistory.reference_id
+                == compose_legacy_id_subquery(SQLReference, ref_id),
+                SQLLegacyHistory.index.is_(None),
+            )
+            .values(index=document["_id"], index_version=str(index_version)),
         )
 
     return document
@@ -150,17 +193,19 @@ async def create(
 async def find(
     mongo: "Mongo",
     pg: AsyncEngine,
-    req_query: Mapping,
+    page: int,
+    per_page: int,
     ref_id: str | None = None,
     archived: bool | None = None,
 ) -> dict:
-    """Find an index document matching the `req_query`
+    """Find index documents.
 
     When ``ref_id`` is given, ``archived`` is ignored — the reference is
     already chosen, so its lifecycle state is fixed.
 
     :param mongo: the application database client
-    :param req_query: the request object
+    :param page: the one-indexed page number to return
+    :param per_page: the number of documents to return per page
     :param ref_id: the id of the reference
     :param archived: lifecycle filter on the index's reference; see
         :func:`virtool.references.db.compose_archived_filter`
@@ -195,7 +240,8 @@ async def find(
     data = await paginate(
         mongo.indexes,
         mongo_query,
-        req_query,
+        page,
+        per_page,
         base_query=base_query,
         projection=[
             "_id",
@@ -215,14 +261,14 @@ async def find(
         sort="version",
     )
 
-    unbuilt_stats = await get_unbuilt_stats(mongo, ref_id)
+    unbuilt_stats = await get_unbuilt_stats(mongo, pg, ref_id)
 
     documents = [base_processor(d) for d in data["documents"]]
     transforms = [
         AttachJobTransform(pg),
         AttachReferenceTransform(mongo),
         AttachUserTransform(pg),
-        IndexCountsTransform(mongo),
+        IndexCountsTransform(),
     ]
 
     return {
@@ -260,33 +306,46 @@ async def get_current_id_and_version(
     return document["_id"], document["version"]
 
 
-async def get_otus(mongo: "Mongo", index_id: str) -> list[dict]:
+async def get_otus(pg: AsyncEngine, index_id: str) -> list[dict]:
     """Return a list of otus and number of changes for a specific index.
 
-    :param mongo: the application database client
+    The OTU name is taken from the change with the highest ``otu_version``, mirroring
+    the Mongo aggregation's ``$first`` after sorting by version descending. OTUs whose
+    latest change has no name are excluded.
+
+    :param pg: the application PostgreSQL database object
     :param index_id: the id of the index to get otus for
 
     :return: a list of otus modified in the index
 
     """
-    pipeline = [
-        {"$match": {"index.id": index_id}},
-        {"$sort": {"otu.id": 1, "otu.version": -1}},
-        {
-            "$group": {
-                "_id": "$otu.id",
-                "name": {"$first": "$otu.name"},
-                "count": {"$sum": 1},
-            },
-        },
-        {"$match": {"name": {"$ne": None}}},
-        {"$sort": {"name": 1}},
-    ]
+    async with AsyncSession(pg) as session:
+        rows = (
+            await session.execute(
+                select(
+                    SQLLegacyHistory.otu,
+                    SQLLegacyHistory.otu_name,
+                    func.count()
+                    .over(partition_by=SQLLegacyHistory.otu)
+                    .label("change_count"),
+                )
+                .where(SQLLegacyHistory.index == index_id)
+                .distinct(SQLLegacyHistory.otu)
+                .order_by(
+                    SQLLegacyHistory.otu,
+                    cast(SQLLegacyHistory.otu_version, Integer).desc().nulls_last(),
+                ),
+            )
+        ).all()
 
-    return [
-        {"id": otu["_id"], "name": otu["name"], "change_count": otu["count"]}
-        async for otu in mongo.history.aggregate(pipeline)
-    ]
+    return sorted(
+        (
+            {"id": row.otu, "name": row.otu_name, "change_count": row.change_count}
+            for row in rows
+            if row.otu_name is not None
+        ),
+        key=lambda otu: otu["name"],
+    )
 
 
 async def get_next_version(mongo: "Mongo", ref_id: str) -> int:
@@ -301,31 +360,47 @@ async def get_next_version(mongo: "Mongo", ref_id: str) -> int:
     return await mongo.indexes.count_documents({"reference.id": ref_id, "ready": True})
 
 
-async def get_unbuilt_stats(mongo: "Mongo", ref_id: str | None = None) -> dict:
+async def get_unbuilt_stats(
+    mongo: "Mongo",
+    pg: AsyncEngine,
+    ref_id: str | None = None,
+) -> dict:
     """Get the number of unbuilt changes and number of OTUs affected by those changes.
 
-    Used to populate the metadata for an index find request.Can search against a
+    Used to populate the metadata for an index find request. Can search against a
     specific reference or all references.
 
     :param mongo: the application mongodb client
+    :param pg: the application PostgreSQL database object
     :param ref_id: the ref id to search unbuilt changes for
 
     :return: the change count and modified OTU count
 
     """
     ref_query = {}
+    history_filters = [SQLLegacyHistory.index.is_(None)]
 
     if ref_id:
-        ref_query["reference.id"] = ref_id
+        ref_query["reference.id"] = await compose_reference_id_match(pg, ref_id)
+        history_filters.append(
+            SQLLegacyHistory.reference_id
+            == compose_legacy_id_subquery(SQLReference, ref_id),
+        )
 
-    history_query = {**ref_query, "index.id": "unbuilt"}
+    async with AsyncSession(pg) as session:
+        change_count, modified_otu_count = (
+            await session.execute(
+                select(
+                    func.count(),
+                    func.count(distinct(SQLLegacyHistory.otu)),
+                ).where(*history_filters),
+            )
+        ).one()
 
     return {
         "total_otu_count": await mongo.otus.count_documents(ref_query),
-        "change_count": await mongo.history.count_documents(history_query),
-        "modified_otu_count": len(
-            await mongo.history.distinct("otu.id", history_query),
-        ),
+        "change_count": change_count,
+        "modified_otu_count": modified_otu_count,
     }
 
 
@@ -434,14 +509,16 @@ async def upsert_index_file(
 
 async def update_last_indexed_versions(
     mongo: "Mongo",
+    pg: AsyncEngine,
     ref_id: str,
     session: AsyncIOMotorClientSession,
 ) -> None:
     """Update the `last_indexed_version` field for OTUs associated with `ref_id`
 
     :param mongo: the application mongo client
-    :param session: the motor session to use
+    :param pg: the application Postgres client
     :param ref_id: the id of the reference whose otus should be updated
+    :param session: the motor session to use
 
     """
     pipeline = [
@@ -453,7 +530,12 @@ async def update_last_indexed_versions(
                 "comp": {"$cmp": ["$version", "$last_indexed_version"]},
             },
         },
-        {"$match": {"reference.id": ref_id, "comp": {"$ne": 0}}},
+        {
+            "$match": {
+                "reference.id": await compose_reference_id_match(pg, ref_id),
+                "comp": {"$ne": 0},
+            },
+        },
         {"$group": {"_id": "$version", "id_list": {"$addToSet": "$_id"}}},
     ]
 
@@ -500,45 +582,3 @@ async def attach_files(pg: AsyncEngine, base_url: str, document: dict) -> dict:
         )
 
     return {**document, "files": files}
-
-
-def lookup_index_otu_counts(local_field: str = "index.id") -> list[dict]:
-    """Create a mongoDB aggregation pipeline step to look up index otu counts.
-
-    :param local_field: index id field to look up
-    :return: mongoDB aggregation steps for use in an aggregation pipeline
-    """
-    return [
-        {
-            "$lookup": {
-                "from": "history",
-                "let": {"index_id": f"${local_field}"},
-                "pipeline": [
-                    {"$match": {"$expr": {"$eq": ["$index.id", "$$index_id"]}}},
-                    {"$sort": {"_id": 1}},
-                    {
-                        "$group": {
-                            "_id": None,
-                            "change_count": {"$sum": 1},
-                            "modified_otu_count": {"$addToSet": "$otu.id"},
-                        },
-                    },
-                    {
-                        "$project": {
-                            "_id": False,
-                            "change_count": True,
-                            "modified_otu_count": {"$size": "$modified_otu_count"},
-                        },
-                    },
-                ],
-                "as": "counts",
-            },
-        },
-        {"$set": {"counts": {"$first": "$counts"}}},
-        {"$set": {"change_count": {"$ifNull": ["$counts.change_count", 0]}}},
-        {
-            "$set": {
-                "modified_otu_count": {"$ifNull": ["$counts.modified_otu_count", 0]},
-            },
-        },
-    ]

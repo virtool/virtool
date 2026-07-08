@@ -1,11 +1,8 @@
 import asyncio
-from datetime import datetime, timedelta
 
-import arrow
-from aiohttp import ClientConnectionError, ClientConnectorError, ClientSession
-from multidict import MultiDictProxy
-from semver import VersionInfo
-from sqlalchemy import select
+from aiohttp import ClientSession
+from sqlalchemy import delete, select, update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.history.db
@@ -20,13 +17,16 @@ from virtool.data.errors import (
     ResourceConflictError,
     ResourceError,
     ResourceNotFoundError,
-    ResourceRemoteError,
 )
 from virtool.data.events import Operation, emit, emits
-from virtool.data.topg import both_transactions
+from virtool.data.topg import (
+    both_transactions,
+    compose_legacy_id_single_expression,
+    compose_legacy_id_subquery,
+    resolve_legacy_id,
+    retry_both_transactions,
+)
 from virtool.data.transforms import apply_transforms
-from virtool.errors import GitHubError
-from virtool.github import create_update_subdocument, format_release
 from virtool.groups.pg import SQLGroup
 from virtool.history.db import (
     bulk_delete_history,
@@ -34,21 +34,20 @@ from virtool.history.db import (
     patch_to_version,
 )
 from virtool.history.models import HistorySearchResult
+from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.models import IndexMinimal, IndexSearchResult
 from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_mongo_from_app, get_one_field
+from virtool.mongo.utils import get_one_field
 from virtool.otus.models import OTU, OTUSearchResult
 from virtool.otus.oas import CreateOTURequest
 from virtool.pg.utils import get_row_by_id
 from virtool.references.alot import prepare_otu_insertion
-from virtool.references.bulk import BulkOTUUpdater
 from virtool.references.db import (
     compose_archived_filter,
+    compose_reference_id_match,
     compose_rights_filter,
-    fetch_and_update_release,
     get_contributors,
-    get_internal_control,
     get_latest_build,
     get_manifest,
     get_otu_count,
@@ -57,12 +56,11 @@ from virtool.references.db import (
     get_unbuilt_count,
     populate_insert_only_reference,
     processor,
+    write_legacy_reference,
 )
 from virtool.references.models import (
     Reference,
     ReferenceGroup,
-    ReferenceInstalled,
-    ReferenceRelease,
     ReferenceSearchResult,
     ReferenceUser,
 )
@@ -73,14 +71,17 @@ from virtool.references.oas import (
     ReferenceRightsRequest,
     UpdateReferenceRequest,
 )
+from virtool.references.sql import (
+    SQLReference,
+    SQLReferenceGroup,
+    SQLReferenceUser,
+)
 from virtool.references.tasks import (
     CloneReferenceTask,
     ImportReferenceTask,
-    RemoteReferenceTask,
-    UpdateRemoteReferenceTask,
 )
 from virtool.references.transforms import AttachImportedFromTransform
-from virtool.references.utils import OFFICIAL_REMOTE_SLUG, RIGHTS, ReferenceSourceData
+from virtool.references.utils import RIGHTS, ReferenceSourceData
 from virtool.storage.protocol import StorageBackend
 from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
@@ -91,7 +92,14 @@ from virtool.types import Document
 from virtool.uploads.sql import SQLUpload
 from virtool.users.pg import SQLUser
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import get_http_session_from_app, get_safely
+
+REFERENCE_UPDATE_COLUMNS = frozenset(
+    {"name", "description", "organism", "restrict_source_types", "source_types"},
+)
+"""``UpdateReferenceRequest`` fields that map to ``legacy_references`` columns.
+
+Acts as an allowlist so only these fields are mirrored to Postgres on update.
+"""
 
 
 class ReferencesData(DataLayerDomain):
@@ -153,7 +161,8 @@ class ReferencesData(DataLayerDomain):
         user_id: int,
         administrator: bool,
         groups: list[int | str],
-        query: MultiDictProxy,
+        page: int,
+        per_page: int,
         archived: bool | None = None,
     ) -> ReferenceSearchResult:
         """Find references."""
@@ -170,7 +179,8 @@ class ReferencesData(DataLayerDomain):
         data = await paginate(
             self._mongo.references,
             mongo_query,
-            query,
+            page,
+            per_page,
             sort="name",
             base_query=base_query,
         )
@@ -180,26 +190,20 @@ class ReferencesData(DataLayerDomain):
             for document in data["documents"]
         ]
 
-        documents, remote_slug_count = await asyncio.gather(
-            apply_transforms(
-                documents,
-                [
-                    AttachUserTransform(self._pg),
-                    AttachImportedFromTransform(self._mongo, self._pg),
-                    AttachTaskTransform(self._pg),
-                ],
-                self._pg,
-            ),
-            self._mongo.references.count_documents(
-                {"remotes_from.slug": OFFICIAL_REMOTE_SLUG},
-            ),
+        documents = await apply_transforms(
+            documents,
+            [
+                AttachUserTransform(self._pg),
+                AttachImportedFromTransform(self._mongo, self._pg),
+                AttachTaskTransform(self._pg),
+            ],
+            self._pg,
         )
 
         return ReferenceSearchResult(
             **{
                 **data,
                 "documents": documents,
-                "official_installed": remote_slug_count > 0,
             },
         )
 
@@ -213,7 +217,7 @@ class ReferencesData(DataLayerDomain):
             ):
                 raise ResourceNotFoundError("Source reference does not exist")
 
-            manifest = await get_manifest(self._mongo, data.clone_from)
+            manifest = await get_manifest(self._mongo, self._pg, data.clone_from)
 
             document = await virtool.references.db.create_clone(
                 self._mongo,
@@ -263,49 +267,6 @@ class ReferencesData(DataLayerDomain):
 
             document["task"] = {"id": task.id}
 
-        elif data.remote_from:
-            try:
-                release = await virtool.github.get_release(
-                    self._client,
-                    data.remote_from,
-                    release_id=data.release_id,
-                )
-
-            except ClientConnectionError:
-                raise ResourceRemoteError("Could not reach GitHub")
-
-            except GitHubError as err:
-                if "404" in str(err):
-                    raise ResourceRemoteError(
-                        "Could not retrieve latest GitHub release",
-                    )
-
-                raise
-
-            release = format_release(release)
-            release["newer"] = False
-
-            document = await virtool.references.db.create_remote(
-                self._mongo,
-                settings,
-                data.name,
-                release,
-                data.remote_from,
-                user_id,
-                data.data_type,
-            )
-
-            context = {
-                "release": release,
-                "ref_id": document["_id"],
-                "created_at": document["created_at"],
-                "user_id": user_id,
-            }
-
-            task = await self.data.tasks.create(RemoteReferenceTask, context=context)
-
-            document["task"] = {"id": task.id}
-
         else:
             document = await virtool.references.db.create_document(
                 self._mongo,
@@ -318,9 +279,70 @@ class ReferencesData(DataLayerDomain):
                 user_id=user_id,
             )
 
-        document = await self._mongo.references.insert_one(document)
+        async def persist(mongo_session, pg_session) -> None:
+            await self._mongo.references.insert_one(document, session=mongo_session)
+            await write_legacy_reference(pg_session, document)
+
+        await retry_both_transactions(self._mongo, self._pg, persist)
 
         return await self.get(document["_id"])
+
+    async def _resolve_reference_pk(
+        self,
+        pg_session: AsyncSession,
+        ref_id: str,
+    ) -> int | None:
+        """Resolve a reference's Postgres primary key from its legacy id.
+
+        Returns ``None`` when the reference has no Postgres row yet, signalling
+        that the rights write should be skipped for the backfill to reconcile.
+        """
+        return (
+            await pg_session.execute(
+                select(SQLReference.id).where(
+                    compose_legacy_id_single_expression(SQLReference, ref_id),
+                ),
+            )
+        ).scalar_one_or_none()
+
+    @staticmethod
+    async def _upsert_reference_rights(
+        pg_session: AsyncSession,
+        model: type,
+        member_column: str,
+        reference_pk: int,
+        member_id: int,
+        rights: dict,
+    ) -> None:
+        """Upsert a reference rights child row on its composite key."""
+        await pg_session.execute(
+            pg_insert(model)
+            .values(
+                reference_id=reference_pk,
+                **{member_column: member_id},
+                **rights,
+            )
+            .on_conflict_do_update(
+                index_elements=["reference_id", member_column],
+                set_=rights,
+            ),
+        )
+
+    @staticmethod
+    async def _delete_reference_rights(
+        pg_session: AsyncSession,
+        model: type,
+        member_column: str,
+        reference_pk: int,
+        member_id: int,
+    ) -> None:
+        """Delete a reference rights child row by its composite key."""
+        await pg_session.execute(
+            delete(model).where(
+                model.reference_id == reference_pk,
+                getattr(model, member_column) == member_id,
+            ),
+        )
 
     async def get(self, ref_id: str) -> Reference:
         """Get a reference."""
@@ -329,31 +351,26 @@ class ReferencesData(DataLayerDomain):
         if not document:
             raise ResourceNotFoundError
 
-        internal_control_id = get_safely(document, "internal_control", "id")
-
         (
             contributors,
-            internal_control,
             latest_build,
             otu_count,
             groups,
             users,
             unbuilt_count,
         ) = await asyncio.gather(
-            get_contributors(self._mongo, self._pg, ref_id),
-            get_internal_control(self._mongo, internal_control_id, ref_id),
+            get_contributors(self._pg, ref_id),
             get_latest_build(self._mongo, self._pg, ref_id),
-            get_otu_count(self._mongo, ref_id),
+            get_otu_count(self._mongo, self._pg, ref_id),
             get_reference_groups(self._pg, document),
             get_reference_users(self._mongo, self._pg, document),
-            get_unbuilt_count(self._mongo, ref_id),
+            get_unbuilt_count(self._pg, ref_id),
         )
 
         document.update(
             {
                 "contributors": contributors,
                 "groups": groups,
-                "internal_control": internal_control or None,
                 "latest_build": latest_build,
                 "otu_count": otu_count,
                 "unbuilt_change_count": unbuilt_count,
@@ -366,20 +383,6 @@ class ReferencesData(DataLayerDomain):
             [AttachUserTransform(self._pg), AttachTaskTransform(self._pg)],
             self._pg,
         )
-
-        try:
-            installed: dict | None = document.pop("updates")[-1]
-        except (KeyError, IndexError):
-            installed = None
-
-        if installed:
-            installed = await apply_transforms(
-                installed,
-                [AttachUserTransform(self._pg)],
-                self._pg,
-            )
-
-        document["installed"] = installed
 
         document = await apply_transforms(
             document,
@@ -405,9 +408,48 @@ class ReferencesData(DataLayerDomain):
 
         data = data.dict(exclude_unset=True)
 
-        await self._mongo.references.update_one({"_id": ref_id}, {"$set": data})
+        scalars = {key: data[key] for key in REFERENCE_UPDATE_COLUMNS if key in data}
+
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            await self._mongo.references.update_one(
+                {"_id": ref_id},
+                {"$set": data},
+                session=mongo_session,
+            )
+
+            if scalars:
+                await pg_session.execute(
+                    update(SQLReference)
+                    .where(SQLReference.legacy_id == ref_id)
+                    .values(**scalars),
+                )
 
         return await self.get(ref_id)
+
+    async def _set_archived(self, ref_id: str, archived: bool) -> None:
+        """Dual-write the ``archived`` flag for a reference.
+
+        The Postgres statement matches by ``legacy_id`` and is a no-op when the
+        reference has no Postgres row yet, leaving it for the backfill to create.
+        """
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            await self._mongo.references.update_one(
+                {"_id": ref_id},
+                {"$set": {"archived": archived}},
+                session=mongo_session,
+            )
+
+            await pg_session.execute(
+                update(SQLReference)
+                .where(SQLReference.legacy_id == ref_id)
+                .values(archived=archived),
+            )
 
     @emits(Operation.UPDATE)
     async def archive(self, ref_id: str) -> Reference:
@@ -417,16 +459,8 @@ class ReferencesData(DataLayerDomain):
         if document is None:
             raise ResourceNotFoundError()
 
-        if get_safely(document, "remotes_from", "slug") == OFFICIAL_REMOTE_SLUG:
-            raise ResourceConflictError(
-                "Cannot archive the official plant viruses reference",
-            )
-
         if not document.get("archived", False):
-            await self._mongo.references.update_one(
-                {"_id": ref_id},
-                {"$set": {"archived": True}},
-            )
+            await self._set_archived(ref_id, True)
 
         return await self.get(ref_id)
 
@@ -439,117 +473,25 @@ class ReferencesData(DataLayerDomain):
             raise ResourceNotFoundError()
 
         if document.get("archived", False):
-            await self._mongo.references.update_one(
-                {"_id": ref_id},
-                {"$set": {"archived": False}},
-            )
+            await self._set_archived(ref_id, False)
 
         return await self.get(ref_id)
-
-    async def remove(self, ref_id: str, req) -> None:
-        if not await virtool.references.db.check_right(req, ref_id, "remove"):
-            raise APIInsufficientRights()
-
-        reference = await self.get(ref_id)
-
-        await self._mongo.references.delete_one({"_id": ref_id})
-
-        emit(reference, "references", "delete", Operation.DELETE)
-
-    async def get_release(self, ref_id: str, app) -> ReferenceRelease:
-        if not await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
-            raise ResourceNotFoundError()
-
-        if not await self._mongo.references.count_documents(
-            {"_id": ref_id, "remotes_from": {"$exists": True}},
-        ):
-            raise ResourceConflictError("Not a remote reference")
-        try:
-            release = await virtool.references.db.fetch_and_update_release(
-                get_mongo_from_app(app),
-                get_http_session_from_app(app),
-                ref_id,
-            )
-        except ClientConnectorError:
-            raise ResourceRemoteError("Could not reach GitHub")
-
-        if release is None:
-            raise ResourceRemoteError("Release repository does not exist on GitHub")
-
-        return ReferenceRelease(**release)
-
-    async def get_updates(self, ref_id: str) -> list[ReferenceInstalled]:
-        if not await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
-            raise ResourceNotFoundError()
-
-        updates = await virtool.mongo.utils.get_one_field(
-            self._mongo.references,
-            "updates",
-            ref_id,
-        )
-
-        if updates is not None:
-            updates.reverse()
-            return [ReferenceInstalled(**update) for update in updates]
-
-        return []
-
-    async def create_update(
-        self,
-        ref_id: str,
-        user_id: int,
-    ) -> ReferenceRelease:
-        await self._require_not_archived(ref_id)
-
-        document = await self._mongo.references.find_one(ref_id, ["release"])
-
-        if document is None:
-            raise ResourceNotFoundError()
-
-        if document.get("release") is None:
-            raise ResourceError("No release available")
-
-        created_at = virtool.utils.timestamp()
-
-        task = await self.data.tasks.create(
-            UpdateRemoteReferenceTask,
-            context={
-                "created_at": created_at,
-                "ref_id": ref_id,
-                "release": document["release"],
-                "user_id": user_id,
-            },
-        )
-
-        subdocument = create_update_subdocument(
-            document["release"],
-            False,
-            user_id,
-            created_at,
-        )
-
-        await self._mongo.references.update_one(
-            {"_id": ref_id},
-            {
-                "$push": {"updates": subdocument},
-                "$set": {"task": {"id": task.id}, "updating": True},
-            },
-        )
-
-        return ReferenceRelease(**{**document["release"], **subdocument})
 
     async def find_otus(
         self,
         term: str | None,
         verified: bool | None,
         ref_id: str | None,
-        query,
+        page: int,
+        per_page: int,
     ) -> OTUSearchResult:
         if await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
             data = await virtool.otus.db.find(
                 self._mongo,
+                self._pg,
                 term,
-                query,
+                page,
+                per_page,
                 verified,
                 ref_id,
             )
@@ -571,6 +513,7 @@ class ReferencesData(DataLayerDomain):
         # they are.
         if message := await virtool.otus.db.check_name_and_abbreviation(
             self._mongo,
+            self._pg,
             ref_id,
             data.name,
             data.abbreviation,
@@ -585,31 +528,31 @@ class ReferencesData(DataLayerDomain):
         self,
         ref_id: str,
         unbuilt: bool | None,
-        query,
+        page: int,
+        per_page: int,
     ) -> HistorySearchResult:
         if not await self._mongo.references.count_documents({"_id": ref_id}):
             raise ResourceNotFoundError()
 
-        base_query = {"reference.id": ref_id}
-
-        search_query = {}
-        if unbuilt is True:
-            search_query["index.id"] = "unbuilt"
-        elif unbuilt is False:
-            search_query["index.id"] = {"$ne": "unbuilt"}
-
         data = await virtool.history.db.find(
-            self._mongo, self._pg, search_query, query, base_query
+            self._mongo,
+            self._pg,
+            page,
+            per_page,
+            reference_id=ref_id,
+            unbuilt=unbuilt,
         )
 
         return HistorySearchResult(**data)
 
-    async def find_indexes(self, ref_id: str, query) -> IndexSearchResult:
+    async def find_indexes(
+        self, ref_id: str, page: int, per_page: int
+    ) -> IndexSearchResult:
         if not await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
             raise ResourceNotFoundError()
 
         data = await virtool.indexes.db.find(
-            self._mongo, self._pg, query, ref_id=ref_id
+            self._mongo, self._pg, page, per_page, ref_id=ref_id
         )
 
         return IndexSearchResult(**data)
@@ -628,15 +571,28 @@ class ReferencesData(DataLayerDomain):
             raise ResourceConflictError("Index build already in progress")
 
         if await self._mongo.otus.count_documents(
-            {"reference.id": ref_id, "verified": False},
+            {
+                "reference.id": await compose_reference_id_match(self._pg, ref_id),
+                "verified": False,
+            },
             limit=1,
         ):
             raise ResourceError("There are unverified OTUs")
 
-        if not await self._mongo.history.count_documents(
-            {"reference.id": ref_id, "index.id": "unbuilt"},
-            limit=1,
-        ):
+        async with AsyncSession(self._pg) as session:
+            has_unbuilt = await session.scalar(
+                select(
+                    select(SQLLegacyHistory.id)
+                    .where(
+                        SQLLegacyHistory.reference_id
+                        == compose_legacy_id_subquery(SQLReference, ref_id),
+                        SQLLegacyHistory.index.is_(None),
+                    )
+                    .exists(),
+                ),
+            )
+
+        if not has_unbuilt:
             raise ResourceError("There are no unbuilt changes")
 
         index_id = await virtool.mongo.utils.get_new_id(self._mongo.indexes)
@@ -650,6 +606,7 @@ class ReferencesData(DataLayerDomain):
 
         document = await virtool.indexes.db.create(
             self._mongo,
+            self._pg,
             ref_id,
             user_id,
             job.id,
@@ -703,20 +660,42 @@ class ReferencesData(DataLayerDomain):
             if {group.id, group.legacy_id} & {g["id"] for g in document["groups"]}:
                 raise ResourceConflictError("Group already exists")
 
-        reference_group = {
-            "id": group.id,
+        created_at = virtool.utils.timestamp()
+
+        rights = {
             "build": data.build or False,
-            "created_at": virtool.utils.timestamp(),
-            "legacy_id": group.legacy_id,
             "modify": data.modify or False,
             "modify_otu": data.modify_otu or False,
-            "remove": data.remove or False,
         }
 
-        await self._mongo.references.update_one(
-            {"_id": ref_id},
-            {"$push": {"groups": reference_group}},
-        )
+        reference_group = {
+            "id": group.id,
+            "created_at": created_at,
+            "legacy_id": group.legacy_id,
+            **rights,
+        }
+
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            await self._mongo.references.update_one(
+                {"_id": ref_id},
+                {"$push": {"groups": reference_group}},
+                session=mongo_session,
+            )
+
+            reference_pk = await self._resolve_reference_pk(pg_session, ref_id)
+
+            if reference_pk is not None:
+                await self._upsert_reference_rights(
+                    pg_session,
+                    SQLReferenceGroup,
+                    "group_id",
+                    reference_pk,
+                    group.id,
+                    rights,
+                )
 
         reference = await self.get(ref_id)
 
@@ -770,10 +749,41 @@ class ReferencesData(DataLayerDomain):
             if group["id"] == group_id:
                 group.update({key: data.get(key, group[key]) for key in RIGHTS})
 
-                await self._mongo.references.update_one(
-                    {"_id": ref_id},
-                    {"$set": {"groups": document["groups"]}},
-                )
+                rights = {key: group[key] for key in RIGHTS}
+
+                async with AsyncSession(self._pg) as session:
+                    row = (
+                        await session.execute(
+                            select(SQLGroup).where(
+                                compose_legacy_id_single_expression(
+                                    SQLGroup,
+                                    group_id,
+                                ),
+                            ),
+                        )
+                    ).scalar_one()
+
+                async with both_transactions(self._mongo, self._pg) as (
+                    mongo_session,
+                    pg_session,
+                ):
+                    await self._mongo.references.update_one(
+                        {"_id": ref_id},
+                        {"$set": {"groups": document["groups"]}},
+                        session=mongo_session,
+                    )
+
+                    reference_pk = await self._resolve_reference_pk(pg_session, ref_id)
+
+                    if reference_pk is not None:
+                        await self._upsert_reference_rights(
+                            pg_session,
+                            SQLReferenceGroup,
+                            "group_id",
+                            reference_pk,
+                            row.id,
+                            rights,
+                        )
 
                 emit(
                     await self.get(ref_id),
@@ -782,25 +792,14 @@ class ReferencesData(DataLayerDomain):
                     Operation.UPDATE,
                 )
 
-                async with AsyncSession(self._pg) as session:
-                    result = await session.execute(
-                        select(SQLGroup).where(
-                            (SQLGroup.id == group_id)
-                            if isinstance(group_id, int)
-                            else (SQLGroup.legacy_id == group_id),
-                        ),
-                    )
-
-                    row = result.scalar_one()
-
-                    return ReferenceGroup(
-                        **{
-                            **group,
-                            "id": row.id,
-                            "legacy_id": row.legacy_id,
-                            "name": row.name,
-                        },
-                    )
+                return ReferenceGroup(
+                    **{
+                        **group,
+                        "id": row.id,
+                        "legacy_id": row.legacy_id,
+                        "name": row.name,
+                    },
+                )
 
         raise ResourceNotFoundError()
 
@@ -813,14 +812,41 @@ class ReferencesData(DataLayerDomain):
         if document is None:
             raise ResourceNotFoundError()
 
-        await self._mongo.references.update_one(
-            {"_id": ref_id},
-            {
-                "$set": {
-                    "groups": [g for g in document["groups"] if g["id"] != group_id],
+        async with AsyncSession(self._pg) as session:
+            group_pk = (
+                await session.execute(
+                    select(SQLGroup.id).where(
+                        compose_legacy_id_single_expression(SQLGroup, group_id),
+                    ),
+                )
+            ).scalar_one_or_none()
+
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            await self._mongo.references.update_one(
+                {"_id": ref_id},
+                {
+                    "$set": {
+                        "groups": [
+                            g for g in document["groups"] if g["id"] != group_id
+                        ],
+                    },
                 },
-            },
-        )
+                session=mongo_session,
+            )
+
+            reference_pk = await self._resolve_reference_pk(pg_session, ref_id)
+
+            if reference_pk is not None and group_pk is not None:
+                await self._delete_reference_rights(
+                    pg_session,
+                    SQLReferenceGroup,
+                    "group_id",
+                    reference_pk,
+                    group_pk,
+                )
 
         emit(await self.get(ref_id), "references", "delete_group", Operation.UPDATE)
 
@@ -856,19 +882,37 @@ class ReferencesData(DataLayerDomain):
             if user_row.id in existing_user_ids:
                 raise ResourceConflictError("User already exists")
 
-        reference_user = {
-            "id": user_row.id,
+        created_at = virtool.utils.timestamp()
+
+        rights = {
             "build": data.build or False,
-            "created_at": virtool.utils.timestamp(),
             "modify": data.modify or False,
             "modify_otu": data.modify_otu or False,
-            "remove": data.remove or False,
         }
 
-        await self._mongo.references.update_one(
-            {"_id": ref_id},
-            {"$push": {"users": reference_user}},
-        )
+        reference_user = {"id": user_row.id, "created_at": created_at, **rights}
+
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            await self._mongo.references.update_one(
+                {"_id": ref_id},
+                {"$push": {"users": reference_user}},
+                session=mongo_session,
+            )
+
+            reference_pk = await self._resolve_reference_pk(pg_session, ref_id)
+
+            if reference_pk is not None:
+                await self._upsert_reference_rights(
+                    pg_session,
+                    SQLReferenceUser,
+                    "user_id",
+                    reference_pk,
+                    user_row.id,
+                    rights,
+                )
 
         emit(await self.get(ref_id), "references", "create_user", Operation.UPDATE)
 
@@ -895,10 +939,29 @@ class ReferencesData(DataLayerDomain):
             if user["id"] == user_id:
                 user.update({key: data.get(key, user[key]) for key in RIGHTS})
 
-                await self._mongo.references.update_one(
-                    {"_id": ref_id},
-                    {"$set": {"users": document["users"]}},
-                )
+                rights = {key: user[key] for key in RIGHTS}
+
+                async with both_transactions(self._mongo, self._pg) as (
+                    mongo_session,
+                    pg_session,
+                ):
+                    await self._mongo.references.update_one(
+                        {"_id": ref_id},
+                        {"$set": {"users": document["users"]}},
+                        session=mongo_session,
+                    )
+
+                    reference_pk = await self._resolve_reference_pk(pg_session, ref_id)
+
+                    if reference_pk is not None:
+                        await self._upsert_reference_rights(
+                            pg_session,
+                            SQLReferenceUser,
+                            "user_id",
+                            reference_pk,
+                            user_id,
+                            rights,
+                        )
 
                 emit(
                     await self.get(ref_id),
@@ -928,10 +991,26 @@ class ReferencesData(DataLayerDomain):
 
         filtered_users = [user for user in document["users"] if user["id"] != user_id]
 
-        await self._mongo.references.update_one(
-            {"_id": ref_id},
-            {"$set": {"users": filtered_users}},
-        )
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            await self._mongo.references.update_one(
+                {"_id": ref_id},
+                {"$set": {"users": filtered_users}},
+                session=mongo_session,
+            )
+
+            reference_pk = await self._resolve_reference_pk(pg_session, ref_id)
+
+            if reference_pk is not None:
+                await self._delete_reference_rights(
+                    pg_session,
+                    SQLReferenceUser,
+                    "user_id",
+                    reference_pk,
+                    user_id,
+                )
 
         emit(await self.get(ref_id), "references", "delete_user", Operation.UPDATE)
 
@@ -999,24 +1078,41 @@ class ReferencesData(DataLayerDomain):
             3,
         )
 
-        await self._mongo.references.update_one(
-            {"_id": ref_id},
-            {
-                "$set": {
-                    "data_type": data.data_type,
-                    "organism": data.organism,
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            await self._mongo.references.update_one(
+                {"_id": ref_id},
+                {
+                    "$set": {
+                        "data_type": data.data_type,
+                        "organism": data.organism,
+                    },
                 },
-            },
-        )
+                session=mongo_session,
+            )
+
+            await pg_session.execute(
+                update(SQLReference)
+                .where(SQLReference.legacy_id == ref_id)
+                .values(organism=data.organism),
+            )
 
         await tracker.add(1)
+
+        async with AsyncSession(self._pg) as session:
+            reference_pk = await resolve_legacy_id(session, SQLReference, ref_id)
+
+        if reference_pk is None:
+            raise ResourceConflictError(f"Reference {ref_id!r} not found in postgres")
 
         insertions = [
             prepare_otu_insertion(
                 created_at,
                 HistoryMethod.import_otu,
                 otu.dict(by_alias=True),
-                ref_id,
+                reference_pk,
                 user_id,
             )
             for otu in data.otus
@@ -1043,12 +1139,6 @@ class ReferencesData(DataLayerDomain):
 
             async with asyncio.TaskGroup() as tg:
                 tg.create_task(
-                    self._mongo.history.insert_many(
-                        [insertion.history.document for insertion in insertions],
-                        None,
-                    ),
-                )
-                tg.create_task(
                     self._mongo.otus.insert_many(
                         [insertion.otu for insertion in insertions],
                         None,
@@ -1060,13 +1150,41 @@ class ReferencesData(DataLayerDomain):
         except Exception:
             await bulk_delete_history(self._pg, [row["change_id"] for row in diff_rows])
 
+            reference_id_match = await compose_reference_id_match(self._pg, ref_id)
+
             await asyncio.gather(
-                self._mongo.history.delete_many({"reference.id": ref_id}),
-                self._mongo.sequences.delete_many({"reference.id": ref_id}),
-                self._mongo.otus.delete_many({"reference.id": ref_id}),
+                self._mongo.sequences.delete_many({"reference.id": reference_id_match}),
+                self._mongo.otus.delete_many({"reference.id": reference_id_match}),
             )
 
             await self._mongo.references.delete_one({"_id": ref_id})
+
+            async with AsyncSession(self._pg) as session:
+                reference_id = (
+                    await session.execute(
+                        select(SQLReference.id).where(
+                            SQLReference.legacy_id == ref_id,
+                        ),
+                    )
+                ).scalar_one_or_none()
+
+                if reference_id is not None:
+                    await session.execute(
+                        delete(SQLReferenceUser).where(
+                            SQLReferenceUser.reference_id == reference_id,
+                        ),
+                    )
+                    await session.execute(
+                        delete(SQLReferenceGroup).where(
+                            SQLReferenceGroup.reference_id == reference_id,
+                        ),
+                    )
+                    await session.execute(
+                        delete(SQLReference).where(SQLReference.id == reference_id),
+                    )
+
+                await session.commit()
+
             raise
 
         await tracker.add(1)
@@ -1077,214 +1195,3 @@ class ReferencesData(DataLayerDomain):
             "populate_imported_reference",
             Operation.UPDATE,
         )
-
-    async def populate_remote_reference(
-        self,
-        ref_id: str,
-        data: ReferenceSourceData,
-        user_id: int,
-        release: Document,
-        progress_handler: TaskProgressHandler,
-    ) -> None:
-        tracker = AccumulatingProgressHandlerWrapper(progress_handler, 4)
-
-        created_at: datetime = await get_one_field(
-            self._mongo.references,
-            "created_at",
-            ref_id,
-        )
-
-        await tracker.add(1)
-
-        await self._mongo.references.update_one(
-            {"_id": ref_id},
-            {
-                "$set": {
-                    "data_type": data.data_type,
-                    "organism": data.organism,
-                },
-            },
-        )
-
-        await tracker.add(1)
-
-        await populate_insert_only_reference(
-            created_at,
-            HistoryMethod.remote,
-            self._mongo,
-            self._pg,
-            [otu.dict(by_alias=True) for otu in data.otus],
-            ref_id,
-            user_id,
-        )
-
-        await tracker.add(1)
-
-        await self._mongo.references.update_one(
-            {"_id": ref_id, "updates.id": release["id"]},
-            {
-                "$set": {
-                    "installed": create_update_subdocument(release, True, user_id),
-                    "updates.$.ready": True,
-                    "updating": False,
-                },
-            },
-        )
-
-        await tracker.add(1)
-
-        emit(
-            await self.get(ref_id),
-            "references",
-            "populate_remote_reference",
-            Operation.UPDATE,
-        )
-
-    async def update_remote_reference(
-        self,
-        ref_id: str,
-        data: ReferenceSourceData,
-        release: Document,
-        user_id: int,
-        progress_handler,
-    ) -> None:
-        """Update a remote reference to a newer version.
-
-        * Update reference metadata.
-        * Insert new OTUs.
-        * Update existing OTUs that have changed.
-        * Delete OTUs in the database that don't exist in the update.
-        * Create history.
-
-        """
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
-            created_at: datetime = await get_one_field(
-                self._mongo.references,
-                "created_at",
-                ref_id,
-            )
-
-            to_delete = await self._mongo.otus.distinct(
-                "_id",
-                {
-                    "reference.id": ref_id,
-                    "remote.id": {"$nin": list({otu.id for otu in data.otus})},
-                },
-                session=mongo_session,
-            )
-
-            tracker = AccumulatingProgressHandlerWrapper(
-                progress_handler,
-                len(data.otus) + len(to_delete),
-            )
-
-            await self._mongo.references.update_one(
-                {"_id": ref_id},
-                {"$set": {"organism": data.organism}},
-                session=mongo_session,
-            )
-
-            bulk_updater = BulkOTUUpdater(
-                self._mongo,
-                pg_session,
-                ref_id,
-                user_id,
-                created_at,
-                tracker,
-                mongo_session,
-            )
-
-            bulk_updater.bulk_upsert([otu.dict(by_alias=True) for otu in data.otus])
-
-            for otu_id in to_delete:
-                await bulk_updater.delete(otu_id)
-
-            await bulk_updater.finish()
-
-            await self._mongo.references.update_one(
-                {"_id": ref_id, "updates.id": release["id"]},
-                {
-                    "$set": {
-                        "installed": create_update_subdocument(release, True, user_id),
-                        "updates.$.ready": True,
-                        "updating": False,
-                        "release.newer": False,
-                    },
-                },
-                session=mongo_session,
-            )
-
-        emit(
-            await self.get(ref_id),
-            "references",
-            "update_remote_reference",
-            Operation.UPDATE,
-        )
-
-    async def clean_all(self) -> None:
-        """Clean corrupt updates from reference update lists.
-
-        If the installed version is earlier than the last update, the last update is
-        removed.
-
-        """
-        async for reference in self._mongo.references.find(
-            {"remotes_from": {"$exists": True}},
-            ["installed", "task", "updates"],
-        ):
-            if len(reference["updates"]) == 0:
-                continue
-
-            latest_update = reference["updates"][-1]
-
-            if latest_update["ready"]:
-                continue
-
-            try:
-                raw_version = reference["installed"]["name"].lstrip("v")
-            except (KeyError, TypeError):
-                continue
-
-            installed_version = VersionInfo.parse(raw_version)
-
-            latest_update_version = VersionInfo.parse(latest_update["name"].lstrip("v"))
-
-            if latest_update_version <= installed_version:
-                continue
-
-            if arrow.utcnow() - arrow.get(latest_update["created_at"]) > timedelta(
-                minutes=15,
-            ):
-                await self._mongo.references.update_one(
-                    {"_id": reference["_id"]},
-                    {"$pop": {"updates": -1}, "$set": {"updating": False}},
-                )
-
-                emit(
-                    await self.get(reference["_id"]),
-                    "references",
-                    "clean_all",
-                    Operation.UPDATE,
-                )
-
-    async def fetch_and_update_reference_releases(self) -> None:
-        for ref_id in await self._mongo.references.distinct(
-            "_id",
-            {"remotes_from": {"$exists": True}},
-        ):
-            await fetch_and_update_release(
-                self._mongo,
-                self._client,
-                ref_id,
-                ignore_errors=True,
-            )
-
-            emit(
-                await self.get(ref_id),
-                "references",
-                "fetch_and_update_reference_releases",
-                Operation.UPDATE,
-            )

@@ -7,8 +7,9 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 from virtool.api.client import UserClient
+from virtool.data.topg import compose_legacy_id_subquery
 from virtool.fake.next import DataFaker
-from virtool.history.sql import SQLHistoryDiff, SQLLegacyHistory
+from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.models.enums import HistoryMethod
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
@@ -17,28 +18,33 @@ from virtool.references.db import (
     compose_archived_filter,
     compose_rights_filter,
     create_document,
-    fetch_and_update_release,
     get_manifest,
     get_reference_groups,
     populate_insert_only_reference,
 )
 from virtool.references.models import ReferenceRights
-from virtool.startup import startup_http_client_session
+from virtool.references.sql import SQLReference
 
 
-@pytest.fixture
-async def fake_app():
-    version = "v1.2.3"
-
-    app = {"version": version}
-
-    yield app
-
-    # Close real session created in `test_startup_executors()`.
-    try:
-        await app["client"].close()
-    except TypeError:
-        pass
+async def seed_reference(
+    pg: AsyncEngine,
+    legacy_id: str,
+    user_id: int,
+    created_at,
+) -> None:
+    """Insert a ``legacy_references`` row so history writes can resolve its FK."""
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLReference(
+                legacy_id=legacy_id,
+                name=legacy_id,
+                description="",
+                created_at=created_at,
+                source_types=[],
+                user_id=user_id,
+            ),
+        )
+        await session.commit()
 
 
 @pytest.mark.parametrize("is_administrator", [True, False])
@@ -69,7 +75,6 @@ async def test_check_right(
         build=False,
         modify=False,
         modify_otu=True,
-        remove=False,
     ).dict()
 
     await mongo.references.insert_one(
@@ -145,7 +150,7 @@ class TestComposeRightsFilter:
         }
 
 
-async def test_create_manifest(mongo: Mongo, test_otu: dict):
+async def test_create_manifest(mongo: Mongo, pg: AsyncEngine, test_otu: dict):
     await mongo.otus.insert_many(
         [
             test_otu,
@@ -156,30 +161,11 @@ async def test_create_manifest(mongo: Mongo, test_otu: dict):
         session=None,
     )
 
-    assert await get_manifest(mongo, "hxn167") == {
+    assert await get_manifest(mongo, pg, "hxn167") == {
         "6116cba1": 0,
         "foo": 5,
         "bar": 11,
     }
-
-
-async def test_fetch_and_update_release(mongo: Mongo, fake_app, snapshot, static_time):
-    await startup_http_client_session(fake_app)
-
-    await mongo.references.insert_one(
-        {
-            "_id": "fake_ref_id",
-            "archived": False,
-            "installed": {"name": "1.0.0-fake-install"},
-            "release": {"name": "1.0.0-fake-release"},
-            "remotes_from": {"slug": "virtool/ref-plant-viruses"},
-        },
-    )
-
-    assert (
-        await fetch_and_update_release(mongo, fake_app["client"], "fake_ref_id", False)
-        == snapshot
-    )
 
 
 async def test_get_reference_groups(
@@ -201,14 +187,12 @@ async def test_get_reference_groups(
                         "build": False,
                         "modify": False,
                         "modify_otu": False,
-                        "remove": False,
                     },
                     {
                         "id": group_2.legacy_id,
                         "build": False,
                         "modify": True,
                         "modify_otu": True,
-                        "remove": True,
                     },
                 ],
             },
@@ -245,7 +229,6 @@ async def test_create_document_owner_user(
         "modify": True,
         "modify_otu": True,
         "created_at": static_time.datetime,
-        "remove": True,
     }
 
 
@@ -262,6 +245,8 @@ async def test_populate_insert_only_reference_rollback(
     """
     user = await fake.users.create()
     ref_id = "ref_rollback_test"
+
+    await seed_reference(pg, ref_id, user.id, static_time.datetime)
 
     await mongo.references.insert_one(
         {
@@ -311,17 +296,9 @@ async def test_populate_insert_only_reference_rollback(
         for i in (1, 2)
     ]
 
-    history_done = asyncio.Event()
     otus_done = asyncio.Event()
 
-    real_history_insert_many = mongo.history.insert_many
     real_otus_insert_many = mongo.otus.insert_many
-
-    async def wrapped_history_insert_many(documents, session):
-        try:
-            return await real_history_insert_many(documents, session)
-        finally:
-            history_done.set()
 
     async def wrapped_otus_insert_many(documents, session):
         try:
@@ -330,16 +307,12 @@ async def test_populate_insert_only_reference_rollback(
             otus_done.set()
 
     async def fail_sequences_insert_many(documents, session):
-        # Wait for the sibling inserts to actually land so the rollback has
+        # Wait for the sibling OTU insert to actually land so the rollback has
         # real Mongo state to clean up — otherwise the test would pass
         # trivially against empty collections.
-        await asyncio.wait_for(
-            asyncio.gather(history_done.wait(), otus_done.wait()),
-            timeout=5.0,
-        )
+        await asyncio.wait_for(otus_done.wait(), timeout=5.0)
         raise RuntimeError("forced mongo failure")
 
-    mocker.patch.object(mongo.history, "insert_many", wrapped_history_insert_many)
     mocker.patch.object(mongo.otus, "insert_many", wrapped_otus_insert_many)
     mocker.patch.object(mongo.sequences, "insert_many", fail_sequences_insert_many)
 
@@ -357,15 +330,14 @@ async def test_populate_insert_only_reference_rollback(
     assert excinfo.group_contains(RuntimeError, match="forced mongo failure")
 
     assert await mongo.otus.count_documents({"reference.id": ref_id}) == 0
-    assert await mongo.history.count_documents({"reference.id": ref_id}) == 0
     assert await mongo.sequences.count_documents({"reference.id": ref_id}) == 0
     assert await mongo.references.find_one({"_id": ref_id}) is None
 
     async with AsyncSession(pg) as pg_session:
         diff_count = await pg_session.scalar(
             select(func.count())
-            .select_from(SQLHistoryDiff)
-            .where(SQLHistoryDiff.change_id.in_(["rbotu001.0", "rbotu002.0"])),
+            .select_from(SQLLegacyHistoryDiff)
+            .where(SQLLegacyHistoryDiff.change_id.in_(["rbotu001.0", "rbotu002.0"])),
         )
 
         legacy_count = await pg_session.scalar(
@@ -378,7 +350,7 @@ async def test_populate_insert_only_reference_rollback(
     assert legacy_count == 0
 
 
-async def test_populate_insert_only_reference_dual_writes_legacy_history(
+async def test_populate_insert_only_reference_writes_legacy_history(
     fake: DataFaker,
     mocker: MockerFixture,
     mongo: Mongo,
@@ -389,6 +361,8 @@ async def test_populate_insert_only_reference_dual_writes_legacy_history(
     """A successful bulk insert writes one ``legacy_history`` row per OTU."""
     user = await fake.users.create()
     ref_id = "ref_legacy_test"
+
+    await seed_reference(pg, ref_id, user.id, static_time.datetime)
 
     mocker.patch(
         "virtool.references.alot.random_alphanumeric",
@@ -443,7 +417,10 @@ async def test_populate_insert_only_reference_dual_writes_legacy_history(
             (
                 await pg_session.execute(
                     select(SQLLegacyHistory)
-                    .where(SQLLegacyHistory.reference == ref_id)
+                    .where(
+                        SQLLegacyHistory.reference_id
+                        == compose_legacy_id_subquery(SQLReference, ref_id),
+                    )
                     .order_by(SQLLegacyHistory.legacy_id),
                 )
             )
@@ -453,7 +430,7 @@ async def test_populate_insert_only_reference_dual_writes_legacy_history(
 
     assert [row.legacy_id for row in rows] == ["lhotu001.0", "lhotu002.0"]
     assert all(row.user_id == user.id for row in rows)
-    assert all(row.reference == ref_id for row in rows)
+    assert all(row.reference is None and row.reference_id is not None for row in rows)
     assert all(row.otu_version == "0" for row in rows)
     assert all(row.index is None and row.index_version is None for row in rows)
     assert rows == snapshot(name="legacy_history")

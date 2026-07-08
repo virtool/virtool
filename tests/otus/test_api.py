@@ -2,7 +2,8 @@ import asyncio
 from http import HTTPStatus
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from yarl import URL
 
@@ -11,6 +12,8 @@ from tests.fixtures.response import RespIs
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.history.db import legacy_history_values
+from virtool.history.sql import SQLLegacyHistory
 from virtool.models.enums import HistoryMethod, Molecule
 from virtool.mongo.core import Mongo
 from virtool.otus.models import OTU, OTUIsolate, OTUSegment, OTUSequence
@@ -24,22 +27,17 @@ class TestGet:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         snapshot_recent: SnapshotAssertion,
         spawn_client: ClientSpawner,
-        test_ref: dict,
     ):
         """Test that a valid request returns the expected history item."""
         client = await spawn_client(authenticated=True)
 
-        await asyncio.gather(
-            fake.users.create(),
-            mongo.references.insert_one({**test_ref}),
-        )
-
         user = await data_layer.users.get(client.user.id)
 
-        otu = await fake.otus.create(test_ref["_id"], user=user)
+        reference = await fake.references.create(user=user)
+
+        otu = await fake.otus.create(reference.id, user=user)
 
         response = await client.get(f"/otus/{otu.id}")
 
@@ -51,6 +49,37 @@ class TestGet:
         client = await spawn_client(authenticated=True)
 
         resp = await client.get("/history/foobar")
+
+        await resp_is.not_found(resp)
+
+
+class TestListHistory:
+    async def test_ok(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        snapshot_recent: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that an OTU's history is listed from Postgres."""
+        client = await spawn_client(authenticated=True)
+
+        user = await data_layer.users.get(client.user.id)
+
+        reference = await fake.references.create(user=user)
+
+        otu = await fake.otus.create(reference.id, user=user)
+
+        resp = await client.get(f"/otus/{otu.id}/history")
+
+        assert resp.status == HTTPStatus.OK
+        assert await resp.json() == snapshot_recent
+
+    async def test_not_found(self, spawn_client: ClientSpawner, resp_is: RespIs):
+        """Test that listing history for a non-existent OTU results in a ``404``."""
+        client = await spawn_client(authenticated=True)
+
+        resp = await client.get("/otus/foobar/history")
 
         await resp_is.not_found(resp)
 
@@ -110,13 +139,13 @@ class TestEdit:
         existing_abbreviation: str,
         description: str,
         check_ref_right,
+        fake: DataFaker,
         mongo: Mongo,
         pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
         resp_is: RespIs,
         test_otu,
-        test_ref,
     ):
         """Test that changing the name and abbreviation results:
 
@@ -126,11 +155,14 @@ class TestEdit:
         """
         client = await spawn_client(authenticated=True)
 
-        await asyncio.gather(
-            mongo.otus.insert_one(
-                {**test_otu, "existing_abbreviation": existing_abbreviation},
-            ),
-            mongo.references.insert_one(test_ref),
+        reference = await fake.references.create(user=client.user)
+
+        await mongo.otus.insert_one(
+            {
+                **test_otu,
+                "existing_abbreviation": existing_abbreviation,
+                "reference": {"id": reference.id},
+            },
         )
 
         resp = await client.patch("/otus/6116cba1", data)
@@ -221,32 +253,42 @@ class TestEdit:
         check_ref_right,
         fake: DataFaker,
         mongo: Mongo,
+        pg: AsyncEngine,
         spawn_client: ClientSpawner,
         resp_is: RespIs,
         snapshot: SnapshotAssertion,
         test_change,
         test_otu,
-        test_ref,
         test_sequence,
     ):
         client = await spawn_client(authenticated=True)
 
         user = await fake.users.create()
 
+        change = {**test_change, "user": {"id": user.id}, "_id": "6116cba1.0"}
+
+        reference = await fake.references.create(user=user)
+
         await asyncio.gather(
-            mongo.otus.insert_one(test_otu),
-            mongo.references.insert_one(test_ref),
+            mongo.otus.insert_one({**test_otu, "reference": {"id": reference.id}}),
             mongo.sequences.insert_one(test_sequence),
-            mongo.history.insert_one(
-                {**test_change, "user": {"id": user.id}, "_id": "6116cba1.0"},
-            ),
         )
+
+        async with AsyncSession(pg) as session:
+            session.add(SQLLegacyHistory(**legacy_history_values(change)))
+            await session.commit()
 
         resp = await client.patch(f"/otus/{test_otu['_id']}", data)
 
         if check_ref_right:
             assert resp.status == HTTPStatus.OK
-            assert await mongo.history.count_documents({}) == 1 + change_count
+
+            async with AsyncSession(pg) as session:
+                history_count = await session.scalar(
+                    select(func.count()).select_from(SQLLegacyHistory),
+                )
+
+            assert history_count == 1 + change_count
             assert await resp.json() == snapshot(name="json")
         else:
             await resp_is.insufficient_rights(resp)
@@ -275,7 +317,6 @@ class TestDelete:
         resp_is: RespIs,
         test_change,
         test_otu,
-        test_ref,
         test_sequence,
     ):
         """Test that an OTU can be deleted.
@@ -290,9 +331,9 @@ class TestDelete:
 
         user = await fake.users.create()
 
-        await mongo.references.insert_one(test_ref)
+        reference = await fake.references.create(user=user)
 
-        otu = await fake.otus.create(test_ref["_id"], user)
+        otu = await fake.otus.create(reference.id, user)
 
         resp = await client.delete(f"/otus/{otu.id}")
 
@@ -471,7 +512,6 @@ class TestAddIsolate:
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
         static_time: StaticTime,
-        test_ref: dict,
     ):
         """Test that the first isolate for an OTu is set as the ``default`` otu even if
         ``default`` is set to ``False`` in the POST input.
@@ -483,10 +523,10 @@ class TestAddIsolate:
 
         user = await fake.users.create()
 
-        await mongo.references.insert_one(test_ref)
+        reference = await fake.references.create(user=user)
 
         otu = await data_layer.otus.create(
-            "hxn167",
+            reference.id,
             CreateOTURequest(
                 abbreviation="PVF",
                 name="Prunus virus F",
@@ -532,7 +572,6 @@ class TestAddIsolate:
         spawn_client: ClientSpawner,
         static_time: StaticTime,
         resp_is: RespIs,
-        test_ref: dict,
     ):
         """Test that the ``source_type`` value is forced to lower case."""
         client = await spawn_client(
@@ -540,12 +579,12 @@ class TestAddIsolate:
             base_url="https://virtool.example.com",
         )
 
-        await mongo.references.insert_one(test_ref)
-
         user = await fake.users.create()
 
+        reference = await fake.references.create(user=user)
+
         otu = await data_layer.otus.create(
-            "hxn167",
+            reference.id,
             CreateOTURequest(
                 abbreviation="PVF",
                 name="Prunus virus F",
@@ -603,26 +642,12 @@ class TestUpdateIsolate:
         mongo: Mongo,
         spawn_client: ClientSpawner,
         static_time: StaticTime,
-        test_ref: dict,
     ):
         self.client = await spawn_client(authenticated=True)
 
-        await mongo.references.insert_one(
-            {
-                **test_ref,
-                "users": [
-                    {
-                        "id": self.client.user.id,
-                        "build": True,
-                        "modify": True,
-                        "modify_otu": True,
-                        "remove": True,
-                    },
-                ],
-            },
-        )
+        reference = await fake.references.create(user=self.client.user)
 
-        self.otu = await fake.otus.create("hxn167", self.client.user)
+        self.otu = await fake.otus.create(reference.id, self.client.user)
         self.isolate = self.otu.isolates[0]
 
     @pytest.mark.parametrize(
@@ -727,26 +752,12 @@ class TestSetAsDefault:
         mongo: Mongo,
         spawn_client: ClientSpawner,
         static_time: StaticTime,
-        test_ref: dict,
     ):
         self.client = await spawn_client(authenticated=True)
 
-        await mongo.references.insert_one(
-            {
-                **test_ref,
-                "users": [
-                    {
-                        "id": self.client.user.id,
-                        "build": True,
-                        "modify": True,
-                        "modify_otu": True,
-                        "remove": True,
-                    },
-                ],
-            },
-        )
+        reference = await fake.references.create(user=self.client.user)
 
-        self.otu = await fake.otus.create("hxn167", self.client.user)
+        self.otu = await fake.otus.create(reference.id, self.client.user)
         self.isolate = self.otu.isolates[0]
 
     async def test(
@@ -834,7 +845,6 @@ class TestDeleteIsolate:
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
         static_time: StaticTime,
-        test_ref: dict,
     ):
         """Test that a valid request results in a ``204`` response and the isolate and
         associated sequence data is removed.
@@ -843,9 +853,9 @@ class TestDeleteIsolate:
 
         user = await fake.users.create()
 
-        await mongo.references.insert_one(test_ref)
+        reference = await fake.references.create(user=user)
 
-        otu = await fake.otus.create("hxn167", user)
+        otu = await fake.otus.create(reference.id, user)
 
         isolate = otu.isolates[0]
 
@@ -894,7 +904,6 @@ class TestDeleteIsolate:
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
         static_time: StaticTime,
-        test_ref: dict,
     ):
         """Test that a valid request results in a ``204`` response and ``default``
         status is reassigned correctly.
@@ -903,9 +912,9 @@ class TestDeleteIsolate:
 
         user = await fake.users.create()
 
-        await mongo.references.insert_one(test_ref)
+        reference = await fake.references.create(user=user)
 
-        otu = await fake.otus.create("hxn167", user)
+        otu = await fake.otus.create(reference.id, user)
 
         first_isolate = otu.isolates[0]
 
@@ -972,16 +981,15 @@ class TestListSequences:
         mongo: Mongo,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
-        test_ref,
     ):
         """Test that sequences can be listed for an isolate."""
         client = await spawn_client(authenticated=True)
 
-        await mongo.references.insert_one(test_ref)
-
         user = await fake.users.create()
 
-        otu = await fake.otus.create(test_ref["_id"], user)
+        reference = await fake.references.create(user=user)
+
+        otu = await fake.otus.create(reference.id, user)
 
         resp = await client.get(
             f"/otus/{otu.id}/isolates/{otu.isolates[0].id}/sequences",
@@ -1010,15 +1018,14 @@ class TestGetSequence:
         mongo: Mongo,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
-        test_ref: dict,
     ):
         client = await spawn_client(authenticated=True)
 
-        await mongo.references.insert_one(test_ref)
-
         user = await fake.users.create()
 
-        otu = await fake.otus.create(test_ref["_id"], user)
+        reference = await fake.references.create(user=user)
+
+        otu = await fake.otus.create(reference.id, user)
         isolate = otu.isolates[0]
         sequence = isolate.sequences[0]
 
@@ -1040,13 +1047,12 @@ class TestCreateSequence:
         fake: DataFaker,
         mongo: Mongo,
         static_time: StaticTime,
-        test_ref: dict,
     ):
         user = await fake.users.create()
 
-        await mongo.references.insert_one(test_ref)
+        reference = await fake.references.create(user=user)
 
-        self.otu = await fake.otus.create(test_ref["_id"], user)
+        self.otu = await fake.otus.create(reference.id, user)
         self.isolate = self.otu.isolates[0]
 
     async def test_ok(
@@ -1129,15 +1135,14 @@ class TestUpdateSequence:
         fake: DataFaker,
         mongo: Mongo,
         static_time: StaticTime,
-        test_ref: dict,
     ):
         self.client = await spawn_client(authenticated=True)
 
         user = await fake.users.create()
 
-        await mongo.references.insert_one(test_ref)
+        reference = await fake.references.create(user=user)
 
-        self.otu = await fake.otus.create(test_ref["_id"], user)
+        self.otu = await fake.otus.create(reference.id, user)
         self.isolate = self.otu.isolates[0]
         self.sequence = self.isolate.sequences[0]
 
@@ -1295,29 +1300,14 @@ class TestDeleteSequence:
         fake: DataFaker,
         mongo: Mongo,
         static_time: StaticTime,
-        test_ref: dict,
     ):
         self.client = await spawn_client(authenticated=True)
 
         user = await fake.users.create()
 
-        await mongo.references.insert_one(
-            {
-                **test_ref,
-                "users": [
-                    {
-                        "id": self.client.user.id,
-                        "build": True,
-                        "modify": True,
-                        "remove": True,
-                        "modify_otu": True,
-                        "remove_otu": True,
-                    },
-                ],
-            },
-        )
+        reference = await fake.references.create(user=self.client.user)
 
-        self.otu = await fake.otus.create(test_ref["_id"], user)
+        self.otu = await fake.otus.create(reference.id, user)
         self.isolate = self.otu.isolates[0]
         self.sequence = self.isolate.sequences[0]
 

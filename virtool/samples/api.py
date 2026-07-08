@@ -7,8 +7,6 @@ from aiohttp.web import (
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404, r409
 from pydantic import Field, conint, constr
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
 from virtool.analyses.models import AnalysisMinimal
@@ -34,16 +32,10 @@ from virtool.data.errors import (
 )
 from virtool.data.utils import get_data_from_req
 from virtool.errors import DatabaseError
-from virtool.groups.pg import SQLGroup
 from virtool.jobs.models import TERMINAL_JOB_STATES
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.utils import get_mongo_from_req
-from virtool.samples.db import (
-    SAMPLE_RIGHTS_PROJECTION,
-    check_rights,
-    get_sample_owner,
-    recalculate_workflow_tags,
-)
+from virtool.samples.db import check_rights
 from virtool.samples.models import Sample, SampleSearchResult
 from virtool.samples.oas import (
     CreateAnalysisRequest,
@@ -311,45 +303,32 @@ class RightsView(PydanticView):
             403: Must be administrator or sample owner
             404: Not found
         """
-        mongo = get_mongo_from_req(self.request)
-        pg: AsyncEngine = self.request.app["pg"]
-
-        data = data.dict(exclude_unset=True)
-
-        if not await mongo.samples.count_documents({"_id": sample_id}):
-            raise APINotFound()
-
         client: UserClient = self.request["client"]
+
+        owner_id = await get_data_from_req(self.request).samples.get_owner_id(
+            sample_id,
+        )
+
+        if owner_id is None:
+            raise APINotFound()
 
         if (
             client.administrator_role != AdministratorRole.FULL
-            and client.user_id != await get_sample_owner(mongo, sample_id)
+            and client.user_id != owner_id
         ):
             raise APIInsufficientRights("Must be administrator or sample owner")
 
-        group = data.get("group")
+        try:
+            sample = await get_data_from_req(self.request).samples.update_rights(
+                sample_id,
+                data.dict(exclude_unset=True),
+            )
+        except ResourceConflictError as err:
+            raise APIBadRequest(str(err))
+        except ResourceNotFoundError:
+            raise APINotFound()
 
-        if group is not None and group != "none":
-            async with AsyncSession(pg) as session:
-                result = await session.execute(
-                    select(SQLGroup.id).where(
-                        (SQLGroup.id == group)
-                        if isinstance(group, int)
-                        else (SQLGroup.legacy_id == group),
-                    ),
-                )
-
-                if not result.scalars().one_or_none():
-                    raise APIBadRequest("Group does not exist")
-
-        # Update the sample document with the new rights.
-        document = await mongo.samples.find_one_and_update(
-            {"_id": sample_id},
-            {"$set": data},
-            projection=SAMPLE_RIGHTS_PROJECTION,
-        )
-
-        return json_response(document)
+        return json_response(sample)
 
 
 @routes.jobs_api.delete("/samples/{sample_id}")
@@ -445,7 +424,6 @@ class AnalysesView(PydanticView):
             409: Subtractions do not exist
         """
         mongo = get_mongo_from_req(self.request)
-        pg: AsyncEngine = self.request.app["pg"]
 
         try:
             if not await check_rights(mongo, sample_id, self.request["client"]):
@@ -469,8 +447,6 @@ class AnalysesView(PydanticView):
             self.request["client"].user_id,
             0,
         )
-
-        await recalculate_workflow_tags(mongo, pg, sample_id)
 
         return json_response(
             analysis,

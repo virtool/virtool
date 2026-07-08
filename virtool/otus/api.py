@@ -14,9 +14,7 @@ from virtool.api.errors import (
 )
 from virtool.api.routes import Routes
 from virtool.data.errors import ResourceNotFoundError
-from virtool.data.transforms import apply_transforms
 from virtool.data.utils import get_data_from_req
-from virtool.history.db import HISTORY_LIST_PROJECTION
 from virtool.mongo.utils import get_mongo_from_req, get_one_field
 from virtool.otus.db import SEQUENCE_PROJECTION
 from virtool.otus.models import OTU, OTUIsolate, OTUSequence, Sequence
@@ -28,7 +26,6 @@ from virtool.otus.oas import (
     UpdateSequenceRequest,
 )
 from virtool.otus.utils import evaluate_changes, find_isolate
-from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
 routes = Routes()
@@ -80,6 +77,7 @@ class OTUView(PydanticView):
 
         """
         mongo = get_mongo_from_req(self.request)
+        pg: AsyncEngine = self.request.app["pg"]
 
         # Get existing complete otu record, at the same time ensuring it exists. Send a
         # ``404`` if not.
@@ -113,6 +111,7 @@ class OTUView(PydanticView):
         # Make sure new name or abbreviation are not already in use.
         if message := await virtool.otus.db.check_name_and_abbreviation(
             mongo,
+            pg,
             ref_id,
             name,
             abbreviation,
@@ -164,8 +163,9 @@ class IsolatesView(PydanticView):
 
         """
         mongo = get_mongo_from_req(self.request)
+        pg: AsyncEngine = self.request.app["pg"]
 
-        document = await virtool.otus.db.join_and_format(mongo, otu_id)
+        document = await virtool.otus.db.join_and_format(mongo, pg, otu_id)
 
         if not document:
             raise APINotFound()
@@ -184,6 +184,7 @@ class IsolatesView(PydanticView):
 
         """
         mongo = get_mongo_from_req(self.request)
+        pg: AsyncEngine = self.request.app["pg"]
 
         reference = await get_one_field(mongo.otus, "reference", otu_id)
 
@@ -202,6 +203,7 @@ class IsolatesView(PydanticView):
         # All source types are stored in lower case.
         if not await virtool.references.db.check_source_type(
             mongo,
+            pg,
             reference["id"],
             source_type,
         ):
@@ -271,7 +273,7 @@ class IsolateView(PydanticView):
             base_processor(sequence)
             async for sequence in mongo.sequences.find(
                 {"otu_id": otu_id, "isolate_id": isolate_id},
-                {"otu_id": False, "isolate_id": False},
+                {"otu_id": False, "isolate_id": False, "reference": False},
             )
         ]
 
@@ -290,6 +292,7 @@ class IsolateView(PydanticView):
 
         """
         mongo = get_mongo_from_req(self.request)
+        pg: AsyncEngine = self.request.app["pg"]
 
         reference = await get_one_field(
             mongo.otus,
@@ -319,6 +322,7 @@ class IsolateView(PydanticView):
 
             if not await virtool.references.db.check_source_type(
                 mongo,
+                pg,
                 ref_id,
                 source_type,
             ):
@@ -591,26 +595,14 @@ async def list_history(req):
 
     Lists an OTU's history.
     """
-    mongo = get_mongo_from_req(req)
-    pg: AsyncEngine = req.app["pg"]
-
     otu_id = req.match_info["otu_id"]
 
-    if not await mongo.otus.count_documents({"_id": otu_id}, limit=1):
+    try:
+        changes = await get_data_from_req(req).history.list_by_otu(otu_id)
+    except ResourceNotFoundError:
         raise APINotFound()
 
-    documents = await mongo.history.find(
-        {"otu.id": otu_id},
-        projection=HISTORY_LIST_PROJECTION,
-    ).to_list(None)
-
-    return json_response(
-        await apply_transforms(
-            [base_processor(d) for d in documents],
-            [AttachUserTransform(pg, ignore_errors=True)],
-            pg,
-        ),
-    )
+    return json_response(changes)
 
 
 @routes.put("/otus/{otu_id}/isolates/{isolate_id}/default")

@@ -9,6 +9,7 @@ from virtool.fake.wrapper import FakerWrapper
 from virtool.mongo.utils import get_mongo_from_app
 from virtool.samples.db import create_sample
 from virtool.samples.files import create_reads_file
+from virtool.samples.sql import SQLLegacySample, SQLLegacySampleSubtraction
 from virtool.samples.utils import sample_file_key
 from virtool.settings.models import Settings
 from virtool.storage.protocol import STORAGE_CHUNK_SIZE, StorageBackend
@@ -82,6 +83,63 @@ async def create_fake_sample(
 
         subtraction_ids = list(result.scalars().all())
 
+    settings = Settings()
+    settings.sample_group_read = True
+    settings.sample_group_write = True
+    settings.sample_all_read = True
+    settings.sample_all_write = True
+
+    document = await create_sample(
+        _id=sample_id,
+        mongo=mongo,
+        name=f"Fake {sample_id.upper()}",
+        host="Vine",
+        isolate="Isolate A1",
+        locale="",
+        subtractions=subtraction_ids,
+        notes=fake.text(50),
+        library_type="normal",
+        labels=[],
+        user_id=user_id,
+        group="none",
+        settings=settings,
+    )
+
+    async with AsyncSession(pg) as session:
+        sample = SQLLegacySample(
+            legacy_id=document["id"],
+            name=document["name"],
+            host=document["host"],
+            isolate=document["isolate"],
+            locale=document["locale"],
+            notes=document["notes"],
+            library_type=document["library_type"],
+            format=document["format"],
+            quality=document["quality"],
+            created_at=document["created_at"],
+            paired=document["paired"],
+            ready=document["ready"],
+            hold=document["hold"],
+            is_legacy=document["is_legacy"],
+            all_read=document["all_read"],
+            all_write=document["all_write"],
+            group_read=document["group_read"],
+            group_write=document["group_write"],
+            user_id=user_id,
+        )
+        session.add(sample)
+        await session.flush()
+
+        for subtraction_id in document["subtractions"]:
+            session.add(
+                SQLLegacySampleSubtraction(
+                    sample_id=sample.id,
+                    subtraction_id=subtraction_id,
+                ),
+            )
+
+        await session.commit()
+
     if finalized is True:
         if paired:
             for n in (1, 2):
@@ -114,29 +172,6 @@ async def create_fake_sample(
                 sample_id,
             )
 
-    settings = Settings()
-    settings.sample_group_read = True
-    settings.sample_group_write = True
-    settings.sample_all_read = True
-    settings.sample_all_write = True
-
-    await create_sample(
-        _id=sample_id,
-        mongo=mongo,
-        name=f"Fake {sample_id.upper()}",
-        host="Vine",
-        isolate="Isolate A1",
-        locale="",
-        subtractions=subtraction_ids,
-        notes=fake.text(50),
-        library_type="normal",
-        labels=[],
-        user_id=user_id,
-        group="none",
-        settings=settings,
-    )
-
-    if finalized is True:
         await get_data_from_app(app).samples.finalize(
             sample_id=sample_id,
             quality=await create_fake_quality(fake),

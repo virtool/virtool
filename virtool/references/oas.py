@@ -2,9 +2,7 @@ from pydantic import Field, constr, root_validator, validator
 
 from virtool.models import BaseModel
 from virtool.models.validators import prevent_none
-from virtool.references.utils import OFFICIAL_REMOTE_SLUG
 
-ALLOWED_REMOTE = [OFFICIAL_REMOTE_SLUG]
 ALLOWED_DATA_TYPE = ["genome"]
 
 
@@ -27,57 +25,26 @@ class CreateReferenceRequest(BaseModel):
     )
     data_type: str = Field(default="genome", description="the sequence data type")
     organism: str = Field(default="", description="the organism")
-    release_id: str | None = Field(
-        default=11447367,
-        description="the id of the GitHub release to install",
-    )
     clone_from: str | None = Field(
         description="a valid ref_id that the new reference should be cloned from",
     )
     import_from: int | None = Field(
         description="the id of an upload to import the reference from",
     )
-    remote_from: str | None = Field(
-        description="a valid GitHub slug to download and update the new reference from",
-    )
 
     _prevent_none = prevent_none(
-        "release_id",
         "clone_from",
         "import_from",
-        "remote_from",
     )
 
     @root_validator
     def check_values(cls, values: str):
-        """Check that the reference source is an allowable value.
+        """Check that only one reference source is used.
 
-        Only one of clone_from, import_from or remote_from may be used, if any.
+        Only one of clone_from or import_from may be used, if any.
         """
-        clone_from, import_from, remote_from = (
-            values.get("clone_from"),
-            values.get("import_from"),
-            values.get("remote_from"),
-        )
-
-        if clone_from:
-            if import_from or remote_from:
-                raise ValueError(
-                    "Only one of clone_from, import_from and remote_from are allowed",
-                )
-        elif import_from:
-            if clone_from or remote_from:
-                raise ValueError(
-                    "Only one of clone_from, import_from and remote_from are allowed",
-                )
-        elif remote_from:
-            if clone_from or import_from:
-                raise ValueError(
-                    "Only one of clone_from, import_from and remote_from are allowed",
-                )
-
-            if remote_from not in ALLOWED_REMOTE:
-                raise ValueError("provided remote not allowed")
+        if values.get("clone_from") and values.get("import_from"):
+            raise ValueError("Only one of clone_from and import_from are allowed")
 
         return values
 
@@ -100,9 +67,6 @@ class UpdateReferenceRequest(BaseModel):
     description: constr(strip_whitespace=True) | None = Field(
         description="a longer description for the reference",
     )
-    internal_control: str | None = Field(
-        description="set the OTU identified by the passed id as the internal control for the reference",
-    )
     organism: constr(strip_whitespace=True) | None = Field(
         description="the organism",
     )
@@ -115,7 +79,6 @@ class UpdateReferenceRequest(BaseModel):
 
     _prevent_none = prevent_none(
         "description",
-        "internal_control",
         "name",
         "organism",
         "restrict_source_types",
@@ -127,7 +90,6 @@ class UpdateReferenceRequest(BaseModel):
             "example": {
                 "name": "Regulated Pests",
                 "organism": "phytoplasma",
-                "internal_control": "ah4m5jqz",
             },
         }
 
@@ -142,7 +104,6 @@ class ReferenceRightsRequest(BaseModel):
     modify_otu: bool | None = Field(
         description="allow members to modify the reference’s member OTUs",
     )
-    remove: bool | None = Field(description="allow members to remove the reference")
 
     class Config:
         schema_extra = {"example": {"build": True, "modify": True}}

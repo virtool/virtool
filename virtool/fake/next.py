@@ -23,6 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
 from virtool.data.layer import DataLayer
+from virtool.data.topg import both_transactions
 from virtool.example import example_path
 from virtool.fake.providers import OrganismProvider, SegmentProvider, SequenceProvider
 from virtool.groups.models import Group
@@ -39,11 +40,9 @@ from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.otus.models import OTU, OTUSegment
 from virtool.otus.oas import CreateOTURequest
-from virtool.references.tasks import (
-    CloneReferenceTask,
-    ReferenceReleasesRefreshTask,
-    ReferencesCleanTask,
-)
+from virtool.references.db import create_document, write_legacy_reference
+from virtool.references.models import Reference, ReferenceDataType
+from virtool.references.tasks import CloneReferenceTask
 from virtool.subtractions.models import Subtraction
 from virtool.subtractions.oas import (
     CreateSubtractionRequest,
@@ -132,6 +131,7 @@ class DataFaker:
         self.jobs = JobsFakerDomain(self)
         self.labels = LabelsFakerDomain(self)
         self.otus = OTUsFakerDomain(self)
+        self.references = ReferencesFakerDomain(self)
         self.subtractions = SubtractionFakerDomain(self)
         self.tasks = TasksFakerDomain(self)
         self.users = UsersFakerDomain(self)
@@ -326,6 +326,48 @@ class LabelsFakerDomain(DataFakerDomain):
         )
 
 
+class ReferencesFakerDomain(DataFakerDomain):
+    model = Reference
+
+    async def create(
+        self,
+        user: User,
+        id_: str | None = None,
+        name: str = "Reference",
+        data_type: ReferenceDataType = ReferenceDataType.genome,
+        organism: str = "",
+        description: str = "",
+    ) -> Reference:
+        """Create a fake reference in both Mongo and Postgres.
+
+        Pass ``id_`` to force the Mongo ``_id`` (and Postgres ``legacy_id``); omit it
+        for a generated id. The reference is dual-written so its integer primary key
+        exists for holders (analyses, history) to resolve.
+        """
+        settings = await self._layer.settings.get_all()
+
+        document = await create_document(
+            self._mongo,
+            settings,
+            name,
+            organism,
+            description,
+            data_type.value,
+            created_at=virtool.utils.timestamp(),
+            ref_id=id_,
+            user_id=user.id,
+        )
+
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            await self._mongo.references.insert_one(document, session=mongo_session)
+            await write_legacy_reference(pg_session, document)
+
+        return await self._layer.references.get(document["_id"])
+
+
 class OTUsFakerDomain(DataFakerDomain):
     model = OTU
 
@@ -390,13 +432,7 @@ class TasksFakerDomain(DataFakerDomain):
         :return: a new fake task
         """
         return await self._layer.tasks.create(
-            self._faker.random_element(
-                [
-                    ReferenceReleasesRefreshTask,
-                    CloneReferenceTask,
-                    ReferencesCleanTask,
-                ],
-            ),
+            CloneReferenceTask,
             {},
         )
 

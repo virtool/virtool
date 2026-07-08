@@ -28,9 +28,9 @@ from virtool.jobs.models import (
 from virtool.jobs.pg import (
     SQLJob,
     SQLJobIndex,
-    SQLJobSample,
 )
 from virtool.jobs.utils import compute_progress
+from virtool.samples.sql import SQLLegacySample
 from virtool.subtractions.pg import SQLSubtraction
 from virtool.types import Document
 from virtool.users.models_base import UserNested
@@ -178,6 +178,48 @@ class JobsData:
             page=page,
         )
 
+    async def create_in_session(
+        self,
+        session: AsyncSession,
+        workflow: str,
+        job_args: Document,
+        user_id: int,
+    ) -> int:
+        """Create a job within the caller's session and return its id.
+
+        The job is added to ``session`` and flushed but not committed, so it
+        participates in the caller's transaction and only becomes claimable once
+        that transaction commits. This lets a job be created atomically with the
+        resource that supplies its arguments — e.g. a ``create_sample`` job and
+        its sample, whose ``legacy_samples.job_id`` back-reference is the source
+        of the job's ``sample_id`` argument. Without this a runner could claim the
+        job before the sample row commits and read empty arguments.
+
+        It is the caller's responsibility to commit ``session``. Unlike
+        :meth:`create`, this does not emit a job-creation event; the caller should
+        emit once its transaction has committed.
+
+        :param session: the PostgreSQL session to create the job within
+        :param workflow: the name of the workflow to run
+        :param job_args: the arguments required to run the job
+        :param user_id: the user that started the job
+        :return: the id of the created job
+        """
+        sql_job = SQLJob(
+            acquired=False,
+            created_at=virtool.utils.timestamp(),
+            state="pending",
+            user_id=user_id,
+            workflow=workflow,
+        )
+        session.add(sql_job)
+        await session.flush()
+
+        if workflow == "build_index" and "index_id" in job_args:
+            session.add(SQLJobIndex(job_id=sql_job.id, index_id=job_args["index_id"]))
+
+        return sql_job.id
+
     @emits(Operation.CREATE)
     async def create(
         self,
@@ -194,25 +236,7 @@ class JobsData:
         :param space_id: the space that the job belongs to
         """
         async with AsyncSession(self._pg) as session:
-            sql_job = SQLJob(
-                acquired=False,
-                created_at=virtool.utils.timestamp(),
-                state="pending",
-                user_id=user_id,
-                workflow=workflow,
-            )
-            session.add(sql_job)
-            await session.flush()
-
-            if workflow == "create_sample" and "sample_id" in job_args:
-                session.add(
-                    SQLJobSample(job_id=sql_job.id, sample_id=job_args["sample_id"]),
-                )
-            elif workflow == "build_index" and "index_id" in job_args:
-                session.add(
-                    SQLJobIndex(job_id=sql_job.id, index_id=job_args["index_id"]),
-                )
-            new_id = sql_job.id
+            new_id = await self.create_in_session(session, workflow, job_args, user_id)
             await session.commit()
 
         return await self.get(new_id)
@@ -228,13 +252,13 @@ class JobsData:
                 select(
                     SQLJob,
                     SQLUser,
-                    SQLJobSample.sample_id,
+                    SQLLegacySample.legacy_id.label("sample_id"),
                     SQLJobIndex.index_id,
                     SQLSubtraction.id.label("subtraction_id"),
                     SQLAnalysis.legacy_id,
                 )
                 .join(SQLUser, SQLJob.user_id == SQLUser.id)
-                .outerjoin(SQLJobSample, SQLJob.id == SQLJobSample.job_id)
+                .outerjoin(SQLLegacySample, SQLLegacySample.job_id == SQLJob.id)
                 .outerjoin(SQLJobIndex, SQLJob.id == SQLJobIndex.job_id)
                 .outerjoin(SQLSubtraction, SQLSubtraction.job_id == SQLJob.id)
                 .outerjoin(SQLAnalysis, SQLAnalysis.job_id == SQLJob.id)
@@ -247,6 +271,14 @@ class JobsData:
 
         sql_job, sql_user, sample_id, index_id, subtraction_id, analysis_id = row
 
+        # The create_sample job's sample is resolved through the reverse
+        # ``legacy_samples.job_id`` foreign key rather than a ``job_samples`` link
+        # row. ``sample_id`` is exposed as the legacy sample string
+        # (``legacy_samples.legacy_id``), not the integer ``legacy_samples.id``
+        # primary key: the create_sample workflow uses this value to address the
+        # sample over the jobs API, whose endpoints still resolve samples by their
+        # Mongo ``_id``. The public identifier flips to the integer primary key in
+        # VIR-2529.
         args = {
             field: value
             for field, value in (

@@ -1,17 +1,24 @@
 """Work with OTUs in the database."""
 
-from collections.abc import Mapping
 from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
+from sqlalchemy import distinct, func, select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.history.db
 import virtool.otus.utils
 from virtool.api.utils import compose_regex_query, paginate
+from virtool.data.topg import (
+    compose_legacy_id_mongo_match,
+    compose_legacy_id_subquery,
+)
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
+from virtool.history.sql import SQLLegacyHistory
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
+from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.utils import base_processor, to_bool
@@ -31,6 +38,7 @@ SEQUENCE_PROJECTION = (
 
 async def check_name_and_abbreviation(
     mongo: "Mongo",
+    pg: AsyncEngine,
     ref_id: str,
     name: str | None = None,
     abbreviation: str | None = None,
@@ -40,18 +48,21 @@ async def check_name_and_abbreviation(
     Returns an error message if the ``name`` or ``abbreviation`` are already in use.
 
     :param mongo: the application database client
+    :param pg: the application PostgreSQL engine
     :param ref_id: the id of the reference to check in
     :param name: an OTU name
     :param abbreviation: an OTU abbreviation
 
     """
+    reference_id_match = await compose_legacy_id_mongo_match(pg, SQLReference, ref_id)
+
     name_exists = name and await mongo.otus.count_documents(
-        {"lower_name": name.lower(), "reference.id": ref_id},
+        {"lower_name": name.lower(), "reference.id": reference_id_match},
         limit=1,
     )
 
     abbreviation_exists = abbreviation and await mongo.otus.count_documents(
-        {"abbreviation": abbreviation, "reference.id": ref_id},
+        {"abbreviation": abbreviation, "reference.id": reference_id_match},
         limit=1,
     )
 
@@ -67,8 +78,10 @@ async def check_name_and_abbreviation(
 
 async def find(
     mongo: "Mongo",
+    pg: AsyncEngine,
     term: str | None,
-    req_query: Mapping,
+    page: int,
+    per_page: int,
     verified: bool | None,
     ref_id: str | None = None,
 ) -> dict[str, Any] | list[dict | None]:
@@ -83,12 +96,17 @@ async def find(
     base_query = None
 
     if ref_id is not None:
-        base_query = {"reference.id": ref_id}
+        base_query = {
+            "reference.id": await compose_legacy_id_mongo_match(
+                pg, SQLReference, ref_id
+            ),
+        }
 
     data = await paginate(
         mongo.otus,
         mongo_query,
-        req_query,
+        page,
+        per_page,
         base_query=base_query,
         sort="name",
         projection=["_id", "abbreviation", "name", "reference", "verified", "version"],
@@ -97,17 +115,23 @@ async def find(
     data["documents"] = await apply_transforms(
         [base_processor(d) for d in data["documents"]],
         [AttachReferenceTransform(mongo)],
-        None,  # pg parameter - not needed for AttachReferenceTransform
+        pg,
     )
 
-    history_query = {"index.id": "unbuilt"}
+    history_filters = [SQLLegacyHistory.index.is_(None)]
 
     if ref_id:
-        history_query["reference.id"] = ref_id
+        history_filters.append(
+            SQLLegacyHistory.reference_id
+            == compose_legacy_id_subquery(SQLReference, ref_id),
+        )
 
-    data["modified_count"] = len(
-        await mongo.history.distinct("otu.name", history_query),
-    )
+    async with AsyncSession(pg) as session:
+        data["modified_count"] = await session.scalar(
+            select(func.count(distinct(SQLLegacyHistory.otu))).where(
+                *history_filters,
+            ),
+        )
 
     return data
 
@@ -219,6 +243,7 @@ async def bulk_join_documents(
 
 async def join_and_format(
     mongo: "Mongo",
+    pg: AsyncEngine,
     otu_id: str,
     joined: dict | None = None,
     issues: dict | bool | None = False,
@@ -229,6 +254,7 @@ async def join_and_format(
     format the joined otu into a format that can be directly returned to API clients.
 
     :param mongo: the application database client
+    :param pg: the application PostgreSQL database object
     :param otu_id: the id of the otu to join
     :param joined:
     :param issues: an object describing issues in the otu
@@ -240,7 +266,7 @@ async def join_and_format(
     if not joined:
         return None
 
-    most_recent_change = await virtool.history.db.get_most_recent_change(mongo, otu_id)
+    most_recent_change = await virtool.history.db.get_most_recent_change(pg, otu_id)
 
     if issues is False:
         issues = await verify(mongo, otu_id)

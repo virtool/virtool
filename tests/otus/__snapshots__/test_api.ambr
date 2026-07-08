@@ -1,7 +1,7 @@
 # serializer version: 1
 # name: TestAddIsolate.test_default[True-False][history]
   list([
-    History(created_at=datetime.datetime(2015, 10, 6, 20, 0), description='Created Prunus virus F (PVF)', id='fb085f7f.0', method_name=<HistoryMethod.create: 'create'>, user=UserNested(id=2, handle='myersmitchell'), index=HistoryIndex(id='unbuilt', version='unbuilt'), otu=HistoryOTU(id='fb085f7f', name='Prunus virus F', version=0), reference=ReferenceNested(id='bf1b993c', data_type=<ReferenceDataType.genome: 'genome'>, name='Example'), diff={'_id': 'fb085f7f', 'name': 'Prunus virus F', 'schema': [{'name': 'Genome', 'molecule': 'ssRNA', 'required': True}], 'version': 0, 'isolates': [], 'verified': False, 'reference': {'id': 'bf1b993c'}, 'lower_name': 'prunus virus f', 'abbreviation': 'PVF', 'last_indexed_version': None}),
+    History(created_at=datetime.datetime(2015, 10, 6, 20, 0), description='Created Prunus virus F (PVF)', id='fb085f7f.0', method_name=<HistoryMethod.create: 'create'>, user=UserNested(id=2, handle='myersmitchell'), index=HistoryIndex(id='unbuilt', version='unbuilt'), otu=HistoryOTU(id='fb085f7f', name='Prunus virus F', version=0), reference=ReferenceNested(id='bf1b993c', data_type=<ReferenceDataType.genome: 'genome'>, name='Example'), diff={'_id': 'fb085f7f', 'name': 'Prunus virus F', 'schema': [{'name': 'Genome', 'molecule': 'ssRNA', 'required': True}], 'version': 0, 'isolates': [], 'verified': False, 'reference': {'id': 1}, 'lower_name': 'prunus virus f', 'abbreviation': 'PVF', 'last_indexed_version': None}),
     History(created_at=datetime.datetime(2015, 10, 6, 20, 0), description='Added B isolate as default', id='fb085f7f.1', method_name=<HistoryMethod.add_isolate: 'add_isolate'>, user=UserNested(id=2, handle='myersmitchell'), index=HistoryIndex(id='unbuilt', version='unbuilt'), otu=HistoryOTU(id='fb085f7f', name='Prunus virus F', version=1), reference=ReferenceNested(id='bf1b993c', data_type=<ReferenceDataType.genome: 'genome'>, name='Example'), diff=[['add', 'isolates', [[0, {'id': '7cf872dc', 'default': True, 'sequences': [], 'source_name': 'isolate', 'source_type': 'b'}]]], ['change', 'version', [0, 1]]]),
     History(created_at=datetime.datetime(2015, 10, 6, 20, 0), description='Added Isolate a', id='fb085f7f.2', method_name=<HistoryMethod.add_isolate: 'add_isolate'>, user=UserNested(id=1, handle='leeashley'), index=HistoryIndex(id='unbuilt', version='unbuilt'), otu=HistoryOTU(id='fb085f7f', name='Prunus virus F', version=2), reference=ReferenceNested(id='bf1b993c', data_type=<ReferenceDataType.genome: 'genome'>, name='Example'), diff=[['add', 'isolates', [[1, {'id': '3cbb22cc', 'default': False, 'sequences': [], 'source_name': 'a', 'source_type': 'isolate'}]]], ['change', 'version', [1, 2]]]),
   ])
@@ -81,7 +81,7 @@
 # ---
 # name: TestAddIsolate.test_default[True-True][history]
   list([
-    History(created_at=datetime.datetime(2015, 10, 6, 20, 0), description='Created Prunus virus F (PVF)', id='fb085f7f.0', method_name=<HistoryMethod.create: 'create'>, user=UserNested(id=2, handle='myersmitchell'), index=HistoryIndex(id='unbuilt', version='unbuilt'), otu=HistoryOTU(id='fb085f7f', name='Prunus virus F', version=0), reference=ReferenceNested(id='bf1b993c', data_type=<ReferenceDataType.genome: 'genome'>, name='Example'), diff={'_id': 'fb085f7f', 'name': 'Prunus virus F', 'schema': [{'name': 'Genome', 'molecule': 'ssRNA', 'required': True}], 'version': 0, 'isolates': [], 'verified': False, 'reference': {'id': 'bf1b993c'}, 'lower_name': 'prunus virus f', 'abbreviation': 'PVF', 'last_indexed_version': None}),
+    History(created_at=datetime.datetime(2015, 10, 6, 20, 0), description='Created Prunus virus F (PVF)', id='fb085f7f.0', method_name=<HistoryMethod.create: 'create'>, user=UserNested(id=2, handle='myersmitchell'), index=HistoryIndex(id='unbuilt', version='unbuilt'), otu=HistoryOTU(id='fb085f7f', name='Prunus virus F', version=0), reference=ReferenceNested(id='bf1b993c', data_type=<ReferenceDataType.genome: 'genome'>, name='Example'), diff={'_id': 'fb085f7f', 'name': 'Prunus virus F', 'schema': [{'name': 'Genome', 'molecule': 'ssRNA', 'required': True}], 'version': 0, 'isolates': [], 'verified': False, 'reference': {'id': 1}, 'lower_name': 'prunus virus f', 'abbreviation': 'PVF', 'last_indexed_version': None}),
     History(created_at=datetime.datetime(2015, 10, 6, 20, 0), description='Added B isolate as default', id='fb085f7f.1', method_name=<HistoryMethod.add_isolate: 'add_isolate'>, user=UserNested(id=2, handle='myersmitchell'), index=HistoryIndex(id='unbuilt', version='unbuilt'), otu=HistoryOTU(id='fb085f7f', name='Prunus virus F', version=1), reference=ReferenceNested(id='bf1b993c', data_type=<ReferenceDataType.genome: 'genome'>, name='Example'), diff=[['add', 'isolates', [[0, {'id': '7cf872dc', 'default': True, 'sequences': [], 'source_name': 'isolate', 'source_type': 'b'}]]], ['change', 'version', [0, 1]]]),
     History(created_at=datetime.datetime(2015, 10, 6, 20, 0), description='Added Isolate a as default', id='fb085f7f.2', method_name=<HistoryMethod.add_isolate: 'add_isolate'>, user=UserNested(id=1, handle='leeashley'), index=HistoryIndex(id='unbuilt', version='unbuilt'), otu=HistoryOTU(id='fb085f7f', name='Prunus virus F', version=2), reference=ReferenceNested(id='bf1b993c', data_type=<ReferenceDataType.genome: 'genome'>, name='Example'), diff=[['change', ['isolates', 0, 'default'], [True, False]], ['add', 'isolates', [[1, {'id': '3cbb22cc', 'default': True, 'sequences': [], 'source_name': 'a', 'source_type': 'isolate'}]]], ['change', 'version', [1, 2]]]),
   ])
@@ -172,7 +172,7 @@
             0,
             dict({
               'default': True,
-              'id': 'fb085f7f',
+              'id': '7cf872dc',
               'sequences': list([
               ]),
               'source_name': 'b',
@@ -190,21 +190,21 @@
         ]),
       ]),
     ]),
-    'id': 'bf1b993c.1',
+    'id': 'fb085f7f.1',
     'index': dict({
       'id': 'unbuilt',
       'version': 'unbuilt',
     }),
     'method_name': <HistoryMethod.add_isolate: 'add_isolate'>,
     'otu': dict({
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
       'name': 'Prunus virus F',
       'version': 1,
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
@@ -215,7 +215,7 @@
 # name: TestAddIsolate.test_first[True][json]
   dict({
     'default': True,
-    'id': 'fb085f7f',
+    'id': '7cf872dc',
     'sequences': list([
     ]),
     'source_name': 'b',
@@ -223,16 +223,16 @@
   })
 # ---
 # name: TestAddIsolate.test_first[True][location]
-  'https://virtool.example.com/otus/bf1b993c/isolates/fb085f7f'
+  'https://virtool.example.com/otus/fb085f7f/isolates/7cf872dc'
 # ---
 # name: TestAddIsolate.test_first[True][otu]
   dict({
     'abbreviation': 'PVF',
-    'id': 'bf1b993c',
+    'id': 'fb085f7f',
     'isolates': list([
       dict({
         'default': True,
-        'id': 'fb085f7f',
+        'id': '7cf872dc',
         'sequences': list([
         ]),
         'source_name': 'b',
@@ -241,7 +241,7 @@
     ]),
     'issues': dict({
       'empty_isolate': list([
-        'fb085f7f',
+        '7cf872dc',
       ]),
       'empty_otu': False,
       'empty_sequence': False,
@@ -251,7 +251,7 @@
     'most_recent_change': dict({
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Added Isolate b as default',
-      'id': 'bf1b993c.1',
+      'id': 'fb085f7f.1',
       'method_name': <HistoryMethod.add_isolate: 'add_isolate'>,
       'user': dict({
         'handle': 'leeashley',
@@ -268,8 +268,8 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'verified': False,
@@ -289,7 +289,7 @@
             0,
             dict({
               'default': True,
-              'id': 'fb085f7f',
+              'id': '7cf872dc',
               'sequences': list([
               ]),
               'source_name': 'Beta',
@@ -307,21 +307,21 @@
         ]),
       ]),
     ]),
-    'id': 'bf1b993c.1',
+    'id': 'fb085f7f.1',
     'index': dict({
       'id': 'unbuilt',
       'version': 'unbuilt',
     }),
     'method_name': <HistoryMethod.add_isolate: 'add_isolate'>,
     'otu': dict({
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
       'name': 'Prunus virus F',
       'version': 1,
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
@@ -332,7 +332,7 @@
 # name: TestAddIsolate.test_force_case[True][json]
   dict({
     'default': True,
-    'id': 'fb085f7f',
+    'id': '7cf872dc',
     'sequences': list([
     ]),
     'source_name': 'Beta',
@@ -340,16 +340,16 @@
   })
 # ---
 # name: TestAddIsolate.test_force_case[True][location]
-  'https://virtool.example.com/otus/bf1b993c/isolates/fb085f7f'
+  'https://virtool.example.com/otus/fb085f7f/isolates/7cf872dc'
 # ---
 # name: TestAddIsolate.test_force_case[True][otu]
   dict({
     'abbreviation': 'PVF',
-    'id': 'bf1b993c',
+    'id': 'fb085f7f',
     'isolates': list([
       dict({
         'default': True,
-        'id': 'fb085f7f',
+        'id': '7cf872dc',
         'sequences': list([
         ]),
         'source_name': 'Beta',
@@ -358,7 +358,7 @@
     ]),
     'issues': dict({
       'empty_isolate': list([
-        'fb085f7f',
+        '7cf872dc',
       ]),
       'empty_otu': False,
       'empty_sequence': False,
@@ -368,7 +368,7 @@
     'most_recent_change': dict({
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Added Isolate Beta as default',
-      'id': 'bf1b993c.1',
+      'id': 'fb085f7f.1',
       'method_name': <HistoryMethod.add_isolate: 'add_isolate'>,
       'user': dict({
         'handle': 'leeashley',
@@ -385,8 +385,8 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'verified': False,
@@ -413,10 +413,10 @@
               'accession': 'foobar',
               'definition': 'A made up sequence',
               'host': 'Plant',
-              'isolate_id': 'fb085f7f',
-              'otu_id': 'bf1b993c',
+              'isolate_id': '7cf872dc',
+              'otu_id': 'fb085f7f',
               'reference': dict({
-                'id': 'hxn167',
+                'id': 1,
               }),
               'segment': None,
               'sequence': 'ATGCGTGTACTG',
@@ -433,21 +433,21 @@
         ]),
       ]),
     ]),
-    'id': 'bf1b993c.5',
+    'id': 'fb085f7f.5',
     'index': dict({
       'id': 'unbuilt',
       'version': 'unbuilt',
     }),
     'method_name': <HistoryMethod.create_sequence: 'create_sequence'>,
     'otu': dict({
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
       'name': 'Pepper leafroll virus',
       'version': 5,
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'aanderson',
@@ -467,22 +467,22 @@
   })
 # ---
 # name: TestCreateSequence.test_ok[True][location]
-  '/otus/bf1b993c/isolates/fb085f7f/sequences/bf1b993c'
+  '/otus/fb085f7f/isolates/7cf872dc/sequences/bf1b993c'
 # ---
 # name: TestCreateSequence.test_ok[True][otu]
   dict({
     'abbreviation': 'PLV',
-    'id': 'bf1b993c',
+    'id': 'fb085f7f',
     'isolates': list([
       dict({
         'default': True,
-        'id': 'fb085f7f',
+        'id': '7cf872dc',
         'sequences': list([
           dict({
             'accession': 'NC_795330',
             'definition': 'Bring determine some forward staff.',
             'host': 'prunus',
-            'id': '7cf872dc',
+            'id': '3cbb22cc',
             'remote': None,
             'segment': 'RNA_C',
             'sequence': 'GGAGCSCAAAGAAGACADGCGAGCCGAATTACCGTTRCRCGAGGAACAKCAGRGKCTCAGCAGCAGCCCCGGATGGACGAATGCGAGCGGAAGTGRCAATGAGHTCBHGAAWTAAGHGCACATGACKCAYGATCGCAAGAATTTCGGBCCCCTGATTATTTAGATACTVAAGMTGGTGTACCTGGAACATGAACGNAGAATACTKGGAAANCAAAGGACGACTCNGCACTGACCCCTCGGGNCGCMAGGTTCGCATTGCGCYAATGTGGGCTTCAAGCCATGTRTHGDCTGAGGTCTCTGGTTAMT',
@@ -491,7 +491,7 @@
             'accession': 'NC_076279',
             'definition': 'Purpose character would in.',
             'host': 'rice',
-            'id': '3cbb22cc',
+            'id': 'da42dca3',
             'remote': None,
             'segment': 'RNA-U3',
             'sequence': 'CCAGACATGCAGGAAGCMCDGTGBTTGBVAGNATTATCBRATACCGTGGCCCCWAGTAAATABGTTCGTTTAGTAGTTCAACGRGTGMTACCGTAATBTGCTCACTTAAACTATCGCTGATTKCTTTCCCTABRTTWAAAACAGMATABTCTCAGTGTCAAHTCTGACBCTCATCATGGTGTGCAAATCAGGGAGTACAABCGRTTCAAATCCTCGACCCBTACGATTNGHGAWKTTAATCTRACATGTTCGAMATAATVTCGGTAGRACGTGGTTAGGGGTAGCCCGTCTCTAATTAATACCAACCATCGTCAAGTGTGTCTCGTTCACTYTCTATGAGACGCGTBTAGTTNARCGGGCCCTACGATAGNACTATTDCTGCTGRATTTCCAACTCGGAANAAYCGDTATTCACKCACCTBCAGGGCGAATATTSATGTGCCTTAACACTCATAWTGTCAKTATCGGTAGCGHGGCAWACCCGGATGAWBGGGCGTGACGCATGTCGCTCCCAGTGSACTCACCMATATATNTGGMNGGCTGTAVGSTCCGAGAGGCAATTTCTTAGCTTAGYCCTCASTGCACCSCCTTTAGGTTCTTGTAACGGGTCAYCGGRTHAATGAGCTAGTCTGGGGAATATTTTGTTTCGATTCCGGCTCCTGTKAAGTAGCCTGBATANCTAAGCAGYGGGGCGGGTAGGAATGTGGCCYGTACACGTWAGCGCGYAGAACAGACCTTTGCAKAATCACGGYCGAKMTTCCTTGCACTWAAAATGGTGGGCGCTGKACGATADACGBATSGAGAGSMTABCTTCTDTATTCTGACGGAAATAAKCAAGGTCGGKTATACTAGTTYTCKATTCCCGGTCGTCCGATGGHTACCACAKGGATATCCAGTGTTACATTAAATACCCGATGAAAAACRCTGGGYGGTACDCATGCTYTTCTTTAHACCHGAGGCCCTGAAAATGTGTGCGTACGGCGACANTCTGTCKATATGCTTGACTCCTTTTTCYCBCCTACGTTACACCAATGCGACTGGGTCVTATBKATTGDGATAGCGTCGATGTGCTTHGGTARAAMGMTTGHCCMNGATTTCACTWGTAGTTGAAGAWACAGCYACGCCTCKTTCAAHABATTTCACTAAAAGAAHTTCCGCCTACATACGGCTGTTGCBGATCATTCMAGGAMCAATTCARTACAAWGTGGATCCGCAGCCMCACCTGAATGCCADCKCTGCATGGTVTNAAAASWGATATATCGCCBCCRTCACGGACTAAGCGCBTCATGHTGMTCMATCCBCTTGACMAAAGTCTATCCGCACARGCTANACBGTAANAAGAAGAACTAGTAG',
@@ -500,7 +500,7 @@
             'accession': 'QX375248',
             'definition': 'Bar standard final.',
             'host': 'apple',
-            'id': 'da42dca3',
+            'id': '09d01419',
             'remote': None,
             'segment': 'RNA L',
             'sequence': 'ACTAGHCTTTCTAHNATTGAGCTGCTCHAGGGACGTCTTGCTATCTGTTTGRBAGCATTTCSAGGTTATACTATGTGSTCGCATVTGGGGGGAACACCAAAGABVGCTTTTGGATAAGCATCGGACCAACTDCGACGGATCTCTGYTCTCGCGGGAACCGCRGCGCTTCCAGDCAAATGAGSAADTGAVACMGTGTCTTCGGGACTAKAAACCCCSGRAGACMCTTYKCGTAHCTHCTGAGAATGCTAKGGGGAGGGCGAGTGCCCAAAGAATHGTGATCVATKACTCGTGBVAGGASAABGCTTTACAGAATGGCSATGTACATTTCCATTTCTAACGCAAATCCCCTCGTGGRCTGATHTCTAATCCCAATSATCYWACTCGGGGGAAGCNATTGCYGNCHATCHCGCCTTTABCGGSTTCTAGCCGAKCGCCGACATCTTGABCACACGTTCMGTGAAVGCCTGGCAGGNGAVGCTGCACAGGGACTAGSKCGATYCTATCTGTAGCHAGACCAGTGGGGGGAAACAACATAATGTCGGATTCDACATBYAGGKCTGCGAATTCTGGTAGCAACCCTCTACACGAATCTGCCAAKAAACCTTCTGCCATGACHTCAATCCGTTGCGGAACCCTAKTATCCGACTGTGANCTGTATTCCGCAACTASAYCSGTCATMATAGGCCTCGGACGCGCBCCAACGACAGGCATTCGCNGAHATCTATTGCAGATGGTCHGGCVKTTCTCRTTCTCAGTCTCCCA',
@@ -524,7 +524,7 @@
     'most_recent_change': dict({
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Created new sequence foobar in Isolate Position',
-      'id': 'bf1b993c.5',
+      'id': 'fb085f7f.5',
       'method_name': <HistoryMethod.create_sequence: 'create_sequence'>,
       'user': dict({
         'handle': 'aanderson',
@@ -551,8 +551,8 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'verified': True,
@@ -565,11 +565,11 @@
     'definition': 'A made up sequence',
     'host': 'Plant',
     'id': 'bf1b993c',
-    'otu_id': 'bf1b993c',
+    'otu_id': 'fb085f7f',
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'segment': None,
@@ -581,48 +581,48 @@
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'description': 'Removed Pepper bunchy top virus (PBTV)',
     'diff': dict({
-      '_id': 'bf1b993c',
+      '_id': 'fb085f7f',
       'abbreviation': 'PBTV',
       'isolates': list([
         dict({
           'default': True,
-          'id': 'fb085f7f',
+          'id': '7cf872dc',
           'sequences': list([
             dict({
-              '_id': '7cf872dc',
+              '_id': '3cbb22cc',
               'accession': 'VC280715',
               'definition': 'Exactly drive well good explain grow water.',
               'host': 'prunus',
-              'isolate_id': 'fb085f7f',
-              'otu_id': 'bf1b993c',
+              'isolate_id': '7cf872dc',
+              'otu_id': 'fb085f7f',
               'reference': dict({
-                'id': 'hxn167',
+                'id': 1,
               }),
               'segment': 'DNA M',
               'sequence': 'GATGGACGAATGCGAGCGGAAGTGRCAATGAGHTCBHGAAWTAAGHGCACATGACKCAYGATCGCAAGAATTTCGGBCCCCTGATTATTTAGATACTVAAGMTGGTGTACCTGGAACATGAACGNAGAATACTKGGAAANCAAAGGACGACTCNGCACTGACCCCTCGGGNCGCMAGGTTCGCATTGCGCYAATGTGGGCTTCAAGCCATGTRTHGDCTGAGGTCTCTGGTTAMTGTSCAGCAGGTACCAGACATGCAGGAAGCMCDGTGBTTGBVAGNATTATCBRATACCGTGGCCCCWAGTAAATABGTTCGTTTAGTAGTTCAACGRGTGMTACCGTAATBTGCTCACTTAAACTATCGCTGATTKCTTTCCCTABRTTWAAAACAGMATABTCTCAGTGTCAAHTCTGACBCTCATCATGGTGTGCAAATCAGGGAGTACAABCGRTTCAAATCCTCGACCCBTACGATTNGHGAWKTTAATCTRACATGTTCGAMATAATVTCGGTAGRACGTGGTTAGGGGTAGCCCGTCTCTAATTAATACCAACCATCGTCAAGTGTGTCTCGTTCACTYTCTATGAGACGCGTBTAGTTNARCGGGCCCTACGATAGNACTATTDCTGCTGRATTTCCAACTCGGAANAAYCGDTATTCACKCACCTBCAGGGCGAATATTSATGTGCCTTAACACTCATAWTGTCAKTATCGGTAGCGHGGCAWACCCGGATGAWBGGGCGTGACGCATGTCGCTCCCAGTGSACTCACCMATATATNTGGMNGGCTGTAVGSTCCGAGAGGCAATTTCTTAGCTTAGYCCTCASTGCACCSCCTTTAGGTTCTTGTAACGGGTCAYCGGRTHAATGAGCTAGTCTGGGGAATATTTTGTTTCGATTCCGGCTCCTGTKAAGTAGCCTGBATANCTAAGCAGYGGGGCGGGTAGGAATGTGGCCYGTACACGTWAGCGCGYAGAACAGACCTTTGCAKAATCACGGYCGAKMTTCCTTGCACTWAAAATGGTGGGCGCTGKACGATADACGBATSGAGAGSMTABCTTCTDTATTCTGACGGAAATAAKCAAGGTCGGKTATACTAGTTYTCKATTCCCGGTCGTCCGATGGHTACCACAKGGATATCCAGTGTTACATTAAATACCCGATGAAAAACRCTGGGYGGTACDCATGCTYTTCTTTAHACCHGAGGCCCTGAAAATGTGTGCGTACGGCGACANTCTGTCKATATGCTTGACTCCTTTTTCYCBCCTACGTTACACCAATGCGACTGGGTCVTATBKATTGDGATAGCGTCGATGTGCTTHGGTARAAMGMTTGHCCMNGATTTCACTWGTAGTTGAAGAWACAGCYACGCCTCKTTCAAHABATTTCACTAAAAGAA',
             }),
             dict({
-              '_id': '3cbb22cc',
+              '_id': 'da42dca3',
               'accession': 'NC_688181',
               'definition': 'Buy throw like lawyer fund indicate help.',
               'host': 'lettuce',
-              'isolate_id': 'fb085f7f',
-              'otu_id': 'bf1b993c',
+              'isolate_id': '7cf872dc',
+              'otu_id': 'fb085f7f',
               'reference': dict({
-                'id': 'hxn167',
+                'id': 1,
               }),
               'segment': 'RNA_R',
               'sequence': 'CGGCTGTTGCBGATCATTCMAGGAMCAATTCARTACAAWGTGGATCCGCAGCCMCACCTGAATGCCADCKCTGCATGGTVTNAAAASWGATATATCGCCBCCRTCACGGACTAAGCGCBTCATGHTGMTCMATCCBCTTGACMAAAGTCTATCCGCACARGCTANACBGTAANAAGAAGAACTAGTAGGHCACTACGACTGGTAAGATACGACGACCTTCCTAAGAHTHCTGTGCTATTTWYCGGTAAGCAAAAATGTTCCTTGMAGCAAGGAVCAGGKGAGAGGGCGGGGACRATTTTCAGCRGAGTTCVHCTAGCGGGAGGTGGCCGTCTTGTCTAGMGCTTAGSGTGCTTGTGCTTTAACGCYGCYTTRCGATGACGHSGAGCRCCTGCAYAGBTGGGATAAACTGGTTGCACTCYTATCCCAATCCGAADTHGCCYTCCGGCCTTCCTACSGCAADTGGTTATGGACHWGTGCACAGCGTAYRAGAGTTHGCGTCCRCCAACTAGGGCGGCAAGANWAGGTGAACGCCATGCCCRATGTGAACAATTSGCCTCCCTCGGTGACCTGTACHCATTCGGTGGCCGTGGGKGCCMGGGCAACCGCCTTTGGATTTTTTCMTCCCATGTAGCGTAATTGCRTTAGTAAAGGCTTCGGGGGAYGTATGTCTYTWAAHCCACCBGNRTAAMTGGGGCMCBGTAAWAGTGACAAGTWACTCGGGAGCGTCAGGGGTACCWCCCTSCTGACTCTTTAACCCAGYATGAGGTHTAGTGCGGCCTTGVAAVATCCCATATAGAACAGCCCCCCGYCCCGTHGGAAAGGACATCTGSGTCCGTCAGTGGCAGTGATGARGATGCGTAACAACTCGTGAATGTAAGCGCACCAGGAGGTCTTAGWGACMTTGGGGDGGCAAACCTTAAGCTTTRVCAAGTCCHATCCATCCTAACTGTGAAADTCGCGCGGAGTGGAGTTCTGGATGGCTTGATMBATGCAGTTTAAGAAGGTCTGTGTATACTDATTGTGCTACAATACCTACTAKAAACRGTGATBAAGAGTCCGACATWTTTCGCGRTGAACCTCSTTVCCRATGTACGGGTAACAACCCCATCGTYATGGGTCTVATTGGCTCTATTCTGKTKGGDGTCTGCGTTBTGVTATAGGGACTVACYGGATTCAAGCCGGTTCTGAGGTMCTMTAAGAATACACACCAGAAGCCAACACGVGAAGGTACBGCAGTTYCCTTCACGDGSCAATGAR',
             }),
             dict({
-              '_id': 'da42dca3',
+              '_id': '09d01419',
               'accession': 'NC_772442',
               'definition': 'Common prevent spend.',
               'host': 'sweet potato',
-              'isolate_id': 'fb085f7f',
-              'otu_id': 'bf1b993c',
+              'isolate_id': '7cf872dc',
+              'otu_id': 'fb085f7f',
               'reference': dict({
-                'id': 'hxn167',
+                'id': 1,
               }),
               'segment': 'RNA_L',
               'sequence': 'ACCCCTCCGTTATMTTCTAGCGATGTATTGTCHGGATWCACGCATGAAGAATCGYACGAGCCBDTAGTAGTGGGGGRTCCMCCGAGTTBGGTGACTVANTTCCTGCACTGTCCCWATCTAACWTGAGTCCCCGRCGGCATAACCVCGGVCBTTCGAAKTGCCTAAATACACACATTKGYAAAGTTCAAGTCAGSTCTTATGTGCTGCTCATAACCGACAMCNATTTGACTAGABACTGAGTCAAKAATGTCAGRGTACTTAGTGYGACGGGCRGTTGTGAATTAGTTATACTCTHGRVGGAGYTCGATACVCCGTTCTNNAGGHCAAGGGATTAAATAGBVWCVGAGCAATAAACAYGGGGCCCGCTGTCMNGMAGGGTGGMGKAANCKAMCCCACCTDASCGNGGGCAATATACCCGCCATNGAGAGTGAVTAAAATTTTAACTTGTAATCGCAACCGCGATHCAGGCAGTTAGATAGTACGAGCCGCGRGTGCVAATAVGGSAGTTTYGWTTYAGGAGGNGGADTGAGADAGAGGCATCRAATAGTATCCCAAGGCABGAAACCAGATGCAGGAVTTCTTCTTTGGTAAACYTTGCTAGCAGCGATAACAATTGATTACTTACHAGTGCAATTGGAGTWGACGKATAGACGGTACTCCCAAGTTADNCATAGACGCTTSATTTAGCGATATYTHAGAVCDTTGCCGTGCGGAHCTAAGGGARTYKCTCATMMNGAGTAMCGTCCTTGCAGGTCTCCTCAA',
@@ -636,7 +636,7 @@
       'lower_name': 'pepper bunchy top virus',
       'name': 'Pepper bunchy top virus',
       'reference': dict({
-        'id': 'hxn167',
+        'id': 1,
       }),
       'schema': list([
         dict({
@@ -658,21 +658,21 @@
       'verified': True,
       'version': 4,
     }),
-    'id': 'bf1b993c.removed',
+    'id': 'fb085f7f.removed',
     'index': dict({
       'id': 'unbuilt',
       'version': 'unbuilt',
     }),
     'method_name': <HistoryMethod.remove: 'remove'>,
     'otu': dict({
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
       'name': 'Pepper bunchy top virus',
       'version': 'removed',
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
@@ -693,8 +693,8 @@
           'id',
         ]),
         list([
-          'fb085f7f',
-          '09d01419',
+          '7cf872dc',
+          'f60bae36',
         ]),
       ]),
       list([
@@ -720,14 +720,14 @@
           list([
             2,
             dict({
-              '_id': 'da42dca3',
+              '_id': '09d01419',
               'accession': 'NC_772442',
               'definition': 'Common prevent spend.',
               'host': 'sweet potato',
-              'isolate_id': 'fb085f7f',
-              'otu_id': 'bf1b993c',
+              'isolate_id': '7cf872dc',
+              'otu_id': 'fb085f7f',
               'reference': dict({
-                'id': 'hxn167',
+                'id': 1,
               }),
               'segment': 'RNA_L',
               'sequence': 'ACCCCTCCGTTATMTTCTAGCGATGTATTGTCHGGATWCACGCATGAAGAATCGYACGAGCCBDTAGTAGTGGGGGRTCCMCCGAGTTBGGTGACTVANTTCCTGCACTGTCCCWATCTAACWTGAGTCCCCGRCGGCATAACCVCGGVCBTTCGAAKTGCCTAAATACACACATTKGYAAAGTTCAAGTCAGSTCTTATGTGCTGCTCATAACCGACAMCNATTTGACTAGABACTGAGTCAAKAATGTCAGRGTACTTAGTGYGACGGGCRGTTGTGAATTAGTTATACTCTHGRVGGAGYTCGATACVCCGTTCTNNAGGHCAAGGGATTAAATAGBVWCVGAGCAATAAACAYGGGGCCCGCTGTCMNGMAGGGTGGMGKAANCKAMCCCACCTDASCGNGGGCAATATACCCGCCATNGAGAGTGAVTAAAATTTTAACTTGTAATCGCAACCGCGATHCAGGCAGTTAGATAGTACGAGCCGCGRGTGCVAATAVGGSAGTTTYGWTTYAGGAGGNGGADTGAGADAGAGGCATCRAATAGTATCCCAAGGCABGAAACCAGATGCAGGAVTTCTTCTTTGGTAAACYTTGCTAGCAGCGATAACAATTGATTACTTACHAGTGCAATTGGAGTWGACGKATAGACGGTACTCCCAAGTTADNCATAGACGCTTSATTTAGCGATATYTHAGAVCDTTGCCGTGCGGAHCTAAGGGARTYKCTCATMMNGAGTAMCGTCCTTGCAGGTCTCCTCAA',
@@ -736,14 +736,14 @@
           list([
             1,
             dict({
-              '_id': '3cbb22cc',
+              '_id': 'da42dca3',
               'accession': 'NC_688181',
               'definition': 'Buy throw like lawyer fund indicate help.',
               'host': 'lettuce',
-              'isolate_id': 'fb085f7f',
-              'otu_id': 'bf1b993c',
+              'isolate_id': '7cf872dc',
+              'otu_id': 'fb085f7f',
               'reference': dict({
-                'id': 'hxn167',
+                'id': 1,
               }),
               'segment': 'RNA_R',
               'sequence': 'CGGCTGTTGCBGATCATTCMAGGAMCAATTCARTACAAWGTGGATCCGCAGCCMCACCTGAATGCCADCKCTGCATGGTVTNAAAASWGATATATCGCCBCCRTCACGGACTAAGCGCBTCATGHTGMTCMATCCBCTTGACMAAAGTCTATCCGCACARGCTANACBGTAANAAGAAGAACTAGTAGGHCACTACGACTGGTAAGATACGACGACCTTCCTAAGAHTHCTGTGCTATTTWYCGGTAAGCAAAAATGTTCCTTGMAGCAAGGAVCAGGKGAGAGGGCGGGGACRATTTTCAGCRGAGTTCVHCTAGCGGGAGGTGGCCGTCTTGTCTAGMGCTTAGSGTGCTTGTGCTTTAACGCYGCYTTRCGATGACGHSGAGCRCCTGCAYAGBTGGGATAAACTGGTTGCACTCYTATCCCAATCCGAADTHGCCYTCCGGCCTTCCTACSGCAADTGGTTATGGACHWGTGCACAGCGTAYRAGAGTTHGCGTCCRCCAACTAGGGCGGCAAGANWAGGTGAACGCCATGCCCRATGTGAACAATTSGCCTCCCTCGGTGACCTGTACHCATTCGGTGGCCGTGGGKGCCMGGGCAACCGCCTTTGGATTTTTTCMTCCCATGTAGCGTAATTGCRTTAGTAAAGGCTTCGGGGGAYGTATGTCTYTWAAHCCACCBGNRTAAMTGGGGCMCBGTAAWAGTGACAAGTWACTCGGGAGCGTCAGGGGTACCWCCCTSCTGACTCTTTAACCCAGYATGAGGTHTAGTGCGGCCTTGVAAVATCCCATATAGAACAGCCCCCCGYCCCGTHGGAAAGGACATCTGSGTCCGTCAGTGGCAGTGATGARGATGCGTAACAACTCGTGAATGTAAGCGCACCAGGAGGTCTTAGWGACMTTGGGGDGGCAAACCTTAAGCTTTRVCAAGTCCHATCCATCCTAACTGTGAAADTCGCGCGGAGTGGAGTTCTGGATGGCTTGATMBATGCAGTTTAAGAAGGTCTGTGTATACTDATTGTGCTACAATACCTACTAKAAACRGTGATBAAGAGTCCGACATWTTTCGCGRTGAACCTCSTTVCCRATGTACGGGTAACAACCCCATCGTYATGGGTCTVATTGGCTCTATTCTGKTKGGDGTCTGCGTTBTGVTATAGGGACTVACYGGATTCAAGCCGGTTCTGAGGTMCTMTAAGAATACACACCAGAAGCCAACACGVGAAGGTACBGCAGTTYCCTTCACGDGSCAATGAR',
@@ -752,14 +752,14 @@
           list([
             0,
             dict({
-              '_id': '7cf872dc',
+              '_id': '3cbb22cc',
               'accession': 'VC280715',
               'definition': 'Exactly drive well good explain grow water.',
               'host': 'prunus',
-              'isolate_id': 'fb085f7f',
-              'otu_id': 'bf1b993c',
+              'isolate_id': '7cf872dc',
+              'otu_id': 'fb085f7f',
               'reference': dict({
-                'id': 'hxn167',
+                'id': 1,
               }),
               'segment': 'DNA M',
               'sequence': 'GATGGACGAATGCGAGCGGAAGTGRCAATGAGHTCBHGAAWTAAGHGCACATGACKCAYGATCGCAAGAATTTCGGBCCCCTGATTATTTAGATACTVAAGMTGGTGTACCTGGAACATGAACGNAGAATACTKGGAAANCAAAGGACGACTCNGCACTGACCCCTCGGGNCGCMAGGTTCGCATTGCGCYAATGTGGGCTTCAAGCCATGTRTHGDCTGAGGTCTCTGGTTAMTGTSCAGCAGGTACCAGACATGCAGGAAGCMCDGTGBTTGBVAGNATTATCBRATACCGTGGCCCCWAGTAAATABGTTCGTTTAGTAGTTCAACGRGTGMTACCGTAATBTGCTCACTTAAACTATCGCTGATTKCTTTCCCTABRTTWAAAACAGMATABTCTCAGTGTCAAHTCTGACBCTCATCATGGTGTGCAAATCAGGGAGTACAABCGRTTCAAATCCTCGACCCBTACGATTNGHGAWKTTAATCTRACATGTTCGAMATAATVTCGGTAGRACGTGGTTAGGGGTAGCCCGTCTCTAATTAATACCAACCATCGTCAAGTGTGTCTCGTTCACTYTCTATGAGACGCGTBTAGTTNARCGGGCCCTACGATAGNACTATTDCTGCTGRATTTCCAACTCGGAANAAYCGDTATTCACKCACCTBCAGGGCGAATATTSATGTGCCTTAACACTCATAWTGTCAKTATCGGTAGCGHGGCAWACCCGGATGAWBGGGCGTGACGCATGTCGCTCCCAGTGSACTCACCMATATATNTGGMNGGCTGTAVGSTCCGAGAGGCAATTTCTTAGCTTAGYCCTCASTGCACCSCCTTTAGGTTCTTGTAACGGGTCAYCGGRTHAATGAGCTAGTCTGGGGAATATTTTGTTTCGATTCCGGCTCCTGTKAAGTAGCCTGBATANCTAAGCAGYGGGGCGGGTAGGAATGTGGCCYGTACACGTWAGCGCGYAGAACAGACCTTTGCAKAATCACGGYCGAKMTTCCTTGCACTWAAAATGGTGGGCGCTGKACGATADACGBATSGAGAGSMTABCTTCTDTATTCTGACGGAAATAAKCAAGGTCGGKTATACTAGTTYTCKATTCCCGGTCGTCCGATGGHTACCACAKGGATATCCAGTGTTACATTAAATACCCGATGAAAAACRCTGGGYGGTACDCATGCTYTTCTTTAHACCHGAGGCCCTGAAAATGTGTGCGTACGGCGACANTCTGTCKATATGCTTGACTCCTTTTTCYCBCCTACGTTACACCAATGCGACTGGGTCVTATBKATTGDGATAGCGTCGATGTGCTTHGGTARAAMGMTTGHCCMNGATTTCACTWGTAGTTGAAGAWACAGCYACGCCTCKTTCAAHABATTTCACTAAAAGAA',
@@ -775,7 +775,7 @@
             1,
             dict({
               'default': False,
-              'id': '09d01419',
+              'id': 'f60bae36',
               'sequences': list([
               ]),
               'source_name': 'b',
@@ -793,21 +793,21 @@
         ]),
       ]),
     ]),
-    'id': 'bf1b993c.6',
+    'id': 'fb085f7f.6',
     'index': dict({
       'id': 'unbuilt',
       'version': 'unbuilt',
     }),
     'method_name': <HistoryMethod.remove_isolate: 'remove_isolate'>,
     'otu': dict({
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
       'name': 'Pepper bunchy top virus',
       'version': 6,
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
@@ -818,11 +818,11 @@
 # name: TestDeleteIsolate.test_default[True][otu]
   dict({
     'abbreviation': 'PBTV',
-    'id': 'bf1b993c',
+    'id': 'fb085f7f',
     'isolates': list([
       dict({
         'default': True,
-        'id': '09d01419',
+        'id': 'f60bae36',
         'sequences': list([
         ]),
         'source_name': 'b',
@@ -831,7 +831,7 @@
     ]),
     'issues': dict({
       'empty_isolate': list([
-        '09d01419',
+        'f60bae36',
       ]),
       'empty_otu': False,
       'empty_sequence': False,
@@ -841,7 +841,7 @@
     'most_recent_change': dict({
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Removed Isolate Important and set Isolate b as default',
-      'id': 'bf1b993c.6',
+      'id': 'fb085f7f.6',
       'method_name': <HistoryMethod.remove_isolate: 'remove_isolate'>,
       'user': dict({
         'handle': 'leeashley',
@@ -868,8 +868,8 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'verified': False,
@@ -897,56 +897,56 @@
             0,
             dict({
               'default': True,
-              'id': 'fb085f7f',
+              'id': '7cf872dc',
               'sequences': list([
                 dict({
-                  '_id': '7cf872dc',
+                  '_id': '3cbb22cc',
                   'accession': 'VC280715',
                   'definition': 'Exactly drive well good explain grow water.',
                   'host': 'prunus',
-                  'isolate_id': 'fb085f7f',
-                  'otu_id': 'bf1b993c',
+                  'isolate_id': '7cf872dc',
+                  'otu_id': 'fb085f7f',
                   'reference': dict({
-                    'id': 'hxn167',
+                    'id': 1,
                   }),
                   'segment': 'DNA M',
                   'sequence': 'GATGGACGAATGCGAGCGGAAGTGRCAATGAGHTCBHGAAWTAAGHGCACATGACKCAYGATCGCAAGAATTTCGGBCCCCTGATTATTTAGATACTVAAGMTGGTGTACCTGGAACATGAACGNAGAATACTKGGAAANCAAAGGACGACTCNGCACTGACCCCTCGGGNCGCMAGGTTCGCATTGCGCYAATGTGGGCTTCAAGCCATGTRTHGDCTGAGGTCTCTGGTTAMTGTSCAGCAGGTACCAGACATGCAGGAAGCMCDGTGBTTGBVAGNATTATCBRATACCGTGGCCCCWAGTAAATABGTTCGTTTAGTAGTTCAACGRGTGMTACCGTAATBTGCTCACTTAAACTATCGCTGATTKCTTTCCCTABRTTWAAAACAGMATABTCTCAGTGTCAAHTCTGACBCTCATCATGGTGTGCAAATCAGGGAGTACAABCGRTTCAAATCCTCGACCCBTACGATTNGHGAWKTTAATCTRACATGTTCGAMATAATVTCGGTAGRACGTGGTTAGGGGTAGCCCGTCTCTAATTAATACCAACCATCGTCAAGTGTGTCTCGTTCACTYTCTATGAGACGCGTBTAGTTNARCGGGCCCTACGATAGNACTATTDCTGCTGRATTTCCAACTCGGAANAAYCGDTATTCACKCACCTBCAGGGCGAATATTSATGTGCCTTAACACTCATAWTGTCAKTATCGGTAGCGHGGCAWACCCGGATGAWBGGGCGTGACGCATGTCGCTCCCAGTGSACTCACCMATATATNTGGMNGGCTGTAVGSTCCGAGAGGCAATTTCTTAGCTTAGYCCTCASTGCACCSCCTTTAGGTTCTTGTAACGGGTCAYCGGRTHAATGAGCTAGTCTGGGGAATATTTTGTTTCGATTCCGGCTCCTGTKAAGTAGCCTGBATANCTAAGCAGYGGGGCGGGTAGGAATGTGGCCYGTACACGTWAGCGCGYAGAACAGACCTTTGCAKAATCACGGYCGAKMTTCCTTGCACTWAAAATGGTGGGCGCTGKACGATADACGBATSGAGAGSMTABCTTCTDTATTCTGACGGAAATAAKCAAGGTCGGKTATACTAGTTYTCKATTCCCGGTCGTCCGATGGHTACCACAKGGATATCCAGTGTTACATTAAATACCCGATGAAAAACRCTGGGYGGTACDCATGCTYTTCTTTAHACCHGAGGCCCTGAAAATGTGTGCGTACGGCGACANTCTGTCKATATGCTTGACTCCTTTTTCYCBCCTACGTTACACCAATGCGACTGGGTCVTATBKATTGDGATAGCGTCGATGTGCTTHGGTARAAMGMTTGHCCMNGATTTCACTWGTAGTTGAAGAWACAGCYACGCCTCKTTCAAHABATTTCACTAAAAGAA',
                 }),
                 dict({
-                  '_id': '3cbb22cc',
+                  '_id': 'da42dca3',
                   'accession': 'NC_688181',
                   'definition': 'Buy throw like lawyer fund indicate help.',
                   'host': 'lettuce',
-                  'isolate_id': 'fb085f7f',
-                  'otu_id': 'bf1b993c',
+                  'isolate_id': '7cf872dc',
+                  'otu_id': 'fb085f7f',
                   'reference': dict({
-                    'id': 'hxn167',
+                    'id': 1,
                   }),
                   'segment': 'RNA_R',
                   'sequence': 'CGGCTGTTGCBGATCATTCMAGGAMCAATTCARTACAAWGTGGATCCGCAGCCMCACCTGAATGCCADCKCTGCATGGTVTNAAAASWGATATATCGCCBCCRTCACGGACTAAGCGCBTCATGHTGMTCMATCCBCTTGACMAAAGTCTATCCGCACARGCTANACBGTAANAAGAAGAACTAGTAGGHCACTACGACTGGTAAGATACGACGACCTTCCTAAGAHTHCTGTGCTATTTWYCGGTAAGCAAAAATGTTCCTTGMAGCAAGGAVCAGGKGAGAGGGCGGGGACRATTTTCAGCRGAGTTCVHCTAGCGGGAGGTGGCCGTCTTGTCTAGMGCTTAGSGTGCTTGTGCTTTAACGCYGCYTTRCGATGACGHSGAGCRCCTGCAYAGBTGGGATAAACTGGTTGCACTCYTATCCCAATCCGAADTHGCCYTCCGGCCTTCCTACSGCAADTGGTTATGGACHWGTGCACAGCGTAYRAGAGTTHGCGTCCRCCAACTAGGGCGGCAAGANWAGGTGAACGCCATGCCCRATGTGAACAATTSGCCTCCCTCGGTGACCTGTACHCATTCGGTGGCCGTGGGKGCCMGGGCAACCGCCTTTGGATTTTTTCMTCCCATGTAGCGTAATTGCRTTAGTAAAGGCTTCGGGGGAYGTATGTCTYTWAAHCCACCBGNRTAAMTGGGGCMCBGTAAWAGTGACAAGTWACTCGGGAGCGTCAGGGGTACCWCCCTSCTGACTCTTTAACCCAGYATGAGGTHTAGTGCGGCCTTGVAAVATCCCATATAGAACAGCCCCCCGYCCCGTHGGAAAGGACATCTGSGTCCGTCAGTGGCAGTGATGARGATGCGTAACAACTCGTGAATGTAAGCGCACCAGGAGGTCTTAGWGACMTTGGGGDGGCAAACCTTAAGCTTTRVCAAGTCCHATCCATCCTAACTGTGAAADTCGCGCGGAGTGGAGTTCTGGATGGCTTGATMBATGCAGTTTAAGAAGGTCTGTGTATACTDATTGTGCTACAATACCTACTAKAAACRGTGATBAAGAGTCCGACATWTTTCGCGRTGAACCTCSTTVCCRATGTACGGGTAACAACCCCATCGTYATGGGTCTVATTGGCTCTATTCTGKTKGGDGTCTGCGTTBTGVTATAGGGACTVACYGGATTCAAGCCGGTTCTGAGGTMCTMTAAGAATACACACCAGAAGCCAACACGVGAAGGTACBGCAGTTYCCTTCACGDGSCAATGAR',
                 }),
                 dict({
-                  '_id': 'da42dca3',
+                  '_id': '09d01419',
                   'accession': 'NC_772442',
                   'definition': 'Common prevent spend.',
                   'host': 'sweet potato',
-                  'isolate_id': 'fb085f7f',
-                  'otu_id': 'bf1b993c',
+                  'isolate_id': '7cf872dc',
+                  'otu_id': 'fb085f7f',
                   'reference': dict({
-                    'id': 'hxn167',
+                    'id': 1,
                   }),
                   'segment': 'RNA_L',
                   'sequence': 'ACCCCTCCGTTATMTTCTAGCGATGTATTGTCHGGATWCACGCATGAAGAATCGYACGAGCCBDTAGTAGTGGGGGRTCCMCCGAGTTBGGTGACTVANTTCCTGCACTGTCCCWATCTAACWTGAGTCCCCGRCGGCATAACCVCGGVCBTTCGAAKTGCCTAAATACACACATTKGYAAAGTTCAAGTCAGSTCTTATGTGCTGCTCATAACCGACAMCNATTTGACTAGABACTGAGTCAAKAATGTCAGRGTACTTAGTGYGACGGGCRGTTGTGAATTAGTTATACTCTHGRVGGAGYTCGATACVCCGTTCTNNAGGHCAAGGGATTAAATAGBVWCVGAGCAATAAACAYGGGGCCCGCTGTCMNGMAGGGTGGMGKAANCKAMCCCACCTDASCGNGGGCAATATACCCGCCATNGAGAGTGAVTAAAATTTTAACTTGTAATCGCAACCGCGATHCAGGCAGTTAGATAGTACGAGCCGCGRGTGCVAATAVGGSAGTTTYGWTTYAGGAGGNGGADTGAGADAGAGGCATCRAATAGTATCCCAAGGCABGAAACCAGATGCAGGAVTTCTTCTTTGGTAAACYTTGCTAGCAGCGATAACAATTGATTACTTACHAGTGCAATTGGAGTWGACGKATAGACGGTACTCCCAAGTTADNCATAGACGCTTSATTTAGCGATATYTHAGAVCDTTGCCGTGCGGAHCTAAGGGARTYKCTCATMMNGAGTAMCGTCCTTGCAGGTCTCCTCAA',
                 }),
                 dict({
-                  '_id': '09d01419',
+                  '_id': 'f60bae36',
                   'accession': 'OR596737.1',
                   'definition': 'Prunus virus F isolate PCEG segment RNA2',
                   'host': 'Prunus cerasus',
-                  'isolate_id': 'fb085f7f',
-                  'otu_id': 'bf1b993c',
+                  'isolate_id': '7cf872dc',
+                  'otu_id': 'fb085f7f',
                   'reference': dict({
-                    'id': 'hxn167',
+                    'id': 1,
                   }),
                   'segment': 2,
                   'sequence': 'TAAGAGATTAAACAACCGCTTTCGTTACCAGAAACTGCTTTCTTTGAACGTTTCTGTTTGCTT',
@@ -967,21 +967,21 @@
         ]),
       ]),
     ]),
-    'id': 'bf1b993c.6',
+    'id': 'fb085f7f.6',
     'index': dict({
       'id': 'unbuilt',
       'version': 'unbuilt',
     }),
     'method_name': <HistoryMethod.remove_isolate: 'remove_isolate'>,
     'otu': dict({
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
       'name': 'Pepper bunchy top virus',
       'version': 6,
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
@@ -992,7 +992,7 @@
 # name: TestDeleteSequence.test_ok[history]
   dict({
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'description': 'Removed sequence 7cf872dc from Isolate Important',
+    'description': 'Removed sequence 3cbb22cc from Isolate Important',
     'diff': list([
       list([
         'change',
@@ -1004,8 +1004,8 @@
           '_id',
         ]),
         list([
-          '7cf872dc',
           '3cbb22cc',
+          'da42dca3',
         ]),
       ]),
       list([
@@ -1088,8 +1088,8 @@
           '_id',
         ]),
         list([
-          '3cbb22cc',
           'da42dca3',
+          '09d01419',
         ]),
       ]),
       list([
@@ -1173,14 +1173,14 @@
           list([
             2,
             dict({
-              '_id': 'da42dca3',
+              '_id': '09d01419',
               'accession': 'NC_772442',
               'definition': 'Common prevent spend.',
               'host': 'sweet potato',
-              'isolate_id': 'fb085f7f',
-              'otu_id': 'bf1b993c',
+              'isolate_id': '7cf872dc',
+              'otu_id': 'fb085f7f',
               'reference': dict({
-                'id': 'hxn167',
+                'id': 1,
               }),
               'segment': 'RNA_L',
               'sequence': 'ACCCCTCCGTTATMTTCTAGCGATGTATTGTCHGGATWCACGCATGAAGAATCGYACGAGCCBDTAGTAGTGGGGGRTCCMCCGAGTTBGGTGACTVANTTCCTGCACTGTCCCWATCTAACWTGAGTCCCCGRCGGCATAACCVCGGVCBTTCGAAKTGCCTAAATACACACATTKGYAAAGTTCAAGTCAGSTCTTATGTGCTGCTCATAACCGACAMCNATTTGACTAGABACTGAGTCAAKAATGTCAGRGTACTTAGTGYGACGGGCRGTTGTGAATTAGTTATACTCTHGRVGGAGYTCGATACVCCGTTCTNNAGGHCAAGGGATTAAATAGBVWCVGAGCAATAAACAYGGGGCCCGCTGTCMNGMAGGGTGGMGKAANCKAMCCCACCTDASCGNGGGCAATATACCCGCCATNGAGAGTGAVTAAAATTTTAACTTGTAATCGCAACCGCGATHCAGGCAGTTAGATAGTACGAGCCGCGRGTGCVAATAVGGSAGTTTYGWTTYAGGAGGNGGADTGAGADAGAGGCATCRAATAGTATCCCAAGGCABGAAACCAGATGCAGGAVTTCTTCTTTGGTAAACYTTGCTAGCAGCGATAACAATTGATTACTTACHAGTGCAATTGGAGTWGACGKATAGACGGTACTCCCAAGTTADNCATAGACGCTTSATTTAGCGATATYTHAGAVCDTTGCCGTGCGGAHCTAAGGGARTYKCTCATMMNGAGTAMCGTCCTTGCAGGTCTCCTCAA',
@@ -1197,21 +1197,21 @@
         ]),
       ]),
     ]),
-    'id': 'bf1b993c.5',
+    'id': 'fb085f7f.5',
     'index': dict({
       'id': 'unbuilt',
       'version': 'unbuilt',
     }),
     'method_name': <HistoryMethod.remove_sequence: 'remove_sequence'>,
     'otu': dict({
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
       'name': 'Pepper bunchy top virus',
       'version': 5,
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
@@ -1262,8 +1262,8 @@
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
@@ -1307,8 +1307,8 @@
     'name': 'Tobacco mosaic otu',
     'reference': dict({
       'data_type': 'genome',
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'schema': list([
@@ -1355,8 +1355,8 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'verified': False,
@@ -1414,8 +1414,8 @@
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
@@ -1459,8 +1459,8 @@
     'name': 'Tobacco mosaic otu',
     'reference': dict({
       'data_type': 'genome',
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'schema': list([
@@ -1507,8 +1507,8 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'verified': False,
@@ -1550,8 +1550,8 @@
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
@@ -1595,8 +1595,8 @@
     'name': 'Prunus virus F',
     'reference': dict({
       'data_type': 'genome',
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'schema': list([
@@ -1643,8 +1643,8 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'verified': False,
@@ -1702,8 +1702,8 @@
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
@@ -1747,8 +1747,8 @@
     'name': 'Tobacco mosaic otu',
     'reference': dict({
       'data_type': 'genome',
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'schema': list([
@@ -1795,8 +1795,8 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'verified': False,
@@ -1854,8 +1854,8 @@
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
@@ -1899,8 +1899,8 @@
     'name': 'Tobacco mosaic otu',
     'reference': dict({
       'data_type': 'genome',
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'schema': list([
@@ -1947,8 +1947,8 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'verified': False,
@@ -2006,8 +2006,8 @@
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
@@ -2051,8 +2051,8 @@
     'name': 'Tobacco mosaic otu',
     'reference': dict({
       'data_type': 'genome',
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'schema': list([
@@ -2099,8 +2099,8 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'verified': False,
@@ -2142,8 +2142,8 @@
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
@@ -2187,8 +2187,8 @@
     'name': 'Prunus virus F',
     'reference': dict({
       'data_type': 'genome',
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'schema': list([
@@ -2235,8 +2235,8 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'verified': False,
@@ -2278,8 +2278,8 @@
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
@@ -2323,8 +2323,8 @@
     'name': 'Prunus virus F',
     'reference': dict({
       'data_type': 'genome',
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'schema': list([
@@ -2371,8 +2371,8 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'verified': False,
@@ -2414,8 +2414,8 @@
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
@@ -2459,8 +2459,8 @@
     'name': 'Prunus virus F',
     'reference': dict({
       'data_type': 'genome',
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'schema': list([
@@ -2507,8 +2507,8 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'verified': False,
@@ -2553,8 +2553,8 @@
     'name': 'Prunus virus F',
     'reference': dict({
       'data_type': 'genome',
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'schema': list([
@@ -2601,8 +2601,8 @@
     'name': 'Prunus virus F',
     'reference': dict({
       'data_type': 'genome',
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'schema': list([
@@ -2638,19 +2638,19 @@
     'last_indexed_version': 0,
     'most_recent_change': dict({
       'created_at': '2015-10-06T20:00:00Z',
-      'description': 'Edited Prunus virus E',
-      'id': '6116cba1.0',
+      'description': 'Changed name to Prunus virus F and changed abbreviation to PVF2 and modified schema',
+      'id': '6116cba1.1',
       'method_name': 'edit',
       'user': dict({
-        'handle': 'myersmitchell',
-        'id': 2,
+        'handle': 'leeashley',
+        'id': 1,
       }),
     }),
     'name': 'Prunus virus F',
     'reference': dict({
       'data_type': 'genome',
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'schema': list([
@@ -2686,19 +2686,19 @@
     'last_indexed_version': 0,
     'most_recent_change': dict({
       'created_at': '2015-10-06T20:00:00Z',
-      'description': 'Edited Prunus virus E',
-      'id': '6116cba1.0',
+      'description': 'Changed name to Prunus virus G and changed abbreviation to PVF and modified schema',
+      'id': '6116cba1.1',
       'method_name': 'edit',
       'user': dict({
-        'handle': 'myersmitchell',
-        'id': 2,
+        'handle': 'leeashley',
+        'id': 1,
       }),
     }),
     'name': 'Prunus virus G',
     'reference': dict({
       'data_type': 'genome',
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'schema': list([
@@ -2709,42 +2709,33 @@
 # ---
 # name: TestGet.test_ok
   dict({
-    'abbreviation': 'PBTV',
-    'id': 'bf1b993c',
+    'abbreviation': 'SBSV',
+    'id': 'fb085f7f',
     'isolates': list([
       dict({
         'default': True,
-        'id': 'fb085f7f',
+        'id': '7cf872dc',
         'sequences': list([
           dict({
-            'accession': 'VC280715',
-            'definition': 'Exactly drive well good explain grow water.',
-            'host': 'prunus',
-            'id': '7cf872dc',
-            'remote': None,
-            'segment': 'DNA M',
-            'sequence': 'GATGGACGAATGCGAGCGGAAGTGRCAATGAGHTCBHGAAWTAAGHGCACATGACKCAYGATCGCAAGAATTTCGGBCCCCTGATTATTTAGATACTVAAGMTGGTGTACCTGGAACATGAACGNAGAATACTKGGAAANCAAAGGACGACTCNGCACTGACCCCTCGGGNCGCMAGGTTCGCATTGCGCYAATGTGGGCTTCAAGCCATGTRTHGDCTGAGGTCTCTGGTTAMTGTSCAGCAGGTACCAGACATGCAGGAAGCMCDGTGBTTGBVAGNATTATCBRATACCGTGGCCCCWAGTAAATABGTTCGTTTAGTAGTTCAACGRGTGMTACCGTAATBTGCTCACTTAAACTATCGCTGATTKCTTTCCCTABRTTWAAAACAGMATABTCTCAGTGTCAAHTCTGACBCTCATCATGGTGTGCAAATCAGGGAGTACAABCGRTTCAAATCCTCGACCCBTACGATTNGHGAWKTTAATCTRACATGTTCGAMATAATVTCGGTAGRACGTGGTTAGGGGTAGCCCGTCTCTAATTAATACCAACCATCGTCAAGTGTGTCTCGTTCACTYTCTATGAGACGCGTBTAGTTNARCGGGCCCTACGATAGNACTATTDCTGCTGRATTTCCAACTCGGAANAAYCGDTATTCACKCACCTBCAGGGCGAATATTSATGTGCCTTAACACTCATAWTGTCAKTATCGGTAGCGHGGCAWACCCGGATGAWBGGGCGTGACGCATGTCGCTCCCAGTGSACTCACCMATATATNTGGMNGGCTGTAVGSTCCGAGAGGCAATTTCTTAGCTTAGYCCTCASTGCACCSCCTTTAGGTTCTTGTAACGGGTCAYCGGRTHAATGAGCTAGTCTGGGGAATATTTTGTTTCGATTCCGGCTCCTGTKAAGTAGCCTGBATANCTAAGCAGYGGGGCGGGTAGGAATGTGGCCYGTACACGTWAGCGCGYAGAACAGACCTTTGCAKAATCACGGYCGAKMTTCCTTGCACTWAAAATGGTGGGCGCTGKACGATADACGBATSGAGAGSMTABCTTCTDTATTCTGACGGAAATAAKCAAGGTCGGKTATACTAGTTYTCKATTCCCGGTCGTCCGATGGHTACCACAKGGATATCCAGTGTTACATTAAATACCCGATGAAAAACRCTGGGYGGTACDCATGCTYTTCTTTAHACCHGAGGCCCTGAAAATGTGTGCGTACGGCGACANTCTGTCKATATGCTTGACTCCTTTTTCYCBCCTACGTTACACCAATGCGACTGGGTCVTATBKATTGDGATAGCGTCGATGTGCTTHGGTARAAMGMTTGHCCMNGATTTCACTWGTAGTTGAAGAWACAGCYACGCCTCKTTCAAHABATTTCACTAAAAGAA',
-          }),
-          dict({
-            'accession': 'NC_688181',
-            'definition': 'Buy throw like lawyer fund indicate help.',
-            'host': 'lettuce',
+            'accession': 'NC_112201',
+            'definition': 'Raise study modern miss dog Democrat quickly.',
+            'host': 'okra',
             'id': '3cbb22cc',
             'remote': None,
-            'segment': 'RNA_R',
-            'sequence': 'CGGCTGTTGCBGATCATTCMAGGAMCAATTCARTACAAWGTGGATCCGCAGCCMCACCTGAATGCCADCKCTGCATGGTVTNAAAASWGATATATCGCCBCCRTCACGGACTAAGCGCBTCATGHTGMTCMATCCBCTTGACMAAAGTCTATCCGCACARGCTANACBGTAANAAGAAGAACTAGTAGGHCACTACGACTGGTAAGATACGACGACCTTCCTAAGAHTHCTGTGCTATTTWYCGGTAAGCAAAAATGTTCCTTGMAGCAAGGAVCAGGKGAGAGGGCGGGGACRATTTTCAGCRGAGTTCVHCTAGCGGGAGGTGGCCGTCTTGTCTAGMGCTTAGSGTGCTTGTGCTTTAACGCYGCYTTRCGATGACGHSGAGCRCCTGCAYAGBTGGGATAAACTGGTTGCACTCYTATCCCAATCCGAADTHGCCYTCCGGCCTTCCTACSGCAADTGGTTATGGACHWGTGCACAGCGTAYRAGAGTTHGCGTCCRCCAACTAGGGCGGCAAGANWAGGTGAACGCCATGCCCRATGTGAACAATTSGCCTCCCTCGGTGACCTGTACHCATTCGGTGGCCGTGGGKGCCMGGGCAACCGCCTTTGGATTTTTTCMTCCCATGTAGCGTAATTGCRTTAGTAAAGGCTTCGGGGGAYGTATGTCTYTWAAHCCACCBGNRTAAMTGGGGCMCBGTAAWAGTGACAAGTWACTCGGGAGCGTCAGGGGTACCWCCCTSCTGACTCTTTAACCCAGYATGAGGTHTAGTGCGGCCTTGVAAVATCCCATATAGAACAGCCCCCCGYCCCGTHGGAAAGGACATCTGSGTCCGTCAGTGGCAGTGATGARGATGCGTAACAACTCGTGAATGTAAGCGCACCAGGAGGTCTTAGWGACMTTGGGGDGGCAAACCTTAAGCTTTRVCAAGTCCHATCCATCCTAACTGTGAAADTCGCGCGGAGTGGAGTTCTGGATGGCTTGATMBATGCAGTTTAAGAAGGTCTGTGTATACTDATTGTGCTACAATACCTACTAKAAACRGTGATBAAGAGTCCGACATWTTTCGCGRTGAACCTCSTTVCCRATGTACGGGTAACAACCCCATCGTYATGGGTCTVATTGGCTCTATTCTGKTKGGDGTCTGCGTTBTGVTATAGGGACTVACYGGATTCAAGCCGGTTCTGAGGTMCTMTAAGAATACACACCAGAAGCCAACACGVGAAGGTACBGCAGTTYCCTTCACGDGSCAATGAR',
+            'segment': 'DNA A',
+            'sequence': 'CCCNYGACCCGTGAAGTGAAGACYCGACCCTTHAABAAAGSATATACTACAAVATGGKACDAGGTTCTACTCCTTGTCAGTATTWTTTWCCGTTCAATTCTGCTTGTCATTACCCGGCTCGGGANCAGVTGTAGAGCAACGTHAGTATCGGACCTGTAAGCWSYAGGCGRCTCACAATGGTCAAVTTCTCTAACATTTAYCGHTCGTTGGKCTHCAAGAATCTCCGTTVTGTTAGGRCGATAAWAAATCAVVATGGCYTCCCACATBGGAATGGCGGAAGATAAGTAACDCRCCGGGVGRACCGCGTCGGCAACTAGSTTGACATGAATCGGCAVTCTACAACCACTTGCGCCCTAGCGAYGYGGGCGAGTGCGAAMCRSCCAAGGGGTTATCKMTAGGATGAKBGAATATAHGAGAACSAATACGAATBADTCTSBCANACAGWGTTGTTAAAAATCGATCATTWATTGTATCWGTCGGTTGTTCSACCCAAGCATGCCAGCGGTGTVAGATCCTATTGYCAGTTCTKATTCCCCTCTGGTTCAGTCACTCTCGTCATGACACGACAGGGCAACNGGGTGTACTATGTTGCAYTGTGTAASCATTAAACACCGCTGTCCCBBMMCCGATAAACAGGDTKCTAGGTCTAATACAACGTGTTGAMACGAGHCAAAGTKTATGGAACAGMTTCTCATTCCTTAGAGTTGCGCGACAGTGGCAGTCGTCTAGCTCAATHCAGGGCGAGGGTCCRAGCTCAACCCWCTGTCGGGTAAGBTTGCTCTTCGAACAATCAADTGATTATVGTTTCGGCAKTTAAGCGATGGTAGAGGAAMCCCACTGGAMAATATTGTTCTTRCHGCTGCGTCAGAGCGTGACTHDACTDKCGGTYRTGAGCWTCTGCVAAAAMWCWGGGACTWAACAACGCGTTTNGWCCVAGGGGACKCTWCTCGTACSGCCC',
           }),
           dict({
-            'accession': 'NC_772442',
-            'definition': 'Common prevent spend.',
-            'host': 'sweet potato',
+            'accession': 'PV426197',
+            'definition': 'Tell time special beyond could key assume.',
+            'host': 'tobacco',
             'id': 'da42dca3',
             'remote': None,
-            'segment': 'RNA_L',
-            'sequence': 'ACCCCTCCGTTATMTTCTAGCGATGTATTGTCHGGATWCACGCATGAAGAATCGYACGAGCCBDTAGTAGTGGGGGRTCCMCCGAGTTBGGTGACTVANTTCCTGCACTGTCCCWATCTAACWTGAGTCCCCGRCGGCATAACCVCGGVCBTTCGAAKTGCCTAAATACACACATTKGYAAAGTTCAAGTCAGSTCTTATGTGCTGCTCATAACCGACAMCNATTTGACTAGABACTGAGTCAAKAATGTCAGRGTACTTAGTGYGACGGGCRGTTGTGAATTAGTTATACTCTHGRVGGAGYTCGATACVCCGTTCTNNAGGHCAAGGGATTAAATAGBVWCVGAGCAATAAACAYGGGGCCCGCTGTCMNGMAGGGTGGMGKAANCKAMCCCACCTDASCGNGGGCAATATACCCGCCATNGAGAGTGAVTAAAATTTTAACTTGTAATCGCAACCGCGATHCAGGCAGTTAGATAGTACGAGCCGCGRGTGCVAATAVGGSAGTTTYGWTTYAGGAGGNGGADTGAGADAGAGGCATCRAATAGTATCCCAAGGCABGAAACCAGATGCAGGAVTTCTTCTTTGGTAAACYTTGCTAGCAGCGATAACAATTGATTACTTACHAGTGCAATTGGAGTWGACGKATAGACGGTACTCCCAAGTTADNCATAGACGCTTSATTTAGCGATATYTHAGAVCDTTGCCGTGCGGAHCTAAGGGARTYKCTCATMMNGAGTAMCGTCCTTGCAGGTCTCCTCAA',
+            'segment': 'DNA_U3',
+            'sequence': 'CSTGGCAAATGTGCTGACGAGTACCACTAAACAMGWTRVGTCCTTAAACCGAGACGCWTCACGATGTTMNARCACCAGGACCTCATCCCCGTGATTCGCVGATAGAGATATTAGGTGAATRGCCGTAGATTATACCACCGCAAGGGTCAGTBCAYCTATACAAKCTGCWCGGATTATTGCGACAMATGNAGCAGACGCTATYTTACCATCDTTCTTCTCGNGTACCTATGDAGAGATGTKGCATTCNTCMTCGCGABACTCTTGTGTACATTAGGGCCAATCGTGGGTABGTGRTCTGYVGTGNTWCDNGGAACGMCGCACVAGCTGAGGCACCTCGKCGAGKAGGGCCAGTAATGCYMACTCCCAGCCCACAGGAAATWCTTAAGAGGACAGCGCGMCGTAATGTACWCTACTTTGTSGCGTTAGTCCCTYTTTGNGCTTTTABCATTCHHCCGCCTGATGTDVCAAATAGTTATAACMAGAAGGAATMTGTTGCTCGGGCCAWGTGCCTCCACAAYAGCCTTTCTGTTCMAGATGTTTCTTCCMDCATCCWAAGGGCGTATGGBGGCGAKGCTCCGCATTRGCAAATCAGGGTCVGTGACTTTCGCAGGWTCCGGAAGCGTAANACCTCADCATGTGGTDAGCATCTGATCTGTAACCANCTGATCBGGATATTTTGAGCTCACAGTTNCTGACCGCCCGTCGNGBTCGTTHTNGAGVTCGAGTGWACTAGHCTTTCTAHNATTGAGCTGCTCHAGGGACGTCTTGCTATCTGTTTGRBAGCATTTCSAGGTTATACTATGTGSTCGCATVTGGGGGGAACACCAAAGABVGCTTTTGGATAAGCATCGGACCAACTDCGACGGATCTCTGYTCTCGCGGGAACCGCRGCGCTTCCAGDCAAATGAGSAADTGAVACMGTGTCTTCGGGACTAKAAACCCCSGRAGACMCTTYKCGTAHCTHCTGAGAATG',
           }),
         ]),
-        'source_name': 'Important',
+        'source_name': 'Ever',
         'source_type': 'isolate',
       }),
     ]),
@@ -2752,40 +2743,35 @@
     'last_indexed_version': None,
     'most_recent_change': dict({
       'created_at': 'approximately_now_isoformat',
-      'description': 'Created new sequence NC_772442 in Isolate Important',
-      'id': 'bf1b993c.4',
+      'description': 'Created new sequence PV426197 in Isolate Ever',
+      'id': 'fb085f7f.3',
       'method_name': 'create_sequence',
       'user': dict({
         'handle': 'leeashley',
         'id': 1,
       }),
     }),
-    'name': 'Pepper bunchy top virus',
+    'name': 'Squash browning spot virus',
     'reference': dict({
       'data_type': 'genome',
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'schema': list([
       dict({
         'molecule': 'ssRNA',
-        'name': 'DNA M',
+        'name': 'DNA A',
         'required': True,
       }),
       dict({
         'molecule': 'ssRNA',
-        'name': 'RNA_R',
-        'required': True,
-      }),
-      dict({
-        'molecule': 'ssRNA',
-        'name': 'RNA_L',
+        'name': 'DNA_U3',
         'required': True,
       }),
     ]),
     'verified': True,
-    'version': 4,
+    'version': 3,
   })
 # ---
 # name: TestGetSequence.test_ok
@@ -2793,17 +2779,117 @@
     'accession': 'VC280715',
     'definition': 'Exactly drive well good explain grow water.',
     'host': 'prunus',
-    'id': '7cf872dc',
-    'otu_id': 'bf1b993c',
+    'id': '3cbb22cc',
+    'otu_id': 'fb085f7f',
     'reference': dict({
       'data_type': 'genome',
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'segment': 'DNA M',
     'sequence': 'GATGGACGAATGCGAGCGGAAGTGRCAATGAGHTCBHGAAWTAAGHGCACATGACKCAYGATCGCAAGAATTTCGGBCCCCTGATTATTTAGATACTVAAGMTGGTGTACCTGGAACATGAACGNAGAATACTKGGAAANCAAAGGACGACTCNGCACTGACCCCTCGGGNCGCMAGGTTCGCATTGCGCYAATGTGGGCTTCAAGCCATGTRTHGDCTGAGGTCTCTGGTTAMTGTSCAGCAGGTACCAGACATGCAGGAAGCMCDGTGBTTGBVAGNATTATCBRATACCGTGGCCCCWAGTAAATABGTTCGTTTAGTAGTTCAACGRGTGMTACCGTAATBTGCTCACTTAAACTATCGCTGATTKCTTTCCCTABRTTWAAAACAGMATABTCTCAGTGTCAAHTCTGACBCTCATCATGGTGTGCAAATCAGGGAGTACAABCGRTTCAAATCCTCGACCCBTACGATTNGHGAWKTTAATCTRACATGTTCGAMATAATVTCGGTAGRACGTGGTTAGGGGTAGCCCGTCTCTAATTAATACCAACCATCGTCAAGTGTGTCTCGTTCACTYTCTATGAGACGCGTBTAGTTNARCGGGCCCTACGATAGNACTATTDCTGCTGRATTTCCAACTCGGAANAAYCGDTATTCACKCACCTBCAGGGCGAATATTSATGTGCCTTAACACTCATAWTGTCAKTATCGGTAGCGHGGCAWACCCGGATGAWBGGGCGTGACGCATGTCGCTCCCAGTGSACTCACCMATATATNTGGMNGGCTGTAVGSTCCGAGAGGCAATTTCTTAGCTTAGYCCTCASTGCACCSCCTTTAGGTTCTTGTAACGGGTCAYCGGRTHAATGAGCTAGTCTGGGGAATATTTTGTTTCGATTCCGGCTCCTGTKAAGTAGCCTGBATANCTAAGCAGYGGGGCGGGTAGGAATGTGGCCYGTACACGTWAGCGCGYAGAACAGACCTTTGCAKAATCACGGYCGAKMTTCCTTGCACTWAAAATGGTGGGCGCTGKACGATADACGBATSGAGAGSMTABCTTCTDTATTCTGACGGAAATAAKCAAGGTCGGKTATACTAGTTYTCKATTCCCGGTCGTCCGATGGHTACCACAKGGATATCCAGTGTTACATTAAATACCCGATGAAAAACRCTGGGYGGTACDCATGCTYTTCTTTAHACCHGAGGCCCTGAAAATGTGTGCGTACGGCGACANTCTGTCKATATGCTTGACTCCTTTTTCYCBCCTACGTTACACCAATGCGACTGGGTCVTATBKATTGDGATAGCGTCGATGTGCTTHGGTARAAMGMTTGHCCMNGATTTCACTWGTAGTTGAAGAWACAGCYACGCCTCKTTCAAHABATTTCACTAAAAGAA',
   })
+# ---
+# name: TestListHistory.test_ok
+  list([
+    dict({
+      'created_at': 'approximately_now_isoformat',
+      'description': 'Created new sequence PV426197 in Isolate Ever',
+      'id': 'fb085f7f.3',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'create_sequence',
+      'otu': dict({
+        'id': 'fb085f7f',
+        'name': 'Squash browning spot virus',
+        'version': 3,
+      }),
+      'reference': dict({
+        'data_type': 'genome',
+        'id': 'bf1b993c',
+        'name': 'Reference',
+      }),
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+    }),
+    dict({
+      'created_at': 'approximately_now_isoformat',
+      'description': 'Created new sequence NC_112201 in Isolate Ever',
+      'id': 'fb085f7f.2',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'create_sequence',
+      'otu': dict({
+        'id': 'fb085f7f',
+        'name': 'Squash browning spot virus',
+        'version': 2,
+      }),
+      'reference': dict({
+        'data_type': 'genome',
+        'id': 'bf1b993c',
+        'name': 'Reference',
+      }),
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+    }),
+    dict({
+      'created_at': 'approximately_now_isoformat',
+      'description': 'Added Isolate Ever as default',
+      'id': 'fb085f7f.1',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'add_isolate',
+      'otu': dict({
+        'id': 'fb085f7f',
+        'name': 'Squash browning spot virus',
+        'version': 1,
+      }),
+      'reference': dict({
+        'data_type': 'genome',
+        'id': 'bf1b993c',
+        'name': 'Reference',
+      }),
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+    }),
+    dict({
+      'created_at': 'approximately_now_isoformat',
+      'description': 'Created Squash browning spot virus (SBSV)',
+      'id': 'fb085f7f.0',
+      'index': dict({
+        'id': 'unbuilt',
+        'version': 'unbuilt',
+      }),
+      'method_name': 'create',
+      'otu': dict({
+        'id': 'fb085f7f',
+        'name': 'Squash browning spot virus',
+        'version': 0,
+      }),
+      'reference': dict({
+        'data_type': 'genome',
+        'id': 'bf1b993c',
+        'name': 'Reference',
+      }),
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+    }),
+  ])
 # ---
 # name: TestListIsolates.test_ok[json]
   list([
@@ -2831,7 +2917,7 @@
       'accession': 'VC280715',
       'definition': 'Exactly drive well good explain grow water.',
       'host': 'prunus',
-      'id': '7cf872dc',
+      'id': '3cbb22cc',
       'remote': None,
       'segment': 'DNA M',
       'sequence': 'GATGGACGAATGCGAGCGGAAGTGRCAATGAGHTCBHGAAWTAAGHGCACATGACKCAYGATCGCAAGAATTTCGGBCCCCTGATTATTTAGATACTVAAGMTGGTGTACCTGGAACATGAACGNAGAATACTKGGAAANCAAAGGACGACTCNGCACTGACCCCTCGGGNCGCMAGGTTCGCATTGCGCYAATGTGGGCTTCAAGCCATGTRTHGDCTGAGGTCTCTGGTTAMTGTSCAGCAGGTACCAGACATGCAGGAAGCMCDGTGBTTGBVAGNATTATCBRATACCGTGGCCCCWAGTAAATABGTTCGTTTAGTAGTTCAACGRGTGMTACCGTAATBTGCTCACTTAAACTATCGCTGATTKCTTTCCCTABRTTWAAAACAGMATABTCTCAGTGTCAAHTCTGACBCTCATCATGGTGTGCAAATCAGGGAGTACAABCGRTTCAAATCCTCGACCCBTACGATTNGHGAWKTTAATCTRACATGTTCGAMATAATVTCGGTAGRACGTGGTTAGGGGTAGCCCGTCTCTAATTAATACCAACCATCGTCAAGTGTGTCTCGTTCACTYTCTATGAGACGCGTBTAGTTNARCGGGCCCTACGATAGNACTATTDCTGCTGRATTTCCAACTCGGAANAAYCGDTATTCACKCACCTBCAGGGCGAATATTSATGTGCCTTAACACTCATAWTGTCAKTATCGGTAGCGHGGCAWACCCGGATGAWBGGGCGTGACGCATGTCGCTCCCAGTGSACTCACCMATATATNTGGMNGGCTGTAVGSTCCGAGAGGCAATTTCTTAGCTTAGYCCTCASTGCACCSCCTTTAGGTTCTTGTAACGGGTCAYCGGRTHAATGAGCTAGTCTGGGGAATATTTTGTTTCGATTCCGGCTCCTGTKAAGTAGCCTGBATANCTAAGCAGYGGGGCGGGTAGGAATGTGGCCYGTACACGTWAGCGCGYAGAACAGACCTTTGCAKAATCACGGYCGAKMTTCCTTGCACTWAAAATGGTGGGCGCTGKACGATADACGBATSGAGAGSMTABCTTCTDTATTCTGACGGAAATAAKCAAGGTCGGKTATACTAGTTYTCKATTCCCGGTCGTCCGATGGHTACCACAKGGATATCCAGTGTTACATTAAATACCCGATGAAAAACRCTGGGYGGTACDCATGCTYTTCTTTAHACCHGAGGCCCTGAAAATGTGTGCGTACGGCGACANTCTGTCKATATGCTTGACTCCTTTTTCYCBCCTACGTTACACCAATGCGACTGGGTCVTATBKATTGDGATAGCGTCGATGTGCTTHGGTARAAMGMTTGHCCMNGATTTCACTWGTAGTTGAAGAWACAGCYACGCCTCKTTCAAHABATTTCACTAAAAGAA',
@@ -2840,7 +2926,7 @@
       'accession': 'NC_688181',
       'definition': 'Buy throw like lawyer fund indicate help.',
       'host': 'lettuce',
-      'id': '3cbb22cc',
+      'id': 'da42dca3',
       'remote': None,
       'segment': 'RNA_R',
       'sequence': 'CGGCTGTTGCBGATCATTCMAGGAMCAATTCARTACAAWGTGGATCCGCAGCCMCACCTGAATGCCADCKCTGCATGGTVTNAAAASWGATATATCGCCBCCRTCACGGACTAAGCGCBTCATGHTGMTCMATCCBCTTGACMAAAGTCTATCCGCACARGCTANACBGTAANAAGAAGAACTAGTAGGHCACTACGACTGGTAAGATACGACGACCTTCCTAAGAHTHCTGTGCTATTTWYCGGTAAGCAAAAATGTTCCTTGMAGCAAGGAVCAGGKGAGAGGGCGGGGACRATTTTCAGCRGAGTTCVHCTAGCGGGAGGTGGCCGTCTTGTCTAGMGCTTAGSGTGCTTGTGCTTTAACGCYGCYTTRCGATGACGHSGAGCRCCTGCAYAGBTGGGATAAACTGGTTGCACTCYTATCCCAATCCGAADTHGCCYTCCGGCCTTCCTACSGCAADTGGTTATGGACHWGTGCACAGCGTAYRAGAGTTHGCGTCCRCCAACTAGGGCGGCAAGANWAGGTGAACGCCATGCCCRATGTGAACAATTSGCCTCCCTCGGTGACCTGTACHCATTCGGTGGCCGTGGGKGCCMGGGCAACCGCCTTTGGATTTTTTCMTCCCATGTAGCGTAATTGCRTTAGTAAAGGCTTCGGGGGAYGTATGTCTYTWAAHCCACCBGNRTAAMTGGGGCMCBGTAAWAGTGACAAGTWACTCGGGAGCGTCAGGGGTACCWCCCTSCTGACTCTTTAACCCAGYATGAGGTHTAGTGCGGCCTTGVAAVATCCCATATAGAACAGCCCCCCGYCCCGTHGGAAAGGACATCTGSGTCCGTCAGTGGCAGTGATGARGATGCGTAACAACTCGTGAATGTAAGCGCACCAGGAGGTCTTAGWGACMTTGGGGDGGCAAACCTTAAGCTTTRVCAAGTCCHATCCATCCTAACTGTGAAADTCGCGCGGAGTGGAGTTCTGGATGGCTTGATMBATGCAGTTTAAGAAGGTCTGTGTATACTDATTGTGCTACAATACCTACTAKAAACRGTGATBAAGAGTCCGACATWTTTCGCGRTGAACCTCSTTVCCRATGTACGGGTAACAACCCCATCGTYATGGGTCTVATTGGCTCTATTCTGKTKGGDGTCTGCGTTBTGVTATAGGGACTVACYGGATTCAAGCCGGTTCTGAGGTMCTMTAAGAATACACACCAGAAGCCAACACGVGAAGGTACBGCAGTTYCCTTCACGDGSCAATGAR',
@@ -2849,7 +2935,7 @@
       'accession': 'NC_772442',
       'definition': 'Common prevent spend.',
       'host': 'sweet potato',
-      'id': 'da42dca3',
+      'id': '09d01419',
       'remote': None,
       'segment': 'RNA_L',
       'sequence': 'ACCCCTCCGTTATMTTCTAGCGATGTATTGTCHGGATWCACGCATGAAGAATCGYACGAGCCBDTAGTAGTGGGGGRTCCMCCGAGTTBGGTGACTVANTTCCTGCACTGTCCCWATCTAACWTGAGTCCCCGRCGGCATAACCVCGGVCBTTCGAAKTGCCTAAATACACACATTKGYAAAGTTCAAGTCAGSTCTTATGTGCTGCTCATAACCGACAMCNATTTGACTAGABACTGAGTCAAKAATGTCAGRGTACTTAGTGYGACGGGCRGTTGTGAATTAGTTATACTCTHGRVGGAGYTCGATACVCCGTTCTNNAGGHCAAGGGATTAAATAGBVWCVGAGCAATAAACAYGGGGCCCGCTGTCMNGMAGGGTGGMGKAANCKAMCCCACCTDASCGNGGGCAATATACCCGCCATNGAGAGTGAVTAAAATTTTAACTTGTAATCGCAACCGCGATHCAGGCAGTTAGATAGTACGAGCCGCGRGTGCVAATAVGGSAGTTTYGWTTYAGGAGGNGGADTGAGADAGAGGCATCRAATAGTATCCCAAGGCABGAAACCAGATGCAGGAVTTCTTCTTTGGTAAACYTTGCTAGCAGCGATAACAATTGATTACTTACHAGTGCAATTGGAGTWGACGKATAGACGGTACTCCCAAGTTADNCATAGACGCTTSATTTAGCGATATYTHAGAVCDTTGCCGTGCGGAHCTAAGGGARTYKCTCATMMNGAGTAMCGTCCTTGCAGGTCTCCTCAA',
@@ -2894,21 +2980,21 @@
         ]),
       ]),
     ]),
-    'id': 'bf1b993c.5',
+    'id': 'fb085f7f.5',
     'index': dict({
       'id': 'unbuilt',
       'version': 'unbuilt',
     }),
     'method_name': <HistoryMethod.set_as_default: 'set_as_default'>,
     'otu': dict({
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
       'name': 'Squash browning spot virus',
       'version': 5,
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
@@ -2919,7 +3005,7 @@
 # name: TestSetAsDefault.test[json]
   dict({
     'default': True,
-    'id': 'da42dca3',
+    'id': '09d01419',
     'sequences': list([
     ]),
     'source_name': 'b',
@@ -2929,31 +3015,25 @@
 # name: TestSetAsDefault.test_no_change[json]
   dict({
     'default': True,
-    'id': 'fb085f7f',
+    'id': '7cf872dc',
     'sequences': list([
       dict({
-        '_id': '7cf872dc',
+        '_id': '3cbb22cc',
         'accession': 'NC_112201',
         'definition': 'Raise study modern miss dog Democrat quickly.',
         'host': 'okra',
-        'isolate_id': 'fb085f7f',
-        'otu_id': 'bf1b993c',
-        'reference': dict({
-          'id': 'hxn167',
-        }),
+        'isolate_id': '7cf872dc',
+        'otu_id': 'fb085f7f',
         'segment': 'DNA A',
         'sequence': 'CCCNYGACCCGTGAAGTGAAGACYCGACCCTTHAABAAAGSATATACTACAAVATGGKACDAGGTTCTACTCCTTGTCAGTATTWTTTWCCGTTCAATTCTGCTTGTCATTACCCGGCTCGGGANCAGVTGTAGAGCAACGTHAGTATCGGACCTGTAAGCWSYAGGCGRCTCACAATGGTCAAVTTCTCTAACATTTAYCGHTCGTTGGKCTHCAAGAATCTCCGTTVTGTTAGGRCGATAAWAAATCAVVATGGCYTCCCACATBGGAATGGCGGAAGATAAGTAACDCRCCGGGVGRACCGCGTCGGCAACTAGSTTGACATGAATCGGCAVTCTACAACCACTTGCGCCCTAGCGAYGYGGGCGAGTGCGAAMCRSCCAAGGGGTTATCKMTAGGATGAKBGAATATAHGAGAACSAATACGAATBADTCTSBCANACAGWGTTGTTAAAAATCGATCATTWATTGTATCWGTCGGTTGTTCSACCCAAGCATGCCAGCGGTGTVAGATCCTATTGYCAGTTCTKATTCCCCTCTGGTTCAGTCACTCTCGTCATGACACGACAGGGCAACNGGGTGTACTATGTTGCAYTGTGTAASCATTAAACACCGCTGTCCCBBMMCCGATAAACAGGDTKCTAGGTCTAATACAACGTGTTGAMACGAGHCAAAGTKTATGGAACAGMTTCTCATTCCTTAGAGTTGCGCGACAGTGGCAGTCGTCTAGCTCAATHCAGGGCGAGGGTCCRAGCTCAACCCWCTGTCGGGTAAGBTTGCTCTTCGAACAATCAADTGATTATVGTTTCGGCAKTTAAGCGATGGTAGAGGAAMCCCACTGGAMAATATTGTTCTTRCHGCTGCGTCAGAGCGTGACTHDACTDKCGGTYRTGAGCWTCTGCVAAAAMWCWGGGACTWAACAACGCGTTTNGWCCVAGGGGACKCTWCTCGTACSGCCC',
       }),
       dict({
-        '_id': '3cbb22cc',
+        '_id': 'da42dca3',
         'accession': 'PV426197',
         'definition': 'Tell time special beyond could key assume.',
         'host': 'tobacco',
-        'isolate_id': 'fb085f7f',
-        'otu_id': 'bf1b993c',
-        'reference': dict({
-          'id': 'hxn167',
-        }),
+        'isolate_id': '7cf872dc',
+        'otu_id': 'fb085f7f',
         'segment': 'DNA_U3',
         'sequence': 'CSTGGCAAATGTGCTGACGAGTACCACTAAACAMGWTRVGTCCTTAAACCGAGACGCWTCACGATGTTMNARCACCAGGACCTCATCCCCGTGATTCGCVGATAGAGATATTAGGTGAATRGCCGTAGATTATACCACCGCAAGGGTCAGTBCAYCTATACAAKCTGCWCGGATTATTGCGACAMATGNAGCAGACGCTATYTTACCATCDTTCTTCTCGNGTACCTATGDAGAGATGTKGCATTCNTCMTCGCGABACTCTTGTGTACATTAGGGCCAATCGTGGGTABGTGRTCTGYVGTGNTWCDNGGAACGMCGCACVAGCTGAGGCACCTCGKCGAGKAGGGCCAGTAATGCYMACTCCCAGCCCACAGGAAATWCTTAAGAGGACAGCGCGMCGTAATGTACWCTACTTTGTSGCGTTAGTCCCTYTTTGNGCTTTTABCATTCHHCCGCCTGATGTDVCAAATAGTTATAACMAGAAGGAATMTGTTGCTCGGGCCAWGTGCCTCCACAAYAGCCTTTCTGTTCMAGATGTTTCTTCCMDCATCCWAAGGGCGTATGGBGGCGAKGCTCCGCATTRGCAAATCAGGGTCVGTGACTTTCGCAGGWTCCGGAAGCGTAANACCTCADCATGTGGTDAGCATCTGATCTGTAACCANCTGATCBGGATATTTTGAGCTCACAGTTNCTGACCGCCCGTCGNGBTCGTTHTNGAGVTCGAGTGWACTAGHCTTTCTAHNATTGAGCTGCTCHAGGGACGTCTTGCTATCTGTTTGRBAGCATTTCSAGGTTATACTATGTGSTCGCATVTGGGGGGAACACCAAAGABVGCTTTTGGATAAGCATCGGACCAACTDCGACGGATCTCTGYTCTCGCGGGAACCGCRGCGCTTCCAGDCAAATGAGSAADTGAVACMGTGTCTTCGGGACTAKAAACCCCSGRAGACMCTTYKCGTAHCTHCTGAGAATG',
       }),
@@ -2965,16 +3045,13 @@
 # name: TestUpdateIsolate.test_force_case
   dict({
     'default': True,
-    'id': 'fb085f7f',
+    'id': '7cf872dc',
     'sequences': list([
       dict({
         'accession': 'NC_112201',
         'definition': 'Raise study modern miss dog Democrat quickly.',
         'host': 'okra',
-        'id': '7cf872dc',
-        'reference': dict({
-          'id': 'hxn167',
-        }),
+        'id': '3cbb22cc',
         'segment': 'DNA A',
         'sequence': 'CCCNYGACCCGTGAAGTGAAGACYCGACCCTTHAABAAAGSATATACTACAAVATGGKACDAGGTTCTACTCCTTGTCAGTATTWTTTWCCGTTCAATTCTGCTTGTCATTACCCGGCTCGGGANCAGVTGTAGAGCAACGTHAGTATCGGACCTGTAAGCWSYAGGCGRCTCACAATGGTCAAVTTCTCTAACATTTAYCGHTCGTTGGKCTHCAAGAATCTCCGTTVTGTTAGGRCGATAAWAAATCAVVATGGCYTCCCACATBGGAATGGCGGAAGATAAGTAACDCRCCGGGVGRACCGCGTCGGCAACTAGSTTGACATGAATCGGCAVTCTACAACCACTTGCGCCCTAGCGAYGYGGGCGAGTGCGAAMCRSCCAAGGGGTTATCKMTAGGATGAKBGAATATAHGAGAACSAATACGAATBADTCTSBCANACAGWGTTGTTAAAAATCGATCATTWATTGTATCWGTCGGTTGTTCSACCCAAGCATGCCAGCGGTGTVAGATCCTATTGYCAGTTCTKATTCCCCTCTGGTTCAGTCACTCTCGTCATGACACGACAGGGCAACNGGGTGTACTATGTTGCAYTGTGTAASCATTAAACACCGCTGTCCCBBMMCCGATAAACAGGDTKCTAGGTCTAATACAACGTGTTGAMACGAGHCAAAGTKTATGGAACAGMTTCTCATTCCTTAGAGTTGCGCGACAGTGGCAGTCGTCTAGCTCAATHCAGGGCGAGGGTCCRAGCTCAACCCWCTGTCGGGTAAGBTTGCTCTTCGAACAATCAADTGATTATVGTTTCGGCAKTTAAGCGATGGTAGAGGAAMCCCACTGGAMAATATTGTTCTTRCHGCTGCGTCAGAGCGTGACTHDACTDKCGGTYRTGAGCWTCTGCVAAAAMWCWGGGACTWAACAACGCGTTTNGWCCVAGGGGACKCTWCTCGTACSGCCC',
       }),
@@ -2982,10 +3059,7 @@
         'accession': 'PV426197',
         'definition': 'Tell time special beyond could key assume.',
         'host': 'tobacco',
-        'id': '3cbb22cc',
-        'reference': dict({
-          'id': 'hxn167',
-        }),
+        'id': 'da42dca3',
         'segment': 'DNA_U3',
         'sequence': 'CSTGGCAAATGTGCTGACGAGTACCACTAAACAMGWTRVGTCCTTAAACCGAGACGCWTCACGATGTTMNARCACCAGGACCTCATCCCCGTGATTCGCVGATAGAGATATTAGGTGAATRGCCGTAGATTATACCACCGCAAGGGTCAGTBCAYCTATACAAKCTGCWCGGATTATTGCGACAMATGNAGCAGACGCTATYTTACCATCDTTCTTCTCGNGTACCTATGDAGAGATGTKGCATTCNTCMTCGCGABACTCTTGTGTACATTAGGGCCAATCGTGGGTABGTGRTCTGYVGTGNTWCDNGGAACGMCGCACVAGCTGAGGCACCTCGKCGAGKAGGGCCAGTAATGCYMACTCCCAGCCCACAGGAAATWCTTAAGAGGACAGCGCGMCGTAATGTACWCTACTTTGTSGCGTTAGTCCCTYTTTGNGCTTTTABCATTCHHCCGCCTGATGTDVCAAATAGTTATAACMAGAAGGAATMTGTTGCTCGGGCCAWGTGCCTCCACAAYAGCCTTTCTGTTCMAGATGTTTCTTCCMDCATCCWAAGGGCGTATGGBGGCGAKGCTCCGCATTRGCAAATCAGGGTCVGTGACTTTCGCAGGWTCCGGAAGCGTAANACCTCADCATGTGGTDAGCATCTGATCTGTAACCANCTGATCBGGATATTTTGAGCTCACAGTTNCTGACCGCCCGTCGNGBTCGTTHTNGAGVTCGAGTGWACTAGHCTTTCTAHNATTGAGCTGCTCHAGGGACGTCTTGCTATCTGTTTGRBAGCATTTCSAGGTTATACTATGTGSTCGCATVTGGGGGGAACACCAAAGABVGCTTTTGGATAAGCATCGGACCAACTDCGACGGATCTCTGYTCTCGCGGGAACCGCRGCGCTTCCAGDCAAATGAGSAADTGAVACMGTGTCTTCGGGACTAKAAACCCCSGRAGACMCTTYKCGTAHCTHCTGAGAATG',
       }),
@@ -3032,21 +3106,21 @@
         ]),
       ]),
     ]),
-    'id': 'bf1b993c.4',
+    'id': 'fb085f7f.4',
     'index': dict({
       'id': 'unbuilt',
       'version': 'unbuilt',
     }),
     'method_name': <HistoryMethod.edit_isolate: 'edit_isolate'>,
     'otu': dict({
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
       'name': 'Squash browning spot virus',
       'version': 4,
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
@@ -3057,16 +3131,13 @@
 # name: TestUpdateIsolate.test_ok[both][json]
   dict({
     'default': True,
-    'id': 'fb085f7f',
+    'id': '7cf872dc',
     'sequences': list([
       dict({
         'accession': 'NC_112201',
         'definition': 'Raise study modern miss dog Democrat quickly.',
         'host': 'okra',
-        'id': '7cf872dc',
-        'reference': dict({
-          'id': 'hxn167',
-        }),
+        'id': '3cbb22cc',
         'segment': 'DNA A',
         'sequence': 'CCCNYGACCCGTGAAGTGAAGACYCGACCCTTHAABAAAGSATATACTACAAVATGGKACDAGGTTCTACTCCTTGTCAGTATTWTTTWCCGTTCAATTCTGCTTGTCATTACCCGGCTCGGGANCAGVTGTAGAGCAACGTHAGTATCGGACCTGTAAGCWSYAGGCGRCTCACAATGGTCAAVTTCTCTAACATTTAYCGHTCGTTGGKCTHCAAGAATCTCCGTTVTGTTAGGRCGATAAWAAATCAVVATGGCYTCCCACATBGGAATGGCGGAAGATAAGTAACDCRCCGGGVGRACCGCGTCGGCAACTAGSTTGACATGAATCGGCAVTCTACAACCACTTGCGCCCTAGCGAYGYGGGCGAGTGCGAAMCRSCCAAGGGGTTATCKMTAGGATGAKBGAATATAHGAGAACSAATACGAATBADTCTSBCANACAGWGTTGTTAAAAATCGATCATTWATTGTATCWGTCGGTTGTTCSACCCAAGCATGCCAGCGGTGTVAGATCCTATTGYCAGTTCTKATTCCCCTCTGGTTCAGTCACTCTCGTCATGACACGACAGGGCAACNGGGTGTACTATGTTGCAYTGTGTAASCATTAAACACCGCTGTCCCBBMMCCGATAAACAGGDTKCTAGGTCTAATACAACGTGTTGAMACGAGHCAAAGTKTATGGAACAGMTTCTCATTCCTTAGAGTTGCGCGACAGTGGCAGTCGTCTAGCTCAATHCAGGGCGAGGGTCCRAGCTCAACCCWCTGTCGGGTAAGBTTGCTCTTCGAACAATCAADTGATTATVGTTTCGGCAKTTAAGCGATGGTAGAGGAAMCCCACTGGAMAATATTGTTCTTRCHGCTGCGTCAGAGCGTGACTHDACTDKCGGTYRTGAGCWTCTGCVAAAAMWCWGGGACTWAACAACGCGTTTNGWCCVAGGGGACKCTWCTCGTACSGCCC',
       }),
@@ -3074,10 +3145,7 @@
         'accession': 'PV426197',
         'definition': 'Tell time special beyond could key assume.',
         'host': 'tobacco',
-        'id': '3cbb22cc',
-        'reference': dict({
-          'id': 'hxn167',
-        }),
+        'id': 'da42dca3',
         'segment': 'DNA_U3',
         'sequence': 'CSTGGCAAATGTGCTGACGAGTACCACTAAACAMGWTRVGTCCTTAAACCGAGACGCWTCACGATGTTMNARCACCAGGACCTCATCCCCGTGATTCGCVGATAGAGATATTAGGTGAATRGCCGTAGATTATACCACCGCAAGGGTCAGTBCAYCTATACAAKCTGCWCGGATTATTGCGACAMATGNAGCAGACGCTATYTTACCATCDTTCTTCTCGNGTACCTATGDAGAGATGTKGCATTCNTCMTCGCGABACTCTTGTGTACATTAGGGCCAATCGTGGGTABGTGRTCTGYVGTGNTWCDNGGAACGMCGCACVAGCTGAGGCACCTCGKCGAGKAGGGCCAGTAATGCYMACTCCCAGCCCACAGGAAATWCTTAAGAGGACAGCGCGMCGTAATGTACWCTACTTTGTSGCGTTAGTCCCTYTTTGNGCTTTTABCATTCHHCCGCCTGATGTDVCAAATAGTTATAACMAGAAGGAATMTGTTGCTCGGGCCAWGTGCCTCCACAAYAGCCTTTCTGTTCMAGATGTTTCTTCCMDCATCCWAAGGGCGTATGGBGGCGAKGCTCCGCATTRGCAAATCAGGGTCVGTGACTTTCGCAGGWTCCGGAAGCGTAANACCTCADCATGTGGTDAGCATCTGATCTGTAACCANCTGATCBGGATATTTTGAGCTCACAGTTNCTGACCGCCCGTCGNGBTCGTTHTNGAGVTCGAGTGWACTAGHCTTTCTAHNATTGAGCTGCTCHAGGGACGTCTTGCTATCTGTTTGRBAGCATTTCSAGGTTATACTATGTGSTCGCATVTGGGGGGAACACCAAAGABVGCTTTTGGATAAGCATCGGACCAACTDCGACGGATCTCTGYTCTCGCGGGAACCGCRGCGCTTCCAGDCAAATGAGSAADTGAVACMGTGTCTTCGGGACTAKAAACCCCSGRAGACMCTTYKCGTAHCTHCTGAGAATG',
       }),
@@ -3089,17 +3157,17 @@
 # name: TestUpdateIsolate.test_ok[both][otu]
   dict({
     'abbreviation': 'SBSV',
-    'id': 'bf1b993c',
+    'id': 'fb085f7f',
     'isolates': list([
       dict({
         'default': True,
-        'id': 'fb085f7f',
+        'id': '7cf872dc',
         'sequences': list([
           dict({
             'accession': 'NC_112201',
             'definition': 'Raise study modern miss dog Democrat quickly.',
             'host': 'okra',
-            'id': '7cf872dc',
+            'id': '3cbb22cc',
             'remote': None,
             'segment': 'DNA A',
             'sequence': 'CCCNYGACCCGTGAAGTGAAGACYCGACCCTTHAABAAAGSATATACTACAAVATGGKACDAGGTTCTACTCCTTGTCAGTATTWTTTWCCGTTCAATTCTGCTTGTCATTACCCGGCTCGGGANCAGVTGTAGAGCAACGTHAGTATCGGACCTGTAAGCWSYAGGCGRCTCACAATGGTCAAVTTCTCTAACATTTAYCGHTCGTTGGKCTHCAAGAATCTCCGTTVTGTTAGGRCGATAAWAAATCAVVATGGCYTCCCACATBGGAATGGCGGAAGATAAGTAACDCRCCGGGVGRACCGCGTCGGCAACTAGSTTGACATGAATCGGCAVTCTACAACCACTTGCGCCCTAGCGAYGYGGGCGAGTGCGAAMCRSCCAAGGGGTTATCKMTAGGATGAKBGAATATAHGAGAACSAATACGAATBADTCTSBCANACAGWGTTGTTAAAAATCGATCATTWATTGTATCWGTCGGTTGTTCSACCCAAGCATGCCAGCGGTGTVAGATCCTATTGYCAGTTCTKATTCCCCTCTGGTTCAGTCACTCTCGTCATGACACGACAGGGCAACNGGGTGTACTATGTTGCAYTGTGTAASCATTAAACACCGCTGTCCCBBMMCCGATAAACAGGDTKCTAGGTCTAATACAACGTGTTGAMACGAGHCAAAGTKTATGGAACAGMTTCTCATTCCTTAGAGTTGCGCGACAGTGGCAGTCGTCTAGCTCAATHCAGGGCGAGGGTCCRAGCTCAACCCWCTGTCGGGTAAGBTTGCTCTTCGAACAATCAADTGATTATVGTTTCGGCAKTTAAGCGATGGTAGAGGAAMCCCACTGGAMAATATTGTTCTTRCHGCTGCGTCAGAGCGTGACTHDACTDKCGGTYRTGAGCWTCTGCVAAAAMWCWGGGACTWAACAACGCGTTTNGWCCVAGGGGACKCTWCTCGTACSGCCC',
@@ -3108,7 +3176,7 @@
             'accession': 'PV426197',
             'definition': 'Tell time special beyond could key assume.',
             'host': 'tobacco',
-            'id': '3cbb22cc',
+            'id': 'da42dca3',
             'remote': None,
             'segment': 'DNA_U3',
             'sequence': 'CSTGGCAAATGTGCTGACGAGTACCACTAAACAMGWTRVGTCCTTAAACCGAGACGCWTCACGATGTTMNARCACCAGGACCTCATCCCCGTGATTCGCVGATAGAGATATTAGGTGAATRGCCGTAGATTATACCACCGCAAGGGTCAGTBCAYCTATACAAKCTGCWCGGATTATTGCGACAMATGNAGCAGACGCTATYTTACCATCDTTCTTCTCGNGTACCTATGDAGAGATGTKGCATTCNTCMTCGCGABACTCTTGTGTACATTAGGGCCAATCGTGGGTABGTGRTCTGYVGTGNTWCDNGGAACGMCGCACVAGCTGAGGCACCTCGKCGAGKAGGGCCAGTAATGCYMACTCCCAGCCCACAGGAAATWCTTAAGAGGACAGCGCGMCGTAATGTACWCTACTTTGTSGCGTTAGTCCCTYTTTGNGCTTTTABCATTCHHCCGCCTGATGTDVCAAATAGTTATAACMAGAAGGAATMTGTTGCTCGGGCCAWGTGCCTCCACAAYAGCCTTTCTGTTCMAGATGTTTCTTCCMDCATCCWAAGGGCGTATGGBGGCGAKGCTCCGCATTRGCAAATCAGGGTCVGTGACTTTCGCAGGWTCCGGAAGCGTAANACCTCADCATGTGGTDAGCATCTGATCTGTAACCANCTGATCBGGATATTTTGAGCTCACAGTTNCTGACCGCCCGTCGNGBTCGTTHTNGAGVTCGAGTGWACTAGHCTTTCTAHNATTGAGCTGCTCHAGGGACGTCTTGCTATCTGTTTGRBAGCATTTCSAGGTTATACTATGTGSTCGCATVTGGGGGGAACACCAAAGABVGCTTTTGGATAAGCATCGGACCAACTDCGACGGATCTCTGYTCTCGCGGGAACCGCRGCGCTTCCAGDCAAATGAGSAADTGAVACMGTGTCTTCGGGACTAKAAACCCCSGRAGACMCTTYKCGTAHCTHCTGAGAATG',
@@ -3123,7 +3191,7 @@
     'most_recent_change': dict({
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Renamed Isolate Ever to Variant A',
-      'id': 'bf1b993c.4',
+      'id': 'fb085f7f.4',
       'method_name': <HistoryMethod.edit_isolate: 'edit_isolate'>,
       'user': dict({
         'handle': 'leeashley',
@@ -3145,8 +3213,8 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'verified': True,
@@ -3179,21 +3247,21 @@
         ]),
       ]),
     ]),
-    'id': 'bf1b993c.4',
+    'id': 'fb085f7f.4',
     'index': dict({
       'id': 'unbuilt',
       'version': 'unbuilt',
     }),
     'method_name': <HistoryMethod.edit_isolate: 'edit_isolate'>,
     'otu': dict({
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
       'name': 'Squash browning spot virus',
       'version': 4,
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
@@ -3204,16 +3272,13 @@
 # name: TestUpdateIsolate.test_ok[source_name][json]
   dict({
     'default': True,
-    'id': 'fb085f7f',
+    'id': '7cf872dc',
     'sequences': list([
       dict({
         'accession': 'NC_112201',
         'definition': 'Raise study modern miss dog Democrat quickly.',
         'host': 'okra',
-        'id': '7cf872dc',
-        'reference': dict({
-          'id': 'hxn167',
-        }),
+        'id': '3cbb22cc',
         'segment': 'DNA A',
         'sequence': 'CCCNYGACCCGTGAAGTGAAGACYCGACCCTTHAABAAAGSATATACTACAAVATGGKACDAGGTTCTACTCCTTGTCAGTATTWTTTWCCGTTCAATTCTGCTTGTCATTACCCGGCTCGGGANCAGVTGTAGAGCAACGTHAGTATCGGACCTGTAAGCWSYAGGCGRCTCACAATGGTCAAVTTCTCTAACATTTAYCGHTCGTTGGKCTHCAAGAATCTCCGTTVTGTTAGGRCGATAAWAAATCAVVATGGCYTCCCACATBGGAATGGCGGAAGATAAGTAACDCRCCGGGVGRACCGCGTCGGCAACTAGSTTGACATGAATCGGCAVTCTACAACCACTTGCGCCCTAGCGAYGYGGGCGAGTGCGAAMCRSCCAAGGGGTTATCKMTAGGATGAKBGAATATAHGAGAACSAATACGAATBADTCTSBCANACAGWGTTGTTAAAAATCGATCATTWATTGTATCWGTCGGTTGTTCSACCCAAGCATGCCAGCGGTGTVAGATCCTATTGYCAGTTCTKATTCCCCTCTGGTTCAGTCACTCTCGTCATGACACGACAGGGCAACNGGGTGTACTATGTTGCAYTGTGTAASCATTAAACACCGCTGTCCCBBMMCCGATAAACAGGDTKCTAGGTCTAATACAACGTGTTGAMACGAGHCAAAGTKTATGGAACAGMTTCTCATTCCTTAGAGTTGCGCGACAGTGGCAGTCGTCTAGCTCAATHCAGGGCGAGGGTCCRAGCTCAACCCWCTGTCGGGTAAGBTTGCTCTTCGAACAATCAADTGATTATVGTTTCGGCAKTTAAGCGATGGTAGAGGAAMCCCACTGGAMAATATTGTTCTTRCHGCTGCGTCAGAGCGTGACTHDACTDKCGGTYRTGAGCWTCTGCVAAAAMWCWGGGACTWAACAACGCGTTTNGWCCVAGGGGACKCTWCTCGTACSGCCC',
       }),
@@ -3221,10 +3286,7 @@
         'accession': 'PV426197',
         'definition': 'Tell time special beyond could key assume.',
         'host': 'tobacco',
-        'id': '3cbb22cc',
-        'reference': dict({
-          'id': 'hxn167',
-        }),
+        'id': 'da42dca3',
         'segment': 'DNA_U3',
         'sequence': 'CSTGGCAAATGTGCTGACGAGTACCACTAAACAMGWTRVGTCCTTAAACCGAGACGCWTCACGATGTTMNARCACCAGGACCTCATCCCCGTGATTCGCVGATAGAGATATTAGGTGAATRGCCGTAGATTATACCACCGCAAGGGTCAGTBCAYCTATACAAKCTGCWCGGATTATTGCGACAMATGNAGCAGACGCTATYTTACCATCDTTCTTCTCGNGTACCTATGDAGAGATGTKGCATTCNTCMTCGCGABACTCTTGTGTACATTAGGGCCAATCGTGGGTABGTGRTCTGYVGTGNTWCDNGGAACGMCGCACVAGCTGAGGCACCTCGKCGAGKAGGGCCAGTAATGCYMACTCCCAGCCCACAGGAAATWCTTAAGAGGACAGCGCGMCGTAATGTACWCTACTTTGTSGCGTTAGTCCCTYTTTGNGCTTTTABCATTCHHCCGCCTGATGTDVCAAATAGTTATAACMAGAAGGAATMTGTTGCTCGGGCCAWGTGCCTCCACAAYAGCCTTTCTGTTCMAGATGTTTCTTCCMDCATCCWAAGGGCGTATGGBGGCGAKGCTCCGCATTRGCAAATCAGGGTCVGTGACTTTCGCAGGWTCCGGAAGCGTAANACCTCADCATGTGGTDAGCATCTGATCTGTAACCANCTGATCBGGATATTTTGAGCTCACAGTTNCTGACCGCCCGTCGNGBTCGTTHTNGAGVTCGAGTGWACTAGHCTTTCTAHNATTGAGCTGCTCHAGGGACGTCTTGCTATCTGTTTGRBAGCATTTCSAGGTTATACTATGTGSTCGCATVTGGGGGGAACACCAAAGABVGCTTTTGGATAAGCATCGGACCAACTDCGACGGATCTCTGYTCTCGCGGGAACCGCRGCGCTTCCAGDCAAATGAGSAADTGAVACMGTGTCTTCGGGACTAKAAACCCCSGRAGACMCTTYKCGTAHCTHCTGAGAATG',
       }),
@@ -3236,17 +3298,17 @@
 # name: TestUpdateIsolate.test_ok[source_name][otu]
   dict({
     'abbreviation': 'SBSV',
-    'id': 'bf1b993c',
+    'id': 'fb085f7f',
     'isolates': list([
       dict({
         'default': True,
-        'id': 'fb085f7f',
+        'id': '7cf872dc',
         'sequences': list([
           dict({
             'accession': 'NC_112201',
             'definition': 'Raise study modern miss dog Democrat quickly.',
             'host': 'okra',
-            'id': '7cf872dc',
+            'id': '3cbb22cc',
             'remote': None,
             'segment': 'DNA A',
             'sequence': 'CCCNYGACCCGTGAAGTGAAGACYCGACCCTTHAABAAAGSATATACTACAAVATGGKACDAGGTTCTACTCCTTGTCAGTATTWTTTWCCGTTCAATTCTGCTTGTCATTACCCGGCTCGGGANCAGVTGTAGAGCAACGTHAGTATCGGACCTGTAAGCWSYAGGCGRCTCACAATGGTCAAVTTCTCTAACATTTAYCGHTCGTTGGKCTHCAAGAATCTCCGTTVTGTTAGGRCGATAAWAAATCAVVATGGCYTCCCACATBGGAATGGCGGAAGATAAGTAACDCRCCGGGVGRACCGCGTCGGCAACTAGSTTGACATGAATCGGCAVTCTACAACCACTTGCGCCCTAGCGAYGYGGGCGAGTGCGAAMCRSCCAAGGGGTTATCKMTAGGATGAKBGAATATAHGAGAACSAATACGAATBADTCTSBCANACAGWGTTGTTAAAAATCGATCATTWATTGTATCWGTCGGTTGTTCSACCCAAGCATGCCAGCGGTGTVAGATCCTATTGYCAGTTCTKATTCCCCTCTGGTTCAGTCACTCTCGTCATGACACGACAGGGCAACNGGGTGTACTATGTTGCAYTGTGTAASCATTAAACACCGCTGTCCCBBMMCCGATAAACAGGDTKCTAGGTCTAATACAACGTGTTGAMACGAGHCAAAGTKTATGGAACAGMTTCTCATTCCTTAGAGTTGCGCGACAGTGGCAGTCGTCTAGCTCAATHCAGGGCGAGGGTCCRAGCTCAACCCWCTGTCGGGTAAGBTTGCTCTTCGAACAATCAADTGATTATVGTTTCGGCAKTTAAGCGATGGTAGAGGAAMCCCACTGGAMAATATTGTTCTTRCHGCTGCGTCAGAGCGTGACTHDACTDKCGGTYRTGAGCWTCTGCVAAAAMWCWGGGACTWAACAACGCGTTTNGWCCVAGGGGACKCTWCTCGTACSGCCC',
@@ -3255,7 +3317,7 @@
             'accession': 'PV426197',
             'definition': 'Tell time special beyond could key assume.',
             'host': 'tobacco',
-            'id': '3cbb22cc',
+            'id': 'da42dca3',
             'remote': None,
             'segment': 'DNA_U3',
             'sequence': 'CSTGGCAAATGTGCTGACGAGTACCACTAAACAMGWTRVGTCCTTAAACCGAGACGCWTCACGATGTTMNARCACCAGGACCTCATCCCCGTGATTCGCVGATAGAGATATTAGGTGAATRGCCGTAGATTATACCACCGCAAGGGTCAGTBCAYCTATACAAKCTGCWCGGATTATTGCGACAMATGNAGCAGACGCTATYTTACCATCDTTCTTCTCGNGTACCTATGDAGAGATGTKGCATTCNTCMTCGCGABACTCTTGTGTACATTAGGGCCAATCGTGGGTABGTGRTCTGYVGTGNTWCDNGGAACGMCGCACVAGCTGAGGCACCTCGKCGAGKAGGGCCAGTAATGCYMACTCCCAGCCCACAGGAAATWCTTAAGAGGACAGCGCGMCGTAATGTACWCTACTTTGTSGCGTTAGTCCCTYTTTGNGCTTTTABCATTCHHCCGCCTGATGTDVCAAATAGTTATAACMAGAAGGAATMTGTTGCTCGGGCCAWGTGCCTCCACAAYAGCCTTTCTGTTCMAGATGTTTCTTCCMDCATCCWAAGGGCGTATGGBGGCGAKGCTCCGCATTRGCAAATCAGGGTCVGTGACTTTCGCAGGWTCCGGAAGCGTAANACCTCADCATGTGGTDAGCATCTGATCTGTAACCANCTGATCBGGATATTTTGAGCTCACAGTTNCTGACCGCCCGTCGNGBTCGTTHTNGAGVTCGAGTGWACTAGHCTTTCTAHNATTGAGCTGCTCHAGGGACGTCTTGCTATCTGTTTGRBAGCATTTCSAGGTTATACTATGTGSTCGCATVTGGGGGGAACACCAAAGABVGCTTTTGGATAAGCATCGGACCAACTDCGACGGATCTCTGYTCTCGCGGGAACCGCRGCGCTTCCAGDCAAATGAGSAADTGAVACMGTGTCTTCGGGACTAKAAACCCCSGRAGACMCTTYKCGTAHCTHCTGAGAATG',
@@ -3270,7 +3332,7 @@
     'most_recent_change': dict({
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Renamed Isolate Ever to Isolate A',
-      'id': 'bf1b993c.4',
+      'id': 'fb085f7f.4',
       'method_name': <HistoryMethod.edit_isolate: 'edit_isolate'>,
       'user': dict({
         'handle': 'leeashley',
@@ -3292,8 +3354,8 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'verified': True,
@@ -3326,21 +3388,21 @@
         ]),
       ]),
     ]),
-    'id': 'bf1b993c.4',
+    'id': 'fb085f7f.4',
     'index': dict({
       'id': 'unbuilt',
       'version': 'unbuilt',
     }),
     'method_name': <HistoryMethod.edit_isolate: 'edit_isolate'>,
     'otu': dict({
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
       'name': 'Squash browning spot virus',
       'version': 4,
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
@@ -3351,16 +3413,13 @@
 # name: TestUpdateIsolate.test_ok[source_type][json]
   dict({
     'default': True,
-    'id': 'fb085f7f',
+    'id': '7cf872dc',
     'sequences': list([
       dict({
         'accession': 'NC_112201',
         'definition': 'Raise study modern miss dog Democrat quickly.',
         'host': 'okra',
-        'id': '7cf872dc',
-        'reference': dict({
-          'id': 'hxn167',
-        }),
+        'id': '3cbb22cc',
         'segment': 'DNA A',
         'sequence': 'CCCNYGACCCGTGAAGTGAAGACYCGACCCTTHAABAAAGSATATACTACAAVATGGKACDAGGTTCTACTCCTTGTCAGTATTWTTTWCCGTTCAATTCTGCTTGTCATTACCCGGCTCGGGANCAGVTGTAGAGCAACGTHAGTATCGGACCTGTAAGCWSYAGGCGRCTCACAATGGTCAAVTTCTCTAACATTTAYCGHTCGTTGGKCTHCAAGAATCTCCGTTVTGTTAGGRCGATAAWAAATCAVVATGGCYTCCCACATBGGAATGGCGGAAGATAAGTAACDCRCCGGGVGRACCGCGTCGGCAACTAGSTTGACATGAATCGGCAVTCTACAACCACTTGCGCCCTAGCGAYGYGGGCGAGTGCGAAMCRSCCAAGGGGTTATCKMTAGGATGAKBGAATATAHGAGAACSAATACGAATBADTCTSBCANACAGWGTTGTTAAAAATCGATCATTWATTGTATCWGTCGGTTGTTCSACCCAAGCATGCCAGCGGTGTVAGATCCTATTGYCAGTTCTKATTCCCCTCTGGTTCAGTCACTCTCGTCATGACACGACAGGGCAACNGGGTGTACTATGTTGCAYTGTGTAASCATTAAACACCGCTGTCCCBBMMCCGATAAACAGGDTKCTAGGTCTAATACAACGTGTTGAMACGAGHCAAAGTKTATGGAACAGMTTCTCATTCCTTAGAGTTGCGCGACAGTGGCAGTCGTCTAGCTCAATHCAGGGCGAGGGTCCRAGCTCAACCCWCTGTCGGGTAAGBTTGCTCTTCGAACAATCAADTGATTATVGTTTCGGCAKTTAAGCGATGGTAGAGGAAMCCCACTGGAMAATATTGTTCTTRCHGCTGCGTCAGAGCGTGACTHDACTDKCGGTYRTGAGCWTCTGCVAAAAMWCWGGGACTWAACAACGCGTTTNGWCCVAGGGGACKCTWCTCGTACSGCCC',
       }),
@@ -3368,10 +3427,7 @@
         'accession': 'PV426197',
         'definition': 'Tell time special beyond could key assume.',
         'host': 'tobacco',
-        'id': '3cbb22cc',
-        'reference': dict({
-          'id': 'hxn167',
-        }),
+        'id': 'da42dca3',
         'segment': 'DNA_U3',
         'sequence': 'CSTGGCAAATGTGCTGACGAGTACCACTAAACAMGWTRVGTCCTTAAACCGAGACGCWTCACGATGTTMNARCACCAGGACCTCATCCCCGTGATTCGCVGATAGAGATATTAGGTGAATRGCCGTAGATTATACCACCGCAAGGGTCAGTBCAYCTATACAAKCTGCWCGGATTATTGCGACAMATGNAGCAGACGCTATYTTACCATCDTTCTTCTCGNGTACCTATGDAGAGATGTKGCATTCNTCMTCGCGABACTCTTGTGTACATTAGGGCCAATCGTGGGTABGTGRTCTGYVGTGNTWCDNGGAACGMCGCACVAGCTGAGGCACCTCGKCGAGKAGGGCCAGTAATGCYMACTCCCAGCCCACAGGAAATWCTTAAGAGGACAGCGCGMCGTAATGTACWCTACTTTGTSGCGTTAGTCCCTYTTTGNGCTTTTABCATTCHHCCGCCTGATGTDVCAAATAGTTATAACMAGAAGGAATMTGTTGCTCGGGCCAWGTGCCTCCACAAYAGCCTTTCTGTTCMAGATGTTTCTTCCMDCATCCWAAGGGCGTATGGBGGCGAKGCTCCGCATTRGCAAATCAGGGTCVGTGACTTTCGCAGGWTCCGGAAGCGTAANACCTCADCATGTGGTDAGCATCTGATCTGTAACCANCTGATCBGGATATTTTGAGCTCACAGTTNCTGACCGCCCGTCGNGBTCGTTHTNGAGVTCGAGTGWACTAGHCTTTCTAHNATTGAGCTGCTCHAGGGACGTCTTGCTATCTGTTTGRBAGCATTTCSAGGTTATACTATGTGSTCGCATVTGGGGGGAACACCAAAGABVGCTTTTGGATAAGCATCGGACCAACTDCGACGGATCTCTGYTCTCGCGGGAACCGCRGCGCTTCCAGDCAAATGAGSAADTGAVACMGTGTCTTCGGGACTAKAAACCCCSGRAGACMCTTYKCGTAHCTHCTGAGAATG',
       }),
@@ -3383,17 +3439,17 @@
 # name: TestUpdateIsolate.test_ok[source_type][otu]
   dict({
     'abbreviation': 'SBSV',
-    'id': 'bf1b993c',
+    'id': 'fb085f7f',
     'isolates': list([
       dict({
         'default': True,
-        'id': 'fb085f7f',
+        'id': '7cf872dc',
         'sequences': list([
           dict({
             'accession': 'NC_112201',
             'definition': 'Raise study modern miss dog Democrat quickly.',
             'host': 'okra',
-            'id': '7cf872dc',
+            'id': '3cbb22cc',
             'remote': None,
             'segment': 'DNA A',
             'sequence': 'CCCNYGACCCGTGAAGTGAAGACYCGACCCTTHAABAAAGSATATACTACAAVATGGKACDAGGTTCTACTCCTTGTCAGTATTWTTTWCCGTTCAATTCTGCTTGTCATTACCCGGCTCGGGANCAGVTGTAGAGCAACGTHAGTATCGGACCTGTAAGCWSYAGGCGRCTCACAATGGTCAAVTTCTCTAACATTTAYCGHTCGTTGGKCTHCAAGAATCTCCGTTVTGTTAGGRCGATAAWAAATCAVVATGGCYTCCCACATBGGAATGGCGGAAGATAAGTAACDCRCCGGGVGRACCGCGTCGGCAACTAGSTTGACATGAATCGGCAVTCTACAACCACTTGCGCCCTAGCGAYGYGGGCGAGTGCGAAMCRSCCAAGGGGTTATCKMTAGGATGAKBGAATATAHGAGAACSAATACGAATBADTCTSBCANACAGWGTTGTTAAAAATCGATCATTWATTGTATCWGTCGGTTGTTCSACCCAAGCATGCCAGCGGTGTVAGATCCTATTGYCAGTTCTKATTCCCCTCTGGTTCAGTCACTCTCGTCATGACACGACAGGGCAACNGGGTGTACTATGTTGCAYTGTGTAASCATTAAACACCGCTGTCCCBBMMCCGATAAACAGGDTKCTAGGTCTAATACAACGTGTTGAMACGAGHCAAAGTKTATGGAACAGMTTCTCATTCCTTAGAGTTGCGCGACAGTGGCAGTCGTCTAGCTCAATHCAGGGCGAGGGTCCRAGCTCAACCCWCTGTCGGGTAAGBTTGCTCTTCGAACAATCAADTGATTATVGTTTCGGCAKTTAAGCGATGGTAGAGGAAMCCCACTGGAMAATATTGTTCTTRCHGCTGCGTCAGAGCGTGACTHDACTDKCGGTYRTGAGCWTCTGCVAAAAMWCWGGGACTWAACAACGCGTTTNGWCCVAGGGGACKCTWCTCGTACSGCCC',
@@ -3402,7 +3458,7 @@
             'accession': 'PV426197',
             'definition': 'Tell time special beyond could key assume.',
             'host': 'tobacco',
-            'id': '3cbb22cc',
+            'id': 'da42dca3',
             'remote': None,
             'segment': 'DNA_U3',
             'sequence': 'CSTGGCAAATGTGCTGACGAGTACCACTAAACAMGWTRVGTCCTTAAACCGAGACGCWTCACGATGTTMNARCACCAGGACCTCATCCCCGTGATTCGCVGATAGAGATATTAGGTGAATRGCCGTAGATTATACCACCGCAAGGGTCAGTBCAYCTATACAAKCTGCWCGGATTATTGCGACAMATGNAGCAGACGCTATYTTACCATCDTTCTTCTCGNGTACCTATGDAGAGATGTKGCATTCNTCMTCGCGABACTCTTGTGTACATTAGGGCCAATCGTGGGTABGTGRTCTGYVGTGNTWCDNGGAACGMCGCACVAGCTGAGGCACCTCGKCGAGKAGGGCCAGTAATGCYMACTCCCAGCCCACAGGAAATWCTTAAGAGGACAGCGCGMCGTAATGTACWCTACTTTGTSGCGTTAGTCCCTYTTTGNGCTTTTABCATTCHHCCGCCTGATGTDVCAAATAGTTATAACMAGAAGGAATMTGTTGCTCGGGCCAWGTGCCTCCACAAYAGCCTTTCTGTTCMAGATGTTTCTTCCMDCATCCWAAGGGCGTATGGBGGCGAKGCTCCGCATTRGCAAATCAGGGTCVGTGACTTTCGCAGGWTCCGGAAGCGTAANACCTCADCATGTGGTDAGCATCTGATCTGTAACCANCTGATCBGGATATTTTGAGCTCACAGTTNCTGACCGCCCGTCGNGBTCGTTHTNGAGVTCGAGTGWACTAGHCTTTCTAHNATTGAGCTGCTCHAGGGACGTCTTGCTATCTGTTTGRBAGCATTTCSAGGTTATACTATGTGSTCGCATVTGGGGGGAACACCAAAGABVGCTTTTGGATAAGCATCGGACCAACTDCGACGGATCTCTGYTCTCGCGGGAACCGCRGCGCTTCCAGDCAAATGAGSAADTGAVACMGTGTCTTCGGGACTAKAAACCCCSGRAGACMCTTYKCGTAHCTHCTGAGAATG',
@@ -3417,7 +3473,7 @@
     'most_recent_change': dict({
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Renamed Isolate Ever to Variant Ever',
-      'id': 'bf1b993c.4',
+      'id': 'fb085f7f.4',
       'method_name': <HistoryMethod.edit_isolate: 'edit_isolate'>,
       'user': dict({
         'handle': 'leeashley',
@@ -3439,8 +3495,8 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'verified': True,
@@ -3450,7 +3506,7 @@
 # name: TestUpdateSequence.test_ok[True][history]
   dict({
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'description': 'Edited sequence 7cf872dc in Isolate Important',
+    'description': 'Edited sequence 3cbb22cc in Isolate Important',
     'diff': list([
       list([
         'change',
@@ -3503,21 +3559,21 @@
         ]),
       ]),
     ]),
-    'id': 'bf1b993c.5',
+    'id': 'fb085f7f.5',
     'index': dict({
       'id': 'unbuilt',
       'version': 'unbuilt',
     }),
     'method_name': <HistoryMethod.edit_sequence: 'edit_sequence'>,
     'otu': dict({
-      'id': 'bf1b993c',
+      'id': 'fb085f7f',
       'name': 'Pepper bunchy top virus',
       'version': 5,
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
@@ -3530,11 +3586,11 @@
     'accession': 'VC280715',
     'definition': 'A made up sequence',
     'host': 'Grapevine',
-    'id': '7cf872dc',
-    'isolate_id': 'fb085f7f',
-    'otu_id': 'bf1b993c',
+    'id': '3cbb22cc',
+    'isolate_id': '7cf872dc',
+    'otu_id': 'fb085f7f',
     'reference': dict({
-      'id': 'hxn167',
+      'id': 1,
     }),
     'segment': 'DNA M',
     'sequence': 'ATGCGTGTACTG',
@@ -3545,12 +3601,12 @@
     'accession': 'VC280715',
     'definition': 'A made up sequence',
     'host': 'Grapevine',
-    'id': '7cf872dc',
-    'otu_id': 'bf1b993c',
+    'id': '3cbb22cc',
+    'otu_id': 'fb085f7f',
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'hxn167',
-      'name': 'Reference A',
+      'id': 'bf1b993c',
+      'name': 'Reference',
     }),
     'remote': None,
     'segment': 'DNA M',
@@ -3562,11 +3618,11 @@
     'accession': 'VC280715',
     'definition': 'Exactly drive well good explain grow water.',
     'host': 'prunus',
-    'id': '7cf872dc',
-    'isolate_id': 'fb085f7f',
-    'otu_id': 'bf1b993c',
+    'id': '3cbb22cc',
+    'isolate_id': '7cf872dc',
+    'otu_id': 'fb085f7f',
     'reference': dict({
-      'id': 'hxn167',
+      'id': 1,
     }),
     'segment': None,
     'sequence': 'GATGGACGAATGCGAGCGGAAGTGRCAATGAGHTCBHGAAWTAAGHGCACATGACKCAYGATCGCAAGAATTTCGGBCCCCTGATTATTTAGATACTVAAGMTGGTGTACCTGGAACATGAACGNAGAATACTKGGAAANCAAAGGACGACTCNGCACTGACCCCTCGGGNCGCMAGGTTCGCATTGCGCYAATGTGGGCTTCAAGCCATGTRTHGDCTGAGGTCTCTGGTTAMTGTSCAGCAGGTACCAGACATGCAGGAAGCMCDGTGBTTGBVAGNATTATCBRATACCGTGGCCCCWAGTAAATABGTTCGTTTAGTAGTTCAACGRGTGMTACCGTAATBTGCTCACTTAAACTATCGCTGATTKCTTTCCCTABRTTWAAAACAGMATABTCTCAGTGTCAAHTCTGACBCTCATCATGGTGTGCAAATCAGGGAGTACAABCGRTTCAAATCCTCGACCCBTACGATTNGHGAWKTTAATCTRACATGTTCGAMATAATVTCGGTAGRACGTGGTTAGGGGTAGCCCGTCTCTAATTAATACCAACCATCGTCAAGTGTGTCTCGTTCACTYTCTATGAGACGCGTBTAGTTNARCGGGCCCTACGATAGNACTATTDCTGCTGRATTTCCAACTCGGAANAAYCGDTATTCACKCACCTBCAGGGCGAATATTSATGTGCCTTAACACTCATAWTGTCAKTATCGGTAGCGHGGCAWACCCGGATGAWBGGGCGTGACGCATGTCGCTCCCAGTGSACTCACCMATATATNTGGMNGGCTGTAVGSTCCGAGAGGCAATTTCTTAGCTTAGYCCTCASTGCACCSCCTTTAGGTTCTTGTAACGGGTCAYCGGRTHAATGAGCTAGTCTGGGGAATATTTTGTTTCGATTCCGGCTCCTGTKAAGTAGCCTGBATANCTAAGCAGYGGGGCGGGTAGGAATGTGGCCYGTACACGTWAGCGCGYAGAACAGACCTTTGCAKAATCACGGYCGAKMTTCCTTGCACTWAAAATGGTGGGCGCTGKACGATADACGBATSGAGAGSMTABCTTCTDTATTCTGACGGAAATAAKCAAGGTCGGKTATACTAGTTYTCKATTCCCGGTCGTCCGATGGHTACCACAKGGATATCCAGTGTTACATTAAATACCCGATGAAAAACRCTGGGYGGTACDCATGCTYTTCTTTAHACCHGAGGCCCTGAAAATGTGTGCGTACGGCGACANTCTGTCKATATGCTTGACTCCTTTTTCYCBCCTACGTTACACCAATGCGACTGGGTCVTATBKATTGDGATAGCGTCGATGTGCTTHGGTARAAMGMTTGHCCMNGATTTCACTWGTAGTTGAAGAWACAGCYACGCCTCKTTCAAHABATTTCACTAAAAGAA',
@@ -3582,9 +3638,6 @@
         'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
         'host': 'sweet cherry',
         'id': 'abcd1234',
-        'reference': dict({
-          'id': 'ref',
-        }),
         'remote': None,
         'segment': None,
         'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',

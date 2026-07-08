@@ -15,8 +15,8 @@
         'id': 3,
         'progress': 0,
         'runner_id': None,
-        'step': 'refresh_reference_releases',
-        'type': 'refresh_reference_releases',
+        'step': 'clone_reference',
+        'type': 'clone_reference',
       }),
     }),
     dict({

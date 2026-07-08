@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Build
@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install mise
         uses: jdx/mise-action@v4
       - name: Install uv
@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install mise
         uses: jdx/mise-action@v4
       - name: Build test environment
@@ -81,7 +81,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
@@ -102,7 +102,7 @@ jobs:
       packages: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.release.outputs.git-tag }}
       - name: Login to Registry

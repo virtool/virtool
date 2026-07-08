@@ -8,7 +8,7 @@ from pathlib import Path
 import arrow
 import pytest
 from aiohttp.test_utils import make_mocked_coro
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
@@ -21,13 +21,121 @@ from virtool.jobs.models import JobState
 from virtool.models.enums import LibraryType, Permission
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
+from virtool.references.models import Reference
 from virtool.samples.fake import create_fake_sample
 from virtool.samples.models import WorkflowState
-from virtool.samples.sql import SQLSampleArtifact, SQLSampleReads
+from virtool.samples.sql import (
+    SQLLegacySample,
+    SQLLegacySampleLabel,
+    SQLLegacySampleSubtraction,
+    SQLSampleArtifact,
+    SQLSampleReads,
+)
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.subtractions.pg import SQLSubtraction
 from virtool.uploads.sql import SQLUpload
 from virtool.users.oas import UpdateUserRequest
+
+
+async def insert_pg_sample(
+    session: AsyncSession,
+    document: dict,
+    group_id: int | None = None,
+) -> SQLLegacySample:
+    """Insert the ``legacy_samples`` row and label join rows mirroring a Mongo sample.
+
+    Sample reads are served from Postgres, so tests that seed Mongo directly must seed
+    the matching Postgres rows too.
+    """
+    created_at = document["created_at"]
+
+    if created_at.tzinfo is not None:
+        created_at = created_at.replace(tzinfo=None)
+
+    sample = SQLLegacySample(
+        legacy_id=document["_id"],
+        name=document["name"],
+        host=document.get("host", ""),
+        isolate=document.get("isolate", ""),
+        locale=document.get("locale", ""),
+        notes=document.get("notes", ""),
+        library_type=document["library_type"],
+        format=document.get("format", "fastq"),
+        group_id=group_id,
+        quality=document.get("quality"),
+        created_at=created_at,
+        paired=document.get("paired", False),
+        ready=document.get("ready", False),
+        hold=document.get("hold", True),
+        is_legacy=document.get("is_legacy", False),
+        all_read=document.get("all_read", False),
+        all_write=document.get("all_write", False),
+        group_read=document.get("group_read", False),
+        group_write=document.get("group_write", False),
+        user_id=document["user"]["id"],
+        job_id=document["job"]["id"] if document.get("job") else None,
+    )
+
+    session.add(sample)
+    await session.flush()
+
+    for label_id in document.get("labels", []):
+        session.add(SQLLegacySampleLabel(sample_id=sample.id, label_id=label_id))
+
+    for subtraction_id in document.get("subtractions", []):
+        session.add(
+            SQLLegacySampleSubtraction(
+                sample_id=sample.id,
+                subtraction_id=subtraction_id,
+            ),
+        )
+
+    return sample
+
+
+async def update_pg_sample_rights(
+    pg: AsyncEngine,
+    legacy_id: str,
+    **values,
+) -> None:
+    """Apply a rights change to the Postgres ``legacy_samples`` row for a test.
+
+    Read paths resolve rights from Postgres, so tests that mutate rights in Mongo must
+    mirror the change here.
+    """
+    async with AsyncSession(pg) as session:
+        await session.execute(
+            update(SQLLegacySample)
+            .where(SQLLegacySample.legacy_id == legacy_id)
+            .values(**values),
+        )
+        await session.commit()
+
+
+async def _ensure_legacy_sample_id(session: AsyncSession, legacy_id: str) -> int:
+    """Insert a ``legacy_samples`` row for ``legacy_id`` if absent and return its id.
+
+    Sample file rows are keyed by an integer FK to ``legacy_samples``, so tests that
+    insert artifact/reads rows directly need a parent legacy sample to point at.
+    """
+    sample_id = (
+        await session.execute(
+            select(SQLLegacySample.id).where(SQLLegacySample.legacy_id == legacy_id),
+        )
+    ).scalar()
+
+    if sample_id is None:
+        sample = SQLLegacySample(
+            legacy_id=legacy_id,
+            name=legacy_id,
+            library_type=LibraryType.normal.value,
+            created_at=datetime(2015, 10, 6, 20, 0),
+        )
+        session.add(sample)
+        await session.flush()
+        sample_id = sample.id
+
+    return sample_id
 
 
 class MockJobInterface:
@@ -36,7 +144,12 @@ class MockJobInterface:
 
 
 @pytest.fixture
-async def get_sample_ready_false(fake: DataFaker, mongo: Mongo, static_time):
+async def get_sample_ready_false(
+    fake: DataFaker,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    static_time,
+):
     label = await fake.labels.create()
     user = await fake.users.create()
     job = await fake.jobs.create(user, workflow="create_sample")
@@ -49,45 +162,49 @@ async def get_sample_ready_false(fake: DataFaker, mongo: Mongo, static_time):
         user=user, upload=upload, name="Pear", upload_files=False, finalized=False
     )
 
-    await mongo.samples.insert_one(
-        {
-            "_id": "test",
-            "all_read": True,
-            "all_write": True,
-            "created_at": static_time.datetime,
-            "files": [
-                {
-                    "id": "foo",
-                    "name": "Bar.fq.gz",
-                    "download_url": "/download/samples/files/file_1.fq.gz",
-                },
-            ],
-            "format": "fastq",
-            "group": "none",
-            "group_read": True,
-            "group_write": True,
-            "hold": False,
-            "host": "",
-            "is_legacy": False,
-            "isolate": "",
-            "job": {"id": job.id},
-            "labels": [label.id],
-            "library_type": LibraryType.normal.value,
-            "locale": "",
-            "name": "Test",
-            "notes": "",
-            "nuvs": False,
-            "pathoscope": True,
-            "ready": False,
-            "subtractions": [apple.id, pear.id],
-            "user": {"id": user.id},
-            "workflows": {
-                "aodp": WorkflowState.INCOMPATIBLE.value,
-                "pathoscope": WorkflowState.COMPLETE.value,
-                "nuvs": WorkflowState.PENDING.value,
+    document = {
+        "_id": "test",
+        "all_read": True,
+        "all_write": True,
+        "created_at": static_time.datetime,
+        "files": [
+            {
+                "id": "foo",
+                "name": "Bar.fq.gz",
+                "download_url": "/download/samples/files/file_1.fq.gz",
             },
+        ],
+        "format": "fastq",
+        "group": "none",
+        "group_read": True,
+        "group_write": True,
+        "hold": False,
+        "host": "",
+        "is_legacy": False,
+        "isolate": "",
+        "job": {"id": job.id},
+        "labels": [label.id],
+        "library_type": LibraryType.normal.value,
+        "locale": "",
+        "name": "Test",
+        "notes": "",
+        "nuvs": False,
+        "pathoscope": True,
+        "ready": False,
+        "subtractions": [apple.id, pear.id],
+        "user": {"id": user.id},
+        "workflows": {
+            "aodp": WorkflowState.INCOMPATIBLE.value,
+            "pathoscope": WorkflowState.COMPLETE.value,
+            "nuvs": WorkflowState.PENDING.value,
         },
-    )
+    }
+
+    await mongo.samples.insert_one(document)
+
+    async with AsyncSession(pg) as session:
+        await insert_pg_sample(session, document)
+        await session.commit()
 
 
 @pytest.fixture
@@ -158,11 +275,45 @@ async def get_sample_data(
     )
 
     async with AsyncSession(pg) as session:
+        legacy = SQLLegacySample(
+            legacy_id="test",
+            name="Test",
+            host="",
+            isolate="",
+            locale="",
+            notes="",
+            library_type=LibraryType.normal.value,
+            format="fastq",
+            quality=None,
+            created_at=static_time.datetime,
+            ready=True,
+            hold=False,
+            is_legacy=False,
+            all_read=True,
+            all_write=True,
+            group_read=True,
+            group_write=True,
+            user_id=user.id,
+            job_id=job.id,
+        )
+        session.add(legacy)
+        await session.flush()
+
         session.add_all(
             [
+                SQLLegacySampleLabel(sample_id=legacy.id, label_id=label.id),
+                SQLLegacySampleSubtraction(
+                    sample_id=legacy.id,
+                    subtraction_id=apple.id,
+                ),
+                SQLLegacySampleSubtraction(
+                    sample_id=legacy.id,
+                    subtraction_id=pear.id,
+                ),
                 SQLSampleArtifact(
                     name="reference.fa.gz",
                     sample="test",
+                    sample_id=legacy.id,
                     type="fasta",
                     name_on_disk="reference.fa.gz",
                     size=34879234,
@@ -171,6 +322,7 @@ async def get_sample_data(
                     name="reads_1.fq.gz",
                     name_on_disk="reads_1.fq.gz",
                     sample="test",
+                    sample_id=legacy.id,
                     size=2903109210,
                     uploaded_at=static_time.datetime,
                     upload=None,
@@ -186,6 +338,7 @@ async def get_sample_data(
 async def find_samples_client(
     fake: DataFaker,
     mongo: Mongo,
+    pg: AsyncEngine,
     spawn_client: ClientSpawner,
     static_time,
 ):
@@ -200,65 +353,81 @@ async def find_samples_client(
 
     client = await spawn_client(authenticated=True)
 
-    await mongo.samples.insert_many(
-        [
-            {
-                "_id": "beb1eb10",
-                "all_read": True,
-                "created_at": arrow.get(static_time.datetime).shift(hours=1).datetime,
-                "foobar": True,
-                "host": "",
-                "isolate": "Thing",
-                "job": {"id": job.id},
-                "labels": [label_1.id, label_2.id],
-                "library_type": "normal",
-                "name": "16GVP042",
-                "notes": "",
-                "nuvs": True,
-                "pathoscope": True,
-                "ready": True,
-                "user": {"id": user_1.id},
-                "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
-            },
-            {
-                "user": {"id": user_2.id},
-                "nuvs": False,
-                "host": "",
-                "foobar": True,
-                "isolate": "Test",
-                "library_type": "srna",
-                "created_at": arrow.get(static_time.datetime).datetime,
-                "_id": "72bb8b31",
-                "job": None,
-                "name": "16GVP043",
-                "pathoscope": False,
-                "all_read": True,
-                "ready": True,
-                "labels": [label_1.id],
-                "notes": "This is a good sample.",
-                "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
-            },
-            {
-                "user": {"id": user_2.id},
-                "nuvs": False,
-                "host": "",
-                "library_type": "amplicon",
-                "notes": "",
-                "foobar": True,
-                "ready": True,
-                "isolate": "",
-                "created_at": arrow.get(static_time.datetime).shift(hours=2).datetime,
-                "_id": "cb400e6d",
-                "job": None,
-                "name": "16SPP044",
-                "pathoscope": False,
-                "all_read": True,
-                "labels": [label_3.id],
-                "workflows": {"aodp": "none", "nuvs": "none", "pathoscope": "none"},
-            },
-        ],
-        session=None,
-    )
+    documents = [
+        {
+            "_id": "beb1eb10",
+            "all_read": True,
+            "created_at": arrow.get(static_time.datetime).shift(hours=1).datetime,
+            "foobar": True,
+            "host": "",
+            "isolate": "Thing",
+            "job": {"id": job.id},
+            "labels": [label_1.id, label_2.id],
+            "library_type": "normal",
+            "name": "16GVP042",
+            "notes": "",
+            "ready": True,
+            "user": {"id": user_1.id},
+        },
+        {
+            "user": {"id": user_2.id},
+            "host": "",
+            "foobar": True,
+            "isolate": "Test",
+            "library_type": "srna",
+            "created_at": arrow.get(static_time.datetime).datetime,
+            "_id": "72bb8b31",
+            "job": None,
+            "name": "16GVP043",
+            "all_read": True,
+            "ready": True,
+            "labels": [label_1.id],
+            "notes": "This is a good sample.",
+        },
+        {
+            "user": {"id": user_2.id},
+            "host": "",
+            "library_type": "amplicon",
+            "notes": "",
+            "foobar": True,
+            "ready": True,
+            "isolate": "",
+            "created_at": arrow.get(static_time.datetime).shift(hours=2).datetime,
+            "_id": "cb400e6d",
+            "job": None,
+            "name": "16SPP044",
+            "all_read": True,
+            "labels": [label_3.id],
+        },
+    ]
+
+    await mongo.samples.insert_many(documents, session=None)
+
+    async with AsyncSession(pg) as session:
+        samples = {
+            document["_id"]: await insert_pg_sample(session, document)
+            for document in documents
+        }
+
+        # ``beb1eb10`` has completed nuvs and pathoscope analyses so its workflow
+        # tags derive to ready; the other samples have no analyses.
+        for workflow in ("nuvs", "pathoscope"):
+            session.add(
+                SQLAnalysis(
+                    legacy_id=f"beb1eb10_{workflow}",
+                    created_at=static_time.datetime,
+                    updated_at=static_time.datetime,
+                    workflow=workflow,
+                    ready=True,
+                    sample="beb1eb10",
+                    sample_id=samples["beb1eb10"].id,
+                    reference="ref",
+                    index="index",
+                    user_id=user_1.id,
+                ),
+            )
+
+        await session.commit()
 
     return client
 
@@ -327,6 +496,13 @@ class TestFind:
             ["nuvs:ready", "pathoscope:ready"],
             ["pathoscope:ready", "pathoscope:none"],
             ["nuvs:none", "pathoscope:none", "pathoscope:ready"],
+            # ``nuvs`` is incompatible with the amplicon sample, so ``nuvs:none``
+            # matches only the srna sample, never the amplicon one.
+            ["nuvs:none"],
+            # ``aodp`` is only compatible with amplicon libraries, so ``aodp:none``
+            # matches the amplicon sample alone rather than every sample lacking an
+            # aodp analysis.
+            ["aodp:none"],
         ],
     )
     async def test_workflows(
@@ -366,6 +542,7 @@ class TestGet:
         get_sample_data,
         snapshot: SnapshotAssertion,
         mongo: Mongo,
+        pg: AsyncEngine,
         spawn_client: ClientSpawner,
     ):
         """Test that a sample can be retrieved by its owner."""
@@ -382,6 +559,14 @@ class TestGet:
                 },
             },
         )
+        await update_pg_sample_rights(
+            pg,
+            "test",
+            all_read=False,
+            group_read=False,
+            group_id=None,
+            user_id=client.user.id,
+        )
 
         resp = await client.get("/samples/test")
 
@@ -394,6 +579,7 @@ class TestGet:
         get_sample_data,
         snapshot: SnapshotAssertion,
         mongo: Mongo,
+        pg: AsyncEngine,
         spawn_client: ClientSpawner,
     ):
         """Test that a sample can be retrieved any user when ``all_read`` is ``True`` on
@@ -414,6 +600,14 @@ class TestGet:
                 },
             },
         )
+        await update_pg_sample_rights(
+            pg,
+            "test",
+            all_read=True,
+            group_read=False,
+            group_id=None,
+            user_id=user.id,
+        )
 
         resp = await client.get("/samples/test")
 
@@ -427,6 +621,7 @@ class TestGet:
         fake: DataFaker,
         get_sample_data,
         mongo: Mongo,
+        pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
@@ -455,6 +650,15 @@ class TestGet:
                     "user": {"id": user.id},
                 },
             },
+        )
+        await update_pg_sample_rights(
+            pg,
+            "test",
+            all_read=False,
+            all_write=False,
+            group_read=True,
+            group_id=group.id,
+            user_id=user.id,
         )
 
         resp = await client.get("/samples/test")
@@ -1148,6 +1352,16 @@ async def test_find_analyses(
     )
 
     async with AsyncSession(pg) as session:
+        legacy_sample = SQLLegacySample(
+            legacy_id="test",
+            name="Test Sample",
+            library_type="normal",
+            created_at=static_time.datetime,
+            user_id=user_1.id,
+        )
+        session.add(legacy_sample)
+        await session.flush()
+
         analyses = [
             SQLAnalysis(
                 legacy_id="test_1",
@@ -1156,6 +1370,7 @@ async def test_find_analyses(
                 workflow="pathoscope",
                 ready=True,
                 sample="test",
+                sample_id=legacy_sample.id,
                 reference="baz",
                 index="foo",
                 user_id=user_1.id,
@@ -1168,6 +1383,7 @@ async def test_find_analyses(
                 workflow="pathoscope",
                 ready=True,
                 sample="test",
+                sample_id=legacy_sample.id,
                 reference="baz",
                 index="foo",
                 user_id=user_1.id,
@@ -1179,6 +1395,7 @@ async def test_find_analyses(
                 workflow="pathoscope",
                 ready=True,
                 sample="test",
+                sample_id=legacy_sample.id,
                 reference="foo",
                 index="foo",
                 user_id=user_2.id,
@@ -1234,22 +1451,16 @@ class TestAnalyze:
         return client
 
     @staticmethod
-    async def _insert_reference(mongo: Mongo, *, archived: bool = False) -> None:
-        await mongo.references.insert_one(
-            {
-                "_id": "test_ref",
-                "archived": archived,
-                "data_type": "genome",
-                "name": "Test Reference",
-            },
-        )
+    async def _insert_reference(fake: DataFaker) -> Reference:
+        user = await fake.users.create()
+        return await fake.references.create(user=user, name="Test Reference")
 
     @staticmethod
-    async def _insert_index(mongo: Mongo, *, ready: bool = True) -> None:
+    async def _insert_index(mongo: Mongo, ref_id: str, *, ready: bool = True) -> None:
         await mongo.indexes.insert_one(
             {
                 "_id": "test",
-                "reference": {"id": "test_ref"},
+                "reference": {"id": ref_id},
                 "ready": ready,
                 "version": 4,
             },
@@ -1275,12 +1486,12 @@ class TestAnalyze:
         await create_fake_sample(client.app, "test", user.id, finalized=True)
 
     @staticmethod
-    async def _post(client: VirtoolTestClient):
+    async def _post(client: VirtoolTestClient, ref_id: str):
         return await client.post(
             "/samples/test/analyses",
             data={
                 "workflow": "pathoscope",
-                "ref_id": "test_ref",
+                "ref_id": ref_id,
                 "subtractions": [1],
             },
         )
@@ -1294,12 +1505,12 @@ class TestAnalyze:
         snapshot: SnapshotAssertion,
         static_time,
     ):
-        await self._insert_reference(mongo)
-        await self._insert_index(mongo)
+        reference = await self._insert_reference(fake)
+        await self._insert_index(mongo, reference.id)
         await self._insert_subtraction(pg)
         await self._insert_sample(analyze_client, fake)
 
-        resp = await self._post(analyze_client)
+        resp = await self._post(analyze_client, reference.id)
 
         assert resp.status == 201
         assert resp.headers["Location"] == "/analyses/1"
@@ -1316,25 +1527,27 @@ class TestAnalyze:
         await self._insert_subtraction(pg)
         await self._insert_sample(analyze_client, fake)
 
-        resp = await self._post(analyze_client)
+        resp = await self._post(analyze_client, "does_not_exist")
 
         await resp_is.conflict(resp, "Reference does not exist")
 
     async def test_archived_reference(
         self,
         analyze_client: VirtoolTestClient,
+        data_layer: DataLayer,
         fake: DataFaker,
         mongo: Mongo,
         pg: AsyncEngine,
         resp_is,
         static_time,
     ):
-        await self._insert_reference(mongo, archived=True)
-        await self._insert_index(mongo)
+        reference = await self._insert_reference(fake)
+        await data_layer.references.archive(reference.id)
+        await self._insert_index(mongo, reference.id)
         await self._insert_subtraction(pg)
         await self._insert_sample(analyze_client, fake)
 
-        resp = await self._post(analyze_client)
+        resp = await self._post(analyze_client, reference.id)
 
         await resp_is.conflict(resp, "Reference is archived")
 
@@ -1347,11 +1560,11 @@ class TestAnalyze:
         resp_is,
         static_time,
     ):
-        await self._insert_reference(mongo)
+        reference = await self._insert_reference(fake)
         await self._insert_subtraction(pg)
         await self._insert_sample(analyze_client, fake)
 
-        resp = await self._post(analyze_client)
+        resp = await self._post(analyze_client, reference.id)
 
         await resp_is.conflict(resp, "No ready index")
 
@@ -1364,12 +1577,12 @@ class TestAnalyze:
         resp_is,
         static_time,
     ):
-        await self._insert_reference(mongo)
-        await self._insert_index(mongo, ready=False)
+        reference = await self._insert_reference(fake)
+        await self._insert_index(mongo, reference.id, ready=False)
         await self._insert_subtraction(pg)
         await self._insert_sample(analyze_client, fake)
 
-        resp = await self._post(analyze_client)
+        resp = await self._post(analyze_client, reference.id)
 
         await resp_is.conflict(resp, "No ready index")
 
@@ -1381,27 +1594,28 @@ class TestAnalyze:
         resp_is,
         static_time,
     ):
-        await self._insert_reference(mongo)
-        await self._insert_index(mongo)
+        reference = await self._insert_reference(fake)
+        await self._insert_index(mongo, reference.id)
         await self._insert_sample(analyze_client, fake)
 
-        resp = await self._post(analyze_client)
+        resp = await self._post(analyze_client, reference.id)
 
         await resp_is.conflict(resp, "Subtractions do not exist: 1")
 
     async def test_missing_sample(
         self,
         analyze_client: VirtoolTestClient,
+        fake: DataFaker,
         mongo: Mongo,
         pg: AsyncEngine,
         resp_is,
         static_time,
     ):
-        await self._insert_reference(mongo)
-        await self._insert_index(mongo)
+        reference = await self._insert_reference(fake)
+        await self._insert_index(mongo, reference.id)
         await self._insert_subtraction(pg)
 
-        resp = await self._post(analyze_client)
+        resp = await self._post(analyze_client, reference.id)
 
         await resp_is.not_found(resp)
 
@@ -1413,8 +1627,8 @@ class TestAnalyze:
         pg: AsyncEngine,
         static_time,
     ):
-        await self._insert_reference(mongo)
-        await self._insert_index(mongo)
+        reference = await self._insert_reference(fake)
+        await self._insert_index(mongo, reference.id)
         await self._insert_subtraction(pg)
         await self._insert_sample(analyze_client, fake)
 
@@ -1422,7 +1636,7 @@ class TestAnalyze:
             "/samples/test/analyses",
             data={
                 "workflow": "iimi",
-                "ref_id": "test_ref",
+                "ref_id": reference.id,
                 "subtractions": ["subtraction_1"],
             },
         )
@@ -1434,8 +1648,11 @@ class TestUploadArtifact:
     """Test that new artifacts can be uploaded after sample creation using the Jobs API."""
 
     @staticmethod
-    async def _insert_sample(mongo: Mongo) -> None:
+    async def _insert_sample(mongo: Mongo, pg: AsyncEngine) -> None:
         await mongo.samples.insert_one({"_id": "test", "ready": True})
+        async with AsyncSession(pg) as session:
+            await _ensure_legacy_sample_id(session, "test")
+            await session.commit()
 
     @staticmethod
     async def _post(
@@ -1453,12 +1670,13 @@ class TestUploadArtifact:
         example_path: Path,
         memory_storage,
         mongo: Mongo,
+        pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         spawn_job_client: JobClientSpawner,
         static_time,
     ):
         client = await spawn_job_client(authenticated=True)
-        await self._insert_sample(mongo)
+        await self._insert_sample(mongo, pg)
 
         resp = await self._post(
             client, example_path / "sample" / "reads_1.fq.gz", "fastq"
@@ -1474,12 +1692,13 @@ class TestUploadArtifact:
         self,
         example_path: Path,
         mongo: Mongo,
+        pg: AsyncEngine,
         resp_is,
         spawn_job_client: JobClientSpawner,
         static_time,
     ):
         client = await spawn_job_client(authenticated=True)
-        await self._insert_sample(mongo)
+        await self._insert_sample(mongo, pg)
 
         resp = await self._post(
             client, example_path / "sample" / "reads_1.fq.gz", "foo"
@@ -1491,12 +1710,13 @@ class TestUploadArtifact:
         self,
         example_path: Path,
         mongo: Mongo,
+        pg: AsyncEngine,
         resp_is,
         spawn_job_client: JobClientSpawner,
         static_time,
     ):
         client = await spawn_job_client(authenticated=True)
-        await self._insert_sample(mongo)
+        await self._insert_sample(mongo, pg)
 
         path = example_path / "sample" / "reads_1.fq.gz"
 
@@ -1517,6 +1737,7 @@ class TestUploadReads:
         example_path: Path,
         memory_storage,
         mongo: Mongo,
+        pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         spawn_job_client: JobClientSpawner,
     ):
@@ -1531,6 +1752,10 @@ class TestUploadReads:
                 "ready": True,
             },
         )
+
+        async with AsyncSession(pg) as session:
+            await _ensure_legacy_sample_id(session, "test")
+            await session.commit()
 
         resp_1 = await client.put(
             "/samples/test/reads/reads_1.fq.gz",
@@ -1665,6 +1890,7 @@ class TestDownloadReads:
                 SQLSampleReads(
                     id=1,
                     sample="foo",
+                    sample_id=await _ensure_legacy_sample_id(session, "foo"),
                     name=file_name,
                     name_on_disk=file_name,
                     size=size,
@@ -1804,6 +2030,7 @@ class TestDownloadArtifact:
                 SQLSampleArtifact(
                     id=1,
                     sample="foo",
+                    sample_id=await _ensure_legacy_sample_id(session, "foo"),
                     name="fastqc.txt",
                     name_on_disk="fastqc.txt",
                     type="fastq",

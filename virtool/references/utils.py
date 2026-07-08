@@ -9,10 +9,43 @@ from pydantic import BaseModel, Field, validator
 
 from virtool.references.models import ReferenceDataType
 from virtool.storage.protocol import StorageBackend
+from virtool.types import Document
 
-RIGHTS = ["build", "modify", "modify_otu", "remove"]
+RIGHTS = ["build", "modify", "modify_otu"]
 
-OFFICIAL_REMOTE_SLUG = "virtool/ref-plant-viruses"
+
+def reference_values(
+    document: Document,
+    user_id: int | None,
+    upload_id: int | None,
+    cloned_from_id: int | None,
+    task_id: int | None,
+) -> dict:
+    """Map a Mongo reference ``document`` to ``legacy_references`` column values.
+
+    The integer ``id`` is omitted so the database assigns the identity surrogate
+    key. ``user_id``, ``upload_id``, ``cloned_from_id`` and ``task_id`` are the
+    resolved Postgres integer foreign keys, not the raw Mongo references
+    (``user.id``, ``imported_from.id``, ``cloned_from.id`` and ``task.id``).
+
+    The Mongo fields ``data_type``, ``space``, ``internal_control`` and the
+    retired remote-reference fields are intentionally dropped. ``cloned_from.name``
+    is not stored; the name is re-derived via join.
+    """
+    return {
+        "legacy_id": document["_id"],
+        "name": document["name"],
+        "description": document["description"],
+        "organism": document["organism"] or "",
+        "created_at": document["created_at"],
+        "archived": document.get("archived", False),
+        "restrict_source_types": document.get("restrict_source_types", False),
+        "source_types": document.get("source_types", []),
+        "user_id": user_id,
+        "upload_id": upload_id,
+        "cloned_from_id": cloned_from_id,
+        "task_id": task_id,
+    }
 
 
 class ReferenceSourceDataError(Exception):

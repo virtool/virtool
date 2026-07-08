@@ -388,7 +388,24 @@ Releases are automated with semantic-release.
 - Do not use `git -C` — it breaks allowed tools settings. Run git commands
   from the working directory instead.
 
-### Pull Request Descriptions
+`feat` and `fix` are the types that trigger a semantic-release version bump.
+Their titles should describe the outcome, not the implementation:
+
+- Bad: `feat: dual-write samples to mongo and postgres`
+- Good: `feat: add samples to postgres`
+- Bad: `fix: count otu list modified_count by otu id not name`
+- Good: `fix: correct otu modification counts in list view`
+
+Other types (`chore`, `refactor`, `test`, etc.) are developer-facing —
+implementation details in the title are fine and make history easier to
+search later.
+
+### Pull Requests
+
+PRs in this repo are squash-merged, so the PR title and body become the
+commit title and body — write them as the commit you want in history, not as
+a running log of the branch's work. The PR title must follow Conventional
+Commits format (see above) so the squash lands as a well-formed commit.
 
 Keep PR bodies short. Summarize what changed and why in a few sentences or
 bullets. Do not add a "Test plan" section, a checklist of test commands, or a

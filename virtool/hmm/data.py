@@ -4,7 +4,6 @@ import math
 from collections.abc import AsyncIterator
 
 from aiohttp import ClientSession
-from multidict import MultiDictProxy
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -16,15 +15,14 @@ from virtool.data.errors import (
 )
 from virtool.data.topg import compose_legacy_id_single_expression
 from virtool.data.transforms import apply_transforms
-from virtool.github import create_update_subdocument
 from virtool.hmm.db import (
-    HMM_REPO_SLUG,
     fetch_and_update_release,
     generate_annotations,
 )
 from virtool.hmm.models import HMM, HMMInstalled, HMMSearchResult, HMMStatus
 from virtool.hmm.sql import HMM_STATUS_ID, SQLHMM, SQLHMMStatus
 from virtool.hmm.tasks import HMMInstallTask
+from virtool.hmm.utils import create_update_subdocument
 from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
 from virtool.tasks.progress import (
@@ -77,22 +75,12 @@ class HmmsData(DataLayerDomain):
         self._pg = pg
         self._storage = storage
 
-    async def find(self, query: MultiDictProxy):
-        try:
-            page = max(1, int(query["page"]))
-        except (KeyError, ValueError):
-            page = 1
-
-        try:
-            per_page = max(1, int(query["per_page"]))
-        except (KeyError, ValueError):
-            per_page = 25
-
+    async def find(self, page: int, per_page: int, term: str | None = None):
         not_hidden = SQLHMM.hidden.is_(False)
 
         filters = [not_hidden]
 
-        if term := query.get("find"):
+        if term:
             filters.append(_compose_hmm_search_filter(term))
 
         data, status = await asyncio.gather(
@@ -230,7 +218,6 @@ class HmmsData(DataLayerDomain):
         await fetch_and_update_release(
             self._client,
             self._pg,
-            HMM_REPO_SLUG,
         )
 
         async with AsyncSession(self._pg) as session:
@@ -393,5 +380,4 @@ class HmmsData(DataLayerDomain):
         await fetch_and_update_release(
             self._client,
             self._pg,
-            HMM_REPO_SLUG,
         )

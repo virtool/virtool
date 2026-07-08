@@ -21,7 +21,7 @@
 # name: test_create
   dict({
     'args': dict({
-      'sample_id': 'foo',
+      'index_id': 'foo',
     }),
     'claim': None,
     'claimed_at': None,
@@ -35,6 +35,6 @@
       'handle': 'leeashley',
       'id': 1,
     }),
-    'workflow': <Workflow.CREATE_SAMPLE: 'create_sample'>,
+    'workflow': <Workflow.BUILD_INDEX: 'build_index'>,
   })
 # ---

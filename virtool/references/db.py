@@ -5,47 +5,37 @@ import datetime
 from typing import TYPE_CHECKING
 
 import pymongo
-from aiohttp import ClientConnectorError
 from aiohttp.web import Request
-from motor.motor_asyncio import AsyncIOMotorClientSession
-from pymongo import DeleteMany, DeleteOne, UpdateOne
-from semver import VersionInfo
-from sqlalchemy import select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 
-import virtool.github
 import virtool.history.db
 import virtool.mongo.utils
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
-from virtool.data.topg import compose_legacy_id_multi_expression
+from virtool.data.topg import (
+    compose_legacy_id_mongo_match,
+    compose_legacy_id_multi_expression,
+    compose_legacy_id_single_expression,
+    compose_legacy_id_subquery,
+    resolve_legacy_id,
+)
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
 from virtool.history.db import bulk_delete_history, bulk_insert_history
+from virtool.history.sql import SQLLegacyHistory
 from virtool.models.enums import HistoryMethod
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.utils import get_mongo_from_req
-from virtool.otus.db import join
-from virtool.otus.utils import verify
 from virtool.references.alot import prepare_otu_insertion
-from virtool.references.bulk_models import (
-    OTUData,
-    OTUDelete,
-    OTUInsert,
-    OTUUpdate,
-    SequenceChanges,
+from virtool.references.sql import (
+    SQLReference,
+    SQLReferenceGroup,
+    SQLReferenceUser,
 )
-from virtool.references.utils import (
-    OFFICIAL_REMOTE_SLUG,
-    check_will_change,
-)
-from virtool.releases import (
-    GetReleaseError,
-    ReleaseType,
-    fetch_release_manifest_from_virtool,
-)
+from virtool.references.utils import reference_values
 from virtool.settings.models import Settings
 from virtool.types import Document
 from virtool.users.transforms import AttachUserTransform
@@ -54,6 +44,107 @@ from virtool.utils import base_processor
 if TYPE_CHECKING:
     from virtool.api.client import UserClient
     from virtool.mongo.core import Mongo
+
+
+async def compose_reference_id_match(pg: AsyncEngine, ref_id: int | str) -> dict:
+    """Build a Mongo match value for an embedded ``reference.id``.
+
+    While the ``references`` migration is in progress, ``otus`` and ``sequences``
+    documents may carry either the legacy Mongo string id or the integer
+    ``legacy_references`` primary key, so both forms must match.
+    """
+    return await compose_legacy_id_mongo_match(pg, SQLReference, ref_id)
+
+
+async def resolve_reference_legacy_id(pg: AsyncEngine, ref_id: int | str) -> str:
+    """Return the legacy Mongo string id for a reference.
+
+    ``references`` still live in Mongo keyed by their legacy string ``_id`` while
+    ``otus`` and ``sequences`` may already embed the integer
+    ``legacy_references`` primary key. Callers that hold an embedded id and need
+    to reach the Mongo ``references`` document resolve it here. A legacy string id
+    passes through unchanged.
+    """
+    if isinstance(ref_id, str):
+        return ref_id
+
+    async with AsyncSession(pg) as session:
+        legacy_id = await session.scalar(
+            select(SQLReference.legacy_id).where(SQLReference.id == ref_id),
+        )
+
+    if legacy_id is None:
+        raise ResourceNotFoundError
+
+    return legacy_id
+
+
+async def write_legacy_reference(
+    pg_session: AsyncSession,
+    document: Document,
+) -> None:
+    """Insert a ``legacy_references`` row and its seeded rights from a Mongo reference
+    ``document`` into the open Postgres session.
+
+    ``cloned_from`` holds the source reference's legacy id, which is resolved to its
+    Postgres primary key. If the source has no Postgres row yet, the foreign key is left
+    ``NULL`` for the backfill to fill in later.
+    """
+    cloned_from = document.get("cloned_from")
+
+    cloned_from_id = None
+
+    if cloned_from is not None:
+        cloned_from_id = (
+            await pg_session.execute(
+                select(SQLReference.id).where(
+                    compose_legacy_id_single_expression(
+                        SQLReference,
+                        cloned_from["id"],
+                    ),
+                ),
+            )
+        ).scalar_one_or_none()
+
+    user = document.get("user")
+    imported_from = document.get("imported_from")
+    task = document.get("task")
+
+    reference = SQLReference(
+        **reference_values(
+            document,
+            user_id=user["id"] if user else None,
+            upload_id=imported_from["id"] if imported_from else None,
+            cloned_from_id=cloned_from_id,
+            task_id=task["id"] if task else None,
+        ),
+    )
+
+    pg_session.add(reference)
+
+    await pg_session.flush()
+
+    for member in document.get("users", []):
+        pg_session.add(
+            SQLReferenceUser(
+                reference_id=reference.id,
+                user_id=member["id"],
+                build=member.get("build", False),
+                modify=member.get("modify", False),
+                modify_otu=member.get("modify_otu", False),
+            ),
+        )
+
+    for member in document.get("groups", []):
+        pg_session.add(
+            SQLReferenceGroup(
+                reference_id=reference.id,
+                group_id=member["id"],
+                build=member.get("build", False),
+                modify=member.get("modify", False),
+                modify_otu=member.get("modify_otu", False),
+            ),
+        )
 
 
 async def processor(mongo: "Mongo", pg: AsyncEngine, document: Document) -> Document:
@@ -72,8 +163,8 @@ async def processor(mongo: "Mongo", pg: AsyncEngine, document: Document) -> Docu
 
     latest_build, otu_count, unbuilt_count = await asyncio.gather(
         get_latest_build(mongo, pg, ref_id),
-        get_otu_count(mongo, ref_id),
-        get_unbuilt_count(mongo, ref_id),
+        get_otu_count(mongo, pg, ref_id),
+        get_unbuilt_count(pg, ref_id),
     )
 
     document.update(
@@ -84,16 +175,7 @@ async def processor(mongo: "Mongo", pg: AsyncEngine, document: Document) -> Docu
         },
     )
 
-    try:
-        installed = document.pop("updates")[-1]
-    except (KeyError, IndexError):
-        installed = None
-
-    if installed:
-        installed = await apply_transforms(installed, [AttachUserTransform(pg)], pg)
-
     document["id"] = ref_id
-    document["installed"] = installed
 
     return document
 
@@ -176,11 +258,14 @@ async def get_reference_users(
     ]
 
 
-async def check_right(req: Request, ref_id: str, right: str) -> bool:
+async def check_right(req: Request, ref_id: int | str, right: str) -> bool:
     client: UserClient = req["client"]
 
     if client.administrator_role == AdministratorRole.FULL:
         return True
+
+    if isinstance(ref_id, int):
+        ref_id = await resolve_reference_legacy_id(req.app["pg"], ref_id)
 
     reference = await get_mongo_from_req(req).references.find_one(
         ref_id,
@@ -209,15 +294,23 @@ async def check_right(req: Request, ref_id: str, right: str) -> bool:
     return any(group[right] and group["id"] in client.groups for group in groups)
 
 
-async def check_source_type(mongo: "Mongo", ref_id: str, source_type: str) -> bool:
+async def check_source_type(
+    mongo: "Mongo",
+    pg: AsyncEngine,
+    ref_id: int | str,
+    source_type: str,
+) -> bool:
     """Check `source_type` is valid based on the reference configuration.
 
     :param mongo: the application MongoDB client
+    :param pg: the application PostgreSQL engine
     :param ref_id: the reference context
     :param source_type: the source type to check
     :return: source type is valid
 
     """
+    ref_id = await resolve_reference_legacy_id(pg, ref_id)
+
     document = await mongo.references.find_one(
         ref_id,
         ["restrict_source_types", "source_types"],
@@ -289,133 +382,15 @@ def compose_rights_filter(
     }
 
 
-async def fetch_and_update_release(
-    mongo: "Mongo",
-    client,
-    ref_id: str,
-    ignore_errors: bool = False,
-) -> dict:
-    """Get the latest release for the GitHub repository identified by the passed `slug`.
-
-    If a release is found, update the reference identified by the passed `ref_id` and
-    return the release.
-
-    Exceptions can be ignored during the request. Error information will still
-    be written to the reference document.
-
-    :param mongo: the application database client
-    :param client: the application client
-    :param ref_id: the id of the reference to update
-    :param ignore_errors: ignore exceptions raised during the request
-    :return: the latest release
-
-    """
-    retrieved_at = virtool.utils.timestamp()
-
-    document = await mongo.references.find_one(
-        ref_id,
-        ["release", "remotes_from", "installed"],
-    )
-
-    release = document.get("release")
-
-    errors = []
-
-    updated_release: dict | None = None
-
-    try:
-        releases = await fetch_release_manifest_from_virtool(
-            client,
-            ReleaseType.REFERENCES,
-        )
-
-        if releases:
-            latest_release = releases["ref-plant-viruses"][0]
-
-            updated_release = {
-                "id": latest_release["id"],
-                "name": latest_release["name"],
-                "body": latest_release["body"],
-                "filename": latest_release["name"],
-                "size": latest_release["size"],
-                "html_url": latest_release["html_url"],
-                "download_url": latest_release["download_url"],
-                "published_at": latest_release["published_at"],
-                "content_type": latest_release["content_type"],
-            }
-
-    except (ClientConnectorError, GetReleaseError) as err:
-        if "ClientConnectorError" in str(err):
-            errors = ["Could not reach Virtool.ca"]
-
-        if "404" in str(err):
-            errors = ["Release does not exist"]
-
-        if errors and not ignore_errors:
-            raise
-
-    if updated_release:
-        release = updated_release
-
-    if release:
-        installed: dict | None = document.get("installed", None)
-
-        release["newer"] = bool(
-            not installed
-            or VersionInfo.parse(release["name"].lstrip("v"))
-            > VersionInfo.parse(installed["name"].lstrip("v")),
-        )
-
-        release["retrieved_at"] = retrieved_at
-
-    await mongo.references.update_one(
-        {"_id": ref_id},
-        {"$set": {"errors": errors, "release": release}},
-    )
-
-    return release
-
-
-async def get_contributors(mongo: "Mongo", pg, ref_id: str) -> list[Document] | None:
+async def get_contributors(pg, ref_id: str) -> list[Document] | None:
     """Return a list of contributors and their contribution count for a specific ref.
 
-    :param mongo: the application database client
     :param pg: the PostgreSQL engine
     :param ref_id: the id of the ref to get contributors for
     :return: a list of contributors to the ref
 
     """
-    return await virtool.history.db.get_contributors(
-        mongo, pg, {"reference.id": ref_id}
-    )
-
-
-async def get_internal_control(
-    mongo: "Mongo",
-    internal_control_id: str | None,
-    ref_id: str,
-) -> Document | None:
-    """Return a minimal dict describing the ref internal control given a `otu_id`.
-
-    :param mongo: the application database client
-    :param internal_control_id: the id of the otu to create a minimal dict for
-    :param ref_id: the id of the reference to look for the control OTU in
-    :return: a minimal dict describing the ref internal control
-
-    """
-    if internal_control_id is None:
-        return None
-
-    name = await virtool.mongo.utils.get_one_field(
-        mongo.otus,
-        "name",
-        {"_id": internal_control_id, "reference.id": ref_id},
-    )
-
-    if name is None:
-        return None
-
-    return {"id": internal_control_id, "name": name}
+    return await virtool.history.db.get_contributors(pg, reference_id=ref_id)
 
 
 async def get_latest_build(
@@ -443,28 +418,14 @@ async def get_latest_build(
         )
 
 
-async def get_official_installed(mongo: "Mongo") -> bool:
-    """Return a boolean indicating whether the official plant virus reference is
-    installed.
-
-    :param mongo: the application mongodb client
-    :return: the install status for the official reference
-    """
-    return (
-        await mongo.references.count_documents(
-            {"remotes_from.slug": OFFICIAL_REMOTE_SLUG},
-        )
-        > 0
-    )
-
-
-async def get_manifest(mongo: "Mongo", ref_id: str) -> Document:
+async def get_manifest(mongo: "Mongo", pg: AsyncEngine, ref_id: str) -> Document:
     """Generate a dict of otu document version numbers keyed by the document id.
 
     This is used to make sure only changes made at the time the index rebuild was
     started are included in the build.
 
     :param mongo: the application database client
+    :param pg: the application PostgreSQL engine
     :param ref_id: the id of the reference to get the current index for
     :return: a manifest of otu ids and versions
 
@@ -472,34 +433,44 @@ async def get_manifest(mongo: "Mongo", ref_id: str) -> Document:
     return {
         document["_id"]: document["version"]
         async for document in mongo.otus.find(
-            {"reference.id": ref_id},
+            {"reference.id": await compose_reference_id_match(pg, ref_id)},
             ["version"],
         )
     }
 
 
-async def get_otu_count(mongo: "Mongo", ref_id: str) -> int:
+async def get_otu_count(mongo: "Mongo", pg: AsyncEngine, ref_id: str) -> int:
     """Get the number of OTUs associated with the given `ref_id`.
 
     :param mongo: the application database client
+    :param pg: the application PostgreSQL engine
     :param ref_id: the id of the reference to get the current index for
     :return: the OTU count
 
     """
-    return await mongo.otus.count_documents({"reference.id": ref_id})
+    return await mongo.otus.count_documents(
+        {"reference.id": await compose_reference_id_match(pg, ref_id)},
+    )
 
 
-async def get_unbuilt_count(mongo: "Mongo", ref_id: str) -> int:
+async def get_unbuilt_count(pg: AsyncEngine, ref_id: str) -> int:
     """Return a count of unbuilt history changes associated with a given `ref_id`.
 
-    :param mongo: the application database client
+    :param pg: the application PostgreSQL database object
     :param ref_id: the id of the ref to count unbuilt changes for
     :return: the number of unbuilt changes
 
     """
-    return await mongo.history.count_documents(
-        {"reference.id": ref_id, "index.id": "unbuilt"},
-    )
+    async with AsyncSession(pg) as session:
+        return await session.scalar(
+            select(func.count())
+            .select_from(SQLLegacyHistory)
+            .where(
+                SQLLegacyHistory.reference_id
+                == compose_legacy_id_subquery(SQLReference, ref_id),
+                SQLLegacyHistory.index.is_(None),
+            ),
+        )
 
 
 async def create_clone(
@@ -560,7 +531,6 @@ async def create_document(
                 "modify": True,
                 "modify_otu": True,
                 "created_at": created_at,
-                "remove": True,
             }
         ]
 
@@ -572,7 +542,6 @@ async def create_document(
         "description": description,
         "name": name,
         "organism": organism,
-        "internal_control": None,
         "restrict_source_types": False,
         "source_types": settings.default_source_types,
         "space": {"id": 0},
@@ -625,167 +594,6 @@ async def create_import(
     return document
 
 
-async def create_remote(
-    mongo: "Mongo",
-    settings: Settings,
-    name: str,
-    release: dict,
-    remote_from: str,
-    user_id: int,
-    data_type: str,
-) -> dict:
-    """Create a remote reference document in the database.
-
-    :param mongo: the application database object
-    :param settings: the application settings
-    :param name: the name for the new reference
-    :param release: the latest release for the remote reference
-    :param remote_from: information about the remote (errors, GitHub slug)
-    :param user_id: the id of the requesting user
-    :param data_type: the data type of the reference
-    :return: the new reference document
-
-    """
-    created_at = virtool.utils.timestamp()
-
-    document = await create_document(
-        mongo,
-        settings,
-        "Plant Viruses",
-        name or "Unnamed Remote",
-        "The official plant virus reference from the Virtool developers",
-        data_type,
-        created_at=created_at,
-        user_id=user_id,
-    )
-
-    return {
-        **document,
-        # Connection information for the GitHub remote repo.
-        "remotes_from": {"errors": [], "slug": remote_from},
-        # The latest available release on GitHub.
-        "release": dict(release, retrieved_at=created_at),
-        # The update history for the reference. We put the release being installed as
-        # the first history item.
-        "updates": [
-            virtool.github.create_update_subdocument(
-                release,
-                False,
-                user_id,
-                created_at,
-            ),
-        ],
-        "installed": None,
-    }
-
-
-async def insert_change(
-    mongo: "Mongo",
-    pg: AsyncEngine,
-    otu_id: str,
-    method_name: HistoryMethod,
-    user_id: int,
-    session: AsyncIOMotorClientSession,
-    old: Document | None = None,
-) -> None:
-    """Insert a history document for an OTU involved in import, remote, or clone.
-
-    :param mongo: the application database object
-    :param pg: the application PostgreSQL database object
-    :param otu_id: the ID of the OTU the change is for
-    :param method_name: the change verb (eg. remove, insert)
-    :param user_id: the ID of the requesting user
-    :param old: the old joined OTU document
-    :param session: a Mongo session
-
-    """
-    joined = await join(mongo, otu_id, session=session)
-
-    name = joined["name"]
-
-    e = "" if method_name.value[-1] == "e" else "e"
-
-    description = f"{method_name.value.capitalize()}{e}d {name}"
-
-    if abbreviation := joined.get("abbreviation"):
-        description = f"{description} ({abbreviation})"
-
-    await virtool.history.db.add(
-        mongo,
-        pg,
-        description,
-        method_name,
-        old,
-        joined,
-        user_id,
-        mongo_session=session,
-    )
-
-
-async def insert_joined_otu(
-    mongo: "Mongo",
-    otu: dict,
-    created_at: datetime.datetime,
-    ref_id: str,
-    user_id: int,
-    session: AsyncIOMotorClientSession,
-) -> str:
-    issues = verify(otu)
-
-    document = await mongo.otus.insert_one(
-        {
-            "abbreviation": otu["abbreviation"],
-            "created_at": created_at,
-            "imported": True,
-            "isolates": [
-                {
-                    key: isolate[key]
-                    for key in ("id", "default", "source_type", "source_name")
-                }
-                for isolate in otu["isolates"]
-            ],
-            "issues": issues,
-            "lower_name": otu["name"].lower(),
-            "last_indexed_version": None,
-            "name": otu["name"],
-            "reference": {"id": ref_id},
-            "remote": {"id": otu["_id"]},
-            "schema": otu.get("schema", []),
-            "user": {"id": user_id},
-            "verified": issues is None,
-            "version": 0,
-        },
-        session=session,
-    )
-
-    sequences = []
-
-    for isolate in otu["isolates"]:
-        for sequence in isolate.pop("sequences"):
-            try:
-                remote_sequence_id = sequence["remote"]["id"]
-                sequence.pop("_id")
-            except KeyError:
-                remote_sequence_id = sequence.pop("_id")
-
-            sequences.append(
-                {
-                    **sequence,
-                    "accession": sequence["accession"],
-                    "isolate_id": isolate["id"],
-                    "otu_id": document["_id"],
-                    "segment": sequence.get("segment", ""),
-                    "reference": {"id": ref_id},
-                    "remote": {"id": remote_sequence_id},
-                },
-            )
-
-    for sequence in sequences:
-        await mongo.sequences.insert_one(sequence, session=session)
-
-    return document["_id"]
-
-
 async def populate_insert_only_reference(
     created_at: datetime,
     history_method: HistoryMethod,
@@ -795,12 +603,18 @@ async def populate_insert_only_reference(
     reference_id: str,
     user_id: int,
 ) -> None:
+    async with AsyncSession(pg) as session:
+        reference_pk = await resolve_legacy_id(session, SQLReference, reference_id)
+
+    if reference_pk is None:
+        raise ValueError(f"Reference {reference_id!r} not found in postgres")
+
     insertions = [
         prepare_otu_insertion(
             created_at,
             history_method,
             otu,
-            reference_id,
+            reference_pk,
             user_id,
         )
         for otu in otus
@@ -825,12 +639,6 @@ async def populate_insert_only_reference(
 
         async with asyncio.TaskGroup() as tg:
             tg.create_task(
-                mongo.history.insert_many(
-                    [insertion.history.document for insertion in insertions],
-                    None,
-                ),
-            )
-            tg.create_task(
                 mongo.otus.insert_many(
                     [insertion.otu for insertion in insertions],
                     None,
@@ -840,268 +648,42 @@ async def populate_insert_only_reference(
     except Exception:
         await bulk_delete_history(pg, [row["change_id"] for row in diff_rows])
 
+        reference_id_match = await compose_reference_id_match(pg, reference_id)
+
         await asyncio.gather(
-            mongo.history.delete_many({"reference.id": reference_id}),
-            mongo.sequences.delete_many({"reference.id": reference_id}),
-            mongo.otus.delete_many({"reference.id": reference_id}),
+            mongo.sequences.delete_many({"reference.id": reference_id_match}),
+            mongo.otus.delete_many({"reference.id": reference_id_match}),
         )
 
         await mongo.references.delete_one({"_id": reference_id})
-        raise
 
+        async with AsyncSession(pg) as session:
+            sql_reference_id = (
+                await session.execute(
+                    select(SQLReference.id).where(
+                        SQLReference.legacy_id == reference_id,
+                    ),
+                )
+            ).scalar_one_or_none()
 
-async def prepare_update_joined_otu(
-    mongo: "Mongo",
-    old,
-    otu: Document,
-    ref_id: str,
-) -> OTUUpdate | None:
-    if not check_will_change(old, otu):
-        return None
-
-    otu_update = UpdateOne(
-        {"_id": old["_id"]},
-        {
-            "$inc": {"version": 1},
-            "$set": {
-                "abbreviation": otu["abbreviation"],
-                "name": otu["name"],
-                "lower_name": otu["name"].lower(),
-                "isolates": otu["isolates"],
-                "schema": otu.get("schema", []),
-            },
-        },
-    )
-
-    sequence_changes = []
-
-    for isolate in otu["isolates"]:
-        for sequence in isolate.pop("sequences"):
-            sequence_changes.append(
-                {
-                    "accession": sequence["accession"],
-                    "definition": sequence["definition"],
-                    "host": sequence["host"],
-                    "segment": sequence.get("segment", ""),
-                    "sequence": sequence["sequence"],
-                    "otu_id": old["_id"],
-                    "isolate_id": isolate["id"],
-                    "reference": {"id": ref_id},
-                    "remote": {"id": sequence["_id"]},
-                },
-            )
-
-    sequence_inserts = []
-    sequence_updates = []
-    for sequence_update in sequence_changes:
-        remote_sequence_id = sequence_update["remote"]["id"]
-        if await mongo.sequences.find_one(
-            {"reference.id": ref_id, "remote.id": remote_sequence_id},
-        ):
-            sequence_updates.append(
-                UpdateOne(
-                    {"reference.id": ref_id, "remote.id": remote_sequence_id},
-                    {"$set": sequence_update},
-                ),
-            )
-        else:
-            sequence_inserts.append(sequence_update)
-
-    return OTUUpdate(
-        otu_update,
-        SequenceChanges(updates=sequence_updates, inserts=sequence_inserts),
-        old,
-        otu_id=old["_id"],
-    )
-
-
-async def bulk_prepare_update_joined_otu(
-    mongo: "Mongo",
-    otu_data: list[OTUData],
-    ref_id: str,
-    session,
-) -> list[OTUUpdate]:
-    otu_ids = [otu_item.old["_id"] for otu_item in otu_data]
-
-    cursor = mongo.sequences.find(
-        {"otu_id": {"$in": otu_ids}},
-        session=session,
-    )
-
-    existing_sequences_by_otu: dict[str, set[str]] = {}
-    async for sequence in cursor:
-        otu_id = sequence["otu_id"]
-        if otu_id not in existing_sequences_by_otu:
-            existing_sequences_by_otu[otu_id] = set()
-        existing_sequences_by_otu[otu_id].add(sequence["remote"]["id"])
-
-    otu_updates = []
-    for otu_item in otu_data:
-        if not check_will_change(otu_item.old, otu_item.otu):
-            continue
-
-        existing_remote_ids = existing_sequences_by_otu.get(otu_item.old["_id"], set())
-
-        otu_update = UpdateOne(
-            {"_id": otu_item.old["_id"]},
-            {
-                "$inc": {"version": 1},
-                "$set": {
-                    "abbreviation": otu_item.otu["abbreviation"],
-                    "name": otu_item.otu["name"],
-                    "lower_name": otu_item.otu["name"].lower(),
-                    "isolates": otu_item.otu["isolates"],
-                    "schema": otu_item.otu.get("schema", []),
-                },
-            },
-        )
-
-        sequence_updates = []
-        sequence_inserts = []
-
-        new_remote_sequence_ids = set()
-
-        for isolate in otu_item.otu["isolates"]:
-            for sequence in isolate.pop("sequences"):
-                new_remote_sequence_ids.add(sequence["_id"])
-                sequence_update = {
-                    "accession": sequence["accession"],
-                    "definition": sequence["definition"],
-                    "host": sequence["host"],
-                    "segment": sequence.get("segment", ""),
-                    "sequence": sequence["sequence"],
-                    "otu_id": otu_item.old["_id"],
-                    "isolate_id": isolate["id"],
-                    "reference": {"id": ref_id},
-                    "remote": {"id": sequence["_id"]},
-                }
-
-                remote_sequence_id = sequence_update["remote"]["id"]
-                if remote_sequence_id in existing_remote_ids:
-                    sequence_updates.append(
-                        UpdateOne(
-                            {"reference.id": ref_id, "remote.id": remote_sequence_id},
-                            {"$set": sequence_update},
-                        ),
-                    )
-                else:
-                    sequence_inserts.append(sequence_update)
-
-        # Identify sequences to delete: present in DB but not in update payload
-        sequences_to_delete = []
-        for sequence_id in existing_remote_ids:
-            if sequence_id not in new_remote_sequence_ids:
-                sequences_to_delete.append(
-                    DeleteOne({"reference.id": ref_id, "remote.id": sequence_id})
+            if sql_reference_id is not None:
+                await session.execute(
+                    delete(SQLReferenceUser).where(
+                        SQLReferenceUser.reference_id == sql_reference_id,
+                    ),
+                )
+                await session.execute(
+                    delete(SQLReferenceGroup).where(
+                        SQLReferenceGroup.reference_id == sql_reference_id,
+                    ),
+                )
+                await session.execute(
+                    delete(SQLReference).where(SQLReference.id == sql_reference_id),
                 )
 
-        otu_updates.append(
-            OTUUpdate(
-                otu_update,
-                SequenceChanges(
-                    updates=sequence_updates,
-                    inserts=sequence_inserts,
-                    deletes=sequences_to_delete,
-                ),
-                otu_item.old,
-                otu_id=otu_item.old["_id"],
-            ),
-        )
+            await session.commit()
 
-    return otu_updates
-
-
-def prepare_insert_otu(
-    otu: dict,
-    created_at: datetime.datetime,
-    ref_id: str,
-    user_id: int,
-) -> OTUInsert:
-    issues = verify(otu)
-
-    new_otu = {
-        "abbreviation": otu["abbreviation"],
-        "created_at": created_at,
-        "imported": True,
-        "isolates": [
-            {
-                key: isolate[key]
-                for key in ("id", "default", "source_type", "source_name")
-            }
-            for isolate in otu["isolates"]
-        ],
-        "issues": issues,
-        "lower_name": otu["name"].lower(),
-        "last_indexed_version": None,
-        "name": otu["name"],
-        "reference": {"id": ref_id},
-        "remote": {"id": otu["_id"]},
-        "schema": otu.get("schema", []),
-        "user": {"id": user_id},
-        "verified": issues is None,
-        "version": 0,
-    }
-
-    sequences = []
-    for isolate in otu["isolates"]:
-        for sequence in isolate.pop("sequences"):
-            try:
-                remote_sequence_id = sequence["remote"]["id"]
-                sequence.pop("_id")
-            except KeyError:
-                remote_sequence_id = sequence.pop("_id")
-
-            sequences.append(
-                {
-                    **sequence,
-                    "accession": sequence["accession"],
-                    "isolate_id": isolate["id"],
-                    "otu_id": otu["_id"],
-                    "segment": sequence.get("segment", ""),
-                    "reference": {"id": ref_id},
-                    "remote": {"id": remote_sequence_id},
-                },
-            )
-
-    return OTUInsert(
-        new_otu,
-        SequenceChanges(inserts=sequences),
-    )
-
-
-async def prepare_remove_otu(mongo: "Mongo", otu_id: str, session) -> OTUDelete | None:
-    """Remove an OTU.
-
-    Create a history document to record the change.
-
-    :param otu_id: the ID of the OTU
-    :param user_id: the ID of the requesting user
-    :return: `True` if the removal was successful
-
-    """
-    joined = await virtool.otus.db.join(mongo, otu_id, session=session)
-
-    if not joined:
-        return None
-
-    otu_delete = DeleteOne({"_id": otu_id})
-    sequences_delete = DeleteMany({"otu_id": otu_id})
-
-    reference_update = UpdateOne(
-        {
-            "_id": joined["reference"]["id"],
-            "internal_control.id": joined["_id"],
-        },
-        {"$set": {"internal_control": None}},
-    )
-
-    return OTUDelete(
-        otu_delete,
-        SequenceChanges(deletes=[sequences_delete]),
-        joined,
-        reference_update,
-        otu_id=otu_id,
-    )
+        raise
 
 
 def lookup_nested_reference_by_id(
