@@ -575,6 +575,186 @@ async def _archive_and_delete(
     return result.deleted_count
 
 
+async def compare_reference_rights(ctx: MigrationContext) -> None:
+    """Verify Mongo's embedded reference rights match the Postgres join tables.
+
+    A gating drift check run after the reference backfill and before authorization
+    and reference reads switch to Postgres. It changes nothing: it reads every
+    production reference (no sampling), builds the set of rights grants recorded in
+    Mongo and the set recorded in Postgres, and raises if they disagree.
+
+    For each reference two comparisons run independently:
+
+    - **Groups.** The embedded ``groups`` member ids are canonicalised through
+      :class:`SQLGroup` exactly as the read path :func:`get_reference_groups` does,
+      so an int id and the legacy string id of the same group collapse to one
+      canonical integer. A member whose group no longer resolves is dropped rather
+      than counted as drift: the backfill deliberately skips grants to deleted
+      groups (see :func:`_insert_rights_rows`), so Postgres is expected not to hold
+      them. The number dropped is logged so the omission is not silent.
+    - **Users.** User grants must always resolve, because users are never
+      hard-deleted and the backfill raises on an unresolvable ``users`` member. A
+      member that fails to resolve here is therefore recorded as drift rather than
+      silently dropped.
+
+    Only the authorization-relevant booleans ``build``, ``modify`` and
+    ``modify_otu`` take part in the comparison. There is no ``remove`` right, and
+    the join tables carry no ``created_at``, so neither can contribute drift.
+
+    The check is exhaustive before it fails: mismatches are accumulated across
+    every reference, the full per-reference report is logged, and a single
+    :class:`ValueError` is raised at the end. A clean run logs zero drift.
+    """
+    async with AsyncSession(ctx.pg) as session:
+        reference_ids = [
+            document["_id"]
+            async for document in ctx.mongo.references.find({}, projection=["_id"])
+        ]
+
+        group_id_cache: dict[int | str, int | None] = {}
+        user_id_cache: dict[int | str, int | None] = {}
+
+        drifted: list[dict] = []
+        dropped_group_grants = 0
+
+        for reference_id in reference_ids:
+            document = await ctx.mongo.references.find_one({"_id": reference_id})
+
+            if document is None:
+                continue
+
+            reference_pk = (
+                await session.execute(
+                    select(SQLReference.id).where(
+                        SQLReference.legacy_id == reference_id,
+                    ),
+                )
+            ).scalar_one_or_none()
+
+            if reference_pk is None:
+                msg = (
+                    f"reference {reference_id!r} exists in mongo but is missing "
+                    "from postgres"
+                )
+                raise ValueError(msg)
+
+            expected_groups: set[tuple[int, bool, bool, bool]] = set()
+
+            for member in document.get("groups") or []:
+                group_id = await _resolve_id(
+                    session,
+                    SQLGroup,
+                    member["id"],
+                    group_id_cache,
+                )
+
+                if group_id is None:
+                    dropped_group_grants += 1
+                    continue
+
+                expected_groups.add(_rights_tuple(group_id, member))
+
+            unresolvable_users: list[int | str] = []
+            expected_users: set[tuple[int, bool, bool, bool]] = set()
+
+            for member in document.get("users") or []:
+                user_id = await _resolve_id(
+                    session,
+                    SQLUser,
+                    member["id"],
+                    user_id_cache,
+                )
+
+                if user_id is None:
+                    unresolvable_users.append(member["id"])
+                    continue
+
+                expected_users.add(_rights_tuple(user_id, member))
+
+            actual_groups = {
+                (row.group_id, row.build, row.modify, row.modify_otu)
+                for row in (
+                    await session.execute(
+                        select(
+                            SQLReferenceGroup.group_id,
+                            SQLReferenceGroup.build,
+                            SQLReferenceGroup.modify,
+                            SQLReferenceGroup.modify_otu,
+                        ).where(SQLReferenceGroup.reference_id == reference_pk),
+                    )
+                ).all()
+            }
+
+            actual_users = {
+                (row.user_id, row.build, row.modify, row.modify_otu)
+                for row in (
+                    await session.execute(
+                        select(
+                            SQLReferenceUser.user_id,
+                            SQLReferenceUser.build,
+                            SQLReferenceUser.modify,
+                            SQLReferenceUser.modify_otu,
+                        ).where(SQLReferenceUser.reference_id == reference_pk),
+                    )
+                ).all()
+            }
+
+            if (
+                expected_groups != actual_groups
+                or expected_users != actual_users
+                or unresolvable_users
+            ):
+                drifted.append(
+                    {
+                        "reference_id": reference_id,
+                        "groups_only_in_mongo": sorted(
+                            expected_groups - actual_groups,
+                        ),
+                        "groups_only_in_postgres": sorted(
+                            actual_groups - expected_groups,
+                        ),
+                        "users_only_in_mongo": sorted(expected_users - actual_users),
+                        "users_only_in_postgres": sorted(
+                            actual_users - expected_users,
+                        ),
+                        "unresolvable_users": unresolvable_users,
+                    },
+                )
+
+    if dropped_group_grants:
+        logger.info(
+            "dropped grants to deleted groups when building expected rights",
+            dropped=dropped_group_grants,
+        )
+
+    if drifted:
+        for report in drifted:
+            logger.error("reference rights drift", **report)
+
+        msg = f"reference rights drift detected in {len(drifted)} references"
+        raise ValueError(msg)
+
+    logger.info(
+        "reference rights match; no drift",
+        references=len(reference_ids),
+    )
+
+
+def _rights_tuple(canonical_id: int, member: dict) -> tuple[int, bool, bool, bool]:
+    """Build a hashable rights grant keyed by a canonical integer id.
+
+    ``created_at`` and the retired ``remove`` right are intentionally excluded: the
+    join tables store neither, so only the three live authorization booleans take
+    part in the comparison.
+    """
+    return (
+        canonical_id,
+        member.get("build", False),
+        member.get("modify", False),
+        member.get("modify_otu", False),
+    )
+
+
 async def _resolve_rights_member_id(
     session: AsyncSession,
     model: type[Base],
