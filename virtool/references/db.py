@@ -350,6 +350,45 @@ def compose_archived_filter(archived: bool | None) -> dict:
     return {"archived": archived}
 
 
+async def compose_reference_ids_in_match(
+    pg: AsyncEngine,
+    mongo: "Mongo",
+    archived: bool | None = None,
+) -> list[int | str]:
+    """Build a Mongo ``$in`` list of embedded reference ids for the references
+    matching ``archived``.
+
+    ``indexes`` documents embed either the legacy Mongo string reference id or the
+    integer ``legacy_references`` primary key during the migration, so both forms
+    are included for every matching reference. This backs the orphan and lifecycle
+    filters on the index list, which scope indexes to references that still exist.
+
+    :param pg: the application PostgreSQL engine
+    :param mongo: the application database client
+    :param archived: lifecycle filter mode; see :func:`compose_archived_filter`
+    :return: a list of both id forms for use as a Mongo ``$in`` value
+    """
+    legacy_ids: list[str] = await mongo.references.distinct(
+        "_id",
+        compose_archived_filter(archived),
+    )
+
+    async with AsyncSession(pg) as session:
+        integer_ids = (
+            (
+                await session.execute(
+                    select(SQLReference.id).where(
+                        SQLReference.legacy_id.in_(legacy_ids),
+                    ),
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+    return [*legacy_ids, *integer_ids]
+
+
 def compose_rights_filter(
     user_id: int,
     administrator: bool,
@@ -405,7 +444,10 @@ async def get_latest_build(
 
     """
     latest_build = await mongo.indexes.find_one(
-        {"reference.id": ref_id, "ready": True},
+        {
+            "reference.id": await compose_reference_id_match(pg, ref_id),
+            "ready": True,
+        },
         projection=["created_at", "version", "user", "has_json"],
         sort=[("version", pymongo.DESCENDING)],
     )
@@ -684,29 +726,3 @@ async def populate_insert_only_reference(
             await session.commit()
 
         raise
-
-
-def lookup_nested_reference_by_id(
-    local_field: str = "reference.id",
-    set_as: str = "reference",
-) -> list[dict]:
-    """Create a mongoDB aggregation pipeline step to look up nested reference by id.
-
-    :param local_field: reference field to look up
-    :param set_as: desired name of the returned record
-    :return: mongoDB aggregation steps for use in an aggregation pipeline
-    """
-    return [
-        {
-            "$lookup": {
-                "from": "references",
-                "let": {"reference_id": f"${local_field}"},
-                "pipeline": [
-                    {"$match": {"$expr": {"$eq": ["$_id", "$$reference_id"]}}},
-                    {"$project": {"_id": True, "name": True, "data_type": True}},
-                ],
-                "as": set_as,
-            },
-        },
-        {"$set": {set_as: {"$first": f"${set_as}"}}},
-    ]

@@ -22,16 +22,37 @@ from virtool.mongo.core import Mongo
 from virtool.references.sql import SQLReference
 
 
+async def _add_reference(pg: AsyncEngine, legacy_id: str, user_id: int, static_time):
+    async with AsyncSession(pg) as session:
+        reference = SQLReference(
+            legacy_id=legacy_id,
+            name=legacy_id,
+            description="",
+            created_at=static_time.datetime,
+            source_types=[],
+            user_id=user_id,
+        )
+        session.add(reference)
+        await session.commit()
+
+
 @pytest.mark.parametrize("index_id", [None, "abc"])
 async def test_create(
     index_id: str | None,
     mocker: MockerFixture,
     mongo: Mongo,
     pg: AsyncEngine,
+    fake,
     snapshot: SnapshotAssertion,
     static_time,
 ):
+    """The new index embeds the integer ``legacy_references`` primary key of its
+    reference rather than the legacy Mongo string id.
+    """
+    user = await fake.users.create()
+
     await mongo.references.insert_one({"_id": "foo"})
+    await _add_reference(pg, "foo", user.id, static_time)
 
     mocker.patch("virtool.references.db.get_manifest", make_mocked_coro("manifest"))
 
@@ -154,6 +175,7 @@ async def test_create_rolls_back_both_stores_on_failure(
     user = await fake.users.create()
 
     await mongo.references.insert_one({"_id": "built_ref"})
+    await _add_reference(pg, "built_ref", user.id, static_time)
 
     async with AsyncSession(pg) as session:
         session.add(
@@ -206,7 +228,9 @@ async def test_create_rolls_back_both_stores_on_failure(
 
 @pytest.mark.parametrize("exists", [True, False])
 @pytest.mark.parametrize("has_ref", [True, False])
-async def test_get_current_id_and_version(exists, has_ref, test_indexes, mongo):
+async def test_get_current_id_and_version(
+    exists, has_ref, test_indexes, mongo, pg: AsyncEngine
+):
     if not exists:
         test_indexes = [dict(i, ready=False, has_files=False) for i in test_indexes]
 
@@ -214,7 +238,7 @@ async def test_get_current_id_and_version(exists, has_ref, test_indexes, mongo):
 
     ref_id = "hxn167" if has_ref else "foobar"
 
-    index_id, index_version = await get_current_id_and_version(mongo, ref_id)
+    index_id, index_version = await get_current_id_and_version(mongo, pg, ref_id)
 
     if has_ref and exists:
         assert index_id == "ptlrcefm"
@@ -227,7 +251,7 @@ async def test_get_current_id_and_version(exists, has_ref, test_indexes, mongo):
 
 @pytest.mark.parametrize("empty", [False, True])
 @pytest.mark.parametrize("has_ref", [True, False])
-async def test_get_next_version(empty, has_ref, test_indexes, mongo):
+async def test_get_next_version(empty, has_ref, test_indexes, mongo, pg: AsyncEngine):
     if not empty:
         await mongo.indexes.insert_many(test_indexes, session=None)
 
@@ -236,7 +260,47 @@ async def test_get_next_version(empty, has_ref, test_indexes, mongo):
     if empty or not has_ref:
         expected = 0
 
-    assert await get_next_version(mongo, "hxn167" if has_ref else "foobar") == expected
+    assert (
+        await get_next_version(mongo, pg, "hxn167" if has_ref else "foobar") == expected
+    )
+
+
+async def test_reads_tolerate_integer_embedded_reference_id(
+    mongo: Mongo,
+    pg: AsyncEngine,
+    fake,
+    static_time,
+):
+    """``get_current_id_and_version`` and ``get_next_version`` resolve the legacy
+    string ref id and match an index whose embedded ``reference.id`` is the integer
+    ``legacy_references`` primary key.
+    """
+    user = await fake.users.create()
+
+    await mongo.references.insert_one({"_id": "legacy_ref"})
+    await _add_reference(pg, "legacy_ref", user.id, static_time)
+
+    async with AsyncSession(pg) as session:
+        reference_pk = (
+            await session.execute(
+                select(SQLReference.id).where(SQLReference.legacy_id == "legacy_ref"),
+            )
+        ).scalar_one()
+
+    await mongo.indexes.insert_one(
+        {
+            "_id": "built_index",
+            "reference": {"id": reference_pk},
+            "version": 0,
+            "ready": True,
+        },
+    )
+
+    index_id, index_version = await get_current_id_and_version(mongo, pg, "legacy_ref")
+
+    assert index_id == "built_index"
+    assert index_version == 0
+    assert await get_next_version(mongo, pg, "legacy_ref") == 1
 
 
 async def test_get_patched_otus(mocker: MockerFixture, mongo: Mongo):
