@@ -4,7 +4,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.transforms import apply_transforms
 from virtool.fake.next import DataFaker
-from virtool.mongo.core import Mongo
 from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
 
@@ -30,17 +29,16 @@ async def _seed_reference(pg: AsyncEngine, legacy_id: str, user_id: int) -> int:
 class TestAttachReferenceTransform:
     async def test_legacy_string_id(
         self,
-        mongo: Mongo,
+        fake: DataFaker,
         pg: AsyncEngine,
     ):
-        """A document embedding the legacy string id resolves against Mongo."""
-        await mongo.references.insert_one(
-            {"_id": "foo", "name": "Reference A", "data_type": "genome"},
-        )
+        """A document embedding the legacy string id resolves against Postgres."""
+        user = await fake.users.create()
+        await _seed_reference(pg, "foo", user.id)
 
         document = await apply_transforms(
             {"id": "6116cba1", "reference": {"id": "foo"}},
-            [AttachReferenceTransform(mongo)],
+            [AttachReferenceTransform(pg)],
             pg,
         )
 
@@ -53,22 +51,15 @@ class TestAttachReferenceTransform:
     async def test_integer_primary_key(
         self,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
-        """A document embedding the integer primary key is resolved to its Mongo
-        reference via Postgres.
-        """
+        """A document embedding the integer primary key resolves against Postgres."""
         user = await fake.users.create()
         reference_id = await _seed_reference(pg, "foo", user.id)
 
-        await mongo.references.insert_one(
-            {"_id": "foo", "name": "Reference A", "data_type": "genome"},
-        )
-
         document = await apply_transforms(
             {"id": "6116cba1", "reference": {"id": reference_id}},
-            [AttachReferenceTransform(mongo)],
+            [AttachReferenceTransform(pg)],
             pg,
         )
 
@@ -81,23 +72,18 @@ class TestAttachReferenceTransform:
     async def test_many_mixed_ids(
         self,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
         """A batch mixing legacy string and integer ids resolves every document."""
         user = await fake.users.create()
         reference_id = await _seed_reference(pg, "foo", user.id)
 
-        await mongo.references.insert_one(
-            {"_id": "foo", "name": "Reference A", "data_type": "genome"},
-        )
-
         documents = await apply_transforms(
             [
                 {"id": "string_ref", "reference": {"id": "foo"}},
                 {"id": "integer_ref", "reference": {"id": reference_id}},
             ],
-            [AttachReferenceTransform(mongo)],
+            [AttachReferenceTransform(pg)],
             pg,
         )
 

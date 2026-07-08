@@ -66,9 +66,15 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
         ).scalar_one_or_none()
 
         if reference_pg_id is None:
+            reference_doc = await mongo.references.find_one(reference["id"], ["name"])
+            reference_name = (
+                reference_doc["name"]
+                if reference_doc
+                else reference.get("name", reference["id"])
+            )
             legacy_reference = SQLReference(
                 legacy_id=reference["id"],
-                name=reference.get("name", reference["id"]),
+                name=reference_name,
                 description="",
                 created_at=document["created_at"],
                 source_types=[],

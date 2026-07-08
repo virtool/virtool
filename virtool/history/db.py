@@ -476,7 +476,7 @@ async def find(
 
     documents = await apply_transforms(
         [base_processor(legacy_history_document(row, handle)) for row, handle in rows],
-        [AttachReferenceTransform(mongo)],
+        [AttachReferenceTransform(pg)],
         pg,
     )
 
@@ -551,7 +551,7 @@ async def find_by_index(
 
     documents = await apply_transforms(
         [base_processor(legacy_history_document(row, handle)) for row, handle in rows],
-        [AttachReferenceTransform(mongo)],
+        [AttachReferenceTransform(pg)],
         pg,
     )
 

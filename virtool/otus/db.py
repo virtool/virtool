@@ -114,7 +114,7 @@ async def find(
 
     data["documents"] = await apply_transforms(
         [base_processor(d) for d in data["documents"]],
-        [AttachReferenceTransform(mongo)],
+        [AttachReferenceTransform(pg)],
         pg,
     )
 

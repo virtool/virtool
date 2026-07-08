@@ -106,7 +106,7 @@ class IndexData:
             items,
             [
                 AttachJobTransform(self._pg),
-                AttachReferenceTransform(self._mongo),
+                AttachReferenceTransform(self._pg),
                 AttachUserTransform(self._pg),
                 IndexCountsTransform(),
             ],
@@ -150,7 +150,7 @@ class IndexData:
             base_processor(document),
             [
                 AttachJobTransform(self._pg),
-                AttachReferenceTransform(self._mongo),
+                AttachReferenceTransform(self._pg),
                 AttachUserTransform(self._pg),
                 IndexCountsTransform(),
             ],

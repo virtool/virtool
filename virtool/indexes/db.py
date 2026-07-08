@@ -265,7 +265,7 @@ async def find(
             [base_processor(d) for d in data["documents"]],
             [
                 AttachJobTransform(pg),
-                AttachReferenceTransform(mongo),
+                AttachReferenceTransform(pg),
                 AttachUserTransform(pg),
                 IndexCountsTransform(),
             ],
