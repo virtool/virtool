@@ -903,10 +903,6 @@ class TestUpdate:
             UpdateSampleRequest(name="Renamed", notes="Updated notes"),
         )
 
-        document = await mongo.samples.find_one()
-        assert document["name"] == "Renamed"
-        assert document["notes"] == "Updated notes"
-
         async with AsyncSession(pg) as session:
             legacy = (
                 await session.execute(
@@ -918,6 +914,10 @@ class TestUpdate:
 
         assert legacy.name == "Renamed"
         assert legacy.notes == "Updated notes"
+
+        document = await mongo.samples.find_one({"_id": legacy.legacy_id})
+        assert document["name"] == "Renamed"
+        assert document["notes"] == "Updated notes"
 
     async def test_labels_reconciled(
         self,
