@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner, VirtoolTestClient
+from tests.samples.utils import add_sample_uploads
 from virtool.analyses.sql import SQLAnalysis, SQLAnalysisSubtraction
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
@@ -922,6 +923,27 @@ class TestCreate:
 
         await resp_is.bad_request(resp, "File does not exist")
 
+    async def test_duplicate_file(
+        self,
+        fake: DataFaker,
+        spawn_client: ClientSpawner,
+        resp_is,
+    ):
+        """Test that the same upload cannot be passed twice in ``files``."""
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_sample],
+        )
+
+        upload = await fake.uploads.create(user=await fake.users.create())
+
+        resp = await client.post(
+            "/samples",
+            {"name": "Foobar", "files": [upload.id, upload.id]},
+        )
+
+        await resp_is.bad_request(resp, "File is duplicated")
+
     async def test_label_dne(
         self,
         fake: DataFaker,
@@ -1288,10 +1310,7 @@ class TestDelete:
             reserved=True,
         )
 
-        await mongo.samples.update_one(
-            {"_id": "test"},
-            {"$set": {"uploads": [{"id": upload.id}]}},
-        )
+        await add_sample_uploads(mongo, pg, "test", [upload.id])
 
         resp = await client.delete(f"/samples/{sample_id}")
 

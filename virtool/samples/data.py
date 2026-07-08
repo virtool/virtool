@@ -52,7 +52,6 @@ from virtool.samples.checks import (
 )
 from virtool.samples.db import (
     AttachArtifactsAndReadsTransform,
-    AttachMongoUploadsTransform,
     AttachUploadsTransform,
     DeriveWorkflowTagsTransform,
     compose_sample_workflow_filter,
@@ -70,6 +69,7 @@ from virtool.samples.sql import (
     SQLLegacySampleSubtraction,
     SQLSampleArtifact,
     SQLSampleReads,
+    SQLSampleUpload,
 )
 from virtool.samples.utils import (
     SampleRight,
@@ -281,7 +281,6 @@ class SamplesData(DataLayerDomain):
                 for row in rows
             ],
             [
-                AttachMongoUploadsTransform(self._mongo),
                 DeriveWorkflowTagsTransform(),
                 AttachJobTransform(self._pg),
                 AttachLabelsTransform(self._pg),
@@ -417,7 +416,6 @@ class SamplesData(DataLayerDomain):
         document = await apply_transforms(
             _map_sample_row(row, label_ids, subtraction_ids),
             [
-                AttachMongoUploadsTransform(self._mongo),
                 DeriveWorkflowTagsTransform(),
                 AttachArtifactsAndReadsTransform(self._pg),
                 AttachJobTransform(self._pg),
@@ -484,6 +482,16 @@ class SamplesData(DataLayerDomain):
             document["subtractions"],
         )
 
+        for index, upload in enumerate(document["uploads"]):
+            pg_session.add(
+                SQLSampleUpload(
+                    sample=document["_id"],
+                    sample_id=sample.id,
+                    upload_id=upload["id"],
+                    index=index,
+                ),
+            )
+
     @staticmethod
     def _add_legacy_sample_join_rows(
         pg_session: AsyncSession,
@@ -525,6 +533,9 @@ class SamplesData(DataLayerDomain):
             check_labels_do_not_exist(self._pg, data.labels),
             check_subtractions_do_not_exist(self._pg, data.subtractions),
         )
+
+        if len(set(data.files)) != len(data.files):
+            raise ResourceConflictError("File is duplicated")
 
         try:
             uploads = [
@@ -693,6 +704,14 @@ class SamplesData(DataLayerDomain):
                 ),
             )
             await pg_session.execute(
+                delete(SQLSampleUpload).where(
+                    or_(
+                        SQLSampleUpload.sample_id == sample_pk,
+                        SQLSampleUpload.sample == legacy_id,
+                    ),
+                ),
+            )
+            await pg_session.execute(
                 delete(SQLSampleArtifact).where(
                     or_(
                         SQLSampleArtifact.sample_id == sample_pk,
@@ -770,16 +789,18 @@ class SamplesData(DataLayerDomain):
                 .values(quality=quality, ready=True),
             )
 
-        uploads = await get_one_field(self._mongo.samples, "uploads", legacy_id) or []
-        upload_ids = [upload["id"] for upload in uploads]
-
         names_on_disk = []
 
         async with AsyncSession(self._pg) as session:
             rows = (
                 (
                     await session.execute(
-                        select(SQLUpload).where(SQLUpload.id.in_(upload_ids)),
+                        select(SQLUpload)
+                        .join(
+                            SQLSampleUpload,
+                            SQLSampleUpload.upload_id == SQLUpload.id,
+                        )
+                        .where(SQLSampleUpload.sample_id == sample_pk),
                     )
                 )
                 .unique()
