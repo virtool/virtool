@@ -18,8 +18,12 @@ from virtool.data.topg import compose_legacy_id_subquery
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
-from virtool.mongo.core import Mongo
-from virtool.samples.sql import SQLLegacySample, SQLSampleArtifact, SQLSampleReads
+from virtool.samples.sql import (
+    SQLLegacySample,
+    SQLSampleArtifact,
+    SQLSampleReads,
+    SQLSampleUpload,
+)
 from virtool.settings.models import Settings
 from virtool.types import Document
 from virtool.uploads.data import serialize as serialize_upload
@@ -102,132 +106,68 @@ class AttachArtifactsAndReadsTransform(AbstractTransform):
 
 
 class AttachUploadsTransform(AbstractTransform):
-    """Attaches upload details to samples that have an uploads field."""
+    """Attach the input uploads of a sample, ordered as they were on creation.
+
+    Membership comes from the ``sample_uploads`` table, keyed by the integer
+    ``sample_id``. The ``index`` column preserves the order the uploads were
+    supplied in.
+
+    A sample with no uploads is given ``None`` rather than an empty list.
+    """
 
     def __init__(self, pg: AsyncEngine):
         self._pg = pg
 
     async def attach_one(self, document: Document, prepared: Any) -> Document:
-        if prepared is None:
-            return {**document, "uploads": None}
+        return {**document, "uploads": prepared}
 
-        uploads = [
-            prepared.get(u["id"])
-            for u in document.get("uploads", [])
-            if u["id"] in prepared
-        ]
-
-        return {**document, "uploads": uploads}
+    async def _serialize(self, uploads: list[SQLUpload]) -> list[Document]:
+        return await apply_transforms(
+            [serialize_upload(upload) for upload in uploads],
+            [AttachUserTransform(self._pg, ignore_errors=True)],
+            self._pg,
+        )
 
     async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
-        uploads = document.get("uploads")
+        result = await session.execute(
+            select(SQLUpload)
+            .join(SQLSampleUpload, SQLSampleUpload.upload_id == SQLUpload.id)
+            .where(SQLSampleUpload.sample_id == document["id"])
+            .order_by(SQLSampleUpload.index),
+        )
+
+        uploads = list(result.unique().scalars())
 
         if not uploads:
             return None
 
-        upload_ids = [u["id"] for u in uploads]
-
-        result = await session.execute(
-            select(SQLUpload).where(SQLUpload.id.in_(upload_ids)),
-        )
-
-        upload_dicts = [serialize_upload(upload) for upload in result.scalars()]
-
-        upload_dicts = await apply_transforms(
-            upload_dicts,
-            [AttachUserTransform(self._pg, ignore_errors=True)],
-            self._pg,
-        )
-
-        return {u["id"]: u for u in upload_dicts}
+        return await self._serialize(uploads)
 
     async def prepare_many(
         self,
         documents: list[Document],
         session: AsyncSession,
-    ) -> dict[str, dict[int, dict] | None]:
-        all_upload_ids = set()
-
-        for document in documents:
-            uploads = document.get("uploads")
-            if uploads:
-                all_upload_ids.update(u["id"] for u in uploads)
-
-        if not all_upload_ids:
-            return {document["id"]: None for document in documents}
+    ) -> dict[int, list[Document] | None]:
+        sample_ids = [document["id"] for document in documents]
 
         result = await session.execute(
-            select(SQLUpload).where(SQLUpload.id.in_(list(all_upload_ids))),
+            select(SQLSampleUpload.sample_id, SQLUpload)
+            .join(SQLUpload, SQLSampleUpload.upload_id == SQLUpload.id)
+            .where(SQLSampleUpload.sample_id.in_(sample_ids))
+            .order_by(SQLSampleUpload.sample_id, SQLSampleUpload.index),
         )
 
-        upload_dicts = [serialize_upload(upload) for upload in result.scalars()]
+        rows = result.unique().all()
 
-        upload_dicts = await apply_transforms(
-            upload_dicts,
-            [AttachUserTransform(self._pg, ignore_errors=True)],
-            self._pg,
-        )
+        upload_dicts = await self._serialize([upload for _, upload in rows])
 
-        uploads_by_id = {u["id"]: u for u in upload_dicts}
+        uploads_by_sample = defaultdict(list)
+
+        for (sample_id, _), upload_dict in zip(rows, upload_dicts, strict=True):
+            uploads_by_sample[sample_id].append(upload_dict)
 
         return {
-            document["id"]: uploads_by_id if document.get("uploads") else None
-            for document in documents
-        }
-
-
-MONGO_UPLOADS_FIELD = ["uploads"]
-
-
-class AttachMongoUploadsTransform(AbstractTransform):
-    """Attach the reserved ``uploads`` array still sourced from MongoDB.
-
-    Sample metadata is read from Postgres, but the ``uploads`` array is not stored
-    there yet. This transform bridges it from Mongo so read responses are unchanged.
-
-    It must run before :class:`~virtool.samples.db.AttachUploadsTransform`, which
-    enriches the bridged ``uploads`` array with upload details from Postgres.
-    """
-
-    def __init__(self, mongo: Mongo):
-        self._mongo = mongo
-
-    async def attach_one(self, document: Document, prepared: Any) -> Document:
-        return {**document, "uploads": prepared}
-
-    async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
-        mongo_document = await self._mongo.samples.find_one(
-            {"_id": document["legacy_id"]},
-            MONGO_UPLOADS_FIELD,
-        )
-
-        if mongo_document is None:
-            raise KeyError(f"Sample missing from Mongo: {document['legacy_id']}")
-
-        return mongo_document.get("uploads")
-
-    async def prepare_many(
-        self,
-        documents: list[Document],
-        session: AsyncSession,
-    ) -> dict[str, Any]:
-        legacy_ids = [document["legacy_id"] for document in documents]
-
-        mongo_documents = {
-            mongo_document["_id"]: mongo_document
-            async for mongo_document in self._mongo.samples.find(
-                {"_id": {"$in": legacy_ids}},
-                MONGO_UPLOADS_FIELD,
-            )
-        }
-
-        missing = set(legacy_ids) - mongo_documents.keys()
-
-        if missing:
-            raise KeyError(f"Samples missing from Mongo: {missing}")
-
-        return {
-            document["id"]: mongo_documents[document["legacy_id"]].get("uploads")
+            document["id"]: uploads_by_sample.get(document["id"])
             for document in documents
         }
 
