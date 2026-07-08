@@ -14,7 +14,7 @@
     }),
     'ready': False,
     'reference': dict({
-      'id': 'foo',
+      'id': 1,
     }),
     'user': dict({
       'id': 1,

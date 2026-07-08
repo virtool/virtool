@@ -44,6 +44,7 @@ from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.pg.utils import delete_row
+from virtool.references.db import compose_reference_id_match
 from virtool.samples.checks import (
     check_labels_do_not_exist,
     check_name_is_in_use,
@@ -1027,7 +1028,10 @@ class SamplesData(DataLayerDomain):
             raise ResourceConflictError("Reference is archived")
 
         if not await self._mongo.indexes.count_documents(
-            {"reference.id": ref_id, "ready": True},
+            {
+                "reference.id": await compose_reference_id_match(self._pg, ref_id),
+                "ready": True,
+            },
         ):
             raise ResourceConflictError("No ready index")
 

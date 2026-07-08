@@ -298,6 +298,7 @@ class AnalysisData(DataLayerDomain):
 
         index_id, _ = await get_current_id_and_version(
             self._mongo,
+            self._pg,
             data.ref_id,
         )
 
