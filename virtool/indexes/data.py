@@ -35,7 +35,7 @@ from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import get_rows
 from virtool.references.db import (
-    compose_reference_ids_in_match,
+    compose_reference_ids_match,
     resolve_reference_legacy_id,
 )
 from virtool.references.models import ReferenceNested
@@ -90,13 +90,11 @@ class IndexData:
                     {
                         "$match": {
                             "ready": True,
-                            "reference.id": {
-                                "$in": await compose_reference_ids_in_match(
-                                    self._pg,
-                                    self._mongo,
-                                    archived,
-                                ),
-                            },
+                            "reference.id": await compose_reference_ids_match(
+                                self._pg,
+                                self._mongo,
+                                archived,
+                            ),
                         },
                     },
                     {"$sort": {"created_at": 1}},

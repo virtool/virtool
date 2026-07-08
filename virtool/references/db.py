@@ -17,6 +17,7 @@ from virtool.data.errors import ResourceNotFoundError
 from virtool.data.topg import (
     compose_legacy_id_mongo_match,
     compose_legacy_id_multi_expression,
+    compose_legacy_id_multi_mongo_match,
     compose_legacy_id_single_expression,
     compose_legacy_id_subquery,
     resolve_legacy_id,
@@ -350,13 +351,12 @@ def compose_archived_filter(archived: bool | None) -> dict:
     return {"archived": archived}
 
 
-async def compose_reference_ids_in_match(
+async def compose_reference_ids_match(
     pg: AsyncEngine,
     mongo: "Mongo",
     archived: bool | None = None,
-) -> list[int | str]:
-    """Build a Mongo ``$in`` list of embedded reference ids for the references
-    matching ``archived``.
+) -> dict:
+    """Build a Mongo ``reference.id`` match for the references matching ``archived``.
 
     ``indexes`` documents embed either the legacy Mongo string reference id or the
     integer ``legacy_references`` primary key during the migration, so both forms
@@ -366,27 +366,14 @@ async def compose_reference_ids_in_match(
     :param pg: the application PostgreSQL engine
     :param mongo: the application database client
     :param archived: lifecycle filter mode; see :func:`compose_archived_filter`
-    :return: a list of both id forms for use as a Mongo ``$in`` value
+    :return: a Mongo ``$in`` match value covering both id forms
     """
-    legacy_ids: list[str] = await mongo.references.distinct(
+    legacy_ids = await mongo.references.distinct(
         "_id",
         compose_archived_filter(archived),
     )
 
-    async with AsyncSession(pg) as session:
-        integer_ids = (
-            (
-                await session.execute(
-                    select(SQLReference.id).where(
-                        SQLReference.legacy_id.in_(legacy_ids),
-                    ),
-                )
-            )
-            .scalars()
-            .all()
-        )
-
-    return [*legacy_ids, *integer_ids]
+    return await compose_legacy_id_multi_mongo_match(pg, SQLReference, legacy_ids)
 
 
 def compose_rights_filter(

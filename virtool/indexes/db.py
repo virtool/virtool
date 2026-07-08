@@ -26,7 +26,7 @@ from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
 from virtool.references.db import (
     compose_reference_id_match,
-    compose_reference_ids_in_match,
+    compose_reference_ids_match,
 )
 from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
@@ -226,17 +226,11 @@ async def find(
         # filter goes into mongo_query so total_count reflects all indexes whose
         # reference exists, while found_count narrows to the requested
         # lifecycle.
-        base_query = {
-            "reference.id": {
-                "$in": await compose_reference_ids_in_match(pg, mongo),
-            },
-        }
+        base_query = {"reference.id": await compose_reference_ids_match(pg, mongo)}
 
         if archived is not None:
             mongo_query = {
-                "reference.id": {
-                    "$in": await compose_reference_ids_in_match(pg, mongo, archived),
-                },
+                "reference.id": await compose_reference_ids_match(pg, mongo, archived),
             }
 
     data = await paginate(
