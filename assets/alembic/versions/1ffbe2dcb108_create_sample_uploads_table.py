@@ -19,7 +19,7 @@ depends_on = None
 def upgrade() -> None:
     op.create_table(
         "sample_uploads",
-        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("id", sa.BigInteger(), sa.Identity(always=True), nullable=False),
         sa.Column("sample", sa.String(), nullable=False),
         sa.Column("sample_id", sa.BigInteger(), nullable=True),
         sa.Column("upload_id", sa.Integer(), nullable=False),

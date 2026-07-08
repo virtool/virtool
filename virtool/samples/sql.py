@@ -76,7 +76,7 @@ class SQLSampleUpload(Base):
     __tablename__ = "sample_uploads"
     __table_args__ = (UniqueConstraint("upload_id"),)
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, Identity(always=True), primary_key=True)
     sample = Column(String, nullable=False)
     sample_id = Column(BigInteger, ForeignKey("legacy_samples.id"))
     upload_id = Column(Integer, ForeignKey("uploads.id"), nullable=False)
