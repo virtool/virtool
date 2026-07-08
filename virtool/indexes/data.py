@@ -30,17 +30,11 @@ from virtool.indexes.db import (
     IndexCountsTransform,
     update_last_indexed_versions,
 )
-from virtool.indexes.index_sqlite import (
-    COMPRESSED_INDEX_SQLITE_FILE_NAME,
-    INDEX_SQLITE_FILE_NAME,
-    create_index_sqlite,
-)
 from virtool.indexes.models import Index, IndexFile, IndexMinimal, IndexSearchResult
 from virtool.indexes.sql import SQLIndexFile
 from virtool.indexes.utils import (
     compose_index_file_key,
     compose_index_prefix,
-    iter_file_chunks,
 )
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
@@ -57,7 +51,7 @@ from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
 from virtool.uploads.utils import multipart_file_chunker
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import base_processor, compress_file, wait_for_checks
+from virtool.utils import base_processor, wait_for_checks
 
 logger = get_logger("indexes")
 
@@ -266,10 +260,10 @@ class IndexData:
                 gzip.compress, dump_bytes(patched_otus)
             )
 
-            async def _stream():
+            async def stream():
                 yield compressed
 
-            size = await self._storage.write(key, _stream())
+            size = await self._storage.write(key, stream())
 
         return self._storage.read(key), size
 
@@ -398,8 +392,8 @@ class IndexData:
         return await self.get(index_id)
 
     @emits(Operation.UPDATE)
-    async def generate_index_file(self, index_id: str, work_path: Path) -> Index:
-        """Generate the task-backed index SQLite artifact and mark the index ready."""
+    async def generate_index_file(self, index_id: str, _work_path: Path) -> Index:
+        """Generate the task-backed index JSON artifact and mark the index ready."""
         index = await self._mongo.indexes.find_one(
             {"_id": index_id},
             ["manifest", "reference", "job", "task"],
@@ -426,31 +420,35 @@ class IndexData:
         if reference is None:
             raise ResourceNotFoundError()
 
-        file_name = COMPRESSED_INDEX_SQLITE_FILE_NAME
-        sqlite_path = work_path / INDEX_SQLITE_FILE_NAME
-        compressed_sqlite_path = work_path / COMPRESSED_INDEX_SQLITE_FILE_NAME
-
-        patched_otus = virtool.indexes.db.iter_patched_otus(
-            self._mongo,
-            self._pg,
-            index["manifest"],
+        file_name = "reference.json.gz"
+        patched_otus = [
+            otu
+            async for otu in virtool.indexes.db.iter_patched_otus(
+                self._mongo,
+                self._pg,
+                index["manifest"],
+            )
+        ]
+        compressed = await asyncio.to_thread(
+            gzip.compress,
+            dump_bytes({**reference, "otus": patched_otus}),
         )
-
-        await create_index_sqlite(sqlite_path, reference, patched_otus)
-        await asyncio.to_thread(compress_file, sqlite_path, compressed_sqlite_path)
 
         key = compose_index_file_key(index_id, file_name)
 
+        async def stream():
+            yield compressed
+
         size = await self._storage.write(
             key,
-            iter_file_chunks(compressed_sqlite_path),
+            stream(),
         )
 
         try:
             await virtool.indexes.db.upsert_index_file(
                 self._pg,
                 index_id,
-                "sqlite",
+                "json",
                 file_name,
                 size,
             )
