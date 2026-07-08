@@ -214,11 +214,11 @@
     }),
     'linked_samples': list([
       dict({
-        'id': '12',
+        'id': 1,
         'name': 'Sample 12',
       }),
       dict({
-        'id': '22',
+        'id': 2,
         'name': 'Sample 22',
       }),
     ]),
@@ -334,11 +334,11 @@
     }),
     'linked_samples': list([
       dict({
-        'id': '12',
+        'id': 1,
         'name': 'Sample 12',
       }),
       dict({
-        'id': '22',
+        'id': 2,
         'name': 'Sample 22',
       }),
     ]),
@@ -454,11 +454,11 @@
     }),
     'linked_samples': list([
       dict({
-        'id': '12',
+        'id': 1,
         'name': 'Sample 12',
       }),
       dict({
-        'id': '22',
+        'id': 2,
         'name': 'Sample 22',
       }),
     ]),
@@ -574,11 +574,11 @@
     }),
     'linked_samples': list([
       dict({
-        'id': '12',
+        'id': 1,
         'name': 'Sample 12',
       }),
       dict({
-        'id': '22',
+        'id': 2,
         'name': 'Sample 22',
       }),
     ]),

@@ -10,8 +10,10 @@ from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from virtool.fake.next import DataFaker
 from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
+from virtool.samples.sql import SQLLegacySample, SQLLegacySampleSubtraction
 from virtool.subtractions.pg import SQLSubtractionFile
 from virtool.uploads.sql import UploadType
+from virtool.utils import timestamp
 
 
 async def test_find_empty_subtractions(
@@ -110,7 +112,7 @@ async def test_get_from_job(fake: DataFaker, spawn_job_client, snapshot_recent):
 async def test_edit(
     data: dict,
     fake: DataFaker,
-    mongo: Mongo,
+    pg: AsyncEngine,
     snapshot_recent: SnapshotAssertion,
     spawn_client: ClientSpawner,
 ):
@@ -124,13 +126,25 @@ async def test_edit(
 
     subtraction_pk = subtraction.id
 
-    await mongo.samples.insert_many(
-        [
-            {"_id": "12", "name": "Sample 12", "subtractions": [subtraction_pk]},
-            {"_id": "22", "name": "Sample 22", "subtractions": [subtraction_pk]},
-        ],
-        session=None,
-    )
+    async with AsyncSession(pg) as session:
+        for legacy_id, name in [("12", "Sample 12"), ("22", "Sample 22")]:
+            sample = SQLLegacySample(
+                legacy_id=legacy_id,
+                name=name,
+                library_type="normal",
+                created_at=timestamp(),
+                user_id=user.id,
+            )
+            session.add(sample)
+            await session.flush()
+            session.add(
+                SQLLegacySampleSubtraction(
+                    sample_id=sample.id,
+                    subtraction_id=subtraction_pk,
+                ),
+            )
+
+        await session.commit()
 
     client = await spawn_client(
         authenticated=True,

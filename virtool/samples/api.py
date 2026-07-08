@@ -31,11 +31,9 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.utils import get_data_from_req
-from virtool.errors import DatabaseError
 from virtool.jobs.models import TERMINAL_JOB_STATES
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.utils import get_mongo_from_req
-from virtool.samples.db import check_rights
 from virtool.samples.models import Sample, SampleSearchResult
 from virtool.samples.oas import (
     CreateAnalysisRequest,
@@ -128,7 +126,7 @@ class SamplesView(PydanticView):
 
 @routes.view("/samples/{sample_id}")
 class SampleView(PydanticView):
-    async def get(self, sample_id: str, /) -> r200[Sample] | r403 | r404:
+    async def get(self, sample_id: int, /) -> r200[Sample] | r403 | r404:
         """Get a sample.
 
         Fetches the details for a sample.
@@ -154,7 +152,7 @@ class SampleView(PydanticView):
 
     async def patch(
         self,
-        sample_id: str,
+        sample_id: int,
         /,
         data: UpdateSampleRequest,
     ) -> r200[Sample] | r400 | r403 | r404:
@@ -188,7 +186,7 @@ class SampleView(PydanticView):
 
         return json_response(sample)
 
-    async def delete(self, sample_id: str, /) -> r204 | r403 | r404:
+    async def delete(self, sample_id: int, /) -> r204 | r403 | r404:
         """Delete a sample.
 
         Removes a sample document and all associated analyses.
@@ -199,25 +197,22 @@ class SampleView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
-        if not await get_data_from_req(self.request).samples.has_right(
+        samples = get_data_from_req(self.request).samples
+
+        if not await samples.has_right(
             sample_id,
             self.request["client"],
             SampleRight.write,
         ):
             raise APIInsufficientRights()
 
-        mongo = get_mongo_from_req(self.request)
-
-        sample_document = await mongo.samples.find_one(
-            {"_id": sample_id},
-            {"ready": 1, "job": 1},
-        )
-
-        if not sample_document:
+        try:
+            sample = await samples.get(sample_id)
+        except ResourceNotFoundError:
             raise APINotFound()
 
-        if sample_document.get("ready") is False:
-            job_id = get_safely(sample_document, "job", "id")
+        if not sample.ready:
+            job_id = sample.job.id if sample.job else None
 
             if not job_id:
                 raise APIBadRequest(
@@ -235,7 +230,7 @@ class SampleView(PydanticView):
                 )
 
         try:
-            await get_data_from_req(self.request).samples.delete(sample_id)
+            await samples.delete(sample_id)
         except ResourceNotFoundError:
             raise APINotFound()
 
@@ -288,7 +283,7 @@ async def finalize(req):
 class RightsView(PydanticView):
     async def patch(
         self,
-        sample_id: str,
+        sample_id: int,
         /,
         data: UpdateRightsRequest,
     ) -> r200[Sample] | r400 | r403 | r404:
@@ -380,7 +375,7 @@ async def job_remove(req):
 class AnalysesView(PydanticView):
     async def get(
         self,
-        sample_id: str,
+        sample_id: int,
         page: conint(ge=1) = 1,
         per_page: conint(ge=1, le=100) = 25,
         /,
@@ -405,7 +400,7 @@ class AnalysesView(PydanticView):
 
     async def post(
         self,
-        sample_id: str,
+        sample_id: int,
         /,
         data: CreateAnalysisRequest,
     ) -> r201[AnalysisMinimal] | r400 | r403 | r404 | r409:
@@ -423,21 +418,23 @@ class AnalysesView(PydanticView):
             409: No index is ready for the reference
             409: Subtractions do not exist
         """
-        mongo = get_mongo_from_req(self.request)
+        samples = get_data_from_req(self.request).samples
+
+        if await samples.get_owner_id(sample_id) is None:
+            raise APINotFound()
+
+        if not await samples.has_right(
+            sample_id,
+            self.request["client"],
+            SampleRight.write,
+        ):
+            raise APIInsufficientRights()
 
         try:
-            if not await check_rights(mongo, sample_id, self.request["client"]):
-                raise APIInsufficientRights()
-        except DatabaseError as err:
-            if "Sample does not exist" in str(err):
-                raise APINotFound()
-
-            raise
-
-        try:
-            await get_data_from_req(
-                self.request,
-            ).samples.has_resources_for_analysis_job(data.ref_id, data.subtractions)
+            await samples.has_resources_for_analysis_job(
+                data.ref_id,
+                data.subtractions,
+            )
         except ResourceError as err:
             raise APIConflict(str(err))
 

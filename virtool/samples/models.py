@@ -63,7 +63,7 @@ class SampleMinimal(SampleNested):
                 {
                     "created_at": "2022-05-20T23:48:00.901000Z",
                     "host": "Malus domestica",
-                    "id": "9zn468u9",
+                    "id": 1234,
                     "isolate": "",
                     "labels": [],
                     "library_type": "normal",
@@ -93,7 +93,7 @@ class Read(BaseModel):
     id: int
     name: str
     name_on_disk: str
-    sample: str
+    sample: int
     size: int
     upload: UploadMinimal | None
     uploaded_at: datetime.datetime
@@ -128,7 +128,7 @@ class Sample(SampleMinimal):
                 "group_write": True,
                 "hold": True,
                 "host": "Malus domestica",
-                "id": "9zn468u9",
+                "id": 1234,
                 "is_legacy": False,
                 "isolate": "",
                 "labels": [],
@@ -170,21 +170,21 @@ class Sample(SampleMinimal):
                 },
                 "reads": [
                     {
-                        "download_url": "/samples/9zn468u9/reads/reads_1.fq.gz",
+                        "download_url": "/samples/1234/reads/reads_1.fq.gz",
                         "id": 713,
                         "name": "reads_1.fq.gz",
                         "name_on_disk": "reads_1.fq.gz",
-                        "sample": "9zn468u9",
+                        "sample": 1234,
                         "size": 3540467819,
                         "upload": None,
                         "uploaded_at": "2022-05-21T00:10:27.418000Z",
                     },
                     {
-                        "download_url": "/samples/9zn468u9/reads/reads_2.fq.gz",
+                        "download_url": "/samples/1234/reads/reads_2.fq.gz",
                         "id": 714,
                         "name": "reads_2.fq.gz",
                         "name_on_disk": "reads_2.fq.gz",
-                        "sample": "9zn468u9",
+                        "sample": 1234,
                         "size": 3321721014,
                         "upload": None,
                         "uploaded_at": "2022-05-21T00:11:10.743000Z",
