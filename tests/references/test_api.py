@@ -13,6 +13,7 @@ import virtool.utils
 from tests.fixtures.client import ClientSpawner, VirtoolTestClient
 from tests.fixtures.response import RespIs
 from virtool.data.layer import DataLayer
+from virtool.data.topg import both_transactions
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
 from virtool.models.enums import Permission
@@ -21,13 +22,16 @@ from virtool.mongo.utils import get_one_field
 from virtool.otus.oas import (
     CreateOTURequest,
 )
+from virtool.references.db import write_legacy_reference
 from virtool.references.models import ReferenceDataType
 from virtool.references.oas import CreateReferenceRequest, CreateReferenceUserRequest
-from virtool.references.sql import SQLReference
+from virtool.references.sql import SQLReference, SQLReferenceGroup, SQLReferenceUser
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.tasks.sql import SQLTask
 from virtool.users.oas import UpdateUserRequest
 from virtool.workflow.pytest_plugin.utils import StaticTime
+
+FULL_RIGHTS = {"build": True, "modify": True, "modify_otu": True}
 
 
 async def seed_pg_reference(
@@ -35,20 +39,55 @@ async def seed_pg_reference(
     legacy_id: str,
     user_id: int,
     created_at,
+    *,
+    users: list[tuple[int, dict]] | None = None,
+    groups: list[tuple[int, dict]] | None = None,
 ) -> None:
-    """Insert a ``legacy_references`` row so OTU history writes can resolve its FK."""
+    """Insert a ``legacy_references`` row plus optional user and group rights rows."""
     async with AsyncSession(pg) as session:
-        session.add(
-            SQLReference(
-                legacy_id=legacy_id,
-                name=legacy_id,
-                description="",
-                created_at=created_at,
-                source_types=[],
-                user_id=user_id,
-            ),
+        reference = SQLReference(
+            legacy_id=legacy_id,
+            name=legacy_id,
+            description="",
+            created_at=created_at,
+            source_types=[],
+            user_id=user_id,
         )
+        session.add(reference)
+        await session.flush()
+
+        reference_id = reference.id
+
+        for member_id, rights in users or []:
+            session.add(
+                SQLReferenceUser(
+                    reference_id=reference_id,
+                    user_id=member_id,
+                    **rights,
+                ),
+            )
+
+        for group_id, rights in groups or []:
+            session.add(
+                SQLReferenceGroup(
+                    reference_id=reference_id,
+                    group_id=group_id,
+                    **rights,
+                ),
+            )
+
         await session.commit()
+
+
+async def insert_reference(mongo: Mongo, pg: AsyncEngine, document: dict) -> None:
+    """Insert a reference into Mongo and mirror it (row and rights) into Postgres.
+
+    Requires a full reference ``document`` (with ``created_at``, ``description`` and
+    ``organism``) whose members are real integer user and group ids.
+    """
+    async with both_transactions(mongo, pg) as (mongo_session, pg_session):
+        await mongo.references.insert_one(document, session=mongo_session)
+        await write_legacy_reference(pg_session, document)
 
 
 @pytest.mark.parametrize(
@@ -393,6 +432,7 @@ class TestEdit:
     async def _insert_reference(
         fake: DataFaker,
         mongo: Mongo,
+        pg: AsyncEngine,
         static_time,
     ) -> None:
         user_1 = await fake.users.create()
@@ -430,18 +470,30 @@ class TestEdit:
             },
         )
 
+        await seed_pg_reference(
+            pg,
+            "foo",
+            user_1.id,
+            static_time.datetime,
+            users=[
+                (user_2.id, FULL_RIGHTS),
+                (user_3.id, FULL_RIGHTS),
+            ],
+        )
+
     async def test_ok(
         self,
         fake: DataFaker,
         mocker,
         snapshot,
         mongo: Mongo,
+        pg: AsyncEngine,
         spawn_client: ClientSpawner,
         static_time,
     ):
         client = await spawn_client(authenticated=True)
 
-        await self._insert_reference(fake, mongo, static_time)
+        await self._insert_reference(fake, mongo, pg, static_time)
 
         mocker.patch(
             "virtool.references.api.check_right",
@@ -462,12 +514,13 @@ class TestEdit:
         mocker,
         resp_is,
         mongo: Mongo,
+        pg: AsyncEngine,
         spawn_client: ClientSpawner,
         static_time,
     ):
         client = await spawn_client(authenticated=True)
 
-        await self._insert_reference(fake, mongo, static_time)
+        await self._insert_reference(fake, mongo, pg, static_time)
 
         mocker.patch(
             "virtool.references.api.check_right",
@@ -691,7 +744,13 @@ class TestCreateOTU:
         )
 
         if error != "404":
-            await seed_pg_reference(pg, "foo", client.user.id, static_time.datetime)
+            await seed_pg_reference(
+                pg,
+                "foo",
+                client.user.id,
+                static_time.datetime,
+                users=[] if error == "403" else [(client.user.id, FULL_RIGHTS)],
+            )
             await mongo.references.insert_one(
                 {
                     "_id": "foo",
@@ -774,7 +833,13 @@ class TestCreateOTU:
         client = await spawn_client(authenticated=True)
 
         if error != "404":
-            await seed_pg_reference(pg, "foo", client.user.id, static_time.datetime)
+            await seed_pg_reference(
+                pg,
+                "foo",
+                client.user.id,
+                static_time.datetime,
+                users=[(client.user.id, FULL_RIGHTS)],
+            )
             await mongo.references.insert_one(
                 {
                     "_id": "foo",
@@ -905,6 +970,7 @@ async def test_create_user(
     resp_is,
     snapshot: SnapshotAssertion,
     mongo: Mongo,
+    pg: AsyncEngine,
     spawn_client: ClientSpawner,
     static_time,
 ):
@@ -959,7 +1025,7 @@ async def test_create_user(
 
     # Don't insert the ref document if we want to trigger a 404.
     if error != "404":
-        await mongo.references.insert_one(document)
+        await insert_reference(mongo, pg, document)
 
     resp = await client.post(
         "/references/v1/foo/users",
@@ -986,6 +1052,7 @@ async def test_create_group(
     resp_is,
     snapshot: SnapshotAssertion,
     mongo: Mongo,
+    pg: AsyncEngine,
     spawn_client: ClientSpawner,
     static_time,
 ):
@@ -1002,7 +1069,9 @@ async def test_create_group(
     group_2 = await fake.groups.create()
 
     if error != "404":
-        await mongo.references.insert_one(
+        await insert_reference(
+            mongo,
+            pg,
             {
                 "_id": "foo",
                 "archived": False,
@@ -1051,6 +1120,7 @@ class TestUpdateUser:
         self,
         fake: DataFaker,
         mongo: Mongo,
+        pg: AsyncEngine,
         spawn_client: ClientSpawner,
         static_time,
     ) -> None:
@@ -1059,7 +1129,9 @@ class TestUpdateUser:
         self.mongo = mongo
         self.static_time = static_time
 
-        await mongo.references.insert_one(
+        await insert_reference(
+            mongo,
+            pg,
             {
                 "_id": "foo",
                 "archived": False,
@@ -1128,6 +1200,7 @@ async def test_update_group(
     resp_is,
     snapshot,
     mongo: Mongo,
+    pg: AsyncEngine,
     spawn_client: ClientSpawner,
     static_time,
 ):
@@ -1136,7 +1209,9 @@ async def test_update_group(
     group = await fake.groups.create()
 
     if error != "404_ref":
-        await mongo.references.insert_one(
+        await insert_reference(
+            mongo,
+            pg,
             {
                 "_id": "foo",
                 "archived": False,
@@ -1189,6 +1264,7 @@ class TestDeleteUser:
         self,
         fake: DataFaker,
         mongo: Mongo,
+        pg: AsyncEngine,
         spawn_client: ClientSpawner,
         static_time,
     ) -> None:
@@ -1196,7 +1272,9 @@ class TestDeleteUser:
         self.user = await fake.users.create()
         self.mongo = mongo
         self.static_time = static_time
-        await mongo.references.insert_one(
+        await insert_reference(
+            mongo,
+            pg,
             {
                 "_id": "foo",
                 "archived": False,
@@ -1251,6 +1329,7 @@ async def test_delete_group(
     resp_is,
     snapshot: SnapshotAssertion,
     mongo: Mongo,
+    pg: AsyncEngine,
     spawn_client: ClientSpawner,
     static_time,
 ):
@@ -1259,7 +1338,9 @@ async def test_delete_group(
     group = await fake.groups.create()
 
     if error != "404_ref":
-        await mongo.references.insert_one(
+        await insert_reference(
+            mongo,
+            pg,
             {
                 "_id": "foo",
                 "archived": False,
@@ -1568,6 +1649,7 @@ class TestArchivedReferenceRejectsWrites:
 async def test_archived_reference_allows_user_rights_update(
     fake: DataFaker,
     mongo: Mongo,
+    pg: AsyncEngine,
     spawn_client: ClientSpawner,
     static_time: StaticTime,
 ):
@@ -1575,7 +1657,9 @@ async def test_archived_reference_allows_user_rights_update(
     client = await spawn_client(authenticated=True)
     user = await fake.users.create()
 
-    await mongo.references.insert_one(
+    await insert_reference(
+        mongo,
+        pg,
         {
             "_id": "foo",
             "archived": True,

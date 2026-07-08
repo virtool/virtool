@@ -3,19 +3,21 @@
   list([
     dict({
       'build': False,
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'id': 1,
       'legacy_id': None,
       'modify': False,
       'modify_otu': False,
-      'name': 'musicians',
+      'name': 'haematologists',
     }),
     dict({
       'build': False,
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'id': 2,
       'legacy_id': 'group_2',
-      'modify': True,
+      'modify': False,
       'modify_otu': True,
-      'name': 'architects',
+      'name': 'geoscientists',
     }),
   ])
 # ---

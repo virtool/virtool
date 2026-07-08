@@ -363,7 +363,7 @@ class ReferencesData(DataLayerDomain):
             get_latest_build(self._mongo, self._pg, ref_id),
             get_otu_count(self._mongo, self._pg, ref_id),
             get_reference_groups(self._pg, document),
-            get_reference_users(self._mongo, self._pg, document),
+            get_reference_users(self._pg, document),
             get_unbuilt_count(self._pg, ref_id),
         )
 
@@ -389,10 +389,6 @@ class ReferencesData(DataLayerDomain):
             [AttachImportedFromTransform(self._mongo, self._pg)],
             self._pg,
         )
-
-        for user in document["users"]:
-            if "created_at" not in user:
-                user["created_at"] = document["created_at"]
 
         return Reference(**document)
 
@@ -623,18 +619,48 @@ class ReferencesData(DataLayerDomain):
 
         :param ref_id: the id of the reference
         :raises ResourceNotFoundError: if the reference does not exist
-        :return: a list of reference users
+        :return: a list of reference groups
         """
-        groups = await virtool.mongo.utils.get_one_field(
-            self._mongo.references,
-            "groups",
-            ref_id,
-        )
+        async with AsyncSession(self._pg) as session:
+            reference = (
+                await session.execute(
+                    select(SQLReference.id, SQLReference.created_at).where(
+                        compose_legacy_id_single_expression(SQLReference, ref_id),
+                    ),
+                )
+            ).one_or_none()
 
-        if groups:
-            return [ReferenceGroup(**group) for group in groups]
+            if reference is None:
+                raise ResourceNotFoundError
 
-        raise ResourceNotFoundError
+            rows = (
+                await session.execute(
+                    select(
+                        SQLGroup.id,
+                        SQLGroup.legacy_id,
+                        SQLGroup.name,
+                        SQLReferenceGroup.build,
+                        SQLReferenceGroup.modify,
+                        SQLReferenceGroup.modify_otu,
+                    )
+                    .join(SQLGroup, SQLGroup.id == SQLReferenceGroup.group_id)
+                    .where(SQLReferenceGroup.reference_id == reference.id)
+                    .order_by(SQLReferenceGroup.group_id),
+                )
+            ).all()
+
+        return [
+            ReferenceGroup(
+                id=row.id,
+                legacy_id=row.legacy_id,
+                name=row.name,
+                build=row.build,
+                modify=row.modify,
+                modify_otu=row.modify_otu,
+                created_at=reference.created_at,
+            )
+            for row in rows
+        ]
 
     async def create_group(
         self,
@@ -717,20 +743,11 @@ class ReferencesData(DataLayerDomain):
         :param group_id: the id of the group
 
         """
-        groups = await get_one_field(
-            self._mongo.references,
-            "groups",
-            {"_id": ref_id, "groups.id": group_id},
-        )
+        for group in await self.list_groups(ref_id):
+            if group_id in (group.id, group.legacy_id):
+                return group
 
-        if groups is None:
-            raise ResourceNotFoundError()
-
-        for group in groups:
-            if group["id"] == group_id:
-                return ReferenceGroup(**group)
-
-        raise ResourceNotFoundError()
+        raise ResourceNotFoundError
 
     async def update_group(
         self,

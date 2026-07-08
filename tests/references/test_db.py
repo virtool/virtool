@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 from virtool.api.client import UserClient
+from virtool.data.errors import ResourceNotFoundError
 from virtool.data.topg import compose_legacy_id_subquery
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
@@ -22,8 +23,11 @@ from virtool.references.db import (
     get_reference_groups,
     populate_insert_only_reference,
 )
-from virtool.references.models import ReferenceRights
-from virtool.references.sql import SQLReference
+from virtool.references.sql import (
+    SQLReference,
+    SQLReferenceGroup,
+    SQLReferenceUser,
+)
 
 
 async def seed_reference(
@@ -47,63 +51,348 @@ async def seed_reference(
         await session.commit()
 
 
-@pytest.mark.parametrize("is_administrator", [True, False])
-@pytest.mark.parametrize("membership", [None, "group", "user"])
-@pytest.mark.parametrize(
-    "right,expect",
-    [("read", True), ("modify_otu", True), ("modify", False)],
-)
-async def test_check_right(
-    is_administrator: bool,
-    expect: bool,
-    membership: str | None,
-    right: str,
-    mock_req,
-    mocker,
-    mongo: Mongo,
-):
-    mock_req.app = {"mongo": mongo}
+RIGHTS_NONE = {"build": False, "modify": False, "modify_otu": False}
+RIGHTS_MODIFY_OTU = {"build": False, "modify": False, "modify_otu": True}
 
-    mock_req["client"] = mocker.Mock(spec=UserClient)
-    mock_req["client"].administrator_role = (
-        AdministratorRole.FULL if is_administrator else None
-    )
-    mock_req["client"].user_id = "bar"
-    mock_req["client"].groups = ["foo"]
 
-    rights = ReferenceRights(
-        build=False,
-        modify=False,
-        modify_otu=True,
-    ).dict()
+async def seed_reference_rights(
+    pg: AsyncEngine,
+    *,
+    legacy_id: str,
+    owner_id: int,
+    created_at,
+    users: list[tuple[int, dict]] | None = None,
+    groups: list[tuple[int, dict]] | None = None,
+) -> int:
+    """Insert a reference plus its user and group rights child rows.
 
-    await mongo.references.insert_one(
-        {
-            "_id": "baz",
-            "archived": False,
-            "groups": [
-                {
-                    "id": "foo" if membership == "group" else "none",
+    :return: the reference's Postgres primary key
+    """
+    async with AsyncSession(pg) as session:
+        reference = SQLReference(
+            legacy_id=legacy_id,
+            name=legacy_id,
+            description="",
+            created_at=created_at,
+            source_types=[],
+            user_id=owner_id,
+        )
+        session.add(reference)
+        await session.flush()
+
+        reference_id = reference.id
+
+        for user_id, rights in users or []:
+            session.add(
+                SQLReferenceUser(
+                    reference_id=reference_id,
+                    user_id=user_id,
                     **rights,
-                },
-            ],
-            "users": [
-                {
-                    "id": "bar" if membership == "user" else "none",
+                ),
+            )
+
+        for group_id, rights in groups or []:
+            session.add(
+                SQLReferenceGroup(
+                    reference_id=reference_id,
+                    group_id=group_id,
                     **rights,
-                },
-            ],
-        },
-    )
+                ),
+            )
 
-    result = await check_right(mock_req, "baz", right)
+        await session.commit()
 
-    if is_administrator:
-        assert result is True
-    elif membership is None:
-        assert result is False
-    else:
-        assert result is expect
+        return reference_id
+
+
+def make_client(mocker, *, user_id, groups, admin=False) -> UserClient:
+    client = mocker.Mock(spec=UserClient)
+    client.administrator_role = AdministratorRole.FULL if admin else None
+    client.user_id = user_id
+    client.groups = groups
+    return client
+
+
+class TestCheckRight:
+    """Authorization reads resolve rights from the Postgres child tables."""
+
+    async def test_administrator_short_circuit(
+        self,
+        mock_req,
+        mocker,
+        pg: AsyncEngine,
+        fake: DataFaker,
+    ):
+        """A full administrator is granted any right without a database lookup."""
+        user = await fake.users.create()
+
+        mock_req.app = {"pg": pg}
+        mock_req["client"] = make_client(
+            mocker,
+            user_id=user.id,
+            groups=[],
+            admin=True,
+        )
+
+        assert await check_right(mock_req, "unseeded_reference", "modify") is True
+
+    async def test_reference_not_found(
+        self,
+        mock_req,
+        mocker,
+        pg: AsyncEngine,
+        fake: DataFaker,
+    ):
+        """A missing reference raises ``ResourceNotFoundError``."""
+        user = await fake.users.create()
+
+        mock_req.app = {"pg": pg}
+        mock_req["client"] = make_client(mocker, user_id=user.id, groups=[])
+
+        with pytest.raises(ResourceNotFoundError):
+            await check_right(mock_req, "missing_reference", "read")
+
+    async def test_read_granted_by_user_membership(
+        self,
+        mock_req,
+        mocker,
+        pg: AsyncEngine,
+        fake: DataFaker,
+        static_time,
+    ):
+        """A user listed on the reference has ``read`` access."""
+        owner = await fake.users.create()
+        member = await fake.users.create()
+
+        await seed_reference_rights(
+            pg,
+            legacy_id="ref_read_user",
+            owner_id=owner.id,
+            created_at=static_time.datetime,
+            users=[(member.id, RIGHTS_NONE)],
+        )
+
+        mock_req.app = {"pg": pg}
+        mock_req["client"] = make_client(mocker, user_id=member.id, groups=[])
+
+        assert await check_right(mock_req, "ref_read_user", "read") is True
+
+    async def test_read_granted_by_group_membership(
+        self,
+        mock_req,
+        mocker,
+        pg: AsyncEngine,
+        fake: DataFaker,
+        static_time,
+    ):
+        """A member of a group listed on the reference has ``read`` access."""
+        owner = await fake.users.create()
+        member = await fake.users.create()
+        group = await fake.groups.create()
+
+        await seed_reference_rights(
+            pg,
+            legacy_id="ref_read_group",
+            owner_id=owner.id,
+            created_at=static_time.datetime,
+            groups=[(group.id, RIGHTS_NONE)],
+        )
+
+        mock_req.app = {"pg": pg}
+        mock_req["client"] = make_client(
+            mocker,
+            user_id=member.id,
+            groups=[group.id],
+        )
+
+        assert await check_right(mock_req, "ref_read_group", "read") is True
+
+    async def test_read_denied_for_non_member(
+        self,
+        mock_req,
+        mocker,
+        pg: AsyncEngine,
+        fake: DataFaker,
+        static_time,
+    ):
+        """A user with no membership is denied ``read`` access."""
+        owner = await fake.users.create()
+        outsider = await fake.users.create()
+
+        await seed_reference_rights(
+            pg,
+            legacy_id="ref_read_denied",
+            owner_id=owner.id,
+            created_at=static_time.datetime,
+        )
+
+        mock_req.app = {"pg": pg}
+        mock_req["client"] = make_client(mocker, user_id=outsider.id, groups=[])
+
+        assert await check_right(mock_req, "ref_read_denied", "read") is False
+
+    async def test_right_granted_by_user_entry(
+        self,
+        mock_req,
+        mocker,
+        pg: AsyncEngine,
+        fake: DataFaker,
+        static_time,
+    ):
+        """A user entry that carries the right grants it."""
+        owner = await fake.users.create()
+        member = await fake.users.create()
+
+        await seed_reference_rights(
+            pg,
+            legacy_id="ref_user_right",
+            owner_id=owner.id,
+            created_at=static_time.datetime,
+            users=[(member.id, RIGHTS_MODIFY_OTU)],
+        )
+
+        mock_req.app = {"pg": pg}
+        mock_req["client"] = make_client(mocker, user_id=member.id, groups=[])
+
+        assert await check_right(mock_req, "ref_user_right", "modify_otu") is True
+
+    async def test_right_denied_when_no_entry_carries_it(
+        self,
+        mock_req,
+        mocker,
+        pg: AsyncEngine,
+        fake: DataFaker,
+        static_time,
+    ):
+        """A member whose entries all lack the right is denied it."""
+        owner = await fake.users.create()
+        member = await fake.users.create()
+
+        await seed_reference_rights(
+            pg,
+            legacy_id="ref_right_denied",
+            owner_id=owner.id,
+            created_at=static_time.datetime,
+            users=[(member.id, RIGHTS_NONE)],
+        )
+
+        mock_req.app = {"pg": pg}
+        mock_req["client"] = make_client(mocker, user_id=member.id, groups=[])
+
+        assert await check_right(mock_req, "ref_right_denied", "modify_otu") is False
+
+    async def test_right_granted_by_group_when_user_entry_lacks_it(
+        self,
+        mock_req,
+        mocker,
+        pg: AsyncEngine,
+        fake: DataFaker,
+        static_time,
+    ):
+        """A member group's right grants access even when the user entry lacks it.
+
+        The user entry does not short-circuit to a denial; group rights are still
+        evaluated.
+        """
+        owner = await fake.users.create()
+        member = await fake.users.create()
+        group = await fake.groups.create()
+
+        await seed_reference_rights(
+            pg,
+            legacy_id="ref_group_wins",
+            owner_id=owner.id,
+            created_at=static_time.datetime,
+            users=[(member.id, RIGHTS_NONE)],
+            groups=[(group.id, RIGHTS_MODIFY_OTU)],
+        )
+
+        mock_req.app = {"pg": pg}
+        mock_req["client"] = make_client(
+            mocker,
+            user_id=member.id,
+            groups=[group.id],
+        )
+
+        assert await check_right(mock_req, "ref_group_wins", "modify_otu") is True
+
+    async def test_group_matched_by_legacy_id(
+        self,
+        mock_req,
+        mocker,
+        pg: AsyncEngine,
+        fake: DataFaker,
+        static_time,
+    ):
+        """A client group held as a legacy string id resolves to its integer row."""
+        owner = await fake.users.create()
+        member = await fake.users.create()
+        group = await fake.groups.create(legacy_id="legacy_group")
+
+        await seed_reference_rights(
+            pg,
+            legacy_id="ref_legacy_group",
+            owner_id=owner.id,
+            created_at=static_time.datetime,
+            groups=[(group.id, RIGHTS_NONE)],
+        )
+
+        mock_req.app = {"pg": pg}
+        mock_req["client"] = make_client(
+            mocker,
+            user_id=member.id,
+            groups=[group.legacy_id],
+        )
+
+        assert await check_right(mock_req, "ref_legacy_group", "read") is True
+
+    async def test_reference_matched_by_integer_pk(
+        self,
+        mock_req,
+        mocker,
+        pg: AsyncEngine,
+        fake: DataFaker,
+        static_time,
+    ):
+        """A reference addressed by its integer primary key resolves correctly."""
+        owner = await fake.users.create()
+        member = await fake.users.create()
+
+        reference_pk = await seed_reference_rights(
+            pg,
+            legacy_id="ref_by_pk",
+            owner_id=owner.id,
+            created_at=static_time.datetime,
+            users=[(member.id, RIGHTS_NONE)],
+        )
+
+        mock_req.app = {"pg": pg}
+        mock_req["client"] = make_client(mocker, user_id=member.id, groups=[])
+
+        assert await check_right(mock_req, reference_pk, "read") is True
+
+    async def test_job_client_denied(
+        self,
+        mock_req,
+        mocker,
+        pg: AsyncEngine,
+        fake: DataFaker,
+        static_time,
+    ):
+        """A client without a user id or groups is denied without erroring."""
+        owner = await fake.users.create()
+
+        await seed_reference_rights(
+            pg,
+            legacy_id="ref_job_client",
+            owner_id=owner.id,
+            created_at=static_time.datetime,
+        )
+
+        mock_req.app = {"pg": pg}
+        mock_req["client"] = make_client(mocker, user_id=None, groups=[])
+
+        assert await check_right(mock_req, "ref_job_client", "read") is False
 
 
 class TestComposeArchivedFilter:
@@ -172,30 +461,28 @@ async def test_get_reference_groups(
     fake: DataFaker,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
+    static_time,
 ):
-    """Test that reference groups are returned whether they have integer or string ids."""
+    """Groups are read from the child table and enriched with name and legacy id."""
+    owner = await fake.users.create()
     group_1 = await fake.groups.create()
     group_2 = await fake.groups.create(legacy_id="group_2")
+
+    await seed_reference_rights(
+        pg,
+        legacy_id="ref_groups",
+        owner_id=owner.id,
+        created_at=static_time.datetime,
+        groups=[
+            (group_1.id, RIGHTS_NONE),
+            (group_2.id, RIGHTS_MODIFY_OTU),
+        ],
+    )
 
     assert (
         await get_reference_groups(
             pg,
-            {
-                "groups": [
-                    {
-                        "id": group_1.id,
-                        "build": False,
-                        "modify": False,
-                        "modify_otu": False,
-                    },
-                    {
-                        "id": group_2.legacy_id,
-                        "build": False,
-                        "modify": True,
-                        "modify_otu": True,
-                    },
-                ],
-            },
+            {"_id": "ref_groups", "created_at": static_time.datetime},
         )
         == snapshot
     )
