@@ -14,13 +14,20 @@ import virtool.pg.utils
 import virtool.references.db
 import virtool.utils
 from virtool.api.utils import paginate
-from virtool.data.topg import both_transactions, compose_legacy_id_subquery
+from virtool.data.topg import (
+    both_transactions,
+    compose_legacy_id_subquery,
+    resolve_legacy_id,
+)
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.sql import SQLIndexFile
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
-from virtool.references.db import compose_archived_filter, compose_reference_id_match
+from virtool.references.db import (
+    compose_reference_id_match,
+    compose_reference_ids_match,
+)
 from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
@@ -147,7 +154,7 @@ async def create(
     :return: the new index document
     """
     index_version, manifest = await asyncio.gather(
-        get_next_version(mongo, ref_id),
+        get_next_version(mongo, pg, ref_id),
         virtool.references.db.get_manifest(mongo, pg, ref_id),
     )
 
@@ -158,7 +165,6 @@ async def create(
         "ready": False,
         "has_files": True,
         "has_json": False,
-        "reference": {"id": ref_id},
         "job": {"id": job_id},
         "user": {"id": user_id},
     }
@@ -167,6 +173,13 @@ async def create(
         document["_id"] = index_id
 
     async with both_transactions(mongo, pg) as (mongo_session, pg_session):
+        reference_pk = await resolve_legacy_id(pg_session, SQLReference, ref_id)
+
+        if reference_pk is None:
+            raise ValueError(f"Reference {ref_id!r} not found in postgres")
+
+        document["reference"] = {"id": reference_pk}
+
         document = await mongo.indexes.insert_one(document, session=mongo_session)
 
         await pg_session.execute(
@@ -207,26 +220,17 @@ async def find(
     mongo_query: dict = {}
 
     if ref_id:
-        base_query = {"reference.id": ref_id}
+        base_query = {"reference.id": await compose_reference_id_match(pg, ref_id)}
     else:
         # base_query is the orphan filter only (visibility scope). The lifecycle
         # filter goes into mongo_query so total_count reflects all indexes whose
         # reference exists, while found_count narrows to the requested
         # lifecycle.
-        base_query = {
-            "reference.id": {"$in": await mongo.references.distinct("_id")},
-        }
+        base_query = {"reference.id": await compose_reference_ids_match(pg, mongo)}
 
-        archived_filter = compose_archived_filter(archived)
-
-        if archived_filter:
+        if archived is not None:
             mongo_query = {
-                "reference.id": {
-                    "$in": await mongo.references.distinct(
-                        "_id",
-                        archived_filter,
-                    ),
-                },
+                "reference.id": await compose_reference_ids_match(pg, mongo, archived),
             }
 
     data = await paginate(
@@ -272,18 +276,23 @@ async def find(
 
 async def get_current_id_and_version(
     mongo: "Mongo",
+    pg: AsyncEngine,
     ref_id: str,
 ) -> tuple[str | None, int]:
     """Return the current index id and version number.
 
     :param mongo: the application database client
+    :param pg: the application Postgres client
     :param ref_id: the id of the reference to get the current index for
 
     :return: the index and version of the current index
 
     """
     document = await mongo.indexes.find_one(
-        {"reference.id": ref_id, "ready": True},
+        {
+            "reference.id": await compose_reference_id_match(pg, ref_id),
+            "ready": True,
+        },
         sort=[("version", pymongo.DESCENDING)],
         projection=["_id", "version"],
     )
@@ -336,16 +345,22 @@ async def get_otus(pg: AsyncEngine, index_id: str) -> list[dict]:
     )
 
 
-async def get_next_version(mongo: "Mongo", ref_id: str) -> int:
+async def get_next_version(mongo: "Mongo", pg: AsyncEngine, ref_id: str) -> int:
     """Get the version number that should be used for the next index build.
 
     :param mongo: the application mongodb client
+    :param pg: the application Postgres client
     :param ref_id: the id of the reference to get the next version for
 
     :return: the next version number
 
     """
-    return await mongo.indexes.count_documents({"reference.id": ref_id, "ready": True})
+    return await mongo.indexes.count_documents(
+        {
+            "reference.id": await compose_reference_id_match(pg, ref_id),
+            "ready": True,
+        },
+    )
 
 
 async def get_unbuilt_stats(

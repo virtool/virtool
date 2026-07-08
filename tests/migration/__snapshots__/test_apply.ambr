@@ -680,5 +680,12 @@
       'name': 'backfill embedded reference ids to integers',
       'revision': 'a5hg3lbp6rz1',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 98,
+      'name': 'backfill embedded index reference ids to integers',
+      'revision': 'tr3p2obxndjm',
+    }),
   ])
 # ---
