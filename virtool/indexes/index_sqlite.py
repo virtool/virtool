@@ -217,6 +217,7 @@ def _insert_otu(
 
     for isolate in otu["isolates"]:
         _validate_required_schema_sequences(otu_id, isolate, required_schema_names)
+
         _insert_isolate(connection, otu_id, isolate, schema_names)
 
 

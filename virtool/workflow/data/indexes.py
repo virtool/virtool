@@ -9,7 +9,7 @@ from collections.abc import (
     Mapping,
 )
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, TypedDict
 
@@ -37,7 +37,7 @@ from virtool.jobs.models import Job
 from virtool.references.models import ReferenceNested
 from virtool.utils import decompress_file
 from virtool.workflow.client import WorkflowAPIClient
-from virtool.workflow.errors import MissingJobArgumentError
+from virtool.workflow.errors import JobsAPIError, MissingJobArgumentError
 from virtool.workflow.files import VirtoolFileFormat
 
 logger = get_logger("api")
@@ -63,224 +63,29 @@ class WFIndex:
     id: str
     """The ID of the index."""
 
-    _source: "IndexSource"
-    """The source used to query indexed reference data."""
-
-    async def iter_otus(self) -> AsyncIterator[dict[str, Any]]:
-        """Iterate indexed OTUs regardless of the backing artifact format."""
-        async for otu in self._source.iter_otus():
-            yield otu
-
-    async def iter_sequences(self) -> AsyncIterator[dict[str, Any]]:
-        """Iterate indexed sequences regardless of the backing artifact format."""
-        async for sequence in self._source.iter_sequences():
-            yield sequence
-
-    async def iter_default_sequences(self) -> AsyncIterator[dict[str, Any]]:
-        """Iterate indexed sequences that belong to default isolates."""
-        async for sequence in self._source.iter_default_sequences():
-            yield sequence
-
-    async def iter_otu_sequences(
-        self,
-        otu_ids: str | Iterable[str],
-    ) -> AsyncIterator[dict[str, Any]]:
-        """Iterate indexed sequences belonging to the given OTU IDs."""
-        async for sequence in self._source.iter_otu_sequences(otu_ids):
-            yield sequence
-
-    async def write_fasta(
-        self,
-        path: Path,
-        sequences: AsyncIterable[Mapping[str, Any]],
-    ) -> None:
-        """Write the given sequence documents to a FASTA file."""
-        async with aiofiles.open(path, "w") as f:
-            async for sequence in sequences:
-                await f.write(
-                    f">{_get_sequence_id(sequence)}\n{sequence['sequence']}\n"
-                )
-
-    async def get_otu_refs_by_sequence_ids(
-        self,
-        sequence_ids: Iterable[str],
-    ) -> dict[str, WFIndexOTURef]:
-        """Get reduced OTU reference data keyed by the given sequence IDs."""
-        return await self._source.get_otu_refs_by_sequence_ids(sequence_ids)
-
-    async def get_reference_metadata(self) -> dict[str, Any]:
-        """Get indexed reference metadata excluding OTUs."""
-        return await self._source.get_reference_metadata()
-
-
-class IndexSource:
-    """Source-neutral access to indexed reference data."""
-
-    async def iter_otus(self) -> AsyncIterator[dict[str, Any]]:
-        """Iterate indexed OTUs."""
-        raise NotImplementedError
-
-    async def iter_sequences(self) -> AsyncIterator[dict[str, Any]]:
-        """Iterate indexed sequences."""
-        raise NotImplementedError
-
-    async def iter_default_sequences(self) -> AsyncIterator[dict[str, Any]]:
-        """Iterate indexed sequences that belong to default isolates."""
-        raise NotImplementedError
-
-    async def iter_otu_sequences(
-        self,
-        otu_ids: str | Iterable[str],
-    ) -> AsyncIterator[dict[str, Any]]:
-        """Iterate indexed sequences belonging to the given OTU IDs."""
-        raise NotImplementedError
-
-    async def get_otu_refs_by_sequence_ids(
-        self,
-        sequence_ids: Iterable[str],
-    ) -> dict[str, WFIndexOTURef]:
-        """Get reduced OTU reference data keyed by the given sequence IDs."""
-        raise NotImplementedError
-
-    async def get_reference_metadata(self) -> dict[str, Any]:
-        """Get indexed reference metadata excluding OTUs."""
-        raise NotImplementedError
-
-
-@dataclass
-class LegacyOTUJsonSource(IndexSource):
-    """Index source backed by legacy OTU JSON."""
-
     path: Path
-    _data: dict[str, Any] | list[dict[str, Any]] | None = field(
-        default=None,
-        init=False,
-        repr=False,
-    )
-    _data_lock: asyncio.Lock = field(
-        default_factory=asyncio.Lock,
-        init=False,
-        repr=False,
-    )
-
-    async def iter_otus(self) -> AsyncIterator[dict[str, Any]]:
-        """Iterate indexed OTUs."""
-        data = await self._get_data()
-        otus = data["otus"] if isinstance(data, dict) else data
-
-        for otu in otus:
-            yield _shape_legacy_otu(otu)
-
-    async def iter_sequences(self) -> AsyncIterator[dict[str, Any]]:
-        """Iterate indexed sequences."""
-        async for otu in self.iter_otus():
-            for isolate in otu["isolates"]:
-                for sequence in isolate["sequences"]:
-                    yield {
-                        **sequence,
-                        "isolate_id": isolate["id"],
-                    }
-
-    async def iter_default_sequences(self) -> AsyncIterator[dict[str, Any]]:
-        """Iterate indexed sequences that belong to default isolates."""
-        async for otu in self.iter_otus():
-            for isolate in otu["isolates"]:
-                if isolate["default"]:
-                    for sequence in isolate["sequences"]:
-                        yield {
-                            **sequence,
-                            "isolate_id": isolate["id"],
-                        }
-
-    async def iter_otu_sequences(
-        self,
-        otu_ids: str | Iterable[str],
-    ) -> AsyncIterator[dict[str, Any]]:
-        """Iterate indexed sequences belonging to the given OTU IDs."""
-        otu_id_set = _normalize_otu_ids(otu_ids)
-
-        async for otu in self.iter_otus():
-            if otu["id"] not in otu_id_set:
-                continue
-
-            for isolate in otu["isolates"]:
-                for sequence in isolate["sequences"]:
-                    yield {
-                        **sequence,
-                        "isolate_id": isolate["id"],
-                    }
-
-    async def get_otu_refs_by_sequence_ids(
-        self,
-        sequence_ids: Iterable[str],
-    ) -> dict[str, WFIndexOTURef]:
-        """Get reduced OTU reference data keyed by the given sequence IDs."""
-        sequence_ids = set(sequence_ids)
-
-        otu_refs_by_sequence_id = {}
-
-        async for otu in self.iter_otus():
-            otu_ref = _shape_otu_ref(otu)
-
-            for isolate in otu["isolates"]:
-                for sequence in isolate["sequences"]:
-                    sequence_id = sequence["id"]
-
-                    if sequence_id in sequence_ids:
-                        otu_refs_by_sequence_id[sequence_id] = otu_ref
-
-        missing_sequence_ids = sequence_ids - otu_refs_by_sequence_id.keys()
-
-        if missing_sequence_ids:
-            msg = "The sequence_id does not exist in the index"
-            raise ValueError(msg)
-
-        return otu_refs_by_sequence_id
-
-    async def get_reference_metadata(self) -> dict[str, Any]:
-        """Get indexed reference metadata excluding OTUs."""
-        data = await self._get_data()
-
-        if isinstance(data, list):
-            return {}
-
-        return _shape_legacy_reference_metadata(data)
-
-    async def _get_data(self) -> dict[str, Any] | list[dict[str, Any]]:
-        if self._data is None:
-            async with self._data_lock:
-                if self._data is None:
-                    async with aiofiles.open(self.path) as f:
-                        self._data = json.loads(await f.read())
-
-        return self._data
-
-
-@dataclass
-class SQLiteIndexSource(IndexSource):
-    """Index source backed by a decompressed structured index SQLite artifact."""
-
-    path: Path
+    """The path to the SQLite index artifact."""
 
     @classmethod
     async def create(
         cls,
+        id_: str,
         path: Path,
         reference: Mapping[str, Any],
         otus: AsyncIterable[Mapping[str, Any]],
-    ) -> "SQLiteIndexSource":
-        """Create a SQLite index artifact and return a source for it."""
+    ) -> "WFIndex":
+        """Create a SQLite index artifact and return a workflow index for it."""
         await create_index_sqlite(path, reference, otus)
 
-        return cls(path)
+        return cls(id_, path)
 
     @classmethod
-    def load(cls, path: Path) -> "SQLiteIndexSource":
+    def load(cls, id_: str, path: Path) -> "WFIndex":
         """Load an existing SQLite index artifact."""
         if not path.exists():
             raise FileNotFoundError(path)
 
-        return cls(path)
+        return cls(id_, path)
 
     async def iter_otus(self) -> AsyncIterator[dict[str, Any]]:
         """Iterate indexed OTUs."""
@@ -326,6 +131,18 @@ class SQLiteIndexSource(IndexSource):
             ),
         ):
             yield sequence
+
+    async def write_fasta(
+        self,
+        path: Path,
+        sequences: AsyncIterable[Mapping[str, Any]],
+    ) -> None:
+        """Write the given sequence documents to a FASTA file."""
+        async with aiofiles.open(path, "w") as f:
+            async for sequence in sequences:
+                await f.write(
+                    f">{_get_sequence_id(sequence)}\n{sequence['sequence']}\n"
+                )
 
     async def get_otu_refs_by_sequence_ids(
         self,
@@ -477,38 +294,6 @@ def _identity[T](value: T) -> T:
     return value
 
 
-def _shape_legacy_otu(otu: Mapping[str, Any]) -> dict[str, Any]:
-    return {
-        **{key: value for key, value in otu.items() if key != "_id"},
-        "id": otu["_id"],
-        "isolates": [_shape_legacy_isolate(isolate) for isolate in otu["isolates"]],
-    }
-
-
-def _shape_legacy_isolate(isolate: Mapping[str, Any]) -> dict[str, Any]:
-    return {
-        **isolate,
-        "sequences": [
-            _shape_legacy_sequence(sequence) for sequence in isolate["sequences"]
-        ],
-    }
-
-
-def _shape_legacy_sequence(sequence: Mapping[str, Any]) -> dict[str, Any]:
-    return {
-        **{key: value for key, value in sequence.items() if key != "_id"},
-        "id": sequence["_id"],
-    }
-
-
-def _shape_legacy_reference_metadata(data: Mapping[str, Any]) -> dict[str, Any]:
-    return {
-        "id" if key == "_id" else key: value
-        for key, value in data.items()
-        if key != "otus"
-    }
-
-
 async def _iter_sqlite_query_batches[T](
     path: Path,
     query: Select,
@@ -547,16 +332,6 @@ async def _iter_sqlite_query_batches[T](
 
 def _get_sequence_id(sequence: Mapping[str, Any]) -> str:
     return sequence["id"]
-
-
-def _shape_otu_ref(otu: Mapping[str, Any]) -> WFIndexOTURef:
-    return {
-        "id": otu["id"],
-        "abbreviation": otu["abbreviation"],
-        "name": otu["name"],
-        "taxid": otu.get("taxid"),
-        "version": otu["version"],
-    }
 
 
 def _validate_sqlite_otu(otu: dict[str, Any]) -> dict[str, Any]:
@@ -724,6 +499,59 @@ def _shape_sqlite_sequence(sequence: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+async def _read_json(path: Path) -> dict[str, Any] | list[dict[str, Any]]:
+    async with aiofiles.open(path) as f:
+        return json.loads(await f.read())
+
+
+def _shape_reference_json_metadata(
+    data: Mapping[str, Any],
+    index_: Index,
+) -> dict[str, Any]:
+    return {
+        "id": data.get("_id") or data.get("id") or index_.reference.id,
+        "created_at": data.get("created_at") or index_.created_at,
+        "data_type": data.get("data_type") or index_.reference.data_type,
+        "name": data.get("name") or index_.reference.name,
+        "organism": data.get("organism") or "unknown",
+    }
+
+
+async def _iter_json_otus(
+    data: Mapping[str, Any],
+    manifest: Mapping[str, int],
+) -> AsyncIterator[dict[str, Any]]:
+    for otu in data["otus"]:
+        yield _shape_json_otu(otu, manifest)
+
+
+def _shape_json_otu(
+    otu: dict[str, Any],
+    manifest: Mapping[str, int],
+) -> dict[str, Any]:
+    otu_id = otu.get("_id") or otu["id"]
+    otu["version"] = manifest[otu_id]
+
+    otu["isolates"] = [_shape_json_isolate(isolate) for isolate in otu["isolates"]]
+
+    return otu
+
+
+def _shape_json_isolate(isolate: dict[str, Any]) -> dict[str, Any]:
+    isolate["sequences"] = [
+        _shape_json_sequence(sequence) for sequence in isolate["sequences"]
+    ]
+
+    return isolate
+
+
+def _shape_json_sequence(sequence: dict[str, Any]) -> dict[str, Any]:
+    if sequence.get("host") is None:
+        sequence["host"] = ""
+
+    return sequence
+
+
 @fixture
 async def index(
     _api: WorkflowAPIClient,
@@ -748,14 +576,17 @@ async def index(
 
     log.info("created index directory")
 
-    if any(file.name == COMPRESSED_INDEX_SQLITE_FILE_NAME for file in index_.files):
-        sqlite_path = index_work_path / INDEX_SQLITE_FILE_NAME
-        compressed_sqlite_path = index_work_path / COMPRESSED_INDEX_SQLITE_FILE_NAME
+    sqlite_path = index_work_path / INDEX_SQLITE_FILE_NAME
+    compressed_sqlite_path = index_work_path / COMPRESSED_INDEX_SQLITE_FILE_NAME
 
+    try:
         await _api.get_file(
             f"/indexes/{id_}/files/{COMPRESSED_INDEX_SQLITE_FILE_NAME}",
             compressed_sqlite_path,
         )
+    except JobsAPIError:
+        log.info("index sqlite unavailable")
+    else:
         await asyncio.to_thread(
             decompress_file,
             compressed_sqlite_path,
@@ -763,24 +594,36 @@ async def index(
             proc,
         )
 
-        source = SQLiteIndexSource.load(sqlite_path)
         log.info("loaded index OTUs from index sqlite")
-    else:
-        compressed_otus_path = index_work_path / "otus.json.gz"
-        await _api.get_file(f"/indexes/{id_}/files/otus.json.gz", compressed_otus_path)
-        await asyncio.to_thread(
-            decompress_file,
-            compressed_otus_path,
-            index_work_path / "otus.json",
-            proc,
-        )
+        return WFIndex.load(id_, sqlite_path)
 
-        source = LegacyOTUJsonSource(index_work_path / "otus.json")
-        log.info("loaded index OTUs from legacy otus json")
+    reference_json_path = index_work_path / "reference.json"
+    compressed_reference_json_path = index_work_path / "reference.json.gz"
 
-    return WFIndex(
-        id=id_,
-        _source=source,
+    await _api.get_file(
+        f"/indexes/{id_}/files/reference.json.gz",
+        compressed_reference_json_path,
+    )
+    await asyncio.to_thread(
+        decompress_file,
+        compressed_reference_json_path,
+        reference_json_path,
+        proc,
+    )
+
+    reference_json = await _read_json(reference_json_path)
+
+    if not isinstance(reference_json, Mapping):
+        msg = "reference.json must contain reference metadata"
+        raise TypeError(msg)
+
+    log.info("creating index sqlite from reference json")
+
+    return await WFIndex.create(
+        id_,
+        sqlite_path,
+        _shape_reference_json_metadata(reference_json, index_),
+        _iter_json_otus(reference_json, index_.manifest),
     )
 
 
