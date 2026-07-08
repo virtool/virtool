@@ -1,11 +1,15 @@
+from sqlalchemy.ext.asyncio import AsyncSession
+
 import virtool.subtractions.db
 from virtool.data.transforms import apply_transforms
 from virtool.fake.next import DataFaker
+from virtool.samples.sql import SQLLegacySample, SQLLegacySampleSubtraction
 from virtool.subtractions.db import (
     AttachSubtractionsTransform,
     get_missing_subtraction_ids,
 )
 from virtool.uploads.sql import UploadType
+from virtool.utils import timestamp
 
 
 class TestAttachSubtractions:
@@ -86,43 +90,50 @@ class TestGetMissingSubtractionIds:
         assert await get_missing_subtraction_ids(pg, []) == set()
 
 
-async def test_get_linked_samples(fake: DataFaker, mongo):
+async def test_get_linked_samples(fake: DataFaker, pg):
     user = await fake.users.create()
     upload = await fake.uploads.create(
         user=user, upload_type=UploadType.subtraction, name="foobar.fq.gz"
     )
     subtraction = await fake.subtractions.create(user=user, upload=upload)
+    other = await fake.subtractions.create(user=user, upload=upload)
 
     target = subtraction.id
 
-    # Other integer subtraction ids the samples reference; only ``target`` should
-    # match. The offsets simply guarantee distinctness from ``target``.
-    other_a, other_b, other_c = target + 1, target + 2, target + 3
+    linked_ids = []
 
-    await mongo.samples.insert_many(
-        [
-            {
-                "_id": "sample_with_target",
-                "name": "Sample With Target",
-                "subtractions": [other_a, target, other_b],
-            },
-            {
-                "_id": "another_with_target",
-                "name": "Another With Target",
-                "subtractions": [other_c, target, other_a],
-            },
-            {
-                "_id": "sample_without_target",
-                "name": "Sample Without Target",
-                "subtractions": [other_a],
-            },
-        ],
-        session=None,
-    )
+    async with AsyncSession(pg) as session:
+        for legacy_id, name, subtraction_ids in [
+            ("sample_with_target", "Sample With Target", [other.id, target]),
+            ("another_with_target", "Another With Target", [target]),
+            ("sample_without_target", "Sample Without Target", [other.id]),
+        ]:
+            sample = SQLLegacySample(
+                legacy_id=legacy_id,
+                name=name,
+                library_type="normal",
+                created_at=timestamp(),
+                user_id=user.id,
+            )
+            session.add(sample)
+            await session.flush()
 
-    samples = await virtool.subtractions.db.get_linked_samples(mongo, target)
+            for subtraction_id in subtraction_ids:
+                session.add(
+                    SQLLegacySampleSubtraction(
+                        sample_id=sample.id,
+                        subtraction_id=subtraction_id,
+                    ),
+                )
+
+            if target in subtraction_ids:
+                linked_ids.append(sample.id)
+
+        await session.commit()
+
+    samples = await virtool.subtractions.db.get_linked_samples(pg, target)
 
     assert samples == [
-        {"id": "sample_with_target", "name": "Sample With Target"},
-        {"id": "another_with_target", "name": "Another With Target"},
+        {"id": linked_ids[0], "name": "Sample With Target"},
+        {"id": linked_ids[1], "name": "Another With Target"},
     ]

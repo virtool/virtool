@@ -13,7 +13,7 @@ from virtool.users.models_base import UserNested
 
 
 class AnalysisSample(BaseModel):
-    id: str
+    id: int
 
 
 class AnalysisMinimal(BaseModel):
@@ -46,7 +46,7 @@ class AnalysisMinimal(BaseModel):
                     "job": {"id": "bt8nwg9z"},
                     "ready": True,
                     "reference": {"id": "d19exr83", "name": "New Plant Viruses"},
-                    "sample": {"id": "9zn468u9"},
+                    "sample": {"id": 1234},
                     "subtractions": [{"id": 18, "name": "Malus domestica"}],
                     "updated_at": "2022-05-21T01:28:55.441000Z",
                     "user": {
@@ -118,7 +118,7 @@ class Analysis(AnalysisMinimal):
                     "read_count": 584,
                     "subtracted_count": 0,
                 },
-                "sample": {"id": "7tu8c5m5"},
+                "sample": {"id": 5678},
                 "subtractions": [{"id": 24, "name": "Vitis vinifera"}],
                 "updated_at": "2022-08-15T17:42:35.979000Z",
                 "user": {"administrator": True, "handle": "mrott", "id": "ihvze2u9"},

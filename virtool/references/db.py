@@ -29,7 +29,6 @@ from virtool.history.db import bulk_delete_history, bulk_insert_history
 from virtool.history.sql import SQLLegacyHistory
 from virtool.models.enums import HistoryMethod
 from virtool.models.roles import AdministratorRole
-from virtool.mongo.utils import get_mongo_from_req
 from virtool.references.alot import prepare_otu_insertion
 from virtool.references.sql import (
     SQLReference,
@@ -184,78 +183,106 @@ async def processor(mongo: "Mongo", pg: AsyncEngine, document: Document) -> Docu
 async def get_reference_groups(pg: AsyncEngine, document: Document) -> list[Document]:
     """Get a detailed list of groups that have access to the specified reference.
 
+    Membership and rights are read from the ``legacy_reference_groups`` child
+    table and enriched with the group name from ``groups``. Each entry inherits
+    the reference's ``created_at`` because per-member timestamps are not stored
+    in Postgres.
+
     :param pg: the application Postgres engine
     :param document: the reference document
     :return: a list of group data dictionaries
 
     """
-    if not document["groups"]:
-        return []
-
-    document_groups: list[Document] = document["groups"]
-
     async with AsyncSession(pg) as session:
-        result = await session.execute(
-            select(SQLGroup).where(
-                compose_legacy_id_multi_expression(
-                    SQLGroup,
-                    [g["id"] for g in document_groups],
-                ),
+        reference_pk = await session.scalar(
+            select(SQLReference.id).where(
+                compose_legacy_id_single_expression(SQLReference, document["_id"]),
             ),
         )
 
-    rows = result.scalars().all()
+        if reference_pk is None:
+            return []
 
-    groups_map: dict[int | str, SQLGroup] = {
-        **{row.id: row for row in rows},
-        **{row.legacy_id: row for row in rows},
-    }
+        rows = (
+            await session.execute(
+                select(
+                    SQLGroup.id,
+                    SQLGroup.legacy_id,
+                    SQLGroup.name,
+                    SQLReferenceGroup.build,
+                    SQLReferenceGroup.modify,
+                    SQLReferenceGroup.modify_otu,
+                )
+                .join(SQLGroup, SQLGroup.id == SQLReferenceGroup.group_id)
+                .where(SQLReferenceGroup.reference_id == reference_pk)
+                .order_by(SQLReferenceGroup.group_id),
+            )
+        ).all()
 
     return [
         {
-            **g,
-            "id": groups_map[g["id"]].id,
-            "legacy_id": groups_map[g["id"]].legacy_id,
-            "name": groups_map[g["id"]].name,
+            "id": row.id,
+            "legacy_id": row.legacy_id,
+            "name": row.name,
+            "build": row.build,
+            "modify": row.modify,
+            "modify_otu": row.modify_otu,
+            "created_at": document["created_at"],
         }
-        for g in document_groups
+        for row in rows
     ]
 
 
-async def get_reference_users(
-    mongo: "Mongo", pg: AsyncEngine, document: Document
-) -> list[Document]:
+async def get_reference_users(pg: AsyncEngine, document: Document) -> list[Document]:
     """Get a detailed list of users that have access to the specified reference.
 
-    :param mongo: the application database client
+    Membership and rights are read from the ``legacy_reference_users`` child
+    table and enriched with the user handle from ``users``. Each entry inherits
+    the reference's ``created_at`` because per-member timestamps are not stored
+    in Postgres.
+
     :param pg: the application PostgreSQL engine
     :param document: the reference document
     :return: a list of user data dictionaries
 
     """
-    if not (users := document.get("users")):
-        return []
-
     from virtool.users.pg import SQLUser
 
-    user_ids = [user["id"] for user in users]
-
-    if not user_ids:
-        return []
-
     async with AsyncSession(pg) as session:
-        result = await session.execute(
-            select(SQLUser.id, SQLUser.handle).where(SQLUser.id.in_(user_ids)),
+        reference_pk = await session.scalar(
+            select(SQLReference.id).where(
+                compose_legacy_id_single_expression(SQLReference, document["_id"]),
+            ),
         )
 
-        user_rows = result.all()
+        if reference_pk is None:
+            return []
 
-    user_map = {row.id: {"id": row.id, "handle": row.handle} for row in user_rows}
+        rows = (
+            await session.execute(
+                select(
+                    SQLUser.id,
+                    SQLUser.handle,
+                    SQLReferenceUser.build,
+                    SQLReferenceUser.modify,
+                    SQLReferenceUser.modify_otu,
+                )
+                .join(SQLUser, SQLUser.id == SQLReferenceUser.user_id)
+                .where(SQLReferenceUser.reference_id == reference_pk)
+                .order_by(SQLReferenceUser.user_id),
+            )
+        ).all()
 
     return [
-        {**user, **user_data}
-        for user in users
-        if (user_data := user_map.get(user["id"]))
+        {
+            "id": row.id,
+            "handle": row.handle,
+            "build": row.build,
+            "modify": row.modify,
+            "modify_otu": row.modify_otu,
+            "created_at": document["created_at"],
+        }
+        for row in rows
     ]
 
 
@@ -265,34 +292,49 @@ async def check_right(req: Request, ref_id: int | str, right: str) -> bool:
     if client.administrator_role == AdministratorRole.FULL:
         return True
 
-    if isinstance(ref_id, int):
-        ref_id = await resolve_reference_legacy_id(req.app["pg"], ref_id)
+    async with AsyncSession(req.app["pg"]) as session:
+        reference_pk = await session.scalar(
+            select(SQLReference.id).where(
+                compose_legacy_id_single_expression(SQLReference, ref_id),
+            ),
+        )
 
-    reference = await get_mongo_from_req(req).references.find_one(
-        ref_id,
-        ["groups", "users"],
-    )
+        if reference_pk is None:
+            raise ResourceNotFoundError
 
-    if reference is None:
-        raise ResourceNotFoundError()
+        if client.user_id is not None:
+            user_query = select(SQLReferenceUser.reference_id).where(
+                SQLReferenceUser.reference_id == reference_pk,
+                SQLReferenceUser.user_id == client.user_id,
+            )
 
-    groups: list[dict] = reference["groups"]
-    users: list[dict] = reference["users"]
+            if right != "read":
+                user_query = user_query.where(
+                    getattr(SQLReferenceUser, right).is_(True),
+                )
 
-    if right == "read":
-        if any(user["id"] == client.user_id for user in users):
-            return True
-
-        return any(group["id"] in client.groups for group in groups)
-
-    for user in users:
-        if user["id"] == client.user_id:
-            if user[right]:
+            if await session.scalar(user_query.limit(1)) is not None:
                 return True
 
-            break
+        if client.groups:
+            group_query = (
+                select(SQLReferenceGroup.reference_id)
+                .join(SQLGroup, SQLGroup.id == SQLReferenceGroup.group_id)
+                .where(
+                    SQLReferenceGroup.reference_id == reference_pk,
+                    compose_legacy_id_multi_expression(SQLGroup, client.groups),
+                )
+            )
 
-    return any(group[right] and group["id"] in client.groups for group in groups)
+            if right != "read":
+                group_query = group_query.where(
+                    getattr(SQLReferenceGroup, right).is_(True),
+                )
+
+            if await session.scalar(group_query.limit(1)) is not None:
+                return True
+
+    return False
 
 
 async def check_source_type(

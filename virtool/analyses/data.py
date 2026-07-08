@@ -72,6 +72,7 @@ FIND_COLUMNS = (
     SQLAnalysis.workflow,
     SQLAnalysis.ready,
     SQLAnalysis.sample,
+    SQLAnalysis.sample_id,
     SQLAnalysis.reference,
     SQLAnalysis.index,
     SQLAnalysis.user_id,
@@ -100,7 +101,7 @@ def _row_to_document(row, *, include_results: bool) -> dict:
         "updated_at": row.updated_at,
         "workflow": row.workflow,
         "ready": row.ready,
-        "sample": {"id": row.sample},
+        "sample": {"id": row.sample_id},
         "reference": {"id": row.reference},
         "index": {"id": row.index},
         "user": {"id": row.user_id},
@@ -189,7 +190,7 @@ class AnalysisData(DataLayerDomain):
 
         documents = await filter_analyses_by_sample_rights(
             client,
-            self._mongo,
+            self._pg,
             documents,
         )
 
@@ -313,10 +314,18 @@ class AnalysisData(DataLayerDomain):
         subtractions = data.subtractions if data.subtractions is not None else []
 
         async with AsyncSession(self._pg) as session:
-            sample_pg_id = await resolve_legacy_id(session, SQLLegacySample, sample_id)
+            sample_row = (
+                await session.execute(
+                    select(SQLLegacySample.id, SQLLegacySample.legacy_id).where(
+                        compose_legacy_id_single_expression(SQLLegacySample, sample_id),
+                    ),
+                )
+            ).one_or_none()
 
-            if sample_pg_id is None:
+            if sample_row is None:
                 raise ResourceConflictError("Sample does not exist")
+
+            sample_pg_id, sample_legacy_id = sample_row
 
             reference_pg_id = await resolve_legacy_id(
                 session,
@@ -337,7 +346,7 @@ class AnalysisData(DataLayerDomain):
                         workflow=data.workflow.value,
                         ready=False,
                         results=None,
-                        sample=sample_id,
+                        sample=sample_legacy_id or str(sample_pg_id),
                         sample_id=sample_pg_id,
                         reference=data.ref_id,
                         reference_id=reference_pg_id,
@@ -439,6 +448,12 @@ class AnalysisData(DataLayerDomain):
         legacy_id = (await self._resolve_ids(analysis.id)).legacy_id
 
         async with AsyncSession(self._pg) as session:
+            sample_legacy_id = (
+                await session.execute(
+                    select(SQLAnalysis.sample).where(SQLAnalysis.id == analysis.id),
+                )
+            ).scalar_one_or_none()
+
             await session.execute(
                 delete(SQLAnalysis).where(SQLAnalysis.id == analysis.id),
             )
@@ -447,7 +462,7 @@ class AnalysisData(DataLayerDomain):
 
         for key, exc in await delete_prefix(
             self._storage,
-            f"samples/{analysis.sample.id}/analysis/{legacy_id}/",
+            f"samples/{sample_legacy_id}/analysis/{legacy_id}/",
         ):
             logger.error(
                 "storage cleanup failed; file orphaned",

@@ -339,7 +339,7 @@ class TestMutations:
             legacy = (
                 await session.execute(
                     select(SQLLegacySample).where(
-                        SQLLegacySample.legacy_id == sample.id,
+                        SQLLegacySample.id == sample.id,
                     ),
                 )
             ).scalar_one()

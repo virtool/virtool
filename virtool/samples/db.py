@@ -70,10 +70,15 @@ class AttachArtifactsAndReadsTransform(AbstractTransform):
 
         for artifact in artifacts:
             artifact["download_url"] = str(
-                URL("/samples") / sample_id / "artifacts" / artifact["name_on_disk"]
+                URL("/samples")
+                / str(sample_id)
+                / "artifacts"
+                / artifact["name_on_disk"]
             )
 
         for reads_file in reads:
+            reads_file["sample"] = reads_file["sample_id"]
+
             if upload := reads_file.get("upload"):
                 upload_dict = serialize_upload(
                     (
@@ -90,7 +95,7 @@ class AttachArtifactsAndReadsTransform(AbstractTransform):
                 )
 
             reads_file["download_url"] = str(
-                URL("/samples") / sample_id / "reads" / reads_file["name"]
+                URL("/samples") / str(sample_id) / "reads" / reads_file["name"]
             )
 
         return {"artifacts": artifacts, "reads": reads}
@@ -192,12 +197,12 @@ class AttachMongoUploadsTransform(AbstractTransform):
 
     async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
         mongo_document = await self._mongo.samples.find_one(
-            {"_id": document["id"]},
+            {"_id": document["legacy_id"]},
             MONGO_UPLOADS_FIELD,
         )
 
         if mongo_document is None:
-            raise KeyError(f"Sample missing from Mongo: {document['id']}")
+            raise KeyError(f"Sample missing from Mongo: {document['legacy_id']}")
 
         return mongo_document.get("uploads")
 
@@ -206,23 +211,23 @@ class AttachMongoUploadsTransform(AbstractTransform):
         documents: list[Document],
         session: AsyncSession,
     ) -> dict[str, Any]:
-        sample_ids = [document["id"] for document in documents]
+        legacy_ids = [document["legacy_id"] for document in documents]
 
         mongo_documents = {
             mongo_document["_id"]: mongo_document
             async for mongo_document in self._mongo.samples.find(
-                {"_id": {"$in": sample_ids}},
+                {"_id": {"$in": legacy_ids}},
                 MONGO_UPLOADS_FIELD,
             )
         }
 
-        missing = set(sample_ids) - mongo_documents.keys()
+        missing = set(legacy_ids) - mongo_documents.keys()
 
         if missing:
             raise KeyError(f"Samples missing from Mongo: {missing}")
 
         return {
-            document["id"]: mongo_documents[document["id"]].get("uploads")
+            document["id"]: mongo_documents[document["legacy_id"]].get("uploads")
             for document in documents
         }
 
@@ -267,19 +272,18 @@ class DeriveWorkflowTagsTransform(AbstractTransform):
 
         rows = await session.execute(
             select(
-                SQLLegacySample.legacy_id,
+                SQLAnalysis.sample_id,
                 SQLAnalysis.workflow,
                 func.bool_or(SQLAnalysis.ready),
             )
-            .join(SQLAnalysis, SQLAnalysis.sample_id == SQLLegacySample.id)
-            .where(SQLLegacySample.legacy_id.in_(sample_ids))
-            .group_by(SQLLegacySample.legacy_id, SQLAnalysis.workflow),
+            .where(SQLAnalysis.sample_id.in_(sample_ids))
+            .group_by(SQLAnalysis.sample_id, SQLAnalysis.workflow),
         )
 
-        ready_by_sample: dict[str, dict[str, bool]] = defaultdict(dict)
+        ready_by_sample: dict[int, dict[str, bool]] = defaultdict(dict)
 
-        for legacy_id, workflow, ready in rows:
-            ready_by_sample[legacy_id][workflow] = ready
+        for sample_id, workflow, ready in rows:
+            ready_by_sample[sample_id][workflow] = ready
 
         return {
             document["id"]: virtool.samples.utils.encode_workflow_tags(

@@ -4,6 +4,7 @@ import io
 from datetime import datetime
 from http import HTTPStatus
 from pathlib import Path
+from typing import NamedTuple
 
 import arrow
 import pytest
@@ -207,14 +208,21 @@ async def get_sample_ready_false(
         await session.commit()
 
 
+class SampleData(NamedTuple):
+    """Identifiers for the sample seeded by :func:`get_sample_data`."""
+
+    id: int
+    unattached_subtraction_id: int
+
+
 @pytest.fixture
 async def get_sample_data(
     mongo: "Mongo",
     fake: DataFaker,
     pg: AsyncEngine,
     static_time,
-) -> int:
-    """Set up the ``test`` sample and return the id of an unattached subtraction.
+) -> SampleData:
+    """Set up the ``test`` sample and return its integer id and an unattached subtraction.
 
     The sample is attached to ``apple`` and ``pear``; ``peach`` exists but is not
     attached, so edit tests can switch the sample's subtractions to it.
@@ -299,6 +307,8 @@ async def get_sample_data(
         session.add(legacy)
         await session.flush()
 
+        sample_id = legacy.id
+
         session.add_all(
             [
                 SQLLegacySampleLabel(sample_id=legacy.id, label_id=label.id),
@@ -331,7 +341,7 @@ async def get_sample_data(
         )
         await session.commit()
 
-    return peach.id
+    return SampleData(id=sample_id, unattached_subtraction_id=peach.id)
 
 
 @pytest.fixture
@@ -532,7 +542,7 @@ class TestGet:
         """Test that a sample can be retrieved by an administrator."""
         client = await spawn_client(administrator=True, authenticated=True)
 
-        resp = await client.get("/samples/test")
+        resp = await client.get(f"/samples/{get_sample_data.id}")
 
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot(name="resp")
@@ -568,7 +578,7 @@ class TestGet:
             user_id=client.user.id,
         )
 
-        resp = await client.get("/samples/test")
+        resp = await client.get(f"/samples/{get_sample_data.id}")
 
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot(name="resp")
@@ -609,7 +619,7 @@ class TestGet:
             user_id=user.id,
         )
 
-        resp = await client.get("/samples/test")
+        resp = await client.get(f"/samples/{get_sample_data.id}")
 
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot(name="resp")
@@ -661,7 +671,7 @@ class TestGet:
             user_id=user.id,
         )
 
-        resp = await client.get("/samples/test")
+        resp = await client.get(f"/samples/{get_sample_data.id}")
 
         assert resp.status == (200 if is_member else 403)
         assert await resp.json() == snapshot(name="resp")
@@ -935,20 +945,18 @@ class TestCreate:
 class TestEdit:
     async def test_ok(
         self,
-        get_sample_data: int,
+        get_sample_data: SampleData,
         snapshot,
         spawn_client: ClientSpawner,
     ):
         """Test that an existing sample can be edited correctly."""
-        peach_id = get_sample_data
-
         client = await spawn_client(administrator=True, authenticated=True)
 
         resp = await client.patch(
-            "/samples/test",
+            f"/samples/{get_sample_data.id}",
             {
                 "name": "test_sample",
-                "subtractions": [peach_id],
+                "subtractions": [get_sample_data.unattached_subtraction_id],
                 "labels": [1],
                 "notes": "This is a test.",
             },
@@ -961,6 +969,7 @@ class TestEdit:
         self,
         resp_is,
         mongo: Mongo,
+        pg: AsyncEngine,
         spawn_client: ClientSpawner,
     ):
         """Test that a ``bad_request`` is returned if the sample name passed in ``name``
@@ -994,7 +1003,11 @@ class TestEdit:
             session=None,
         )
 
-        resp = await client.patch("/samples/foo", {"name": "Bar"})
+        async with AsyncSession(pg) as session:
+            foo_id = await _ensure_legacy_sample_id(session, "foo")
+            await session.commit()
+
+        resp = await client.patch(f"/samples/{foo_id}", {"name": "Bar"})
 
         assert resp.status == 400
         await resp_is.bad_request(resp, "Sample name is already in use")
@@ -1003,6 +1016,7 @@ class TestEdit:
         self,
         snapshot,
         mongo: Mongo,
+        pg: AsyncEngine,
         spawn_client: ClientSpawner,
     ):
         """Test that a ``bad_request`` is returned if the label passed in ``labels`` does
@@ -1024,7 +1038,11 @@ class TestEdit:
             },
         )
 
-        resp = await client.patch("/samples/foo", {"labels": [1]})
+        async with AsyncSession(pg) as session:
+            foo_id = await _ensure_legacy_sample_id(session, "foo")
+            await session.commit()
+
+        resp = await client.patch(f"/samples/{foo_id}", {"labels": [1]})
 
         assert resp.status == 400
         assert await resp.json() == snapshot(name="json")
@@ -1034,6 +1052,7 @@ class TestEdit:
         fake: DataFaker,
         snapshot,
         mongo: Mongo,
+        pg: AsyncEngine,
         spawn_client: ClientSpawner,
     ):
         """Test that a ``bad_request`` is returned if the subtraction passed in
@@ -1061,8 +1080,12 @@ class TestEdit:
             },
         )
 
+        async with AsyncSession(pg) as session:
+            sample_id = await _ensure_legacy_sample_id(session, "test")
+            await session.commit()
+
         resp = await client.patch(
-            "/samples/test",
+            f"/samples/{sample_id}",
             {"subtractions": [foo.id, 999]},
         )
 
@@ -1123,7 +1146,7 @@ class TestDelete:
         mongo: Mongo,
         spawn_client: ClientSpawner,
         static_time,
-    ) -> VirtoolTestClient:
+    ) -> tuple[VirtoolTestClient, int]:
         """Helper to create an unfinalized sample with a job in a specific state."""
         client = await spawn_client(authenticated=True)
 
@@ -1138,11 +1161,28 @@ class TestDelete:
             {"$set": {"job": {"id": job.id}}},
         )
 
-        return client
+        async with AsyncSession(client.app["pg"]) as session:
+            await session.execute(
+                update(SQLLegacySample)
+                .where(SQLLegacySample.legacy_id == "test")
+                .values(job_id=job.id),
+            )
+            await session.commit()
+
+            sample_id = (
+                await session.execute(
+                    select(SQLLegacySample.id).where(
+                        SQLLegacySample.legacy_id == "test",
+                    ),
+                )
+            ).scalar_one()
+
+        return client, sample_id
 
     async def test_finalized(
         self,
         fake: DataFaker,
+        pg: AsyncEngine,
         spawn_client: ClientSpawner,
     ):
         """Test that finalized samples can be deleted."""
@@ -1152,7 +1192,16 @@ class TestDelete:
 
         await create_fake_sample(client.app, "test", user.id, finalized=True)
 
-        resp = await client.delete("/samples/test")
+        async with AsyncSession(pg) as session:
+            sample_id = (
+                await session.execute(
+                    select(SQLLegacySample.id).where(
+                        SQLLegacySample.legacy_id == "test",
+                    ),
+                )
+            ).scalar_one()
+
+        resp = await client.delete(f"/samples/{sample_id}")
 
         assert resp.status == 204
 
@@ -1164,7 +1213,7 @@ class TestDelete:
         static_time,
     ):
         """Test that unfinalized samples with failed jobs can be deleted."""
-        client = await self.setup_unfinalized_sample_with_job(
+        client, sample_id = await self.setup_unfinalized_sample_with_job(
             JobState.FAILED,
             fake,
             mongo,
@@ -1172,7 +1221,7 @@ class TestDelete:
             static_time,
         )
 
-        resp = await client.delete("/samples/test")
+        resp = await client.delete(f"/samples/{sample_id}")
 
         assert resp.status == 204
 
@@ -1184,7 +1233,7 @@ class TestDelete:
         static_time,
     ):
         """Test that unfinalized samples with cancelled jobs can be deleted."""
-        client = await self.setup_unfinalized_sample_with_job(
+        client, sample_id = await self.setup_unfinalized_sample_with_job(
             JobState.CANCELLED,
             fake,
             mongo,
@@ -1192,7 +1241,7 @@ class TestDelete:
             static_time,
         )
 
-        resp = await client.delete("/samples/test")
+        resp = await client.delete(f"/samples/{sample_id}")
 
         assert resp.status == 204
 
@@ -1204,7 +1253,7 @@ class TestDelete:
         static_time,
     ):
         """Test that unfinalized samples with succeeded jobs can be deleted."""
-        client = await self.setup_unfinalized_sample_with_job(
+        client, sample_id = await self.setup_unfinalized_sample_with_job(
             JobState.SUCCEEDED,
             fake,
             mongo,
@@ -1212,7 +1261,7 @@ class TestDelete:
             static_time,
         )
 
-        resp = await client.delete("/samples/test")
+        resp = await client.delete(f"/samples/{sample_id}")
 
         assert resp.status == 204
 
@@ -1225,7 +1274,7 @@ class TestDelete:
         static_time,
     ):
         """Deleting a sample through the web API releases its reserved uploads."""
-        client = await self.setup_unfinalized_sample_with_job(
+        client, sample_id = await self.setup_unfinalized_sample_with_job(
             JobState.FAILED,
             fake,
             mongo,
@@ -1243,7 +1292,7 @@ class TestDelete:
             {"$set": {"uploads": [{"id": upload.id}]}},
         )
 
-        resp = await client.delete("/samples/test")
+        resp = await client.delete(f"/samples/{sample_id}")
 
         assert resp.status == 204
 
@@ -1258,7 +1307,7 @@ class TestDelete:
         static_time,
     ):
         """Test that unfinalized samples with running jobs cannot be deleted."""
-        client = await self.setup_unfinalized_sample_with_job(
+        client, sample_id = await self.setup_unfinalized_sample_with_job(
             JobState.RUNNING,
             fake,
             mongo,
@@ -1266,7 +1315,7 @@ class TestDelete:
             static_time,
         )
 
-        resp = await client.delete("/samples/test")
+        resp = await client.delete(f"/samples/{sample_id}")
 
         assert resp.status == 400
 
@@ -1293,7 +1342,7 @@ class TestDelete:
 
     async def test_not_found(self, spawn_client: ClientSpawner):
         client = await spawn_client(authenticated=True)
-        resp = await client.delete("/samples/test")
+        resp = await client.delete("/samples/999999")
         assert resp.status == 404
 
     async def test_not_found_from_job(self, spawn_job_client):
@@ -1362,6 +1411,8 @@ async def test_find_analyses(
         session.add(legacy_sample)
         await session.flush()
 
+        legacy_sample_id = legacy_sample.id
+
         analyses = [
             SQLAnalysis(
                 legacy_id="test_1",
@@ -1427,7 +1478,7 @@ async def test_find_analyses(
 
         await session.commit()
 
-    resp = await client.get("/samples/test/analyses")
+    resp = await client.get(f"/samples/{legacy_sample_id}/analyses")
 
     assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot
@@ -1481,14 +1532,23 @@ class TestAnalyze:
             await session.commit()
 
     @staticmethod
-    async def _insert_sample(client: VirtoolTestClient, fake: DataFaker) -> None:
+    async def _insert_sample(client: VirtoolTestClient, fake: DataFaker) -> int:
         user = await fake.users.create()
         await create_fake_sample(client.app, "test", user.id, finalized=True)
 
+        async with AsyncSession(client.app["pg"]) as session:
+            return (
+                await session.execute(
+                    select(SQLLegacySample.id).where(
+                        SQLLegacySample.legacy_id == "test",
+                    ),
+                )
+            ).scalar_one()
+
     @staticmethod
-    async def _post(client: VirtoolTestClient, ref_id: str):
+    async def _post(client: VirtoolTestClient, ref_id: str, sample_id: int):
         return await client.post(
-            "/samples/test/analyses",
+            f"/samples/{sample_id}/analyses",
             data={
                 "workflow": "pathoscope",
                 "ref_id": ref_id,
@@ -1508,9 +1568,9 @@ class TestAnalyze:
         reference = await self._insert_reference(fake)
         await self._insert_index(mongo, reference.id)
         await self._insert_subtraction(pg)
-        await self._insert_sample(analyze_client, fake)
+        sample_id = await self._insert_sample(analyze_client, fake)
 
-        resp = await self._post(analyze_client, reference.id)
+        resp = await self._post(analyze_client, reference.id, sample_id)
 
         assert resp.status == 201
         assert resp.headers["Location"] == "/analyses/1"
@@ -1525,9 +1585,9 @@ class TestAnalyze:
         static_time,
     ):
         await self._insert_subtraction(pg)
-        await self._insert_sample(analyze_client, fake)
+        sample_id = await self._insert_sample(analyze_client, fake)
 
-        resp = await self._post(analyze_client, "does_not_exist")
+        resp = await self._post(analyze_client, "does_not_exist", sample_id)
 
         await resp_is.conflict(resp, "Reference does not exist")
 
@@ -1545,9 +1605,9 @@ class TestAnalyze:
         await data_layer.references.archive(reference.id)
         await self._insert_index(mongo, reference.id)
         await self._insert_subtraction(pg)
-        await self._insert_sample(analyze_client, fake)
+        sample_id = await self._insert_sample(analyze_client, fake)
 
-        resp = await self._post(analyze_client, reference.id)
+        resp = await self._post(analyze_client, reference.id, sample_id)
 
         await resp_is.conflict(resp, "Reference is archived")
 
@@ -1562,9 +1622,9 @@ class TestAnalyze:
     ):
         reference = await self._insert_reference(fake)
         await self._insert_subtraction(pg)
-        await self._insert_sample(analyze_client, fake)
+        sample_id = await self._insert_sample(analyze_client, fake)
 
-        resp = await self._post(analyze_client, reference.id)
+        resp = await self._post(analyze_client, reference.id, sample_id)
 
         await resp_is.conflict(resp, "No ready index")
 
@@ -1580,9 +1640,9 @@ class TestAnalyze:
         reference = await self._insert_reference(fake)
         await self._insert_index(mongo, reference.id, ready=False)
         await self._insert_subtraction(pg)
-        await self._insert_sample(analyze_client, fake)
+        sample_id = await self._insert_sample(analyze_client, fake)
 
-        resp = await self._post(analyze_client, reference.id)
+        resp = await self._post(analyze_client, reference.id, sample_id)
 
         await resp_is.conflict(resp, "No ready index")
 
@@ -1596,9 +1656,9 @@ class TestAnalyze:
     ):
         reference = await self._insert_reference(fake)
         await self._insert_index(mongo, reference.id)
-        await self._insert_sample(analyze_client, fake)
+        sample_id = await self._insert_sample(analyze_client, fake)
 
-        resp = await self._post(analyze_client, reference.id)
+        resp = await self._post(analyze_client, reference.id, sample_id)
 
         await resp_is.conflict(resp, "Subtractions do not exist: 1")
 
@@ -1615,7 +1675,7 @@ class TestAnalyze:
         await self._insert_index(mongo, reference.id)
         await self._insert_subtraction(pg)
 
-        resp = await self._post(analyze_client, reference.id)
+        resp = await self._post(analyze_client, reference.id, 999999)
 
         await resp_is.not_found(resp)
 
@@ -1630,10 +1690,10 @@ class TestAnalyze:
         reference = await self._insert_reference(fake)
         await self._insert_index(mongo, reference.id)
         await self._insert_subtraction(pg)
-        await self._insert_sample(analyze_client, fake)
+        sample_id = await self._insert_sample(analyze_client, fake)
 
         resp = await analyze_client.post(
-            "/samples/test/analyses",
+            f"/samples/{sample_id}/analyses",
             data={
                 "workflow": "iimi",
                 "ref_id": reference.id,
@@ -1939,8 +1999,8 @@ class TestDownloadReads:
         await self._write_file(memory_storage, file_name)
         await self._insert_reads_row(pg, file_name)
 
-        resp = await client.get(f"/samples/foo/reads/{file_name}")
-        job_resp = await job_client.get(f"/samples/foo/reads/{file_name}")
+        resp = await client.get(f"/samples/999999/reads/{file_name}")
+        job_resp = await job_client.get(f"/samples/999999/reads/{file_name}")
 
         assert resp.status == job_resp.status == 404
 
@@ -2068,7 +2128,7 @@ class TestDownloadArtifact:
         await self._write_file(memory_storage)
         await self._insert_artifact_row(pg)
 
-        resp = await client.get("/samples/foo/artifacts/fastqc.txt")
+        resp = await client.get("/samples/999999/artifacts/fastqc.txt")
 
         assert resp.status == 404
 
@@ -2136,7 +2196,10 @@ class TestChangeSampleRights:
         group = await fake.groups.create()
 
         client = await spawn_client(administrator=True, authenticated=True)
-        resp = await client.patch("/samples/test/rights", data={"group": group.id})
+        resp = await client.patch(
+            f"/samples/{get_sample_data.id}/rights",
+            data={"group": group.id},
+        )
 
         assert await resp.json() == snapshot(name="resp")
         assert await mongo.samples.find_one("test") == snapshot(name="mongo")
@@ -2157,7 +2220,7 @@ class TestChangeSampleRights:
         client = await spawn_client(administrator=True, authenticated=True)
 
         resp = await client.patch(
-            "/samples/test/rights",
+            f"/samples/{get_sample_data.id}/rights",
             data={
                 "group": "none",
             },
@@ -2175,7 +2238,7 @@ class TestChangeSampleRights:
     ):
         client = await spawn_client(administrator=True, authenticated=True)
         resp = await client.patch(
-            "/samples/test/rights",
+            f"/samples/{get_sample_data.id}/rights",
             data={"group_read": False, "group_write": False},
         )
 
@@ -2191,7 +2254,7 @@ class TestChangeSampleRights:
     ):
         client = await spawn_client(administrator=True, authenticated=True)
         resp = await client.patch(
-            "/samples/test/rights",
+            f"/samples/{get_sample_data.id}/rights",
             data={"all_read": False, "all_write": False},
         )
 
@@ -2210,7 +2273,7 @@ class TestChangeSampleRights:
 
         client = await spawn_client(administrator=True, authenticated=True)
         resp = await client.patch(
-            "/samples/test/rights",
+            f"/samples/{get_sample_data.id}/rights",
             data={
                 "group": group.id,
                 "group_read": False,

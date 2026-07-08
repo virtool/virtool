@@ -26,7 +26,7 @@
     }),
     'results': None,
     'sample': dict({
-      'id': 'test_sample',
+      'id': 1,
     }),
     'subtractions': list([
       dict({
@@ -84,7 +84,7 @@
           'name': 'Test Reference',
         }),
         'sample': dict({
-          'id': 'test_sample',
+          'id': 1,
         }),
         'subtractions': list([
           dict({
@@ -139,7 +139,7 @@
           'name': 'Test Reference',
         }),
         'sample': dict({
-          'id': 'test_sample',
+          'id': 1,
         }),
         'subtractions': list([
           dict({
@@ -183,7 +183,7 @@
           'name': 'Test Reference',
         }),
         'sample': dict({
-          'id': 'test_sample',
+          'id': 1,
         }),
         'subtractions': list([
           dict({
