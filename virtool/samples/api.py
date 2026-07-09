@@ -66,23 +66,30 @@ class SamplesView(PydanticView):
         label: list[int] = Field(default_factory=list),
         page: conint(gt=0) = 1,
         per_page: conint(ge=1, le=100) = 25,
+        user: list[int] = Field(default_factory=list),
         workflows: list[str] = Field(default_factory=list),
     ) -> r200[SampleSearchResult] | r400:
         """Find samples.
 
         Lists samples, filtering by data passed as URL parameters.
 
+        The ``find`` parameter matches a substring of the sample name. Use ``user`` to
+        filter by owner instead: it may be repeated to match samples owned by any of
+        several users. Results are always limited to samples the requesting client may
+        read, so filtering by another user cannot reveal their private samples.
+
         Status Codes:
             200: Successful operation
             400: Invalid query
         """
         search_result = await get_data_from_req(self.request).samples.find(
-            label,
-            page,
-            per_page,
-            find,
-            workflows,
-            self.request["client"],
+            labels=label,
+            page=page,
+            per_page=per_page,
+            term=find,
+            users=user,
+            workflows=workflows,
+            client=self.request["client"],
         )
 
         return json_response(search_result)
