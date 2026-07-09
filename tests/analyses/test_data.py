@@ -29,6 +29,22 @@ from virtool.subtractions.pg import SQLSubtraction
 from virtool.utils import timestamp
 
 
+async def insert_sample(pg: AsyncEngine, legacy_id: str, user_id: int, **rights):
+    """Insert a minimal ``legacy_samples`` row for exercising analysis rights."""
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLLegacySample(
+                legacy_id=legacy_id,
+                name=legacy_id,
+                library_type="normal",
+                created_at=timestamp(),
+                user_id=user_id,
+                **rights,
+            ),
+        )
+        await session.commit()
+
+
 @pytest.fixture
 async def subtraction_ids(fake: DataFaker) -> dict[str, int]:
     """Seed two subtractions and return their ``{name slug: integer id}`` map."""
@@ -213,21 +229,6 @@ class TestFindSampleRights:
     """The analysis list is scoped to samples the requesting client can read."""
 
     @staticmethod
-    async def _insert_sample(pg: AsyncEngine, legacy_id: str, user_id: int, **rights):
-        async with AsyncSession(pg) as session:
-            session.add(
-                SQLLegacySample(
-                    legacy_id=legacy_id,
-                    name=legacy_id,
-                    library_type="normal",
-                    created_at=timestamp(),
-                    user_id=user_id,
-                    **rights,
-                ),
-            )
-            await session.commit()
-
-    @staticmethod
     async def _seed_analysis(
         mongo: Mongo,
         pg: AsyncEngine,
@@ -266,7 +267,7 @@ class TestFindSampleRights:
         """
         other_user = await fake.users.create()
 
-        await self._insert_sample(pg, "other_private", other_user.id, all_read=False)
+        await insert_sample(pg, "other_private", other_user.id, all_read=False)
         await self._seed_analysis(mongo, pg, "hidden", "other_private", setup_sample)
 
         owned = await self._seed_analysis(
@@ -298,7 +299,7 @@ class TestFindSampleRights:
         sample_owner = await fake.users.create()
         group_member = await fake.users.create(groups=[group])
 
-        await self._insert_sample(
+        await insert_sample(
             pg,
             "group_readable",
             sample_owner.id,
@@ -336,7 +337,7 @@ class TestFindSampleRights:
         sample_owner = await fake.users.create()
         outsider = await fake.users.create()
 
-        await self._insert_sample(
+        await insert_sample(
             pg,
             "group_readable",
             sample_owner.id,
@@ -355,21 +356,6 @@ class TestFindSampleRights:
 
 class TestHasRight:
     """Rights on an analysis are resolved from the parent sample's Postgres row."""
-
-    @staticmethod
-    async def _insert_sample(pg: AsyncEngine, legacy_id: str, user_id: int, **rights):
-        async with AsyncSession(pg) as session:
-            session.add(
-                SQLLegacySample(
-                    legacy_id=legacy_id,
-                    name=legacy_id,
-                    library_type="normal",
-                    created_at=timestamp(),
-                    user_id=user_id,
-                    **rights,
-                ),
-            )
-            await session.commit()
 
     @staticmethod
     async def _seed_analysis(
@@ -440,7 +426,7 @@ class TestHasRight:
             administrator_role=AdministratorRole.FULL,
         )
 
-        await self._insert_sample(pg, "owner_private", sample_owner.id, all_read=False)
+        await insert_sample(pg, "owner_private", sample_owner.id, all_read=False)
         await self._seed_analysis(
             mongo,
             pg,
@@ -472,7 +458,7 @@ class TestHasRight:
             administrator_role=AdministratorRole.BASE,
         )
 
-        await self._insert_sample(pg, "owner_private", sample_owner.id, all_read=False)
+        await insert_sample(pg, "owner_private", sample_owner.id, all_read=False)
         await self._seed_analysis(
             mongo,
             pg,
@@ -500,7 +486,7 @@ class TestHasRight:
         sample_owner = await fake.users.create()
         other_user = await fake.users.create()
 
-        await self._insert_sample(
+        await insert_sample(
             pg,
             "world_readable",
             sample_owner.id,
@@ -534,7 +520,7 @@ class TestHasRight:
         sample_owner = await fake.users.create()
         group_member = await fake.users.create(groups=[group])
 
-        await self._insert_sample(
+        await insert_sample(
             pg,
             "group_shared",
             sample_owner.id,
@@ -571,7 +557,7 @@ class TestHasRight:
         sample_owner = await fake.users.create()
         outsider = await fake.users.create()
 
-        await self._insert_sample(
+        await insert_sample(
             pg,
             "group_shared",
             sample_owner.id,
