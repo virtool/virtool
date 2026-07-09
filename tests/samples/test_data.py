@@ -11,7 +11,7 @@ import virtool.utils
 from tests.fixtures.client import ClientSpawner
 from tests.samples.utils import add_sample_uploads
 from virtool.analyses.sql import SQLAnalysis
-from virtool.api.client import UserClient
+from virtool.api.client import JobClient, UserClient
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.data.transforms import apply_transforms
@@ -20,7 +20,6 @@ from virtool.models.enums import AnalysisWorkflow, LibraryType, Permission
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row, get_row_by_id
-from virtool.references.sql import SQLReference
 from virtool.samples.db import AttachUploadsTransform
 from virtool.samples.models import WorkflowState
 from virtool.samples.oas import (
@@ -35,7 +34,7 @@ from virtool.samples.sql import (
     SQLSampleReads,
     SQLSampleUpload,
 )
-from virtool.samples.utils import SampleRight
+from virtool.samples.utils import SampleRight, sample_file_key, sample_prefix
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
@@ -727,6 +726,38 @@ class TestHasRight:
 
         assert await data_layer.samples.has_right("sample_4", client, SampleRight.write)
 
+    async def test_job_client_full_access(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """A job-authenticated client holds every right regardless of ownership or
+        sharing, since a job's identity is neither a user nor an administrator.
+        """
+        sample_owner = await fake.users.create()
+
+        await insert_rights_sample(
+            pg,
+            "job_sample",
+            user_id=sample_owner.id,
+            all_read=False,
+            all_write=False,
+        )
+
+        client = JobClient(job_id=1)
+
+        assert await data_layer.samples.has_right(
+            "job_sample",
+            client,
+            SampleRight.read,
+        )
+        assert await data_layer.samples.has_right(
+            "job_sample",
+            client,
+            SampleRight.write,
+        )
+
     async def test_non_group_member_denied(
         self,
         data_layer: DataLayer,
@@ -840,6 +871,7 @@ class TestFindRights:
 class TestHasResourcesForAnalysisJob:
     @staticmethod
     async def _seed(
+        data_layer: DataLayer,
         fake: DataFaker,
         mongo: Mongo,
         *,
@@ -851,15 +883,12 @@ class TestHasResourcesForAnalysisJob:
             upload_type=UploadType.subtraction,
         )
 
-        _, _, subtraction = await asyncio.gather(
-            mongo.references.insert_one(
-                {
-                    "_id": "test_ref",
-                    "archived": archived,
-                    "data_type": "genome",
-                    "name": "Test Reference",
-                },
-            ),
+        reference = await fake.references.create(user=user, id_="test_ref")
+
+        if archived:
+            await data_layer.references.archive(reference.id)
+
+        _, subtraction = await asyncio.gather(
             mongo.indexes.insert_one(
                 {
                     "_id": "test_index",
@@ -874,7 +903,7 @@ class TestHasResourcesForAnalysisJob:
         return subtraction.id
 
     async def test_ok(self, data_layer: DataLayer, fake: DataFaker, mongo: Mongo):
-        subtraction_id = await self._seed(fake, mongo)
+        subtraction_id = await self._seed(data_layer, fake, mongo)
 
         assert (
             await data_layer.samples.has_resources_for_analysis_job(
@@ -898,33 +927,13 @@ class TestHasResourcesForAnalysisJob:
             upload_type=UploadType.subtraction,
         )
 
-        async with AsyncSession(pg) as session:
-            reference = SQLReference(
-                legacy_id="test_ref",
-                name="Test Reference",
-                description="",
-                created_at=virtool.utils.timestamp(),
-                source_types=[],
-                user_id=user.id,
-            )
-            session.add(reference)
-            await session.flush()
-            reference_pk = reference.id
-            await session.commit()
+        reference = await fake.references.create(user=user, id_="test_ref")
 
-        _, _, subtraction = await asyncio.gather(
-            mongo.references.insert_one(
-                {
-                    "_id": "test_ref",
-                    "archived": False,
-                    "data_type": "genome",
-                    "name": "Test Reference",
-                },
-            ),
+        _, subtraction = await asyncio.gather(
             mongo.indexes.insert_one(
                 {
                     "_id": "test_index",
-                    "reference": {"id": reference_pk},
+                    "reference": {"id": reference.id},
                     "ready": True,
                     "version": 1,
                 },
@@ -934,7 +943,7 @@ class TestHasResourcesForAnalysisJob:
 
         assert (
             await data_layer.samples.has_resources_for_analysis_job(
-                "test_ref",
+                reference.id,
                 [subtraction.id],
             )
             is None
@@ -953,7 +962,7 @@ class TestHasResourcesForAnalysisJob:
         fake: DataFaker,
         mongo: Mongo,
     ):
-        subtraction_id = await self._seed(fake, mongo, archived=True)
+        subtraction_id = await self._seed(data_layer, fake, mongo, archived=True)
 
         with pytest.raises(ResourceConflictError, match=r"Reference is archived"):
             await data_layer.samples.has_resources_for_analysis_job(
@@ -967,7 +976,7 @@ class TestHasResourcesForAnalysisJob:
         fake: DataFaker,
         mongo: Mongo,
     ):
-        subtraction_id = await self._seed(fake, mongo)
+        subtraction_id = await self._seed(data_layer, fake, mongo)
 
         with pytest.raises(
             ResourceConflictError,
@@ -1534,43 +1543,47 @@ class TestDelete:
 
         assert await mongo.samples.find_one() is None
 
-    async def test_cleans_storage_for_postgres_only_sample(
+    async def test_postgres_native_sample_cleans_storage(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
         memory_storage: StorageBackend,
         pg: AsyncEngine,
     ):
-        """A sample with no Mongo document still has its stored files removed.
+        """Deleting a Postgres-native sample (no ``legacy_id``) removes its Postgres row
+        and cleans up its storage prefix instead of raising ``ResourceNotFoundError``.
 
-        Storage cleanup keys on the sample's own prefix, so a Postgres-native sample
-        (``legacy_id`` is ``None``, matching no Mongo document) must not orphan its
-        files just because the Mongo delete matched nothing.
+        The sample has no Mongo document, so the delete's success signal comes from the
+        ``legacy_samples`` rowcount, not ``delete_one``'s ``deleted_count``.
         """
         user = await fake.users.create()
 
         async with AsyncSession(pg) as session:
             sample = SQLLegacySample(
                 legacy_id=None,
-                name="native",
+                name="Postgres Native",
                 library_type=LibraryType.normal.value,
                 created_at=virtool.utils.timestamp(),
                 user_id=user.id,
                 all_read=True,
+                all_write=True,
             )
             session.add(sample)
             await session.flush()
-            sample_pk = sample.id
+            sample_id = sample.id
             await session.commit()
 
-        async def _reads():
+        async def _content() -> AsyncIterator[bytes]:
             yield b"reads"
 
-        await memory_storage.write(f"samples/{sample_pk}/reads_1.fq.gz", _reads())
+        key = sample_file_key(str(sample_id), "reads_1.fq.gz")
+        await memory_storage.write(key, _content())
 
-        await data_layer.samples.delete(sample_pk)
+        await data_layer.samples.delete(sample_id)
 
-        assert await get_row_by_id(pg, SQLLegacySample, sample_pk) is None
-        assert [
-            obj.key async for obj in memory_storage.list(f"samples/{sample_pk}/")
-        ] == []
+        assert await get_row_by_id(pg, SQLLegacySample, sample_id) is None
+
+        remaining = [
+            obj.key async for obj in memory_storage.list(sample_prefix(str(sample_id)))
+        ]
+        assert remaining == []

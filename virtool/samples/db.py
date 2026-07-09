@@ -236,10 +236,9 @@ class DeriveWorkflowTagsTransform(AbstractTransform):
 def compose_sample_rights_filter(client) -> ColumnExpressionArgument[bool]:
     """Compose the Postgres predicate scoping samples to those ``client`` can read.
 
-    A full administrator may read every sample. Otherwise the requesting user owns the
-    sample, the sample is world-readable, or the sample is readable by a group the user
-    belongs to. This mirrors :func:`virtool.samples.utils.has_sample_right` so a sample's
-    list and single-resource views never disagree about who may read it.
+    The requesting user owns the sample, the sample is world-readable, or the sample is
+    readable by a group the user belongs to. A full administrator sees every sample,
+    matching the single-resource bypass in :func:`has_sample_right`.
     """
     if client.administrator_role == AdministratorRole.FULL:
         return true()

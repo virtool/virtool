@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
+from tests.fixtures.references import seed_reference
 from tests.fixtures.response import RespIs
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
@@ -585,14 +586,18 @@ class TestCreate:
     async def test_checks(
         self,
         error,
+        fake: DataFaker,
         resp_is,
         mongo: Mongo,
+        pg: AsyncEngine,
         spawn_client: ClientSpawner,
         check_ref_right,
     ):
         client = await spawn_client(authenticated=True)
 
-        await mongo.references.insert_one({"_id": "foo"})
+        user = await fake.users.create()
+
+        await seed_reference(mongo, pg, "foo", user.id, name="Foo")
 
         if error == "409_running":
             await mongo.indexes.insert_one({"ready": False, "reference": {"id": "foo"}})
@@ -738,36 +743,27 @@ async def test_delete_index(
     user = await fake.users.create()
 
     if error != 404:
-        await asyncio.gather(
-            mongo.references.insert_one(
-                {"_id": "foo", "archived": False, "data_type": "genome", "name": "Foo"},
-            ),
-            mongo.indexes.insert_one(
-                {
-                    "_id": index_id,
-                    "created_at": static_time.iso,
-                    "has_files": True,
-                    "manifest": {"foo": 2},
-                    "ready": True,
-                    "reference": {"id": "foo"},
-                    "user": {"id": user.id},
-                    "version": 4,
-                },
-            ),
+        await seed_reference(
+            mongo,
+            pg,
+            "foo",
+            user.id,
+            name="Foo",
+            created_at=static_time.datetime,
         )
 
-        async with AsyncSession(pg) as session:
-            session.add(
-                SQLReference(
-                    legacy_id="foo",
-                    name="Foo",
-                    description="",
-                    created_at=static_time.datetime,
-                    source_types=[],
-                    user_id=user.id,
-                ),
-            )
-            await session.commit()
+        await mongo.indexes.insert_one(
+            {
+                "_id": index_id,
+                "created_at": static_time.iso,
+                "has_files": True,
+                "manifest": {"foo": 2},
+                "ready": True,
+                "reference": {"id": "foo"},
+                "user": {"id": user.id},
+                "version": 4,
+            },
+        )
 
     response = await client.delete(f"/indexes/{index_id}")
 
@@ -797,16 +793,10 @@ async def test_upload(
 
     files = {"file": open(path, "rb")}
 
-    user, _ = await asyncio.gather(
-        fake.users.create(),
-        mongo.references.insert_many(
-            [
-                {"_id": "bar", "archived": False, "data_type": "genome", "name": "Bar"},
-                {"_id": "foo", "archived": False, "data_type": "genome", "name": "Foo"},
-            ],
-            session=None,
-        ),
-    )
+    user = await fake.users.create()
+
+    await seed_reference(mongo, pg, "bar", user.id, name="Bar")
+    await seed_reference(mongo, pg, "foo", user.id, name="Foo")
 
     index = {"_id": "foo", "reference": {"id": "bar"}, "user": {"id": user.id}}
 
@@ -950,6 +940,7 @@ async def test_finalize(
 async def test_download(
     status: int,
     example_path: Path,
+    fake: DataFaker,
     memory_storage: StorageBackend,
     mongo: Mongo,
     pg: AsyncEngine,
@@ -957,18 +948,12 @@ async def test_download(
 ):
     client = await spawn_job_client(authenticated=True)
 
-    await asyncio.gather(
-        mongo.indexes.insert_one(
-            {"_id": "test_index", "reference": {"id": "test_reference"}},
-        ),
-        mongo.references.insert_one(
-            {
-                "_id": "test_reference",
-                "archived": False,
-                "data_type": "genome",
-                "name": "Test A",
-            },
-        ),
+    user = await fake.users.create()
+
+    await seed_reference(mongo, pg, "test_reference", user.id, name="Test A")
+
+    await mongo.indexes.insert_one(
+        {"_id": "test_index", "reference": {"id": "test_reference"}},
     )
 
     path = example_path / "indexes" / "reference.1.bt2"

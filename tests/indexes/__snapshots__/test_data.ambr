@@ -84,7 +84,7 @@
     'ready': True,
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'bar',
+      'id': 1,
       'name': 'Bar',
     }),
     'user': dict({

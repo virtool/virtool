@@ -17,7 +17,10 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.events import Operation, emit, emits
-from virtool.data.topg import retry_both_transactions
+from virtool.data.topg import (
+    compose_legacy_id_single_expression,
+    retry_both_transactions,
+)
 from virtool.data.transforms import apply_transforms
 from virtool.history.models import HistorySearchResult
 from virtool.history.sql import SQLLegacyHistory
@@ -39,7 +42,11 @@ from virtool.references.db import (
     resolve_reference_legacy_id,
 )
 from virtool.references.models import ReferenceNested
-from virtool.references.transforms import AttachReferenceTransform
+from virtool.references.sql import SQLReference
+from virtool.references.transforms import (
+    AttachReferenceTransform,
+    shape_nested_reference,
+)
 from virtool.storage.cleanup import delete_prefix
 from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
@@ -170,20 +177,25 @@ class IndexData:
             index_id,
         )
 
-        if reference_field and (
-            reference := await self._mongo.references.find_one(
-                {
-                    "_id": await resolve_reference_legacy_id(
-                        self._pg,
-                        reference_field["id"],
-                    ),
-                },
-                ["data_type", "name"],
-            )
-        ):
-            return ReferenceNested(**reference)
+        if not reference_field:
+            raise ResourceNotFoundError
 
-        raise ResourceNotFoundError
+        async with AsyncSession(self._pg) as session:
+            row = (
+                await session.execute(
+                    select(SQLReference.id, SQLReference.name).where(
+                        compose_legacy_id_single_expression(
+                            SQLReference,
+                            reference_field["id"],
+                        ),
+                    ),
+                )
+            ).first()
+
+        if row is None:
+            raise ResourceNotFoundError
+
+        return ReferenceNested(**shape_nested_reference(row.id, row.name))
 
     async def get_otus_json(
         self,

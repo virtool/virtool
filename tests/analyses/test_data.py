@@ -15,7 +15,7 @@ from virtool.analyses.sql import (
     SQLAnalysisFile,
     SQLAnalysisSubtraction,
 )
-from virtool.api.client import UserClient
+from virtool.api.client import JobClient, UserClient
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
@@ -23,6 +23,7 @@ from virtool.models.enums import AnalysisWorkflow
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row, get_row_by_id
+from virtool.references.sql import SQLReference
 from virtool.samples.oas import CreateAnalysisRequest
 from virtool.samples.sql import SQLLegacySample
 from virtool.subtractions.pg import SQLSubtraction
@@ -51,6 +52,16 @@ async def subtraction_ids(fake: DataFaker) -> dict[str, int]:
     return {"subtraction_1": first.id, "subtraction_2": second.id}
 
 
+async def _legacy_id(pg: AsyncEngine, reference_pk: int) -> str:
+    """Return the Mongo ``_id`` of a reference, which its public id no longer is."""
+    async with AsyncSession(pg) as session:
+        return (
+            await session.execute(
+                select(SQLReference.legacy_id).where(SQLReference.id == reference_pk),
+            )
+        ).scalar_one()
+
+
 def build_user_client(user) -> UserClient:
     """Build a ``UserClient`` authenticated as ``user``."""
     return UserClient(
@@ -66,8 +77,9 @@ def build_user_client(user) -> UserClient:
 class SampleSetup(NamedTuple):
     """Identifiers for the sample and reference seeded by ``setup_sample``."""
 
-    user_id: str
-    reference_id: str
+    user_id: int
+    reference_id: int
+    reference_legacy_id: str
     client: UserClient
 
 
@@ -141,6 +153,7 @@ async def setup_sample(
     return SampleSetup(
         user_id=user.id,
         reference_id=reference.id,
+        reference_legacy_id=await _legacy_id(pg, reference.id),
         client=build_user_client(user),
     )
 
@@ -360,17 +373,20 @@ class TestFindSampleRights:
         pg: AsyncEngine,
         setup_sample: SampleSetup,
     ):
-        """A full administrator lists analyses on samples they neither own nor share."""
+        """A full administrator lists analyses on another user's private sample,
+        matching the single-resource bypass in ``has_sample_right``.
+        """
+        sample_owner = await fake.users.create()
         administrator = await fake.users.create(
             administrator_role=AdministratorRole.FULL,
         )
-        sample_owner = await fake.users.create()
 
         await self._insert_sample(pg, "other_private", sample_owner.id, all_read=False)
+
         hidden = await self._seed_analysis(
             mongo,
             pg,
-            "admin_visible",
+            "private",
             "other_private",
             setup_sample,
         )
@@ -381,9 +397,10 @@ class TestFindSampleRights:
             build_user_client(administrator),
         )
 
-        assert hidden in [document.id for document in found.documents]
+        assert [document.id for document in found.documents] == [hidden]
+        assert found.total_count == 1
 
-    async def test_base_administrator_scoped_like_a_user(
+    async def test_base_administrator_scoped_like_user(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
@@ -391,14 +408,16 @@ class TestFindSampleRights:
         pg: AsyncEngine,
         setup_sample: SampleSetup,
     ):
-        """Only the full role bypasses rights; a base administrator is scoped."""
+        """An administrator below the full role is scoped like any other user and does
+        not see another user's private sample.
+        """
+        sample_owner = await fake.users.create()
         administrator = await fake.users.create(
             administrator_role=AdministratorRole.BASE,
         )
-        sample_owner = await fake.users.create()
 
         await self._insert_sample(pg, "other_private", sample_owner.id, all_read=False)
-        await self._seed_analysis(mongo, pg, "hidden", "other_private", setup_sample)
+        await self._seed_analysis(mongo, pg, "private", "other_private", setup_sample)
 
         found = await data_layer.analyses.find(
             1,
@@ -677,6 +696,40 @@ class TestHasRight:
             "read",
         )
 
+    async def test_job_client_has_full_access(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """A job-authenticated client holds both rights on another user's private
+        sample, since a job's identity is neither a user nor an administrator.
+        """
+        sample_owner = await fake.users.create()
+
+        await self._insert_sample(
+            pg,
+            "owner_private",
+            sample_owner.id,
+            all_read=False,
+            all_write=False,
+        )
+        await self._seed_analysis(
+            mongo,
+            pg,
+            "private",
+            "owner_private",
+            sample_owner.id,
+            setup_sample.reference_id,
+        )
+
+        client = JobClient(job_id=1)
+
+        assert await data_layer.analyses.has_right("private", client, "read")
+        assert await data_layer.analyses.has_right("private", client, "write")
+
     async def test_missing_analysis_raises(
         self,
         data_layer: DataLayer,
@@ -828,7 +881,8 @@ class TestCreate:
         assert row.ready is False
         assert row.results is None
         assert row.sample == "test_sample"
-        assert row.reference == setup_sample.reference_id
+        assert row.reference == setup_sample.reference_legacy_id
+        assert row.reference_id == setup_sample.reference_id
         assert row.created_at == row.updated_at
         assert isinstance(row.user_id, int)
 
