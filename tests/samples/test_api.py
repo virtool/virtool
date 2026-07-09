@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner, VirtoolTestClient
+from tests.samples.utils import add_sample_uploads
 from virtool.analyses.sql import SQLAnalysis, SQLAnalysisSubtraction
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
@@ -1309,10 +1310,7 @@ class TestDelete:
             reserved=True,
         )
 
-        await mongo.samples.update_one(
-            {"_id": "test"},
-            {"$set": {"uploads": [{"id": upload.id}]}},
-        )
+        await add_sample_uploads(mongo, pg, "test", [upload.id])
 
         resp = await client.delete(f"/samples/{sample_id}")
 

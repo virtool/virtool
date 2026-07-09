@@ -17,7 +17,9 @@ from virtool.samples.sql import (
     SQLLegacySample,
     SQLLegacySampleLabel,
     SQLLegacySampleSubtraction,
+    SQLSampleUpload,
 )
+from virtool.uploads.sql import SQLUpload
 from virtool.users.pg import SQLUser
 
 logger = get_logger("migration")
@@ -190,6 +192,117 @@ async def _insert_join_rows(
             insert(SQLLegacySampleSubtraction)
             .values(sample_id=sample_pk, subtraction_id=subtraction_id)
             .on_conflict_do_nothing(),
+        )
+
+
+async def backfill_sample_uploads_to_postgres(ctx: MigrationContext) -> None:
+    """Backfill the sample-to-uploads membership from Mongo into ``sample_uploads``.
+
+    The membership lives on each Mongo ``samples`` document as an ordered
+    ``uploads`` array of ``{"id": <upload id>}`` entries. One ``sample_uploads``
+    row is written per entry, with ``index`` preserving the array position so the
+    read side can reproduce the original order.
+
+    Documents are processed one at a time and committed individually so memory
+    stays bounded and an interruption keeps the rows already written. Samples that
+    already have ``sample_uploads`` rows are skipped wholesale, and every insert
+    uses ``ON CONFLICT (upload_id) DO NOTHING`` as a second line of defence, so the
+    backfill is safe to re-run.
+
+    ``sample_id`` is resolved from ``legacy_samples`` by ``legacy_id``; a sample
+    document with no matching Postgres row raises, since the sample copy must have
+    run first. Individual upload ids that no longer exist in Postgres are skipped
+    with a warning rather than aborting the run: a hard-deleted upload is already
+    dropped from the Mongo-backed read today, so skipping it keeps the two stores
+    consistent.
+    """
+    async with AsyncSession(ctx.pg) as session:
+        existing_result = await session.execute(
+            select(SQLSampleUpload.sample).distinct(),
+        )
+        backfilled_samples = {row[0] for row in existing_result}
+
+        logger.info(
+            "found samples with uploads already in postgres",
+            count=len(backfilled_samples),
+        )
+
+        sample_ids = [
+            document["_id"]
+            async for document in ctx.mongo.samples.find({}, projection=["_id"])
+        ]
+
+        migrated_count = 0
+        skipped_count = 0
+        missing_upload_count = 0
+
+        for sample_id in sample_ids:
+            if sample_id in backfilled_samples:
+                skipped_count += 1
+                continue
+
+            document = await ctx.mongo.samples.find_one(
+                {"_id": sample_id},
+                projection=["uploads"],
+            )
+
+            if document is None or not document.get("uploads"):
+                skipped_count += 1
+                continue
+
+            sample_pk = (
+                await session.execute(
+                    select(SQLLegacySample.id).where(
+                        SQLLegacySample.legacy_id == sample_id,
+                    ),
+                )
+            ).scalar_one_or_none()
+
+            if sample_pk is None:
+                msg = (
+                    f"sample {sample_id!r} has uploads but no legacy_samples row; "
+                    "run the sample copy first"
+                )
+                raise ValueError(msg)
+
+            for index, upload in enumerate(document["uploads"]):
+                upload_id = upload["id"]
+
+                upload_exists = (
+                    await session.execute(
+                        select(SQLUpload.id).where(SQLUpload.id == upload_id),
+                    )
+                ).scalar_one_or_none()
+
+                if upload_exists is None:
+                    missing_upload_count += 1
+                    logger.warning(
+                        "sample references an upload that no longer exists; skipping",
+                        sample_id=sample_id,
+                        upload_id=upload_id,
+                    )
+                    continue
+
+                await session.execute(
+                    insert(SQLSampleUpload)
+                    .values(
+                        sample=sample_id,
+                        sample_id=sample_pk,
+                        upload_id=upload_id,
+                        index=index,
+                    )
+                    .on_conflict_do_nothing(index_elements=["upload_id"]),
+                )
+
+            await session.commit()
+
+            migrated_count += 1
+
+        logger.info(
+            "sample uploads migration complete",
+            migrated=migrated_count,
+            skipped=skipped_count,
+            missing_uploads=missing_upload_count,
         )
 
 

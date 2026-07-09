@@ -52,7 +52,6 @@ from virtool.samples.checks import (
 )
 from virtool.samples.db import (
     AttachArtifactsAndReadsTransform,
-    AttachMongoUploadsTransform,
     AttachUploadsTransform,
     DeriveWorkflowTagsTransform,
     compose_sample_workflow_filter,
@@ -282,7 +281,6 @@ class SamplesData(DataLayerDomain):
                 for row in rows
             ],
             [
-                AttachMongoUploadsTransform(self._mongo),
                 DeriveWorkflowTagsTransform(),
                 AttachJobTransform(self._pg),
                 AttachLabelsTransform(self._pg),
@@ -418,7 +416,6 @@ class SamplesData(DataLayerDomain):
         document = await apply_transforms(
             _map_sample_row(row, label_ids, subtraction_ids),
             [
-                AttachMongoUploadsTransform(self._mongo),
                 DeriveWorkflowTagsTransform(),
                 AttachArtifactsAndReadsTransform(self._pg),
                 AttachJobTransform(self._pg),
@@ -792,16 +789,18 @@ class SamplesData(DataLayerDomain):
                 .values(quality=quality, ready=True),
             )
 
-        uploads = await get_one_field(self._mongo.samples, "uploads", legacy_id) or []
-        upload_ids = [upload["id"] for upload in uploads]
-
         names_on_disk = []
 
         async with AsyncSession(self._pg) as session:
             rows = (
                 (
                     await session.execute(
-                        select(SQLUpload).where(SQLUpload.id.in_(upload_ids)),
+                        select(SQLUpload)
+                        .join(
+                            SQLSampleUpload,
+                            SQLSampleUpload.upload_id == SQLUpload.id,
+                        )
+                        .where(SQLSampleUpload.sample_id == sample_pk),
                     )
                 )
                 .unique()

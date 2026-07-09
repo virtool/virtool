@@ -701,5 +701,12 @@
       'name': 'create sample uploads table',
       'revision': '1ffbe2dcb108',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 101,
+      'name': 'backfill sample uploads to postgres',
+      'revision': 'n03aryu6frku',
+    }),
   ])
 # ---
