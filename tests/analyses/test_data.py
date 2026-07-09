@@ -352,6 +352,63 @@ class TestFindSampleRights:
         assert found.documents == []
         assert found.total_count == 0
 
+    async def test_full_administrator_sees_private_sample(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """A full administrator lists analyses on samples they neither own nor share."""
+        administrator = await fake.users.create(
+            administrator_role=AdministratorRole.FULL,
+        )
+        sample_owner = await fake.users.create()
+
+        await self._insert_sample(pg, "other_private", sample_owner.id, all_read=False)
+        hidden = await self._seed_analysis(
+            mongo,
+            pg,
+            "admin_visible",
+            "other_private",
+            setup_sample,
+        )
+
+        found = await data_layer.analyses.find(
+            1,
+            25,
+            build_user_client(administrator),
+        )
+
+        assert hidden in [document.id for document in found.documents]
+
+    async def test_base_administrator_scoped_like_a_user(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """Only the full role bypasses rights; a base administrator is scoped."""
+        administrator = await fake.users.create(
+            administrator_role=AdministratorRole.BASE,
+        )
+        sample_owner = await fake.users.create()
+
+        await self._insert_sample(pg, "other_private", sample_owner.id, all_read=False)
+        await self._seed_analysis(mongo, pg, "hidden", "other_private", setup_sample)
+
+        found = await data_layer.analyses.find(
+            1,
+            25,
+            build_user_client(administrator),
+        )
+
+        assert found.documents == []
+        assert found.total_count == 0
+
 
 class TestHasRight:
     """Rights on an analysis are resolved from the parent sample's Postgres row."""

@@ -762,6 +762,81 @@ class TestHasRight:
         )
 
 
+class TestFindRights:
+    """``find`` scopes the sample list to those the requesting client can read."""
+
+    @staticmethod
+    def _build_client(user) -> UserClient:
+        return UserClient(
+            administrator_role=user.administrator_role,
+            authenticated=True,
+            force_reset=False,
+            groups=[group.id for group in user.groups],
+            permissions=user.permissions.dict(),
+            user_id=user.id,
+        )
+
+    async def test_full_administrator_sees_private_sample(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """A full administrator lists a sample they neither own nor share."""
+        administrator = await fake.users.create(
+            administrator_role=AdministratorRole.FULL,
+        )
+        sample_owner = await fake.users.create()
+
+        await insert_rights_sample(
+            pg,
+            "other_private",
+            user_id=sample_owner.id,
+            all_read=False,
+        )
+
+        result = await data_layer.samples.find(
+            [],
+            1,
+            25,
+            "",
+            [],
+            self._build_client(administrator),
+        )
+
+        assert result.found_count == 1
+        assert [document.name for document in result.documents] == ["other_private"]
+
+    async def test_non_owner_cannot_see_private_sample(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """A non-administrator without rights does not list another user's sample."""
+        user = await fake.users.create()
+        sample_owner = await fake.users.create()
+
+        await insert_rights_sample(
+            pg,
+            "other_private",
+            user_id=sample_owner.id,
+            all_read=False,
+        )
+
+        result = await data_layer.samples.find(
+            [],
+            1,
+            25,
+            "",
+            [],
+            self._build_client(user),
+        )
+
+        assert result.found_count == 0
+        assert result.documents == []
+
+
 class TestHasResourcesForAnalysisJob:
     @staticmethod
     async def _seed(
@@ -1458,3 +1533,44 @@ class TestDelete:
             ).scalars().all() == []
 
         assert await mongo.samples.find_one() is None
+
+    async def test_cleans_storage_for_postgres_only_sample(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        memory_storage: StorageBackend,
+        pg: AsyncEngine,
+    ):
+        """A sample with no Mongo document still has its stored files removed.
+
+        Storage cleanup keys on the sample's own prefix, so a Postgres-native sample
+        (``legacy_id`` is ``None``, matching no Mongo document) must not orphan its
+        files just because the Mongo delete matched nothing.
+        """
+        user = await fake.users.create()
+
+        async with AsyncSession(pg) as session:
+            sample = SQLLegacySample(
+                legacy_id=None,
+                name="native",
+                library_type=LibraryType.normal.value,
+                created_at=virtool.utils.timestamp(),
+                user_id=user.id,
+                all_read=True,
+            )
+            session.add(sample)
+            await session.flush()
+            sample_pk = sample.id
+            await session.commit()
+
+        async def _reads():
+            yield b"reads"
+
+        await memory_storage.write(f"samples/{sample_pk}/reads_1.fq.gz", _reads())
+
+        await data_layer.samples.delete(sample_pk)
+
+        assert await get_row_by_id(pg, SQLLegacySample, sample_pk) is None
+        assert [
+            obj.key async for obj in memory_storage.list(f"samples/{sample_pk}/")
+        ] == []

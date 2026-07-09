@@ -11,6 +11,7 @@ from sqlalchemy import (
     not_,
     or_,
     select,
+    true,
 )
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from yarl import URL
@@ -25,6 +26,7 @@ from virtool.data.topg import (
 )
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.groups.pg import SQLGroup
+from virtool.models.roles import AdministratorRole
 from virtool.samples.sql import (
     SQLLegacySample,
     SQLSampleArtifact,
@@ -234,9 +236,14 @@ class DeriveWorkflowTagsTransform(AbstractTransform):
 def compose_sample_rights_filter(client) -> ColumnExpressionArgument[bool]:
     """Compose the Postgres predicate scoping samples to those ``client`` can read.
 
-    The requesting user owns the sample, the sample is world-readable, or the sample is
-    readable by a group the user belongs to.
+    A full administrator may read every sample. Otherwise the requesting user owns the
+    sample, the sample is world-readable, or the sample is readable by a group the user
+    belongs to. This mirrors :func:`virtool.samples.utils.has_sample_right` so a sample's
+    list and single-resource views never disagree about who may read it.
     """
+    if client.administrator_role == AdministratorRole.FULL:
+        return true()
+
     rights_filter = [
         SQLLegacySample.all_read.is_(True),
         SQLLegacySample.user_id == client.user_id,

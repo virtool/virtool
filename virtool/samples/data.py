@@ -612,7 +612,7 @@ class SamplesData(DataLayerDomain):
             mongo_session,
             pg_session,
         ):
-            result = await self._mongo.samples.delete_one(
+            await self._mongo.samples.delete_one(
                 {"_id": legacy_id}, session=mongo_session
             )
             await self._mongo.analyses.delete_many(
@@ -682,20 +682,17 @@ class SamplesData(DataLayerDomain):
                 ),
             )
 
-        if result.deleted_count:
-            for key, exc in await delete_prefix(
-                self._storage, sample_prefix(sample_storage_id(sample_pk, legacy_id))
-            ):
-                logger.error(
-                    "storage cleanup failed; file orphaned",
-                    sample_id=sample_pk,
-                    key=key,
-                    error=repr(exc),
-                )
+        for key, exc in await delete_prefix(
+            self._storage, sample_prefix(sample_storage_id(sample_pk, legacy_id))
+        ):
+            logger.error(
+                "storage cleanup failed; file orphaned",
+                sample_id=sample_pk,
+                key=key,
+                error=repr(exc),
+            )
 
-            return sample
-
-        raise ResourceNotFoundError
+        return sample
 
     @emits(Operation.UPDATE, name="finalize")
     async def finalize(

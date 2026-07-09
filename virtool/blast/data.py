@@ -121,8 +121,33 @@ class BLASTData(DataLayerDomain):
                         await self._check(row)
                 except Exception:
                     logger.exception("failed to advance blast", id=row.id, rid=row.rid)
+                    await self._back_off(row)
 
         await asyncio.gather(*[advance(row) for row in due])
+
+    async def _back_off(self, row: Row) -> None:
+        """Delay the next attempt on a row whose advance failed against NCBI.
+
+        A failed advance never reaches the database, so the row's ``interval`` and
+        ``last_checked_at`` would otherwise stay untouched and the sweeper would retry
+        it on the very next pass. Bump them with the same backoff the not-ready check
+        uses so an NCBI outage spaces retries out instead of hammering NCBI.
+        """
+        timestamp = virtool.utils.timestamp()
+
+        async with AsyncSession(self._pg) as session:
+            await session.execute(
+                update(SQLNuVsBlast)
+                .where(SQLNuVsBlast.id == row.id)
+                .values(
+                    last_checked_at=timestamp,
+                    interval=min(
+                        (row.interval or INITIAL_INTERVAL) + INTERVAL_STEP,
+                        MAX_INTERVAL,
+                    ),
+                ),
+            )
+            await session.commit()
 
     async def _delete_expired(self, expired: list[Row], now: datetime) -> None:
         """Abandon searches that have outlived :data:`TIMEOUT`.

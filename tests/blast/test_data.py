@@ -578,7 +578,7 @@ class TestSweepSelection:
         pg,
         static_time,
     ):
-        """A row that raises against NCBI is left for the next sweep."""
+        """A row that raises against NCBI does not prevent others advancing."""
         failing_id = await _insert_blast(
             pg, analysis_ids["analysis"], 12, static_time, rid="RID_FAILS"
         )
@@ -596,11 +596,67 @@ class TestSweepSelection:
 
         await blast_data.sweep()
 
-        failing = await _get_blast(pg, failing_id)
         succeeding = await _get_blast(pg, succeeding_id)
 
-        assert failing.interval == 3
+        assert await _get_blast(pg, failing_id) is not None
         assert succeeding.interval == 8
+
+
+class TestSweepBackOff:
+    """A row whose advance fails against NCBI is backed off, not retried at once."""
+
+    async def test_check_failure_backs_off(
+        self,
+        blast_data: BLASTData,
+        analysis_ids: dict[str, int],
+        mocker,
+        pg,
+        static_time,
+    ):
+        """A failed status check bumps the interval and ``last_checked_at``.
+
+        Without the backoff the untouched row would be due again on the next sweep,
+        hammering NCBI during an outage.
+        """
+        mocker.patch(
+            "virtool.blast.data.check_rid",
+            side_effect=OSError("NCBI is unreachable"),
+        )
+
+        row_id = await _insert_blast(
+            pg, analysis_ids["analysis"], 12, static_time, rid="RID_FAILS"
+        )
+
+        await blast_data.sweep()
+
+        row = await _get_blast(pg, row_id)
+
+        assert row.interval == 8
+        assert row.last_checked_at == static_time.datetime
+
+    async def test_initialize_failure_backs_off(
+        self,
+        blast_data: BLASTData,
+        analysis_ids: dict[str, int],
+        mocker,
+        pg,
+        static_time,
+    ):
+        """A failed submission bumps the interval and ``last_checked_at``."""
+        mocker.patch(
+            "virtool.blast.data.fetch_ncbi_blast_html",
+            side_effect=OSError("NCBI is unreachable"),
+        )
+
+        row_id = await _insert_blast(pg, analysis_ids["analysis"], 12, static_time)
+
+        await blast_data.sweep()
+
+        row = await _get_blast(pg, row_id)
+
+        assert row.rid is None
+        assert row.interval == 8
+        assert row.last_checked_at == static_time.datetime
 
 
 async def test_delete_nuvs_blast(
