@@ -76,6 +76,7 @@ from virtool.samples.utils import (
     define_initial_workflows,
     sample_file_key,
     sample_prefix,
+    sample_storage_id,
 )
 from virtool.storage.cleanup import delete_prefix
 from virtool.storage.protocol import StorageBackend
@@ -683,11 +684,11 @@ class SamplesData(DataLayerDomain):
 
         if result.deleted_count:
             for key, exc in await delete_prefix(
-                self._storage, sample_prefix(legacy_id)
+                self._storage, sample_prefix(sample_storage_id(sample_pk, legacy_id))
             ):
                 logger.error(
                     "storage cleanup failed; file orphaned",
-                    sample_id=legacy_id,
+                    sample_id=sample_pk,
                     key=key,
                     error=repr(exc),
                 )
@@ -1018,20 +1019,29 @@ class SamplesData(DataLayerDomain):
 
     async def upload_artifact(
         self,
-        sample_id: str,
+        sample_id: int | str,
         artifact_type: str | None,
         filename: str,
         chunker: AsyncGenerator[bytearray],
     ) -> dict:
+        resolved = await self._resolve_ids(sample_id)
+
+        if resolved is None:
+            raise ResourceNotFoundError
+
         if artifact_type and artifact_type not in ArtifactType.to_list():
             raise ResourceConflictError("Unsupported sample artifact type")
+
+        sample_pk, legacy_id = resolved
+        storage_id = sample_storage_id(sample_pk, legacy_id)
 
         try:
             artifact = await create_artifact_file(
                 self._pg,
                 filename,
                 filename,
-                sample_id,
+                sample_pk,
+                storage_id,
                 artifact_type,
             )
         except exc.IntegrityError:
@@ -1039,7 +1049,7 @@ class SamplesData(DataLayerDomain):
                 "Artifact file has already been uploaded for this sample",
             )
 
-        key = sample_file_key(sample_id, filename)
+        key = sample_file_key(storage_id, filename)
 
         try:
             size = await self._storage.write(key, chunker)
@@ -1057,12 +1067,20 @@ class SamplesData(DataLayerDomain):
 
     async def upload_reads(
         self,
-        sample_id: str,
+        sample_id: int | str,
         filename: str,
         chunker: AsyncGenerator[bytearray],
         upload_id: int | None = None,
     ) -> dict:
-        key = sample_file_key(sample_id, filename)
+        resolved = await self._resolve_ids(sample_id)
+
+        if resolved is None:
+            raise ResourceNotFoundError
+
+        sample_pk, legacy_id = resolved
+        storage_id = sample_storage_id(sample_pk, legacy_id)
+
+        key = sample_file_key(storage_id, filename)
 
         first = await anext(chunker, None)
 
@@ -1084,7 +1102,8 @@ class SamplesData(DataLayerDomain):
                 size,
                 filename,
                 filename,
-                sample_id,
+                sample_pk,
+                storage_id,
                 upload_id=upload_id,
             )
         except exc.IntegrityError:
