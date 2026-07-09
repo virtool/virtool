@@ -10,7 +10,7 @@
     'description': '',
     'groups': list([
     ]),
-    'id': 'foo',
+    'id': 1,
     'imported_from': None,
     'latest_build': None,
     'name': 'Foo',
@@ -42,7 +42,7 @@
     'description': '',
     'groups': list([
     ]),
-    'id': 'foo',
+    'id': 1,
     'imported_from': None,
     'latest_build': None,
     'name': 'Foo',
@@ -64,13 +64,13 @@
   })
 # ---
 # name: TestCreate.test_clone[location]
-  '/references/v1/bf1b993c'
+  '/references/v1/2'
 # ---
 # name: TestCreate.test_clone[resp]
   dict({
     'archived': False,
     'cloned_from': dict({
-      'id': 'foo',
+      'id': 1,
       'name': 'Foo',
     }),
     'contributors': list([
@@ -80,7 +80,7 @@
     'description': '',
     'groups': list([
     ]),
-    'id': 'bf1b993c',
+    'id': 2,
     'imported_from': None,
     'latest_build': None,
     'name': 'Test 1',
@@ -128,7 +128,7 @@
     'description': '',
     'groups': list([
     ]),
-    'id': str,
+    'id': int,
     'imported_from': dict({
       'created_at': '2015-10-06T20:00:00Z',
       'id': 1,
@@ -181,7 +181,7 @@
   })
 # ---
 # name: TestCreate.test_ok[location]
-  'https://virtool.example.com/references/v1/bf1b993c'
+  'https://virtool.example.com/references/v1/1'
 # ---
 # name: TestCreate.test_ok[resp]
   dict({
@@ -194,7 +194,7 @@
     'description': 'A bunch of viruses used for testing',
     'groups': list([
     ]),
-    'id': 'bf1b993c',
+    'id': 1,
     'imported_from': None,
     'latest_build': None,
     'name': 'Test Viruses',
@@ -256,7 +256,7 @@
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'foo',
+      'id': 1,
       'name': 'Foo',
     }),
     'user': dict({
@@ -293,7 +293,7 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'foo',
+      'id': 1,
       'name': 'Foo',
     }),
     'remote': None,
@@ -327,7 +327,7 @@
     'name': 'Tobacco mosaic virus',
     'reference': dict({
       'data_type': 'genome',
-      'id': 'foo',
+      'id': 1,
       'name': 'Foo',
     }),
     'remote': None,
@@ -370,7 +370,7 @@
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'foo',
+      'id': 1,
       'name': 'Foo',
     }),
     'user': dict({
@@ -407,7 +407,7 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'foo',
+      'id': 1,
       'name': 'Foo',
     }),
     'remote': None,
@@ -441,7 +441,7 @@
     'name': 'Tobacco mosaic virus',
     'reference': dict({
       'data_type': 'genome',
-      'id': 'foo',
+      'id': 1,
       'name': 'Foo',
     }),
     'remote': None,
@@ -484,7 +484,7 @@
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'foo',
+      'id': 1,
       'name': 'Foo',
     }),
     'user': dict({
@@ -521,7 +521,7 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'foo',
+      'id': 1,
       'name': 'Foo',
     }),
     'remote': None,
@@ -555,7 +555,7 @@
     'name': 'Tobacco mosaic virus',
     'reference': dict({
       'data_type': 'genome',
-      'id': 'foo',
+      'id': 1,
       'name': 'Foo',
     }),
     'remote': None,
@@ -641,7 +641,7 @@
     'description': 'This is a test reference.',
     'groups': list([
     ]),
-    'id': 'foo',
+    'id': 1,
     'imported_from': None,
     'latest_build': None,
     'name': 'Bar',
@@ -697,7 +697,7 @@
         }),
         'reference': dict({
           'data_type': 'genome',
-          'id': 'bf1b993c',
+          'id': 1,
           'name': 'Test Reference',
         }),
         'user': dict({
@@ -721,7 +721,7 @@
         }),
         'reference': dict({
           'data_type': 'genome',
-          'id': 'bf1b993c',
+          'id': 1,
           'name': 'Test Reference',
         }),
         'user': dict({
@@ -745,7 +745,7 @@
         }),
         'reference': dict({
           'data_type': 'genome',
-          'id': 'bf1b993c',
+          'id': 1,
           'name': 'Test Reference',
         }),
         'user': dict({
@@ -769,7 +769,7 @@
         }),
         'reference': dict({
           'data_type': 'genome',
-          'id': 'bf1b993c',
+          'id': 1,
           'name': 'Test Reference',
         }),
         'user': dict({
@@ -793,7 +793,7 @@
         }),
         'reference': dict({
           'data_type': 'genome',
-          'id': 'bf1b993c',
+          'id': 1,
           'name': 'Test Reference',
         }),
         'user': dict({
@@ -820,7 +820,7 @@
     'description': '',
     'groups': list([
     ]),
-    'id': 'bf1b993c',
+    'id': 1,
     'imported_from': None,
     'latest_build': None,
     'name': 'Bar',
@@ -868,7 +868,7 @@
     'description': '',
     'groups': list([
     ]),
-    'id': 'foo',
+    'id': 1,
     'imported_from': None,
     'latest_build': None,
     'name': 'Foo',
@@ -900,7 +900,7 @@
     'description': '',
     'groups': list([
     ]),
-    'id': 'foo',
+    'id': 1,
     'imported_from': None,
     'latest_build': None,
     'name': 'Foo',
@@ -1054,7 +1054,7 @@
     'ready': False,
     'reference': dict({
       'data_type': 'genome',
-      'id': 'foo',
+      'id': 1,
       'name': 'Foo',
     }),
     'user': dict({
@@ -1168,7 +1168,7 @@
         'cloned_from': None,
         'created_at': '2015-10-06T20:00:00Z',
         'data_type': 'genome',
-        'id': 'group_member_active',
+        'id': 4,
         'imported_from': None,
         'latest_build': None,
         'name': 'Group Member Active',
@@ -1194,7 +1194,7 @@
         'cloned_from': None,
         'created_at': '2015-10-06T20:00:00Z',
         'data_type': 'genome',
-        'id': 'owned_active',
+        'id': 1,
         'imported_from': None,
         'latest_build': None,
         'name': 'Owned Active',
@@ -1220,7 +1220,7 @@
         'cloned_from': None,
         'created_at': '2015-10-06T20:00:00Z',
         'data_type': 'genome',
-        'id': 'user_member_active',
+        'id': 3,
         'imported_from': None,
         'latest_build': None,
         'name': 'User Member Active',
@@ -1257,7 +1257,7 @@
         'cloned_from': None,
         'created_at': '2015-10-06T20:00:00Z',
         'data_type': 'genome',
-        'id': 'owned_archived',
+        'id': 5,
         'imported_from': None,
         'latest_build': None,
         'name': 'Owned Archived',
@@ -1294,7 +1294,7 @@
         'cloned_from': None,
         'created_at': '2015-10-06T20:00:00Z',
         'data_type': 'genome',
-        'id': 'group_member_active',
+        'id': 4,
         'imported_from': None,
         'latest_build': None,
         'name': 'Group Member Active',
@@ -1320,7 +1320,7 @@
         'cloned_from': None,
         'created_at': '2015-10-06T20:00:00Z',
         'data_type': 'genome',
-        'id': 'owned_active',
+        'id': 1,
         'imported_from': None,
         'latest_build': None,
         'name': 'Owned Active',
@@ -1346,7 +1346,7 @@
         'cloned_from': None,
         'created_at': '2015-10-06T20:00:00Z',
         'data_type': 'genome',
-        'id': 'owned_archived',
+        'id': 5,
         'imported_from': None,
         'latest_build': None,
         'name': 'Owned Archived',
@@ -1372,7 +1372,7 @@
         'cloned_from': None,
         'created_at': '2015-10-06T20:00:00Z',
         'data_type': 'genome',
-        'id': 'user_member_active',
+        'id': 3,
         'imported_from': None,
         'latest_build': None,
         'name': 'User Member Active',
@@ -1410,7 +1410,7 @@
         'name': 'Papaya virus q',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': False,
@@ -1470,7 +1470,7 @@
         'name': 'Papaya virus q',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': False,
@@ -1494,7 +1494,7 @@
         'name': 'Papaya virus q',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': False,
@@ -1506,7 +1506,7 @@
         'name': 'Prunus virus F',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': True,
@@ -1530,7 +1530,7 @@
         'name': 'Prunus virus F',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': True,
@@ -1554,7 +1554,7 @@
         'name': 'Prunus virus F',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': True,
@@ -1578,7 +1578,7 @@
         'name': 'Prunus virus F',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': True,
@@ -1602,7 +1602,7 @@
         'name': 'Papaya virus q',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': False,
@@ -1614,7 +1614,7 @@
         'name': 'Prunus virus F',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': True,
@@ -1638,7 +1638,7 @@
         'name': 'Prunus virus F',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': True,
@@ -1662,7 +1662,7 @@
         'name': 'Prunus virus F',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': True,
@@ -1686,7 +1686,7 @@
         'name': 'Prunus virus F',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': True,
@@ -1710,7 +1710,7 @@
         'name': 'Prunus virus F',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': True,
@@ -1734,7 +1734,7 @@
         'name': 'Prunus virus F',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': True,

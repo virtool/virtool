@@ -25,7 +25,7 @@ class CreateReferenceRequest(BaseModel):
     )
     data_type: str = Field(default="genome", description="the sequence data type")
     organism: str = Field(default="", description="the organism")
-    clone_from: str | None = Field(
+    clone_from: int | str | None = Field(
         description="a valid ref_id that the new reference should be cloned from",
     )
     import_from: int | None = Field(

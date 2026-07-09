@@ -3,6 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.data.topg import both_transactions
@@ -30,22 +31,21 @@ async def insert_reference(mongo: Mongo, pg: AsyncEngine, document: dict) -> Non
         await write_legacy_reference(pg_session, document)
 
 
-async def _reference_pk(pg: AsyncEngine, ref_id: str) -> int:
+async def _legacy_id(pg: AsyncEngine, reference_pk: int) -> str:
+    """Return the Mongo ``_id`` of a reference, which its public id no longer is."""
     async with AsyncSession(pg) as session:
         return (
             await session.execute(
-                select(SQLReference.id).where(SQLReference.legacy_id == ref_id),
+                select(SQLReference.legacy_id).where(SQLReference.id == reference_pk),
             )
         ).scalar_one()
 
 
 async def _reference_user_row(
     pg: AsyncEngine,
-    ref_id: str,
+    reference_pk: int,
     user_id: int,
 ) -> SQLReferenceUser | None:
-    reference_pk = await _reference_pk(pg, ref_id)
-
     async with AsyncSession(pg) as session:
         return (
             await session.execute(
@@ -59,11 +59,9 @@ async def _reference_user_row(
 
 async def _reference_group_row(
     pg: AsyncEngine,
-    ref_id: str,
+    reference_pk: int,
     group_id: int,
 ) -> SQLReferenceGroup | None:
-    reference_pk = await _reference_pk(pg, ref_id)
-
     async with AsyncSession(pg) as session:
         return (
             await session.execute(
@@ -247,14 +245,15 @@ class TestCreate:
             user.id,
         )
 
-        assert await mongo.references.find_one(reference.id) is not None
+        assert (
+            await mongo.references.find_one(await _legacy_id(pg, reference.id))
+            is not None
+        )
 
         async with AsyncSession(pg) as session:
             row = (
                 await session.execute(
-                    select(SQLReference).where(
-                        SQLReference.legacy_id == reference.id,
-                    ),
+                    select(SQLReference).where(SQLReference.id == reference.id),
                 )
             ).scalar_one()
 
@@ -303,23 +302,13 @@ class TestCreate:
         )
 
         async with AsyncSession(pg) as session:
-            source_id = (
-                await session.execute(
-                    select(SQLReference.id).where(
-                        SQLReference.legacy_id == source.id,
-                    ),
-                )
-            ).scalar_one()
-
             clone_row = (
                 await session.execute(
-                    select(SQLReference).where(
-                        SQLReference.legacy_id == clone.id,
-                    ),
+                    select(SQLReference).where(SQLReference.id == clone.id),
                 )
             ).scalar_one()
 
-        assert clone_row.cloned_from_id == source_id
+        assert clone_row.cloned_from_id == source.id
 
     async def test_import_sets_upload_id(
         self,
@@ -339,9 +328,7 @@ class TestCreate:
         async with AsyncSession(pg) as session:
             row = (
                 await session.execute(
-                    select(SQLReference).where(
-                        SQLReference.legacy_id == reference.id,
-                    ),
+                    select(SQLReference).where(SQLReference.id == reference.id),
                 )
             ).scalar_one()
 
@@ -383,20 +370,50 @@ class TestUpdate:
             UpdateReferenceRequest(name="After", organism="bacteria"),
         )
 
-        document = await mongo.references.find_one(reference.id)
+        document = await mongo.references.find_one(await _legacy_id(pg, reference.id))
         assert document["name"] == "After"
 
         async with AsyncSession(pg) as session:
             row = (
                 await session.execute(
-                    select(SQLReference).where(
-                        SQLReference.legacy_id == reference.id,
-                    ),
+                    select(SQLReference).where(SQLReference.id == reference.id),
                 )
             ).scalar_one()
 
         assert row.name == "After"
         assert row.organism == "bacteria"
+
+    async def test_postgres_native_raises_not_found(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """Updating a Postgres-native reference (no ``legacy_id``, so no Mongo document)
+        raises ``ResourceNotFoundError`` rather than an unhandled ``ValueError``.
+        """
+        user = await fake.users.create()
+
+        async with AsyncSession(pg) as session:
+            reference = SQLReference(
+                legacy_id=None,
+                name="Postgres Native",
+                description="",
+                organism="virus",
+                created_at=virtool.utils.timestamp(),
+                source_types=[],
+                user_id=user.id,
+            )
+            session.add(reference)
+            await session.flush()
+            reference_id = reference.id
+            await session.commit()
+
+        with pytest.raises(ResourceNotFoundError):
+            await data_layer.references.update(
+                reference_id,
+                UpdateReferenceRequest(name="After"),
+            )
 
 
 class TestArchive:
@@ -415,28 +432,30 @@ class TestArchive:
             user.id,
         )
 
+        legacy_id = await _legacy_id(pg, reference.id)
+
         await data_layer.references.archive(reference.id)
 
-        assert (await mongo.references.find_one(reference.id))["archived"] is True
+        assert (await mongo.references.find_one(legacy_id))["archived"] is True
 
         async with AsyncSession(pg) as session:
             assert (
                 await session.execute(
                     select(SQLReference.archived).where(
-                        SQLReference.legacy_id == reference.id,
+                        SQLReference.id == reference.id,
                     ),
                 )
             ).scalar_one() is True
 
         await data_layer.references.unarchive(reference.id)
 
-        assert (await mongo.references.find_one(reference.id))["archived"] is False
+        assert (await mongo.references.find_one(legacy_id))["archived"] is False
 
         async with AsyncSession(pg) as session:
             assert (
                 await session.execute(
                     select(SQLReference.archived).where(
-                        SQLReference.legacy_id == reference.id,
+                        SQLReference.id == reference.id,
                     ),
                 )
             ).scalar_one() is False
@@ -480,12 +499,15 @@ class TestCreateUser:
         fake: DataFaker,
         mongo: Mongo,
         static_time,
+        pg: AsyncEngine,
     ):
         """Test that a user cannot be added to a reference if they are already a member."""
         user_1 = await fake.users.create()
         user_2 = await fake.users.create()
 
-        await mongo.references.insert_one(
+        await insert_reference(
+            mongo,
+            pg,
             {
                 "_id": "foo",
                 "archived": False,
@@ -532,11 +554,14 @@ class TestCreateUser:
         fake: DataFaker,
         mongo: Mongo,
         static_time,
+        pg: AsyncEngine,
     ):
         """Test that a `NotFound` error is raised when the user does not exist."""
         user = await fake.users.create()
 
-        await mongo.references.insert_one(
+        await insert_reference(
+            mongo,
+            pg,
             {
                 "_id": "foo",
                 "archived": False,
@@ -630,6 +655,7 @@ class TestUpdateUser:
         fake: DataFaker,
         mongo: Mongo,
         static_time,
+        pg: AsyncEngine,
     ):
         """Test that ``ResourceNotFound`` is raised when the reference or reference user
         do not exist.
@@ -637,7 +663,9 @@ class TestUpdateUser:
         user_1 = await fake.users.create()
 
         if reference_exists:
-            await mongo.references.insert_one(
+            await insert_reference(
+                mongo,
+                pg,
                 {
                     "_id": "foo",
                     "archived": False,
@@ -723,6 +751,7 @@ class TestDeleteUser:
         fake: DataFaker,
         mongo: Mongo,
         static_time,
+        pg: AsyncEngine,
     ):
         """Test that ``ResourceNotFound`` is raised when the reference or reference user
         do not exist.
@@ -730,7 +759,9 @@ class TestDeleteUser:
         user_1 = await fake.users.create()
 
         if reference_exists:
-            await mongo.references.insert_one(
+            await insert_reference(
+                mongo,
+                pg,
                 {
                     "_id": "foo",
                     "archived": False,
@@ -833,11 +864,14 @@ class TestCreateGroup:
         fake: DataFaker,
         mongo: Mongo,
         static_time,
+        pg: AsyncEngine,
     ):
         """Test that `ResourceNotFound` is raised when the group does not exist."""
         user = await fake.users.create()
 
-        await mongo.references.insert_one(
+        await insert_reference(
+            mongo,
+            pg,
             {
                 "_id": "foo",
                 "archived": False,
@@ -924,6 +958,7 @@ class TestUpdateGroup:
         fake: DataFaker,
         mongo: Mongo,
         static_time,
+        pg: AsyncEngine,
     ):
         """Test that ``ResourceNotFound`` is raised when the reference or reference group
         do not exist.
@@ -931,7 +966,9 @@ class TestUpdateGroup:
         user = await fake.users.create()
 
         if reference_exists:
-            await mongo.references.insert_one(
+            await insert_reference(
+                mongo,
+                pg,
                 {
                     "_id": "foo",
                     "archived": False,
@@ -1017,6 +1054,7 @@ class TestDeleteGroup:
         fake: DataFaker,
         mongo: Mongo,
         static_time,
+        pg: AsyncEngine,
     ):
         """Test that ``ResourceNotFound`` is raised when the reference or reference group
         do not exist.
@@ -1024,7 +1062,9 @@ class TestDeleteGroup:
         user = await fake.users.create()
 
         if reference_exists:
-            await mongo.references.insert_one(
+            await insert_reference(
+                mongo,
+                pg,
                 {
                     "_id": "foo",
                     "archived": False,

@@ -418,12 +418,13 @@ class TestComposeReferenceIdsMatch:
         return reference_ids
 
     async def test_unfiltered(self, pg: AsyncEngine, references: dict[str, int]):
-        """Both id forms of every legacy reference are matched when ``archived`` is None."""
+        """Both id forms of every reference are matched when ``archived`` is None."""
         match = await compose_reference_ids_match(pg)
 
         assert set(match["$in"]) == {
             references["active"],
             references["archived"],
+            references["native_active"],
             "ref_active",
             "ref_archived",
         }
@@ -436,21 +437,26 @@ class TestComposeReferenceIdsMatch:
     async def test_active(self, pg: AsyncEngine, references: dict[str, int]):
         match = await compose_reference_ids_match(pg, False)
 
-        assert set(match["$in"]) == {references["active"], "ref_active"}
+        assert set(match["$in"]) == {
+            references["active"],
+            references["native_active"],
+            "ref_active",
+        }
 
-    async def test_native_reference_excluded(
+    async def test_native_reference_contributes_only_its_pk(
         self,
         pg: AsyncEngine,
         references: dict[str, int],
     ):
-        """A reference with no ``legacy_id`` never enters the match.
+        """A reference with no ``legacy_id`` is matched by its primary key alone.
 
-        It cannot be shaped into a ``ReferenceNested``, whose ``id`` is a required
-        string, so matching its indexes would fail response validation.
+        Now that the integer primary key is the public identifier, a Postgres-native
+        reference can be shaped into a ``ReferenceNested``. Its ``NULL`` legacy id must
+        not leak into the match, where it would match indexes with no reference.
         """
         match = await compose_reference_ids_match(pg)
 
-        assert references["native_active"] not in match["$in"]
+        assert references["native_active"] in match["$in"]
         assert None not in match["$in"]
 
 

@@ -42,6 +42,7 @@ from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.pg.utils import delete_row
 from virtool.references.db import compose_reference_id_match
+from virtool.references.sql import SQLReference
 from virtool.samples.checks import (
     check_labels_do_not_exist,
     check_name_is_in_use,
@@ -676,13 +677,18 @@ class SamplesData(DataLayerDomain):
                     ),
                 ),
             )
-            await pg_session.execute(
+            sql_result = await pg_session.execute(
                 delete(SQLLegacySample).where(
                     SQLLegacySample.id == sample_pk,
                 ),
             )
 
-        if result.deleted_count:
+        if legacy_id is None:
+            deleted = sql_result.rowcount > 0
+        else:
+            deleted = result.deleted_count > 0
+
+        if deleted:
             for key, exc in await delete_prefix(
                 self._storage, sample_prefix(sample_storage_id(sample_pk, legacy_id))
             ):
@@ -961,15 +967,19 @@ class SamplesData(DataLayerDomain):
         :param ref_id: the reference id
         :param subtractions: list of subtractions
         """
-        reference = await self._mongo.references.find_one(
-            {"_id": ref_id},
-            ["archived"],
-        )
+        async with AsyncSession(self._pg) as session:
+            reference = (
+                await session.execute(
+                    select(SQLReference.archived).where(
+                        compose_legacy_id_single_expression(SQLReference, ref_id),
+                    ),
+                )
+            ).first()
 
         if reference is None:
             raise ResourceConflictError("Reference does not exist")
 
-        if reference.get("archived"):
+        if reference.archived:
             raise ResourceConflictError("Reference is archived")
 
         if not await self._mongo.indexes.count_documents(

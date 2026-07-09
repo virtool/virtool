@@ -2,7 +2,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.analyses.sql import SQLAnalysis, SQLAnalysisSubtraction
-from virtool.data.topg import compose_legacy_id_multi_expression
+from virtool.data.topg import (
+    compose_legacy_id_multi_expression,
+    compose_legacy_id_single_expression,
+)
 from virtool.mongo.core import Mongo
 from virtool.references.sql import SQLReference
 from virtool.samples.sql import SQLLegacySample
@@ -73,15 +76,20 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
                 await session.flush()
                 sample_pg_id = legacy_sample.id
 
-        reference_pg_id = (
+        reference_row = (
             await session.execute(
-                select(SQLReference.id).where(
-                    SQLReference.legacy_id == reference["id"],
+                select(SQLReference.id, SQLReference.legacy_id).where(
+                    compose_legacy_id_single_expression(SQLReference, reference["id"]),
                 ),
             )
-        ).scalar_one_or_none()
+        ).first()
 
-        if reference_pg_id is None:
+        if reference_row is None:
+            if not isinstance(reference["id"], str):
+                raise AssertionError(
+                    f"No reference row for primary key {reference['id']}",
+                )
+
             reference_doc = await mongo.references.find_one(reference["id"], ["name"])
             reference_name = (
                 reference_doc["name"]
@@ -99,6 +107,10 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
             session.add(legacy_reference)
             await session.flush()
             reference_pg_id = legacy_reference.id
+            reference_legacy_id = legacy_reference.legacy_id
+        else:
+            reference_pg_id = reference_row.id
+            reference_legacy_id = reference_row.legacy_id
 
         analysis = SQLAnalysis(
             legacy_id=document["_id"],
@@ -109,7 +121,7 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
             results=results if isinstance(results, dict) else None,
             sample=sample["id"],
             sample_id=sample_pg_id,
-            reference=reference["id"],
+            reference=reference_legacy_id,
             reference_id=reference_pg_id,
             index=index["id"],
             user_id=document["user"]["id"],
