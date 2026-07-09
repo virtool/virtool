@@ -677,13 +677,18 @@ class SamplesData(DataLayerDomain):
                     ),
                 ),
             )
-            await pg_session.execute(
+            sql_result = await pg_session.execute(
                 delete(SQLLegacySample).where(
                     SQLLegacySample.id == sample_pk,
                 ),
             )
 
-        if result.deleted_count:
+        if legacy_id is None:
+            deleted = sql_result.rowcount > 0
+        else:
+            deleted = result.deleted_count > 0
+
+        if deleted:
             for key, exc in await delete_prefix(
                 self._storage, sample_prefix(sample_storage_id(sample_pk, legacy_id))
             ):

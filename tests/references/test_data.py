@@ -3,6 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.data.topg import both_transactions
@@ -381,6 +382,38 @@ class TestUpdate:
 
         assert row.name == "After"
         assert row.organism == "bacteria"
+
+    async def test_postgres_native_raises_not_found(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """Updating a Postgres-native reference (no ``legacy_id``, so no Mongo document)
+        raises ``ResourceNotFoundError`` rather than an unhandled ``ValueError``.
+        """
+        user = await fake.users.create()
+
+        async with AsyncSession(pg) as session:
+            reference = SQLReference(
+                legacy_id=None,
+                name="Postgres Native",
+                description="",
+                organism="virus",
+                created_at=virtool.utils.timestamp(),
+                source_types=[],
+                user_id=user.id,
+            )
+            session.add(reference)
+            await session.flush()
+            reference_id = reference.id
+            await session.commit()
+
+        with pytest.raises(ResourceNotFoundError):
+            await data_layer.references.update(
+                reference_id,
+                UpdateReferenceRequest(name="After"),
+            )
 
 
 class TestArchive:

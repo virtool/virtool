@@ -43,7 +43,10 @@ from virtool.references.db import (
 )
 from virtool.references.models import ReferenceNested
 from virtool.references.sql import SQLReference
-from virtool.references.transforms import AttachReferenceTransform
+from virtool.references.transforms import (
+    AttachReferenceTransform,
+    shape_nested_reference,
+)
 from virtool.storage.cleanup import delete_prefix
 from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
@@ -192,7 +195,7 @@ class IndexData:
         if row is None:
             raise ResourceNotFoundError
 
-        return ReferenceNested(id=row.id, data_type="genome", name=row.name)
+        return ReferenceNested(**shape_nested_reference(row.id, row.name))
 
     async def get_otus_json(
         self,

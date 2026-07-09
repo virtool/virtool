@@ -15,7 +15,7 @@ from virtool.analyses.sql import (
     SQLAnalysisFile,
     SQLAnalysisSubtraction,
 )
-from virtool.api.client import UserClient
+from virtool.api.client import JobClient, UserClient
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
@@ -365,6 +365,69 @@ class TestFindSampleRights:
         assert found.documents == []
         assert found.total_count == 0
 
+    async def test_full_administrator_sees_private_sample(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """A full administrator lists analyses on another user's private sample,
+        matching the single-resource bypass in ``has_sample_right``.
+        """
+        sample_owner = await fake.users.create()
+        administrator = await fake.users.create(
+            administrator_role=AdministratorRole.FULL,
+        )
+
+        await self._insert_sample(pg, "other_private", sample_owner.id, all_read=False)
+
+        hidden = await self._seed_analysis(
+            mongo,
+            pg,
+            "private",
+            "other_private",
+            setup_sample,
+        )
+
+        found = await data_layer.analyses.find(
+            1,
+            25,
+            build_user_client(administrator),
+        )
+
+        assert [document.id for document in found.documents] == [hidden]
+        assert found.total_count == 1
+
+    async def test_base_administrator_scoped_like_user(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """An administrator below the full role is scoped like any other user and does
+        not see another user's private sample.
+        """
+        sample_owner = await fake.users.create()
+        administrator = await fake.users.create(
+            administrator_role=AdministratorRole.BASE,
+        )
+
+        await self._insert_sample(pg, "other_private", sample_owner.id, all_read=False)
+        await self._seed_analysis(mongo, pg, "private", "other_private", setup_sample)
+
+        found = await data_layer.analyses.find(
+            1,
+            25,
+            build_user_client(administrator),
+        )
+
+        assert found.documents == []
+        assert found.total_count == 0
+
 
 class TestHasRight:
     """Rights on an analysis are resolved from the parent sample's Postgres row."""
@@ -632,6 +695,40 @@ class TestHasRight:
             setup_sample.client,
             "read",
         )
+
+    async def test_job_client_has_full_access(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """A job-authenticated client holds both rights on another user's private
+        sample, since a job's identity is neither a user nor an administrator.
+        """
+        sample_owner = await fake.users.create()
+
+        await self._insert_sample(
+            pg,
+            "owner_private",
+            sample_owner.id,
+            all_read=False,
+            all_write=False,
+        )
+        await self._seed_analysis(
+            mongo,
+            pg,
+            "private",
+            "owner_private",
+            sample_owner.id,
+            setup_sample.reference_id,
+        )
+
+        client = JobClient(job_id=1)
+
+        assert await data_layer.analyses.has_right("private", client, "read")
+        assert await data_layer.analyses.has_right("private", client, "write")
 
     async def test_missing_analysis_raises(
         self,

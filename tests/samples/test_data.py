@@ -11,7 +11,7 @@ import virtool.utils
 from tests.fixtures.client import ClientSpawner
 from tests.samples.utils import add_sample_uploads
 from virtool.analyses.sql import SQLAnalysis
-from virtool.api.client import UserClient
+from virtool.api.client import JobClient, UserClient
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.data.transforms import apply_transforms
@@ -34,7 +34,7 @@ from virtool.samples.sql import (
     SQLSampleReads,
     SQLSampleUpload,
 )
-from virtool.samples.utils import SampleRight
+from virtool.samples.utils import SampleRight, sample_file_key, sample_prefix
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
@@ -725,6 +725,38 @@ class TestHasRight:
         await insert_rights_sample(pg, "sample_4", user_id=user.id)
 
         assert await data_layer.samples.has_right("sample_4", client, SampleRight.write)
+
+    async def test_job_client_full_access(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """A job-authenticated client holds every right regardless of ownership or
+        sharing, since a job's identity is neither a user nor an administrator.
+        """
+        sample_owner = await fake.users.create()
+
+        await insert_rights_sample(
+            pg,
+            "job_sample",
+            user_id=sample_owner.id,
+            all_read=False,
+            all_write=False,
+        )
+
+        client = JobClient(job_id=1)
+
+        assert await data_layer.samples.has_right(
+            "job_sample",
+            client,
+            SampleRight.read,
+        )
+        assert await data_layer.samples.has_right(
+            "job_sample",
+            client,
+            SampleRight.write,
+        )
 
     async def test_non_group_member_denied(
         self,
@@ -1435,3 +1467,48 @@ class TestDelete:
             ).scalars().all() == []
 
         assert await mongo.samples.find_one() is None
+
+    async def test_postgres_native_sample_cleans_storage(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        memory_storage: StorageBackend,
+        pg: AsyncEngine,
+    ):
+        """Deleting a Postgres-native sample (no ``legacy_id``) removes its Postgres row
+        and cleans up its storage prefix instead of raising ``ResourceNotFoundError``.
+
+        The sample has no Mongo document, so the delete's success signal comes from the
+        ``legacy_samples`` rowcount, not ``delete_one``'s ``deleted_count``.
+        """
+        user = await fake.users.create()
+
+        async with AsyncSession(pg) as session:
+            sample = SQLLegacySample(
+                legacy_id=None,
+                name="Postgres Native",
+                library_type=LibraryType.normal.value,
+                created_at=virtool.utils.timestamp(),
+                user_id=user.id,
+                all_read=True,
+                all_write=True,
+            )
+            session.add(sample)
+            await session.flush()
+            sample_id = sample.id
+            await session.commit()
+
+        async def _content() -> AsyncIterator[bytes]:
+            yield b"reads"
+
+        key = sample_file_key(str(sample_id), "reads_1.fq.gz")
+        await memory_storage.write(key, _content())
+
+        await data_layer.samples.delete(sample_id)
+
+        assert await get_row_by_id(pg, SQLLegacySample, sample_id) is None
+
+        remaining = [
+            obj.key async for obj in memory_storage.list(sample_prefix(str(sample_id)))
+        ]
+        assert remaining == []

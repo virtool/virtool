@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
 
 
-def _shape_nested_reference(id_: int, name: str) -> Document:
+def shape_nested_reference(id_: int, name: str) -> Document:
     """Shape a ``legacy_references`` row into a nested reference doc.
 
     ``data_type`` is emitted as the constant ``"genome"`` because the column is
@@ -62,7 +62,7 @@ class AttachReferenceTransform(AbstractTransform):
         if row is None:
             raise ValueError(f"Reference {reference_id!r} not found in postgres")
 
-        return _shape_nested_reference(row.id, row.name)
+        return shape_nested_reference(row.id, row.name)
 
     async def prepare_many(
         self,
@@ -92,7 +92,7 @@ class AttachReferenceTransform(AbstractTransform):
         reference_lookup: dict[int | str, Document] = {}
 
         for row in rows:
-            shaped = _shape_nested_reference(row.id, row.name)
+            shaped = shape_nested_reference(row.id, row.name)
             reference_lookup[row.id] = shaped
 
             if row.legacy_id is not None:

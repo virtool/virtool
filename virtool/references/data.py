@@ -143,7 +143,7 @@ class ReferencesData(DataLayerDomain):
             raise ResourceNotFoundError()
 
         if row.legacy_id is None:
-            raise ValueError(f"Reference {row.id} has no legacy id")
+            raise ResourceNotFoundError()
 
         return row.legacy_id
 
