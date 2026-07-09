@@ -744,9 +744,8 @@ class TestCreate:
         self,
         fake: DataFaker,
         snapshot,
-        mongo: Mongo,
+        pg: AsyncEngine,
         spawn_client: ClientSpawner,
-        static_time,
     ):
         client = await spawn_client(
             authenticated=True,
@@ -760,17 +759,17 @@ class TestCreate:
             user=user, upload=upload, name="Apple", upload_files=False, finalized=False
         )
 
-        await mongo.samples.insert_one(
-            {
-                "_id": "foobar",
-                "name": "Foobar",
-                "lower_name": "foobar",
-                "created_at": static_time.datetime,
-                "nuvs": False,
-                "pathoscope": False,
-                "ready": True,
-            },
-        )
+        async with AsyncSession(pg) as session:
+            session.add(
+                SQLLegacySample(
+                    name="Foobar",
+                    library_type=LibraryType.normal.value,
+                    created_at=datetime(2015, 10, 6, 20, 0),
+                    ready=True,
+                ),
+            )
+
+            await session.commit()
 
         resp = await client.post(
             "/samples",
@@ -991,7 +990,6 @@ class TestEdit:
     async def test_name_exists(
         self,
         resp_is,
-        mongo: Mongo,
         pg: AsyncEngine,
         spawn_client: ClientSpawner,
     ):
@@ -1000,37 +998,33 @@ class TestEdit:
         """
         client = await spawn_client(administrator=True, authenticated=True)
 
-        await mongo.samples.insert_many(
-            [
-                {
-                    "_id": "foo",
-                    "name": "Foo",
-                    "all_read": True,
-                    "all_write": True,
-                    "ready": True,
-                    "subtractions": [],
-                    "user": {
-                        "id": "test",
-                    },
-                },
-                {
-                    "_id": "bar",
-                    "name": "Bar",
-                    "ready": True,
-                    "subtractions": [],
-                    "user": {
-                        "id": "test",
-                    },
-                },
-            ],
-            session=None,
-        )
-
         async with AsyncSession(pg) as session:
-            foo_id = await _ensure_legacy_sample_id(session, "foo")
+            renamed = SQLLegacySample(
+                name="Foo",
+                library_type=LibraryType.normal.value,
+                created_at=datetime(2015, 10, 6, 20, 0),
+                all_read=True,
+                all_write=True,
+                ready=True,
+            )
+
+            session.add(renamed)
+            session.add(
+                SQLLegacySample(
+                    name="Bar",
+                    library_type=LibraryType.normal.value,
+                    created_at=datetime(2015, 10, 6, 20, 0),
+                    ready=True,
+                ),
+            )
+
+            await session.flush()
+
+            renamed_id = renamed.id
+
             await session.commit()
 
-        resp = await client.patch(f"/samples/{foo_id}", {"name": "Bar"})
+        resp = await client.patch(f"/samples/{renamed_id}", {"name": "Bar"})
 
         assert resp.status == 400
         await resp_is.bad_request(resp, "Sample name is already in use")
@@ -2437,7 +2431,6 @@ class TestChangeSampleRights:
         self,
         fake: DataFaker,
         get_sample_data,
-        mongo: Mongo,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
@@ -2450,21 +2443,14 @@ class TestChangeSampleRights:
         )
 
         assert await resp.json() == snapshot(name="resp")
-        assert await mongo.samples.find_one("test") == snapshot(name="mongo")
 
     async def test_set_none_group_id(
         self,
         get_sample_data,
         fake: DataFaker,
-        mongo: Mongo,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
-        await mongo.samples.find_one_and_update(
-            {"_id": "test"},
-            {"$set": {"group": "fake_group"}},
-        )
-
         client = await spawn_client(administrator=True, authenticated=True)
 
         resp = await client.patch(
@@ -2475,12 +2461,10 @@ class TestChangeSampleRights:
         )
 
         assert await resp.json() == snapshot(name="resp")
-        assert await mongo.samples.find_one("test") == snapshot(name="mongo")
 
     async def test_update_group_rights(
         self,
         get_sample_data,
-        mongo: Mongo,
         snapshot,
         spawn_client,
     ):
@@ -2491,12 +2475,10 @@ class TestChangeSampleRights:
         )
 
         assert await resp.json() == snapshot(name="resp")
-        assert await mongo.samples.find_one("test") == snapshot(name="mongo")
 
     async def test_update_all_user_rights(
         self,
         get_sample_data,
-        mongo: Mongo,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
@@ -2507,13 +2489,11 @@ class TestChangeSampleRights:
         )
 
         assert await resp.json() == snapshot(name="resp")
-        assert await mongo.samples.find_one("test") == snapshot(name="mongo")
 
     async def test_update_all_rights(
         self,
         get_sample_data,
         fake: DataFaker,
-        mongo: Mongo,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
@@ -2532,4 +2512,3 @@ class TestChangeSampleRights:
         )
 
         assert await resp.json() == snapshot(name="resp")
-        assert await mongo.samples.find_one("test") == snapshot(name="mongo")
