@@ -8,7 +8,6 @@ from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.labels.sql import SQLLabel
 from virtool.models.enums import Permission
-from virtool.mongo.core import Mongo
 from virtool.samples.oas import CreateSampleRequest
 from virtool.samples.sql import SQLLegacySample, SQLLegacySampleLabel
 
@@ -33,13 +32,10 @@ class TestDelete:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         spawn_client: ClientSpawner,
     ):
-        """Deleting a label removes its ``legacy_sample_labels`` join rows and pulls
-        the label from sample documents in Mongo.
-        """
+        """Deleting a label removes its ``legacy_sample_labels`` join rows."""
         client = await spawn_client(
             authenticated=True,
             permissions=[Permission.create_sample],
@@ -56,7 +52,6 @@ class TestDelete:
                 name="Labelled",
             ),
             client.user.id,
-            0,
         )
 
         async with AsyncSession(pg) as session:
@@ -92,7 +87,3 @@ class TestDelete:
                     select(SQLLabel).where(SQLLabel.id == label.id),
                 )
             ).scalar_one_or_none() is None
-
-        stored = await mongo.samples.find_one({"_id": legacy.legacy_id})
-
-        assert label.id not in stored["labels"]

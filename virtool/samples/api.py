@@ -117,7 +117,6 @@ class SamplesView(PydanticView):
             sample = await get_data_from_req(self.request).samples.create(
                 data,
                 self.request["client"].user_id,
-                0,
             )
         except ResourceConflictError as err:
             raise APIBadRequest(str(err))
