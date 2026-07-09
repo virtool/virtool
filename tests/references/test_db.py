@@ -315,36 +315,6 @@ class TestCheckRight:
 
         assert await check_right(mock_req, "ref_group_wins", "modify_otu") is True
 
-    async def test_group_matched_by_legacy_id(
-        self,
-        mock_req,
-        mocker,
-        pg: AsyncEngine,
-        fake: DataFaker,
-        static_time,
-    ):
-        """A client group held as a legacy string id resolves to its integer row."""
-        owner = await fake.users.create()
-        member = await fake.users.create()
-        group = await fake.groups.create(legacy_id="legacy_group")
-
-        await seed_reference_rights(
-            pg,
-            legacy_id="ref_legacy_group",
-            owner_id=owner.id,
-            created_at=static_time.datetime,
-            groups=[(group.id, RIGHTS_NONE)],
-        )
-
-        mock_req.app = {"pg": pg}
-        mock_req["client"] = make_client(
-            mocker,
-            user_id=member.id,
-            groups=[group.legacy_id],
-        )
-
-        assert await check_right(mock_req, "ref_legacy_group", "read") is True
-
     async def test_reference_matched_by_integer_pk(
         self,
         mock_req,

@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.analyses.sql import SQLAnalysis
 from virtool.blast.data import BLASTData
 from virtool.blast.sql import SQLNuVsBlast
+from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.pg.utils import get_row
 from virtool.tasks.data import TasksData
@@ -122,8 +123,14 @@ async def _insert_blast(
     analysis_id: int,
     sequence_index: int,
     static_time,
+    rid: str | None = None,
 ) -> None:
-    """Insert a pending NuVs BLAST row directly, as ``AnalysisData.blast`` would."""
+    """Insert a NuVs BLAST row directly.
+
+    ``AnalysisData.blast`` creates rows with ``rid=None``; the ``BLASTTask`` fills
+    the RID in once NCBI responds. Pass ``rid`` to simulate a row that has already
+    reached NCBI.
+    """
     async with AsyncSession(pg) as session:
         session.add(
             SQLNuVsBlast(
@@ -133,6 +140,7 @@ async def _insert_blast(
                 updated_at=static_time.datetime,
                 last_checked_at=static_time.datetime,
                 ready=False,
+                rid=rid,
             ),
         )
         await session.commit()
@@ -224,6 +232,31 @@ class TestCheckNuvsBlast:
 
         assert await blast_data.get_nuvs_blast(analysis_id, 12) == snapshot
 
+    async def test_missing_rid(
+        self,
+        blast_data: BLASTData,
+        analysis_ids: dict[str, int],
+        mocker,
+        pg,
+        static_time,
+    ):
+        """A row whose ``rid`` is still ``NULL`` has no NCBI search to check.
+
+        This happens when a re-BLAST deletes and recreates the row while an older
+        task is still polling. Treat it as a missing record so callers stop, rather
+        than passing ``None`` to NCBI.
+        """
+        check_rid = mocker.patch("virtool.blast.data.check_rid")
+
+        analysis_id = analysis_ids["analysis"]
+
+        await _insert_blast(pg, analysis_id, 12, static_time)
+
+        with pytest.raises(ResourceNotFoundError):
+            await blast_data.check_nuvs_blast(analysis_id, 12)
+
+        check_rid.assert_not_called()
+
     async def test_bad_zip_file(
         self,
         blast_data: BLASTData,
@@ -244,7 +277,7 @@ class TestCheckNuvsBlast:
             "virtool.blast.data.fetch_nuvs_blast_result", side_effect=BadZipFile()
         )
 
-        await _insert_blast(pg, analysis_id, 12, static_time)
+        await _insert_blast(pg, analysis_id, 12, static_time, rid="RID_12345")
         await blast_data.check_nuvs_blast(analysis_id, 12)
 
         assert await blast_data.get_nuvs_blast(analysis_id, 12) == snapshot
@@ -275,7 +308,9 @@ class TestAnalysisUpdatedAtBump:
     ):
         mocker.patch("virtool.blast.data.check_rid", return_value=False)
 
-        await _insert_blast(pg, analysis_ids["analysis"], 12, static_time)
+        await _insert_blast(
+            pg, analysis_ids["analysis"], 12, static_time, rid="RID_12345"
+        )
 
         # Reset to an old timestamp so the assertions prove that ``check_nuvs_blast``
         # performed the bump, not the insert.

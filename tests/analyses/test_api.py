@@ -3,7 +3,6 @@ from http import HTTPStatus
 from pathlib import Path
 
 import pytest
-from pytest_mock import MockerFixture
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
@@ -18,6 +17,7 @@ from virtool.fake.next import DataFaker
 from virtool.jobs.models import Job, JobState
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
+from virtool.samples.sql import SQLLegacySample
 from virtool.users.models import User
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
@@ -40,15 +40,12 @@ def get_handle(example_path: Path):
 
 async def test_find(
     fake: DataFaker,
-    mocker: MockerFixture,
     mongo: Mongo,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
     static_time,
 ):
-    mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
-
     client = await spawn_client(authenticated=True)
 
     user_1 = await fake.users.create()
@@ -87,6 +84,20 @@ async def test_find(
             },
         ),
     )
+
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLLegacySample(
+                legacy_id="test",
+                name="Test",
+                library_type="normal",
+                created_at=static_time.datetime,
+                user_id=user_1.id,
+                all_read=True,
+                all_write=True,
+            ),
+        )
+        await session.commit()
 
     for document in [
         {
@@ -613,7 +624,7 @@ async def test_remove(
         case "403":
             await resp_is.insufficient_rights(resp)
 
-        case ("404_analysis", "404_sample"):
+        case "404_analysis" | "404_sample":
             await resp_is.not_found(resp)
 
         case "409":
@@ -777,7 +788,6 @@ class TestDownloadAnalysisResult:
         "404_analysis",
         "404_sample",
         "404_sequence",
-        "404_sequence",
         "409_workflow",
         "409_ready",
     ],
@@ -864,7 +874,7 @@ async def test_blast(
     elif error == "403":
         await resp_is.insufficient_rights(resp)
 
-    elif error == "404_analysis":
+    elif error in ("404_analysis", "404_sample"):
         await resp_is.not_found(resp)
 
     elif error == "404_sequence":

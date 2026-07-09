@@ -16,7 +16,6 @@ import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.topg import (
     compose_legacy_id_mongo_match,
-    compose_legacy_id_multi_expression,
     compose_legacy_id_single_expression,
     compose_legacy_id_subquery,
     resolve_legacy_id,
@@ -361,13 +360,9 @@ async def check_right(req: Request, ref_id: int | str, right: str) -> bool:
                 return True
 
         if client.groups:
-            group_query = (
-                select(SQLReferenceGroup.reference_id)
-                .join(SQLGroup, SQLGroup.id == SQLReferenceGroup.group_id)
-                .where(
-                    SQLReferenceGroup.reference_id == reference_pk,
-                    compose_legacy_id_multi_expression(SQLGroup, client.groups),
-                )
+            group_query = select(SQLReferenceGroup.reference_id).where(
+                SQLReferenceGroup.reference_id == reference_pk,
+                SQLReferenceGroup.group_id.in_(client.groups),
             )
 
             if right != "read":

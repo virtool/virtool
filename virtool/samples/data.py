@@ -9,7 +9,6 @@ from typing import Any
 from pymongo.results import UpdateResult
 from sqlalchemy import (
     ColumnExpressionArgument,
-    and_,
     delete,
     exc,
     func,
@@ -30,7 +29,6 @@ from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
 from virtool.data.topg import (
     both_transactions,
-    compose_legacy_id_multi_expression,
     compose_legacy_id_single_expression,
     compose_legacy_id_subquery,
     retry_both_transactions,
@@ -40,7 +38,6 @@ from virtool.groups.models import GroupMinimal
 from virtool.groups.pg import SQLGroup
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.labels.transforms import AttachLabelsTransform
-from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.pg.utils import delete_row
@@ -55,6 +52,7 @@ from virtool.samples.db import (
     AttachArtifactsAndReadsTransform,
     AttachUploadsTransform,
     DeriveWorkflowTagsTransform,
+    compose_sample_rights_filter,
     compose_sample_workflow_filter,
 )
 from virtool.samples.files import (
@@ -73,10 +71,13 @@ from virtool.samples.sql import (
     SQLSampleUpload,
 )
 from virtool.samples.utils import (
+    SAMPLE_RIGHTS_COLUMNS,
     SampleRight,
     define_initial_workflows,
+    has_sample_right,
     sample_file_key,
     sample_prefix,
+    sample_storage_id,
 )
 from virtool.storage.cleanup import delete_prefix
 from virtool.storage.protocol import StorageBackend
@@ -226,7 +227,7 @@ class SamplesData(DataLayerDomain):
         client,
     ) -> SampleSearchResult:
         """Find and filter samples."""
-        filters = [await self._compose_rights_filter(client)]
+        filters = [compose_sample_rights_filter(client)]
 
         if term:
             filters.append(_compose_sample_search_filter(term))
@@ -299,58 +300,6 @@ class SamplesData(DataLayerDomain):
             page_count=int(math.ceil(found_count / per_page)),
             per_page=per_page,
         )
-
-    async def _resolve_client_group_ids(self, client) -> list[int]:
-        """Resolve the Postgres group ids for the groups ``client`` belongs to.
-
-        Shared by ``_compose_rights_filter`` and ``has_right`` so the two rights
-        paths resolve group membership the same way.
-        """
-        if not client.groups:
-            return []
-
-        async with AsyncSession(self._pg) as session:
-            return list(
-                (
-                    await session.execute(
-                        select(SQLGroup.id).where(
-                            compose_legacy_id_multi_expression(
-                                SQLGroup,
-                                client.groups,
-                            ),
-                        ),
-                    )
-                )
-                .scalars()
-                .all(),
-            )
-
-    async def _compose_rights_filter(
-        self,
-        client,
-    ) -> ColumnExpressionArgument[bool]:
-        """Compose the Postgres predicate scoping samples to those ``client`` can read.
-
-        Mirrors the Mongo ``$or`` rights filter: the requesting user owns the sample,
-        the sample is world-readable, or the sample is readable by a group the user
-        belongs to.
-        """
-        rights_filter = [
-            SQLLegacySample.all_read.is_(True),
-            SQLLegacySample.user_id == client.user_id,
-        ]
-
-        group_ids = await self._resolve_client_group_ids(client)
-
-        if group_ids:
-            rights_filter.append(
-                and_(
-                    SQLLegacySample.group_read.is_(True),
-                    SQLLegacySample.group_id.in_(group_ids),
-                ),
-            )
-
-        return or_(*rights_filter)
 
     async def get(self, sample_id: int | str) -> Sample:
         """Get a sample by its id.
@@ -736,11 +685,11 @@ class SamplesData(DataLayerDomain):
 
         if result.deleted_count:
             for key, exc in await delete_prefix(
-                self._storage, sample_prefix(legacy_id)
+                self._storage, sample_prefix(sample_storage_id(sample_pk, legacy_id))
             ):
                 logger.error(
                     "storage cleanup failed; file orphaned",
-                    sample_id=legacy_id,
+                    sample_id=sample_pk,
                     key=key,
                     error=repr(exc),
                 )
@@ -994,14 +943,7 @@ class SamplesData(DataLayerDomain):
         async with AsyncSession(self._pg) as session:
             row = (
                 await session.execute(
-                    select(
-                        SQLLegacySample.all_read,
-                        SQLLegacySample.all_write,
-                        SQLLegacySample.group_read,
-                        SQLLegacySample.group_write,
-                        SQLLegacySample.group_id,
-                        SQLLegacySample.user_id,
-                    ).where(
+                    select(*SAMPLE_RIGHTS_COLUMNS).where(
                         compose_legacy_id_single_expression(
                             SQLLegacySample,
                             sample_id,
@@ -1013,25 +955,7 @@ class SamplesData(DataLayerDomain):
         if row is None:
             return True
 
-        if (
-            client.administrator_role == AdministratorRole.FULL
-            or client.user_id == row.user_id
-        ):
-            return True
-
-        is_group_member = False
-
-        if row.group_id is not None:
-            member_group_ids = await self._resolve_client_group_ids(client)
-            is_group_member = row.group_id in member_group_ids
-
-        if right == SampleRight.read:
-            return row.all_read or (is_group_member and row.group_read)
-
-        if right == SampleRight.write:
-            return row.all_write or (is_group_member and row.group_write)
-
-        raise ValueError(f"Invalid sample right: {right}")
+        return has_sample_right(row, client, right)
 
     async def has_resources_for_analysis_job(self, ref_id, subtractions) -> None:
         """Checks that resources for analysis job exist.
@@ -1075,20 +999,29 @@ class SamplesData(DataLayerDomain):
 
     async def upload_artifact(
         self,
-        sample_id: str,
+        sample_id: int | str,
         artifact_type: str | None,
         filename: str,
         chunker: AsyncGenerator[bytearray],
     ) -> dict:
+        resolved = await self._resolve_ids(sample_id)
+
+        if resolved is None:
+            raise ResourceNotFoundError
+
         if artifact_type and artifact_type not in ArtifactType.to_list():
             raise ResourceConflictError("Unsupported sample artifact type")
+
+        sample_pk, legacy_id = resolved
+        storage_id = sample_storage_id(sample_pk, legacy_id)
 
         try:
             artifact = await create_artifact_file(
                 self._pg,
                 filename,
                 filename,
-                sample_id,
+                sample_pk,
+                storage_id,
                 artifact_type,
             )
         except exc.IntegrityError:
@@ -1096,7 +1029,7 @@ class SamplesData(DataLayerDomain):
                 "Artifact file has already been uploaded for this sample",
             )
 
-        key = sample_file_key(sample_id, filename)
+        key = sample_file_key(storage_id, filename)
 
         try:
             size = await self._storage.write(key, chunker)
@@ -1114,12 +1047,20 @@ class SamplesData(DataLayerDomain):
 
     async def upload_reads(
         self,
-        sample_id: str,
+        sample_id: int | str,
         filename: str,
         chunker: AsyncGenerator[bytearray],
         upload_id: int | None = None,
     ) -> dict:
-        key = sample_file_key(sample_id, filename)
+        resolved = await self._resolve_ids(sample_id)
+
+        if resolved is None:
+            raise ResourceNotFoundError
+
+        sample_pk, legacy_id = resolved
+        storage_id = sample_storage_id(sample_pk, legacy_id)
+
+        key = sample_file_key(storage_id, filename)
 
         first = await anext(chunker, None)
 
@@ -1141,7 +1082,8 @@ class SamplesData(DataLayerDomain):
                 size,
                 filename,
                 filename,
-                sample_id,
+                sample_pk,
+                storage_id,
                 upload_id=upload_id,
             )
         except exc.IntegrityError:

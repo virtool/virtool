@@ -6,6 +6,7 @@ from syrupy import SnapshotAssertion
 
 from tests.fixtures.analysis import seed_analysis
 from virtool.blast.task import BLASTTask
+from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.mongo.core import Mongo
@@ -112,3 +113,66 @@ async def test_task(
     assert await data_layer.blast.get_nuvs_blast(analysis_id, 5) == snapshot(
         name="blast",
     )
+
+
+class TestWaitForBlastSearch:
+    """Polling stops cleanly when the record it owns is gone or superseded."""
+
+    async def test_superseded_record_exits_without_error(
+        self,
+        mocker: MockerFixture,
+    ):
+        """A re-BLAST can delete and recreate the row while an older task polls.
+
+        ``check_nuvs_blast`` then raises ``ResourceNotFoundError`` (the new row has
+        no RID yet, or was deleted). The task should leave the poll loop quietly
+        without flagging an error, because nothing failed.
+        """
+        mocker.patch("virtool.blast.task.asyncio.sleep")
+
+        data_layer = mocker.Mock()
+        data_layer.blast.check_nuvs_blast = mocker.AsyncMock(
+            side_effect=ResourceNotFoundError,
+        )
+
+        task = BLASTTask(
+            1,
+            data_layer,
+            {"analysis_id": 7, "sequence_index": 5},
+            get_temp_dir(),
+        )
+        task.rid = "RID_OLD"
+        set_error = mocker.patch.object(task, "_set_error")
+
+        await task.wait_for_blast_search()
+
+        set_error.assert_not_called()
+        assert task.errored is False
+
+    async def test_replacement_rid_exits_without_error(
+        self,
+        mocker: MockerFixture,
+    ):
+        """If the replacement row already carries a different RID, the older task
+        recognizes it does not own the search and stops without erroring.
+        """
+        mocker.patch("virtool.blast.task.asyncio.sleep")
+
+        data_layer = mocker.Mock()
+        data_layer.blast.check_nuvs_blast = mocker.AsyncMock(
+            return_value=mocker.Mock(rid="RID_NEW", ready=False, error=None),
+        )
+
+        task = BLASTTask(
+            1,
+            data_layer,
+            {"analysis_id": 7, "sequence_index": 5},
+            get_temp_dir(),
+        )
+        task.rid = "RID_OLD"
+        set_error = mocker.patch.object(task, "_set_error")
+
+        await task.wait_for_blast_search()
+
+        set_error.assert_not_called()
+        assert task.errored is False

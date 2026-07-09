@@ -20,7 +20,7 @@ class AbstractClient(ABC):
     def has_permission(self, permission: str) -> bool: ...
 
     @abstractmethod
-    def is_group_member(self, group_id: str) -> bool: ...
+    def is_group_member(self, group_id: int) -> bool: ...
 
     @property
     @abstractmethod
@@ -54,7 +54,7 @@ class JobClient(AbstractClient):
     def has_permission(self, permission: str) -> bool:
         return False
 
-    def is_group_member(self, _: str) -> bool:
+    def is_group_member(self, _: int) -> bool:
         return False
 
     @property
@@ -72,7 +72,7 @@ class UserClient(AbstractClient):
         administrator_role: AdministratorRole | None,
         authenticated: bool,
         force_reset: bool,
-        groups: list[int | str],
+        groups: list[int],
         permissions: dict[str, bool],
         user_id: int | None,
         session_id: str | None = None,
@@ -102,7 +102,7 @@ class UserClient(AbstractClient):
     def has_permission(self, permission: str) -> bool:
         return self.permissions.get(permission, False)
 
-    def is_group_member(self, group_id: str) -> bool:
+    def is_group_member(self, group_id: int) -> bool:
         return group_id in self.groups
 
     @property

@@ -7,7 +7,7 @@
     'last_checked_at': datetime.datetime(2015, 10, 6, 20, 0),
     'ready': False,
     'result': None,
-    'rid': None,
+    'rid': 'RID_12345',
     'task': None,
     'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
   })

@@ -1,4 +1,3 @@
-from collections.abc import Awaitable
 from typing import Any
 
 from sqlalchemy import select
@@ -6,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.transforms import AbstractTransform
 from virtool.labels.sql import SQLLabel
-from virtool.mongo.core import Mongo
 from virtool.types import Document
 
 
@@ -49,16 +47,3 @@ class AttachLabelsTransform(AbstractTransform):
             document["id"]: [labels_by_id[label_id] for label_id in document["labels"]]
             for document in documents
         }
-
-
-class AttachSampleCountsTransform(AbstractTransform):
-    """Attach the number of associated samples to each label document."""
-
-    def __init__(self, mongo: Mongo):
-        self._mongo = mongo
-
-    async def attach_one(self, document: Document, prepared: int) -> Document:
-        return {**document, "count": prepared}
-
-    async def prepare_one(self, document, session: AsyncSession) -> Awaitable[Any]:
-        return await self._mongo.samples.count_documents({"labels": document["id"]})
