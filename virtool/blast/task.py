@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from structlog import get_logger
 
+from virtool.data.errors import ResourceNotFoundError
 from virtool.tasks.task import BaseTask
 
 if TYPE_CHECKING:
@@ -109,10 +110,25 @@ class BLASTTask(BaseTask):
         while True:
             await asyncio.sleep(interval)
 
-            blast = await self.data.blast.check_nuvs_blast(
-                self.analysis_id,
-                self.sequence_index,
-            )
+            try:
+                blast = await self.data.blast.check_nuvs_blast(
+                    self.analysis_id,
+                    self.sequence_index,
+                )
+            except ResourceNotFoundError:
+                logger.info(
+                    "BLAST record gone or superseded by a newer search",
+                    rid=self.rid,
+                )
+                break
+
+            if blast.rid != self.rid:
+                logger.info(
+                    "BLAST record replaced by a newer search",
+                    rid=self.rid,
+                    new_rid=blast.rid,
+                )
+                break
 
             if blast.ready:
                 logger.info("retrieved result for blast", rid=blast.rid)

@@ -95,7 +95,7 @@ class BLASTData(DataLayerDomain):
         async with AsyncSession(self._pg) as session:
             blast_row = await get_nuvs_blast(session, analysis_id, sequence_index)
 
-            if blast_row is None:
+            if blast_row is None or blast_row.rid is None:
                 raise ResourceNotFoundError
 
             rid = blast_row.rid
