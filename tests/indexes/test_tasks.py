@@ -30,16 +30,13 @@ async def _create_task_backed_index(
 
     task = await data_layer.tasks.create(CreateIndexTask, {"index_id": "task_index"})
 
-    await mongo.references.insert_one(
-        {
-            "_id": "hxn167",
-            "archived": False,
-            "created_at": static_time.datetime,
-            "data_type": "genome",
-            "name": "Test Reference",
-            "organism": "virus",
-        },
-    )
+    if not await mongo.references.count_documents({"_id": "hxn167"}):
+        await fake.references.create(
+            user=user,
+            id_="hxn167",
+            name="Test Reference",
+            organism="virus",
+        )
 
     await mongo.indexes.insert_one(
         {
@@ -173,20 +170,17 @@ async def test_create_index_task_resolves_integer_reference_id(
 ):
     """A task-backed build resolves an integer embedded reference id to Mongo."""
     user = await fake.users.create()
+    await fake.references.create(
+        user=user,
+        id_="hxn167",
+        name="Test Reference",
+        organism="virus",
+    )
 
     async with AsyncSession(pg) as session:
-        reference = SQLReference(
-            legacy_id="hxn167",
-            name="Test Reference",
-            description="",
-            created_at=static_time.datetime,
-            source_types=[],
-            user_id=user.id,
+        reference_pk = await session.scalar(
+            select(SQLReference.id).where(SQLReference.legacy_id == "hxn167"),
         )
-        session.add(reference)
-        await session.flush()
-        reference_pk = reference.id
-        await session.commit()
 
     manifest = await _insert_indexed_otu(mongo, test_otu, test_sequence)
     task_id = await _create_task_backed_index(

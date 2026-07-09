@@ -23,18 +23,11 @@ from virtool.mongo.core import Mongo
 from virtool.references.sql import SQLReference
 
 
-async def _add_reference(pg: AsyncEngine, legacy_id: str, user_id: int, static_time):
+async def _get_reference_id(pg: AsyncEngine, legacy_id: str) -> int:
     async with AsyncSession(pg) as session:
-        reference = SQLReference(
-            legacy_id=legacy_id,
-            name=legacy_id,
-            description="",
-            created_at=static_time.datetime,
-            source_types=[],
-            user_id=user_id,
+        return await session.scalar(
+            select(SQLReference.id).where(SQLReference.legacy_id == legacy_id),
         )
-        session.add(reference)
-        await session.commit()
 
 
 @pytest.mark.parametrize("index_id", [None, "abc"])
@@ -52,22 +45,21 @@ async def test_create(
     """
     user = await fake.users.create()
 
-    await mongo.references.insert_one({"_id": "foo"})
-    await _add_reference(pg, "foo", user.id, static_time)
+    await fake.references.create(user=user, id_="foo", name="foo")
 
     mocker.patch("virtool.references.db.get_manifest", make_mocked_coro("manifest"))
 
-    assert (
-        await virtool.indexes.db.create(
-            mongo,
-            pg,
-            "foo",
-            "test",
-            "bar",
-            index_id=index_id,
-        )
-        == snapshot
+    created = await virtool.indexes.db.create(
+        mongo,
+        pg,
+        "foo",
+        "test",
+        "bar",
+        index_id=index_id,
     )
+
+    assert created["created_at"] == static_time.datetime
+    assert created == snapshot
 
 
 async def test_create_assigns_index_in_postgres(
@@ -82,17 +74,16 @@ async def test_create_assigns_index_in_postgres(
     changes untouched.
     """
     user = await fake.users.create()
+    await fake.references.create(user=user, id_="built_ref", name="built_ref")
+    await fake.references.create(user=user, id_="other_ref", name="other_ref")
 
-    await asyncio.gather(
-        mongo.references.insert_one({"_id": "built_ref"}),
-        mongo.indexes.insert_one(
-            {
-                "_id": "prior_index",
-                "reference": {"id": "built_ref"},
-                "version": 0,
-                "ready": True,
-            },
-        ),
+    await mongo.indexes.insert_one(
+        {
+            "_id": "prior_index",
+            "reference": {"id": "built_ref"},
+            "version": 0,
+            "ready": True,
+        },
     )
 
     def legacy_row(
@@ -112,31 +103,17 @@ async def test_create_assigns_index_in_postgres(
             index_version="0" if index else None,
         )
 
-    async with AsyncSession(pg) as session:
-        built_ref = SQLReference(
-            legacy_id="built_ref",
-            name="built_ref",
-            description="",
-            created_at=static_time.datetime,
-            source_types=[],
-            user_id=user.id,
-        )
-        other_ref = SQLReference(
-            legacy_id="other_ref",
-            name="other_ref",
-            description="",
-            created_at=static_time.datetime,
-            source_types=[],
-            user_id=user.id,
-        )
-        session.add_all([built_ref, other_ref])
-        await session.flush()
+    built_ref_id, other_ref_id = await asyncio.gather(
+        _get_reference_id(pg, "built_ref"),
+        _get_reference_id(pg, "other_ref"),
+    )
 
+    async with AsyncSession(pg) as session:
         session.add_all(
             [
-                legacy_row("ref_unbuilt", built_ref.id, None),
-                legacy_row("ref_already_built", built_ref.id, "prior_index"),
-                legacy_row("other_ref_unbuilt", other_ref.id, None),
+                legacy_row("ref_unbuilt", built_ref_id, None),
+                legacy_row("ref_already_built", built_ref_id, "prior_index"),
+                legacy_row("other_ref_unbuilt", other_ref_id, None),
             ],
         )
         await session.commit()
@@ -175,8 +152,7 @@ async def test_create_rolls_back_both_stores_on_failure(
     """
     user = await fake.users.create()
 
-    await mongo.references.insert_one({"_id": "built_ref"})
-    await _add_reference(pg, "built_ref", user.id, static_time)
+    await fake.references.create(user=user, id_="built_ref", name="built_ref")
 
     async with AsyncSession(pg) as session:
         session.add(
@@ -270,7 +246,6 @@ async def test_reads_tolerate_integer_embedded_reference_id(
     mongo: Mongo,
     pg: AsyncEngine,
     fake,
-    static_time,
 ):
     """``get_current_id_and_version`` and ``get_next_version`` resolve the legacy
     string ref id and match an index whose embedded ``reference.id`` is the integer
@@ -278,8 +253,7 @@ async def test_reads_tolerate_integer_embedded_reference_id(
     """
     user = await fake.users.create()
 
-    await mongo.references.insert_one({"_id": "legacy_ref"})
-    await _add_reference(pg, "legacy_ref", user.id, static_time)
+    await fake.references.create(user=user, id_="legacy_ref", name="legacy_ref")
 
     async with AsyncSession(pg) as session:
         reference_pk = (

@@ -61,6 +61,15 @@ class TestFind:
         job_active_b = await fake.jobs.create(user=user, workflow="build_index")
         job_archived = await fake.jobs.create(user=user, workflow="build_index")
 
+        await fake.references.create(user=user, id_="ref_active_a", name="Active A")
+        await fake.references.create(user=user, id_="ref_active_b", name="Active B")
+        await fake.references.create(
+            user=user,
+            id_="ref_archived",
+            name="Archived",
+            archived=True,
+        )
+
         await asyncio.gather(
             mongo.history.insert_many(
                 [
@@ -141,29 +150,6 @@ class TestFind:
                 ],
                 session=None,
             ),
-            mongo.references.insert_many(
-                [
-                    {
-                        "_id": "ref_active_a",
-                        "archived": False,
-                        "data_type": "genome",
-                        "name": "Active A",
-                    },
-                    {
-                        "_id": "ref_active_b",
-                        "archived": False,
-                        "data_type": "genome",
-                        "name": "Active B",
-                    },
-                    {
-                        "_id": "ref_archived",
-                        "archived": True,
-                        "data_type": "genome",
-                        "name": "Archived",
-                    },
-                ],
-                session=None,
-            ),
         )
 
         index_references = {
@@ -172,22 +158,6 @@ class TestFind:
         }
 
         async with AsyncSession(pg) as session:
-            session.add_all(
-                SQLReference(
-                    legacy_id=legacy_id,
-                    name=name,
-                    description="",
-                    created_at=static_time.datetime,
-                    archived=archived,
-                    source_types=[],
-                    user_id=user.id,
-                )
-                for legacy_id, name, archived in (
-                    ("ref_active_a", "Active A", False),
-                    ("ref_active_b", "Active B", False),
-                    ("ref_archived", "Archived", True),
-                )
-            )
             session.add_all(
                 SQLLegacyHistory(
                     legacy_id=legacy_id,
@@ -247,7 +217,6 @@ class TestFind:
         fake: DataFaker,
         snapshot,
         mongo: Mongo,
-        pg: AsyncEngine,
         spawn_client: ClientSpawner,
         static_time,
     ):
@@ -256,91 +225,56 @@ class TestFind:
         user = await fake.users.create()
         job = await fake.jobs.create(user=user)
 
-        await asyncio.gather(
-            mongo.indexes.insert_many(
-                [
-                    {
-                        "_id": "idx_active_a",
-                        "version": 1,
-                        "created_at": static_time.datetime + timedelta(hours=2),
-                        "manifest": {"otu_1": 2},
-                        "ready": True,
-                        "has_files": True,
-                        "job": {"id": job.id},
-                        "task": None,
-                        "reference": {"id": "ref_active_a"},
-                        "user": {"id": user.id},
-                    },
-                    {
-                        "_id": "idx_active_b",
-                        "version": 0,
-                        "created_at": static_time.datetime,
-                        "manifest": {"otu_1": 2},
-                        "ready": True,
-                        "has_files": True,
-                        "job": {"id": job.id},
-                        "task": None,
-                        "reference": {"id": "ref_active_b"},
-                        "user": {"id": user.id},
-                    },
-                    {
-                        "_id": "idx_archived",
-                        "version": 0,
-                        "created_at": static_time.datetime + timedelta(hours=4),
-                        "manifest": {"otu_1": 2},
-                        "ready": True,
-                        "has_files": True,
-                        "job": {"id": job.id},
-                        "task": None,
-                        "reference": {"id": "ref_archived"},
-                        "user": {"id": user.id},
-                    },
-                ],
-                session=None,
-            ),
-            mongo.references.insert_many(
-                [
-                    {
-                        "_id": "ref_active_a",
-                        "archived": False,
-                        "data_type": "genome",
-                        "name": "Active A",
-                    },
-                    {
-                        "_id": "ref_active_b",
-                        "archived": False,
-                        "data_type": "genome",
-                        "name": "Active B",
-                    },
-                    {
-                        "_id": "ref_archived",
-                        "archived": True,
-                        "data_type": "genome",
-                        "name": "Archived",
-                    },
-                ],
-                session=None,
-            ),
+        await fake.references.create(user=user, id_="ref_active_a", name="Active A")
+        await fake.references.create(user=user, id_="ref_active_b", name="Active B")
+        await fake.references.create(
+            user=user,
+            id_="ref_archived",
+            name="Archived",
+            archived=True,
         )
 
-        async with AsyncSession(pg) as session:
-            session.add_all(
-                SQLReference(
-                    legacy_id=legacy_id,
-                    name=name,
-                    description="",
-                    created_at=static_time.datetime,
-                    archived=archived_flag,
-                    source_types=[],
-                    user_id=user.id,
-                )
-                for legacy_id, name, archived_flag in (
-                    ("ref_active_a", "Active A", False),
-                    ("ref_active_b", "Active B", False),
-                    ("ref_archived", "Archived", True),
-                )
-            )
-            await session.commit()
+        await mongo.indexes.insert_many(
+            [
+                {
+                    "_id": "idx_active_a",
+                    "version": 1,
+                    "created_at": static_time.datetime + timedelta(hours=2),
+                    "manifest": {"otu_1": 2},
+                    "ready": True,
+                    "has_files": True,
+                    "job": {"id": job.id},
+                    "task": None,
+                    "reference": {"id": "ref_active_a"},
+                    "user": {"id": user.id},
+                },
+                {
+                    "_id": "idx_active_b",
+                    "version": 0,
+                    "created_at": static_time.datetime,
+                    "manifest": {"otu_1": 2},
+                    "ready": True,
+                    "has_files": True,
+                    "job": {"id": job.id},
+                    "task": None,
+                    "reference": {"id": "ref_active_b"},
+                    "user": {"id": user.id},
+                },
+                {
+                    "_id": "idx_archived",
+                    "version": 0,
+                    "created_at": static_time.datetime + timedelta(hours=4),
+                    "manifest": {"otu_1": 2},
+                    "ready": True,
+                    "has_files": True,
+                    "job": {"id": job.id},
+                    "task": None,
+                    "reference": {"id": "ref_archived"},
+                    "user": {"id": user.id},
+                },
+            ],
+            session=None,
+        )
 
         url = "/indexes?ready=True"
         if archived is not None:
@@ -738,7 +672,6 @@ async def test_delete_index(
     error,
     fake: DataFaker,
     mongo: Mongo,
-    pg: AsyncEngine,
     spawn_job_client: JobClientSpawner,
     static_time,
 ):
@@ -749,37 +682,20 @@ async def test_delete_index(
     user = await fake.users.create()
 
     if error != 404:
-        await asyncio.gather(
-            mongo.references.insert_one(
-                {"_id": "foo", "archived": False, "data_type": "genome", "name": "Foo"},
-            ),
-            mongo.indexes.insert_one(
-                {
-                    "_id": index_id,
-                    "created_at": static_time.iso,
-                    "has_files": True,
-                    "manifest": {"foo": 2},
-                    "ready": True,
-                    "reference": {"id": "foo"},
-                    "user": {"id": user.id},
-                    "task": None,
-                    "version": 4,
-                },
-            ),
+        await fake.references.create(user=user, id_="foo", name="Foo")
+        await mongo.indexes.insert_one(
+            {
+                "_id": index_id,
+                "created_at": static_time.iso,
+                "has_files": True,
+                "manifest": {"foo": 2},
+                "ready": True,
+                "reference": {"id": "foo"},
+                "user": {"id": user.id},
+                "task": None,
+                "version": 4,
+            },
         )
-
-        async with AsyncSession(pg) as session:
-            session.add(
-                SQLReference(
-                    legacy_id="foo",
-                    name="Foo",
-                    description="",
-                    created_at=static_time.datetime,
-                    source_types=[],
-                    user_id=user.id,
-                ),
-            )
-            await session.commit()
 
     response = await client.delete(f"/indexes/{index_id}")
 

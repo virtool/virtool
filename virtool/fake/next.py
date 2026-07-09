@@ -337,6 +337,8 @@ class ReferencesFakerDomain(DataFakerDomain):
         data_type: ReferenceDataType = ReferenceDataType.genome,
         organism: str = "",
         description: str = "",
+        *,
+        archived: bool = False,
     ) -> Reference:
         """Create a fake reference in both Mongo and Postgres.
 
@@ -364,6 +366,9 @@ class ReferencesFakerDomain(DataFakerDomain):
         ):
             await self._mongo.references.insert_one(document, session=mongo_session)
             await write_legacy_reference(pg_session, document)
+
+        if archived:
+            return await self._layer.references.archive(document["_id"])
 
         return await self._layer.references.get(document["_id"])
 
