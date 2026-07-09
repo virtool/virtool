@@ -85,6 +85,37 @@ class TestSize:
         assert await adapter.size("samples/sample1/reads.fq.gz") == len(b"reads")
 
 
+class TestCopy:
+    async def test_translates_both_index_keys(self, adapter, tmp_path):
+        _seed_legacy_index(tmp_path, "ref1", "idx1", "reference.json.gz", b"payload")
+        _seed_legacy_index(tmp_path, "ref2", "idx2", "placeholder", b"")
+
+        await adapter.copy("indexes/idx1/reference.json.gz", "indexes/idx2/copied.gz")
+
+        assert (
+            tmp_path / "references" / "ref2" / "idx2" / "copied.gz"
+        ).read_bytes() == b"payload"
+
+    async def test_passes_through_non_index_keys(self, adapter, tmp_path):
+        path = tmp_path / "samples" / "sample1" / "reads.fq.gz"
+        path.parent.mkdir(parents=True)
+        path.write_bytes(b"reads")
+
+        await adapter.copy("samples/sample1/reads.fq.gz", "samples/12/reads.fq.gz")
+
+        assert (tmp_path / "samples" / "12" / "reads.fq.gz").read_bytes() == b"reads"
+
+    async def test_unknown_source_index_raises(self, adapter):
+        with pytest.raises(StorageKeyNotFoundError):
+            await adapter.copy("indexes/missing/reference.json.gz", "samples/12/x.gz")
+
+    async def test_unknown_destination_index_raises(self, adapter, tmp_path):
+        _seed_legacy_index(tmp_path, "ref1", "idx1", "reference.json.gz", b"payload")
+
+        with pytest.raises(StorageError, match="cannot copy to index key"):
+            await adapter.copy("indexes/idx1/reference.json.gz", "indexes/missing/x.gz")
+
+
 class TestDelete:
     async def test_translates_index_key(self, adapter, tmp_path):
         path = _seed_legacy_index(

@@ -47,6 +47,25 @@ class FallbackStorageRouter:
         await self._fallback.delete(key)
         return await self._primary.write(key, data)
 
+    async def copy(self, src: str, dst: str) -> None:
+        """Copy ``src`` to ``dst``, always landing the destination on the primary.
+
+        When ``src`` lives on the primary the copy stays there and can be done
+        server-side. When it only exists on the fallback it is promoted:
+        streamed out of the fallback and written to the primary. Either way the
+        fallback copy of ``dst`` is dropped first, matching ``write``, so a
+        stale fallback object is never served in place of the new one.
+        """
+        await self._fallback.delete(dst)
+
+        try:
+            await self._primary.size(src)
+        except StorageKeyNotFoundError:
+            await self._primary.write(dst, self._fallback.read(src))
+            return
+
+        await self._primary.copy(src, dst)
+
     async def delete(self, key: str) -> None:
         primary_result, fallback_result = await asyncio.gather(
             self._primary.delete(key),

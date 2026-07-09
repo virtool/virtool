@@ -88,6 +88,60 @@ class TestWrite:
         assert not (tmp_path / "target.txt").exists()
 
 
+class TestCopy:
+    async def test_ok(self, provider, tmp_path):
+        await provider.write("samples/abc/reads.fq.gz", _async_iter(b"read data"))
+
+        await provider.copy("samples/abc/reads.fq.gz", "samples/12/reads.fq.gz")
+
+        assert (
+            tmp_path / "samples" / "12" / "reads.fq.gz"
+        ).read_bytes() == b"read data"
+
+    async def test_leaves_source_in_place(self, provider, tmp_path):
+        await provider.write("src.txt", _async_iter(b"payload"))
+
+        await provider.copy("src.txt", "dst.txt")
+
+        assert (tmp_path / "src.txt").read_bytes() == b"payload"
+
+    async def test_creates_parent_directories(self, provider, tmp_path):
+        await provider.write("src.txt", _async_iter(b"data"))
+
+        await provider.copy("src.txt", "deep/nested/path/file.txt")
+
+        assert (tmp_path / "deep" / "nested" / "path" / "file.txt").exists()
+
+    async def test_overwrites_destination(self, provider, tmp_path):
+        await provider.write("src.txt", _async_iter(b"new"))
+        await provider.write("dst.txt", _async_iter(b"stale"))
+
+        await provider.copy("src.txt", "dst.txt")
+
+        assert (tmp_path / "dst.txt").read_bytes() == b"new"
+
+    async def test_leaves_no_temporary_file(self, provider, tmp_path):
+        await provider.write("src.txt", _async_iter(b"data"))
+
+        await provider.copy("src.txt", "dst.txt")
+
+        assert sorted(p.name for p in tmp_path.iterdir()) == ["dst.txt", "src.txt"]
+
+    async def test_nonexistent_source(self, provider):
+        with pytest.raises(StorageKeyNotFoundError):
+            await provider.copy("does/not/exist", "dst.txt")
+
+    async def test_source_outside_base_path(self, provider):
+        with pytest.raises(StorageError, match="resolves outside the base path"):
+            await provider.copy("../escape.txt", "dst.txt")
+
+    async def test_destination_outside_base_path(self, provider):
+        await provider.write("src.txt", _async_iter(b"data"))
+
+        with pytest.raises(StorageError, match="resolves outside the base path"):
+            await provider.copy("src.txt", "../escape.txt")
+
+
 class TestDelete:
     async def test_existing_key(self, provider, tmp_path):
         path = tmp_path / "to_delete"

@@ -150,6 +150,69 @@ class TestWrite:
         primary_write.assert_not_called()
 
 
+class TestCopy:
+    async def test_copies_within_primary(self, primary, router):
+        await primary.write("src", _async_iter(b"data"))
+
+        await router.copy("src", "dst")
+
+        assert await _collect_bytes(primary.read("dst")) == b"data"
+
+    async def test_uses_primary_copy_when_source_is_on_primary(
+        self, primary, fallback, router, mocker
+    ):
+        """A primary-resident source must be copied server-side, not streamed.
+
+        Falling back to read-then-write would pull the object through this
+        process, which for a multi-gigabyte reads file is the difference
+        between a metadata-scale operation and a full transfer.
+        """
+        await primary.write("src", _async_iter(b"data"))
+
+        primary_copy = mocker.spy(primary, "copy")
+        primary_write = mocker.spy(primary, "write")
+
+        await router.copy("src", "dst")
+
+        primary_copy.assert_called_once_with("src", "dst")
+        primary_write.assert_not_called()
+
+    async def test_promotes_source_from_fallback(self, primary, fallback, router):
+        await fallback.write("src", _async_iter(b"legacy"))
+
+        await router.copy("src", "dst")
+
+        assert await _collect_bytes(primary.read("dst")) == b"legacy"
+
+    async def test_leaves_fallback_source_in_place(self, fallback, router):
+        await fallback.write("src", _async_iter(b"legacy"))
+
+        await router.copy("src", "dst")
+
+        assert await _collect_bytes(fallback.read("src")) == b"legacy"
+
+    async def test_drains_stale_fallback_destination(self, primary, fallback, router):
+        """A stale fallback object at ``dst`` must never outlive the copy.
+
+        Reads probe the primary first, so a surviving fallback copy would only
+        surface if the primary object were later lost -- serving stale bytes
+        under a key the migration believes it rewrote.
+        """
+        await primary.write("src", _async_iter(b"new"))
+        await fallback.write("dst", _async_iter(b"stale"))
+
+        await router.copy("src", "dst")
+
+        with pytest.raises(StorageKeyNotFoundError):
+            await _collect_bytes(fallback.read("dst"))
+
+        assert await _collect_bytes(router.read("dst")) == b"new"
+
+    async def test_nonexistent_source(self, router):
+        with pytest.raises(StorageKeyNotFoundError):
+            await router.copy("does/not/exist", "dst")
+
+
 class TestDelete:
     async def test_deletes_from_both(self, primary, fallback, router):
         await primary.write("key", _async_iter(b"a"))

@@ -99,6 +99,21 @@ class LegacyIndexFilesystemAdapter:
             raise StorageError(msg)
         return await self._inner.write(translated, data)
 
+    async def copy(self, src: str, dst: str) -> None:
+        translated_src = await self._translate(src)
+        if translated_src is None:
+            raise StorageKeyNotFoundError(src)
+
+        translated_dst = await self._translate(dst)
+        if translated_dst is None:
+            msg = (
+                f"cannot copy to index key {dst!r} through the legacy fallback: "
+                "no on-disk reference directory contains this index_id"
+            )
+            raise StorageError(msg)
+
+        await self._inner.copy(translated_src, translated_dst)
+
     async def delete(self, key: str) -> None:
         translated = await self._translate(key)
         if translated is None:

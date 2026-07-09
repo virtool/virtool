@@ -70,6 +70,53 @@ class TestRoundtrip:
         assert await _collect_bytes(provider.read(key)) == b"second"
 
 
+class TestCopy:
+    async def test_ok(self, provider, request, worker_id):
+        src = _key(request, worker_id, "src.txt")
+        dst = _key(request, worker_id, "dst.txt")
+
+        await provider.write(src, _async_iter(b"read data"))
+        await provider.copy(src, dst)
+
+        assert await _collect_bytes(provider.read(dst)) == b"read data"
+        assert await _collect_bytes(provider.read(src)) == b"read data"
+
+    async def test_overwrites_destination(self, provider, request, worker_id):
+        src = _key(request, worker_id, "src.txt")
+        dst = _key(request, worker_id, "dst.txt")
+
+        await provider.write(src, _async_iter(b"new"))
+        await provider.write(dst, _async_iter(b"stale"))
+        await provider.copy(src, dst)
+
+        assert await _collect_bytes(provider.read(dst)) == b"new"
+
+    async def test_object_larger_than_chunk_size(self, provider, request, worker_id):
+        """Copy an object spanning more than one write chunk.
+
+        This does not cover S3's 5 GiB single-request ``CopyObject`` ceiling,
+        above which a multipart copy is required. Sample reads files exceed
+        that, so any migration that re-keys them must establish separately that
+        the backend switches to multipart.
+        """
+        src = _key(request, worker_id, "large-src.bin")
+        dst = _key(request, worker_id, "large-dst.bin")
+        payload = b"x" * (STORAGE_CHUNK_SIZE * 2 + 123)
+
+        await provider.write(src, _async_iter(payload, chunk_size=512 * 1024))
+        await provider.copy(src, dst)
+
+        assert await provider.size(dst) == len(payload)
+        assert await _collect_bytes(provider.read(dst)) == payload
+
+    async def test_nonexistent_source(self, provider, request, worker_id):
+        src = _key(request, worker_id, "never-existed.txt")
+        dst = _key(request, worker_id, "dst.txt")
+
+        with pytest.raises(StorageKeyNotFoundError):
+            await provider.copy(src, dst)
+
+
 class TestDelete:
     async def test_existing(self, provider, request, worker_id):
         key = _key(request, worker_id, "to-delete.txt")

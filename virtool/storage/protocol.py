@@ -33,6 +33,18 @@ class StorageBackend(Protocol):
         """
         ...
 
+    async def copy(self, src: str, dst: str) -> None:
+        """Copy the object at ``src`` to ``dst``, overwriting ``dst``.
+
+        Backends that can copy server-side must do so rather than streaming the
+        object through the caller: this is used to re-key multi-gigabyte sample
+        reads files.
+
+        Raises :class:`~virtool.storage.errors.StorageKeyNotFoundError` if
+        ``src`` does not exist.
+        """
+        ...
+
     async def delete(self, key: str) -> None:
         """Delete the object at ``key``.
 

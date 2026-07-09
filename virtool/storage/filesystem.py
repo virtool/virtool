@@ -3,6 +3,7 @@
 import asyncio
 import errno
 import os
+import shutil
 import tempfile
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
@@ -78,6 +79,35 @@ class FilesystemProvider:
             raise
 
         return size
+
+    async def copy(self, src: str, dst: str) -> None:
+        """Copy the object at ``src`` to ``dst``, overwriting ``dst``.
+
+        Uses a temporary file and atomic rename, so a failure part-way through
+        never leaves a truncated object at ``dst``.
+        """
+        src_path = await self._resolve(src)
+        dst_path = await self._resolve(dst)
+
+        if not await asyncio.to_thread(src_path.is_file):
+            raise StorageKeyNotFoundError(src)
+
+        await asyncio.to_thread(dst_path.parent.mkdir, parents=True, exist_ok=True)
+
+        tmp_fd = await asyncio.to_thread(
+            tempfile.NamedTemporaryFile,
+            dir=dst_path.parent,
+            delete=False,
+        )
+        tmp_path = Path(tmp_fd.name)
+
+        try:
+            await asyncio.to_thread(tmp_fd.close)
+            await asyncio.to_thread(shutil.copyfile, src_path, tmp_path)
+            await asyncio.to_thread(os.replace, tmp_path, dst_path)
+        except BaseException:
+            await asyncio.to_thread(tmp_path.unlink, True)
+            raise
 
     async def delete(self, key: str) -> None:
         """Delete the object at ``key``. Idempotent."""

@@ -69,6 +69,37 @@ class TestWrite:
         assert await _collect_bytes(provider.read("key")) == b"second"
 
 
+class TestCopy:
+    async def test_ok(self, provider):
+        await provider.write("samples/abc/reads.fq.gz", _async_iter(b"read data"))
+
+        await provider.copy("samples/abc/reads.fq.gz", "samples/12/reads.fq.gz")
+
+        assert (
+            await _collect_bytes(provider.read("samples/12/reads.fq.gz"))
+            == b"read data"
+        )
+
+    async def test_leaves_source_in_place(self, provider):
+        await provider.write("src", _async_iter(b"payload"))
+
+        await provider.copy("src", "dst")
+
+        assert await _collect_bytes(provider.read("src")) == b"payload"
+
+    async def test_overwrites_destination(self, provider):
+        await provider.write("src", _async_iter(b"new"))
+        await provider.write("dst", _async_iter(b"stale"))
+
+        await provider.copy("src", "dst")
+
+        assert await _collect_bytes(provider.read("dst")) == b"new"
+
+    async def test_nonexistent_source(self, provider):
+        with pytest.raises(StorageKeyNotFoundError):
+            await provider.copy("does/not/exist", "dst")
+
+
 class TestDelete:
     async def test_existing_key(self, provider):
         await provider.write("to_delete", _async_iter(b"data"))

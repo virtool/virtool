@@ -124,6 +124,25 @@ class ObjectProvider:
 
         return size
 
+    async def copy(self, src: str, dst: str) -> None:
+        """Copy the object at ``src`` to ``dst``, overwriting ``dst``.
+
+        ``obstore`` issues a server-side copy, so the object never transits this
+        process.
+        """
+        try:
+            await obs.copy_async(self._store, src, dst)
+        except FileNotFoundError as exc:
+            raise StorageKeyNotFoundError(src) from exc
+        except GenericError as exc:
+            # See `delete` for why the structured S3 error code is matched here.
+            msg = str(exc)
+            if _S3_NOT_FOUND_CODE_RE.search(msg):
+                raise StorageKeyNotFoundError(src) from exc
+            raise StorageError(msg) from exc
+        except Exception as exc:
+            raise StorageError(str(exc)) from exc
+
     async def delete(self, key: str) -> None:
         """Delete the object at ``key``. Idempotent."""
         try:

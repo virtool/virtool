@@ -44,6 +44,17 @@ class MemoryStorageProvider:
 
         return len(blob)
 
+    async def copy(self, src: str, dst: str) -> None:
+        try:
+            obj = self._store[src]
+        except KeyError as exc:
+            raise StorageKeyNotFoundError(src) from exc
+
+        self._store[dst] = _StoredObject(
+            data=obj.data,
+            last_modified=datetime.now(tz=UTC),
+        )
+
     async def delete(self, key: str) -> None:
         self._store.pop(key, None)
 

@@ -101,6 +101,65 @@ class TestErrorTranslation:
         with pytest.raises(StorageError):
             await provider.delete("present")
 
+    async def test_copy_missing_source_raises_key_not_found(self, provider):
+        with pytest.raises(StorageKeyNotFoundError):
+            await provider.copy("does/not/exist", "dst")
+
+    async def test_copy_translates_s3_compatible_no_such_key(self, provider, mocker):
+        """Unlike ``delete``, a missing source is an error for ``copy``.
+
+        Garage-style backends wrap not-found as a GenericError carrying a
+        structured ``code: "NoSuchKey"`` marker, which must surface as
+        StorageKeyNotFoundError rather than a bare StorageError.
+        """
+        mocker.patch(
+            "virtool.storage.object.obs.copy_async",
+            side_effect=GenericError(
+                "Generic S3 error: CopyObject request failed for key foo: "
+                "Key not found (code: NoSuchKey)",
+            ),
+        )
+
+        with pytest.raises(StorageKeyNotFoundError):
+            await provider.copy("missing", "dst")
+
+    async def test_copy_does_not_swallow_unrelated_error_code(self, provider, mocker):
+        mocker.patch(
+            "virtool.storage.object.obs.copy_async",
+            side_effect=GenericError(
+                "Generic S3 error: bucket missing (code: NoSuchBucket)",
+            ),
+        )
+
+        with pytest.raises(StorageError) as info:
+            await provider.copy("present", "dst")
+
+        assert not isinstance(info.value, StorageKeyNotFoundError)
+
+
+class TestCopy:
+    async def test_ok(self, provider):
+        await provider.write("samples/abc/reads.fq.gz", _async_iter(b"read data"))
+
+        await provider.copy("samples/abc/reads.fq.gz", "samples/12/reads.fq.gz")
+
+        assert (
+            await _collect_bytes(provider.read("samples/12/reads.fq.gz"))
+            == b"read data"
+        )
+        assert (
+            await _collect_bytes(provider.read("samples/abc/reads.fq.gz"))
+            == b"read data"
+        )
+
+    async def test_overwrites_destination(self, provider):
+        await provider.write("src", _async_iter(b"new"))
+        await provider.write("dst", _async_iter(b"stale"))
+
+        await provider.copy("src", "dst")
+
+        assert await _collect_bytes(provider.read("dst")) == b"new"
+
 
 class TestSize:
     async def test_ok(self, provider):
