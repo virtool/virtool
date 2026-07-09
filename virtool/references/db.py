@@ -442,11 +442,18 @@ async def compose_reference_ids_match(
     are included for every matching reference. This backs the orphan and lifecycle
     filters on the index list, which scope indexes to references that still exist.
 
+    References with no ``legacy_id`` are excluded. ``legacy_id`` remains the public
+    reference identifier until the integer primary key becomes canonical, so a
+    Postgres-native reference cannot yet be shaped into a ``ReferenceNested``. Drop
+    this constraint when the public identifier flips.
+
     :param pg: the application PostgreSQL engine
     :param archived: lifecycle filter mode
     :return: a Mongo ``$in`` match value covering both id forms
     """
-    query = select(SQLReference.id, SQLReference.legacy_id)
+    query = select(SQLReference.id, SQLReference.legacy_id).where(
+        SQLReference.legacy_id.is_not(None),
+    )
 
     if archived is not None:
         query = query.where(SQLReference.archived == archived)
@@ -454,9 +461,7 @@ async def compose_reference_ids_match(
     async with AsyncSession(pg) as session:
         rows = (await session.execute(query)).all()
 
-    return {
-        "$in": [value for row in rows for value in row if value is not None],
-    }
+    return {"$in": [value for row in rows for value in row]}
 
 
 async def get_contributors(pg, ref_id: str) -> list[Document] | None:

@@ -448,13 +448,12 @@ class TestComposeReferenceIdsMatch:
         return reference_ids
 
     async def test_unfiltered(self, pg: AsyncEngine, references: dict[str, int]):
-        """Both id forms of every reference are matched when ``archived`` is None."""
+        """Both id forms of every legacy reference are matched when ``archived`` is None."""
         match = await compose_reference_ids_match(pg)
 
         assert set(match["$in"]) == {
             references["active"],
             references["archived"],
-            references["native_active"],
             "ref_active",
             "ref_archived",
         }
@@ -465,14 +464,24 @@ class TestComposeReferenceIdsMatch:
         assert set(match["$in"]) == {references["archived"], "ref_archived"}
 
     async def test_active(self, pg: AsyncEngine, references: dict[str, int]):
-        """A Postgres-native reference contributes its integer id and no legacy id."""
         match = await compose_reference_ids_match(pg, False)
 
-        assert set(match["$in"]) == {
-            references["active"],
-            references["native_active"],
-            "ref_active",
-        }
+        assert set(match["$in"]) == {references["active"], "ref_active"}
+
+    async def test_native_reference_excluded(
+        self,
+        pg: AsyncEngine,
+        references: dict[str, int],
+    ):
+        """A reference with no ``legacy_id`` never enters the match.
+
+        It cannot be shaped into a ``ReferenceNested``, whose ``id`` is a required
+        string, so matching its indexes would fail response validation.
+        """
+        match = await compose_reference_ids_match(pg)
+
+        assert references["native_active"] not in match["$in"]
+        assert None not in match["$in"]
 
 
 async def test_create_manifest(mongo: Mongo, pg: AsyncEngine, test_otu: dict):
