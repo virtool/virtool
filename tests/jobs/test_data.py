@@ -197,11 +197,10 @@ class TestCreatePostgres:
     ):
         """``get`` resolves the sample from the legacy sample linked by job_id.
 
-        Unlike subtractions and analyses, which expose the integer id, the sample
-        reference is exposed as the legacy Mongo string so the create_sample
-        workflow can address the sample over the jobs API, whose endpoints still
-        resolve samples by their Mongo ``_id``. The public flip to the integer PK
-        is VIR-2529.
+        The sample is exposed as its integer primary key, which the create_sample
+        workflow uses to address the sample over the jobs API. A sample created
+        natively in Postgres has no legacy id, so the legacy string cannot be the
+        job argument.
         """
         user = await fake.users.create()
 
@@ -213,19 +212,22 @@ class TestCreatePostgres:
         )
 
         async with AsyncSession(pg) as session:
-            session.add(
-                SQLLegacySample(
-                    legacy_id="sample_123",
-                    name="Sample 123",
-                    library_type="normal",
-                    created_at=arrow.utcnow().naive,
-                    job_id=job.id,
-                ),
+            sample = SQLLegacySample(
+                legacy_id="sample_123",
+                name="Sample 123",
+                library_type="normal",
+                created_at=arrow.utcnow().naive,
+                job_id=job.id,
             )
+            session.add(sample)
+            await session.flush()
+
+            sample_pk = sample.id
+
             await session.commit()
 
         fetched_job = await jobs_data.get(job.id)
-        assert fetched_job.args == {"sample_id": "sample_123"}
+        assert fetched_job.args == {"sample_id": sample_pk}
 
     async def test_index_join_table(
         self,

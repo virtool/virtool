@@ -1740,20 +1740,23 @@ class TestUploadArtifact:
     """Test that new artifacts can be uploaded after sample creation using the Jobs API."""
 
     @staticmethod
-    async def _insert_sample(mongo: Mongo, pg: AsyncEngine) -> None:
+    async def _insert_sample(mongo: Mongo, pg: AsyncEngine) -> int:
         await mongo.samples.insert_one({"_id": "test", "ready": True})
         async with AsyncSession(pg) as session:
-            await _ensure_legacy_sample_id(session, "test")
+            sample_pk = await _ensure_legacy_sample_id(session, "test")
             await session.commit()
+
+        return sample_pk
 
     @staticmethod
     async def _post(
         client: VirtoolTestClient,
         path: Path,
         artifact_type: str,
+        sample_id: int | str = "test",
     ):
         return await client.post(
-            f"/samples/test/artifacts?name=small.fq.gz&type={artifact_type}",
+            f"/samples/{sample_id}/artifacts?name=small.fq.gz&type={artifact_type}",
             data={"file": open(path, "rb")},
         )
 
@@ -1779,6 +1782,52 @@ class TestUploadArtifact:
 
         keys = {obj.key async for obj in memory_storage.list("samples/test/")}
         assert keys == {"samples/test/small.fq.gz"}
+
+    async def test_addressed_by_primary_key(
+        self,
+        example_path: Path,
+        memory_storage,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        spawn_job_client: JobClientSpawner,
+        static_time,
+    ):
+        """An artifact can be uploaded to a sample addressed by its integer id.
+
+        The stored object stays under the sample's legacy storage prefix.
+        """
+        client = await spawn_job_client(authenticated=True)
+        sample_pk = await self._insert_sample(mongo, pg)
+
+        resp = await self._post(
+            client,
+            example_path / "sample" / "reads_1.fq.gz",
+            "fastq",
+            sample_id=sample_pk,
+        )
+
+        assert resp.status == 201
+
+        keys = {obj.key async for obj in memory_storage.list("samples/test/")}
+        assert keys == {"samples/test/small.fq.gz"}
+
+    async def test_not_found(
+        self,
+        example_path: Path,
+        resp_is,
+        spawn_job_client: JobClientSpawner,
+        static_time,
+    ):
+        client = await spawn_job_client(authenticated=True)
+
+        resp = await self._post(
+            client,
+            example_path / "sample" / "reads_1.fq.gz",
+            "fastq",
+            sample_id=999999,
+        )
+
+        await resp_is.not_found(resp)
 
     async def test_unsupported_type(
         self,
@@ -1874,6 +1923,51 @@ class TestUploadReads:
         assert resp_3.status == 409
         assert await resp_3.json() == snapshot(name="409")
 
+    async def test_addressed_by_primary_key(
+        self,
+        example_path: Path,
+        memory_storage,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        spawn_job_client: JobClientSpawner,
+    ):
+        """Reads can be uploaded to a sample addressed by its integer id.
+
+        The stored object stays under the sample's legacy storage prefix.
+        """
+        client = await spawn_job_client(authenticated=True)
+
+        await mongo.samples.insert_one({"_id": "test", "ready": True})
+
+        async with AsyncSession(pg) as session:
+            sample_pk = await _ensure_legacy_sample_id(session, "test")
+            await session.commit()
+
+        resp = await client.put(
+            f"/samples/{sample_pk}/reads/reads_1.fq.gz",
+            data={"file": open(example_path / "sample" / "reads_1.fq.gz", "rb")},
+        )
+
+        assert resp.status == 201
+
+        keys = {obj.key async for obj in memory_storage.list("samples/test/")}
+        assert keys == {"samples/test/reads_1.fq.gz"}
+
+    async def test_not_found(
+        self,
+        example_path: Path,
+        resp_is,
+        spawn_job_client: JobClientSpawner,
+    ):
+        client = await spawn_job_client(authenticated=True)
+
+        resp = await client.put(
+            "/samples/999999/reads/reads_1.fq.gz",
+            data={"file": open(example_path / "sample" / "reads_1.fq.gz", "rb")},
+        )
+
+        await resp_is.not_found(resp)
+
     async def test_uncompressed(
         self,
         example_path: Path,
@@ -1895,6 +1989,10 @@ class TestUploadReads:
                 "ready": True,
             },
         )
+
+        async with AsyncSession(pg) as session:
+            await _ensure_legacy_sample_id(session, "test")
+            await session.commit()
 
         upload = await fake.uploads.create(user=await fake.users.create())
 
@@ -1939,6 +2037,10 @@ class TestUploadReads:
             },
         )
 
+        async with AsyncSession(pg) as session:
+            await _ensure_legacy_sample_id(session, "test")
+            await session.commit()
+
         resp = await client.put(
             "/samples/test/reads/reads_1.fq.gz",
             data={"file": io.BytesIO(b"")},
@@ -1957,6 +2059,124 @@ class TestUploadReads:
             )
 
         assert rows == []
+
+
+class TestJobRemove:
+    """Test removal of unfinalized samples over the Jobs API."""
+
+    async def setup_sample(
+        self,
+        fake: DataFaker,
+        mongo: Mongo,
+        spawn_job_client: JobClientSpawner,
+        finalized: bool,
+        job_state: JobState,
+    ) -> tuple[VirtoolTestClient, int]:
+        """Create a sample with a creation job in ``job_state`` and return its id."""
+        client = await spawn_job_client(authenticated=True)
+
+        user = await fake.users.create()
+
+        await create_fake_sample(client.app, "test", user.id, finalized=finalized)
+
+        job = await fake.jobs.create(user, state=job_state, workflow="create_sample")
+
+        await mongo.samples.update_one(
+            {"_id": "test"},
+            {"$set": {"job": {"id": job.id}}},
+        )
+
+        async with AsyncSession(client.app["pg"]) as session:
+            await session.execute(
+                update(SQLLegacySample)
+                .where(SQLLegacySample.legacy_id == "test")
+                .values(job_id=job.id),
+            )
+            await session.commit()
+
+            sample_id = (
+                await session.execute(
+                    select(SQLLegacySample.id).where(
+                        SQLLegacySample.legacy_id == "test",
+                    ),
+                )
+            ).scalar_one()
+
+        return client, sample_id
+
+    async def test_ok(
+        self,
+        fake: DataFaker,
+        mongo: Mongo,
+        spawn_job_client: JobClientSpawner,
+        static_time,
+    ):
+        """An unfinalized sample addressed by integer id can be removed."""
+        client, sample_id = await self.setup_sample(
+            fake,
+            mongo,
+            spawn_job_client,
+            finalized=False,
+            job_state=JobState.FAILED,
+        )
+
+        resp = await client.delete(f"/samples/{sample_id}")
+
+        assert resp.status == 204
+
+    async def test_finalized(
+        self,
+        fake: DataFaker,
+        mongo: Mongo,
+        resp_is,
+        spawn_job_client: JobClientSpawner,
+        static_time,
+    ):
+        client, sample_id = await self.setup_sample(
+            fake,
+            mongo,
+            spawn_job_client,
+            finalized=True,
+            job_state=JobState.SUCCEEDED,
+        )
+
+        resp = await client.delete(f"/samples/{sample_id}")
+
+        await resp_is.bad_request(resp, "Only unfinalized samples can be deleted")
+
+    async def test_active_job(
+        self,
+        fake: DataFaker,
+        mongo: Mongo,
+        resp_is,
+        spawn_job_client: JobClientSpawner,
+        static_time,
+    ):
+        client, sample_id = await self.setup_sample(
+            fake,
+            mongo,
+            spawn_job_client,
+            finalized=False,
+            job_state=JobState.RUNNING,
+        )
+
+        resp = await client.delete(f"/samples/{sample_id}")
+
+        await resp_is.bad_request(
+            resp,
+            "Cannot delete sample with active job (current state: running)",
+        )
+
+    async def test_not_found(
+        self,
+        resp_is,
+        spawn_job_client: JobClientSpawner,
+    ):
+        client = await spawn_job_client(authenticated=True)
+
+        resp = await client.delete("/samples/999999")
+
+        await resp_is.not_found(resp)
 
 
 class TestDownloadReads:
