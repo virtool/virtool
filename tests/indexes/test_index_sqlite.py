@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-import pytest
 from sqlalchemy import select
 
 from virtool.indexes.index_sqlite import (
@@ -117,54 +116,90 @@ async def test_connect_index_sqlite_enables_foreign_keys(tmp_path: Path):
         assert connection.exec_driver_sql("PRAGMA foreign_keys").scalar() == 1
 
 
-async def test_create_index_sqlite_rejects_sequence_segment_outside_otu_schema(
+async def test_create_index_sqlite_allows_sequence_segment_outside_otu_schema(
     tmp_path: Path,
 ):
-    """It rejects sequence segments not defined in the OTU schema."""
+    """It allows sequence segments that are not defined in the OTU schema."""
 
     async def iter_otus():
         yield _otu(segments=("DNA A", "DNA B", "DNA C"))
 
-    with pytest.raises(ValueError, match="is not in OTU otu schema"):
-        await create_index_sqlite(
-            tmp_path / INDEX_SQLITE_FILE_NAME,
-            _reference(),
-            iter_otus(),
+    sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
+
+    await create_index_sqlite(sqlite_path, _reference(), iter_otus())
+
+    with connect_index_sqlite(sqlite_path) as connection:
+        sequence_segments = (
+            connection.execute(
+                select(sequences_table.c.segment).order_by(sequences_table.c.segment),
+            )
+            .scalars()
+            .all()
         )
 
+    assert sequence_segments == ["DNA A", "DNA B", "DNA C"]
 
-async def test_create_index_sqlite_rejects_missing_required_isolate_segment(
+
+async def test_create_index_sqlite_allows_missing_required_isolate_segment(
     tmp_path: Path,
 ):
-    """It rejects isolates missing sequences for required schema entries."""
+    """It allows isolates missing sequences for required schema entries."""
 
     async def iter_otus():
         yield _otu(segments=("DNA A",))
 
-    with pytest.raises(
-        ValueError,
-        match=(
-            r"Isolate isolate in OTU otu is missing required sequence "
-            r"segment\(s\): 'DNA B'"
-        ),
-    ):
-        await create_index_sqlite(
-            tmp_path / INDEX_SQLITE_FILE_NAME,
-            _reference(),
-            iter_otus(),
-        )
+    sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
+
+    await create_index_sqlite(sqlite_path, _reference(), iter_otus())
+
+    with connect_index_sqlite(sqlite_path) as connection:
+        sequence_segments = connection.execute(select(sequences_table.c.segment)).all()
+
+    assert [row.segment for row in sequence_segments] == ["DNA A"]
 
 
-async def test_create_index_sqlite_allows_missing_optional_isolate_segment(
+async def test_create_index_sqlite_allows_null_segment_for_schema_otu(
     tmp_path: Path,
 ):
-    """It allows isolates to omit sequences for optional schema entries."""
+    """It allows null sequence segments for schema OTUs."""
 
     async def iter_otus():
-        yield _otu(segments=("DNA A",), required_b=False)
+        otu = _otu(segments=("DNA A",))
+        otu["isolates"][0]["sequences"][0]["segment"] = None
+        yield otu
+
+    sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
+
+    await create_index_sqlite(sqlite_path, _reference(), iter_otus())
+
+    with connect_index_sqlite(sqlite_path) as connection:
+        segment = connection.execute(select(sequences_table.c.segment)).scalar_one()
+
+    assert segment is None
+
+
+async def test_create_index_sqlite_allows_legacy_otu_without_schema_or_abbreviation(
+    tmp_path: Path,
+):
+    """It allows legacy OTUs that predate schema and abbreviation fields."""
+
+    async def iter_otus():
+        otu = _otu()
+        del otu["abbreviation"]
+        del otu["schema"]
+        yield otu
+
+    sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
 
     await create_index_sqlite(
-        tmp_path / INDEX_SQLITE_FILE_NAME,
+        sqlite_path,
         _reference(),
         iter_otus(),
     )
+
+    with connect_index_sqlite(sqlite_path) as connection:
+        otu_row = connection.execute(select(otus_table)).mappings().one()
+        schema_rows = connection.execute(select(otu_schema_table)).all()
+
+    assert otu_row["abbreviation"] == ""
+    assert schema_rows == []

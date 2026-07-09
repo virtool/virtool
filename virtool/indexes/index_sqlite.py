@@ -186,22 +186,21 @@ def _insert_otu(
     otu: Mapping[str, Any],
 ) -> None:
     otu_id = _get_id(otu)
-    schema_names = {item["name"] for item in otu["schema"]}
-    required_schema_names = {item["name"] for item in otu["schema"] if item["required"]}
+    schema = otu.get("schema", [])
 
     connection.execute(
         insert(otus_table),
         {
             "id": otu_id,
             "reference_id": reference_id,
-            "abbreviation": otu["abbreviation"],
+            "abbreviation": otu.get("abbreviation", ""),
             "name": otu["name"],
             "taxid": otu.get("taxid"),
             "version": otu["version"],
         },
     )
 
-    if otu["schema"]:
+    if schema:
         connection.execute(
             insert(otu_schema_table),
             [
@@ -209,41 +208,20 @@ def _insert_otu(
                     "otu_id": otu_id,
                     "name": item["name"],
                     "molecule": item.get("molecule"),
-                    "required": int(item["required"]),
+                    "required": int(item.get("required", True)),
                 }
-                for item in otu["schema"]
+                for item in schema
             ],
         )
 
     for isolate in otu["isolates"]:
-        _validate_required_schema_sequences(otu_id, isolate, required_schema_names)
-
-        _insert_isolate(connection, otu_id, isolate, schema_names)
-
-
-def _validate_required_schema_sequences(
-    otu_id: str,
-    isolate: Mapping[str, Any],
-    required_schema_names: set[str],
-) -> None:
-    isolate_segments = {sequence.get("segment") for sequence in isolate["sequences"]}
-    missing_names = sorted(required_schema_names - isolate_segments)
-
-    if missing_names:
-        isolate_id = _get_id(isolate)
-        missing_names_display = ", ".join(repr(name) for name in missing_names)
-        msg = (
-            f"Isolate {isolate_id} in OTU {otu_id} is missing required sequence "
-            f"segment(s): {missing_names_display}"
-        )
-        raise ValueError(msg)
+        _insert_isolate(connection, otu_id, isolate)
 
 
 def _insert_isolate(
     connection: Connection,
     otu_id: str,
     isolate: Mapping[str, Any],
-    schema_names: set[str],
 ) -> None:
     isolate_id = _get_id(isolate)
 
@@ -259,24 +237,16 @@ def _insert_isolate(
     )
 
     for sequence in isolate["sequences"]:
-        _insert_sequence(connection, otu_id, isolate_id, sequence, schema_names)
+        _insert_sequence(connection, isolate_id, sequence)
 
 
 def _insert_sequence(
     connection: Connection,
-    otu_id: str,
     isolate_id: str,
     sequence: Mapping[str, Any],
-    schema_names: set[str],
 ) -> None:
     sequence_id = _get_id(sequence)
     segment = sequence.get("segment")
-
-    if schema_names and segment not in schema_names:
-        msg = (
-            f"Sequence {sequence_id} segment {segment!r} is not in OTU {otu_id} schema"
-        )
-        raise ValueError(msg)
 
     connection.execute(
         insert(sequences_table),
