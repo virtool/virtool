@@ -1439,6 +1439,8 @@ async def test_find_analyses(
             library_type="normal",
             created_at=static_time.datetime,
             user_id=user_1.id,
+            all_read=True,
+            all_write=True,
         )
         session.add(legacy_sample)
         await session.flush()

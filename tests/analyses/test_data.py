@@ -50,11 +50,24 @@ async def subtraction_ids(fake: DataFaker) -> dict[str, int]:
     return {"subtraction_1": first.id, "subtraction_2": second.id}
 
 
+def build_user_client(user) -> UserClient:
+    """Build a ``UserClient`` authenticated as ``user``."""
+    return UserClient(
+        administrator_role=user.administrator_role,
+        authenticated=True,
+        force_reset=False,
+        groups=[group.id for group in user.groups],
+        permissions=user.permissions.dict(),
+        user_id=user.id,
+    )
+
+
 class SampleSetup(NamedTuple):
     """Identifiers for the sample and reference seeded by ``setup_sample``."""
 
     user_id: str
     reference_id: str
+    client: UserClient
 
 
 @pytest.fixture
@@ -124,7 +137,11 @@ async def setup_sample(
             },
         ),
     )
-    return SampleSetup(user_id=user.id, reference_id=reference.id)
+    return SampleSetup(
+        user_id=user.id,
+        reference_id=reference.id,
+        client=build_user_client(user),
+    )
 
 
 @pytest.mark.parametrize("number_of_analyses", [0, 1, 2])
@@ -136,11 +153,9 @@ async def test_find(
     pg: AsyncEngine,
     setup_sample: SampleSetup,
     subtraction_ids: dict[str, int],
-    mocker,
 ):
     """Tests that all analysis are listed."""
-    mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
-    client = mocker.Mock(spec=UserClient)
+    client = setup_sample.client
     user_id = setup_sample.user_id
 
     await mongo.samples.insert_one({"_id": "test_false", "name": "Test False"})
@@ -193,6 +208,150 @@ async def test_find(
     assert analyses_found.total_count == analyses_found.found_count
 
 
+class TestFindSampleRights:
+    """The analysis list is scoped to samples the requesting client can read."""
+
+    @staticmethod
+    async def _insert_sample(pg: AsyncEngine, legacy_id: str, user_id: int, **rights):
+        async with AsyncSession(pg) as session:
+            session.add(
+                SQLLegacySample(
+                    legacy_id=legacy_id,
+                    name=legacy_id,
+                    library_type="normal",
+                    created_at=timestamp(),
+                    user_id=user_id,
+                    **rights,
+                ),
+            )
+            await session.commit()
+
+    @staticmethod
+    async def _seed_analysis(
+        mongo: Mongo,
+        pg: AsyncEngine,
+        legacy_id: str,
+        sample_id: str,
+        setup: SampleSetup,
+    ) -> int:
+        return await seed_analysis(
+            mongo,
+            pg,
+            {
+                "_id": legacy_id,
+                "workflow": "pathoscope",
+                "created_at": timestamp(),
+                "ready": True,
+                "job": None,
+                "index": {"id": "test_index", "version": 11},
+                "user": {"id": setup.user_id},
+                "sample": {"id": sample_id},
+                "reference": {"id": setup.reference_id},
+                "results": {"hits": []},
+                "subtractions": [],
+            },
+        )
+
+    async def test_private_sample_of_other_user_hidden(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """An analysis on another user's private sample is absent from the documents
+        and from ``total_count``.
+        """
+        other_user = await fake.users.create()
+
+        await self._insert_sample(pg, "other_private", other_user.id, all_read=False)
+        await self._seed_analysis(mongo, pg, "hidden", "other_private", setup_sample)
+
+        owned = await self._seed_analysis(
+            mongo,
+            pg,
+            "visible",
+            "test_sample",
+            setup_sample,
+        )
+
+        found = await data_layer.analyses.find(1, 25, setup_sample.client)
+
+        assert [document.id for document in found.documents] == [owned]
+        assert found.total_count == 1
+        assert found.found_count == 1
+
+    async def test_group_readable_sample_visible(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """An analysis on another user's sample is listed when the client belongs to a
+        group the sample is readable by.
+        """
+        group = await fake.groups.create()
+        sample_owner = await fake.users.create()
+        group_member = await fake.users.create(groups=[group])
+
+        await self._insert_sample(
+            pg,
+            "group_readable",
+            sample_owner.id,
+            all_read=False,
+            group_read=True,
+            group_id=group.id,
+        )
+
+        shared = await self._seed_analysis(
+            mongo,
+            pg,
+            "shared",
+            "group_readable",
+            setup_sample,
+        )
+
+        found = await data_layer.analyses.find(
+            1,
+            25,
+            build_user_client(group_member),
+        )
+
+        assert [document.id for document in found.documents] == [shared]
+
+    async def test_private_sample_hidden_from_non_member(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """A group-readable sample stays hidden from a user outside the group."""
+        group = await fake.groups.create()
+        sample_owner = await fake.users.create()
+        outsider = await fake.users.create()
+
+        await self._insert_sample(
+            pg,
+            "group_readable",
+            sample_owner.id,
+            all_read=False,
+            group_read=True,
+            group_id=group.id,
+        )
+
+        await self._seed_analysis(mongo, pg, "shared", "group_readable", setup_sample)
+
+        found = await data_layer.analyses.find(1, 25, build_user_client(outsider))
+
+        assert found.documents == []
+        assert found.total_count == 0
+
+
 class TestHideIimi:
     """Iimi analyses are hidden from the data-layer find and get operations ahead of
     the iimi purge migration.
@@ -224,14 +383,9 @@ class TestHideIimi:
         mongo: Mongo,
         pg: AsyncEngine,
         setup_sample: SampleSetup,
-        mocker,
     ):
         """An iimi analysis is excluded from both the documents and the counts."""
-        mocker.patch(
-            "virtool.samples.utils.get_sample_rights",
-            return_value=(True, True),
-        )
-        client = mocker.Mock(spec=UserClient)
+        client = setup_sample.client
         user_id = setup_sample.user_id
 
         visible = await data_layer.analyses.create(
