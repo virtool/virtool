@@ -3,9 +3,7 @@ from virtool.api.routes import Routes
 from virtool.data.utils import get_data_from_app, get_data_from_req
 from virtool.fake.next import DataFaker
 from virtool.mongo.utils import get_mongo_from_app
-from virtool.samples.fake import create_fake_sample
 from virtool.uploads.sql import UploadType
-from virtool.utils import random_alphanumeric
 
 routes = Routes()
 
@@ -31,15 +29,6 @@ async def dev(request):
         )
 
         await fake.subtractions.create(user=user, upload=upload)
-
-    if command == "create_sample":
-        await create_fake_sample(
-            request.app,
-            random_alphanumeric(8),
-            request["client"].user_id,
-            False,
-            True,
-        )
 
     if command == "force_delete_jobs":
         await get_data_from_req(request).jobs.force_delete()

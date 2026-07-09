@@ -1,24 +1,25 @@
-from motor.motor_asyncio import AsyncIOMotorClientSession
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.errors import ResourceConflictError
+from virtool.samples.sql import SQLLegacySample
 from virtool.samples.utils import check_labels
 from virtool.subtractions.db import get_missing_subtraction_ids
 
 
 async def check_name_is_in_use(
-    mongo,
+    pg: AsyncEngine,
     name: str,
-    sample_id: str | None = None,
-    session: AsyncIOMotorClientSession | None = None,
+    sample_id: int | None = None,
 ) -> None:
-    query = {"name": name}
+    statement = select(SQLLegacySample.id).where(SQLLegacySample.name == name)
 
-    if sample_id:
-        query["_id"] = {"$ne": sample_id}
+    if sample_id is not None:
+        statement = statement.where(SQLLegacySample.id != sample_id)
 
-    if await mongo.samples.count_documents(query, limit=1, session=session) != 0:
-        raise ResourceConflictError("Sample name is already in use")
+    async with AsyncSession(pg) as session:
+        if (await session.execute(statement.limit(1))).scalar_one_or_none() is not None:
+            raise ResourceConflictError("Sample name is already in use")
 
 
 async def check_subtractions_do_not_exist(

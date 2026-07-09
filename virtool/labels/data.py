@@ -4,18 +4,15 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
-from virtool.data.topg import both_transactions
 from virtool.labels.models import Label
 from virtool.labels.sql import SQLLabel
-from virtool.mongo.core import Mongo
 from virtool.samples.sql import SQLLegacySampleLabel
 
 
 class LabelsData:
     name = "labels"
 
-    def __init__(self, mongo: Mongo, pg: AsyncEngine):
-        self._mongo = mongo
+    def __init__(self, pg: AsyncEngine):
         self._pg = pg
 
     @emits(Operation.CREATE)
@@ -46,10 +43,7 @@ class LabelsData:
 
         :param label_id: ID of the label to delete
         """
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
+        async with AsyncSession(self._pg) as pg_session:
             result = await pg_session.execute(
                 select(SQLLabel).filter_by(id=label_id),
             )
@@ -58,12 +52,6 @@ class LabelsData:
             if label is None:
                 raise ResourceNotFoundError
 
-            await self._mongo.samples.update_many(
-                {"labels": label_id},
-                {"$pull": {"labels": label_id}},
-                session=mongo_session,
-            )
-
             await pg_session.execute(
                 delete(SQLLegacySampleLabel).where(
                     SQLLegacySampleLabel.label_id == label_id,
@@ -71,5 +59,7 @@ class LabelsData:
             )
 
             await pg_session.delete(label)
+
+            await pg_session.commit()
 
         emit(label, "labels", "delete", Operation.DELETE)
