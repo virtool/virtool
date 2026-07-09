@@ -37,6 +37,7 @@ from virtool.samples.sql import (
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.subtractions.pg import SQLSubtraction
 from virtool.uploads.sql import SQLUpload
+from virtool.users.models import User
 from virtool.users.oas import UpdateUserRequest
 
 
@@ -346,6 +347,14 @@ async def get_sample_data(
     return SampleData(id=sample_id, unattached_subtraction_id=peach.id)
 
 
+class FindSamplesData(NamedTuple):
+    """The client and sample owners seeded by :func:`find_samples_client`."""
+
+    client: VirtoolTestClient
+    single_sample_owner: User
+    two_sample_owner: User
+
+
 @pytest.fixture
 async def find_samples_client(
     fake: DataFaker,
@@ -353,7 +362,8 @@ async def find_samples_client(
     pg: AsyncEngine,
     spawn_client: ClientSpawner,
     static_time,
-):
+) -> FindSamplesData:
+    """Seed three readable samples: one owned by ``user_1`` and two by ``user_2``."""
     user_1 = await fake.users.create()
     user_2 = await fake.users.create()
 
@@ -441,7 +451,11 @@ async def find_samples_client(
 
         await session.commit()
 
-    return client
+    return FindSamplesData(
+        client=client,
+        single_sample_owner=user_1,
+        two_sample_owner=user_2,
+    )
 
 
 class TestFind:
@@ -450,14 +464,14 @@ class TestFind:
         self,
         find: str | None,
         snapshot: SnapshotAssertion,
-        find_samples_client: VirtoolTestClient,
+        find_samples_client: FindSamplesData,
     ):
         path = "/samples"
 
         if find is not None:
             path += f"?find={find}"
 
-        resp = await find_samples_client.get(path)
+        resp = await find_samples_client.client.get(path)
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
@@ -467,7 +481,7 @@ class TestFind:
         page: int | None,
         per_page: int | None,
         snapshot: SnapshotAssertion,
-        find_samples_client: VirtoolTestClient,
+        find_samples_client: FindSamplesData,
     ):
         query = []
 
@@ -480,7 +494,7 @@ class TestFind:
             query.append(f"page={page}")
             path += f"?{'&'.join(query)}"
 
-        resp = await find_samples_client.get(path)
+        resp = await find_samples_client.client.get(path)
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
@@ -489,7 +503,7 @@ class TestFind:
         self,
         labels: list[int] | None,
         snapshot: SnapshotAssertion,
-        find_samples_client: VirtoolTestClient,
+        find_samples_client: FindSamplesData,
     ):
         path = "/samples"
 
@@ -497,7 +511,7 @@ class TestFind:
             query = "&label=".join(str(label) for label in labels)
             path += f"?label={query}"
 
-        resp = await find_samples_client.get(path)
+        resp = await find_samples_client.client.get(path)
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
@@ -521,7 +535,7 @@ class TestFind:
         self,
         workflows: list[str] | None,
         snapshot: SnapshotAssertion,
-        find_samples_client: VirtoolTestClient,
+        find_samples_client: FindSamplesData,
     ):
         path = "/samples"
 
@@ -529,9 +543,88 @@ class TestFind:
             workflows_query = "&workflows=".join(workflow for workflow in workflows)
             path += f"?workflows={workflows_query}"
 
-        resp = await find_samples_client.get(path)
+        resp = await find_samples_client.client.get(path)
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
+
+    async def test_user(self, find_samples_client: FindSamplesData):
+        """A single ``user`` matches only that user's samples."""
+        owner = find_samples_client.single_sample_owner
+
+        resp = await find_samples_client.client.get(f"/samples?user={owner.id}")
+        assert resp.status == HTTPStatus.OK
+
+        body = await resp.json()
+
+        assert body["found_count"] == 1
+        assert body["total_count"] == 3
+        assert [document["name"] for document in body["documents"]] == ["16GVP042"]
+
+    async def test_user_multiple(self, find_samples_client: FindSamplesData):
+        """Repeating ``user`` matches samples owned by any of the given users."""
+        single_owner = find_samples_client.single_sample_owner
+        two_owner = find_samples_client.two_sample_owner
+
+        resp = await find_samples_client.client.get(
+            f"/samples?user={single_owner.id}&user={two_owner.id}",
+        )
+        assert resp.status == HTTPStatus.OK
+
+        body = await resp.json()
+
+        assert body["found_count"] == 3
+        assert {document["name"] for document in body["documents"]} == {
+            "16GVP042",
+            "16GVP043",
+            "16SPP044",
+        }
+
+    async def test_user_owns_no_samples(
+        self,
+        fake: DataFaker,
+        find_samples_client: FindSamplesData,
+    ):
+        """A user that owns no samples matches nothing rather than erroring."""
+        stranger = await fake.users.create()
+
+        resp = await find_samples_client.client.get(f"/samples?user={stranger.id}")
+        assert resp.status == HTTPStatus.OK
+
+        body = await resp.json()
+
+        assert body["documents"] == []
+        assert body["found_count"] == 0
+        assert body["total_count"] == 3
+
+    async def test_user_cannot_reveal_unreadable_samples(
+        self,
+        fake: DataFaker,
+        find_samples_client: FindSamplesData,
+        pg: AsyncEngine,
+        static_time,
+    ):
+        """Filtering by a user does not expose that user's unreadable samples."""
+        private_owner = await fake.users.create()
+
+        async with AsyncSession(pg) as session:
+            session.add(
+                SQLLegacySample(
+                    legacy_id="other_private",
+                    name="other_private",
+                    library_type=LibraryType.normal.value,
+                    created_at=static_time.datetime,
+                    all_read=False,
+                    all_write=False,
+                    group_read=False,
+                    group_write=False,
+                    user_id=private_owner.id,
+                ),
+            )
+            await session.commit()
+
+        resp = await find_samples_client.client.get(f"/samples?user={private_owner.id}")
+        assert resp.status == HTTPStatus.OK
+        assert (await resp.json())["documents"] == []
 
 
 class TestGet:
