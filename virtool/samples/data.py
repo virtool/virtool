@@ -38,7 +38,6 @@ from virtool.groups.models import GroupMinimal
 from virtool.groups.pg import SQLGroup
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.labels.transforms import AttachLabelsTransform
-from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.pg.utils import delete_row
@@ -71,8 +70,10 @@ from virtool.samples.sql import (
     SQLSampleUpload,
 )
 from virtool.samples.utils import (
+    SAMPLE_RIGHTS_COLUMNS,
     SampleRight,
     define_initial_workflows,
+    has_sample_right,
     sample_file_key,
     sample_prefix,
     sample_storage_id,
@@ -941,14 +942,7 @@ class SamplesData(DataLayerDomain):
         async with AsyncSession(self._pg) as session:
             row = (
                 await session.execute(
-                    select(
-                        SQLLegacySample.all_read,
-                        SQLLegacySample.all_write,
-                        SQLLegacySample.group_read,
-                        SQLLegacySample.group_write,
-                        SQLLegacySample.group_id,
-                        SQLLegacySample.user_id,
-                    ).where(
+                    select(*SAMPLE_RIGHTS_COLUMNS).where(
                         compose_legacy_id_single_expression(
                             SQLLegacySample,
                             sample_id,
@@ -960,23 +954,7 @@ class SamplesData(DataLayerDomain):
         if row is None:
             return True
 
-        if (
-            client.administrator_role == AdministratorRole.FULL
-            or client.user_id == row.user_id
-        ):
-            return True
-
-        is_group_member = row.group_id is not None and client.is_group_member(
-            row.group_id,
-        )
-
-        if right == SampleRight.read:
-            return row.all_read or (is_group_member and row.group_read)
-
-        if right == SampleRight.write:
-            return row.all_write or (is_group_member and row.group_write)
-
-        raise ValueError(f"Invalid sample right: {right}")
+        return has_sample_right(row, client, right)
 
     async def has_resources_for_analysis_job(self, ref_id, subtractions) -> None:
         """Checks that resources for analysis job exist.

@@ -44,7 +44,6 @@ from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
 from virtool.indexes.transforms import AttachIndexTransform
 from virtool.jobs.transforms import AttachJobTransform
-from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_new_id
 from virtool.pg.utils import delete_row, get_row_by_id
@@ -53,6 +52,11 @@ from virtool.references.transforms import AttachReferenceTransform
 from virtool.samples.db import compose_sample_rights_filter
 from virtool.samples.oas import CreateAnalysisRequest
 from virtool.samples.sql import SQLLegacySample
+from virtool.samples.utils import (
+    SAMPLE_RIGHTS_COLUMNS,
+    SampleRight,
+    has_sample_right,
+)
 from virtool.storage.cleanup import delete_prefix
 from virtool.storage.protocol import StorageBackend
 from virtool.subtractions.pg import SQLSubtraction
@@ -400,14 +404,7 @@ class AnalysisData(DataLayerDomain):
         async with AsyncSession(self._pg) as session:
             row = (
                 await session.execute(
-                    select(
-                        SQLLegacySample.all_read,
-                        SQLLegacySample.all_write,
-                        SQLLegacySample.group_read,
-                        SQLLegacySample.group_write,
-                        SQLLegacySample.group_id,
-                        SQLLegacySample.user_id,
-                    )
+                    select(*SAMPLE_RIGHTS_COLUMNS)
                     .join(SQLAnalysis, SQLAnalysis.sample_id == SQLLegacySample.id)
                     .where(
                         compose_legacy_id_single_expression(SQLAnalysis, analysis_id),
@@ -422,23 +419,7 @@ class AnalysisData(DataLayerDomain):
             )
             raise ResourceNotFoundError
 
-        if (
-            client.administrator_role == AdministratorRole.FULL
-            or client.user_id == row.user_id
-        ):
-            return True
-
-        is_group_member = row.group_id is not None and client.is_group_member(
-            row.group_id,
-        )
-
-        if right == "read":
-            return row.all_read or (is_group_member and row.group_read)
-
-        if right == "write":
-            return row.all_write or (is_group_member and row.group_write)
-
-        raise ValueError(f"Invalid sample right: {right}")
+        return has_sample_right(row, client, SampleRight(right))
 
     async def delete(self, analysis_id: str, jobs_api_flag: bool) -> None:
         """Delete a single analysis by its ID.

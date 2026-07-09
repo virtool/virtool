@@ -1,17 +1,59 @@
 from enum import Enum
 
 from aiohttp.web import Response
-from sqlalchemy import select
+from sqlalchemy import Row, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from virtool.api.client import AbstractClient
 from virtool.api.errors import APIBadRequest
 from virtool.labels.sql import SQLLabel
+from virtool.models.roles import AdministratorRole
 from virtool.samples.models import WorkflowState
+from virtool.samples.sql import SQLLegacySample
 
 
 class SampleRight(Enum):
     read = "read"
     write = "write"
+
+
+SAMPLE_RIGHTS_COLUMNS = (
+    SQLLegacySample.all_read,
+    SQLLegacySample.all_write,
+    SQLLegacySample.group_read,
+    SQLLegacySample.group_write,
+    SQLLegacySample.group_id,
+    SQLLegacySample.user_id,
+)
+"""The ``legacy_samples`` columns :func:`has_sample_right` needs to resolve a right."""
+
+
+def has_sample_right(
+    row: Row,
+    client: AbstractClient,
+    right: SampleRight,
+) -> bool:
+    """Resolve whether ``client`` holds ``right`` on a sample.
+
+    ``row`` must carry the columns in :data:`SAMPLE_RIGHTS_COLUMNS`. Shared by the
+    samples and analyses domains so a sample and the analyses on it never disagree
+    about who may read or write them.
+    """
+    if (
+        client.administrator_role == AdministratorRole.FULL
+        or client.user_id == row.user_id
+    ):
+        return True
+
+    is_group_member = row.group_id is not None and client.is_group_member(row.group_id)
+
+    if right is SampleRight.read:
+        return row.all_read or (is_group_member and row.group_read)
+
+    if right is SampleRight.write:
+        return row.all_write or (is_group_member and row.group_write)
+
+    raise ValueError(f"Invalid sample right: {right}")
 
 
 def define_initial_workflows(library_type: str) -> dict[str, str]:
