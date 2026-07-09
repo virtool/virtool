@@ -37,6 +37,7 @@ from virtool.samples.sql import (
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.subtractions.pg import SQLSubtraction
 from virtool.uploads.sql import SQLUpload
+from virtool.users.models import User
 from virtool.users.oas import UpdateUserRequest
 
 
@@ -346,118 +347,124 @@ async def get_sample_data(
     return SampleData(id=sample_id, unattached_subtraction_id=peach.id)
 
 
-@pytest.fixture
-async def find_samples_client(
-    fake: DataFaker,
-    mongo: Mongo,
-    pg: AsyncEngine,
-    spawn_client: ClientSpawner,
-    static_time,
-):
-    user_1 = await fake.users.create()
-    user_2 = await fake.users.create()
-
-    label_1 = await fake.labels.create()
-    label_2 = await fake.labels.create()
-    label_3 = await fake.labels.create()
-
-    job = await fake.jobs.create(user_1, workflow="create_sample")
-
-    client = await spawn_client(authenticated=True)
-
-    documents = [
-        {
-            "_id": "beb1eb10",
-            "all_read": True,
-            "created_at": arrow.get(static_time.datetime).shift(hours=1).datetime,
-            "foobar": True,
-            "host": "",
-            "isolate": "Thing",
-            "job": {"id": job.id},
-            "labels": [label_1.id, label_2.id],
-            "library_type": "normal",
-            "name": "16GVP042",
-            "notes": "",
-            "ready": True,
-            "user": {"id": user_1.id},
-        },
-        {
-            "user": {"id": user_2.id},
-            "host": "",
-            "foobar": True,
-            "isolate": "Test",
-            "library_type": "srna",
-            "created_at": arrow.get(static_time.datetime).datetime,
-            "_id": "72bb8b31",
-            "job": None,
-            "name": "16GVP043",
-            "all_read": True,
-            "ready": True,
-            "labels": [label_1.id],
-            "notes": "This is a good sample.",
-        },
-        {
-            "user": {"id": user_2.id},
-            "host": "",
-            "library_type": "amplicon",
-            "notes": "",
-            "foobar": True,
-            "ready": True,
-            "isolate": "",
-            "created_at": arrow.get(static_time.datetime).shift(hours=2).datetime,
-            "_id": "cb400e6d",
-            "job": None,
-            "name": "16SPP044",
-            "all_read": True,
-            "labels": [label_3.id],
-        },
-    ]
-
-    await mongo.samples.insert_many(documents, session=None)
-
-    async with AsyncSession(pg) as session:
-        samples = {
-            document["_id"]: await insert_pg_sample(session, document)
-            for document in documents
-        }
-
-        # ``beb1eb10`` has completed nuvs and pathoscope analyses so its workflow
-        # tags derive to ready; the other samples have no analyses.
-        for workflow in ("nuvs", "pathoscope"):
-            session.add(
-                SQLAnalysis(
-                    legacy_id=f"beb1eb10_{workflow}",
-                    created_at=static_time.datetime,
-                    updated_at=static_time.datetime,
-                    workflow=workflow,
-                    ready=True,
-                    sample="beb1eb10",
-                    sample_id=samples["beb1eb10"].id,
-                    reference="ref",
-                    index="index",
-                    user_id=user_1.id,
-                ),
-            )
-
-        await session.commit()
-
-    return client
-
-
 class TestFind:
+    client: VirtoolTestClient
+    single_sample_owner: User
+    two_sample_owner: User
+
+    @pytest.fixture(autouse=True)
+    async def _setup(
+        self,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        spawn_client: ClientSpawner,
+        static_time,
+    ):
+        """Seed three readable samples: one owned by ``user_1`` and two by ``user_2``."""
+        user_1 = await fake.users.create()
+        user_2 = await fake.users.create()
+
+        label_1 = await fake.labels.create()
+        label_2 = await fake.labels.create()
+        label_3 = await fake.labels.create()
+
+        job = await fake.jobs.create(user_1, workflow="create_sample")
+
+        client = await spawn_client(authenticated=True)
+
+        documents = [
+            {
+                "_id": "beb1eb10",
+                "all_read": True,
+                "created_at": arrow.get(static_time.datetime).shift(hours=1).datetime,
+                "foobar": True,
+                "host": "",
+                "isolate": "Thing",
+                "job": {"id": job.id},
+                "labels": [label_1.id, label_2.id],
+                "library_type": "normal",
+                "name": "16GVP042",
+                "notes": "",
+                "ready": True,
+                "user": {"id": user_1.id},
+            },
+            {
+                "user": {"id": user_2.id},
+                "host": "",
+                "foobar": True,
+                "isolate": "Test",
+                "library_type": "srna",
+                "created_at": arrow.get(static_time.datetime).datetime,
+                "_id": "72bb8b31",
+                "job": None,
+                "name": "16GVP043",
+                "all_read": True,
+                "ready": True,
+                "labels": [label_1.id],
+                "notes": "This is a good sample.",
+            },
+            {
+                "user": {"id": user_2.id},
+                "host": "",
+                "library_type": "amplicon",
+                "notes": "",
+                "foobar": True,
+                "ready": True,
+                "isolate": "",
+                "created_at": arrow.get(static_time.datetime).shift(hours=2).datetime,
+                "_id": "cb400e6d",
+                "job": None,
+                "name": "16SPP044",
+                "all_read": True,
+                "labels": [label_3.id],
+            },
+        ]
+
+        await mongo.samples.insert_many(documents, session=None)
+
+        async with AsyncSession(pg) as session:
+            samples = {
+                document["_id"]: await insert_pg_sample(session, document)
+                for document in documents
+            }
+
+            # ``beb1eb10`` has completed nuvs and pathoscope analyses so its workflow
+            # tags derive to ready; the other samples have no analyses.
+            for workflow in ("nuvs", "pathoscope"):
+                session.add(
+                    SQLAnalysis(
+                        legacy_id=f"beb1eb10_{workflow}",
+                        created_at=static_time.datetime,
+                        updated_at=static_time.datetime,
+                        workflow=workflow,
+                        ready=True,
+                        sample="beb1eb10",
+                        sample_id=samples["beb1eb10"].id,
+                        reference="ref",
+                        index="index",
+                        user_id=user_1.id,
+                    ),
+                )
+
+            await session.commit()
+
+        self.client = client
+        self.single_sample_owner = user_1
+        self.two_sample_owner = user_2
+
     @pytest.mark.parametrize("find", [None, "gv", "sp"])
     async def test_term(
         self,
         find: str | None,
         snapshot: SnapshotAssertion,
-        find_samples_client: VirtoolTestClient,
     ):
         path = "/samples"
 
         if find is not None:
             path += f"?find={find}"
 
-        resp = await find_samples_client.get(path)
+        resp = await self.client.get(path)
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
@@ -467,7 +474,6 @@ class TestFind:
         page: int | None,
         per_page: int | None,
         snapshot: SnapshotAssertion,
-        find_samples_client: VirtoolTestClient,
     ):
         query = []
 
@@ -480,7 +486,7 @@ class TestFind:
             query.append(f"page={page}")
             path += f"?{'&'.join(query)}"
 
-        resp = await find_samples_client.get(path)
+        resp = await self.client.get(path)
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
@@ -489,7 +495,6 @@ class TestFind:
         self,
         labels: list[int] | None,
         snapshot: SnapshotAssertion,
-        find_samples_client: VirtoolTestClient,
     ):
         path = "/samples"
 
@@ -497,7 +502,7 @@ class TestFind:
             query = "&label=".join(str(label) for label in labels)
             path += f"?label={query}"
 
-        resp = await find_samples_client.get(path)
+        resp = await self.client.get(path)
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
@@ -521,7 +526,6 @@ class TestFind:
         self,
         workflows: list[str] | None,
         snapshot: SnapshotAssertion,
-        find_samples_client: VirtoolTestClient,
     ):
         path = "/samples"
 
@@ -529,9 +533,79 @@ class TestFind:
             workflows_query = "&workflows=".join(workflow for workflow in workflows)
             path += f"?workflows={workflows_query}"
 
-        resp = await find_samples_client.get(path)
+        resp = await self.client.get(path)
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
+
+    async def test_user(self):
+        """A single ``user`` matches only that user's samples."""
+        resp = await self.client.get(f"/samples?user={self.single_sample_owner.id}")
+        assert resp.status == HTTPStatus.OK
+
+        body = await resp.json()
+
+        assert body["found_count"] == 1
+        assert body["total_count"] == 3
+        assert [document["name"] for document in body["documents"]] == ["16GVP042"]
+
+    async def test_user_multiple(self):
+        """Repeating ``user`` matches samples owned by any of the given users."""
+        resp = await self.client.get(
+            f"/samples?user={self.single_sample_owner.id}"
+            f"&user={self.two_sample_owner.id}",
+        )
+        assert resp.status == HTTPStatus.OK
+
+        body = await resp.json()
+
+        assert body["found_count"] == 3
+        assert {document["name"] for document in body["documents"]} == {
+            "16GVP042",
+            "16GVP043",
+            "16SPP044",
+        }
+
+    async def test_user_owns_no_samples(self, fake: DataFaker):
+        """A user that owns no samples matches nothing rather than erroring."""
+        stranger = await fake.users.create()
+
+        resp = await self.client.get(f"/samples?user={stranger.id}")
+        assert resp.status == HTTPStatus.OK
+
+        body = await resp.json()
+
+        assert body["documents"] == []
+        assert body["found_count"] == 0
+        assert body["total_count"] == 3
+
+    async def test_user_cannot_reveal_unreadable_samples(
+        self,
+        fake: DataFaker,
+        pg: AsyncEngine,
+        static_time,
+    ):
+        """Filtering by a user does not expose that user's unreadable samples."""
+        private_owner = await fake.users.create()
+
+        async with AsyncSession(pg) as session:
+            session.add(
+                SQLLegacySample(
+                    legacy_id="other_private",
+                    name="other_private",
+                    library_type=LibraryType.normal.value,
+                    created_at=static_time.datetime,
+                    all_read=False,
+                    all_write=False,
+                    group_read=False,
+                    group_write=False,
+                    user_id=private_owner.id,
+                ),
+            )
+            await session.commit()
+
+        resp = await self.client.get(f"/samples?user={private_owner.id}")
+        assert resp.status == HTTPStatus.OK
+        assert (await resp.json())["documents"] == []
 
 
 class TestGet:

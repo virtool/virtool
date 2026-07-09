@@ -7,7 +7,6 @@ from collections.abc import AsyncGenerator, AsyncIterator
 from typing import Any
 
 from sqlalchemy import (
-    ColumnExpressionArgument,
     delete,
     exc,
     func,
@@ -87,25 +86,6 @@ from virtool.users.transforms import AttachUserTransform
 from virtool.utils import wait_for_checks
 
 logger = get_logger("samples")
-
-
-def _compose_sample_search_filter(term: str) -> ColumnExpressionArgument[bool]:
-    """Compose a case-insensitive substring match on ``name`` and the owner id.
-
-    Mirrors the Mongo ``compose_regex_query(term, ["name", "user.id"])`` the find
-    endpoint used before reading from Postgres: the term is matched literally, so SQL
-    ``LIKE`` wildcards in the term are escaped rather than interpreted. The historical
-    ``user.id`` value is the owner's legacy Mongo id, now ``SQLUser.legacy_id``.
-    """
-    escaped = term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-    pattern = f"%{escaped}%"
-
-    return or_(
-        SQLLegacySample.name.ilike(pattern, escape="\\"),
-        SQLLegacySample.user_id.in_(
-            select(SQLUser.id).where(SQLUser.legacy_id.ilike(pattern, escape="\\")),
-        ),
-    )
 
 
 def _map_sample_minimal_row(
@@ -218,14 +198,25 @@ class SamplesData(DataLayerDomain):
         page: int,
         per_page: int,
         term: str,
+        users: list[int],
         workflows: list[str],
         client,
     ) -> SampleSearchResult:
-        """Find and filter samples."""
+        """Find and filter samples.
+
+        Samples are always limited to those the ``client`` may read. The ``users``
+        filter narrows that set to samples owned by the given users; it can never
+        widen it.
+        """
         filters = [compose_sample_rights_filter(client)]
 
         if term:
-            filters.append(_compose_sample_search_filter(term))
+            # Escape LIKE wildcards so the term matches literally.
+            escaped = term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            filters.append(SQLLegacySample.name.ilike(f"%{escaped}%", escape="\\"))
+
+        if users:
+            filters.append(SQLLegacySample.user_id.in_(users))
 
         if labels:
             filters.append(

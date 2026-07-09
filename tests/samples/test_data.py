@@ -835,12 +835,13 @@ class TestFindRights:
         )
 
         result = await data_layer.samples.find(
-            [],
-            1,
-            25,
-            "",
-            [],
-            self._build_client(administrator),
+            labels=[],
+            page=1,
+            per_page=25,
+            term="",
+            users=[],
+            workflows=[],
+            client=self._build_client(administrator),
         )
 
         assert result.found_count == 1
@@ -864,12 +865,13 @@ class TestFindRights:
         )
 
         result = await data_layer.samples.find(
-            [],
-            1,
-            25,
-            "",
-            [],
-            self._build_client(user),
+            labels=[],
+            page=1,
+            per_page=25,
+            term="",
+            users=[],
+            workflows=[],
+            client=self._build_client(user),
         )
 
         assert result.found_count == 0
