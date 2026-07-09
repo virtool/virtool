@@ -15,9 +15,7 @@ from sqlalchemy import (
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from yarl import URL
 
-import virtool.mongo.utils
 import virtool.samples.utils
-import virtool.utils
 from virtool.analyses.sql import SQLAnalysis
 from virtool.analyses.utils import WORKFLOW_NAMES
 from virtool.data.topg import (
@@ -31,12 +29,10 @@ from virtool.samples.sql import (
     SQLSampleReads,
     SQLSampleUpload,
 )
-from virtool.settings.models import Settings
 from virtool.types import Document
 from virtool.uploads.data import serialize as serialize_upload
 from virtool.uploads.sql import SQLUpload
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import base_processor
 
 
 class AttachArtifactsAndReadsTransform(AbstractTransform):
@@ -351,73 +347,6 @@ def compose_sample_workflow_filter(workflows: list[str]):
             for workflow, conditions in conditions_by_workflow.items()
         ],
     )
-
-
-async def create_sample(
-    mongo,
-    name: str,
-    host: str,
-    isolate: str,
-    group: int | str,
-    locale: str,
-    library_type: str,
-    subtractions: list[int],
-    notes: str,
-    labels: list[int],
-    user_id: int,
-    settings: Settings,
-    paired: bool = False,
-    _id: str | None = None,
-) -> Document:
-    """Create, insert, and return a new sample document.
-
-    :param mongo: the application mongo client
-    :param name: the sample name
-    :param host: user-defined host for the sample
-    :param isolate: user-defined isolate for the sample
-    :param group: the owner group for the sample
-    :param locale: user-defined locale for the sample
-    :param library_type: Type of library for a sample, defaults to None
-    :param subtractions: IDs of default subtractions for the sample
-    :param notes: user-defined notes for the sample
-    :param labels: IDs of labels associated with the sample
-    :param user_id: the ID of the user that is creating the sample
-    :param settings: the application settings
-    :param paired: Whether a sample is paired or not, defaults to False
-    :param _id: An id to assign to a sample instead of it being automatically generated
-    :return: the newly inserted sample document
-    """
-    if _id is None:
-        _id = await virtool.mongo.utils.get_new_id(mongo.samples)
-
-    document = await mongo.samples.insert_one(
-        {
-            "_id": _id,
-            "name": name,
-            "host": host,
-            "isolate": isolate,
-            "created_at": virtool.utils.timestamp(),
-            "is_legacy": False,
-            "format": "fastq",
-            "ready": False,
-            "quality": None,
-            "hold": True,
-            "group_read": settings.sample_group_read,
-            "group_write": settings.sample_group_write,
-            "all_read": settings.sample_all_read,
-            "all_write": settings.sample_all_write,
-            "labels": labels,
-            "library_type": library_type,
-            "subtractions": subtractions,
-            "notes": notes,
-            "user": {"id": user_id},
-            "group": group,
-            "locale": locale,
-            "paired": paired,
-        },
-    )
-
-    return base_processor(document)
 
 
 async def validate_force_choice_group(pg: AsyncEngine, data: dict) -> str | None:

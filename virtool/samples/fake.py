@@ -3,15 +3,13 @@ from pathlib import Path
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import virtool.utils
 from virtool.data.utils import get_data_from_app
 from virtool.example import example_path
 from virtool.fake.wrapper import FakerWrapper
-from virtool.mongo.utils import get_mongo_from_app
-from virtool.samples.db import create_sample
 from virtool.samples.files import create_reads_file
 from virtool.samples.sql import SQLLegacySample, SQLLegacySampleSubtraction
 from virtool.samples.utils import sample_file_key, sample_storage_id
-from virtool.settings.models import Settings
 from virtool.storage.protocol import STORAGE_CHUNK_SIZE, StorageBackend
 from virtool.subtractions.pg import SQLSubtraction
 from virtool.types import App
@@ -72,7 +70,6 @@ async def create_fake_sample(
 ) -> None:
     fake = app.get("fake", FakerWrapper())
 
-    mongo = get_mongo_from_app(app)
     pg = app["pg"]
     storage: StorageBackend = app["storage"]
 
@@ -83,48 +80,25 @@ async def create_fake_sample(
 
         subtraction_ids = list(result.scalars().all())
 
-    settings = Settings()
-    settings.sample_group_read = True
-    settings.sample_group_write = True
-    settings.sample_all_read = True
-    settings.sample_all_write = True
-
-    document = await create_sample(
-        _id=sample_id,
-        mongo=mongo,
-        name=f"Fake {sample_id.upper()}",
-        host="Vine",
-        isolate="Isolate A1",
-        locale="",
-        subtractions=subtraction_ids,
-        notes=fake.text(50),
-        library_type="normal",
-        labels=[],
-        user_id=user_id,
-        group="none",
-        settings=settings,
-    )
-
-    async with AsyncSession(pg) as session:
         sample = SQLLegacySample(
-            legacy_id=document["id"],
-            name=document["name"],
-            host=document["host"],
-            isolate=document["isolate"],
-            locale=document["locale"],
-            notes=document["notes"],
-            library_type=document["library_type"],
-            format=document["format"],
-            quality=document["quality"],
-            created_at=document["created_at"],
-            paired=document["paired"],
-            ready=document["ready"],
-            hold=document["hold"],
-            is_legacy=document["is_legacy"],
-            all_read=document["all_read"],
-            all_write=document["all_write"],
-            group_read=document["group_read"],
-            group_write=document["group_write"],
+            legacy_id=sample_id,
+            name=f"Fake {sample_id.upper()}",
+            host="Vine",
+            isolate="Isolate A1",
+            locale="",
+            notes=fake.text(50),
+            library_type="normal",
+            format="fastq",
+            quality=None,
+            created_at=virtool.utils.timestamp(),
+            paired=False,
+            ready=False,
+            hold=True,
+            is_legacy=False,
+            all_read=True,
+            all_write=True,
+            group_read=True,
+            group_write=True,
             user_id=user_id,
         )
         session.add(sample)
@@ -132,7 +106,7 @@ async def create_fake_sample(
 
         sample_pk = sample.id
 
-        for subtraction_id in document["subtractions"]:
+        for subtraction_id in subtraction_ids:
             session.add(
                 SQLLegacySampleSubtraction(
                     sample_id=sample_pk,
