@@ -382,7 +382,7 @@ class TestFindSampleRights:
             administrator_role=AdministratorRole.FULL,
         )
 
-        await self._insert_sample(pg, "other_private", sample_owner.id, all_read=False)
+        await insert_sample(pg, "other_private", sample_owner.id, all_read=False)
 
         hidden = await self._seed_analysis(
             mongo,
@@ -417,7 +417,7 @@ class TestFindSampleRights:
             administrator_role=AdministratorRole.BASE,
         )
 
-        await self._insert_sample(pg, "other_private", sample_owner.id, all_read=False)
+        await insert_sample(pg, "other_private", sample_owner.id, all_read=False)
         await self._seed_analysis(mongo, pg, "private", "other_private", setup_sample)
 
         found = await data_layer.analyses.find(
@@ -695,7 +695,7 @@ class TestHasRight:
         """
         sample_owner = await fake.users.create()
 
-        await self._insert_sample(
+        await insert_sample(
             pg,
             "owner_private",
             sample_owner.id,
