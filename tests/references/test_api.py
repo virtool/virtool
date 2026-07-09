@@ -1262,7 +1262,7 @@ async def test_update_group(
             assert resp.status == HTTPStatus.OK
             assert await resp.json() == snapshot(name="resp")
             assert await mongo.references.find_one() == snapshot(name="mongo")
-        case ("404_group", "404_ref"):
+        case "404_group" | "404_ref":
             await resp_is.not_found(resp)
 
 

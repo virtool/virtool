@@ -5,10 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
 from virtool.data.topg import both_transactions
-from virtool.data.transforms import apply_transforms
 from virtool.labels.models import Label
 from virtool.labels.sql import SQLLabel
-from virtool.labels.transforms import AttachSampleCountsTransform
 from virtool.mongo.core import Mongo
 from virtool.samples.sql import SQLLegacySampleLabel
 
@@ -41,13 +39,7 @@ class LabelsData:
             except IntegrityError:
                 raise ResourceConflictError()
 
-        document = await apply_transforms(
-            row,
-            [AttachSampleCountsTransform(self._mongo)],
-            self._pg,
-        )
-
-        return Label(**document)
+        return Label(**row, count=0)
 
     async def delete(self, label_id: int) -> None:
         """Delete an existing label.

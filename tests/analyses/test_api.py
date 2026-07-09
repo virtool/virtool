@@ -615,7 +615,7 @@ async def test_remove(
         case "403":
             await resp_is.insufficient_rights(resp)
 
-        case ("404_analysis", "404_sample"):
+        case "404_analysis" | "404_sample":
             await resp_is.not_found(resp)
 
         case "409":
@@ -779,7 +779,6 @@ class TestDownloadAnalysisResult:
         "404_analysis",
         "404_sample",
         "404_sequence",
-        "404_sequence",
         "409_workflow",
         "409_ready",
     ],
@@ -866,7 +865,7 @@ async def test_blast(
     elif error == "403":
         await resp_is.insufficient_rights(resp)
 
-    elif error == "404_analysis":
+    elif error in ("404_analysis", "404_sample"):
         await resp_is.not_found(resp)
 
     elif error == "404_sequence":

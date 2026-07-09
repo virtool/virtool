@@ -1,18 +1,59 @@
 from enum import Enum
 
 from aiohttp.web import Response
-from sqlalchemy import select
+from sqlalchemy import Row, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.api.client import AbstractClient
 from virtool.api.errors import APIBadRequest
 from virtool.labels.sql import SQLLabel
+from virtool.models.roles import AdministratorRole
 from virtool.samples.models import WorkflowState
+from virtool.samples.sql import SQLLegacySample
 
 
 class SampleRight(Enum):
     read = "read"
     write = "write"
+
+
+SAMPLE_RIGHTS_COLUMNS = (
+    SQLLegacySample.all_read,
+    SQLLegacySample.all_write,
+    SQLLegacySample.group_read,
+    SQLLegacySample.group_write,
+    SQLLegacySample.group_id,
+    SQLLegacySample.user_id,
+)
+"""The ``legacy_samples`` columns :func:`has_sample_right` needs to resolve a right."""
+
+
+def has_sample_right(
+    row: Row,
+    client: AbstractClient,
+    right: SampleRight,
+) -> bool:
+    """Resolve whether ``client`` holds ``right`` on a sample.
+
+    ``row`` must carry the columns in :data:`SAMPLE_RIGHTS_COLUMNS`. Shared by the
+    samples and analyses domains so a sample and the analyses on it never disagree
+    about who may read or write them.
+    """
+    if (
+        client.administrator_role == AdministratorRole.FULL
+        or client.user_id == row.user_id
+    ):
+        return True
+
+    is_group_member = row.group_id is not None and client.is_group_member(row.group_id)
+
+    if right is SampleRight.read:
+        return row.all_read or (is_group_member and row.group_read)
+
+    if right is SampleRight.write:
+        return row.all_write or (is_group_member and row.group_write)
+
+    raise ValueError(f"Invalid sample right: {right}")
 
 
 def define_initial_workflows(library_type: str) -> dict[str, str]:
@@ -99,31 +140,6 @@ async def check_labels(pg: AsyncEngine, labels: list[int]) -> list[int]:
         results = set(query.scalars().all())
 
     return [label for label in labels if label not in results]
-
-
-def get_sample_rights(sample: dict, client: AbstractClient):
-    if (
-        client.administrator_role
-        or sample["user"]["id"] == client.user_id
-        or client.is_job
-    ):
-        return True, True
-
-    # Handle both None and "none" during the transition period
-    group = sample["group"]
-    if group == "none":
-        group = None
-
-    is_group_member = group and client.is_group_member(group)
-
-    read = sample["all_read"] or (is_group_member and sample["group_read"])
-
-    if not read:
-        return False, False
-
-    write = sample["all_write"] or (is_group_member and sample["group_write"])
-
-    return read, write
 
 
 def bad_labels_response(labels: list[int]) -> Response:
