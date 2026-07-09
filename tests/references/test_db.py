@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 from virtool.api.client import UserClient
-from virtool.data.errors import ResourceError, ResourceNotFoundError
+from virtool.data.errors import ResourceNotFoundError
 from virtool.data.topg import compose_legacy_id_subquery
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
@@ -16,7 +16,6 @@ from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.references.db import (
     check_right,
-    check_source_type,
     compose_reference_ids_match,
     create_document,
     get_manifest,
@@ -739,143 +738,3 @@ async def test_populate_insert_only_reference_writes_legacy_history(
     assert all(row.otu_version == "0" for row in rows)
     assert all(row.index is None and row.index_version is None for row in rows)
     assert rows == snapshot(name="legacy_history")
-
-
-async def seed_source_type_reference(
-    pg: AsyncEngine,
-    *,
-    legacy_id: str,
-    user_id: int,
-    created_at,
-    restrict_source_types: bool,
-    source_types: list[str],
-) -> int:
-    """Insert a reference with a source type configuration.
-
-    :return: the reference's Postgres primary key
-    """
-    async with AsyncSession(pg) as session:
-        reference = SQLReference(
-            legacy_id=legacy_id,
-            name=legacy_id,
-            description="",
-            created_at=created_at,
-            restrict_source_types=restrict_source_types,
-            source_types=source_types,
-            user_id=user_id,
-        )
-
-        session.add(reference)
-        await session.flush()
-
-        reference_id = reference.id
-
-        await session.commit()
-
-    return reference_id
-
-
-class TestCheckSourceType:
-    async def test_allowed_when_restricted(
-        self,
-        fake: DataFaker,
-        pg: AsyncEngine,
-        static_time,
-    ):
-        user = await fake.users.create()
-
-        reference_id = await seed_source_type_reference(
-            pg,
-            legacy_id="restricted",
-            user_id=user.id,
-            created_at=static_time.datetime,
-            restrict_source_types=True,
-            source_types=["isolate", "strain"],
-        )
-
-        assert await check_source_type(pg, reference_id, "isolate") is True
-
-    async def test_disallowed_when_restricted(
-        self,
-        fake: DataFaker,
-        pg: AsyncEngine,
-        static_time,
-    ):
-        user = await fake.users.create()
-
-        reference_id = await seed_source_type_reference(
-            pg,
-            legacy_id="restricted",
-            user_id=user.id,
-            created_at=static_time.datetime,
-            restrict_source_types=True,
-            source_types=["isolate", "strain"],
-        )
-
-        assert await check_source_type(pg, reference_id, "genotype") is False
-
-    async def test_allowed_when_unrestricted(
-        self,
-        fake: DataFaker,
-        pg: AsyncEngine,
-        static_time,
-    ):
-        user = await fake.users.create()
-
-        reference_id = await seed_source_type_reference(
-            pg,
-            legacy_id="unrestricted",
-            user_id=user.id,
-            created_at=static_time.datetime,
-            restrict_source_types=False,
-            source_types=["isolate"],
-        )
-
-        assert await check_source_type(pg, reference_id, "genotype") is True
-
-    async def test_unknown_is_always_allowed(
-        self,
-        fake: DataFaker,
-        pg: AsyncEngine,
-        static_time,
-    ):
-        user = await fake.users.create()
-
-        reference_id = await seed_source_type_reference(
-            pg,
-            legacy_id="restricted",
-            user_id=user.id,
-            created_at=static_time.datetime,
-            restrict_source_types=True,
-            source_types=["isolate"],
-        )
-
-        assert await check_source_type(pg, reference_id, "unknown") is True
-
-    async def test_legacy_id(
-        self,
-        fake: DataFaker,
-        pg: AsyncEngine,
-        static_time,
-    ):
-        """A reference addressed by its legacy Mongo id resolves."""
-        user = await fake.users.create()
-
-        await seed_source_type_reference(
-            pg,
-            legacy_id="restricted",
-            user_id=user.id,
-            created_at=static_time.datetime,
-            restrict_source_types=True,
-            source_types=["isolate"],
-        )
-
-        assert await check_source_type(pg, "restricted", "isolate") is True
-        assert await check_source_type(pg, "restricted", "genotype") is False
-
-    async def test_reference_missing_from_postgres(self, pg: AsyncEngine):
-        """An OTU referring to a reference with no Postgres row is corrupt data, not a
-        missing resource.
-        """
-        with pytest.raises(ResourceError, match="Could not find reference 9999"):
-            await check_source_type(pg, 9999, "isolate")

@@ -13,7 +13,7 @@ from virtool.api.errors import (
     APINotFound,
 )
 from virtool.api.routes import Routes
-from virtool.data.errors import ResourceNotFoundError
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.mongo.utils import get_mongo_from_req, get_one_field
 from virtool.otus.db import SEQUENCE_PROJECTION
@@ -184,7 +184,6 @@ class IsolatesView(PydanticView):
 
         """
         mongo = get_mongo_from_req(self.request)
-        pg: AsyncEngine = self.request.app["pg"]
 
         reference = await get_one_field(mongo.otus, "reference", otu_id)
 
@@ -198,23 +197,16 @@ class IsolatesView(PydanticView):
         ):
             raise APIInsufficientRights()
 
-        source_type = data.source_type.lower()
-
-        # All source types are stored in lower case.
-        if not await virtool.references.db.check_source_type(
-            pg,
-            reference["id"],
-            source_type,
-        ):
-            raise APIBadRequest("Source type is not allowed")
-
-        isolate = await get_data_from_req(self.request).otus.add_isolate(
-            otu_id,
-            source_type,
-            data.source_name,
-            self.request["client"].user_id,
-            data.default,
-        )
+        try:
+            isolate = await get_data_from_req(self.request).otus.add_isolate(
+                otu_id,
+                data.source_type,
+                data.source_name,
+                self.request["client"].user_id,
+                data.default,
+            )
+        except ResourceConflictError as err:
+            raise APIBadRequest(str(err))
 
         return json_response(
             isolate,
@@ -291,7 +283,6 @@ class IsolateView(PydanticView):
 
         """
         mongo = get_mongo_from_req(self.request)
-        pg: AsyncEngine = self.request.app["pg"]
 
         reference = await get_one_field(
             mongo.otus,
@@ -302,37 +293,25 @@ class IsolateView(PydanticView):
         if not reference:
             raise APINotFound()
 
-        ref_id = reference["id"]
-
         if not await virtool.references.db.check_right(
             self.request,
-            ref_id,
+            reference["id"],
             "modify_otu",
         ):
             raise APIInsufficientRights()
 
         data = data.dict(exclude_unset=True)
 
-        source_type = None
-
-        # All source types are stored in lower case.
-        if "source_type" in data:
-            source_type = data["source_type"].lower()
-
-            if not await virtool.references.db.check_source_type(
-                pg,
-                ref_id,
-                source_type,
-            ):
-                raise APIBadRequest("Source type is not allowed")
-
-        isolate = await get_data_from_req(self.request).otus.update_isolate(
-            otu_id,
-            isolate_id,
-            self.request["client"].user_id,
-            source_type=source_type,
-            source_name=data.get("source_name"),
-        )
+        try:
+            isolate = await get_data_from_req(self.request).otus.update_isolate(
+                otu_id,
+                isolate_id,
+                self.request["client"].user_id,
+                source_type=data.get("source_type"),
+                source_name=data.get("source_name"),
+            )
+        except ResourceConflictError as err:
+            raise APIBadRequest(str(err))
 
         return json_response(isolate, status=200)
 
