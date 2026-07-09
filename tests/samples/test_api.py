@@ -1522,14 +1522,8 @@ class TestAnalyze:
     @pytest.fixture
     async def analyze_client(
         self,
-        mocker,
         spawn_client: ClientSpawner,
     ) -> VirtoolTestClient:
-        mocker.patch(
-            "virtool.samples.utils.get_sample_rights",
-            return_value=(True, True),
-        )
-
         client = await spawn_client(authenticated=True)
         client.app["jobs"] = MockJobInterface()
 

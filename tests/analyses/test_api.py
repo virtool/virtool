@@ -226,6 +226,15 @@ async def test_get(
         )
         await create_analysis_file(pg, analysis_id, "fasta", "reference.fa")
 
+    if error == "404_sample":
+        async with AsyncSession(pg) as session:
+            await session.execute(
+                update(SQLAnalysis)
+                .where(SQLAnalysis.id == analysis_id)
+                .values(sample_id=None),
+            )
+            await session.commit()
+
     resp = await client.get("/analyses/foobar")
 
     if error is None:

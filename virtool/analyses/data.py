@@ -44,6 +44,7 @@ from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
 from virtool.indexes.transforms import AttachIndexTransform
 from virtool.jobs.transforms import AttachJobTransform
+from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_new_id
 from virtool.pg.utils import delete_row, get_row_by_id
@@ -52,7 +53,6 @@ from virtool.references.transforms import AttachReferenceTransform
 from virtool.samples.db import compose_sample_rights_filter
 from virtool.samples.oas import CreateAnalysisRequest
 from virtool.samples.sql import SQLLegacySample
-from virtool.samples.utils import get_sample_rights
 from virtool.storage.cleanup import delete_prefix
 from virtool.storage.protocol import StorageBackend
 from virtool.subtractions.pg import SQLSubtraction
@@ -162,7 +162,7 @@ class AnalysisData(DataLayerDomain):
             skip_count = (page - 1) * per_page
 
         readable_sample_ids = select(SQLLegacySample.id).where(
-            await compose_sample_rights_filter(self._pg, client),
+            compose_sample_rights_filter(client),
         )
 
         filters = [
@@ -398,37 +398,47 @@ class AnalysisData(DataLayerDomain):
         :return: boolean value
         """
         async with AsyncSession(self._pg) as session:
-            sample_id = (
+            row = (
                 await session.execute(
-                    select(SQLAnalysis.sample).where(
+                    select(
+                        SQLLegacySample.all_read,
+                        SQLLegacySample.all_write,
+                        SQLLegacySample.group_read,
+                        SQLLegacySample.group_write,
+                        SQLLegacySample.group_id,
+                        SQLLegacySample.user_id,
+                    )
+                    .join(SQLAnalysis, SQLAnalysis.sample_id == SQLLegacySample.id)
+                    .where(
                         compose_legacy_id_single_expression(SQLAnalysis, analysis_id),
                     ),
                 )
-            ).scalar_one_or_none()
+            ).first()
 
-        if sample_id is None:
-            raise ResourceNotFoundError
-
-        sample = await self._mongo.samples.find_one(
-            {"_id": sample_id},
-            ["user", "group", "all_read", "group_read", "group_write", "all_write"],
-        )
-
-        if not sample:
+        if row is None:
             logger.warning(
-                "parent sample not found for analysis",
+                "analysis or parent sample not found",
                 analysis_id=analysis_id,
-                sample_id=sample_id,
             )
             raise ResourceNotFoundError
 
-        read, write = get_sample_rights(sample, client)
+        if (
+            client.administrator_role == AdministratorRole.FULL
+            or client.user_id == row.user_id
+        ):
+            return True
+
+        is_group_member = row.group_id is not None and client.is_group_member(
+            row.group_id,
+        )
 
         if right == "read":
-            return read
+            return row.all_read or (is_group_member and row.group_read)
 
         if right == "write":
-            return write
+            return row.all_write or (is_group_member and row.group_write)
+
+        raise ValueError(f"Invalid sample right: {right}")
 
     async def delete(self, analysis_id: str, jobs_api_flag: bool) -> None:
         """Delete a single analysis by its ID.

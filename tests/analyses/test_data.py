@@ -20,6 +20,7 @@ from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.models.enums import AnalysisWorkflow
+from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row, get_row_by_id
 from virtool.samples.oas import CreateAnalysisRequest
@@ -350,6 +351,289 @@ class TestFindSampleRights:
 
         assert found.documents == []
         assert found.total_count == 0
+
+
+class TestHasRight:
+    """Rights on an analysis are resolved from the parent sample's Postgres row."""
+
+    @staticmethod
+    async def _insert_sample(pg: AsyncEngine, legacy_id: str, user_id: int, **rights):
+        async with AsyncSession(pg) as session:
+            session.add(
+                SQLLegacySample(
+                    legacy_id=legacy_id,
+                    name=legacy_id,
+                    library_type="normal",
+                    created_at=timestamp(),
+                    user_id=user_id,
+                    **rights,
+                ),
+            )
+            await session.commit()
+
+    @staticmethod
+    async def _seed_analysis(
+        mongo: Mongo,
+        pg: AsyncEngine,
+        legacy_id: str,
+        sample_id: str,
+        owner_id: int,
+        reference_id: str,
+    ) -> int:
+        return await seed_analysis(
+            mongo,
+            pg,
+            {
+                "_id": legacy_id,
+                "workflow": "pathoscope",
+                "created_at": timestamp(),
+                "ready": True,
+                "job": None,
+                "index": {"id": "test_index", "version": 11},
+                "user": {"id": owner_id},
+                "sample": {"id": sample_id},
+                "reference": {"id": reference_id},
+                "results": {"hits": []},
+                "subtractions": [],
+            },
+        )
+
+    async def test_owner_has_read_and_write(
+        self,
+        data_layer: DataLayer,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """The owner of the parent sample holds both rights on its analyses."""
+        await self._seed_analysis(
+            mongo,
+            pg,
+            "owned",
+            "test_sample",
+            setup_sample.user_id,
+            setup_sample.reference_id,
+        )
+
+        assert await data_layer.analyses.has_right(
+            "owned",
+            setup_sample.client,
+            "read",
+        )
+        assert await data_layer.analyses.has_right(
+            "owned",
+            setup_sample.client,
+            "write",
+        )
+
+    async def test_full_administrator_has_write(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """A full administrator holds both rights on another user's private sample."""
+        sample_owner = await fake.users.create()
+        administrator = await fake.users.create(
+            administrator_role=AdministratorRole.FULL,
+        )
+
+        await self._insert_sample(pg, "owner_private", sample_owner.id, all_read=False)
+        await self._seed_analysis(
+            mongo,
+            pg,
+            "private",
+            "owner_private",
+            sample_owner.id,
+            setup_sample.reference_id,
+        )
+
+        assert await data_layer.analyses.has_right(
+            "private",
+            build_user_client(administrator),
+            "write",
+        )
+
+    async def test_base_administrator_denied(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """An administrator below the full role is scoped like any other user, matching
+        how ``SamplesData.has_right`` treats the parent sample.
+        """
+        sample_owner = await fake.users.create()
+        administrator = await fake.users.create(
+            administrator_role=AdministratorRole.BASE,
+        )
+
+        await self._insert_sample(pg, "owner_private", sample_owner.id, all_read=False)
+        await self._seed_analysis(
+            mongo,
+            pg,
+            "private",
+            "owner_private",
+            sample_owner.id,
+            setup_sample.reference_id,
+        )
+
+        assert not await data_layer.analyses.has_right(
+            "private",
+            build_user_client(administrator),
+            "read",
+        )
+
+    async def test_all_read_grants_read_not_write(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """A world-readable sample grants read but withholds write."""
+        sample_owner = await fake.users.create()
+        other_user = await fake.users.create()
+
+        await self._insert_sample(
+            pg,
+            "world_readable",
+            sample_owner.id,
+            all_read=True,
+            all_write=False,
+        )
+        await self._seed_analysis(
+            mongo,
+            pg,
+            "public",
+            "world_readable",
+            sample_owner.id,
+            setup_sample.reference_id,
+        )
+
+        client = build_user_client(other_user)
+
+        assert await data_layer.analyses.has_right("public", client, "read")
+        assert not await data_layer.analyses.has_right("public", client, "write")
+
+    async def test_group_member_has_group_rights(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """A member of the sample's group holds the rights the group is granted."""
+        group = await fake.groups.create()
+        sample_owner = await fake.users.create()
+        group_member = await fake.users.create(groups=[group])
+
+        await self._insert_sample(
+            pg,
+            "group_shared",
+            sample_owner.id,
+            all_read=False,
+            all_write=False,
+            group_read=True,
+            group_write=True,
+            group_id=group.id,
+        )
+        await self._seed_analysis(
+            mongo,
+            pg,
+            "shared",
+            "group_shared",
+            sample_owner.id,
+            setup_sample.reference_id,
+        )
+
+        client = build_user_client(group_member)
+
+        assert await data_layer.analyses.has_right("shared", client, "read")
+        assert await data_layer.analyses.has_right("shared", client, "write")
+
+    async def test_non_member_denied(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """A user outside the sample's group holds neither right."""
+        group = await fake.groups.create()
+        sample_owner = await fake.users.create()
+        outsider = await fake.users.create()
+
+        await self._insert_sample(
+            pg,
+            "group_shared",
+            sample_owner.id,
+            all_read=False,
+            group_read=True,
+            group_id=group.id,
+        )
+        await self._seed_analysis(
+            mongo,
+            pg,
+            "shared",
+            "group_shared",
+            sample_owner.id,
+            setup_sample.reference_id,
+        )
+
+        client = build_user_client(outsider)
+
+        assert not await data_layer.analyses.has_right("shared", client, "read")
+        assert not await data_layer.analyses.has_right("shared", client, "write")
+
+    async def test_postgres_only_sample_readable(
+        self,
+        data_layer: DataLayer,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """An analysis whose parent sample has no Mongo document resolves its rights
+        from Postgres.
+        """
+        await self._seed_analysis(
+            mongo,
+            pg,
+            "owned",
+            "test_sample",
+            setup_sample.user_id,
+            setup_sample.reference_id,
+        )
+
+        await mongo.samples.delete_one({"_id": "test_sample"})
+
+        assert await data_layer.analyses.has_right(
+            "owned",
+            setup_sample.client,
+            "read",
+        )
+
+    async def test_missing_analysis_raises(
+        self,
+        data_layer: DataLayer,
+        setup_sample: SampleSetup,
+    ):
+        """An analysis that does not exist raises ``ResourceNotFoundError`` so the API
+        can return a 404 rather than a 403.
+        """
+        with pytest.raises(ResourceNotFoundError):
+            await data_layer.analyses.has_right(
+                "missing",
+                setup_sample.client,
+                "read",
+            )
 
 
 class TestHideIimi:

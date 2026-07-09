@@ -54,7 +54,6 @@ from virtool.samples.db import (
     DeriveWorkflowTagsTransform,
     compose_sample_rights_filter,
     compose_sample_workflow_filter,
-    resolve_client_group_ids,
 )
 from virtool.samples.files import (
     create_artifact_file,
@@ -225,7 +224,7 @@ class SamplesData(DataLayerDomain):
         client,
     ) -> SampleSearchResult:
         """Find and filter samples."""
-        filters = [await compose_sample_rights_filter(self._pg, client)]
+        filters = [compose_sample_rights_filter(client)]
 
         if term:
             filters.append(_compose_sample_search_filter(term))
@@ -966,11 +965,9 @@ class SamplesData(DataLayerDomain):
         ):
             return True
 
-        is_group_member = False
-
-        if row.group_id is not None:
-            member_group_ids = await resolve_client_group_ids(self._pg, client)
-            is_group_member = row.group_id in member_group_ids
+        is_group_member = row.group_id is not None and client.is_group_member(
+            row.group_id,
+        )
 
         if right == SampleRight.read:
             return row.all_read or (is_group_member and row.group_read)

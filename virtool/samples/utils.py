@@ -4,7 +4,6 @@ from aiohttp.web import Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.api.client import AbstractClient
 from virtool.api.errors import APIBadRequest
 from virtool.labels.sql import SQLLabel
 from virtool.samples.models import WorkflowState
@@ -99,31 +98,6 @@ async def check_labels(pg: AsyncEngine, labels: list[int]) -> list[int]:
         results = set(query.scalars().all())
 
     return [label for label in labels if label not in results]
-
-
-def get_sample_rights(sample: dict, client: AbstractClient):
-    if (
-        client.administrator_role
-        or sample["user"]["id"] == client.user_id
-        or client.is_job
-    ):
-        return True, True
-
-    # Handle both None and "none" during the transition period
-    group = sample["group"]
-    if group == "none":
-        group = None
-
-    is_group_member = group and client.is_group_member(group)
-
-    read = sample["all_read"] or (is_group_member and sample["group_read"])
-
-    if not read:
-        return False, False
-
-    write = sample["all_write"] or (is_group_member and sample["group_write"])
-
-    return read, write
 
 
 def bad_labels_response(labels: list[int]) -> Response:

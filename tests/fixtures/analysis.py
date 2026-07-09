@@ -18,6 +18,11 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
     Non-integer ``job.id`` placeholders are stored as a null ``job_id`` since the
     Postgres column is a foreign key to ``jobs.id``.
 
+    When the parent sample has no ``legacy_samples`` row yet, one is created from the
+    sample's Mongo document so that its rights columns match. Rights are read from
+    Postgres, so a row seeded with the column defaults would deny access to a sample
+    the Mongo document marks readable.
+
     :return: the integer ``analyses.id`` of the seeded row
     """
     index = document["index"]
@@ -46,12 +51,18 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
         ).scalar_one_or_none()
 
         if sample_pg_id is None:
+            sample_document = await mongo.samples.find_one({"_id": sample["id"]}) or {}
+
             legacy_sample = SQLLegacySample(
                 legacy_id=sample["id"],
                 name=sample.get("name", sample["id"]),
                 library_type="normal",
                 created_at=document["created_at"],
                 user_id=document["user"]["id"],
+                all_read=sample_document.get("all_read", False),
+                all_write=sample_document.get("all_write", False),
+                group_read=sample_document.get("group_read", False),
+                group_write=sample_document.get("group_write", False),
             )
             session.add(legacy_sample)
             await session.flush()
