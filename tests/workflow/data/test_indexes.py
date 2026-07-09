@@ -5,7 +5,6 @@ from pyfixtures import FixtureScope
 
 from virtool.indexes.db import LEGACY_INDEX_FILE_NAMES
 from virtool.indexes.index_sqlite import (
-    COMPRESSED_INDEX_SQLITE_FILE_NAME,
     INDEX_SQLITE_FILE_NAME,
 )
 from virtool.indexes.models import IndexFile
@@ -123,6 +122,44 @@ def _get_otu_ref(otu: dict) -> dict:
         "taxid": otu.get("taxid"),
         "version": otu["version"],
     }
+
+
+def _set_reference_json_index_data(workflow_data: WorkflowData) -> None:
+    workflow_data.job.args["analysis_id"] = workflow_data.analysis.id
+    workflow_data.job.workflow = "build_index"
+    workflow_data.index.manifest = {
+        "0b9f16ba": 1,
+        "b67008d3": 2,
+        "51c5d911": 3,
+        "41915321": 4,
+        "q1gu14xk": 5,
+        "9457c8c7": 6,
+        "qe8afugr": 7,
+        "lliyqfxq": 8,
+        "c85dca33": 9,
+        "a89b6529": 10,
+        "6bb1fe0b": 11,
+        "rpz4bwux": 12,
+        "0716c1e1": 13,
+        "4ydohve6": 14,
+        "579c7055": 15,
+        "2oafytcq": 16,
+        "400ab879": 17,
+        "898l72tb": 18,
+        "xxv54nax": 19,
+        "kqpzbw0s": 20,
+    }
+    workflow_data.index.files = [
+        IndexFile(
+            download_url=f"/indexes/{workflow_data.index.id}/files/{file_name}",
+            id=id_,
+            index=workflow_data.index.id,
+            name=file_name,
+            size=100,
+            type="unknown",
+        )
+        for id_, file_name in enumerate(LEGACY_INDEX_FILE_NAMES, start=1)
+    ]
 
 
 class TestWFIndex:
@@ -282,48 +319,14 @@ class TestWFIndex:
 
 
 class TestIndex:
-    async def test_reference_json_fallback_ok(
+    async def test_reference_json_ok(
         self,
         scope: FixtureScope,
         work_path: Path,
         workflow_data: WorkflowData,
     ):
-        """Reference JSON is converted to SQLite when SQLite is unavailable."""
-        workflow_data.job.args["analysis_id"] = workflow_data.analysis.id
-        workflow_data.job.workflow = "build_index"
-        workflow_data.index.manifest = {
-            "0b9f16ba": 1,
-            "b67008d3": 2,
-            "51c5d911": 3,
-            "41915321": 4,
-            "q1gu14xk": 5,
-            "9457c8c7": 6,
-            "qe8afugr": 7,
-            "lliyqfxq": 8,
-            "c85dca33": 9,
-            "a89b6529": 10,
-            "6bb1fe0b": 11,
-            "rpz4bwux": 12,
-            "0716c1e1": 13,
-            "4ydohve6": 14,
-            "579c7055": 15,
-            "2oafytcq": 16,
-            "400ab879": 17,
-            "898l72tb": 18,
-            "xxv54nax": 19,
-            "kqpzbw0s": 20,
-        }
-        workflow_data.index.files = [
-            IndexFile(
-                download_url=f"/indexes/{workflow_data.index.id}/files/{file_name}",
-                id=id_,
-                index=workflow_data.index.id,
-                name=file_name,
-                size=100,
-                type="unknown",
-            )
-            for id_, file_name in enumerate(LEGACY_INDEX_FILE_NAMES, start=1)
-        ]
+        """Reference JSON is converted to the local workflow index."""
+        _set_reference_json_index_data(workflow_data)
 
         index: WFIndex = await scope.instantiate_by_key("index")
         otus = [otu async for otu in index.iter_otus()]
@@ -378,113 +381,38 @@ class TestIndex:
             "ixnaodb8",
         }
 
-    async def test_sqlite_ok(
+    async def test_reference_json_used_when_sqlite_file_record_exists(
         self,
         scope: FixtureScope,
         work_path: Path,
         workflow_data: WorkflowData,
     ):
-        """The canonical SQLite source is loaded when present."""
-        workflow_data.job.args["analysis_id"] = workflow_data.analysis.id
-        workflow_data.job.workflow = "build_index"
-        workflow_data.index.manifest = {"sqlite_otu": 99}
-        workflow_data.index.files = [
+        """The workflow index only reads reference JSON during initialization."""
+        _set_reference_json_index_data(workflow_data)
+        workflow_data.index.files.append(
             IndexFile(
-                download_url=(
-                    f"/indexes/{workflow_data.index.id}/files/"
-                    f"{COMPRESSED_INDEX_SQLITE_FILE_NAME}"
-                ),
-                id=1,
+                download_url=f"/indexes/{workflow_data.index.id}/files/index.sqlite.gz",
+                id=21,
                 index=workflow_data.index.id,
-                name=COMPRESSED_INDEX_SQLITE_FILE_NAME,
+                name="index.sqlite.gz",
                 size=100,
                 type="sqlite",
             ),
-        ]
+        )
 
         index: WFIndex = await scope.instantiate_by_key("index")
         otus = [otu async for otu in index.iter_otus()]
-        reference_metadata = await index.get_reference_metadata()
-        sequences = [sequence async for sequence in index.iter_sequences()]
-        default_sequences = [
-            sequence async for sequence in index.iter_default_sequences()
-        ]
-        otu_sequences = [
-            sequence async for sequence in index.iter_otu_sequences("sqlite_otu")
-        ]
-        otu_refs_by_sequence_ids = await index.get_otu_refs_by_sequence_ids(
-            ["sqlite_sequence", "sqlite_other_sequence"],
-        )
 
         index_path = work_path / "indexes" / workflow_data.analysis.index.id
 
         assert index.id == workflow_data.analysis.index.id
         assert {p.name for p in index_path.iterdir()} == {
             "index.sqlite",
-            COMPRESSED_INDEX_SQLITE_FILE_NAME,
+            "reference.json",
+            "reference.json.gz",
         }
-        assert reference_metadata == {
-            "id": "hxn167",
-            "created_at": "2026-01-15T19:55:34.203324Z",
-            "data_type": "genome",
-            "name": "Plant Viruses",
-            "organism": "virus",
-        }
-        assert otus == [_get_source_otu()]
-        assert sequences == sorted(
-            _get_source_sequences(),
-            key=lambda sequence: sequence["id"],
-        )
-        assert default_sequences == [_get_source_sequences()[0]]
-        assert otu_sequences == _get_source_sequences()
-        assert otu_refs_by_sequence_ids == {
-            "sqlite_sequence": _get_otu_ref(_get_source_otu()),
-            "sqlite_other_sequence": _get_otu_ref(_get_source_otu()),
-        }
-
-    async def test_sqlite_download_preferred_over_json_fallback(
-        self,
-        scope: FixtureScope,
-        work_path: Path,
-        workflow_data: WorkflowData,
-    ):
-        """The SQLite artifact is used without downloading JSON fallback files."""
-        workflow_data.job.args["analysis_id"] = workflow_data.analysis.id
-        workflow_data.job.workflow = "build_index"
-        workflow_data.index.manifest = {"sqlite_otu": 99}
-        workflow_data.index.files = [
-            IndexFile(
-                download_url=f"/indexes/{workflow_data.index.id}/files/reference.json.gz",
-                id=1,
-                index=workflow_data.index.id,
-                name="reference.json.gz",
-                size=100,
-                type="json",
-            ),
-            IndexFile(
-                download_url=(
-                    f"/indexes/{workflow_data.index.id}/files/"
-                    f"{COMPRESSED_INDEX_SQLITE_FILE_NAME}"
-                ),
-                id=2,
-                index=workflow_data.index.id,
-                name=COMPRESSED_INDEX_SQLITE_FILE_NAME,
-                size=100,
-                type="sqlite",
-            ),
-        ]
-
-        index: WFIndex = await scope.instantiate_by_key("index")
-        otus = [otu async for otu in index.iter_otus()]
-
-        index_path = work_path / "indexes" / workflow_data.analysis.index.id
-
-        assert {p.name for p in index_path.iterdir()} == {
-            "index.sqlite",
-            COMPRESSED_INDEX_SQLITE_FILE_NAME,
-        }
-        assert otus[0]["id"] == "sqlite_otu"
-        assert otus[0]["version"] == 1
+        assert otus[0]["id"] == "0716c1e1"
+        assert otus[0]["version"] == 13
 
     async def test_write_fasta(
         self,
@@ -492,29 +420,14 @@ class TestIndex:
         tmp_path: Path,
         workflow_data: WorkflowData,
     ):
-        workflow_data.job.args["analysis_id"] = workflow_data.analysis.id
-        workflow_data.job.workflow = "build_index"
-        workflow_data.index.manifest = {"sqlite_otu": 1}
-        workflow_data.index.files = [
-            IndexFile(
-                download_url=(
-                    f"/indexes/{workflow_data.index.id}/files/"
-                    f"{COMPRESSED_INDEX_SQLITE_FILE_NAME}"
-                ),
-                id=1,
-                index=workflow_data.index.id,
-                name=COMPRESSED_INDEX_SQLITE_FILE_NAME,
-                size=100,
-                type="sqlite",
-            ),
-        ]
+        _set_reference_json_index_data(workflow_data)
 
         index: WFIndex = await scope.instantiate_by_key("index")
         fasta_path = tmp_path / "reference.fa"
 
         await index.write_fasta(fasta_path, index.iter_default_sequences())
 
-        assert fasta_path.read_text() == ">sqlite_sequence\nACGTAC\n"
+        assert fasta_path.read_text().startswith(">njbw70pe\n")
 
 
 class TestNewIndex:

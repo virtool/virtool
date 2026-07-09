@@ -22,7 +22,6 @@ from structlog import get_logger
 
 from virtool.analyses.models import Analysis
 from virtool.indexes.index_sqlite import (
-    COMPRESSED_INDEX_SQLITE_FILE_NAME,
     INDEX_SQLITE_FILE_NAME,
     connect_index_sqlite,
     create_index_sqlite,
@@ -37,7 +36,7 @@ from virtool.jobs.models import Job
 from virtool.references.models import ReferenceNested
 from virtool.utils import decompress_file
 from virtool.workflow.client import WorkflowAPIClient
-from virtool.workflow.errors import JobsAPIError, MissingJobArgumentError
+from virtool.workflow.errors import MissingJobArgumentError
 from virtool.workflow.files import VirtoolFileFormat
 
 logger = get_logger("api")
@@ -576,27 +575,6 @@ async def index(
 
     log.info("created index directory")
 
-    sqlite_path = index_work_path / INDEX_SQLITE_FILE_NAME
-    compressed_sqlite_path = index_work_path / COMPRESSED_INDEX_SQLITE_FILE_NAME
-
-    try:
-        await _api.get_file(
-            f"/indexes/{id_}/files/{COMPRESSED_INDEX_SQLITE_FILE_NAME}",
-            compressed_sqlite_path,
-        )
-    except JobsAPIError:
-        log.info("index sqlite unavailable")
-    else:
-        await asyncio.to_thread(
-            decompress_file,
-            compressed_sqlite_path,
-            sqlite_path,
-            proc,
-        )
-
-        log.info("loaded index OTUs from index sqlite")
-        return WFIndex.load(id_, sqlite_path)
-
     reference_json_path = index_work_path / "reference.json"
     compressed_reference_json_path = index_work_path / "reference.json.gz"
 
@@ -617,11 +595,11 @@ async def index(
         msg = "reference.json must contain reference metadata"
         raise TypeError(msg)
 
-    log.info("creating index sqlite from reference json")
+    log.info("creating local index sqlite from reference json")
 
     return await WFIndex.create(
         id_,
-        sqlite_path,
+        index_work_path / INDEX_SQLITE_FILE_NAME,
         _shape_reference_json_metadata(reference_json, index_),
         _iter_json_otus(reference_json, index_.manifest),
     )
