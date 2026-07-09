@@ -11,9 +11,11 @@ from asyncio import gather
 import pytest
 from syrupy import SnapshotAssertion
 
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.otus.oas import CreateOTURequest, UpdateOTURequest
+from virtool.references.oas import UpdateReferenceRequest
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
@@ -158,3 +160,154 @@ async def test_get_isolate_fasta(mongo, data_layer, test_otu, test_sequence):
         ">Prunus virus F|Isolate 8816-v2|abcd1234|27\nTGTTTAAGAGATTAAACAACCGCTTTC\n"
         ">Prunus virus F|Isolate 8816-v2|AX12345|12\nATAGAGGAGTTA",
     )
+
+
+class TestAddIsolateSourceType:
+    """The parent reference's source type configuration governs new isolates."""
+
+    async def _create_otu(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        *,
+        restrict_source_types: bool,
+        source_types: list[str],
+    ):
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+        otu = await fake.otus.create_empty(reference.id, user)
+
+        await data_layer.references.update(
+            reference.id,
+            UpdateReferenceRequest(
+                restrict_source_types=restrict_source_types,
+                source_types=source_types,
+            ),
+        )
+
+        return otu, user
+
+    async def test_allowed_when_restricted(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+    ):
+        otu, user = await self._create_otu(
+            data_layer,
+            fake,
+            restrict_source_types=True,
+            source_types=["isolate", "strain"],
+        )
+
+        isolate = await data_layer.otus.add_isolate(otu.id, "Isolate", "8816", user.id)
+
+        assert isolate.source_type == "isolate"
+
+    async def test_disallowed_when_restricted(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+    ):
+        otu, user = await self._create_otu(
+            data_layer,
+            fake,
+            restrict_source_types=True,
+            source_types=["isolate", "strain"],
+        )
+
+        with pytest.raises(ResourceConflictError, match="Source type is not allowed"):
+            await data_layer.otus.add_isolate(otu.id, "genotype", "8816", user.id)
+
+    async def test_allowed_when_unrestricted(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+    ):
+        otu, user = await self._create_otu(
+            data_layer,
+            fake,
+            restrict_source_types=False,
+            source_types=["isolate"],
+        )
+
+        isolate = await data_layer.otus.add_isolate(otu.id, "genotype", "8816", user.id)
+
+        assert isolate.source_type == "genotype"
+
+    async def test_unknown_is_always_allowed(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+    ):
+        otu, user = await self._create_otu(
+            data_layer,
+            fake,
+            restrict_source_types=True,
+            source_types=["isolate"],
+        )
+
+        isolate = await data_layer.otus.add_isolate(otu.id, "unknown", "8816", user.id)
+
+        assert isolate.source_type == "unknown"
+
+    async def test_otu_not_found(self, data_layer: DataLayer, fake: DataFaker):
+        user = await fake.users.create()
+
+        with pytest.raises(ResourceNotFoundError):
+            await data_layer.otus.add_isolate("missing", "isolate", "8816", user.id)
+
+
+class TestUpdateIsolateSourceType:
+    async def test_disallowed_when_restricted(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+    ):
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+        otu = await fake.otus.create(reference.id, user)
+
+        await data_layer.references.update(
+            reference.id,
+            UpdateReferenceRequest(
+                restrict_source_types=True,
+                source_types=["isolate"],
+            ),
+        )
+
+        isolate_id = otu.isolates[0].id
+
+        with pytest.raises(ResourceConflictError, match="Source type is not allowed"):
+            await data_layer.otus.update_isolate(
+                otu.id,
+                isolate_id,
+                user.id,
+                source_type="genotype",
+            )
+
+    async def test_source_name_only_skips_check(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+    ):
+        """A rename that leaves ``source_type`` alone is not source type checked."""
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+        otu = await fake.otus.create(reference.id, user)
+
+        await data_layer.references.update(
+            reference.id,
+            UpdateReferenceRequest(
+                restrict_source_types=True,
+                source_types=["strain"],
+            ),
+        )
+
+        isolate = await data_layer.otus.update_isolate(
+            otu.id,
+            otu.isolates[0].id,
+            user.id,
+            source_name="Renamed",
+        )
+
+        assert isolate["source_name"] == "Renamed"

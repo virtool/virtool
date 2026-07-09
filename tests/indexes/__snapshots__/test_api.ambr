@@ -478,12 +478,6 @@
     }),
   ])
 # ---
-# name: test_finalize[404_reference]
-  dict({
-    'id': 'not_found',
-    'message': 'Not found',
-  })
-# ---
 # name: test_finalize[409_fasta]
   dict({
     'id': 'conflict',

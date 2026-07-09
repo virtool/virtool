@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import virtool.history.db
 import virtool.otus.db
 import virtool.otus.utils
-from virtool.data.errors import ResourceNotFoundError
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.topg import resolve_legacy_id
 from virtool.data.transforms import apply_transforms
 from virtool.history.utils import (
@@ -36,6 +36,7 @@ from virtool.otus.utils import (
     format_isolate_name,
     strip_sequence_references,
 )
+from virtool.references.db import check_source_type
 from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
@@ -382,6 +383,22 @@ class OTUData:
 
         return await self._mongo.with_transaction(func)
 
+    async def _check_source_type(self, otu_id: str, source_type: str) -> None:
+        """Ensure ``source_type`` is allowed by the OTU's parent reference.
+
+        :param otu_id: the id of the OTU the isolate belongs to
+        :param source_type: the lowercased source type
+        :raises ResourceNotFoundError: the OTU does not exist
+        :raises ResourceConflictError: the reference does not allow the source type
+        """
+        reference = await get_one_field(self._mongo.otus, "reference", otu_id)
+
+        if not reference:
+            raise ResourceNotFoundError
+
+        if not await check_source_type(self._pg, reference["id"], source_type):
+            raise ResourceConflictError("Source type is not allowed")
+
     async def add_isolate(
         self,
         otu_id: str,
@@ -390,6 +407,10 @@ class OTUData:
         user_id: int,
         default: bool = False,
     ) -> OTUIsolate:
+        source_type = source_type.lower()
+
+        await self._check_source_type(otu_id, source_type)
+
         async def func(session: AsyncIOMotorClientSession) -> OTUIsolate:
             document = await self._mongo.otus.find_one(otu_id, session=session)
 
@@ -482,6 +503,11 @@ class OTUData:
         source_type: str | None = None,
         source_name: str | None = None,
     ):
+        if source_type is not None:
+            source_type = source_type.lower()
+
+            await self._check_source_type(otu_id, source_type)
+
         isolates = await get_one_field(self._mongo.otus, "isolates", otu_id)
 
         isolate = find_isolate(isolates, isolate_id)

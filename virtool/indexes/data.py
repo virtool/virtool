@@ -37,10 +37,7 @@ from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import get_rows
-from virtool.references.db import (
-    compose_reference_ids_match,
-    resolve_reference_legacy_id,
-)
+from virtool.references.db import compose_reference_ids_match
 from virtool.references.models import ReferenceNested
 from virtool.references.sql import SQLReference
 from virtool.references.transforms import (
@@ -318,26 +315,25 @@ class IndexData:
         except KeyError:
             raise ResourceError("Could not find index reference id")
 
-        data_type = await get_one_field(
-            self._mongo.references,
-            "data_type",
-            await resolve_reference_legacy_id(self._pg, ref_id),
-        )
+        async with AsyncSession(self._pg) as session:
+            reference_id = await session.scalar(
+                select(SQLReference.id).where(
+                    compose_legacy_id_single_expression(SQLReference, ref_id),
+                ),
+            )
 
-        if data_type is None:
-            raise ResourceNotFoundError
+        if reference_id is None:
+            raise ResourceError(f"Could not find reference {ref_id} in postgres")
 
         results = {
             f.name: f.type
             for f in await get_rows(self._pg, SQLIndexFile, "index", index_id)
         }
 
-        aws = [check_fasta_file_uploaded(results)]
-
-        if data_type == "genome":
-            aws.append(check_index_files_uploaded(results))
-
-        await wait_for_checks(*aws)
+        await wait_for_checks(
+            check_fasta_file_uploaded(results),
+            check_index_files_uploaded(results),
+        )
 
         async with self._mongo.create_session() as session:
             await update_last_indexed_versions(self._mongo, self._pg, ref_id, session)

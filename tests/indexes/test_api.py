@@ -854,7 +854,7 @@ async def test_upload(
         ).scalar() == snapshot
 
 
-@pytest.mark.parametrize("error", [None, "409_genome", "409_fasta", "404_reference"])
+@pytest.mark.parametrize("error", [None, "409_genome", "409_fasta"])
 async def test_finalize(
     error: str | None,
     fake: DataFaker,
@@ -878,28 +878,27 @@ async def test_finalize(
     else:
         files = INDEX_FILE_NAMES
 
-    if error != "404_reference":
-        await mongo.references.insert_one(
-            {
-                "_id": "hxn167",
-                "archived": False,
-                "data_type": "genome",
-                "name": "Test A",
-            },
-        )
+    await mongo.references.insert_one(
+        {
+            "_id": "hxn167",
+            "archived": False,
+            "data_type": "genome",
+            "name": "Test A",
+        },
+    )
 
-        async with AsyncSession(pg) as session:
-            session.add(
-                SQLReference(
-                    legacy_id="hxn167",
-                    name="Test A",
-                    description="",
-                    created_at=static_time.datetime,
-                    source_types=[],
-                    user_id=user.id,
-                ),
-            )
-            await session.commit()
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLReference(
+                legacy_id="hxn167",
+                name="Test A",
+                description="",
+                created_at=static_time.datetime,
+                source_types=[],
+                user_id=user.id,
+            ),
+        )
+        await session.commit()
 
     await asyncio.gather(
         mongo.indexes.insert_one(

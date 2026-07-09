@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio.engine import AsyncEngine
 import virtool.history.db
 import virtool.mongo.utils
 import virtool.utils
-from virtool.data.errors import ResourceNotFoundError
+from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.topg import (
     compose_legacy_id_mongo_match,
     compose_legacy_id_single_expression,
@@ -52,29 +52,6 @@ async def compose_reference_id_match(pg: AsyncEngine, ref_id: int | str) -> dict
     ``legacy_references`` primary key, so both forms must match.
     """
     return await compose_legacy_id_mongo_match(pg, SQLReference, ref_id)
-
-
-async def resolve_reference_legacy_id(pg: AsyncEngine, ref_id: int | str) -> str:
-    """Return the legacy Mongo string id for a reference.
-
-    ``references`` still live in Mongo keyed by their legacy string ``_id`` while
-    ``otus`` and ``sequences`` may already embed the integer
-    ``legacy_references`` primary key. Callers that hold an embedded id and need
-    to reach the Mongo ``references`` document resolve it here. A legacy string id
-    passes through unchanged.
-    """
-    if isinstance(ref_id, str):
-        return ref_id
-
-    async with AsyncSession(pg) as session:
-        legacy_id = await session.scalar(
-            select(SQLReference.legacy_id).where(SQLReference.id == ref_id),
-        )
-
-    if legacy_id is None:
-        raise ResourceNotFoundError
-
-    return legacy_id
 
 
 async def write_legacy_reference(
@@ -377,36 +354,37 @@ async def check_right(req: Request, ref_id: int | str, right: str) -> bool:
 
 
 async def check_source_type(
-    mongo: "Mongo",
     pg: AsyncEngine,
     ref_id: int | str,
     source_type: str,
 ) -> bool:
     """Check `source_type` is valid based on the reference configuration.
 
-    :param mongo: the application MongoDB client
     :param pg: the application PostgreSQL engine
     :param ref_id: the reference context
     :param source_type: the source type to check
     :return: source type is valid
 
     """
-    ref_id = await resolve_reference_legacy_id(pg, ref_id)
-
-    document = await mongo.references.find_one(
-        ref_id,
-        ["restrict_source_types", "source_types"],
-    )
-
-    restrict_source_types = document.get("restrict_source_types", False)
-    source_types = document.get("source_types", [])
-
     if source_type == "unknown":
         return True
 
+    async with AsyncSession(pg) as session:
+        row = (
+            await session.execute(
+                select(
+                    SQLReference.restrict_source_types,
+                    SQLReference.source_types,
+                ).where(compose_legacy_id_single_expression(SQLReference, ref_id)),
+            )
+        ).one_or_none()
+
+    if row is None:
+        raise ResourceError(f"Could not find reference {ref_id} in postgres")
+
     # Return `False` when source_types are restricted and source_type is not allowed.
-    if source_type and restrict_source_types:
-        return source_type in source_types
+    if source_type and row.restrict_source_types:
+        return source_type in row.source_types
 
     # Return `True` when:
     # - source_type is empty string (unknown)
