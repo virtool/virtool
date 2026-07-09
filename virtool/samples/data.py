@@ -9,7 +9,6 @@ from typing import Any
 from pymongo.results import UpdateResult
 from sqlalchemy import (
     ColumnExpressionArgument,
-    and_,
     delete,
     exc,
     func,
@@ -30,7 +29,6 @@ from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
 from virtool.data.topg import (
     both_transactions,
-    compose_legacy_id_multi_expression,
     compose_legacy_id_single_expression,
     compose_legacy_id_subquery,
     retry_both_transactions,
@@ -54,7 +52,9 @@ from virtool.samples.db import (
     AttachArtifactsAndReadsTransform,
     AttachUploadsTransform,
     DeriveWorkflowTagsTransform,
+    compose_sample_rights_filter,
     compose_sample_workflow_filter,
+    resolve_client_group_ids,
 )
 from virtool.samples.files import (
     create_artifact_file,
@@ -225,7 +225,7 @@ class SamplesData(DataLayerDomain):
         client,
     ) -> SampleSearchResult:
         """Find and filter samples."""
-        filters = [await self._compose_rights_filter(client)]
+        filters = [await compose_sample_rights_filter(self._pg, client)]
 
         if term:
             filters.append(_compose_sample_search_filter(term))
@@ -298,58 +298,6 @@ class SamplesData(DataLayerDomain):
             page_count=int(math.ceil(found_count / per_page)),
             per_page=per_page,
         )
-
-    async def _resolve_client_group_ids(self, client) -> list[int]:
-        """Resolve the Postgres group ids for the groups ``client`` belongs to.
-
-        Shared by ``_compose_rights_filter`` and ``has_right`` so the two rights
-        paths resolve group membership the same way.
-        """
-        if not client.groups:
-            return []
-
-        async with AsyncSession(self._pg) as session:
-            return list(
-                (
-                    await session.execute(
-                        select(SQLGroup.id).where(
-                            compose_legacy_id_multi_expression(
-                                SQLGroup,
-                                client.groups,
-                            ),
-                        ),
-                    )
-                )
-                .scalars()
-                .all(),
-            )
-
-    async def _compose_rights_filter(
-        self,
-        client,
-    ) -> ColumnExpressionArgument[bool]:
-        """Compose the Postgres predicate scoping samples to those ``client`` can read.
-
-        Mirrors the Mongo ``$or`` rights filter: the requesting user owns the sample,
-        the sample is world-readable, or the sample is readable by a group the user
-        belongs to.
-        """
-        rights_filter = [
-            SQLLegacySample.all_read.is_(True),
-            SQLLegacySample.user_id == client.user_id,
-        ]
-
-        group_ids = await self._resolve_client_group_ids(client)
-
-        if group_ids:
-            rights_filter.append(
-                and_(
-                    SQLLegacySample.group_read.is_(True),
-                    SQLLegacySample.group_id.in_(group_ids),
-                ),
-            )
-
-        return or_(*rights_filter)
 
     async def get(self, sample_id: int | str) -> Sample:
         """Get a sample by its id.
@@ -1021,7 +969,7 @@ class SamplesData(DataLayerDomain):
         is_group_member = False
 
         if row.group_id is not None:
-            member_group_ids = await self._resolve_client_group_ids(client)
+            member_group_ids = await resolve_client_group_ids(self._pg, client)
             is_group_member = row.group_id in member_group_ids
 
         if right == SampleRight.read:

@@ -3,7 +3,15 @@
 from collections import defaultdict
 from typing import Any
 
-from sqlalchemy import and_, exists, func, not_, or_, select
+from sqlalchemy import (
+    ColumnExpressionArgument,
+    and_,
+    exists,
+    func,
+    not_,
+    or_,
+    select,
+)
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from yarl import URL
 
@@ -14,7 +22,10 @@ import virtool.utils
 from virtool.analyses.sql import SQLAnalysis
 from virtool.analyses.utils import WORKFLOW_NAMES
 from virtool.api.errors import APINotFound
-from virtool.data.topg import compose_legacy_id_subquery
+from virtool.data.topg import (
+    compose_legacy_id_multi_expression,
+    compose_legacy_id_subquery,
+)
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
@@ -261,6 +272,53 @@ async def check_rights(db, sample_id: str | None, client, write: bool = True) ->
     has_read, has_write = virtool.samples.utils.get_sample_rights(sample_rights, client)
 
     return has_read and (write is False or has_write)
+
+
+async def resolve_client_group_ids(pg: AsyncEngine, client) -> list[int]:
+    """Resolve the Postgres group ids for the groups ``client`` belongs to."""
+    if not client.groups:
+        return []
+
+    async with AsyncSession(pg) as session:
+        return list(
+            (
+                await session.execute(
+                    select(SQLGroup.id).where(
+                        compose_legacy_id_multi_expression(SQLGroup, client.groups),
+                    ),
+                )
+            )
+            .scalars()
+            .all(),
+        )
+
+
+async def compose_sample_rights_filter(
+    pg: AsyncEngine,
+    client,
+) -> ColumnExpressionArgument[bool]:
+    """Compose the Postgres predicate scoping samples to those ``client`` can read.
+
+    Mirrors the Mongo ``$or`` rights filter: the requesting user owns the sample,
+    the sample is world-readable, or the sample is readable by a group the user
+    belongs to.
+    """
+    rights_filter = [
+        SQLLegacySample.all_read.is_(True),
+        SQLLegacySample.user_id == client.user_id,
+    ]
+
+    group_ids = await resolve_client_group_ids(pg, client)
+
+    if group_ids:
+        rights_filter.append(
+            and_(
+                SQLLegacySample.group_read.is_(True),
+                SQLLegacySample.group_id.in_(group_ids),
+            ),
+        )
+
+    return or_(*rights_filter)
 
 
 WORKFLOW_CONDITIONS = ("none", "pending", "ready")
