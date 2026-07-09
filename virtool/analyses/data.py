@@ -18,7 +18,6 @@ from virtool.analyses.checks import (
 from virtool.analyses.db import (
     AttachAnalysisSubtractionsTransform,
     bump_analysis_updated_at,
-    filter_analyses_by_sample_rights,
 )
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import Analysis, AnalysisFile, AnalysisSearchResult
@@ -49,9 +48,14 @@ from virtool.mongo.utils import get_new_id
 from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
+from virtool.samples.db import compose_sample_rights_filter
 from virtool.samples.oas import CreateAnalysisRequest
 from virtool.samples.sql import SQLLegacySample
-from virtool.samples.utils import get_sample_rights
+from virtool.samples.utils import (
+    SAMPLE_RIGHTS_COLUMNS,
+    SampleRight,
+    has_sample_right,
+)
 from virtool.storage.cleanup import delete_prefix
 from virtool.storage.protocol import StorageBackend
 from virtool.subtractions.pg import SQLSubtraction
@@ -147,6 +151,8 @@ class AnalysisData(DataLayerDomain):
     ) -> AnalysisSearchResult:
         """List all analysis documents.
 
+        Only analyses on samples the client has read rights to are listed.
+
         :param page: the page number
         :param per_page: the number of documents per page
         :param client: the client object
@@ -158,26 +164,30 @@ class AnalysisData(DataLayerDomain):
         if page > 1:
             skip_count = (page - 1) * per_page
 
-        count_statement = (
-            select(func.count())
-            .select_from(SQLAnalysis)
-            .where(SQLAnalysis.workflow != IIMI_WORKFLOW)
+        readable_sample_ids = select(SQLLegacySample.id).where(
+            compose_sample_rights_filter(client),
         )
+
+        filters = [
+            SQLAnalysis.workflow != IIMI_WORKFLOW,
+            SQLAnalysis.sample_id.in_(readable_sample_ids),
+        ]
+
+        if sample_id is not None:
+            filters.append(
+                SQLAnalysis.sample_id
+                == compose_legacy_id_subquery(SQLLegacySample, sample_id),
+            )
+
+        count_statement = select(func.count()).select_from(SQLAnalysis).where(*filters)
         statement = (
             select(*FIND_COLUMNS)
-            .where(SQLAnalysis.workflow != IIMI_WORKFLOW)
+            .where(*filters)
             .order_by(
                 SQLAnalysis.created_at.desc(),
                 SQLAnalysis.id.desc(),
             )
         )
-
-        if sample_id is not None:
-            sample_subquery = compose_legacy_id_subquery(SQLLegacySample, sample_id)
-            count_statement = count_statement.where(
-                SQLAnalysis.sample_id == sample_subquery,
-            )
-            statement = statement.where(SQLAnalysis.sample_id == sample_subquery)
 
         async with AsyncSession(self._pg) as session:
             total_count = (await session.execute(count_statement)).scalar_one()
@@ -186,12 +196,6 @@ class AnalysisData(DataLayerDomain):
             ).all()
 
         documents = [_row_to_document(row, include_results=False) for row in rows]
-
-        documents = await filter_analyses_by_sample_rights(
-            client,
-            self._pg,
-            documents,
-        )
 
         documents = await apply_transforms(
             [base_processor(d) for d in documents],
@@ -397,37 +401,24 @@ class AnalysisData(DataLayerDomain):
         :return: boolean value
         """
         async with AsyncSession(self._pg) as session:
-            sample_id = (
+            row = (
                 await session.execute(
-                    select(SQLAnalysis.sample).where(
+                    select(*SAMPLE_RIGHTS_COLUMNS)
+                    .join(SQLAnalysis, SQLAnalysis.sample_id == SQLLegacySample.id)
+                    .where(
                         compose_legacy_id_single_expression(SQLAnalysis, analysis_id),
                     ),
                 )
-            ).scalar_one_or_none()
+            ).first()
 
-        if sample_id is None:
-            raise ResourceNotFoundError
-
-        sample = await self._mongo.samples.find_one(
-            {"_id": sample_id},
-            ["user", "group", "all_read", "group_read", "group_write", "all_write"],
-        )
-
-        if not sample:
+        if row is None:
             logger.warning(
-                "parent sample not found for analysis",
+                "analysis or parent sample not found",
                 analysis_id=analysis_id,
-                sample_id=sample_id,
             )
             raise ResourceNotFoundError
 
-        read, write = get_sample_rights(sample, client)
-
-        if right == "read":
-            return read
-
-        if right == "write":
-            return write
+        return has_sample_right(row, client, SampleRight(right))
 
     async def delete(self, analysis_id: str, jobs_api_flag: bool) -> None:
         """Delete a single analysis by its ID.

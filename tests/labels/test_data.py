@@ -13,6 +13,16 @@ from virtool.samples.oas import CreateSampleRequest
 from virtool.samples.sql import SQLLegacySample, SQLLegacySampleLabel
 
 
+class TestCreate:
+    async def test_count_is_zero(self, data_layer: DataLayer):
+        """A newly created label has no samples, so its count is zero. Nothing can
+        reference the label's primary key before it is inserted.
+        """
+        label = await data_layer.labels.create("Bug", "#a83432", "This is a bug")
+
+        assert label.count == 0
+
+
 class TestDelete:
     async def test_missing(self, data_layer: DataLayer):
         """Deleting a non-existent label raises ``ResourceNotFoundError``."""

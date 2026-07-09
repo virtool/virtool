@@ -10,7 +10,7 @@ from virtool.mongo.utils import get_mongo_from_app
 from virtool.samples.db import create_sample
 from virtool.samples.files import create_reads_file
 from virtool.samples.sql import SQLLegacySample, SQLLegacySampleSubtraction
-from virtool.samples.utils import sample_file_key
+from virtool.samples.utils import sample_file_key, sample_storage_id
 from virtool.settings.models import Settings
 from virtool.storage.protocol import STORAGE_CHUNK_SIZE, StorageBackend
 from virtool.subtractions.pg import SQLSubtraction
@@ -130,15 +130,19 @@ async def create_fake_sample(
         session.add(sample)
         await session.flush()
 
+        sample_pk = sample.id
+
         for subtraction_id in document["subtractions"]:
             session.add(
                 SQLLegacySampleSubtraction(
-                    sample_id=sample.id,
+                    sample_id=sample_pk,
                     subtraction_id=subtraction_id,
                 ),
             )
 
         await session.commit()
+
+    storage_id = sample_storage_id(sample_pk, sample_id)
 
     if finalized is True:
         if paired:
@@ -149,7 +153,7 @@ async def create_fake_sample(
                     storage,
                     file_path,
                     f"reads_{n}.fq.gz",
-                    sample_id,
+                    storage_id,
                 )
 
                 await create_reads_file(
@@ -157,19 +161,21 @@ async def create_fake_sample(
                     file_path.stat().st_size,
                     f"reads_{n}.fq.gz",
                     f"reads_{n}.fq.gz",
-                    sample_id,
+                    sample_pk,
+                    storage_id,
                 )
         else:
             file_path = example_path / "sample" / "reads_1.fq.gz"
 
-            await copy_reads_file(storage, file_path, "reads_1.fq.gz", sample_id)
+            await copy_reads_file(storage, file_path, "reads_1.fq.gz", storage_id)
 
             await create_reads_file(
                 pg,
                 file_path.stat().st_size,
                 "reads_1.fq.gz",
                 "reads_1.fq.gz",
-                sample_id,
+                sample_pk,
+                storage_id,
             )
 
         await get_data_from_app(app).samples.finalize(
@@ -188,7 +194,7 @@ async def copy_reads_file(
     storage: StorageBackend,
     file_path: Path,
     filename: str,
-    sample_id: str,
+    storage_id: str,
 ) -> None:
-    key = sample_file_key(sample_id, filename)
+    key = sample_file_key(storage_id, filename)
     await storage.write(key, _stream_file(file_path))

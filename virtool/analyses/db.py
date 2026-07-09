@@ -8,8 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.analyses.sql import SQLAnalysis, SQLAnalysisSubtraction
 from virtool.data.transforms import AbstractTransform
-from virtool.samples.sql import SQLLegacySample
-from virtool.samples.utils import get_sample_rights
 from virtool.subtractions.pg import SQLSubtraction
 from virtool.types import Document
 
@@ -86,63 +84,3 @@ async def bump_analysis_updated_at(
         .where(SQLAnalysis.id == analysis_id)
         .values(updated_at=updated_at),
     )
-
-
-async def filter_analyses_by_sample_rights(
-    client,
-    pg: AsyncEngine,
-    analyses: list[dict],
-) -> list[dict]:
-    """Filter a list of analyses based on the user's rights to the samples they are
-    associated with.
-
-    Sample rights are read from the ``legacy_samples`` Postgres table, keyed by the
-    integer sample id the analyses now carry.
-
-    :param client: the client making the request
-    :param pg: the application Postgres engine
-    :param analyses: the analyses to filter
-    :return: the filtered analyses
-
-    """
-    sample_ids = {a["sample"]["id"] for a in analyses}
-
-    if not sample_ids:
-        return []
-
-    async with AsyncSession(pg) as session:
-        rows = (
-            await session.execute(
-                select(
-                    SQLLegacySample.id,
-                    SQLLegacySample.group_id,
-                    SQLLegacySample.group_read,
-                    SQLLegacySample.group_write,
-                    SQLLegacySample.all_read,
-                    SQLLegacySample.all_write,
-                    SQLLegacySample.user_id,
-                ).where(SQLLegacySample.id.in_(sample_ids)),
-            )
-        ).all()
-
-    sample_rights_lookup = {
-        row.id: {
-            "group": row.group_id,
-            "group_read": row.group_read,
-            "group_write": row.group_write,
-            "all_read": row.all_read,
-            "all_write": row.all_write,
-            "user": {"id": row.user_id},
-        }
-        for row in rows
-    }
-
-    filtered = []
-
-    for analysis in analyses:
-        rights = sample_rights_lookup.get(analysis["sample"]["id"])
-
-        if rights is not None and get_sample_rights(rights, client):
-            filtered.append(analysis)
-
-    return filtered
