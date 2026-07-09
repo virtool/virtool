@@ -347,131 +347,124 @@ async def get_sample_data(
     return SampleData(id=sample_id, unattached_subtraction_id=peach.id)
 
 
-class FindSamplesData(NamedTuple):
-    """The client and sample owners seeded by :func:`find_samples_client`."""
-
+class TestFind:
     client: VirtoolTestClient
     single_sample_owner: User
     two_sample_owner: User
 
+    @pytest.fixture(autouse=True)
+    async def _setup(
+        self,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        spawn_client: ClientSpawner,
+        static_time,
+    ):
+        """Seed three readable samples: one owned by ``user_1`` and two by ``user_2``."""
+        user_1 = await fake.users.create()
+        user_2 = await fake.users.create()
 
-@pytest.fixture
-async def find_samples_client(
-    fake: DataFaker,
-    mongo: Mongo,
-    pg: AsyncEngine,
-    spawn_client: ClientSpawner,
-    static_time,
-) -> FindSamplesData:
-    """Seed three readable samples: one owned by ``user_1`` and two by ``user_2``."""
-    user_1 = await fake.users.create()
-    user_2 = await fake.users.create()
+        label_1 = await fake.labels.create()
+        label_2 = await fake.labels.create()
+        label_3 = await fake.labels.create()
 
-    label_1 = await fake.labels.create()
-    label_2 = await fake.labels.create()
-    label_3 = await fake.labels.create()
+        job = await fake.jobs.create(user_1, workflow="create_sample")
 
-    job = await fake.jobs.create(user_1, workflow="create_sample")
+        client = await spawn_client(authenticated=True)
 
-    client = await spawn_client(authenticated=True)
+        documents = [
+            {
+                "_id": "beb1eb10",
+                "all_read": True,
+                "created_at": arrow.get(static_time.datetime).shift(hours=1).datetime,
+                "foobar": True,
+                "host": "",
+                "isolate": "Thing",
+                "job": {"id": job.id},
+                "labels": [label_1.id, label_2.id],
+                "library_type": "normal",
+                "name": "16GVP042",
+                "notes": "",
+                "ready": True,
+                "user": {"id": user_1.id},
+            },
+            {
+                "user": {"id": user_2.id},
+                "host": "",
+                "foobar": True,
+                "isolate": "Test",
+                "library_type": "srna",
+                "created_at": arrow.get(static_time.datetime).datetime,
+                "_id": "72bb8b31",
+                "job": None,
+                "name": "16GVP043",
+                "all_read": True,
+                "ready": True,
+                "labels": [label_1.id],
+                "notes": "This is a good sample.",
+            },
+            {
+                "user": {"id": user_2.id},
+                "host": "",
+                "library_type": "amplicon",
+                "notes": "",
+                "foobar": True,
+                "ready": True,
+                "isolate": "",
+                "created_at": arrow.get(static_time.datetime).shift(hours=2).datetime,
+                "_id": "cb400e6d",
+                "job": None,
+                "name": "16SPP044",
+                "all_read": True,
+                "labels": [label_3.id],
+            },
+        ]
 
-    documents = [
-        {
-            "_id": "beb1eb10",
-            "all_read": True,
-            "created_at": arrow.get(static_time.datetime).shift(hours=1).datetime,
-            "foobar": True,
-            "host": "",
-            "isolate": "Thing",
-            "job": {"id": job.id},
-            "labels": [label_1.id, label_2.id],
-            "library_type": "normal",
-            "name": "16GVP042",
-            "notes": "",
-            "ready": True,
-            "user": {"id": user_1.id},
-        },
-        {
-            "user": {"id": user_2.id},
-            "host": "",
-            "foobar": True,
-            "isolate": "Test",
-            "library_type": "srna",
-            "created_at": arrow.get(static_time.datetime).datetime,
-            "_id": "72bb8b31",
-            "job": None,
-            "name": "16GVP043",
-            "all_read": True,
-            "ready": True,
-            "labels": [label_1.id],
-            "notes": "This is a good sample.",
-        },
-        {
-            "user": {"id": user_2.id},
-            "host": "",
-            "library_type": "amplicon",
-            "notes": "",
-            "foobar": True,
-            "ready": True,
-            "isolate": "",
-            "created_at": arrow.get(static_time.datetime).shift(hours=2).datetime,
-            "_id": "cb400e6d",
-            "job": None,
-            "name": "16SPP044",
-            "all_read": True,
-            "labels": [label_3.id],
-        },
-    ]
+        await mongo.samples.insert_many(documents, session=None)
 
-    await mongo.samples.insert_many(documents, session=None)
+        async with AsyncSession(pg) as session:
+            samples = {
+                document["_id"]: await insert_pg_sample(session, document)
+                for document in documents
+            }
 
-    async with AsyncSession(pg) as session:
-        samples = {
-            document["_id"]: await insert_pg_sample(session, document)
-            for document in documents
-        }
+            # ``beb1eb10`` has completed nuvs and pathoscope analyses so its workflow
+            # tags derive to ready; the other samples have no analyses.
+            for workflow in ("nuvs", "pathoscope"):
+                session.add(
+                    SQLAnalysis(
+                        legacy_id=f"beb1eb10_{workflow}",
+                        created_at=static_time.datetime,
+                        updated_at=static_time.datetime,
+                        workflow=workflow,
+                        ready=True,
+                        sample="beb1eb10",
+                        sample_id=samples["beb1eb10"].id,
+                        reference="ref",
+                        index="index",
+                        user_id=user_1.id,
+                    ),
+                )
 
-        # ``beb1eb10`` has completed nuvs and pathoscope analyses so its workflow
-        # tags derive to ready; the other samples have no analyses.
-        for workflow in ("nuvs", "pathoscope"):
-            session.add(
-                SQLAnalysis(
-                    legacy_id=f"beb1eb10_{workflow}",
-                    created_at=static_time.datetime,
-                    updated_at=static_time.datetime,
-                    workflow=workflow,
-                    ready=True,
-                    sample="beb1eb10",
-                    sample_id=samples["beb1eb10"].id,
-                    reference="ref",
-                    index="index",
-                    user_id=user_1.id,
-                ),
-            )
+            await session.commit()
 
-        await session.commit()
+        self.client = client
+        self.single_sample_owner = user_1
+        self.two_sample_owner = user_2
 
-    return FindSamplesData(
-        client=client,
-        single_sample_owner=user_1,
-        two_sample_owner=user_2,
-    )
-
-
-class TestFind:
     @pytest.mark.parametrize("find", [None, "gv", "sp"])
     async def test_term(
         self,
         find: str | None,
         snapshot: SnapshotAssertion,
-        find_samples_client: FindSamplesData,
     ):
         path = "/samples"
 
         if find is not None:
             path += f"?find={find}"
 
-        resp = await find_samples_client.client.get(path)
+        resp = await self.client.get(path)
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
@@ -481,7 +474,6 @@ class TestFind:
         page: int | None,
         per_page: int | None,
         snapshot: SnapshotAssertion,
-        find_samples_client: FindSamplesData,
     ):
         query = []
 
@@ -494,7 +486,7 @@ class TestFind:
             query.append(f"page={page}")
             path += f"?{'&'.join(query)}"
 
-        resp = await find_samples_client.client.get(path)
+        resp = await self.client.get(path)
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
@@ -503,7 +495,6 @@ class TestFind:
         self,
         labels: list[int] | None,
         snapshot: SnapshotAssertion,
-        find_samples_client: FindSamplesData,
     ):
         path = "/samples"
 
@@ -511,7 +502,7 @@ class TestFind:
             query = "&label=".join(str(label) for label in labels)
             path += f"?label={query}"
 
-        resp = await find_samples_client.client.get(path)
+        resp = await self.client.get(path)
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
@@ -535,7 +526,6 @@ class TestFind:
         self,
         workflows: list[str] | None,
         snapshot: SnapshotAssertion,
-        find_samples_client: FindSamplesData,
     ):
         path = "/samples"
 
@@ -543,15 +533,13 @@ class TestFind:
             workflows_query = "&workflows=".join(workflow for workflow in workflows)
             path += f"?workflows={workflows_query}"
 
-        resp = await find_samples_client.client.get(path)
+        resp = await self.client.get(path)
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
-    async def test_user(self, find_samples_client: FindSamplesData):
+    async def test_user(self):
         """A single ``user`` matches only that user's samples."""
-        owner = find_samples_client.single_sample_owner
-
-        resp = await find_samples_client.client.get(f"/samples?user={owner.id}")
+        resp = await self.client.get(f"/samples?user={self.single_sample_owner.id}")
         assert resp.status == HTTPStatus.OK
 
         body = await resp.json()
@@ -560,13 +548,11 @@ class TestFind:
         assert body["total_count"] == 3
         assert [document["name"] for document in body["documents"]] == ["16GVP042"]
 
-    async def test_user_multiple(self, find_samples_client: FindSamplesData):
+    async def test_user_multiple(self):
         """Repeating ``user`` matches samples owned by any of the given users."""
-        single_owner = find_samples_client.single_sample_owner
-        two_owner = find_samples_client.two_sample_owner
-
-        resp = await find_samples_client.client.get(
-            f"/samples?user={single_owner.id}&user={two_owner.id}",
+        resp = await self.client.get(
+            f"/samples?user={self.single_sample_owner.id}"
+            f"&user={self.two_sample_owner.id}",
         )
         assert resp.status == HTTPStatus.OK
 
@@ -579,15 +565,11 @@ class TestFind:
             "16SPP044",
         }
 
-    async def test_user_owns_no_samples(
-        self,
-        fake: DataFaker,
-        find_samples_client: FindSamplesData,
-    ):
+    async def test_user_owns_no_samples(self, fake: DataFaker):
         """A user that owns no samples matches nothing rather than erroring."""
         stranger = await fake.users.create()
 
-        resp = await find_samples_client.client.get(f"/samples?user={stranger.id}")
+        resp = await self.client.get(f"/samples?user={stranger.id}")
         assert resp.status == HTTPStatus.OK
 
         body = await resp.json()
@@ -599,7 +581,6 @@ class TestFind:
     async def test_user_cannot_reveal_unreadable_samples(
         self,
         fake: DataFaker,
-        find_samples_client: FindSamplesData,
         pg: AsyncEngine,
         static_time,
     ):
@@ -622,7 +603,7 @@ class TestFind:
             )
             await session.commit()
 
-        resp = await find_samples_client.client.get(f"/samples?user={private_owner.id}")
+        resp = await self.client.get(f"/samples?user={private_owner.id}")
         assert resp.status == HTTPStatus.OK
         assert (await resp.json())["documents"] == []
 

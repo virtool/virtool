@@ -7,7 +7,6 @@ from collections.abc import AsyncGenerator, AsyncIterator
 from typing import Any
 
 from sqlalchemy import (
-    ColumnExpressionArgument,
     delete,
     exc,
     func,
@@ -87,18 +86,6 @@ from virtool.users.transforms import AttachUserTransform
 from virtool.utils import wait_for_checks
 
 logger = get_logger("samples")
-
-
-def _compose_sample_search_filter(term: str) -> ColumnExpressionArgument[bool]:
-    """Compose a case-insensitive substring match on the sample ``name``.
-
-    The term is matched literally, so SQL ``LIKE`` wildcards in the term are escaped
-    rather than interpreted. Filter by owner with the ``user`` parameter of
-    :meth:`SamplesData.find` instead of the search term.
-    """
-    escaped = term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-
-    return SQLLegacySample.name.ilike(f"%{escaped}%", escape="\\")
 
 
 def _map_sample_minimal_row(
@@ -224,7 +211,9 @@ class SamplesData(DataLayerDomain):
         filters = [compose_sample_rights_filter(client)]
 
         if term:
-            filters.append(_compose_sample_search_filter(term))
+            # Escape LIKE wildcards so the term matches literally.
+            escaped = term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            filters.append(SQLLegacySample.name.ilike(f"%{escaped}%", escape="\\"))
 
         if users:
             filters.append(SQLLegacySample.user_id.in_(users))
