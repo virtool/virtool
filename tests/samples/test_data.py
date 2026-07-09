@@ -591,6 +591,20 @@ async def test_finalized_already(get_sample_ready_false, data_layer):
         await data_layer.samples.finalize("test", quality)
 
 
+async def test_finalize_sample_disappeared(data_layer: DataLayer, mocker):
+    """Finalizing raises ``ResourceNotFoundError`` when the sample row is gone after the
+    existence check, rather than surfacing a ``NoResultFound`` 500.
+    """
+    mocker.patch.object(
+        data_layer.samples,
+        "_resolve_ids",
+        return_value=(999999, "gone"),
+    )
+
+    with pytest.raises(ResourceNotFoundError):
+        await data_layer.samples.finalize(999999, {})
+
+
 class TestHasRight:
     async def test_ok(
         self,

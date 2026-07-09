@@ -642,13 +642,18 @@ class SamplesData(DataLayerDomain):
         sample_pk, _ = resolved
 
         async with AsyncSession(self._pg) as pg_session:
-            if (
+            ready = (
                 await pg_session.execute(
                     select(SQLLegacySample.ready).where(
                         SQLLegacySample.id == sample_pk,
                     ),
                 )
-            ).scalar_one():
+            ).scalar_one_or_none()
+
+            if ready is None:
+                raise ResourceNotFoundError
+
+            if ready:
                 raise ResourceConflictError("Sample already finalized")
 
             await pg_session.execute(
