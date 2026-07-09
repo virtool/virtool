@@ -38,9 +38,13 @@ def has_sample_right(
     ``row`` must carry the columns in :data:`SAMPLE_RIGHTS_COLUMNS`. Shared by the
     samples and analyses domains so a sample and the analyses on it never disagree
     about who may read or write them.
+
+    Full administrators, job-authenticated clients, and the sample's owner always
+    hold every right.
     """
     if (
         client.administrator_role == AdministratorRole.FULL
+        or client.is_job
         or client.user_id == row.user_id
     ):
         return True

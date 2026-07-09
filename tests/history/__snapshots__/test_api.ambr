@@ -32,7 +32,7 @@
     }),
     'reference': dict({
       'data_type': 'genome',
-      'id': 'bf1b993c',
+      'id': 1,
       'name': 'Test Reference',
     }),
     'user': dict({
@@ -60,7 +60,7 @@
         }),
         'reference': dict({
           'data_type': 'genome',
-          'id': 'bf1b993c',
+          'id': 1,
           'name': 'Test Reference',
         }),
         'user': dict({
@@ -84,7 +84,7 @@
         }),
         'reference': dict({
           'data_type': 'genome',
-          'id': 'bf1b993c',
+          'id': 1,
           'name': 'Test Reference',
         }),
         'user': dict({

@@ -23,7 +23,7 @@
     'ready': False,
     'reference': dict({
       'data_type': 'genome',
-      'id': 'bf1b993c',
+      'id': 1,
       'name': 'Test Reference',
     }),
     'results': None,
@@ -2456,7 +2456,7 @@
         'ready': True,
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'sample': dict({
@@ -2486,7 +2486,7 @@
         'ready': True,
         'reference': dict({
           'data_type': 'genome',
-          'id': 'baz',
+          'id': 2,
           'name': 'Baz',
         }),
         'sample': dict({
@@ -2526,7 +2526,7 @@
         'ready': True,
         'reference': dict({
           'data_type': 'genome',
-          'id': 'baz',
+          'id': 2,
           'name': 'Baz',
         }),
         'sample': dict({

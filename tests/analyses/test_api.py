@@ -9,6 +9,7 @@ from syrupy import SnapshotAssertion
 
 from tests.fixtures.analysis import seed_analysis
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
+from tests.fixtures.references import seed_reference
 from tests.fixtures.response import RespIs
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.sql import SQLAnalysis, SQLAnalysisFile
@@ -353,23 +354,27 @@ async def test_get_archived_reference(
     user = await fake.users.create()
     job = await fake.jobs.create(user=user, state=JobState.SUCCEEDED)
 
-    await asyncio.gather(
-        mongo.references.insert_one(
-            {"_id": "baz", "archived": True, "data_type": "genome", "name": "Baz"},
-        ),
-        mongo.samples.insert_one(
-            {
-                "_id": "baz",
-                "all_read": True,
-                "all_write": False,
-                "group": "tech",
-                "group_read": True,
-                "group_write": True,
-                "labels": [],
-                "subtractions": [],
-                "user": {"id": user.id},
-            },
-        ),
+    reference_id = await seed_reference(
+        mongo,
+        pg,
+        "baz",
+        user.id,
+        name="Baz",
+        archived=True,
+    )
+
+    await mongo.samples.insert_one(
+        {
+            "_id": "baz",
+            "all_read": True,
+            "all_write": False,
+            "group": "tech",
+            "group_read": True,
+            "group_write": True,
+            "labels": [],
+            "subtractions": [],
+            "user": {"id": user.id},
+        },
     )
 
     analysis_id = await seed_analysis(
@@ -395,7 +400,11 @@ async def test_get_archived_reference(
 
     assert resp.status == HTTPStatus.OK
     body = await resp.json()
-    assert body["reference"] == {"id": "baz", "data_type": "genome", "name": "Baz"}
+    assert body["reference"] == {
+        "id": reference_id,
+        "data_type": "genome",
+        "name": "Baz",
+    }
 
 
 async def test_get_by_integer_id(

@@ -21,7 +21,7 @@
     'ready': False,
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'bf1b993c',
+      'id': 1,
       'name': 'Test Reference',
     }),
     'results': None,
@@ -80,7 +80,7 @@
         'ready': False,
         'reference': dict({
           'data_type': <ReferenceDataType.genome: 'genome'>,
-          'id': 'bf1b993c',
+          'id': 1,
           'name': 'Test Reference',
         }),
         'sample': dict({
@@ -135,7 +135,7 @@
         'ready': False,
         'reference': dict({
           'data_type': <ReferenceDataType.genome: 'genome'>,
-          'id': 'bf1b993c',
+          'id': 1,
           'name': 'Test Reference',
         }),
         'sample': dict({
@@ -179,7 +179,7 @@
         'ready': False,
         'reference': dict({
           'data_type': <ReferenceDataType.genome: 'genome'>,
-          'id': 'bf1b993c',
+          'id': 1,
           'name': 'Test Reference',
         }),
         'sample': dict({

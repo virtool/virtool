@@ -8,7 +8,7 @@ from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
 
 
-async def _seed_reference(pg: AsyncEngine, legacy_id: str, user_id: int) -> int:
+async def _seed_reference(pg: AsyncEngine, legacy_id: str | None, user_id: int) -> int:
     async with AsyncSession(pg) as session:
         reference = SQLReference(
             legacy_id=legacy_id,
@@ -32,18 +32,22 @@ class TestAttachReferenceTransform:
         fake: DataFaker,
         pg: AsyncEngine,
     ):
-        """A document embedding the legacy string id resolves against Postgres."""
+        """A document embedding the legacy string id resolves against Postgres.
+
+        The attached nested reference is keyed by the integer primary key regardless
+        of which id form the document embeds.
+        """
         user = await fake.users.create()
-        await _seed_reference(pg, "foo", user.id)
+        reference_id = await _seed_reference(pg, "legacy_reference", user.id)
 
         document = await apply_transforms(
-            {"id": "6116cba1", "reference": {"id": "foo"}},
+            {"id": "6116cba1", "reference": {"id": "legacy_reference"}},
             [AttachReferenceTransform(pg)],
             pg,
         )
 
         assert document["reference"] == {
-            "id": "foo",
+            "id": reference_id,
             "name": "Reference A",
             "data_type": "genome",
         }
@@ -55,7 +59,7 @@ class TestAttachReferenceTransform:
     ):
         """A document embedding the integer primary key resolves against Postgres."""
         user = await fake.users.create()
-        reference_id = await _seed_reference(pg, "foo", user.id)
+        reference_id = await _seed_reference(pg, "legacy_reference", user.id)
 
         document = await apply_transforms(
             {"id": "6116cba1", "reference": {"id": reference_id}},
@@ -64,7 +68,28 @@ class TestAttachReferenceTransform:
         )
 
         assert document["reference"] == {
-            "id": "foo",
+            "id": reference_id,
+            "name": "Reference A",
+            "data_type": "genome",
+        }
+
+    async def test_native_reference(
+        self,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """A reference with no legacy id resolves by its primary key."""
+        user = await fake.users.create()
+        reference_id = await _seed_reference(pg, None, user.id)
+
+        document = await apply_transforms(
+            {"id": "6116cba1", "reference": {"id": reference_id}},
+            [AttachReferenceTransform(pg)],
+            pg,
+        )
+
+        assert document["reference"] == {
+            "id": reference_id,
             "name": "Reference A",
             "data_type": "genome",
         }
@@ -76,18 +101,22 @@ class TestAttachReferenceTransform:
     ):
         """A batch mixing legacy string and integer ids resolves every document."""
         user = await fake.users.create()
-        reference_id = await _seed_reference(pg, "foo", user.id)
+        reference_id = await _seed_reference(pg, "legacy_reference", user.id)
 
         documents = await apply_transforms(
             [
-                {"id": "string_ref", "reference": {"id": "foo"}},
+                {"id": "string_ref", "reference": {"id": "legacy_reference"}},
                 {"id": "integer_ref", "reference": {"id": reference_id}},
             ],
             [AttachReferenceTransform(pg)],
             pg,
         )
 
-        expected = {"id": "foo", "name": "Reference A", "data_type": "genome"}
+        expected = {
+            "id": reference_id,
+            "name": "Reference A",
+            "data_type": "genome",
+        }
 
         assert {d["id"]: d["reference"] for d in documents} == {
             "string_ref": expected,
