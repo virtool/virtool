@@ -23,6 +23,10 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
     Postgres, so a row seeded with the column defaults would deny access to a sample
     the Mongo document marks readable.
 
+    A sample with no Mongo document is left unseeded, giving the analysis a null
+    ``sample_id``. That is the only shape a parentless analysis can take in Postgres,
+    where the foreign key guarantees a non-null ``sample_id`` points at a real row.
+
     :return: the integer ``analyses.id`` of the seeded row
     """
     index = document["index"]
@@ -51,22 +55,23 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
         ).scalar_one_or_none()
 
         if sample_pg_id is None:
-            sample_document = await mongo.samples.find_one({"_id": sample["id"]}) or {}
+            sample_document = await mongo.samples.find_one({"_id": sample["id"]})
 
-            legacy_sample = SQLLegacySample(
-                legacy_id=sample["id"],
-                name=sample.get("name", sample["id"]),
-                library_type="normal",
-                created_at=document["created_at"],
-                user_id=document["user"]["id"],
-                all_read=sample_document.get("all_read", False),
-                all_write=sample_document.get("all_write", False),
-                group_read=sample_document.get("group_read", False),
-                group_write=sample_document.get("group_write", False),
-            )
-            session.add(legacy_sample)
-            await session.flush()
-            sample_pg_id = legacy_sample.id
+            if sample_document is not None:
+                legacy_sample = SQLLegacySample(
+                    legacy_id=sample["id"],
+                    name=sample.get("name", sample["id"]),
+                    library_type="normal",
+                    created_at=document["created_at"],
+                    user_id=document["user"]["id"],
+                    all_read=sample_document.get("all_read", False),
+                    all_write=sample_document.get("all_write", False),
+                    group_read=sample_document.get("group_read", False),
+                    group_write=sample_document.get("group_write", False),
+                )
+                session.add(legacy_sample)
+                await session.flush()
+                sample_pg_id = legacy_sample.id
 
         reference_pg_id = (
             await session.execute(

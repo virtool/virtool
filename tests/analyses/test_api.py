@@ -226,15 +226,6 @@ async def test_get(
         )
         await create_analysis_file(pg, analysis_id, "fasta", "reference.fa")
 
-    if error == "404_sample":
-        async with AsyncSession(pg) as session:
-            await session.execute(
-                update(SQLAnalysis)
-                .where(SQLAnalysis.id == analysis_id)
-                .values(sample_id=None),
-            )
-            await session.commit()
-
     resp = await client.get("/analyses/foobar")
 
     if error is None:
@@ -624,7 +615,7 @@ async def test_remove(
         case "403":
             await resp_is.insufficient_rights(resp)
 
-        case ("404_analysis", "404_sample"):
+        case "404_analysis" | "404_sample":
             await resp_is.not_found(resp)
 
         case "409":
@@ -788,7 +779,6 @@ class TestDownloadAnalysisResult:
         "404_analysis",
         "404_sample",
         "404_sequence",
-        "404_sequence",
         "409_workflow",
         "409_ready",
     ],
@@ -875,7 +865,7 @@ async def test_blast(
     elif error == "403":
         await resp_is.insufficient_rights(resp)
 
-    elif error == "404_analysis":
+    elif error in ("404_analysis", "404_sample"):
         await resp_is.not_found(resp)
 
     elif error == "404_sequence":
