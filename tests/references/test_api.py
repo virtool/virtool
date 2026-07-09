@@ -5,12 +5,14 @@ from unittest.mock import ANY
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
 
 import virtool.utils
 from tests.fixtures.client import ClientSpawner, VirtoolTestClient
+from tests.fixtures.references import seed_reference
 from tests.fixtures.response import RespIs
 from virtool.data.layer import DataLayer
 from virtool.data.topg import both_transactions
@@ -255,9 +257,20 @@ async def test_find(
     resp = await client.get(url)
     body = await resp.json()
 
+    async with AsyncSession(pg) as session:
+        reference_pks = dict(
+            (
+                await session.execute(
+                    select(SQLReference.legacy_id, SQLReference.id),
+                )
+            ).all(),
+        )
+
     assert resp.status == HTTPStatus.OK
     assert body == snapshot
-    assert {d["id"] for d in body["documents"]} == expected_ids
+    assert {d["id"] for d in body["documents"]} == {
+        reference_pks[legacy_id] for legacy_id in expected_ids
+    }
 
 
 async def test_find_archived_invalid(spawn_client: ClientSpawner):
@@ -374,7 +387,7 @@ class TestCreate:
 
         assert resp.status == 201
         assert body == snapshot(
-            matcher=path_type({"id": (str,)}, regex=True),
+            matcher=path_type({"id": (int,)}, regex=True),
         )
 
     async def test_clone(
@@ -1585,33 +1598,33 @@ class TestArchivedReferenceRejectsWrites:
     async def archived_ref(
         self,
         mongo: Mongo,
+        pg: AsyncEngine,
         spawn_client: ClientSpawner,
         static_time: StaticTime,
     ) -> tuple[VirtoolTestClient, str]:
         client = await spawn_client(authenticated=True)
 
-        await mongo.references.insert_one(
-            {
-                "_id": "foo",
-                "archived": True,
-                "created_at": static_time.datetime,
-                "data_type": "genome",
-                "groups": [],
-                "name": "Foo",
-                "organism": "virus",
-                "restrict_source_types": False,
-                "source_types": ["isolate", "strain"],
-                "user": {"id": client.user.id},
-                "users": [
-                    {
-                        "id": client.user.id,
-                        "build": True,
-                        "created_at": static_time.datetime,
-                        "modify": True,
-                        "modify_otu": True,
-                    },
-                ],
-            },
+        await seed_reference(
+            mongo,
+            pg,
+            "foo",
+            client.user.id,
+            name="Foo",
+            archived=True,
+            created_at=static_time.datetime,
+            organism="virus",
+            source_types=["isolate", "strain"],
+            groups=[],
+            restrict_source_types=False,
+            users=[
+                {
+                    "id": client.user.id,
+                    "build": True,
+                    "created_at": static_time.datetime,
+                    "modify": True,
+                    "modify_otu": True,
+                },
+            ],
         )
 
         return client, "foo"

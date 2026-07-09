@@ -131,7 +131,7 @@ class ReferencesView(PydanticView):
 @routes.view("/references/v1/{ref_id}")
 @routes.jobs_api.get("/references/v1/{ref_id}")
 class ReferenceView(PydanticView):
-    async def get(self, ref_id: str, /) -> r200[Reference] | r403 | r404:
+    async def get(self, ref_id: int | str, /) -> r200[Reference] | r403 | r404:
         """Get a reference.
 
         Fetches the details of a reference.
@@ -151,7 +151,7 @@ class ReferenceView(PydanticView):
 
     async def patch(
         self,
-        ref_id: str,
+        ref_id: int | str,
         /,
         data: UpdateReferenceRequest,
     ) -> r200[Reference] | r403 | r404:
@@ -186,7 +186,7 @@ class ReferenceView(PydanticView):
 
 @routes.view("/references/v1/{ref_id}/archive")
 class ReferenceArchiveView(PydanticView):
-    async def post(self, ref_id: str, /) -> r200[Reference] | r403 | r404 | r409:
+    async def post(self, ref_id: int | str, /) -> r200[Reference] | r403 | r404 | r409:
         """Archive a reference.
 
         Marks a reference as archived. Archiving the official plant viruses
@@ -218,7 +218,7 @@ class ReferenceArchiveView(PydanticView):
 
 @routes.view("/references/v1/{ref_id}/unarchive")
 class ReferenceUnarchiveView(PydanticView):
-    async def post(self, ref_id: str, /) -> r200[Reference] | r403 | r404:
+    async def post(self, ref_id: int | str, /) -> r200[Reference] | r403 | r404:
         """Unarchive a reference.
 
         Marks a reference as not archived.
@@ -248,7 +248,7 @@ class ReferenceUnarchiveView(PydanticView):
 class ReferenceOTUsView(PydanticView):
     async def get(
         self,
-        ref_id: str,
+        ref_id: int | str,
         /,
         find: str | None,
         verified: bool | None,
@@ -278,7 +278,7 @@ class ReferenceOTUsView(PydanticView):
 
     async def post(
         self,
-        ref_id: str,
+        ref_id: int | str,
         /,
         data: CreateOTURequest,
     ) -> r201[OTU] | r400 | r403 | r404:
@@ -316,7 +316,7 @@ class ReferenceOTUsView(PydanticView):
 class ReferenceHistoryView(PydanticView):
     async def get(
         self,
-        ref_id: str,
+        ref_id: int | str,
         /,
         unbuilt: bool | None = Field(
             default=None,
@@ -351,7 +351,7 @@ class ReferenceHistoryView(PydanticView):
 class ReferenceIndexesView(PydanticView):
     async def get(
         self,
-        ref_id: str,
+        ref_id: int | str,
         /,
         page: Page = 1,
         per_page: PerPage = 25,
@@ -378,7 +378,7 @@ class ReferenceIndexesView(PydanticView):
 
     async def post(
         self,
-        ref_id: str,
+        ref_id: int | str,
         /,
     ) -> r201[IndexMinimal] | r403 | r404:
         """Create an index.
@@ -416,7 +416,7 @@ class ReferenceIndexesView(PydanticView):
 
 @routes.view("/references/v1/{ref_id}/groups")
 class ReferenceGroupsView(PydanticView):
-    async def get(self, ref_id: str, /) -> r200[ReferenceGroup] | r404:
+    async def get(self, ref_id: int | str, /) -> r200[ReferenceGroup] | r404:
         """List groups.
 
         Lists all groups that have access to the reference.
@@ -436,7 +436,7 @@ class ReferenceGroupsView(PydanticView):
 
     async def post(
         self,
-        ref_id: str,
+        ref_id: int | str,
         /,
         data: CreateReferenceGroupRequest,
     ) -> r201[ReferenceGroup] | r400 | r403 | r404:
@@ -471,7 +471,7 @@ class ReferenceGroupsView(PydanticView):
 class ReferenceGroupView(PydanticView):
     async def get(
         self,
-        ref_id: str,
+        ref_id: int | str,
         group_id: int | str,
         /,
     ) -> r200[ReferenceGroup] | r404:
@@ -495,7 +495,7 @@ class ReferenceGroupView(PydanticView):
 
     async def patch(
         self,
-        ref_id: str,
+        ref_id: int | str,
         group_id: int | str,
         /,
         data: ReferenceRightsRequest,
@@ -530,7 +530,9 @@ class ReferenceGroupView(PydanticView):
 
         return json_response(group)
 
-    async def delete(self, ref_id: str, group_id: int | str, /) -> r204 | r403 | r404:
+    async def delete(
+        self, ref_id: int | str, group_id: int | str, /
+    ) -> r204 | r403 | r404:
         """Delete a group.
 
         Deletes a group from the reference.
@@ -565,7 +567,7 @@ class ReferenceGroupView(PydanticView):
 class ReferenceUsersView(PydanticView):
     async def post(
         self,
-        ref_id: str,
+        ref_id: int | str,
         /,
         data: CreateReferenceUserRequest,
     ) -> r201[list[ReferenceUser]] | r400 | r403 | r404:
@@ -611,7 +613,7 @@ class ReferenceUsersView(PydanticView):
 class ReferenceUserView(PydanticView):
     async def patch(
         self,
-        ref_id: str,
+        ref_id: int | str,
         user_id: int,
         /,
         data: ReferenceRightsRequest,
@@ -646,7 +648,7 @@ class ReferenceUserView(PydanticView):
 
         return json_response(user)
 
-    async def delete(self, ref_id: str, user_id: int, /) -> r204 | r403 | r404:
+    async def delete(self, ref_id: int | str, user_id: int, /) -> r204 | r403 | r404:
         """Remove a user.
 
         Removes a user from the reference.

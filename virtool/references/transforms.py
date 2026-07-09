@@ -20,13 +20,13 @@ if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
 
 
-def _shape_nested_reference(legacy_id: str, name: str) -> Document:
+def _shape_nested_reference(id_: int, name: str) -> Document:
     """Shape a ``legacy_references`` row into a nested reference doc.
 
     ``data_type`` is emitted as the constant ``"genome"`` because the column is
-    dropped from Postgres. The nested ``id`` remains the legacy Mongo string id.
+    dropped from Postgres.
     """
-    return {"id": legacy_id, "data_type": "genome", "name": name}
+    return {"id": id_, "data_type": "genome", "name": name}
 
 
 class AttachReferenceTransform(AbstractTransform):
@@ -53,7 +53,7 @@ class AttachReferenceTransform(AbstractTransform):
 
         row = (
             await session.execute(
-                select(SQLReference.legacy_id, SQLReference.name).where(
+                select(SQLReference.id, SQLReference.name).where(
                     compose_legacy_id_single_expression(SQLReference, reference_id),
                 ),
             )
@@ -62,7 +62,7 @@ class AttachReferenceTransform(AbstractTransform):
         if row is None:
             raise ValueError(f"Reference {reference_id!r} not found in postgres")
 
-        return _shape_nested_reference(row.legacy_id, row.name)
+        return _shape_nested_reference(row.id, row.name)
 
     async def prepare_many(
         self,
@@ -92,7 +92,7 @@ class AttachReferenceTransform(AbstractTransform):
         reference_lookup: dict[int | str, Document] = {}
 
         for row in rows:
-            shaped = _shape_nested_reference(row.legacy_id, row.name)
+            shaped = _shape_nested_reference(row.id, row.name)
             reference_lookup[row.id] = shaped
 
             if row.legacy_id is not None:

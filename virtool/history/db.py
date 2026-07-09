@@ -418,7 +418,7 @@ async def find(
     pg: AsyncEngine,
     page: int,
     per_page: int,
-    reference_id: str | None = None,
+    reference_id: int | str | None = None,
     unbuilt: bool | None = None,
 ) -> dict:
     """List history changes from the ``legacy_history`` table.
@@ -567,7 +567,7 @@ async def find_by_index(
 
 async def get_contributors(
     pg: AsyncEngine,
-    reference_id: str | None = None,
+    reference_id: int | str | None = None,
     index_id: str | None = None,
 ) -> list[dict]:
     """Return a list of contributors and their contribution count for a set of history.

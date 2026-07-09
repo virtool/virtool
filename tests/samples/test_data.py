@@ -20,7 +20,6 @@ from virtool.models.enums import AnalysisWorkflow, LibraryType, Permission
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row, get_row_by_id
-from virtool.references.sql import SQLReference
 from virtool.samples.db import AttachUploadsTransform
 from virtool.samples.models import WorkflowState
 from virtool.samples.oas import (
@@ -765,6 +764,7 @@ class TestHasRight:
 class TestHasResourcesForAnalysisJob:
     @staticmethod
     async def _seed(
+        data_layer: DataLayer,
         fake: DataFaker,
         mongo: Mongo,
         *,
@@ -776,15 +776,12 @@ class TestHasResourcesForAnalysisJob:
             upload_type=UploadType.subtraction,
         )
 
-        _, _, subtraction = await asyncio.gather(
-            mongo.references.insert_one(
-                {
-                    "_id": "test_ref",
-                    "archived": archived,
-                    "data_type": "genome",
-                    "name": "Test Reference",
-                },
-            ),
+        reference = await fake.references.create(user=user, id_="test_ref")
+
+        if archived:
+            await data_layer.references.archive(reference.id)
+
+        _, subtraction = await asyncio.gather(
             mongo.indexes.insert_one(
                 {
                     "_id": "test_index",
@@ -799,7 +796,7 @@ class TestHasResourcesForAnalysisJob:
         return subtraction.id
 
     async def test_ok(self, data_layer: DataLayer, fake: DataFaker, mongo: Mongo):
-        subtraction_id = await self._seed(fake, mongo)
+        subtraction_id = await self._seed(data_layer, fake, mongo)
 
         assert (
             await data_layer.samples.has_resources_for_analysis_job(
@@ -823,33 +820,13 @@ class TestHasResourcesForAnalysisJob:
             upload_type=UploadType.subtraction,
         )
 
-        async with AsyncSession(pg) as session:
-            reference = SQLReference(
-                legacy_id="test_ref",
-                name="Test Reference",
-                description="",
-                created_at=virtool.utils.timestamp(),
-                source_types=[],
-                user_id=user.id,
-            )
-            session.add(reference)
-            await session.flush()
-            reference_pk = reference.id
-            await session.commit()
+        reference = await fake.references.create(user=user, id_="test_ref")
 
-        _, _, subtraction = await asyncio.gather(
-            mongo.references.insert_one(
-                {
-                    "_id": "test_ref",
-                    "archived": False,
-                    "data_type": "genome",
-                    "name": "Test Reference",
-                },
-            ),
+        _, subtraction = await asyncio.gather(
             mongo.indexes.insert_one(
                 {
                     "_id": "test_index",
-                    "reference": {"id": reference_pk},
+                    "reference": {"id": reference.id},
                     "ready": True,
                     "version": 1,
                 },
@@ -859,7 +836,7 @@ class TestHasResourcesForAnalysisJob:
 
         assert (
             await data_layer.samples.has_resources_for_analysis_job(
-                "test_ref",
+                reference.id,
                 [subtraction.id],
             )
             is None
@@ -878,7 +855,7 @@ class TestHasResourcesForAnalysisJob:
         fake: DataFaker,
         mongo: Mongo,
     ):
-        subtraction_id = await self._seed(fake, mongo, archived=True)
+        subtraction_id = await self._seed(data_layer, fake, mongo, archived=True)
 
         with pytest.raises(ResourceConflictError, match=r"Reference is archived"):
             await data_layer.samples.has_resources_for_analysis_job(
@@ -892,7 +869,7 @@ class TestHasResourcesForAnalysisJob:
         fake: DataFaker,
         mongo: Mongo,
     ):
-        subtraction_id = await self._seed(fake, mongo)
+        subtraction_id = await self._seed(data_layer, fake, mongo)
 
         with pytest.raises(
             ResourceConflictError,

@@ -39,7 +39,6 @@ from virtool.data.events import Operation, emit, emits
 from virtool.data.topg import (
     compose_legacy_id_single_expression,
     compose_legacy_id_subquery,
-    resolve_legacy_id,
 )
 from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
@@ -74,6 +73,7 @@ FIND_COLUMNS = (
     SQLAnalysis.sample,
     SQLAnalysis.sample_id,
     SQLAnalysis.reference,
+    SQLAnalysis.reference_id,
     SQLAnalysis.index,
     SQLAnalysis.user_id,
     SQLAnalysis.job_id,
@@ -93,6 +93,10 @@ def _row_to_document(row, *, include_results: bool) -> dict:
     internal consumers (storage keys, Mongo dual-writes, and string-keyed SQL tables
     such as ``analysis_files`` and ``nuvs_blast``) that have not yet been migrated off
     the slug.
+
+    The nested reference is keyed by the integer ``reference_id`` foreign key, falling
+    back to the legacy ``reference`` string on rows the backfill has not reached.
+    ``AttachReferenceTransform`` resolves either form.
     """
     document = {
         "_id": row.id,
@@ -102,7 +106,9 @@ def _row_to_document(row, *, include_results: bool) -> dict:
         "workflow": row.workflow,
         "ready": row.ready,
         "sample": {"id": row.sample_id},
-        "reference": {"id": row.reference},
+        "reference": {
+            "id": row.reference_id if row.reference_id is not None else row.reference,
+        },
         "index": {"id": row.index},
         "user": {"id": row.user_id},
         "job": {"id": row.job_id} if row.job_id else None,
@@ -327,14 +333,18 @@ class AnalysisData(DataLayerDomain):
 
             sample_pg_id, sample_legacy_id = sample_row
 
-            reference_pg_id = await resolve_legacy_id(
-                session,
-                SQLReference,
-                data.ref_id,
-            )
+            reference_row = (
+                await session.execute(
+                    select(SQLReference.id, SQLReference.legacy_id).where(
+                        compose_legacy_id_single_expression(SQLReference, data.ref_id),
+                    ),
+                )
+            ).one_or_none()
 
-            if reference_pg_id is None:
+            if reference_row is None:
                 raise ResourceConflictError("Reference does not exist")
+
+            reference_pg_id, reference_legacy_id = reference_row
 
             pg_id = (
                 await session.execute(
@@ -348,7 +358,7 @@ class AnalysisData(DataLayerDomain):
                         results=None,
                         sample=sample_legacy_id or str(sample_pg_id),
                         sample_id=sample_pg_id,
-                        reference=data.ref_id,
+                        reference=reference_legacy_id or str(reference_pg_id),
                         reference_id=reference_pg_id,
                         index=index_id,
                         user_id=user_id,

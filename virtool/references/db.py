@@ -159,15 +159,12 @@ def map_reference_minimal(
     ``AttachImportedFromTransform`` transforms expect. ``cloned_from`` is resolved by
     the caller via :func:`get_cloned_from_lookup`.
 
-    The public ``id`` remains the legacy Mongo string id for this migration step; the
-    integer primary key cutover happens later.
-
     :param row: a ``legacy_references`` row
     :param cloned_from: the resolved nested cloned-from doc, or ``None``
     :return: the base reference document
     """
     return {
-        "id": row.legacy_id,
+        "id": row.id,
         "name": row.name,
         "organism": row.organism,
         "created_at": row.created_at,
@@ -187,9 +184,7 @@ async def get_cloned_from_lookup(
     """Map each source ``cloned_from_id`` in ``rows`` to its nested cloned-from doc.
 
     The denormalized ``cloned_from.name`` snapshot is not stored in Postgres; the
-    source reference's current ``name`` is re-derived here via its primary key. The
-    nested ``id`` remains the source's legacy Mongo string id, matching the
-    pre-migration response shape.
+    source reference's current ``name`` is re-derived here via its primary key.
 
     :param session: an active Postgres session
     :param rows: the reference rows whose ``cloned_from`` docs are needed
@@ -201,12 +196,12 @@ async def get_cloned_from_lookup(
         return {}
 
     result = await session.execute(
-        select(SQLReference.id, SQLReference.legacy_id, SQLReference.name).where(
+        select(SQLReference.id, SQLReference.name).where(
             SQLReference.id.in_(source_ids),
         ),
     )
 
-    return {id_: {"id": legacy_id, "name": name} for id_, legacy_id, name in result}
+    return {id_: {"id": id_, "name": name} for id_, name in result}
 
 
 async def processor(
@@ -223,12 +218,10 @@ async def processor(
     :param cloned_from: the resolved nested cloned-from doc, or ``None``
     :return: the processed document
     """
-    ref_id = row.legacy_id
-
     latest_build, otu_count, unbuilt_count = await asyncio.gather(
-        get_latest_build(mongo, pg, ref_id),
-        get_otu_count(mongo, pg, ref_id),
-        get_unbuilt_count(pg, ref_id),
+        get_latest_build(mongo, pg, row.id),
+        get_otu_count(mongo, pg, row.id),
+        get_unbuilt_count(pg, row.id),
     )
 
     return {
@@ -442,18 +435,14 @@ async def compose_reference_ids_match(
     are included for every matching reference. This backs the orphan and lifecycle
     filters on the index list, which scope indexes to references that still exist.
 
-    References with no ``legacy_id`` are excluded. ``legacy_id`` remains the public
-    reference identifier until the integer primary key becomes canonical, so a
-    Postgres-native reference cannot yet be shaped into a ``ReferenceNested``. Drop
-    this constraint when the public identifier flips.
+    A Postgres-native reference has no ``legacy_id``; only its primary key is
+    contributed to the match.
 
     :param pg: the application PostgreSQL engine
     :param archived: lifecycle filter mode
     :return: a Mongo ``$in`` match value covering both id forms
     """
-    query = select(SQLReference.id, SQLReference.legacy_id).where(
-        SQLReference.legacy_id.is_not(None),
-    )
+    query = select(SQLReference.id, SQLReference.legacy_id)
 
     if archived is not None:
         query = query.where(SQLReference.archived == archived)
@@ -461,10 +450,10 @@ async def compose_reference_ids_match(
     async with AsyncSession(pg) as session:
         rows = (await session.execute(query)).all()
 
-    return {"$in": [value for row in rows for value in row]}
+    return {"$in": [value for row in rows for value in row if value is not None]}
 
 
-async def get_contributors(pg, ref_id: str) -> list[Document] | None:
+async def get_contributors(pg, ref_id: int | str) -> list[Document] | None:
     """Return a list of contributors and their contribution count for a specific ref.
 
     :param pg: the PostgreSQL engine
@@ -476,7 +465,7 @@ async def get_contributors(pg, ref_id: str) -> list[Document] | None:
 
 
 async def get_latest_build(
-    mongo: "Mongo", pg: AsyncEngine, ref_id: str
+    mongo: "Mongo", pg: AsyncEngine, ref_id: int | str
 ) -> Document | None:
     """Return the latest index build for the ref.
 
@@ -503,7 +492,7 @@ async def get_latest_build(
         )
 
 
-async def get_manifest(mongo: "Mongo", pg: AsyncEngine, ref_id: str) -> Document:
+async def get_manifest(mongo: "Mongo", pg: AsyncEngine, ref_id: int | str) -> Document:
     """Generate a dict of otu document version numbers keyed by the document id.
 
     This is used to make sure only changes made at the time the index rebuild was
@@ -524,7 +513,7 @@ async def get_manifest(mongo: "Mongo", pg: AsyncEngine, ref_id: str) -> Document
     }
 
 
-async def get_otu_count(mongo: "Mongo", pg: AsyncEngine, ref_id: str) -> int:
+async def get_otu_count(mongo: "Mongo", pg: AsyncEngine, ref_id: int | str) -> int:
     """Get the number of OTUs associated with the given `ref_id`.
 
     :param mongo: the application database client
@@ -538,7 +527,7 @@ async def get_otu_count(mongo: "Mongo", pg: AsyncEngine, ref_id: str) -> int:
     )
 
 
-async def get_unbuilt_count(pg: AsyncEngine, ref_id: str) -> int:
+async def get_unbuilt_count(pg: AsyncEngine, ref_id: int | str) -> int:
     """Return a count of unbuilt history changes associated with a given `ref_id`.
 
     :param pg: the application PostgreSQL database object

@@ -22,6 +22,7 @@ from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.models.enums import AnalysisWorkflow
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row, get_row_by_id
+from virtool.references.sql import SQLReference
 from virtool.samples.oas import CreateAnalysisRequest
 from virtool.samples.sql import SQLLegacySample
 from virtool.subtractions.pg import SQLSubtraction
@@ -50,11 +51,22 @@ async def subtraction_ids(fake: DataFaker) -> dict[str, int]:
     return {"subtraction_1": first.id, "subtraction_2": second.id}
 
 
+async def _legacy_id(pg: AsyncEngine, reference_pk: int) -> str:
+    """Return the Mongo ``_id`` of a reference, which its public id no longer is."""
+    async with AsyncSession(pg) as session:
+        return (
+            await session.execute(
+                select(SQLReference.legacy_id).where(SQLReference.id == reference_pk),
+            )
+        ).scalar_one()
+
+
 class SampleSetup(NamedTuple):
     """Identifiers for the sample and reference seeded by ``setup_sample``."""
 
-    user_id: str
-    reference_id: str
+    user_id: int
+    reference_id: int
+    reference_legacy_id: str
 
 
 @pytest.fixture
@@ -124,7 +136,11 @@ async def setup_sample(
             },
         ),
     )
-    return SampleSetup(user_id=user.id, reference_id=reference.id)
+    return SampleSetup(
+        user_id=user.id,
+        reference_id=reference.id,
+        reference_legacy_id=await _legacy_id(pg, reference.id),
+    )
 
 
 @pytest.mark.parametrize("number_of_analyses", [0, 1, 2])
@@ -333,7 +349,8 @@ class TestCreate:
         assert row.ready is False
         assert row.results is None
         assert row.sample == "test_sample"
-        assert row.reference == setup_sample.reference_id
+        assert row.reference == setup_sample.reference_legacy_id
+        assert row.reference_id == setup_sample.reference_id
         assert row.created_at == row.updated_at
         assert isinstance(row.user_id, int)
 

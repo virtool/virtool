@@ -120,16 +120,76 @@ class ReferencesData(DataLayerDomain):
         self._client = client
         self._storage = storage
 
-    async def _require_not_archived(self, ref_id: str) -> None:
-        document = await self._mongo.references.find_one(
-            {"_id": ref_id},
-            {"archived": 1},
-        )
+    async def _resolve_legacy_id(self, ref_id: int | str) -> str:
+        """Resolve a public reference id to the Mongo ``_id`` of its document.
 
-        if document is None:
+        The public identifier is the Postgres primary key, but the ``references``
+        collection is still keyed by the legacy string id while the dual-write is in
+        place. Every Mongo access in this domain resolves through here.
+
+        :param ref_id: the primary key or legacy id of the reference
+        :return: the legacy id of the reference
+        """
+        async with AsyncSession(self._pg) as session:
+            row = (
+                await session.execute(
+                    select(SQLReference.id, SQLReference.legacy_id).where(
+                        compose_legacy_id_single_expression(SQLReference, ref_id),
+                    ),
+                )
+            ).first()
+
+        if row is None:
             raise ResourceNotFoundError()
 
-        if document.get("archived"):
+        if row.legacy_id is None:
+            raise ValueError(f"Reference {row.id} has no legacy id")
+
+        return row.legacy_id
+
+    async def _require_exists(self, ref_id: int | str | None) -> None:
+        """Raise ``ResourceNotFoundError`` unless a reference exists.
+
+        A ``None`` id never matches. Passing it to the legacy id expression would
+        otherwise match any Postgres-native reference, whose ``legacy_id`` is ``NULL``.
+
+        :param ref_id: the primary key or legacy id of the reference
+        """
+        if ref_id is None:
+            raise ResourceNotFoundError()
+
+        async with AsyncSession(self._pg) as session:
+            reference_pk = await session.scalar(
+                select(SQLReference.id).where(
+                    compose_legacy_id_single_expression(SQLReference, ref_id),
+                ),
+            )
+
+        if reference_pk is None:
+            raise ResourceNotFoundError()
+
+    async def _get_archived(self, ref_id: int | str) -> bool:
+        """Return the ``archived`` flag of a reference.
+
+        :param ref_id: the primary key or legacy id of the reference
+        :return: whether the reference is archived
+        """
+        async with AsyncSession(self._pg) as session:
+            row = (
+                await session.execute(
+                    select(SQLReference.archived).where(
+                        compose_legacy_id_single_expression(SQLReference, ref_id),
+                    ),
+                )
+            ).first()
+
+        if row is None:
+            raise ResourceNotFoundError()
+
+        return row.archived
+
+    async def _require_not_archived(self, ref_id: int | str) -> None:
+        if await self._get_archived(ref_id):
             raise ResourceConflictError("Reference is archived")
 
     async def _extend_user(self, user: Document) -> Document:
@@ -297,18 +357,18 @@ class ReferencesData(DataLayerDomain):
         settings = await self.data.settings.get_all()
 
         if data.clone_from:
-            if not await self._mongo.references.count_documents(
-                {"_id": data.clone_from},
-            ):
-                raise ResourceNotFoundError("Source reference does not exist")
+            try:
+                clone_from = await self._resolve_legacy_id(data.clone_from)
+            except ResourceNotFoundError:
+                raise ResourceNotFoundError("Source reference does not exist") from None
 
-            manifest = await get_manifest(self._mongo, self._pg, data.clone_from)
+            manifest = await get_manifest(self._mongo, self._pg, clone_from)
 
             document = await virtool.references.db.create_clone(
                 self._mongo,
                 settings,
                 data.name,
-                data.clone_from,
+                clone_from,
                 data.description,
                 user_id,
             )
@@ -429,7 +489,7 @@ class ReferencesData(DataLayerDomain):
             ),
         )
 
-    async def get(self, ref_id: str) -> Reference:
+    async def get(self, ref_id: int | str) -> Reference:
         """Get a reference."""
         async with AsyncSession(self._pg) as session:
             row = (
@@ -453,12 +513,12 @@ class ReferencesData(DataLayerDomain):
             users,
             unbuilt_count,
         ) = await asyncio.gather(
-            get_contributors(self._pg, row.legacy_id),
-            get_latest_build(self._mongo, self._pg, row.legacy_id),
-            get_otu_count(self._mongo, self._pg, row.legacy_id),
+            get_contributors(self._pg, row.id),
+            get_latest_build(self._mongo, self._pg, row.id),
+            get_otu_count(self._mongo, self._pg, row.id),
             get_reference_groups(self._pg, row.id, row.created_at),
             get_reference_users(self._pg, row.id, row.created_at),
-            get_unbuilt_count(self._pg, row.legacy_id),
+            get_unbuilt_count(self._pg, row.id),
         )
 
         document = {
@@ -489,14 +549,13 @@ class ReferencesData(DataLayerDomain):
         return Reference(**document)
 
     @emits(Operation.UPDATE)
-    async def update(self, ref_id: str, data: UpdateReferenceRequest) -> Reference:
+    async def update(
+        self, ref_id: int | str, data: UpdateReferenceRequest
+    ) -> Reference:
         """Update a reference."""
         await self._require_not_archived(ref_id)
 
-        document = await self._mongo.references.find_one(ref_id)
-
-        if document is None:
-            raise ResourceNotFoundError()
+        legacy_id = await self._resolve_legacy_id(ref_id)
 
         data = data.dict(exclude_unset=True)
 
@@ -507,7 +566,7 @@ class ReferencesData(DataLayerDomain):
             pg_session,
         ):
             await self._mongo.references.update_one(
-                {"_id": ref_id},
+                {"_id": legacy_id},
                 {"$set": data},
                 session=mongo_session,
             )
@@ -515,56 +574,44 @@ class ReferencesData(DataLayerDomain):
             if scalars:
                 await pg_session.execute(
                     update(SQLReference)
-                    .where(SQLReference.legacy_id == ref_id)
+                    .where(SQLReference.legacy_id == legacy_id)
                     .values(**scalars),
                 )
 
         return await self.get(ref_id)
 
-    async def _set_archived(self, ref_id: str, archived: bool) -> None:
-        """Dual-write the ``archived`` flag for a reference.
+    async def _set_archived(self, ref_id: int | str, archived: bool) -> None:
+        """Dual-write the ``archived`` flag for a reference."""
+        legacy_id = await self._resolve_legacy_id(ref_id)
 
-        The Postgres statement matches by ``legacy_id`` and is a no-op when the
-        reference has no Postgres row yet, leaving it for the backfill to create.
-        """
         async with both_transactions(self._mongo, self._pg) as (
             mongo_session,
             pg_session,
         ):
             await self._mongo.references.update_one(
-                {"_id": ref_id},
+                {"_id": legacy_id},
                 {"$set": {"archived": archived}},
                 session=mongo_session,
             )
 
             await pg_session.execute(
                 update(SQLReference)
-                .where(SQLReference.legacy_id == ref_id)
+                .where(SQLReference.legacy_id == legacy_id)
                 .values(archived=archived),
             )
 
     @emits(Operation.UPDATE)
-    async def archive(self, ref_id: str) -> Reference:
+    async def archive(self, ref_id: int | str) -> Reference:
         """Archive a reference."""
-        document = await self._mongo.references.find_one(ref_id)
-
-        if document is None:
-            raise ResourceNotFoundError()
-
-        if not document.get("archived", False):
+        if not await self._get_archived(ref_id):
             await self._set_archived(ref_id, True)
 
         return await self.get(ref_id)
 
     @emits(Operation.UPDATE)
-    async def unarchive(self, ref_id: str) -> Reference:
+    async def unarchive(self, ref_id: int | str) -> Reference:
         """Unarchive a reference."""
-        document = await self._mongo.references.find_one(ref_id)
-
-        if document is None:
-            raise ResourceNotFoundError()
-
-        if document.get("archived", False):
+        if await self._get_archived(ref_id):
             await self._set_archived(ref_id, False)
 
         return await self.get(ref_id)
@@ -573,29 +620,28 @@ class ReferencesData(DataLayerDomain):
         self,
         term: str | None,
         verified: bool | None,
-        ref_id: str | None,
+        ref_id: int | str | None,
         page: int,
         per_page: int,
     ) -> OTUSearchResult:
-        if await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
-            data = await virtool.otus.db.find(
-                self._mongo,
-                self._pg,
-                term,
-                page,
-                per_page,
-                verified,
-                ref_id,
-            )
+        await self._require_exists(ref_id)
 
-            return OTUSearchResult(**data)
+        data = await virtool.otus.db.find(
+            self._mongo,
+            self._pg,
+            term,
+            page,
+            per_page,
+            verified,
+            ref_id,
+        )
 
-        raise ResourceNotFoundError()
+        return OTUSearchResult(**data)
 
     @emits(Operation.CREATE, domain="otus", name="create")
     async def create_otu(
         self,
-        ref_id: str,
+        ref_id: int | str,
         data: CreateOTURequest,
         user_id: int,
     ) -> OTU:
@@ -618,13 +664,12 @@ class ReferencesData(DataLayerDomain):
 
     async def find_history(
         self,
-        ref_id: str,
+        ref_id: int | str,
         unbuilt: bool | None,
         page: int,
         per_page: int,
     ) -> HistorySearchResult:
-        if not await self._mongo.references.count_documents({"_id": ref_id}):
-            raise ResourceNotFoundError()
+        await self._require_exists(ref_id)
 
         data = await virtool.history.db.find(
             self._mongo,
@@ -638,10 +683,9 @@ class ReferencesData(DataLayerDomain):
         return HistorySearchResult(**data)
 
     async def find_indexes(
-        self, ref_id: str, page: int, per_page: int
+        self, ref_id: int | str, page: int, per_page: int
     ) -> IndexSearchResult:
-        if not await virtool.mongo.utils.id_exists(self._mongo.references, ref_id):
-            raise ResourceNotFoundError()
+        await self._require_exists(ref_id)
 
         data = await virtool.indexes.db.find(
             self._mongo, self._pg, page, per_page, ref_id=ref_id
@@ -771,7 +815,9 @@ class ReferencesData(DataLayerDomain):
         :param data: the creation request data
         :return: the new reference griyo
         """
-        document = await self._mongo.references.find_one(ref_id, ["groups"])
+        legacy_id = await self._resolve_legacy_id(ref_id)
+
+        document = await self._mongo.references.find_one(legacy_id, ["groups"])
 
         if document is None:
             raise ResourceNotFoundError()
@@ -805,7 +851,7 @@ class ReferencesData(DataLayerDomain):
             pg_session,
         ):
             await self._mongo.references.update_one(
-                {"_id": ref_id},
+                {"_id": legacy_id},
                 {"$push": {"groups": reference_group}},
                 session=mongo_session,
             )
@@ -851,8 +897,10 @@ class ReferencesData(DataLayerDomain):
         group_id: int | str,
         data: ReferenceRightsRequest,
     ) -> ReferenceGroup:
+        legacy_id = await self._resolve_legacy_id(ref_id)
+
         document = await self._mongo.references.find_one(
-            {"_id": ref_id, "groups.id": group_id},
+            {"_id": legacy_id, "groups.id": group_id},
             ["groups", "users"],
         )
 
@@ -884,7 +932,7 @@ class ReferencesData(DataLayerDomain):
                     pg_session,
                 ):
                     await self._mongo.references.update_one(
-                        {"_id": ref_id},
+                        {"_id": legacy_id},
                         {"$set": {"groups": document["groups"]}},
                         session=mongo_session,
                     )
@@ -920,8 +968,10 @@ class ReferencesData(DataLayerDomain):
         raise ResourceNotFoundError()
 
     async def delete_group(self, ref_id: str, group_id: int | str) -> None:
+        legacy_id = await self._resolve_legacy_id(ref_id)
+
         document = await self._mongo.references.find_one(
-            {"_id": ref_id, "groups.id": group_id},
+            {"_id": legacy_id, "groups.id": group_id},
             ["groups", "users"],
         )
 
@@ -942,7 +992,7 @@ class ReferencesData(DataLayerDomain):
             pg_session,
         ):
             await self._mongo.references.update_one(
-                {"_id": ref_id},
+                {"_id": legacy_id},
                 {
                     "$set": {
                         "groups": [
@@ -978,7 +1028,9 @@ class ReferencesData(DataLayerDomain):
         :param data: the request data
         :param ref_id: the id of the reference
         """
-        document = await self._mongo.references.find_one({"_id": ref_id}, ["users"])
+        legacy_id = await self._resolve_legacy_id(ref_id)
+
+        document = await self._mongo.references.find_one({"_id": legacy_id}, ["users"])
 
         if not document:
             raise ResourceNotFoundError()
@@ -1013,7 +1065,7 @@ class ReferencesData(DataLayerDomain):
             pg_session,
         ):
             await self._mongo.references.update_one(
-                {"_id": ref_id},
+                {"_id": legacy_id},
                 {"$push": {"users": reference_user}},
                 session=mongo_session,
             )
@@ -1041,8 +1093,10 @@ class ReferencesData(DataLayerDomain):
         data: ReferenceRightsRequest,
     ) -> ReferenceUser:
         """Update a reference user."""
+        legacy_id = await self._resolve_legacy_id(ref_id)
+
         document = await self._mongo.references.find_one(
-            {"_id": ref_id, "users.id": user_id},
+            {"_id": legacy_id, "users.id": user_id},
             ["users"],
         )
 
@@ -1062,7 +1116,7 @@ class ReferencesData(DataLayerDomain):
                     pg_session,
                 ):
                     await self._mongo.references.update_one(
-                        {"_id": ref_id},
+                        {"_id": legacy_id},
                         {"$set": {"users": document["users"]}},
                         session=mongo_session,
                     )
@@ -1097,8 +1151,10 @@ class ReferencesData(DataLayerDomain):
         :param user_id: the id of the user to delete
 
         """
+        legacy_id = await self._resolve_legacy_id(ref_id)
+
         document = await self._mongo.references.find_one(
-            {"_id": ref_id, "users.id": user_id},
+            {"_id": legacy_id, "users.id": user_id},
             ["groups", "users"],
         )
 
@@ -1112,7 +1168,7 @@ class ReferencesData(DataLayerDomain):
             pg_session,
         ):
             await self._mongo.references.update_one(
-                {"_id": ref_id},
+                {"_id": legacy_id},
                 {"$set": {"users": filtered_users}},
                 session=mongo_session,
             )

@@ -50,7 +50,7 @@
     'description': '',
     'groups': list([
     ]),
-    'id': 'bf1b993c',
+    'id': 1,
     'imported_from': None,
     'latest_build': None,
     'name': 'Example',
