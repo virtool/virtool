@@ -801,6 +801,81 @@ class TestHasRight:
         )
 
 
+class TestFindRights:
+    """``find`` scopes the sample list to those the requesting client can read."""
+
+    @staticmethod
+    def _build_client(user) -> UserClient:
+        return UserClient(
+            administrator_role=user.administrator_role,
+            authenticated=True,
+            force_reset=False,
+            groups=[group.id for group in user.groups],
+            permissions=user.permissions.dict(),
+            user_id=user.id,
+        )
+
+    async def test_full_administrator_sees_private_sample(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """A full administrator lists a sample they neither own nor share."""
+        administrator = await fake.users.create(
+            administrator_role=AdministratorRole.FULL,
+        )
+        sample_owner = await fake.users.create()
+
+        await insert_rights_sample(
+            pg,
+            "other_private",
+            user_id=sample_owner.id,
+            all_read=False,
+        )
+
+        result = await data_layer.samples.find(
+            [],
+            1,
+            25,
+            "",
+            [],
+            self._build_client(administrator),
+        )
+
+        assert result.found_count == 1
+        assert [document.name for document in result.documents] == ["other_private"]
+
+    async def test_non_owner_cannot_see_private_sample(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """A non-administrator without rights does not list another user's sample."""
+        user = await fake.users.create()
+        sample_owner = await fake.users.create()
+
+        await insert_rights_sample(
+            pg,
+            "other_private",
+            user_id=sample_owner.id,
+            all_read=False,
+        )
+
+        result = await data_layer.samples.find(
+            [],
+            1,
+            25,
+            "",
+            [],
+            self._build_client(user),
+        )
+
+        assert result.found_count == 0
+        assert result.documents == []
+
+
 class TestHasResourcesForAnalysisJob:
     @staticmethod
     async def _seed(
