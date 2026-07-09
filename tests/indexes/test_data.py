@@ -1,8 +1,10 @@
 import asyncio
 
+import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from virtool.data.errors import ResourceError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
@@ -109,6 +111,37 @@ async def test_finalize(
 
     # Ensure document in database is correct.
     assert await mongo.indexes.find_one() == snapshot
+
+
+async def test_finalize_reference_missing_from_postgres(
+    data_layer: DataLayer,
+    fake: DataFaker,
+    mongo: Mongo,
+    static_time,
+):
+    """An index whose reference has no Postgres row is corrupt data, not a missing
+    resource.
+    """
+    user = await fake.users.create()
+    job = await fake.jobs.create(user=user)
+
+    await mongo.indexes.insert_one(
+        {
+            "_id": "foo",
+            "reference": {"id": "missing"},
+            "user": {"id": user.id},
+            "version": 2,
+            "created_at": static_time.datetime,
+            "job": {"id": job.id},
+            "has_files": True,
+            "manifest": {},
+        },
+    )
+
+    with pytest.raises(ResourceError, match="Could not find reference missing"):
+        await data_layer.index.finalize("foo")
+
+    assert await mongo.indexes.find_one("foo", ["ready"]) == {"_id": "foo"}
 
 
 class TestDelete:

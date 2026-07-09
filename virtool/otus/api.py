@@ -202,7 +202,6 @@ class IsolatesView(PydanticView):
 
         # All source types are stored in lower case.
         if not await virtool.references.db.check_source_type(
-            mongo,
             pg,
             reference["id"],
             source_type,
@@ -321,7 +320,6 @@ class IsolateView(PydanticView):
             source_type = data["source_type"].lower()
 
             if not await virtool.references.db.check_source_type(
-                mongo,
                 pg,
                 ref_id,
                 source_type,
