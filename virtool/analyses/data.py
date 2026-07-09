@@ -27,7 +27,6 @@ from virtool.analyses.utils import (
     attach_analysis_files,
 )
 from virtool.blast.sql import SQLNuVsBlast
-from virtool.blast.task import BLASTTask
 from virtool.blast.transform import AttachNuVsBLAST
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import (
@@ -650,11 +649,6 @@ class AnalysisData(DataLayerDomain):
             await session.flush()
 
             await bump_analysis_updated_at(session, analysis.id, timestamp)
-
-            await self.data.tasks.create(
-                BLASTTask,
-                {"analysis_id": analysis.id, "sequence_index": sequence_index},
-            )
 
             blast_data = blast.to_dict()
 

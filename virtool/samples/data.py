@@ -699,9 +699,7 @@ class SamplesData(DataLayerDomain):
                     error=repr(exc),
                 )
 
-            return sample
-
-        raise ResourceNotFoundError
+        return sample
 
     @emits(Operation.UPDATE, name="finalize")
     async def finalize(
