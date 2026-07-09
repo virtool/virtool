@@ -221,7 +221,7 @@ async def find(
     :param per_page: the number of documents to return per page
     :param ref_id: the id of the reference
     :param archived: lifecycle filter on the index's reference; see
-        :func:`virtool.references.db.compose_archived_filter`
+        :func:`virtool.references.db.compose_reference_ids_match`
     :return: the index document
 
     """
@@ -234,11 +234,11 @@ async def find(
         # filter goes into mongo_query so total_count reflects all indexes whose
         # reference exists, while found_count narrows to the requested
         # lifecycle.
-        base_query = {"reference.id": await compose_reference_ids_match(pg, mongo)}
+        base_query = {"reference.id": await compose_reference_ids_match(pg)}
 
         if archived is not None:
             mongo_query = {
-                "reference.id": await compose_reference_ids_match(pg, mongo, archived),
+                "reference.id": await compose_reference_ids_match(pg, archived),
             }
 
     data = await paginate(
@@ -270,7 +270,7 @@ async def find(
     documents = [base_processor(d) for d in data["documents"]]
     transforms = [
         AttachJobTransform(pg),
-        AttachReferenceTransform(mongo),
+        AttachReferenceTransform(pg),
         AttachUserTransform(pg),
         IndexCountsTransform(),
     ]

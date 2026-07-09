@@ -116,7 +116,7 @@ class IndexData:
         :param page: the one-indexed page number to return
         :param per_page: the number of documents to return per page
         :param archived: lifecycle filter on the index's reference; see
-            :func:`virtool.references.db.compose_archived_filter`
+            :func:`virtool.references.db.compose_reference_ids_match`
         :return: a list of all index documents
         """
         if not ready:
@@ -134,7 +134,6 @@ class IndexData:
                             "ready": True,
                             "reference.id": await compose_reference_ids_match(
                                 self._pg,
-                                self._mongo,
                                 archived,
                             ),
                         },
@@ -148,7 +147,7 @@ class IndexData:
             items,
             [
                 AttachJobTransform(self._pg),
-                AttachReferenceTransform(self._mongo),
+                AttachReferenceTransform(self._pg),
                 AttachUserTransform(self._pg),
                 IndexCountsTransform(),
             ],
@@ -192,7 +191,7 @@ class IndexData:
             base_processor(document),
             [
                 AttachJobTransform(self._pg),
-                AttachReferenceTransform(self._mongo),
+                AttachReferenceTransform(self._pg),
                 AttachUserTransform(self._pg),
                 IndexCountsTransform(),
             ],

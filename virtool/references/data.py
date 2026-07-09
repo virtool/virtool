@@ -1,7 +1,8 @@
 import asyncio
+import math
 
 from aiohttp import ClientSession
-from sqlalchemy import delete, select, update
+from sqlalchemy import ColumnExpressionArgument, delete, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -10,7 +11,6 @@ import virtool.indexes.db
 import virtool.otus.db
 import virtool.utils
 from virtool.api.errors import APIInsufficientRights
-from virtool.api.utils import compose_regex_query, paginate
 from virtool.config import Config
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import (
@@ -21,6 +21,7 @@ from virtool.data.errors import (
 from virtool.data.events import Operation, emit, emits
 from virtool.data.topg import (
     both_transactions,
+    compose_legacy_id_multi_expression,
     compose_legacy_id_single_expression,
     compose_legacy_id_subquery,
     resolve_legacy_id,
@@ -44,9 +45,8 @@ from virtool.otus.oas import CreateOTURequest
 from virtool.pg.utils import get_row_by_id
 from virtool.references.alot import prepare_otu_insertion
 from virtool.references.db import (
-    compose_archived_filter,
     compose_reference_id_match,
-    compose_rights_filter,
+    get_cloned_from_lookup,
     get_contributors,
     get_latest_build,
     get_manifest,
@@ -54,6 +54,7 @@ from virtool.references.db import (
     get_reference_groups,
     get_reference_users,
     get_unbuilt_count,
+    map_reference_minimal,
     populate_insert_only_reference,
     processor,
     write_legacy_reference,
@@ -155,6 +156,61 @@ class ReferencesData(DataLayerDomain):
                 "handle": user_row.handle,
             }
 
+    async def _resolve_group_ids(self, groups: list[int | str]) -> list[int]:
+        """Resolve the Postgres primary keys for ``groups``.
+
+        ``groups`` are the requesting client's group memberships, which may be legacy
+        Mongo string ids or integer primary keys during the migration.
+        """
+        if not groups:
+            return []
+
+        async with AsyncSession(self._pg) as session:
+            return list(
+                (
+                    await session.execute(
+                        select(SQLGroup.id).where(
+                            compose_legacy_id_multi_expression(SQLGroup, groups),
+                        ),
+                    )
+                )
+                .scalars()
+                .all(),
+            )
+
+    async def _compose_rights_filter(
+        self,
+        user_id: int,
+        groups: list[int | str],
+    ) -> ColumnExpressionArgument[bool]:
+        """Compose the Postgres predicate scoping references to those the user can read.
+
+        Mirrors the Mongo ``$or`` rights filter: the requesting user owns the
+        reference, is granted direct user rights, or belongs to a group that is
+        granted rights.
+        """
+        clauses = [
+            SQLReference.user_id == user_id,
+            SQLReference.id.in_(
+                select(SQLReferenceUser.reference_id).where(
+                    SQLReferenceUser.user_id == user_id,
+                ),
+            ),
+        ]
+
+        group_ids = await self._resolve_group_ids(groups)
+
+        if group_ids:
+            clauses.append(
+                SQLReference.id.in_(
+                    select(SQLReferenceGroup.reference_id).where(
+                        SQLReferenceGroup.group_id.in_(group_ids),
+                    ),
+                ),
+            )
+
+        return or_(*clauses)
+
     async def find(
         self,
         find: str,
@@ -166,28 +222,55 @@ class ReferencesData(DataLayerDomain):
         archived: bool | None = None,
     ) -> ReferenceSearchResult:
         """Find references."""
-        mongo_query = {**compose_archived_filter(archived)}
+        base_filters: list[ColumnExpressionArgument[bool]] = []
+
+        if not administrator:
+            base_filters.append(await self._compose_rights_filter(user_id, groups))
+
+        search_filters = list(base_filters)
+
+        if archived is not None:
+            search_filters.append(SQLReference.archived.is_(archived))
 
         if find:
-            mongo_query = {
-                **mongo_query,
-                **compose_regex_query(find, ["name", "data_type"]),
-            }
+            escaped = find.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            search_filters.append(
+                SQLReference.name.ilike(f"%{escaped}%", escape="\\"),
+            )
 
-        base_query = compose_rights_filter(user_id, administrator, groups)
+        async with AsyncSession(self._pg) as session:
+            total_count = await session.scalar(
+                select(func.count()).select_from(SQLReference).where(*base_filters),
+            )
 
-        data = await paginate(
-            self._mongo.references,
-            mongo_query,
-            page,
-            per_page,
-            sort="name",
-            base_query=base_query,
-        )
+            found_count = await session.scalar(
+                select(func.count()).select_from(SQLReference).where(*search_filters),
+            )
+
+            rows = (
+                (
+                    await session.execute(
+                        select(SQLReference)
+                        .where(*search_filters)
+                        .order_by(SQLReference.name, SQLReference.id)
+                        .offset(per_page * (page - 1))
+                        .limit(per_page),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+
+            cloned_from_lookup = await get_cloned_from_lookup(session, rows)
 
         documents = [
-            await processor(self._mongo, self._pg, document)
-            for document in data["documents"]
+            await processor(
+                self._mongo,
+                self._pg,
+                row,
+                cloned_from_lookup.get(row.cloned_from_id),
+            )
+            for row in rows
         ]
 
         documents = await apply_transforms(
@@ -201,10 +284,12 @@ class ReferencesData(DataLayerDomain):
         )
 
         return ReferenceSearchResult(
-            **{
-                **data,
-                "documents": documents,
-            },
+            documents=documents,
+            found_count=found_count,
+            total_count=total_count,
+            page=page,
+            page_count=int(math.ceil(found_count / per_page)),
+            per_page=per_page,
         )
 
     @emits(Operation.CREATE)
@@ -346,10 +431,19 @@ class ReferencesData(DataLayerDomain):
 
     async def get(self, ref_id: str) -> Reference:
         """Get a reference."""
-        document = await self._mongo.references.find_one(ref_id)
+        async with AsyncSession(self._pg) as session:
+            row = (
+                await session.execute(
+                    select(SQLReference).where(
+                        compose_legacy_id_single_expression(SQLReference, ref_id),
+                    ),
+                )
+            ).scalar_one_or_none()
 
-        if not document:
-            raise ResourceNotFoundError
+            if row is None:
+                raise ResourceNotFoundError
+
+            cloned_from_lookup = await get_cloned_from_lookup(session, [row])
 
         (
             contributors,
@@ -359,24 +453,26 @@ class ReferencesData(DataLayerDomain):
             users,
             unbuilt_count,
         ) = await asyncio.gather(
-            get_contributors(self._pg, ref_id),
-            get_latest_build(self._mongo, self._pg, ref_id),
-            get_otu_count(self._mongo, self._pg, ref_id),
-            get_reference_groups(self._pg, document),
-            get_reference_users(self._pg, document),
-            get_unbuilt_count(self._pg, ref_id),
+            get_contributors(self._pg, row.legacy_id),
+            get_latest_build(self._mongo, self._pg, row.legacy_id),
+            get_otu_count(self._mongo, self._pg, row.legacy_id),
+            get_reference_groups(self._pg, row.id, row.created_at),
+            get_reference_users(self._pg, row.id, row.created_at),
+            get_unbuilt_count(self._pg, row.legacy_id),
         )
 
-        document.update(
-            {
-                "contributors": contributors,
-                "groups": groups,
-                "latest_build": latest_build,
-                "otu_count": otu_count,
-                "unbuilt_change_count": unbuilt_count,
-                "users": users,
-            },
-        )
+        document = {
+            **map_reference_minimal(row, cloned_from_lookup.get(row.cloned_from_id)),
+            "description": row.description,
+            "restrict_source_types": row.restrict_source_types,
+            "source_types": row.source_types,
+            "contributors": contributors,
+            "groups": groups,
+            "latest_build": latest_build,
+            "otu_count": otu_count,
+            "unbuilt_change_count": unbuilt_count,
+            "users": users,
+        }
 
         document = await apply_transforms(
             document,

@@ -40,6 +40,7 @@ async def seed_pg_reference(
     user_id: int,
     created_at,
     *,
+    name: str | None = None,
     users: list[tuple[int, dict]] | None = None,
     groups: list[tuple[int, dict]] | None = None,
 ) -> None:
@@ -47,7 +48,7 @@ async def seed_pg_reference(
     async with AsyncSession(pg) as session:
         reference = SQLReference(
             legacy_id=legacy_id,
-            name=legacy_id,
+            name=name or legacy_id,
             description="",
             created_at=created_at,
             source_types=[],
@@ -134,86 +135,6 @@ async def test_find(
     user = await fake.users.create()
     await data_layer.users.update(client.user.id, UpdateUserRequest(groups=[group.id]))
 
-    await mongo.references.insert_many(
-        [
-            {
-                "_id": "owned_active",
-                "archived": False,
-                "created_at": static_time.datetime,
-                "data_type": "genome",
-                "groups": [],
-                "name": "Owned Active",
-                "organism": "virus",
-                "restrict_source_types": False,
-                "task": {"id": 1},
-                "user": {"id": client.user.id},
-            },
-            {
-                "_id": "other_active",
-                "archived": False,
-                "created_at": static_time.datetime,
-                "data_type": "genome",
-                "groups": [],
-                "name": "Other Active",
-                "organism": "virus",
-                "restrict_source_types": True,
-                "task": {"id": 2},
-                "user": {"id": user.id},
-            },
-            {
-                "_id": "user_member_active",
-                "archived": False,
-                "created_at": static_time.datetime,
-                "data_type": "genome",
-                "groups": [],
-                "name": "User Member Active",
-                "organism": "virus",
-                "restrict_source_types": True,
-                "task": {"id": 2},
-                "user": {"id": user.id},
-                "users": [{"id": client.user.id}],
-            },
-            {
-                "_id": "group_member_active",
-                "archived": False,
-                "created_at": static_time.datetime,
-                "data_type": "genome",
-                "groups": [{"id": group.id}],
-                "name": "Group Member Active",
-                "organism": "virus",
-                "restrict_source_types": True,
-                "task": {"id": 2},
-                "user": {"id": user.id},
-                "users": [],
-            },
-            {
-                "_id": "owned_archived",
-                "archived": True,
-                "created_at": static_time.datetime,
-                "data_type": "genome",
-                "groups": [],
-                "name": "Owned Archived",
-                "organism": "virus",
-                "restrict_source_types": False,
-                "task": {"id": 1},
-                "user": {"id": client.user.id},
-            },
-            {
-                "_id": "other_archived",
-                "archived": True,
-                "created_at": static_time.datetime,
-                "data_type": "genome",
-                "groups": [],
-                "name": "Other Archived",
-                "organism": "virus",
-                "restrict_source_types": True,
-                "task": {"id": 2},
-                "user": {"id": user.id},
-            },
-        ],
-        session=None,
-    )
-
     async with AsyncSession(pg) as session:
         session.add_all(
             [
@@ -242,6 +163,90 @@ async def test_find(
             ],
         )
         await session.commit()
+
+    for document in [
+        {
+            "_id": "owned_active",
+            "archived": False,
+            "created_at": static_time.datetime,
+            "data_type": "genome",
+            "description": "",
+            "groups": [],
+            "name": "Owned Active",
+            "organism": "virus",
+            "restrict_source_types": False,
+            "task": {"id": 1},
+            "user": {"id": client.user.id},
+        },
+        {
+            "_id": "other_active",
+            "archived": False,
+            "created_at": static_time.datetime,
+            "data_type": "genome",
+            "description": "",
+            "groups": [],
+            "name": "Other Active",
+            "organism": "virus",
+            "restrict_source_types": True,
+            "task": {"id": 2},
+            "user": {"id": user.id},
+        },
+        {
+            "_id": "user_member_active",
+            "archived": False,
+            "created_at": static_time.datetime,
+            "data_type": "genome",
+            "description": "",
+            "groups": [],
+            "name": "User Member Active",
+            "organism": "virus",
+            "restrict_source_types": True,
+            "task": {"id": 2},
+            "user": {"id": user.id},
+            "users": [{"id": client.user.id}],
+        },
+        {
+            "_id": "group_member_active",
+            "archived": False,
+            "created_at": static_time.datetime,
+            "data_type": "genome",
+            "description": "",
+            "groups": [{"id": group.id}],
+            "name": "Group Member Active",
+            "organism": "virus",
+            "restrict_source_types": True,
+            "task": {"id": 2},
+            "user": {"id": user.id},
+            "users": [],
+        },
+        {
+            "_id": "owned_archived",
+            "archived": True,
+            "created_at": static_time.datetime,
+            "data_type": "genome",
+            "description": "",
+            "groups": [],
+            "name": "Owned Archived",
+            "organism": "virus",
+            "restrict_source_types": False,
+            "task": {"id": 1},
+            "user": {"id": client.user.id},
+        },
+        {
+            "_id": "other_archived",
+            "archived": True,
+            "created_at": static_time.datetime,
+            "data_type": "genome",
+            "description": "",
+            "groups": [],
+            "name": "Other Archived",
+            "organism": "virus",
+            "restrict_source_types": True,
+            "task": {"id": 2},
+            "user": {"id": user.id},
+        },
+    ]:
+        await insert_reference(mongo, pg, document)
 
     url = "/references/v1"
     if archived is not None:
@@ -376,6 +381,7 @@ class TestCreate:
         self,
         fake: DataFaker,
         mongo: Mongo,
+        pg: AsyncEngine,
         spawn_client: ClientSpawner,
         snapshot: SnapshotAssertion,
         static_time,
@@ -388,12 +394,15 @@ class TestCreate:
         user_1 = await fake.users.create()
         user_2 = await fake.users.create()
 
-        await mongo.references.insert_one(
+        await insert_reference(
+            mongo,
+            pg,
             {
                 "_id": "foo",
                 "archived": False,
-                "created_at": virtool.utils.timestamp(),
+                "created_at": static_time.datetime,
                 "data_type": "genome",
+                "description": "",
                 "name": "Foo",
                 "organism": "virus",
                 "restrict_source_types": False,
@@ -439,12 +448,15 @@ class TestEdit:
         user_2 = await fake.users.create()
         user_3 = await fake.users.create()
 
-        await mongo.references.insert_one(
+        await insert_reference(
+            mongo,
+            pg,
             {
                 "_id": "foo",
                 "archived": False,
-                "created_at": virtool.utils.timestamp(),
+                "created_at": static_time.datetime,
                 "data_type": "genome",
+                "description": "",
                 "name": "Foo",
                 "organism": "virus",
                 "restrict_source_types": False,
@@ -468,17 +480,6 @@ class TestEdit:
                     },
                 ],
             },
-        )
-
-        await seed_pg_reference(
-            pg,
-            "foo",
-            user_1.id,
-            static_time.datetime,
-            users=[
-                (user_2.id, FULL_RIGHTS),
-                (user_3.id, FULL_RIGHTS),
-            ],
         )
 
     async def test_ok(
@@ -580,13 +581,16 @@ class TestArchive:
         fake: DataFaker,
         mocker,
         mongo: Mongo,
+        pg: AsyncEngine,
         snapshot_recent: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
         client = await spawn_client(authenticated=True)
         user = await fake.users.create()
 
-        await mongo.references.insert_one(
+        await insert_reference(
+            mongo,
+            pg,
             _archive_reference_doc(user.id, archived=already_archived),
         )
 
@@ -654,13 +658,16 @@ class TestUnarchive:
         fake: DataFaker,
         mocker,
         mongo: Mongo,
+        pg: AsyncEngine,
         snapshot_recent: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
         client = await spawn_client(authenticated=True)
         user = await fake.users.create()
 
-        await mongo.references.insert_one(
+        await insert_reference(
+            mongo,
+            pg,
             _archive_reference_doc(user.id, archived=already_archived),
         )
 
@@ -749,6 +756,7 @@ class TestCreateOTU:
                 "foo",
                 client.user.id,
                 static_time.datetime,
+                name="Foo",
                 users=[] if error == "403" else [(client.user.id, FULL_RIGHTS)],
             )
             await mongo.references.insert_one(
@@ -1389,6 +1397,8 @@ async def test_delete_group(
 async def test_find_otus(
     find: str | None,
     verified: bool | None,
+    fake: DataFaker,
+    pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     mongo: Mongo,
     spawn_client: ClientSpawner,
@@ -1397,6 +1407,21 @@ async def test_find_otus(
     filtered.
     """
     client = await spawn_client(authenticated=True)
+
+    user = await fake.users.create()
+
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLReference(
+                legacy_id="foo",
+                name="Foo",
+                description="",
+                created_at=virtool.utils.timestamp(),
+                source_types=[],
+                user_id=user.id,
+            ),
+        )
+        await session.commit()
 
     await asyncio.gather(
         mongo.references.insert_one(

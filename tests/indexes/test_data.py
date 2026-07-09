@@ -8,6 +8,7 @@ from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.sql import SQLIndexFile
 from virtool.mongo.core import Mongo
+from virtool.references.sql import SQLReference
 
 
 async def test_finalize(
@@ -43,6 +44,14 @@ async def test_finalize(
     async with AsyncSession(pg) as session:
         session.add_all(
             [
+                SQLReference(
+                    legacy_id="bar",
+                    name="Bar",
+                    description="",
+                    created_at=static_time.datetime,
+                    source_types=[],
+                    user_id=user.id,
+                ),
                 SQLIndexFile(
                     id=1,
                     name="reference.1.bt2",
@@ -145,6 +154,14 @@ class TestDelete:
         async with AsyncSession(pg) as session:
             session.add_all(
                 [
+                    SQLReference(
+                        legacy_id="reference",
+                        name="Reference",
+                        description="",
+                        created_at=static_time.datetime,
+                        source_types=[],
+                        user_id=user.id,
+                    ),
                     SQLLegacyHistory(
                         legacy_id="otu_a.0",
                         created_at=static_time.datetime,

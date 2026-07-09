@@ -9,16 +9,19 @@ from syrupy import SnapshotAssertion
 
 import virtool.utils
 from tests.fixtures.client import ClientSpawner
+from tests.samples.utils import add_sample_uploads
 from virtool.analyses.sql import SQLAnalysis
 from virtool.api.client import UserClient
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
+from virtool.data.transforms import apply_transforms
 from virtool.fake.next import DataFaker
 from virtool.models.enums import AnalysisWorkflow, LibraryType, Permission
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row, get_row_by_id
 from virtool.references.sql import SQLReference
+from virtool.samples.db import AttachUploadsTransform
 from virtool.samples.models import WorkflowState
 from virtool.samples.oas import (
     CreateAnalysisRequest,
@@ -30,6 +33,7 @@ from virtool.samples.sql import (
     SQLLegacySampleLabel,
     SQLLegacySampleSubtraction,
     SQLSampleReads,
+    SQLSampleUpload,
 )
 from virtool.samples.utils import SampleRight
 from virtool.settings.oas import UpdateSettingsRequest
@@ -260,6 +264,22 @@ class TestCreate:
                 .all()
             )
 
+            sample_uploads = (
+                (
+                    await session.execute(
+                        select(SQLSampleUpload)
+                        .where(SQLSampleUpload.sample_id == legacy.id)
+                        .order_by(SQLSampleUpload.index),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+
+        assert [(row.sample, row.upload_id, row.index) for row in sample_uploads] == [
+            (sample["_id"], u["id"], i) for i, u in enumerate(sample["uploads"])
+        ]
+
         assert legacy.name == sample["name"]
         assert legacy.library_type == sample["library_type"]
         # Mongo truncates datetimes to millisecond precision while Postgres keeps
@@ -344,6 +364,85 @@ class TestCreate:
         assert await mongo.samples.find_one() is None
 
 
+class TestAttachUploadsTransform:
+    """The uploads array is sourced from ``sample_uploads``, ordered by ``index``."""
+
+    @staticmethod
+    async def get_sample_pk(pg: AsyncEngine) -> int:
+        async with AsyncSession(pg) as session:
+            return (
+                await session.execute(
+                    select(SQLLegacySample.id).where(
+                        SQLLegacySample.legacy_id == "test",
+                    ),
+                )
+            ).scalar_one()
+
+    async def test_orders_one_by_index(
+        self,
+        fake: DataFaker,
+        get_sample_ready_false,
+        mongo: Mongo,
+        pg: AsyncEngine,
+    ):
+        """A single sample's uploads come back in their stored index order."""
+        user = await fake.users.create()
+        first = await fake.uploads.create(user=user)
+        second = await fake.uploads.create(user=user)
+
+        await add_sample_uploads(mongo, pg, "test", [second.id, first.id])
+
+        document = await apply_transforms(
+            {"id": await self.get_sample_pk(pg)},
+            [AttachUploadsTransform(pg)],
+            pg,
+        )
+
+        assert [upload["id"] for upload in document["uploads"]] == [
+            second.id,
+            first.id,
+        ]
+
+    async def test_orders_many_by_index(
+        self,
+        fake: DataFaker,
+        get_sample_ready_false,
+        mongo: Mongo,
+        pg: AsyncEngine,
+    ):
+        """The batched path groups uploads by sample and preserves index order."""
+        user = await fake.users.create()
+        first = await fake.uploads.create(user=user)
+        second = await fake.uploads.create(user=user)
+
+        await add_sample_uploads(mongo, pg, "test", [second.id, first.id])
+
+        documents = await apply_transforms(
+            [{"id": await self.get_sample_pk(pg)}],
+            [AttachUploadsTransform(pg)],
+            pg,
+        )
+
+        assert [upload["id"] for upload in documents[0]["uploads"]] == [
+            second.id,
+            first.id,
+        ]
+
+    async def test_no_uploads_is_none(
+        self,
+        get_sample_ready_false,
+        pg: AsyncEngine,
+    ):
+        """A sample with no ``sample_uploads`` rows gets ``None``, not an empty list."""
+        document = await apply_transforms(
+            {"id": await self.get_sample_pk(pg)},
+            [AttachUploadsTransform(pg)],
+            pg,
+        )
+
+        assert document["uploads"] is None
+
+
 async def test_finalize(
     data_layer: DataLayer,
     fake: DataFaker,
@@ -360,10 +459,7 @@ async def test_finalize(
     upload_row = await get_row_by_id(pg, SQLUpload, upload.id)
     upload_name_on_disk = upload_row.name_on_disk
 
-    await mongo.samples.update_one(
-        {"_id": "test"},
-        {"$set": {"uploads": [{"id": upload.id}]}},
-    )
+    await add_sample_uploads(mongo, pg, "test", [upload.id])
 
     async with AsyncSession(pg) as session:
         legacy_sample_id = (
@@ -443,10 +539,7 @@ async def test_finalize_cleans_up_uploads_without_reads_link(
     upload_row = await get_row_by_id(pg, SQLUpload, upload.id)
     upload_key = upload_file_key(upload_row.name_on_disk)
 
-    await mongo.samples.update_one(
-        {"_id": "test"},
-        {"$set": {"uploads": [{"id": upload.id}]}},
-    )
+    await add_sample_uploads(mongo, pg, "test", [upload.id])
 
     async with AsyncSession(pg) as session:
         session.add(
@@ -1269,10 +1362,7 @@ class TestDelete:
             reserved=True,
         )
 
-        await mongo.samples.update_one(
-            {"_id": "test_sample"},
-            {"$set": {"uploads": [{"id": upload.id}]}},
-        )
+        await add_sample_uploads(mongo, pg, "test_sample", [upload.id])
 
         await data_layer.samples.delete("test_sample")
 
@@ -1324,6 +1414,14 @@ class TestDelete:
                 )
             ).scalar_one()
 
+            assert (
+                await session.execute(
+                    select(SQLSampleUpload).where(
+                        SQLSampleUpload.sample_id == legacy.id,
+                    ),
+                )
+            ).scalars().all() != []
+
         await data_layer.samples.delete(sample.id)
 
         async with AsyncSession(pg) as session:
@@ -1347,6 +1445,14 @@ class TestDelete:
                 await session.execute(
                     select(SQLLegacySampleSubtraction).where(
                         SQLLegacySampleSubtraction.sample_id == legacy.id,
+                    ),
+                )
+            ).scalars().all() == []
+
+            assert (
+                await session.execute(
+                    select(SQLSampleUpload).where(
+                        SQLSampleUpload.sample_id == legacy.id,
                     ),
                 )
             ).scalars().all() == []

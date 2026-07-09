@@ -173,6 +173,22 @@ class TestFind:
 
         async with AsyncSession(pg) as session:
             session.add_all(
+                SQLReference(
+                    legacy_id=legacy_id,
+                    name=name,
+                    description="",
+                    created_at=static_time.datetime,
+                    archived=archived,
+                    source_types=[],
+                    user_id=user.id,
+                )
+                for legacy_id, name, archived in (
+                    ("ref_active_a", "Active A", False),
+                    ("ref_active_b", "Active B", False),
+                    ("ref_archived", "Archived", True),
+                )
+            )
+            session.add_all(
                 SQLLegacyHistory(
                     legacy_id=legacy_id,
                     created_at=static_time.datetime,
@@ -231,6 +247,7 @@ class TestFind:
         fake: DataFaker,
         snapshot,
         mongo: Mongo,
+        pg: AsyncEngine,
         spawn_client: ClientSpawner,
         static_time,
     ):
@@ -306,6 +323,25 @@ class TestFind:
             ),
         )
 
+        async with AsyncSession(pg) as session:
+            session.add_all(
+                SQLReference(
+                    legacy_id=legacy_id,
+                    name=name,
+                    description="",
+                    created_at=static_time.datetime,
+                    archived=archived_flag,
+                    source_types=[],
+                    user_id=user.id,
+                )
+                for legacy_id, name, archived_flag in (
+                    ("ref_active_a", "Active A", False),
+                    ("ref_active_b", "Active B", False),
+                    ("ref_archived", "Archived", True),
+                )
+            )
+            await session.commit()
+
         url = "/indexes?ready=True"
         if archived is not None:
             url = f"{url}&archived={archived}"
@@ -353,6 +389,16 @@ async def test_get(
     )
 
     async with AsyncSession(pg) as session:
+        session.add(
+            SQLReference(
+                legacy_id="bar",
+                name="Bar",
+                description="",
+                created_at=static_time.datetime,
+                source_types=[],
+                user_id=prolific.id,
+            ),
+        )
         session.add_all(
             SQLLegacyHistory(
                 legacy_id=legacy_id,
@@ -692,6 +738,7 @@ async def test_delete_index(
     error,
     fake: DataFaker,
     mongo: Mongo,
+    pg: AsyncEngine,
     spawn_job_client: JobClientSpawner,
     static_time,
 ):
@@ -720,6 +767,19 @@ async def test_delete_index(
                 },
             ),
         )
+
+        async with AsyncSession(pg) as session:
+            session.add(
+                SQLReference(
+                    legacy_id="foo",
+                    name="Foo",
+                    description="",
+                    created_at=static_time.datetime,
+                    source_types=[],
+                    user_id=user.id,
+                ),
+            )
+            await session.commit()
 
     response = await client.delete(f"/indexes/{index_id}")
 
@@ -907,6 +967,19 @@ async def test_finalize(
                 "name": "Test A",
             },
         )
+
+        async with AsyncSession(pg) as session:
+            session.add(
+                SQLReference(
+                    legacy_id="hxn167",
+                    name="Test A",
+                    description="",
+                    created_at=static_time.datetime,
+                    source_types=[],
+                    user_id=user.id,
+                ),
+            )
+            await session.commit()
 
     await asyncio.gather(
         mongo.indexes.insert_one(

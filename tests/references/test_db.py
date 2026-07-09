@@ -16,8 +16,7 @@ from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.references.db import (
     check_right,
-    compose_archived_filter,
-    compose_rights_filter,
+    compose_reference_ids_match,
     create_document,
     get_manifest,
     get_reference_groups,
@@ -395,48 +394,94 @@ class TestCheckRight:
         assert await check_right(mock_req, "ref_job_client", "read") is False
 
 
-class TestComposeArchivedFilter:
-    """The lifecycle facet of the references find query."""
+class TestComposeReferenceIdsMatch:
+    """The lifecycle facet of the index find query, sourced from Postgres.
 
-    @pytest.mark.parametrize(
-        ("archived", "expected"),
-        [
-            (None, {}),
-            (True, {"archived": True}),
-            (False, {"archived": False}),
-        ],
-    )
-    def test(self, archived, expected):
-        assert compose_archived_filter(archived) == expected
+    Indexes embed either the legacy string reference id or the integer primary key
+    during the migration, so both forms must appear in the match for every reference
+    that passes the lifecycle filter.
+    """
 
+    @pytest.fixture
+    async def references(self, fake: DataFaker, pg: AsyncEngine, static_time):
+        """Seed an active, an archived, and a Postgres-native active reference."""
+        user = await fake.users.create()
 
-class TestComposeRightsFilter:
-    """The user-rights facet of the references find query."""
+        async with AsyncSession(pg) as session:
+            rows = {
+                "active": SQLReference(
+                    legacy_id="ref_active",
+                    name="active",
+                    description="",
+                    created_at=static_time.datetime,
+                    archived=False,
+                    source_types=[],
+                    user_id=user.id,
+                ),
+                "archived": SQLReference(
+                    legacy_id="ref_archived",
+                    name="archived",
+                    description="",
+                    created_at=static_time.datetime,
+                    archived=True,
+                    source_types=[],
+                    user_id=user.id,
+                ),
+                "native_active": SQLReference(
+                    legacy_id=None,
+                    name="native_active",
+                    description="",
+                    created_at=static_time.datetime,
+                    archived=False,
+                    source_types=[],
+                    user_id=user.id,
+                ),
+            }
 
-    def test_administrator(self):
-        """Administrators bypass the rights filter."""
-        assert (
-            compose_rights_filter(
-                user_id=7,
-                administrator=True,
-                groups=["foo"],
-            )
-            == {}
-        )
+            session.add_all(rows.values())
+            await session.flush()
 
-    def test_non_administrator(self):
-        """Non-administrators get an ``$or`` over their group and user id."""
-        assert compose_rights_filter(
-            user_id=7,
-            administrator=False,
-            groups=["foo"],
-        ) == {
-            "$or": [
-                {"groups.id": {"$in": ["foo"]}},
-                {"users.id": 7},
-                {"user.id": 7},
-            ],
+            reference_ids = {key: row.id for key, row in rows.items()}
+
+            await session.commit()
+
+        return reference_ids
+
+    async def test_unfiltered(self, pg: AsyncEngine, references: dict[str, int]):
+        """Both id forms of every legacy reference are matched when ``archived`` is None."""
+        match = await compose_reference_ids_match(pg)
+
+        assert set(match["$in"]) == {
+            references["active"],
+            references["archived"],
+            "ref_active",
+            "ref_archived",
         }
+
+    async def test_archived(self, pg: AsyncEngine, references: dict[str, int]):
+        match = await compose_reference_ids_match(pg, True)
+
+        assert set(match["$in"]) == {references["archived"], "ref_archived"}
+
+    async def test_active(self, pg: AsyncEngine, references: dict[str, int]):
+        match = await compose_reference_ids_match(pg, False)
+
+        assert set(match["$in"]) == {references["active"], "ref_active"}
+
+    async def test_native_reference_excluded(
+        self,
+        pg: AsyncEngine,
+        references: dict[str, int],
+    ):
+        """A reference with no ``legacy_id`` never enters the match.
+
+        It cannot be shaped into a ``ReferenceNested``, whose ``id`` is a required
+        string, so matching its indexes would fail response validation.
+        """
+        match = await compose_reference_ids_match(pg)
+
+        assert references["native_active"] not in match["$in"]
+        assert None not in match["$in"]
 
 
 async def test_create_manifest(mongo: Mongo, pg: AsyncEngine, test_otu: dict):
@@ -468,7 +513,7 @@ async def test_get_reference_groups(
     group_1 = await fake.groups.create()
     group_2 = await fake.groups.create(legacy_id="group_2")
 
-    await seed_reference_rights(
+    reference_pk = await seed_reference_rights(
         pg,
         legacy_id="ref_groups",
         owner_id=owner.id,
@@ -480,11 +525,7 @@ async def test_get_reference_groups(
     )
 
     assert (
-        await get_reference_groups(
-            pg,
-            {"_id": "ref_groups", "created_at": static_time.datetime},
-        )
-        == snapshot
+        await get_reference_groups(pg, reference_pk, static_time.datetime) == snapshot
     )
 
 

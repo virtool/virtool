@@ -69,7 +69,7 @@ class HistoryData:
                 base_processor(legacy_history_document(row, handle))
                 for row, handle in rows
             ],
-            [AttachReferenceTransform(self._mongo)],
+            [AttachReferenceTransform(self._pg)],
             self._pg,
         )
 
@@ -104,7 +104,7 @@ class HistoryData:
             base_processor(legacy_history_document(legacy_row, handle)),
             [
                 AttachDiffTransform(self._pg),
-                AttachReferenceTransform(self._mongo),
+                AttachReferenceTransform(self._pg),
             ],
             self._pg,
         )

@@ -398,54 +398,6 @@ class TestUpdate:
         assert row.name == "After"
         assert row.organism == "bacteria"
 
-    async def test_skips_postgres_when_row_absent(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-        mongo: Mongo,
-        pg: AsyncEngine,
-        static_time,
-    ):
-        """A Mongo-only reference still updates Mongo without a Postgres row."""
-        user = await fake.users.create()
-
-        await mongo.references.insert_one(
-            {
-                "_id": "mongo_only",
-                "archived": False,
-                "created_at": static_time.datetime,
-                "data_type": "genome",
-                "description": "Mongo only.",
-                "groups": [],
-                "internal_control": None,
-                "name": "Before",
-                "organism": "virus",
-                "restrict_source_types": False,
-                "source_types": [],
-                "user": {"id": user.id},
-                "users": [],
-            },
-        )
-
-        await data_layer.references.update(
-            "mongo_only",
-            UpdateReferenceRequest(name="After"),
-        )
-
-        document = await mongo.references.find_one("mongo_only")
-        assert document["name"] == "After"
-
-        async with AsyncSession(pg) as session:
-            row = (
-                await session.execute(
-                    select(SQLReference).where(
-                        SQLReference.legacy_id == "mongo_only",
-                    ),
-                )
-            ).scalar_one_or_none()
-
-        assert row is None
-
 
 class TestArchive:
     async def test_dual_write(
@@ -616,6 +568,7 @@ class TestUpdateUser:
         data_layer: DataLayer,
         fake: DataFaker,
         mongo: Mongo,
+        pg: AsyncEngine,
         snapshot,
         static_time,
     ):
@@ -623,7 +576,9 @@ class TestUpdateUser:
         user_1 = await fake.users.create()
         user_2 = await fake.users.create()
 
-        await mongo.references.insert_one(
+        await insert_reference(
+            mongo,
+            pg,
             {
                 "_id": "foo",
                 "archived": False,
@@ -715,6 +670,7 @@ class TestDeleteUser:
         data_layer: DataLayer,
         fake: DataFaker,
         mongo: Mongo,
+        pg: AsyncEngine,
         snapshot,
         static_time,
     ):
@@ -722,7 +678,9 @@ class TestDeleteUser:
         user_1 = await fake.users.create()
         user_2 = await fake.users.create()
 
-        await mongo.references.insert_one(
+        await insert_reference(
+            mongo,
+            pg,
             {
                 "_id": "foo",
                 "archived": False,
@@ -911,6 +869,7 @@ class TestUpdateGroup:
         data_layer: DataLayer,
         fake: DataFaker,
         mongo: Mongo,
+        pg: AsyncEngine,
         snapshot,
         static_time,
     ):
@@ -918,7 +877,9 @@ class TestUpdateGroup:
         user = await fake.users.create()
         group = await fake.groups.create()
 
-        await mongo.references.insert_one(
+        await insert_reference(
+            mongo,
+            pg,
             {
                 "_id": "foo",
                 "archived": False,
@@ -1003,6 +964,7 @@ class TestDeleteGroup:
         data_layer: DataLayer,
         fake: DataFaker,
         mongo: Mongo,
+        pg: AsyncEngine,
         snapshot,
         static_time,
     ):
@@ -1010,7 +972,9 @@ class TestDeleteGroup:
         user = await fake.users.create()
         group = await fake.groups.create()
 
-        await mongo.references.insert_one(
+        await insert_reference(
+            mongo,
+            pg,
             {
                 "_id": "foo",
                 "archived": False,
