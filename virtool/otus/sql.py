@@ -33,7 +33,7 @@ class SQLOTU(Base):
     already an integer.
     """
 
-    __tablename__ = "otus"
+    __tablename__ = "legacy_otus"
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
     data: Mapped[dict] = mapped_column(JSONB, nullable=False)
@@ -45,7 +45,7 @@ class SQLOTU(Base):
     verified: Mapped[bool]
     version: Mapped[int]
 
-    __table_args__ = (Index("otus_name_lower", text("lower(name)"), "id"),)
+    __table_args__ = (Index("legacy_otus_name_lower", text("lower(name)"), "id"),)
 
 
 class SQLSequence(Base):
@@ -53,15 +53,15 @@ class SQLSequence(Base):
 
     Like :class:`SQLOTU` this is a hybrid model: the verbatim Mongo document lives
     in ``data`` and ``otu_id`` is the only promoted column. ``otu_id`` is a real
-    foreign key to ``otus.id`` with ``ON DELETE CASCADE`` so a deleted OTU takes
-    its sequences with it. The column is indexed because Postgres does not index
-    foreign key columns automatically.
+    foreign key to ``legacy_otus.id`` with ``ON DELETE CASCADE`` so a deleted OTU
+    takes its sequences with it. The column is indexed because Postgres does not
+    index foreign key columns automatically.
     """
 
-    __tablename__ = "sequences"
+    __tablename__ = "legacy_sequences"
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
     data: Mapped[dict] = mapped_column(JSONB, nullable=False)
     otu_id: Mapped[str] = mapped_column(
-        ForeignKey("otus.id", ondelete="CASCADE"), index=True
+        ForeignKey("legacy_otus.id", ondelete="CASCADE"), index=True
     )

@@ -19,7 +19,7 @@ depends_on = None
 
 def upgrade() -> None:
     op.create_table(
-        "otus",
+        "legacy_otus",
         sa.Column("id", sa.String(), nullable=False),
         sa.Column("data", JSONB(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
@@ -30,20 +30,22 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.ForeignKeyConstraint(["reference_id"], ["legacy_references.id"]),
     )
-    op.create_index("otus_name_lower", "otus", [sa.text("lower(name)"), "id"])
+    op.create_index(
+        "legacy_otus_name_lower", "legacy_otus", [sa.text("lower(name)"), "id"]
+    )
     op.create_table(
-        "sequences",
+        "legacy_sequences",
         sa.Column("id", sa.String(), nullable=False),
         sa.Column("data", JSONB(), nullable=False),
         sa.Column("otu_id", sa.String(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
-        sa.ForeignKeyConstraint(["otu_id"], ["otus.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["otu_id"], ["legacy_otus.id"], ondelete="CASCADE"),
     )
-    op.create_index("ix_sequences_otu_id", "sequences", ["otu_id"])
+    op.create_index("ix_legacy_sequences_otu_id", "legacy_sequences", ["otu_id"])
 
 
 def downgrade() -> None:
-    op.drop_index("ix_sequences_otu_id", table_name="sequences")
-    op.drop_table("sequences")
-    op.drop_index("otus_name_lower", table_name="otus")
-    op.drop_table("otus")
+    op.drop_index("ix_legacy_sequences_otu_id", table_name="legacy_sequences")
+    op.drop_table("legacy_sequences")
+    op.drop_index("legacy_otus_name_lower", table_name="legacy_otus")
+    op.drop_table("legacy_otus")
