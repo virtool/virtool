@@ -329,35 +329,32 @@ class TestCreatePostgres:
         fake: DataFaker,
         pg: AsyncEngine,
     ):
-        """``get`` resolves the analysis id from the analysis row linked by job_id."""
+        """``get`` resolves the integer analysis id from the analysis row linked by
+        job_id.
+        """
         user = await fake.users.create()
 
-        job = await jobs_data.create(
-            workflow,
-            {"analysis_id": "analysis_abc"},
-            user.id,
-            0,
-        )
+        job = await jobs_data.create(workflow, {}, user.id, 0)
 
         async with AsyncSession(pg) as session:
-            session.add(
-                SQLAnalysis(
-                    legacy_id="analysis_abc",
-                    created_at=arrow.utcnow().naive,
-                    updated_at=arrow.utcnow().naive,
-                    workflow=workflow,
-                    ready=False,
-                    sample="sample_abc",
-                    reference="ref_abc",
-                    index="index_abc",
-                    user_id=user.id,
-                    job_id=job.id,
-                ),
+            analysis = SQLAnalysis(
+                created_at=arrow.utcnow().naive,
+                updated_at=arrow.utcnow().naive,
+                workflow=workflow,
+                ready=False,
+                sample="sample_abc",
+                reference="ref_abc",
+                index="index_abc",
+                user_id=user.id,
+                job_id=job.id,
             )
+            session.add(analysis)
+            await session.flush()
+            analysis_id = analysis.id
             await session.commit()
 
         fetched_job = await jobs_data.get(job.id)
-        assert fetched_job.args == {"analysis_id": "analysis_abc"}
+        assert fetched_job.args == {"analysis_id": analysis_id}
 
 
 class TestStartStepPostgres:

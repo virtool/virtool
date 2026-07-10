@@ -20,7 +20,7 @@ class WFAnalysis:
     def __init__(
         self,
         api: WorkflowAPIClient,
-        analysis_id: str,
+        analysis_id: int,
         index: IndexNested,
         reference: ReferenceNested,
         sample: AnalysisSample,

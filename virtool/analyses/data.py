@@ -43,7 +43,6 @@ from virtool.indexes.db import get_current_id_and_version
 from virtool.indexes.transforms import AttachIndexTransform
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_new_id
 from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
@@ -92,10 +91,10 @@ def _row_to_document(row, *, include_results: bool) -> dict:
     formatters expect.
 
     The integer ``id`` is the outward-facing identifier; ``base_processor`` later
-    renames ``_id`` to ``id``. The legacy Mongo slug is carried in ``legacy_id`` for
-    internal consumers (storage keys, Mongo dual-writes, and string-keyed SQL tables
-    such as ``analysis_files`` and ``nuvs_blast``) that have not yet been migrated off
-    the slug.
+    renames ``_id`` to ``id``. The legacy Mongo slug is carried in ``legacy_id`` so
+    analyses migrated from Mongo can still be addressed by their old string id and
+    have their slug-prefixed storage objects cleaned up; Postgres-native analyses
+    have a ``NULL`` slug.
 
     The nested reference is keyed by the integer ``reference_id`` foreign key, falling
     back to the legacy ``reference`` string on rows the backfill has not reached.
@@ -135,9 +134,10 @@ class AnalysisData(DataLayerDomain):
         """Resolve the integer id and legacy slug for an analysis by either identifier.
 
         Accepts the outward-facing integer id or the legacy Mongo slug and returns the
-        row's ``(id, legacy_id)``, or ``None`` if no analysis matches. The slug is still
-        needed for Mongo dual-writes and the string-keyed ``analysis_files``,
-        ``nuvs_blast``, and ``analysis_results`` tables.
+        row's ``(id, legacy_id)``, or ``None`` if no analysis matches. The slug is only
+        retained for analyses migrated from Mongo, where it locates their slug-prefixed
+        objects in storage during deletion; Postgres-native analyses have a ``NULL``
+        slug.
         """
         async with AsyncSession(self._pg) as session:
             return (
@@ -288,7 +288,6 @@ class AnalysisData(DataLayerDomain):
         data: CreateAnalysisRequest,
         sample_id: str,
         user_id: int,
-        space_id: int,
     ) -> Analysis:
         """Creates a new analysis.
 
@@ -299,7 +298,6 @@ class AnalysisData(DataLayerDomain):
         :param data: the analysis creation input data
         :param sample_id: the ID of the sample to create an analysis for
         :param user_id: the ID of the user starting the job
-        :param space_id: the ID of the parent space
         :return: the analysis
 
         """
@@ -311,18 +309,20 @@ class AnalysisData(DataLayerDomain):
             data.ref_id,
         )
 
-        analysis_id = await get_new_id(self._mongo.analyses)
-
-        job = await self.data.jobs.create(
-            data.workflow.value,
-            {"analysis_id": analysis_id},
-            user_id,
-            space_id,
-        )
-
         subtractions = data.subtractions if data.subtractions is not None else []
 
         async with AsyncSession(self._pg) as session:
+            # Create the job inside the analysis's transaction so the job and its
+            # analysis commit atomically. The job's ``analysis_id`` argument is
+            # derived from ``analyses.job_id`` on read, so the job must not become
+            # claimable before its analysis row exists.
+            job_id = await self.data.jobs.create_in_session(
+                session,
+                data.workflow.value,
+                {},
+                user_id,
+            )
+
             sample_row = (
                 await session.execute(
                     select(SQLLegacySample.id, SQLLegacySample.legacy_id).where(
@@ -353,7 +353,6 @@ class AnalysisData(DataLayerDomain):
                 await session.execute(
                     insert(SQLAnalysis)
                     .values(
-                        legacy_id=analysis_id,
                         created_at=created_at,
                         updated_at=created_at,
                         workflow=data.workflow.value,
@@ -365,7 +364,7 @@ class AnalysisData(DataLayerDomain):
                         reference_id=reference_pg_id,
                         index=index_id,
                         user_id=user_id,
-                        job_id=job.id,
+                        job_id=job_id,
                     )
                     .returning(SQLAnalysis.id),
                 )
@@ -400,7 +399,9 @@ class AnalysisData(DataLayerDomain):
 
             await session.commit()
 
-        return await self.get(analysis_id, None)
+        emit(await self.data.jobs.get(job_id), "jobs", "create", Operation.CREATE)
+
+        return await self.get(pg_id, None)
 
     async def has_right(self, analysis_id: str, client, right: str) -> bool:
         """Checks if the client has the `read` or `write` rights.
@@ -460,17 +461,21 @@ class AnalysisData(DataLayerDomain):
 
             await session.commit()
 
-        for key, exc in await delete_prefix(
-            self._storage,
-            f"samples/{sample_legacy_id}/analysis/{legacy_id}/",
-        ):
-            logger.error(
-                "storage cleanup failed; file orphaned",
-                analysis_id=analysis.id,
-                sample_id=analysis.sample.id,
-                key=key,
-                error=repr(exc),
-            )
+        # Only analyses migrated from Mongo have a ``legacy_id`` and slug-prefixed
+        # storage objects to clean up. Postgres-native analyses store no results in
+        # object storage, so there is nothing to delete.
+        if legacy_id is not None:
+            for key, exc in await delete_prefix(
+                self._storage,
+                f"samples/{sample_legacy_id}/analysis/{legacy_id}/",
+            ):
+                logger.error(
+                    "storage cleanup failed; file orphaned",
+                    analysis_id=analysis.id,
+                    sample_id=analysis.sample.id,
+                    key=key,
+                    error=repr(exc),
+                )
 
         emit(
             await self.data.samples.get(analysis.sample.id),

@@ -5,7 +5,7 @@ from syrupy import SnapshotAssertion
 import virtool.analyses.files
 import virtool.analyses.utils
 from virtool.analyses.sql import SQLAnalysis
-from virtool.analyses.utils import analysis_file_key, analysis_result_key
+from virtool.analyses.utils import analysis_file_key
 from virtool.users.pg import SQLUser
 
 
@@ -66,10 +66,3 @@ async def test_attach_analysis_files(
 
 def test_analysis_file_key():
     assert analysis_file_key("1-output.fasta") == "analyses/1-output.fasta"
-
-
-def test_analysis_result_key():
-    assert (
-        analysis_result_key("abc123", "sample1")
-        == "samples/sample1/analysis/abc123/results.json"
-    )

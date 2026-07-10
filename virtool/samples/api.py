@@ -433,7 +433,6 @@ class AnalysesView(PydanticView):
             data,
             sample_id,
             self.request["client"].user_id,
-            0,
         )
 
         return json_response(

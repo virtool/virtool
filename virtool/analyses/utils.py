@@ -13,11 +13,6 @@ def analysis_file_key(name_on_disk: str) -> str:
     return f"analyses/{name_on_disk}"
 
 
-def analysis_result_key(analysis_id: str, sample_id: str) -> str:
-    """Derive the storage key for an analysis results JSON file."""
-    return f"samples/{sample_id}/analysis/{analysis_id}/results.json"
-
-
 async def attach_analysis_files(
     pg: AsyncEngine,
     analysis_id: int,

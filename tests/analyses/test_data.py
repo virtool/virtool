@@ -1,10 +1,10 @@
 import asyncio
 from pathlib import Path
 from typing import NamedTuple
-from unittest.mock import ANY
+from unittest.mock import ANY, AsyncMock
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.filters import props
@@ -213,7 +213,6 @@ async def test_find(
         ),
         "test_false",
         user_id,
-        0,
     )
 
     for _ in range(number_of_analyses):
@@ -228,7 +227,6 @@ async def test_find(
             ),
             "test_sample",
             user_id,
-            0,
         )
 
     analyses_found = await data_layer.analyses.find(1, 25, client, "test_sample")
@@ -776,7 +774,6 @@ class TestHideIimi:
             ),
             "test_sample",
             user_id,
-            0,
         )
 
         await self._seed_iimi(mongo, pg, setup_sample)
@@ -821,7 +818,6 @@ async def test_create(
         ),
         "test_sample",
         user_id,
-        0,
     )
 
     assert analysis == snapshot(name="obj", exclude=props("created_at", "updated_at"))
@@ -856,13 +852,13 @@ class TestCreate:
             _create_request(subtraction_ids, setup_sample.reference_id),
             "test_sample",
             setup_sample.user_id,
-            0,
         )
 
         row = await get_row(pg, SQLAnalysis, ("id", analysis.id))
 
         assert row is not None
         assert row.id == analysis.id
+        assert row.legacy_id is None
         assert row.workflow == "nuvs"
         assert row.ready is False
         assert row.results is None
@@ -892,6 +888,32 @@ class TestCreate:
             [subtraction_ids["subtraction_1"], subtraction_ids["subtraction_2"]],
         )
 
+    async def test_links_job_with_integer_analysis_id(
+        self,
+        data_layer: DataLayer,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+        subtraction_ids: dict[str, int],
+    ):
+        """The analysis is linked to a job whose ``analysis_id`` argument is the
+        analysis's integer id, resolved through the ``analyses.job_id`` foreign key.
+        """
+        analysis = await data_layer.analyses.create(
+            _create_request(subtraction_ids, setup_sample.reference_id),
+            "test_sample",
+            setup_sample.user_id,
+        )
+
+        row = await get_row(pg, SQLAnalysis, ("id", analysis.id))
+
+        assert row is not None
+        assert row.job_id is not None
+
+        job = await data_layer.jobs.get(row.job_id)
+
+        assert job.args["analysis_id"] == analysis.id
+        assert isinstance(job.args["analysis_id"], int)
+
     async def test_subtractions_default_to_list(
         self,
         data_layer: DataLayer,
@@ -906,7 +928,6 @@ class TestCreate:
             ),
             "test_sample",
             setup_sample.user_id,
-            0,
         )
 
         async with AsyncSession(pg) as session:
@@ -940,7 +961,6 @@ class TestCreate:
                 ),
                 "test_sample",
                 setup_sample.user_id,
-                0,
             )
 
     async def test_unknown_sample_raises(
@@ -957,7 +977,6 @@ class TestCreate:
                 _create_request(subtraction_ids, setup_sample.reference_id),
                 "unknown_sample",
                 setup_sample.user_id,
-                0,
             )
 
     async def test_unknown_reference_raises(
@@ -981,7 +1000,6 @@ class TestCreate:
                 ),
                 "test_sample",
                 setup_sample.user_id,
-                0,
             )
 
     async def test_rolls_back_when_pg_write_fails(
@@ -1003,7 +1021,6 @@ class TestCreate:
                 _create_request(subtraction_ids, setup_sample.reference_id),
                 "test_sample",
                 setup_sample.user_id,
-                0,
             )
 
         async with AsyncSession(pg) as session:
@@ -1033,7 +1050,6 @@ class TestFinalize:
             _create_request(subtraction_ids, setup_sample.reference_id),
             "test_sample",
             setup_sample.user_id,
-            0,
         )
 
         created = await get_row(pg, SQLAnalysis, ("id", analysis.id))
@@ -1073,12 +1089,71 @@ class TestDelete:
             _create_request(subtraction_ids, setup_sample.reference_id),
             "test_sample",
             setup_sample.user_id,
-            0,
         )
 
         await data_layer.analyses.delete(analysis.id, jobs_api_flag=True)
 
         assert await get_row(pg, SQLAnalysis, ("id", analysis.id)) is None
+
+    async def test_native_analysis_skips_storage_cleanup(
+        self,
+        data_layer: DataLayer,
+        mocker,
+        setup_sample: SampleSetup,
+        subtraction_ids: dict[str, int],
+    ):
+        """A Postgres-native analysis has a NULL legacy id, so no slug-prefixed
+        storage objects exist to clean up.
+        """
+        delete_prefix = mocker.patch(
+            "virtool.analyses.data.delete_prefix",
+            new=AsyncMock(return_value=[]),
+        )
+
+        analysis = await data_layer.analyses.create(
+            _create_request(subtraction_ids, setup_sample.reference_id),
+            "test_sample",
+            setup_sample.user_id,
+        )
+
+        await data_layer.analyses.delete(analysis.id, jobs_api_flag=True)
+
+        delete_prefix.assert_not_awaited()
+
+    async def test_legacy_analysis_cleans_storage(
+        self,
+        data_layer: DataLayer,
+        mocker,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+        subtraction_ids: dict[str, int],
+    ):
+        """A Mongo-migrated analysis still removes its slug-prefixed storage objects."""
+        delete_prefix = mocker.patch(
+            "virtool.analyses.data.delete_prefix",
+            new=AsyncMock(return_value=[]),
+        )
+
+        analysis = await data_layer.analyses.create(
+            _create_request(subtraction_ids, setup_sample.reference_id),
+            "test_sample",
+            setup_sample.user_id,
+        )
+
+        async with AsyncSession(pg) as session:
+            await session.execute(
+                update(SQLAnalysis)
+                .where(SQLAnalysis.id == analysis.id)
+                .values(legacy_id="oldslug"),
+            )
+            await session.commit()
+
+        await data_layer.analyses.delete(analysis.id, jobs_api_flag=True)
+
+        delete_prefix.assert_awaited_once()
+        assert (
+            delete_prefix.await_args.args[1] == "samples/test_sample/analysis/oldslug/"
+        )
 
 
 async def test_get_without_if_modified_since(
@@ -1098,7 +1173,6 @@ async def test_get_without_if_modified_since(
         ),
         "test_sample",
         setup_sample.user_id,
-        0,
     )
 
     fetched = await data_layer.analyses.get(analysis.id)
@@ -1131,7 +1205,6 @@ async def test_upload_file(
         ),
         "test_sample",
         user_id,
-        0,
     )
 
     chunks = fake_file_chunker(example_path / "sample" / "reads_1.fq.gz")

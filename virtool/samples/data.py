@@ -19,7 +19,7 @@ from structlog import get_logger
 
 import virtool.uploads.db
 import virtool.utils
-from virtool.analyses.sql import SQLAnalysis, SQLAnalysisResult
+from virtool.analyses.sql import SQLAnalysis
 from virtool.api.client import UserClient
 from virtool.config.cls import Config
 from virtool.data.domain import DataLayerDomain
@@ -542,15 +542,6 @@ class SamplesData(DataLayerDomain):
                     .values(reserved=False),
                 )
 
-            await pg_session.execute(
-                delete(SQLAnalysisResult).where(
-                    SQLAnalysisResult.analysis_id.in_(
-                        select(SQLAnalysis.legacy_id).where(
-                            SQLAnalysis.sample_id == sample_pk,
-                        ),
-                    ),
-                ),
-            )
             await pg_session.execute(
                 delete(SQLAnalysis).where(
                     SQLAnalysis.sample_id == sample_pk,
