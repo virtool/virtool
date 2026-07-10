@@ -497,21 +497,16 @@ class TestEdit:
     async def test_ok(
         self,
         fake: DataFaker,
-        mocker,
         snapshot,
         mongo: Mongo,
         pg: AsyncEngine,
         spawn_client: ClientSpawner,
         static_time,
     ):
-        client = await spawn_client(authenticated=True)
+        """An administrator edits a reference they do not own."""
+        client = await spawn_client(authenticated=True, administrator=True)
 
         await self._insert_reference(fake, mongo, pg, static_time)
-
-        mocker.patch(
-            "virtool.references.api.check_right",
-            make_mocked_coro(return_value=True),
-        )
 
         resp = await client.patch(
             "/references/v1/foo",
@@ -523,21 +518,16 @@ class TestEdit:
     async def test_insufficient_rights(
         self,
         fake: DataFaker,
-        mocker,
         resp_is,
         mongo: Mongo,
         pg: AsyncEngine,
         spawn_client: ClientSpawner,
         static_time,
     ):
+        """A user with no rights on the reference cannot edit it."""
         client = await spawn_client(authenticated=True)
 
         await self._insert_reference(fake, mongo, pg, static_time)
-
-        mocker.patch(
-            "virtool.references.api.check_right",
-            make_mocked_coro(return_value=False),
-        )
 
         resp = await client.patch(
             "/references/v1/foo",
@@ -548,16 +538,11 @@ class TestEdit:
 
     async def test_not_found(
         self,
-        mocker,
         resp_is,
         spawn_client: ClientSpawner,
     ):
+        """Editing a reference that does not exist returns 404."""
         client = await spawn_client(authenticated=True)
-
-        mocker.patch(
-            "virtool.references.api.check_right",
-            make_mocked_coro(return_value=True),
-        )
 
         resp = await client.patch(
             "/references/v1/foo",
@@ -1645,15 +1630,9 @@ class TestArchivedReferenceRejectsWrites:
     async def test_patch(
         self,
         archived_ref: tuple[VirtoolTestClient, str],
-        mocker,
         resp_is: RespIs,
     ):
         client, ref_id = archived_ref
-
-        mocker.patch(
-            "virtool.references.api.check_right",
-            make_mocked_coro(return_value=True),
-        )
 
         resp = await client.patch(f"/references/v1/{ref_id}", {"name": "Bar"})
 
@@ -1662,15 +1641,9 @@ class TestArchivedReferenceRejectsWrites:
     async def test_create_otu(
         self,
         archived_ref: tuple[VirtoolTestClient, str],
-        mocker,
         resp_is: RespIs,
     ):
         client, ref_id = archived_ref
-
-        mocker.patch(
-            "virtool.references.db.check_right",
-            make_mocked_coro(return_value=True),
-        )
 
         resp = await client.post(
             f"/references/v1/{ref_id}/otus",
@@ -1682,15 +1655,9 @@ class TestArchivedReferenceRejectsWrites:
     async def test_create_index(
         self,
         archived_ref: tuple[VirtoolTestClient, str],
-        mocker,
         resp_is: RespIs,
     ):
         client, ref_id = archived_ref
-
-        mocker.patch(
-            "virtool.references.db.check_right",
-            make_mocked_coro(return_value=True),
-        )
 
         resp = await client.post(f"/references/v1/{ref_id}/indexes", {})
 

@@ -1,4 +1,3 @@
-import aiohttp.web
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 from pytest_mock import MockerFixture
@@ -6,7 +5,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
 from virtool.mongo.core import Mongo
-from virtool.references.sql import SQLReference
+from virtool.references.sql import (
+    SQLReference,
+    SQLReferenceGroup,
+    SQLReferenceUser,
+)
 
 
 async def seed_reference(
@@ -63,6 +66,28 @@ async def seed_reference(
 
         reference_pk = reference.id
 
+        for member in fields.get("users", []):
+            session.add(
+                SQLReferenceUser(
+                    reference_id=reference_pk,
+                    user_id=member["id"],
+                    build=member.get("build", False),
+                    modify=member.get("modify", False),
+                    modify_otu=member.get("modify_otu", False),
+                ),
+            )
+
+        for group in fields.get("groups", []):
+            session.add(
+                SQLReferenceGroup(
+                    reference_id=reference_pk,
+                    group_id=group["id"],
+                    build=group.get("build", False),
+                    modify=group.get("modify", False),
+                    modify_otu=group.get("modify_otu", False),
+                ),
+            )
+
         await session.commit()
 
     return reference_pk
@@ -71,13 +96,11 @@ async def seed_reference(
 @pytest.fixture(params=[True, False])
 def check_ref_right(mocker: MockerFixture, request):
     mock = mocker.patch(
-        "virtool.references.db.check_right",
+        "virtool.references.data.ReferencesData.check_right",
         make_mocked_coro(request.param),
     )
 
     mock.__bool__ = lambda x: request.param
-
-    mock.called_with_req = lambda: isinstance(mock.call_args[0][0], aiohttp.web.Request)
 
     return mock
 

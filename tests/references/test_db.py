@@ -6,16 +6,14 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
-from virtool.api.client import UserClient
 from virtool.data.errors import ResourceNotFoundError
+from virtool.data.layer import DataLayer
 from virtool.data.topg import compose_legacy_id_subquery
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.models.enums import HistoryMethod
-from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.references.db import (
-    check_right,
     compose_reference_ids_match,
     create_document,
     get_manifest,
@@ -104,57 +102,48 @@ async def seed_reference_rights(
         return reference_id
 
 
-def make_client(mocker, *, user_id, groups, admin=False) -> UserClient:
-    client = mocker.Mock(spec=UserClient)
-    client.administrator_role = AdministratorRole.FULL if admin else None
-    client.user_id = user_id
-    client.groups = groups
-    return client
-
-
 class TestCheckRight:
     """Authorization reads resolve rights from the Postgres child tables."""
 
     async def test_administrator_short_circuit(
         self,
-        mock_req,
-        mocker,
-        pg: AsyncEngine,
+        data_layer: DataLayer,
         fake: DataFaker,
     ):
         """A full administrator is granted any right without a database lookup."""
         user = await fake.users.create()
 
-        mock_req.app = {"pg": pg}
-        mock_req["client"] = make_client(
-            mocker,
-            user_id=user.id,
-            groups=[],
-            admin=True,
+        assert (
+            await data_layer.references.check_right(
+                "unseeded_reference",
+                "modify",
+                user_id=user.id,
+                group_ids=[],
+                administrator=True,
+            )
+            is True
         )
-
-        assert await check_right(mock_req, "unseeded_reference", "modify") is True
 
     async def test_reference_not_found(
         self,
-        mock_req,
-        mocker,
-        pg: AsyncEngine,
+        data_layer: DataLayer,
         fake: DataFaker,
     ):
         """A missing reference raises ``ResourceNotFoundError``."""
         user = await fake.users.create()
 
-        mock_req.app = {"pg": pg}
-        mock_req["client"] = make_client(mocker, user_id=user.id, groups=[])
-
         with pytest.raises(ResourceNotFoundError):
-            await check_right(mock_req, "missing_reference", "read")
+            await data_layer.references.check_right(
+                "missing_reference",
+                "read",
+                user_id=user.id,
+                group_ids=[],
+                administrator=False,
+            )
 
     async def test_read_granted_by_user_membership(
         self,
-        mock_req,
-        mocker,
+        data_layer: DataLayer,
         pg: AsyncEngine,
         fake: DataFaker,
         static_time,
@@ -171,15 +160,20 @@ class TestCheckRight:
             users=[(member.id, RIGHTS_NONE)],
         )
 
-        mock_req.app = {"pg": pg}
-        mock_req["client"] = make_client(mocker, user_id=member.id, groups=[])
-
-        assert await check_right(mock_req, "ref_read_user", "read") is True
+        assert (
+            await data_layer.references.check_right(
+                "ref_read_user",
+                "read",
+                user_id=member.id,
+                group_ids=[],
+                administrator=False,
+            )
+            is True
+        )
 
     async def test_read_granted_by_group_membership(
         self,
-        mock_req,
-        mocker,
+        data_layer: DataLayer,
         pg: AsyncEngine,
         fake: DataFaker,
         static_time,
@@ -197,19 +191,20 @@ class TestCheckRight:
             groups=[(group.id, RIGHTS_NONE)],
         )
 
-        mock_req.app = {"pg": pg}
-        mock_req["client"] = make_client(
-            mocker,
-            user_id=member.id,
-            groups=[group.id],
+        assert (
+            await data_layer.references.check_right(
+                "ref_read_group",
+                "read",
+                user_id=member.id,
+                group_ids=[group.id],
+                administrator=False,
+            )
+            is True
         )
-
-        assert await check_right(mock_req, "ref_read_group", "read") is True
 
     async def test_read_denied_for_non_member(
         self,
-        mock_req,
-        mocker,
+        data_layer: DataLayer,
         pg: AsyncEngine,
         fake: DataFaker,
         static_time,
@@ -225,15 +220,20 @@ class TestCheckRight:
             created_at=static_time.datetime,
         )
 
-        mock_req.app = {"pg": pg}
-        mock_req["client"] = make_client(mocker, user_id=outsider.id, groups=[])
-
-        assert await check_right(mock_req, "ref_read_denied", "read") is False
+        assert (
+            await data_layer.references.check_right(
+                "ref_read_denied",
+                "read",
+                user_id=outsider.id,
+                group_ids=[],
+                administrator=False,
+            )
+            is False
+        )
 
     async def test_right_granted_by_user_entry(
         self,
-        mock_req,
-        mocker,
+        data_layer: DataLayer,
         pg: AsyncEngine,
         fake: DataFaker,
         static_time,
@@ -250,15 +250,20 @@ class TestCheckRight:
             users=[(member.id, RIGHTS_MODIFY_OTU)],
         )
 
-        mock_req.app = {"pg": pg}
-        mock_req["client"] = make_client(mocker, user_id=member.id, groups=[])
-
-        assert await check_right(mock_req, "ref_user_right", "modify_otu") is True
+        assert (
+            await data_layer.references.check_right(
+                "ref_user_right",
+                "modify_otu",
+                user_id=member.id,
+                group_ids=[],
+                administrator=False,
+            )
+            is True
+        )
 
     async def test_right_denied_when_no_entry_carries_it(
         self,
-        mock_req,
-        mocker,
+        data_layer: DataLayer,
         pg: AsyncEngine,
         fake: DataFaker,
         static_time,
@@ -275,15 +280,20 @@ class TestCheckRight:
             users=[(member.id, RIGHTS_NONE)],
         )
 
-        mock_req.app = {"pg": pg}
-        mock_req["client"] = make_client(mocker, user_id=member.id, groups=[])
-
-        assert await check_right(mock_req, "ref_right_denied", "modify_otu") is False
+        assert (
+            await data_layer.references.check_right(
+                "ref_right_denied",
+                "modify_otu",
+                user_id=member.id,
+                group_ids=[],
+                administrator=False,
+            )
+            is False
+        )
 
     async def test_right_granted_by_group_when_user_entry_lacks_it(
         self,
-        mock_req,
-        mocker,
+        data_layer: DataLayer,
         pg: AsyncEngine,
         fake: DataFaker,
         static_time,
@@ -306,19 +316,20 @@ class TestCheckRight:
             groups=[(group.id, RIGHTS_MODIFY_OTU)],
         )
 
-        mock_req.app = {"pg": pg}
-        mock_req["client"] = make_client(
-            mocker,
-            user_id=member.id,
-            groups=[group.id],
+        assert (
+            await data_layer.references.check_right(
+                "ref_group_wins",
+                "modify_otu",
+                user_id=member.id,
+                group_ids=[group.id],
+                administrator=False,
+            )
+            is True
         )
-
-        assert await check_right(mock_req, "ref_group_wins", "modify_otu") is True
 
     async def test_reference_matched_by_integer_pk(
         self,
-        mock_req,
-        mocker,
+        data_layer: DataLayer,
         pg: AsyncEngine,
         fake: DataFaker,
         static_time,
@@ -335,20 +346,25 @@ class TestCheckRight:
             users=[(member.id, RIGHTS_NONE)],
         )
 
-        mock_req.app = {"pg": pg}
-        mock_req["client"] = make_client(mocker, user_id=member.id, groups=[])
+        assert (
+            await data_layer.references.check_right(
+                reference_pk,
+                "read",
+                user_id=member.id,
+                group_ids=[],
+                administrator=False,
+            )
+            is True
+        )
 
-        assert await check_right(mock_req, reference_pk, "read") is True
-
-    async def test_job_client_denied(
+    async def test_client_without_user_denied(
         self,
-        mock_req,
-        mocker,
+        data_layer: DataLayer,
         pg: AsyncEngine,
         fake: DataFaker,
         static_time,
     ):
-        """A client without a user id or groups is denied without erroring."""
+        """A client with no user id or groups is denied without erroring."""
         owner = await fake.users.create()
 
         await seed_reference_rights(
@@ -358,10 +374,16 @@ class TestCheckRight:
             created_at=static_time.datetime,
         )
 
-        mock_req.app = {"pg": pg}
-        mock_req["client"] = make_client(mocker, user_id=None, groups=[])
-
-        assert await check_right(mock_req, "ref_job_client", "read") is False
+        assert (
+            await data_layer.references.check_right(
+                "ref_job_client",
+                "read",
+                user_id=None,
+                group_ids=[],
+                administrator=False,
+            )
+            is False
+        )
 
 
 class TestComposeReferenceIdsMatch:
