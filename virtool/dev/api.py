@@ -18,8 +18,9 @@ async def dev(request):
         layer = get_data_from_app(app)
         mongo = get_mongo_from_app(app)
         pg = app["pg"]
+        storage = app["storage"]
 
-        fake = DataFaker(layer, mongo, pg)
+        fake = DataFaker(layer, mongo, pg, storage)
 
         user = await fake.users.create()
         upload = await fake.uploads.create(
