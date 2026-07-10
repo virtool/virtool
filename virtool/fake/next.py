@@ -3,7 +3,7 @@
 import asyncio
 import datetime
 import gzip
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Generator
 from pathlib import Path
 
 import arrow
@@ -42,6 +42,11 @@ from virtool.otus.oas import CreateOTURequest
 from virtool.references.db import create_document, write_legacy_reference
 from virtool.references.models import Reference, ReferenceDataType
 from virtool.references.tasks import CloneReferenceTask
+from virtool.samples.files import create_reads_file
+from virtool.samples.models import Sample
+from virtool.samples.oas import CreateSampleRequest
+from virtool.samples.utils import sample_file_key, sample_storage_id
+from virtool.storage.protocol import STORAGE_CHUNK_SIZE, StorageBackend
 from virtool.subtractions.models import Subtraction
 from virtool.subtractions.oas import (
     CreateSubtractionRequest,
@@ -93,6 +98,60 @@ async def gzip_file_chunker(path: Path) -> AsyncGenerator[bytearray]:
     await task
 
 
+async def _stream_reads_file(path: Path) -> AsyncGenerator[bytes]:
+    with path.open("rb") as f:
+        while chunk := f.read(STORAGE_CHUNK_SIZE):
+            yield chunk
+
+
+async def copy_reads_file(
+    storage: StorageBackend,
+    file_path: Path,
+    filename: str,
+    storage_id: str,
+) -> None:
+    """Copy a reads file into a sample's storage prefix."""
+    await storage.write(
+        sample_file_key(storage_id, filename), _stream_reads_file(file_path)
+    )
+
+
+def _fake_composition(faker: Faker) -> Generator[int]:
+    left = 100
+    sent = 0
+
+    while left > 0 and sent < 4:
+        i = faker.pyint(1, 97)
+        yield i
+        sent += 1
+        left -= i
+
+    while sent < 4:
+        yield 1
+        sent += 1
+
+
+def create_fake_quality(faker: Faker) -> dict:
+    """Generate a fake sample quality payload for finalization."""
+    return {
+        "count": faker.pyint(min_value=10000, max_value=10000000000),
+        "encoding": "Sanger / Illumina 1.9\n",
+        "length": [faker.pyint(10, 100), faker.pyint(10, 100)],
+        "gc": faker.pyint(0, 100),
+        "bases": [[faker.pyint(31, 32) for _ in range(5)] for _ in range(5)],
+        "sequences": faker.pylist(25, value_types=[int]),
+        "composition": [
+            list(_fake_composition(faker)) for _ in range(faker.pyint(4, 8))
+        ],
+        "hold": faker.pybool(),
+        "group_read": faker.pybool(),
+        "group_write": faker.pybool(),
+        "all_read": faker.pybool(),
+        "all_write": faker.pybool(),
+        "paired": faker.pybool(),
+    }
+
+
 class VirtoolProvider(BaseProvider):
     def mongo_id(self):
         return self.random_letters(8)
@@ -108,10 +167,17 @@ class VirtoolProvider(BaseProvider):
 
 
 class DataFaker:
-    def __init__(self, layer: DataLayer, mongo: Mongo, pg: AsyncEngine):
+    def __init__(
+        self,
+        layer: DataLayer,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        storage: StorageBackend,
+    ):
         self.layer = layer
         self.mongo = mongo
         self.pg = pg
+        self.storage = storage
 
         self.faker = Faker()
         self.faker.seed_instance(0)
@@ -131,6 +197,7 @@ class DataFaker:
         self.labels = LabelsFakerDomain(self)
         self.otus = OTUsFakerDomain(self)
         self.references = ReferencesFakerDomain(self)
+        self.samples = SamplesFakerDomain(self)
         self.subtractions = SubtractionFakerDomain(self)
         self.tasks = TasksFakerDomain(self)
         self.users = UsersFakerDomain(self)
@@ -141,10 +208,12 @@ class DataFaker:
 
 class DataFakerDomain:
     def __init__(self, data_faker: DataFaker):
+        self._data_faker = data_faker
         self._faker = data_faker.faker
         self._layer: DataLayer = data_faker.layer
         self._mongo = data_faker.mongo
         self._pg = data_faker.pg
+        self._storage = data_faker.storage
 
         self.history = []
 
@@ -551,6 +620,74 @@ class UsersFakerDomain(DataFakerDomain):
             )
 
         return user
+
+
+class SamplesFakerDomain(DataFakerDomain):
+    model = Sample
+
+    async def create(
+        self,
+        user: User,
+        uploads: list[Upload] | None = None,
+        paired: bool = False,
+        ready: bool = False,
+    ) -> Sample:
+        """Create a fake sample through the samples data layer.
+
+        When ``uploads`` is omitted, one or two read uploads are generated
+        automatically and ``paired`` selects between single- and paired-end. When
+        ``uploads`` is passed, ``paired`` is ignored and derived from its length.
+
+        When ``ready`` is ``True``, the read files are copied into storage and the
+        sample is finalized so it is returned in a completed state.
+
+        :param user: the user creating the sample
+        :param uploads: the read uploads to attach; auto-generated when omitted
+        :param paired: whether to auto-generate two uploads instead of one
+        :param ready: whether to finalize the sample
+        :return: the created sample
+        """
+        if uploads is None:
+            uploads = [
+                await self._data_faker.uploads.create(user)
+                for _ in range(2 if paired else 1)
+            ]
+
+        paired = len(uploads) == 2
+
+        sample = await self._layer.samples.create(
+            CreateSampleRequest(
+                name=self._faker.unique.word().capitalize(),
+                files=[upload.id for upload in uploads],
+            ),
+            user.id,
+        )
+
+        if not ready:
+            return sample
+
+        storage_id = sample_storage_id(sample.id, None)
+
+        filenames = ["reads_1.fq.gz", "reads_2.fq.gz"] if paired else ["reads_1.fq.gz"]
+
+        for filename in filenames:
+            file_path = example_path / "sample" / filename
+
+            await copy_reads_file(self._storage, file_path, filename, storage_id)
+
+            await create_reads_file(
+                self._pg,
+                file_path.stat().st_size,
+                filename,
+                filename,
+                sample.id,
+                storage_id,
+            )
+
+        return await self._layer.samples.finalize(
+            sample.id,
+            create_fake_quality(self._faker),
+        )
 
 
 class SubtractionFakerDomain(DataFakerDomain):

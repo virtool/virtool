@@ -13,20 +13,20 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
+import virtool.utils
 from tests.fixtures.client import ClientSpawner, JobClientSpawner, VirtoolTestClient
-from tests.samples.utils import add_sample_uploads
 from virtool.analyses.sql import SQLAnalysis, SQLAnalysisSubtraction
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
-from virtool.jobs.models import JobState
+from virtool.jobs.models import CreateJobClaimRequest, JobState, Workflow
+from virtool.jobs.pg import SQLJob
 from virtool.models.enums import LibraryType, Permission
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.references.models import Reference
 from virtool.references.sql import SQLReference
-from virtool.samples.fake import create_fake_sample
-from virtool.samples.models import WorkflowState
+from virtool.samples.models import Sample, WorkflowState
 from virtool.samples.sql import (
     SQLLegacySample,
     SQLLegacySampleLabel,
@@ -1229,87 +1229,97 @@ class TestFinalize:
         await resp_is.invalid_input(resp, {"quality": ["required field"]})
 
 
+async def _drive_sample_job(app, sample: Sample, state: JobState) -> None:
+    """Drive a sample's real creation job to ``state`` via the data layer.
+
+    ``SamplesData.create()`` creates the ``create_sample`` job in ``pending`` state
+    and wires it to the sample. This transitions that same job — no second job is
+    created and no Mongo write is needed.
+    """
+    jobs = get_data_from_app(app).jobs
+    job_id = sample.job.id
+
+    if state is JobState.PENDING:
+        return
+
+    if state is JobState.CANCELLED:
+        await jobs.cancel(job_id)
+        return
+
+    if state is JobState.FAILED:
+        async with AsyncSession(app["pg"]) as session:
+            await session.execute(
+                update(SQLJob)
+                .where(SQLJob.id == job_id)
+                .values(
+                    state=JobState.FAILED.value,
+                    finished_at=virtool.utils.timestamp(),
+                ),
+            )
+            await session.commit()
+        return
+
+    await jobs.claim(
+        Workflow.CREATE_SAMPLE,
+        CreateJobClaimRequest(
+            runner_id="fake-runner",
+            mem=1.0,
+            cpu=1.0,
+            image="virtool/fake:latest",
+            runtime_version="0.0.0",
+            workflow_version="0.0.0",
+            steps=[],
+        ),
+    )
+
+    if state is JobState.SUCCEEDED:
+        await jobs.finish(job_id)
+
+
 class TestDelete:
     async def setup_unfinalized_sample_with_job(
         self,
         job_state: JobState,
         fake: DataFaker,
-        mongo: Mongo,
         spawn_client: ClientSpawner,
-        static_time,
     ) -> tuple[VirtoolTestClient, int]:
-        """Helper to create an unfinalized sample with a job in a specific state."""
-        client = await spawn_client(authenticated=True)
+        """Create an unfinalized sample whose creation job is in ``job_state``."""
+        client = await spawn_client(administrator=True, authenticated=True)
 
         user = await fake.users.create()
 
-        await create_fake_sample(client.app, "test", user.id, finalized=False)
+        sample = await fake.samples.create(user, ready=False)
 
-        job = await fake.jobs.create(user, state=job_state, workflow="create_sample")
+        await _drive_sample_job(client.app, sample, job_state)
 
-        await mongo.samples.update_one(
-            {"_id": "test"},
-            {"$set": {"job": {"id": job.id}}},
-        )
-
-        async with AsyncSession(client.app["pg"]) as session:
-            await session.execute(
-                update(SQLLegacySample)
-                .where(SQLLegacySample.legacy_id == "test")
-                .values(job_id=job.id),
-            )
-            await session.commit()
-
-            sample_id = (
-                await session.execute(
-                    select(SQLLegacySample.id).where(
-                        SQLLegacySample.legacy_id == "test",
-                    ),
-                )
-            ).scalar_one()
-
-        return client, sample_id
+        return client, sample.id
 
     async def test_finalized(
         self,
         fake: DataFaker,
-        pg: AsyncEngine,
         spawn_client: ClientSpawner,
     ):
         """Test that finalized samples can be deleted."""
-        client = await spawn_client(authenticated=True)
+        client = await spawn_client(administrator=True, authenticated=True)
 
         user = await fake.users.create()
 
-        await create_fake_sample(client.app, "test", user.id, finalized=True)
+        sample = await fake.samples.create(user, ready=True)
 
-        async with AsyncSession(pg) as session:
-            sample_id = (
-                await session.execute(
-                    select(SQLLegacySample.id).where(
-                        SQLLegacySample.legacy_id == "test",
-                    ),
-                )
-            ).scalar_one()
-
-        resp = await client.delete(f"/samples/{sample_id}")
+        resp = await client.delete(f"/samples/{sample.id}")
 
         assert resp.status == 204
 
     async def test_unfinalized_with_failed_job(
         self,
         fake: DataFaker,
-        mongo: Mongo,
         spawn_client: ClientSpawner,
-        static_time,
     ):
         """Test that unfinalized samples with failed jobs can be deleted."""
         client, sample_id = await self.setup_unfinalized_sample_with_job(
             JobState.FAILED,
             fake,
-            mongo,
             spawn_client,
-            static_time,
         )
 
         resp = await client.delete(f"/samples/{sample_id}")
@@ -1319,17 +1329,13 @@ class TestDelete:
     async def test_unfinalized_with_cancelled_job(
         self,
         fake: DataFaker,
-        mongo: Mongo,
         spawn_client: ClientSpawner,
-        static_time,
     ):
         """Test that unfinalized samples with cancelled jobs can be deleted."""
         client, sample_id = await self.setup_unfinalized_sample_with_job(
             JobState.CANCELLED,
             fake,
-            mongo,
             spawn_client,
-            static_time,
         )
 
         resp = await client.delete(f"/samples/{sample_id}")
@@ -1339,17 +1345,13 @@ class TestDelete:
     async def test_unfinalized_with_succeeded_job(
         self,
         fake: DataFaker,
-        mongo: Mongo,
         spawn_client: ClientSpawner,
-        static_time,
     ):
         """Test that unfinalized samples with succeeded jobs can be deleted."""
         client, sample_id = await self.setup_unfinalized_sample_with_job(
             JobState.SUCCEEDED,
             fake,
-            mongo,
             spawn_client,
-            static_time,
         )
 
         resp = await client.delete(f"/samples/{sample_id}")
@@ -1359,28 +1361,22 @@ class TestDelete:
     async def test_releases_reserved_uploads(
         self,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         spawn_client: ClientSpawner,
-        static_time,
     ):
         """Deleting a sample through the web API releases its reserved uploads."""
-        client, sample_id = await self.setup_unfinalized_sample_with_job(
-            JobState.FAILED,
-            fake,
-            mongo,
-            spawn_client,
-            static_time,
-        )
+        client = await spawn_client(administrator=True, authenticated=True)
 
-        upload = await fake.uploads.create(
-            user=await fake.users.create(),
-            reserved=True,
-        )
+        user = await fake.users.create()
+        upload = await fake.uploads.create(user=user)
 
-        await add_sample_uploads(mongo, pg, "test", [upload.id])
+        sample = await fake.samples.create(user, uploads=[upload], ready=False)
 
-        resp = await client.delete(f"/samples/{sample_id}")
+        assert (await get_row_by_id(pg, SQLUpload, upload.id)).reserved is True
+
+        await _drive_sample_job(client.app, sample, JobState.FAILED)
+
+        resp = await client.delete(f"/samples/{sample.id}")
 
         assert resp.status == 204
 
@@ -1390,17 +1386,13 @@ class TestDelete:
     async def test_unfinalized_with_running_job(
         self,
         fake: DataFaker,
-        mongo: Mongo,
         spawn_client: ClientSpawner,
-        static_time,
     ):
         """Test that unfinalized samples with running jobs cannot be deleted."""
         client, sample_id = await self.setup_unfinalized_sample_with_job(
             JobState.RUNNING,
             fake,
-            mongo,
             spawn_client,
-            static_time,
         )
 
         resp = await client.delete(f"/samples/{sample_id}")
@@ -1419,9 +1411,12 @@ class TestDelete:
 
         user = await fake.users.create()
 
-        await create_fake_sample(client.app, "test", user.id, finalized=finalized)
+        sample = await fake.samples.create(user, ready=finalized)
 
-        resp = await client.delete("/samples/test")
+        if not finalized:
+            await _drive_sample_job(client.app, sample, JobState.CANCELLED)
+
+        resp = await client.delete(f"/samples/{sample.id}")
 
         if finalized:
             assert resp.status == 400
@@ -1629,17 +1624,8 @@ class TestAnalyze:
 
     @staticmethod
     async def _insert_sample(client: VirtoolTestClient, fake: DataFaker) -> int:
-        user = await fake.users.create()
-        await create_fake_sample(client.app, "test", user.id, finalized=True)
-
-        async with AsyncSession(client.app["pg"]) as session:
-            return (
-                await session.execute(
-                    select(SQLLegacySample.id).where(
-                        SQLLegacySample.legacy_id == "test",
-                    ),
-                )
-            ).scalar_one()
+        owner = await get_data_from_app(client.app).users.get(client.user.id)
+        return (await fake.samples.create(owner, ready=True)).id
 
     @staticmethod
     async def _post(client: VirtoolTestClient, ref_id: str, sample_id: int):
@@ -2131,54 +2117,34 @@ class TestJobRemove:
     async def setup_sample(
         self,
         fake: DataFaker,
-        mongo: Mongo,
         spawn_job_client: JobClientSpawner,
         finalized: bool,
         job_state: JobState,
     ) -> tuple[VirtoolTestClient, int]:
-        """Create a sample with a creation job in ``job_state`` and return its id."""
+        """Create a sample with a creation job in ``job_state`` and return its id.
+
+        When ``finalized`` is ``True`` the sample is ready and deletion is blocked by
+        the ready check before job state matters, so the job is left untouched.
+        """
         client = await spawn_job_client(authenticated=True)
 
         user = await fake.users.create()
 
-        await create_fake_sample(client.app, "test", user.id, finalized=finalized)
+        sample = await fake.samples.create(user, ready=finalized)
 
-        job = await fake.jobs.create(user, state=job_state, workflow="create_sample")
+        if not finalized:
+            await _drive_sample_job(client.app, sample, job_state)
 
-        await mongo.samples.update_one(
-            {"_id": "test"},
-            {"$set": {"job": {"id": job.id}}},
-        )
-
-        async with AsyncSession(client.app["pg"]) as session:
-            await session.execute(
-                update(SQLLegacySample)
-                .where(SQLLegacySample.legacy_id == "test")
-                .values(job_id=job.id),
-            )
-            await session.commit()
-
-            sample_id = (
-                await session.execute(
-                    select(SQLLegacySample.id).where(
-                        SQLLegacySample.legacy_id == "test",
-                    ),
-                )
-            ).scalar_one()
-
-        return client, sample_id
+        return client, sample.id
 
     async def test_ok(
         self,
         fake: DataFaker,
-        mongo: Mongo,
         spawn_job_client: JobClientSpawner,
-        static_time,
     ):
         """An unfinalized sample addressed by integer id can be removed."""
         client, sample_id = await self.setup_sample(
             fake,
-            mongo,
             spawn_job_client,
             finalized=False,
             job_state=JobState.FAILED,
@@ -2191,14 +2157,11 @@ class TestJobRemove:
     async def test_finalized(
         self,
         fake: DataFaker,
-        mongo: Mongo,
         resp_is,
         spawn_job_client: JobClientSpawner,
-        static_time,
     ):
         client, sample_id = await self.setup_sample(
             fake,
-            mongo,
             spawn_job_client,
             finalized=True,
             job_state=JobState.SUCCEEDED,
@@ -2211,14 +2174,11 @@ class TestJobRemove:
     async def test_active_job(
         self,
         fake: DataFaker,
-        mongo: Mongo,
         resp_is,
         spawn_job_client: JobClientSpawner,
-        static_time,
     ):
         client, sample_id = await self.setup_sample(
             fake,
-            mongo,
             spawn_job_client,
             finalized=False,
             job_state=JobState.RUNNING,
