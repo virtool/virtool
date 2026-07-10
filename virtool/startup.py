@@ -15,7 +15,6 @@ from virtool.hmm.tasks import HMMRefreshTask
 from virtool.jobs.tasks import JobsTimeoutTask
 from virtool.migration.pg import check_data_revision_version
 from virtool.mongo.connect import connect_mongo
-from virtool.mongo.migrate import migrate_status
 from virtool.mongo.utils import get_mongo_from_app
 from virtool.pg.utils import connect_pg
 from virtool.routes import setup_routes
@@ -38,7 +37,6 @@ async def startup_check_db(app: App):
     mongo = get_mongo_from_app(app)
 
     logger.info("checking database")
-    await migrate_status(mongo)
 
     # Make sure the indexes collection exists before later trying to set an compound
     # index on it.
