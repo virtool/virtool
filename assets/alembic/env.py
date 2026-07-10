@@ -13,6 +13,7 @@ from virtool.hmm.sql import SQLHMMStatus
 from virtool.indexes.sql import SQLIndexFile
 from virtool.labels.sql import SQLLabel
 from virtool.messages.sql import SQLInstanceMessage
+from virtool.otus.sql import SQLOTU, SQLSequence
 from virtool.pg.base import Base
 from virtool.references.sql import (
     SQLReference,
@@ -49,11 +50,13 @@ __models__ = (
     SQLInstanceMessage,
     SQLLabel,
     SQLNuVsBlast,
+    SQLOTU,
     SQLReference,
     SQLReferenceGroup,
     SQLReferenceUser,
     SQLSampleArtifact,
     SQLSampleReads,
+    SQLSequence,
     SQLSession,
     SQLSettings,
     SQLSpace,
