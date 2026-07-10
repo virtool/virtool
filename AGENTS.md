@@ -10,11 +10,11 @@ API server using aiohttp, with PostgreSQL and MongoDB backends.
 Tests run in Docker containers with PostgreSQL and MongoDB services.
 
 ```bash
-# Run full test suite
-mise run test
+# Run specific tests, single worker (use for targeted runs)
+mise run test -- tests/account
 
-# Run specific tests with pytest args
-mise run test -- tests/account -n4
+# Run the full suite in parallel (nproc/2 workers)
+mise run test:multi
 
 # Update snapshots
 mise run test -- --su
@@ -28,6 +28,18 @@ mise run test:shell
 # Stop test environment
 mise run test:down
 ```
+
+The Docker test stack is **shared across all git worktrees** — the compose
+project name is pinned to `virtool`, so every worktree binds the same container
+and the same `/app` mount. To stop concurrent runs from clobbering each other,
+`test` and `test:multi` serialize stack access with an OS-level `flock` on
+`/tmp/virtool-test.lock`; a waiting run queues behind the active one instead of
+recreating the container.
+
+Use `test` (single worker) for targeted runs and `test:multi` for the full
+suite. Cross-worktree database-name collisions (`vt_test_{worker_id}`,
+`test/{worker_id}/...`) are tracked separately and only bite when runs overlap,
+which the lock now prevents.
 
 We use Syrupy-based snapshot testing.
 
