@@ -9,7 +9,7 @@ from virtool.fake.next import DataFaker
 
 
 @pytest.fixture
-async def fake_hmm_status(mongo, seed_pg_hmm_status, fake: DataFaker, static_time):
+async def fake_hmm_status(seed_hmm_status, fake: DataFaker, static_time):
     user = await fake.users.create()
 
     document = {
@@ -59,8 +59,7 @@ async def fake_hmm_status(mongo, seed_pg_hmm_status, fake: DataFaker, static_tim
         "errors": [],
     }
 
-    await mongo.status.insert_one(document)
-    await seed_pg_hmm_status(document)
+    await seed_hmm_status(document)
 
     return user
 

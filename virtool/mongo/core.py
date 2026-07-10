@@ -164,7 +164,6 @@ class Mongo:
 
         self.analyses = self.bind_collection("analyses")
         self.history = self.bind_collection("history")
-        self.hmm = self.bind_collection("hmm")
         self.indexes = self.bind_collection("indexes")
         self.jobs = self.bind_collection("jobs")
         self.labels = self.bind_collection("labels")
@@ -173,7 +172,6 @@ class Mongo:
         self.references = self.bind_collection("references")
         self.samples = self.bind_collection("samples")
         self.sequences = self.bind_collection("sequences")
-        self.status = self.bind_collection("status")
         self.subtraction = self.bind_collection("subtraction")
 
     def bind_collection(self, name: str) -> Collection:
