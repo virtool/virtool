@@ -21,8 +21,8 @@ from virtool.data.topg import (
 )
 from virtool.data.transforms import apply_transforms
 from virtool.groups.pg import SQLGroup
-from virtool.history.db import bulk_delete_history, bulk_insert_history
-from virtool.history.sql import SQLLegacyHistory
+from virtool.history.db import bulk_insert_history
+from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.models.enums import HistoryMethod
 from virtool.models.roles import AdministratorRole
 from virtool.otus.db import bulk_insert_otu_rows, bulk_insert_sequence_rows
@@ -717,12 +717,7 @@ async def populate_insert_only_reference(
                 tg.create_task(mongo.otus.insert_many(chunk_otus, None))
                 tg.create_task(mongo.sequences.insert_many(chunk_sequences, None))
     except Exception:
-        await _rollback_insert_only_reference(
-            mongo,
-            pg,
-            reference_id,
-            [insertion.history.id for insertion in insertions],
-        )
+        await _rollback_insert_only_reference(mongo, pg, reference_id)
 
         raise
 
@@ -731,24 +726,17 @@ async def _rollback_insert_only_reference(
     mongo: "Mongo",
     pg: AsyncEngine,
     reference_id: str,
-    change_ids: list[str],
 ) -> None:
     """Undo a partially completed bulk reference populate.
 
-    Removes every OTU, sequence and history row already committed for the reference
-    from both Mongo and Postgres, then deletes the reference itself. The OTU rows
-    are deleted before the reference because ``legacy_otus.reference_id`` has no
-    cascade; the sequence rows cascade from their OTUs.
+    Deletes every history, OTU, sequence and rights row committed for the reference
+    and the reference itself in a single Postgres transaction, then deletes the
+    matching Mongo documents. Every Postgres delete is scoped to the reference's
+    primary key, so the cleanup is atomic and can never touch history rows that
+    belong to another reference. The OTU rows are deleted before the reference
+    because ``legacy_otus.reference_id`` has no cascade; the sequence rows cascade
+    from their OTUs.
     """
-    reference_id_match = await compose_reference_id_match(pg, reference_id)
-
-    await asyncio.gather(
-        mongo.sequences.delete_many({"reference.id": reference_id_match}),
-        mongo.otus.delete_many({"reference.id": reference_id_match}),
-    )
-
-    await bulk_delete_history(pg, change_ids)
-
     async with AsyncSession(pg) as session:
         sql_reference_id = (
             await session.execute(
@@ -759,6 +747,20 @@ async def _rollback_insert_only_reference(
         ).scalar_one_or_none()
 
         if sql_reference_id is not None:
+            history_ids = select(SQLLegacyHistory.id).where(
+                SQLLegacyHistory.reference_id == sql_reference_id,
+            )
+
+            await session.execute(
+                delete(SQLLegacyHistoryDiff).where(
+                    SQLLegacyHistoryDiff.history_id.in_(history_ids),
+                ),
+            )
+            await session.execute(
+                delete(SQLLegacyHistory).where(
+                    SQLLegacyHistory.reference_id == sql_reference_id,
+                ),
+            )
             await session.execute(
                 delete(SQLOTU).where(SQLOTU.reference_id == sql_reference_id),
             )
@@ -777,3 +779,10 @@ async def _rollback_insert_only_reference(
             )
 
         await session.commit()
+
+    reference_id_match = await compose_reference_id_match(pg, reference_id)
+
+    await asyncio.gather(
+        mongo.sequences.delete_many({"reference.id": reference_id_match}),
+        mongo.otus.delete_many({"reference.id": reference_id_match}),
+    )
