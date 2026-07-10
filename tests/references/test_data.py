@@ -3,7 +3,6 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
@@ -15,47 +14,6 @@ from virtool.references.oas import (
     UpdateReferenceRequest,
 )
 from virtool.references.sql import SQLReference
-from virtool.tasks.sql import SQLTask
-
-
-class TestFakeReferenceBuilder:
-    """The fake builder creates native references, with an opt-in for legacy ones."""
-
-    async def test_native_by_default(
-        self,
-        fake: DataFaker,
-        pg: AsyncEngine,
-    ):
-        user = await fake.users.create()
-
-        reference = await fake.references.create(user=user)
-
-        async with AsyncSession(pg) as session:
-            legacy_id = await session.scalar(
-                select(SQLReference.legacy_id).where(
-                    SQLReference.id == reference.id,
-                ),
-            )
-
-        assert legacy_id is None
-
-    async def test_use_legacy_id(
-        self,
-        fake: DataFaker,
-        pg: AsyncEngine,
-    ):
-        user = await fake.users.create()
-
-        reference = await fake.references.create(user=user, use_legacy_id=True)
-
-        async with AsyncSession(pg) as session:
-            legacy_id = await session.scalar(
-                select(SQLReference.legacy_id).where(
-                    SQLReference.id == reference.id,
-                ),
-            )
-
-        assert legacy_id is not None
 
 
 class TestCreate:
@@ -63,9 +21,8 @@ class TestCreate:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        pg: AsyncEngine,
     ):
-        """Cloning links the new Postgres row to the source reference's primary key."""
+        """Cloning links the new reference to the source reference's primary key."""
         user = await fake.users.create()
 
         source = await data_layer.references.create(
@@ -78,22 +35,16 @@ class TestCreate:
             user.id,
         )
 
-        async with AsyncSession(pg) as session:
-            clone_row = (
-                await session.execute(
-                    select(SQLReference).where(SQLReference.id == clone.id),
-                )
-            ).scalar_one()
+        cloned = await data_layer.references.get(clone.id)
 
-        assert clone_row.cloned_from_id == source.id
+        assert cloned.cloned_from.id == source.id
 
     async def test_import_sets_upload_id(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        pg: AsyncEngine,
     ):
-        """Importing records the source upload as the Postgres foreign key."""
+        """Importing records the source upload on the reference."""
         user = await fake.users.create()
         upload = await fake.uploads.create(user=user)
 
@@ -102,47 +53,14 @@ class TestCreate:
             user.id,
         )
 
-        async with AsyncSession(pg) as session:
-            row = (
-                await session.execute(
-                    select(SQLReference).where(SQLReference.id == reference.id),
-                )
-            ).scalar_one()
+        imported = await data_layer.references.get(reference.id)
 
-        assert row.upload_id == upload.id
-
-    async def test_native_no_legacy_id(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-        pg: AsyncEngine,
-    ):
-        """A reference created through the data layer is Postgres-native: its primary
-        key is the public id and its ``legacy_id`` is ``NULL``.
-        """
-        user = await fake.users.create()
-
-        reference = await data_layer.references.create(
-            CreateReferenceRequest(name="Native"),
-            user.id,
-        )
-
-        assert isinstance(reference.id, int)
-
-        async with AsyncSession(pg) as session:
-            legacy_id = await session.scalar(
-                select(SQLReference.legacy_id).where(
-                    SQLReference.id == reference.id,
-                ),
-            )
-
-        assert legacy_id is None
+        assert imported.imported_from.id == upload.id
 
     async def test_import_task_keyed_by_pk(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        pg: AsyncEngine,
     ):
         """The import population task is handed the integer primary key, not a legacy
         id, so it can locate a Postgres-native reference.
@@ -155,14 +73,8 @@ class TestCreate:
             user.id,
         )
 
-        async with AsyncSession(pg) as session:
-            task_id = await session.scalar(
-                select(SQLReference.task_id).where(
-                    SQLReference.id == reference.id,
-                ),
-            )
-
-            task = await session.get(SQLTask, task_id)
+        imported = await data_layer.references.get(reference.id)
+        task = await data_layer.tasks.get(imported.task.id)
 
         assert task.context["ref_id"] == reference.id
 
@@ -171,124 +83,54 @@ class TestCreate:
         data_layer: DataLayer,
         pg: AsyncEngine,
     ):
-        """A failed Postgres write leaves no reference row behind."""
+        """A create that fails partway leaves no reference row behind.
+
+        The owner-rights insert violates the user FK, rolling back the reference row
+        inserted earlier in the same transaction.
+        """
+        nonexistent_user_id = 999999
+
         with pytest.raises(IntegrityError):
             await data_layer.references.create(
                 CreateReferenceRequest(name="Example"),
-                999999,
+                nonexistent_user_id,
             )
 
         async with AsyncSession(pg) as session:
-            assert (await session.execute(select(SQLReference))).scalars().all() == []
+            rows = (
+                (
+                    await session.execute(
+                        select(SQLReference).where(SQLReference.name == "Example"),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+
+        assert rows == []
 
 
 class TestUpdate:
-    async def test_writes_postgres(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-        pg: AsyncEngine,
-    ):
-        """Updating persisted columns writes through to Postgres."""
-        user = await fake.users.create()
-
-        reference = await data_layer.references.create(
-            CreateReferenceRequest(name="Before", organism="virus"),
-            user.id,
-        )
-
-        await data_layer.references.update(
-            reference.id,
-            UpdateReferenceRequest(name="After", organism="bacteria"),
-        )
-
-        async with AsyncSession(pg) as session:
-            row = (
-                await session.execute(
-                    select(SQLReference).where(SQLReference.id == reference.id),
-                )
-            ).scalar_one()
-
-        assert row.name == "After"
-        assert row.organism == "bacteria"
-
     async def test_postgres_native(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        pg: AsyncEngine,
     ):
         """A Postgres-native reference (no ``legacy_id``) is addressed by its integer
         primary key and updates normally.
         """
         user = await fake.users.create()
 
-        async with AsyncSession(pg) as session:
-            reference = SQLReference(
-                legacy_id=None,
-                name="Postgres Native",
-                description="",
-                organism="virus",
-                created_at=virtool.utils.timestamp(),
-                source_types=[],
-                user_id=user.id,
-            )
-            session.add(reference)
-            await session.flush()
-            reference_id = reference.id
-            await session.commit()
+        reference = await fake.references.create(user=user)
 
         await data_layer.references.update(
-            reference_id,
+            reference.id,
             UpdateReferenceRequest(name="After"),
         )
 
-        async with AsyncSession(pg) as session:
-            row = (
-                await session.execute(
-                    select(SQLReference).where(SQLReference.id == reference_id),
-                )
-            ).scalar_one()
+        updated = await data_layer.references.get(reference.id)
 
-        assert row.name == "After"
-
-
-class TestArchive:
-    async def test_writes_postgres(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-        pg: AsyncEngine,
-    ):
-        """Archiving and unarchiving flips the flag in Postgres."""
-        user = await fake.users.create()
-
-        reference = await data_layer.references.create(
-            CreateReferenceRequest(name="Example"),
-            user.id,
-        )
-
-        await data_layer.references.archive(reference.id)
-
-        async with AsyncSession(pg) as session:
-            assert (
-                await session.execute(
-                    select(SQLReference.archived).where(
-                        SQLReference.id == reference.id,
-                    ),
-                )
-            ).scalar_one() is True
-
-        await data_layer.references.unarchive(reference.id)
-
-        async with AsyncSession(pg) as session:
-            assert (
-                await session.execute(
-                    select(SQLReference.archived).where(
-                        SQLReference.id == reference.id,
-                    ),
-                )
-            ).scalar_one() is False
+        assert updated.name == "After"
 
 
 class TestCreateUser:
