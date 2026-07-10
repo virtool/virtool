@@ -24,7 +24,7 @@
     'reference': dict({
       'data_type': 'genome',
       'id': 1,
-      'name': 'Baz',
+      'name': 'Reference',
     }),
     'results': dict({
       'hits': list([
@@ -74,7 +74,7 @@
         'reference': dict({
           'data_type': 'genome',
           'id': 2,
-          'name': 'Foo',
+          'name': 'Reference',
         }),
         'sample': dict({
           'id': 1,
@@ -110,7 +110,7 @@
         'reference': dict({
           'data_type': 'genome',
           'id': 1,
-          'name': 'Baz',
+          'name': 'Reference',
         }),
         'sample': dict({
           'id': 1,
@@ -150,7 +150,7 @@
         'reference': dict({
           'data_type': 'genome',
           'id': 1,
-          'name': 'Baz',
+          'name': 'Reference',
         }),
         'sample': dict({
           'id': 1,
@@ -207,7 +207,7 @@
     'reference': dict({
       'data_type': 'genome',
       'id': 1,
-      'name': 'Baz',
+      'name': 'Reference',
     }),
     'results': dict({
       'hits': list([
@@ -269,7 +269,7 @@
     'reference': dict({
       'data_type': 'genome',
       'id': 1,
-      'name': 'Baz',
+      'name': 'Reference',
     }),
     'results': dict({
       'hits': list([
