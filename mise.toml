@@ -6,7 +6,7 @@ run = './.config/test.sh $usage_pytest_args'
 [tasks."test:multi"]
 description = "Run the full test suite in parallel (nproc/2 workers), serialized across worktrees."
 usage = 'arg "[<pytest_args>...]" help="Arguments passed to pytest"'
-run = './.config/test.sh -n "$(( $(nproc) / 2 ))" $usage_pytest_args'
+run = 'VT_TEST_PARALLEL=1 ./.config/test.sh $usage_pytest_args'
 
 [tasks."test:build"]
 description = "Build test Docker image."
