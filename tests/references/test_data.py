@@ -22,6 +22,7 @@ from virtool.references.sql import (
     SQLReferenceGroup,
     SQLReferenceUser,
 )
+from virtool.tasks.sql import SQLTask
 
 
 async def insert_reference(mongo: Mongo, pg: AsyncEngine, document: dict) -> None:
@@ -29,16 +30,6 @@ async def insert_reference(mongo: Mongo, pg: AsyncEngine, document: dict) -> Non
     async with both_transactions(mongo, pg) as (mongo_session, pg_session):
         await mongo.references.insert_one(document, session=mongo_session)
         await write_legacy_reference(pg_session, document)
-
-
-async def _legacy_id(pg: AsyncEngine, reference_pk: int) -> str:
-    """Return the Mongo ``_id`` of a reference, which its public id no longer is."""
-    async with AsyncSession(pg) as session:
-        return (
-            await session.execute(
-                select(SQLReference.legacy_id).where(SQLReference.id == reference_pk),
-            )
-        ).scalar_one()
 
 
 async def _reference_user_row(
@@ -71,6 +62,46 @@ async def _reference_group_row(
                 ),
             )
         ).scalar_one_or_none()
+
+
+class TestFakeReferenceBuilder:
+    """The fake builder creates native references, with an opt-in for legacy ones."""
+
+    async def test_native_by_default(
+        self,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        user = await fake.users.create()
+
+        reference = await fake.references.create(user=user)
+
+        async with AsyncSession(pg) as session:
+            legacy_id = await session.scalar(
+                select(SQLReference.legacy_id).where(
+                    SQLReference.id == reference.id,
+                ),
+            )
+
+        assert legacy_id is None
+
+    async def test_use_legacy_id(
+        self,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        user = await fake.users.create()
+
+        reference = await fake.references.create(user=user, use_legacy_id=True)
+
+        async with AsyncSession(pg) as session:
+            legacy_id = await session.scalar(
+                select(SQLReference.legacy_id).where(
+                    SQLReference.id == reference.id,
+                ),
+            )
+
+        assert legacy_id is not None
 
 
 class TestReferenceRightsDualWrite:
@@ -230,24 +261,18 @@ class TestReferenceRightsDualWrite:
 
 
 class TestCreate:
-    async def test_dual_write(
+    async def test_writes_postgres(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
-        """A created reference and its seeded owner rights land in both stores."""
+        """A created reference and its seeded owner rights land in Postgres."""
         user = await fake.users.create()
 
         reference = await data_layer.references.create(
             CreateReferenceRequest(name="Example", organism="virus"),
             user.id,
-        )
-
-        assert (
-            await mongo.references.find_one(await _legacy_id(pg, reference.id))
-            is not None
         )
 
         async with AsyncSession(pg) as session:
@@ -334,27 +359,82 @@ class TestCreate:
 
         assert row.upload_id == upload.id
 
-    async def test_rolls_back_mongo_on_postgres_failure(
+    async def test_native_no_legacy_id(
         self,
         data_layer: DataLayer,
-        mongo: Mongo,
+        fake: DataFaker,
+        pg: AsyncEngine,
     ):
-        """A failed Postgres write rolls the Mongo insert back, leaving neither."""
+        """A reference created through the data layer is Postgres-native: its primary
+        key is the public id and its ``legacy_id`` is ``NULL``.
+        """
+        user = await fake.users.create()
+
+        reference = await data_layer.references.create(
+            CreateReferenceRequest(name="Native"),
+            user.id,
+        )
+
+        assert isinstance(reference.id, int)
+
+        async with AsyncSession(pg) as session:
+            legacy_id = await session.scalar(
+                select(SQLReference.legacy_id).where(
+                    SQLReference.id == reference.id,
+                ),
+            )
+
+        assert legacy_id is None
+
+    async def test_import_task_keyed_by_pk(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """The import population task is handed the integer primary key, not a legacy
+        id, so it can locate a Postgres-native reference.
+        """
+        user = await fake.users.create()
+        upload = await fake.uploads.create(user=user)
+
+        reference = await data_layer.references.create(
+            CreateReferenceRequest(name="Imported", import_from=upload.id),
+            user.id,
+        )
+
+        async with AsyncSession(pg) as session:
+            task_id = await session.scalar(
+                select(SQLReference.task_id).where(
+                    SQLReference.id == reference.id,
+                ),
+            )
+
+            task = await session.get(SQLTask, task_id)
+
+        assert task.context["ref_id"] == reference.id
+
+    async def test_rolls_back_on_postgres_failure(
+        self,
+        data_layer: DataLayer,
+        pg: AsyncEngine,
+    ):
+        """A failed Postgres write leaves no reference row behind."""
         with pytest.raises(IntegrityError):
             await data_layer.references.create(
                 CreateReferenceRequest(name="Example"),
                 999999,
             )
 
-        assert await mongo.references.count_documents({}) == 0
+        async with AsyncSession(pg) as session:
+            assert (await session.execute(select(SQLReference))).scalars().all() == []
 
 
 class TestUpdate:
-    async def test_dual_write(
+    async def test_writes_postgres(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
         """Updating persisted columns writes through to Postgres."""
@@ -370,9 +450,6 @@ class TestUpdate:
             UpdateReferenceRequest(name="After", organism="bacteria"),
         )
 
-        document = await mongo.references.find_one(await _legacy_id(pg, reference.id))
-        assert document["name"] == "After"
-
         async with AsyncSession(pg) as session:
             row = (
                 await session.execute(
@@ -383,14 +460,14 @@ class TestUpdate:
         assert row.name == "After"
         assert row.organism == "bacteria"
 
-    async def test_postgres_native_raises_not_found(
+    async def test_postgres_native(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
         pg: AsyncEngine,
     ):
-        """Updating a Postgres-native reference (no ``legacy_id``, so no Mongo document)
-        raises ``ResourceNotFoundError`` rather than an unhandled ``ValueError``.
+        """A Postgres-native reference (no ``legacy_id``) is addressed by its integer
+        primary key and updates normally.
         """
         user = await fake.users.create()
 
@@ -409,22 +486,29 @@ class TestUpdate:
             reference_id = reference.id
             await session.commit()
 
-        with pytest.raises(ResourceNotFoundError):
-            await data_layer.references.update(
-                reference_id,
-                UpdateReferenceRequest(name="After"),
-            )
+        await data_layer.references.update(
+            reference_id,
+            UpdateReferenceRequest(name="After"),
+        )
+
+        async with AsyncSession(pg) as session:
+            row = (
+                await session.execute(
+                    select(SQLReference).where(SQLReference.id == reference_id),
+                )
+            ).scalar_one()
+
+        assert row.name == "After"
 
 
 class TestArchive:
-    async def test_dual_write(
+    async def test_writes_postgres(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
-        """Archiving and unarchiving flips the flag in both stores."""
+        """Archiving and unarchiving flips the flag in Postgres."""
         user = await fake.users.create()
 
         reference = await data_layer.references.create(
@@ -432,11 +516,7 @@ class TestArchive:
             user.id,
         )
 
-        legacy_id = await _legacy_id(pg, reference.id)
-
         await data_layer.references.archive(reference.id)
-
-        assert (await mongo.references.find_one(legacy_id))["archived"] is True
 
         async with AsyncSession(pg) as session:
             assert (
@@ -448,8 +528,6 @@ class TestArchive:
             ).scalar_one() is True
 
         await data_layer.references.unarchive(reference.id)
-
-        assert (await mongo.references.find_one(legacy_id))["archived"] is False
 
         async with AsyncSession(pg) as session:
             assert (
@@ -645,8 +723,6 @@ class TestUpdateUser:
             ),
         ) == snapshot(name="obj_2")
 
-        assert await mongo.references.find_one() == snapshot(name="mongo")
-
     @pytest.mark.parametrize("reference_exists", [True, False])
     async def test_not_found(
         self,
@@ -699,7 +775,6 @@ class TestDeleteUser:
         fake: DataFaker,
         mongo: Mongo,
         pg: AsyncEngine,
-        snapshot,
         static_time,
     ):
         """Test that a user can be deleted from a reference."""
@@ -735,9 +810,8 @@ class TestDeleteUser:
 
         assert await data_layer.references.delete_user("foo", user_2.id) is None
 
-        document = await mongo.references.find_one()
-        assert document["users"] == []
-        assert document == snapshot
+        reference = await data_layer.references.get("foo")
+        assert reference.users == []
 
     @pytest.mark.parametrize(
         "reference_exists",
@@ -779,7 +853,7 @@ class TestDeleteUser:
             )
 
         with pytest.raises(ResourceNotFoundError):
-            assert await data_layer.references.delete_user("foo", "bar")
+            assert await data_layer.references.delete_user("foo", 999999)
 
 
 class TestCreateGroup:
@@ -823,8 +897,6 @@ class TestCreateGroup:
                 group_id=group.id,
             ),
         ) == snapshot(name="obj")
-
-        assert await mongo.references.find_one() == snapshot(name="mongo")
 
         # Try creating again to make sure an error is raised if the group already
         # exists.
@@ -944,8 +1016,6 @@ class TestUpdateGroup:
             ReferenceRightsRequest(build=False, modify=True),
         ) == snapshot(name="obj")
 
-        assert await mongo.references.find_one() == snapshot(name="mongo")
-
     @pytest.mark.parametrize(
         "reference_exists",
         [True, False],
@@ -1002,7 +1072,6 @@ class TestDeleteGroup:
         fake: DataFaker,
         mongo: Mongo,
         pg: AsyncEngine,
-        snapshot,
         static_time,
     ):
         """Test that a group can be deleted from a reference."""
@@ -1038,9 +1107,8 @@ class TestDeleteGroup:
 
         assert await data_layer.references.delete_group("foo", group.id) is None
 
-        document = await mongo.references.find_one()
-        assert document["groups"] == []
-        assert document == snapshot
+        reference = await data_layer.references.get("foo")
+        assert reference.groups == []
 
     @pytest.mark.parametrize(
         "reference_exists",

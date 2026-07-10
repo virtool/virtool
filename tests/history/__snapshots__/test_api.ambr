@@ -4,7 +4,7 @@
     'created_at': 'approximately_now_isoformat',
     'description': 'Created Tobacco mosaic virus (TMV)',
     'diff': dict({
-      '_id': 'fb085f7f',
+      '_id': 'bf1b993c',
       'abbreviation': 'TMV',
       'isolates': list([
       ]),
@@ -19,14 +19,14 @@
       'verified': False,
       'version': 0,
     }),
-    'id': 'fb085f7f.0',
+    'id': 'bf1b993c.0',
     'index': dict({
       'id': 'unbuilt',
       'version': 'unbuilt',
     }),
     'method_name': 'create',
     'otu': dict({
-      'id': 'fb085f7f',
+      'id': 'bf1b993c',
       'name': 'Tobacco mosaic virus',
       'version': 0,
     }),
@@ -47,14 +47,14 @@
       dict({
         'created_at': 'approximately_now_isoformat',
         'description': 'Created Potato virus X (PVX)',
-        'id': '7cf872dc.0',
+        'id': 'fb085f7f.0',
         'index': dict({
           'id': 'unbuilt',
           'version': 'unbuilt',
         }),
         'method_name': 'create',
         'otu': dict({
-          'id': '7cf872dc',
+          'id': 'fb085f7f',
           'name': 'Potato virus X',
           'version': 0,
         }),
@@ -71,14 +71,14 @@
       dict({
         'created_at': 'approximately_now_isoformat',
         'description': 'Created Tobacco mosaic virus (TMV)',
-        'id': 'fb085f7f.0',
+        'id': 'bf1b993c.0',
         'index': dict({
           'id': 'unbuilt',
           'version': 'unbuilt',
         }),
         'method_name': 'create',
         'otu': dict({
-          'id': 'fb085f7f',
+          'id': 'bf1b993c',
           'name': 'Tobacco mosaic virus',
           'version': 0,
         }),

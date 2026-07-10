@@ -11,7 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 
 import virtool.history.db
-import virtool.mongo.utils
 import virtool.utils
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.topg import (
@@ -21,7 +20,6 @@ from virtool.data.topg import (
     resolve_legacy_id,
 )
 from virtool.data.transforms import apply_transforms
-from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
 from virtool.history.db import bulk_delete_history, bulk_insert_history
 from virtool.history.sql import SQLLegacyHistory
@@ -57,13 +55,16 @@ async def compose_reference_id_match(pg: AsyncEngine, ref_id: int | str) -> dict
 async def write_legacy_reference(
     pg_session: AsyncSession,
     document: Document,
-) -> None:
-    """Insert a ``legacy_references`` row and its seeded rights from a Mongo reference
-    ``document`` into the open Postgres session.
+) -> int:
+    """Insert a ``legacy_references`` row and its seeded rights from a reference
+    ``document`` into the open Postgres session and return the new primary key.
 
-    ``cloned_from`` holds the source reference's legacy id, which is resolved to its
-    Postgres primary key. If the source has no Postgres row yet, the foreign key is left
-    ``NULL`` for the backfill to fill in later.
+    ``legacy_id`` is taken from the document's ``_id`` when present and is otherwise
+    left ``NULL`` for a Postgres-native reference.
+
+    ``cloned_from`` holds the source reference's id, which is resolved to its Postgres
+    primary key. If the source has no Postgres row yet, the foreign key is left ``NULL``
+    for the backfill to fill in later.
     """
     cloned_from = document.get("cloned_from")
 
@@ -120,6 +121,8 @@ async def write_legacy_reference(
                 modify_otu=member.get("modify_otu", False),
             ),
         )
+
+    return reference.id
 
 
 def map_reference_minimal(
@@ -521,35 +524,43 @@ async def get_unbuilt_count(pg: AsyncEngine, ref_id: int | str) -> int:
 
 
 async def create_clone(
-    mongo: "Mongo",
+    pg: AsyncEngine,
     settings: Settings,
     name: str,
-    clone_from: str,
+    clone_from: int | str,
     description: str,
     user_id: int,
 ) -> Document:
-    source = await mongo.references.find_one(clone_from)
+    async with AsyncSession(pg) as session:
+        source = (
+            await session.execute(
+                select(SQLReference.name, SQLReference.organism).where(
+                    compose_legacy_id_single_expression(SQLReference, clone_from),
+                ),
+            )
+        ).one_or_none()
 
-    name = name or "Clone of " + source["name"]
+    if source is None:
+        raise ResourceNotFoundError
+
+    name = name or "Clone of " + source.name
 
     document = await create_document(
-        mongo,
         settings,
         name,
-        source["organism"],
+        source.organism,
         description,
-        source["data_type"],
+        "genome",
         created_at=virtool.utils.timestamp(),
         user_id=user_id,
     )
 
-    document["cloned_from"] = {"id": clone_from, "name": source["name"]}
+    document["cloned_from"] = {"id": clone_from, "name": source.name}
 
     return document
 
 
 async def create_document(
-    mongo: "Mongo",
     settings: Settings,
     name: str,
     organism: str | None,
@@ -560,11 +571,11 @@ async def create_document(
     user_id: int | None = None,
     users=None,
 ):
-    if ref_id and await mongo.references.count_documents({"_id": ref_id}):
-        raise DatabaseError("ref_id already exists")
+    """Build a reference document for :func:`write_legacy_reference`.
 
-    ref_id = ref_id or await virtool.mongo.utils.get_new_id(mongo.references)
-
+    Pass ``ref_id`` to seed a legacy ``_id`` (mirrored to ``legacy_id``); omit it for
+    a Postgres-native reference whose primary key the database assigns.
+    """
     user = None
 
     if user_id:
@@ -582,7 +593,6 @@ async def create_document(
         ]
 
     document = {
-        "_id": ref_id,
         "archived": False,
         "created_at": created_at,
         "data_type": data_type,
@@ -597,11 +607,13 @@ async def create_document(
         "user": user,
     }
 
+    if ref_id is not None:
+        document["_id"] = ref_id
+
     return document
 
 
 async def create_import(
-    mongo: "Mongo",
     settings: Settings,
     name: str,
     description: str,
@@ -612,7 +624,6 @@ async def create_import(
 ) -> dict:
     """Import a previously exported Virtool reference.
 
-    :param mongo: the application database client
     :param settings: the application settings object
     :param name: the name for the new reference
     :param description: a description for the new reference
@@ -626,7 +637,6 @@ async def create_import(
     created_at = virtool.utils.timestamp()
 
     document = await create_document(
-        mongo,
         settings,
         name or "Unnamed Import",
         organism,
@@ -702,13 +712,11 @@ async def populate_insert_only_reference(
             mongo.otus.delete_many({"reference.id": reference_id_match}),
         )
 
-        await mongo.references.delete_one({"_id": reference_id})
-
         async with AsyncSession(pg) as session:
             sql_reference_id = (
                 await session.execute(
                     select(SQLReference.id).where(
-                        SQLReference.legacy_id == reference_id,
+                        compose_legacy_id_single_expression(SQLReference, reference_id),
                     ),
                 )
             ).scalar_one_or_none()

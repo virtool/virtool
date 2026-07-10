@@ -520,7 +520,6 @@ class TestEdit:
         )
 
         assert await resp.json() == snapshot(name="resp")
-        assert await mongo.references.find_one() == snapshot(name="db")
 
     async def test_insufficient_rights(
         self,
@@ -618,7 +617,6 @@ class TestArchive:
         body = await resp.json()
         assert body["archived"] is True
         assert body == snapshot_recent(name="resp")
-        assert await get_one_field(mongo.references, "archived", "foo") is True
 
     async def test_insufficient_rights(
         self,
@@ -695,7 +693,6 @@ class TestUnarchive:
         body = await resp.json()
         assert body["archived"] is False
         assert body == snapshot_recent(name="resp")
-        assert await get_one_field(mongo.references, "archived", "foo") is False
 
     async def test_insufficient_rights(
         self,
@@ -1057,7 +1054,6 @@ async def test_create_user(
         case None:
             assert resp.status == 201
             assert await resp.json() == snapshot(name="resp")
-            assert await mongo.references.find_one() == snapshot(name="mongo")
         case "404":
             await resp_is.not_found(resp)
         case "400_dne":
@@ -1126,7 +1122,6 @@ async def test_create_group(
         case None:
             assert resp.status == 201
             assert await resp.json() == snapshot
-            assert await mongo.references.find_one() == snapshot
         case "404":
             await resp_is.not_found(resp)
         case "400_dne":
@@ -1192,7 +1187,6 @@ class TestUpdateUser:
 
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
-        assert await self.mongo.references.find_one() == snapshot
 
     async def test_ref_not_found(self, resp_is):
         resp = await self.client.patch(
@@ -1274,7 +1268,6 @@ async def test_update_group(
         case None:
             assert resp.status == HTTPStatus.OK
             assert await resp.json() == snapshot(name="resp")
-            assert await mongo.references.find_one() == snapshot(name="mongo")
         case "404_group" | "404_ref":
             await resp_is.not_found(resp)
 
@@ -1327,10 +1320,9 @@ class TestDeleteUser:
             },
         )
 
-    async def test_ok(self, snapshot: SnapshotAssertion):
+    async def test_ok(self):
         resp = await self.client.delete(f"/references/v1/foo/users/{self.user.id}")
         assert resp.status == 204
-        assert await self.mongo.references.find_one() == snapshot
 
     async def test_ref_not_found(self, resp_is):
         resp = await self.client.delete(
@@ -1348,7 +1340,6 @@ async def test_delete_group(
     error: str | None,
     fake: DataFaker,
     resp_is,
-    snapshot: SnapshotAssertion,
     mongo: Mongo,
     pg: AsyncEngine,
     spawn_client: ClientSpawner,
@@ -1402,7 +1393,6 @@ async def test_delete_group(
         await resp_is.not_found(resp)
     else:
         assert resp.status == 204
-        assert await mongo.references.find_one() == snapshot
 
 
 @pytest.mark.parametrize("find", [None, "Prunus", "virus", "PVF", "VF"])

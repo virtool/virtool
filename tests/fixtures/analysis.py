@@ -121,7 +121,7 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
             results=results if isinstance(results, dict) else None,
             sample=sample["id"],
             sample_id=sample_pg_id,
-            reference=reference_legacy_id,
+            reference=reference_legacy_id or str(reference_pg_id),
             reference_id=reference_pg_id,
             index=index["id"],
             user_id=document["user"]["id"],
