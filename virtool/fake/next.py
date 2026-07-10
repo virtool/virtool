@@ -23,7 +23,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
 from virtool.data.layer import DataLayer
-from virtool.data.topg import both_transactions
 from virtool.example import example_path
 from virtool.fake.providers import OrganismProvider, SegmentProvider, SequenceProvider
 from virtool.groups.models import Group
@@ -337,35 +336,40 @@ class ReferencesFakerDomain(DataFakerDomain):
         data_type: ReferenceDataType = ReferenceDataType.genome,
         organism: str = "",
         description: str = "",
+        *,
+        use_legacy_id: bool = False,
     ) -> Reference:
-        """Create a fake reference in both Mongo and Postgres.
+        """Create a fake reference in Postgres.
 
-        Pass ``id_`` to force the Mongo ``_id`` (and Postgres ``legacy_id``); omit it
-        for a generated id. The reference is dual-written so its integer primary key
-        exists for holders (analyses, history) to resolve.
+        By default the reference is Postgres-native: its ``legacy_id`` is ``NULL`` and
+        the integer primary key is what holders (analyses, history) resolve against.
+
+        Pass ``id_`` to force a specific ``legacy_id``, or ``use_legacy_id=True`` to
+        seed a generated one, when exercising the legacy-reference bridge.
         """
         settings = await self._layer.settings.get_all()
 
+        ref_id = id_
+
+        if ref_id is None and use_legacy_id:
+            ref_id = self._mongo.id_provider.get()
+
         document = await create_document(
-            self._mongo,
             settings,
             name,
             organism,
             description,
             data_type.value,
             created_at=virtool.utils.timestamp(),
-            ref_id=id_,
+            ref_id=ref_id,
             user_id=user.id,
         )
 
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
-            await self._mongo.references.insert_one(document, session=mongo_session)
-            await write_legacy_reference(pg_session, document)
+        async with AsyncSession(self._pg) as session:
+            reference_pk = await write_legacy_reference(session, document)
+            await session.commit()
 
-        return await self._layer.references.get(document["_id"])
+        return await self._layer.references.get(reference_pk)
 
 
 class OTUsFakerDomain(DataFakerDomain):

@@ -506,7 +506,6 @@ async def test_get_reference_groups(
 
 
 async def test_create_document_owner_user(
-    mongo: Mongo,
     static_time,
 ):
     from virtool.settings.models import Settings
@@ -514,7 +513,6 @@ async def test_create_document_owner_user(
     settings = Settings(default_source_types=["isolate", "strain"])
 
     document = await create_document(
-        mongo,
         settings,
         "Test Reference",
         "virus",
@@ -551,16 +549,6 @@ async def test_populate_insert_only_reference_rollback(
     ref_id = "ref_rollback_test"
 
     await seed_reference(pg, ref_id, user.id, static_time.datetime)
-
-    await mongo.references.insert_one(
-        {
-            "_id": ref_id,
-            "created_at": static_time.datetime,
-            "data_type": "genome",
-            "name": "Rollback",
-            "user": {"id": user.id},
-        },
-    )
 
     mocker.patch(
         "virtool.references.alot.random_alphanumeric",
@@ -635,9 +623,14 @@ async def test_populate_insert_only_reference_rollback(
 
     assert await mongo.otus.count_documents({"reference.id": ref_id}) == 0
     assert await mongo.sequences.count_documents({"reference.id": ref_id}) == 0
-    assert await mongo.references.find_one({"_id": ref_id}) is None
 
     async with AsyncSession(pg) as pg_session:
+        reference_row = await pg_session.scalar(
+            select(SQLReference).where(SQLReference.legacy_id == ref_id),
+        )
+
+        assert reference_row is None
+
         diff_count = await pg_session.scalar(
             select(func.count())
             .select_from(SQLLegacyHistoryDiff)
