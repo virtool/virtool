@@ -263,6 +263,8 @@ class OTUData:
                 session=mongo_session,
             )
 
+            await virtool.otus.db.write_legacy_otu(pg_session, document_)
+
             await virtool.history.db.add(
                 pg_session,
                 compose_create_description(document_),
@@ -311,6 +313,8 @@ class OTUData:
             mongo_session: AsyncIOMotorClientSession,
             pg_session: AsyncSession,
         ):
+            await virtool.otus.db.lock_legacy_otu(pg_session, otu_id)
+
             old = await virtool.otus.db.join(self._mongo, otu_id, session=mongo_session)
 
             document_ = await self._mongo.otus.find_one_and_update(
@@ -334,6 +338,22 @@ class OTUData:
             )
 
             await update_otu_verification(self._mongo, new, session=mongo_session)
+
+            final = await self._mongo.otus.find_one(otu_id, session=mongo_session)
+
+            await virtool.otus.db.write_legacy_otu(pg_session, final)
+
+            # ``update_sequence_segments`` unsets ``segment`` on sequences whose
+            # segment name is no longer in the schema. Re-mirror the OTU's sequences
+            # so their Postgres rows track that change.
+            if {s["name"] for s in (old or {}).get("schema", [])} - {
+                s["name"] for s in final.get("schema", [])
+            }:
+                async for sequence in self._mongo.sequences.find(
+                    {"otu_id": otu_id},
+                    session=mongo_session,
+                ):
+                    await virtool.otus.db.write_legacy_sequence(pg_session, sequence)
 
             await virtool.history.db.add(
                 pg_session,
@@ -378,6 +398,8 @@ class OTUData:
                 ),
                 self._mongo.otus.delete_one({"_id": otu_id}, session=mongo_session),
             )
+
+            await virtool.otus.db.delete_legacy_otu(pg_session, otu_id)
 
             description = compose_remove_description(joined)
 
@@ -426,19 +448,7 @@ class OTUData:
             mongo_session: AsyncIOMotorClientSession,
             pg_session: AsyncSession,
         ) -> OTUIsolate:
-            document = await self._mongo.otus.find_one(otu_id, session=mongo_session)
-
-            isolates = deepcopy(document["isolates"])
-
-            # True if the new isolate should be default and any existing isolates should
-            # be non-default.
-            will_be_default = not isolates or default
-
-            # Set ``default`` to ``False`` for all existing isolates if the new one
-            # should be default.
-            if will_be_default:
-                for isolate_ in isolates:
-                    isolate_["default"] = False
+            await virtool.otus.db.lock_legacy_otu(pg_session, otu_id)
 
             document = await self._mongo.otus.find_one(otu_id, session=mongo_session)
 
@@ -491,6 +501,10 @@ class OTUData:
 
             await update_otu_verification(self._mongo, new, session=mongo_session)
 
+            final = await self._mongo.otus.find_one(otu_id, session=mongo_session)
+
+            await virtool.otus.db.write_legacy_otu(pg_session, final)
+
             description = f"Added {format_isolate_name(isolate_)}"
 
             if will_be_default:
@@ -539,6 +553,8 @@ class OTUData:
             mongo_session: AsyncIOMotorClientSession,
             pg_session: AsyncSession,
         ) -> Document:
+            await virtool.otus.db.lock_legacy_otu(pg_session, otu_id)
+
             old = await virtool.otus.db.join(self._mongo, otu_id, session=mongo_session)
 
             # Replace the isolates list with the update one.
@@ -564,6 +580,10 @@ class OTUData:
                 new_,
                 session=mongo_session,
             )
+
+            final = await self._mongo.otus.find_one(otu_id, session=mongo_session)
+
+            await virtool.otus.db.write_legacy_otu(pg_session, final)
 
             # Use the old and new entry to add a new history document for the change.
             await virtool.history.db.add(
@@ -607,6 +627,8 @@ class OTUData:
             mongo_session: AsyncIOMotorClientSession,
             pg_session: AsyncSession,
         ) -> Document:
+            await virtool.otus.db.lock_legacy_otu(pg_session, otu_id)
+
             document = await self._mongo.otus.find_one(otu_id, session=mongo_session)
 
             isolate = find_isolate(document["isolates"], isolate_id)
@@ -656,6 +678,10 @@ class OTUData:
                 session=mongo_session,
             )
 
+            final = await self._mongo.otus.find_one(otu_id, session=mongo_session)
+
+            await virtool.otus.db.write_legacy_otu(pg_session, final)
+
             # Use the old and new entry to add a new history document for the change.
             await virtool.history.db.add(
                 pg_session,
@@ -685,6 +711,8 @@ class OTUData:
             mongo_session: AsyncIOMotorClientSession,
             pg_session: AsyncSession,
         ):
+            await virtool.otus.db.lock_legacy_otu(pg_session, otu_id)
+
             document = await self._mongo.otus.find_one(otu_id, session=mongo_session)
 
             isolates = deepcopy(document["isolates"])
@@ -737,6 +765,16 @@ class OTUData:
                 ),
             )
 
+            final = await self._mongo.otus.find_one(otu_id, session=mongo_session)
+
+            await virtool.otus.db.write_legacy_otu(pg_session, final)
+
+            await virtool.otus.db.delete_legacy_isolate_sequences(
+                pg_session,
+                otu_id,
+                isolate_id,
+            )
+
             description = f"Removed {format_isolate_name(isolate_to_remove)}"
 
             if isolate_to_remove["default"] and new_default:
@@ -769,6 +807,8 @@ class OTUData:
             mongo_session: AsyncIOMotorClientSession,
             pg_session: AsyncSession,
         ) -> OTUSequence:
+            await virtool.otus.db.lock_legacy_otu(pg_session, otu_id)
+
             old = await virtool.otus.db.join(self._mongo, otu_id, session=mongo_session)
 
             to_insert = {
@@ -806,6 +846,12 @@ class OTUData:
                 new,
                 session=mongo_session,
             )
+
+            final = await self._mongo.otus.find_one(otu_id, session=mongo_session)
+
+            await virtool.otus.db.write_legacy_otu(pg_session, final)
+
+            await virtool.otus.db.write_legacy_sequence(pg_session, document)
 
             isolate_name = format_isolate_name(
                 find_isolate(old["isolates"], isolate_id),
@@ -871,6 +917,8 @@ class OTUData:
             mongo_session: AsyncIOMotorClientSession,
             pg_session: AsyncSession,
         ) -> Document:
+            await virtool.otus.db.lock_legacy_otu(pg_session, otu_id)
+
             old = await virtool.otus.db.join(self._mongo, otu_id, session=mongo_session)
 
             document = await self._mongo.sequences.find_one_and_update(
@@ -884,6 +932,17 @@ class OTUData:
             new = await virtool.otus.db.join(self._mongo, otu_id, session=mongo_session)
 
             await update_otu_verification(self._mongo, new, session=mongo_session)
+
+            final_otu = await self._mongo.otus.find_one(otu_id, session=mongo_session)
+
+            await virtool.otus.db.write_legacy_otu(pg_session, final_otu)
+
+            final_sequence = await self._mongo.sequences.find_one(
+                sequence_id,
+                session=mongo_session,
+            )
+
+            await virtool.otus.db.write_legacy_sequence(pg_session, final_sequence)
 
             isolate_name = format_isolate_name(
                 find_isolate(old["isolates"], isolate_id),
@@ -925,6 +984,8 @@ class OTUData:
             mongo_session: AsyncIOMotorClientSession,
             pg_session: AsyncSession,
         ):
+            await virtool.otus.db.lock_legacy_otu(pg_session, otu_id)
+
             await self._mongo.sequences.delete_one(
                 {"_id": sequence_id},
                 session=mongo_session,
@@ -942,6 +1003,12 @@ class OTUData:
             )
 
             await update_otu_verification(self._mongo, new, session=mongo_session)
+
+            final = await self._mongo.otus.find_one(otu_id, session=mongo_session)
+
+            await virtool.otus.db.write_legacy_otu(pg_session, final)
+
+            await virtool.otus.db.delete_legacy_sequence(pg_session, sequence_id)
 
             isolate_name = format_isolate_name(
                 find_isolate(old["isolates"], isolate_id),

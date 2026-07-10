@@ -9,12 +9,19 @@ TODO: Use `fake` fixture.
 from asyncio import gather
 
 import pytest
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
-from virtool.otus.oas import CreateOTURequest, UpdateOTURequest
+from virtool.otus.oas import (
+    CreateOTURequest,
+    UpdateOTURequest,
+    UpdateSequenceRequest,
+)
+from virtool.otus.sql import SQLOTU, SQLSequence
 from virtool.references.oas import UpdateReferenceRequest
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
@@ -311,3 +318,257 @@ class TestUpdateIsolateSourceType:
         )
 
         assert isolate["source_name"] == "Renamed"
+
+
+async def _get_otu_row(pg: AsyncEngine, otu_id: str) -> SQLOTU | None:
+    async with AsyncSession(pg) as session:
+        return (
+            await session.execute(select(SQLOTU).where(SQLOTU.id == otu_id))
+        ).scalar_one_or_none()
+
+
+async def _get_sequence_rows(pg: AsyncEngine, otu_id: str) -> list[SQLSequence]:
+    async with AsyncSession(pg) as session:
+        return list(
+            (
+                await session.execute(
+                    select(SQLSequence).where(SQLSequence.otu_id == otu_id),
+                )
+            ).scalars(),
+        )
+
+
+class TestOTUDualWrite:
+    """The single-OTU write path mirrors Mongo into the ``legacy_otus`` table."""
+
+    async def test_create_writes_row(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        otu = await data_layer.otus.create(
+            reference.id,
+            CreateOTURequest(name="Tobacco mosaic virus", abbreviation="TMV"),
+            user.id,
+        )
+
+        row = await _get_otu_row(pg, otu.id)
+
+        assert row is not None
+        assert row.name == "Tobacco mosaic virus"
+        assert row.abbreviation == "TMV"
+        assert row.reference_id == reference.id
+        assert row.verified is False
+        assert row.version == 0
+        assert row.data["_id"] == otu.id
+        assert row.data["name"] == "Tobacco mosaic virus"
+
+    async def test_update_syncs_row(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        otu = await data_layer.otus.create(
+            reference.id,
+            CreateOTURequest(name="Old name", abbreviation="ON"),
+            user.id,
+        )
+
+        await data_layer.otus.update(
+            otu.id,
+            UpdateOTURequest(name="New name"),
+            user.id,
+        )
+
+        row = await _get_otu_row(pg, otu.id)
+
+        assert row.name == "New name"
+        assert row.version == 1
+        assert row.verified is False
+        assert row.data["name"] == "New name"
+
+    async def test_remove_deletes_row_and_sequences(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        otu = await fake.otus.create(reference.id, user)
+
+        assert await _get_otu_row(pg, otu.id) is not None
+        assert await _get_sequence_rows(pg, otu.id)
+
+        await data_layer.otus.remove(otu.id, user.id)
+
+        assert await _get_otu_row(pg, otu.id) is None
+        assert await _get_sequence_rows(pg, otu.id) == []
+
+
+class TestIsolateDualWrite:
+    async def test_add_isolate_bumps_version(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        otu = await data_layer.otus.create(
+            reference.id,
+            CreateOTURequest(name="Example"),
+            user.id,
+        )
+
+        await data_layer.otus.add_isolate(otu.id, "isolate", "A", user.id)
+
+        row = await _get_otu_row(pg, otu.id)
+
+        assert row.version == 1
+        assert len(row.data["isolates"]) == 1
+
+    async def test_remove_isolate_deletes_its_sequences(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        otu = await fake.otus.create(reference.id, user)
+        isolate_id = otu.isolates[0].id
+
+        assert await _get_sequence_rows(pg, otu.id)
+
+        await data_layer.otus.remove_isolate(otu.id, isolate_id, user.id)
+
+        assert await _get_sequence_rows(pg, otu.id) == []
+        assert await _get_otu_row(pg, otu.id) is not None
+
+
+class TestSequenceDualWrite:
+    """The per-sequence write path mirrors both the sequence row and the parent OTU."""
+
+    async def _make_isolate(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+    ) -> tuple[str, str, int]:
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        otu = await data_layer.otus.create(
+            reference.id,
+            CreateOTURequest(name="Example"),
+            user.id,
+        )
+
+        isolate = await data_layer.otus.add_isolate(otu.id, "isolate", "A", user.id)
+
+        return otu.id, isolate.id, user.id
+
+    async def test_create_sequence_writes_row_and_bumps_otu(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        otu_id, isolate_id, user_id = await self._make_isolate(data_layer, fake)
+
+        version_before = (await _get_otu_row(pg, otu_id)).version
+
+        await data_layer.otus.create_sequence(
+            otu_id,
+            isolate_id,
+            "NC_001367",
+            "Example genome",
+            "ATGCGTACGT",
+            user_id,
+            "host",
+            "RNA_2",
+        )
+
+        rows = await _get_sequence_rows(pg, otu_id)
+
+        assert len(rows) == 1
+        assert rows[0].otu_id == otu_id
+        assert rows[0].isolate_id == isolate_id
+        assert rows[0].segment == "RNA_2"
+        assert rows[0].data["accession"] == "NC_001367"
+
+        assert (await _get_otu_row(pg, otu_id)).version == version_before + 1
+
+    async def test_update_sequence_syncs_row(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        otu_id, isolate_id, user_id = await self._make_isolate(data_layer, fake)
+
+        await data_layer.otus.create_sequence(
+            otu_id,
+            isolate_id,
+            "NC_001367",
+            "Example genome",
+            "ATGCGTACGT",
+            user_id,
+            "host",
+            "RNA_1",
+        )
+
+        [row] = await _get_sequence_rows(pg, otu_id)
+        version_before = (await _get_otu_row(pg, otu_id)).version
+
+        await data_layer.otus.update_sequence(
+            otu_id,
+            isolate_id,
+            row.id,
+            user_id,
+            UpdateSequenceRequest(segment="RNA_2"),
+        )
+
+        [row] = await _get_sequence_rows(pg, otu_id)
+
+        assert row.segment == "RNA_2"
+        assert row.data["segment"] == "RNA_2"
+        assert (await _get_otu_row(pg, otu_id)).version == version_before + 1
+
+    async def test_remove_sequence_deletes_row_and_bumps_otu(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        otu_id, isolate_id, user_id = await self._make_isolate(data_layer, fake)
+
+        await data_layer.otus.create_sequence(
+            otu_id,
+            isolate_id,
+            "NC_001367",
+            "Example genome",
+            "ATGCGTACGT",
+            user_id,
+            "host",
+            "RNA_1",
+        )
+
+        [row] = await _get_sequence_rows(pg, otu_id)
+        version_before = (await _get_otu_row(pg, otu_id)).version
+
+        await data_layer.otus.remove_sequence(otu_id, isolate_id, row.id, user_id)
+
+        assert await _get_sequence_rows(pg, otu_id) == []
+        assert (await _get_otu_row(pg, otu_id)).version == version_before + 1

@@ -867,7 +867,6 @@ class TestDeleteIsolate:
             "TAAGAGATTAAACAACCGCTTTCGTTACCAGAAACTGCTTTCTTTGAACGTTTCTGTTTGCTT",
             user.id,
             "Prunus cerasus",
-            user.id,
         )
 
         assert (await data_layer.otus.get(otu.id)).isolates[0].id == isolate.id
