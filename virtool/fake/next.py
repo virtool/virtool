@@ -684,6 +684,20 @@ class SamplesFakerDomain(DataFakerDomain):
                 storage_id,
             )
 
+        # A real finalized sample has a completed creation job. Mark this
+        # sample's job succeeded so a ready sample never leaves a claimable
+        # pending job behind.
+        async with AsyncSession(self._pg) as session:
+            await session.execute(
+                update(SQLJob)
+                .where(SQLJob.id == sample.job.id)
+                .values(
+                    state=JobState.SUCCEEDED.value,
+                    finished_at=virtool.utils.timestamp(),
+                ),
+            )
+            await session.commit()
+
         return await self._layer.samples.finalize(
             sample.id,
             create_fake_quality(self._faker),
