@@ -6,10 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
-from virtool.data.topg import both_transactions
 from virtool.fake.next import DataFaker
-from virtool.mongo.core import Mongo
-from virtool.references.db import write_legacy_reference
 from virtool.references.oas import (
     CreateReferenceGroupRequest,
     CreateReferenceRequest,
@@ -23,13 +20,6 @@ from virtool.references.sql import (
     SQLReferenceUser,
 )
 from virtool.tasks.sql import SQLTask
-
-
-async def insert_reference(mongo: Mongo, pg: AsyncEngine, document: dict) -> None:
-    """Insert a reference into Mongo and mirror it (row and rights) into Postgres."""
-    async with both_transactions(mongo, pg) as (mongo_session, pg_session):
-        await mongo.references.insert_one(document, session=mongo_session)
-        await write_legacy_reference(pg_session, document)
 
 
 async def _reference_user_row(
@@ -544,7 +534,6 @@ class TestCreateUser:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         snapshot,
         static_time,
     ):
@@ -575,36 +564,21 @@ class TestCreateUser:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
-        static_time,
-        pg: AsyncEngine,
     ):
         """Test that a user cannot be added to a reference if they are already a member."""
         user_1 = await fake.users.create()
         user_2 = await fake.users.create()
 
-        await insert_reference(
-            mongo,
-            pg,
-            {
-                "_id": "foo",
-                "archived": False,
-                "created_at": static_time.datetime,
-                "data_type": "genome",
-                "description": "This is a test reference.",
-                "groups": [],
-                "name": "Foo",
-                "organism": "virus",
-                "restrict_source_types": False,
-                "source_types": [],
-                "user": {"id": user_1.id},
-                "users": [{"id": user_2.id, "build": True, "modify_otu": True}],
-            },
+        reference = await fake.references.create(user=user_1)
+
+        await data_layer.references.create_user(
+            reference.id,
+            CreateReferenceUserRequest(build=True, modify_otu=True, user_id=user_2.id),
         )
 
         with pytest.raises(ResourceConflictError) as err:
             await data_layer.references.create_user(
-                "foo",
+                reference.id,
                 CreateReferenceUserRequest(
                     build=True,
                     modify_otu=True,
@@ -630,35 +604,15 @@ class TestCreateUser:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
-        static_time,
-        pg: AsyncEngine,
     ):
         """Test that a `NotFound` error is raised when the user does not exist."""
         user = await fake.users.create()
 
-        await insert_reference(
-            mongo,
-            pg,
-            {
-                "_id": "foo",
-                "archived": False,
-                "created_at": static_time.datetime,
-                "data_type": "genome",
-                "description": "This is a test reference.",
-                "groups": [],
-                "name": "Foo",
-                "organism": "virus",
-                "restrict_source_types": False,
-                "source_types": [],
-                "user": {"id": user.id},
-                "users": [],
-            },
-        )
+        reference = await fake.references.create(user=user)
 
         with pytest.raises(ResourceConflictError) as err:
             await data_layer.references.create_user(
-                "foo",
+                reference.id,
                 CreateReferenceUserRequest(build=True, modify_otu=True, user_id=99),
             )
 
@@ -670,8 +624,6 @@ class TestUpdateUser:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
-        pg: AsyncEngine,
         snapshot,
         static_time,
     ):
@@ -679,35 +631,15 @@ class TestUpdateUser:
         user_1 = await fake.users.create()
         user_2 = await fake.users.create()
 
-        await insert_reference(
-            mongo,
-            pg,
-            {
-                "_id": "foo",
-                "archived": False,
-                "created_at": static_time.datetime,
-                "data_type": "genome",
-                "description": "This is a test reference.",
-                "groups": [],
-                "name": "Foo",
-                "organism": "virus",
-                "restrict_source_types": False,
-                "source_types": [],
-                "user": {"id": user_1.id},
-                "users": [
-                    {
-                        "id": user_2.id,
-                        "build": True,
-                        "created_at": static_time.datetime,
-                        "modify": False,
-                        "modify_otu": True,
-                    },
-                ],
-            },
+        reference = await fake.references.create(user=user_1)
+
+        await data_layer.references.create_user(
+            reference.id,
+            CreateReferenceUserRequest(build=True, modify_otu=True, user_id=user_2.id),
         )
 
         assert await data_layer.references.update_user(
-            "foo",
+            reference.id,
             user_2.id,
             ReferenceRightsRequest(
                 modify_otu=False,
@@ -715,7 +647,7 @@ class TestUpdateUser:
         ) == snapshot(name="obj_1")
 
         assert await data_layer.references.update_user(
-            "foo",
+            reference.id,
             user_2.id,
             ReferenceRightsRequest(
                 modify=True,
@@ -723,48 +655,39 @@ class TestUpdateUser:
             ),
         ) == snapshot(name="obj_2")
 
-    @pytest.mark.parametrize("reference_exists", [True, False])
-    async def test_not_found(
+    async def test_reference_not_found(
         self,
-        reference_exists: bool,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
-        static_time,
-        pg: AsyncEngine,
     ):
-        """Test that ``ResourceNotFound`` is raised when the reference or reference user
-        do not exist.
-        """
-        user_1 = await fake.users.create()
-
-        if reference_exists:
-            await insert_reference(
-                mongo,
-                pg,
-                {
-                    "_id": "foo",
-                    "archived": False,
-                    "created_at": static_time.datetime,
-                    "data_type": "genome",
-                    "description": "This is a test reference.",
-                    "groups": [],
-                    "name": "Foo",
-                    "organism": "virus",
-                    "restrict_source_types": False,
-                    "source_types": [],
-                    "user": {"id": user_1.id},
-                    "users": [],
-                },
-            )
+        """Test ``ResourceNotFound`` is raised when the reference does not exist."""
+        user = await fake.users.create()
 
         with pytest.raises(ResourceNotFoundError):
-            assert await data_layer.references.update_user(
+            await data_layer.references.update_user(
                 "foo",
-                user_1.id,
-                ReferenceRightsRequest(
-                    modify_otu=False,
-                ),
+                user.id,
+                ReferenceRightsRequest(modify_otu=False),
+            )
+
+    async def test_user_not_a_member(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+    ):
+        """Test that ``ResourceNotFound`` is raised when the user is not a member of the
+        reference.
+        """
+        owner = await fake.users.create()
+        non_member = await fake.users.create()
+
+        reference = await fake.references.create(user=owner)
+
+        with pytest.raises(ResourceNotFoundError):
+            await data_layer.references.update_user(
+                reference.id,
+                non_member.id,
+                ReferenceRightsRequest(modify_otu=False),
             )
 
 
@@ -773,87 +696,45 @@ class TestDeleteUser:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
-        pg: AsyncEngine,
-        static_time,
     ):
         """Test that a user can be deleted from a reference."""
         user_1 = await fake.users.create()
         user_2 = await fake.users.create()
 
-        await insert_reference(
-            mongo,
-            pg,
-            {
-                "_id": "foo",
-                "archived": False,
-                "created_at": static_time.datetime,
-                "data_type": "genome",
-                "description": "This is a test reference.",
-                "groups": [],
-                "name": "Foo",
-                "organism": "virus",
-                "restrict_source_types": False,
-                "source_types": [],
-                "user": {"id": user_1.id},
-                "users": [
-                    {
-                        "id": user_2.id,
-                        "build": True,
-                        "created_at": static_time.datetime,
-                        "modify": False,
-                        "modify_otu": True,
-                    },
-                ],
-            },
+        reference = await fake.references.create(user=user_1)
+
+        await data_layer.references.create_user(
+            reference.id,
+            CreateReferenceUserRequest(build=True, modify_otu=True, user_id=user_2.id),
         )
 
-        assert await data_layer.references.delete_user("foo", user_2.id) is None
+        assert await data_layer.references.delete_user(reference.id, user_2.id) is None
 
-        reference = await data_layer.references.get("foo")
-        assert reference.users == []
+        reference = await data_layer.references.get(reference.id)
+        assert [member.id for member in reference.users] == [user_1.id]
 
-    @pytest.mark.parametrize(
-        "reference_exists",
-        [True, False],
-        ids=["reference_exists", "reference_does_not_exist"],
-    )
-    async def test_not_found(
+    async def test_reference_not_found(
         self,
-        reference_exists: bool,
+        data_layer: DataLayer,
+    ):
+        """Test ``ResourceNotFound`` is raised when the reference does not exist."""
+        with pytest.raises(ResourceNotFoundError):
+            await data_layer.references.delete_user("foo", 999999)
+
+    async def test_user_not_a_member(
+        self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
-        static_time,
-        pg: AsyncEngine,
     ):
-        """Test that ``ResourceNotFound`` is raised when the reference or reference user
-        do not exist.
+        """Test that ``ResourceNotFound`` is raised when the user is not a member of the
+        reference.
         """
-        user_1 = await fake.users.create()
+        user = await fake.users.create()
 
-        if reference_exists:
-            await insert_reference(
-                mongo,
-                pg,
-                {
-                    "_id": "foo",
-                    "archived": False,
-                    "created_at": static_time.datetime,
-                    "data_type": "genome",
-                    "description": "This is a test reference.",
-                    "groups": [],
-                    "name": "Foo",
-                    "organism": "virus",
-                    "restrict_source_types": False,
-                    "source_types": [],
-                    "user": {"id": user_1.id},
-                    "users": [],
-                },
-            )
+        reference = await fake.references.create(user=user)
 
         with pytest.raises(ResourceNotFoundError):
-            assert await data_layer.references.delete_user("foo", 999999)
+            await data_layer.references.delete_user(reference.id, 999999)
 
 
 class TestCreateGroup:
@@ -861,8 +742,6 @@ class TestCreateGroup:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
-        pg: AsyncEngine,
         snapshot,
         static_time,
     ):
@@ -870,27 +749,10 @@ class TestCreateGroup:
         user = await fake.users.create()
         group = await fake.groups.create()
 
-        await insert_reference(
-            mongo,
-            pg,
-            {
-                "_id": "foo",
-                "archived": False,
-                "created_at": static_time.datetime,
-                "data_type": "genome",
-                "description": "This is a test reference.",
-                "groups": [],
-                "name": "Foo",
-                "organism": "virus",
-                "restrict_source_types": False,
-                "source_types": [],
-                "user": {"id": user.id},
-                "users": [],
-            },
-        )
+        reference = await fake.references.create(user=user)
 
         assert await data_layer.references.create_group(
-            "foo",
+            reference.id,
             CreateReferenceGroupRequest(
                 build=True,
                 modify_otu=True,
@@ -902,7 +764,7 @@ class TestCreateGroup:
         # exists.
         with pytest.raises(ResourceConflictError) as err:
             await data_layer.references.create_group(
-                "foo",
+                reference.id,
                 CreateReferenceGroupRequest(
                     build=True,
                     modify_otu=True,
@@ -934,36 +796,18 @@ class TestCreateGroup:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
-        static_time,
-        pg: AsyncEngine,
     ):
         """Test that `ResourceNotFound` is raised when the group does not exist."""
         user = await fake.users.create()
 
-        await insert_reference(
-            mongo,
-            pg,
-            {
-                "_id": "foo",
-                "archived": False,
-                "created_at": static_time.datetime,
-                "data_type": "genome",
-                "description": "This is a test reference.",
-                "groups": [],
-                "name": "Foo",
-                "organism": "virus",
-                "restrict_source_types": False,
-                "source_types": [],
-                "user": {"id": user.id},
-                "users": [],
-            },
-        )
+        reference = await fake.references.create(user=user)
 
         with pytest.raises(ResourceConflictError) as err:
             await data_layer.references.create_group(
-                "foo",
-                CreateReferenceGroupRequest(build=True, modify_otu=True, group_id=21),
+                reference.id,
+                CreateReferenceGroupRequest(
+                    build=True, modify_otu=True, group_id=999999
+                ),
             )
 
         assert "Group does not exist" in str(err)
@@ -974,8 +818,6 @@ class TestUpdateGroup:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
-        pg: AsyncEngine,
         snapshot,
         static_time,
     ):
@@ -983,85 +825,48 @@ class TestUpdateGroup:
         user = await fake.users.create()
         group = await fake.groups.create()
 
-        await insert_reference(
-            mongo,
-            pg,
-            {
-                "_id": "foo",
-                "archived": False,
-                "created_at": static_time.datetime,
-                "data_type": "genome",
-                "description": "This is a test reference.",
-                "groups": [
-                    {
-                        "id": group.id,
-                        "build": True,
-                        "created_at": static_time.datetime,
-                        "modify": False,
-                        "modify_otu": True,
-                    },
-                ],
-                "name": "Foo",
-                "organism": "virus",
-                "restrict_source_types": False,
-                "source_types": [],
-                "user": {"id": user.id},
-                "users": [],
-            },
+        reference = await fake.references.create(user=user)
+
+        await data_layer.references.create_group(
+            reference.id,
+            CreateReferenceGroupRequest(build=True, modify_otu=True, group_id=group.id),
         )
 
         assert await data_layer.references.update_group(
-            "foo",
+            reference.id,
             group.id,
             ReferenceRightsRequest(build=False, modify=True),
         ) == snapshot(name="obj")
 
-    @pytest.mark.parametrize(
-        "reference_exists",
-        [True, False],
-        ids=["reference_exists", "reference_does_not_exist"],
-    )
-    async def test_not_found(
+    async def test_reference_not_found(
         self,
-        reference_exists: bool,
+        data_layer: DataLayer,
+    ):
+        """Test ``ResourceNotFound`` is raised when the reference does not exist."""
+        with pytest.raises(ResourceNotFoundError):
+            await data_layer.references.update_group(
+                "foo",
+                999999,
+                ReferenceRightsRequest(modify_otu=False),
+            )
+
+    async def test_group_not_a_member(
+        self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
-        static_time,
-        pg: AsyncEngine,
     ):
-        """Test that ``ResourceNotFound`` is raised when the reference or reference group
-        do not exist.
+        """Test ``ResourceNotFound`` is raised when the group is not attached to the
+        reference.
         """
         user = await fake.users.create()
 
-        if reference_exists:
-            await insert_reference(
-                mongo,
-                pg,
-                {
-                    "_id": "foo",
-                    "archived": False,
-                    "created_at": static_time.datetime,
-                    "data_type": "genome",
-                    "description": "This is a test reference.",
-                    "groups": [],
-                    "name": "Foo",
-                    "organism": "virus",
-                    "restrict_source_types": False,
-                    "source_types": [],
-                    "user": {"id": user.id},
-                    "users": [],
-                },
-            )
+        reference = await fake.references.create(user=user)
 
         with pytest.raises(ResourceNotFoundError):
-            assert await data_layer.references.update_group(
-                "foo",
-                "bar",
-                ReferenceRightsRequest(
-                    modify_otu=False,
-                ),
+            await data_layer.references.update_group(
+                reference.id,
+                999999,
+                ReferenceRightsRequest(modify_otu=False),
             )
 
 
@@ -1070,84 +875,42 @@ class TestDeleteGroup:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
-        pg: AsyncEngine,
-        static_time,
     ):
         """Test that a group can be deleted from a reference."""
         user = await fake.users.create()
         group = await fake.groups.create()
 
-        await insert_reference(
-            mongo,
-            pg,
-            {
-                "_id": "foo",
-                "archived": False,
-                "created_at": static_time.datetime,
-                "data_type": "genome",
-                "description": "This is a test reference.",
-                "groups": [
-                    {
-                        "id": group.id,
-                        "build": True,
-                        "created_at": static_time.datetime,
-                        "modify": False,
-                        "modify_otu": True,
-                    },
-                ],
-                "name": "Foo",
-                "organism": "virus",
-                "restrict_source_types": False,
-                "source_types": [],
-                "user": {"id": user.id},
-                "users": [],
-            },
+        reference = await fake.references.create(user=user)
+
+        await data_layer.references.create_group(
+            reference.id,
+            CreateReferenceGroupRequest(build=True, modify_otu=True, group_id=group.id),
         )
 
-        assert await data_layer.references.delete_group("foo", group.id) is None
+        assert await data_layer.references.delete_group(reference.id, group.id) is None
 
-        reference = await data_layer.references.get("foo")
+        reference = await data_layer.references.get(reference.id)
         assert reference.groups == []
 
-    @pytest.mark.parametrize(
-        "reference_exists",
-        [True, False],
-        ids=["reference_exists", "reference_does_not_exist"],
-    )
-    async def test_not_found(
+    async def test_reference_not_found(
         self,
-        reference_exists: bool,
+        data_layer: DataLayer,
+    ):
+        """Test ``ResourceNotFound`` is raised when the reference does not exist."""
+        with pytest.raises(ResourceNotFoundError):
+            await data_layer.references.delete_group("foo", 999999)
+
+    async def test_group_not_a_member(
+        self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
-        static_time,
-        pg: AsyncEngine,
     ):
-        """Test that ``ResourceNotFound`` is raised when the reference or reference group
-        do not exist.
+        """Test ``ResourceNotFound`` is raised when the group is not attached to the
+        reference.
         """
         user = await fake.users.create()
 
-        if reference_exists:
-            await insert_reference(
-                mongo,
-                pg,
-                {
-                    "_id": "foo",
-                    "archived": False,
-                    "created_at": static_time.datetime,
-                    "data_type": "genome",
-                    "description": "This is a test reference.",
-                    "groups": [],
-                    "name": "Foo",
-                    "organism": "virus",
-                    "restrict_source_types": False,
-                    "source_types": [],
-                    "user": {"id": user.id},
-                    "users": [],
-                },
-            )
+        reference = await fake.references.create(user=user)
 
         with pytest.raises(ResourceNotFoundError):
-            assert await data_layer.references.delete_group("foo", "bar")
+            await data_layer.references.delete_group(reference.id, 999999)
