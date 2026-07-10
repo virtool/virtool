@@ -24,13 +24,10 @@ from virtool.data.topg import (
     compose_legacy_id_multi_expression,
     compose_legacy_id_single_expression,
     compose_legacy_id_subquery,
-    resolve_legacy_id,
 )
 from virtool.data.transforms import apply_transforms
 from virtool.groups.pg import SQLGroup
 from virtool.history.db import (
-    bulk_delete_history,
-    bulk_insert_history,
     patch_to_version,
 )
 from virtool.history.models import HistorySearchResult
@@ -41,7 +38,6 @@ from virtool.mongo.core import Mongo
 from virtool.otus.models import OTU, OTUSearchResult
 from virtool.otus.oas import CreateOTURequest
 from virtool.pg.utils import get_row_by_id
-from virtool.references.alot import prepare_otu_insertion
 from virtool.references.db import (
     compose_reference_id_match,
     get_cloned_from_lookup,
@@ -1129,7 +1125,7 @@ class ReferencesData(DataLayerDomain):
 
         tracker = AccumulatingProgressHandlerWrapper(
             progress_handler,
-            3,
+            2,
         )
 
         async with AsyncSession(self._pg) as session:
@@ -1142,91 +1138,15 @@ class ReferencesData(DataLayerDomain):
 
         await tracker.add(1)
 
-        async with AsyncSession(self._pg) as session:
-            reference_pk = await resolve_legacy_id(session, SQLReference, ref_id)
-
-        if reference_pk is None:
-            raise ResourceConflictError(f"Reference {ref_id!r} not found in postgres")
-
-        insertions = [
-            prepare_otu_insertion(
-                created_at,
-                HistoryMethod.import_otu,
-                otu.dict(by_alias=True),
-                reference_pk,
-                user_id,
-            )
-            for otu in data.otus
-        ]
-
-        diff_rows = [
-            {"change_id": insertion.history.id, "diff": insertion.history.diff}
-            for insertion in insertions
-        ]
-
-        async with AsyncSession(self._pg) as pg_session:
-            await bulk_insert_history(
-                pg_session,
-                diff_rows,
-                [insertion.history.document for insertion in insertions],
-            )
-            await pg_session.commit()
-
-        await tracker.add(1)
-
-        try:
-            sequences = []
-
-            for insertion in insertions:
-                sequences.extend(insertion.sequences)
-
-            async with asyncio.TaskGroup() as tg:
-                tg.create_task(
-                    self._mongo.otus.insert_many(
-                        [insertion.otu for insertion in insertions],
-                        None,
-                    ),
-                )
-                tg.create_task(
-                    self._mongo.sequences.insert_many(sequences, None),
-                )
-        except Exception:
-            await bulk_delete_history(self._pg, [row["change_id"] for row in diff_rows])
-
-            reference_id_match = await compose_reference_id_match(self._pg, ref_id)
-
-            await asyncio.gather(
-                self._mongo.sequences.delete_many({"reference.id": reference_id_match}),
-                self._mongo.otus.delete_many({"reference.id": reference_id_match}),
-            )
-
-            async with AsyncSession(self._pg) as session:
-                reference_id = (
-                    await session.execute(
-                        select(SQLReference.id).where(
-                            compose_legacy_id_single_expression(SQLReference, ref_id),
-                        ),
-                    )
-                ).scalar_one_or_none()
-
-                if reference_id is not None:
-                    await session.execute(
-                        delete(SQLReferenceUser).where(
-                            SQLReferenceUser.reference_id == reference_id,
-                        ),
-                    )
-                    await session.execute(
-                        delete(SQLReferenceGroup).where(
-                            SQLReferenceGroup.reference_id == reference_id,
-                        ),
-                    )
-                    await session.execute(
-                        delete(SQLReference).where(SQLReference.id == reference_id),
-                    )
-
-                await session.commit()
-
-            raise
+        await populate_insert_only_reference(
+            created_at,
+            HistoryMethod.import_otu,
+            self._mongo,
+            self._pg,
+            [otu.dict(by_alias=True) for otu in data.otus],
+            ref_id,
+            user_id,
+        )
 
         await tracker.add(1)
 

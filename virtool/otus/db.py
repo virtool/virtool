@@ -357,6 +357,65 @@ def sequence_row_values(document: Document) -> dict[str, Any]:
     }
 
 
+_OTU_ROW_CHUNK_SIZE = 32767 // 7
+"""Max ``legacy_otus`` rows per statement.
+
+asyncpg caps bind parameters per statement at 32767. Each row binds the seven
+columns produced by :func:`otu_row_values`.
+"""
+
+_SEQUENCE_ROW_CHUNK_SIZE = 32767 // 5
+"""Max ``legacy_sequences`` rows per statement.
+
+asyncpg caps bind parameters per statement at 32767. Each row binds the five
+columns produced by :func:`sequence_row_values`.
+"""
+
+
+async def bulk_insert_otu_rows(
+    pg_session: AsyncSession,
+    documents: list[Document],
+    reference_id: int,
+) -> None:
+    """Insert ``legacy_otus`` rows for ``documents`` into ``pg_session``.
+
+    Every row's ``reference_id`` column is set to the resolved ``reference_id``
+    primary key. The rows are written in asyncpg-safe chunks without committing, so
+    they commit or roll back together with the caller's surrounding transaction.
+    """
+    if not documents:
+        return
+
+    rows = [otu_row_values(document, reference_id) for document in documents]
+
+    for start in range(0, len(rows), _OTU_ROW_CHUNK_SIZE):
+        await pg_session.execute(
+            pg_insert(SQLOTU).values(rows[start : start + _OTU_ROW_CHUNK_SIZE]),
+        )
+
+
+async def bulk_insert_sequence_rows(
+    pg_session: AsyncSession,
+    documents: list[Document],
+) -> None:
+    """Insert ``legacy_sequences`` rows for ``documents`` into ``pg_session``.
+
+    The rows are written in asyncpg-safe chunks without committing, so they commit
+    or roll back together with the caller's surrounding transaction.
+    """
+    if not documents:
+        return
+
+    rows = [sequence_row_values(document) for document in documents]
+
+    for start in range(0, len(rows), _SEQUENCE_ROW_CHUNK_SIZE):
+        await pg_session.execute(
+            pg_insert(SQLSequence).values(
+                rows[start : start + _SEQUENCE_ROW_CHUNK_SIZE],
+            ),
+        )
+
+
 async def lock_legacy_otu(pg_session: AsyncSession, otu_id: str) -> None:
     """Take a ``SELECT … FOR UPDATE`` lock on an OTU's ``legacy_otus`` row.
 
