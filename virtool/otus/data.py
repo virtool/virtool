@@ -650,7 +650,11 @@ class OTUData:
                 session=mongo_session,
             )
 
-            await virtool.otus.db.update_otu_verification(self._mongo, new)
+            await virtool.otus.db.update_otu_verification(
+                self._mongo,
+                new,
+                session=mongo_session,
+            )
 
             # Use the old and new entry to add a new history document for the change.
             await virtool.history.db.add(
@@ -681,7 +685,7 @@ class OTUData:
             mongo_session: AsyncIOMotorClientSession,
             pg_session: AsyncSession,
         ):
-            document = await self._mongo.otus.find_one(otu_id)
+            document = await self._mongo.otus.find_one(otu_id, session=mongo_session)
 
             isolates = deepcopy(document["isolates"])
 
