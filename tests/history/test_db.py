@@ -158,14 +158,16 @@ class TestAdd:
             await ensure_reference(session, "hxn167", user.id)
             await session.commit()
 
-        change = await virtool.history.db.add(
-            pg,
-            "This is a description",
-            HistoryMethod.edit,
-            old,
-            new,
-            user.id,
-        )
+        async with AsyncSession(pg) as session:
+            change = await virtool.history.db.add(
+                session,
+                "This is a description",
+                HistoryMethod.edit,
+                old,
+                new,
+                user.id,
+            )
+            await session.commit()
 
         change_id = change["_id"]
 
@@ -209,14 +211,16 @@ class TestAdd:
             await ensure_reference(session, "hxn167", user.id)
             await session.commit()
 
-        change = await virtool.history.db.add(
-            pg,
-            f"Created {new['name']}",
-            HistoryMethod.create,
-            old,
-            new,
-            user.id,
-        )
+        async with AsyncSession(pg) as session:
+            change = await virtool.history.db.add(
+                session,
+                f"Created {new['name']}",
+                HistoryMethod.create,
+                old,
+                new,
+                user.id,
+            )
+            await session.commit()
 
         assert change == snapshot
         assert await get_row_by_id(pg, SQLLegacyHistoryDiff, 1) == snapshot
@@ -250,14 +254,16 @@ class TestAdd:
             await ensure_reference(session, "hxn167", user.id)
             await session.commit()
 
-        change = await virtool.history.db.add(
-            pg,
-            f"Removed {old['name']}",
-            HistoryMethod.remove,
-            old,
-            new,
-            user.id,
-        )
+        async with AsyncSession(pg) as session:
+            change = await virtool.history.db.add(
+                session,
+                f"Removed {old['name']}",
+                HistoryMethod.remove,
+                old,
+                new,
+                user.id,
+            )
+            await session.commit()
 
         assert change == snapshot(name="return_value")
 

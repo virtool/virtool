@@ -125,19 +125,20 @@ async def bulk_insert_diffs(pg: AsyncEngine, rows: list[dict]) -> None:
 
 
 async def bulk_insert_history(
-    pg: AsyncEngine,
+    pg_session: AsyncSession,
     diff_rows: list[dict],
     documents: list[Document],
 ) -> None:
-    """Insert ``history_diffs`` and ``legacy_history`` rows in one transaction.
+    """Insert ``history_diffs`` and ``legacy_history`` rows into ``pg_session``.
 
     ``diff_rows`` and ``documents`` are parallel: ``diff_rows[i]`` must describe
     the same change as ``documents[i]``. They are validated to be aligned by
     ``change_id`` before any write, so a misaligned caller fails loudly rather
     than corrupting history.
 
-    Both tables are written in asyncpg-safe chunks within a single Postgres
-    transaction so they commit or roll back together.
+    Both tables are written in asyncpg-safe chunks into the caller-provided
+    ``pg_session`` without committing, so they commit or roll back together with the
+    caller's surrounding transaction.
     """
     if {row["change_id"] for row in diff_rows} != {
         document["_id"] for document in documents
@@ -153,61 +154,58 @@ async def bulk_insert_history(
 
     embedded_reference_ids = {document["reference"]["id"] for document in documents}
 
-    async with AsyncSession(pg) as session:
-        rows = (
-            (
-                await session.execute(
-                    select(SQLReference.id, SQLReference.legacy_id).where(
-                        compose_legacy_id_multi_expression(
-                            SQLReference,
-                            embedded_reference_ids,
-                        ),
+    rows = (
+        (
+            await pg_session.execute(
+                select(SQLReference.id, SQLReference.legacy_id).where(
+                    compose_legacy_id_multi_expression(
+                        SQLReference,
+                        embedded_reference_ids,
                     ),
-                )
-            ).all()
-            if embedded_reference_ids
-            else []
-        )
-
-        reference_id_map: dict[int | str, int] = {
-            **{id_: id_ for id_, _ in rows},
-            **{legacy_id: id_ for id_, legacy_id in rows if legacy_id is not None},
-        }
-
-        unresolved = embedded_reference_ids - reference_id_map.keys()
-
-        if unresolved:
-            raise ValueError(
-                f"References not found in postgres: {sorted(unresolved, key=str)}",
-            )
-
-        for row, document in zip(legacy_rows, documents, strict=True):
-            row["reference_id"] = reference_id_map[document["reference"]["id"]]
-
-        history_ids: dict[str, int] = {}
-
-        for start in range(0, len(legacy_rows), _LEGACY_HISTORY_CHUNK_SIZE):
-            result = await session.execute(
-                insert(SQLLegacyHistory)
-                .values(legacy_rows[start : start + _LEGACY_HISTORY_CHUNK_SIZE])
-                .returning(SQLLegacyHistory.id, SQLLegacyHistory.legacy_id),
-            )
-
-            for id_, legacy_id in result.all():
-                history_ids[legacy_id] = id_
-
-        diff_values = [
-            {**row, "history_id": history_ids[row["change_id"]]} for row in diff_rows
-        ]
-
-        for start in range(0, len(diff_values), _HISTORY_DIFF_CHUNK_SIZE):
-            await session.execute(
-                insert(SQLLegacyHistoryDiff).values(
-                    diff_values[start : start + _HISTORY_DIFF_CHUNK_SIZE],
                 ),
             )
+        ).all()
+        if embedded_reference_ids
+        else []
+    )
 
-        await session.commit()
+    reference_id_map: dict[int | str, int] = {
+        **{id_: id_ for id_, _ in rows},
+        **{legacy_id: id_ for id_, legacy_id in rows if legacy_id is not None},
+    }
+
+    unresolved = embedded_reference_ids - reference_id_map.keys()
+
+    if unresolved:
+        raise ValueError(
+            f"References not found in postgres: {sorted(unresolved, key=str)}",
+        )
+
+    for row, document in zip(legacy_rows, documents, strict=True):
+        row["reference_id"] = reference_id_map[document["reference"]["id"]]
+
+    history_ids: dict[str, int] = {}
+
+    for start in range(0, len(legacy_rows), _LEGACY_HISTORY_CHUNK_SIZE):
+        result = await pg_session.execute(
+            insert(SQLLegacyHistory)
+            .values(legacy_rows[start : start + _LEGACY_HISTORY_CHUNK_SIZE])
+            .returning(SQLLegacyHistory.id, SQLLegacyHistory.legacy_id),
+        )
+
+        for id_, legacy_id in result.all():
+            history_ids[legacy_id] = id_
+
+    diff_values = [
+        {**row, "history_id": history_ids[row["change_id"]]} for row in diff_rows
+    ]
+
+    for start in range(0, len(diff_values), _HISTORY_DIFF_CHUNK_SIZE):
+        await pg_session.execute(
+            insert(SQLLegacyHistoryDiff).values(
+                diff_values[start : start + _HISTORY_DIFF_CHUNK_SIZE],
+            ),
+        )
 
 
 async def bulk_delete_history(pg: AsyncEngine, change_ids: list[str]) -> None:
@@ -265,7 +263,7 @@ class PreparedChange:
 
 
 async def add(
-    pg: AsyncEngine,
+    pg_session: AsyncSession,
     description: str,
     method_name: HistoryMethod,
     old: dict | None,
@@ -274,7 +272,12 @@ async def add(
 ) -> dict:
     """Add a change document to ``legacy_history``.
 
-    :param pg: the application PostgreSQL database object
+    Writes into the caller-provided ``pg_session`` and does not commit, so the history
+    rows land or roll back atomically with the surrounding transaction (e.g. the paired
+    Mongo write coordinated by ``both_transactions``). The session is flushed to populate
+    the ``legacy_history`` primary key for the diff's foreign key.
+
+    :param pg_session: an active Postgres session owned by the caller
     :param method_name: the name of the handler method that executed the change
     :param old: the otu document prior to the change
     :param new: the otu document after the change
@@ -290,23 +293,21 @@ async def add(
     diff_row = SQLLegacyHistoryDiff(change_id=document["_id"], diff=prepared.diff)
     legacy_row = SQLLegacyHistory(**legacy_history_values(document))
 
-    async with AsyncSession(pg) as pg_session:
-        reference_id = document["reference"]["id"]
+    reference_id = document["reference"]["id"]
 
-        legacy_row.reference_id = await resolve_legacy_id(
-            pg_session,
-            SQLReference,
-            reference_id,
-        )
+    legacy_row.reference_id = await resolve_legacy_id(
+        pg_session,
+        SQLReference,
+        reference_id,
+    )
 
-        if legacy_row.reference_id is None:
-            raise ValueError(f"Reference {reference_id!r} not found in postgres")
+    if legacy_row.reference_id is None:
+        raise ValueError(f"Reference {reference_id!r} not found in postgres")
 
-        pg_session.add(legacy_row)
-        await pg_session.flush()
-        diff_row.history_id = legacy_row.id
-        pg_session.add(diff_row)
-        await pg_session.commit()
+    pg_session.add(legacy_row)
+    await pg_session.flush()
+    diff_row.history_id = legacy_row.id
+    pg_session.add(diff_row)
 
     return {**document, "diff": prepared.diff}
 
