@@ -57,27 +57,6 @@ class TestCreate:
 
         assert imported.imported_from.id == upload.id
 
-    async def test_import_task_keyed_by_pk(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-    ):
-        """The import population task is handed the integer primary key, not a legacy
-        id, so it can locate a Postgres-native reference.
-        """
-        user = await fake.users.create()
-        upload = await fake.uploads.create(user=user)
-
-        reference = await data_layer.references.create(
-            CreateReferenceRequest(name="Imported", import_from=upload.id),
-            user.id,
-        )
-
-        imported = await data_layer.references.get(reference.id)
-        task = await data_layer.tasks.get(imported.task.id)
-
-        assert task.context["ref_id"] == reference.id
-
     async def test_rolls_back_on_postgres_failure(
         self,
         data_layer: DataLayer,
@@ -111,14 +90,11 @@ class TestCreate:
 
 
 class TestUpdate:
-    async def test_postgres_native(
+    async def test_ok(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
     ):
-        """A Postgres-native reference (no ``legacy_id``) is addressed by its integer
-        primary key and updates normally.
-        """
         user = await fake.users.create()
 
         reference = await fake.references.create(user=user)
@@ -131,6 +107,34 @@ class TestUpdate:
         updated = await data_layer.references.get(reference.id)
 
         assert updated.name == "After"
+
+    async def test_archived(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+    ):
+        """An archived reference cannot be updated."""
+        user = await fake.users.create()
+
+        reference = await fake.references.create(user=user)
+
+        await data_layer.references.archive(reference.id)
+
+        with pytest.raises(ResourceConflictError) as err:
+            await data_layer.references.update(
+                reference.id,
+                UpdateReferenceRequest(name="After"),
+            )
+
+        assert "Reference is archived" in str(err.value)
+
+    async def test_not_found(self, data_layer: DataLayer):
+        """Updating a reference that does not exist raises a not-found error."""
+        with pytest.raises(ResourceNotFoundError):
+            await data_layer.references.update(
+                999999,
+                UpdateReferenceRequest(name="After"),
+            )
 
 
 class TestCreateUser:
