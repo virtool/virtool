@@ -1165,11 +1165,13 @@ class ReferencesData(DataLayerDomain):
             for insertion in insertions
         ]
 
-        await bulk_insert_history(
-            self._pg,
-            diff_rows,
-            [insertion.history.document for insertion in insertions],
-        )
+        async with AsyncSession(self._pg) as pg_session:
+            await bulk_insert_history(
+                pg_session,
+                diff_rows,
+                [insertion.history.document for insertion in insertions],
+            )
+            await pg_session.commit()
 
         await tracker.add(1)
 

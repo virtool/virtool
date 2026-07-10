@@ -682,11 +682,13 @@ async def populate_insert_only_reference(
         for insertion in insertions
     ]
 
-    await bulk_insert_history(
-        pg,
-        diff_rows,
-        [insertion.history.document for insertion in insertions],
-    )
+    async with AsyncSession(pg) as pg_session:
+        await bulk_insert_history(
+            pg_session,
+            diff_rows,
+            [insertion.history.document for insertion in insertions],
+        )
+        await pg_session.commit()
 
     try:
         sequences = []
