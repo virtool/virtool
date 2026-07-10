@@ -948,7 +948,7 @@
                   'reference': dict({
                     'id': 1,
                   }),
-                  'segment': 2,
+                  'segment': None,
                   'sequence': 'TAAGAGATTAAACAACCGCTTTCGTTACCAGAAACTGCTTTCTTTGAACGTTTCTGTTTGCTT',
                 }),
               ]),

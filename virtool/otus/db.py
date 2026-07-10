@@ -3,7 +3,8 @@
 from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from sqlalchemy import distinct, func, select
+from sqlalchemy import delete, distinct, func, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.history.db
@@ -12,12 +13,14 @@ from virtool.api.utils import compose_regex_query, paginate
 from virtool.data.topg import (
     compose_legacy_id_mongo_match,
     compose_legacy_id_subquery,
+    resolve_legacy_id,
 )
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
 from virtool.history.sql import SQLLegacyHistory
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
+from virtool.otus.sql import SQLOTU, SQLSequence
 from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
@@ -324,6 +327,118 @@ async def update_otu_verification(
         joined["verified"] = True
 
     return issues
+
+
+def otu_row_values(document: Document, reference_id: int) -> dict[str, Any]:
+    """Map a Mongo OTU ``document`` to ``legacy_otus`` column values.
+
+    The whole document is stored verbatim in ``data``; the remaining columns are
+    promoted from it so they can be queried, filtered and sorted directly.
+    """
+    return {
+        "id": document["_id"],
+        "data": document,
+        "name": document["name"],
+        "abbreviation": document.get("abbreviation") or "",
+        "reference_id": reference_id,
+        "verified": document["verified"],
+        "version": document["version"],
+    }
+
+
+def sequence_row_values(document: Document) -> dict[str, Any]:
+    """Map a Mongo sequence ``document`` to ``legacy_sequences`` column values."""
+    return {
+        "id": document["_id"],
+        "data": document,
+        "otu_id": document["otu_id"],
+        "isolate_id": document["isolate_id"],
+        "segment": document.get("segment"),
+    }
+
+
+async def lock_legacy_otu(pg_session: AsyncSession, otu_id: str) -> None:
+    """Take a ``SELECT … FOR UPDATE`` lock on an OTU's ``legacy_otus`` row.
+
+    Serializes concurrent edits to the same OTU so no version bump is lost. Call it
+    before the first Mongo read in a write transaction so the Mongo snapshot is taken
+    after the lock is held. A no-op while the OTU has no Postgres row yet (not
+    backfilled); the Mongo transaction still guards the bump in that transient window.
+    """
+    await pg_session.execute(
+        select(SQLOTU.id).where(SQLOTU.id == otu_id).with_for_update(),
+    )
+
+
+async def write_legacy_otu(pg_session: AsyncSession, document: Document) -> None:
+    """Upsert a Mongo OTU ``document`` into ``legacy_otus`` within ``pg_session``.
+
+    The embedded ``reference.id`` is resolved to the integer ``legacy_references``
+    primary key. Every promoted column is recomputed from the document, so the same
+    call serves inserts and updates and keeps the row in sync on each whole-document
+    write.
+    """
+    reference_id = await resolve_legacy_id(
+        pg_session,
+        SQLReference,
+        document["reference"]["id"],
+    )
+
+    if reference_id is None:
+        raise ValueError(
+            f"Reference {document['reference']['id']!r} not found in postgres",
+        )
+
+    values = otu_row_values(document, reference_id)
+
+    await pg_session.execute(
+        pg_insert(SQLOTU)
+        .values(**values)
+        .on_conflict_do_update(
+            index_elements=["id"],
+            set_={key: value for key, value in values.items() if key != "id"},
+        ),
+    )
+
+
+async def write_legacy_sequence(pg_session: AsyncSession, document: Document) -> None:
+    """Upsert a Mongo sequence ``document`` into ``legacy_sequences`` within
+    ``pg_session``.
+    """
+    values = sequence_row_values(document)
+
+    await pg_session.execute(
+        pg_insert(SQLSequence)
+        .values(**values)
+        .on_conflict_do_update(
+            index_elements=["id"],
+            set_={key: value for key, value in values.items() if key != "id"},
+        ),
+    )
+
+
+async def delete_legacy_otu(pg_session: AsyncSession, otu_id: str) -> None:
+    """Delete an OTU's ``legacy_otus`` row; its ``legacy_sequences`` rows cascade."""
+    await pg_session.execute(delete(SQLOTU).where(SQLOTU.id == otu_id))
+
+
+async def delete_legacy_sequence(pg_session: AsyncSession, sequence_id: str) -> None:
+    """Delete a single ``legacy_sequences`` row by id."""
+    await pg_session.execute(delete(SQLSequence).where(SQLSequence.id == sequence_id))
+
+
+async def delete_legacy_isolate_sequences(
+    pg_session: AsyncSession,
+    otu_id: str,
+    isolate_id: str,
+) -> None:
+    """Delete every ``legacy_sequences`` row belonging to an isolate."""
+    await pg_session.execute(
+        delete(SQLSequence).where(
+            SQLSequence.otu_id == otu_id,
+            SQLSequence.isolate_id == isolate_id,
+        ),
+    )
 
 
 async def update_sequence_segments(
