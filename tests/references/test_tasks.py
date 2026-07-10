@@ -37,13 +37,10 @@ def assert_reference_created(
     async def func(
         query: dict | None = None,
     ):
-        references, otus, sequences = await asyncio.gather(
-            mongo.references.find_one("foo"),
+        otus, sequences = await asyncio.gather(
             mongo.otus.find(query or {}, sort=[("name", 1)]).to_list(None),
             mongo.sequences.find(query or {}, sort=[("accession", 1)]).to_list(None),
         )
-
-        assert references == snapshot(name="ref")
 
         assert otus == snapshot(
             name="otus",
@@ -462,15 +459,12 @@ class TestImportReferenceDualWrite:
         return setup
 
     @pytest.mark.flaky(reruns=2)
-    async def test_mirrors_organism(self, run_import, mongo: Mongo, pg: AsyncEngine):
-        """The imported organism is written to both Mongo and Postgres."""
+    async def test_writes_organism(self, run_import, pg: AsyncEngine):
+        """The imported organism is written to Postgres."""
         data_layer = await run_import()
 
         task = await ImportReferenceTask.from_task_id(data_layer, 1)
         await task.run()
-
-        document = await mongo.references.find_one("foo")
-        assert document["organism"] == "virus"
 
         row = await _reference_row(pg, "foo")
         assert row is not None
@@ -495,7 +489,6 @@ class TestImportReferenceDualWrite:
         task = await ImportReferenceTask.from_task_id(data_layer, 1)
         await task.run()
 
-        assert await mongo.references.find_one("foo") is None
         assert await _reference_row(pg, "foo") is None
 
 
@@ -582,5 +575,4 @@ class TestCloneReferenceDualWrite:
         task = await CloneReferenceTask.from_task_id(data_layer, 1)
         await task.run()
 
-        assert await mongo.references.find_one("foo") is None
         assert await _reference_row(pg, "foo") is None

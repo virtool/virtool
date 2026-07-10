@@ -33,7 +33,7 @@ def reference_values(
     is not stored; the name is re-derived via join.
     """
     return {
-        "legacy_id": document["_id"],
+        "legacy_id": document.get("_id"),
         "name": document["name"],
         "description": document["description"],
         "organism": document["organism"] or "",

@@ -565,71 +565,6 @@
     'version': 0,
   })
 # ---
-# name: TestDeleteUser.test_ok
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'name': 'Test',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 1,
-        'modify': True,
-        'modify_otu': True,
-      }),
-    ]),
-  })
-# ---
-# name: TestEdit.test_ok[db]
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'name': 'Bar',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-      'isolate',
-      'strain',
-    ]),
-    'user': dict({
-      'id': 2,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 3,
-        'modify': True,
-        'modify_otu': True,
-      }),
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 4,
-        'modify': True,
-        'modify_otu': True,
-      }),
-    ]),
-  })
-# ---
 # name: TestEdit.test_ok[resp]
   dict({
     'archived': False,
@@ -684,14 +619,14 @@
       dict({
         'created_at': 'approximately_now_isoformat',
         'description': 'Created new sequence NC_001367 in Isolate strain_1',
-        'id': 'fb085f7f.2',
+        'id': 'bf1b993c.2',
         'index': dict({
           'id': 'unbuilt',
           'version': 'unbuilt',
         }),
         'method_name': 'create_sequence',
         'otu': dict({
-          'id': 'fb085f7f',
+          'id': 'bf1b993c',
           'name': 'Tobacco mosaic virus',
           'version': 2,
         }),
@@ -708,14 +643,14 @@
       dict({
         'created_at': 'approximately_now_isoformat',
         'description': 'Added Isolate strain_1 as default',
-        'id': 'fb085f7f.1',
+        'id': 'bf1b993c.1',
         'index': dict({
           'id': 'unbuilt',
           'version': 'unbuilt',
         }),
         'method_name': 'add_isolate',
         'otu': dict({
-          'id': 'fb085f7f',
+          'id': 'bf1b993c',
           'name': 'Tobacco mosaic virus',
           'version': 1,
         }),
@@ -732,14 +667,14 @@
       dict({
         'created_at': 'approximately_now_isoformat',
         'description': 'Created Cucumber mosaic virus',
-        'id': '3cbb22cc.0',
+        'id': '7cf872dc.0',
         'index': dict({
           'id': 'unbuilt',
           'version': 'unbuilt',
         }),
         'method_name': 'create',
         'otu': dict({
-          'id': '3cbb22cc',
+          'id': '7cf872dc',
           'name': 'Cucumber mosaic virus',
           'version': 0,
         }),
@@ -756,14 +691,14 @@
       dict({
         'created_at': 'approximately_now_isoformat',
         'description': 'Created Potato virus X (PVX)',
-        'id': '7cf872dc.0',
+        'id': 'fb085f7f.0',
         'index': dict({
           'id': 'unbuilt',
           'version': 'unbuilt',
         }),
         'method_name': 'create',
         'otu': dict({
-          'id': '7cf872dc',
+          'id': 'fb085f7f',
           'name': 'Potato virus X',
           'version': 0,
         }),
@@ -780,14 +715,14 @@
       dict({
         'created_at': 'approximately_now_isoformat',
         'description': 'Created Tobacco mosaic virus (TMV)',
-        'id': 'fb085f7f.0',
+        'id': 'bf1b993c.0',
         'index': dict({
           'id': 'unbuilt',
           'version': 'unbuilt',
         }),
         'method_name': 'create',
         'otu': dict({
-          'id': 'fb085f7f',
+          'id': 'bf1b993c',
           'name': 'Tobacco mosaic virus',
           'version': 0,
         }),
@@ -931,41 +866,6 @@
     'modify_otu': True,
   })
 # ---
-# name: TestUpdateUser.test_ok.1
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'name': 'Test',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 1,
-        'modify': True,
-        'modify_otu': True,
-      }),
-      dict({
-        'build': False,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 2,
-        'modify': True,
-        'modify_otu': True,
-      }),
-    ]),
-  })
-# ---
 # name: test_create_group[None]
   dict({
     'build': False,
@@ -975,42 +875,6 @@
     'modify': True,
     'modify_otu': False,
     'name': 'gaffers',
-  })
-# ---
-# name: test_create_group[None].1
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 1,
-        'modify': True,
-        'modify_otu': True,
-      }),
-      dict({
-        'build': False,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 2,
-        'legacy_id': None,
-        'modify': True,
-        'modify_otu': False,
-      }),
-    ]),
-    'name': 'Test',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'users': list([
-    ]),
   })
 # ---
 # name: test_create_index[True]
@@ -1087,41 +951,6 @@
     'version': 0,
   })
 # ---
-# name: test_create_user[None][mongo]
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'name': 'Test',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 1,
-        'modify': True,
-        'modify_otu': True,
-      }),
-      dict({
-        'build': False,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 2,
-        'modify': True,
-        'modify_otu': False,
-      }),
-    ]),
-  })
-# ---
 # name: test_create_user[None][resp]
   dict({
     'build': False,
@@ -1130,34 +959,6 @@
     'id': 2,
     'modify': True,
     'modify_otu': False,
-  })
-# ---
-# name: test_delete_group[None]
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'name': 'Test',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 1,
-        'modify': True,
-        'modify_otu': True,
-      }),
-    ]),
   })
 # ---
 # name: test_find[active]
@@ -1747,41 +1548,6 @@
     'page_count': 1,
     'per_page': 25,
     'total_count': 2,
-  })
-# ---
-# name: test_update_group[None][mongo]
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-      dict({
-        'build': False,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 1,
-        'modify': False,
-        'modify_otu': True,
-      }),
-    ]),
-    'name': 'Test',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 1,
-        'modify': True,
-        'modify_otu': True,
-      }),
-    ]),
   })
 # ---
 # name: test_update_group[None][resp]
