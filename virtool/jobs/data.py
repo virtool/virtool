@@ -255,7 +255,7 @@ class JobsData:
                     SQLLegacySample.id.label("sample_id"),
                     SQLJobIndex.index_id,
                     SQLSubtraction.id.label("subtraction_id"),
-                    SQLAnalysis.legacy_id,
+                    SQLAnalysis.id.label("analysis_id"),
                 )
                 .join(SQLUser, SQLJob.user_id == SQLUser.id)
                 .outerjoin(SQLLegacySample, SQLLegacySample.job_id == SQLJob.id)

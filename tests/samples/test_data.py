@@ -1417,7 +1417,6 @@ class TestDelete:
             ),
             "test_sample",
             user_id,
-            0,
         )
 
         await data_layer.analyses.finalize(analysis.id, {"hits": []})
