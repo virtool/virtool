@@ -27,7 +27,6 @@ from virtool.indexes.sql import SQLIndexFile
 from virtool.indexes.utils import check_index_file_type, compose_index_file_key
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app
-from virtool.references.sql import SQLReference
 from virtool.storage.protocol import StorageBackend
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
@@ -46,6 +45,7 @@ class TestFind:
         self,
         archived: bool | None,
         expected_ids: set[str],
+        data_layer: DataLayer,
         fake: DataFaker,
         mocker: MockerFixture,
         mongo: Mongo,
@@ -61,6 +61,11 @@ class TestFind:
         job_active_a = await fake.jobs.create(user=user, workflow="build_index")
         job_active_b = await fake.jobs.create(user=user, workflow="build_index")
         job_archived = await fake.jobs.create(user=user, workflow="build_index")
+
+        reference_active_a = await fake.references.create(user=user)
+        reference_active_b = await fake.references.create(user=user)
+        reference_archived = await fake.references.create(user=user)
+        await data_layer.references.archive(reference_archived.id)
 
         await asyncio.gather(
             mongo.history.insert_many(
@@ -108,7 +113,7 @@ class TestFind:
                         "ready": False,
                         "has_files": True,
                         "job": {"id": job_active_a.id},
-                        "reference": {"id": "ref_active_a"},
+                        "reference": {"id": reference_active_a.id},
                         "user": {"id": user.id},
                         "sequence_otu_map": {"seq_1": "otu_1"},
                     },
@@ -120,7 +125,7 @@ class TestFind:
                         "ready": False,
                         "has_files": True,
                         "job": {"id": job_active_b.id},
-                        "reference": {"id": "ref_active_b"},
+                        "reference": {"id": reference_active_b.id},
                         "user": {"id": user.id},
                         "sequence_otu_map": {"seq_1": "otu_2"},
                     },
@@ -132,32 +137,9 @@ class TestFind:
                         "ready": False,
                         "has_files": True,
                         "job": {"id": job_archived.id},
-                        "reference": {"id": "ref_archived"},
+                        "reference": {"id": reference_archived.id},
                         "user": {"id": user.id},
                         "sequence_otu_map": {"seq_1": "otu_5"},
-                    },
-                ],
-                session=None,
-            ),
-            mongo.references.insert_many(
-                [
-                    {
-                        "_id": "ref_active_a",
-                        "archived": False,
-                        "data_type": "genome",
-                        "name": "Active A",
-                    },
-                    {
-                        "_id": "ref_active_b",
-                        "archived": False,
-                        "data_type": "genome",
-                        "name": "Active B",
-                    },
-                    {
-                        "_id": "ref_archived",
-                        "archived": True,
-                        "data_type": "genome",
-                        "name": "Archived",
                     },
                 ],
                 session=None,
@@ -165,27 +147,11 @@ class TestFind:
         )
 
         index_references = {
-            "idx_active_a": "ref_active_a",
-            "idx_active_b": "ref_active_b",
+            "idx_active_a": reference_active_a.id,
+            "idx_active_b": reference_active_b.id,
         }
 
         async with AsyncSession(pg) as session:
-            session.add_all(
-                SQLReference(
-                    legacy_id=legacy_id,
-                    name=name,
-                    description="",
-                    created_at=static_time.datetime,
-                    archived=archived,
-                    source_types=[],
-                    user_id=user.id,
-                )
-                for legacy_id, name, archived in (
-                    ("ref_active_a", "Active A", False),
-                    ("ref_active_b", "Active B", False),
-                    ("ref_archived", "Archived", True),
-                )
-            )
             session.add_all(
                 SQLLegacyHistory(
                     legacy_id=legacy_id,
@@ -196,7 +162,7 @@ class TestFind:
                     otu=otu_id,
                     otu_name=otu_id,
                     otu_version="0",
-                    reference=index_references[index_id],
+                    reference_id=index_references[index_id],
                     index=index_id,
                     index_version="0",
                 )
@@ -242,6 +208,7 @@ class TestFind:
         self,
         archived: bool | None,
         expected_ids: set[str],
+        data_layer: DataLayer,
         fake: DataFaker,
         snapshot,
         mongo: Mongo,
@@ -254,88 +221,49 @@ class TestFind:
         user = await fake.users.create()
         job = await fake.jobs.create(user=user)
 
-        await asyncio.gather(
-            mongo.indexes.insert_many(
-                [
-                    {
-                        "_id": "idx_active_a",
-                        "version": 1,
-                        "created_at": static_time.datetime + timedelta(hours=2),
-                        "manifest": {"otu_1": 2},
-                        "ready": True,
-                        "has_files": True,
-                        "job": {"id": job.id},
-                        "reference": {"id": "ref_active_a"},
-                        "user": {"id": user.id},
-                    },
-                    {
-                        "_id": "idx_active_b",
-                        "version": 0,
-                        "created_at": static_time.datetime,
-                        "manifest": {"otu_1": 2},
-                        "ready": True,
-                        "has_files": True,
-                        "job": {"id": job.id},
-                        "reference": {"id": "ref_active_b"},
-                        "user": {"id": user.id},
-                    },
-                    {
-                        "_id": "idx_archived",
-                        "version": 0,
-                        "created_at": static_time.datetime + timedelta(hours=4),
-                        "manifest": {"otu_1": 2},
-                        "ready": True,
-                        "has_files": True,
-                        "job": {"id": job.id},
-                        "reference": {"id": "ref_archived"},
-                        "user": {"id": user.id},
-                    },
-                ],
-                session=None,
-            ),
-            mongo.references.insert_many(
-                [
-                    {
-                        "_id": "ref_active_a",
-                        "archived": False,
-                        "data_type": "genome",
-                        "name": "Active A",
-                    },
-                    {
-                        "_id": "ref_active_b",
-                        "archived": False,
-                        "data_type": "genome",
-                        "name": "Active B",
-                    },
-                    {
-                        "_id": "ref_archived",
-                        "archived": True,
-                        "data_type": "genome",
-                        "name": "Archived",
-                    },
-                ],
-                session=None,
-            ),
-        )
+        reference_active_a = await fake.references.create(user=user)
+        reference_active_b = await fake.references.create(user=user)
+        reference_archived = await fake.references.create(user=user)
+        await data_layer.references.archive(reference_archived.id)
 
-        async with AsyncSession(pg) as session:
-            session.add_all(
-                SQLReference(
-                    legacy_id=legacy_id,
-                    name=name,
-                    description="",
-                    created_at=static_time.datetime,
-                    archived=archived_flag,
-                    source_types=[],
-                    user_id=user.id,
-                )
-                for legacy_id, name, archived_flag in (
-                    ("ref_active_a", "Active A", False),
-                    ("ref_active_b", "Active B", False),
-                    ("ref_archived", "Archived", True),
-                )
-            )
-            await session.commit()
+        await mongo.indexes.insert_many(
+            [
+                {
+                    "_id": "idx_active_a",
+                    "version": 1,
+                    "created_at": static_time.datetime + timedelta(hours=2),
+                    "manifest": {"otu_1": 2},
+                    "ready": True,
+                    "has_files": True,
+                    "job": {"id": job.id},
+                    "reference": {"id": reference_active_a.id},
+                    "user": {"id": user.id},
+                },
+                {
+                    "_id": "idx_active_b",
+                    "version": 0,
+                    "created_at": static_time.datetime,
+                    "manifest": {"otu_1": 2},
+                    "ready": True,
+                    "has_files": True,
+                    "job": {"id": job.id},
+                    "reference": {"id": reference_active_b.id},
+                    "user": {"id": user.id},
+                },
+                {
+                    "_id": "idx_archived",
+                    "version": 0,
+                    "created_at": static_time.datetime + timedelta(hours=4),
+                    "manifest": {"otu_1": 2},
+                    "ready": True,
+                    "has_files": True,
+                    "job": {"id": job.id},
+                    "reference": {"id": reference_archived.id},
+                    "user": {"id": user.id},
+                },
+            ],
+            session=None,
+        )
 
         url = "/indexes?ready=True"
         if archived is not None:
@@ -379,21 +307,9 @@ async def test_get(
     prolific = await fake.users.create()
     occasional = await fake.users.create()
 
-    await mongo.references.insert_one(
-        {"_id": "bar", "archived": False, "data_type": "genome", "name": "Bar"},
-    )
+    reference = await fake.references.create(user=prolific)
 
     async with AsyncSession(pg) as session:
-        session.add(
-            SQLReference(
-                legacy_id="bar",
-                name="Bar",
-                description="",
-                created_at=static_time.datetime,
-                source_types=[],
-                user_id=prolific.id,
-            ),
-        )
         session.add_all(
             SQLLegacyHistory(
                 legacy_id=legacy_id,
@@ -404,7 +320,7 @@ async def test_get(
                 otu=otu_id,
                 otu_name=otu_name,
                 otu_version=otu_version,
-                reference="bar",
+                reference_id=reference.id,
                 index=index_id,
                 index_version="0",
             )
@@ -426,7 +342,7 @@ async def test_get(
                 "version": 0,
                 "created_at": static_time.datetime,
                 "ready": False,
-                "reference": {"id": "bar"},
+                "reference": {"id": reference.id},
                 "manifest": {"foo": 2},
                 "has_files": True,
                 "user": {"id": prolific.id},
@@ -514,33 +430,19 @@ class TestCreate:
 
         user = await fake.users.create()
 
-        await asyncio.gather(
-            mongo.references.insert_one(
-                {"_id": "foo", "archived": False, "data_type": "genome", "name": "Foo"},
-            ),
-            # Insert unbuilt changes to prevent initial check failure.
-            mongo.history.insert_one(
-                {
-                    "_id": "history_1",
-                    "index": {"id": "unbuilt", "version": "unbuilt"},
-                    "reference": {"id": "foo"},
-                    "user": {"id": user.id},
-                },
-            ),
+        reference = await fake.references.create(user=user)
+
+        # Insert unbuilt changes to prevent initial check failure.
+        await mongo.history.insert_one(
+            {
+                "_id": "history_1",
+                "index": {"id": "unbuilt", "version": "unbuilt"},
+                "reference": {"id": reference.id},
+                "user": {"id": user.id},
+            },
         )
 
         async with AsyncSession(pg) as session:
-            reference = SQLReference(
-                legacy_id="foo",
-                name="Foo",
-                description="",
-                created_at=static_time.datetime,
-                source_types=[],
-                user_id=user.id,
-            )
-            session.add(reference)
-            await session.flush()
-
             session.add(
                 SQLLegacyHistory(
                     legacy_id="history_1",
@@ -563,7 +465,7 @@ class TestCreate:
             new=make_mocked_coro({"foo": 1, "bar": 2}),
         )
 
-        resp = await client.post("/references/v1/foo/indexes", {})
+        resp = await client.post(f"/references/v1/{reference.id}/indexes", {})
 
         if not check_ref_right:
             await resp_is.insufficient_rights(resp)
@@ -577,7 +479,7 @@ class TestCreate:
 
         assert index == snapshot(name="index")
 
-        m_create_manifest.assert_called_with(ANY, ANY, "foo")
+        m_create_manifest.assert_called_with(ANY, ANY, reference.id)
 
     @pytest.mark.parametrize(
         "error",
@@ -643,11 +545,13 @@ async def test_find_history(
     user_1 = await fake.users.create()
     user_2 = await fake.users.create()
 
+    reference = await fake.references.create(user=user_1)
+
     history_documents = [
         {
             "_id": "zxbbvngc.0",
             "created_at": static_time.datetime,
-            "reference": {"id": "foo"},
+            "reference": {"id": reference.id},
             "otu": {"version": 0, "name": "Test", "id": "zxbbvngc"},
             "user": {"id": user_1.id},
             "description": "Added Unnamed Isolate as default",
@@ -657,7 +561,7 @@ async def test_find_history(
         {
             "_id": "zxbbvngc.1",
             "created_at": static_time.datetime,
-            "reference": {"id": "foo"},
+            "reference": {"id": reference.id},
             "otu": {"version": 1, "name": "Test", "id": "zxbbvngc"},
             "user": {"id": user_1.id},
             "description": "Added Unnamed Isolate as default",
@@ -667,7 +571,7 @@ async def test_find_history(
         {
             "_id": "zxbbvngc.2",
             "created_at": static_time.datetime,
-            "reference": {"id": "foo"},
+            "reference": {"id": reference.id},
             "otu": {"version": 2, "name": "Test", "id": "zxbbvngc"},
             "user": {"id": user_2.id},
             "description": "Added Unnamed Isolate as default",
@@ -677,7 +581,7 @@ async def test_find_history(
         {
             "_id": "kjs8sa99.3",
             "created_at": static_time.datetime,
-            "reference": {"id": "foo"},
+            "reference": {"id": reference.id},
             "otu": {"version": 3, "name": "Foo", "id": "kjs8sa99"},
             "user": {"id": user_1.id},
             "description": "Edited sequence wrta20tr in Islolate chilli-CR",
@@ -686,29 +590,9 @@ async def test_find_history(
         },
     ]
 
-    await asyncio.gather(
-        mongo.history.insert_many(history_documents, session=None),
-        mongo.references.insert_many(
-            [
-                {"_id": "bar", "archived": False, "data_type": "genome", "name": "Bar"},
-                {"_id": "foo", "archived": False, "data_type": "genome", "name": "Foo"},
-            ],
-            session=None,
-        ),
-    )
+    await mongo.history.insert_many(history_documents, session=None)
 
     async with AsyncSession(pg) as session:
-        reference = SQLReference(
-            legacy_id="foo",
-            name="Foo",
-            description="",
-            created_at=static_time.datetime,
-            source_types=[],
-            user_id=user_1.id,
-        )
-        session.add(reference)
-        await session.flush()
-
         session.add_all(
             SQLLegacyHistory(
                 **legacy_history_values(document),
@@ -878,33 +762,13 @@ async def test_finalize(
     else:
         files = INDEX_FILE_NAMES
 
-    await mongo.references.insert_one(
-        {
-            "_id": "hxn167",
-            "archived": False,
-            "data_type": "genome",
-            "name": "Test A",
-        },
-    )
-
-    async with AsyncSession(pg) as session:
-        session.add(
-            SQLReference(
-                legacy_id="hxn167",
-                name="Test A",
-                description="",
-                created_at=static_time.datetime,
-                source_types=[],
-                user_id=user.id,
-            ),
-        )
-        await session.commit()
+    reference = await fake.references.create(user=user)
 
     await asyncio.gather(
         mongo.indexes.insert_one(
             {
                 "_id": "test_index",
-                "reference": {"id": "hxn167"},
+                "reference": {"id": reference.id},
                 "manifest": {"foo": 4},
                 "user": {"id": user.id},
                 "version": 2,
@@ -914,7 +778,9 @@ async def test_finalize(
             },
         ),
         # change `version` that should be reflected in `last_indexed_version` after calling
-        mongo.otus.insert_one({**test_otu, "version": 1}),
+        mongo.otus.insert_one(
+            {**test_otu, "version": 1, "reference": {"id": reference.id}},
+        ),
     )
 
     for file_name in files:

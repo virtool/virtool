@@ -64,7 +64,7 @@
     'reference': dict({
       'data_type': 'genome',
       'id': 1,
-      'name': 'Foo',
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
@@ -101,7 +101,7 @@
         'reference': dict({
           'data_type': 'genome',
           'id': 1,
-          'name': 'Active A',
+          'name': 'Reference',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -130,7 +130,7 @@
         'reference': dict({
           'data_type': 'genome',
           'id': 2,
-          'name': 'Active B',
+          'name': 'Reference',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -173,7 +173,7 @@
         'reference': dict({
           'data_type': 'genome',
           'id': 3,
-          'name': 'Archived',
+          'name': 'Reference',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -216,7 +216,7 @@
         'reference': dict({
           'data_type': 'genome',
           'id': 1,
-          'name': 'Active A',
+          'name': 'Reference',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -245,7 +245,7 @@
         'reference': dict({
           'data_type': 'genome',
           'id': 2,
-          'name': 'Active B',
+          'name': 'Reference',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -274,7 +274,7 @@
         'reference': dict({
           'data_type': 'genome',
           'id': 3,
-          'name': 'Archived',
+          'name': 'Reference',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -315,7 +315,7 @@
       'reference': dict({
         'data_type': 'genome',
         'id': 2,
-        'name': 'Active B',
+        'name': 'Reference',
       }),
       'user': dict({
         'handle': 'myersmitchell',
@@ -344,7 +344,7 @@
       'reference': dict({
         'data_type': 'genome',
         'id': 1,
-        'name': 'Active A',
+        'name': 'Reference',
       }),
       'user': dict({
         'handle': 'myersmitchell',
@@ -377,7 +377,7 @@
       'reference': dict({
         'data_type': 'genome',
         'id': 3,
-        'name': 'Archived',
+        'name': 'Reference',
       }),
       'user': dict({
         'handle': 'myersmitchell',
@@ -410,7 +410,7 @@
       'reference': dict({
         'data_type': 'genome',
         'id': 2,
-        'name': 'Active B',
+        'name': 'Reference',
       }),
       'user': dict({
         'handle': 'myersmitchell',
@@ -439,7 +439,7 @@
       'reference': dict({
         'data_type': 'genome',
         'id': 1,
-        'name': 'Active A',
+        'name': 'Reference',
       }),
       'user': dict({
         'handle': 'myersmitchell',
@@ -468,7 +468,7 @@
       'reference': dict({
         'data_type': 'genome',
         'id': 3,
-        'name': 'Archived',
+        'name': 'Reference',
       }),
       'user': dict({
         'handle': 'myersmitchell',
@@ -585,7 +585,7 @@
     'reference': dict({
       'data_type': 'genome',
       'id': 1,
-      'name': 'Test A',
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
@@ -610,7 +610,7 @@
     'lower_name': 'prunus virus f',
     'name': 'Prunus virus F',
     'reference': dict({
-      'id': 'hxn167',
+      'id': 1,
     }),
     'remote_id': None,
     'schema': list([
@@ -639,7 +639,7 @@
         'reference': dict({
           'data_type': 'genome',
           'id': 1,
-          'name': 'Foo',
+          'name': 'Reference',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -663,7 +663,7 @@
         'reference': dict({
           'data_type': 'genome',
           'id': 1,
-          'name': 'Foo',
+          'name': 'Reference',
         }),
         'user': dict({
           'handle': 'modonnell',
@@ -687,7 +687,7 @@
         'reference': dict({
           'data_type': 'genome',
           'id': 1,
-          'name': 'Foo',
+          'name': 'Reference',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -711,7 +711,7 @@
         'reference': dict({
           'data_type': 'genome',
           'id': 1,
-          'name': 'Foo',
+          'name': 'Reference',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -777,7 +777,7 @@
     'reference': dict({
       'data_type': 'genome',
       'id': 1,
-      'name': 'Bar',
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'myersmitchell',
