@@ -715,5 +715,12 @@
       'name': 'create otus and sequences tables',
       'revision': '8bbc31ae5a8a',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 103,
+      'name': 'add sequence isolate_id and segment columns and otu reference_id index',
+      'revision': '5de38ebeaa78',
+    }),
   ])
 # ---

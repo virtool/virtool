@@ -40,7 +40,7 @@ class SQLOTU(Base):
     name: Mapped[str]
     abbreviation: Mapped[str] = mapped_column(default="")
     reference_id: Mapped[int] = mapped_column(
-        BigInteger, ForeignKey("legacy_references.id")
+        BigInteger, ForeignKey("legacy_references.id"), index=True
     )
     verified: Mapped[bool]
     version: Mapped[int]
@@ -52,10 +52,14 @@ class SQLSequence(Base):
     """SQL model for a sequence.
 
     Like :class:`SQLOTU` this is a hybrid model: the verbatim Mongo document lives
-    in ``data`` and ``otu_id`` is the only promoted column. ``otu_id`` is a real
-    foreign key to ``legacy_otus.id`` with ``ON DELETE CASCADE`` so a deleted OTU
-    takes its sequences with it. The column is indexed because Postgres does not
-    index foreign key columns automatically.
+    in ``data`` and the remaining columns are promoted from it for querying.
+    ``otu_id`` is a real foreign key to ``legacy_otus.id`` with ``ON DELETE
+    CASCADE`` so a deleted OTU takes its sequences with it. The column is indexed
+    because Postgres does not index foreign key columns automatically.
+
+    ``isolate_id`` identifies the embedded isolate the sequence belongs to and is
+    promoted so isolate-scoped operations (such as removing an isolate) can filter
+    and delete on it directly. ``segment`` is the optional segment name.
     """
 
     __tablename__ = "legacy_sequences"
@@ -65,3 +69,5 @@ class SQLSequence(Base):
     otu_id: Mapped[str] = mapped_column(
         ForeignKey("legacy_otus.id", ondelete="CASCADE"), index=True
     )
+    isolate_id: Mapped[str]
+    segment: Mapped[str | None]
