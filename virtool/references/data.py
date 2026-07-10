@@ -401,21 +401,20 @@ class ReferencesData(DataLayerDomain):
 
         async with AsyncSession(self._pg) as session:
             reference_pk = await write_legacy_reference(session, document)
-            await session.commit()
 
-        if task_class is not None:
-            task = await self.data.tasks.create(
-                task_class,
-                context={**context, "ref_id": reference_pk},
-            )
+            if task_class is not None:
+                task = await self.data.tasks.create(
+                    task_class,
+                    context={**context, "ref_id": reference_pk},
+                )
 
-            async with AsyncSession(self._pg) as session:
                 await session.execute(
                     update(SQLReference)
                     .where(SQLReference.id == reference_pk)
                     .values(task_id=task.id),
                 )
-                await session.commit()
+
+            await session.commit()
 
         return await self.get(reference_pk)
 
