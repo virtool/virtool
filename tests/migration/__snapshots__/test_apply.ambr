@@ -708,5 +708,12 @@
       'name': 'backfill sample uploads to postgres',
       'revision': 'n03aryu6frku',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 102,
+      'name': 'create otus and sequences tables',
+      'revision': '8bbc31ae5a8a',
+    }),
   ])
 # ---
