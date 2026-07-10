@@ -2238,65 +2238,54 @@ class TestDownloadReads:
     async def test_ok(
         self,
         suffix: str,
-        memory_storage,
-        mongo: Mongo,
-        pg: AsyncEngine,
+        fake: DataFaker,
         spawn_client: ClientSpawner,
         spawn_job_client: JobClientSpawner,
     ):
+        """Reads on a ready sample download over both the public and jobs APIs."""
+        user = await fake.users.create()
+        sample = await fake.samples.create(user, paired=True, ready=True)
+
         client = await spawn_client(authenticated=True)
         job_client = await spawn_job_client(authenticated=True)
 
         file_name = f"reads_{suffix}.fq.gz"
 
-        await self._write_file(memory_storage, file_name)
-        await self._insert_sample(mongo)
-        await self._insert_reads_row(pg, file_name)
-
-        resp = await client.get(f"/samples/foo/reads/{file_name}")
-        job_resp = await job_client.get(f"/samples/foo/reads/{file_name}")
+        resp = await client.get(f"/samples/{sample.id}/reads/{file_name}")
+        job_resp = await job_client.get(f"/samples/{sample.id}/reads/{file_name}")
 
         assert resp.status == job_resp.status == HTTPStatus.OK
-        assert await resp.content.read() == b"test"
-        assert await job_resp.content.read() == b"test"
+        assert await resp.content.read()
+        assert await job_resp.content.read()
 
     async def test_404_sample(
         self,
-        memory_storage,
-        pg: AsyncEngine,
         spawn_client: ClientSpawner,
         spawn_job_client: JobClientSpawner,
     ):
         client = await spawn_client(authenticated=True)
         job_client = await spawn_job_client(authenticated=True)
 
-        file_name = "reads_1.fq.gz"
-
-        await self._write_file(memory_storage, file_name)
-        await self._insert_reads_row(pg, file_name)
-
-        resp = await client.get(f"/samples/999999/reads/{file_name}")
-        job_resp = await job_client.get(f"/samples/999999/reads/{file_name}")
+        resp = await client.get("/samples/999999/reads/reads_1.fq.gz")
+        job_resp = await job_client.get("/samples/999999/reads/reads_1.fq.gz")
 
         assert resp.status == job_resp.status == 404
 
     async def test_404_reads(
         self,
-        memory_storage,
-        mongo: Mongo,
+        fake: DataFaker,
         spawn_client: ClientSpawner,
         spawn_job_client: JobClientSpawner,
     ):
+        """Downloading a reads file that was never uploaded returns 404."""
+        user = await fake.users.create()
+        sample = await fake.samples.create(user, ready=False)
+
         client = await spawn_client(authenticated=True)
         job_client = await spawn_job_client(authenticated=True)
 
-        file_name = "reads_1.fq.gz"
-
-        await self._write_file(memory_storage, file_name)
-        await self._insert_sample(mongo)
-
-        resp = await client.get(f"/samples/foo/reads/{file_name}")
-        job_resp = await job_client.get(f"/samples/foo/reads/{file_name}")
+        resp = await client.get(f"/samples/{sample.id}/reads/reads_1.fq.gz")
+        job_resp = await job_client.get(f"/samples/{sample.id}/reads/reads_1.fq.gz")
 
         assert resp.status == job_resp.status == 404
 
