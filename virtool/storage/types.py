@@ -21,10 +21,6 @@ class StorageObjectInfo:
 
     - ``MemoryStorageProvider`` records ``datetime.now(tz=UTC)`` at write time,
       using the API process clock at microsecond resolution.
-    - ``FilesystemProvider`` returns the file's ``st_mtime``. Resolution is
-      filesystem-dependent (nanoseconds on ext4, seconds on FAT/NFS) and the
-      value reflects any out-of-band modification, not just writes through this
-      provider.
     - ``ObjectProvider`` passes through the object store's server-side
       timestamp (e.g. S3 ``LastModified``), typically second-resolution and set
       by the storage server's clock rather than the API server's.

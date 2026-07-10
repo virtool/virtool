@@ -16,7 +16,7 @@ import virtool.mongo.connect
 from virtool.api.custom_json import dump_string
 from virtool.config.cls import MigrationConfig
 from virtool.pg.utils import get_sqlalchemy_url
-from virtool.storage.factory import build_primary_backend
+from virtool.storage.factory import create_storage_backend
 from virtool.storage.protocol import StorageBackend
 
 logger = get_logger("migration")
@@ -86,5 +86,5 @@ async def create_migration_context(config: MigrationConfig) -> MigrationContext:
     return MigrationContext(
         mongo=mongo_database,
         pg=pg,
-        storage=build_primary_backend(config),
+        storage=create_storage_backend(config),
     )
