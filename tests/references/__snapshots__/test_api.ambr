@@ -1,5 +1,5 @@
 # serializer version: 1
-# name: TestArchive.test_ok[False][resp]
+# name: TestArchive.test_ok[resp]
   dict({
     'archived': True,
     'cloned_from': None,
@@ -13,8 +13,8 @@
     'id': 1,
     'imported_from': None,
     'latest_build': None,
-    'name': 'Foo',
-    'organism': 'virus',
+    'name': 'Owned Reference',
+    'organism': '',
     'otu_count': 0,
     'restrict_source_types': False,
     'source_types': list([
@@ -24,42 +24,18 @@
     'task': None,
     'unbuilt_change_count': 0,
     'user': dict({
-      'handle': 'myersmitchell',
-      'id': 2,
+      'handle': 'leeashley',
+      'id': 1,
     }),
     'users': list([
-    ]),
-  })
-# ---
-# name: TestArchive.test_ok[True][resp]
-  dict({
-    'archived': True,
-    'cloned_from': None,
-    'contributors': list([
-    ]),
-    'created_at': 'approximately_now_isoformat',
-    'data_type': 'genome',
-    'description': '',
-    'groups': list([
-    ]),
-    'id': 1,
-    'imported_from': None,
-    'latest_build': None,
-    'name': 'Foo',
-    'organism': 'virus',
-    'otu_count': 0,
-    'restrict_source_types': False,
-    'source_types': list([
-      'isolate',
-      'strain',
-    ]),
-    'task': None,
-    'unbuilt_change_count': 0,
-    'user': dict({
-      'handle': 'myersmitchell',
-      'id': 2,
-    }),
-    'users': list([
+      dict({
+        'build': True,
+        'created_at': 'approximately_now_isoformat',
+        'handle': 'leeashley',
+        'id': 1,
+        'modify': True,
+        'modify_otu': True,
+      }),
     ]),
   })
 # ---
@@ -792,7 +768,7 @@
     ]),
   })
 # ---
-# name: TestUnarchive.test_ok[False][resp]
+# name: TestUnarchive.test_ok[resp]
   dict({
     'archived': False,
     'cloned_from': None,
@@ -806,8 +782,8 @@
     'id': 1,
     'imported_from': None,
     'latest_build': None,
-    'name': 'Foo',
-    'organism': 'virus',
+    'name': 'Owned Reference',
+    'organism': '',
     'otu_count': 0,
     'restrict_source_types': False,
     'source_types': list([
@@ -817,42 +793,18 @@
     'task': None,
     'unbuilt_change_count': 0,
     'user': dict({
-      'handle': 'myersmitchell',
-      'id': 2,
+      'handle': 'leeashley',
+      'id': 1,
     }),
     'users': list([
-    ]),
-  })
-# ---
-# name: TestUnarchive.test_ok[True][resp]
-  dict({
-    'archived': False,
-    'cloned_from': None,
-    'contributors': list([
-    ]),
-    'created_at': 'approximately_now_isoformat',
-    'data_type': 'genome',
-    'description': '',
-    'groups': list([
-    ]),
-    'id': 1,
-    'imported_from': None,
-    'latest_build': None,
-    'name': 'Foo',
-    'organism': 'virus',
-    'otu_count': 0,
-    'restrict_source_types': False,
-    'source_types': list([
-      'isolate',
-      'strain',
-    ]),
-    'task': None,
-    'unbuilt_change_count': 0,
-    'user': dict({
-      'handle': 'myersmitchell',
-      'id': 2,
-    }),
-    'users': list([
+      dict({
+        'build': True,
+        'created_at': 'approximately_now_isoformat',
+        'handle': 'leeashley',
+        'id': 1,
+        'modify': True,
+        'modify_otu': True,
+      }),
     ]),
   })
 # ---

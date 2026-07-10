@@ -20,7 +20,6 @@ from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
 from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_one_field
 from virtool.otus.oas import (
     CreateOTURequest,
 )
@@ -568,171 +567,195 @@ class TestEdit:
         await resp_is.not_found(resp)
 
 
-def _archive_reference_doc(user_id: int, *, archived: bool):
-    return {
-        "_id": "foo",
-        "archived": archived,
-        "created_at": virtool.utils.timestamp(),
-        "data_type": "genome",
-        "description": "",
-        "groups": [],
-        "name": "Foo",
-        "organism": "virus",
-        "restrict_source_types": False,
-        "source_types": ["isolate", "strain"],
-        "user": {"id": user_id},
-        "users": [],
-    }
+async def _create_reference(
+    client: VirtoolTestClient, name: str = "Owned Reference"
+) -> dict:
+    """Create a blank reference through the API and return the response body.
+
+    The creating user becomes the reference owner with full rights, so it can
+    subsequently archive and unarchive the reference.
+    """
+    resp = await client.post("/references/v1", {"name": name})
+
+    assert resp.status == HTTPStatus.CREATED
+
+    return await resp.json()
 
 
 class TestArchive:
-    @pytest.mark.parametrize("already_archived", [False, True])
     async def test_ok(
         self,
-        already_archived: bool,
-        fake: DataFaker,
-        mocker,
-        mongo: Mongo,
-        pg: AsyncEngine,
         snapshot_recent: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
-        client = await spawn_client(authenticated=True)
-        user = await fake.users.create()
-
-        await insert_reference(
-            mongo,
-            pg,
-            _archive_reference_doc(user.id, archived=already_archived),
+        """The reference owner archives their own reference."""
+        owner = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_ref],
         )
+        reference = await _create_reference(owner)
 
-        mocker.patch(
-            "virtool.references.api.check_right",
-            make_mocked_coro(return_value=True),
-        )
-
-        resp = await client.post("/references/v1/foo/archive", {})
+        resp = await owner.post(f"/references/v1/{reference['id']}/archive", {})
 
         assert resp.status == 200
         body = await resp.json()
         assert body["archived"] is True
         assert body == snapshot_recent(name="resp")
 
+    async def test_already_archived(self, spawn_client: ClientSpawner):
+        """Archiving an already-archived reference leaves it archived."""
+        owner = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_ref],
+        )
+        reference = await _create_reference(owner)
+
+        await owner.post(f"/references/v1/{reference['id']}/archive", {})
+        resp = await owner.post(f"/references/v1/{reference['id']}/archive", {})
+
+        assert resp.status == 200
+        assert (await resp.json())["archived"] is True
+
+    async def test_group_rights(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        spawn_client: ClientSpawner,
+    ):
+        """A member of a group granted modify rights can archive the reference."""
+        owner = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_ref],
+        )
+        reference = await _create_reference(owner)
+
+        group = await fake.groups.create()
+        member = await spawn_client(authenticated=True)
+        await data_layer.users.update(
+            member.user.id,
+            UpdateUserRequest(groups=[group.id]),
+        )
+
+        await owner.post(
+            f"/references/v1/{reference['id']}/groups",
+            {"group_id": group.id, "modify": True},
+        )
+
+        resp = await member.post(f"/references/v1/{reference['id']}/archive", {})
+
+        assert resp.status == 200
+        assert (await resp.json())["archived"] is True
+
+    async def test_administrator(self, spawn_client: ClientSpawner):
+        """A full administrator can archive a reference it does not own."""
+        owner = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_ref],
+        )
+        reference = await _create_reference(owner)
+
+        administrator = await spawn_client(authenticated=True, administrator=True)
+
+        resp = await administrator.post(f"/references/v1/{reference['id']}/archive", {})
+
+        assert resp.status == 200
+        assert (await resp.json())["archived"] is True
+
     async def test_insufficient_rights(
         self,
-        fake: DataFaker,
-        mocker,
-        mongo: Mongo,
         resp_is: RespIs,
         spawn_client: ClientSpawner,
     ):
-        client = await spawn_client(authenticated=True)
-        user = await fake.users.create()
-
-        await mongo.references.insert_one(
-            _archive_reference_doc(user.id, archived=False),
+        """A user with no rights on the reference cannot archive it, and the
+        reference stays active.
+        """
+        owner = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_ref],
         )
+        reference = await _create_reference(owner)
 
-        mocker.patch(
-            "virtool.references.api.check_right",
-            make_mocked_coro(return_value=False),
-        )
+        other = await spawn_client(authenticated=True)
 
-        resp = await client.post("/references/v1/foo/archive", {})
+        resp = await other.post(f"/references/v1/{reference['id']}/archive", {})
 
         await resp_is.insufficient_rights(resp)
-        assert await get_one_field(mongo.references, "archived", "foo") is False
 
-    async def test_not_found(
-        self,
-        mocker,
-        resp_is: RespIs,
-        spawn_client: ClientSpawner,
-    ):
+        resp = await owner.get(f"/references/v1/{reference['id']}")
+        assert (await resp.json())["archived"] is False
+
+    async def test_not_found(self, resp_is: RespIs, spawn_client: ClientSpawner):
+        """Archiving a nonexistent reference returns 404."""
         client = await spawn_client(authenticated=True)
 
-        mocker.patch(
-            "virtool.references.api.check_right",
-            make_mocked_coro(return_value=True),
-        )
-
-        resp = await client.post("/references/v1/foo/archive", {})
+        resp = await client.post("/references/v1/999999/archive", {})
 
         await resp_is.not_found(resp)
 
 
 class TestUnarchive:
-    @pytest.mark.parametrize("already_archived", [True, False])
     async def test_ok(
         self,
-        already_archived: bool,
-        fake: DataFaker,
-        mocker,
-        mongo: Mongo,
-        pg: AsyncEngine,
         snapshot_recent: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
-        client = await spawn_client(authenticated=True)
-        user = await fake.users.create()
-
-        await insert_reference(
-            mongo,
-            pg,
-            _archive_reference_doc(user.id, archived=already_archived),
+        """The reference owner unarchives their own archived reference."""
+        owner = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_ref],
         )
+        reference = await _create_reference(owner)
+        await owner.post(f"/references/v1/{reference['id']}/archive", {})
 
-        mocker.patch(
-            "virtool.references.api.check_right",
-            make_mocked_coro(return_value=True),
-        )
-
-        resp = await client.post("/references/v1/foo/unarchive", {})
+        resp = await owner.post(f"/references/v1/{reference['id']}/unarchive", {})
 
         assert resp.status == 200
         body = await resp.json()
         assert body["archived"] is False
         assert body == snapshot_recent(name="resp")
 
+    async def test_already_active(self, spawn_client: ClientSpawner):
+        """Unarchiving a reference that is not archived leaves it active."""
+        owner = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_ref],
+        )
+        reference = await _create_reference(owner)
+
+        resp = await owner.post(f"/references/v1/{reference['id']}/unarchive", {})
+
+        assert resp.status == 200
+        assert (await resp.json())["archived"] is False
+
     async def test_insufficient_rights(
         self,
-        fake: DataFaker,
-        mocker,
-        mongo: Mongo,
         resp_is: RespIs,
         spawn_client: ClientSpawner,
     ):
-        client = await spawn_client(authenticated=True)
-        user = await fake.users.create()
-
-        await mongo.references.insert_one(
-            _archive_reference_doc(user.id, archived=True),
+        """A user with no rights on the reference cannot unarchive it, and the
+        reference stays archived.
+        """
+        owner = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_ref],
         )
+        reference = await _create_reference(owner)
+        await owner.post(f"/references/v1/{reference['id']}/archive", {})
 
-        mocker.patch(
-            "virtool.references.api.check_right",
-            make_mocked_coro(return_value=False),
-        )
+        other = await spawn_client(authenticated=True)
 
-        resp = await client.post("/references/v1/foo/unarchive", {})
+        resp = await other.post(f"/references/v1/{reference['id']}/unarchive", {})
 
         await resp_is.insufficient_rights(resp)
-        assert await get_one_field(mongo.references, "archived", "foo") is True
 
-    async def test_not_found(
-        self,
-        mocker,
-        resp_is: RespIs,
-        spawn_client: ClientSpawner,
-    ):
+        resp = await owner.get(f"/references/v1/{reference['id']}")
+        assert (await resp.json())["archived"] is True
+
+    async def test_not_found(self, resp_is: RespIs, spawn_client: ClientSpawner):
+        """Unarchiving a nonexistent reference returns 404."""
         client = await spawn_client(authenticated=True)
 
-        mocker.patch(
-            "virtool.references.api.check_right",
-            make_mocked_coro(return_value=True),
-        )
-
-        resp = await client.post("/references/v1/foo/unarchive", {})
+        resp = await client.post("/references/v1/999999/unarchive", {})
 
         await resp_is.not_found(resp)
 
