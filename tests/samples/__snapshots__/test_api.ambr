@@ -1598,15 +1598,15 @@
 # name: TestFinalize.test_quality
   dict({
     'all_read': True,
-    'all_write': True,
+    'all_write': False,
     'artifacts': list([
     ]),
     'created_at': '2015-10-06T20:00:00Z',
     'format': 'fastq',
     'group': None,
     'group_read': True,
-    'group_write': True,
-    'hold': False,
+    'group_write': False,
+    'hold': True,
     'host': '',
     'id': 1,
     'is_legacy': False,
@@ -1614,8 +1614,8 @@
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
       'id': 1,
-      'progress': 100,
-      'state': 'failed',
+      'progress': 0,
+      'state': 'pending',
       'user': dict({
         'handle': 'leeashley',
         'id': 1,
@@ -1623,16 +1623,10 @@
       'workflow': 'create_sample',
     }),
     'labels': list([
-      dict({
-        'color': '#629f70',
-        'description': 'American whole magazine truth stop whose.',
-        'id': 1,
-        'name': 'Three',
-      }),
     ]),
     'library_type': 'normal',
     'locale': '',
-    'name': 'Test',
+    'name': 'Result',
     'notes': '',
     'nuvs': False,
     'paired': False,
@@ -1662,16 +1656,25 @@
     ]),
     'ready': True,
     'subtractions': list([
+    ]),
+    'uploads': list([
       dict({
+        'created_at': '2015-10-06T20:00:00Z',
         'id': 1,
-        'name': 'Apple',
-      }),
-      dict({
-        'id': 2,
-        'name': 'Pear',
+        'name': 'test.fq.gz',
+        'ready': True,
+        'removed': True,
+        'removed_at': '2015-10-06T20:00:00Z',
+        'reserved': True,
+        'size': 723988,
+        'type': 'reads',
+        'uploaded_at': '2015-10-06T20:00:00Z',
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 1,
+        }),
       }),
     ]),
-    'uploads': None,
     'user': dict({
       'handle': 'leeashley',
       'id': 1,

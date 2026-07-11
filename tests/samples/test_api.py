@@ -9,7 +9,7 @@ from typing import NamedTuple
 import arrow
 import pytest
 from aiohttp.test_utils import make_mocked_coro
-from sqlalchemy import select, update
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
@@ -21,12 +21,12 @@ from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.jobs.models import CreateJobClaimRequest, JobState, Workflow
 from virtool.jobs.pg import SQLJob
-from virtool.models.enums import LibraryType, Permission
+from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.references.models import Reference
 from virtool.references.sql import SQLReference
-from virtool.samples.models import Sample, WorkflowState
+from virtool.samples.models import Sample
 from virtool.samples.oas import UpdateSampleRequest
 from virtool.samples.sql import (
     SQLLegacySample,
@@ -97,118 +97,9 @@ async def insert_pg_sample(
     return sample
 
 
-async def update_pg_sample_rights(
-    pg: AsyncEngine,
-    legacy_id: str,
-    **values,
-) -> None:
-    """Apply a rights change to the Postgres ``legacy_samples`` row for a test.
-
-    Read paths resolve rights from Postgres, so tests that mutate rights in Mongo must
-    mirror the change here.
-    """
-    async with AsyncSession(pg) as session:
-        await session.execute(
-            update(SQLLegacySample)
-            .where(SQLLegacySample.legacy_id == legacy_id)
-            .values(**values),
-        )
-        await session.commit()
-
-
-async def _ensure_legacy_sample_id(session: AsyncSession, legacy_id: str) -> int:
-    """Insert a ``legacy_samples`` row for ``legacy_id`` if absent and return its id.
-
-    Sample file rows are keyed by an integer FK to ``legacy_samples``, so tests that
-    insert artifact/reads rows directly need a parent legacy sample to point at.
-    """
-    sample_id = (
-        await session.execute(
-            select(SQLLegacySample.id).where(SQLLegacySample.legacy_id == legacy_id),
-        )
-    ).scalar()
-
-    if sample_id is None:
-        sample = SQLLegacySample(
-            legacy_id=legacy_id,
-            name=legacy_id,
-            library_type=LibraryType.normal.value,
-            created_at=datetime(2015, 10, 6, 20, 0),
-        )
-        session.add(sample)
-        await session.flush()
-        sample_id = sample.id
-
-    return sample_id
-
-
 class MockJobInterface:
     def __init__(self):
         self.enqueue = make_mocked_coro()
-
-
-@pytest.fixture
-async def get_sample_ready_false(
-    fake: DataFaker,
-    mongo: Mongo,
-    pg: AsyncEngine,
-    static_time,
-):
-    label = await fake.labels.create()
-    user = await fake.users.create()
-    job = await fake.jobs.create(user, workflow="create_sample")
-
-    upload = await fake.uploads.create(user=user)
-    apple = await fake.subtractions.create(
-        user=user, upload=upload, name="Apple", upload_files=False, finalized=False
-    )
-    pear = await fake.subtractions.create(
-        user=user, upload=upload, name="Pear", upload_files=False, finalized=False
-    )
-
-    document = {
-        "_id": "test",
-        "all_read": True,
-        "all_write": True,
-        "created_at": static_time.datetime,
-        "files": [
-            {
-                "id": "foo",
-                "name": "Bar.fq.gz",
-                "download_url": "/download/samples/files/file_1.fq.gz",
-            },
-        ],
-        "format": "fastq",
-        "group": "none",
-        "group_read": True,
-        "group_write": True,
-        "hold": False,
-        "host": "",
-        "is_legacy": False,
-        "isolate": "",
-        "job": {"id": job.id},
-        "labels": [label.id],
-        "library_type": LibraryType.normal.value,
-        "locale": "",
-        "name": "Test",
-        "notes": "",
-        "nuvs": False,
-        "pathoscope": True,
-        "ready": False,
-        "subtractions": [apple.id, pear.id],
-        "user": {"id": user.id},
-        "workflows": {
-            "aodp": WorkflowState.INCOMPATIBLE.value,
-            "pathoscope": WorkflowState.COMPLETE.value,
-            "nuvs": WorkflowState.PENDING.value,
-        },
-    }
-
-    await mongo.samples.insert_one(document)
-
-    async with AsyncSession(pg) as session:
-        await insert_pg_sample(session, document)
-        await session.commit()
 
 
 class SampleData(NamedTuple):
@@ -490,28 +381,22 @@ class TestFind:
 
     async def test_user_cannot_reveal_unreadable_samples(
         self,
+        data_layer: DataLayer,
         fake: DataFaker,
-        pg: AsyncEngine,
-        static_time,
     ):
         """Filtering by a user does not expose that user's unreadable samples."""
         private_owner = await fake.users.create()
+        sample = await fake.samples.create(private_owner)
 
-        async with AsyncSession(pg) as session:
-            session.add(
-                SQLLegacySample(
-                    legacy_id="other_private",
-                    name="other_private",
-                    library_type=LibraryType.normal.value,
-                    created_at=static_time.datetime,
-                    all_read=False,
-                    all_write=False,
-                    group_read=False,
-                    group_write=False,
-                    user_id=private_owner.id,
-                ),
-            )
-            await session.commit()
+        await data_layer.samples.update_rights(
+            sample.id,
+            {
+                "all_read": False,
+                "all_write": False,
+                "group_read": False,
+                "group_write": False,
+            },
+        )
 
         resp = await self.client.get(f"/samples?user={private_owner.id}")
         assert resp.status == HTTPStatus.OK
@@ -681,9 +566,9 @@ class TestCreate:
 
     async def test_name_exists(
         self,
+        data_layer: DataLayer,
         fake: DataFaker,
         snapshot,
-        pg: AsyncEngine,
         spawn_client: ClientSpawner,
     ):
         client = await spawn_client(
@@ -698,17 +583,11 @@ class TestCreate:
             user=user, upload=upload, name="Apple", upload_files=False, finalized=False
         )
 
-        async with AsyncSession(pg) as session:
-            session.add(
-                SQLLegacySample(
-                    name="Foobar",
-                    library_type=LibraryType.normal.value,
-                    created_at=datetime(2015, 10, 6, 20, 0),
-                    ready=True,
-                ),
-            )
-
-            await session.commit()
+        existing = await fake.samples.create(user)
+        await data_layer.samples.update(
+            existing.id,
+            UpdateSampleRequest(name="Foobar"),
+        )
 
         resp = await client.post(
             "/samples",
@@ -928,8 +807,9 @@ class TestEdit:
 
     async def test_name_exists(
         self,
+        data_layer: DataLayer,
+        fake: DataFaker,
         resp_is,
-        pg: AsyncEngine,
         spawn_client: ClientSpawner,
     ):
         """Test that a ``bad_request`` is returned if the sample name passed in ``name``
@@ -937,42 +817,21 @@ class TestEdit:
         """
         client = await spawn_client(administrator=True, authenticated=True)
 
-        async with AsyncSession(pg) as session:
-            renamed = SQLLegacySample(
-                name="Foo",
-                library_type=LibraryType.normal.value,
-                created_at=datetime(2015, 10, 6, 20, 0),
-                all_read=True,
-                all_write=True,
-                ready=True,
-            )
+        user = await fake.users.create()
 
-            session.add(renamed)
-            session.add(
-                SQLLegacySample(
-                    name="Bar",
-                    library_type=LibraryType.normal.value,
-                    created_at=datetime(2015, 10, 6, 20, 0),
-                    ready=True,
-                ),
-            )
+        renamed = await fake.samples.create(user)
+        other = await fake.samples.create(user)
+        await data_layer.samples.update(other.id, UpdateSampleRequest(name="Bar"))
 
-            await session.flush()
-
-            renamed_id = renamed.id
-
-            await session.commit()
-
-        resp = await client.patch(f"/samples/{renamed_id}", {"name": "Bar"})
+        resp = await client.patch(f"/samples/{renamed.id}", {"name": "Bar"})
 
         assert resp.status == 400
         await resp_is.bad_request(resp, "Sample name is already in use")
 
     async def test_label_exists(
         self,
+        fake: DataFaker,
         snapshot,
-        mongo: Mongo,
-        pg: AsyncEngine,
         spawn_client: ClientSpawner,
     ):
         """Test that a ``bad_request`` is returned if the label passed in ``labels`` does
@@ -981,24 +840,10 @@ class TestEdit:
         """
         client = await spawn_client(administrator=True, authenticated=True)
 
-        await mongo.samples.insert_one(
-            {
-                "_id": "foo",
-                "name": "Foo",
-                "all_read": True,
-                "all_write": True,
-                "subtractions": [],
-                "user": {"id": "test"},
-                "labels": [2, 3],
-                "ready": True,
-            },
-        )
+        user = await fake.users.create()
+        sample = await fake.samples.create(user)
 
-        async with AsyncSession(pg) as session:
-            foo_id = await _ensure_legacy_sample_id(session, "foo")
-            await session.commit()
-
-        resp = await client.patch(f"/samples/{foo_id}", {"labels": [1]})
+        resp = await client.patch(f"/samples/{sample.id}", {"labels": [1]})
 
         assert resp.status == 400
         assert await resp.json() == snapshot(name="json")
@@ -1007,8 +852,6 @@ class TestEdit:
         self,
         fake: DataFaker,
         snapshot,
-        mongo: Mongo,
-        pg: AsyncEngine,
         spawn_client: ClientSpawner,
     ):
         """Test that a ``bad_request`` is returned if the subtraction passed in
@@ -1024,24 +867,10 @@ class TestEdit:
             user=user, upload=upload, name="Foo", upload_files=False, finalized=False
         )
 
-        await mongo.samples.insert_one(
-            {
-                "_id": "test",
-                "name": "Test",
-                "all_read": True,
-                "all_write": True,
-                "ready": True,
-                "subtractions": [],
-                "user": {"id": user.id},
-            },
-        )
-
-        async with AsyncSession(pg) as session:
-            sample_id = await _ensure_legacy_sample_id(session, "test")
-            await session.commit()
+        sample = await fake.samples.create(user)
 
         resp = await client.patch(
-            f"/samples/{sample_id}",
+            f"/samples/{sample.id}",
             {"subtractions": [foo.id, 999]},
         )
 
@@ -1054,11 +883,15 @@ class TestFinalize:
 
     async def test_quality(
         self,
+        fake: DataFaker,
         resp_is,
         snapshot,
         spawn_job_client,
-        get_sample_ready_false,
+        static_time,
     ):
+        user = await fake.users.create()
+        sample = await fake.samples.create(user, ready=False)
+
         client = await spawn_job_client(authenticated=True)
 
         json = {
@@ -1073,12 +906,12 @@ class TestFinalize:
             },
         }
 
-        resp = await client.patch("/samples/test", json=json)
+        resp = await client.patch(f"/samples/{sample.id}", json=json)
 
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot
 
-        resp = await client.patch("/samples/test", json=json)
+        resp = await client.patch(f"/samples/{sample.id}", json=json)
         await resp_is.conflict(resp, "Sample already finalized")
 
     async def test_not_quality(
