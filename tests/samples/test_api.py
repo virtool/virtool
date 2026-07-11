@@ -27,12 +27,11 @@ from virtool.pg.utils import get_row_by_id
 from virtool.references.models import Reference
 from virtool.references.sql import SQLReference
 from virtool.samples.models import Sample, WorkflowState
+from virtool.samples.oas import UpdateSampleRequest
 from virtool.samples.sql import (
     SQLLegacySample,
     SQLLegacySampleLabel,
     SQLLegacySampleSubtraction,
-    SQLSampleArtifact,
-    SQLSampleReads,
 )
 from virtool.samples.utils import sample_file_key, sample_storage_id
 from virtool.settings.oas import UpdateSettingsRequest
@@ -221,19 +220,17 @@ class SampleData(NamedTuple):
 
 @pytest.fixture
 async def get_sample_data(
-    mongo: "Mongo",
+    data_layer: DataLayer,
     fake: DataFaker,
-    pg: AsyncEngine,
     static_time,
 ) -> SampleData:
-    """Set up the ``test`` sample and return its integer id and an unattached subtraction.
+    """Create the ``Test`` sample and return its id and an unattached subtraction.
 
     The sample is attached to ``apple`` and ``pear``; ``peach`` exists but is not
     attached, so edit tests can switch the sample's subtractions to it.
     """
-    label = await fake.labels.create()
     user = await fake.users.create()
-    job = await fake.jobs.create(user, workflow="create_sample")
+    label = await fake.labels.create()
 
     upload = await fake.uploads.create(user=user)
     apple = await fake.subtractions.create(
@@ -246,106 +243,18 @@ async def get_sample_data(
         user=user, upload=upload, name="Peach", upload_files=False, finalized=False
     )
 
-    await mongo.samples.insert_one(
-        {
-            "_id": "test",
-            "all_read": True,
-            "all_write": True,
-            "created_at": static_time.datetime,
-            "files": [
-                {
-                    "id": "foo",
-                    "name": "Bar.fq.gz",
-                    "download_url": "/download/samples/files/file_1.fq.gz",
-                },
-            ],
-            "format": "fastq",
-            "group": "none",
-            "group_read": True,
-            "group_write": True,
-            "hold": False,
-            "host": "",
-            "is_legacy": False,
-            "isolate": "",
-            "job": {"id": job.id},
-            "labels": [label.id],
-            "library_type": LibraryType.normal.value,
-            "locale": "",
-            "name": "Test",
-            "notes": "",
-            "nuvs": False,
-            "pathoscope": True,
-            "ready": True,
-            "subtractions": [apple.id, pear.id],
-            "user": {"id": user.id},
-            "workflows": {
-                "aodp": WorkflowState.INCOMPATIBLE.value,
-                "pathoscope": WorkflowState.COMPLETE.value,
-                "nuvs": WorkflowState.PENDING.value,
-            },
-        },
+    sample = await fake.samples.create(user, ready=True)
+
+    await data_layer.samples.update(
+        sample.id,
+        UpdateSampleRequest(
+            name="Test",
+            labels=[label.id],
+            subtractions=[apple.id, pear.id],
+        ),
     )
 
-    async with AsyncSession(pg) as session:
-        legacy = SQLLegacySample(
-            legacy_id="test",
-            name="Test",
-            host="",
-            isolate="",
-            locale="",
-            notes="",
-            library_type=LibraryType.normal.value,
-            format="fastq",
-            quality=None,
-            created_at=static_time.datetime,
-            ready=True,
-            hold=False,
-            is_legacy=False,
-            all_read=True,
-            all_write=True,
-            group_read=True,
-            group_write=True,
-            user_id=user.id,
-            job_id=job.id,
-        )
-        session.add(legacy)
-        await session.flush()
-
-        sample_id = legacy.id
-
-        session.add_all(
-            [
-                SQLLegacySampleLabel(sample_id=legacy.id, label_id=label.id),
-                SQLLegacySampleSubtraction(
-                    sample_id=legacy.id,
-                    subtraction_id=apple.id,
-                ),
-                SQLLegacySampleSubtraction(
-                    sample_id=legacy.id,
-                    subtraction_id=pear.id,
-                ),
-                SQLSampleArtifact(
-                    name="reference.fa.gz",
-                    sample="test",
-                    sample_id=legacy.id,
-                    type="fasta",
-                    name_on_disk="reference.fa.gz",
-                    size=34879234,
-                ),
-                SQLSampleReads(
-                    name="reads_1.fq.gz",
-                    name_on_disk="reads_1.fq.gz",
-                    sample="test",
-                    sample_id=legacy.id,
-                    size=2903109210,
-                    uploaded_at=static_time.datetime,
-                    upload=None,
-                ),
-            ],
-        )
-        await session.commit()
-
-    return SampleData(id=sample_id, unattached_subtraction_id=peach.id)
+    return SampleData(id=sample.id, unattached_subtraction_id=peach.id)
 
 
 class TestFind:
@@ -626,77 +535,46 @@ class TestGet:
 
     async def test_owner(
         self,
-        get_sample_data,
+        data_layer: DataLayer,
+        fake: DataFaker,
         snapshot: SnapshotAssertion,
-        mongo: Mongo,
-        pg: AsyncEngine,
         spawn_client: ClientSpawner,
+        static_time,
     ):
-        """Test that a sample can be retrieved by its owner."""
+        """A sample with no public or group read rights is still readable by its owner."""
         client = await spawn_client(authenticated=True)
+        sample = await fake.samples.create(client.user, ready=True)
 
-        await mongo.samples.update_one(
-            {"_id": "test"},
-            {
-                "$set": {
-                    "all_read": False,
-                    "group_read": False,
-                    "group": "none",
-                    "user": {"id": client.user.id},
-                },
-            },
-        )
-        await update_pg_sample_rights(
-            pg,
-            "test",
-            all_read=False,
-            group_read=False,
-            group_id=None,
-            user_id=client.user.id,
+        await data_layer.samples.update_rights(
+            sample.id,
+            {"all_read": False, "group_read": False},
         )
 
-        resp = await client.get(f"/samples/{get_sample_data.id}")
+        resp = await client.get(f"/samples/{sample.id}")
 
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot(name="resp")
 
     async def test_all_read(
         self,
+        data_layer: DataLayer,
         fake: DataFaker,
-        get_sample_data,
         snapshot: SnapshotAssertion,
-        mongo: Mongo,
-        pg: AsyncEngine,
         spawn_client: ClientSpawner,
+        static_time,
     ):
-        """Test that a sample can be retrieved any user when ``all_read`` is ``True`` on
-        the sample.
-        """
+        """A sample with ``all_read`` set is readable by a user who does not own it."""
+        owner = await fake.users.create()
+        sample = await fake.samples.create(owner, ready=True)
+
+        await data_layer.samples.update_rights(
+            sample.id,
+            {"all_read": True, "group_read": False},
+        )
+
         client = await spawn_client(authenticated=True)
 
-        user = await fake.users.create()
-
-        await mongo.samples.update_one(
-            {"_id": "test"},
-            {
-                "$set": {
-                    "all_read": True,
-                    "group_read": False,
-                    "group": "none",
-                    "user": {"id": user.id},
-                },
-            },
-        )
-        await update_pg_sample_rights(
-            pg,
-            "test",
-            all_read=True,
-            group_read=False,
-            group_id=None,
-            user_id=user.id,
-        )
-
-        resp = await client.get(f"/samples/{get_sample_data.id}")
+        resp = await client.get(f"/samples/{sample.id}")
 
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot(name="resp")
@@ -705,50 +583,36 @@ class TestGet:
     async def test_group_read(
         self,
         is_member: bool,
+        data_layer: DataLayer,
         fake: DataFaker,
-        get_sample_data,
-        mongo: Mongo,
-        pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
+        static_time,
     ):
-        """Test that a sample can be retrieved by the client user when they are a member
-        the sample's ``group`` and ``group_read`` is ``True``.
-        """
+        """A sample with ``group_read`` is readable only by members of its group."""
+        owner = await fake.users.create()
+        group = await fake.groups.create()
+        sample = await fake.samples.create(owner, ready=True)
+
+        await data_layer.samples.update_rights(
+            sample.id,
+            {
+                "all_read": False,
+                "all_write": False,
+                "group_read": True,
+                "group": group.id,
+            },
+        )
+
         client = await spawn_client(authenticated=True)
 
-        group = await fake.groups.create()
-        user = await fake.users.create()
-
         if is_member:
-            await get_data_from_app(client.app).users.update(
+            await data_layer.users.update(
                 client.user.id,
                 UpdateUserRequest(groups=[group.id]),
             )
 
-        await mongo.samples.update_one(
-            {"_id": "test"},
-            {
-                "$set": {
-                    "all_read": False,
-                    "all_write": False,
-                    "group_read": True,
-                    "group": group.id,
-                    "user": {"id": user.id},
-                },
-            },
-        )
-        await update_pg_sample_rights(
-            pg,
-            "test",
-            all_read=False,
-            all_write=False,
-            group_read=True,
-            group_id=group.id,
-            user_id=user.id,
-        )
-
-        resp = await client.get(f"/samples/{get_sample_data.id}")
+        resp = await client.get(f"/samples/{sample.id}")
 
         assert resp.status == (200 if is_member else 403)
         assert await resp.json() == snapshot(name="resp")
