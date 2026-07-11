@@ -1156,19 +1156,7 @@ async def test_find_analyses(
         finalized=False,
     )
 
-    await mongo.samples.insert_one(
-        {
-            "_id": "test",
-            "created_at": static_time.datetime,
-            "all_read": True,
-            "all_write": True,
-            "group": "none",
-            "group_read": True,
-            "group_write": True,
-            "ready": True,
-            "user": {"id": user_1.id},
-        },
-    )
+    sample = await fake.samples.create(user_1, ready=True)
 
     await asyncio.gather(
         mongo.references.insert_many(
@@ -1194,20 +1182,6 @@ async def test_find_analyses(
             for legacy_id, name in (("foo", "Foo"), ("baz", "Baz"))
         )
 
-        legacy_sample = SQLLegacySample(
-            legacy_id="test",
-            name="Test Sample",
-            library_type="normal",
-            created_at=static_time.datetime,
-            user_id=user_1.id,
-            all_read=True,
-            all_write=True,
-        )
-        session.add(legacy_sample)
-        await session.flush()
-
-        legacy_sample_id = legacy_sample.id
-
         analyses = [
             SQLAnalysis(
                 legacy_id="test_1",
@@ -1215,8 +1189,8 @@ async def test_find_analyses(
                 updated_at=static_time.datetime,
                 workflow="pathoscope",
                 ready=True,
-                sample="test",
-                sample_id=legacy_sample.id,
+                sample=str(sample.id),
+                sample_id=sample.id,
                 reference="baz",
                 index="foo",
                 user_id=user_1.id,
@@ -1228,8 +1202,8 @@ async def test_find_analyses(
                 updated_at=static_time.datetime,
                 workflow="pathoscope",
                 ready=True,
-                sample="test",
-                sample_id=legacy_sample.id,
+                sample=str(sample.id),
+                sample_id=sample.id,
                 reference="baz",
                 index="foo",
                 user_id=user_1.id,
@@ -1240,8 +1214,8 @@ async def test_find_analyses(
                 updated_at=static_time.datetime,
                 workflow="pathoscope",
                 ready=True,
-                sample="test",
-                sample_id=legacy_sample.id,
+                sample=str(sample.id),
+                sample_id=sample.id,
                 reference="foo",
                 index="foo",
                 user_id=user_2.id,
@@ -1273,7 +1247,7 @@ async def test_find_analyses(
 
         await session.commit()
 
-    resp = await client.get(f"/samples/{legacy_sample_id}/analyses")
+    resp = await client.get(f"/samples/{sample.id}/analyses")
 
     assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot
