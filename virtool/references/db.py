@@ -20,9 +20,11 @@ from virtool.data.topg import (
 )
 from virtool.data.transforms import apply_transforms
 from virtool.groups.pg import SQLGroup
-from virtool.history.db import bulk_delete_history, bulk_insert_history
-from virtool.history.sql import SQLLegacyHistory
+from virtool.history.db import bulk_insert_history
+from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.models.enums import HistoryMethod
+from virtool.otus.db import bulk_insert_otu_rows, bulk_insert_sequence_rows
+from virtool.otus.sql import SQLOTU
 from virtool.references.alot import prepare_otu_insertion
 from virtool.references.sql import (
     SQLReference,
@@ -601,6 +603,15 @@ async def create_import(
     return document
 
 
+_REFERENCE_OTU_CHUNK_SIZE = 1000
+"""Number of OTUs written per transaction in the bulk reference populate paths.
+
+Reference imports and clones can involve tens of thousands of OTUs and 100k+
+sequences. Writing them in bounded chunks with a commit per chunk keeps each
+transaction small instead of holding one enormous transaction open.
+"""
+
+
 async def populate_insert_only_reference(
     created_at: datetime,
     history_method: HistoryMethod,
@@ -627,67 +638,101 @@ async def populate_insert_only_reference(
         for otu in otus
     ]
 
-    diff_rows = [
-        {"change_id": insertion.history.id, "diff": insertion.history.diff}
-        for insertion in insertions
-    ]
-
-    async with AsyncSession(pg) as pg_session:
-        await bulk_insert_history(
-            pg_session,
-            diff_rows,
-            [insertion.history.document for insertion in insertions],
-        )
-        await pg_session.commit()
-
     try:
-        sequences = []
+        for start in range(0, len(insertions), _REFERENCE_OTU_CHUNK_SIZE):
+            chunk = insertions[start : start + _REFERENCE_OTU_CHUNK_SIZE]
 
-        for insertion in insertions:
-            sequences.extend(insertion.sequences)
+            chunk_otus = [insertion.otu for insertion in chunk]
+            chunk_sequences = [
+                sequence for insertion in chunk for sequence in insertion.sequences
+            ]
 
-        async with asyncio.TaskGroup() as tg:
-            tg.create_task(
-                mongo.otus.insert_many(
-                    [insertion.otu for insertion in insertions],
-                    None,
-                ),
-            )
-            tg.create_task(mongo.sequences.insert_many(sequences, None))
+            async with AsyncSession(pg) as pg_session:
+                await bulk_insert_otu_rows(pg_session, chunk_otus, reference_pk)
+                await bulk_insert_sequence_rows(pg_session, chunk_sequences)
+                await bulk_insert_history(
+                    pg_session,
+                    [
+                        {
+                            "change_id": insertion.history.id,
+                            "diff": insertion.history.diff,
+                        }
+                        for insertion in chunk
+                    ],
+                    [insertion.history.document for insertion in chunk],
+                )
+                await pg_session.commit()
+
+            async with asyncio.TaskGroup() as tg:
+                tg.create_task(mongo.otus.insert_many(chunk_otus, None))
+                tg.create_task(mongo.sequences.insert_many(chunk_sequences, None))
     except Exception:
-        await bulk_delete_history(pg, [row["change_id"] for row in diff_rows])
-
-        reference_id_match = await compose_reference_id_match(pg, reference_id)
-
-        await asyncio.gather(
-            mongo.sequences.delete_many({"reference.id": reference_id_match}),
-            mongo.otus.delete_many({"reference.id": reference_id_match}),
-        )
-
-        async with AsyncSession(pg) as session:
-            sql_reference_id = (
-                await session.execute(
-                    select(SQLReference.id).where(
-                        compose_legacy_id_single_expression(SQLReference, reference_id),
-                    ),
-                )
-            ).scalar_one_or_none()
-
-            if sql_reference_id is not None:
-                await session.execute(
-                    delete(SQLReferenceUser).where(
-                        SQLReferenceUser.reference_id == sql_reference_id,
-                    ),
-                )
-                await session.execute(
-                    delete(SQLReferenceGroup).where(
-                        SQLReferenceGroup.reference_id == sql_reference_id,
-                    ),
-                )
-                await session.execute(
-                    delete(SQLReference).where(SQLReference.id == sql_reference_id),
-                )
-
-            await session.commit()
+        await _rollback_insert_only_reference(mongo, pg, reference_id)
 
         raise
+
+
+async def _rollback_insert_only_reference(
+    mongo: "Mongo",
+    pg: AsyncEngine,
+    reference_id: str,
+) -> None:
+    """Undo a partially completed bulk reference populate.
+
+    Deletes every history, OTU, sequence and rights row committed for the reference
+    and the reference itself in a single Postgres transaction, then deletes the
+    matching Mongo documents. Every Postgres delete is scoped to the reference's
+    primary key, so the cleanup is atomic and can never touch history rows that
+    belong to another reference. The OTU rows are deleted before the reference
+    because ``legacy_otus.reference_id`` has no cascade; the sequence rows cascade
+    from their OTUs.
+    """
+    async with AsyncSession(pg) as session:
+        sql_reference_id = (
+            await session.execute(
+                select(SQLReference.id).where(
+                    compose_legacy_id_single_expression(SQLReference, reference_id),
+                ),
+            )
+        ).scalar_one_or_none()
+
+        if sql_reference_id is not None:
+            history_ids = select(SQLLegacyHistory.id).where(
+                SQLLegacyHistory.reference_id == sql_reference_id,
+            )
+
+            await session.execute(
+                delete(SQLLegacyHistoryDiff).where(
+                    SQLLegacyHistoryDiff.history_id.in_(history_ids),
+                ),
+            )
+            await session.execute(
+                delete(SQLLegacyHistory).where(
+                    SQLLegacyHistory.reference_id == sql_reference_id,
+                ),
+            )
+            await session.execute(
+                delete(SQLOTU).where(SQLOTU.reference_id == sql_reference_id),
+            )
+            await session.execute(
+                delete(SQLReferenceUser).where(
+                    SQLReferenceUser.reference_id == sql_reference_id,
+                ),
+            )
+            await session.execute(
+                delete(SQLReferenceGroup).where(
+                    SQLReferenceGroup.reference_id == sql_reference_id,
+                ),
+            )
+            await session.execute(
+                delete(SQLReference).where(SQLReference.id == sql_reference_id),
+            )
+
+        await session.commit()
+
+    reference_id_match = await compose_reference_id_match(pg, reference_id)
+
+    await asyncio.gather(
+        mongo.sequences.delete_many({"reference.id": reference_id_match}),
+        mongo.otus.delete_many({"reference.id": reference_id_match}),
+    )

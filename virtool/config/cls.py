@@ -21,23 +21,6 @@ CACHE_STORAGE_BUDGET = 100 * 1024**3
 """100 GiB, a conservative single-node default operators can override."""
 
 
-def _validate_fallback_path(value: str | Path) -> Path:
-    raw = str(value)
-
-    if not raw:
-        raise ValueError("storage_fallback_path cannot be an empty string")
-
-    path = Path(raw)
-
-    if not path.exists():
-        raise ValueError(f"storage_fallback_path does not exist: {path}")
-
-    if not path.is_dir():
-        raise ValueError(f"storage_fallback_path is not a directory: {path}")
-
-    return path
-
-
 def _validate_s3_credentials(access_key_id: str, secret_access_key: str) -> None:
     """Reject partial S3 credential config.
 
@@ -63,7 +46,7 @@ def _validate_storage_backend(
 ) -> None:
     """Validate the ``storage_*`` fields shared by every service config.
 
-    Mirrors the requirements ``build_primary_backend`` relies on: an S3 backend
+    Mirrors the requirements ``create_storage_backend`` relies on: an S3 backend
     needs a bucket and complete (or absent) credentials; an Azure backend needs
     an account and container.
     """
@@ -134,7 +117,6 @@ class ServerConfig:
     real_ip_header: str
     sentry_dsn: str | None
     storage_backend: StorageBackendName
-    storage_fallback_path: Path | None = None
     cache_storage_budget: int = CACHE_STORAGE_BUDGET
     storage_s3_bucket: str = ""
     storage_s3_region: str = ""
@@ -155,11 +137,6 @@ class ServerConfig:
         return PgOptions.from_connection_string(self.postgres_connection_string)
 
     def __post_init__(self):
-        if self.storage_fallback_path is not None:
-            self.storage_fallback_path = _validate_fallback_path(
-                self.storage_fallback_path,
-            )
-
         _validate_cache_storage_budget(self.cache_storage_budget)
 
         _validate_storage_backend(self)
@@ -177,7 +154,6 @@ class TaskRunnerConfig:
     postgres_connection_string: str
     sentry_dsn: str
     storage_backend: StorageBackendName
-    storage_fallback_path: Path | None = None
     cache_storage_budget: int = CACHE_STORAGE_BUDGET
     storage_s3_bucket: str = ""
     storage_s3_region: str = ""
@@ -198,11 +174,6 @@ class TaskRunnerConfig:
         return PgOptions.from_connection_string(self.postgres_connection_string)
 
     def __post_init__(self):
-        if self.storage_fallback_path is not None:
-            self.storage_fallback_path = _validate_fallback_path(
-                self.storage_fallback_path,
-            )
-
         _validate_cache_storage_budget(self.cache_storage_budget)
 
         _validate_storage_backend(self)

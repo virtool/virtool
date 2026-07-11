@@ -13,6 +13,7 @@ from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
+from virtool.otus.sql import SQLOTU, SQLSequence
 from virtool.references.db import (
     compose_reference_ids_match,
     create_document,
@@ -25,6 +26,35 @@ from virtool.references.sql import (
     SQLReferenceGroup,
     SQLReferenceUser,
 )
+
+
+def build_source_otus(indices: list[int]) -> list[dict]:
+    """Build source OTU documents for the bulk reference populate paths."""
+    return [
+        {
+            "_id": f"remote_{i}",
+            "name": f"OTU {i}",
+            "abbreviation": f"O{i}",
+            "isolates": [
+                {
+                    "id": f"remote_iso_{i}",
+                    "default": True,
+                    "source_type": "isolate",
+                    "source_name": "a",
+                    "sequences": [
+                        {
+                            "_id": f"remote_seq_{i}",
+                            "accession": f"ACC{i}",
+                            "sequence": "ATCG",
+                            "definition": "test",
+                            "host": "h",
+                        },
+                    ],
+                },
+            ],
+        }
+        for i in indices
+    ]
 
 
 async def seed_reference(
@@ -584,31 +614,7 @@ async def test_populate_insert_only_reference_rollback(
         ],
     )
 
-    otus = [
-        {
-            "_id": f"remote_{i}",
-            "name": f"OTU {i}",
-            "abbreviation": f"O{i}",
-            "isolates": [
-                {
-                    "id": f"remote_iso_{i}",
-                    "default": True,
-                    "source_type": "isolate",
-                    "source_name": "a",
-                    "sequences": [
-                        {
-                            "_id": f"remote_seq_{i}",
-                            "accession": f"ACC{i}",
-                            "sequence": "ATCG",
-                            "definition": "test",
-                            "host": "h",
-                        },
-                    ],
-                },
-            ],
-        }
-        for i in (1, 2)
-    ]
+    otus = build_source_otus([1, 2])
 
     otus_done = asyncio.Event()
 
@@ -665,8 +671,22 @@ async def test_populate_insert_only_reference_rollback(
             .where(SQLLegacyHistory.legacy_id.in_(["rbotu001.0", "rbotu002.0"])),
         )
 
+        otu_count = await pg_session.scalar(
+            select(func.count())
+            .select_from(SQLOTU)
+            .where(SQLOTU.id.in_(["rbotu001", "rbotu002"])),
+        )
+
+        sequence_count = await pg_session.scalar(
+            select(func.count())
+            .select_from(SQLSequence)
+            .where(SQLSequence.id.in_(["rbseq001", "rbseq002"])),
+        )
+
     assert diff_count == 0
     assert legacy_count == 0
+    assert otu_count == 0
+    assert sequence_count == 0
 
 
 async def test_populate_insert_only_reference_writes_legacy_history(
@@ -695,31 +715,7 @@ async def test_populate_insert_only_reference_writes_legacy_history(
         ],
     )
 
-    otus = [
-        {
-            "_id": f"remote_{i}",
-            "name": f"OTU {i}",
-            "abbreviation": f"O{i}",
-            "isolates": [
-                {
-                    "id": f"remote_iso_{i}",
-                    "default": True,
-                    "source_type": "isolate",
-                    "source_name": "a",
-                    "sequences": [
-                        {
-                            "_id": f"remote_seq_{i}",
-                            "accession": f"ACC{i}",
-                            "sequence": "ATCG",
-                            "definition": "test",
-                            "host": "h",
-                        },
-                    ],
-                },
-            ],
-        }
-        for i in (1, 2)
-    ]
+    otus = build_source_otus([1, 2])
 
     await populate_insert_only_reference(
         static_time.datetime,
@@ -753,3 +749,146 @@ async def test_populate_insert_only_reference_writes_legacy_history(
     assert all(row.otu_version == "0" for row in rows)
     assert all(row.index is None and row.index_version is None for row in rows)
     assert rows == snapshot(name="legacy_history")
+
+
+async def test_populate_insert_only_reference_writes_otu_and_sequence_rows(
+    fake: DataFaker,
+    mocker: MockerFixture,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    snapshot: SnapshotAssertion,
+    static_time,
+):
+    """A successful bulk insert writes a ``legacy_otus`` row per OTU and a
+    ``legacy_sequences`` row per sequence, with promoted columns and verbatim data.
+    """
+    user = await fake.users.create()
+    ref_id = "ref_otu_rows_test"
+
+    await seed_reference(pg, ref_id, user.id, static_time.datetime)
+
+    mocker.patch(
+        "virtool.references.alot.random_alphanumeric",
+        side_effect=[
+            "orotu001",
+            "oriso001",
+            "orseq001",
+            "orotu002",
+            "oriso002",
+            "orseq002",
+        ],
+    )
+
+    await populate_insert_only_reference(
+        static_time.datetime,
+        HistoryMethod.remote,
+        mongo,
+        pg,
+        build_source_otus([1, 2]),
+        ref_id,
+        user.id,
+    )
+
+    async with AsyncSession(pg) as pg_session:
+        reference_pk = await pg_session.scalar(
+            select(SQLReference.id).where(SQLReference.legacy_id == ref_id),
+        )
+
+        otu_rows = (
+            (
+                await pg_session.execute(
+                    select(SQLOTU)
+                    .where(SQLOTU.reference_id == reference_pk)
+                    .order_by(SQLOTU.id),
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        sequence_rows = (
+            (
+                await pg_session.execute(
+                    select(SQLSequence)
+                    .where(SQLSequence.otu_id.in_([row.id for row in otu_rows]))
+                    .order_by(SQLSequence.id),
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+    assert [row.id for row in otu_rows] == ["orotu001", "orotu002"]
+    assert [row.name for row in otu_rows] == ["OTU 1", "OTU 2"]
+    assert [row.abbreviation for row in otu_rows] == ["O1", "O2"]
+    assert all(row.reference_id == reference_pk for row in otu_rows)
+    assert all(row.version == 0 for row in otu_rows)
+    assert all(row.data["reference"]["id"] == reference_pk for row in otu_rows)
+
+    assert [row.id for row in sequence_rows] == ["orseq001", "orseq002"]
+    assert [row.otu_id for row in sequence_rows] == ["orotu001", "orotu002"]
+    assert [row.isolate_id for row in sequence_rows] == ["oriso001", "oriso002"]
+
+    assert otu_rows == snapshot(name="legacy_otus")
+    assert sequence_rows == snapshot(name="legacy_sequences")
+
+
+async def test_populate_insert_only_reference_chunks_inserts(
+    fake: DataFaker,
+    mocker: MockerFixture,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    static_time,
+):
+    """OTUs spanning multiple per-chunk commits all land in both stores."""
+    user = await fake.users.create()
+    ref_id = "ref_chunk_test"
+
+    await seed_reference(pg, ref_id, user.id, static_time.datetime)
+
+    mocker.patch("virtool.references.db._REFERENCE_OTU_CHUNK_SIZE", 1)
+    mocker.patch(
+        "virtool.references.alot.random_alphanumeric",
+        side_effect=[
+            "ckotu001",
+            "ckiso001",
+            "ckseq001",
+            "ckotu002",
+            "ckiso002",
+            "ckseq002",
+            "ckotu003",
+            "ckiso003",
+            "ckseq003",
+        ],
+    )
+
+    await populate_insert_only_reference(
+        static_time.datetime,
+        HistoryMethod.remote,
+        mongo,
+        pg,
+        build_source_otus([1, 2, 3]),
+        ref_id,
+        user.id,
+    )
+
+    assert await mongo.otus.count_documents({}) == 3
+    assert await mongo.sequences.count_documents({}) == 3
+
+    async with AsyncSession(pg) as pg_session:
+        otu_count = await pg_session.scalar(select(func.count()).select_from(SQLOTU))
+        sequence_count = await pg_session.scalar(
+            select(func.count()).select_from(SQLSequence),
+        )
+        history_count = await pg_session.scalar(
+            select(func.count())
+            .select_from(SQLLegacyHistory)
+            .where(
+                SQLLegacyHistory.reference_id
+                == compose_legacy_id_subquery(SQLReference, ref_id),
+            ),
+        )
+
+    assert otu_count == 3
+    assert sequence_count == 3
+    assert history_count == 3
