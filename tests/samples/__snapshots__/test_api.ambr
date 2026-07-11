@@ -1690,46 +1690,15 @@
   dict({
     'documents': list([
       dict({
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 3,
-        'isolate': '',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          }),
-        ]),
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'uploads': None,
-        'user': dict({
-          'handle': 'zclark',
-          'id': 2,
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'incompatible',
-          'pathoscope': 'incompatible',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T21:00:00Z',
+        'created_at': '2015-10-06T20:00:00Z',
         'host': '',
         'id': 1,
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': 1,
-          'progress': 0,
-          'state': 'pending',
+          'progress': 100,
+          'state': 'succeeded',
           'user': dict({
             'handle': 'leeashley',
             'id': 1,
@@ -1756,7 +1725,24 @@
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
-        'uploads': None,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 1,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'leeashley',
+              'id': 1,
+            }),
+          }),
+        ]),
         'user': dict({
           'handle': 'leeashley',
           'id': 1,
@@ -1772,7 +1758,17 @@
         'host': '',
         'id': 2,
         'isolate': 'Test',
-        'job': None,
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 2,
+          'progress': 100,
+          'state': 'succeeded',
+          'user': dict({
+            'handle': 'zclark',
+            'id': 2,
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#78bc72',
@@ -1787,7 +1783,82 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'uploads': None,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 2,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'zclark',
+              'id': 2,
+            }),
+          }),
+        ]),
+        'user': dict({
+          'handle': 'zclark',
+          'id': 2,
+        }),
+        'workflows': dict({
+          'aodp': 'incompatible',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        }),
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': 3,
+        'isolate': '',
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 3,
+          'progress': 100,
+          'state': 'succeeded',
+          'user': dict({
+            'handle': 'zclark',
+            'id': 2,
+          }),
+          'workflow': 'create_sample',
+        }),
+        'labels': list([
+          dict({
+            'color': '#47e7f6',
+            'description': 'Drive well good explain.',
+            'id': 3,
+            'name': 'Off',
+          }),
+        ]),
+        'library_type': 'normal',
+        'name': '16SPP044',
+        'notes': '',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 3,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'zclark',
+              'id': 2,
+            }),
+          }),
+        ]),
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -1810,11 +1881,21 @@
   dict({
     'documents': list([
       dict({
-        'created_at': '2015-10-06T22:00:00Z',
+        'created_at': '2015-10-06T20:00:00Z',
         'host': '',
         'id': 3,
         'isolate': '',
-        'job': None,
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 3,
+          'progress': 100,
+          'state': 'succeeded',
+          'user': dict({
+            'handle': 'zclark',
+            'id': 2,
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#47e7f6',
@@ -1823,21 +1904,38 @@
             'name': 'Off',
           }),
         ]),
-        'library_type': 'amplicon',
+        'library_type': 'normal',
         'name': '16SPP044',
         'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'uploads': None,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 3,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'zclark',
+              'id': 2,
+            }),
+          }),
+        ]),
         'user': dict({
           'handle': 'zclark',
           'id': 2,
         }),
         'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'incompatible',
-          'pathoscope': 'incompatible',
+          'aodp': 'incompatible',
+          'nuvs': 'none',
+          'pathoscope': 'none',
         }),
       }),
     ]),
@@ -1852,46 +1950,15 @@
   dict({
     'documents': list([
       dict({
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 3,
-        'isolate': '',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          }),
-        ]),
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'uploads': None,
-        'user': dict({
-          'handle': 'zclark',
-          'id': 2,
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'incompatible',
-          'pathoscope': 'incompatible',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T21:00:00Z',
+        'created_at': '2015-10-06T20:00:00Z',
         'host': '',
         'id': 1,
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': 1,
-          'progress': 0,
-          'state': 'pending',
+          'progress': 100,
+          'state': 'succeeded',
           'user': dict({
             'handle': 'leeashley',
             'id': 1,
@@ -1918,7 +1985,24 @@
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
-        'uploads': None,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 1,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'leeashley',
+              'id': 1,
+            }),
+          }),
+        ]),
         'user': dict({
           'handle': 'leeashley',
           'id': 1,
@@ -1927,6 +2011,64 @@
           'aodp': 'incompatible',
           'nuvs': 'complete',
           'pathoscope': 'complete',
+        }),
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': 3,
+        'isolate': '',
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 3,
+          'progress': 100,
+          'state': 'succeeded',
+          'user': dict({
+            'handle': 'zclark',
+            'id': 2,
+          }),
+          'workflow': 'create_sample',
+        }),
+        'labels': list([
+          dict({
+            'color': '#47e7f6',
+            'description': 'Drive well good explain.',
+            'id': 3,
+            'name': 'Off',
+          }),
+        ]),
+        'library_type': 'normal',
+        'name': '16SPP044',
+        'notes': '',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 3,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'zclark',
+              'id': 2,
+            }),
+          }),
+        ]),
+        'user': dict({
+          'handle': 'zclark',
+          'id': 2,
+        }),
+        'workflows': dict({
+          'aodp': 'incompatible',
+          'nuvs': 'none',
+          'pathoscope': 'none',
         }),
       }),
     ]),
@@ -1952,46 +2094,15 @@
   dict({
     'documents': list([
       dict({
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 3,
-        'isolate': '',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          }),
-        ]),
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'uploads': None,
-        'user': dict({
-          'handle': 'zclark',
-          'id': 2,
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'incompatible',
-          'pathoscope': 'incompatible',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T21:00:00Z',
+        'created_at': '2015-10-06T20:00:00Z',
         'host': '',
         'id': 1,
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': 1,
-          'progress': 0,
-          'state': 'pending',
+          'progress': 100,
+          'state': 'succeeded',
           'user': dict({
             'handle': 'leeashley',
             'id': 1,
@@ -2018,7 +2129,24 @@
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
-        'uploads': None,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 1,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'leeashley',
+              'id': 1,
+            }),
+          }),
+        ]),
         'user': dict({
           'handle': 'leeashley',
           'id': 1,
@@ -2027,6 +2155,64 @@
           'aodp': 'incompatible',
           'nuvs': 'complete',
           'pathoscope': 'complete',
+        }),
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': 2,
+        'isolate': 'Test',
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 2,
+          'progress': 100,
+          'state': 'succeeded',
+          'user': dict({
+            'handle': 'zclark',
+            'id': 2,
+          }),
+          'workflow': 'create_sample',
+        }),
+        'labels': list([
+          dict({
+            'color': '#78bc72',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Add',
+          }),
+        ]),
+        'library_type': 'srna',
+        'name': '16GVP043',
+        'notes': 'This is a good sample.',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 2,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'zclark',
+              'id': 2,
+            }),
+          }),
+        ]),
+        'user': dict({
+          'handle': 'zclark',
+          'id': 2,
+        }),
+        'workflows': dict({
+          'aodp': 'incompatible',
+          'nuvs': 'none',
+          'pathoscope': 'none',
         }),
       }),
     ]),
@@ -2043,24 +2229,51 @@
       dict({
         'created_at': '2015-10-06T20:00:00Z',
         'host': '',
-        'id': 2,
-        'isolate': 'Test',
-        'job': None,
+        'id': 3,
+        'isolate': '',
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 3,
+          'progress': 100,
+          'state': 'succeeded',
+          'user': dict({
+            'handle': 'zclark',
+            'id': 2,
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
-            'color': '#78bc72',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Add',
+            'color': '#47e7f6',
+            'description': 'Drive well good explain.',
+            'id': 3,
+            'name': 'Off',
           }),
         ]),
-        'library_type': 'srna',
-        'name': '16GVP043',
-        'notes': 'This is a good sample.',
+        'library_type': 'normal',
+        'name': '16SPP044',
+        'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'uploads': None,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 3,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'zclark',
+              'id': 2,
+            }),
+          }),
+        ]),
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -2083,46 +2296,15 @@
   dict({
     'documents': list([
       dict({
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 3,
-        'isolate': '',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          }),
-        ]),
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'uploads': None,
-        'user': dict({
-          'handle': 'zclark',
-          'id': 2,
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'incompatible',
-          'pathoscope': 'incompatible',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T21:00:00Z',
+        'created_at': '2015-10-06T20:00:00Z',
         'host': '',
         'id': 1,
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': 1,
-          'progress': 0,
-          'state': 'pending',
+          'progress': 100,
+          'state': 'succeeded',
           'user': dict({
             'handle': 'leeashley',
             'id': 1,
@@ -2149,7 +2331,24 @@
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
-        'uploads': None,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 1,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'leeashley',
+              'id': 1,
+            }),
+          }),
+        ]),
         'user': dict({
           'handle': 'leeashley',
           'id': 1,
@@ -2165,7 +2364,17 @@
         'host': '',
         'id': 2,
         'isolate': 'Test',
-        'job': None,
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 2,
+          'progress': 100,
+          'state': 'succeeded',
+          'user': dict({
+            'handle': 'zclark',
+            'id': 2,
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#78bc72',
@@ -2180,7 +2389,82 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'uploads': None,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 2,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'zclark',
+              'id': 2,
+            }),
+          }),
+        ]),
+        'user': dict({
+          'handle': 'zclark',
+          'id': 2,
+        }),
+        'workflows': dict({
+          'aodp': 'incompatible',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        }),
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': 3,
+        'isolate': '',
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 3,
+          'progress': 100,
+          'state': 'succeeded',
+          'user': dict({
+            'handle': 'zclark',
+            'id': 2,
+          }),
+          'workflow': 'create_sample',
+        }),
+        'labels': list([
+          dict({
+            'color': '#47e7f6',
+            'description': 'Drive well good explain.',
+            'id': 3,
+            'name': 'Off',
+          }),
+        ]),
+        'library_type': 'normal',
+        'name': '16SPP044',
+        'notes': '',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 3,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'zclark',
+              'id': 2,
+            }),
+          }),
+        ]),
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -2203,46 +2487,15 @@
   dict({
     'documents': list([
       dict({
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 3,
-        'isolate': '',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          }),
-        ]),
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'uploads': None,
-        'user': dict({
-          'handle': 'zclark',
-          'id': 2,
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'incompatible',
-          'pathoscope': 'incompatible',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T21:00:00Z',
+        'created_at': '2015-10-06T20:00:00Z',
         'host': '',
         'id': 1,
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': 1,
-          'progress': 0,
-          'state': 'pending',
+          'progress': 100,
+          'state': 'succeeded',
           'user': dict({
             'handle': 'leeashley',
             'id': 1,
@@ -2269,7 +2522,24 @@
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
-        'uploads': None,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 1,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'leeashley',
+              'id': 1,
+            }),
+          }),
+        ]),
         'user': dict({
           'handle': 'leeashley',
           'id': 1,
@@ -2285,7 +2555,17 @@
         'host': '',
         'id': 2,
         'isolate': 'Test',
-        'job': None,
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 2,
+          'progress': 100,
+          'state': 'succeeded',
+          'user': dict({
+            'handle': 'zclark',
+            'id': 2,
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#78bc72',
@@ -2300,7 +2580,82 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'uploads': None,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 2,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'zclark',
+              'id': 2,
+            }),
+          }),
+        ]),
+        'user': dict({
+          'handle': 'zclark',
+          'id': 2,
+        }),
+        'workflows': dict({
+          'aodp': 'incompatible',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        }),
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': 3,
+        'isolate': '',
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 3,
+          'progress': 100,
+          'state': 'succeeded',
+          'user': dict({
+            'handle': 'zclark',
+            'id': 2,
+          }),
+          'workflow': 'create_sample',
+        }),
+        'labels': list([
+          dict({
+            'color': '#47e7f6',
+            'description': 'Drive well good explain.',
+            'id': 3,
+            'name': 'Off',
+          }),
+        ]),
+        'library_type': 'normal',
+        'name': '16SPP044',
+        'notes': '',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 3,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'zclark',
+              'id': 2,
+            }),
+          }),
+        ]),
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -2323,15 +2678,15 @@
   dict({
     'documents': list([
       dict({
-        'created_at': '2015-10-06T21:00:00Z',
+        'created_at': '2015-10-06T20:00:00Z',
         'host': '',
         'id': 1,
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': 1,
-          'progress': 0,
-          'state': 'pending',
+          'progress': 100,
+          'state': 'succeeded',
           'user': dict({
             'handle': 'leeashley',
             'id': 1,
@@ -2358,7 +2713,24 @@
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
-        'uploads': None,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 1,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'leeashley',
+              'id': 1,
+            }),
+          }),
+        ]),
         'user': dict({
           'handle': 'leeashley',
           'id': 1,
@@ -2374,7 +2746,17 @@
         'host': '',
         'id': 2,
         'isolate': 'Test',
-        'job': None,
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 2,
+          'progress': 100,
+          'state': 'succeeded',
+          'user': dict({
+            'handle': 'zclark',
+            'id': 2,
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#78bc72',
@@ -2389,7 +2771,24 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'uploads': None,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 2,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'zclark',
+              'id': 2,
+            }),
+          }),
+        ]),
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -2412,11 +2811,21 @@
   dict({
     'documents': list([
       dict({
-        'created_at': '2015-10-06T22:00:00Z',
+        'created_at': '2015-10-06T20:00:00Z',
         'host': '',
         'id': 3,
         'isolate': '',
-        'job': None,
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 3,
+          'progress': 100,
+          'state': 'succeeded',
+          'user': dict({
+            'handle': 'zclark',
+            'id': 2,
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#47e7f6',
@@ -2425,21 +2834,38 @@
             'name': 'Off',
           }),
         ]),
-        'library_type': 'amplicon',
+        'library_type': 'normal',
         'name': '16SPP044',
         'notes': '',
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'uploads': None,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 3,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'zclark',
+              'id': 2,
+            }),
+          }),
+        ]),
         'user': dict({
           'handle': 'zclark',
           'id': 2,
         }),
         'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'incompatible',
-          'pathoscope': 'incompatible',
+          'aodp': 'incompatible',
+          'nuvs': 'none',
+          'pathoscope': 'none',
         }),
       }),
     ]),
@@ -2454,46 +2880,15 @@
   dict({
     'documents': list([
       dict({
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 3,
-        'isolate': '',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          }),
-        ]),
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'uploads': None,
-        'user': dict({
-          'handle': 'zclark',
-          'id': 2,
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'incompatible',
-          'pathoscope': 'incompatible',
-        }),
-      }),
-      dict({
-        'created_at': '2015-10-06T21:00:00Z',
+        'created_at': '2015-10-06T20:00:00Z',
         'host': '',
         'id': 1,
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': 1,
-          'progress': 0,
-          'state': 'pending',
+          'progress': 100,
+          'state': 'succeeded',
           'user': dict({
             'handle': 'leeashley',
             'id': 1,
@@ -2520,7 +2915,24 @@
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
-        'uploads': None,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 1,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'leeashley',
+              'id': 1,
+            }),
+          }),
+        ]),
         'user': dict({
           'handle': 'leeashley',
           'id': 1,
@@ -2536,7 +2948,17 @@
         'host': '',
         'id': 2,
         'isolate': 'Test',
-        'job': None,
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 2,
+          'progress': 100,
+          'state': 'succeeded',
+          'user': dict({
+            'handle': 'zclark',
+            'id': 2,
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#78bc72',
@@ -2551,7 +2973,82 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'uploads': None,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 2,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'zclark',
+              'id': 2,
+            }),
+          }),
+        ]),
+        'user': dict({
+          'handle': 'zclark',
+          'id': 2,
+        }),
+        'workflows': dict({
+          'aodp': 'incompatible',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        }),
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': 3,
+        'isolate': '',
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 3,
+          'progress': 100,
+          'state': 'succeeded',
+          'user': dict({
+            'handle': 'zclark',
+            'id': 2,
+          }),
+          'workflow': 'create_sample',
+        }),
+        'labels': list([
+          dict({
+            'color': '#47e7f6',
+            'description': 'Drive well good explain.',
+            'id': 3,
+            'name': 'Off',
+          }),
+        ]),
+        'library_type': 'normal',
+        'name': '16SPP044',
+        'notes': '',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 3,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'zclark',
+              'id': 2,
+            }),
+          }),
+        ]),
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -2574,15 +3071,15 @@
   dict({
     'documents': list([
       dict({
-        'created_at': '2015-10-06T21:00:00Z',
+        'created_at': '2015-10-06T20:00:00Z',
         'host': '',
         'id': 1,
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': 1,
-          'progress': 0,
-          'state': 'pending',
+          'progress': 100,
+          'state': 'succeeded',
           'user': dict({
             'handle': 'leeashley',
             'id': 1,
@@ -2609,7 +3106,24 @@
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
-        'uploads': None,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 1,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'leeashley',
+              'id': 1,
+            }),
+          }),
+        ]),
         'user': dict({
           'handle': 'leeashley',
           'id': 1,
@@ -2632,15 +3146,15 @@
   dict({
     'documents': list([
       dict({
-        'created_at': '2015-10-06T21:00:00Z',
+        'created_at': '2015-10-06T20:00:00Z',
         'host': '',
         'id': 1,
         'isolate': 'Thing',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': 1,
-          'progress': 0,
-          'state': 'pending',
+          'progress': 100,
+          'state': 'succeeded',
           'user': dict({
             'handle': 'leeashley',
             'id': 1,
@@ -2667,7 +3181,24 @@
         'nuvs': True,
         'pathoscope': True,
         'ready': True,
-        'uploads': None,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 1,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'leeashley',
+              'id': 1,
+            }),
+          }),
+        ]),
         'user': dict({
           'handle': 'leeashley',
           'id': 1,
@@ -2683,7 +3214,17 @@
         'host': '',
         'id': 2,
         'isolate': 'Test',
-        'job': None,
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 2,
+          'progress': 100,
+          'state': 'succeeded',
+          'user': dict({
+            'handle': 'zclark',
+            'id': 2,
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#78bc72',
@@ -2698,7 +3239,209 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'uploads': None,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 2,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'zclark',
+              'id': 2,
+            }),
+          }),
+        ]),
+        'user': dict({
+          'handle': 'zclark',
+          'id': 2,
+        }),
+        'workflows': dict({
+          'aodp': 'incompatible',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        }),
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': 3,
+        'isolate': '',
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 3,
+          'progress': 100,
+          'state': 'succeeded',
+          'user': dict({
+            'handle': 'zclark',
+            'id': 2,
+          }),
+          'workflow': 'create_sample',
+        }),
+        'labels': list([
+          dict({
+            'color': '#47e7f6',
+            'description': 'Drive well good explain.',
+            'id': 3,
+            'name': 'Off',
+          }),
+        ]),
+        'library_type': 'normal',
+        'name': '16SPP044',
+        'notes': '',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 3,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'zclark',
+              'id': 2,
+            }),
+          }),
+        ]),
+        'user': dict({
+          'handle': 'zclark',
+          'id': 2,
+        }),
+        'workflows': dict({
+          'aodp': 'incompatible',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        }),
+      }),
+    ]),
+    'found_count': 3,
+    'page': 1,
+    'page_count': 1,
+    'per_page': 25,
+    'total_count': 3,
+  })
+# ---
+# name: TestFind.test_workflows[workflows3]
+  dict({
+    'documents': list([
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': 2,
+        'isolate': 'Test',
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 2,
+          'progress': 100,
+          'state': 'succeeded',
+          'user': dict({
+            'handle': 'zclark',
+            'id': 2,
+          }),
+          'workflow': 'create_sample',
+        }),
+        'labels': list([
+          dict({
+            'color': '#78bc72',
+            'description': 'Tonight themselves true power home price.',
+            'id': 1,
+            'name': 'Add',
+          }),
+        ]),
+        'library_type': 'srna',
+        'name': '16GVP043',
+        'notes': 'This is a good sample.',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 2,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'zclark',
+              'id': 2,
+            }),
+          }),
+        ]),
+        'user': dict({
+          'handle': 'zclark',
+          'id': 2,
+        }),
+        'workflows': dict({
+          'aodp': 'incompatible',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        }),
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': 3,
+        'isolate': '',
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 3,
+          'progress': 100,
+          'state': 'succeeded',
+          'user': dict({
+            'handle': 'zclark',
+            'id': 2,
+          }),
+          'workflow': 'create_sample',
+        }),
+        'labels': list([
+          dict({
+            'color': '#47e7f6',
+            'description': 'Drive well good explain.',
+            'id': 3,
+            'name': 'Off',
+          }),
+        ]),
+        'library_type': 'normal',
+        'name': '16SPP044',
+        'notes': '',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 3,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'zclark',
+              'id': 2,
+            }),
+          }),
+        ]),
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -2717,48 +3460,6 @@
     'total_count': 3,
   })
 # ---
-# name: TestFind.test_workflows[workflows3]
-  dict({
-    'documents': list([
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'host': '',
-        'id': 2,
-        'isolate': 'Test',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#78bc72',
-            'description': 'Tonight themselves true power home price.',
-            'id': 1,
-            'name': 'Add',
-          }),
-        ]),
-        'library_type': 'srna',
-        'name': '16GVP043',
-        'notes': 'This is a good sample.',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'uploads': None,
-        'user': dict({
-          'handle': 'zclark',
-          'id': 2,
-        }),
-        'workflows': dict({
-          'aodp': 'incompatible',
-          'nuvs': 'none',
-          'pathoscope': 'none',
-        }),
-      }),
-    ]),
-    'found_count': 1,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  })
-# ---
 # name: TestFind.test_workflows[workflows4]
   dict({
     'documents': list([
@@ -2767,7 +3468,17 @@
         'host': '',
         'id': 2,
         'isolate': 'Test',
-        'job': None,
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 2,
+          'progress': 100,
+          'state': 'succeeded',
+          'user': dict({
+            'handle': 'zclark',
+            'id': 2,
+          }),
+          'workflow': 'create_sample',
+        }),
         'labels': list([
           dict({
             'color': '#78bc72',
@@ -2782,7 +3493,82 @@
         'nuvs': False,
         'pathoscope': False,
         'ready': True,
-        'uploads': None,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 2,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'zclark',
+              'id': 2,
+            }),
+          }),
+        ]),
+        'user': dict({
+          'handle': 'zclark',
+          'id': 2,
+        }),
+        'workflows': dict({
+          'aodp': 'incompatible',
+          'nuvs': 'none',
+          'pathoscope': 'none',
+        }),
+      }),
+      dict({
+        'created_at': '2015-10-06T20:00:00Z',
+        'host': '',
+        'id': 3,
+        'isolate': '',
+        'job': dict({
+          'created_at': '2015-10-06T20:00:00Z',
+          'id': 3,
+          'progress': 100,
+          'state': 'succeeded',
+          'user': dict({
+            'handle': 'zclark',
+            'id': 2,
+          }),
+          'workflow': 'create_sample',
+        }),
+        'labels': list([
+          dict({
+            'color': '#47e7f6',
+            'description': 'Drive well good explain.',
+            'id': 3,
+            'name': 'Off',
+          }),
+        ]),
+        'library_type': 'normal',
+        'name': '16SPP044',
+        'notes': '',
+        'nuvs': False,
+        'pathoscope': False,
+        'ready': True,
+        'uploads': list([
+          dict({
+            'created_at': '2015-10-06T20:00:00Z',
+            'id': 3,
+            'name': 'test.fq.gz',
+            'ready': True,
+            'removed': True,
+            'removed_at': '2015-10-06T20:00:00Z',
+            'reserved': True,
+            'size': 723988,
+            'type': 'reads',
+            'uploaded_at': '2015-10-06T20:00:00Z',
+            'user': dict({
+              'handle': 'zclark',
+              'id': 2,
+            }),
+          }),
+        ]),
         'user': dict({
           'handle': 'zclark',
           'id': 2,
@@ -2794,49 +3580,7 @@
         }),
       }),
     ]),
-    'found_count': 1,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
-  })
-# ---
-# name: TestFind.test_workflows[workflows5]
-  dict({
-    'documents': list([
-      dict({
-        'created_at': '2015-10-06T22:00:00Z',
-        'host': '',
-        'id': 3,
-        'isolate': '',
-        'job': None,
-        'labels': list([
-          dict({
-            'color': '#47e7f6',
-            'description': 'Drive well good explain.',
-            'id': 3,
-            'name': 'Off',
-          }),
-        ]),
-        'library_type': 'amplicon',
-        'name': '16SPP044',
-        'notes': '',
-        'nuvs': False,
-        'pathoscope': False,
-        'ready': True,
-        'uploads': None,
-        'user': dict({
-          'handle': 'zclark',
-          'id': 2,
-        }),
-        'workflows': dict({
-          'aodp': 'none',
-          'nuvs': 'incompatible',
-          'pathoscope': 'incompatible',
-        }),
-      }),
-    ]),
-    'found_count': 1,
+    'found_count': 2,
     'page': 1,
     'page_count': 1,
     'per_page': 25,

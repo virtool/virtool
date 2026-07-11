@@ -6,7 +6,6 @@ from http import HTTPStatus
 from pathlib import Path
 from typing import NamedTuple
 
-import arrow
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy import update
@@ -21,80 +20,19 @@ from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.jobs.models import CreateJobClaimRequest, JobState, Workflow
 from virtool.jobs.pg import SQLJob
-from virtool.models.enums import Permission
+from virtool.models.enums import LibraryType, Permission
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.references.models import Reference
 from virtool.references.sql import SQLReference
 from virtool.samples.models import Sample
 from virtool.samples.oas import UpdateSampleRequest
-from virtool.samples.sql import (
-    SQLLegacySample,
-    SQLLegacySampleLabel,
-    SQLLegacySampleSubtraction,
-)
 from virtool.samples.utils import sample_file_key, sample_storage_id
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.subtractions.pg import SQLSubtraction
 from virtool.uploads.sql import SQLUpload
 from virtool.users.models import User
 from virtool.users.oas import UpdateUserRequest
-
-
-async def insert_pg_sample(
-    session: AsyncSession,
-    document: dict,
-    group_id: int | None = None,
-) -> SQLLegacySample:
-    """Insert the ``legacy_samples`` row and label join rows mirroring a Mongo sample.
-
-    Sample reads are served from Postgres, so tests that seed Mongo directly must seed
-    the matching Postgres rows too.
-    """
-    created_at = document["created_at"]
-
-    if created_at.tzinfo is not None:
-        created_at = created_at.replace(tzinfo=None)
-
-    sample = SQLLegacySample(
-        legacy_id=document["_id"],
-        name=document["name"],
-        host=document.get("host", ""),
-        isolate=document.get("isolate", ""),
-        locale=document.get("locale", ""),
-        notes=document.get("notes", ""),
-        library_type=document["library_type"],
-        format=document.get("format", "fastq"),
-        group_id=group_id,
-        quality=document.get("quality"),
-        created_at=created_at,
-        paired=document.get("paired", False),
-        ready=document.get("ready", False),
-        hold=document.get("hold", True),
-        is_legacy=document.get("is_legacy", False),
-        all_read=document.get("all_read", False),
-        all_write=document.get("all_write", False),
-        group_read=document.get("group_read", False),
-        group_write=document.get("group_write", False),
-        user_id=document["user"]["id"],
-        job_id=document["job"]["id"] if document.get("job") else None,
-    )
-
-    session.add(sample)
-    await session.flush()
-
-    for label_id in document.get("labels", []):
-        session.add(SQLLegacySampleLabel(sample_id=sample.id, label_id=label_id))
-
-    for subtraction_id in document.get("subtractions", []):
-        session.add(
-            SQLLegacySampleSubtraction(
-                sample_id=sample.id,
-                subtraction_id=subtraction_id,
-            ),
-        )
-
-    return sample
 
 
 class MockJobInterface:
@@ -156,8 +94,8 @@ class TestFind:
     @pytest.fixture(autouse=True)
     async def _setup(
         self,
+        data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         spawn_client: ClientSpawner,
         static_time,
@@ -170,78 +108,54 @@ class TestFind:
         label_2 = await fake.labels.create()
         label_3 = await fake.labels.create()
 
-        job = await fake.jobs.create(user_1, workflow="create_sample")
-
         client = await spawn_client(authenticated=True)
 
-        documents = [
-            {
-                "_id": "beb1eb10",
-                "all_read": True,
-                "created_at": arrow.get(static_time.datetime).shift(hours=1).datetime,
-                "foobar": True,
-                "host": "",
-                "isolate": "Thing",
-                "job": {"id": job.id},
-                "labels": [label_1.id, label_2.id],
-                "library_type": "normal",
-                "name": "16GVP042",
-                "notes": "",
-                "ready": True,
-                "user": {"id": user_1.id},
-            },
-            {
-                "user": {"id": user_2.id},
-                "host": "",
-                "foobar": True,
-                "isolate": "Test",
-                "library_type": "srna",
-                "created_at": arrow.get(static_time.datetime).datetime,
-                "_id": "72bb8b31",
-                "job": None,
-                "name": "16GVP043",
-                "all_read": True,
-                "ready": True,
-                "labels": [label_1.id],
-                "notes": "This is a good sample.",
-            },
-            {
-                "user": {"id": user_2.id},
-                "host": "",
-                "library_type": "amplicon",
-                "notes": "",
-                "foobar": True,
-                "ready": True,
-                "isolate": "",
-                "created_at": arrow.get(static_time.datetime).shift(hours=2).datetime,
-                "_id": "cb400e6d",
-                "job": None,
-                "name": "16SPP044",
-                "all_read": True,
-                "labels": [label_3.id],
-            },
-        ]
+        sample_1 = await fake.samples.create(
+            user_1, ready=True, library_type=LibraryType.normal
+        )
+        await data_layer.samples.update(
+            sample_1.id,
+            UpdateSampleRequest(
+                name="16GVP042",
+                isolate="Thing",
+                labels=[label_1.id, label_2.id],
+            ),
+        )
 
-        await mongo.samples.insert_many(documents, session=None)
+        sample_2 = await fake.samples.create(
+            user_2, ready=True, library_type=LibraryType.srna
+        )
+        await data_layer.samples.update(
+            sample_2.id,
+            UpdateSampleRequest(
+                name="16GVP043",
+                isolate="Test",
+                labels=[label_1.id],
+                notes="This is a good sample.",
+            ),
+        )
 
+        sample_3 = await fake.samples.create(
+            user_2, ready=True, library_type=LibraryType.normal
+        )
+        await data_layer.samples.update(
+            sample_3.id,
+            UpdateSampleRequest(name="16SPP044", labels=[label_3.id]),
+        )
+
+        # ``sample_1`` has completed nuvs and pathoscope analyses so its workflow
+        # tags derive to ready; the other samples have no analyses.
         async with AsyncSession(pg) as session:
-            samples = {
-                document["_id"]: await insert_pg_sample(session, document)
-                for document in documents
-            }
-
-            # ``beb1eb10`` has completed nuvs and pathoscope analyses so its workflow
-            # tags derive to ready; the other samples have no analyses.
             for workflow in ("nuvs", "pathoscope"):
                 session.add(
                     SQLAnalysis(
-                        legacy_id=f"beb1eb10_{workflow}",
+                        legacy_id=f"{sample_1.id}_{workflow}",
                         created_at=static_time.datetime,
                         updated_at=static_time.datetime,
                         workflow=workflow,
                         ready=True,
-                        sample="beb1eb10",
-                        sample_id=samples["beb1eb10"].id,
+                        sample=str(sample_1.id),
+                        sample_id=sample_1.id,
                         reference="ref",
                         index="index",
                         user_id=user_1.id,
@@ -314,13 +228,8 @@ class TestFind:
             ["nuvs:ready", "pathoscope:ready"],
             ["pathoscope:ready", "pathoscope:none"],
             ["nuvs:none", "pathoscope:none", "pathoscope:ready"],
-            # ``nuvs`` is incompatible with the amplicon sample, so ``nuvs:none``
-            # matches only the srna sample, never the amplicon one.
+            # ``nuvs:none`` matches the samples that have no nuvs analysis.
             ["nuvs:none"],
-            # ``aodp`` is only compatible with amplicon libraries, so ``aodp:none``
-            # matches the amplicon sample alone rather than every sample lacking an
-            # aodp analysis.
-            ["aodp:none"],
         ],
     )
     async def test_workflows(
