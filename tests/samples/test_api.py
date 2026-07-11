@@ -34,6 +34,7 @@ from virtool.samples.sql import (
     SQLSampleArtifact,
     SQLSampleReads,
 )
+from virtool.samples.utils import sample_file_key, sample_storage_id
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.subtractions.pg import SQLSubtraction
 from virtool.uploads.sql import SQLUpload
@@ -1790,20 +1791,11 @@ class TestUploadArtifact:
     """Test that new artifacts can be uploaded after sample creation using the Jobs API."""
 
     @staticmethod
-    async def _insert_sample(mongo: Mongo, pg: AsyncEngine) -> int:
-        await mongo.samples.insert_one({"_id": "test", "ready": True})
-        async with AsyncSession(pg) as session:
-            sample_pk = await _ensure_legacy_sample_id(session, "test")
-            await session.commit()
-
-        return sample_pk
-
-    @staticmethod
     async def _post(
         client: VirtoolTestClient,
         path: Path,
         artifact_type: str,
-        sample_id: int | str = "test",
+        sample_id: int,
     ):
         return await client.post(
             f"/samples/{sample_id}/artifacts?name=small.fq.gz&type={artifact_type}",
@@ -1813,53 +1805,27 @@ class TestUploadArtifact:
     async def test_ok(
         self,
         example_path: Path,
-        memory_storage,
-        mongo: Mongo,
-        pg: AsyncEngine,
+        fake: DataFaker,
         snapshot: SnapshotAssertion,
         spawn_job_client: JobClientSpawner,
         static_time,
     ):
-        client = await spawn_job_client(authenticated=True)
-        await self._insert_sample(mongo, pg)
+        """An uploaded artifact downloads with the bytes it was uploaded with."""
+        user = await fake.users.create()
+        sample = await fake.samples.create(user, ready=True)
 
-        resp = await self._post(
-            client, example_path / "sample" / "reads_1.fq.gz", "fastq"
-        )
+        client = await spawn_job_client(authenticated=True)
+
+        path = example_path / "sample" / "reads_1.fq.gz"
+        resp = await self._post(client, path, "fastq", sample.id)
 
         assert resp.status == 201
         assert await resp.json() == snapshot
 
-        keys = {obj.key async for obj in memory_storage.list("samples/test/")}
-        assert keys == {"samples/test/small.fq.gz"}
+        download = await client.get(f"/samples/{sample.id}/artifacts/small.fq.gz")
 
-    async def test_addressed_by_primary_key(
-        self,
-        example_path: Path,
-        memory_storage,
-        mongo: Mongo,
-        pg: AsyncEngine,
-        spawn_job_client: JobClientSpawner,
-        static_time,
-    ):
-        """An artifact can be uploaded to a sample addressed by its integer id.
-
-        The stored object stays under the sample's legacy storage prefix.
-        """
-        client = await spawn_job_client(authenticated=True)
-        sample_pk = await self._insert_sample(mongo, pg)
-
-        resp = await self._post(
-            client,
-            example_path / "sample" / "reads_1.fq.gz",
-            "fastq",
-            sample_id=sample_pk,
-        )
-
-        assert resp.status == 201
-
-        keys = {obj.key async for obj in memory_storage.list("samples/test/")}
-        assert keys == {"samples/test/small.fq.gz"}
+        assert download.status == 200
+        assert await download.content.read() == path.read_bytes()
 
     async def test_not_found(
         self,
@@ -1882,17 +1848,18 @@ class TestUploadArtifact:
     async def test_unsupported_type(
         self,
         example_path: Path,
-        mongo: Mongo,
-        pg: AsyncEngine,
+        fake: DataFaker,
         resp_is,
         spawn_job_client: JobClientSpawner,
         static_time,
     ):
+        user = await fake.users.create()
+        sample = await fake.samples.create(user, ready=True)
+
         client = await spawn_job_client(authenticated=True)
-        await self._insert_sample(mongo, pg)
 
         resp = await self._post(
-            client, example_path / "sample" / "reads_1.fq.gz", "foo"
+            client, example_path / "sample" / "reads_1.fq.gz", "foo", sample.id
         )
 
         await resp_is.bad_request(resp, "Unsupported sample artifact type")
@@ -1900,21 +1867,22 @@ class TestUploadArtifact:
     async def test_duplicate_upload(
         self,
         example_path: Path,
-        mongo: Mongo,
-        pg: AsyncEngine,
+        fake: DataFaker,
         resp_is,
         spawn_job_client: JobClientSpawner,
         static_time,
     ):
+        user = await fake.users.create()
+        sample = await fake.samples.create(user, ready=True)
+
         client = await spawn_job_client(authenticated=True)
-        await self._insert_sample(mongo, pg)
 
         path = example_path / "sample" / "reads_1.fq.gz"
 
-        resp_1 = await self._post(client, path, "fastq")
+        resp_1 = await self._post(client, path, "fastq", sample.id)
         assert resp_1.status == 201
 
-        resp_2 = await self._post(client, path, "fastq")
+        resp_2 = await self._post(client, path, "fastq", sample.id)
 
         await resp_is.conflict(
             resp_2,
@@ -1926,82 +1894,46 @@ class TestUploadReads:
     async def test(
         self,
         example_path: Path,
-        memory_storage,
-        mongo: Mongo,
-        pg: AsyncEngine,
+        fake: DataFaker,
         snapshot: SnapshotAssertion,
         spawn_job_client: JobClientSpawner,
     ):
-        """Test that paired sample reads can be uploaded using the Jobs API and that
-        conflicts are properly handled.
+        """Paired reads uploaded to a sample download back byte-for-byte, and a
+        repeat upload of the same file conflicts.
         """
+        user = await fake.users.create()
+        sample = await fake.samples.create(user, ready=False)
+
         client = await spawn_job_client(authenticated=True)
 
-        await mongo.samples.insert_one(
-            {
-                "_id": "test",
-                "ready": True,
-            },
-        )
-
-        async with AsyncSession(pg) as session:
-            await _ensure_legacy_sample_id(session, "test")
-            await session.commit()
+        path_1 = example_path / "sample" / "reads_1.fq.gz"
+        path_2 = example_path / "sample" / "reads_2.fq.gz"
 
         resp_1 = await client.put(
-            "/samples/test/reads/reads_1.fq.gz",
-            data={"file": open(example_path / "sample" / "reads_1.fq.gz", "rb")},
+            f"/samples/{sample.id}/reads/reads_1.fq.gz",
+            data={"file": open(path_1, "rb")},
         )
-
-        assert resp_1.status == 201
-
         resp_2 = await client.put(
-            "/samples/test/reads/reads_2.fq.gz",
-            data={"file": open(example_path / "sample" / "reads_2.fq.gz", "rb")},
+            f"/samples/{sample.id}/reads/reads_2.fq.gz",
+            data={"file": open(path_2, "rb")},
         )
 
-        assert resp_2.status == 201
+        assert resp_1.status == resp_2.status == 201
 
-        keys = {obj.key async for obj in memory_storage.list("samples/test/")}
-        assert keys == {"samples/test/reads_1.fq.gz", "samples/test/reads_2.fq.gz"}
+        download_1 = await client.get(f"/samples/{sample.id}/reads/reads_1.fq.gz")
+        download_2 = await client.get(f"/samples/{sample.id}/reads/reads_2.fq.gz")
+
+        assert download_1.status == download_2.status == 200
+        assert await download_1.content.read() == path_1.read_bytes()
+        assert await download_2.content.read() == path_2.read_bytes()
 
         resp_3 = await client.put(
-            "/samples/test/reads/reads_2.fq.gz",
-            data={"file": open(example_path / "sample" / "reads_2.fq.gz", "rb")},
+            f"/samples/{sample.id}/reads/reads_2.fq.gz",
+            data={"file": open(path_2, "rb")},
         )
 
         assert resp_3.status == 409
         assert await resp_3.json() == snapshot(name="409")
-
-    async def test_addressed_by_primary_key(
-        self,
-        example_path: Path,
-        memory_storage,
-        mongo: Mongo,
-        pg: AsyncEngine,
-        spawn_job_client: JobClientSpawner,
-    ):
-        """Reads can be uploaded to a sample addressed by its integer id.
-
-        The stored object stays under the sample's legacy storage prefix.
-        """
-        client = await spawn_job_client(authenticated=True)
-
-        await mongo.samples.insert_one({"_id": "test", "ready": True})
-
-        async with AsyncSession(pg) as session:
-            sample_pk = await _ensure_legacy_sample_id(session, "test")
-            await session.commit()
-
-        resp = await client.put(
-            f"/samples/{sample_pk}/reads/reads_1.fq.gz",
-            data={"file": open(example_path / "sample" / "reads_1.fq.gz", "rb")},
-        )
-
-        assert resp.status == 201
-
-        keys = {obj.key async for obj in memory_storage.list("samples/test/")}
-        assert keys == {"samples/test/reads_1.fq.gz"}
 
     async def test_not_found(
         self,
@@ -2022,32 +1954,18 @@ class TestUploadReads:
         self,
         example_path: Path,
         fake: DataFaker,
-        memory_storage,
-        mongo: Mongo,
-        pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         spawn_job_client: JobClientSpawner,
     ):
-        """Test that uncompressed sample reads are rejected without writing a
-        storage object or a SQL row.
-        """
+        """An uncompressed reads upload is rejected and leaves nothing to download."""
+        user = await fake.users.create()
+        sample = await fake.samples.create(user, ready=False)
+        upload = await fake.uploads.create(user=user)
+
         client = await spawn_job_client(authenticated=True)
 
-        await mongo.samples.insert_one(
-            {
-                "_id": "test",
-                "ready": True,
-            },
-        )
-
-        async with AsyncSession(pg) as session:
-            await _ensure_legacy_sample_id(session, "test")
-            await session.commit()
-
-        upload = await fake.uploads.create(user=await fake.users.create())
-
         resp = await client.put(
-            f"/samples/test/reads/reads_1.fq.gz?upload={upload.id}",
+            f"/samples/{sample.id}/reads/reads_1.fq.gz?upload={upload.id}",
             data={
                 "file": gzip.open(example_path / "sample" / "reads_1.fq.gz", "rb"),
             },
@@ -2056,59 +1974,31 @@ class TestUploadReads:
         assert resp.status == 400
         assert await resp.json() == snapshot
 
-        assert [obj.key async for obj in memory_storage.list("samples/test/")] == []
-
-        async with AsyncSession(pg) as session:
-            rows = (
-                (await session.execute(select(SQLSampleReads).filter_by(sample="test")))
-                .scalars()
-                .all()
-            )
-
-        assert rows == []
+        download = await client.get(f"/samples/{sample.id}/reads/reads_1.fq.gz")
+        assert download.status == 404
 
     async def test_empty(
         self,
-        memory_storage,
-        mongo: Mongo,
-        pg: AsyncEngine,
+        fake: DataFaker,
         snapshot: SnapshotAssertion,
         spawn_job_client: JobClientSpawner,
     ):
-        """Test that an empty reads upload is rejected without writing a storage
-        object or a SQL row.
-        """
+        """An empty reads upload is rejected and leaves nothing to download."""
+        user = await fake.users.create()
+        sample = await fake.samples.create(user, ready=False)
+
         client = await spawn_job_client(authenticated=True)
 
-        await mongo.samples.insert_one(
-            {
-                "_id": "test",
-                "ready": True,
-            },
-        )
-
-        async with AsyncSession(pg) as session:
-            await _ensure_legacy_sample_id(session, "test")
-            await session.commit()
-
         resp = await client.put(
-            "/samples/test/reads/reads_1.fq.gz",
+            f"/samples/{sample.id}/reads/reads_1.fq.gz",
             data={"file": io.BytesIO(b"")},
         )
 
         assert resp.status == 400
         assert await resp.json() == snapshot
 
-        assert [obj.key async for obj in memory_storage.list("samples/test/")] == []
-
-        async with AsyncSession(pg) as session:
-            rows = (
-                (await session.execute(select(SQLSampleReads).filter_by(sample="test")))
-                .scalars()
-                .all()
-            )
-
-        assert rows == []
+        download = await client.get(f"/samples/{sample.id}/reads/reads_1.fq.gz")
+        assert download.status == 404
 
 
 class TestJobRemove:
@@ -2204,36 +2094,6 @@ class TestJobRemove:
 
 
 class TestDownloadReads:
-    @staticmethod
-    async def _write_file(memory_storage, file_name: str) -> None:
-        async def _data():
-            yield b"test"
-
-        await memory_storage.write(f"samples/foo/{file_name}", _data())
-
-    @staticmethod
-    async def _insert_sample(mongo: Mongo) -> None:
-        await mongo.samples.insert_one({"_id": "foo", "ready": True})
-
-    @staticmethod
-    async def _insert_reads_row(
-        pg: AsyncEngine,
-        file_name: str,
-        size: int = 4,
-    ) -> None:
-        async with AsyncSession(pg) as session:
-            session.add(
-                SQLSampleReads(
-                    id=1,
-                    sample="foo",
-                    sample_id=await _ensure_legacy_sample_id(session, "foo"),
-                    name=file_name,
-                    name_on_disk=file_name,
-                    size=size,
-                ),
-            )
-            await session.commit()
-
     @pytest.mark.parametrize("suffix", ["1", "2"])
     async def test_ok(
         self,
@@ -2291,107 +2151,76 @@ class TestDownloadReads:
 
     async def test_missing_blob_is_server_error(
         self,
-        mongo: Mongo,
-        pg: AsyncEngine,
+        fake: DataFaker,
+        memory_storage,
         spawn_client: ClientSpawner,
         spawn_job_client: JobClientSpawner,
     ):
         """A reads row that resolves but whose blob is missing is a server-side
         data-integrity bug, returning 500 rather than a client-facing 404.
+
+        This state is unreachable through the API, so it is injected by deleting a
+        ready sample's blob out from under its resolvable row.
         """
+        user = await fake.users.create()
+        sample = await fake.samples.create(user, ready=True)
+
+        file_name = "reads_1.fq.gz"
+        await memory_storage.delete(
+            sample_file_key(sample_storage_id(sample.id, None), file_name),
+        )
+
         client = await spawn_client(authenticated=True)
         job_client = await spawn_job_client(authenticated=True)
 
-        file_name = "reads_1.fq.gz"
-
-        await self._insert_sample(mongo)
-        await self._insert_reads_row(pg, file_name)
-
-        resp = await client.get(f"/samples/foo/reads/{file_name}")
-        job_resp = await job_client.get(f"/samples/foo/reads/{file_name}")
-
-        assert resp.status == job_resp.status == 500
-
-    async def test_zero_byte_missing_blob_is_server_error(
-        self,
-        mongo: Mongo,
-        pg: AsyncEngine,
-        spawn_client: ClientSpawner,
-        spawn_job_client: JobClientSpawner,
-    ):
-        """A zero-byte reads row whose blob is missing is a server-side
-        data-integrity bug, returning 500 rather than a client-facing 404.
-        """
-        client = await spawn_client(authenticated=True)
-        job_client = await spawn_job_client(authenticated=True)
-
-        file_name = "reads_1.fq.gz"
-
-        await self._insert_sample(mongo)
-        await self._insert_reads_row(pg, file_name, size=0)
-
-        resp = await client.get(f"/samples/foo/reads/{file_name}")
-        job_resp = await job_client.get(f"/samples/foo/reads/{file_name}")
+        resp = await client.get(f"/samples/{sample.id}/reads/{file_name}")
+        job_resp = await job_client.get(f"/samples/{sample.id}/reads/{file_name}")
 
         assert resp.status == job_resp.status == 500
 
 
 class TestDownloadArtifact:
     @staticmethod
-    async def _write_file(memory_storage) -> None:
-        async def _data():
-            yield b"test"
+    async def _upload_artifact(
+        client: VirtoolTestClient,
+        example_path: Path,
+        sample_id: int,
+    ) -> bytes:
+        """Upload an artifact to a sample over the jobs API and return its bytes."""
+        payload = (example_path / "sample" / "reads_1.fq.gz").read_bytes()
 
-        await memory_storage.write("samples/foo/fastqc.txt", _data())
+        resp = await client.post(
+            f"/samples/{sample_id}/artifacts?name=fastqc.txt&type=fastq",
+            data={"file": io.BytesIO(payload)},
+        )
 
-    @staticmethod
-    async def _insert_sample(mongo: Mongo) -> None:
-        await mongo.samples.insert_one({"_id": "foo", "ready": True})
+        assert resp.status == 201
 
-    @staticmethod
-    async def _insert_artifact_row(pg: AsyncEngine, size: int = 4) -> None:
-        async with AsyncSession(pg) as session:
-            session.add(
-                SQLSampleArtifact(
-                    id=1,
-                    sample="foo",
-                    sample_id=await _ensure_legacy_sample_id(session, "foo"),
-                    name="fastqc.txt",
-                    name_on_disk="fastqc.txt",
-                    type="fastq",
-                    size=size,
-                ),
-            )
-            await session.commit()
+        return payload
 
     async def test_ok(
         self,
-        memory_storage,
-        mongo: Mongo,
-        pg: AsyncEngine,
+        example_path: Path,
+        fake: DataFaker,
         spawn_job_client: JobClientSpawner,
     ):
+        """An uploaded artifact downloads with the bytes it was uploaded with."""
+        user = await fake.users.create()
+        sample = await fake.samples.create(user, ready=True)
+
         client = await spawn_job_client(authenticated=True)
+        payload = await self._upload_artifact(client, example_path, sample.id)
 
-        await self._write_file(memory_storage)
-        await self._insert_sample(mongo)
-        await self._insert_artifact_row(pg)
-
-        resp = await client.get("/samples/foo/artifacts/fastqc.txt")
+        resp = await client.get(f"/samples/{sample.id}/artifacts/fastqc.txt")
 
         assert resp.status == HTTPStatus.OK
-        assert await resp.content.read() == b"test"
+        assert await resp.content.read() == payload
 
     async def test_404_sample(
         self,
-        memory_storage,
-        pg: AsyncEngine,
         spawn_job_client: JobClientSpawner,
     ):
         client = await spawn_job_client(authenticated=True)
-
-        await self._write_file(memory_storage)
-        await self._insert_artifact_row(pg)
 
         resp = await client.get("/samples/999999/artifacts/fastqc.txt")
 
@@ -2399,52 +2228,43 @@ class TestDownloadArtifact:
 
     async def test_404_artifact(
         self,
-        memory_storage,
-        mongo: Mongo,
+        fake: DataFaker,
         spawn_job_client: JobClientSpawner,
     ):
+        """Downloading an artifact that was never uploaded returns 404."""
+        user = await fake.users.create()
+        sample = await fake.samples.create(user, ready=True)
+
         client = await spawn_job_client(authenticated=True)
 
-        await self._write_file(memory_storage)
-        await self._insert_sample(mongo)
-
-        resp = await client.get("/samples/foo/artifacts/fastqc.txt")
+        resp = await client.get(f"/samples/{sample.id}/artifacts/fastqc.txt")
 
         assert resp.status == 404
 
     async def test_missing_blob_is_server_error(
         self,
-        mongo: Mongo,
-        pg: AsyncEngine,
+        example_path: Path,
+        fake: DataFaker,
+        memory_storage,
         spawn_job_client: JobClientSpawner,
     ):
         """An artifact row that resolves but whose blob is missing is a server-side
         data-integrity bug, returning 500 rather than a client-facing 404.
+
+        This state is unreachable through the API, so it is injected by deleting an
+        uploaded artifact's blob out from under its resolvable row.
         """
+        user = await fake.users.create()
+        sample = await fake.samples.create(user, ready=True)
+
         client = await spawn_job_client(authenticated=True)
+        await self._upload_artifact(client, example_path, sample.id)
 
-        await self._insert_sample(mongo)
-        await self._insert_artifact_row(pg)
+        await memory_storage.delete(
+            sample_file_key(sample_storage_id(sample.id, None), "fastqc.txt"),
+        )
 
-        resp = await client.get("/samples/foo/artifacts/fastqc.txt")
-
-        assert resp.status == 500
-
-    async def test_zero_byte_missing_blob_is_server_error(
-        self,
-        mongo: Mongo,
-        pg: AsyncEngine,
-        spawn_job_client: JobClientSpawner,
-    ):
-        """A zero-byte artifact row whose blob is missing is a server-side
-        data-integrity bug, returning 500 rather than a client-facing 404.
-        """
-        client = await spawn_job_client(authenticated=True)
-
-        await self._insert_sample(mongo)
-        await self._insert_artifact_row(pg, size=0)
-
-        resp = await client.get("/samples/foo/artifacts/fastqc.txt")
+        resp = await client.get(f"/samples/{sample.id}/artifacts/fastqc.txt")
 
         assert resp.status == 500
 
