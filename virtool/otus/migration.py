@@ -286,14 +286,19 @@ async def compare_otu_and_sequence_stores(ctx: MigrationContext) -> None:
     deleted between the two chunk reads would otherwise be reported as drift; the
     second pass costs nothing on a clean run, where there are no candidates.
 
+    Each pass runs in its own :class:`AsyncSession`. The scanning session's
+    identity map still holds every row it loaded, and a ``select()`` against it
+    would hand those instances back rather than re-reading the row -- which would
+    leave the second pass unable to see the very dual-write it exists to
+    tolerate.
+
     The check is exhaustive before it fails: drift is accumulated across every OTU
     and sequence, the full per-document diff is logged, and a single
     :class:`ValueError` is raised at the end. A clean run logs zero drift with the
     document counts.
     """
-    async with AsyncSession(ctx.pg) as session:
-        otu_drift = await _compare_otus(ctx, session)
-        sequence_drift = await _compare_sequences(ctx, session)
+    otu_drift = await _compare_otus(ctx)
+    sequence_drift = await _compare_sequences(ctx)
 
     if otu_drift or sequence_drift:
         for report in otu_drift:
@@ -311,117 +316,131 @@ async def compare_otu_and_sequence_stores(ctx: MigrationContext) -> None:
     logger.info("otu and sequence stores match; no drift")
 
 
-async def _compare_otus(ctx: MigrationContext, session: AsyncSession) -> list[dict]:
-    """Compare the Mongo ``otus`` collection against ``legacy_otus``."""
+async def _compare_otus(ctx: MigrationContext) -> list[dict]:
+    """Compare the Mongo ``otus`` collection against ``legacy_otus``.
+
+    The scan and the verification of its candidates run in separate sessions so
+    the verification really re-reads each row. See
+    :func:`compare_otu_and_sequence_stores`.
+    """
     mongo_ids = {
         document["_id"]
         async for document in ctx.mongo.otus.find({}, projection=["_id"])
     }
-    postgres_ids = {row[0] for row in await session.execute(select(SQLOTU.id))}
-
-    candidates = mongo_ids ^ postgres_ids
-    shared = sorted(mongo_ids & postgres_ids)
 
     reference_id_cache: dict[int | str, int] = {}
 
-    for start in range(0, len(shared), _OTU_CHUNK_SIZE):
-        chunk = shared[start : start + _OTU_CHUNK_SIZE]
+    async with AsyncSession(ctx.pg) as session:
+        postgres_ids = {row[0] for row in await session.execute(select(SQLOTU.id))}
 
-        documents = {
-            document["_id"]: document
-            async for document in ctx.mongo.otus.find({"_id": {"$in": chunk}})
-        }
+        candidates = mongo_ids ^ postgres_ids
+        shared = sorted(mongo_ids & postgres_ids)
 
-        rows = {
-            row.id: row
-            for row in (
-                await session.execute(select(SQLOTU).where(SQLOTU.id.in_(chunk)))
-            ).scalars()
-        }
+        for start in range(0, len(shared), _OTU_CHUNK_SIZE):
+            chunk = shared[start : start + _OTU_CHUNK_SIZE]
 
-        for otu_id in chunk:
-            document = documents.get(otu_id)
-            row = rows.get(otu_id)
+            documents = {
+                document["_id"]: document
+                async for document in ctx.mongo.otus.find({"_id": {"$in": chunk}})
+            }
 
-            if document is None or row is None:
-                candidates.add(otu_id)
-                continue
+            rows = {
+                row.id: row
+                for row in (
+                    await session.execute(select(SQLOTU).where(SQLOTU.id.in_(chunk)))
+                ).scalars()
+            }
 
-            reference_id = await _lookup_reference_id(
-                session,
-                document["reference"]["id"],
-                reference_id_cache,
-            )
+            for otu_id in chunk:
+                document = documents.get(otu_id)
+                row = rows.get(otu_id)
 
-            if reference_id is None or _diff_row(
-                row,
-                otu_row_values(document, reference_id),
-            ):
-                candidates.add(otu_id)
+                if document is None or row is None:
+                    candidates.add(otu_id)
+                    continue
 
-    drifted = [
-        report
-        for otu_id in sorted(candidates)
-        if (report := await _verify_otu(ctx, session, otu_id, reference_id_cache))
-    ]
+                reference_id = await _lookup_reference_id(
+                    session,
+                    document["reference"]["id"],
+                    reference_id_cache,
+                )
+
+                if reference_id is None or _diff_row(
+                    row,
+                    otu_row_values(document, reference_id),
+                ):
+                    candidates.add(otu_id)
+
+    async with AsyncSession(ctx.pg) as session:
+        drifted = [
+            report
+            for otu_id in sorted(candidates)
+            if (report := await _verify_otu(ctx, session, otu_id, reference_id_cache))
+        ]
 
     logger.info("compared otus", otus=len(mongo_ids), drifted=len(drifted))
 
     return drifted
 
 
-async def _compare_sequences(
-    ctx: MigrationContext,
-    session: AsyncSession,
-) -> list[dict]:
+async def _compare_sequences(ctx: MigrationContext) -> list[dict]:
     """Compare the Mongo ``sequences`` collection against ``legacy_sequences``.
 
     A sequence whose parent OTU has no ``legacy_otus`` row cannot have a
     ``legacy_sequences`` row either -- the not-null foreign key would reject it --
     so such a sequence surfaces here as missing from Postgres.
+
+    The scan and the verification of its candidates run in separate sessions so
+    the verification really re-reads each row. See
+    :func:`compare_otu_and_sequence_stores`.
     """
     mongo_ids = {
         document["_id"]
         async for document in ctx.mongo.sequences.find({}, projection=["_id"])
     }
-    postgres_ids = {row[0] for row in await session.execute(select(SQLSequence.id))}
 
-    candidates = mongo_ids ^ postgres_ids
-    shared = sorted(mongo_ids & postgres_ids)
+    async with AsyncSession(ctx.pg) as session:
+        postgres_ids = {row[0] for row in await session.execute(select(SQLSequence.id))}
 
-    for start in range(0, len(shared), _SEQUENCE_CHUNK_SIZE):
-        chunk = shared[start : start + _SEQUENCE_CHUNK_SIZE]
+        candidates = mongo_ids ^ postgres_ids
+        shared = sorted(mongo_ids & postgres_ids)
 
-        documents = {
-            document["_id"]: document
-            async for document in ctx.mongo.sequences.find({"_id": {"$in": chunk}})
-        }
+        for start in range(0, len(shared), _SEQUENCE_CHUNK_SIZE):
+            chunk = shared[start : start + _SEQUENCE_CHUNK_SIZE]
 
-        rows = {
-            row.id: row
-            for row in (
-                await session.execute(
-                    select(SQLSequence).where(SQLSequence.id.in_(chunk)),
+            documents = {
+                document["_id"]: document
+                async for document in ctx.mongo.sequences.find(
+                    {"_id": {"$in": chunk}},
                 )
-            ).scalars()
-        }
+            }
 
-        for sequence_id in chunk:
-            document = documents.get(sequence_id)
-            row = rows.get(sequence_id)
+            rows = {
+                row.id: row
+                for row in (
+                    await session.execute(
+                        select(SQLSequence).where(SQLSequence.id.in_(chunk)),
+                    )
+                ).scalars()
+            }
 
-            if (
-                document is None
-                or row is None
-                or _diff_row(row, sequence_row_values(document))
-            ):
-                candidates.add(sequence_id)
+            for sequence_id in chunk:
+                document = documents.get(sequence_id)
+                row = rows.get(sequence_id)
 
-    drifted = [
-        report
-        for sequence_id in sorted(candidates)
-        if (report := await _verify_sequence(ctx, session, sequence_id))
-    ]
+                if (
+                    document is None
+                    or row is None
+                    or _diff_row(row, sequence_row_values(document))
+                ):
+                    candidates.add(sequence_id)
+
+    async with AsyncSession(ctx.pg) as session:
+        drifted = [
+            report
+            for sequence_id in sorted(candidates)
+            if (report := await _verify_sequence(ctx, session, sequence_id))
+        ]
 
     logger.info(
         "compared sequences",

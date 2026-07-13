@@ -466,6 +466,43 @@ class TestCompareOtuAndSequenceStores:
         with pytest.raises(ValueError, match="2 otus and 1 sequences"):
             await compare_otu_and_sequence_stores(ctx)
 
+    async def test_row_written_mid_run_is_not_drift(
+        self,
+        ctx: MigrationContext,
+        matching_stores: None,
+        mocker,
+    ):
+        """A dual-write that lands between the scan and the re-read is not drift.
+
+        The scan sees a Postgres row that has fallen behind Mongo and flags the
+        OTU. The application then dual-writes the row before the candidate is
+        re-read. The re-read must go back to Postgres rather than reuse the row the
+        scan already loaded, or the stores are reported as drifted after they have
+        converged.
+        """
+        await ctx.mongo.otus.update_one(
+            {"_id": "otu_matched"},
+            {"$set": {"version": 4}},
+        )
+
+        document = await ctx.mongo.otus.find_one({"_id": "otu_matched"})
+
+        real_find_one = AsyncIOMotorCollection.find_one
+
+        async def find_one_after_dual_write(self, *args, **kwargs):
+            if self.name == "otus":
+                await _update_otu_row(ctx, "otu_matched", data=document, version=4)
+
+            return await real_find_one(self, *args, **kwargs)
+
+        mocker.patch.object(
+            AsyncIOMotorCollection,
+            "find_one",
+            find_one_after_dual_write,
+        )
+
+        await compare_otu_and_sequence_stores(ctx)
+
     async def test_null_abbreviation_and_missing_segment_pass(
         self,
         ctx: MigrationContext,
