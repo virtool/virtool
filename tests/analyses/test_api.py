@@ -13,13 +13,41 @@ from tests.fixtures.references import seed_reference
 from tests.fixtures.response import RespIs
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.sql import SQLAnalysis, SQLAnalysisFile
+from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.jobs.models import Job, JobState
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
-from virtool.samples.sql import SQLLegacySample
+from virtool.samples.models import Sample
 from virtool.users.models import User
 from virtool.workflow.pytest_plugin.utils import StaticTime
+
+MISSING_SAMPLE_ID = 999999
+"""The id of a sample that does not exist, for exercising 404s on the parent sample."""
+
+
+async def create_analysis_sample(
+    data_layer: DataLayer,
+    fake: DataFaker,
+    owner: User,
+    *,
+    all_read: bool = True,
+    all_write: bool = False,
+) -> Sample:
+    """Create a finalized sample owned by ``owner`` for an analysis to hang off."""
+    sample = await fake.samples.create(owner, ready=True)
+
+    await data_layer.samples.update_rights(
+        sample.id,
+        {
+            "all_read": all_read,
+            "all_write": all_write,
+            "group_read": True,
+            "group_write": True,
+        },
+    )
+
+    return sample
 
 
 @pytest.fixture
@@ -39,6 +67,7 @@ def get_handle(example_path: Path):
 
 
 async def test_find(
+    data_layer: DataLayer,
     fake: DataFaker,
     mongo: Mongo,
     pg: AsyncEngine,
@@ -62,42 +91,20 @@ async def test_find(
         finalized=False,
     )
 
-    await asyncio.gather(
-        mongo.references.insert_many(
-            [
-                {"_id": "foo", "archived": False, "data_type": "genome", "name": "Foo"},
-                {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
-            ],
-            session=None,
-        ),
-        mongo.samples.insert_one(
-            {
-                "_id": "test",
-                "created_at": static_time.datetime,
-                "all_read": True,
-                "all_write": True,
-                "group": "none",
-                "group_read": False,
-                "group_write": False,
-                "user": {"id": user_1.id},
-                "labels": [],
-            },
-        ),
+    await mongo.references.insert_many(
+        [
+            {"_id": "foo", "archived": False, "data_type": "genome", "name": "Foo"},
+            {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
+        ],
+        session=None,
     )
 
-    async with AsyncSession(pg) as session:
-        session.add(
-            SQLLegacySample(
-                legacy_id="test",
-                name="Test",
-                library_type="normal",
-                created_at=static_time.datetime,
-                user_id=user_1.id,
-                all_read=True,
-                all_write=True,
-            ),
-        )
-        await session.commit()
+    sample = await create_analysis_sample(
+        data_layer,
+        fake,
+        user_1,
+        all_write=True,
+    )
 
     for document in [
         {
@@ -108,7 +115,7 @@ async def test_find(
             "job": {"id": job.id},
             "index": {"version": 2, "id": "foo"},
             "user": {"id": user_1.id},
-            "sample": {"id": "test"},
+            "sample": {"id": sample.id},
             "reference": {"id": "baz"},
             "results": {"hits": []},
             "subtractions": [],
@@ -122,7 +129,7 @@ async def test_find(
             "job": {"id": job.id},
             "index": {"version": 2, "id": "foo"},
             "user": {"id": user_1.id},
-            "sample": {"id": "test"},
+            "sample": {"id": sample.id},
             "reference": {"id": "baz"},
             "results": {"hits": []},
             "subtractions": [malus.id],
@@ -136,7 +143,7 @@ async def test_find(
             "job": None,
             "index": {"version": 2, "id": "foo"},
             "user": {"id": user_1.id},
-            "sample": {"id": "test"},
+            "sample": {"id": sample.id},
             "reference": {"id": "foo"},
             "results": {"hits": []},
             "subtractions": [],
@@ -165,6 +172,7 @@ async def test_get(
     ready: bool,
     exists: bool,
     error: str | None,
+    data_layer: DataLayer,
     fake: DataFaker,
     mongo: Mongo,
     pg: AsyncEngine,
@@ -192,20 +200,16 @@ async def test_get(
         {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
     )
 
+    sample_id = MISSING_SAMPLE_ID
+
     if error != "404_sample":
-        await mongo.samples.insert_one(
-            {
-                "_id": "baz",
-                "all_read": error != "403",
-                "all_write": False,
-                "group": "tech",
-                "group_read": True,
-                "group_write": True,
-                "labels": [],
-                "subtractions": [apple.id, plum.id],
-                "user": {"id": user_1.id},
-            },
+        sample = await create_analysis_sample(
+            data_layer,
+            fake,
+            user_1,
+            all_read=error != "403",
         )
+        sample_id = sample.id
 
     if error != "404_analysis":
         analysis_id = await seed_analysis(
@@ -219,7 +223,7 @@ async def test_get(
                 "ready": True,
                 "reference": {"id": "baz"},
                 "results": {"hits": []},
-                "sample": {"id": "baz"},
+                "sample": {"id": sample_id},
                 "subtractions": [plum.id, apple.id],
                 "user": {"id": user_1.id},
                 "workflow": "pathoscope",
@@ -247,6 +251,7 @@ class TestHideIimi:
 
     async def test_get(
         self,
+        data_layer: DataLayer,
         fake: DataFaker,
         mongo: Mongo,
         pg: AsyncEngine,
@@ -261,24 +266,11 @@ class TestHideIimi:
 
         user = await fake.users.create()
 
-        await asyncio.gather(
-            mongo.references.insert_one(
-                {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
-            ),
-            mongo.samples.insert_one(
-                {
-                    "_id": "baz",
-                    "all_read": True,
-                    "all_write": False,
-                    "group": "none",
-                    "group_read": False,
-                    "group_write": False,
-                    "labels": [],
-                    "subtractions": [],
-                    "user": {"id": user.id},
-                },
-            ),
+        await mongo.references.insert_one(
+            {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
         )
+
+        sample = await create_analysis_sample(data_layer, fake, user)
 
         analysis_id = await seed_analysis(
             mongo,
@@ -291,7 +283,7 @@ class TestHideIimi:
                 "ready": True,
                 "reference": {"id": "baz"},
                 "results": {"hits": []},
-                "sample": {"id": "baz"},
+                "sample": {"id": sample.id},
                 "subtractions": [],
                 "user": {"id": user.id},
                 "workflow": "iimi",
@@ -304,6 +296,7 @@ class TestHideIimi:
 
     async def test_get_for_jobs_api(
         self,
+        data_layer: DataLayer,
         fake: DataFaker,
         mongo: Mongo,
         pg: AsyncEngine,
@@ -316,6 +309,8 @@ class TestHideIimi:
 
         user = await fake.users.create()
 
+        sample = await create_analysis_sample(data_layer, fake, user)
+
         analysis_id = await seed_analysis(
             mongo,
             pg,
@@ -327,7 +322,7 @@ class TestHideIimi:
                 "ready": True,
                 "reference": {"id": "baz"},
                 "results": {"hits": []},
-                "sample": {"id": "baz"},
+                "sample": {"id": sample.id},
                 "subtractions": [],
                 "user": {"id": user.id},
                 "workflow": "iimi",
@@ -340,6 +335,7 @@ class TestHideIimi:
 
 
 async def test_get_archived_reference(
+    data_layer: DataLayer,
     fake: DataFaker,
     mongo: Mongo,
     pg: AsyncEngine,
@@ -363,19 +359,7 @@ async def test_get_archived_reference(
         archived=True,
     )
 
-    await mongo.samples.insert_one(
-        {
-            "_id": "baz",
-            "all_read": True,
-            "all_write": False,
-            "group": "tech",
-            "group_read": True,
-            "group_write": True,
-            "labels": [],
-            "subtractions": [],
-            "user": {"id": user.id},
-        },
-    )
+    sample = await create_analysis_sample(data_layer, fake, user)
 
     analysis_id = await seed_analysis(
         mongo,
@@ -388,7 +372,7 @@ async def test_get_archived_reference(
             "ready": True,
             "reference": {"id": "baz"},
             "results": {"hits": []},
-            "sample": {"id": "baz"},
+            "sample": {"id": sample.id},
             "subtractions": [],
             "user": {"id": user.id},
             "workflow": "pathoscope",
@@ -408,6 +392,7 @@ async def test_get_archived_reference(
 
 
 async def test_get_by_integer_id(
+    data_layer: DataLayer,
     fake: DataFaker,
     mongo: Mongo,
     pg: AsyncEngine,
@@ -422,24 +407,11 @@ async def test_get_by_integer_id(
     user = await fake.users.create()
     job = await fake.jobs.create(user=user, state=JobState.SUCCEEDED)
 
-    await asyncio.gather(
-        mongo.references.insert_one(
-            {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
-        ),
-        mongo.samples.insert_one(
-            {
-                "_id": "baz",
-                "all_read": True,
-                "all_write": False,
-                "group": "tech",
-                "group_read": True,
-                "group_write": True,
-                "labels": [],
-                "subtractions": [],
-                "user": {"id": user.id},
-            },
-        ),
+    await mongo.references.insert_one(
+        {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
     )
+
+    sample = await create_analysis_sample(data_layer, fake, user)
 
     await seed_analysis(
         mongo,
@@ -452,7 +424,7 @@ async def test_get_by_integer_id(
             "ready": True,
             "reference": {"id": "baz"},
             "results": {"hits": []},
-            "sample": {"id": "baz"},
+            "sample": {"id": sample.id},
             "subtractions": [],
             "user": {"id": user.id},
             "workflow": "pathoscope",
@@ -475,6 +447,7 @@ async def test_get_by_integer_id(
 @pytest.mark.parametrize("ready", [True, False])
 async def test_get_304(
     ready: bool,
+    data_layer: DataLayer,
     mongo: Mongo,
     fake: DataFaker,
     pg,
@@ -493,24 +466,11 @@ async def test_get_304(
         user=user, upload=upload, name="Apple", upload_files=False, finalized=False
     )
 
-    await asyncio.gather(
-        mongo.references.insert_one(
-            {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
-        ),
-        mongo.samples.insert_one(
-            {
-                "_id": "baz",
-                "all_read": True,
-                "all_write": False,
-                "group": "tech",
-                "group_read": True,
-                "group_write": True,
-                "labels": [],
-                "subtractions": [apple.id, plum.id],
-                "user": {"id": user.id},
-            },
-        ),
+    await mongo.references.insert_one(
+        {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
     )
+
+    sample = await create_analysis_sample(data_layer, fake, user)
 
     analysis_id = await seed_analysis(
         mongo,
@@ -523,7 +483,7 @@ async def test_get_304(
             "index": {"version": 3, "id": "bar"},
             "workflow": "pathoscope",
             "results": {"hits": []},
-            "sample": {"id": "baz"},
+            "sample": {"id": sample.id},
             "reference": {"id": "baz"},
             "subtractions": [plum.id, apple.id],
             "user": {"id": user.id},
@@ -543,6 +503,7 @@ async def test_get_304(
 @pytest.mark.parametrize("error", [None, "403", "404_analysis", "404_sample", "409"])
 async def test_remove(
     error: str | None,
+    data_layer: DataLayer,
     fake: DataFaker,
     mongo: Mongo,
     pg: AsyncEngine,
@@ -571,30 +532,16 @@ async def test_remove(
         ),
     )
 
+    sample_id = MISSING_SAMPLE_ID
+
     if error != "404_sample":
-        await mongo.samples.insert_one(
-            {
-                "_id": "baz",
-                "all_read": True,
-                "all_write": error != "403",
-                "created_at": static_time.datetime,
-                "format": "fastq",
-                "group": "tech",
-                "group_read": True,
-                "group_write": True,
-                "hold": False,
-                "host": "",
-                "is_legacy": False,
-                "isolate": "",
-                "library_type": "normal",
-                "locale": "",
-                "name": "Sample 1",
-                "notes": "",
-                "ready": True,
-                "subtractions": [],
-                "user": {"id": user.id},
-            },
+        sample = await create_analysis_sample(
+            data_layer,
+            fake,
+            user,
+            all_write=error != "403",
         )
+        sample_id = sample.id
 
     if error != "404_analysis":
         await seed_analysis(
@@ -607,7 +554,7 @@ async def test_remove(
                 "job": {"id": "hello"},
                 "ready": error != "409",
                 "reference": {"id": "baz"},
-                "sample": {"id": "baz", "name": "Baz"},
+                "sample": {"id": sample_id},
                 "subtractions": [plum.id],
                 "user": {"id": user.id},
                 "workflow": "pathoscope",
@@ -794,6 +741,7 @@ class TestDownloadAnalysisResult:
 )
 async def test_blast(
     error,
+    data_layer: DataLayer,
     fake: DataFaker,
     mongo: Mongo,
     pg: AsyncEngine,
@@ -814,6 +762,17 @@ async def test_blast(
     user = await fake.users.create()
 
     if error != "404_analysis":
+        sample_id = MISSING_SAMPLE_ID
+
+        if error != "404_sample":
+            sample = await create_analysis_sample(
+                data_layer,
+                fake,
+                user,
+                all_write=error != "403",
+            )
+            sample_id = sample.id
+
         analysis_document = {
             "_id": "foobar",
             "created_at": static_time.datetime,
@@ -826,7 +785,7 @@ async def test_blast(
                     {"index": 8, "sequence": "ACCAATAGACATT"},
                 ],
             },
-            "sample": {"id": "baz"},
+            "sample": {"id": sample_id},
             "reference": {"id": "ref"},
             "index": {"id": "index", "version": 0},
             "subtractions": [],
@@ -841,19 +800,6 @@ async def test_blast(
 
         elif error == "409_ready":
             analysis_document["ready"] = False
-
-        if error != "404_sample":
-            await mongo.samples.insert_one(
-                {
-                    "_id": "baz",
-                    "all_read": True,
-                    "all_write": error != "403",
-                    "group": "tech",
-                    "group_read": True,
-                    "group_write": True,
-                    "user": {"id": "fred"},
-                },
-            )
 
         await seed_analysis(mongo, pg, analysis_document)
 
@@ -894,6 +840,7 @@ class TestFinalize:
     @pytest.fixture(autouse=True)
     async def _setup(
         self,
+        data_layer: DataLayer,
         fake: DataFaker,
         mongo: Mongo,
         pg: AsyncEngine,
@@ -902,41 +849,18 @@ class TestFinalize:
         user = await fake.users.create()
         job = await fake.jobs.create(state=JobState.RUNNING, user=user)
 
-        await asyncio.gather(
-            mongo.references.insert_one(
-                {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
-            ),
-            mongo.samples.insert_one(
-                {
-                    "_id": "sample1",
-                    "all_read": True,
-                    "all_write": True,
-                    "created_at": static_time.datetime,
-                    "format": "fastq",
-                    "group": "none",
-                    "group_read": False,
-                    "group_write": False,
-                    "hold": False,
-                    "host": "",
-                    "is_legacy": False,
-                    "isolate": "",
-                    "library_type": "normal",
-                    "locale": "",
-                    "name": "Sample 1",
-                    "notes": "",
-                    "ready": True,
-                    "subtractions": [],
-                    "user": {"id": user.id},
-                },
-            ),
+        await mongo.references.insert_one(
+            {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
         )
+
+        sample = await create_analysis_sample(data_layer, fake, user, all_write=True)
 
         await seed_analysis(
             mongo,
             pg,
             {
                 "_id": "analysis1",
-                "sample": {"id": "sample1"},
+                "sample": {"id": sample.id},
                 "created_at": static_time.datetime,
                 "files": [],
                 "index": {"version": 2, "id": "foo"},

@@ -1,15 +1,13 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-
 import virtool.subtractions.db
+from virtool.data.layer import DataLayer
 from virtool.data.transforms import apply_transforms
 from virtool.fake.next import DataFaker
-from virtool.samples.sql import SQLLegacySample, SQLLegacySampleSubtraction
+from virtool.samples.oas import UpdateSampleRequest
 from virtool.subtractions.db import (
     AttachSubtractionsTransform,
     get_missing_subtraction_ids,
 )
 from virtool.uploads.sql import UploadType
-from virtool.utils import timestamp
 
 
 class TestAttachSubtractions:
@@ -90,50 +88,35 @@ class TestGetMissingSubtractionIds:
         assert await get_missing_subtraction_ids(pg, []) == set()
 
 
-async def test_get_linked_samples(fake: DataFaker, pg):
+async def test_get_linked_samples(data_layer: DataLayer, fake: DataFaker, pg):
     user = await fake.users.create()
     upload = await fake.uploads.create(
         user=user, upload_type=UploadType.subtraction, name="foobar.fq.gz"
     )
-    subtraction = await fake.subtractions.create(user=user, upload=upload)
+    target = await fake.subtractions.create(user=user, upload=upload)
     other = await fake.subtractions.create(user=user, upload=upload)
 
-    target = subtraction.id
+    sample_with_target = await fake.samples.create(user)
+    await data_layer.samples.update(
+        sample_with_target.id,
+        UpdateSampleRequest(subtractions=[other.id, target.id]),
+    )
 
-    linked_ids = []
+    another_with_target = await fake.samples.create(user)
+    await data_layer.samples.update(
+        another_with_target.id,
+        UpdateSampleRequest(subtractions=[target.id]),
+    )
 
-    async with AsyncSession(pg) as session:
-        for legacy_id, name, subtraction_ids in [
-            ("sample_with_target", "Sample With Target", [other.id, target]),
-            ("another_with_target", "Another With Target", [target]),
-            ("sample_without_target", "Sample Without Target", [other.id]),
-        ]:
-            sample = SQLLegacySample(
-                legacy_id=legacy_id,
-                name=name,
-                library_type="normal",
-                created_at=timestamp(),
-                user_id=user.id,
-            )
-            session.add(sample)
-            await session.flush()
+    sample_without_target = await fake.samples.create(user)
+    await data_layer.samples.update(
+        sample_without_target.id,
+        UpdateSampleRequest(subtractions=[other.id]),
+    )
 
-            for subtraction_id in subtraction_ids:
-                session.add(
-                    SQLLegacySampleSubtraction(
-                        sample_id=sample.id,
-                        subtraction_id=subtraction_id,
-                    ),
-                )
-
-            if target in subtraction_ids:
-                linked_ids.append(sample.id)
-
-        await session.commit()
-
-    samples = await virtool.subtractions.db.get_linked_samples(pg, target)
+    samples = await virtool.subtractions.db.get_linked_samples(pg, target.id)
 
     assert samples == [
-        {"id": linked_ids[0], "name": "Sample With Target"},
-        {"id": linked_ids[1], "name": "Another With Target"},
+        {"id": sample_with_target.id, "name": sample_with_target.name},
+        {"id": another_with_target.id, "name": another_with_target.name},
     ]
