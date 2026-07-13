@@ -2,7 +2,6 @@ import math
 import uuid
 from collections.abc import AsyncIterator
 from datetime import timedelta
-from typing import TYPE_CHECKING
 
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -18,9 +17,6 @@ from virtool.uploads.models import Upload, UploadSearchResult
 from virtool.uploads.sql import SQLUpload, UploadType
 from virtool.uploads.utils import upload_file_key
 from virtool.users.transforms import AttachUserTransform
-
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
 
 
 def serialize(upload: SQLUpload) -> dict:
@@ -44,11 +40,7 @@ def serialize(upload: SQLUpload) -> dict:
 class UploadsData(DataLayerDomain):
     name = "uploads"
 
-    def __init__(
-        self, config, mongo: "Mongo", pg: AsyncEngine, storage: StorageBackend
-    ):
-        self._config = config
-        self._mongo: Mongo = mongo
+    def __init__(self, pg: AsyncEngine, storage: StorageBackend):
         self._pg: AsyncEngine = pg
         self._storage = storage
 

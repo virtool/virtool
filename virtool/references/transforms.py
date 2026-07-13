@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -15,9 +15,6 @@ from virtool.uploads.data import serialize as serialize_upload
 from virtool.uploads.sql import SQLUpload
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import get_safely
-
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
 
 
 def shape_nested_reference(id_: int, name: str) -> Document:
@@ -114,8 +111,7 @@ class AttachReferenceTransform(AbstractTransform):
 class AttachImportedFromTransform(AbstractTransform):
     """Attach the upload and upload user data to an imported reference."""
 
-    def __init__(self, mongo: "Mongo", pg: AsyncEngine):
-        self._mongo = mongo
+    def __init__(self, pg: AsyncEngine):
         self._pg = pg
 
     async def prepare_one(
