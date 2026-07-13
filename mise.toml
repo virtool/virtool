@@ -1,10 +1,12 @@
 [tasks.test]
-description = "Run Python tests in Docker."
+description = "Run Python tests in Docker (single worker by default), serialized across worktrees."
 usage = 'arg "[<pytest_args>...]" help="Arguments passed to pytest"'
-run = [
-  "docker compose up -d test",
-  "docker compose exec test uv run pytest $usage_pytest_args"
-]
+run = './.config/test.sh $usage_pytest_args'
+
+[tasks."test:multi"]
+description = "Run the full test suite in parallel (nproc/2 workers), serialized across worktrees."
+usage = 'arg "[<pytest_args>...]" help="Arguments passed to pytest"'
+run = 'VT_TEST_PARALLEL=1 ./.config/test.sh $usage_pytest_args'
 
 [tasks."test:build"]
 description = "Build test Docker image."

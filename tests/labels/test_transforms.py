@@ -3,66 +3,7 @@ from syrupy import SnapshotAssertion
 
 from virtool.data.transforms import apply_transforms
 from virtool.labels.sql import SQLLabel
-from virtool.labels.transforms import AttachLabelsTransform, AttachSampleCountsTransform
-from virtool.mongo.core import Mongo
-
-
-class TestAttachSampleCounts:
-    async def test_single(self, mongo: Mongo, snapshot: SnapshotAssertion):
-        await mongo.samples.insert_many(
-            [
-                {"_id": "foo", "name": "Foo", "labels": [1, 2, 4]},
-                {"_id": "bar", "name": "Bar", "labels": []},
-                {"_id": "baz", "name": "Baz", "labels": [2]},
-            ],
-            session=None,
-        )
-
-        assert (
-            await apply_transforms(
-                {
-                    "id": 1,
-                    "name": "Bug",
-                    "color": "#a83432",
-                    "description": "This is a bug",
-                },
-                [AttachSampleCountsTransform(mongo)],
-                None,
-            )
-            == snapshot
-        )
-
-    async def test_multiple(self, mongo: Mongo, snapshot: SnapshotAssertion):
-        await mongo.samples.insert_many(
-            [
-                {"_id": "foo", "name": "Foo", "labels": [1, 2, 4]},
-                {"_id": "bar", "name": "Bar", "labels": []},
-                {"_id": "baz", "name": "Baz", "labels": [2]},
-            ],
-            session=None,
-        )
-
-        assert (
-            await apply_transforms(
-                [
-                    {
-                        "id": 2,
-                        "name": "Question",
-                        "color": "#03fc20",
-                        "description": "This is a question",
-                    },
-                    {
-                        "id": 3,
-                        "name": "Info",
-                        "color": "#02db21",
-                        "description": "This is a info",
-                    },
-                ],
-                [AttachSampleCountsTransform(mongo)],
-                None,
-            )
-            == snapshot
-        )
+from virtool.labels.transforms import AttachLabelsTransform
 
 
 class TestAttachLabels:

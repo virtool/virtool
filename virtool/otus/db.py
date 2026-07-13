@@ -1,23 +1,29 @@
 """Work with OTUs in the database."""
 
+from collections import Counter
+from datetime import datetime
 from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from sqlalchemy import distinct, func, select
+from sqlalchemy import delete, distinct, func, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.history.db
 import virtool.otus.utils
+from virtool.api.custom_json import isoformat_to_datetime
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.data.topg import (
     compose_legacy_id_mongo_match,
     compose_legacy_id_subquery,
+    resolve_legacy_id,
 )
 from virtool.data.transforms import apply_transforms
 from virtool.errors import DatabaseError
 from virtool.history.sql import SQLLegacyHistory
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
+from virtool.otus.sql import SQLOTU, SQLSequence
 from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
@@ -164,83 +170,6 @@ async def join(
     return virtool.otus.utils.merge_otu(document, [d async for d in cursor])
 
 
-async def bulk_join_query(
-    mongo: "Mongo",
-    query: dict,
-    session: AsyncIOMotorClientSession | None = None,
-) -> list[dict[str, Any]]:
-    """Join the otu associated with the supplied ``otu_id`` with its sequences.
-
-    If an OTU is passed, the document will not be pulled from the database.
-
-    :param mongo: the application database client
-    :param query: mongo query for the target documents
-    :param document: use this otu document as a basis for the join
-    :param session: a Motor session to use for database operations
-    :return: the joined otu document
-    """
-    cursor = mongo.otus.find(query, session=session)
-    documents = [document async for document in cursor]
-
-    return await bulk_join_documents(mongo, documents, session)
-
-
-async def bulk_join_ids(
-    mongo,
-    ids: list[str],
-    session: AsyncIOMotorClientSession | None = None,
-) -> list[dict[str, Any]]:
-    """Join the otu associated with the supplied ``otu_id`` with its sequences.
-
-    If an OTU is passed, the document will not be pulled from the database.
-
-    :param mongo: the application database client
-    :param ids: the ids of the otus to join
-    :param session: a Motor session to use for database operations
-    :return: the joined otu document
-    """
-    cursor = mongo.otus.find({"_id": {"$in": ids}}, session=session)
-
-    return await bulk_join_documents(
-        mongo,
-        [document async for document in cursor],
-        session,
-    )
-
-
-async def bulk_join_documents(
-    mongo,
-    otus: list[Document],
-    session: AsyncIOMotorClientSession | None = None,
-) -> list[dict[str, Any]]:
-    """Join the otu associated with the supplied ``otu_id`` with its sequences.
-
-    If an OTU is passed, the document will not be pulled from the database.
-
-    :param mongo: the application database client
-    :param otus: use these otu documents as a basis for the joins
-    :param session: a Motor session to use for database operations
-    :return: the joined otu document
-    """
-    # Get the otu entry if a ``document`` parameter was not passed
-
-    cursor = mongo.sequences.find(
-        {"otu_id": {"$in": [otu["_id"] for otu in otus]}},
-        session=session,
-    )
-
-    sequences = {}
-    async for sequence in cursor:
-        dict_entry = sequences.setdefault(sequence["otu_id"], [])
-        dict_entry.append(sequence)
-
-    merged_documents = [
-        virtool.otus.utils.merge_otu(otu, sequences[otu["_id"]]) for otu in otus
-    ]
-
-    return merged_documents
-
-
 async def join_and_format(
     mongo: "Mongo",
     pg: AsyncEngine,
@@ -324,6 +253,274 @@ async def update_otu_verification(
         joined["verified"] = True
 
     return issues
+
+
+def _encode_otu_data(document: Document) -> Document:
+    """Render a Mongo OTU ``document`` as the ``data`` JSONB column must store it.
+
+    Only OTUs created by a reference import or clone carry a ``created_at``, and only
+    the bulk insert path writes one that never round-tripped through Mongo. BSON holds
+    a datetime as int64 milliseconds and drops the microseconds, while the engine's
+    JSON serializer would write every one of them. Flooring to the millisecond -- the
+    same truncation pymongo applies -- means the stored ISO string is exactly the
+    instant Mongo holds, so ``data`` stays a faithful lift of the document.
+
+    ``created_at`` is rewritten on a copy, never in place, because the caller keeps
+    using the document it passed: the bulk insert path hands that very dict to
+    ``mongo.otus.insert_many`` afterwards, and the OTU data layer reuses it for history
+    diffs and returns it. A document with no ``created_at`` to rewrite -- every OTU
+    created through the API -- is returned as-is.
+    """
+    created_at = document.get("created_at")
+
+    if not isinstance(created_at, datetime):
+        return document
+
+    return {
+        **document,
+        "created_at": created_at.replace(
+            microsecond=created_at.microsecond // 1000 * 1000,
+        ),
+    }
+
+
+def otu_document_from_row(row: SQLOTU) -> Document:
+    """Recover the Mongo OTU document a ``legacy_otus`` row was written from.
+
+    The inverse of :func:`_encode_otu_data`. A JSONB column cannot hold a datetime, so
+    ``created_at`` comes back out as the ISO string it was stored as and is parsed back
+    to the naive datetime the rest of the codebase expects. OTUs created through the API
+    carry no ``created_at`` at all, so its absence is normal rather than an error.
+    """
+    document = row.data
+
+    created_at = document.get("created_at")
+
+    if created_at is None:
+        return document
+
+    return {**document, "created_at": isoformat_to_datetime(created_at)}
+
+
+def sequence_document_from_row(row: SQLSequence) -> Document:
+    """Recover the Mongo sequence document a ``legacy_sequences`` row was written from.
+
+    A passthrough. Sequence documents hold nothing JSON cannot express -- no datetimes
+    in particular -- so the column returns what was put in it. It exists so the read
+    path has one obvious entry point per collection, matching
+    :func:`otu_document_from_row`.
+    """
+    return row.data
+
+
+def otu_row_values(document: Document, reference_id: int) -> dict[str, Any]:
+    """Map a Mongo OTU ``document`` to ``legacy_otus`` column values.
+
+    The whole document is stored verbatim in ``data``, save for the millisecond
+    truncation :func:`_encode_otu_data` applies to ``created_at`` so the column can
+    hold it. The remaining columns are promoted from the document so they can be
+    queried, filtered and sorted directly.
+    """
+    return {
+        "id": document["_id"],
+        "data": _encode_otu_data(document),
+        "name": document["name"],
+        "abbreviation": document.get("abbreviation") or "",
+        "reference_id": reference_id,
+        "verified": document["verified"],
+        "version": document["version"],
+    }
+
+
+def sequence_row_values(document: Document) -> dict[str, Any]:
+    """Map a Mongo sequence ``document`` to ``legacy_sequences`` column values.
+
+    ``position`` is deliberately absent. It orders a sequence within its OTU and so
+    cannot be derived from the document alone; every write path supplies it
+    separately.
+    """
+    return {
+        "id": document["_id"],
+        "data": document,
+        "otu_id": document["otu_id"],
+        "isolate_id": document["isolate_id"],
+        "segment": document.get("segment"),
+    }
+
+
+def next_sequence_position(otu_id: str):
+    """Compose a scalar subquery for the next free ``position`` in an OTU.
+
+    Evaluated by Postgres inside the insert, so the read and the write cannot be
+    interleaved. Callers hold the OTU's :func:`lock_legacy_otu` row lock, which
+    serializes concurrent appends to the same OTU.
+    """
+    return (
+        select(func.coalesce(func.max(SQLSequence.position) + 1, 0))
+        .where(SQLSequence.otu_id == otu_id)
+        .scalar_subquery()
+    )
+
+
+_OTU_ROW_CHUNK_SIZE = 32767 // 7
+"""Max ``legacy_otus`` rows per statement.
+
+asyncpg caps bind parameters per statement at 32767. Each row binds the seven
+columns produced by :func:`otu_row_values`.
+"""
+
+_SEQUENCE_ROW_CHUNK_SIZE = 32767 // 6
+"""Max ``legacy_sequences`` rows per statement.
+
+asyncpg caps bind parameters per statement at 32767. Each row binds the five
+columns produced by :func:`sequence_row_values` plus ``position``.
+"""
+
+
+async def bulk_insert_otu_rows(
+    pg_session: AsyncSession,
+    documents: list[Document],
+    reference_id: int,
+) -> None:
+    """Insert ``legacy_otus`` rows for ``documents`` into ``pg_session``.
+
+    Every row's ``reference_id`` column is set to the resolved ``reference_id``
+    primary key. The rows are written in asyncpg-safe chunks without committing, so
+    they commit or roll back together with the caller's surrounding transaction.
+    """
+    if not documents:
+        return
+
+    rows = [otu_row_values(document, reference_id) for document in documents]
+
+    for start in range(0, len(rows), _OTU_ROW_CHUNK_SIZE):
+        await pg_session.execute(
+            pg_insert(SQLOTU).values(rows[start : start + _OTU_ROW_CHUNK_SIZE]),
+        )
+
+
+async def bulk_insert_sequence_rows(
+    pg_session: AsyncSession,
+    documents: list[Document],
+) -> None:
+    """Insert ``legacy_sequences`` rows for ``documents`` into ``pg_session``.
+
+    ``position`` is assigned by counting off each OTU's sequences in the order they
+    appear in ``documents``. That is the order they are handed to
+    ``sequences.insert_many``, so it is the Mongo natural order the rows must
+    reproduce. Callers insert whole OTUs at a time, so an OTU's sequences are never
+    split across two calls and the count always starts at zero for a new OTU.
+
+    The rows are written in asyncpg-safe chunks without committing, so they commit
+    or roll back together with the caller's surrounding transaction.
+    """
+    if not documents:
+        return
+
+    positions = Counter()
+    rows = []
+
+    for document in documents:
+        otu_id = document["otu_id"]
+
+        rows.append({**sequence_row_values(document), "position": positions[otu_id]})
+
+        positions[otu_id] += 1
+
+    for start in range(0, len(rows), _SEQUENCE_ROW_CHUNK_SIZE):
+        await pg_session.execute(
+            pg_insert(SQLSequence).values(
+                rows[start : start + _SEQUENCE_ROW_CHUNK_SIZE],
+            ),
+        )
+
+
+async def lock_legacy_otu(pg_session: AsyncSession, otu_id: str) -> None:
+    """Take a ``SELECT … FOR UPDATE`` lock on an OTU's ``legacy_otus`` row.
+
+    Serializes concurrent edits to the same OTU so no version bump is lost. Call it
+    before the first Mongo read in a write transaction so the Mongo snapshot is taken
+    after the lock is held. A no-op while the OTU has no Postgres row yet (not
+    backfilled); the Mongo transaction still guards the bump in that transient window.
+    """
+    await pg_session.execute(
+        select(SQLOTU.id).where(SQLOTU.id == otu_id).with_for_update(),
+    )
+
+
+async def write_legacy_otu(pg_session: AsyncSession, document: Document) -> None:
+    """Upsert a Mongo OTU ``document`` into ``legacy_otus`` within ``pg_session``.
+
+    The embedded ``reference.id`` is resolved to the integer ``legacy_references``
+    primary key. Every promoted column is recomputed from the document, so the same
+    call serves inserts and updates and keeps the row in sync on each whole-document
+    write.
+    """
+    reference_id = await resolve_legacy_id(
+        pg_session,
+        SQLReference,
+        document["reference"]["id"],
+    )
+
+    if reference_id is None:
+        raise ValueError(
+            f"Reference {document['reference']['id']!r} not found in postgres",
+        )
+
+    values = otu_row_values(document, reference_id)
+
+    await pg_session.execute(
+        pg_insert(SQLOTU)
+        .values(**values)
+        .on_conflict_do_update(
+            index_elements=["id"],
+            set_={key: value for key, value in values.items() if key != "id"},
+        ),
+    )
+
+
+async def write_legacy_sequence(pg_session: AsyncSession, document: Document) -> None:
+    """Upsert a Mongo sequence ``document`` into ``legacy_sequences`` within
+    ``pg_session``.
+
+    A new sequence is appended to the end of its OTU. An existing one keeps the
+    ``position`` it already holds: the column is left out of the conflict update so
+    re-mirroring a sequence never renumbers it and never reorders the OTU.
+    """
+    values = sequence_row_values(document)
+
+    await pg_session.execute(
+        pg_insert(SQLSequence)
+        .values(**values, position=next_sequence_position(document["otu_id"]))
+        .on_conflict_do_update(
+            index_elements=["id"],
+            set_={key: value for key, value in values.items() if key != "id"},
+        ),
+    )
+
+
+async def delete_legacy_otu(pg_session: AsyncSession, otu_id: str) -> None:
+    """Delete an OTU's ``legacy_otus`` row; its ``legacy_sequences`` rows cascade."""
+    await pg_session.execute(delete(SQLOTU).where(SQLOTU.id == otu_id))
+
+
+async def delete_legacy_sequence(pg_session: AsyncSession, sequence_id: str) -> None:
+    """Delete a single ``legacy_sequences`` row by id."""
+    await pg_session.execute(delete(SQLSequence).where(SQLSequence.id == sequence_id))
+
+
+async def delete_legacy_isolate_sequences(
+    pg_session: AsyncSession,
+    otu_id: str,
+    isolate_id: str,
+) -> None:
+    """Delete every ``legacy_sequences`` row belonging to an isolate."""
+    await pg_session.execute(
+        delete(SQLSequence).where(
+            SQLSequence.otu_id == otu_id,
+            SQLSequence.isolate_id == isolate_id,
+        ),
+    )
 
 
 async def update_sequence_segments(

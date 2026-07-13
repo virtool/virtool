@@ -16,7 +16,7 @@ class Permissions(BaseModel):
 
 
 class GroupMinimal(BaseModel):
-    id: int | str
+    id: int
     legacy_id: str | None
     name: str
 

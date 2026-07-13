@@ -197,11 +197,10 @@ class TestCreatePostgres:
     ):
         """``get`` resolves the sample from the legacy sample linked by job_id.
 
-        Unlike subtractions and analyses, which expose the integer id, the sample
-        reference is exposed as the legacy Mongo string so the create_sample
-        workflow can address the sample over the jobs API, whose endpoints still
-        resolve samples by their Mongo ``_id``. The public flip to the integer PK
-        is VIR-2529.
+        The sample is exposed as its integer primary key, which the create_sample
+        workflow uses to address the sample over the jobs API. A sample created
+        natively in Postgres has no legacy id, so the legacy string cannot be the
+        job argument.
         """
         user = await fake.users.create()
 
@@ -213,19 +212,41 @@ class TestCreatePostgres:
         )
 
         async with AsyncSession(pg) as session:
-            session.add(
-                SQLLegacySample(
-                    legacy_id="sample_123",
-                    name="Sample 123",
-                    library_type="normal",
-                    created_at=arrow.utcnow().naive,
-                    job_id=job.id,
-                ),
+            sample = SQLLegacySample(
+                legacy_id="sample_123",
+                name="Sample 123",
+                library_type="normal",
+                created_at=arrow.utcnow().naive,
+                job_id=job.id,
             )
+            session.add(sample)
+            await session.flush()
+
+            sample_pk = sample.id
+
             await session.commit()
 
         fetched_job = await jobs_data.get(job.id)
-        assert fetched_job.args == {"sample_id": "sample_123"}
+        assert fetched_job.args == {"sample_id": sample_pk}
+
+    async def test_sample_id_resolved_without_legacy_id(
+        self,
+        jobs_data: JobsData,
+        fake: DataFaker,
+    ):
+        """``get`` exposes the sample id for a sample created natively in Postgres.
+
+        Such a sample has no legacy id, so the job argument can only come from the
+        integer primary key. Sample creation supplies no ``sample_id`` argument of its
+        own, so the one seen here is derived entirely from the linked sample.
+        """
+        user = await fake.users.create()
+
+        sample = await fake.samples.create(user)
+
+        fetched_job = await jobs_data.get(sample.job.id)
+
+        assert fetched_job.args == {"sample_id": sample.id}
 
     async def test_index_join_table(
         self,
@@ -286,7 +307,7 @@ class TestCreatePostgres:
         fetched_job = await jobs_data.get(job.id)
         assert fetched_job.args == {"subtraction_id": subtraction_id}
 
-    @pytest.mark.parametrize("workflow", ["aodp", "nuvs", "pathoscope"])
+    @pytest.mark.parametrize("workflow", ["nuvs", "pathoscope"])
     async def test_analysis_id_resolved_from_analysis(
         self,
         workflow: str,
@@ -294,35 +315,32 @@ class TestCreatePostgres:
         fake: DataFaker,
         pg: AsyncEngine,
     ):
-        """``get`` resolves the analysis id from the analysis row linked by job_id."""
+        """``get`` resolves the integer analysis id from the analysis row linked by
+        job_id.
+        """
         user = await fake.users.create()
 
-        job = await jobs_data.create(
-            workflow,
-            {"analysis_id": "analysis_abc"},
-            user.id,
-            0,
-        )
+        job = await jobs_data.create(workflow, {}, user.id, 0)
 
         async with AsyncSession(pg) as session:
-            session.add(
-                SQLAnalysis(
-                    legacy_id="analysis_abc",
-                    created_at=arrow.utcnow().naive,
-                    updated_at=arrow.utcnow().naive,
-                    workflow=workflow,
-                    ready=False,
-                    sample="sample_abc",
-                    reference="ref_abc",
-                    index="index_abc",
-                    user_id=user.id,
-                    job_id=job.id,
-                ),
+            analysis = SQLAnalysis(
+                created_at=arrow.utcnow().naive,
+                updated_at=arrow.utcnow().naive,
+                workflow=workflow,
+                ready=False,
+                sample="sample_abc",
+                reference="ref_abc",
+                index="index_abc",
+                user_id=user.id,
+                job_id=job.id,
             )
+            session.add(analysis)
+            await session.flush()
+            analysis_id = analysis.id
             await session.commit()
 
         fetched_job = await jobs_data.get(job.id)
-        assert fetched_job.args == {"analysis_id": "analysis_abc"}
+        assert fetched_job.args == {"analysis_id": analysis_id}
 
 
 class TestStartStepPostgres:

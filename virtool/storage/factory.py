@@ -2,23 +2,16 @@
 
 from typing import Protocol
 
-from structlog import get_logger
-
-from virtool.config.cls import ServerConfig, StorageBackendName
-from virtool.storage.filesystem import FilesystemProvider
-from virtool.storage.legacy import LegacyIndexFilesystemAdapter
+from virtool.config.cls import StorageBackendName
 from virtool.storage.object import ObjectProvider
 from virtool.storage.protocol import StorageBackend
-from virtool.storage.routing import FallbackStorageRouter
-
-logger = get_logger("storage")
 
 
 class StorageBackendConfig(Protocol):
-    """Structural type for the ``storage_*`` fields ``build_primary_backend`` reads.
+    """Structural type for the ``storage_*`` fields ``create_storage_backend`` reads.
 
-    ``ServerConfig`` and ``TaskRunnerConfig`` both satisfy this without
-    explicit inheritance.
+    ``ServerConfig``, ``TaskRunnerConfig``, and ``MigrationConfig`` all satisfy
+    this without explicit inheritance.
     """
 
     storage_backend: StorageBackendName
@@ -33,46 +26,10 @@ class StorageBackendConfig(Protocol):
     storage_azure_endpoint: str
 
 
-def create_storage_backend(config: ServerConfig) -> StorageBackend:
-    """Create the configured storage backend.
+def create_storage_backend(config: StorageBackendConfig) -> StorageBackend:
+    """Create the configured object-storage backend (S3 or Azure Blob).
 
-    The primary is an object-storage backend (S3 or Azure Blob) determined by
-    ``config.storage_backend``. Storage is blob-only by default.
-
-    When ``config.storage_fallback_path`` is set, a :class:`FilesystemProvider`
-    rooted at that path is wired in as a read/migration fallback via
-    :class:`FallbackStorageRouter`, wrapped in
-    :class:`LegacyIndexFilesystemAdapter` so legacy index files at
-    ``references/{ref_id}/{index_id}/...`` are reachable via the new
-    ``indexes/{index_id}/...`` keys.
-
-    The fallback exists only to surface legacy on-disk files during the
-    migration to object storage and will be removed entirely once that
-    migration is complete.
-    """
-    primary = build_primary_backend(config)
-
-    if config.storage_fallback_path is None:
-        return primary
-
-    logger.warning(
-        "legacy filesystem fallback is enabled; storage is not blob-only",
-        storage_fallback_path=str(config.storage_fallback_path),
-    )
-
-    fallback = LegacyIndexFilesystemAdapter(
-        FilesystemProvider(config.storage_fallback_path),
-        config.storage_fallback_path,
-    )
-
-    return FallbackStorageRouter(primary, fallback)
-
-
-def build_primary_backend(config: StorageBackendConfig) -> StorageBackend:
-    """Build the object-storage primary backend.
-
-    Exposed for tests that need to drive the remote backend directly without
-    the filesystem fallback wrapper.
+    The backend is selected by ``config.storage_backend``.
     """
     match config.storage_backend:
         case "s3":

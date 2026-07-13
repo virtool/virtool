@@ -20,14 +20,6 @@ from virtool.indexes.db import (
 )
 from virtool.indexes.sql import SQLIndexFile
 from virtool.mongo.core import Mongo
-from virtool.references.sql import SQLReference
-
-
-async def _get_reference_id(pg: AsyncEngine, legacy_id: str) -> int:
-    async with AsyncSession(pg) as session:
-        return await session.scalar(
-            select(SQLReference.id).where(SQLReference.legacy_id == legacy_id),
-        )
 
 
 @pytest.mark.parametrize("index_id", [None, "abc"])
@@ -45,7 +37,7 @@ async def test_create(
     """
     user = await fake.users.create()
 
-    await fake.references.create(user=user, id_="foo", name="foo")
+    await fake.references.create(user=user, id_="foo")
 
     mocker.patch("virtool.references.db.get_manifest", make_mocked_coro("manifest"))
 
@@ -74,13 +66,13 @@ async def test_create_assigns_index_in_postgres(
     changes untouched.
     """
     user = await fake.users.create()
-    await fake.references.create(user=user, id_="built_ref", name="built_ref")
-    await fake.references.create(user=user, id_="other_ref", name="other_ref")
+    built_ref = await fake.references.create(user=user, id_="built_ref")
+    other_ref = await fake.references.create(user=user, id_="other_ref")
 
     await mongo.indexes.insert_one(
         {
             "_id": "prior_index",
-            "reference": {"id": "built_ref"},
+            "reference": {"id": built_ref.id},
             "version": 0,
             "ready": True,
         },
@@ -103,17 +95,12 @@ async def test_create_assigns_index_in_postgres(
             index_version="0" if index else None,
         )
 
-    built_ref_id, other_ref_id = await asyncio.gather(
-        _get_reference_id(pg, "built_ref"),
-        _get_reference_id(pg, "other_ref"),
-    )
-
     async with AsyncSession(pg) as session:
         session.add_all(
             [
-                legacy_row("ref_unbuilt", built_ref_id, None),
-                legacy_row("ref_already_built", built_ref_id, "prior_index"),
-                legacy_row("other_ref_unbuilt", other_ref_id, None),
+                legacy_row("ref_unbuilt", built_ref.id, None),
+                legacy_row("ref_already_built", built_ref.id, "prior_index"),
+                legacy_row("other_ref_unbuilt", other_ref.id, None),
             ],
         )
         await session.commit()
@@ -152,7 +139,7 @@ async def test_create_rolls_back_both_stores_on_failure(
     """
     user = await fake.users.create()
 
-    await fake.references.create(user=user, id_="built_ref", name="built_ref")
+    built_ref = await fake.references.create(user=user, id_="built_ref")
 
     async with AsyncSession(pg) as session:
         session.add(
@@ -165,7 +152,7 @@ async def test_create_rolls_back_both_stores_on_failure(
                 otu="ref_unbuilt",
                 otu_name="ref_unbuilt",
                 otu_version="0",
-                reference="built_ref",
+                reference_id=built_ref.id,
                 index=None,
                 index_version=None,
             ),
@@ -253,19 +240,12 @@ async def test_reads_tolerate_integer_embedded_reference_id(
     """
     user = await fake.users.create()
 
-    await fake.references.create(user=user, id_="legacy_ref", name="legacy_ref")
-
-    async with AsyncSession(pg) as session:
-        reference_pk = (
-            await session.execute(
-                select(SQLReference.id).where(SQLReference.legacy_id == "legacy_ref"),
-            )
-        ).scalar_one()
+    reference = await fake.references.create(user=user, id_="legacy_ref")
 
     await mongo.indexes.insert_one(
         {
             "_id": "built_index",
-            "reference": {"id": reference_pk},
+            "reference": {"id": reference.id},
             "version": 0,
             "ready": True,
         },
@@ -283,7 +263,7 @@ async def test_iter_patched_otus_starts_when_consumed(
     mongo: Mongo,
 ):
     async def patch_to_version(_mongo, _pg, otu_id, version):
-        return None, {"_id": otu_id, "version": version}, None
+        return None, {"_id": otu_id, "version": version}
 
     m = mocker.patch(
         "virtool.history.db.patch_to_version",
@@ -326,7 +306,7 @@ async def test_iter_patched_otus_preserves_order_when_patches_finish_out_of_orde
 
         await gates[otu_id].wait()
 
-        return None, {"_id": otu_id, "version": version}, None
+        return None, {"_id": otu_id, "version": version}
 
     mocker.patch(
         "virtool.history.db.patch_to_version",
@@ -379,7 +359,7 @@ async def test_iter_patched_otus_limits_concurrent_patches(
 
         await gates[otu_id].wait()
 
-        return None, {"_id": otu_id, "version": version}, None
+        return None, {"_id": otu_id, "version": version}
 
     mocker.patch(
         "virtool.history.db.patch_to_version",
@@ -438,7 +418,7 @@ async def test_iter_patched_otus_limits_scheduled_lookahead(
 
         await gates[otu_id].wait()
 
-        return None, {"_id": otu_id, "version": version}, None
+        return None, {"_id": otu_id, "version": version}
 
     mocker.patch(
         "virtool.history.db.patch_to_version",

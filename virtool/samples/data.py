@@ -6,10 +6,7 @@ from collections import defaultdict
 from collections.abc import AsyncGenerator, AsyncIterator
 from typing import Any
 
-from pymongo.results import UpdateResult
 from sqlalchemy import (
-    ColumnExpressionArgument,
-    and_,
     delete,
     exc,
     func,
@@ -22,29 +19,25 @@ from structlog import get_logger
 
 import virtool.uploads.db
 import virtool.utils
-from virtool.analyses.sql import SQLAnalysis, SQLAnalysisResult
+from virtool.analyses.sql import SQLAnalysis
 from virtool.api.client import UserClient
 from virtool.config.cls import Config
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
 from virtool.data.topg import (
-    both_transactions,
-    compose_legacy_id_multi_expression,
     compose_legacy_id_single_expression,
     compose_legacy_id_subquery,
-    retry_both_transactions,
 )
 from virtool.data.transforms import apply_transforms
 from virtool.groups.models import GroupMinimal
 from virtool.groups.pg import SQLGroup
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.labels.transforms import AttachLabelsTransform
-from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_new_id, get_one_field
 from virtool.pg.utils import delete_row
 from virtool.references.db import compose_reference_id_match
+from virtool.references.sql import SQLReference
 from virtool.samples.checks import (
     check_labels_do_not_exist,
     check_name_is_in_use,
@@ -54,6 +47,7 @@ from virtool.samples.db import (
     AttachArtifactsAndReadsTransform,
     AttachUploadsTransform,
     DeriveWorkflowTagsTransform,
+    compose_sample_rights_filter,
     compose_sample_workflow_filter,
 )
 from virtool.samples.files import (
@@ -72,10 +66,12 @@ from virtool.samples.sql import (
     SQLSampleUpload,
 )
 from virtool.samples.utils import (
+    SAMPLE_RIGHTS_COLUMNS,
     SampleRight,
-    define_initial_workflows,
+    has_sample_right,
     sample_file_key,
     sample_prefix,
+    sample_storage_id,
 )
 from virtool.storage.cleanup import delete_prefix
 from virtool.storage.protocol import StorageBackend
@@ -90,25 +86,6 @@ from virtool.users.transforms import AttachUserTransform
 from virtool.utils import wait_for_checks
 
 logger = get_logger("samples")
-
-
-def _compose_sample_search_filter(term: str) -> ColumnExpressionArgument[bool]:
-    """Compose a case-insensitive substring match on ``name`` and the owner id.
-
-    Mirrors the Mongo ``compose_regex_query(term, ["name", "user.id"])`` the find
-    endpoint used before reading from Postgres: the term is matched literally, so SQL
-    ``LIKE`` wildcards in the term are escaped rather than interpreted. The historical
-    ``user.id`` value is the owner's legacy Mongo id, now ``SQLUser.legacy_id``.
-    """
-    escaped = term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-    pattern = f"%{escaped}%"
-
-    return or_(
-        SQLLegacySample.name.ilike(pattern, escape="\\"),
-        SQLLegacySample.user_id.in_(
-            select(SQLUser.id).where(SQLUser.legacy_id.ilike(pattern, escape="\\")),
-        ),
-    )
 
 
 def _map_sample_minimal_row(
@@ -199,9 +176,9 @@ class SamplesData(DataLayerDomain):
     async def _resolve_ids(self, sample_id: int | str) -> tuple[int, str | None] | None:
         """Resolve a sample's integer primary key and legacy Mongo id from either form.
 
-        Accepts the outward-facing integer id or the legacy Mongo string. The legacy
-        string is still required for Mongo dual-writes and storage keys, which remain
-        keyed on the Mongo ``_id`` until the samples migration completes.
+        Accepts the outward-facing integer id or the legacy Mongo string. Samples
+        migrated from Mongo keep their ``legacy_id`` as their storage key for life;
+        samples created natively in Postgres have none and are keyed by primary key.
 
         :param sample_id: the integer primary key or legacy string id of the sample
         :return: the row's ``(id, legacy_id)``, or ``None`` if no sample matches
@@ -221,14 +198,25 @@ class SamplesData(DataLayerDomain):
         page: int,
         per_page: int,
         term: str,
+        users: list[int],
         workflows: list[str],
         client,
     ) -> SampleSearchResult:
-        """Find and filter samples."""
-        filters = [await self._compose_rights_filter(client)]
+        """Find and filter samples.
+
+        Samples are always limited to those the ``client`` may read. The ``users``
+        filter narrows that set to samples owned by the given users; it can never
+        widen it.
+        """
+        filters = [compose_sample_rights_filter(client)]
 
         if term:
-            filters.append(_compose_sample_search_filter(term))
+            # Escape LIKE wildcards so the term matches literally.
+            escaped = term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            filters.append(SQLLegacySample.name.ilike(f"%{escaped}%", escape="\\"))
+
+        if users:
+            filters.append(SQLLegacySample.user_id.in_(users))
 
         if labels:
             filters.append(
@@ -298,58 +286,6 @@ class SamplesData(DataLayerDomain):
             page_count=int(math.ceil(found_count / per_page)),
             per_page=per_page,
         )
-
-    async def _resolve_client_group_ids(self, client) -> list[int]:
-        """Resolve the Postgres group ids for the groups ``client`` belongs to.
-
-        Shared by ``_compose_rights_filter`` and ``has_right`` so the two rights
-        paths resolve group membership the same way.
-        """
-        if not client.groups:
-            return []
-
-        async with AsyncSession(self._pg) as session:
-            return list(
-                (
-                    await session.execute(
-                        select(SQLGroup.id).where(
-                            compose_legacy_id_multi_expression(
-                                SQLGroup,
-                                client.groups,
-                            ),
-                        ),
-                    )
-                )
-                .scalars()
-                .all(),
-            )
-
-    async def _compose_rights_filter(
-        self,
-        client,
-    ) -> ColumnExpressionArgument[bool]:
-        """Compose the Postgres predicate scoping samples to those ``client`` can read.
-
-        Mirrors the Mongo ``$or`` rights filter: the requesting user owns the sample,
-        the sample is world-readable, or the sample is readable by a group the user
-        belongs to.
-        """
-        rights_filter = [
-            SQLLegacySample.all_read.is_(True),
-            SQLLegacySample.user_id == client.user_id,
-        ]
-
-        group_ids = await self._resolve_client_group_ids(client)
-
-        if group_ids:
-            rights_filter.append(
-                and_(
-                    SQLLegacySample.group_read.is_(True),
-                    SQLLegacySample.group_id.in_(group_ids),
-                ),
-            )
-
-        return or_(*rights_filter)
 
     async def get(self, sample_id: int | str) -> Sample:
         """Get a sample by its id.
@@ -435,63 +371,6 @@ class SamplesData(DataLayerDomain):
             },
         )
 
-    async def _write_legacy_sample(
-        self,
-        pg_session: AsyncSession,
-        document: dict[str, Any],
-    ) -> None:
-        """Write the ``legacy_samples`` row and join rows for a new ``document``.
-
-        The label and subtraction join-row values are already integer ``labels.id``
-        and ``subtractions.id`` values, so they map directly with no legacy-id
-        resolution.
-        """
-        group = document["group"]
-
-        sample = SQLLegacySample(
-            legacy_id=document["_id"],
-            name=document["name"],
-            host=document["host"],
-            isolate=document["isolate"],
-            locale=document["locale"],
-            notes=document["notes"],
-            library_type=document["library_type"],
-            format=document["format"],
-            group_id=group if isinstance(group, int) else None,
-            quality=document["quality"],
-            created_at=document["created_at"],
-            paired=document["paired"],
-            ready=document["ready"],
-            hold=document["hold"],
-            is_legacy=document["is_legacy"],
-            all_read=document["all_read"],
-            all_write=document["all_write"],
-            group_read=document["group_read"],
-            group_write=document["group_write"],
-            user_id=document["user"]["id"],
-            job_id=document["job"]["id"] if document.get("job") else None,
-        )
-
-        pg_session.add(sample)
-        await pg_session.flush()
-
-        self._add_legacy_sample_join_rows(
-            pg_session,
-            sample.id,
-            document["labels"],
-            document["subtractions"],
-        )
-
-        for index, upload in enumerate(document["uploads"]):
-            pg_session.add(
-                SQLSampleUpload(
-                    sample=document["_id"],
-                    sample_id=sample.id,
-                    upload_id=upload["id"],
-                    index=index,
-                ),
-            )
-
     @staticmethod
     def _add_legacy_sample_join_rows(
         pg_session: AsyncSession,
@@ -522,14 +401,12 @@ class SamplesData(DataLayerDomain):
         self,
         data: CreateSampleRequest,
         user_id: int,
-        space_id: int,
-        _id: str | None = None,
     ) -> Sample:
         """Create a sample."""
         settings = await self.data.settings.get_all()
 
         await wait_for_checks(
-            check_name_is_in_use(self._mongo, data.name),
+            check_name_is_in_use(self._pg, data.name),
             check_labels_do_not_exist(self._pg, data.labels),
             check_subtractions_do_not_exist(self._pg, data.subtractions),
         )
@@ -573,14 +450,7 @@ class SamplesData(DataLayerDomain):
             if user is not None and user.primary_group is not None:
                 group = user.primary_group.id
 
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
-            sample_id = _id or await get_new_id(
-                self._mongo.samples, session=mongo_session
-            )
-
+        async with AsyncSession(self._pg) as pg_session:
             await self.data.uploads.reserve(data.files, pg_session)
 
             # Create the job inside the sample's transaction so the job and its
@@ -590,62 +460,67 @@ class SamplesData(DataLayerDomain):
             job_id = await self.data.jobs.create_in_session(
                 pg_session,
                 "create_sample",
-                {"sample_id": sample_id},
+                {},
                 user_id,
             )
 
-            document = await self._mongo.samples.insert_one(
-                {
-                    "_id": sample_id,
-                    "all_read": settings.sample_all_read,
-                    "all_write": settings.sample_all_write,
-                    "created_at": virtool.utils.timestamp(),
-                    "format": "fastq",
-                    "group": group,
-                    "group_read": settings.sample_group_read,
-                    "group_write": settings.sample_group_write,
-                    "hold": True,
-                    "host": data.host,
-                    "is_legacy": False,
-                    "isolate": data.isolate,
-                    "job": {"id": job_id},
-                    "labels": data.labels,
-                    "library_type": data.library_type,
-                    "locale": data.locale,
-                    "name": data.name,
-                    "notes": data.notes,
-                    # ``nuvs``, ``pathoscope`` and ``workflows`` are now derived on
-                    # read and no longer maintained here. Their initial values are
-                    # still written so replicas from the previous release, which
-                    # read these fields directly, do not 500 on samples created
-                    # mid rolling-deploy. Remove once every reader derives on read.
-                    "nuvs": False,
-                    "pathoscope": False,
-                    "paired": len(uploads) == 2,
-                    "quality": None,
-                    "ready": False,
-                    "results": None,
-                    "space": {"id": space_id},
-                    "subtractions": data.subtractions,
-                    "uploads": [{"id": upload["id"]} for upload in uploads],
-                    "user": {"id": user_id},
-                    "workflows": define_initial_workflows(data.library_type),
-                },
-                session=mongo_session,
+            sample = SQLLegacySample(
+                all_read=settings.sample_all_read,
+                all_write=settings.sample_all_write,
+                created_at=virtool.utils.timestamp(),
+                format="fastq",
+                group_id=group,
+                group_read=settings.sample_group_read,
+                group_write=settings.sample_group_write,
+                hold=True,
+                host=data.host,
+                is_legacy=False,
+                isolate=data.isolate,
+                job_id=job_id,
+                library_type=data.library_type,
+                locale=data.locale,
+                name=data.name,
+                notes=data.notes,
+                paired=len(uploads) == 2,
+                quality=None,
+                ready=False,
+                user_id=user_id,
             )
 
-            await self._write_legacy_sample(pg_session, document)
+            pg_session.add(sample)
+            await pg_session.flush()
+
+            sample_pk = sample.id
+
+            self._add_legacy_sample_join_rows(
+                pg_session,
+                sample_pk,
+                data.labels,
+                data.subtractions,
+            )
+
+            for index, upload in enumerate(uploads):
+                pg_session.add(
+                    SQLSampleUpload(
+                        sample=sample_storage_id(sample_pk, None),
+                        sample_id=sample_pk,
+                        upload_id=upload["id"],
+                        index=index,
+                    ),
+                )
+
+            await pg_session.commit()
 
         emit(await self.data.jobs.get(job_id), "jobs", "create", Operation.CREATE)
 
-        return await self.get(document["_id"])
+        return await self.get(sample_pk)
 
     @emits(Operation.DELETE)
     async def delete(self, sample_id: int | str) -> Sample:
         """Delete the sample identified by ``sample_id`` and all its analyses.
 
         :param sample_id: the id of the sample to delete
-        :return: the mongodb deletion result
+        :return: the deleted sample
 
         """
         resolved = await self._resolve_ids(sample_id)
@@ -659,18 +534,7 @@ class SamplesData(DataLayerDomain):
 
         upload_ids = [upload.id for upload in sample.uploads or []]
 
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
-            result = await self._mongo.samples.delete_one(
-                {"_id": legacy_id}, session=mongo_session
-            )
-            await self._mongo.analyses.delete_many(
-                {"sample.id": legacy_id},
-                session=mongo_session,
-            )
-
+        async with AsyncSession(self._pg) as pg_session:
             if upload_ids:
                 await pg_session.execute(
                     update(SQLUpload)
@@ -678,15 +542,6 @@ class SamplesData(DataLayerDomain):
                     .values(reserved=False),
                 )
 
-            await pg_session.execute(
-                delete(SQLAnalysisResult).where(
-                    SQLAnalysisResult.analysis_id.in_(
-                        select(SQLAnalysis.legacy_id).where(
-                            SQLAnalysis.sample_id == sample_pk,
-                        ),
-                    ),
-                ),
-            )
             await pg_session.execute(
                 delete(SQLAnalysis).where(
                     SQLAnalysis.sample_id == sample_pk,
@@ -727,26 +582,28 @@ class SamplesData(DataLayerDomain):
                     ),
                 ),
             )
-            await pg_session.execute(
+            result = await pg_session.execute(
                 delete(SQLLegacySample).where(
                     SQLLegacySample.id == sample_pk,
                 ),
             )
 
-        if result.deleted_count:
-            for key, exc in await delete_prefix(
-                self._storage, sample_prefix(legacy_id)
-            ):
-                logger.error(
-                    "storage cleanup failed; file orphaned",
-                    sample_id=legacy_id,
-                    key=key,
-                    error=repr(exc),
-                )
+            if not result.rowcount:
+                raise ResourceNotFoundError
 
-            return sample
+            await pg_session.commit()
 
-        raise ResourceNotFoundError
+        for key, failure in await delete_prefix(
+            self._storage, sample_prefix(sample_storage_id(sample_pk, legacy_id))
+        ):
+            logger.error(
+                "storage cleanup failed; file orphaned",
+                sample_id=sample_pk,
+                key=key,
+                error=repr(failure),
+            )
+
+        return sample
 
     @emits(Operation.UPDATE, name="finalize")
     async def finalize(
@@ -765,29 +622,30 @@ class SamplesData(DataLayerDomain):
         if resolved is None:
             raise ResourceNotFoundError
 
-        sample_pk, legacy_id = resolved
+        sample_pk, _ = resolved
 
-        if await get_one_field(self._mongo.samples, "ready", legacy_id):
-            raise ResourceConflictError("Sample already finalized")
+        async with AsyncSession(self._pg) as pg_session:
+            ready = (
+                await pg_session.execute(
+                    select(SQLLegacySample.ready).where(
+                        SQLLegacySample.id == sample_pk,
+                    ),
+                )
+            ).scalar_one_or_none()
 
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
-            result: UpdateResult = await self._mongo.samples.update_one(
-                {"_id": legacy_id},
-                {"$set": {"quality": quality, "ready": True}},
-                session=mongo_session,
-            )
-
-            if not result.modified_count:
+            if ready is None:
                 raise ResourceNotFoundError
+
+            if ready:
+                raise ResourceConflictError("Sample already finalized")
 
             await pg_session.execute(
                 update(SQLLegacySample)
                 .where(SQLLegacySample.id == sample_pk)
                 .values(quality=quality, ready=True),
             )
+
+            await pg_session.commit()
 
         names_on_disk = []
 
@@ -836,7 +694,7 @@ class SamplesData(DataLayerDomain):
         if resolved is None:
             raise ResourceNotFoundError
 
-        sample_pk, legacy_id = resolved
+        sample_pk, _ = resolved
 
         data = data.dict(exclude_unset=True)
 
@@ -844,7 +702,7 @@ class SamplesData(DataLayerDomain):
 
         if "name" in data:
             aws.append(
-                check_name_is_in_use(self._mongo, data["name"], sample_id=legacy_id),
+                check_name_is_in_use(self._pg, data["name"], sample_id=sample_pk),
             )
 
         if "labels" in data:
@@ -863,13 +721,7 @@ class SamplesData(DataLayerDomain):
             if key in data
         }
 
-        async def apply(mongo_session, pg_session) -> None:
-            await self._mongo.samples.update_one(
-                {"_id": legacy_id},
-                {"$set": data},
-                session=mongo_session,
-            )
-
+        async with AsyncSession(self._pg) as pg_session:
             if scalars:
                 await pg_session.execute(
                     update(SQLLegacySample)
@@ -877,31 +729,29 @@ class SamplesData(DataLayerDomain):
                     .values(**scalars),
                 )
 
-            if "labels" not in data and "subtractions" not in data:
-                return
+            if "labels" in data or "subtractions" in data:
+                if "labels" in data:
+                    await pg_session.execute(
+                        delete(SQLLegacySampleLabel).where(
+                            SQLLegacySampleLabel.sample_id == sample_pk,
+                        ),
+                    )
 
-            if "labels" in data:
-                await pg_session.execute(
-                    delete(SQLLegacySampleLabel).where(
-                        SQLLegacySampleLabel.sample_id == sample_pk,
-                    ),
+                if "subtractions" in data:
+                    await pg_session.execute(
+                        delete(SQLLegacySampleSubtraction).where(
+                            SQLLegacySampleSubtraction.sample_id == sample_pk,
+                        ),
+                    )
+
+                self._add_legacy_sample_join_rows(
+                    pg_session,
+                    sample_pk,
+                    data.get("labels", []),
+                    data.get("subtractions", []),
                 )
 
-            if "subtractions" in data:
-                await pg_session.execute(
-                    delete(SQLLegacySampleSubtraction).where(
-                        SQLLegacySampleSubtraction.sample_id == sample_pk,
-                    ),
-                )
-
-            self._add_legacy_sample_join_rows(
-                pg_session,
-                sample_pk,
-                data.get("labels", []),
-                data.get("subtractions", []),
-            )
-
-        await retry_both_transactions(self._mongo, self._pg, apply)
+            await pg_session.commit()
 
         return await self.get(sample_id)
 
@@ -932,7 +782,7 @@ class SamplesData(DataLayerDomain):
         if resolved is None:
             raise ResourceNotFoundError
 
-        sample_pk, legacy_id = resolved
+        sample_pk, _ = resolved
 
         group_id = None
 
@@ -961,26 +811,16 @@ class SamplesData(DataLayerDomain):
 
         if "group" in data:
             scalars["group_id"] = group_id
-            data["group"] = group_id
 
-        async def apply(mongo_session, pg_session) -> None:
-            result = await self._mongo.samples.update_one(
-                {"_id": legacy_id},
-                {"$set": data},
-                session=mongo_session,
-            )
-
-            if not result.matched_count:
-                raise ResourceNotFoundError
-
-            if scalars:
+        if scalars:
+            async with AsyncSession(self._pg) as pg_session:
                 await pg_session.execute(
                     update(SQLLegacySample)
                     .where(SQLLegacySample.id == sample_pk)
                     .values(**scalars),
                 )
 
-        await retry_both_transactions(self._mongo, self._pg, apply)
+                await pg_session.commit()
 
         return await self.get(sample_id)
 
@@ -993,14 +833,7 @@ class SamplesData(DataLayerDomain):
         async with AsyncSession(self._pg) as session:
             row = (
                 await session.execute(
-                    select(
-                        SQLLegacySample.all_read,
-                        SQLLegacySample.all_write,
-                        SQLLegacySample.group_read,
-                        SQLLegacySample.group_write,
-                        SQLLegacySample.group_id,
-                        SQLLegacySample.user_id,
-                    ).where(
+                    select(*SAMPLE_RIGHTS_COLUMNS).where(
                         compose_legacy_id_single_expression(
                             SQLLegacySample,
                             sample_id,
@@ -1012,40 +845,26 @@ class SamplesData(DataLayerDomain):
         if row is None:
             return True
 
-        if (
-            client.administrator_role == AdministratorRole.FULL
-            or client.user_id == row.user_id
-        ):
-            return True
-
-        is_group_member = False
-
-        if row.group_id is not None:
-            member_group_ids = await self._resolve_client_group_ids(client)
-            is_group_member = row.group_id in member_group_ids
-
-        if right == SampleRight.read:
-            return row.all_read or (is_group_member and row.group_read)
-
-        if right == SampleRight.write:
-            return row.all_write or (is_group_member and row.group_write)
-
-        raise ValueError(f"Invalid sample right: {right}")
+        return has_sample_right(row, client, right)
 
     async def has_resources_for_analysis_job(self, ref_id, subtractions) -> None:
         """Checks that resources for analysis job exist.
         :param ref_id: the reference id
         :param subtractions: list of subtractions
         """
-        reference = await self._mongo.references.find_one(
-            {"_id": ref_id},
-            ["archived"],
-        )
+        async with AsyncSession(self._pg) as session:
+            reference = (
+                await session.execute(
+                    select(SQLReference.archived).where(
+                        compose_legacy_id_single_expression(SQLReference, ref_id),
+                    ),
+                )
+            ).first()
 
         if reference is None:
             raise ResourceConflictError("Reference does not exist")
 
-        if reference.get("archived"):
+        if reference.archived:
             raise ResourceConflictError("Reference is archived")
 
         if not await self._mongo.indexes.count_documents(
@@ -1070,20 +889,29 @@ class SamplesData(DataLayerDomain):
 
     async def upload_artifact(
         self,
-        sample_id: str,
+        sample_id: int | str,
         artifact_type: str | None,
         filename: str,
         chunker: AsyncGenerator[bytearray],
     ) -> dict:
+        resolved = await self._resolve_ids(sample_id)
+
+        if resolved is None:
+            raise ResourceNotFoundError
+
         if artifact_type and artifact_type not in ArtifactType.to_list():
             raise ResourceConflictError("Unsupported sample artifact type")
+
+        sample_pk, legacy_id = resolved
+        storage_id = sample_storage_id(sample_pk, legacy_id)
 
         try:
             artifact = await create_artifact_file(
                 self._pg,
                 filename,
                 filename,
-                sample_id,
+                sample_pk,
+                storage_id,
                 artifact_type,
             )
         except exc.IntegrityError:
@@ -1091,7 +919,7 @@ class SamplesData(DataLayerDomain):
                 "Artifact file has already been uploaded for this sample",
             )
 
-        key = sample_file_key(sample_id, filename)
+        key = sample_file_key(storage_id, filename)
 
         try:
             size = await self._storage.write(key, chunker)
@@ -1109,12 +937,20 @@ class SamplesData(DataLayerDomain):
 
     async def upload_reads(
         self,
-        sample_id: str,
+        sample_id: int | str,
         filename: str,
         chunker: AsyncGenerator[bytearray],
         upload_id: int | None = None,
     ) -> dict:
-        key = sample_file_key(sample_id, filename)
+        resolved = await self._resolve_ids(sample_id)
+
+        if resolved is None:
+            raise ResourceNotFoundError
+
+        sample_pk, legacy_id = resolved
+        storage_id = sample_storage_id(sample_pk, legacy_id)
+
+        key = sample_file_key(storage_id, filename)
 
         first = await anext(chunker, None)
 
@@ -1136,7 +972,8 @@ class SamplesData(DataLayerDomain):
                 size,
                 filename,
                 filename,
-                sample_id,
+                sample_pk,
+                storage_id,
                 upload_id=upload_id,
             )
         except exc.IntegrityError:

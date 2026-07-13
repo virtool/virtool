@@ -3,15 +3,13 @@
   dict({
     'counts': dict({
       'cancelled': dict({
-        'aodp': 0,
         'build_index': 0,
         'create_sample': 0,
         'create_subtraction': 0,
-        'nuvs': 0,
+        'nuvs': 1,
         'pathoscope': 0,
       }),
       'failed': dict({
-        'aodp': 2,
         'build_index': 0,
         'create_sample': 0,
         'create_subtraction': 0,
@@ -19,26 +17,23 @@
         'pathoscope': 0,
       }),
       'pending': dict({
-        'aodp': 0,
-        'build_index': 0,
-        'create_sample': 1,
-        'create_subtraction': 0,
-        'nuvs': 1,
-        'pathoscope': 0,
+        'build_index': 1,
+        'create_sample': 0,
+        'create_subtraction': 2,
+        'nuvs': 0,
+        'pathoscope': 1,
       }),
       'running': dict({
-        'aodp': 1,
         'build_index': 0,
         'create_sample': 0,
-        'create_subtraction': 1,
+        'create_subtraction': 0,
         'nuvs': 1,
         'pathoscope': 1,
       }),
       'succeeded': dict({
-        'aodp': 0,
         'build_index': 0,
         'create_sample': 1,
-        'create_subtraction': 1,
+        'create_subtraction': 2,
         'nuvs': 0,
         'pathoscope': 1,
       }),
@@ -48,8 +43,8 @@
       dict({
         'created_at': str,
         'id': 11,
-        'progress': 0,
-        'state': 'running',
+        'progress': 100,
+        'state': 'succeeded',
         'user': dict({
           'handle': 'modonnell',
           'id': 3,
@@ -60,38 +55,27 @@
         'created_at': str,
         'id': 10,
         'progress': 0,
-        'state': 'running',
+        'state': 'pending',
         'user': dict({
           'handle': 'modonnell',
           'id': 3,
         }),
-        'workflow': 'nuvs',
+        'workflow': 'create_subtraction',
       }),
       dict({
         'created_at': str,
         'id': 9,
-        'progress': 100,
-        'state': 'failed',
+        'progress': 0,
+        'state': 'pending',
         'user': dict({
           'handle': 'modonnell',
           'id': 3,
         }),
-        'workflow': 'aodp',
+        'workflow': 'build_index',
       }),
       dict({
         'created_at': str,
         'id': 8,
-        'progress': 100,
-        'state': 'failed',
-        'user': dict({
-          'handle': 'modonnell',
-          'id': 3,
-        }),
-        'workflow': 'aodp',
-      }),
-      dict({
-        'created_at': str,
-        'id': 7,
         'progress': 100,
         'state': 'succeeded',
         'user': dict({
@@ -99,6 +83,17 @@
           'id': 3,
         }),
         'workflow': 'create_subtraction',
+      }),
+      dict({
+        'created_at': str,
+        'id': 7,
+        'progress': 100,
+        'state': 'cancelled',
+        'user': dict({
+          'handle': 'modonnell',
+          'id': 3,
+        }),
+        'workflow': 'nuvs',
       }),
     ]),
     'page': 1,
@@ -143,7 +138,7 @@
       'handle': 'myersmitchell',
       'id': 2,
     }),
-    'workflow': 'nuvs',
+    'workflow': 'pathoscope',
   })
 # ---
 # name: test_get[None]
@@ -169,6 +164,6 @@
       'handle': 'myersmitchell',
       'id': 2,
     }),
-    'workflow': 'nuvs',
+    'workflow': 'pathoscope',
   })
 # ---

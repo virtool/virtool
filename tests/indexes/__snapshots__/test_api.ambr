@@ -1,5 +1,5 @@
 # serializer version: 1
-# name: TestCreate.test[True][index]
+# name: TestCreate.test_ok[index]
   dict({
     '_id': 'bf1b993c',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -23,14 +23,14 @@
     'version': 0,
   })
 # ---
-# name: TestCreate.test[True][json]
+# name: TestCreate.test_ok[json]
   dict({
     'change_count': 1,
     'contributors': list([
       dict({
         'count': 1,
-        'handle': 'myersmitchell',
-        'id': 2,
+        'handle': 'leeashley',
+        'id': 1,
       }),
     ]),
     'created_at': '2015-10-06T20:00:00Z',
@@ -64,7 +64,7 @@
     'ready': False,
     'reference': dict({
       'data_type': 'genome',
-      'id': 'foo',
+      'id': 1,
       'name': 'Foo',
     }),
     'user': dict({
@@ -74,7 +74,7 @@
     'version': 0,
   })
 # ---
-# name: TestCreate.test[True][location]
+# name: TestCreate.test_ok[location]
   'https://virtool.example.com/indexes/bf1b993c'
 # ---
 # name: TestFind.test_find[active]
@@ -101,8 +101,8 @@
         'ready': False,
         'reference': dict({
           'data_type': 'genome',
-          'id': 'ref_active_a',
-          'name': 'Active A',
+          'id': 1,
+          'name': 'Reference',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -130,8 +130,8 @@
         'ready': False,
         'reference': dict({
           'data_type': 'genome',
-          'id': 'ref_active_b',
-          'name': 'Active B',
+          'id': 2,
+          'name': 'Reference',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -173,8 +173,8 @@
         'ready': False,
         'reference': dict({
           'data_type': 'genome',
-          'id': 'ref_archived',
-          'name': 'Archived',
+          'id': 3,
+          'name': 'Reference',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -216,8 +216,8 @@
         'ready': False,
         'reference': dict({
           'data_type': 'genome',
-          'id': 'ref_active_a',
-          'name': 'Active A',
+          'id': 1,
+          'name': 'Reference',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -245,8 +245,8 @@
         'ready': False,
         'reference': dict({
           'data_type': 'genome',
-          'id': 'ref_active_b',
-          'name': 'Active B',
+          'id': 2,
+          'name': 'Reference',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -274,8 +274,8 @@
         'ready': False,
         'reference': dict({
           'data_type': 'genome',
-          'id': 'ref_archived',
-          'name': 'Archived',
+          'id': 3,
+          'name': 'Reference',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -309,14 +309,14 @@
           'handle': 'myersmitchell',
           'id': 2,
         }),
-        'workflow': 'nuvs',
+        'workflow': 'pathoscope',
       }),
       'modified_otu_count': 0,
       'ready': True,
       'reference': dict({
         'data_type': 'genome',
-        'id': 'ref_active_b',
-        'name': 'Active B',
+        'id': 2,
+        'name': 'Reference',
       }),
       'user': dict({
         'handle': 'myersmitchell',
@@ -338,14 +338,14 @@
           'handle': 'myersmitchell',
           'id': 2,
         }),
-        'workflow': 'nuvs',
+        'workflow': 'pathoscope',
       }),
       'modified_otu_count': 0,
       'ready': True,
       'reference': dict({
         'data_type': 'genome',
-        'id': 'ref_active_a',
-        'name': 'Active A',
+        'id': 1,
+        'name': 'Reference',
       }),
       'user': dict({
         'handle': 'myersmitchell',
@@ -371,14 +371,14 @@
           'handle': 'myersmitchell',
           'id': 2,
         }),
-        'workflow': 'nuvs',
+        'workflow': 'pathoscope',
       }),
       'modified_otu_count': 0,
       'ready': True,
       'reference': dict({
         'data_type': 'genome',
-        'id': 'ref_archived',
-        'name': 'Archived',
+        'id': 3,
+        'name': 'Reference',
       }),
       'user': dict({
         'handle': 'myersmitchell',
@@ -404,14 +404,14 @@
           'handle': 'myersmitchell',
           'id': 2,
         }),
-        'workflow': 'nuvs',
+        'workflow': 'pathoscope',
       }),
       'modified_otu_count': 0,
       'ready': True,
       'reference': dict({
         'data_type': 'genome',
-        'id': 'ref_active_b',
-        'name': 'Active B',
+        'id': 2,
+        'name': 'Reference',
       }),
       'user': dict({
         'handle': 'myersmitchell',
@@ -433,14 +433,14 @@
           'handle': 'myersmitchell',
           'id': 2,
         }),
-        'workflow': 'nuvs',
+        'workflow': 'pathoscope',
       }),
       'modified_otu_count': 0,
       'ready': True,
       'reference': dict({
         'data_type': 'genome',
-        'id': 'ref_active_a',
-        'name': 'Active A',
+        'id': 1,
+        'name': 'Reference',
       }),
       'user': dict({
         'handle': 'myersmitchell',
@@ -462,14 +462,14 @@
           'handle': 'myersmitchell',
           'id': 2,
         }),
-        'workflow': 'nuvs',
+        'workflow': 'pathoscope',
       }),
       'modified_otu_count': 0,
       'ready': True,
       'reference': dict({
         'data_type': 'genome',
-        'id': 'ref_archived',
-        'name': 'Archived',
+        'id': 3,
+        'name': 'Reference',
       }),
       'user': dict({
         'handle': 'myersmitchell',
@@ -478,12 +478,6 @@
       'version': 0,
     }),
   ])
-# ---
-# name: test_finalize[404_reference]
-  dict({
-    'id': 'not_found',
-    'message': 'Not found',
-  })
 # ---
 # name: test_finalize[409_fasta]
   dict({
@@ -591,8 +585,8 @@
     'ready': True,
     'reference': dict({
       'data_type': 'genome',
-      'id': 'hxn167',
-      'name': 'Test A',
+      'id': 1,
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
@@ -617,7 +611,7 @@
     'lower_name': 'prunus virus f',
     'name': 'Prunus virus F',
     'reference': dict({
-      'id': 'hxn167',
+      'id': 1,
     }),
     'remote_id': None,
     'schema': list([
@@ -645,8 +639,8 @@
         }),
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
-          'name': 'Foo',
+          'id': 1,
+          'name': 'Reference',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -669,8 +663,8 @@
         }),
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
-          'name': 'Foo',
+          'id': 1,
+          'name': 'Reference',
         }),
         'user': dict({
           'handle': 'modonnell',
@@ -693,8 +687,8 @@
         }),
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
-          'name': 'Foo',
+          'id': 1,
+          'name': 'Reference',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -717,8 +711,8 @@
         }),
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
-          'name': 'Foo',
+          'id': 1,
+          'name': 'Reference',
         }),
         'user': dict({
           'handle': 'myersmitchell',
@@ -783,8 +777,8 @@
     'ready': False,
     'reference': dict({
       'data_type': 'genome',
-      'id': 'bar',
-      'name': 'Bar',
+      'id': 1,
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'myersmitchell',

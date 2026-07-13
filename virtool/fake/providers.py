@@ -48,7 +48,6 @@ NUCLEOTIDE_PROBABILITIES = OrderedDict(
 
 
 WORKFLOW_NAMES = [
-    "aodp",
     "build_index",
     "create_sample",
     "create_subtraction",

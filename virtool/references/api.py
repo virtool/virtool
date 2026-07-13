@@ -15,7 +15,6 @@ from aiohttp_pydantic.oas.typing import (
 )
 from pydantic import Field
 
-import virtool.references.db
 from virtool.api.custom_json import json_response
 from virtool.api.errors import (
     APIBadRequest,
@@ -40,7 +39,6 @@ from virtool.indexes.oas import ListIndexesResponse
 from virtool.models.roles import AdministratorRole
 from virtool.otus.models import OTU, OTUSearchResult
 from virtool.otus.oas import CreateOTURequest
-from virtool.references.db import check_right
 from virtool.references.models import (
     Reference,
     ReferenceGroup,
@@ -131,7 +129,7 @@ class ReferencesView(PydanticView):
 @routes.view("/references/v1/{ref_id}")
 @routes.jobs_api.get("/references/v1/{ref_id}")
 class ReferenceView(PydanticView):
-    async def get(self, ref_id: str, /) -> r200[Reference] | r403 | r404:
+    async def get(self, ref_id: int | str, /) -> r200[Reference] | r403 | r404:
         """Get a reference.
 
         Fetches the details of a reference.
@@ -151,7 +149,7 @@ class ReferenceView(PydanticView):
 
     async def patch(
         self,
-        ref_id: str,
+        ref_id: int | str,
         /,
         data: UpdateReferenceRequest,
     ) -> r200[Reference] | r403 | r404:
@@ -165,8 +163,16 @@ class ReferenceView(PydanticView):
             404: Not found
 
         """
+        client = self.request["client"]
+
         try:
-            if not await check_right(self.request, ref_id, "modify"):
+            if not await get_data_from_req(self.request).references.check_right(
+                ref_id,
+                "modify",
+                user_id=client.user_id,
+                group_ids=client.groups,
+                administrator=client.administrator_role == AdministratorRole.FULL,
+            ):
                 raise APIInsufficientRights()
         except ResourceNotFoundError:
             raise APINotFound
@@ -186,7 +192,7 @@ class ReferenceView(PydanticView):
 
 @routes.view("/references/v1/{ref_id}/archive")
 class ReferenceArchiveView(PydanticView):
-    async def post(self, ref_id: str, /) -> r200[Reference] | r403 | r404 | r409:
+    async def post(self, ref_id: int | str, /) -> r200[Reference] | r403 | r404 | r409:
         """Archive a reference.
 
         Marks a reference as archived. Archiving the official plant viruses
@@ -198,8 +204,16 @@ class ReferenceArchiveView(PydanticView):
             404: Not found
             409: Cannot archive the official plant viruses reference
         """
+        client = self.request["client"]
+
         try:
-            if not await check_right(self.request, ref_id, "modify"):
+            if not await get_data_from_req(self.request).references.check_right(
+                ref_id,
+                "modify",
+                user_id=client.user_id,
+                group_ids=client.groups,
+                administrator=client.administrator_role == AdministratorRole.FULL,
+            ):
                 raise APIInsufficientRights()
         except ResourceNotFoundError:
             raise APINotFound
@@ -218,7 +232,7 @@ class ReferenceArchiveView(PydanticView):
 
 @routes.view("/references/v1/{ref_id}/unarchive")
 class ReferenceUnarchiveView(PydanticView):
-    async def post(self, ref_id: str, /) -> r200[Reference] | r403 | r404:
+    async def post(self, ref_id: int | str, /) -> r200[Reference] | r403 | r404:
         """Unarchive a reference.
 
         Marks a reference as not archived.
@@ -228,8 +242,16 @@ class ReferenceUnarchiveView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
+        client = self.request["client"]
+
         try:
-            if not await check_right(self.request, ref_id, "modify"):
+            if not await get_data_from_req(self.request).references.check_right(
+                ref_id,
+                "modify",
+                user_id=client.user_id,
+                group_ids=client.groups,
+                administrator=client.administrator_role == AdministratorRole.FULL,
+            ):
                 raise APIInsufficientRights()
         except ResourceNotFoundError:
             raise APINotFound
@@ -248,7 +270,7 @@ class ReferenceUnarchiveView(PydanticView):
 class ReferenceOTUsView(PydanticView):
     async def get(
         self,
-        ref_id: str,
+        ref_id: int | str,
         /,
         find: str | None,
         verified: bool | None,
@@ -278,7 +300,7 @@ class ReferenceOTUsView(PydanticView):
 
     async def post(
         self,
-        ref_id: str,
+        ref_id: int | str,
         /,
         data: CreateOTURequest,
     ) -> r201[OTU] | r400 | r403 | r404:
@@ -286,11 +308,15 @@ class ReferenceOTUsView(PydanticView):
 
         Creates an OTU.
         """
+        client = self.request["client"]
+
         try:
-            if not await virtool.references.db.check_right(
-                self.request,
+            if not await get_data_from_req(self.request).references.check_right(
                 ref_id,
                 "modify_otu",
+                user_id=client.user_id,
+                group_ids=client.groups,
+                administrator=client.administrator_role == AdministratorRole.FULL,
             ):
                 raise APIInsufficientRights()
         except ResourceNotFoundError:
@@ -300,7 +326,7 @@ class ReferenceOTUsView(PydanticView):
             otu = await get_data_from_req(self.request).references.create_otu(
                 ref_id,
                 data,
-                self.request["client"].user_id,
+                client.user_id,
             )
         except ResourceNotFoundError:
             raise APINotFound()
@@ -316,7 +342,7 @@ class ReferenceOTUsView(PydanticView):
 class ReferenceHistoryView(PydanticView):
     async def get(
         self,
-        ref_id: str,
+        ref_id: int | str,
         /,
         unbuilt: bool | None = Field(
             default=None,
@@ -351,7 +377,7 @@ class ReferenceHistoryView(PydanticView):
 class ReferenceIndexesView(PydanticView):
     async def get(
         self,
-        ref_id: str,
+        ref_id: int | str,
         /,
         page: Page = 1,
         per_page: PerPage = 25,
@@ -378,7 +404,7 @@ class ReferenceIndexesView(PydanticView):
 
     async def post(
         self,
-        ref_id: str,
+        ref_id: int | str,
         /,
     ) -> r201[IndexMinimal] | r403 | r404:
         """Create an index.
@@ -394,11 +420,24 @@ class ReferenceIndexesView(PydanticView):
             404: Not found
 
         """
+        client = self.request["client"]
+
+        try:
+            if not await get_data_from_req(self.request).references.check_right(
+                ref_id,
+                "build",
+                user_id=client.user_id,
+                group_ids=client.groups,
+                administrator=client.administrator_role == AdministratorRole.FULL,
+            ):
+                raise APIInsufficientRights()
+        except ResourceNotFoundError:
+            raise APINotFound()
+
         try:
             document = await get_data_from_req(self.request).references.create_index(
                 ref_id,
-                self.request,
-                self.request["client"].user_id,
+                client.user_id,
             )
         except ResourceConflictError as err:
             raise APIConflict(str(err))
@@ -416,7 +455,7 @@ class ReferenceIndexesView(PydanticView):
 
 @routes.view("/references/v1/{ref_id}/groups")
 class ReferenceGroupsView(PydanticView):
-    async def get(self, ref_id: str, /) -> r200[ReferenceGroup] | r404:
+    async def get(self, ref_id: int | str, /) -> r200[ReferenceGroup] | r404:
         """List groups.
 
         Lists all groups that have access to the reference.
@@ -436,7 +475,7 @@ class ReferenceGroupsView(PydanticView):
 
     async def post(
         self,
-        ref_id: str,
+        ref_id: int | str,
         /,
         data: CreateReferenceGroupRequest,
     ) -> r201[ReferenceGroup] | r400 | r403 | r404:
@@ -471,7 +510,7 @@ class ReferenceGroupsView(PydanticView):
 class ReferenceGroupView(PydanticView):
     async def get(
         self,
-        ref_id: str,
+        ref_id: int | str,
         group_id: int | str,
         /,
     ) -> r200[ReferenceGroup] | r404:
@@ -495,7 +534,7 @@ class ReferenceGroupView(PydanticView):
 
     async def patch(
         self,
-        ref_id: str,
+        ref_id: int | str,
         group_id: int | str,
         /,
         data: ReferenceRightsRequest,
@@ -509,11 +548,15 @@ class ReferenceGroupView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
+        client = self.request["client"]
+
         try:
-            if not await virtool.references.db.check_right(
-                self.request,
+            if not await get_data_from_req(self.request).references.check_right(
                 ref_id,
                 "modify",
+                user_id=client.user_id,
+                group_ids=client.groups,
+                administrator=client.administrator_role == AdministratorRole.FULL,
             ):
                 raise APIInsufficientRights()
         except ResourceNotFoundError:
@@ -530,7 +573,9 @@ class ReferenceGroupView(PydanticView):
 
         return json_response(group)
 
-    async def delete(self, ref_id: str, group_id: int | str, /) -> r204 | r403 | r404:
+    async def delete(
+        self, ref_id: int | str, group_id: int | str, /
+    ) -> r204 | r403 | r404:
         """Delete a group.
 
         Deletes a group from the reference.
@@ -540,11 +585,15 @@ class ReferenceGroupView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
+        client = self.request["client"]
+
         try:
-            if not await virtool.references.db.check_right(
-                self.request,
+            if not await get_data_from_req(self.request).references.check_right(
                 ref_id,
                 "modify",
+                user_id=client.user_id,
+                group_ids=client.groups,
+                administrator=client.administrator_role == AdministratorRole.FULL,
             ):
                 raise APIInsufficientRights()
         except ResourceNotFoundError:
@@ -565,7 +614,7 @@ class ReferenceGroupView(PydanticView):
 class ReferenceUsersView(PydanticView):
     async def post(
         self,
-        ref_id: str,
+        ref_id: int | str,
         /,
         data: CreateReferenceUserRequest,
     ) -> r201[list[ReferenceUser]] | r400 | r403 | r404:
@@ -580,11 +629,15 @@ class ReferenceUsersView(PydanticView):
             404: Not found
 
         """
+        client = self.request["client"]
+
         try:
-            if not await virtool.references.db.check_right(
-                self.request,
+            if not await get_data_from_req(self.request).references.check_right(
                 ref_id,
                 "modify",
+                user_id=client.user_id,
+                group_ids=client.groups,
+                administrator=client.administrator_role == AdministratorRole.FULL,
             ):
                 raise APIInsufficientRights()
         except ResourceNotFoundError:
@@ -611,7 +664,7 @@ class ReferenceUsersView(PydanticView):
 class ReferenceUserView(PydanticView):
     async def patch(
         self,
-        ref_id: str,
+        ref_id: int | str,
         user_id: int,
         /,
         data: ReferenceRightsRequest,
@@ -625,11 +678,15 @@ class ReferenceUserView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
+        client = self.request["client"]
+
         try:
-            if not await virtool.references.db.check_right(
-                self.request,
+            if not await get_data_from_req(self.request).references.check_right(
                 ref_id,
                 "modify",
+                user_id=client.user_id,
+                group_ids=client.groups,
+                administrator=client.administrator_role == AdministratorRole.FULL,
             ):
                 raise APIInsufficientRights()
         except ResourceNotFoundError:
@@ -646,7 +703,7 @@ class ReferenceUserView(PydanticView):
 
         return json_response(user)
 
-    async def delete(self, ref_id: str, user_id: int, /) -> r204 | r403 | r404:
+    async def delete(self, ref_id: int | str, user_id: int, /) -> r204 | r403 | r404:
         """Remove a user.
 
         Removes a user from the reference.
@@ -656,11 +713,15 @@ class ReferenceUserView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
+        client = self.request["client"]
+
         try:
-            if not await virtool.references.db.check_right(
-                self.request,
+            if not await get_data_from_req(self.request).references.check_right(
                 ref_id,
                 "modify",
+                user_id=client.user_id,
+                group_ids=client.groups,
+                administrator=client.administrator_role == AdministratorRole.FULL,
             ):
                 raise APIInsufficientRights()
         except ResourceNotFoundError:

@@ -5,29 +5,26 @@ import datetime
 from typing import TYPE_CHECKING
 
 import pymongo
-from aiohttp.web import Request
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 
 import virtool.history.db
-import virtool.mongo.utils
 import virtool.utils
-from virtool.data.errors import ResourceNotFoundError
+from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.topg import (
     compose_legacy_id_mongo_match,
-    compose_legacy_id_multi_expression,
     compose_legacy_id_single_expression,
     compose_legacy_id_subquery,
     resolve_legacy_id,
 )
 from virtool.data.transforms import apply_transforms
-from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
-from virtool.history.db import bulk_delete_history, bulk_insert_history
-from virtool.history.sql import SQLLegacyHistory
+from virtool.history.db import bulk_insert_history
+from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.models.enums import HistoryMethod
-from virtool.models.roles import AdministratorRole
+from virtool.otus.db import bulk_insert_otu_rows, bulk_insert_sequence_rows
+from virtool.otus.sql import SQLOTU
 from virtool.references.alot import prepare_otu_insertion
 from virtool.references.sql import (
     SQLReference,
@@ -41,7 +38,6 @@ from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
 if TYPE_CHECKING:
-    from virtool.api.client import UserClient
     from virtool.mongo.core import Mongo
 
 
@@ -55,39 +51,19 @@ async def compose_reference_id_match(pg: AsyncEngine, ref_id: int | str) -> dict
     return await compose_legacy_id_mongo_match(pg, SQLReference, ref_id)
 
 
-async def resolve_reference_legacy_id(pg: AsyncEngine, ref_id: int | str) -> str:
-    """Return the legacy Mongo string id for a reference.
-
-    ``references`` still live in Mongo keyed by their legacy string ``_id`` while
-    ``otus`` and ``sequences`` may already embed the integer
-    ``legacy_references`` primary key. Callers that hold an embedded id and need
-    to reach the Mongo ``references`` document resolve it here. A legacy string id
-    passes through unchanged.
-    """
-    if isinstance(ref_id, str):
-        return ref_id
-
-    async with AsyncSession(pg) as session:
-        legacy_id = await session.scalar(
-            select(SQLReference.legacy_id).where(SQLReference.id == ref_id),
-        )
-
-    if legacy_id is None:
-        raise ResourceNotFoundError
-
-    return legacy_id
-
-
 async def write_legacy_reference(
     pg_session: AsyncSession,
     document: Document,
-) -> None:
-    """Insert a ``legacy_references`` row and its seeded rights from a Mongo reference
-    ``document`` into the open Postgres session.
+) -> int:
+    """Insert a ``legacy_references`` row and its seeded rights from a reference
+    ``document`` into the open Postgres session and return the new primary key.
 
-    ``cloned_from`` holds the source reference's legacy id, which is resolved to its
-    Postgres primary key. If the source has no Postgres row yet, the foreign key is left
-    ``NULL`` for the backfill to fill in later.
+    ``legacy_id`` is taken from the document's ``_id`` when present and is otherwise
+    left ``NULL`` for a Postgres-native reference.
+
+    ``cloned_from`` holds the source reference's id, which is resolved to its Postgres
+    primary key. If the source has no Postgres row yet, the foreign key is left ``NULL``
+    for the backfill to fill in later.
     """
     cloned_from = document.get("cloned_from")
 
@@ -145,6 +121,8 @@ async def write_legacy_reference(
             ),
         )
 
+    return reference.id
+
 
 def map_reference_minimal(
     row: SQLReference,
@@ -159,15 +137,12 @@ def map_reference_minimal(
     ``AttachImportedFromTransform`` transforms expect. ``cloned_from`` is resolved by
     the caller via :func:`get_cloned_from_lookup`.
 
-    The public ``id`` remains the legacy Mongo string id for this migration step; the
-    integer primary key cutover happens later.
-
     :param row: a ``legacy_references`` row
     :param cloned_from: the resolved nested cloned-from doc, or ``None``
     :return: the base reference document
     """
     return {
-        "id": row.legacy_id,
+        "id": row.id,
         "name": row.name,
         "organism": row.organism,
         "created_at": row.created_at,
@@ -187,9 +162,7 @@ async def get_cloned_from_lookup(
     """Map each source ``cloned_from_id`` in ``rows`` to its nested cloned-from doc.
 
     The denormalized ``cloned_from.name`` snapshot is not stored in Postgres; the
-    source reference's current ``name`` is re-derived here via its primary key. The
-    nested ``id`` remains the source's legacy Mongo string id, matching the
-    pre-migration response shape.
+    source reference's current ``name`` is re-derived here via its primary key.
 
     :param session: an active Postgres session
     :param rows: the reference rows whose ``cloned_from`` docs are needed
@@ -201,12 +174,12 @@ async def get_cloned_from_lookup(
         return {}
 
     result = await session.execute(
-        select(SQLReference.id, SQLReference.legacy_id, SQLReference.name).where(
+        select(SQLReference.id, SQLReference.name).where(
             SQLReference.id.in_(source_ids),
         ),
     )
 
-    return {id_: {"id": legacy_id, "name": name} for id_, legacy_id, name in result}
+    return {id_: {"id": id_, "name": name} for id_, name in result}
 
 
 async def processor(
@@ -223,12 +196,10 @@ async def processor(
     :param cloned_from: the resolved nested cloned-from doc, or ``None``
     :return: the processed document
     """
-    ref_id = row.legacy_id
-
     latest_build, otu_count, unbuilt_count = await asyncio.gather(
-        get_latest_build(mongo, pg, ref_id),
-        get_otu_count(mongo, pg, ref_id),
-        get_unbuilt_count(pg, ref_id),
+        get_latest_build(mongo, pg, row.id),
+        get_otu_count(mongo, pg, row.id),
+        get_unbuilt_count(pg, row.id),
     )
 
     return {
@@ -337,88 +308,38 @@ async def get_reference_users(
     ]
 
 
-async def check_right(req: Request, ref_id: int | str, right: str) -> bool:
-    client: UserClient = req["client"]
-
-    if client.administrator_role == AdministratorRole.FULL:
-        return True
-
-    async with AsyncSession(req.app["pg"]) as session:
-        reference_pk = await session.scalar(
-            select(SQLReference.id).where(
-                compose_legacy_id_single_expression(SQLReference, ref_id),
-            ),
-        )
-
-        if reference_pk is None:
-            raise ResourceNotFoundError
-
-        if client.user_id is not None:
-            user_query = select(SQLReferenceUser.reference_id).where(
-                SQLReferenceUser.reference_id == reference_pk,
-                SQLReferenceUser.user_id == client.user_id,
-            )
-
-            if right != "read":
-                user_query = user_query.where(
-                    getattr(SQLReferenceUser, right).is_(True),
-                )
-
-            if await session.scalar(user_query.limit(1)) is not None:
-                return True
-
-        if client.groups:
-            group_query = (
-                select(SQLReferenceGroup.reference_id)
-                .join(SQLGroup, SQLGroup.id == SQLReferenceGroup.group_id)
-                .where(
-                    SQLReferenceGroup.reference_id == reference_pk,
-                    compose_legacy_id_multi_expression(SQLGroup, client.groups),
-                )
-            )
-
-            if right != "read":
-                group_query = group_query.where(
-                    getattr(SQLReferenceGroup, right).is_(True),
-                )
-
-            if await session.scalar(group_query.limit(1)) is not None:
-                return True
-
-    return False
-
-
 async def check_source_type(
-    mongo: "Mongo",
     pg: AsyncEngine,
     ref_id: int | str,
     source_type: str,
 ) -> bool:
     """Check `source_type` is valid based on the reference configuration.
 
-    :param mongo: the application MongoDB client
     :param pg: the application PostgreSQL engine
     :param ref_id: the reference context
     :param source_type: the source type to check
     :return: source type is valid
 
     """
-    ref_id = await resolve_reference_legacy_id(pg, ref_id)
-
-    document = await mongo.references.find_one(
-        ref_id,
-        ["restrict_source_types", "source_types"],
-    )
-
-    restrict_source_types = document.get("restrict_source_types", False)
-    source_types = document.get("source_types", [])
-
     if source_type == "unknown":
         return True
 
+    async with AsyncSession(pg) as session:
+        row = (
+            await session.execute(
+                select(
+                    SQLReference.restrict_source_types,
+                    SQLReference.source_types,
+                ).where(compose_legacy_id_single_expression(SQLReference, ref_id)),
+            )
+        ).one_or_none()
+
+    if row is None:
+        raise ResourceError(f"Could not find reference {ref_id} in postgres")
+
     # Return `False` when source_types are restricted and source_type is not allowed.
-    if source_type and restrict_source_types:
-        return source_type in source_types
+    if source_type and row.restrict_source_types:
+        return source_type in row.source_types
 
     # Return `True` when:
     # - source_type is empty string (unknown)
@@ -442,18 +363,14 @@ async def compose_reference_ids_match(
     are included for every matching reference. This backs the orphan and lifecycle
     filters on the index list, which scope indexes to references that still exist.
 
-    References with no ``legacy_id`` are excluded. ``legacy_id`` remains the public
-    reference identifier until the integer primary key becomes canonical, so a
-    Postgres-native reference cannot yet be shaped into a ``ReferenceNested``. Drop
-    this constraint when the public identifier flips.
+    A Postgres-native reference has no ``legacy_id``; only its primary key is
+    contributed to the match.
 
     :param pg: the application PostgreSQL engine
     :param archived: lifecycle filter mode
     :return: a Mongo ``$in`` match value covering both id forms
     """
-    query = select(SQLReference.id, SQLReference.legacy_id).where(
-        SQLReference.legacy_id.is_not(None),
-    )
+    query = select(SQLReference.id, SQLReference.legacy_id)
 
     if archived is not None:
         query = query.where(SQLReference.archived == archived)
@@ -461,10 +378,10 @@ async def compose_reference_ids_match(
     async with AsyncSession(pg) as session:
         rows = (await session.execute(query)).all()
 
-    return {"$in": [value for row in rows for value in row]}
+    return {"$in": [value for row in rows for value in row if value is not None]}
 
 
-async def get_contributors(pg, ref_id: str) -> list[Document] | None:
+async def get_contributors(pg, ref_id: int | str) -> list[Document] | None:
     """Return a list of contributors and their contribution count for a specific ref.
 
     :param pg: the PostgreSQL engine
@@ -476,7 +393,7 @@ async def get_contributors(pg, ref_id: str) -> list[Document] | None:
 
 
 async def get_latest_build(
-    mongo: "Mongo", pg: AsyncEngine, ref_id: str
+    mongo: "Mongo", pg: AsyncEngine, ref_id: int | str
 ) -> Document | None:
     """Return the latest index build for the ref.
 
@@ -503,7 +420,7 @@ async def get_latest_build(
         )
 
 
-async def get_manifest(mongo: "Mongo", pg: AsyncEngine, ref_id: str) -> Document:
+async def get_manifest(mongo: "Mongo", pg: AsyncEngine, ref_id: int | str) -> Document:
     """Generate a dict of otu document version numbers keyed by the document id.
 
     This is used to make sure only changes made at the time the index rebuild was
@@ -524,7 +441,7 @@ async def get_manifest(mongo: "Mongo", pg: AsyncEngine, ref_id: str) -> Document
     }
 
 
-async def get_otu_count(mongo: "Mongo", pg: AsyncEngine, ref_id: str) -> int:
+async def get_otu_count(mongo: "Mongo", pg: AsyncEngine, ref_id: int | str) -> int:
     """Get the number of OTUs associated with the given `ref_id`.
 
     :param mongo: the application database client
@@ -538,7 +455,7 @@ async def get_otu_count(mongo: "Mongo", pg: AsyncEngine, ref_id: str) -> int:
     )
 
 
-async def get_unbuilt_count(pg: AsyncEngine, ref_id: str) -> int:
+async def get_unbuilt_count(pg: AsyncEngine, ref_id: int | str) -> int:
     """Return a count of unbuilt history changes associated with a given `ref_id`.
 
     :param pg: the application PostgreSQL database object
@@ -559,35 +476,43 @@ async def get_unbuilt_count(pg: AsyncEngine, ref_id: str) -> int:
 
 
 async def create_clone(
-    mongo: "Mongo",
+    pg: AsyncEngine,
     settings: Settings,
     name: str,
-    clone_from: str,
+    clone_from: int | str,
     description: str,
     user_id: int,
 ) -> Document:
-    source = await mongo.references.find_one(clone_from)
+    async with AsyncSession(pg) as session:
+        source = (
+            await session.execute(
+                select(SQLReference.name, SQLReference.organism).where(
+                    compose_legacy_id_single_expression(SQLReference, clone_from),
+                ),
+            )
+        ).one_or_none()
 
-    name = name or "Clone of " + source["name"]
+    if source is None:
+        raise ResourceNotFoundError
+
+    name = name or "Clone of " + source.name
 
     document = await create_document(
-        mongo,
         settings,
         name,
-        source["organism"],
+        source.organism,
         description,
-        source["data_type"],
+        "genome",
         created_at=virtool.utils.timestamp(),
         user_id=user_id,
     )
 
-    document["cloned_from"] = {"id": clone_from, "name": source["name"]}
+    document["cloned_from"] = {"id": clone_from, "name": source.name}
 
     return document
 
 
 async def create_document(
-    mongo: "Mongo",
     settings: Settings,
     name: str,
     organism: str | None,
@@ -598,11 +523,11 @@ async def create_document(
     user_id: int | None = None,
     users=None,
 ):
-    if ref_id and await mongo.references.count_documents({"_id": ref_id}):
-        raise DatabaseError("ref_id already exists")
+    """Build a reference document for :func:`write_legacy_reference`.
 
-    ref_id = ref_id or await virtool.mongo.utils.get_new_id(mongo.references)
-
+    Pass ``ref_id`` to seed a legacy ``_id`` (mirrored to ``legacy_id``); omit it for
+    a Postgres-native reference whose primary key the database assigns.
+    """
     user = None
 
     if user_id:
@@ -620,7 +545,6 @@ async def create_document(
         ]
 
     document = {
-        "_id": ref_id,
         "archived": False,
         "created_at": created_at,
         "data_type": data_type,
@@ -635,11 +559,13 @@ async def create_document(
         "user": user,
     }
 
+    if ref_id is not None:
+        document["_id"] = ref_id
+
     return document
 
 
 async def create_import(
-    mongo: "Mongo",
     settings: Settings,
     name: str,
     description: str,
@@ -650,7 +576,6 @@ async def create_import(
 ) -> dict:
     """Import a previously exported Virtool reference.
 
-    :param mongo: the application database client
     :param settings: the application settings object
     :param name: the name for the new reference
     :param description: a description for the new reference
@@ -664,7 +589,6 @@ async def create_import(
     created_at = virtool.utils.timestamp()
 
     document = await create_document(
-        mongo,
         settings,
         name or "Unnamed Import",
         organism,
@@ -677,6 +601,15 @@ async def create_import(
     document["imported_from"] = {"id": upload_id}
 
     return document
+
+
+_REFERENCE_OTU_CHUNK_SIZE = 1000
+"""Number of OTUs written per transaction in the bulk reference populate paths.
+
+Reference imports and clones can involve tens of thousands of OTUs and 100k+
+sequences. Writing them in bounded chunks with a commit per chunk keeps each
+transaction small instead of holding one enormous transaction open.
+"""
 
 
 async def populate_insert_only_reference(
@@ -705,67 +638,101 @@ async def populate_insert_only_reference(
         for otu in otus
     ]
 
-    diff_rows = [
-        {"change_id": insertion.history.id, "diff": insertion.history.diff}
-        for insertion in insertions
-    ]
-
-    await bulk_insert_history(
-        pg,
-        diff_rows,
-        [insertion.history.document for insertion in insertions],
-    )
-
     try:
-        sequences = []
+        for start in range(0, len(insertions), _REFERENCE_OTU_CHUNK_SIZE):
+            chunk = insertions[start : start + _REFERENCE_OTU_CHUNK_SIZE]
 
-        for insertion in insertions:
-            sequences.extend(insertion.sequences)
+            chunk_otus = [insertion.otu for insertion in chunk]
+            chunk_sequences = [
+                sequence for insertion in chunk for sequence in insertion.sequences
+            ]
 
-        async with asyncio.TaskGroup() as tg:
-            tg.create_task(
-                mongo.otus.insert_many(
-                    [insertion.otu for insertion in insertions],
-                    None,
-                ),
-            )
-            tg.create_task(mongo.sequences.insert_many(sequences, None))
+            async with AsyncSession(pg) as pg_session:
+                await bulk_insert_otu_rows(pg_session, chunk_otus, reference_pk)
+                await bulk_insert_sequence_rows(pg_session, chunk_sequences)
+                await bulk_insert_history(
+                    pg_session,
+                    [
+                        {
+                            "change_id": insertion.history.id,
+                            "diff": insertion.history.diff,
+                        }
+                        for insertion in chunk
+                    ],
+                    [insertion.history.document for insertion in chunk],
+                )
+                await pg_session.commit()
+
+            async with asyncio.TaskGroup() as tg:
+                tg.create_task(mongo.otus.insert_many(chunk_otus, None))
+                tg.create_task(mongo.sequences.insert_many(chunk_sequences, None))
     except Exception:
-        await bulk_delete_history(pg, [row["change_id"] for row in diff_rows])
-
-        reference_id_match = await compose_reference_id_match(pg, reference_id)
-
-        await asyncio.gather(
-            mongo.sequences.delete_many({"reference.id": reference_id_match}),
-            mongo.otus.delete_many({"reference.id": reference_id_match}),
-        )
-
-        await mongo.references.delete_one({"_id": reference_id})
-
-        async with AsyncSession(pg) as session:
-            sql_reference_id = (
-                await session.execute(
-                    select(SQLReference.id).where(
-                        SQLReference.legacy_id == reference_id,
-                    ),
-                )
-            ).scalar_one_or_none()
-
-            if sql_reference_id is not None:
-                await session.execute(
-                    delete(SQLReferenceUser).where(
-                        SQLReferenceUser.reference_id == sql_reference_id,
-                    ),
-                )
-                await session.execute(
-                    delete(SQLReferenceGroup).where(
-                        SQLReferenceGroup.reference_id == sql_reference_id,
-                    ),
-                )
-                await session.execute(
-                    delete(SQLReference).where(SQLReference.id == sql_reference_id),
-                )
-
-            await session.commit()
+        await _rollback_insert_only_reference(mongo, pg, reference_id)
 
         raise
+
+
+async def _rollback_insert_only_reference(
+    mongo: "Mongo",
+    pg: AsyncEngine,
+    reference_id: str,
+) -> None:
+    """Undo a partially completed bulk reference populate.
+
+    Deletes every history, OTU, sequence and rights row committed for the reference
+    and the reference itself in a single Postgres transaction, then deletes the
+    matching Mongo documents. Every Postgres delete is scoped to the reference's
+    primary key, so the cleanup is atomic and can never touch history rows that
+    belong to another reference. The OTU rows are deleted before the reference
+    because ``legacy_otus.reference_id`` has no cascade; the sequence rows cascade
+    from their OTUs.
+    """
+    async with AsyncSession(pg) as session:
+        sql_reference_id = (
+            await session.execute(
+                select(SQLReference.id).where(
+                    compose_legacy_id_single_expression(SQLReference, reference_id),
+                ),
+            )
+        ).scalar_one_or_none()
+
+        if sql_reference_id is not None:
+            history_ids = select(SQLLegacyHistory.id).where(
+                SQLLegacyHistory.reference_id == sql_reference_id,
+            )
+
+            await session.execute(
+                delete(SQLLegacyHistoryDiff).where(
+                    SQLLegacyHistoryDiff.history_id.in_(history_ids),
+                ),
+            )
+            await session.execute(
+                delete(SQLLegacyHistory).where(
+                    SQLLegacyHistory.reference_id == sql_reference_id,
+                ),
+            )
+            await session.execute(
+                delete(SQLOTU).where(SQLOTU.reference_id == sql_reference_id),
+            )
+            await session.execute(
+                delete(SQLReferenceUser).where(
+                    SQLReferenceUser.reference_id == sql_reference_id,
+                ),
+            )
+            await session.execute(
+                delete(SQLReferenceGroup).where(
+                    SQLReferenceGroup.reference_id == sql_reference_id,
+                ),
+            )
+            await session.execute(
+                delete(SQLReference).where(SQLReference.id == sql_reference_id),
+            )
+
+        await session.commit()
+
+    reference_id_match = await compose_reference_id_match(pg, reference_id)
+
+    await asyncio.gather(
+        mongo.sequences.delete_many({"reference.id": reference_id_match}),
+        mongo.otus.delete_many({"reference.id": reference_id_match}),
+    )

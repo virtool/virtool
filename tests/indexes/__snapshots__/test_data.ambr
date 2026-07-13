@@ -69,12 +69,12 @@
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'id': 1,
       'progress': 100,
-      'state': <JobState.FAILED: 'failed'>,
+      'state': <JobState.SUCCEEDED: 'succeeded'>,
       'user': dict({
         'handle': 'leeashley',
         'id': 1,
       }),
-      'workflow': <Workflow.PATHOSCOPE: 'pathoscope'>,
+      'workflow': <Workflow.NUVS: 'nuvs'>,
     }),
     'manifest': dict({
     }),
@@ -84,8 +84,8 @@
     'ready': True,
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'bar',
-      'name': 'Bar',
+      'id': 1,
+      'name': 'Reference',
     }),
     'user': dict({
       'handle': 'leeashley',
@@ -106,7 +106,7 @@
     }),
     'ready': True,
     'reference': dict({
-      'id': 'bar',
+      'id': 1,
     }),
     'task': None,
     'user': dict({

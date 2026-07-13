@@ -9,7 +9,7 @@
       'version': 11,
     }),
     'job': dict({
-      'id': 3,
+      'id': 4,
       'progress': 0,
       'state': <JobState.PENDING: 'pending'>,
       'user': dict({
@@ -21,7 +21,7 @@
     'ready': False,
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'bf1b993c',
+      'id': 1,
       'name': 'Test Reference',
     }),
     'results': None,
@@ -68,7 +68,7 @@
         }),
         'job': dict({
           'created_at': 'approximately_now_datetime',
-          'id': 4,
+          'id': 6,
           'progress': 0,
           'state': <JobState.PENDING: 'pending'>,
           'user': dict({
@@ -80,7 +80,7 @@
         'ready': False,
         'reference': dict({
           'data_type': <ReferenceDataType.genome: 'genome'>,
-          'id': 'bf1b993c',
+          'id': 1,
           'name': 'Test Reference',
         }),
         'sample': dict({
@@ -123,7 +123,7 @@
         }),
         'job': dict({
           'created_at': 'approximately_now_datetime',
-          'id': 5,
+          'id': 7,
           'progress': 0,
           'state': <JobState.PENDING: 'pending'>,
           'user': dict({
@@ -135,7 +135,7 @@
         'ready': False,
         'reference': dict({
           'data_type': <ReferenceDataType.genome: 'genome'>,
-          'id': 'bf1b993c',
+          'id': 1,
           'name': 'Test Reference',
         }),
         'sample': dict({
@@ -167,7 +167,7 @@
         }),
         'job': dict({
           'created_at': 'approximately_now_datetime',
-          'id': 4,
+          'id': 6,
           'progress': 0,
           'state': <JobState.PENDING: 'pending'>,
           'user': dict({
@@ -179,7 +179,7 @@
         'ready': False,
         'reference': dict({
           'data_type': <ReferenceDataType.genome: 'genome'>,
-          'id': 'bf1b993c',
+          'id': 1,
           'name': 'Test Reference',
         }),
         'sample': dict({

@@ -26,18 +26,23 @@ class WorkflowState(Enum):
     COMPLETE = "complete"
     """The workflow has completed successfully for a sample."""
 
-    INCOMPATIBLE = "incompatible"
-    """The workflow is incompatible with a sample."""
-
     NONE = "none"
-    """The workflow is compatible with the sample, but has not been started."""
+    """The workflow has not been started for a sample."""
 
     PENDING = "pending"
     """The workflow is currently running, but not complete."""
 
 
 class SampleWorkflows(BaseModel):
-    aodp: WorkflowState
+    """The state of each workflow for a sample.
+
+    The AODP workflow was removed, but workflow images built against Virtool
+    ``39.59.0`` and earlier require ``aodp`` when they validate a sample response and
+    crash without it. It is always ``none`` and can be dropped once every workflow
+    image has been rebuilt.
+    """
+
+    aodp: WorkflowState = WorkflowState.NONE
     nuvs: WorkflowState
     pathoscope: WorkflowState
 
@@ -79,7 +84,7 @@ class SampleMinimal(SampleNested):
                         "id": "ihvze2u9",
                     },
                     "workflows": {
-                        "aodp": "incompatible",
+                        "aodp": "none",
                         "nuvs": "none",
                         "pathoscope": "none",
                     },
@@ -194,7 +199,7 @@ class Sample(SampleMinimal):
                 "subtractions": [{"id": 21, "name": "Malus domestica"}],
                 "user": {"administrator": True, "handle": "mrott", "id": "ihvze2u9"},
                 "workflows": {
-                    "aodp": "incompatible",
+                    "aodp": "none",
                     "nuvs": "none",
                     "pathoscope": "none",
                 },

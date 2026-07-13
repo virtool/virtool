@@ -13,17 +13,14 @@ from virtool.data.topg import compose_legacy_id_subquery
 from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.mongo.core import Mongo
-from virtool.pg.utils import get_row_by_id
 from virtool.references.db import get_manifest
-from virtool.references.sql import SQLReference, SQLReferenceUser
+from virtool.references.oas import CreateReferenceRequest
+from virtool.references.sql import SQLReference
 from virtool.references.tasks import (
     CloneReferenceTask,
     ImportReferenceTask,
 )
-from virtool.storage.protocol import StorageBackend
-from virtool.tasks.sql import SQLTask
-from virtool.uploads.sql import SQLUpload, UploadType
-from virtool.uploads.utils import upload_file_key
+from virtool.uploads.sql import UploadType
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
@@ -37,13 +34,10 @@ def assert_reference_created(
     async def func(
         query: dict | None = None,
     ):
-        references, otus, sequences = await asyncio.gather(
-            mongo.references.find_one("foo"),
+        otus, sequences = await asyncio.gather(
             mongo.otus.find(query or {}, sort=[("name", 1)]).to_list(None),
             mongo.sequences.find(query or {}, sort=[("accession", 1)]).to_list(None),
         )
-
-        assert references == snapshot(name="ref")
 
         assert otus == snapshot(
             name="otus",
@@ -120,9 +114,6 @@ async def test_import_reference_task(
     data_layer: DataLayer,
     example_path: Path,
     fake: DataFaker,
-    memory_storage: StorageBackend,
-    mongo: Mongo,
-    pg: AsyncEngine,
     static_time: StaticTime,
 ):
     user = await fake.users.create()
@@ -134,57 +125,12 @@ async def test_import_reference_task(
         user.id,
     )
 
-    upload_row = await get_row_by_id(pg, SQLUpload, upload.id)
-
-    await memory_storage.write(
-        upload_file_key(upload_row.name_on_disk),
-        fake_file_chunker(example_path / "indexes/reference.json.gz"),
+    reference = await data_layer.references.create(
+        CreateReferenceRequest(name="Test", import_from=upload.id),
+        user.id,
     )
 
-    await mongo.references.insert_one(
-        {
-            "_id": "foo",
-            "archived": False,
-            "created_at": static_time.datetime,
-            "data_type": "genome",
-            "description": "A test reference",
-            "user": {
-                "id": user.id,
-            },
-        },
-    )
-
-    async with AsyncSession(pg) as session:
-        session.add(
-            SQLReference(
-                legacy_id="foo",
-                name="foo",
-                description="",
-                created_at=static_time.datetime,
-                source_types=[],
-                user_id=user.id,
-            ),
-        )
-        session.add(
-            SQLTask(
-                id=1,
-                complete=False,
-                context={
-                    "name_on_disk": upload_row.name_on_disk,
-                    "ref_id": "foo",
-                    "user_id": user.id,
-                },
-                count=0,
-                progress=0,
-                step="load_file",
-                type="import_reference",
-                created_at=static_time.datetime,
-            ),
-        )
-
-        await session.commit()
-
-    task = await ImportReferenceTask.from_task_id(data_layer, 1)
+    task = await ImportReferenceTask.from_task_id(data_layer, reference.task.id)
 
     await task.run()
     await assert_reference_created()
@@ -195,11 +141,7 @@ async def create_reference(
     example_path: Path,
     fake: DataFaker,
     data_layer: DataLayer,
-    memory_storage: StorageBackend,
-    mongo: Mongo,
-    pg: AsyncEngine,
-    static_time: StaticTime,
-):
+) -> int:
     user = await fake.users.create()
 
     upload = await data_layer.uploads.create(
@@ -209,75 +151,27 @@ async def create_reference(
         user.id,
     )
 
-    upload_row = await get_row_by_id(pg, SQLUpload, upload.id)
-
-    await memory_storage.write(
-        upload_file_key(upload_row.name_on_disk),
-        fake_file_chunker(example_path / "indexes/reference.json.gz"),
+    reference = await data_layer.references.create(
+        CreateReferenceRequest(
+            name="Test",
+            description="This is a test reference.",
+            import_from=upload.id,
+        ),
+        user.id,
     )
 
-    async with AsyncSession(pg) as session:
-        session.add(
-            SQLReference(
-                legacy_id="bar",
-                name="bar",
-                description="",
-                created_at=static_time.datetime,
-                source_types=[],
-                user_id=user.id,
-            ),
-        )
-        session.add(
-            SQLTask(
-                id=2,
-                complete=False,
-                context={
-                    "name_on_disk": upload_row.name_on_disk,
-                    "ref_id": "bar",
-                    "user_id": user.id,
-                },
-                count=0,
-                created_at=static_time.datetime,
-                progress=0,
-                step="load_file",
-                type="import_reference",
-            ),
-        )
-
-        await asyncio.gather(
-            session.commit(),
-            mongo.references.insert_one(
-                {
-                    "_id": "bar",
-                    "archived": False,
-                    "created_at": static_time.datetime,
-                    "data_type": "genome",
-                    "description": "This is a test reference.",
-                    "groups": [],
-                    "name": "Test",
-                    "organism": "virus",
-                    "restrict_source_types": False,
-                    "source_types": [],
-                    "user": {"id": user.id},
-                    "users": [],
-                },
-            ),
-        )
-
-    task = await ImportReferenceTask.from_task_id(data_layer, 2)
+    task = await ImportReferenceTask.from_task_id(data_layer, reference.task.id)
     await task.run()
 
-    return "bar"
+    return reference.id
 
 
 async def test_clone_reference_task(
-    assert_reference_created,
-    create_reference: str,
+    create_reference: int,
     data_layer: DataLayer,
     fake: DataFaker,
     mongo: Mongo,
     pg: AsyncEngine,
-    static_time: StaticTime,
 ):
     manifest = await get_manifest(mongo, pg, create_reference)
 
@@ -285,56 +179,12 @@ async def test_clone_reference_task(
 
     user = await fake.users.create()
 
-    await mongo.references.insert_one(
-        {
-            "_id": "foo",
-            "archived": False,
-            "created_at": static_time.datetime,
-            "data_type": "genome",
-            "description": "A test reference",
-            "groups": [],
-            "name": "Test",
-            "organism": "virus",
-            "restrict_source_types": False,
-            "source_types": [],
-            "user": {
-                "id": user.id,
-            },
-            "users": [],
-        },
+    clone_reference = await data_layer.references.create(
+        CreateReferenceRequest(name="Clone", clone_from=create_reference),
+        user.id,
     )
 
-    async with AsyncSession(pg) as session:
-        session.add(
-            SQLReference(
-                legacy_id="foo",
-                name="foo",
-                description="",
-                created_at=static_time.datetime,
-                source_types=[],
-                user_id=user.id,
-            ),
-        )
-        session.add(
-            SQLTask(
-                id=1,
-                complete=False,
-                context={
-                    "manifest": manifest,
-                    "ref_id": "foo",
-                    "user_id": user.id,
-                },
-                count=0,
-                progress=0,
-                step="load_file",
-                type="import_reference",
-                created_at=static_time.datetime,
-            ),
-        )
-
-        await session.commit()
-
-    async def count_history(reference: str | None = None) -> int:
+    async def count_history(reference: int | None = None) -> int:
         query = select(func.count()).select_from(SQLLegacyHistory)
 
         if reference is not None:
@@ -349,10 +199,13 @@ async def test_clone_reference_task(
     assert await count_history() == 20
     assert await mongo.otus.count_documents({}) == 20
 
-    task_instance = await CloneReferenceTask.from_task_id(data_layer, 1)
+    task_instance = await CloneReferenceTask.from_task_id(
+        data_layer,
+        clone_reference.task.id,
+    )
     await task_instance.run()
 
-    task = await data_layer.tasks.get(1)
+    task = await data_layer.tasks.get(clone_reference.task.id)
 
     assert task.complete is True
     assert task.progress == 100
@@ -363,14 +216,14 @@ async def test_clone_reference_task(
     assert len(otus) == 40
 
     assert await count_history() == 40
-    assert await count_history("foo") == 20
+    assert await count_history(clone_reference.id) == 20
 
 
-async def _reference_row(pg: AsyncEngine, ref_id: str) -> SQLReference | None:
+async def _reference_row(pg: AsyncEngine, reference_id: int) -> SQLReference | None:
     async with AsyncSession(pg) as session:
         return (
             await session.execute(
-                select(SQLReference).where(SQLReference.legacy_id == ref_id),
+                select(SQLReference).where(SQLReference.id == reference_id),
             )
         ).scalar_one_or_none()
 
@@ -384,12 +237,8 @@ class TestImportReferenceDualWrite:
         data_layer: DataLayer,
         example_path: Path,
         fake: DataFaker,
-        memory_storage: StorageBackend,
-        mongo: Mongo,
-        pg: AsyncEngine,
-        static_time: StaticTime,
     ):
-        async def setup() -> DataLayer:
+        async def setup():
             user = await fake.users.create()
 
             upload = await data_layer.uploads.create(
@@ -399,80 +248,28 @@ class TestImportReferenceDualWrite:
                 user.id,
             )
 
-            upload_row = await get_row_by_id(pg, SQLUpload, upload.id)
-
-            await memory_storage.write(
-                upload_file_key(upload_row.name_on_disk),
-                fake_file_chunker(example_path / "indexes/reference.json.gz"),
-            )
-
-            await mongo.references.insert_one(
-                {
-                    "_id": "foo",
-                    "archived": False,
-                    "created_at": static_time.datetime,
-                    "data_type": "genome",
-                    "description": "A test reference",
-                    "organism": "",
-                    "user": {"id": user.id},
-                },
-            )
-
-            async with AsyncSession(pg) as session:
-                reference = SQLReference(
-                    legacy_id="foo",
+            reference = await data_layer.references.create(
+                CreateReferenceRequest(
                     name="Test",
                     description="A test reference",
-                    organism="",
-                    created_at=static_time.datetime,
-                    source_types=[],
-                    user_id=user.id,
-                )
-                session.add(reference)
-                await session.flush()
-                session.add(
-                    SQLReferenceUser(
-                        reference_id=reference.id,
-                        user_id=user.id,
-                        build=True,
-                        modify=True,
-                        modify_otu=True,
-                    ),
-                )
-                session.add(
-                    SQLTask(
-                        id=1,
-                        complete=False,
-                        context={
-                            "name_on_disk": upload_row.name_on_disk,
-                            "ref_id": "foo",
-                            "user_id": user.id,
-                        },
-                        count=0,
-                        progress=0,
-                        step="load_file",
-                        type="import_reference",
-                        created_at=static_time.datetime,
-                    ),
-                )
-                await session.commit()
+                    import_from=upload.id,
+                ),
+                user.id,
+            )
 
-            return data_layer
+            return data_layer, reference
 
         return setup
 
     @pytest.mark.flaky(reruns=2)
-    async def test_mirrors_organism(self, run_import, mongo: Mongo, pg: AsyncEngine):
-        """The imported organism is written to both Mongo and Postgres."""
-        data_layer = await run_import()
+    async def test_writes_organism(self, run_import, pg: AsyncEngine):
+        """The imported organism is written to Postgres."""
+        data_layer, reference = await run_import()
 
-        task = await ImportReferenceTask.from_task_id(data_layer, 1)
+        task = await ImportReferenceTask.from_task_id(data_layer, reference.task.id)
         await task.run()
 
-        document = await mongo.references.find_one("foo")
-        assert document["organism"] == "virus"
-
-        row = await _reference_row(pg, "foo")
+        row = await _reference_row(pg, reference.id)
         assert row is not None
         assert row.organism == "virus"
 
@@ -484,7 +281,7 @@ class TestImportReferenceDualWrite:
         pg: AsyncEngine,
     ):
         """A failed insertion rolls back the Postgres reference row, not just Mongo."""
-        data_layer = await run_import()
+        data_layer, reference = await run_import()
 
         mocker.patch.object(
             mongo.otus,
@@ -492,11 +289,10 @@ class TestImportReferenceDualWrite:
             side_effect=RuntimeError("boom"),
         )
 
-        task = await ImportReferenceTask.from_task_id(data_layer, 1)
+        task = await ImportReferenceTask.from_task_id(data_layer, reference.task.id)
         await task.run()
 
-        assert await mongo.references.find_one("foo") is None
-        assert await _reference_row(pg, "foo") is None
+        assert await _reference_row(pg, reference.id) is None
 
 
 class TestCloneReferenceDualWrite:
@@ -504,74 +300,20 @@ class TestCloneReferenceDualWrite:
 
     async def test_rollback_deletes_postgres_row(
         self,
-        create_reference: str,
+        create_reference: int,
         data_layer: DataLayer,
         fake: DataFaker,
         mocker,
         mongo: Mongo,
         pg: AsyncEngine,
-        static_time: StaticTime,
     ):
         """A failed clone insertion rolls back the Postgres reference row."""
-        manifest = await get_manifest(mongo, pg, create_reference)
-
         user = await fake.users.create()
 
-        await mongo.references.insert_one(
-            {
-                "_id": "foo",
-                "archived": False,
-                "created_at": static_time.datetime,
-                "data_type": "genome",
-                "description": "A test reference",
-                "groups": [],
-                "name": "Test",
-                "organism": "virus",
-                "restrict_source_types": False,
-                "source_types": [],
-                "user": {"id": user.id},
-                "users": [],
-            },
+        clone_reference = await data_layer.references.create(
+            CreateReferenceRequest(name="Clone", clone_from=create_reference),
+            user.id,
         )
-
-        async with AsyncSession(pg) as session:
-            reference = SQLReference(
-                legacy_id="foo",
-                name="Test",
-                description="A test reference",
-                organism="virus",
-                created_at=static_time.datetime,
-                source_types=[],
-                user_id=user.id,
-            )
-            session.add(reference)
-            await session.flush()
-            session.add(
-                SQLReferenceUser(
-                    reference_id=reference.id,
-                    user_id=user.id,
-                    build=True,
-                    modify=True,
-                    modify_otu=True,
-                ),
-            )
-            session.add(
-                SQLTask(
-                    id=1,
-                    complete=False,
-                    context={
-                        "manifest": manifest,
-                        "ref_id": "foo",
-                        "user_id": user.id,
-                    },
-                    count=0,
-                    progress=0,
-                    step="load_file",
-                    type="clone_reference",
-                    created_at=static_time.datetime,
-                ),
-            )
-            await session.commit()
 
         mocker.patch.object(
             mongo.otus,
@@ -579,8 +321,10 @@ class TestCloneReferenceDualWrite:
             side_effect=RuntimeError("boom"),
         )
 
-        task = await CloneReferenceTask.from_task_id(data_layer, 1)
+        task = await CloneReferenceTask.from_task_id(
+            data_layer,
+            clone_reference.task.id,
+        )
         await task.run()
 
-        assert await mongo.references.find_one("foo") is None
-        assert await _reference_row(pg, "foo") is None
+        assert await _reference_row(pg, clone_reference.id) is None

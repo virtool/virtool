@@ -1,50 +1,38 @@
-import arrow
-import pytest
+"""Helpers for seeding samples with explicit rights."""
 
+from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.samples.models import Sample
+from virtool.users.models import User
 
 
-@pytest.fixture
-def mock_sample(static_time):
-    return {
-        "_id": "test",
-        "name": "Test",
-        "created_at": static_time.datetime,
-        "ready": False,
-        "files": [
-            {
-                "id": "foo",
-                "name": "Bar.fq.gz",
-                "download_url": "/download/samples/files/file_1.fq.gz",
-            },
-        ],
-        "labels": [],
-        "subtractions": ["foo", "bar"],
-        "user": {"id": ""},
-    }
+async def create_rights_sample(
+    data_layer: DataLayer,
+    fake: DataFaker,
+    owner: User,
+    *,
+    ready: bool = False,
+    all_read: bool = False,
+    all_write: bool = False,
+    group_read: bool = False,
+    group_write: bool = False,
+    group: int | None = None,
+) -> Sample:
+    """Create a sample owned by ``owner`` with explicit rights.
 
+    Rights default to closed so a test only opens the ones it means to exercise.
+    """
+    sample = await fake.samples.create(owner, ready=ready)
 
-@pytest.fixture
-async def mock_samples(fake: DataFaker, mock_sample, static_time):
-    user_1 = await fake.users.create()
-    user_2 = await fake.users.create()
-    user_3 = await fake.users.create()
-
-    return [
+    await data_layer.samples.update_rights(
+        sample.id,
         {
-            **mock_sample,
-            "user": {"id": user_1.id},
+            "all_read": all_read,
+            "all_write": all_write,
+            "group_read": group_read,
+            "group_write": group_write,
+            "group": group,
         },
-        {
-            **mock_sample,
-            "user": {"id": user_2.id},
-            "_id": "foo",
-            "created_at": arrow.get(static_time.datetime).shift(hours=1).datetime,
-        },
-        {
-            **mock_sample,
-            "user": {"id": user_3.id},
-            "_id": "bar",
-            "created_at": arrow.get(static_time.datetime).shift(hours=2).datetime,
-        },
-    ]
+    )
+
+    return sample

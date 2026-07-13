@@ -18,8 +18,7 @@ async def test_get_status(
     config,
     data_layer,
     fake: DataFaker,
-    mongo,
-    seed_pg_hmm_status,
+    seed_hmm_status,
     snapshot,
     static_time,
 ):
@@ -73,8 +72,7 @@ async def test_get_status(
         "errors": [],
     }
 
-    await mongo.status.insert_one(document)
-    await seed_pg_hmm_status(document)
+    await seed_hmm_status(document)
 
     assert await data_layer.hmms.get_status() == snapshot
 
@@ -89,56 +87,35 @@ class TestGetStatusUpdatingFlag:
     (VIR-2445).
     """
 
-    @staticmethod
-    async def _insert_status(mongo, seed_pg_hmm_status, updates: list[dict]) -> None:
-        document = {
-            "_id": "hmm",
-            "updates": updates,
-            "installed": None,
-            "release": None,
-            "errors": [],
-        }
-
-        await mongo.status.insert_one(document)
-        await seed_pg_hmm_status(document)
-
-    async def test_single_in_progress_update(
-        self, data_layer, mongo, seed_pg_hmm_status
-    ):
+    async def test_single_in_progress_update(self, data_layer, seed_hmm_status):
         """A lone unfinished update reports ``updating: True``."""
-        await self._insert_status(
-            mongo, seed_pg_hmm_status, [{"id": 1, "ready": False}]
-        )
+        await seed_hmm_status({"updates": [{"id": 1, "ready": False}]})
 
         status = await data_layer.hmms.get_status()
 
         assert status.updating is True
 
-    async def test_latest_in_progress_update(
-        self, data_layer, mongo, seed_pg_hmm_status
-    ):
+    async def test_latest_in_progress_update(self, data_layer, seed_hmm_status):
         """A finished update followed by an unfinished one reports ``True``."""
-        await self._insert_status(
-            mongo,
-            seed_pg_hmm_status,
-            [{"id": 1, "ready": True}, {"id": 2, "ready": False}],
+        await seed_hmm_status(
+            {"updates": [{"id": 1, "ready": True}, {"id": 2, "ready": False}]},
         )
 
         status = await data_layer.hmms.get_status()
 
         assert status.updating is True
 
-    async def test_latest_completed_update(self, data_layer, mongo, seed_pg_hmm_status):
+    async def test_latest_completed_update(self, data_layer, seed_hmm_status):
         """A latest finished update reports ``updating: False``."""
-        await self._insert_status(mongo, seed_pg_hmm_status, [{"id": 1, "ready": True}])
+        await seed_hmm_status({"updates": [{"id": 1, "ready": True}]})
 
         status = await data_layer.hmms.get_status()
 
         assert status.updating is False
 
-    async def test_no_updates(self, data_layer, mongo, seed_pg_hmm_status):
+    async def test_no_updates(self, data_layer, seed_hmm_status):
         """An empty ``updates`` list reports ``updating: False``."""
-        await self._insert_status(mongo, seed_pg_hmm_status, [])
+        await seed_hmm_status({"updates": []})
 
         status = await data_layer.hmms.get_status()
 
@@ -148,9 +125,9 @@ class TestGetStatusUpdatingFlag:
 class TestGetUpdates:
     """``get_updates`` reads ``updates`` from Postgres, newest-first."""
 
-    async def test_returns_updates_newest_first(self, data_layer, seed_pg_hmm_status):
+    async def test_returns_updates_newest_first(self, data_layer, seed_hmm_status):
         """Stored updates are returned in reverse insertion order."""
-        await seed_pg_hmm_status(
+        await seed_hmm_status(
             {
                 "updates": [
                     {"id": 1, "name": "v0.1.0", "ready": True},
@@ -163,9 +140,9 @@ class TestGetUpdates:
 
         assert [update_["id"] for update_ in updates] == [2, 1]
 
-    async def test_returns_empty_when_no_updates(self, data_layer, seed_pg_hmm_status):
+    async def test_returns_empty_when_no_updates(self, data_layer, seed_hmm_status):
         """A singleton with no updates yields an empty list."""
-        await seed_pg_hmm_status({"updates": []})
+        await seed_hmm_status({"updates": []})
 
         assert await data_layer.hmms.get_updates() == []
 
@@ -353,9 +330,9 @@ class TestFind:
     """``find`` lists annotations from Postgres, excluding hidden ones."""
 
     async def test_reads_from_postgres(
-        self, data_layer, seed_pg_hmm_status, seed_pg_hmm, hmm_document
+        self, data_layer, seed_hmm_status, seed_pg_hmm, hmm_document
     ):
-        await seed_pg_hmm_status({})
+        await seed_hmm_status({})
         await seed_pg_hmm({**hmm_document, "hidden": False})
 
         result = await data_layer.hmms.find(1, 25)
@@ -365,9 +342,9 @@ class TestFind:
         assert [document.id for document in result.documents] == ["f8666902"]
 
     async def test_excludes_hidden(
-        self, data_layer, seed_pg_hmm_status, seed_pg_hmm, hmm_document
+        self, data_layer, seed_hmm_status, seed_pg_hmm, hmm_document
     ):
-        await seed_pg_hmm_status({})
+        await seed_hmm_status({})
         await seed_pg_hmm({**hmm_document, "_id": "visible", "hidden": False})
         await seed_pg_hmm({**hmm_document, "_id": "concealed", "hidden": True})
 
@@ -377,9 +354,9 @@ class TestFind:
         assert [document.id for document in result.documents] == ["visible"]
 
     async def test_search_filters_by_name(
-        self, data_layer, seed_pg_hmm_status, seed_pg_hmm, hmm_document
+        self, data_layer, seed_hmm_status, seed_pg_hmm, hmm_document
     ):
-        await seed_pg_hmm_status({})
+        await seed_hmm_status({})
         await seed_pg_hmm(
             {**hmm_document, "_id": "polymerase", "names": ["RNA polymerase"]},
         )

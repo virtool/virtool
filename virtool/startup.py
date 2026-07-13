@@ -5,6 +5,7 @@ from aiohttp import ClientSession, ClientTimeout
 from pymongo.errors import CollectionInvalid
 from structlog import get_logger
 
+from virtool.blast.task import BLASTSweepTask
 from virtool.caches.tasks import LRUCacheEvictionTask
 from virtool.config import get_config_from_app
 from virtool.data.events import EventPublisher
@@ -14,7 +15,6 @@ from virtool.hmm.tasks import HMMRefreshTask
 from virtool.jobs.tasks import JobsTimeoutTask
 from virtool.migration.pg import check_data_revision_version
 from virtool.mongo.connect import connect_mongo
-from virtool.mongo.migrate import migrate_status
 from virtool.mongo.utils import get_mongo_from_app
 from virtool.pg.utils import connect_pg
 from virtool.routes import setup_routes
@@ -37,7 +37,6 @@ async def startup_check_db(app: App):
     mongo = get_mongo_from_app(app)
 
     logger.info("checking database")
-    await migrate_status(mongo)
 
     # Make sure the indexes collection exists before later trying to set an compound
     # index on it.
@@ -193,6 +192,7 @@ async def startup_periodic_tasks(app: App) -> None:
     logger.info("periodic tasks are enabled")
 
     periodic_tasks = [
+        (BLASTSweepTask, 30),
         (HMMRefreshTask, 600),
         (JobsTimeoutTask, 600),
         (LRUCacheEvictionTask, 3600),

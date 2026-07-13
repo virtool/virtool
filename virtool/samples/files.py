@@ -2,25 +2,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
-from virtool.data.topg import compose_legacy_id_subquery, resolve_legacy_id
+from virtool.data.topg import compose_legacy_id_subquery
 from virtool.samples.sql import SQLLegacySample, SQLSampleArtifact, SQLSampleReads
 from virtool.uploads.sql import SQLUpload
-
-
-async def _resolve_sample_id(session: AsyncSession, sample: str) -> int:
-    """Resolve a sample's Mongo id to its ``legacy_samples`` integer primary key.
-
-    A sample file's parent sample is a required relationship, so a sample that
-    has not been backfilled into Postgres is a data-integrity error rather than a
-    row to store with a ``NULL`` ``sample_id``.
-    """
-    sample_id = await resolve_legacy_id(session, SQLLegacySample, sample)
-
-    if sample_id is None:
-        msg = f"No legacy_samples row for sample {sample!r}"
-        raise ValueError(msg)
-
-    return sample_id
 
 
 async def get_existing_reads(pg: AsyncEngine, sample_id: str) -> list[str]:
@@ -45,7 +29,8 @@ async def create_artifact_file(
     pg: AsyncEngine,
     name: str,
     name_on_disk: str,
-    sample: str,
+    sample_id: int,
+    storage_id: str,
     artifact_type: str,
 ) -> dict[str, any]:
     """Create a row in an SQL table that represents uploaded sample artifact file.
@@ -53,7 +38,8 @@ async def create_artifact_file(
     :param pg: PostgreSQL AsyncEngine object
     :param name: Name of the sample artifact file
     :param name_on_disk: Name of the sample artifact file as it appears on disk
-    :param sample: ID that corresponds to a parent sample
+    :param sample_id: Primary key of the parent sample
+    :param storage_id: Identifier the parent sample's storage objects are keyed under
     :param artifact_type: Type of artifact to be uploaded
     :return: A dictionary representation of the newly created row
     """
@@ -61,8 +47,8 @@ async def create_artifact_file(
         artifact = SQLSampleArtifact(
             name=name,
             name_on_disk=name_on_disk,
-            sample=sample,
-            sample_id=await _resolve_sample_id(session, sample),
+            sample=storage_id,
+            sample_id=sample_id,
             type=artifact_type,
             uploaded_at=virtool.utils.timestamp(),
         )
@@ -82,7 +68,8 @@ async def create_reads_file(
     size: int,
     name: str,
     name_on_disk: str,
-    sample_id: str,
+    sample_id: int,
+    storage_id: str,
     upload_id: int | None = None,
 ) -> dict[str, any]:
     """Create a row in a SQL table that represents uploaded sample reads files.
@@ -91,15 +78,16 @@ async def create_reads_file(
     :param size: Size of a newly uploaded file in bytes
     :param name: Name of the file (either `reads_1.fq.gz` or `reads_2.fq.gz`)
     :param name_on_disk: Name of the newly uploaded file on disk
-    :param sample_id: ID that corresponds to a parent sample
+    :param sample_id: Primary key of the parent sample
+    :param storage_id: Identifier the parent sample's storage objects are keyed under
     :param upload_id: ID for a row in the `uploads` table to pair with
     :return: List of dictionary representations of the newly created row(s)
 
     """
     async with AsyncSession(pg) as session:
         reads = SQLSampleReads(
-            sample=sample_id,
-            sample_id=await _resolve_sample_id(session, sample_id),
+            sample=storage_id,
+            sample_id=sample_id,
             name=name,
             name_on_disk=name_on_disk,
             size=size,

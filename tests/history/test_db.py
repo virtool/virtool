@@ -158,14 +158,16 @@ class TestAdd:
             await ensure_reference(session, "hxn167", user.id)
             await session.commit()
 
-        change = await virtool.history.db.add(
-            pg,
-            "This is a description",
-            HistoryMethod.edit,
-            old,
-            new,
-            user.id,
-        )
+        async with AsyncSession(pg) as session:
+            change = await virtool.history.db.add(
+                session,
+                "This is a description",
+                HistoryMethod.edit,
+                old,
+                new,
+                user.id,
+            )
+            await session.commit()
 
         change_id = change["_id"]
 
@@ -209,14 +211,16 @@ class TestAdd:
             await ensure_reference(session, "hxn167", user.id)
             await session.commit()
 
-        change = await virtool.history.db.add(
-            pg,
-            f"Created {new['name']}",
-            HistoryMethod.create,
-            old,
-            new,
-            user.id,
-        )
+        async with AsyncSession(pg) as session:
+            change = await virtool.history.db.add(
+                session,
+                f"Created {new['name']}",
+                HistoryMethod.create,
+                old,
+                new,
+                user.id,
+            )
+            await session.commit()
 
         assert change == snapshot
         assert await get_row_by_id(pg, SQLLegacyHistoryDiff, 1) == snapshot
@@ -250,14 +254,16 @@ class TestAdd:
             await ensure_reference(session, "hxn167", user.id)
             await session.commit()
 
-        change = await virtool.history.db.add(
-            pg,
-            f"Removed {old['name']}",
-            HistoryMethod.remove,
-            old,
-            new,
-            user.id,
-        )
+        async with AsyncSession(pg) as session:
+            change = await virtool.history.db.add(
+                session,
+                f"Removed {old['name']}",
+                HistoryMethod.remove,
+                old,
+                new,
+                user.id,
+            )
+            await session.commit()
 
         assert change == snapshot(name="return_value")
 
@@ -346,7 +352,7 @@ async def test_patch_to_version(
 ):
     await create_mock_history(remove=remove)
 
-    current, patched, reverted_change_ids = await virtool.history.db.patch_to_version(
+    current, patched = await virtool.history.db.patch_to_version(
         mongo,
         pg,
         "6116cba1",
@@ -355,7 +361,6 @@ async def test_patch_to_version(
 
     assert current == snapshot(name="current")
     assert patched == snapshot(name="patched")
-    assert reverted_change_ids == snapshot(name="reverted_change_ids")
 
 
 def test_stamp_reference():
@@ -393,19 +398,18 @@ async def test_patch_to_version_intermediate(
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
 ):
-    """Patching to an intermediate version reverts only the changes above it, stopping
+    """Patching to an intermediate version unwinds only the changes above it, stopping
     at the first change at or below the target version.
     """
     await create_mock_history(remove=False)
 
-    current, patched, reverted_change_ids = await virtool.history.db.patch_to_version(
+    current, patched = await virtool.history.db.patch_to_version(
         mongo,
         pg,
         "6116cba1",
         2,
     )
 
-    assert reverted_change_ids == ["6116cba1.3"]
     assert current == snapshot(name="current")
     assert patched == snapshot(name="patched")
 

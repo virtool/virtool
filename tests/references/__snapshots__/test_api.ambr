@@ -1,5 +1,5 @@
 # serializer version: 1
-# name: TestArchive.test_ok[False][resp]
+# name: TestArchive.test_ok[resp]
   dict({
     'archived': True,
     'cloned_from': None,
@@ -10,11 +10,11 @@
     'description': '',
     'groups': list([
     ]),
-    'id': 'foo',
+    'id': 1,
     'imported_from': None,
     'latest_build': None,
-    'name': 'Foo',
-    'organism': 'virus',
+    'name': 'Test Reference',
+    'organism': '',
     'otu_count': 0,
     'restrict_source_types': False,
     'source_types': list([
@@ -24,53 +24,29 @@
     'task': None,
     'unbuilt_change_count': 0,
     'user': dict({
-      'handle': 'myersmitchell',
-      'id': 2,
+      'handle': 'leeashley',
+      'id': 1,
     }),
     'users': list([
-    ]),
-  })
-# ---
-# name: TestArchive.test_ok[True][resp]
-  dict({
-    'archived': True,
-    'cloned_from': None,
-    'contributors': list([
-    ]),
-    'created_at': 'approximately_now_isoformat',
-    'data_type': 'genome',
-    'description': '',
-    'groups': list([
-    ]),
-    'id': 'foo',
-    'imported_from': None,
-    'latest_build': None,
-    'name': 'Foo',
-    'organism': 'virus',
-    'otu_count': 0,
-    'restrict_source_types': False,
-    'source_types': list([
-      'isolate',
-      'strain',
-    ]),
-    'task': None,
-    'unbuilt_change_count': 0,
-    'user': dict({
-      'handle': 'myersmitchell',
-      'id': 2,
-    }),
-    'users': list([
+      dict({
+        'build': True,
+        'created_at': 'approximately_now_isoformat',
+        'handle': 'leeashley',
+        'id': 1,
+        'modify': True,
+        'modify_otu': True,
+      }),
     ]),
   })
 # ---
 # name: TestCreate.test_clone[location]
-  '/references/v1/bf1b993c'
+  '/references/v1/2'
 # ---
 # name: TestCreate.test_clone[resp]
   dict({
     'archived': False,
     'cloned_from': dict({
-      'id': 'foo',
+      'id': 1,
       'name': 'Foo',
     }),
     'contributors': list([
@@ -80,7 +56,7 @@
     'description': '',
     'groups': list([
     ]),
-    'id': 'bf1b993c',
+    'id': 2,
     'imported_from': None,
     'latest_build': None,
     'name': 'Test 1',
@@ -128,7 +104,7 @@
     'description': '',
     'groups': list([
     ]),
-    'id': str,
+    'id': int,
     'imported_from': dict({
       'created_at': '2015-10-06T20:00:00Z',
       'id': 1,
@@ -181,7 +157,7 @@
   })
 # ---
 # name: TestCreate.test_ok[location]
-  'https://virtool.example.com/references/v1/bf1b993c'
+  'https://virtool.example.com/references/v1/1'
 # ---
 # name: TestCreate.test_ok[resp]
   dict({
@@ -194,7 +170,7 @@
     'description': 'A bunch of viruses used for testing',
     'groups': list([
     ]),
-    'id': 'bf1b993c',
+    'id': 1,
     'imported_from': None,
     'latest_build': None,
     'name': 'Test Viruses',
@@ -221,6 +197,81 @@
         'modify_otu': True,
       }),
     ]),
+  })
+# ---
+# name: TestCreateIndex.test_ok
+  dict({
+    'change_count': 1,
+    'contributors': list([
+      dict({
+        'count': 1,
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+    ]),
+    'created_at': '2015-10-06T20:00:00Z',
+    'files': list([
+    ]),
+    'has_files': True,
+    'id': 'bf1b993c',
+    'job': dict({
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 1,
+      'progress': 0,
+      'state': 'pending',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+      'workflow': 'build_index',
+    }),
+    'manifest': dict({
+      'bar': 5,
+      'foo': 2,
+    }),
+    'modified_otu_count': 1,
+    'otus': list([
+      dict({
+        'change_count': 1,
+        'id': 'otu_1',
+        'name': 'Tobacco mosaic virus',
+      }),
+    ]),
+    'ready': False,
+    'reference': dict({
+      'data_type': 'genome',
+      'id': 1,
+      'name': 'Foo',
+    }),
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 1,
+    }),
+    'version': 0,
+  })
+# ---
+# name: TestCreateIndex.test_ok.1
+  dict({
+    '_id': 'bf1b993c',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'has_files': True,
+    'has_json': False,
+    'job': dict({
+      'id': 1,
+    }),
+    'manifest': dict({
+      'bar': 5,
+      'foo': 2,
+    }),
+    'ready': False,
+    'reference': dict({
+      'id': 1,
+    }),
+    'task': None,
+    'user': dict({
+      'id': 1,
+    }),
+    'version': 0,
   })
 # ---
 # name: TestCreateOTU.test[None-None][history]
@@ -256,7 +307,7 @@
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'foo',
+      'id': 1,
       'name': 'Foo',
     }),
     'user': dict({
@@ -293,7 +344,7 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'foo',
+      'id': 1,
       'name': 'Foo',
     }),
     'remote': None,
@@ -327,7 +378,7 @@
     'name': 'Tobacco mosaic virus',
     'reference': dict({
       'data_type': 'genome',
-      'id': 'foo',
+      'id': 1,
       'name': 'Foo',
     }),
     'remote': None,
@@ -370,7 +421,7 @@
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'foo',
+      'id': 1,
       'name': 'Foo',
     }),
     'user': dict({
@@ -407,7 +458,7 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'foo',
+      'id': 1,
       'name': 'Foo',
     }),
     'remote': None,
@@ -441,7 +492,7 @@
     'name': 'Tobacco mosaic virus',
     'reference': dict({
       'data_type': 'genome',
-      'id': 'foo',
+      'id': 1,
       'name': 'Foo',
     }),
     'remote': None,
@@ -484,7 +535,7 @@
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'foo',
+      'id': 1,
       'name': 'Foo',
     }),
     'user': dict({
@@ -521,7 +572,7 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'foo',
+      'id': 1,
       'name': 'Foo',
     }),
     'remote': None,
@@ -555,7 +606,7 @@
     'name': 'Tobacco mosaic virus',
     'reference': dict({
       'data_type': 'genome',
-      'id': 'foo',
+      'id': 1,
       'name': 'Foo',
     }),
     'remote': None,
@@ -563,71 +614,6 @@
     ]),
     'verified': False,
     'version': 0,
-  })
-# ---
-# name: TestDeleteUser.test_ok
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'name': 'Test',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 1,
-        'modify': True,
-        'modify_otu': True,
-      }),
-    ]),
-  })
-# ---
-# name: TestEdit.test_ok[db]
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'name': 'Bar',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-      'isolate',
-      'strain',
-    ]),
-    'user': dict({
-      'id': 2,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 3,
-        'modify': True,
-        'modify_otu': True,
-      }),
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 4,
-        'modify': True,
-        'modify_otu': True,
-      }),
-    ]),
   })
 # ---
 # name: TestEdit.test_ok[resp]
@@ -641,7 +627,7 @@
     'description': 'This is a test reference.',
     'groups': list([
     ]),
-    'id': 'foo',
+    'id': 1,
     'imported_from': None,
     'latest_build': None,
     'name': 'Bar',
@@ -684,20 +670,20 @@
       dict({
         'created_at': 'approximately_now_isoformat',
         'description': 'Created new sequence NC_001367 in Isolate strain_1',
-        'id': 'fb085f7f.2',
+        'id': 'bf1b993c.2',
         'index': dict({
           'id': 'unbuilt',
           'version': 'unbuilt',
         }),
         'method_name': 'create_sequence',
         'otu': dict({
-          'id': 'fb085f7f',
+          'id': 'bf1b993c',
           'name': 'Tobacco mosaic virus',
           'version': 2,
         }),
         'reference': dict({
           'data_type': 'genome',
-          'id': 'bf1b993c',
+          'id': 1,
           'name': 'Test Reference',
         }),
         'user': dict({
@@ -708,20 +694,20 @@
       dict({
         'created_at': 'approximately_now_isoformat',
         'description': 'Added Isolate strain_1 as default',
-        'id': 'fb085f7f.1',
+        'id': 'bf1b993c.1',
         'index': dict({
           'id': 'unbuilt',
           'version': 'unbuilt',
         }),
         'method_name': 'add_isolate',
         'otu': dict({
-          'id': 'fb085f7f',
+          'id': 'bf1b993c',
           'name': 'Tobacco mosaic virus',
           'version': 1,
         }),
         'reference': dict({
           'data_type': 'genome',
-          'id': 'bf1b993c',
+          'id': 1,
           'name': 'Test Reference',
         }),
         'user': dict({
@@ -732,20 +718,20 @@
       dict({
         'created_at': 'approximately_now_isoformat',
         'description': 'Created Cucumber mosaic virus',
-        'id': '3cbb22cc.0',
+        'id': '7cf872dc.0',
         'index': dict({
           'id': 'unbuilt',
           'version': 'unbuilt',
         }),
         'method_name': 'create',
         'otu': dict({
-          'id': '3cbb22cc',
+          'id': '7cf872dc',
           'name': 'Cucumber mosaic virus',
           'version': 0,
         }),
         'reference': dict({
           'data_type': 'genome',
-          'id': 'bf1b993c',
+          'id': 1,
           'name': 'Test Reference',
         }),
         'user': dict({
@@ -756,20 +742,20 @@
       dict({
         'created_at': 'approximately_now_isoformat',
         'description': 'Created Potato virus X (PVX)',
-        'id': '7cf872dc.0',
+        'id': 'fb085f7f.0',
         'index': dict({
           'id': 'unbuilt',
           'version': 'unbuilt',
         }),
         'method_name': 'create',
         'otu': dict({
-          'id': '7cf872dc',
+          'id': 'fb085f7f',
           'name': 'Potato virus X',
           'version': 0,
         }),
         'reference': dict({
           'data_type': 'genome',
-          'id': 'bf1b993c',
+          'id': 1,
           'name': 'Test Reference',
         }),
         'user': dict({
@@ -780,20 +766,20 @@
       dict({
         'created_at': 'approximately_now_isoformat',
         'description': 'Created Tobacco mosaic virus (TMV)',
-        'id': 'fb085f7f.0',
+        'id': 'bf1b993c.0',
         'index': dict({
           'id': 'unbuilt',
           'version': 'unbuilt',
         }),
         'method_name': 'create',
         'otu': dict({
-          'id': 'fb085f7f',
+          'id': 'bf1b993c',
           'name': 'Tobacco mosaic virus',
           'version': 0,
         }),
         'reference': dict({
           'data_type': 'genome',
-          'id': 'bf1b993c',
+          'id': 1,
           'name': 'Test Reference',
         }),
         'user': dict({
@@ -820,7 +806,7 @@
     'description': '',
     'groups': list([
     ]),
-    'id': 'bf1b993c',
+    'id': 1,
     'imported_from': None,
     'latest_build': None,
     'name': 'Bar',
@@ -857,7 +843,7 @@
     ]),
   })
 # ---
-# name: TestUnarchive.test_ok[False][resp]
+# name: TestUnarchive.test_ok[resp]
   dict({
     'archived': False,
     'cloned_from': None,
@@ -868,11 +854,11 @@
     'description': '',
     'groups': list([
     ]),
-    'id': 'foo',
+    'id': 1,
     'imported_from': None,
     'latest_build': None,
-    'name': 'Foo',
-    'organism': 'virus',
+    'name': 'Test Reference',
+    'organism': '',
     'otu_count': 0,
     'restrict_source_types': False,
     'source_types': list([
@@ -882,42 +868,18 @@
     'task': None,
     'unbuilt_change_count': 0,
     'user': dict({
-      'handle': 'myersmitchell',
-      'id': 2,
+      'handle': 'leeashley',
+      'id': 1,
     }),
     'users': list([
-    ]),
-  })
-# ---
-# name: TestUnarchive.test_ok[True][resp]
-  dict({
-    'archived': False,
-    'cloned_from': None,
-    'contributors': list([
-    ]),
-    'created_at': 'approximately_now_isoformat',
-    'data_type': 'genome',
-    'description': '',
-    'groups': list([
-    ]),
-    'id': 'foo',
-    'imported_from': None,
-    'latest_build': None,
-    'name': 'Foo',
-    'organism': 'virus',
-    'otu_count': 0,
-    'restrict_source_types': False,
-    'source_types': list([
-      'isolate',
-      'strain',
-    ]),
-    'task': None,
-    'unbuilt_change_count': 0,
-    'user': dict({
-      'handle': 'myersmitchell',
-      'id': 2,
-    }),
-    'users': list([
+      dict({
+        'build': True,
+        'created_at': 'approximately_now_isoformat',
+        'handle': 'leeashley',
+        'id': 1,
+        'modify': True,
+        'modify_otu': True,
+      }),
     ]),
   })
 # ---
@@ -931,41 +893,6 @@
     'modify_otu': True,
   })
 # ---
-# name: TestUpdateUser.test_ok.1
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'name': 'Test',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 1,
-        'modify': True,
-        'modify_otu': True,
-      }),
-      dict({
-        'build': False,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 2,
-        'modify': True,
-        'modify_otu': True,
-      }),
-    ]),
-  })
-# ---
 # name: test_create_group[None]
   dict({
     'build': False,
@@ -975,152 +902,6 @@
     'modify': True,
     'modify_otu': False,
     'name': 'gaffers',
-  })
-# ---
-# name: test_create_group[None].1
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 1,
-        'modify': True,
-        'modify_otu': True,
-      }),
-      dict({
-        'build': False,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 2,
-        'legacy_id': None,
-        'modify': True,
-        'modify_otu': False,
-      }),
-    ]),
-    'name': 'Test',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'users': list([
-    ]),
-  })
-# ---
-# name: test_create_index[True]
-  dict({
-    'change_count': 1,
-    'contributors': list([
-      dict({
-        'count': 1,
-        'handle': 'myersmitchell',
-        'id': 2,
-      }),
-    ]),
-    'created_at': '2015-10-06T20:00:00Z',
-    'files': list([
-    ]),
-    'has_files': True,
-    'id': 'bf1b993c',
-    'job': dict({
-      'created_at': '2015-10-06T20:00:00Z',
-      'id': 1,
-      'progress': 0,
-      'state': 'pending',
-      'user': dict({
-        'handle': 'leeashley',
-        'id': 1,
-      }),
-      'workflow': 'build_index',
-    }),
-    'manifest': dict({
-      'bar': 5,
-      'foo': 2,
-    }),
-    'modified_otu_count': 1,
-    'otus': list([
-      dict({
-        'change_count': 1,
-        'id': 'otu_1',
-        'name': 'Tobacco mosaic virus',
-      }),
-    ]),
-    'ready': False,
-    'reference': dict({
-      'data_type': 'genome',
-      'id': 'foo',
-      'name': 'Foo',
-    }),
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 1,
-    }),
-    'version': 0,
-  })
-# ---
-# name: test_create_index[True].1
-  dict({
-    '_id': 'bf1b993c',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'has_files': True,
-    'has_json': False,
-    'job': dict({
-      'id': 1,
-    }),
-    'manifest': dict({
-      'bar': 5,
-      'foo': 2,
-    }),
-    'ready': False,
-    'reference': dict({
-      'id': 1,
-    }),
-    'task': None,
-    'user': dict({
-      'id': 1,
-    }),
-    'version': 0,
-  })
-# ---
-# name: test_create_user[None][mongo]
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'name': 'Test',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 1,
-        'modify': True,
-        'modify_otu': True,
-      }),
-      dict({
-        'build': False,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 2,
-        'modify': True,
-        'modify_otu': False,
-      }),
-    ]),
   })
 # ---
 # name: test_create_user[None][resp]
@@ -1133,34 +914,6 @@
     'modify_otu': False,
   })
 # ---
-# name: test_delete_group[None]
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'name': 'Test',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 1,
-        'modify': True,
-        'modify_otu': True,
-      }),
-    ]),
-  })
-# ---
 # name: test_find[active]
   dict({
     'documents': list([
@@ -1169,7 +922,7 @@
         'cloned_from': None,
         'created_at': '2015-10-06T20:00:00Z',
         'data_type': 'genome',
-        'id': 'group_member_active',
+        'id': 4,
         'imported_from': None,
         'latest_build': None,
         'name': 'Group Member Active',
@@ -1195,7 +948,7 @@
         'cloned_from': None,
         'created_at': '2015-10-06T20:00:00Z',
         'data_type': 'genome',
-        'id': 'owned_active',
+        'id': 1,
         'imported_from': None,
         'latest_build': None,
         'name': 'Owned Active',
@@ -1221,7 +974,7 @@
         'cloned_from': None,
         'created_at': '2015-10-06T20:00:00Z',
         'data_type': 'genome',
-        'id': 'user_member_active',
+        'id': 3,
         'imported_from': None,
         'latest_build': None,
         'name': 'User Member Active',
@@ -1258,7 +1011,7 @@
         'cloned_from': None,
         'created_at': '2015-10-06T20:00:00Z',
         'data_type': 'genome',
-        'id': 'owned_archived',
+        'id': 5,
         'imported_from': None,
         'latest_build': None,
         'name': 'Owned Archived',
@@ -1295,7 +1048,7 @@
         'cloned_from': None,
         'created_at': '2015-10-06T20:00:00Z',
         'data_type': 'genome',
-        'id': 'group_member_active',
+        'id': 4,
         'imported_from': None,
         'latest_build': None,
         'name': 'Group Member Active',
@@ -1321,7 +1074,7 @@
         'cloned_from': None,
         'created_at': '2015-10-06T20:00:00Z',
         'data_type': 'genome',
-        'id': 'owned_active',
+        'id': 1,
         'imported_from': None,
         'latest_build': None,
         'name': 'Owned Active',
@@ -1347,7 +1100,7 @@
         'cloned_from': None,
         'created_at': '2015-10-06T20:00:00Z',
         'data_type': 'genome',
-        'id': 'owned_archived',
+        'id': 5,
         'imported_from': None,
         'latest_build': None,
         'name': 'Owned Archived',
@@ -1373,7 +1126,7 @@
         'cloned_from': None,
         'created_at': '2015-10-06T20:00:00Z',
         'data_type': 'genome',
-        'id': 'user_member_active',
+        'id': 3,
         'imported_from': None,
         'latest_build': None,
         'name': 'User Member Active',
@@ -1411,7 +1164,7 @@
         'name': 'Papaya virus q',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': False,
@@ -1471,7 +1224,7 @@
         'name': 'Papaya virus q',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': False,
@@ -1495,7 +1248,7 @@
         'name': 'Papaya virus q',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': False,
@@ -1507,7 +1260,7 @@
         'name': 'Prunus virus F',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': True,
@@ -1531,7 +1284,7 @@
         'name': 'Prunus virus F',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': True,
@@ -1555,7 +1308,7 @@
         'name': 'Prunus virus F',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': True,
@@ -1579,7 +1332,7 @@
         'name': 'Prunus virus F',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': True,
@@ -1603,7 +1356,7 @@
         'name': 'Papaya virus q',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': False,
@@ -1615,7 +1368,7 @@
         'name': 'Prunus virus F',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': True,
@@ -1639,7 +1392,7 @@
         'name': 'Prunus virus F',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': True,
@@ -1663,7 +1416,7 @@
         'name': 'Prunus virus F',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': True,
@@ -1687,7 +1440,7 @@
         'name': 'Prunus virus F',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': True,
@@ -1711,7 +1464,7 @@
         'name': 'Prunus virus F',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': True,
@@ -1735,7 +1488,7 @@
         'name': 'Prunus virus F',
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
+          'id': 1,
           'name': 'Foo',
         }),
         'verified': True,
@@ -1748,41 +1501,6 @@
     'page_count': 1,
     'per_page': 25,
     'total_count': 2,
-  })
-# ---
-# name: test_update_group[None][mongo]
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-      dict({
-        'build': False,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 1,
-        'modify': False,
-        'modify_otu': True,
-      }),
-    ]),
-    'name': 'Test',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 1,
-        'modify': True,
-        'modify_otu': True,
-      }),
-    ]),
   })
 # ---
 # name: test_update_group[None][resp]

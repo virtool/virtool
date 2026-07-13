@@ -18,7 +18,6 @@ from virtool.analyses.checks import (
 from virtool.analyses.db import (
     AttachAnalysisSubtractionsTransform,
     bump_analysis_updated_at,
-    filter_analyses_by_sample_rights,
 )
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import Analysis, AnalysisFile, AnalysisSearchResult
@@ -28,7 +27,6 @@ from virtool.analyses.utils import (
     attach_analysis_files,
 )
 from virtool.blast.sql import SQLNuVsBlast
-from virtool.blast.task import BLASTTask
 from virtool.blast.transform import AttachNuVsBLAST
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import (
@@ -39,20 +37,23 @@ from virtool.data.events import Operation, emit, emits
 from virtool.data.topg import (
     compose_legacy_id_single_expression,
     compose_legacy_id_subquery,
-    resolve_legacy_id,
 )
 from virtool.data.transforms import apply_transforms
 from virtool.indexes.db import get_current_id_and_version
 from virtool.indexes.transforms import AttachIndexTransform
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_new_id
 from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
+from virtool.samples.db import compose_sample_rights_filter
 from virtool.samples.oas import CreateAnalysisRequest
 from virtool.samples.sql import SQLLegacySample
-from virtool.samples.utils import get_sample_rights
+from virtool.samples.utils import (
+    SAMPLE_RIGHTS_COLUMNS,
+    SampleRight,
+    has_sample_right,
+)
 from virtool.storage.cleanup import delete_prefix
 from virtool.storage.protocol import StorageBackend
 from virtool.subtractions.pg import SQLSubtraction
@@ -60,9 +61,6 @@ from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor, wait_for_checks
 
 logger = get_logger("analyses")
-
-IIMI_WORKFLOW = "iimi"
-"""Workflow value for iimi analyses, which are hidden from the API ahead of a purge."""
 
 FIND_COLUMNS = (
     SQLAnalysis.id,
@@ -74,6 +72,7 @@ FIND_COLUMNS = (
     SQLAnalysis.sample,
     SQLAnalysis.sample_id,
     SQLAnalysis.reference,
+    SQLAnalysis.reference_id,
     SQLAnalysis.index,
     SQLAnalysis.user_id,
     SQLAnalysis.job_id,
@@ -89,10 +88,14 @@ def _row_to_document(row, *, include_results: bool) -> dict:
     formatters expect.
 
     The integer ``id`` is the outward-facing identifier; ``base_processor`` later
-    renames ``_id`` to ``id``. The legacy Mongo slug is carried in ``legacy_id`` for
-    internal consumers (storage keys, Mongo dual-writes, and string-keyed SQL tables
-    such as ``analysis_files`` and ``nuvs_blast``) that have not yet been migrated off
-    the slug.
+    renames ``_id`` to ``id``. The legacy Mongo slug is carried in ``legacy_id`` so
+    analyses migrated from Mongo can still be addressed by their old string id and
+    have their slug-prefixed storage objects cleaned up; Postgres-native analyses
+    have a ``NULL`` slug.
+
+    The nested reference is keyed by the integer ``reference_id`` foreign key, falling
+    back to the legacy ``reference`` string on rows the backfill has not reached.
+    ``AttachReferenceTransform`` resolves either form.
     """
     document = {
         "_id": row.id,
@@ -102,7 +105,9 @@ def _row_to_document(row, *, include_results: bool) -> dict:
         "workflow": row.workflow,
         "ready": row.ready,
         "sample": {"id": row.sample_id},
-        "reference": {"id": row.reference},
+        "reference": {
+            "id": row.reference_id if row.reference_id is not None else row.reference,
+        },
         "index": {"id": row.index},
         "user": {"id": row.user_id},
         "job": {"id": row.job_id} if row.job_id else None,
@@ -126,9 +131,10 @@ class AnalysisData(DataLayerDomain):
         """Resolve the integer id and legacy slug for an analysis by either identifier.
 
         Accepts the outward-facing integer id or the legacy Mongo slug and returns the
-        row's ``(id, legacy_id)``, or ``None`` if no analysis matches. The slug is still
-        needed for Mongo dual-writes and the string-keyed ``analysis_files``,
-        ``nuvs_blast``, and ``analysis_results`` tables.
+        row's ``(id, legacy_id)``, or ``None`` if no analysis matches. The slug is only
+        retained for analyses migrated from Mongo, where it locates their slug-prefixed
+        objects in storage during deletion; Postgres-native analyses have a ``NULL``
+        slug.
         """
         async with AsyncSession(self._pg) as session:
             return (
@@ -148,6 +154,8 @@ class AnalysisData(DataLayerDomain):
     ) -> AnalysisSearchResult:
         """List all analysis documents.
 
+        Only analyses on samples the client has read rights to are listed.
+
         :param page: the page number
         :param per_page: the number of documents per page
         :param client: the client object
@@ -159,26 +167,29 @@ class AnalysisData(DataLayerDomain):
         if page > 1:
             skip_count = (page - 1) * per_page
 
-        count_statement = (
-            select(func.count())
-            .select_from(SQLAnalysis)
-            .where(SQLAnalysis.workflow != IIMI_WORKFLOW)
+        readable_sample_ids = select(SQLLegacySample.id).where(
+            compose_sample_rights_filter(client),
         )
+
+        filters = [
+            SQLAnalysis.sample_id.in_(readable_sample_ids),
+        ]
+
+        if sample_id is not None:
+            filters.append(
+                SQLAnalysis.sample_id
+                == compose_legacy_id_subquery(SQLLegacySample, sample_id),
+            )
+
+        count_statement = select(func.count()).select_from(SQLAnalysis).where(*filters)
         statement = (
             select(*FIND_COLUMNS)
-            .where(SQLAnalysis.workflow != IIMI_WORKFLOW)
+            .where(*filters)
             .order_by(
                 SQLAnalysis.created_at.desc(),
                 SQLAnalysis.id.desc(),
             )
         )
-
-        if sample_id is not None:
-            sample_subquery = compose_legacy_id_subquery(SQLLegacySample, sample_id)
-            count_statement = count_statement.where(
-                SQLAnalysis.sample_id == sample_subquery,
-            )
-            statement = statement.where(SQLAnalysis.sample_id == sample_subquery)
 
         async with AsyncSession(self._pg) as session:
             total_count = (await session.execute(count_statement)).scalar_one()
@@ -187,12 +198,6 @@ class AnalysisData(DataLayerDomain):
             ).all()
 
         documents = [_row_to_document(row, include_results=False) for row in rows]
-
-        documents = await filter_analyses_by_sample_rights(
-            client,
-            self._pg,
-            documents,
-        )
 
         documents = await apply_transforms(
             [base_processor(d) for d in documents],
@@ -237,7 +242,7 @@ class AnalysisData(DataLayerDomain):
                 )
             ).scalar_one_or_none()
 
-        if row is None or row.workflow == IIMI_WORKFLOW:
+        if row is None:
             raise ResourceNotFoundError()
 
         document = _row_to_document(row, include_results=True)
@@ -279,7 +284,6 @@ class AnalysisData(DataLayerDomain):
         data: CreateAnalysisRequest,
         sample_id: str,
         user_id: int,
-        space_id: int,
     ) -> Analysis:
         """Creates a new analysis.
 
@@ -290,7 +294,6 @@ class AnalysisData(DataLayerDomain):
         :param data: the analysis creation input data
         :param sample_id: the ID of the sample to create an analysis for
         :param user_id: the ID of the user starting the job
-        :param space_id: the ID of the parent space
         :return: the analysis
 
         """
@@ -302,18 +305,20 @@ class AnalysisData(DataLayerDomain):
             data.ref_id,
         )
 
-        analysis_id = await get_new_id(self._mongo.analyses)
-
-        job = await self.data.jobs.create(
-            data.workflow.value,
-            {"analysis_id": analysis_id},
-            user_id,
-            space_id,
-        )
-
         subtractions = data.subtractions if data.subtractions is not None else []
 
         async with AsyncSession(self._pg) as session:
+            # Create the job inside the analysis's transaction so the job and its
+            # analysis commit atomically. The job's ``analysis_id`` argument is
+            # derived from ``analyses.job_id`` on read, so the job must not become
+            # claimable before its analysis row exists.
+            job_id = await self.data.jobs.create_in_session(
+                session,
+                data.workflow.value,
+                {},
+                user_id,
+            )
+
             sample_row = (
                 await session.execute(
                     select(SQLLegacySample.id, SQLLegacySample.legacy_id).where(
@@ -327,20 +332,23 @@ class AnalysisData(DataLayerDomain):
 
             sample_pg_id, sample_legacy_id = sample_row
 
-            reference_pg_id = await resolve_legacy_id(
-                session,
-                SQLReference,
-                data.ref_id,
-            )
+            reference_row = (
+                await session.execute(
+                    select(SQLReference.id, SQLReference.legacy_id).where(
+                        compose_legacy_id_single_expression(SQLReference, data.ref_id),
+                    ),
+                )
+            ).one_or_none()
 
-            if reference_pg_id is None:
+            if reference_row is None:
                 raise ResourceConflictError("Reference does not exist")
+
+            reference_pg_id, reference_legacy_id = reference_row
 
             pg_id = (
                 await session.execute(
                     insert(SQLAnalysis)
                     .values(
-                        legacy_id=analysis_id,
                         created_at=created_at,
                         updated_at=created_at,
                         workflow=data.workflow.value,
@@ -348,11 +356,11 @@ class AnalysisData(DataLayerDomain):
                         results=None,
                         sample=sample_legacy_id or str(sample_pg_id),
                         sample_id=sample_pg_id,
-                        reference=data.ref_id,
+                        reference=reference_legacy_id or str(reference_pg_id),
                         reference_id=reference_pg_id,
                         index=index_id,
                         user_id=user_id,
-                        job_id=job.id,
+                        job_id=job_id,
                     )
                     .returning(SQLAnalysis.id),
                 )
@@ -387,7 +395,9 @@ class AnalysisData(DataLayerDomain):
 
             await session.commit()
 
-        return await self.get(analysis_id, None)
+        emit(await self.data.jobs.get(job_id), "jobs", "create", Operation.CREATE)
+
+        return await self.get(pg_id, None)
 
     async def has_right(self, analysis_id: str, client, right: str) -> bool:
         """Checks if the client has the `read` or `write` rights.
@@ -398,37 +408,24 @@ class AnalysisData(DataLayerDomain):
         :return: boolean value
         """
         async with AsyncSession(self._pg) as session:
-            sample_id = (
+            row = (
                 await session.execute(
-                    select(SQLAnalysis.sample).where(
+                    select(*SAMPLE_RIGHTS_COLUMNS)
+                    .join(SQLAnalysis, SQLAnalysis.sample_id == SQLLegacySample.id)
+                    .where(
                         compose_legacy_id_single_expression(SQLAnalysis, analysis_id),
                     ),
                 )
-            ).scalar_one_or_none()
+            ).first()
 
-        if sample_id is None:
-            raise ResourceNotFoundError
-
-        sample = await self._mongo.samples.find_one(
-            {"_id": sample_id},
-            ["user", "group", "all_read", "group_read", "group_write", "all_write"],
-        )
-
-        if not sample:
+        if row is None:
             logger.warning(
-                "parent sample not found for analysis",
+                "analysis or parent sample not found",
                 analysis_id=analysis_id,
-                sample_id=sample_id,
             )
             raise ResourceNotFoundError
 
-        read, write = get_sample_rights(sample, client)
-
-        if right == "read":
-            return read
-
-        if right == "write":
-            return write
+        return has_sample_right(row, client, SampleRight(right))
 
     async def delete(self, analysis_id: str, jobs_api_flag: bool) -> None:
         """Delete a single analysis by its ID.
@@ -460,17 +457,21 @@ class AnalysisData(DataLayerDomain):
 
             await session.commit()
 
-        for key, exc in await delete_prefix(
-            self._storage,
-            f"samples/{sample_legacy_id}/analysis/{legacy_id}/",
-        ):
-            logger.error(
-                "storage cleanup failed; file orphaned",
-                analysis_id=analysis.id,
-                sample_id=analysis.sample.id,
-                key=key,
-                error=repr(exc),
-            )
+        # Only analyses migrated from Mongo have a ``legacy_id`` and slug-prefixed
+        # storage objects to clean up. Postgres-native analyses store no results in
+        # object storage, so there is nothing to delete.
+        if legacy_id is not None:
+            for key, exc in await delete_prefix(
+                self._storage,
+                f"samples/{sample_legacy_id}/analysis/{legacy_id}/",
+            ):
+                logger.error(
+                    "storage cleanup failed; file orphaned",
+                    analysis_id=analysis.id,
+                    sample_id=analysis.sample.id,
+                    key=key,
+                    error=repr(exc),
+                )
 
         emit(
             await self.data.samples.get(analysis.sample.id),
@@ -649,11 +650,6 @@ class AnalysisData(DataLayerDomain):
             await session.flush()
 
             await bump_analysis_updated_at(session, analysis.id, timestamp)
-
-            await self.data.tasks.create(
-                BLASTTask,
-                {"analysis_id": analysis.id, "sequence_index": sequence_index},
-            )
 
             blast_data = blast.to_dict()
 

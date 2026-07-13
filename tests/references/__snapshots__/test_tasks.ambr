@@ -1779,19 +1779,6 @@
     }),
   ])
 # ---
-# name: test_import_reference_task[ref]
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'A test reference',
-    'organism': 'virus',
-    'user': dict({
-      'id': 1,
-    }),
-  })
-# ---
 # name: test_import_reference_task[sequences]
   list([
     dict({

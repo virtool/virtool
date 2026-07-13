@@ -6,7 +6,6 @@ from tests.fixtures.workflow_api.utils import (
     custom_dumps,
     generate_not_found,
 )
-from virtool.indexes.checks import GENOME_REQUIRED_INDEX_FILE_NAMES
 from virtool.indexes.db import INDEX_FILE_NAMES
 from virtool.indexes.models import IndexFile
 from virtool.workflow.pytest_plugin.data import WorkflowData
@@ -43,10 +42,11 @@ def create_indexes_routes(
             if index_id != data.new_index.id:
                 return generate_not_found()
 
-            if data.new_index.reference.data_type == "genome":
-                required_files = GENOME_REQUIRED_INDEX_FILE_NAMES
-            else:
-                required_files = ("reference.fa.gz",)
+            required_files = [
+                file_name
+                for file_name in INDEX_FILE_NAMES
+                if file_name != "reference.json.gz"
+            ]
 
             missing_files = [
                 file_name

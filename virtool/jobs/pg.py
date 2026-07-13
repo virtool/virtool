@@ -70,7 +70,7 @@ class SQLJobAnalysis(Base):
 
     No longer written: analyses now reference their job directly via
     ``SQLAnalysis.job_id``. The model and ``job_analyses`` table are retained
-    pending their drop in VIR-2438.
+    pending their drop in VIR-2394.
     """
 
     __tablename__ = "job_analyses"

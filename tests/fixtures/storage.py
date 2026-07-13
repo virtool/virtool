@@ -2,9 +2,8 @@
 
 Connection parameters are read from the ``VT_TEST_*`` environment variables set by
 ``docker-compose.yml`` on the ``test`` service. Providers are built via
-:func:`virtool.storage.factory.build_primary_backend` so the integration suite
-exercises the same wiring the deployed server uses for its remote primary,
-without the filesystem fallback wrapper. Each test receives a fresh
+:func:`virtool.storage.factory.create_storage_backend` so the integration suite
+exercises the same wiring the deployed server uses. Each test receives a fresh
 ``ObjectProvider`` whose per-test prefix has been purged, so multiple xdist
 workers can share the same bucket and container.
 """
@@ -20,7 +19,7 @@ import aiohttp
 import pytest
 
 from tests.config.test_cls import build_server_config
-from virtool.storage.factory import build_primary_backend
+from virtool.storage.factory import create_storage_backend
 from virtool.storage.memory import MemoryStorageProvider
 from virtool.storage.object import ObjectProvider
 from virtool.storage.protocol import StorageBackend
@@ -88,7 +87,7 @@ def _s3_provider() -> ObjectProvider:
         storage_s3_access_key_id=os.environ["VT_TEST_S3_ACCESS_KEY_ID"],
         storage_s3_secret_access_key=os.environ["VT_TEST_S3_SECRET_ACCESS_KEY"],
     )
-    backend = build_primary_backend(config)
+    backend = create_storage_backend(config)
     assert isinstance(backend, ObjectProvider)
     return backend
 
@@ -109,7 +108,7 @@ async def _azure_provider() -> ObjectProvider:
         storage_azure_access_key=key,
         storage_azure_endpoint=endpoint,
     )
-    backend = build_primary_backend(config)
+    backend = create_storage_backend(config)
     assert isinstance(backend, ObjectProvider)
     return backend
 

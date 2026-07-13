@@ -3,43 +3,38 @@
 from collections import defaultdict
 from typing import Any
 
-from sqlalchemy import and_, exists, func, not_, or_, select
+from sqlalchemy import (
+    ColumnExpressionArgument,
+    and_,
+    exists,
+    func,
+    not_,
+    or_,
+    select,
+    true,
+)
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from yarl import URL
 
-import virtool.errors
-import virtool.mongo.utils
 import virtool.samples.utils
-import virtool.utils
 from virtool.analyses.sql import SQLAnalysis
 from virtool.analyses.utils import WORKFLOW_NAMES
-from virtool.api.errors import APINotFound
-from virtool.data.topg import compose_legacy_id_subquery
+from virtool.data.topg import (
+    compose_legacy_id_subquery,
+)
 from virtool.data.transforms import AbstractTransform, apply_transforms
-from virtool.errors import DatabaseError
 from virtool.groups.pg import SQLGroup
+from virtool.models.roles import AdministratorRole
 from virtool.samples.sql import (
     SQLLegacySample,
     SQLSampleArtifact,
     SQLSampleReads,
     SQLSampleUpload,
 )
-from virtool.settings.models import Settings
 from virtool.types import Document
 from virtool.uploads.data import serialize as serialize_upload
 from virtool.uploads.sql import SQLUpload
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import base_processor
-
-SAMPLE_RIGHTS_PROJECTION = {
-    "_id": False,
-    "group": True,
-    "group_read": True,
-    "group_write": True,
-    "all_read": True,
-    "all_write": True,
-    "user": True,
-}
 
 
 class AttachArtifactsAndReadsTransform(AbstractTransform):
@@ -198,10 +193,7 @@ class DeriveWorkflowTagsTransform(AbstractTransform):
 
         ready_by_workflow = {workflow: ready for workflow, ready in rows}
 
-        return virtool.samples.utils.encode_workflow_tags(
-            ready_by_workflow,
-            document["library_type"],
-        )
+        return virtool.samples.utils.encode_workflow_tags(ready_by_workflow)
 
     async def prepare_many(
         self,
@@ -228,39 +220,35 @@ class DeriveWorkflowTagsTransform(AbstractTransform):
         return {
             document["id"]: virtool.samples.utils.encode_workflow_tags(
                 ready_by_sample.get(document["id"], {}),
-                document["library_type"],
             )
             for document in documents
         }
 
 
-async def check_rights_error_check(
-    db,
-    sample_id: str | None,
-    client,
-    write: bool = True,
-) -> bool:
-    try:
-        check_right = await check_rights(db, sample_id, client, write=write)
-    except DatabaseError as err:
-        if "Sample does not exist" in str(err):
-            raise APINotFound()
-        raise
+def compose_sample_rights_filter(client) -> ColumnExpressionArgument[bool]:
+    """Compose the Postgres predicate scoping samples to those ``client`` can read.
 
-    return check_right
+    The requesting user owns the sample, the sample is world-readable, or the sample is
+    readable by a group the user belongs to. A full administrator sees every sample,
+    matching the single-resource bypass in :func:`has_sample_right`.
+    """
+    if client.administrator_role == AdministratorRole.FULL:
+        return true()
 
+    rights_filter = [
+        SQLLegacySample.all_read.is_(True),
+        SQLLegacySample.user_id == client.user_id,
+    ]
 
-async def check_rights(db, sample_id: str | None, client, write: bool = True) -> bool:
-    sample_rights = await db.samples.find_one(
-        {"_id": sample_id},
-        SAMPLE_RIGHTS_PROJECTION,
-    )
-    if not sample_rights:
-        raise virtool.errors.DatabaseError("Sample does not exist")
+    if client.groups:
+        rights_filter.append(
+            and_(
+                SQLLegacySample.group_read.is_(True),
+                SQLLegacySample.group_id.in_(client.groups),
+            ),
+        )
 
-    has_read, has_write = virtool.samples.utils.get_sample_rights(sample_rights, client)
-
-    return has_read and (write is False or has_write)
+    return or_(*rights_filter)
 
 
 WORKFLOW_CONDITIONS = ("none", "pending", "ready")
@@ -283,40 +271,23 @@ def _exists_analysis(workflow: str, ready: bool | None = None):
     return exists().where(and_(*conditions))
 
 
-def _workflow_compatible(workflow: str):
-    """Predicate selecting samples whose library type is compatible with ``workflow``.
-
-    Mirrors :func:`define_initial_workflows`: ``aodp`` is only compatible with
-    ``amplicon`` libraries; ``nuvs`` and ``pathoscope`` only with non-amplicon
-    libraries. An incompatible workflow always encodes to ``"incompatible"``, so no
-    condition — ``none`` least of all — should match such a sample.
-    """
-    if workflow == "aodp":
-        return SQLLegacySample.library_type == "amplicon"
-
-    return SQLLegacySample.library_type != "amplicon"
-
-
 def _compose_workflow_condition_filter(workflow: str, condition: str):
     """Translate a single ``workflow:condition`` pair into a semi-join predicate.
 
     Mirrors the legacy tag encoding: ``ready`` matches a completed analysis,
     ``pending`` matches an unfinished analysis with none completed, and ``none``
-    matches a workflow with no analyses. Every condition is additionally
-    constrained to samples whose library type makes the workflow compatible, so an
-    ``incompatible`` workflow (e.g. ``aodp`` on a normal library) never matches.
+    matches a workflow with no analyses.
     """
     if condition == "ready":
-        predicate = _exists_analysis(workflow, ready=True)
-    elif condition == "pending":
-        predicate = and_(
+        return _exists_analysis(workflow, ready=True)
+
+    if condition == "pending":
+        return and_(
             _exists_analysis(workflow),
             not_(_exists_analysis(workflow, ready=True)),
         )
-    else:
-        predicate = not_(_exists_analysis(workflow))
 
-    return and_(_workflow_compatible(workflow), predicate)
+    return not_(_exists_analysis(workflow))
 
 
 def compose_sample_workflow_filter(workflows: list[str]):
@@ -361,73 +332,6 @@ def compose_sample_workflow_filter(workflows: list[str]):
             for workflow, conditions in conditions_by_workflow.items()
         ],
     )
-
-
-async def create_sample(
-    mongo,
-    name: str,
-    host: str,
-    isolate: str,
-    group: int | str,
-    locale: str,
-    library_type: str,
-    subtractions: list[int],
-    notes: str,
-    labels: list[int],
-    user_id: int,
-    settings: Settings,
-    paired: bool = False,
-    _id: str | None = None,
-) -> Document:
-    """Create, insert, and return a new sample document.
-
-    :param mongo: the application mongo client
-    :param name: the sample name
-    :param host: user-defined host for the sample
-    :param isolate: user-defined isolate for the sample
-    :param group: the owner group for the sample
-    :param locale: user-defined locale for the sample
-    :param library_type: Type of library for a sample, defaults to None
-    :param subtractions: IDs of default subtractions for the sample
-    :param notes: user-defined notes for the sample
-    :param labels: IDs of labels associated with the sample
-    :param user_id: the ID of the user that is creating the sample
-    :param settings: the application settings
-    :param paired: Whether a sample is paired or not, defaults to False
-    :param _id: An id to assign to a sample instead of it being automatically generated
-    :return: the newly inserted sample document
-    """
-    if _id is None:
-        _id = await virtool.mongo.utils.get_new_id(mongo.samples)
-
-    document = await mongo.samples.insert_one(
-        {
-            "_id": _id,
-            "name": name,
-            "host": host,
-            "isolate": isolate,
-            "created_at": virtool.utils.timestamp(),
-            "is_legacy": False,
-            "format": "fastq",
-            "ready": False,
-            "quality": None,
-            "hold": True,
-            "group_read": settings.sample_group_read,
-            "group_write": settings.sample_group_write,
-            "all_read": settings.sample_all_read,
-            "all_write": settings.sample_all_write,
-            "labels": labels,
-            "library_type": library_type,
-            "subtractions": subtractions,
-            "notes": notes,
-            "user": {"id": user_id},
-            "group": group,
-            "locale": locale,
-            "paired": paired,
-        },
-    )
-
-    return base_processor(document)
 
 
 async def validate_force_choice_group(pg: AsyncEngine, data: dict) -> str | None:

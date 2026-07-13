@@ -4,7 +4,6 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r403, r404
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 import virtool.otus.db
-import virtool.references.db
 from virtool.api.custom_json import json_response
 from virtool.api.errors import (
     APIBadRequest,
@@ -13,8 +12,9 @@ from virtool.api.errors import (
     APINotFound,
 )
 from virtool.api.routes import Routes
-from virtool.data.errors import ResourceNotFoundError
+from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
+from virtool.models.roles import AdministratorRole
 from virtool.mongo.utils import get_mongo_from_req, get_one_field
 from virtool.otus.db import SEQUENCE_PROJECTION
 from virtool.otus.models import OTU, OTUIsolate, OTUSequence, Sequence
@@ -91,10 +91,14 @@ class OTUView(PydanticView):
 
         ref_id = document["reference"]["id"]
 
-        if not await virtool.references.db.check_right(
-            self.request,
+        client = self.request["client"]
+
+        if not await get_data_from_req(self.request).references.check_right(
             ref_id,
             "modify_otu",
+            user_id=client.user_id,
+            group_ids=client.groups,
+            administrator=client.administrator_role == AdministratorRole.FULL,
         ):
             raise APIInsufficientRights()
 
@@ -139,10 +143,14 @@ class OTUView(PydanticView):
         if document is None:
             raise APINotFound()
 
-        if not await virtool.references.db.check_right(
-            self.request,
+        client = self.request["client"]
+
+        if not await get_data_from_req(self.request).references.check_right(
             document["reference"]["id"],
             "modify_otu",
+            user_id=client.user_id,
+            group_ids=client.groups,
+            administrator=client.administrator_role == AdministratorRole.FULL,
         ):
             raise APIInsufficientRights()
 
@@ -184,38 +192,33 @@ class IsolatesView(PydanticView):
 
         """
         mongo = get_mongo_from_req(self.request)
-        pg: AsyncEngine = self.request.app["pg"]
 
         reference = await get_one_field(mongo.otus, "reference", otu_id)
 
         if not reference:
             raise APINotFound()
 
-        if not await virtool.references.db.check_right(
-            self.request,
+        client = self.request["client"]
+
+        if not await get_data_from_req(self.request).references.check_right(
             reference["id"],
             "modify_otu",
+            user_id=client.user_id,
+            group_ids=client.groups,
+            administrator=client.administrator_role == AdministratorRole.FULL,
         ):
             raise APIInsufficientRights()
 
-        source_type = data.source_type.lower()
-
-        # All source types are stored in lower case.
-        if not await virtool.references.db.check_source_type(
-            mongo,
-            pg,
-            reference["id"],
-            source_type,
-        ):
-            raise APIBadRequest("Source type is not allowed")
-
-        isolate = await get_data_from_req(self.request).otus.add_isolate(
-            otu_id,
-            source_type,
-            data.source_name,
-            self.request["client"].user_id,
-            data.default,
-        )
+        try:
+            isolate = await get_data_from_req(self.request).otus.add_isolate(
+                otu_id,
+                data.source_type,
+                data.source_name,
+                self.request["client"].user_id,
+                data.default,
+            )
+        except ResourceConflictError as err:
+            raise APIBadRequest(str(err))
 
         return json_response(
             isolate,
@@ -292,7 +295,6 @@ class IsolateView(PydanticView):
 
         """
         mongo = get_mongo_from_req(self.request)
-        pg: AsyncEngine = self.request.app["pg"]
 
         reference = await get_one_field(
             mongo.otus,
@@ -303,38 +305,29 @@ class IsolateView(PydanticView):
         if not reference:
             raise APINotFound()
 
-        ref_id = reference["id"]
+        client = self.request["client"]
 
-        if not await virtool.references.db.check_right(
-            self.request,
-            ref_id,
+        if not await get_data_from_req(self.request).references.check_right(
+            reference["id"],
             "modify_otu",
+            user_id=client.user_id,
+            group_ids=client.groups,
+            administrator=client.administrator_role == AdministratorRole.FULL,
         ):
             raise APIInsufficientRights()
 
         data = data.dict(exclude_unset=True)
 
-        source_type = None
-
-        # All source types are stored in lower case.
-        if "source_type" in data:
-            source_type = data["source_type"].lower()
-
-            if not await virtool.references.db.check_source_type(
-                mongo,
-                pg,
-                ref_id,
-                source_type,
-            ):
-                raise APIBadRequest("Source type is not allowed")
-
-        isolate = await get_data_from_req(self.request).otus.update_isolate(
-            otu_id,
-            isolate_id,
-            self.request["client"].user_id,
-            source_type=source_type,
-            source_name=data.get("source_name"),
-        )
+        try:
+            isolate = await get_data_from_req(self.request).otus.update_isolate(
+                otu_id,
+                isolate_id,
+                self.request["client"].user_id,
+                source_type=data.get("source_type"),
+                source_name=data.get("source_name"),
+            )
+        except ResourceConflictError as err:
+            raise APIBadRequest(str(err))
 
         return json_response(isolate, status=200)
 
@@ -355,10 +348,14 @@ class IsolateView(PydanticView):
         if not reference:
             raise APINotFound()
 
-        if not await virtool.references.db.check_right(
-            self.request,
+        client = self.request["client"]
+
+        if not await get_data_from_req(self.request).references.check_right(
             reference["id"],
             "modify_otu",
+            user_id=client.user_id,
+            group_ids=client.groups,
+            administrator=client.administrator_role == AdministratorRole.FULL,
         ):
             raise APIInsufficientRights()
 
@@ -426,10 +423,14 @@ class SequencesView(PydanticView):
 
         ref_id = document["reference"]["id"]
 
-        if not await virtool.references.db.check_right(
-            self.request,
+        client = self.request["client"]
+
+        if not await get_data_from_req(self.request).references.check_right(
             ref_id,
             "modify_otu",
+            user_id=client.user_id,
+            group_ids=client.groups,
+            administrator=client.administrator_role == AdministratorRole.FULL,
         ):
             raise APIInsufficientRights()
 
@@ -529,10 +530,14 @@ class SequenceView(PydanticView):
         ):
             raise APINotFound()
 
-        if not await virtool.references.db.check_right(
-            self.request,
+        client = self.request["client"]
+
+        if not await get_data_from_req(self.request).references.check_right(
             document["reference"]["id"],
             "modify_otu",
+            user_id=client.user_id,
+            group_ids=client.groups,
+            administrator=client.administrator_role == AdministratorRole.FULL,
         ):
             raise APIInsufficientRights()
 
@@ -572,10 +577,14 @@ class SequenceView(PydanticView):
         if document is None:
             raise APINotFound()
 
-        if not await virtool.references.db.check_right(
-            self.request,
+        client = self.request["client"]
+
+        if not await get_data_from_req(self.request).references.check_right(
             document["reference"]["id"],
             "modify_otu",
+            user_id=client.user_id,
+            group_ids=client.groups,
+            administrator=client.administrator_role == AdministratorRole.FULL,
         ):
             raise APIInsufficientRights()
 
@@ -623,10 +632,14 @@ async def set_as_default(req):
     if not document:
         raise APINotFound()
 
-    if not await virtool.references.db.check_right(
-        req,
+    client = req["client"]
+
+    if not await get_data_from_req(req).references.check_right(
         document["reference"]["id"],
         "modify_otu",
+        user_id=client.user_id,
+        group_ids=client.groups,
+        administrator=client.administrator_role == AdministratorRole.FULL,
     ):
         raise APIInsufficientRights()
 

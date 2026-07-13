@@ -33,7 +33,6 @@ from virtool.data.errors import (
 from virtool.data.utils import get_data_from_req
 from virtool.jobs.models import TERMINAL_JOB_STATES
 from virtool.models.roles import AdministratorRole
-from virtool.mongo.utils import get_mongo_from_req
 from virtool.samples.models import Sample, SampleSearchResult
 from virtool.samples.oas import (
     CreateAnalysisRequest,
@@ -46,7 +45,6 @@ from virtool.uploads.utils import (
     multipart_file_chunker,
     naive_validator,
 )
-from virtool.utils import get_safely
 
 logger = get_logger("samples")
 
@@ -68,23 +66,30 @@ class SamplesView(PydanticView):
         label: list[int] = Field(default_factory=list),
         page: conint(gt=0) = 1,
         per_page: conint(ge=1, le=100) = 25,
+        user: list[int] = Field(default_factory=list),
         workflows: list[str] = Field(default_factory=list),
     ) -> r200[SampleSearchResult] | r400:
         """Find samples.
 
         Lists samples, filtering by data passed as URL parameters.
 
+        The ``find`` parameter matches a substring of the sample name. Use ``user`` to
+        filter by owner instead: it may be repeated to match samples owned by any of
+        several users. Results are always limited to samples the requesting client may
+        read, so filtering by another user cannot reveal their private samples.
+
         Status Codes:
             200: Successful operation
             400: Invalid query
         """
         search_result = await get_data_from_req(self.request).samples.find(
-            label,
-            page,
-            per_page,
-            find,
-            workflows,
-            self.request["client"],
+            labels=label,
+            page=page,
+            per_page=per_page,
+            term=find,
+            users=user,
+            workflows=workflows,
+            client=self.request["client"],
         )
 
         return json_response(search_result)
@@ -112,7 +117,6 @@ class SamplesView(PydanticView):
             sample = await get_data_from_req(self.request).samples.create(
                 data,
                 self.request["client"].user_id,
-                0,
             )
         except ResourceConflictError as err:
             raise APIBadRequest(str(err))
@@ -335,33 +339,20 @@ async def job_remove(req):
     Only usable in the Jobs API and when samples are unfinalized.
 
     """
-    mongo = get_mongo_from_req(req)
-
     sample_id = req.match_info["sample_id"]
 
-    sample_document = await mongo.samples.find_one(
-        {"_id": sample_id},
-        {"ready": 1, "job": 1},
-    )
-
-    if not sample_document:
+    try:
+        sample = await get_data_from_req(req).samples.get(sample_id)
+    except ResourceNotFoundError:
         raise APINotFound()
 
-    if sample_document.get("ready") is not False:
+    if sample.ready:
         raise APIBadRequest("Only unfinalized samples can be deleted")
 
-    job_id = get_safely(sample_document, "job", "id")
-
-    if job_id:
-        try:
-            job = await get_data_from_req(req).jobs.get(job_id)
-        except ResourceNotFoundError:
-            job = None
-
-        if job is not None and job.state.value not in DELETABLE_JOB_STATES:
-            raise APIBadRequest(
-                f"Cannot delete sample with active job (current state: {job.state.value})"
-            )
+    if sample.job is not None and sample.job.state.value not in DELETABLE_JOB_STATES:
+        raise APIBadRequest(
+            f"Cannot delete sample with active job (current state: {sample.job.state.value})"
+        )
 
     try:
         await get_data_from_req(req).samples.delete(sample_id)
@@ -442,7 +433,6 @@ class AnalysesView(PydanticView):
             data,
             sample_id,
             self.request["client"].user_id,
-            0,
         )
 
         return json_response(
@@ -458,13 +448,8 @@ async def upload_artifact(req):
 
     Uploads artifact created during sample creation using the Jobs API.
     """
-    mongo = get_mongo_from_req(req)
-
     sample_id = req.match_info["sample_id"]
     artifact_type = req.query.get("type")
-
-    if not await mongo.samples.find_one(sample_id):
-        raise APINotFound()
 
     if errors := naive_validator(req):
         raise APIInvalidQuery(errors)
@@ -478,6 +463,8 @@ async def upload_artifact(req):
             name,
             multipart_file_chunker(await req.multipart()),
         )
+    except ResourceNotFoundError:
+        raise APINotFound()
     except ResourceConflictError as err:
         if "Unsupported" in str(err):
             raise APIBadRequest(str(err))
@@ -502,8 +489,6 @@ async def upload_reads(req):
 
     Uploads sample reads using the Jobs API.
     """
-    mongo = get_mongo_from_req(req)
-
     name = req.match_info["filename"]
     sample_id = req.match_info["sample_id"]
 
@@ -515,9 +500,6 @@ async def upload_reads(req):
     if name not in ["reads_1.fq.gz", "reads_2.fq.gz"]:
         raise APIBadRequest("File name is not an accepted reads file")
 
-    if not await mongo.samples.find_one(sample_id):
-        raise APINotFound()
-
     try:
         reads = await get_data_from_req(req).samples.upload_reads(
             sample_id,
@@ -525,6 +507,8 @@ async def upload_reads(req):
             multipart_file_chunker(await req.multipart()),
             upload_id=upload,
         )
+    except ResourceNotFoundError:
+        raise APINotFound()
     except EOFError:
         raise APIBadRequest("Reads file is empty")
     except OSError:

@@ -17,13 +17,17 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.events import Operation, emit, emits
-from virtool.data.topg import both_transactions, retry_both_transactions
+from virtool.data.topg import (
+    both_transactions,
+    compose_legacy_id_single_expression,
+    retry_both_transactions,
+)
 from virtool.data.transforms import apply_transforms
 from virtool.history.models import HistorySearchResult
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.checks import (
     check_fasta_file_uploaded,
-    check_legacy_index_files_uploaded,
+    check_index_files_uploaded,
 )
 from virtool.indexes.db import (
     INDEX_FILE_NAMES,
@@ -40,12 +44,13 @@ from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.pg.utils import get_rows
-from virtool.references.db import (
-    compose_reference_ids_match,
-    resolve_reference_legacy_id,
-)
+from virtool.references.db import compose_reference_ids_match
 from virtool.references.models import ReferenceNested
-from virtool.references.transforms import AttachReferenceTransform
+from virtool.references.sql import SQLReference
+from virtool.references.transforms import (
+    AttachReferenceTransform,
+    shape_nested_reference,
+)
 from virtool.storage.cleanup import delete_prefix
 from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
@@ -193,20 +198,25 @@ class IndexData:
             index_id,
         )
 
-        if reference_field and (
-            reference := await self._mongo.references.find_one(
-                {
-                    "_id": await resolve_reference_legacy_id(
-                        self._pg,
-                        reference_field["id"],
-                    ),
-                },
-                ["data_type", "name"],
-            )
-        ):
-            return ReferenceNested(**reference)
+        if not reference_field:
+            raise ResourceNotFoundError
 
-        raise ResourceNotFoundError
+        async with AsyncSession(self._pg) as session:
+            row = (
+                await session.execute(
+                    select(SQLReference.id, SQLReference.name).where(
+                        compose_legacy_id_single_expression(
+                            SQLReference,
+                            reference_field["id"],
+                        ),
+                    ),
+                )
+            ).first()
+
+        if row is None:
+            raise ResourceNotFoundError
+
+        return ReferenceNested(**shape_nested_reference(row.id, row.name))
 
     async def get_otus_json(
         self,
@@ -332,26 +342,25 @@ class IndexData:
         except KeyError:
             raise ResourceError("Could not find index reference id")
 
-        data_type = await get_one_field(
-            self._mongo.references,
-            "data_type",
-            await resolve_reference_legacy_id(self._pg, ref_id),
-        )
+        async with AsyncSession(self._pg) as session:
+            reference_id = await session.scalar(
+                select(SQLReference.id).where(
+                    compose_legacy_id_single_expression(SQLReference, ref_id),
+                ),
+            )
 
-        if data_type is None:
-            raise ResourceNotFoundError
+        if reference_id is None:
+            raise ResourceError(f"Could not find reference {ref_id} in postgres")
 
         results = {
             f.name: f.type
             for f in await get_rows(self._pg, SQLIndexFile, "index", index_id)
         }
 
-        checks = [check_fasta_file_uploaded(results)]
-
-        if data_type == "genome":
-            checks.append(check_legacy_index_files_uploaded(results))
-
-        await wait_for_checks(*checks)
+        await wait_for_checks(
+            check_fasta_file_uploaded(results),
+            check_index_files_uploaded(results),
+        )
 
         async with self._mongo.create_session() as session:
             await update_last_indexed_versions(self._mongo, self._pg, ref_id, session)
@@ -383,15 +392,25 @@ class IndexData:
         except KeyError:
             raise ResourceError("Could not find index reference id")
 
-        legacy_ref_id = await resolve_reference_legacy_id(self._pg, ref_id)
+        async with AsyncSession(self._pg) as session:
+            reference_row = (
+                await session.execute(
+                    select(SQLReference).where(
+                        compose_legacy_id_single_expression(SQLReference, ref_id),
+                    ),
+                )
+            ).scalar_one_or_none()
 
-        reference = await self._mongo.references.find_one(
-            {"_id": legacy_ref_id},
-            ["created_at", "data_type", "name", "organism"],
-        )
-
-        if reference is None:
+        if reference_row is None:
             raise ResourceNotFoundError()
+
+        reference = {
+            "_id": reference_row.id,
+            "created_at": reference_row.created_at,
+            "data_type": "genome",
+            "name": reference_row.name,
+            "organism": reference_row.organism,
+        }
 
         file_name = "reference.json.gz"
         patched_otus = [

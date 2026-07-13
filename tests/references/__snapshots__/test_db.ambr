@@ -27,3 +27,15 @@
     <SQLLegacyHistory(id=2, legacy_id=lhotu002.0, created_at=2015-10-06 20:00:00, description=Remoted OTU 2 (O2), method_name=remote, user_id=1, otu=lhotu002, otu_name=OTU 2, otu_version=0, reference=None, reference_id=1, index=None, index_version=None)>,
   ])
 # ---
+# name: test_populate_insert_only_reference_writes_otu_and_sequence_rows[legacy_otus]
+  list([
+    <SQLOTU(id=orotu001, data={'_id': 'orotu001', 'name': 'OTU 1', 'user': {'id': 1}, 'issues': None, 'remote': {'id': 'remote_1'}, 'schema': [], 'version': 0, 'imported': True, 'isolates': [{'id': 'oriso001', 'default': True, 'source_name': 'a', 'source_type': 'isolate'}], 'verified': True, 'reference': {'id': 1}, 'created_at': '2015-10-06T20:00:00Z', 'lower_name': 'otu 1', 'abbreviation': 'O1', 'last_indexed_version': None}, name=OTU 1, abbreviation=O1, reference_id=1, verified=True, version=0)>,
+    <SQLOTU(id=orotu002, data={'_id': 'orotu002', 'name': 'OTU 2', 'user': {'id': 1}, 'issues': None, 'remote': {'id': 'remote_2'}, 'schema': [], 'version': 0, 'imported': True, 'isolates': [{'id': 'oriso002', 'default': True, 'source_name': 'a', 'source_type': 'isolate'}], 'verified': True, 'reference': {'id': 1}, 'created_at': '2015-10-06T20:00:00Z', 'lower_name': 'otu 2', 'abbreviation': 'O2', 'last_indexed_version': None}, name=OTU 2, abbreviation=O2, reference_id=1, verified=True, version=0)>,
+  ])
+# ---
+# name: test_populate_insert_only_reference_writes_otu_and_sequence_rows[legacy_sequences]
+  list([
+    <SQLSequence(id=orseq001, data={'_id': 'orseq001', 'host': 'h', 'otu_id': 'orotu001', 'remote': {'id': 'remote_seq_1'}, 'segment': '', 'sequence': 'ATCG', 'accession': 'ACC1', 'reference': {'id': 1}, 'definition': 'test', 'isolate_id': 'oriso001'}, otu_id=orotu001, isolate_id=oriso001, segment=, position=0)>,
+    <SQLSequence(id=orseq002, data={'_id': 'orseq002', 'host': 'h', 'otu_id': 'orotu002', 'remote': {'id': 'remote_seq_2'}, 'segment': '', 'sequence': 'ATCG', 'accession': 'ACC2', 'reference': {'id': 1}, 'definition': 'test', 'isolate_id': 'oriso002'}, otu_id=orotu002, isolate_id=oriso002, segment=, position=0)>,
+  ])
+# ---

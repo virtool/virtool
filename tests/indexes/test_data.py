@@ -1,6 +1,8 @@
+import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from virtool.data.errors import ResourceError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
@@ -18,12 +20,12 @@ async def test_finalize(
 ):
     user = await fake.users.create()
     job = await fake.jobs.create(user=user)
-    await fake.references.create(user=user, id_="bar", name="Bar")
+    reference = await fake.references.create(user=user)
 
     await mongo.indexes.insert_one(
         {
             "_id": "foo",
-            "reference": {"id": "bar"},
+            "reference": {"id": reference.id},
             "user": {"id": user.id},
             "version": 2,
             "created_at": static_time.datetime,
@@ -97,6 +99,37 @@ async def test_finalize(
     assert await mongo.indexes.find_one() == snapshot
 
 
+async def test_finalize_reference_missing_from_postgres(
+    data_layer: DataLayer,
+    fake: DataFaker,
+    mongo: Mongo,
+    static_time,
+):
+    """An index whose reference has no Postgres row is corrupt data, not a missing
+    resource.
+    """
+    user = await fake.users.create()
+    job = await fake.jobs.create(user=user)
+
+    await mongo.indexes.insert_one(
+        {
+            "_id": "foo",
+            "reference": {"id": "missing"},
+            "user": {"id": user.id},
+            "version": 2,
+            "created_at": static_time.datetime,
+            "job": {"id": job.id},
+            "has_files": True,
+            "manifest": {},
+        },
+    )
+
+    with pytest.raises(ResourceError, match="Could not find reference missing"):
+        await data_layer.index.finalize("foo")
+
+    assert await mongo.indexes.find_one("foo", ["ready"]) == {"_id": "foo"}
+
+
 class TestDelete:
     async def test_resets_legacy_history_index(
         self,
@@ -111,20 +144,17 @@ class TestDelete:
         """
         user = await fake.users.create()
         job = await fake.jobs.create(user=user)
-        await fake.references.create(
-            user=user,
-            id_="reference",
-            name="Reference",
-        )
+        reference = await fake.references.create(user=user)
 
         await mongo.indexes.insert_one(
             {
                 "_id": "deleted_index",
-                "reference": {"id": "reference"},
+                "reference": {"id": reference.id},
                 "user": {"id": user.id},
                 "version": 4,
                 "created_at": static_time.datetime,
                 "job": {"id": job.id},
+                "task": None,
                 "has_files": True,
                 "ready": True,
                 "manifest": {},
@@ -143,7 +173,7 @@ class TestDelete:
                         otu="otu_a",
                         otu_name="Virus A",
                         otu_version="0",
-                        reference="reference",
+                        reference_id=reference.id,
                         index="deleted_index",
                         index_version="4",
                     ),
@@ -156,7 +186,7 @@ class TestDelete:
                         otu="otu_b",
                         otu_name="Virus B",
                         otu_version="0",
-                        reference="reference",
+                        reference_id=reference.id,
                         index="deleted_index",
                         index_version="4",
                     ),
@@ -169,7 +199,7 @@ class TestDelete:
                         otu="otu_c",
                         otu_name="Virus C",
                         otu_version="0",
-                        reference="reference",
+                        reference_id=reference.id,
                         index="other_index",
                         index_version="2",
                     ),

@@ -8,7 +8,7 @@ from virtool.users.models_base import UserNested
 
 
 class ReferenceClonedFrom(BaseModel):
-    id: str
+    id: int
     name: str
 
 
@@ -61,7 +61,7 @@ class ReferenceBuild(BaseModel):
 
 
 class ReferenceNested(BaseModel):
-    id: str
+    id: int
     data_type: ReferenceDataType
     name: str
 
@@ -91,7 +91,7 @@ class Reference(ReferenceMinimal):
         schema_extra = {
             "example": {
                 "archived": False,
-                "cloned_from": {"id": "pat6xdn3", "name": "Plant Viruses"},
+                "cloned_from": {"id": 12, "name": "Plant Viruses"},
                 "contributors": [
                     {
                         "administrator": True,
@@ -130,7 +130,7 @@ class Reference(ReferenceMinimal):
                         "modify_otu": False,
                     },
                 ],
-                "id": "d19exr83",
+                "id": 25,
                 "latest_build": {
                     "created_at": "2022-07-05T17:41:51.857000Z",
                     "has_json": False,
@@ -173,7 +173,7 @@ class ReferenceSearchResult(SearchResult):
                 "documents": [
                     {
                         "archived": False,
-                        "cloned_from": {"id": "pat6xdn3", "name": "Plant Viruses"},
+                        "cloned_from": {"id": 12, "name": "Plant Viruses"},
                         "created_at": "2022-01-28T23:42:48.321000Z",
                         "data_type": "genome",
                         "groups": [
@@ -185,7 +185,7 @@ class ReferenceSearchResult(SearchResult):
                                 "modify_otu": False,
                             },
                         ],
-                        "id": "d19exr83",
+                        "id": 25,
                         "latest_build": {
                             "created_at": "2022-07-05T17:41:51.857000Z",
                             "has_json": False,

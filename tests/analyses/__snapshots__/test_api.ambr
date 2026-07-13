@@ -18,13 +18,13 @@
         'handle': 'leeashley',
         'id': 1,
       }),
-      'workflow': 'pathoscope',
+      'workflow': 'nuvs',
     }),
     'ready': True,
     'reference': dict({
       'data_type': 'genome',
-      'id': 'baz',
-      'name': 'Baz',
+      'id': 1,
+      'name': 'Reference',
     }),
     'results': dict({
       'hits': list([
@@ -41,6 +41,68 @@
       'id': 1,
     }),
     'workflow': 'nuvs',
+  })
+# ---
+# name: TestGet.test_ok
+  dict({
+    'created_at': '2015-10-06T20:00:00Z',
+    'files': list([
+      dict({
+        'analysis': 1,
+        'description': None,
+        'format': 'fasta',
+        'id': 1,
+        'name': 'reference.fa',
+        'name_on_disk': '1-reference.fa',
+        'size': None,
+        'uploaded_at': None,
+      }),
+    ]),
+    'id': 1,
+    'index': dict({
+      'id': 'bar',
+      'version': 3,
+    }),
+    'job': dict({
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 1,
+      'progress': 100,
+      'state': 'succeeded',
+      'user': dict({
+        'handle': 'myersmitchell',
+        'id': 2,
+      }),
+      'workflow': 'pathoscope',
+    }),
+    'ready': True,
+    'reference': dict({
+      'data_type': 'genome',
+      'id': 1,
+      'name': 'Test Reference',
+    }),
+    'results': dict({
+      'hits': list([
+      ]),
+    }),
+    'sample': dict({
+      'id': 1,
+    }),
+    'subtractions': list([
+      dict({
+        'id': 2,
+        'name': 'Apple',
+      }),
+      dict({
+        'id': 1,
+        'name': 'Plum',
+      }),
+    ]),
+    'updated_at': '2015-10-06T20:00:00Z',
+    'user': dict({
+      'handle': 'myersmitchell',
+      'id': 2,
+    }),
+    'workflow': 'pathoscope',
   })
 # ---
 # name: test_blast[None]
@@ -73,8 +135,8 @@
         'ready': True,
         'reference': dict({
           'data_type': 'genome',
-          'id': 'foo',
-          'name': 'Foo',
+          'id': 2,
+          'name': 'Reference',
         }),
         'sample': dict({
           'id': 1,
@@ -109,8 +171,8 @@
         'ready': True,
         'reference': dict({
           'data_type': 'genome',
-          'id': 'baz',
-          'name': 'Baz',
+          'id': 1,
+          'name': 'Reference',
         }),
         'sample': dict({
           'id': 1,
@@ -149,8 +211,8 @@
         'ready': True,
         'reference': dict({
           'data_type': 'genome',
-          'id': 'baz',
-          'name': 'Baz',
+          'id': 1,
+          'name': 'Reference',
         }),
         'sample': dict({
           'id': 1,
@@ -170,130 +232,6 @@
     'page_count': 1,
     'per_page': 25,
     'total_count': 3,
-  })
-# ---
-# name: test_get[None-False-False]
-  dict({
-    'created_at': '2015-10-06T20:00:00Z',
-    'files': list([
-      dict({
-        'analysis': 1,
-        'description': None,
-        'format': 'fasta',
-        'id': 1,
-        'name': 'reference.fa',
-        'name_on_disk': '1-reference.fa',
-        'size': None,
-        'uploaded_at': None,
-      }),
-    ]),
-    'id': 1,
-    'index': dict({
-      'id': 'bar',
-      'version': 3,
-    }),
-    'job': dict({
-      'created_at': '2015-10-06T20:00:00Z',
-      'id': 1,
-      'progress': 100,
-      'state': 'succeeded',
-      'user': dict({
-        'handle': 'modonnell',
-        'id': 3,
-      }),
-      'workflow': 'pathoscope',
-    }),
-    'ready': True,
-    'reference': dict({
-      'data_type': 'genome',
-      'id': 'baz',
-      'name': 'Baz',
-    }),
-    'results': dict({
-      'hits': list([
-      ]),
-    }),
-    'sample': dict({
-      'id': 1,
-    }),
-    'subtractions': list([
-      dict({
-        'id': 2,
-        'name': 'Apple',
-      }),
-      dict({
-        'id': 1,
-        'name': 'Plum',
-      }),
-    ]),
-    'updated_at': '2015-10-06T20:00:00Z',
-    'user': dict({
-      'handle': 'myersmitchell',
-      'id': 2,
-    }),
-    'workflow': 'pathoscope',
-  })
-# ---
-# name: test_get[None-True-True]
-  dict({
-    'created_at': '2015-10-06T20:00:00Z',
-    'files': list([
-      dict({
-        'analysis': 1,
-        'description': None,
-        'format': 'fasta',
-        'id': 1,
-        'name': 'reference.fa',
-        'name_on_disk': '1-reference.fa',
-        'size': None,
-        'uploaded_at': None,
-      }),
-    ]),
-    'id': 1,
-    'index': dict({
-      'id': 'bar',
-      'version': 3,
-    }),
-    'job': dict({
-      'created_at': '2015-10-06T20:00:00Z',
-      'id': 1,
-      'progress': 100,
-      'state': 'succeeded',
-      'user': dict({
-        'handle': 'modonnell',
-        'id': 3,
-      }),
-      'workflow': 'pathoscope',
-    }),
-    'ready': True,
-    'reference': dict({
-      'data_type': 'genome',
-      'id': 'baz',
-      'name': 'Baz',
-    }),
-    'results': dict({
-      'hits': list([
-      ]),
-    }),
-    'sample': dict({
-      'id': 1,
-    }),
-    'subtractions': list([
-      dict({
-        'id': 2,
-        'name': 'Apple',
-      }),
-      dict({
-        'id': 1,
-        'name': 'Plum',
-      }),
-    ]),
-    'updated_at': '2015-10-06T20:00:00Z',
-    'user': dict({
-      'handle': 'myersmitchell',
-      'id': 2,
-    }),
-    'workflow': 'pathoscope',
   })
 # ---
 # name: test_upload_file[None]

@@ -1,5 +1,5 @@
 # serializer version: 1
-# name: TestCheckNuvsBlast.test_bad_zip_file
+# name: TestSweepCheck.test_bad_zip_file
   dict({
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'error': 'Unable to interpret NCBI result',
@@ -7,12 +7,12 @@
     'last_checked_at': datetime.datetime(2015, 10, 6, 20, 0),
     'ready': False,
     'result': None,
-    'rid': None,
+    'rid': 'RID_12345',
     'task': None,
     'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
   })
 # ---
-# name: TestCheckNuvsBlast.test_result
+# name: TestSweepCheck.test_result
   dict({
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'error': None,
@@ -29,36 +29,10 @@
       'stat': 'stat',
       'target': dict({
         'name': 'foo',
-        'sequence': 'ATAGAQGAGATAGAG',
+        'sequence': 'ATAGAGAACTGTACTAGCTGATCGATCTGACGTAGCAC',
       }),
       'version': '1.2.3',
     }),
-    'rid': 'RID_12345',
-    'task': None,
-    'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
-  })
-# ---
-# name: TestCheckNuvsBlast.test_running[after]
-  dict({
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'error': None,
-    'id': 4,
-    'last_checked_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'ready': False,
-    'result': None,
-    'rid': 'RID_12345',
-    'task': None,
-    'updated_at': datetime.datetime(2015, 10, 6, 20, 0),
-  })
-# ---
-# name: TestCheckNuvsBlast.test_running[before]
-  dict({
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'error': None,
-    'id': 4,
-    'last_checked_at': datetime.datetime(2013, 5, 7, 4, 24, 24),
-    'ready': False,
-    'result': None,
     'rid': 'RID_12345',
     'task': None,
     'updated_at': datetime.datetime(2015, 10, 6, 20, 0),

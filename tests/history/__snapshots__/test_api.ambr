@@ -4,7 +4,7 @@
     'created_at': 'approximately_now_isoformat',
     'description': 'Created Tobacco mosaic virus (TMV)',
     'diff': dict({
-      '_id': 'fb085f7f',
+      '_id': 'bf1b993c',
       'abbreviation': 'TMV',
       'isolates': list([
       ]),
@@ -19,20 +19,20 @@
       'verified': False,
       'version': 0,
     }),
-    'id': 'fb085f7f.0',
+    'id': 'bf1b993c.0',
     'index': dict({
       'id': 'unbuilt',
       'version': 'unbuilt',
     }),
     'method_name': 'create',
     'otu': dict({
-      'id': 'fb085f7f',
+      'id': 'bf1b993c',
       'name': 'Tobacco mosaic virus',
       'version': 0,
     }),
     'reference': dict({
       'data_type': 'genome',
-      'id': 'bf1b993c',
+      'id': 1,
       'name': 'Test Reference',
     }),
     'user': dict({
@@ -47,20 +47,20 @@
       dict({
         'created_at': 'approximately_now_isoformat',
         'description': 'Created Potato virus X (PVX)',
-        'id': '7cf872dc.0',
+        'id': 'fb085f7f.0',
         'index': dict({
           'id': 'unbuilt',
           'version': 'unbuilt',
         }),
         'method_name': 'create',
         'otu': dict({
-          'id': '7cf872dc',
+          'id': 'fb085f7f',
           'name': 'Potato virus X',
           'version': 0,
         }),
         'reference': dict({
           'data_type': 'genome',
-          'id': 'bf1b993c',
+          'id': 1,
           'name': 'Test Reference',
         }),
         'user': dict({
@@ -71,20 +71,20 @@
       dict({
         'created_at': 'approximately_now_isoformat',
         'description': 'Created Tobacco mosaic virus (TMV)',
-        'id': 'fb085f7f.0',
+        'id': 'bf1b993c.0',
         'index': dict({
           'id': 'unbuilt',
           'version': 'unbuilt',
         }),
         'method_name': 'create',
         'otu': dict({
-          'id': 'fb085f7f',
+          'id': 'bf1b993c',
           'name': 'Tobacco mosaic virus',
           'version': 0,
         }),
         'reference': dict({
           'data_type': 'genome',
-          'id': 'bf1b993c',
+          'id': 1,
           'name': 'Test Reference',
         }),
         'user': dict({
@@ -99,86 +99,4 @@
     'per_page': 25,
     'total_count': 2,
   })
-# ---
-# name: test_revert[True-False-None]
-  dict({
-    '_id': '6116cba1',
-    'abbreviation': 'TST',
-    'imported': True,
-    'isolates': list([
-      dict({
-        'default': True,
-        'id': 'cab8b360',
-        'source_name': '8816-v2',
-        'source_type': 'isolate',
-      }),
-    ]),
-    'last_indexed_version': 0,
-    'lower_name': 'prunus virus f',
-    'name': 'Prunus virus F',
-    'reference': dict({
-      'id': 'hxn167',
-    }),
-    'schema': list([
-    ]),
-    'verified': False,
-    'version': 1,
-  })
-# ---
-# name: test_revert[True-False-None].1
-  list([
-    dict({
-      '_id': 'KX269872',
-      'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
-      'host': 'sweet cherry',
-      'isolate_id': 'cab8b360',
-      'otu_id': '6116cba1',
-      'reference': dict({
-        'id': 'hxn167',
-      }),
-      'segment': None,
-      'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
-    }),
-  ])
-# ---
-# name: test_revert[True-True-None]
-  dict({
-    '_id': '6116cba1',
-    'abbreviation': 'TST',
-    'imported': True,
-    'isolates': list([
-      dict({
-        'default': True,
-        'id': 'cab8b360',
-        'source_name': '8816-v2',
-        'source_type': 'isolate',
-      }),
-    ]),
-    'last_indexed_version': 0,
-    'lower_name': 'prunus virus f',
-    'name': 'Prunus virus F',
-    'reference': dict({
-      'id': 1,
-    }),
-    'schema': list([
-    ]),
-    'verified': False,
-    'version': 1,
-  })
-# ---
-# name: test_revert[True-True-None].1
-  list([
-    dict({
-      '_id': 'KX269872',
-      'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete cds.',
-      'host': 'sweet cherry',
-      'isolate_id': 'cab8b360',
-      'otu_id': '6116cba1',
-      'reference': dict({
-        'id': 1,
-      }),
-      'segment': None,
-      'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
-    }),
-  ])
 # ---

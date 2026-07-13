@@ -14,7 +14,6 @@ from virtool.indexes.sql import SQLIndexFile
 from virtool.indexes.tasks import CreateIndexTask
 from virtool.indexes.utils import compose_index_file_key
 from virtool.mongo.core import Mongo
-from virtool.references.sql import SQLReference
 from virtool.storage.protocol import StorageBackend
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
@@ -179,21 +178,14 @@ class TestCreateIndexTask:
         assert otu["last_indexed_version"] == 1
 
     async def test_resolves_integer_reference_id(self) -> None:
-        """A task-backed build resolves an integer embedded reference id to Mongo."""
-        async with AsyncSession(self.pg) as session:
-            reference_pk = await session.scalar(
-                select(SQLReference.id).where(
-                    SQLReference.legacy_id == self.reference.id,
-                ),
-            )
-
+        """A task-backed build accepts an integer embedded reference id."""
         manifest = await _insert_indexed_otu(
             self.mongo,
             self.reference.id,
             self.test_otu,
             self.test_sequence,
         )
-        task_id = await self._create_task_backed_index(manifest, reference_pk)
+        task_id = await self._create_task_backed_index(manifest, self.reference.id)
 
         await (await CreateIndexTask.from_task_id(self.data_layer, task_id)).run()
 

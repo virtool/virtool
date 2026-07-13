@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 
 import pytest
 from pytest_mock import MockerFixture
@@ -6,16 +7,16 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
-from virtool.api.client import UserClient
+from virtool.api.custom_json import dump_string, loads
 from virtool.data.errors import ResourceNotFoundError
+from virtool.data.layer import DataLayer
 from virtool.data.topg import compose_legacy_id_subquery
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.models.enums import HistoryMethod
-from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
+from virtool.otus.sql import SQLOTU, SQLSequence
 from virtool.references.db import (
-    check_right,
     compose_reference_ids_match,
     create_document,
     get_manifest,
@@ -27,6 +28,35 @@ from virtool.references.sql import (
     SQLReferenceGroup,
     SQLReferenceUser,
 )
+
+
+def build_source_otus(indices: list[int]) -> list[dict]:
+    """Build source OTU documents for the bulk reference populate paths."""
+    return [
+        {
+            "_id": f"remote_{i}",
+            "name": f"OTU {i}",
+            "abbreviation": f"O{i}",
+            "isolates": [
+                {
+                    "id": f"remote_iso_{i}",
+                    "default": True,
+                    "source_type": "isolate",
+                    "source_name": "a",
+                    "sequences": [
+                        {
+                            "_id": f"remote_seq_{i}",
+                            "accession": f"ACC{i}",
+                            "sequence": "ATCG",
+                            "definition": "test",
+                            "host": "h",
+                        },
+                    ],
+                },
+            ],
+        }
+        for i in indices
+    ]
 
 
 async def seed_reference(
@@ -104,57 +134,48 @@ async def seed_reference_rights(
         return reference_id
 
 
-def make_client(mocker, *, user_id, groups, admin=False) -> UserClient:
-    client = mocker.Mock(spec=UserClient)
-    client.administrator_role = AdministratorRole.FULL if admin else None
-    client.user_id = user_id
-    client.groups = groups
-    return client
-
-
 class TestCheckRight:
     """Authorization reads resolve rights from the Postgres child tables."""
 
     async def test_administrator_short_circuit(
         self,
-        mock_req,
-        mocker,
-        pg: AsyncEngine,
+        data_layer: DataLayer,
         fake: DataFaker,
     ):
         """A full administrator is granted any right without a database lookup."""
         user = await fake.users.create()
 
-        mock_req.app = {"pg": pg}
-        mock_req["client"] = make_client(
-            mocker,
-            user_id=user.id,
-            groups=[],
-            admin=True,
+        assert (
+            await data_layer.references.check_right(
+                "unseeded_reference",
+                "modify",
+                user_id=user.id,
+                group_ids=[],
+                administrator=True,
+            )
+            is True
         )
-
-        assert await check_right(mock_req, "unseeded_reference", "modify") is True
 
     async def test_reference_not_found(
         self,
-        mock_req,
-        mocker,
-        pg: AsyncEngine,
+        data_layer: DataLayer,
         fake: DataFaker,
     ):
         """A missing reference raises ``ResourceNotFoundError``."""
         user = await fake.users.create()
 
-        mock_req.app = {"pg": pg}
-        mock_req["client"] = make_client(mocker, user_id=user.id, groups=[])
-
         with pytest.raises(ResourceNotFoundError):
-            await check_right(mock_req, "missing_reference", "read")
+            await data_layer.references.check_right(
+                "missing_reference",
+                "read",
+                user_id=user.id,
+                group_ids=[],
+                administrator=False,
+            )
 
     async def test_read_granted_by_user_membership(
         self,
-        mock_req,
-        mocker,
+        data_layer: DataLayer,
         pg: AsyncEngine,
         fake: DataFaker,
         static_time,
@@ -171,15 +192,20 @@ class TestCheckRight:
             users=[(member.id, RIGHTS_NONE)],
         )
 
-        mock_req.app = {"pg": pg}
-        mock_req["client"] = make_client(mocker, user_id=member.id, groups=[])
-
-        assert await check_right(mock_req, "ref_read_user", "read") is True
+        assert (
+            await data_layer.references.check_right(
+                "ref_read_user",
+                "read",
+                user_id=member.id,
+                group_ids=[],
+                administrator=False,
+            )
+            is True
+        )
 
     async def test_read_granted_by_group_membership(
         self,
-        mock_req,
-        mocker,
+        data_layer: DataLayer,
         pg: AsyncEngine,
         fake: DataFaker,
         static_time,
@@ -197,19 +223,20 @@ class TestCheckRight:
             groups=[(group.id, RIGHTS_NONE)],
         )
 
-        mock_req.app = {"pg": pg}
-        mock_req["client"] = make_client(
-            mocker,
-            user_id=member.id,
-            groups=[group.id],
+        assert (
+            await data_layer.references.check_right(
+                "ref_read_group",
+                "read",
+                user_id=member.id,
+                group_ids=[group.id],
+                administrator=False,
+            )
+            is True
         )
-
-        assert await check_right(mock_req, "ref_read_group", "read") is True
 
     async def test_read_denied_for_non_member(
         self,
-        mock_req,
-        mocker,
+        data_layer: DataLayer,
         pg: AsyncEngine,
         fake: DataFaker,
         static_time,
@@ -225,15 +252,20 @@ class TestCheckRight:
             created_at=static_time.datetime,
         )
 
-        mock_req.app = {"pg": pg}
-        mock_req["client"] = make_client(mocker, user_id=outsider.id, groups=[])
-
-        assert await check_right(mock_req, "ref_read_denied", "read") is False
+        assert (
+            await data_layer.references.check_right(
+                "ref_read_denied",
+                "read",
+                user_id=outsider.id,
+                group_ids=[],
+                administrator=False,
+            )
+            is False
+        )
 
     async def test_right_granted_by_user_entry(
         self,
-        mock_req,
-        mocker,
+        data_layer: DataLayer,
         pg: AsyncEngine,
         fake: DataFaker,
         static_time,
@@ -250,15 +282,20 @@ class TestCheckRight:
             users=[(member.id, RIGHTS_MODIFY_OTU)],
         )
 
-        mock_req.app = {"pg": pg}
-        mock_req["client"] = make_client(mocker, user_id=member.id, groups=[])
-
-        assert await check_right(mock_req, "ref_user_right", "modify_otu") is True
+        assert (
+            await data_layer.references.check_right(
+                "ref_user_right",
+                "modify_otu",
+                user_id=member.id,
+                group_ids=[],
+                administrator=False,
+            )
+            is True
+        )
 
     async def test_right_denied_when_no_entry_carries_it(
         self,
-        mock_req,
-        mocker,
+        data_layer: DataLayer,
         pg: AsyncEngine,
         fake: DataFaker,
         static_time,
@@ -275,15 +312,20 @@ class TestCheckRight:
             users=[(member.id, RIGHTS_NONE)],
         )
 
-        mock_req.app = {"pg": pg}
-        mock_req["client"] = make_client(mocker, user_id=member.id, groups=[])
-
-        assert await check_right(mock_req, "ref_right_denied", "modify_otu") is False
+        assert (
+            await data_layer.references.check_right(
+                "ref_right_denied",
+                "modify_otu",
+                user_id=member.id,
+                group_ids=[],
+                administrator=False,
+            )
+            is False
+        )
 
     async def test_right_granted_by_group_when_user_entry_lacks_it(
         self,
-        mock_req,
-        mocker,
+        data_layer: DataLayer,
         pg: AsyncEngine,
         fake: DataFaker,
         static_time,
@@ -306,49 +348,20 @@ class TestCheckRight:
             groups=[(group.id, RIGHTS_MODIFY_OTU)],
         )
 
-        mock_req.app = {"pg": pg}
-        mock_req["client"] = make_client(
-            mocker,
-            user_id=member.id,
-            groups=[group.id],
+        assert (
+            await data_layer.references.check_right(
+                "ref_group_wins",
+                "modify_otu",
+                user_id=member.id,
+                group_ids=[group.id],
+                administrator=False,
+            )
+            is True
         )
-
-        assert await check_right(mock_req, "ref_group_wins", "modify_otu") is True
-
-    async def test_group_matched_by_legacy_id(
-        self,
-        mock_req,
-        mocker,
-        pg: AsyncEngine,
-        fake: DataFaker,
-        static_time,
-    ):
-        """A client group held as a legacy string id resolves to its integer row."""
-        owner = await fake.users.create()
-        member = await fake.users.create()
-        group = await fake.groups.create(legacy_id="legacy_group")
-
-        await seed_reference_rights(
-            pg,
-            legacy_id="ref_legacy_group",
-            owner_id=owner.id,
-            created_at=static_time.datetime,
-            groups=[(group.id, RIGHTS_NONE)],
-        )
-
-        mock_req.app = {"pg": pg}
-        mock_req["client"] = make_client(
-            mocker,
-            user_id=member.id,
-            groups=[group.legacy_id],
-        )
-
-        assert await check_right(mock_req, "ref_legacy_group", "read") is True
 
     async def test_reference_matched_by_integer_pk(
         self,
-        mock_req,
-        mocker,
+        data_layer: DataLayer,
         pg: AsyncEngine,
         fake: DataFaker,
         static_time,
@@ -365,20 +378,25 @@ class TestCheckRight:
             users=[(member.id, RIGHTS_NONE)],
         )
 
-        mock_req.app = {"pg": pg}
-        mock_req["client"] = make_client(mocker, user_id=member.id, groups=[])
+        assert (
+            await data_layer.references.check_right(
+                reference_pk,
+                "read",
+                user_id=member.id,
+                group_ids=[],
+                administrator=False,
+            )
+            is True
+        )
 
-        assert await check_right(mock_req, reference_pk, "read") is True
-
-    async def test_job_client_denied(
+    async def test_client_without_user_denied(
         self,
-        mock_req,
-        mocker,
+        data_layer: DataLayer,
         pg: AsyncEngine,
         fake: DataFaker,
         static_time,
     ):
-        """A client without a user id or groups is denied without erroring."""
+        """A client with no user id or groups is denied without erroring."""
         owner = await fake.users.create()
 
         await seed_reference_rights(
@@ -388,10 +406,16 @@ class TestCheckRight:
             created_at=static_time.datetime,
         )
 
-        mock_req.app = {"pg": pg}
-        mock_req["client"] = make_client(mocker, user_id=None, groups=[])
-
-        assert await check_right(mock_req, "ref_job_client", "read") is False
+        assert (
+            await data_layer.references.check_right(
+                "ref_job_client",
+                "read",
+                user_id=None,
+                group_ids=[],
+                administrator=False,
+            )
+            is False
+        )
 
 
 class TestComposeReferenceIdsMatch:
@@ -448,12 +472,13 @@ class TestComposeReferenceIdsMatch:
         return reference_ids
 
     async def test_unfiltered(self, pg: AsyncEngine, references: dict[str, int]):
-        """Both id forms of every legacy reference are matched when ``archived`` is None."""
+        """Both id forms of every reference are matched when ``archived`` is None."""
         match = await compose_reference_ids_match(pg)
 
         assert set(match["$in"]) == {
             references["active"],
             references["archived"],
+            references["native_active"],
             "ref_active",
             "ref_archived",
         }
@@ -466,21 +491,26 @@ class TestComposeReferenceIdsMatch:
     async def test_active(self, pg: AsyncEngine, references: dict[str, int]):
         match = await compose_reference_ids_match(pg, False)
 
-        assert set(match["$in"]) == {references["active"], "ref_active"}
+        assert set(match["$in"]) == {
+            references["active"],
+            references["native_active"],
+            "ref_active",
+        }
 
-    async def test_native_reference_excluded(
+    async def test_native_reference_contributes_only_its_pk(
         self,
         pg: AsyncEngine,
         references: dict[str, int],
     ):
-        """A reference with no ``legacy_id`` never enters the match.
+        """A reference with no ``legacy_id`` is matched by its primary key alone.
 
-        It cannot be shaped into a ``ReferenceNested``, whose ``id`` is a required
-        string, so matching its indexes would fail response validation.
+        Now that the integer primary key is the public identifier, a Postgres-native
+        reference can be shaped into a ``ReferenceNested``. Its ``NULL`` legacy id must
+        not leak into the match, where it would match indexes with no reference.
         """
         match = await compose_reference_ids_match(pg)
 
-        assert references["native_active"] not in match["$in"]
+        assert references["native_active"] in match["$in"]
         assert None not in match["$in"]
 
 
@@ -530,7 +560,6 @@ async def test_get_reference_groups(
 
 
 async def test_create_document_owner_user(
-    mongo: Mongo,
     static_time,
 ):
     from virtool.settings.models import Settings
@@ -538,7 +567,6 @@ async def test_create_document_owner_user(
     settings = Settings(default_source_types=["isolate", "strain"])
 
     document = await create_document(
-        mongo,
         settings,
         "Test Reference",
         "virus",
@@ -576,16 +604,6 @@ async def test_populate_insert_only_reference_rollback(
 
     await seed_reference(pg, ref_id, user.id, static_time.datetime)
 
-    await mongo.references.insert_one(
-        {
-            "_id": ref_id,
-            "created_at": static_time.datetime,
-            "data_type": "genome",
-            "name": "Rollback",
-            "user": {"id": user.id},
-        },
-    )
-
     mocker.patch(
         "virtool.references.alot.random_alphanumeric",
         side_effect=[
@@ -598,31 +616,7 @@ async def test_populate_insert_only_reference_rollback(
         ],
     )
 
-    otus = [
-        {
-            "_id": f"remote_{i}",
-            "name": f"OTU {i}",
-            "abbreviation": f"O{i}",
-            "isolates": [
-                {
-                    "id": f"remote_iso_{i}",
-                    "default": True,
-                    "source_type": "isolate",
-                    "source_name": "a",
-                    "sequences": [
-                        {
-                            "_id": f"remote_seq_{i}",
-                            "accession": f"ACC{i}",
-                            "sequence": "ATCG",
-                            "definition": "test",
-                            "host": "h",
-                        },
-                    ],
-                },
-            ],
-        }
-        for i in (1, 2)
-    ]
+    otus = build_source_otus([1, 2])
 
     otus_done = asyncio.Event()
 
@@ -659,9 +653,14 @@ async def test_populate_insert_only_reference_rollback(
 
     assert await mongo.otus.count_documents({"reference.id": ref_id}) == 0
     assert await mongo.sequences.count_documents({"reference.id": ref_id}) == 0
-    assert await mongo.references.find_one({"_id": ref_id}) is None
 
     async with AsyncSession(pg) as pg_session:
+        reference_row = await pg_session.scalar(
+            select(SQLReference).where(SQLReference.legacy_id == ref_id),
+        )
+
+        assert reference_row is None
+
         diff_count = await pg_session.scalar(
             select(func.count())
             .select_from(SQLLegacyHistoryDiff)
@@ -674,8 +673,22 @@ async def test_populate_insert_only_reference_rollback(
             .where(SQLLegacyHistory.legacy_id.in_(["rbotu001.0", "rbotu002.0"])),
         )
 
+        otu_count = await pg_session.scalar(
+            select(func.count())
+            .select_from(SQLOTU)
+            .where(SQLOTU.id.in_(["rbotu001", "rbotu002"])),
+        )
+
+        sequence_count = await pg_session.scalar(
+            select(func.count())
+            .select_from(SQLSequence)
+            .where(SQLSequence.id.in_(["rbseq001", "rbseq002"])),
+        )
+
     assert diff_count == 0
     assert legacy_count == 0
+    assert otu_count == 0
+    assert sequence_count == 0
 
 
 async def test_populate_insert_only_reference_writes_legacy_history(
@@ -704,31 +717,7 @@ async def test_populate_insert_only_reference_writes_legacy_history(
         ],
     )
 
-    otus = [
-        {
-            "_id": f"remote_{i}",
-            "name": f"OTU {i}",
-            "abbreviation": f"O{i}",
-            "isolates": [
-                {
-                    "id": f"remote_iso_{i}",
-                    "default": True,
-                    "source_type": "isolate",
-                    "source_name": "a",
-                    "sequences": [
-                        {
-                            "_id": f"remote_seq_{i}",
-                            "accession": f"ACC{i}",
-                            "sequence": "ATCG",
-                            "definition": "test",
-                            "host": "h",
-                        },
-                    ],
-                },
-            ],
-        }
-        for i in (1, 2)
-    ]
+    otus = build_source_otus([1, 2])
 
     await populate_insert_only_reference(
         static_time.datetime,
@@ -762,3 +751,195 @@ async def test_populate_insert_only_reference_writes_legacy_history(
     assert all(row.otu_version == "0" for row in rows)
     assert all(row.index is None and row.index_version is None for row in rows)
     assert rows == snapshot(name="legacy_history")
+
+
+async def test_populate_insert_only_reference_writes_otu_and_sequence_rows(
+    fake: DataFaker,
+    mocker: MockerFixture,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    snapshot: SnapshotAssertion,
+    static_time,
+):
+    """A successful bulk insert writes a ``legacy_otus`` row per OTU and a
+    ``legacy_sequences`` row per sequence, with promoted columns and verbatim data.
+    """
+    user = await fake.users.create()
+    ref_id = "ref_otu_rows_test"
+
+    await seed_reference(pg, ref_id, user.id, static_time.datetime)
+
+    mocker.patch(
+        "virtool.references.alot.random_alphanumeric",
+        side_effect=[
+            "orotu001",
+            "oriso001",
+            "orseq001",
+            "orotu002",
+            "oriso002",
+            "orseq002",
+        ],
+    )
+
+    await populate_insert_only_reference(
+        static_time.datetime,
+        HistoryMethod.remote,
+        mongo,
+        pg,
+        build_source_otus([1, 2]),
+        ref_id,
+        user.id,
+    )
+
+    async with AsyncSession(pg) as pg_session:
+        reference_pk = await pg_session.scalar(
+            select(SQLReference.id).where(SQLReference.legacy_id == ref_id),
+        )
+
+        otu_rows = (
+            (
+                await pg_session.execute(
+                    select(SQLOTU)
+                    .where(SQLOTU.reference_id == reference_pk)
+                    .order_by(SQLOTU.id),
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        sequence_rows = (
+            (
+                await pg_session.execute(
+                    select(SQLSequence)
+                    .where(SQLSequence.otu_id.in_([row.id for row in otu_rows]))
+                    .order_by(SQLSequence.id),
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+    assert [row.id for row in otu_rows] == ["orotu001", "orotu002"]
+    assert [row.name for row in otu_rows] == ["OTU 1", "OTU 2"]
+    assert [row.abbreviation for row in otu_rows] == ["O1", "O2"]
+    assert all(row.reference_id == reference_pk for row in otu_rows)
+    assert all(row.version == 0 for row in otu_rows)
+    assert all(row.data["reference"]["id"] == reference_pk for row in otu_rows)
+
+    assert [row.id for row in sequence_rows] == ["orseq001", "orseq002"]
+    assert [row.otu_id for row in sequence_rows] == ["orotu001", "orotu002"]
+    assert [row.isolate_id for row in sequence_rows] == ["oriso001", "oriso002"]
+
+    assert otu_rows == snapshot(name="legacy_otus")
+    assert sequence_rows == snapshot(name="legacy_sequences")
+
+
+async def test_populate_insert_only_reference_stores_created_at_faithfully(
+    fake: DataFaker,
+    mocker: MockerFixture,
+    mongo: Mongo,
+    pg: AsyncEngine,
+):
+    """The ``legacy_otus.data`` written by a bulk populate is a faithful lift of the
+    Mongo document, including a ``created_at`` with microsecond precision.
+
+    This is the one write path that hands Postgres a datetime that never round-tripped
+    through Mongo: the same in-memory dicts go to ``bulk_insert_otu_rows`` and to
+    ``mongo.otus.insert_many``. Mongo floors a datetime to the millisecond, so without
+    a matching truncation Postgres would hold a finer instant than Mongo does and the
+    store parity check would report every imported OTU as drifted.
+
+    ``static_time`` cannot catch this: its ``created_at`` has no microseconds to lose.
+    """
+    user = await fake.users.create()
+    ref_id = "ref_created_at_test"
+
+    created_at = datetime(2015, 10, 6, 20, 0, 0, 123456)
+
+    await seed_reference(pg, ref_id, user.id, created_at)
+
+    mocker.patch(
+        "virtool.references.alot.random_alphanumeric",
+        side_effect=["caotu001", "caiso001", "caseq001"],
+    )
+
+    await populate_insert_only_reference(
+        created_at,
+        HistoryMethod.remote,
+        mongo,
+        pg,
+        build_source_otus([1]),
+        ref_id,
+        user.id,
+    )
+
+    document = await mongo.otus.find_one({"_id": "caotu001"})
+
+    assert document["created_at"] == datetime(2015, 10, 6, 20, 0, 0, 123000)
+
+    async with AsyncSession(pg) as pg_session:
+        row = await pg_session.scalar(select(SQLOTU).where(SQLOTU.id == "caotu001"))
+
+    assert row.data == loads(dump_string(document))
+
+
+async def test_populate_insert_only_reference_chunks_inserts(
+    fake: DataFaker,
+    mocker: MockerFixture,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    static_time,
+):
+    """OTUs spanning multiple per-chunk commits all land in both stores."""
+    user = await fake.users.create()
+    ref_id = "ref_chunk_test"
+
+    await seed_reference(pg, ref_id, user.id, static_time.datetime)
+
+    mocker.patch("virtool.references.db._REFERENCE_OTU_CHUNK_SIZE", 1)
+    mocker.patch(
+        "virtool.references.alot.random_alphanumeric",
+        side_effect=[
+            "ckotu001",
+            "ckiso001",
+            "ckseq001",
+            "ckotu002",
+            "ckiso002",
+            "ckseq002",
+            "ckotu003",
+            "ckiso003",
+            "ckseq003",
+        ],
+    )
+
+    await populate_insert_only_reference(
+        static_time.datetime,
+        HistoryMethod.remote,
+        mongo,
+        pg,
+        build_source_otus([1, 2, 3]),
+        ref_id,
+        user.id,
+    )
+
+    assert await mongo.otus.count_documents({}) == 3
+    assert await mongo.sequences.count_documents({}) == 3
+
+    async with AsyncSession(pg) as pg_session:
+        otu_count = await pg_session.scalar(select(func.count()).select_from(SQLOTU))
+        sequence_count = await pg_session.scalar(
+            select(func.count()).select_from(SQLSequence),
+        )
+        history_count = await pg_session.scalar(
+            select(func.count())
+            .select_from(SQLLegacyHistory)
+            .where(
+                SQLLegacyHistory.reference_id
+                == compose_legacy_id_subquery(SQLReference, ref_id),
+            ),
+        )
+
+    assert otu_count == 3
+    assert sequence_count == 3
+    assert history_count == 3

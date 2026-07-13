@@ -25,6 +25,6 @@
       'handle': 'XerFVrWCqqjehJZicZBv',
       'id': 7093,
     }),
-    'workflow': <Workflow.AODP: 'aodp'>,
+    'workflow': <Workflow.BUILD_INDEX: 'build_index'>,
   })
 # ---

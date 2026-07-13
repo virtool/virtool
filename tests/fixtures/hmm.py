@@ -5,8 +5,8 @@ from virtool.hmm.sql import SQLHMM, SQLHMMStatus
 
 
 @pytest.fixture
-def seed_pg_hmm_status(pg):
-    """Return a function that mirrors a Mongo HMM status singleton into Postgres."""
+def seed_hmm_status(pg):
+    """Return a function that seeds the HMM status singleton row in Postgres."""
 
     async def func(document: dict) -> None:
         task = document.get("task")

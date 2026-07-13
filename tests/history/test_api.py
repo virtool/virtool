@@ -5,7 +5,6 @@ from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner
 from virtool.data.layer import DataLayer
-from virtool.mongo.core import Mongo
 from virtool.otus.oas import CreateOTURequest
 from virtool.references.models import ReferenceDataType
 from virtool.references.oas import CreateReferenceRequest
@@ -120,38 +119,3 @@ class TestGet:
         resp = await client.get("/history/missing.1")
 
         await resp_is.not_found(resp)
-
-
-@pytest.mark.parametrize("error", [None, "404"])
-@pytest.mark.parametrize("remove", [False, True])
-async def test_revert(
-    error,
-    remove,
-    snapshot,
-    create_mock_history,
-    mongo: Mongo,
-    spawn_client: ClientSpawner,
-    check_ref_right,
-    resp_is,
-):
-    """Test that a valid request results in a reversion and a ``204`` response."""
-    client = await spawn_client(authenticated=True)
-
-    await create_mock_history(remove)
-
-    change_id = "foo.1" if error else "6116cba1.2"
-
-    resp = await client.delete("/history/" + change_id)
-
-    if error:
-        await resp_is.not_found(resp)
-        return
-
-    if not check_ref_right:
-        await resp_is.insufficient_rights(resp)
-        return
-
-    await resp_is.no_content(resp)
-
-    assert await mongo.otus.find_one() == snapshot
-    assert await mongo.sequences.find().to_list(None) == snapshot

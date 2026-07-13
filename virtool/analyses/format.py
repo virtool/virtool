@@ -48,41 +48,6 @@ def calculate_median_depths(hits: list[dict]) -> dict[str, int]:
     return {hit["id"]: statistics.median(hit["align"]) for hit in hits}
 
 
-async def format_aodp(
-    mongo: "Mongo",
-    pg: AsyncEngine,
-    *,
-    results: dict[str, Any],
-) -> dict[str, Any]:
-    """Format AODP analysis results by retrieving the detected OTUs and incorporating
-    them into the returned results.
-
-    :param mongo: the application Mongo object
-    :param pg: the application PostgreSQL database object
-    :param results: the results to format
-    :return: the formatted results
-
-    """
-    hits = results["hits"]
-
-    patched_otus = await gather_patched_otus(mongo, pg, hits)
-
-    hits_by_sequence_id = defaultdict(list)
-
-    for hit in hits:
-        hits_by_sequence_id[hit["sequence_id"]].append(hit)
-
-    for otu in patched_otus.values():
-        otu["id"] = otu.pop("_id")
-
-        for isolate in otu["isolates"]:
-            for sequence in isolate["sequences"]:
-                sequence["hits"] = hits_by_sequence_id[sequence["_id"]]
-                sequence["id"] = sequence.pop("_id")
-
-    return {**results, "hits": list(patched_otus.values())}
-
-
 async def format_pathoscope(
     mongo: "Mongo",
     pg: AsyncEngine,
@@ -124,7 +89,7 @@ async def format_pathoscope_hits(
     otu_version,
     hits: list[dict],
 ):
-    _, patched_otu, _ = await patch_to_version(
+    _, patched_otu = await patch_to_version(
         mongo,
         pg,
         otu_id,
@@ -390,40 +355,10 @@ async def format_analysis(
     if workflow == AnalysisWorkflow.nuvs.value:
         return await format_nuvs(pg, results=results)
 
-    if workflow == AnalysisWorkflow.aodp.value:
-        return await format_aodp(mongo, pg, results=results)
-
     if "pathoscope" in workflow:
         return await format_pathoscope(mongo, pg, results=results)
 
     raise ValueError(f"Unknown workflow: {workflow}")
-
-
-async def gather_patched_otus(
-    mongo: "Mongo",
-    pg: AsyncEngine,
-    results: list[dict],
-) -> dict[str, dict]:
-    """Gather patched OTUs for each result item. Only fetch each id-version combination
-    once.
-
-    :param mongo: the database object
-    :param pg: the application PostgreSQL database object
-    :param results: the results field from a pathoscope analysis document
-    :return: a dict containing patched OTUs keyed by the OTU ID
-
-    """
-    # Use set to only id-version combinations once.
-    otu_specifiers = {(hit["otu"]["id"], hit["otu"]["version"]) for hit in results}
-
-    patched_otus = await gather(
-        *[
-            patch_to_version(mongo, pg, otu_id, version)
-            for otu_id, version in otu_specifiers
-        ],
-    )
-
-    return {patched["_id"]: patched for _, patched, _ in patched_otus}
 
 
 def transform_coverage_to_coordinates(

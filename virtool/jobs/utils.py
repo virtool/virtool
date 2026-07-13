@@ -2,7 +2,6 @@ WORKFLOW_NAMES = (
     "jobs_build_index",
     "jobs_create_sample",
     "jobs_create_subtraction",
-    "jobs_aodp",
     "jobs_nuvs",
     "jobs_pathoscope",
 )

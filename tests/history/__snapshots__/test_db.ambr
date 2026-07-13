@@ -298,12 +298,6 @@
     'version': 1,
   })
 # ---
-# name: test_patch_to_version[False][reverted_change_ids]
-  list([
-    '6116cba1.3',
-    '6116cba1.2',
-  ])
-# ---
 # name: test_patch_to_version[True][current]
   None
 # ---
@@ -345,13 +339,6 @@
     'verified': False,
     'version': 1,
   })
-# ---
-# name: test_patch_to_version[True][reverted_change_ids]
-  list([
-    '6116cba1.removed',
-    '6116cba1.3',
-    '6116cba1.2',
-  ])
 # ---
 # name: test_patch_to_version_intermediate[current]
   dict({

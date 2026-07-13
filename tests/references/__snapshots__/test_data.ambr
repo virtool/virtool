@@ -1,33 +1,4 @@
 # serializer version: 1
-# name: TestCreateGroup.test_ok_and_duplicate[mongo]
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 1,
-        'legacy_id': None,
-        'modify': False,
-        'modify_otu': True,
-      }),
-    ]),
-    'name': 'Foo',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'users': list([
-    ]),
-  })
-# ---
 # name: TestCreateGroup.test_ok_and_duplicate[obj]
   dict({
     'build': True,
@@ -50,7 +21,7 @@
     'description': '',
     'groups': list([
     ]),
-    'id': 'bf1b993c',
+    'id': 1,
     'imported_from': None,
     'latest_build': None,
     'name': 'Example',
@@ -97,76 +68,6 @@
     'modify_otu': True,
   })
 # ---
-# name: TestDeleteGroup.test_ok
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'name': 'Foo',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'users': list([
-    ]),
-  })
-# ---
-# name: TestDeleteUser.test_ok
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'name': 'Foo',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'users': list([
-    ]),
-  })
-# ---
-# name: TestUpdateGroup.test_ok[mongo]
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-      dict({
-        'build': False,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 1,
-        'modify': True,
-        'modify_otu': True,
-      }),
-    ]),
-    'name': 'Foo',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'users': list([
-    ]),
-  })
-# ---
 # name: TestUpdateGroup.test_ok[obj]
   dict({
     'build': False,
@@ -176,34 +77,6 @@
     'modify': True,
     'modify_otu': True,
     'name': 'haematologists',
-  })
-# ---
-# name: TestUpdateUser.test_ok[mongo]
-  dict({
-    '_id': 'foo',
-    'archived': False,
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'data_type': 'genome',
-    'description': 'This is a test reference.',
-    'groups': list([
-    ]),
-    'name': 'Foo',
-    'organism': 'virus',
-    'restrict_source_types': False,
-    'source_types': list([
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'users': list([
-      dict({
-        'build': True,
-        'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-        'id': 2,
-        'modify': True,
-        'modify_otu': True,
-      }),
-    ]),
   })
 # ---
 # name: TestUpdateUser.test_ok[obj_1]

@@ -1,178 +1,29 @@
 # serializer version: 1
-# name: TestCreate.test_ok[force_choice][mongo]
-  dict({
-    '_id': 'bf1b993c',
-    'all_read': True,
-    'all_write': True,
-    'created_at': 'approximately_now_datetime',
-    'format': 'fastq',
-    'group': 2,
-    'group_read': True,
-    'group_write': True,
-    'hold': True,
-    'host': '',
-    'is_legacy': False,
-    'isolate': '',
-    'job': dict({
-      'id': 2,
-    }),
-    'labels': list([
-      1,
-    ]),
-    'library_type': 'normal',
-    'locale': '',
-    'name': 'Foobar',
-    'notes': '',
-    'nuvs': False,
-    'paired': False,
-    'pathoscope': False,
-    'quality': None,
-    'ready': False,
-    'results': None,
-    'space': dict({
-      'id': 0,
-    }),
-    'subtractions': list([
-      1,
-    ]),
-    'uploads': list([
-      dict({
-        'id': 1,
-      }),
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'workflows': dict({
-      'aodp': 'incompatible',
-      'nuvs': 'none',
-      'pathoscope': 'none',
-    }),
-  })
-# ---
-# name: TestCreate.test_ok[none][mongo]
-  dict({
-    '_id': 'bf1b993c',
-    'all_read': True,
-    'all_write': True,
-    'created_at': 'approximately_now_datetime',
-    'format': 'fastq',
-    'group': None,
-    'group_read': True,
-    'group_write': True,
-    'hold': True,
-    'host': '',
-    'is_legacy': False,
-    'isolate': '',
-    'job': dict({
-      'id': 2,
-    }),
-    'labels': list([
-      1,
-    ]),
-    'library_type': 'normal',
-    'locale': '',
-    'name': 'Foobar',
-    'notes': '',
-    'nuvs': False,
-    'paired': False,
-    'pathoscope': False,
-    'quality': None,
-    'ready': False,
-    'results': None,
-    'space': dict({
-      'id': 0,
-    }),
-    'subtractions': list([
-      1,
-    ]),
-    'uploads': list([
-      dict({
-        'id': 1,
-      }),
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'workflows': dict({
-      'aodp': 'incompatible',
-      'nuvs': 'none',
-      'pathoscope': 'none',
-    }),
-  })
-# ---
-# name: TestCreate.test_ok[users_primary_group][mongo]
-  dict({
-    '_id': 'bf1b993c',
-    'all_read': True,
-    'all_write': True,
-    'created_at': 'approximately_now_datetime',
-    'format': 'fastq',
-    'group': 2,
-    'group_read': True,
-    'group_write': True,
-    'hold': True,
-    'host': '',
-    'is_legacy': False,
-    'isolate': '',
-    'job': dict({
-      'id': 2,
-    }),
-    'labels': list([
-      1,
-    ]),
-    'library_type': 'normal',
-    'locale': '',
-    'name': 'Foobar',
-    'notes': '',
-    'nuvs': False,
-    'paired': False,
-    'pathoscope': False,
-    'quality': None,
-    'ready': False,
-    'results': None,
-    'space': dict({
-      'id': 0,
-    }),
-    'subtractions': list([
-      1,
-    ]),
-    'uploads': list([
-      dict({
-        'id': 1,
-      }),
-    ]),
-    'user': dict({
-      'id': 1,
-    }),
-    'workflows': dict({
-      'aodp': 'incompatible',
-      'nuvs': 'none',
-      'pathoscope': 'none',
-    }),
-  })
-# ---
-# name: test_finalize
+# name: TestCreate.test_ok[force_choice][sample]
   dict({
     'all_read': True,
     'all_write': True,
     'artifacts': list([
     ]),
-    'created_at': 'not_approximately_now_datetime',
+    'created_at': 'approximately_now_datetime',
     'format': 'fastq',
-    'group': None,
+    'group': dict({
+      'id': 2,
+      'legacy_id': None,
+      'name': 'gaffers',
+    }),
     'group_read': True,
     'group_write': True,
-    'hold': False,
+    'hold': True,
     'host': '',
     'id': 1,
     'is_legacy': False,
     'isolate': '',
     'job': dict({
-      'created_at': 'not_approximately_now_datetime',
-      'id': 1,
-      'progress': 100,
-      'state': <JobState.FAILED: 'failed'>,
+      'created_at': 'approximately_now_datetime',
+      'id': 2,
+      'progress': 0,
+      'state': <JobState.PENDING: 'pending'>,
       'user': dict({
         'handle': 'leeashley',
         'id': 1,
@@ -181,18 +32,259 @@
     }),
     'labels': list([
       dict({
-        'color': '#629f70',
-        'description': 'American whole magazine truth stop whose.',
+        'color': '#11af93',
+        'description': 'Quickly candidate change although.',
         'id': 1,
-        'name': 'Three',
+        'name': 'Maybe',
       }),
     ]),
     'library_type': <LibraryType.normal: 'normal'>,
     'locale': '',
-    'name': 'Test',
+    'name': 'Foobar',
     'notes': '',
     'nuvs': False,
     'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'reads': list([
+    ]),
+    'ready': False,
+    'subtractions': list([
+      dict({
+        'id': 1,
+        'name': 'Apple',
+      }),
+    ]),
+    'uploads': list([
+      dict({
+        'created_at': 'approximately_now_datetime',
+        'id': 1,
+        'name': 'test.fq.gz',
+        'ready': True,
+        'removed': False,
+        'removed_at': None,
+        'reserved': True,
+        'size': 723988,
+        'type': 'reads',
+        'uploaded_at': 'approximately_now_datetime',
+        'user': dict({
+          'handle': 'johnsoncynthia',
+          'id': 2,
+        }),
+      }),
+    ]),
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 1,
+    }),
+    'workflows': dict({
+      'aodp': <WorkflowState.NONE: 'none'>,
+      'nuvs': <WorkflowState.NONE: 'none'>,
+      'pathoscope': <WorkflowState.NONE: 'none'>,
+    }),
+  })
+# ---
+# name: TestCreate.test_ok[none][sample]
+  dict({
+    'all_read': True,
+    'all_write': True,
+    'artifacts': list([
+    ]),
+    'created_at': 'approximately_now_datetime',
+    'format': 'fastq',
+    'group': None,
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': '',
+    'id': 1,
+    'is_legacy': False,
+    'isolate': '',
+    'job': dict({
+      'created_at': 'approximately_now_datetime',
+      'id': 2,
+      'progress': 0,
+      'state': <JobState.PENDING: 'pending'>,
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+      'workflow': <Workflow.CREATE_SAMPLE: 'create_sample'>,
+    }),
+    'labels': list([
+      dict({
+        'color': '#11af93',
+        'description': 'Quickly candidate change although.',
+        'id': 1,
+        'name': 'Maybe',
+      }),
+    ]),
+    'library_type': <LibraryType.normal: 'normal'>,
+    'locale': '',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'reads': list([
+    ]),
+    'ready': False,
+    'subtractions': list([
+      dict({
+        'id': 1,
+        'name': 'Apple',
+      }),
+    ]),
+    'uploads': list([
+      dict({
+        'created_at': 'approximately_now_datetime',
+        'id': 1,
+        'name': 'test.fq.gz',
+        'ready': True,
+        'removed': False,
+        'removed_at': None,
+        'reserved': True,
+        'size': 723988,
+        'type': 'reads',
+        'uploaded_at': 'approximately_now_datetime',
+        'user': dict({
+          'handle': 'johnsoncynthia',
+          'id': 2,
+        }),
+      }),
+    ]),
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 1,
+    }),
+    'workflows': dict({
+      'aodp': <WorkflowState.NONE: 'none'>,
+      'nuvs': <WorkflowState.NONE: 'none'>,
+      'pathoscope': <WorkflowState.NONE: 'none'>,
+    }),
+  })
+# ---
+# name: TestCreate.test_ok[users_primary_group][sample]
+  dict({
+    'all_read': True,
+    'all_write': True,
+    'artifacts': list([
+    ]),
+    'created_at': 'approximately_now_datetime',
+    'format': 'fastq',
+    'group': dict({
+      'id': 2,
+      'legacy_id': None,
+      'name': 'gaffers',
+    }),
+    'group_read': True,
+    'group_write': True,
+    'hold': True,
+    'host': '',
+    'id': 1,
+    'is_legacy': False,
+    'isolate': '',
+    'job': dict({
+      'created_at': 'approximately_now_datetime',
+      'id': 2,
+      'progress': 0,
+      'state': <JobState.PENDING: 'pending'>,
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+      'workflow': <Workflow.CREATE_SAMPLE: 'create_sample'>,
+    }),
+    'labels': list([
+      dict({
+        'color': '#11af93',
+        'description': 'Quickly candidate change although.',
+        'id': 1,
+        'name': 'Maybe',
+      }),
+    ]),
+    'library_type': <LibraryType.normal: 'normal'>,
+    'locale': '',
+    'name': 'Foobar',
+    'notes': '',
+    'nuvs': False,
+    'paired': False,
+    'pathoscope': False,
+    'quality': None,
+    'reads': list([
+    ]),
+    'ready': False,
+    'subtractions': list([
+      dict({
+        'id': 1,
+        'name': 'Apple',
+      }),
+    ]),
+    'uploads': list([
+      dict({
+        'created_at': 'approximately_now_datetime',
+        'id': 1,
+        'name': 'test.fq.gz',
+        'ready': True,
+        'removed': False,
+        'removed_at': None,
+        'reserved': True,
+        'size': 723988,
+        'type': 'reads',
+        'uploaded_at': 'approximately_now_datetime',
+        'user': dict({
+          'handle': 'johnsoncynthia',
+          'id': 2,
+        }),
+      }),
+    ]),
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 1,
+    }),
+    'workflows': dict({
+      'aodp': <WorkflowState.NONE: 'none'>,
+      'nuvs': <WorkflowState.NONE: 'none'>,
+      'pathoscope': <WorkflowState.NONE: 'none'>,
+    }),
+  })
+# ---
+# name: TestFinalize.test_ok
+  dict({
+    'all_read': True,
+    'all_write': False,
+    'artifacts': list([
+    ]),
+    'created_at': 'approximately_now_datetime',
+    'format': 'fastq',
+    'group': None,
+    'group_read': True,
+    'group_write': False,
+    'hold': True,
+    'host': '',
+    'id': 1,
+    'is_legacy': False,
+    'isolate': '',
+    'job': dict({
+      'created_at': 'approximately_now_datetime',
+      'id': 1,
+      'progress': 0,
+      'state': <JobState.PENDING: 'pending'>,
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+      'workflow': <Workflow.CREATE_SAMPLE: 'create_sample'>,
+    }),
+    'labels': list([
+    ]),
+    'library_type': <LibraryType.normal: 'normal'>,
+    'locale': '',
+    'name': 'Result',
+    'notes': '',
+    'nuvs': False,
+    'paired': True,
     'pathoscope': False,
     'quality': dict({
       'bases': list([
@@ -217,57 +309,60 @@
     }),
     'reads': list([
       dict({
-        'download_url': '/samples/1/reads/reads.fq.gz',
+        'download_url': '/samples/1/reads/reads_1.fq.gz',
         'id': 1,
-        'name': 'reads.fq.gz',
+        'name': 'reads_1.fq.gz',
         'name_on_disk': 'reads_1.fq.gz',
         'sample': 1,
-        'size': 15,
-        'upload': dict({
-          'created_at': 'not_approximately_now_datetime',
-          'id': 2,
-          'name': 'test.fq.gz',
-          'ready': True,
-          'removed': True,
-          'removed_at': 'not_approximately_now_datetime',
-          'reserved': False,
-          'size': 723988,
-          'type': 'reads',
-          'uploaded_at': 'not_approximately_now_datetime',
-          'user': dict({
-            'handle': 'zwilliams',
-            'id': 2,
-          }),
-        }),
-        'uploaded_at': 'not_approximately_now_datetime',
+        'size': 723988,
+        'upload': None,
+        'uploaded_at': 'approximately_now_datetime',
+      }),
+      dict({
+        'download_url': '/samples/1/reads/reads_2.fq.gz',
+        'id': 2,
+        'name': 'reads_2.fq.gz',
+        'name_on_disk': 'reads_2.fq.gz',
+        'sample': 1,
+        'size': 624866,
+        'upload': None,
+        'uploaded_at': 'approximately_now_datetime',
       }),
     ]),
     'ready': True,
     'subtractions': list([
-      dict({
-        'id': 1,
-        'name': 'Apple',
-      }),
-      dict({
-        'id': 2,
-        'name': 'Pear',
-      }),
     ]),
     'uploads': list([
       dict({
-        'created_at': 'not_approximately_now_datetime',
+        'created_at': 'approximately_now_datetime',
+        'id': 1,
+        'name': 'test.fq.gz',
+        'ready': True,
+        'removed': True,
+        'removed_at': 'approximately_now_datetime',
+        'reserved': True,
+        'size': 723988,
+        'type': 'reads',
+        'uploaded_at': 'approximately_now_datetime',
+        'user': dict({
+          'handle': 'leeashley',
+          'id': 1,
+        }),
+      }),
+      dict({
+        'created_at': 'approximately_now_datetime',
         'id': 2,
         'name': 'test.fq.gz',
         'ready': True,
         'removed': True,
-        'removed_at': 'not_approximately_now_datetime',
-        'reserved': False,
+        'removed_at': 'approximately_now_datetime',
+        'reserved': True,
         'size': 723988,
         'type': 'reads',
-        'uploaded_at': 'not_approximately_now_datetime',
+        'uploaded_at': 'approximately_now_datetime',
         'user': dict({
-          'handle': 'zwilliams',
-          'id': 2,
+          'handle': 'leeashley',
+          'id': 1,
         }),
       }),
     ]),
@@ -276,7 +371,7 @@
       'id': 1,
     }),
     'workflows': dict({
-      'aodp': <WorkflowState.INCOMPATIBLE: 'incompatible'>,
+      'aodp': <WorkflowState.NONE: 'none'>,
       'nuvs': <WorkflowState.NONE: 'none'>,
       'pathoscope': <WorkflowState.NONE: 'none'>,
     }),

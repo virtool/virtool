@@ -252,10 +252,10 @@ class JobsData:
                 select(
                     SQLJob,
                     SQLUser,
-                    SQLLegacySample.legacy_id.label("sample_id"),
+                    SQLLegacySample.id.label("sample_id"),
                     SQLJobIndex.index_id,
                     SQLSubtraction.id.label("subtraction_id"),
-                    SQLAnalysis.legacy_id,
+                    SQLAnalysis.id.label("analysis_id"),
                 )
                 .join(SQLUser, SQLJob.user_id == SQLUser.id)
                 .outerjoin(SQLLegacySample, SQLLegacySample.job_id == SQLJob.id)
@@ -273,12 +273,7 @@ class JobsData:
 
         # The create_sample job's sample is resolved through the reverse
         # ``legacy_samples.job_id`` foreign key rather than a ``job_samples`` link
-        # row. ``sample_id`` is exposed as the legacy sample string
-        # (``legacy_samples.legacy_id``), not the integer ``legacy_samples.id``
-        # primary key: the create_sample workflow uses this value to address the
-        # sample over the jobs API, whose endpoints still resolve samples by their
-        # Mongo ``_id``. The public identifier flips to the integer primary key in
-        # VIR-2529.
+        # row.
         args = {
             field: value
             for field, value in (

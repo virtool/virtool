@@ -1,30 +1,31 @@
-import asyncio
 from pathlib import Path
 from typing import NamedTuple
-from unittest.mock import ANY
+from unittest.mock import ANY, AsyncMock
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.filters import props
 
 from tests.fixtures.analysis import seed_analysis
+from tests.fixtures.samples import create_rights_sample
 from virtool.analyses.sql import (
     SQLAnalysis,
     SQLAnalysisFile,
     SQLAnalysisSubtraction,
 )
-from virtool.api.client import UserClient
+from virtool.api.client import JobClient, UserClient
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.models.enums import AnalysisWorkflow
+from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row, get_row_by_id
 from virtool.samples.oas import CreateAnalysisRequest
-from virtool.samples.sql import SQLLegacySample
 from virtool.subtractions.pg import SQLSubtraction
+from virtool.users.models import User
 from virtool.utils import timestamp
 
 
@@ -50,112 +51,82 @@ async def subtraction_ids(fake: DataFaker) -> dict[str, int]:
     return {"subtraction_1": first.id, "subtraction_2": second.id}
 
 
+def build_user_client(user) -> UserClient:
+    """Build a ``UserClient`` authenticated as ``user``."""
+    return UserClient(
+        administrator_role=user.administrator_role,
+        authenticated=True,
+        force_reset=False,
+        groups=[group.id for group in user.groups],
+        permissions=user.permissions.dict(),
+        user_id=user.id,
+    )
+
+
 class SampleSetup(NamedTuple):
     """Identifiers for the sample and reference seeded by ``setup_sample``."""
 
-    user_id: str
-    reference_id: str
+    sample_id: int
+    user: User
+    reference_id: int
+    client: UserClient
+
+    @property
+    def user_id(self) -> int:
+        return self.user.id
 
 
 @pytest.fixture
 async def setup_sample(
     mongo: "Mongo",
-    pg: AsyncEngine,
+    data_layer: DataLayer,
     fake: DataFaker,
     subtraction_ids: dict[str, int],
 ) -> SampleSetup:
+    """Seed a finalized sample the owning user can read and write, and a reference with
+    a ready index to analyse it against.
+    """
     user = await fake.users.create()
     reference = await fake.references.create(user=user, name="Test Reference")
 
-    async with AsyncSession(pg) as session:
-        session.add(
-            SQLLegacySample(
-                legacy_id="test_sample",
-                name="Test Sample",
-                library_type="normal",
-                created_at=timestamp(),
-                user_id=user.id,
-                all_read=True,
-                all_write=True,
-            ),
-        )
-        await session.commit()
+    sample = await fake.samples.create(user, ready=True)
 
-    await asyncio.gather(
-        mongo.samples.insert_one(
-            {
-                "_id": "test_sample",
-                "all_read": True,
-                "all_write": True,
-                "created_at": timestamp(),
-                "files": [],
-                "format": "fastq",
-                "group": "none",
-                "group_read": True,
-                "group_write": True,
-                "hold": False,
-                "host": "",
-                "is_legacy": False,
-                "isolate": "",
-                "job": None,
-                "labels": [],
-                "library_type": "normal",
-                "locale": "",
-                "name": "Test Sample",
-                "notes": "",
-                "nuvs": False,
-                "pathoscope": True,
-                "ready": True,
-                "subtractions": [],
-                "user": {"id": user.id},
-                "workflows": {
-                    "aodp": "incompatible",
-                    "pathoscope": "complete",
-                    "nuvs": "pending",
-                },
-            },
-        ),
-        mongo.indexes.insert_one(
-            {
-                "_id": "test_index",
-                "version": 11,
-                "ready": True,
-                "reference": {"id": reference.id},
-            },
-        ),
+    await data_layer.samples.update_rights(
+        sample.id,
+        {"all_read": True, "all_write": True},
     )
-    return SampleSetup(user_id=user.id, reference_id=reference.id)
+
+    await mongo.indexes.insert_one(
+        {
+            "_id": "test_index",
+            "version": 11,
+            "ready": True,
+            "reference": {"id": reference.id},
+        },
+    )
+
+    return SampleSetup(
+        sample_id=sample.id,
+        user=user,
+        reference_id=reference.id,
+        client=build_user_client(user),
+    )
 
 
 @pytest.mark.parametrize("number_of_analyses", [0, 1, 2])
 async def test_find(
     number_of_analyses: int,
     data_layer: DataLayer,
+    fake: DataFaker,
     snapshot_recent: SnapshotAssertion,
-    mongo: Mongo,
-    pg: AsyncEngine,
     setup_sample: SampleSetup,
     subtraction_ids: dict[str, int],
-    mocker,
 ):
     """Tests that all analysis are listed."""
-    mocker.patch("virtool.samples.utils.get_sample_rights", return_value=(True, True))
-    client = mocker.Mock(spec=UserClient)
+    client = setup_sample.client
     user_id = setup_sample.user_id
 
-    await mongo.samples.insert_one({"_id": "test_false", "name": "Test False"})
-
-    async with AsyncSession(pg) as session:
-        session.add(
-            SQLLegacySample(
-                legacy_id="test_false",
-                name="Test False",
-                library_type="normal",
-                created_at=timestamp(),
-                user_id=user_id,
-            ),
-        )
-        await session.commit()
+    other_sample = await fake.samples.create(setup_sample.user, ready=True)
 
     analysis_wrong_sample = await data_layer.analyses.create(
         CreateAnalysisRequest(
@@ -166,9 +137,8 @@ async def test_find(
             ],
             workflow=AnalysisWorkflow.nuvs,
         ),
-        "test_false",
+        other_sample.id,
         user_id,
-        0,
     )
 
     for _ in range(number_of_analyses):
@@ -181,90 +151,520 @@ async def test_find(
                 ],
                 workflow=AnalysisWorkflow.nuvs,
             ),
-            "test_sample",
+            setup_sample.sample_id,
             user_id,
-            0,
         )
 
-    analyses_found = await data_layer.analyses.find(1, 25, client, "test_sample")
+    analyses_found = await data_layer.analyses.find(
+        1,
+        25,
+        client,
+        setup_sample.sample_id,
+    )
 
     assert analyses_found.dict() == snapshot_recent()
     assert analysis_wrong_sample not in analyses_found
     assert analyses_found.total_count == analyses_found.found_count
 
 
-class TestHideIimi:
-    """Iimi analyses are hidden from the data-layer find and get operations ahead of
-    the iimi purge migration.
-    """
+class TestFindSampleRights:
+    """The analysis list is scoped to samples the requesting client can read."""
 
     @staticmethod
-    async def _seed_iimi(mongo: Mongo, pg: AsyncEngine, setup: SampleSetup) -> int:
+    async def _seed_analysis(
+        mongo: Mongo,
+        pg: AsyncEngine,
+        legacy_id: str,
+        sample_id: int,
+        setup: SampleSetup,
+    ) -> int:
         return await seed_analysis(
             mongo,
             pg,
             {
-                "_id": "iimi_hidden",
-                "workflow": "iimi",
+                "_id": legacy_id,
+                "workflow": "pathoscope",
                 "created_at": timestamp(),
                 "ready": True,
                 "job": None,
                 "index": {"id": "test_index", "version": 11},
                 "user": {"id": setup.user_id},
-                "sample": {"id": "test_sample"},
+                "sample": {"id": sample_id},
                 "reference": {"id": setup.reference_id},
                 "results": {"hits": []},
                 "subtractions": [],
             },
         )
 
-    async def test_find_excludes_iimi(
+    async def test_private_sample_of_other_user_hidden(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """An analysis on another user's private sample is absent from the documents
+        and from ``total_count``.
+        """
+        other_user = await fake.users.create()
+
+        other_private = await create_rights_sample(
+            data_layer,
+            fake,
+            other_user,
+            all_read=False,
+        )
+
+        await self._seed_analysis(mongo, pg, "hidden", other_private.id, setup_sample)
+
+        owned = await self._seed_analysis(
+            mongo,
+            pg,
+            "visible",
+            setup_sample.sample_id,
+            setup_sample,
+        )
+
+        found = await data_layer.analyses.find(1, 25, setup_sample.client)
+
+        assert [document.id for document in found.documents] == [owned]
+        assert found.total_count == 1
+        assert found.found_count == 1
+
+    async def test_group_readable_sample_visible(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """An analysis on another user's sample is listed when the client belongs to a
+        group the sample is readable by.
+        """
+        group = await fake.groups.create()
+        sample_owner = await fake.users.create()
+        group_member = await fake.users.create(groups=[group])
+
+        group_readable = await create_rights_sample(
+            data_layer,
+            fake,
+            sample_owner,
+            all_read=False,
+            group_read=True,
+            group=group.id,
+        )
+
+        shared = await self._seed_analysis(
+            mongo,
+            pg,
+            "shared",
+            group_readable.id,
+            setup_sample,
+        )
+
+        found = await data_layer.analyses.find(
+            1,
+            25,
+            build_user_client(group_member),
+        )
+
+        assert [document.id for document in found.documents] == [shared]
+
+    async def test_private_sample_hidden_from_non_member(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """A group-readable sample stays hidden from a user outside the group."""
+        group = await fake.groups.create()
+        sample_owner = await fake.users.create()
+        outsider = await fake.users.create()
+
+        group_readable = await create_rights_sample(
+            data_layer,
+            fake,
+            sample_owner,
+            all_read=False,
+            group_read=True,
+            group=group.id,
+        )
+
+        await self._seed_analysis(mongo, pg, "shared", group_readable.id, setup_sample)
+
+        found = await data_layer.analyses.find(1, 25, build_user_client(outsider))
+
+        assert found.documents == []
+        assert found.total_count == 0
+
+    async def test_full_administrator_sees_private_sample(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """A full administrator lists analyses on another user's private sample,
+        matching the single-resource bypass in ``has_sample_right``.
+        """
+        sample_owner = await fake.users.create()
+        administrator = await fake.users.create(
+            administrator_role=AdministratorRole.FULL,
+        )
+
+        other_private = await create_rights_sample(
+            data_layer,
+            fake,
+            sample_owner,
+            all_read=False,
+        )
+
+        hidden = await self._seed_analysis(
+            mongo,
+            pg,
+            "private",
+            other_private.id,
+            setup_sample,
+        )
+
+        found = await data_layer.analyses.find(
+            1,
+            25,
+            build_user_client(administrator),
+        )
+
+        assert [document.id for document in found.documents] == [hidden]
+        assert found.total_count == 1
+
+    async def test_base_administrator_scoped_like_user(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """An administrator below the full role is scoped like any other user and does
+        not see another user's private sample.
+        """
+        sample_owner = await fake.users.create()
+        administrator = await fake.users.create(
+            administrator_role=AdministratorRole.BASE,
+        )
+
+        other_private = await create_rights_sample(
+            data_layer,
+            fake,
+            sample_owner,
+            all_read=False,
+        )
+
+        await self._seed_analysis(mongo, pg, "private", other_private.id, setup_sample)
+
+        found = await data_layer.analyses.find(
+            1,
+            25,
+            build_user_client(administrator),
+        )
+
+        assert found.documents == []
+        assert found.total_count == 0
+
+
+class TestHasRight:
+    """Rights on an analysis are resolved from the parent sample's Postgres row."""
+
+    @staticmethod
+    async def _seed_analysis(
+        mongo: Mongo,
+        pg: AsyncEngine,
+        legacy_id: str,
+        sample_id: int,
+        owner_id: int,
+        reference_id: str,
+    ) -> int:
+        return await seed_analysis(
+            mongo,
+            pg,
+            {
+                "_id": legacy_id,
+                "workflow": "pathoscope",
+                "created_at": timestamp(),
+                "ready": True,
+                "job": None,
+                "index": {"id": "test_index", "version": 11},
+                "user": {"id": owner_id},
+                "sample": {"id": sample_id},
+                "reference": {"id": reference_id},
+                "results": {"hits": []},
+                "subtractions": [],
+            },
+        )
+
+    async def test_owner_has_read_and_write(
         self,
         data_layer: DataLayer,
         mongo: Mongo,
         pg: AsyncEngine,
         setup_sample: SampleSetup,
-        mocker,
     ):
-        """An iimi analysis is excluded from both the documents and the counts."""
-        mocker.patch(
-            "virtool.samples.utils.get_sample_rights",
-            return_value=(True, True),
-        )
-        client = mocker.Mock(spec=UserClient)
-        user_id = setup_sample.user_id
-
-        visible = await data_layer.analyses.create(
-            CreateAnalysisRequest(
-                ref_id=setup_sample.reference_id,
-                subtractions=[],
-                workflow=AnalysisWorkflow.nuvs,
-            ),
-            "test_sample",
-            user_id,
-            0,
+        """The owner of the parent sample holds both rights on its analyses."""
+        await self._seed_analysis(
+            mongo,
+            pg,
+            "owned",
+            setup_sample.sample_id,
+            setup_sample.user_id,
+            setup_sample.reference_id,
         )
 
-        await self._seed_iimi(mongo, pg, setup_sample)
+        assert await data_layer.analyses.has_right(
+            "owned",
+            setup_sample.client,
+            "read",
+        )
+        assert await data_layer.analyses.has_right(
+            "owned",
+            setup_sample.client,
+            "write",
+        )
 
-        analyses_found = await data_layer.analyses.find(1, 25, client, "test_sample")
-
-        assert [document.id for document in analyses_found.documents] == [visible.id]
-        assert analyses_found.found_count == 1
-        assert analyses_found.total_count == 1
-
-    async def test_get_iimi_not_found(
+    async def test_full_administrator_has_write(
         self,
         data_layer: DataLayer,
+        fake: DataFaker,
         mongo: Mongo,
         pg: AsyncEngine,
         setup_sample: SampleSetup,
     ):
-        """Getting an iimi analysis by id raises ``ResourceNotFoundError``."""
-        analysis_id = await self._seed_iimi(mongo, pg, setup_sample)
+        """A full administrator holds both rights on another user's private sample."""
+        sample_owner = await fake.users.create()
+        administrator = await fake.users.create(
+            administrator_role=AdministratorRole.FULL,
+        )
 
+        owner_private = await create_rights_sample(
+            data_layer,
+            fake,
+            sample_owner,
+            all_read=False,
+        )
+
+        await self._seed_analysis(
+            mongo,
+            pg,
+            "private",
+            owner_private.id,
+            sample_owner.id,
+            setup_sample.reference_id,
+        )
+
+        assert await data_layer.analyses.has_right(
+            "private",
+            build_user_client(administrator),
+            "write",
+        )
+
+    async def test_base_administrator_denied(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """An administrator below the full role is scoped like any other user, matching
+        how ``SamplesData.has_right`` treats the parent sample.
+        """
+        sample_owner = await fake.users.create()
+        administrator = await fake.users.create(
+            administrator_role=AdministratorRole.BASE,
+        )
+
+        owner_private = await create_rights_sample(
+            data_layer,
+            fake,
+            sample_owner,
+            all_read=False,
+        )
+
+        await self._seed_analysis(
+            mongo,
+            pg,
+            "private",
+            owner_private.id,
+            sample_owner.id,
+            setup_sample.reference_id,
+        )
+
+        assert not await data_layer.analyses.has_right(
+            "private",
+            build_user_client(administrator),
+            "read",
+        )
+
+    async def test_all_read_grants_read_not_write(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """A world-readable sample grants read but withholds write."""
+        sample_owner = await fake.users.create()
+        other_user = await fake.users.create()
+
+        world_readable = await create_rights_sample(
+            data_layer,
+            fake,
+            sample_owner,
+            all_read=True,
+            all_write=False,
+        )
+
+        await self._seed_analysis(
+            mongo,
+            pg,
+            "public",
+            world_readable.id,
+            sample_owner.id,
+            setup_sample.reference_id,
+        )
+
+        client = build_user_client(other_user)
+
+        assert await data_layer.analyses.has_right("public", client, "read")
+        assert not await data_layer.analyses.has_right("public", client, "write")
+
+    async def test_group_member_has_group_rights(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """A member of the sample's group holds the rights the group is granted."""
+        group = await fake.groups.create()
+        sample_owner = await fake.users.create()
+        group_member = await fake.users.create(groups=[group])
+
+        group_shared = await create_rights_sample(
+            data_layer,
+            fake,
+            sample_owner,
+            all_read=False,
+            all_write=False,
+            group_read=True,
+            group_write=True,
+            group=group.id,
+        )
+
+        await self._seed_analysis(
+            mongo,
+            pg,
+            "shared",
+            group_shared.id,
+            sample_owner.id,
+            setup_sample.reference_id,
+        )
+
+        client = build_user_client(group_member)
+
+        assert await data_layer.analyses.has_right("shared", client, "read")
+        assert await data_layer.analyses.has_right("shared", client, "write")
+
+    async def test_non_member_denied(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """A user outside the sample's group holds neither right."""
+        group = await fake.groups.create()
+        sample_owner = await fake.users.create()
+        outsider = await fake.users.create()
+
+        group_shared = await create_rights_sample(
+            data_layer,
+            fake,
+            sample_owner,
+            all_read=False,
+            group_read=True,
+            group=group.id,
+        )
+
+        await self._seed_analysis(
+            mongo,
+            pg,
+            "shared",
+            group_shared.id,
+            sample_owner.id,
+            setup_sample.reference_id,
+        )
+
+        client = build_user_client(outsider)
+
+        assert not await data_layer.analyses.has_right("shared", client, "read")
+        assert not await data_layer.analyses.has_right("shared", client, "write")
+
+    async def test_job_client_has_full_access(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+    ):
+        """A job-authenticated client holds both rights on another user's private
+        sample, since a job's identity is neither a user nor an administrator.
+        """
+        sample_owner = await fake.users.create()
+
+        owner_private = await create_rights_sample(
+            data_layer,
+            fake,
+            sample_owner,
+            all_read=False,
+            all_write=False,
+        )
+
+        await self._seed_analysis(
+            mongo,
+            pg,
+            "private",
+            owner_private.id,
+            sample_owner.id,
+            setup_sample.reference_id,
+        )
+
+        client = JobClient(job_id=1)
+
+        assert await data_layer.analyses.has_right("private", client, "read")
+        assert await data_layer.analyses.has_right("private", client, "write")
+
+    async def test_missing_analysis_raises(
+        self,
+        data_layer: DataLayer,
+        setup_sample: SampleSetup,
+    ):
+        """An analysis that does not exist raises ``ResourceNotFoundError`` so the API
+        can return a 404 rather than a 403.
+        """
         with pytest.raises(ResourceNotFoundError):
-            await data_layer.analyses.get(analysis_id)
+            await data_layer.analyses.has_right(
+                "missing",
+                setup_sample.client,
+                "read",
+            )
 
 
 async def test_create(
@@ -285,9 +685,8 @@ async def test_create(
             ],
             workflow=AnalysisWorkflow.nuvs,
         ),
-        "test_sample",
+        setup_sample.sample_id,
         user_id,
-        0,
     )
 
     assert analysis == snapshot(name="obj", exclude=props("created_at", "updated_at"))
@@ -320,20 +719,21 @@ class TestCreate:
         """The Postgres row reflects the creation request."""
         analysis = await data_layer.analyses.create(
             _create_request(subtraction_ids, setup_sample.reference_id),
-            "test_sample",
+            setup_sample.sample_id,
             setup_sample.user_id,
-            0,
         )
 
         row = await get_row(pg, SQLAnalysis, ("id", analysis.id))
 
         assert row is not None
         assert row.id == analysis.id
+        assert row.legacy_id is None
         assert row.workflow == "nuvs"
         assert row.ready is False
         assert row.results is None
-        assert row.sample == "test_sample"
-        assert row.reference == setup_sample.reference_id
+        assert row.sample == str(setup_sample.sample_id)
+        assert row.reference == str(setup_sample.reference_id)
+        assert row.reference_id == setup_sample.reference_id
         assert row.created_at == row.updated_at
         assert isinstance(row.user_id, int)
 
@@ -357,6 +757,32 @@ class TestCreate:
             [subtraction_ids["subtraction_1"], subtraction_ids["subtraction_2"]],
         )
 
+    async def test_links_job_with_integer_analysis_id(
+        self,
+        data_layer: DataLayer,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+        subtraction_ids: dict[str, int],
+    ):
+        """The analysis is linked to a job whose ``analysis_id`` argument is the
+        analysis's integer id, resolved through the ``analyses.job_id`` foreign key.
+        """
+        analysis = await data_layer.analyses.create(
+            _create_request(subtraction_ids, setup_sample.reference_id),
+            setup_sample.sample_id,
+            setup_sample.user_id,
+        )
+
+        row = await get_row(pg, SQLAnalysis, ("id", analysis.id))
+
+        assert row is not None
+        assert row.job_id is not None
+
+        job = await data_layer.jobs.get(row.job_id)
+
+        assert job.args["analysis_id"] == analysis.id
+        assert isinstance(job.args["analysis_id"], int)
+
     async def test_subtractions_default_to_list(
         self,
         data_layer: DataLayer,
@@ -369,9 +795,8 @@ class TestCreate:
                 ref_id=setup_sample.reference_id,
                 workflow=AnalysisWorkflow.nuvs,
             ),
-            "test_sample",
+            setup_sample.sample_id,
             setup_sample.user_id,
-            0,
         )
 
         async with AsyncSession(pg) as session:
@@ -403,9 +828,8 @@ class TestCreate:
                     subtractions=[subtraction_ids["subtraction_1"], 905],
                     workflow=AnalysisWorkflow.nuvs,
                 ),
-                "test_sample",
+                setup_sample.sample_id,
                 setup_sample.user_id,
-                0,
             )
 
     async def test_unknown_sample_raises(
@@ -422,7 +846,6 @@ class TestCreate:
                 _create_request(subtraction_ids, setup_sample.reference_id),
                 "unknown_sample",
                 setup_sample.user_id,
-                0,
             )
 
     async def test_unknown_reference_raises(
@@ -444,9 +867,8 @@ class TestCreate:
                     ],
                     workflow=AnalysisWorkflow.nuvs,
                 ),
-                "test_sample",
+                setup_sample.sample_id,
                 setup_sample.user_id,
-                0,
             )
 
     async def test_rolls_back_when_pg_write_fails(
@@ -466,9 +888,8 @@ class TestCreate:
         with pytest.raises(RuntimeError):
             await data_layer.analyses.create(
                 _create_request(subtraction_ids, setup_sample.reference_id),
-                "test_sample",
+                setup_sample.sample_id,
                 setup_sample.user_id,
-                0,
             )
 
         async with AsyncSession(pg) as session:
@@ -496,9 +917,8 @@ class TestFinalize:
 
         analysis = await data_layer.analyses.create(
             _create_request(subtraction_ids, setup_sample.reference_id),
-            "test_sample",
+            setup_sample.sample_id,
             setup_sample.user_id,
-            0,
         )
 
         created = await get_row(pg, SQLAnalysis, ("id", analysis.id))
@@ -536,14 +956,74 @@ class TestDelete:
         """Delete removes the Postgres row."""
         analysis = await data_layer.analyses.create(
             _create_request(subtraction_ids, setup_sample.reference_id),
-            "test_sample",
+            setup_sample.sample_id,
             setup_sample.user_id,
-            0,
         )
 
         await data_layer.analyses.delete(analysis.id, jobs_api_flag=True)
 
         assert await get_row(pg, SQLAnalysis, ("id", analysis.id)) is None
+
+    async def test_native_analysis_skips_storage_cleanup(
+        self,
+        data_layer: DataLayer,
+        mocker,
+        setup_sample: SampleSetup,
+        subtraction_ids: dict[str, int],
+    ):
+        """A Postgres-native analysis has a NULL legacy id, so no slug-prefixed
+        storage objects exist to clean up.
+        """
+        delete_prefix = mocker.patch(
+            "virtool.analyses.data.delete_prefix",
+            new=AsyncMock(return_value=[]),
+        )
+
+        analysis = await data_layer.analyses.create(
+            _create_request(subtraction_ids, setup_sample.reference_id),
+            setup_sample.sample_id,
+            setup_sample.user_id,
+        )
+
+        await data_layer.analyses.delete(analysis.id, jobs_api_flag=True)
+
+        delete_prefix.assert_not_awaited()
+
+    async def test_legacy_analysis_cleans_storage(
+        self,
+        data_layer: DataLayer,
+        mocker,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+        subtraction_ids: dict[str, int],
+    ):
+        """A Mongo-migrated analysis still removes its slug-prefixed storage objects."""
+        delete_prefix = mocker.patch(
+            "virtool.analyses.data.delete_prefix",
+            new=AsyncMock(return_value=[]),
+        )
+
+        analysis = await data_layer.analyses.create(
+            _create_request(subtraction_ids, setup_sample.reference_id),
+            setup_sample.sample_id,
+            setup_sample.user_id,
+        )
+
+        async with AsyncSession(pg) as session:
+            await session.execute(
+                update(SQLAnalysis)
+                .where(SQLAnalysis.id == analysis.id)
+                .values(legacy_id="oldslug"),
+            )
+            await session.commit()
+
+        await data_layer.analyses.delete(analysis.id, jobs_api_flag=True)
+
+        delete_prefix.assert_awaited_once()
+        assert (
+            delete_prefix.await_args.args[1]
+            == f"samples/{setup_sample.sample_id}/analysis/oldslug/"
+        )
 
 
 async def test_get_without_if_modified_since(
@@ -561,9 +1041,8 @@ async def test_get_without_if_modified_since(
             ],
             workflow=AnalysisWorkflow.nuvs,
         ),
-        "test_sample",
+        setup_sample.sample_id,
         setup_sample.user_id,
-        0,
     )
 
     fetched = await data_layer.analyses.get(analysis.id)
@@ -594,9 +1073,8 @@ async def test_upload_file(
             ],
             workflow=AnalysisWorkflow.nuvs,
         ),
-        "test_sample",
+        setup_sample.sample_id,
         user_id,
-        0,
     )
 
     chunks = fake_file_chunker(example_path / "sample" / "reads_1.fq.gz")

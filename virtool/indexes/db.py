@@ -407,7 +407,7 @@ async def iter_patched_otus(
         patch_id: str,
         patch_version: int,
     ) -> tuple[int, dict]:
-        _, patched, _ = await virtool.history.db.patch_to_version(
+        _, patched = await virtool.history.db.patch_to_version(
             mongo,
             pg,
             patch_id,

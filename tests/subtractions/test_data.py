@@ -332,7 +332,6 @@ class TestMutations:
                 subtractions=[subtraction.id],
             ),
             client.user.id,
-            0,
         )
 
         async with AsyncSession(pg) as session:

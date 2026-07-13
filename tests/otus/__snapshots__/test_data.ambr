@@ -4,7 +4,7 @@
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'description': 'Created Tobacco mosaic virus (TMV)',
     'diff': dict({
-      '_id': 'fb085f7f',
+      '_id': 'bf1b993c',
       'abbreviation': 'TMV',
       'isolates': list([
       ]),
@@ -19,20 +19,20 @@
       'verified': False,
       'version': 0,
     }),
-    'id': 'fb085f7f.0',
+    'id': 'bf1b993c.0',
     'index': dict({
       'id': 'unbuilt',
       'version': 'unbuilt',
     }),
     'method_name': <HistoryMethod.create: 'create'>,
     'otu': dict({
-      'id': 'fb085f7f',
+      'id': 'bf1b993c',
       'name': 'Tobacco mosaic virus',
       'version': 0,
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'bf1b993c',
+      'id': 1,
       'name': 'Reference',
     }),
     'user': dict({
@@ -44,7 +44,7 @@
 # name: test_create[full][otu]
   dict({
     'abbreviation': 'TMV',
-    'id': 'fb085f7f',
+    'id': 'bf1b993c',
     'isolates': list([
     ]),
     'issues': dict({
@@ -57,7 +57,7 @@
     'most_recent_change': dict({
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Created Tobacco mosaic virus (TMV)',
-      'id': 'fb085f7f.0',
+      'id': 'bf1b993c.0',
       'method_name': <HistoryMethod.create: 'create'>,
       'user': dict({
         'handle': 'leeashley',
@@ -69,7 +69,7 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'bf1b993c',
+      'id': 1,
       'name': 'Reference',
     }),
     'remote': None,
@@ -80,7 +80,7 @@
 # name: test_create[full][return_value]
   dict({
     'abbreviation': 'TMV',
-    'id': 'fb085f7f',
+    'id': 'bf1b993c',
     'isolates': list([
     ]),
     'issues': dict({
@@ -93,7 +93,7 @@
     'most_recent_change': dict({
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Created Tobacco mosaic virus (TMV)',
-      'id': 'fb085f7f.0',
+      'id': 'bf1b993c.0',
       'method_name': <HistoryMethod.create: 'create'>,
       'user': dict({
         'handle': 'leeashley',
@@ -105,7 +105,7 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'bf1b993c',
+      'id': 1,
       'name': 'Reference',
     }),
     'remote': None,
@@ -118,7 +118,7 @@
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'description': 'Created Prunus virus A',
     'diff': dict({
-      '_id': 'fb085f7f',
+      '_id': 'bf1b993c',
       'abbreviation': '',
       'isolates': list([
       ]),
@@ -133,20 +133,20 @@
       'verified': False,
       'version': 0,
     }),
-    'id': 'fb085f7f.0',
+    'id': 'bf1b993c.0',
     'index': dict({
       'id': 'unbuilt',
       'version': 'unbuilt',
     }),
     'method_name': <HistoryMethod.create: 'create'>,
     'otu': dict({
-      'id': 'fb085f7f',
+      'id': 'bf1b993c',
       'name': 'Prunus virus A',
       'version': 0,
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'bf1b993c',
+      'id': 1,
       'name': 'Reference',
     }),
     'user': dict({
@@ -158,7 +158,7 @@
 # name: test_create[no_abbreviation][otu]
   dict({
     'abbreviation': '',
-    'id': 'fb085f7f',
+    'id': 'bf1b993c',
     'isolates': list([
     ]),
     'issues': dict({
@@ -171,7 +171,7 @@
     'most_recent_change': dict({
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Created Prunus virus A',
-      'id': 'fb085f7f.0',
+      'id': 'bf1b993c.0',
       'method_name': <HistoryMethod.create: 'create'>,
       'user': dict({
         'handle': 'leeashley',
@@ -183,7 +183,7 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'bf1b993c',
+      'id': 1,
       'name': 'Reference',
     }),
     'remote': None,
@@ -194,7 +194,7 @@
 # name: test_create[no_abbreviation][return_value]
   dict({
     'abbreviation': '',
-    'id': 'fb085f7f',
+    'id': 'bf1b993c',
     'isolates': list([
     ]),
     'issues': dict({
@@ -207,7 +207,7 @@
     'most_recent_change': dict({
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Created Prunus virus A',
-      'id': 'fb085f7f.0',
+      'id': 'bf1b993c.0',
       'method_name': <HistoryMethod.create: 'create'>,
       'user': dict({
         'handle': 'leeashley',
@@ -219,7 +219,7 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'bf1b993c',
+      'id': 1,
       'name': 'Reference',
     }),
     'remote': None,
@@ -270,7 +270,7 @@
     'lower_name': 'prunus virus f',
     'name': 'Prunus virus F',
     'reference': dict({
-      'id': 'bf1b993c',
+      'id': 1,
     }),
     'remote_id': None,
     'schema': list([
@@ -317,20 +317,20 @@
         ]),
       ]),
     ]),
-    'id': 'fb085f7f.5',
+    'id': 'bf1b993c.5',
     'index': dict({
       'id': 'unbuilt',
       'version': 'unbuilt',
     }),
     'method_name': <HistoryMethod.edit: 'edit'>,
     'otu': dict({
-      'id': 'fb085f7f',
+      'id': 'bf1b993c',
       'name': 'Pepper leafroll virus',
       'version': 5,
     }),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'bf1b993c',
+      'id': 1,
       'name': 'Reference',
     }),
     'user': dict({
@@ -342,17 +342,17 @@
 # name: test_update[return_value]
   dict({
     'abbreviation': 'TMV',
-    'id': 'fb085f7f',
+    'id': 'bf1b993c',
     'isolates': list([
       dict({
         'default': True,
-        'id': '7cf872dc',
+        'id': 'fb085f7f',
         'sequences': list([
           dict({
             'accession': 'NC_795330',
             'definition': 'Bring determine some forward staff.',
             'host': 'prunus',
-            'id': '3cbb22cc',
+            'id': '7cf872dc',
             'remote': None,
             'segment': 'RNA_C',
             'sequence': 'GGAGCSCAAAGAAGACADGCGAGCCGAATTACCGTTRCRCGAGGAACAKCAGRGKCTCAGCAGCAGCCCCGGATGGACGAATGCGAGCGGAAGTGRCAATGAGHTCBHGAAWTAAGHGCACATGACKCAYGATCGCAAGAATTTCGGBCCCCTGATTATTTAGATACTVAAGMTGGTGTACCTGGAACATGAACGNAGAATACTKGGAAANCAAAGGACGACTCNGCACTGACCCCTCGGGNCGCMAGGTTCGCATTGCGCYAATGTGGGCTTCAAGCCATGTRTHGDCTGAGGTCTCTGGTTAMT',
@@ -361,7 +361,7 @@
             'accession': 'NC_076279',
             'definition': 'Purpose character would in.',
             'host': 'rice',
-            'id': 'da42dca3',
+            'id': '3cbb22cc',
             'remote': None,
             'segment': 'RNA-U3',
             'sequence': 'CCAGACATGCAGGAAGCMCDGTGBTTGBVAGNATTATCBRATACCGTGGCCCCWAGTAAATABGTTCGTTTAGTAGTTCAACGRGTGMTACCGTAATBTGCTCACTTAAACTATCGCTGATTKCTTTCCCTABRTTWAAAACAGMATABTCTCAGTGTCAAHTCTGACBCTCATCATGGTGTGCAAATCAGGGAGTACAABCGRTTCAAATCCTCGACCCBTACGATTNGHGAWKTTAATCTRACATGTTCGAMATAATVTCGGTAGRACGTGGTTAGGGGTAGCCCGTCTCTAATTAATACCAACCATCGTCAAGTGTGTCTCGTTCACTYTCTATGAGACGCGTBTAGTTNARCGGGCCCTACGATAGNACTATTDCTGCTGRATTTCCAACTCGGAANAAYCGDTATTCACKCACCTBCAGGGCGAATATTSATGTGCCTTAACACTCATAWTGTCAKTATCGGTAGCGHGGCAWACCCGGATGAWBGGGCGTGACGCATGTCGCTCCCAGTGSACTCACCMATATATNTGGMNGGCTGTAVGSTCCGAGAGGCAATTTCTTAGCTTAGYCCTCASTGCACCSCCTTTAGGTTCTTGTAACGGGTCAYCGGRTHAATGAGCTAGTCTGGGGAATATTTTGTTTCGATTCCGGCTCCTGTKAAGTAGCCTGBATANCTAAGCAGYGGGGCGGGTAGGAATGTGGCCYGTACACGTWAGCGCGYAGAACAGACCTTTGCAKAATCACGGYCGAKMTTCCTTGCACTWAAAATGGTGGGCGCTGKACGATADACGBATSGAGAGSMTABCTTCTDTATTCTGACGGAAATAAKCAAGGTCGGKTATACTAGTTYTCKATTCCCGGTCGTCCGATGGHTACCACAKGGATATCCAGTGTTACATTAAATACCCGATGAAAAACRCTGGGYGGTACDCATGCTYTTCTTTAHACCHGAGGCCCTGAAAATGTGTGCGTACGGCGACANTCTGTCKATATGCTTGACTCCTTTTTCYCBCCTACGTTACACCAATGCGACTGGGTCVTATBKATTGDGATAGCGTCGATGTGCTTHGGTARAAMGMTTGHCCMNGATTTCACTWGTAGTTGAAGAWACAGCYACGCCTCKTTCAAHABATTTCACTAAAAGAAHTTCCGCCTACATACGGCTGTTGCBGATCATTCMAGGAMCAATTCARTACAAWGTGGATCCGCAGCCMCACCTGAATGCCADCKCTGCATGGTVTNAAAASWGATATATCGCCBCCRTCACGGACTAAGCGCBTCATGHTGMTCMATCCBCTTGACMAAAGTCTATCCGCACARGCTANACBGTAANAAGAAGAACTAGTAG',
@@ -370,7 +370,7 @@
             'accession': 'QX375248',
             'definition': 'Bar standard final.',
             'host': 'apple',
-            'id': '09d01419',
+            'id': 'da42dca3',
             'remote': None,
             'segment': 'RNA L',
             'sequence': 'ACTAGHCTTTCTAHNATTGAGCTGCTCHAGGGACGTCTTGCTATCTGTTTGRBAGCATTTCSAGGTTATACTATGTGSTCGCATVTGGGGGGAACACCAAAGABVGCTTTTGGATAAGCATCGGACCAACTDCGACGGATCTCTGYTCTCGCGGGAACCGCRGCGCTTCCAGDCAAATGAGSAADTGAVACMGTGTCTTCGGGACTAKAAACCCCSGRAGACMCTTYKCGTAHCTHCTGAGAATGCTAKGGGGAGGGCGAGTGCCCAAAGAATHGTGATCVATKACTCGTGBVAGGASAABGCTTTACAGAATGGCSATGTACATTTCCATTTCTAACGCAAATCCCCTCGTGGRCTGATHTCTAATCCCAATSATCYWACTCGGGGGAAGCNATTGCYGNCHATCHCGCCTTTABCGGSTTCTAGCCGAKCGCCGACATCTTGABCACACGTTCMGTGAAVGCCTGGCAGGNGAVGCTGCACAGGGACTAGSKCGATYCTATCTGTAGCHAGACCAGTGGGGGGAAACAACATAATGTCGGATTCDACATBYAGGKCTGCGAATTCTGGTAGCAACCCTCTACACGAATCTGCCAAKAAACCTTCTGCCATGACHTCAATCCGTTGCGGAACCCTAKTATCCGACTGTGANCTGTATTCCGCAACTASAYCSGTCATMATAGGCCTCGGACGCGCBCCAACGACAGGCATTCGCNGAHATCTATTGCAGATGGTCHGGCVKTTCTCRTTCTCAGTCTCCCA',
@@ -385,7 +385,7 @@
     'most_recent_change': dict({
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'description': 'Changed name to Tobacco mosaic virus and changed abbreviation to TMV and modified schema',
-      'id': 'fb085f7f.5',
+      'id': 'bf1b993c.5',
       'method_name': <HistoryMethod.edit: 'edit'>,
       'user': dict({
         'handle': 'leeashley',
@@ -412,7 +412,7 @@
     ]),
     'reference': dict({
       'data_type': <ReferenceDataType.genome: 'genome'>,
-      'id': 'bf1b993c',
+      'id': 1,
       'name': 'Reference',
     }),
     'remote': None,

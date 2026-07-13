@@ -1,7 +1,6 @@
 import math
 from asyncio import CancelledError
 from collections.abc import AsyncGenerator
-from typing import TYPE_CHECKING
 
 from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.exc import IntegrityError
@@ -12,7 +11,6 @@ import virtool.utils
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emits
-from virtool.data.topg import both_transactions
 from virtool.data.transforms import apply_transforms
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.pg.utils import get_row_by_id
@@ -45,9 +43,6 @@ from virtool.uploads.sql import SQLUpload
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
-
 logger = get_logger("subtractions")
 
 
@@ -73,12 +68,10 @@ class SubtractionsData(DataLayerDomain):
     def __init__(
         self,
         base_url: str,
-        mongo: "Mongo",
         pg: AsyncEngine,
         storage: StorageBackend,
     ):
         self._base_url = base_url
-        self._mongo = mongo
         self._pg = pg
         self._storage = storage
 
@@ -306,10 +299,7 @@ class SubtractionsData(DataLayerDomain):
         return await self.get(subtraction_id)
 
     async def delete(self, subtraction_id: int):
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
+        async with AsyncSession(self._pg) as pg_session:
             row = (
                 await pg_session.execute(
                     select(
@@ -332,11 +322,6 @@ class SubtractionsData(DataLayerDomain):
             )
 
             # Unlink this subtraction as a default subtraction on any samples.
-            await self._mongo.samples.update_many(
-                {"subtractions": subtraction_id},
-                {"$pull": {"subtractions": subtraction_id}},
-                session=mongo_session,
-            )
             await pg_session.execute(
                 delete(SQLLegacySampleSubtraction).where(
                     SQLLegacySampleSubtraction.subtraction_id == subtraction_id,
@@ -344,6 +329,8 @@ class SubtractionsData(DataLayerDomain):
             )
 
             deleted_count = result.rowcount
+
+            await pg_session.commit()
 
         failures = await delete_prefix(self._storage, subtraction_prefix(storage_id))
 

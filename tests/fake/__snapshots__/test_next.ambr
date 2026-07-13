@@ -112,13 +112,13 @@
     'id': 1,
     'pinged_at': datetime,
     'progress': 100,
-    'state': <JobState.FAILED: 'failed'>,
+    'state': <JobState.SUCCEEDED: 'succeeded'>,
     'steps': None,
     'user': dict({
       'handle': 'leeashley',
       'id': 1,
     }),
-    'workflow': <Workflow.PATHOSCOPE: 'pathoscope'>,
+    'workflow': <Workflow.NUVS: 'nuvs'>,
   })
 # ---
 # name: test_subtractions
