@@ -1,4 +1,5 @@
 from pathlib import Path
+from threading import get_ident
 
 import pytest
 from pyfixtures import FixtureScope
@@ -9,6 +10,7 @@ from virtool.workflow.data.index_sqlite import INDEX_SQLITE_FILE_NAME
 from virtool.workflow.data.indexes import (
     WFIndex,
     WFNewIndex,
+    _read_json,
 )
 from virtool.workflow.errors import JobsAPIConflictError, JobsAPINotFoundError
 from virtool.workflow.pytest_plugin.data import WorkflowData
@@ -163,7 +165,7 @@ def _set_reference_json_index_data(workflow_data: WorkflowData) -> None:
 
 class TestWFIndex:
     async def test_create(self, tmp_path: Path):
-        async def iter_otus():
+        def iter_otus():
             yield _get_sqlite_otu()
 
         sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
@@ -187,7 +189,7 @@ class TestWFIndex:
         assert [otu async for otu in index.iter_otus()] == [_get_source_otu()]
 
     async def test_create_without_reference(self, tmp_path: Path):
-        async def iter_otus():
+        def iter_otus():
             yield _get_sqlite_otu()
 
         index = await WFIndex.create(
@@ -205,6 +207,23 @@ class TestWFIndex:
         ):
             await index.get_reference_metadata()
 
+    async def test_read_json_decodes_off_event_loop_thread(self, mocker, tmp_path):
+        event_loop_thread_id = get_ident()
+        decoding_thread_ids = []
+
+        def loads(_data):
+            decoding_thread_ids.append(get_ident())
+            return {"id": "decoded"}
+
+        mocker.patch("virtool.workflow.data.indexes.json.loads", side_effect=loads)
+
+        path = tmp_path / "index.json"
+        path.write_text("{}")
+
+        assert await _read_json(path) == {"id": "decoded"}
+        assert len(decoding_thread_ids) == 1
+        assert decoding_thread_ids[0] != event_loop_thread_id
+
     async def test_create_allows_virtool_isolate_ids_reused_across_otus(
         self,
         tmp_path: Path,
@@ -221,7 +240,7 @@ class TestWFIndex:
         second_otu["isolates"][0]["id"] = "reused_isolate"
         second_otu["isolates"][0]["sequences"][0]["_id"] = "second_sequence"
 
-        async def iter_otus():
+        def iter_otus():
             yield first_otu
             yield second_otu
 
@@ -273,7 +292,7 @@ class TestWFIndex:
     async def test_iter_otus_preserves_json_shape(self, tmp_path: Path):
         otu = _get_sqlite_otu()
 
-        async def iter_otus():
+        def iter_otus():
             yield otu
 
         otu["schema"] = [
@@ -315,7 +334,7 @@ class TestWFIndex:
         assert loaded_otus[0]["isolates"][1]["default"] is False
 
     async def test_iter_otus_raises_when_otu_has_no_isolates(self, tmp_path: Path):
-        async def iter_otus():
+        def iter_otus():
             otu = _get_sqlite_otu()
             otu["isolates"] = []
 
@@ -335,7 +354,7 @@ class TestWFIndex:
         self,
         tmp_path: Path,
     ):
-        async def iter_otus():
+        def iter_otus():
             otu = _get_sqlite_otu()
             otu["isolates"][0]["sequences"] = []
 
@@ -358,7 +377,7 @@ class TestWFIndex:
             WFIndex.load("test_index", sqlite_path)
 
     async def test_iter_sequences_reads_multiple_batches(self, mocker, tmp_path: Path):
-        async def iter_otus():
+        def iter_otus():
             yield _get_sqlite_otu()
 
         mocker.patch("virtool.workflow.data.indexes._SQLITE_SEQUENCE_BATCH_SIZE", 1)
@@ -379,7 +398,7 @@ class TestWFIndex:
         self,
         tmp_path: Path,
     ):
-        async def iter_otus():
+        def iter_otus():
             yield _get_sqlite_otu()
 
         index = await WFIndex.create(

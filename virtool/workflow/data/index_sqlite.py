@@ -1,7 +1,7 @@
 """Build and query workflow-local SQLite index artifacts."""
 
 import asyncio
-from collections.abc import AsyncIterable, Iterator, Mapping
+from collections.abc import Iterable, Iterator, Mapping
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
@@ -133,13 +133,21 @@ def _enable_index_sqlite_foreign_keys(
 async def create_index_sqlite(
     path: Path,
     reference: Mapping[str, Any] | None,
-    otus: AsyncIterable[Mapping[str, Any]],
+    otus: Iterable[Mapping[str, Any]],
 ) -> None:
     """Create a SQLite structured index artifact at ``path``."""
-    await asyncio.to_thread(path.parent.mkdir, parents=True, exist_ok=True)
+    await asyncio.to_thread(_create_index_sqlite, path, reference, otus)
 
-    if await asyncio.to_thread(path.exists):
-        await asyncio.to_thread(path.unlink)
+
+def _create_index_sqlite(
+    path: Path,
+    reference: Mapping[str, Any] | None,
+    otus: Iterable[Mapping[str, Any]],
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    if path.exists():
+        path.unlink()
 
     with connect_index_sqlite(path) as connection, connection.begin():
         index_sqlite_metadata.create_all(connection)
@@ -148,7 +156,7 @@ async def create_index_sqlite(
             _insert_reference(connection, reference) if reference is not None else None
         )
 
-        async for otu in otus:
+        for otu in otus:
             _insert_otu(connection, reference_id, otu)
 
 

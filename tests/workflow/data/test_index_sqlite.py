@@ -1,6 +1,7 @@
 """Tests for index SQLite artifact creation and connections."""
 
 from pathlib import Path
+from threading import get_ident
 
 from sqlalchemy import select
 
@@ -81,7 +82,7 @@ def _otu(
 async def test_create_index_sqlite_writes_schema_and_sequences(tmp_path: Path):
     """It writes normalized schema and sequence rows."""
 
-    async def iter_otus():
+    def iter_otus():
         yield _otu()
 
     sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
@@ -112,10 +113,31 @@ async def test_create_index_sqlite_writes_schema_and_sequences(tmp_path: Path):
     assert [row["segment"] for row in sequence_rows] == ["DNA A", "DNA B"]
 
 
+async def test_create_index_sqlite_consumes_otus_off_event_loop_thread(
+    tmp_path: Path,
+):
+    """It consumes and writes OTUs without blocking the event loop thread."""
+    event_loop_thread_id = get_ident()
+    iteration_thread_ids = []
+
+    def iter_otus():
+        iteration_thread_ids.append(get_ident())
+        yield _otu()
+
+    await create_index_sqlite(
+        tmp_path / INDEX_SQLITE_FILE_NAME,
+        _reference(),
+        iter_otus(),
+    )
+
+    assert len(iteration_thread_ids) == 1
+    assert iteration_thread_ids[0] != event_loop_thread_id
+
+
 async def test_create_index_sqlite_without_reference(tmp_path: Path):
     """It writes OTUs without reference metadata."""
 
-    async def iter_otus():
+    def iter_otus():
         yield _otu()
 
     sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
@@ -141,7 +163,7 @@ async def test_create_index_sqlite_without_reference(tmp_path: Path):
 async def test_connect_index_sqlite_enables_foreign_keys(tmp_path: Path):
     """It enables foreign key enforcement on new connections."""
 
-    async def iter_otus():
+    def iter_otus():
         yield _otu()
 
     sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
@@ -157,7 +179,7 @@ async def test_create_index_sqlite_allows_sequence_segment_outside_otu_schema(
 ):
     """It allows sequence segments that are not defined in the OTU schema."""
 
-    async def iter_otus():
+    def iter_otus():
         yield _otu(segments=("DNA A", "DNA B", "DNA C"))
 
     sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
@@ -181,7 +203,7 @@ async def test_create_index_sqlite_allows_missing_required_isolate_segment(
 ):
     """It allows isolates missing sequences for required schema entries."""
 
-    async def iter_otus():
+    def iter_otus():
         yield _otu(segments=("DNA A",))
 
     sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
@@ -199,7 +221,7 @@ async def test_create_index_sqlite_allows_null_segment_for_schema_otu(
 ):
     """It allows null sequence segments for schema OTUs."""
 
-    async def iter_otus():
+    def iter_otus():
         otu = _otu(segments=("DNA A",))
         otu["isolates"][0]["sequences"][0]["segment"] = None
         yield otu
@@ -219,7 +241,7 @@ async def test_create_index_sqlite_allows_legacy_otu_without_schema_or_abbreviat
 ):
     """It allows legacy OTUs that predate schema and abbreviation fields."""
 
-    async def iter_otus():
+    def iter_otus():
         otu = _otu()
         del otu["abbreviation"]
         del otu["schema"]

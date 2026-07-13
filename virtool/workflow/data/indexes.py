@@ -6,6 +6,7 @@ from collections.abc import (
     Callable,
     Generator,
     Iterable,
+    Iterator,
     Mapping,
 )
 from concurrent.futures import ThreadPoolExecutor
@@ -71,7 +72,7 @@ class WFIndex:
         id_: str,
         path: Path,
         reference: Mapping[str, Any] | None,
-        otus: AsyncIterable[Mapping[str, Any]],
+        otus: Iterable[Mapping[str, Any]],
     ) -> "WFIndex":
         """Create a SQLite index artifact and return a workflow index for it."""
         await create_index_sqlite(path, reference, otus)
@@ -521,7 +522,7 @@ def _shape_sqlite_sequence(sequence: Mapping[str, Any]) -> dict[str, Any]:
 
 async def _read_json(path: Path) -> dict[str, Any] | list[dict[str, Any]]:
     async with aiofiles.open(path) as f:
-        return json.loads(await f.read())
+        return await asyncio.to_thread(json.loads, await f.read())
 
 
 def _shape_reference_json_metadata(
@@ -537,10 +538,10 @@ def _shape_reference_json_metadata(
     }
 
 
-async def _iter_reference_json_otus(
+def _iter_reference_json_otus(
     data: Mapping[str, Any],
     manifest: Mapping[str, int],
-) -> AsyncIterator[dict[str, Any]]:
+) -> Iterator[dict[str, Any]]:
     for otu in data["otus"]:
         otu_id = otu.get("_id") or otu["id"]
         otu["version"] = manifest[otu_id]
@@ -548,9 +549,9 @@ async def _iter_reference_json_otus(
         yield _shape_json_otu(otu)
 
 
-async def _iter_otus_json(
+def _iter_otus_json(
     data: list[dict[str, Any]],
-) -> AsyncIterator[dict[str, Any]]:
+) -> Iterator[dict[str, Any]]:
     for otu in data:
         yield _shape_json_otu(otu)
 
