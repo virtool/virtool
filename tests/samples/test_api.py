@@ -325,6 +325,23 @@ class TestGet:
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == snapshot(name="resp")
 
+    async def test_aodp_workflow_state_retained(
+        self,
+        get_sample_data,
+        spawn_client: ClientSpawner,
+    ):
+        """The removed AODP workflow is still reported as ``none``.
+
+        Workflow images built against Virtool ``39.59.0`` and earlier require
+        ``workflows.aodp`` when they validate a sample response and crash without it.
+        """
+        client = await spawn_client(administrator=True, authenticated=True)
+
+        resp = await client.get(f"/samples/{get_sample_data.id}")
+
+        assert resp.status == HTTPStatus.OK
+        assert (await resp.json())["workflows"]["aodp"] == "none"
+
     async def test_owner(
         self,
         data_layer: DataLayer,
