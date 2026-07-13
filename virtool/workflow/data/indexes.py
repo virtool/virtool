@@ -527,14 +527,13 @@ async def _read_json(path: Path) -> dict[str, Any] | list[dict[str, Any]]:
 
 def _shape_reference_json_metadata(
     data: Mapping[str, Any],
-    index_: Index,
 ) -> dict[str, Any]:
     return {
-        "id": data.get("_id") or data.get("id") or index_.reference.id,
-        "created_at": data.get("created_at") or index_.created_at,
-        "data_type": data.get("data_type") or index_.reference.data_type,
-        "name": data.get("name") or index_.reference.name,
-        "organism": data.get("organism") or "unknown",
+        "id": data["_id"],
+        "created_at": data["created_at"],
+        "data_type": data["data_type"],
+        "name": data["name"],
+        "organism": data["organism"],
     }
 
 
@@ -546,37 +545,7 @@ def _iter_reference_json_otus(
         otu_id = otu.get("_id") or otu["id"]
         otu["version"] = manifest[otu_id]
 
-        yield _shape_json_otu(otu)
-
-
-def _iter_otus_json(
-    data: list[dict[str, Any]],
-) -> Iterator[dict[str, Any]]:
-    for otu in data:
-        yield _shape_json_otu(otu)
-
-
-def _shape_json_otu(
-    otu: dict[str, Any],
-) -> dict[str, Any]:
-    otu["isolates"] = [_shape_json_isolate(isolate) for isolate in otu["isolates"]]
-
-    return otu
-
-
-def _shape_json_isolate(isolate: dict[str, Any]) -> dict[str, Any]:
-    isolate["sequences"] = [
-        _shape_json_sequence(sequence) for sequence in isolate["sequences"]
-    ]
-
-    return isolate
-
-
-def _shape_json_sequence(sequence: dict[str, Any]) -> dict[str, Any]:
-    if sequence.get("host") is None:
-        sequence["host"] = ""
-
-    return sequence
+        yield otu
 
 
 @fixture
@@ -620,7 +589,7 @@ async def index(
 
         reference_json = await _read_json(reference_json_path)
 
-        reference = _shape_reference_json_metadata(reference_json, index_)
+        reference = _shape_reference_json_metadata(reference_json)
         otus = _iter_reference_json_otus(reference_json, index_.manifest)
 
         log.info("creating local index sqlite from reference json")
@@ -646,7 +615,7 @@ async def index(
             raise TypeError(msg)
 
         reference = None
-        otus = _iter_otus_json(otus_json)
+        otus = otus_json
 
         log.info("creating local index sqlite from otus json")
 

@@ -88,7 +88,7 @@ sequences_table = Table(
     Column("isolate_id", Integer, ForeignKey("isolates.id"), nullable=False),
     Column("accession", Text, nullable=False),
     Column("definition", Text, nullable=False),
-    Column("host", Text, nullable=False),
+    Column("host", Text),
     Column("segment", Text),
     Column("sequence", Text, nullable=False),
 )
