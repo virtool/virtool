@@ -18,7 +18,7 @@
         'handle': 'leeashley',
         'id': 1,
       }),
-      'workflow': 'pathoscope',
+      'workflow': 'nuvs',
     }),
     'ready': True,
     'reference': dict({

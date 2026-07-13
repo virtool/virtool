@@ -193,10 +193,7 @@ class DeriveWorkflowTagsTransform(AbstractTransform):
 
         ready_by_workflow = {workflow: ready for workflow, ready in rows}
 
-        return virtool.samples.utils.encode_workflow_tags(
-            ready_by_workflow,
-            document["library_type"],
-        )
+        return virtool.samples.utils.encode_workflow_tags(ready_by_workflow)
 
     async def prepare_many(
         self,
@@ -223,7 +220,6 @@ class DeriveWorkflowTagsTransform(AbstractTransform):
         return {
             document["id"]: virtool.samples.utils.encode_workflow_tags(
                 ready_by_sample.get(document["id"], {}),
-                document["library_type"],
             )
             for document in documents
         }
@@ -275,40 +271,23 @@ def _exists_analysis(workflow: str, ready: bool | None = None):
     return exists().where(and_(*conditions))
 
 
-def _workflow_compatible(workflow: str):
-    """Predicate selecting samples whose library type is compatible with ``workflow``.
-
-    Mirrors :func:`define_initial_workflows`: ``aodp`` is only compatible with
-    ``amplicon`` libraries; ``nuvs`` and ``pathoscope`` only with non-amplicon
-    libraries. An incompatible workflow always encodes to ``"incompatible"``, so no
-    condition — ``none`` least of all — should match such a sample.
-    """
-    if workflow == "aodp":
-        return SQLLegacySample.library_type == "amplicon"
-
-    return SQLLegacySample.library_type != "amplicon"
-
-
 def _compose_workflow_condition_filter(workflow: str, condition: str):
     """Translate a single ``workflow:condition`` pair into a semi-join predicate.
 
     Mirrors the legacy tag encoding: ``ready`` matches a completed analysis,
     ``pending`` matches an unfinished analysis with none completed, and ``none``
-    matches a workflow with no analyses. Every condition is additionally
-    constrained to samples whose library type makes the workflow compatible, so an
-    ``incompatible`` workflow (e.g. ``aodp`` on a normal library) never matches.
+    matches a workflow with no analyses.
     """
     if condition == "ready":
-        predicate = _exists_analysis(workflow, ready=True)
-    elif condition == "pending":
-        predicate = and_(
+        return _exists_analysis(workflow, ready=True)
+
+    if condition == "pending":
+        return and_(
             _exists_analysis(workflow),
             not_(_exists_analysis(workflow, ready=True)),
         )
-    else:
-        predicate = not_(_exists_analysis(workflow))
 
-    return and_(_workflow_compatible(workflow), predicate)
+    return not_(_exists_analysis(workflow))
 
 
 def compose_sample_workflow_filter(workflows: list[str]):
