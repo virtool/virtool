@@ -352,7 +352,7 @@ async def test_patch_to_version(
 ):
     await create_mock_history(remove=remove)
 
-    current, patched, reverted_change_ids = await virtool.history.db.patch_to_version(
+    current, patched = await virtool.history.db.patch_to_version(
         mongo,
         pg,
         "6116cba1",
@@ -361,7 +361,6 @@ async def test_patch_to_version(
 
     assert current == snapshot(name="current")
     assert patched == snapshot(name="patched")
-    assert reverted_change_ids == snapshot(name="reverted_change_ids")
 
 
 def test_stamp_reference():
@@ -399,19 +398,18 @@ async def test_patch_to_version_intermediate(
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
 ):
-    """Patching to an intermediate version reverts only the changes above it, stopping
+    """Patching to an intermediate version unwinds only the changes above it, stopping
     at the first change at or below the target version.
     """
     await create_mock_history(remove=False)
 
-    current, patched, reverted_change_ids = await virtool.history.db.patch_to_version(
+    current, patched = await virtool.history.db.patch_to_version(
         mongo,
         pg,
         "6116cba1",
         2,
     )
 
-    assert reverted_change_ids == ["6116cba1.3"]
     assert current == snapshot(name="current")
     assert patched == snapshot(name="patched")
 

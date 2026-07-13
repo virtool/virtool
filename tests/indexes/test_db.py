@@ -260,7 +260,7 @@ async def test_reads_tolerate_integer_embedded_reference_id(
 async def test_get_patched_otus(mocker: MockerFixture, mongo: Mongo):
     m = mocker.patch(
         "virtool.history.db.patch_to_version",
-        make_mocked_coro((None, {"_id": "foo"}, None)),
+        make_mocked_coro((None, {"_id": "foo"})),
     )
 
     pg = mocker.Mock()
