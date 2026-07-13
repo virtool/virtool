@@ -265,9 +265,11 @@ def _encode_otu_data(document: Document) -> Document:
     same truncation pymongo applies -- means the stored ISO string is exactly the
     instant Mongo holds, so ``data`` stays a faithful lift of the document.
 
-    The document is copied because the caller keeps using it: the bulk insert path
-    hands the very same dict to ``mongo.otus.insert_many`` afterwards, and the OTU data
-    layer reuses it for history diffs and returns it.
+    ``created_at`` is rewritten on a copy, never in place, because the caller keeps
+    using the document it passed: the bulk insert path hands that very dict to
+    ``mongo.otus.insert_many`` afterwards, and the OTU data layer reuses it for history
+    diffs and returns it. A document with no ``created_at`` to rewrite -- every OTU
+    created through the API -- is returned as-is.
     """
     created_at = document.get("created_at")
 
