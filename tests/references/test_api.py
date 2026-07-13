@@ -12,7 +12,6 @@ from syrupy.matchers import path_type
 
 import virtool.utils
 from tests.fixtures.client import ClientSpawner, VirtoolTestClient
-from tests.fixtures.references import seed_reference
 from tests.fixtures.response import RespIs
 from virtool.data.layer import DataLayer
 from virtool.data.topg import both_transactions
@@ -1595,41 +1594,24 @@ class TestArchivedReferenceRejectsWrites:
     @pytest.fixture
     async def archived_ref(
         self,
-        mongo: Mongo,
-        pg: AsyncEngine,
         spawn_client: ClientSpawner,
-        static_time: StaticTime,
-    ) -> tuple[VirtoolTestClient, str]:
-        client = await spawn_client(authenticated=True)
-
-        await seed_reference(
-            mongo,
-            pg,
-            "foo",
-            client.user.id,
-            name="Foo",
-            archived=True,
-            created_at=static_time.datetime,
-            organism="virus",
-            source_types=["isolate", "strain"],
-            groups=[],
-            restrict_source_types=False,
-            users=[
-                {
-                    "id": client.user.id,
-                    "build": True,
-                    "created_at": static_time.datetime,
-                    "modify": True,
-                    "modify_otu": True,
-                },
-            ],
+    ) -> tuple[VirtoolTestClient, int]:
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_ref],
         )
 
-        return client, "foo"
+        reference = await _create_reference(client)
+
+        resp = await client.post(f"/references/v1/{reference['id']}/archive", {})
+
+        assert resp.status == HTTPStatus.OK
+
+        return client, reference["id"]
 
     async def test_patch(
         self,
-        archived_ref: tuple[VirtoolTestClient, str],
+        archived_ref: tuple[VirtoolTestClient, int],
         resp_is: RespIs,
     ):
         client, ref_id = archived_ref
@@ -1640,7 +1622,7 @@ class TestArchivedReferenceRejectsWrites:
 
     async def test_create_otu(
         self,
-        archived_ref: tuple[VirtoolTestClient, str],
+        archived_ref: tuple[VirtoolTestClient, int],
         resp_is: RespIs,
     ):
         client, ref_id = archived_ref
@@ -1654,7 +1636,7 @@ class TestArchivedReferenceRejectsWrites:
 
     async def test_create_index(
         self,
-        archived_ref: tuple[VirtoolTestClient, str],
+        archived_ref: tuple[VirtoolTestClient, int],
         resp_is: RespIs,
     ):
         client, ref_id = archived_ref
@@ -1666,45 +1648,23 @@ class TestArchivedReferenceRejectsWrites:
 
 async def test_archived_reference_allows_user_rights_update(
     fake: DataFaker,
-    mongo: Mongo,
-    pg: AsyncEngine,
     spawn_client: ClientSpawner,
-    static_time: StaticTime,
 ):
     """Rights-management routes are unaffected by the archived guard (D5)."""
-    client = await spawn_client(authenticated=True)
-    user = await fake.users.create()
-
-    await insert_reference(
-        mongo,
-        pg,
-        {
-            "_id": "foo",
-            "archived": True,
-            "created_at": static_time.datetime,
-            "data_type": "genome",
-            "description": "",
-            "groups": [],
-            "name": "Test",
-            "organism": "virus",
-            "restrict_source_types": False,
-            "source_types": [],
-            "user": {"id": client.user.id},
-            "users": [
-                {
-                    "id": client.user.id,
-                    "build": True,
-                    "created_at": static_time.datetime,
-                    "modify": True,
-                    "modify_otu": True,
-                },
-            ],
-        },
+    client = await spawn_client(
+        authenticated=True,
+        permissions=[Permission.create_ref],
     )
 
+    reference = await _create_reference(client)
+
+    await client.post(f"/references/v1/{reference['id']}/archive", {})
+
+    user = await fake.users.create()
+
     resp = await client.post(
-        "/references/v1/foo/users",
+        f"/references/v1/{reference['id']}/users",
         {"user_id": user.id, "modify": True},
     )
 
-    assert resp.status == 201
+    assert resp.status == HTTPStatus.CREATED
