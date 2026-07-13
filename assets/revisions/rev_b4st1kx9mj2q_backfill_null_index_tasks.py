@@ -13,8 +13,8 @@ name = "backfill null index tasks"
 created_at = arrow.get("2026-06-22 12:00:00.000000")
 revision_id = "b4st1kx9mj2q"
 
-alembic_down_revision = "b82907bcac9d"
-virtool_down_revision = None
+alembic_down_revision = None
+virtool_down_revision = "n03aryu6frku"
 
 required_alembic_revision = None
 

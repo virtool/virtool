@@ -712,13 +712,6 @@
       'applied_at': datetime,
       'created_at': datetime,
       'id': 102,
-      'name': 'convert index file type to text',
-      'revision': 'b82907bcac9d',
-    }),
-    dict({
-      'applied_at': datetime,
-      'created_at': datetime,
-      'id': 103,
       'name': 'backfill null index tasks',
       'revision': 'b4st1kx9mj2q',
     }),

@@ -1,13 +1,13 @@
 """Work with indexes in the database."""
 
 import asyncio
-import asyncio.tasks
 from collections.abc import AsyncIterator
 from typing import Any
 
 import pymongo
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy import Integer, cast, distinct, func, select, update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.history.db
@@ -45,39 +45,6 @@ INDEX_FILE_NAMES = (
     "reference.rev.1.bt2",
     "reference.rev.2.bt2",
 )
-
-
-class IndexFilesTransform(AbstractTransform):
-    def __init__(self, base_url: str, pg: AsyncEngine):
-        self._base_url = base_url
-        self._pg = pg
-
-    async def attach_one(self, document: Document, prepared: Any) -> Document:
-        return {**document, "files": prepared}
-
-    async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
-        index_id = document["id"]
-
-        rows = await virtool.pg.utils.get_rows(
-            self._pg,
-            SQLIndexFile,
-            "index",
-            index_id,
-        )
-
-        files = []
-
-        for index_file in [row.to_dict() for row in rows]:
-            location = f"/indexes/{index_id}/files/{index_file['name']}"
-
-            files.append(
-                {
-                    **index_file,
-                    "download_url": str(self._base_url) + location,
-                },
-            )
-
-        return files
 
 
 class IndexCountsTransform(AbstractTransform):
@@ -250,7 +217,6 @@ async def find(
             "modification_count",
             "modified_count",
             "user",
-            "task",
             "ready",
             "reference",
             "version",
@@ -496,24 +462,31 @@ async def upsert_index_file(
 ) -> dict[str, Any]:
     """Create or update an index file row."""
     async with AsyncSession(pg) as session:
-        index_file = (
+        index_file_id = (
             await session.execute(
-                select(SQLIndexFile).filter_by(index=index_id, name=name),
+                pg_insert(SQLIndexFile)
+                .values(
+                    index=index_id,
+                    name=name,
+                    size=size,
+                    type=file_type,
+                )
+                .on_conflict_do_update(
+                    index_elements=[SQLIndexFile.index, SQLIndexFile.name],
+                    set_={"size": size, "type": file_type},
+                )
+                .returning(SQLIndexFile.id),
             )
-        ).scalar_one_or_none()
-
-        if index_file is None:
-            index_file = SQLIndexFile(index=index_id, name=name, type=file_type)
-            session.add(index_file)
-
-        index_file.size = size
-        index_file.type = file_type
-
-        await session.flush()
-        index_file = index_file.to_dict()
+        ).scalar_one()
         await session.commit()
 
-        return index_file
+        return {
+            "id": index_file_id,
+            "index": index_id,
+            "name": name,
+            "size": size,
+            "type": file_type,
+        }
 
 
 async def update_last_indexed_versions(

@@ -5,6 +5,7 @@ from unittest.mock import ANY
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
@@ -966,7 +967,18 @@ async def test_create_index(
 
     assert resp.status == 201
     assert await resp.json() == snapshot
-    assert await mongo.indexes.find_one() == snapshot
+    index = await mongo.indexes.find_one()
+    assert index == snapshot
+    assert index["job"] is not None
+    assert index["task"] is None
+
+    async with AsyncSession(pg) as session:
+        assert (
+            await session.scalar(
+                select(SQLTask.id).where(SQLTask.type == "create_index"),
+            )
+            is None
+        )
 
     m_create_manifest.assert_called_with(ANY, ANY, "foo")
 

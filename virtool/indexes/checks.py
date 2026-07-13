@@ -1,4 +1,5 @@
 from virtool.data.errors import ResourceConflictError
+from virtool.indexes.sql import IndexType
 
 GENOME_REQUIRED_INDEX_FILE_NAMES = (
     "reference.fa.gz",
@@ -11,18 +12,20 @@ GENOME_REQUIRED_INDEX_FILE_NAMES = (
 )
 
 
-async def check_legacy_index_files_uploaded(results: dict, data_type: str) -> None:
-    if data_type == "genome":
-        required_files = GENOME_REQUIRED_INDEX_FILE_NAMES
-    else:
-        required_files = ("reference.fa.gz",)
-
-    missing_files = [
-        file_name for file_name in required_files if file_name not in results
-    ]
-
-    if missing_files:
+async def check_fasta_file_uploaded(results: dict) -> None:
+    if IndexType.fasta not in results.values():
         raise ResourceConflictError(
-            "Job-backed index builds require all legacy index files. "
-            f"missing files: {', '.join(missing_files)}"
+            "A FASTA file must be uploaded in order to finalize index"
+        )
+
+
+async def check_legacy_index_files_uploaded(results: dict) -> None:
+    if missing_files := [
+        file_name
+        for file_name in GENOME_REQUIRED_INDEX_FILE_NAMES
+        if file_name not in results
+    ]:
+        raise ResourceConflictError(
+            f"Reference requires that all Bowtie2 index files have been uploaded. "
+            f"Missing files: {', '.join(missing_files)}"
         )

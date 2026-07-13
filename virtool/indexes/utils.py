@@ -1,17 +1,3 @@
-import asyncio
-from collections.abc import AsyncIterator
-from pathlib import Path
-
-from virtool.storage.protocol import STORAGE_CHUNK_SIZE
-
-
-async def iter_file_chunks(path: Path) -> AsyncIterator[bytes]:
-    """Iterate chunks from ``path``."""
-    with await asyncio.to_thread(path.open, "rb") as f:
-        while chunk := await asyncio.to_thread(f.read, STORAGE_CHUNK_SIZE):
-            yield chunk
-
-
 def check_index_file_type(file_name: str) -> str:
     """Get the index file type based on the extension of given `file_name`
 

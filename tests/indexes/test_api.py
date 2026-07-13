@@ -21,7 +21,6 @@ from virtool.fake.next import DataFaker
 from virtool.history.db import legacy_history_values
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.db import INDEX_FILE_NAMES
-from virtool.indexes.files import create_index_file
 from virtool.indexes.sql import SQLIndexFile
 from virtool.indexes.utils import check_index_file_type, compose_index_file_key
 from virtool.mongo.core import Mongo
@@ -799,54 +798,6 @@ async def test_upload(
         ).scalar() == snapshot
 
 
-async def test_upload_index_without_build_fields(
-    example_path: Path,
-    fake: DataFaker,
-    memory_storage: StorageBackend,
-    mongo: Mongo,
-    spawn_job_client: JobClientSpawner,
-):
-    client = await spawn_job_client(authenticated=True)
-
-    path = example_path / "indexes" / "reference.1.bt2"
-
-    user, _ = await asyncio.gather(
-        fake.users.create(),
-        mongo.references.insert_one(
-            {"_id": "bar", "archived": False, "data_type": "genome", "name": "Bar"},
-        ),
-    )
-    await mongo.indexes.insert_one(
-        {
-            "_id": "foo",
-            "reference": {"id": "bar"},
-            "user": {"id": user.id},
-        },
-    )
-
-    with path.open("rb") as file:
-        resp = await client.put(
-            "/indexes/foo/files/reference.1.bt2",
-            data={"file": file},
-        )
-
-    assert resp.status == 201
-
-    body = await resp.json()
-
-    assert body["index"] == "foo"
-    assert body["name"] == "reference.1.bt2"
-    assert await mongo.indexes.find_one("foo", ["job", "task"]) == {"_id": "foo"}
-
-    chunks = [
-        chunk
-        async for chunk in memory_storage.read(
-            compose_index_file_key("foo", "reference.1.bt2"),
-        )
-    ]
-    assert b"".join(chunks) == path.read_bytes()
-
-
 @pytest.mark.parametrize("error", [None, "409_genome", "409_fasta", "404_reference"])
 async def test_finalize(
     error: str | None,
@@ -912,14 +863,19 @@ async def test_finalize(
         mongo.otus.insert_one({**test_otu, "version": 1}),
     )
 
-    for file_name in files:
-        await create_index_file(
-            pg,
-            "test_index",
-            check_index_file_type(file_name),
-            file_name,
-            9000,
+    async with AsyncSession(pg) as session:
+        session.add_all(
+            [
+                SQLIndexFile(
+                    index="test_index",
+                    name=file_name,
+                    size=9000,
+                    type=check_index_file_type(file_name),
+                )
+                for file_name in files
+            ],
         )
+        await session.commit()
 
     resp = await client.patch("/indexes/test_index")
 

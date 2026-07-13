@@ -205,10 +205,8 @@ async def upload(req):
         index_file = await get_data_from_req(req).index.upload_file(
             index_id, file_type, name, req.multipart
         )
-    except ResourceNotFoundError:
-        raise APINotFound("Index file not found")
-    except ResourceConflictError as err:
-        raise APIConflict(str(err) or "File name already exists")
+    except ResourceConflictError:
+        raise APIConflict("File name already exists")
 
     return json_response(
         index_file,

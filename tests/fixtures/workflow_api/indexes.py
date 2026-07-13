@@ -59,8 +59,9 @@ def create_indexes_routes(
                     {
                         "id": "conflict",
                         "message": (
-                            "Job-backed index builds require all legacy index files. "
-                            f"missing files: {', '.join(missing_files)}"
+                            "Reference requires that all Bowtie2 index files have "
+                            "been uploaded. "
+                            f"Missing files: {', '.join(missing_files)}"
                         ),
                     },
                     status=409,

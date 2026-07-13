@@ -488,13 +488,13 @@
 # name: test_finalize[409_fasta]
   dict({
     'id': 'conflict',
-    'message': 'Job-backed index builds require all legacy index files. missing files: reference.fa.gz, reference.1.bt2, reference.2.bt2, reference.3.bt2, reference.4.bt2, reference.rev.1.bt2, reference.rev.2.bt2',
+    'message': 'A FASTA file must be uploaded in order to finalize index',
   })
 # ---
 # name: test_finalize[409_genome]
   dict({
     'id': 'conflict',
-    'message': 'Job-backed index builds require all legacy index files. missing files: reference.1.bt2, reference.2.bt2, reference.3.bt2, reference.4.bt2, reference.rev.1.bt2, reference.rev.2.bt2',
+    'message': 'Reference requires that all Bowtie2 index files have been uploaded. Missing files: reference.1.bt2, reference.2.bt2, reference.3.bt2, reference.4.bt2, reference.rev.1.bt2, reference.rev.2.bt2',
   })
 # ---
 # name: test_finalize[None]

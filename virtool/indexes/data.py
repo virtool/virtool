@@ -1,7 +1,6 @@
 import asyncio
 import gzip
 from collections.abc import AsyncIterator
-from pathlib import Path
 
 from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
@@ -22,7 +21,10 @@ from virtool.data.topg import retry_both_transactions
 from virtool.data.transforms import apply_transforms
 from virtool.history.models import HistorySearchResult
 from virtool.history.sql import SQLLegacyHistory
-from virtool.indexes.checks import check_legacy_index_files_uploaded
+from virtool.indexes.checks import (
+    check_fasta_file_uploaded,
+    check_legacy_index_files_uploaded,
+)
 from virtool.indexes.db import (
     INDEX_FILE_NAMES,
     IndexCountsTransform,
@@ -55,8 +57,8 @@ logger = get_logger("indexes")
 
 
 def _get_index_build_type(document: dict) -> str:
-    job_id = document["job"]["id"] if document.get("job") is not None else None
-    task_id = document["task"]["id"] if document.get("task") is not None else None
+    job_id = document["job"]["id"] if document["job"] is not None else None
+    task_id = document["task"]["id"] if document["task"] is not None else None
 
     if job_id is None and task_id is None:
         raise ResourceConflictError(
@@ -260,9 +262,6 @@ class IndexData:
         :param multipart: the file reader
         :return: the index file
         """
-        if await self._mongo.indexes.find_one({"_id": index_id}, ["_id"]) is None:
-            raise ResourceNotFoundError()
-
         async with AsyncSession(self._pg) as session:
             index_file = SQLIndexFile(name=name, index=index_id, type=file_type)
 
@@ -347,9 +346,12 @@ class IndexData:
             for f in await get_rows(self._pg, SQLIndexFile, "index", index_id)
         }
 
-        await wait_for_checks(
-            check_legacy_index_files_uploaded(results, data_type),
-        )
+        checks = [check_fasta_file_uploaded(results)]
+
+        if data_type == "genome":
+            checks.append(check_legacy_index_files_uploaded(results))
+
+        await wait_for_checks(*checks)
 
         async with self._mongo.create_session() as session:
             await update_last_indexed_versions(self._mongo, self._pg, ref_id, session)
@@ -363,7 +365,7 @@ class IndexData:
         return await self.get(index_id)
 
     @emits(Operation.UPDATE)
-    async def generate_index_file(self, index_id: str, _work_path: Path) -> Index:
+    async def generate_task_index(self, index_id: str) -> Index:
         """Generate the task-backed index JSON artifact and mark the index ready."""
         index = await self._mongo.indexes.find_one(
             {"_id": index_id},

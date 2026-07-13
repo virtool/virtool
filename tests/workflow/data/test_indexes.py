@@ -149,14 +149,13 @@ def _set_reference_json_index_data(workflow_data: WorkflowData) -> None:
     }
     workflow_data.index.files = [
         IndexFile(
-            download_url=f"/indexes/{workflow_data.index.id}/files/{file_name}",
-            id=id_,
+            download_url=(f"/indexes/{workflow_data.index.id}/files/reference.json.gz"),
+            id=1,
             index=workflow_data.index.id,
-            name=file_name,
+            name="reference.json.gz",
             size=100,
-            type="unknown",
+            type="json",
         )
-        for id_, file_name in enumerate(INDEX_FILE_NAMES, start=1)
     ]
 
 
@@ -482,8 +481,8 @@ class TestNewIndex:
             await new_index.finalize()
 
         expected = (
-            "Job-backed index builds require all legacy index files. missing "
-            "files: reference.fa.gz, reference.1.bt2, reference.2.bt2, "
+            "Reference requires that all Bowtie2 index files have been uploaded. "
+            "Missing files: reference.fa.gz, reference.1.bt2, reference.2.bt2, "
             "reference.3.bt2, reference.4.bt2, reference.rev.1.bt2, "
             "reference.rev.2.bt2"
         )
