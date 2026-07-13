@@ -1,17 +1,20 @@
-"""Tests for the Mongo-to-Postgres OTU and sequence backfill."""
+"""Tests for the Mongo-to-Postgres OTU and sequence backfill and parity gate."""
 
 import asyncio
 from collections.abc import Callable
 
 import pytest
 from motor.motor_asyncio import AsyncIOMotorCollection
-from sqlalchemy import insert, text
+from sqlalchemy import insert, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.migration.ctx import MigrationContext
 from virtool.otus.db import otu_row_values
-from virtool.otus.migration import copy_otus_and_sequences_to_postgres
-from virtool.otus.sql import SQLOTU
+from virtool.otus.migration import (
+    compare_otu_and_sequence_stores,
+    copy_otus_and_sequences_to_postgres,
+)
+from virtool.otus.sql import SQLOTU, SQLSequence
 from virtool.utils import timestamp
 
 
@@ -297,3 +300,209 @@ class TestCopyOtusAndSequences:
         await copy_otus_and_sequences_to_postgres(ctx)
 
         assert await _fetch_sequence(ctx, "seq_dual_written") is not None
+
+
+async def _update_otu_row(ctx: MigrationContext, otu_id: str, **values) -> None:
+    """Change a ``legacy_otus`` row's columns without touching Mongo."""
+    async with AsyncSession(ctx.pg) as session:
+        await session.execute(
+            update(SQLOTU).where(SQLOTU.id == otu_id).values(**values),
+        )
+        await session.commit()
+
+
+async def _update_sequence_row(
+    ctx: MigrationContext,
+    sequence_id: str,
+    **values,
+) -> None:
+    """Change a ``legacy_sequences`` row's columns without touching Mongo."""
+    async with AsyncSession(ctx.pg) as session:
+        await session.execute(
+            update(SQLSequence).where(SQLSequence.id == sequence_id).values(**values),
+        )
+        await session.commit()
+
+
+class TestCompareOtuAndSequenceStores:
+    @pytest.fixture
+    async def matching_stores(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+    ) -> None:
+        """Seed one OTU and one sequence and copy both into Postgres."""
+        await ctx.mongo.otus.insert_one(
+            _otu_doc("otu_matched", reference_id, "Tobacco mosaic virus"),
+        )
+        await ctx.mongo.sequences.insert_one(
+            _sequence_doc("seq_matched", "otu_matched"),
+        )
+
+        await copy_otus_and_sequences_to_postgres(ctx)
+
+    async def test_matching_stores_pass(
+        self,
+        ctx: MigrationContext,
+        matching_stores: None,
+    ):
+        await compare_otu_and_sequence_stores(ctx)
+
+    async def test_is_read_only_and_repeatable(
+        self,
+        ctx: MigrationContext,
+        matching_stores: None,
+    ):
+        """Two runs over unchanged stores agree, and neither writes anything."""
+        await compare_otu_and_sequence_stores(ctx)
+        await compare_otu_and_sequence_stores(ctx)
+
+        assert await _count(ctx, "legacy_otus") == 1
+        assert await _count(ctx, "legacy_sequences") == 1
+        assert await ctx.mongo.otus.count_documents({}) == 1
+        assert await ctx.mongo.sequences.count_documents({}) == 1
+
+    async def test_otu_missing_from_postgres_raises(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+        matching_stores: None,
+    ):
+        await ctx.mongo.otus.insert_one(
+            _otu_doc("otu_not_written", reference_id, "Potato virus Y"),
+        )
+
+        with pytest.raises(ValueError, match="1 otus and 0 sequences"):
+            await compare_otu_and_sequence_stores(ctx)
+
+    async def test_sequence_missing_from_postgres_raises(
+        self,
+        ctx: MigrationContext,
+        matching_stores: None,
+    ):
+        await ctx.mongo.sequences.insert_one(
+            _sequence_doc("seq_not_written", "otu_matched"),
+        )
+
+        with pytest.raises(ValueError, match="0 otus and 1 sequences"):
+            await compare_otu_and_sequence_stores(ctx)
+
+    async def test_otu_missing_from_mongo_raises(
+        self,
+        ctx: MigrationContext,
+        matching_stores: None,
+    ):
+        """A Postgres row whose Mongo document was deleted is drift, not an aside."""
+        await ctx.mongo.otus.delete_one({"_id": "otu_matched"})
+
+        with pytest.raises(ValueError, match="1 otus and 0 sequences"):
+            await compare_otu_and_sequence_stores(ctx)
+
+    async def test_sequence_missing_from_mongo_raises(
+        self,
+        ctx: MigrationContext,
+        matching_stores: None,
+    ):
+        await ctx.mongo.sequences.delete_one({"_id": "seq_matched"})
+
+        with pytest.raises(ValueError, match="0 otus and 1 sequences"):
+            await compare_otu_and_sequence_stores(ctx)
+
+    async def test_otu_data_drift_raises(
+        self,
+        ctx: MigrationContext,
+        matching_stores: None,
+    ):
+        """A Mongo edit that never reached Postgres is drift."""
+        await ctx.mongo.otus.update_one(
+            {"_id": "otu_matched"},
+            {"$set": {"version": 4, "verified": False}},
+        )
+
+        with pytest.raises(ValueError, match="1 otus and 0 sequences"):
+            await compare_otu_and_sequence_stores(ctx)
+
+    async def test_otu_column_drift_raises(
+        self,
+        ctx: MigrationContext,
+        matching_stores: None,
+    ):
+        """A promoted column that disagrees with an otherwise-matching ``data``."""
+        await _update_otu_row(ctx, "otu_matched", name="Wrong name")
+
+        with pytest.raises(ValueError, match="1 otus and 0 sequences"):
+            await compare_otu_and_sequence_stores(ctx)
+
+    async def test_sequence_column_drift_raises(
+        self,
+        ctx: MigrationContext,
+        matching_stores: None,
+    ):
+        await _update_sequence_row(ctx, "seq_matched", segment="RNA2")
+
+        with pytest.raises(ValueError, match="0 otus and 1 sequences"):
+            await compare_otu_and_sequence_stores(ctx)
+
+    async def test_reports_every_drifted_document(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+        matching_stores: None,
+    ):
+        """Drift is accumulated across the whole run, not raised on the first hit."""
+        await ctx.mongo.otus.insert_one(
+            _otu_doc("otu_second", reference_id, "Potato virus Y"),
+        )
+        await ctx.mongo.sequences.insert_one(
+            _sequence_doc("seq_second", "otu_second"),
+        )
+
+        await copy_otus_and_sequences_to_postgres(ctx)
+
+        await _update_otu_row(ctx, "otu_matched", verified=False)
+        await _update_otu_row(ctx, "otu_second", version=99)
+        await _update_sequence_row(ctx, "seq_second", isolate_id="isolate_wrong")
+
+        with pytest.raises(ValueError, match="2 otus and 1 sequences"):
+            await compare_otu_and_sequence_stores(ctx)
+
+    async def test_null_abbreviation_and_missing_segment_pass(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+    ):
+        """The write path's own normalizations must not read as drift.
+
+        Mongo stores a null abbreviation and omits ``segment`` entirely; Postgres
+        holds ``""`` and ``NULL``. Both stores are in parity.
+        """
+        otu = _otu_doc("otu_null_abbreviation", reference_id, "Potato virus Y")
+        otu["abbreviation"] = None
+
+        sequence = _sequence_doc("seq_no_segment", "otu_null_abbreviation")
+        del sequence["segment"]
+
+        await ctx.mongo.otus.insert_one(otu)
+        await ctx.mongo.sequences.insert_one(sequence)
+
+        await copy_otus_and_sequences_to_postgres(ctx)
+
+        await compare_otu_and_sequence_stores(ctx)
+
+    async def test_legacy_string_reference_id_passes(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+    ):
+        """An OTU still holding the legacy string ``reference.id`` is in parity.
+
+        Postgres promotes it to the integer ``legacy_references`` primary key, so
+        the two forms must resolve to the same reference.
+        """
+        await ctx.mongo.otus.insert_one(
+            _otu_doc("otu_legacy_reference", "ref_legacy", "Cucumber mosaic virus"),
+        )
+
+        await copy_otus_and_sequences_to_postgres(ctx)
+
+        await compare_otu_and_sequence_stores(ctx)
