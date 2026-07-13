@@ -1,5 +1,5 @@
 # serializer version: 1
-# name: TestArchive.test_ok[False][resp]
+# name: TestArchive.test_ok[resp]
   dict({
     'archived': True,
     'cloned_from': None,
@@ -13,8 +13,8 @@
     'id': 1,
     'imported_from': None,
     'latest_build': None,
-    'name': 'Foo',
-    'organism': 'virus',
+    'name': 'Test Reference',
+    'organism': '',
     'otu_count': 0,
     'restrict_source_types': False,
     'source_types': list([
@@ -24,42 +24,18 @@
     'task': None,
     'unbuilt_change_count': 0,
     'user': dict({
-      'handle': 'myersmitchell',
-      'id': 2,
+      'handle': 'leeashley',
+      'id': 1,
     }),
     'users': list([
-    ]),
-  })
-# ---
-# name: TestArchive.test_ok[True][resp]
-  dict({
-    'archived': True,
-    'cloned_from': None,
-    'contributors': list([
-    ]),
-    'created_at': 'approximately_now_isoformat',
-    'data_type': 'genome',
-    'description': '',
-    'groups': list([
-    ]),
-    'id': 1,
-    'imported_from': None,
-    'latest_build': None,
-    'name': 'Foo',
-    'organism': 'virus',
-    'otu_count': 0,
-    'restrict_source_types': False,
-    'source_types': list([
-      'isolate',
-      'strain',
-    ]),
-    'task': None,
-    'unbuilt_change_count': 0,
-    'user': dict({
-      'handle': 'myersmitchell',
-      'id': 2,
-    }),
-    'users': list([
+      dict({
+        'build': True,
+        'created_at': 'approximately_now_isoformat',
+        'handle': 'leeashley',
+        'id': 1,
+        'modify': True,
+        'modify_otu': True,
+      }),
     ]),
   })
 # ---
@@ -221,6 +197,80 @@
         'modify_otu': True,
       }),
     ]),
+  })
+# ---
+# name: TestCreateIndex.test_ok
+  dict({
+    'change_count': 1,
+    'contributors': list([
+      dict({
+        'count': 1,
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+    ]),
+    'created_at': '2015-10-06T20:00:00Z',
+    'files': list([
+    ]),
+    'has_files': True,
+    'id': 'bf1b993c',
+    'job': dict({
+      'created_at': '2015-10-06T20:00:00Z',
+      'id': 1,
+      'progress': 0,
+      'state': 'pending',
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+      'workflow': 'build_index',
+    }),
+    'manifest': dict({
+      'bar': 5,
+      'foo': 2,
+    }),
+    'modified_otu_count': 1,
+    'otus': list([
+      dict({
+        'change_count': 1,
+        'id': 'otu_1',
+        'name': 'Tobacco mosaic virus',
+      }),
+    ]),
+    'ready': False,
+    'reference': dict({
+      'data_type': 'genome',
+      'id': 1,
+      'name': 'Foo',
+    }),
+    'user': dict({
+      'handle': 'leeashley',
+      'id': 1,
+    }),
+    'version': 0,
+  })
+# ---
+# name: TestCreateIndex.test_ok.1
+  dict({
+    '_id': 'bf1b993c',
+    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+    'has_files': True,
+    'has_json': False,
+    'job': dict({
+      'id': 1,
+    }),
+    'manifest': dict({
+      'bar': 5,
+      'foo': 2,
+    }),
+    'ready': False,
+    'reference': dict({
+      'id': 1,
+    }),
+    'user': dict({
+      'id': 1,
+    }),
+    'version': 0,
   })
 # ---
 # name: TestCreateOTU.test[None-None][history]
@@ -792,7 +842,7 @@
     ]),
   })
 # ---
-# name: TestUnarchive.test_ok[False][resp]
+# name: TestUnarchive.test_ok[resp]
   dict({
     'archived': False,
     'cloned_from': None,
@@ -806,8 +856,8 @@
     'id': 1,
     'imported_from': None,
     'latest_build': None,
-    'name': 'Foo',
-    'organism': 'virus',
+    'name': 'Test Reference',
+    'organism': '',
     'otu_count': 0,
     'restrict_source_types': False,
     'source_types': list([
@@ -817,42 +867,18 @@
     'task': None,
     'unbuilt_change_count': 0,
     'user': dict({
-      'handle': 'myersmitchell',
-      'id': 2,
+      'handle': 'leeashley',
+      'id': 1,
     }),
     'users': list([
-    ]),
-  })
-# ---
-# name: TestUnarchive.test_ok[True][resp]
-  dict({
-    'archived': False,
-    'cloned_from': None,
-    'contributors': list([
-    ]),
-    'created_at': 'approximately_now_isoformat',
-    'data_type': 'genome',
-    'description': '',
-    'groups': list([
-    ]),
-    'id': 1,
-    'imported_from': None,
-    'latest_build': None,
-    'name': 'Foo',
-    'organism': 'virus',
-    'otu_count': 0,
-    'restrict_source_types': False,
-    'source_types': list([
-      'isolate',
-      'strain',
-    ]),
-    'task': None,
-    'unbuilt_change_count': 0,
-    'user': dict({
-      'handle': 'myersmitchell',
-      'id': 2,
-    }),
-    'users': list([
+      dict({
+        'build': True,
+        'created_at': 'approximately_now_isoformat',
+        'handle': 'leeashley',
+        'id': 1,
+        'modify': True,
+        'modify_otu': True,
+      }),
     ]),
   })
 # ---
@@ -875,80 +901,6 @@
     'modify': True,
     'modify_otu': False,
     'name': 'gaffers',
-  })
-# ---
-# name: test_create_index[True]
-  dict({
-    'change_count': 1,
-    'contributors': list([
-      dict({
-        'count': 1,
-        'handle': 'myersmitchell',
-        'id': 2,
-      }),
-    ]),
-    'created_at': '2015-10-06T20:00:00Z',
-    'files': list([
-    ]),
-    'has_files': True,
-    'id': 'bf1b993c',
-    'job': dict({
-      'created_at': '2015-10-06T20:00:00Z',
-      'id': 1,
-      'progress': 0,
-      'state': 'pending',
-      'user': dict({
-        'handle': 'leeashley',
-        'id': 1,
-      }),
-      'workflow': 'build_index',
-    }),
-    'manifest': dict({
-      'bar': 5,
-      'foo': 2,
-    }),
-    'modified_otu_count': 1,
-    'otus': list([
-      dict({
-        'change_count': 1,
-        'id': 'otu_1',
-        'name': 'Tobacco mosaic virus',
-      }),
-    ]),
-    'ready': False,
-    'reference': dict({
-      'data_type': 'genome',
-      'id': 1,
-      'name': 'Foo',
-    }),
-    'user': dict({
-      'handle': 'leeashley',
-      'id': 1,
-    }),
-    'version': 0,
-  })
-# ---
-# name: test_create_index[True].1
-  dict({
-    '_id': 'bf1b993c',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'has_files': True,
-    'has_json': False,
-    'job': dict({
-      'id': 1,
-    }),
-    'manifest': dict({
-      'bar': 5,
-      'foo': 2,
-    }),
-    'ready': False,
-    'reference': dict({
-      'id': 1,
-    }),
-    'user': dict({
-      'id': 1,
-    }),
-    'version': 0,
   })
 # ---
 # name: test_create_user[None][resp]

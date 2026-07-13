@@ -1,4 +1,3 @@
-import asyncio
 import gzip
 import io
 from datetime import datetime
@@ -24,7 +23,6 @@ from virtool.models.enums import LibraryType, Permission
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.references.models import Reference
-from virtool.references.sql import SQLReference
 from virtool.samples.models import Sample
 from virtool.samples.oas import UpdateSampleRequest
 from virtool.samples.utils import sample_file_key, sample_storage_id
@@ -1067,30 +1065,12 @@ async def test_find_analyses(
 
     sample = await fake.samples.create(user_1, ready=True)
 
-    await asyncio.gather(
-        mongo.references.insert_many(
-            [
-                {"_id": "foo", "archived": False, "data_type": "genome", "name": "Foo"},
-                {"_id": "baz", "archived": False, "data_type": "genome", "name": "Baz"},
-            ],
-            session=None,
-        ),
-        mongo.indexes.insert_one({"_id": "foo", "version": 2}),
-    )
+    reference_foo = await fake.references.create(user=user_1)
+    reference_baz = await fake.references.create(user=user_1)
+
+    await mongo.indexes.insert_one({"_id": "foo", "version": 2})
 
     async with AsyncSession(pg) as session:
-        session.add_all(
-            SQLReference(
-                legacy_id=legacy_id,
-                name=name,
-                description="",
-                created_at=static_time.datetime,
-                source_types=[],
-                user_id=user_1.id,
-            )
-            for legacy_id, name in (("foo", "Foo"), ("baz", "Baz"))
-        )
-
         analyses = [
             SQLAnalysis(
                 legacy_id="test_1",
@@ -1101,6 +1081,7 @@ async def test_find_analyses(
                 sample=str(sample.id),
                 sample_id=sample.id,
                 reference="baz",
+                reference_id=reference_baz.id,
                 index="foo",
                 user_id=user_1.id,
                 job_id=job.id,
@@ -1114,6 +1095,7 @@ async def test_find_analyses(
                 sample=str(sample.id),
                 sample_id=sample.id,
                 reference="baz",
+                reference_id=reference_baz.id,
                 index="foo",
                 user_id=user_1.id,
             ),
@@ -1126,6 +1108,7 @@ async def test_find_analyses(
                 sample=str(sample.id),
                 sample_id=sample.id,
                 reference="foo",
+                reference_id=reference_foo.id,
                 index="foo",
                 user_id=user_2.id,
             ),
@@ -1137,6 +1120,7 @@ async def test_find_analyses(
                 ready=True,
                 sample="test-not-found",
                 reference="foo",
+                reference_id=reference_foo.id,
                 index="foo",
                 user_id=user_2.id,
             ),

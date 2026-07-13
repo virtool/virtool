@@ -2,7 +2,6 @@ from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r204, r400, r403, r404, r409
 
 import virtool.api.routes
-import virtool.references.db
 from virtool.api.custom_json import json_response
 from virtool.api.errors import (
     APIConflict,
@@ -14,6 +13,7 @@ from virtool.api.pagination import Page, PerPage
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.history.models import History, HistorySearchResult
+from virtool.models.roles import AdministratorRole
 
 routes = virtool.api.routes.Routes()
 
@@ -75,10 +75,14 @@ class ChangeView(PydanticView):
         except ResourceNotFoundError:
             raise APINotFound()
 
-        if not await virtool.references.db.check_right(
-            self.request,
+        client = self.request["client"]
+
+        if not await get_data_from_req(self.request).references.check_right(
             reference_id,
             "modify_otu",
+            user_id=client.user_id,
+            group_ids=client.groups,
+            administrator=client.administrator_role == AdministratorRole.FULL,
         ):
             raise APIInsufficientRights()
 

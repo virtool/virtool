@@ -15,7 +15,6 @@ from aiohttp_pydantic.oas.typing import (
 )
 from pydantic import Field
 
-import virtool.references.db
 from virtool.api.custom_json import json_response
 from virtool.api.errors import (
     APIBadRequest,
@@ -40,7 +39,6 @@ from virtool.indexes.oas import ListIndexesResponse
 from virtool.models.roles import AdministratorRole
 from virtool.otus.models import OTU, OTUSearchResult
 from virtool.otus.oas import CreateOTURequest
-from virtool.references.db import check_right
 from virtool.references.models import (
     Reference,
     ReferenceGroup,
@@ -165,8 +163,16 @@ class ReferenceView(PydanticView):
             404: Not found
 
         """
+        client = self.request["client"]
+
         try:
-            if not await check_right(self.request, ref_id, "modify"):
+            if not await get_data_from_req(self.request).references.check_right(
+                ref_id,
+                "modify",
+                user_id=client.user_id,
+                group_ids=client.groups,
+                administrator=client.administrator_role == AdministratorRole.FULL,
+            ):
                 raise APIInsufficientRights()
         except ResourceNotFoundError:
             raise APINotFound
@@ -198,8 +204,16 @@ class ReferenceArchiveView(PydanticView):
             404: Not found
             409: Cannot archive the official plant viruses reference
         """
+        client = self.request["client"]
+
         try:
-            if not await check_right(self.request, ref_id, "modify"):
+            if not await get_data_from_req(self.request).references.check_right(
+                ref_id,
+                "modify",
+                user_id=client.user_id,
+                group_ids=client.groups,
+                administrator=client.administrator_role == AdministratorRole.FULL,
+            ):
                 raise APIInsufficientRights()
         except ResourceNotFoundError:
             raise APINotFound
@@ -228,8 +242,16 @@ class ReferenceUnarchiveView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
+        client = self.request["client"]
+
         try:
-            if not await check_right(self.request, ref_id, "modify"):
+            if not await get_data_from_req(self.request).references.check_right(
+                ref_id,
+                "modify",
+                user_id=client.user_id,
+                group_ids=client.groups,
+                administrator=client.administrator_role == AdministratorRole.FULL,
+            ):
                 raise APIInsufficientRights()
         except ResourceNotFoundError:
             raise APINotFound
@@ -286,11 +308,15 @@ class ReferenceOTUsView(PydanticView):
 
         Creates an OTU.
         """
+        client = self.request["client"]
+
         try:
-            if not await virtool.references.db.check_right(
-                self.request,
+            if not await get_data_from_req(self.request).references.check_right(
                 ref_id,
                 "modify_otu",
+                user_id=client.user_id,
+                group_ids=client.groups,
+                administrator=client.administrator_role == AdministratorRole.FULL,
             ):
                 raise APIInsufficientRights()
         except ResourceNotFoundError:
@@ -300,7 +326,7 @@ class ReferenceOTUsView(PydanticView):
             otu = await get_data_from_req(self.request).references.create_otu(
                 ref_id,
                 data,
-                self.request["client"].user_id,
+                client.user_id,
             )
         except ResourceNotFoundError:
             raise APINotFound()
@@ -394,11 +420,24 @@ class ReferenceIndexesView(PydanticView):
             404: Not found
 
         """
+        client = self.request["client"]
+
+        try:
+            if not await get_data_from_req(self.request).references.check_right(
+                ref_id,
+                "build",
+                user_id=client.user_id,
+                group_ids=client.groups,
+                administrator=client.administrator_role == AdministratorRole.FULL,
+            ):
+                raise APIInsufficientRights()
+        except ResourceNotFoundError:
+            raise APINotFound()
+
         try:
             document = await get_data_from_req(self.request).references.create_index(
                 ref_id,
-                self.request,
-                self.request["client"].user_id,
+                client.user_id,
             )
         except ResourceConflictError as err:
             raise APIConflict(str(err))
@@ -509,11 +548,15 @@ class ReferenceGroupView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
+        client = self.request["client"]
+
         try:
-            if not await virtool.references.db.check_right(
-                self.request,
+            if not await get_data_from_req(self.request).references.check_right(
                 ref_id,
                 "modify",
+                user_id=client.user_id,
+                group_ids=client.groups,
+                administrator=client.administrator_role == AdministratorRole.FULL,
             ):
                 raise APIInsufficientRights()
         except ResourceNotFoundError:
@@ -542,11 +585,15 @@ class ReferenceGroupView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
+        client = self.request["client"]
+
         try:
-            if not await virtool.references.db.check_right(
-                self.request,
+            if not await get_data_from_req(self.request).references.check_right(
                 ref_id,
                 "modify",
+                user_id=client.user_id,
+                group_ids=client.groups,
+                administrator=client.administrator_role == AdministratorRole.FULL,
             ):
                 raise APIInsufficientRights()
         except ResourceNotFoundError:
@@ -582,11 +629,15 @@ class ReferenceUsersView(PydanticView):
             404: Not found
 
         """
+        client = self.request["client"]
+
         try:
-            if not await virtool.references.db.check_right(
-                self.request,
+            if not await get_data_from_req(self.request).references.check_right(
                 ref_id,
                 "modify",
+                user_id=client.user_id,
+                group_ids=client.groups,
+                administrator=client.administrator_role == AdministratorRole.FULL,
             ):
                 raise APIInsufficientRights()
         except ResourceNotFoundError:
@@ -627,11 +678,15 @@ class ReferenceUserView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
+        client = self.request["client"]
+
         try:
-            if not await virtool.references.db.check_right(
-                self.request,
+            if not await get_data_from_req(self.request).references.check_right(
                 ref_id,
                 "modify",
+                user_id=client.user_id,
+                group_ids=client.groups,
+                administrator=client.administrator_role == AdministratorRole.FULL,
             ):
                 raise APIInsufficientRights()
         except ResourceNotFoundError:
@@ -658,11 +713,15 @@ class ReferenceUserView(PydanticView):
             403: Insufficient rights
             404: Not found
         """
+        client = self.request["client"]
+
         try:
-            if not await virtool.references.db.check_right(
-                self.request,
+            if not await get_data_from_req(self.request).references.check_right(
                 ref_id,
                 "modify",
+                user_id=client.user_id,
+                group_ids=client.groups,
+                administrator=client.administrator_role == AdministratorRole.FULL,
             ):
                 raise APIInsufficientRights()
         except ResourceNotFoundError:

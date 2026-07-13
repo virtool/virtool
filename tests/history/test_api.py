@@ -4,6 +4,7 @@ import pytest
 from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner
+from tests.fixtures.references import add_reference_user
 from virtool.data.layer import DataLayer
 from virtool.mongo.core import Mongo
 from virtool.otus.oas import CreateOTURequest
@@ -122,36 +123,73 @@ class TestGet:
         await resp_is.not_found(resp)
 
 
-@pytest.mark.parametrize("error", [None, "404"])
-@pytest.mark.parametrize("remove", [False, True])
-async def test_revert(
-    error,
-    remove,
-    snapshot,
-    create_mock_history,
-    mongo: Mongo,
-    spawn_client: ClientSpawner,
-    check_ref_right,
-    resp_is,
-):
-    """Test that a valid request results in a reversion and a ``204`` response."""
-    client = await spawn_client(authenticated=True)
+class TestRevert:
+    @pytest.mark.parametrize("remove", [False, True])
+    async def test_ok(
+        self,
+        remove: bool,
+        snapshot,
+        create_mock_history,
+        mongo: Mongo,
+        spawn_client: ClientSpawner,
+        resp_is,
+    ):
+        """Test that a reference member with the ``modify_otu`` right can revert a
+        change.
+        """
+        client = await spawn_client(authenticated=True)
+        administrator = await spawn_client(authenticated=True, administrator=True)
 
-    await create_mock_history(remove)
+        await create_mock_history(remove)
 
-    change_id = "foo.1" if error else "6116cba1.2"
+        await add_reference_user(
+            administrator,
+            "hxn167",
+            client.user.id,
+            modify_otu=True,
+        )
 
-    resp = await client.delete("/history/" + change_id)
+        resp = await client.delete("/history/6116cba1.2")
 
-    if error:
-        await resp_is.not_found(resp)
-        return
+        await resp_is.no_content(resp)
 
-    if not check_ref_right:
+        assert await mongo.otus.find_one() == snapshot
+        assert await mongo.sequences.find().to_list(None) == snapshot
+
+    async def test_insufficient_rights(
+        self,
+        create_mock_history,
+        mongo: Mongo,
+        spawn_client: ClientSpawner,
+        resp_is,
+    ):
+        """Test that a reference member without the ``modify_otu`` right cannot revert a
+        change.
+        """
+        client = await spawn_client(authenticated=True)
+        administrator = await spawn_client(authenticated=True, administrator=True)
+
+        otu = await create_mock_history(False)
+
+        await add_reference_user(administrator, "hxn167", client.user.id)
+
+        resp = await client.delete("/history/6116cba1.2")
+
         await resp_is.insufficient_rights(resp)
-        return
 
-    await resp_is.no_content(resp)
+        assert await mongo.otus.find_one() == otu
 
-    assert await mongo.otus.find_one() == snapshot
-    assert await mongo.sequences.find().to_list(None) == snapshot
+    async def test_not_found(
+        self,
+        create_mock_history,
+        spawn_client: ClientSpawner,
+        resp_is,
+    ):
+        """Test that reverting a non-existent change results in a ``404`` response."""
+        client = await spawn_client(authenticated=True)
+
+        await create_mock_history(False)
+
+        resp = await client.delete("/history/foo.1")
+
+        await resp_is.not_found(resp)

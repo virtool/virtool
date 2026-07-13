@@ -11,7 +11,6 @@ import virtool.history.db
 import virtool.indexes.db
 import virtool.otus.db
 import virtool.utils
-from virtool.api.errors import APIInsufficientRights
 from virtool.config import Config
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import (
@@ -175,6 +174,78 @@ class ReferencesData(DataLayerDomain):
     async def _require_not_archived(self, ref_id: int | str) -> None:
         if await self._get_archived(ref_id):
             raise ResourceConflictError("Reference is archived")
+
+    async def check_right(
+        self,
+        ref_id: int | str,
+        right: str,
+        *,
+        user_id: int | None,
+        group_ids: list[int],
+        administrator: bool,
+    ) -> bool:
+        """Check whether a user has a right on a reference.
+
+        A full administrator is granted any right without a database lookup, even
+        against a reference that does not exist.
+
+        Otherwise, membership alone grants ``read``; any other right requires an entry
+        that carries the right flag. A user entry does not short-circuit: a group can
+        grant a right the user's own entry lacks.
+
+        The caller extracts ``user_id``, ``group_ids``, and ``administrator`` from the
+        request client; this method owns only the resulting grant decision.
+
+        :param ref_id: the primary key or legacy id of the reference
+        :param right: the right to check (``read``, ``build``, ``modify``, ``modify_otu``)
+        :param user_id: the id of the requesting user, or ``None`` for a client with no user
+        :param group_ids: the ids of the groups the user belongs to
+        :param administrator: whether the requesting client is a full administrator
+        :return: whether the right is granted
+        :raises ResourceNotFoundError: if the reference does not exist
+        """
+        if administrator:
+            return True
+
+        async with AsyncSession(self._pg) as session:
+            reference_pk = await session.scalar(
+                select(SQLReference.id).where(
+                    compose_legacy_id_single_expression(SQLReference, ref_id),
+                ),
+            )
+
+            if reference_pk is None:
+                raise ResourceNotFoundError
+
+            if user_id is not None:
+                user_query = select(SQLReferenceUser.reference_id).where(
+                    SQLReferenceUser.reference_id == reference_pk,
+                    SQLReferenceUser.user_id == user_id,
+                )
+
+                if right != "read":
+                    user_query = user_query.where(
+                        getattr(SQLReferenceUser, right).is_(True),
+                    )
+
+                if await session.scalar(user_query.limit(1)) is not None:
+                    return True
+
+            if group_ids:
+                group_query = select(SQLReferenceGroup.reference_id).where(
+                    SQLReferenceGroup.reference_id == reference_pk,
+                    SQLReferenceGroup.group_id.in_(group_ids),
+                )
+
+                if right != "read":
+                    group_query = group_query.where(
+                        getattr(SQLReferenceGroup, right).is_(True),
+                    )
+
+                if await session.scalar(group_query.limit(1)) is not None:
+                    return True
+
+        return False
 
     async def _get_created_at(self, ref_id: int | str) -> datetime:
         """Return the ``created_at`` timestamp of a reference.
@@ -638,10 +709,7 @@ class ReferencesData(DataLayerDomain):
         return IndexSearchResult(**data)
 
     @emits(Operation.CREATE, domain="indexes", name="create")
-    async def create_index(self, ref_id: str, req, user_id: int) -> IndexMinimal:
-        if not await virtool.references.db.check_right(req, ref_id, "build"):
-            raise APIInsufficientRights()
-
+    async def create_index(self, ref_id: str, user_id: int) -> IndexMinimal:
         await self._require_not_archived(ref_id)
 
         if await self._mongo.indexes.count_documents(
