@@ -21,12 +21,10 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
     Non-integer ``job.id`` placeholders are stored as a null ``job_id`` since the
     Postgres column is a foreign key to ``jobs.id``.
 
-    When the parent sample has no ``legacy_samples`` row yet, one is created from the
-    sample's Mongo document so that its rights columns match. Rights are read from
-    Postgres, so a row seeded with the column defaults would deny access to a sample
-    the Mongo document marks readable.
+    The parent sample must already exist. ``sample.id`` addresses it by either its
+    integer primary key or its ``legacy_id``.
 
-    A sample with no Mongo document is left unseeded, giving the analysis a null
+    A sample that does not resolve is left unseeded, giving the analysis a null
     ``sample_id``. That is the only shape a parentless analysis can take in Postgres,
     where the foreign key guarantees a non-null ``sample_id`` points at a real row.
 
@@ -49,32 +47,20 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
     reference = document["reference"]
 
     async with AsyncSession(pg) as session:
-        sample_pg_id = (
+        sample_row = (
             await session.execute(
-                select(SQLLegacySample.id).where(
-                    SQLLegacySample.legacy_id == sample["id"],
+                select(SQLLegacySample.id, SQLLegacySample.legacy_id).where(
+                    compose_legacy_id_single_expression(SQLLegacySample, sample["id"]),
                 ),
             )
-        ).scalar_one_or_none()
+        ).first()
 
-        if sample_pg_id is None:
-            sample_document = await mongo.samples.find_one({"_id": sample["id"]})
-
-            if sample_document is not None:
-                legacy_sample = SQLLegacySample(
-                    legacy_id=sample["id"],
-                    name=sample.get("name", sample["id"]),
-                    library_type="normal",
-                    created_at=document["created_at"],
-                    user_id=document["user"]["id"],
-                    all_read=sample_document.get("all_read", False),
-                    all_write=sample_document.get("all_write", False),
-                    group_read=sample_document.get("group_read", False),
-                    group_write=sample_document.get("group_write", False),
-                )
-                session.add(legacy_sample)
-                await session.flush()
-                sample_pg_id = legacy_sample.id
+        if sample_row is None:
+            sample_pg_id = None
+            sample_storage_id = str(sample["id"])
+        else:
+            sample_pg_id = sample_row.id
+            sample_storage_id = sample_row.legacy_id or str(sample_row.id)
 
         reference_row = (
             await session.execute(
@@ -119,7 +105,7 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
             workflow=document["workflow"],
             ready=document["ready"],
             results=results if isinstance(results, dict) else None,
-            sample=sample["id"],
+            sample=sample_storage_id,
             sample_id=sample_pg_id,
             reference=reference_legacy_id or str(reference_pg_id),
             reference_id=reference_pg_id,
