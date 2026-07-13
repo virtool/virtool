@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner
+from tests.fixtures.samples import create_rights_sample
 from virtool.analyses.sql import SQLAnalysis
 from virtool.api.client import JobClient, UserClient
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
@@ -38,35 +39,6 @@ from virtool.storage.protocol import StorageBackend
 from virtool.uploads.sql import SQLUpload, UploadType
 from virtool.uploads.utils import upload_file_key
 from virtool.users.oas import UpdateUserRequest
-
-
-async def create_rights_sample(
-    data_layer: DataLayer,
-    fake: DataFaker,
-    owner,
-    *,
-    all_read: bool = False,
-    all_write: bool = False,
-    group_read: bool = False,
-    group_write: bool = False,
-    group: int | None = None,
-) -> int:
-    """Create a sample owned by ``owner`` with explicit rights and return its id."""
-    sample = await fake.samples.create(owner)
-
-    await data_layer.samples.update_rights(
-        sample.id,
-        {
-            "all_read": all_read,
-            "all_write": all_write,
-            "group_read": group_read,
-            "group_write": group_write,
-            "group": group,
-        },
-    )
-
-    return sample.id
-
 
 QUALITY = {
     "bases": [[1543]],
@@ -453,7 +425,7 @@ class TestHasRight:
             user_id=user.id,
         )
 
-        sample_id = await create_rights_sample(
+        sample = await create_rights_sample(
             data_layer,
             fake,
             sample_owner,
@@ -462,7 +434,7 @@ class TestHasRight:
             group_write=True,
         )
 
-        assert await data_layer.samples.has_right(sample_id, client, SampleRight.write)
+        assert await data_layer.samples.has_right(sample.id, client, SampleRight.write)
 
     async def test_read_permission(
         self,
@@ -483,7 +455,7 @@ class TestHasRight:
             user_id=user.id,
         )
 
-        sample_id = await create_rights_sample(
+        sample = await create_rights_sample(
             data_layer,
             fake,
             sample_owner,
@@ -491,7 +463,7 @@ class TestHasRight:
             group_read=True,
         )
 
-        assert await data_layer.samples.has_right(sample_id, client, SampleRight.read)
+        assert await data_layer.samples.has_right(sample.id, client, SampleRight.read)
 
     async def test_missing_sample(
         self,
@@ -534,9 +506,9 @@ class TestHasRight:
             user_id=user.id,
         )
 
-        sample_id = await create_rights_sample(data_layer, fake, sample_owner)
+        sample = await create_rights_sample(data_layer, fake, sample_owner)
 
-        assert await data_layer.samples.has_right(sample_id, client, SampleRight.write)
+        assert await data_layer.samples.has_right(sample.id, client, SampleRight.write)
 
     async def test_owner_full_access(
         self,
@@ -555,9 +527,9 @@ class TestHasRight:
             user_id=user.id,
         )
 
-        sample_id = await create_rights_sample(data_layer, fake, user)
+        sample = await create_rights_sample(data_layer, fake, user)
 
-        assert await data_layer.samples.has_right(sample_id, client, SampleRight.write)
+        assert await data_layer.samples.has_right(sample.id, client, SampleRight.write)
 
     async def test_job_client_full_access(
         self,
@@ -569,7 +541,7 @@ class TestHasRight:
         """
         sample_owner = await fake.users.create()
 
-        sample_id = await create_rights_sample(
+        sample = await create_rights_sample(
             data_layer,
             fake,
             sample_owner,
@@ -580,12 +552,12 @@ class TestHasRight:
         client = JobClient(job_id=1)
 
         assert await data_layer.samples.has_right(
-            sample_id,
+            sample.id,
             client,
             SampleRight.read,
         )
         assert await data_layer.samples.has_right(
-            sample_id,
+            sample.id,
             client,
             SampleRight.write,
         )
@@ -609,7 +581,7 @@ class TestHasRight:
             user_id=user.id,
         )
 
-        sample_id = await create_rights_sample(
+        sample = await create_rights_sample(
             data_layer,
             fake,
             sample_owner,
@@ -618,7 +590,7 @@ class TestHasRight:
         )
 
         assert not await data_layer.samples.has_right(
-            sample_id,
+            sample.id,
             client,
             SampleRight.write,
         )
@@ -649,7 +621,7 @@ class TestFindRights:
         )
         sample_owner = await fake.users.create()
 
-        sample_id = await create_rights_sample(
+        sample = await create_rights_sample(
             data_layer,
             fake,
             sample_owner,
@@ -667,7 +639,7 @@ class TestFindRights:
         )
 
         assert result.found_count == 1
-        assert [document.id for document in result.documents] == [sample_id]
+        assert [document.id for document in result.documents] == [sample.id]
 
     async def test_non_owner_cannot_see_private_sample(
         self,

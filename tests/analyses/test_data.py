@@ -9,6 +9,7 @@ from syrupy import SnapshotAssertion
 from syrupy.filters import props
 
 from tests.fixtures.analysis import seed_analysis
+from tests.fixtures.samples import create_rights_sample
 from virtool.analyses.sql import (
     SQLAnalysis,
     SQLAnalysisFile,
@@ -26,34 +27,6 @@ from virtool.samples.oas import CreateAnalysisRequest
 from virtool.subtractions.pg import SQLSubtraction
 from virtool.users.models import User
 from virtool.utils import timestamp
-
-
-async def create_rights_sample(
-    data_layer: DataLayer,
-    fake: DataFaker,
-    owner: User,
-    *,
-    all_read: bool = False,
-    all_write: bool = False,
-    group_read: bool = False,
-    group_write: bool = False,
-    group: int | None = None,
-) -> int:
-    """Create a sample owned by ``owner`` with explicit rights and return its id."""
-    sample = await fake.samples.create(owner)
-
-    await data_layer.samples.update_rights(
-        sample.id,
-        {
-            "all_read": all_read,
-            "all_write": all_write,
-            "group_read": group_read,
-            "group_write": group_write,
-            "group": group,
-        },
-    )
-
-    return sample.id
 
 
 @pytest.fixture
@@ -243,7 +216,7 @@ class TestFindSampleRights:
             all_read=False,
         )
 
-        await self._seed_analysis(mongo, pg, "hidden", other_private, setup_sample)
+        await self._seed_analysis(mongo, pg, "hidden", other_private.id, setup_sample)
 
         owned = await self._seed_analysis(
             mongo,
@@ -287,7 +260,7 @@ class TestFindSampleRights:
             mongo,
             pg,
             "shared",
-            group_readable,
+            group_readable.id,
             setup_sample,
         )
 
@@ -321,7 +294,7 @@ class TestFindSampleRights:
             group=group.id,
         )
 
-        await self._seed_analysis(mongo, pg, "shared", group_readable, setup_sample)
+        await self._seed_analysis(mongo, pg, "shared", group_readable.id, setup_sample)
 
         found = await data_layer.analyses.find(1, 25, build_user_client(outsider))
 
@@ -355,7 +328,7 @@ class TestFindSampleRights:
             mongo,
             pg,
             "private",
-            other_private,
+            other_private.id,
             setup_sample,
         )
 
@@ -391,7 +364,7 @@ class TestFindSampleRights:
             all_read=False,
         )
 
-        await self._seed_analysis(mongo, pg, "private", other_private, setup_sample)
+        await self._seed_analysis(mongo, pg, "private", other_private.id, setup_sample)
 
         found = await data_layer.analyses.find(
             1,
@@ -486,7 +459,7 @@ class TestHasRight:
             mongo,
             pg,
             "private",
-            owner_private,
+            owner_private.id,
             sample_owner.id,
             setup_sample.reference_id,
         )
@@ -524,7 +497,7 @@ class TestHasRight:
             mongo,
             pg,
             "private",
-            owner_private,
+            owner_private.id,
             sample_owner.id,
             setup_sample.reference_id,
         )
@@ -559,7 +532,7 @@ class TestHasRight:
             mongo,
             pg,
             "public",
-            world_readable,
+            world_readable.id,
             sample_owner.id,
             setup_sample.reference_id,
         )
@@ -597,7 +570,7 @@ class TestHasRight:
             mongo,
             pg,
             "shared",
-            group_shared,
+            group_shared.id,
             sample_owner.id,
             setup_sample.reference_id,
         )
@@ -633,7 +606,7 @@ class TestHasRight:
             mongo,
             pg,
             "shared",
-            group_shared,
+            group_shared.id,
             sample_owner.id,
             setup_sample.reference_id,
         )
@@ -668,7 +641,7 @@ class TestHasRight:
             mongo,
             pg,
             "private",
-            owner_private,
+            owner_private.id,
             sample_owner.id,
             setup_sample.reference_id,
         )

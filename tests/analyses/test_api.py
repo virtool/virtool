@@ -11,6 +11,7 @@ from tests.fixtures.analysis import seed_analysis
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from tests.fixtures.references import seed_reference
 from tests.fixtures.response import RespIs
+from tests.fixtures.samples import create_rights_sample
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.sql import SQLAnalysis, SQLAnalysisFile
 from virtool.data.layer import DataLayer
@@ -34,20 +35,21 @@ async def create_analysis_sample(
     all_read: bool = True,
     all_write: bool = False,
 ) -> Sample:
-    """Create a finalized sample owned by ``owner`` for an analysis to hang off."""
-    sample = await fake.samples.create(owner, ready=True)
+    """Create a finalized sample owned by ``owner`` for an analysis to hang off.
 
-    await data_layer.samples.update_rights(
-        sample.id,
-        {
-            "all_read": all_read,
-            "all_write": all_write,
-            "group_read": True,
-            "group_write": True,
-        },
+    Analyses are read through their parent sample's rights, so these samples are
+    readable by default and only the right under test is varied.
+    """
+    return await create_rights_sample(
+        data_layer,
+        fake,
+        owner,
+        ready=True,
+        all_read=all_read,
+        all_write=all_write,
+        group_read=True,
+        group_write=True,
     )
-
-    return sample
 
 
 @pytest.fixture
