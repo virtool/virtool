@@ -2,6 +2,7 @@
 
 import asyncio
 from collections.abc import Callable
+from datetime import datetime
 
 import pytest
 from motor.motor_asyncio import AsyncIOMotorCollection
@@ -59,11 +60,23 @@ async def _seed_reference(ctx: MigrationContext, legacy_id: str = "ref_legacy") 
     return reference_id
 
 
+_CREATED_AT = datetime(2025, 7, 2, 21, 18, 48, 420000)
+"""The ``created_at`` carried by legacy OTU documents.
+
+A naive UTC ``datetime``, as Mongo returns it. JSONB cannot hold one, so the write
+path stores it as the ISO string in :data:`_CREATED_AT_JSON`.
+"""
+
+_CREATED_AT_JSON = "2025-07-02T21:18:48.420000Z"
+"""How :data:`_CREATED_AT` comes back out of the ``data`` JSONB column."""
+
+
 def _otu_doc(otu_id: str, reference_id: int, name: str) -> dict:
     return {
         "_id": otu_id,
         "name": name,
         "abbreviation": name[:3].upper(),
+        "created_at": _CREATED_AT,
         "reference": {"id": reference_id},
         "verified": True,
         "version": 3,
@@ -164,7 +177,7 @@ class TestCopyOtusAndSequences:
         await copy_otus_and_sequences_to_postgres(ctx)
 
         otu_row = await _fetch_otu(ctx, "otu_00000000")
-        assert otu_row.data == otu
+        assert otu_row.data == {**otu, "created_at": _CREATED_AT_JSON}
         assert otu_row.name == "Tobacco mosaic virus"
         assert otu_row.abbreviation == "TOB"
         assert otu_row.reference_id == reference_id
@@ -346,6 +359,11 @@ class TestCompareOtuAndSequenceStores:
         ctx: MigrationContext,
         matching_stores: None,
     ):
+        """Matching stores pass, including the OTU's datetime ``created_at``.
+
+        A ``datetime`` cannot survive the JSONB round trip as a ``datetime``: it is
+        stored and read back as an ISO string. The gate must not read that as drift.
+        """
         await compare_otu_and_sequence_stores(ctx)
 
     async def test_is_read_only_and_repeatable(
