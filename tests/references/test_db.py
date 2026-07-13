@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 
 import pytest
 from pytest_mock import MockerFixture
@@ -6,6 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
+from virtool.api.custom_json import dump_string, loads
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.data.topg import compose_legacy_id_subquery
@@ -831,6 +833,55 @@ async def test_populate_insert_only_reference_writes_otu_and_sequence_rows(
 
     assert otu_rows == snapshot(name="legacy_otus")
     assert sequence_rows == snapshot(name="legacy_sequences")
+
+
+async def test_populate_insert_only_reference_stores_created_at_faithfully(
+    fake: DataFaker,
+    mocker: MockerFixture,
+    mongo: Mongo,
+    pg: AsyncEngine,
+):
+    """The ``legacy_otus.data`` written by a bulk populate is a faithful lift of the
+    Mongo document, including a ``created_at`` with microsecond precision.
+
+    This is the one write path that hands Postgres a datetime that never round-tripped
+    through Mongo: the same in-memory dicts go to ``bulk_insert_otu_rows`` and to
+    ``mongo.otus.insert_many``. Mongo floors a datetime to the millisecond, so without
+    a matching truncation Postgres would hold a finer instant than Mongo does and the
+    store parity check would report every imported OTU as drifted.
+
+    ``static_time`` cannot catch this: its ``created_at`` has no microseconds to lose.
+    """
+    user = await fake.users.create()
+    ref_id = "ref_created_at_test"
+
+    created_at = datetime(2015, 10, 6, 20, 0, 0, 123456)
+
+    await seed_reference(pg, ref_id, user.id, created_at)
+
+    mocker.patch(
+        "virtool.references.alot.random_alphanumeric",
+        side_effect=["caotu001", "caiso001", "caseq001"],
+    )
+
+    await populate_insert_only_reference(
+        created_at,
+        HistoryMethod.remote,
+        mongo,
+        pg,
+        build_source_otus([1]),
+        ref_id,
+        user.id,
+    )
+
+    document = await mongo.otus.find_one({"_id": "caotu001"})
+
+    assert document["created_at"] == datetime(2015, 10, 6, 20, 0, 0, 123000)
+
+    async with AsyncSession(pg) as pg_session:
+        row = await pg_session.scalar(select(SQLOTU).where(SQLOTU.id == "caotu001"))
+
+    assert row.data == loads(dump_string(document))
 
 
 async def test_populate_insert_only_reference_chunks_inserts(

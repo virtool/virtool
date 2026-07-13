@@ -1,6 +1,7 @@
 """Work with OTUs in the database."""
 
 from collections import Counter
+from datetime import datetime
 from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
@@ -10,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.history.db
 import virtool.otus.utils
+from virtool.api.custom_json import isoformat_to_datetime
 from virtool.api.utils import compose_regex_query, paginate
 from virtool.data.topg import (
     compose_legacy_id_mongo_match,
@@ -253,15 +255,75 @@ async def update_otu_verification(
     return issues
 
 
+def _encode_otu_data(document: Document) -> Document:
+    """Render a Mongo OTU ``document`` as the ``data`` JSONB column must store it.
+
+    Only OTUs created by a reference import or clone carry a ``created_at``, and only
+    the bulk insert path writes one that never round-tripped through Mongo. BSON holds
+    a datetime as int64 milliseconds and drops the microseconds, while the engine's
+    JSON serializer would write every one of them. Flooring to the millisecond -- the
+    same truncation pymongo applies -- means the stored ISO string is exactly the
+    instant Mongo holds, so ``data`` stays a faithful lift of the document.
+
+    ``created_at`` is rewritten on a copy, never in place, because the caller keeps
+    using the document it passed: the bulk insert path hands that very dict to
+    ``mongo.otus.insert_many`` afterwards, and the OTU data layer reuses it for history
+    diffs and returns it. A document with no ``created_at`` to rewrite -- every OTU
+    created through the API -- is returned as-is.
+    """
+    created_at = document.get("created_at")
+
+    if not isinstance(created_at, datetime):
+        return document
+
+    return {
+        **document,
+        "created_at": created_at.replace(
+            microsecond=created_at.microsecond // 1000 * 1000,
+        ),
+    }
+
+
+def otu_document_from_row(row: SQLOTU) -> Document:
+    """Recover the Mongo OTU document a ``legacy_otus`` row was written from.
+
+    The inverse of :func:`_encode_otu_data`. A JSONB column cannot hold a datetime, so
+    ``created_at`` comes back out as the ISO string it was stored as and is parsed back
+    to the naive datetime the rest of the codebase expects. OTUs created through the API
+    carry no ``created_at`` at all, so its absence is normal rather than an error.
+    """
+    document = row.data
+
+    created_at = document.get("created_at")
+
+    if created_at is None:
+        return document
+
+    return {**document, "created_at": isoformat_to_datetime(created_at)}
+
+
+def sequence_document_from_row(row: SQLSequence) -> Document:
+    """Recover the Mongo sequence document a ``legacy_sequences`` row was written from.
+
+    A passthrough. Sequence documents hold nothing JSON cannot express -- no datetimes
+    in particular -- so the column returns what was put in it. It exists so the read
+    path has one obvious entry point per collection, matching
+    :func:`otu_document_from_row`.
+    """
+    return row.data
+
+
 def otu_row_values(document: Document, reference_id: int) -> dict[str, Any]:
     """Map a Mongo OTU ``document`` to ``legacy_otus`` column values.
 
-    The whole document is stored verbatim in ``data``; the remaining columns are
-    promoted from it so they can be queried, filtered and sorted directly.
+    The whole document is stored verbatim in ``data``, save for the millisecond
+    truncation :func:`_encode_otu_data` applies to ``created_at`` so the column can
+    hold it. The remaining columns are promoted from the document so they can be
+    queried, filtered and sorted directly.
     """
     return {
         "id": document["_id"],
-        "data": document,
+        "data": _encode_otu_data(document),
         "name": document["name"],
         "abbreviation": document.get("abbreviation") or "",
         "reference_id": reference_id,
