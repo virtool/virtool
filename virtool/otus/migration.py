@@ -596,10 +596,14 @@ async def backfill_sequence_positions(ctx: MigrationContext) -> None:
     from Mongo repairs that, and makes the revision idempotent: a second run reads
     the same order and writes the same numbers.
 
-    Each OTU is locked with :func:`virtool.otus.db.lock_legacy_otu` while it is
-    renumbered, which is the same lock every dual-write path takes, so a concurrent
-    edit cannot append a sequence half-way through. The lock is released by the
-    commit at the end of each OTU, bounding both the transaction and memory.
+    Each OTU is locked with :func:`virtool.otus.db.lock_legacy_otu` *before* its
+    sequences are read from Mongo, which is the same lock every dual-write path takes.
+    Taking it first is what makes the renumber safe: a ``create_sequence`` landing
+    between the read and the write would append a sequence this run cannot see, and
+    that sequence would compute its own position as ``MAX + 1`` over an OTU whose rows
+    are still unpositioned -- taking position zero, which this run then also assigns
+    to the OTU's true first sequence. The lock is released by the commit at the end of
+    each OTU, bounding both the transaction and memory.
     """
     otu_ids = [
         document["_id"]
@@ -612,36 +616,37 @@ async def backfill_sequence_positions(ctx: MigrationContext) -> None:
         otu_ids_present = {row[0] for row in await session.execute(select(SQLOTU.id))}
 
         for otu_id in otu_ids:
+            await lock_legacy_otu(session, otu_id)
+
             documents = [
                 document
                 async for document in ctx.mongo.sequences.find({"otu_id": otu_id})
             ]
 
-            if not documents:
-                continue
+            if documents:
+                if otu_id not in otu_ids_present and not await _otu_exists(
+                    session,
+                    otu_id,
+                ):
+                    msg = (
+                        f"otu {otu_id!r} has sequences in mongo but no row in postgres; "
+                        f"run the otu and sequence backfill first"
+                    )
+                    raise ValueError(msg)
 
-            if otu_id not in otu_ids_present and not await _otu_exists(session, otu_id):
-                msg = (
-                    f"otu {otu_id!r} has sequences in mongo but no row in postgres; "
-                    f"run the otu and sequence backfill first"
-                )
-                raise ValueError(msg)
+                for position, document in enumerate(documents):
+                    await session.execute(
+                        insert(SQLSequence)
+                        .values(**sequence_row_values(document), position=position)
+                        .on_conflict_do_update(
+                            index_elements=["id"],
+                            set_={"position": position},
+                        ),
+                    )
 
-            await lock_legacy_otu(session, otu_id)
-
-            for position, document in enumerate(documents):
-                await session.execute(
-                    insert(SQLSequence)
-                    .values(**sequence_row_values(document), position=position)
-                    .on_conflict_do_update(
-                        index_elements=["id"],
-                        set_={"position": position},
-                    ),
-                )
+                positioned_count += len(documents)
 
             await session.commit()
-
-            positioned_count += len(documents)
 
     logger.info(
         "sequence position backfill complete",

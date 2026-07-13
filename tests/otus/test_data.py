@@ -798,3 +798,63 @@ class TestSequencePosition:
         assert [row.id for row in rows] == sequence_ids
         assert [row.id for row in rows] == await _get_mongo_sequence_ids(mongo, otu_id)
         assert [row.segment for row in rows] == ["RNA_0", None, None]
+
+    async def test_isolates_share_one_position_sequence(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+    ):
+        """``position`` numbers an OTU's sequences, not each isolate's separately.
+
+        ``merge_otu`` filters one OTU-wide sequence list into each isolate, so what a
+        diff indexes into is the OTU's order narrowed to an isolate. A per-isolate
+        counter would collide across isolates and lose that.
+        """
+        otu_id, first_isolate_id, user_id = await self._make_isolate(data_layer, fake)
+
+        second_isolate = await data_layer.otus.add_isolate(
+            otu_id,
+            "isolate",
+            "B",
+            user_id,
+        )
+
+        interleaved = [
+            (
+                await data_layer.otus.create_sequence(
+                    otu_id,
+                    isolate_id,
+                    f"NC_00001{index}",
+                    f"Segment {index}",
+                    "ATGCGTACGT",
+                    user_id,
+                    "host",
+                    f"RNA_{index}",
+                )
+            ).id
+            for index, isolate_id in enumerate(
+                [
+                    first_isolate_id,
+                    second_isolate.id,
+                    first_isolate_id,
+                    second_isolate.id,
+                ],
+            )
+        ]
+
+        rows = await _get_sequence_rows(pg, otu_id)
+
+        assert [row.position for row in rows] == [0, 1, 2, 3]
+        assert [row.id for row in rows] == interleaved
+        assert [row.id for row in rows] == await _get_mongo_sequence_ids(mongo, otu_id)
+
+        assert [row.id for row in rows if row.isolate_id == first_isolate_id] == [
+            interleaved[0],
+            interleaved[2],
+        ]
+        assert [row.id for row in rows if row.isolate_id == second_isolate.id] == [
+            interleaved[1],
+            interleaved[3],
+        ]
