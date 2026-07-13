@@ -15,7 +15,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
-from tests.fixtures.references import seed_reference
+from tests.fixtures.references import (
+    add_reference_user,
+    create_reference,
+    seed_reference,
+)
 from tests.fixtures.response import RespIs
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
@@ -25,6 +29,7 @@ from virtool.indexes.db import INDEX_FILE_NAMES
 from virtool.indexes.files import create_index_file
 from virtool.indexes.sql import SQLIndexFile
 from virtool.indexes.utils import check_index_file_type, compose_index_file_key
+from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app
 from virtool.storage.protocol import StorageBackend
@@ -410,35 +415,33 @@ async def test_download_otus_json(
 
 
 class TestCreate:
-    async def test(
+    async def test_ok(
         self,
-        check_ref_right,
-        data_layer: DataLayer,
-        fake: DataFaker,
         mocker: MockerFixture,
         mongo: Mongo,
         pg: AsyncEngine,
-        resp_is: RespIs,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
         static_time: StaticTime,
     ):
+        """Test that the reference owner, who holds the ``build`` right, can build an
+        index.
+        """
         client = await spawn_client(
             authenticated=True,
             base_url="https://virtool.example.com",
+            permissions=[Permission.create_ref],
         )
 
-        user = await fake.users.create()
-
-        reference = await fake.references.create(user=user)
+        reference = await create_reference(client, name="Foo")
 
         # Insert unbuilt changes to prevent initial check failure.
         await mongo.history.insert_one(
             {
                 "_id": "history_1",
                 "index": {"id": "unbuilt", "version": "unbuilt"},
-                "reference": {"id": reference.id},
-                "user": {"id": user.id},
+                "reference": {"id": reference["id"]},
+                "user": {"id": client.user.id},
             },
         )
 
@@ -449,11 +452,11 @@ class TestCreate:
                     created_at=static_time.datetime,
                     description="Description",
                     method_name="create",
-                    user_id=user.id,
+                    user_id=client.user.id,
                     otu="otu_1",
                     otu_name="Tobacco mosaic virus",
                     otu_version="0",
-                    reference_id=reference.id,
+                    reference_id=reference["id"],
                     index=None,
                     index_version=None,
                 ),
@@ -465,11 +468,7 @@ class TestCreate:
             new=make_mocked_coro({"foo": 1, "bar": 2}),
         )
 
-        resp = await client.post(f"/references/v1/{reference.id}/indexes", {})
-
-        if not check_ref_right:
-            await resp_is.insufficient_rights(resp)
-            return
+        resp = await client.post(f"/references/v1/{reference['id']}/indexes", {})
 
         assert resp.status == HTTPStatus.CREATED
         assert await resp.json() == snapshot(name="json")
@@ -479,51 +478,96 @@ class TestCreate:
 
         assert index == snapshot(name="index")
 
-        m_create_manifest.assert_called_with(ANY, ANY, reference.id)
+        m_create_manifest.assert_called_with(ANY, ANY, reference["id"])
 
-    @pytest.mark.parametrize(
-        "error",
-        [None, "400_unbuilt", "400_unverified", "409_running"],
-    )
-    async def test_checks(
+    async def test_insufficient_rights(
         self,
-        error,
-        fake: DataFaker,
-        resp_is,
         mongo: Mongo,
-        pg: AsyncEngine,
+        resp_is: RespIs,
         spawn_client: ClientSpawner,
-        check_ref_right,
     ):
+        """Test that a reference member without the ``build`` right cannot build an
+        index.
+        """
+        owner = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_ref],
+        )
+
+        reference = await create_reference(owner, name="Foo")
+
         client = await spawn_client(authenticated=True)
 
-        user = await fake.users.create()
+        await add_reference_user(owner, reference["id"], client.user.id)
 
-        await seed_reference(mongo, pg, "foo", user.id, name="Foo")
+        resp = await client.post(f"/references/v1/{reference['id']}/indexes", {})
 
-        if error == "409_running":
-            await mongo.indexes.insert_one({"ready": False, "reference": {"id": "foo"}})
+        await resp_is.insufficient_rights(resp)
 
-        if error == "400_unverified":
-            await mongo.otus.insert_one({"verified": False, "reference": {"id": "foo"}})
+        assert await mongo.indexes.find_one() is None
 
-        resp = await client.post("/references/v1/foo/indexes", {})
+    async def test_unbuilt(
+        self,
+        resp_is: RespIs,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that a build with no unbuilt changes results in a ``400`` response."""
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_ref],
+        )
 
-        if not check_ref_right:
-            await resp_is.insufficient_rights(resp)
-            return
+        reference = await create_reference(client, name="Foo")
 
-        if error == "400_unverified":
-            await resp_is.bad_request(resp, "There are unverified OTUs")
-            return
+        resp = await client.post(f"/references/v1/{reference['id']}/indexes", {})
 
-        if error == "400_unbuilt":
-            await resp_is.bad_request(resp, "There are no unbuilt changes")
-            return
+        await resp_is.bad_request(resp, "There are no unbuilt changes")
 
-        if error == "409_running":
-            await resp_is.conflict(resp, "Index build already in progress")
-            return
+    async def test_unverified(
+        self,
+        mongo: Mongo,
+        resp_is: RespIs,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that a build for a reference with unverified OTUs results in a ``400``
+        response.
+        """
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_ref],
+        )
+
+        reference = await create_reference(client, name="Foo")
+
+        await mongo.otus.insert_one(
+            {"verified": False, "reference": {"id": reference["id"]}},
+        )
+
+        resp = await client.post(f"/references/v1/{reference['id']}/indexes", {})
+
+        await resp_is.bad_request(resp, "There are unverified OTUs")
+
+    async def test_build_in_progress(
+        self,
+        mongo: Mongo,
+        resp_is: RespIs,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that a build that is already running results in a ``409`` response."""
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_ref],
+        )
+
+        reference = await create_reference(client, name="Foo")
+
+        await mongo.indexes.insert_one(
+            {"ready": False, "reference": {"id": reference["id"]}},
+        )
+
+        resp = await client.post(f"/references/v1/{reference['id']}/indexes", {})
+
+        await resp_is.conflict(resp, "Index build already in progress")
 
 
 @pytest.mark.parametrize("error", [None, "404"])

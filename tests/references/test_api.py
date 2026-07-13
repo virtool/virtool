@@ -12,6 +12,7 @@ from syrupy.matchers import path_type
 
 import virtool.utils
 from tests.fixtures.client import ClientSpawner, VirtoolTestClient
+from tests.fixtures.references import add_reference_user, create_reference
 from tests.fixtures.response import RespIs
 from virtool.data.layer import DataLayer
 from virtool.data.topg import both_transactions
@@ -551,21 +552,6 @@ class TestEdit:
         await resp_is.not_found(resp)
 
 
-async def _create_reference(
-    client: VirtoolTestClient, name: str = "Owned Reference"
-) -> dict:
-    """Create a blank reference through the API and return the response body.
-
-    The creating user becomes the reference owner with full rights, so it can
-    subsequently archive and unarchive the reference.
-    """
-    resp = await client.post("/references/v1", {"name": name})
-
-    assert resp.status == HTTPStatus.CREATED
-
-    return await resp.json()
-
-
 class TestArchive:
     async def test_ok(
         self,
@@ -577,7 +563,7 @@ class TestArchive:
             authenticated=True,
             permissions=[Permission.create_ref],
         )
-        reference = await _create_reference(owner)
+        reference = await create_reference(owner)
 
         resp = await owner.post(f"/references/v1/{reference['id']}/archive", {})
 
@@ -592,7 +578,7 @@ class TestArchive:
             authenticated=True,
             permissions=[Permission.create_ref],
         )
-        reference = await _create_reference(owner)
+        reference = await create_reference(owner)
 
         await owner.post(f"/references/v1/{reference['id']}/archive", {})
         resp = await owner.post(f"/references/v1/{reference['id']}/archive", {})
@@ -611,7 +597,7 @@ class TestArchive:
             authenticated=True,
             permissions=[Permission.create_ref],
         )
-        reference = await _create_reference(owner)
+        reference = await create_reference(owner)
 
         group = await fake.groups.create()
         member = await spawn_client(authenticated=True)
@@ -636,7 +622,7 @@ class TestArchive:
             authenticated=True,
             permissions=[Permission.create_ref],
         )
-        reference = await _create_reference(owner)
+        reference = await create_reference(owner)
 
         administrator = await spawn_client(authenticated=True, administrator=True)
 
@@ -657,7 +643,7 @@ class TestArchive:
             authenticated=True,
             permissions=[Permission.create_ref],
         )
-        reference = await _create_reference(owner)
+        reference = await create_reference(owner)
 
         other = await spawn_client(authenticated=True)
 
@@ -688,7 +674,7 @@ class TestUnarchive:
             authenticated=True,
             permissions=[Permission.create_ref],
         )
-        reference = await _create_reference(owner)
+        reference = await create_reference(owner)
         await owner.post(f"/references/v1/{reference['id']}/archive", {})
 
         resp = await owner.post(f"/references/v1/{reference['id']}/unarchive", {})
@@ -704,7 +690,7 @@ class TestUnarchive:
             authenticated=True,
             permissions=[Permission.create_ref],
         )
-        reference = await _create_reference(owner)
+        reference = await create_reference(owner)
 
         resp = await owner.post(f"/references/v1/{reference['id']}/unarchive", {})
 
@@ -723,7 +709,7 @@ class TestUnarchive:
             authenticated=True,
             permissions=[Permission.create_ref],
         )
-        reference = await _create_reference(owner)
+        reference = await create_reference(owner)
         await owner.post(f"/references/v1/{reference['id']}/archive", {})
 
         other = await spawn_client(authenticated=True)
@@ -904,88 +890,93 @@ class TestCreateOTU:
             await resp_is.bad_request(resp, message)
 
 
-async def test_create_index(
-    check_ref_right,
-    fake: DataFaker,
-    mocker,
-    resp_is,
-    mongo: Mongo,
-    pg: AsyncEngine,
-    snapshot: SnapshotAssertion,
-    spawn_client: ClientSpawner,
-    static_time,
-):
-    """Test that a valid request results in the creation of a otu document and a ``201`` response."""
-    client = await spawn_client(
-        authenticated=True,
-        base_url="https://virtool.example.com",
-    )
+class TestCreateIndex:
+    async def test_ok(
+        self,
+        mocker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        snapshot: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+        static_time,
+    ):
+        """Test that the reference owner, who holds the ``build`` right, can build an
+        index.
+        """
+        client = await spawn_client(
+            authenticated=True,
+            base_url="https://virtool.example.com",
+            permissions=[Permission.create_ref],
+        )
 
-    user = await fake.users.create()
+        reference = await create_reference(client, name="Foo")
 
-    await asyncio.gather(
-        mongo.references.insert_one(
-            {"_id": "foo", "name": "Foo", "data_type": "genome"},
-        ),
         # Insert unbuilt changes to prevent initial check failure.
-        mongo.history.insert_one(
+        await mongo.history.insert_one(
             {
                 "_id": "history_1",
                 "index": {"id": "unbuilt", "version": "unbuilt"},
-                "reference": {"id": "foo"},
-                "user": {"id": user.id},
+                "reference": {"id": reference["id"]},
+                "user": {"id": client.user.id},
             },
-        ),
-    )
-
-    async with AsyncSession(pg) as session:
-        reference = SQLReference(
-            legacy_id="foo",
-            name="Foo",
-            description="",
-            created_at=static_time.datetime,
-            source_types=[],
-            user_id=user.id,
         )
-        session.add(reference)
-        await session.flush()
 
-        session.add(
-            SQLLegacyHistory(
-                legacy_id="history_1",
-                created_at=static_time.datetime,
-                description="Description",
-                method_name="create",
-                user_id=user.id,
-                otu="otu_1",
-                otu_name="Tobacco mosaic virus",
-                otu_version="0",
-                reference_id=reference.id,
-                index=None,
-                index_version=None,
-            ),
+        async with AsyncSession(pg) as session:
+            session.add(
+                SQLLegacyHistory(
+                    legacy_id="history_1",
+                    created_at=static_time.datetime,
+                    description="Description",
+                    method_name="create",
+                    user_id=client.user.id,
+                    otu="otu_1",
+                    otu_name="Tobacco mosaic virus",
+                    otu_version="0",
+                    reference_id=reference["id"],
+                    index=None,
+                    index_version=None,
+                ),
+            )
+            await session.commit()
+
+        m_create_manifest = mocker.patch(
+            "virtool.references.db.get_manifest",
+            new=make_mocked_coro({"foo": 2, "bar": 5}),
         )
-        await session.commit()
 
-    m_create_manifest = mocker.patch(
-        "virtool.references.db.get_manifest",
-        new=make_mocked_coro({"foo": 2, "bar": 5}),
-    )
+        resp = await client.post(f"/references/v1/{reference['id']}/indexes", {})
 
-    # Pass ref exists check.
-    mocker.patch("virtool.mongo.utils.id_exists", make_mocked_coro(False))
+        assert resp.status == 201
+        assert await resp.json() == snapshot
+        assert await mongo.indexes.find_one() == snapshot
 
-    resp = await client.post("/references/v1/foo/indexes", {})
+        m_create_manifest.assert_called_with(ANY, ANY, reference["id"])
 
-    if not check_ref_right:
+    async def test_insufficient_rights(
+        self,
+        mongo: Mongo,
+        resp_is,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that a reference member without the ``build`` right cannot build an
+        index.
+        """
+        owner = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_ref],
+        )
+
+        reference = await create_reference(owner, name="Foo")
+
+        client = await spawn_client(authenticated=True)
+
+        await add_reference_user(owner, reference["id"], client.user.id)
+
+        resp = await client.post(f"/references/v1/{reference['id']}/indexes", {})
+
         await resp_is.insufficient_rights(resp)
-        return
 
-    assert resp.status == 201
-    assert await resp.json() == snapshot
-    assert await mongo.indexes.find_one() == snapshot
-
-    m_create_manifest.assert_called_with(ANY, ANY, "foo")
+        assert await mongo.indexes.find_one() is None
 
 
 @pytest.mark.parametrize("error", [None, "400_dne", "400_exists", "404"])
@@ -1601,7 +1592,7 @@ class TestArchivedReferenceRejectsWrites:
             permissions=[Permission.create_ref],
         )
 
-        reference = await _create_reference(client)
+        reference = await create_reference(client)
 
         resp = await client.post(f"/references/v1/{reference['id']}/archive", {})
 
@@ -1656,7 +1647,7 @@ async def test_archived_reference_allows_user_rights_update(
         permissions=[Permission.create_ref],
     )
 
-    reference = await _create_reference(client)
+    reference = await create_reference(client)
 
     await client.post(f"/references/v1/{reference['id']}/archive", {})
 
