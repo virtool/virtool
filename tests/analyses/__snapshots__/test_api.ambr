@@ -72,7 +72,7 @@
         'handle': 'myersmitchell',
         'id': 2,
       }),
-      'workflow': 'nuvs',
+      'workflow': 'pathoscope',
     }),
     'ready': True,
     'reference': dict({
