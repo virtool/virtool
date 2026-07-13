@@ -729,5 +729,12 @@
       'name': 'copy otus and sequences to postgres',
       'revision': 'gkdk4xtpkwi2',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 105,
+      'name': 'compare otu and sequence stores',
+      'revision': 'z5qtj25mylrj',
+    }),
   ])
 # ---
