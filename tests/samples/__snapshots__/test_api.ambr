@@ -4415,7 +4415,7 @@
         'reference': dict({
           'data_type': 'genome',
           'id': 1,
-          'name': 'Foo',
+          'name': 'Reference',
         }),
         'sample': dict({
           'id': 1,
@@ -4445,7 +4445,7 @@
         'reference': dict({
           'data_type': 'genome',
           'id': 2,
-          'name': 'Baz',
+          'name': 'Reference',
         }),
         'sample': dict({
           'id': 1,
@@ -4485,7 +4485,7 @@
         'reference': dict({
           'data_type': 'genome',
           'id': 2,
-          'name': 'Baz',
+          'name': 'Reference',
         }),
         'sample': dict({
           'id': 1,

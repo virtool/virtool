@@ -4,7 +4,6 @@ from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r403, r404
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 import virtool.otus.db
-import virtool.references.db
 from virtool.api.custom_json import json_response
 from virtool.api.errors import (
     APIBadRequest,
@@ -15,6 +14,7 @@ from virtool.api.errors import (
 from virtool.api.routes import Routes
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
+from virtool.models.roles import AdministratorRole
 from virtool.mongo.utils import get_mongo_from_req, get_one_field
 from virtool.otus.db import SEQUENCE_PROJECTION
 from virtool.otus.models import OTU, OTUIsolate, OTUSequence, Sequence
@@ -91,10 +91,14 @@ class OTUView(PydanticView):
 
         ref_id = document["reference"]["id"]
 
-        if not await virtool.references.db.check_right(
-            self.request,
+        client = self.request["client"]
+
+        if not await get_data_from_req(self.request).references.check_right(
             ref_id,
             "modify_otu",
+            user_id=client.user_id,
+            group_ids=client.groups,
+            administrator=client.administrator_role == AdministratorRole.FULL,
         ):
             raise APIInsufficientRights()
 
@@ -139,10 +143,14 @@ class OTUView(PydanticView):
         if document is None:
             raise APINotFound()
 
-        if not await virtool.references.db.check_right(
-            self.request,
+        client = self.request["client"]
+
+        if not await get_data_from_req(self.request).references.check_right(
             document["reference"]["id"],
             "modify_otu",
+            user_id=client.user_id,
+            group_ids=client.groups,
+            administrator=client.administrator_role == AdministratorRole.FULL,
         ):
             raise APIInsufficientRights()
 
@@ -190,10 +198,14 @@ class IsolatesView(PydanticView):
         if not reference:
             raise APINotFound()
 
-        if not await virtool.references.db.check_right(
-            self.request,
+        client = self.request["client"]
+
+        if not await get_data_from_req(self.request).references.check_right(
             reference["id"],
             "modify_otu",
+            user_id=client.user_id,
+            group_ids=client.groups,
+            administrator=client.administrator_role == AdministratorRole.FULL,
         ):
             raise APIInsufficientRights()
 
@@ -293,10 +305,14 @@ class IsolateView(PydanticView):
         if not reference:
             raise APINotFound()
 
-        if not await virtool.references.db.check_right(
-            self.request,
+        client = self.request["client"]
+
+        if not await get_data_from_req(self.request).references.check_right(
             reference["id"],
             "modify_otu",
+            user_id=client.user_id,
+            group_ids=client.groups,
+            administrator=client.administrator_role == AdministratorRole.FULL,
         ):
             raise APIInsufficientRights()
 
@@ -332,10 +348,14 @@ class IsolateView(PydanticView):
         if not reference:
             raise APINotFound()
 
-        if not await virtool.references.db.check_right(
-            self.request,
+        client = self.request["client"]
+
+        if not await get_data_from_req(self.request).references.check_right(
             reference["id"],
             "modify_otu",
+            user_id=client.user_id,
+            group_ids=client.groups,
+            administrator=client.administrator_role == AdministratorRole.FULL,
         ):
             raise APIInsufficientRights()
 
@@ -403,10 +423,14 @@ class SequencesView(PydanticView):
 
         ref_id = document["reference"]["id"]
 
-        if not await virtool.references.db.check_right(
-            self.request,
+        client = self.request["client"]
+
+        if not await get_data_from_req(self.request).references.check_right(
             ref_id,
             "modify_otu",
+            user_id=client.user_id,
+            group_ids=client.groups,
+            administrator=client.administrator_role == AdministratorRole.FULL,
         ):
             raise APIInsufficientRights()
 
@@ -506,10 +530,14 @@ class SequenceView(PydanticView):
         ):
             raise APINotFound()
 
-        if not await virtool.references.db.check_right(
-            self.request,
+        client = self.request["client"]
+
+        if not await get_data_from_req(self.request).references.check_right(
             document["reference"]["id"],
             "modify_otu",
+            user_id=client.user_id,
+            group_ids=client.groups,
+            administrator=client.administrator_role == AdministratorRole.FULL,
         ):
             raise APIInsufficientRights()
 
@@ -549,10 +577,14 @@ class SequenceView(PydanticView):
         if document is None:
             raise APINotFound()
 
-        if not await virtool.references.db.check_right(
-            self.request,
+        client = self.request["client"]
+
+        if not await get_data_from_req(self.request).references.check_right(
             document["reference"]["id"],
             "modify_otu",
+            user_id=client.user_id,
+            group_ids=client.groups,
+            administrator=client.administrator_role == AdministratorRole.FULL,
         ):
             raise APIInsufficientRights()
 
@@ -600,10 +632,14 @@ async def set_as_default(req):
     if not document:
         raise APINotFound()
 
-    if not await virtool.references.db.check_right(
-        req,
+    client = req["client"]
+
+    if not await get_data_from_req(req).references.check_right(
         document["reference"]["id"],
         "modify_otu",
+        user_id=client.user_id,
+        group_ids=client.groups,
+        administrator=client.administrator_role == AdministratorRole.FULL,
     ):
         raise APIInsufficientRights()
 

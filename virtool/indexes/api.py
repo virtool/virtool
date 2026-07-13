@@ -23,7 +23,7 @@ from virtool.indexes.oas import (
     ReadyIndexesResponse,
 )
 from virtool.indexes.utils import check_index_file_type
-from virtool.references.db import check_right
+from virtool.models.roles import AdministratorRole
 
 routes = Routes()
 
@@ -133,7 +133,15 @@ class IndexFileView(PydanticView):
         except ResourceNotFoundError:
             raise APINotFound()
 
-        if not await check_right(self.request, reference.id, "read"):
+        client = self.request["client"]
+
+        if not await get_data_from_req(self.request).references.check_right(
+            reference.id,
+            "read",
+            user_id=client.user_id,
+            group_ids=client.groups,
+            administrator=client.administrator_role == AdministratorRole.FULL,
+        ):
             raise APIInsufficientRights()
 
         try:

@@ -5,7 +5,6 @@ import datetime
 from typing import TYPE_CHECKING
 
 import pymongo
-from aiohttp.web import Request
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
@@ -24,7 +23,6 @@ from virtool.groups.pg import SQLGroup
 from virtool.history.db import bulk_insert_history
 from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.models.enums import HistoryMethod
-from virtool.models.roles import AdministratorRole
 from virtool.otus.db import bulk_insert_otu_rows, bulk_insert_sequence_rows
 from virtool.otus.sql import SQLOTU
 from virtool.references.alot import prepare_otu_insertion
@@ -40,7 +38,6 @@ from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
 if TYPE_CHECKING:
-    from virtool.api.client import UserClient
     from virtool.mongo.core import Mongo
 
 
@@ -309,53 +306,6 @@ async def get_reference_users(
         }
         for row in rows
     ]
-
-
-async def check_right(req: Request, ref_id: int | str, right: str) -> bool:
-    client: UserClient = req["client"]
-
-    if client.administrator_role == AdministratorRole.FULL:
-        return True
-
-    async with AsyncSession(req.app["pg"]) as session:
-        reference_pk = await session.scalar(
-            select(SQLReference.id).where(
-                compose_legacy_id_single_expression(SQLReference, ref_id),
-            ),
-        )
-
-        if reference_pk is None:
-            raise ResourceNotFoundError
-
-        if client.user_id is not None:
-            user_query = select(SQLReferenceUser.reference_id).where(
-                SQLReferenceUser.reference_id == reference_pk,
-                SQLReferenceUser.user_id == client.user_id,
-            )
-
-            if right != "read":
-                user_query = user_query.where(
-                    getattr(SQLReferenceUser, right).is_(True),
-                )
-
-            if await session.scalar(user_query.limit(1)) is not None:
-                return True
-
-        if client.groups:
-            group_query = select(SQLReferenceGroup.reference_id).where(
-                SQLReferenceGroup.reference_id == reference_pk,
-                SQLReferenceGroup.group_id.in_(client.groups),
-            )
-
-            if right != "read":
-                group_query = group_query.where(
-                    getattr(SQLReferenceGroup, right).is_(True),
-                )
-
-            if await session.scalar(group_query.limit(1)) is not None:
-                return True
-
-    return False
 
 
 async def check_source_type(
