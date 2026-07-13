@@ -11,6 +11,7 @@ from virtool.workflow.data.indexes import (
     WFIndex,
     WFNewIndex,
     _read_json,
+    _shape_reference_json_metadata,
 )
 from virtool.workflow.errors import JobsAPIConflictError, JobsAPINotFoundError
 from virtool.workflow.pytest_plugin.data import WorkflowData
@@ -161,6 +162,38 @@ def _set_reference_json_index_data(workflow_data: WorkflowData) -> None:
             type="json",
         )
     ]
+
+
+def test_shape_reference_json_metadata_preserves_required_values():
+    data = {
+        "_id": "reference",
+        "created_at": "2026-01-15T19:55:34.203324Z",
+        "data_type": "genome",
+        "name": "Plant Viruses",
+        "organism": "",
+    }
+
+    assert _shape_reference_json_metadata(data) == {
+        "id": "reference",
+        "created_at": "2026-01-15T19:55:34.203324Z",
+        "data_type": "genome",
+        "name": "Plant Viruses",
+        "organism": "",
+    }
+
+
+def test_shape_reference_json_metadata_returns_none_without_id():
+    assert (
+        _shape_reference_json_metadata(
+            {
+                "created_at": "2026-01-15T19:55:34.203324Z",
+                "data_type": "genome",
+                "name": "Plant Viruses",
+                "organism": "virus",
+            }
+        )
+        is None
+    )
 
 
 class TestWFIndex:
@@ -463,7 +496,6 @@ class TestIndex:
 
         index: WFIndex = await scope.instantiate_by_key("index")
         otus = [otu async for otu in index.iter_otus()]
-        reference_metadata = await index.get_reference_metadata()
         otu_refs_by_sequence_ids = await index.get_otu_refs_by_sequence_ids(
             ["7oecw8v8", "8f6riell", "7oecw8v8"],
         )
@@ -485,13 +517,11 @@ class TestIndex:
         assert index.id == workflow_data.analysis.index.id
         assert otus[0]["id"] == "0716c1e1"
         assert otus[0]["version"] == 13
-        assert reference_metadata == {
-            "id": workflow_data.index.reference.id,
-            "created_at": "2022-03-28T19:15:18.479570+00:00",
-            "data_type": "genome",
-            "name": workflow_data.index.reference.name,
-            "organism": "virus",
-        }
+        with pytest.raises(
+            ValueError,
+            match="Reference metadata does not exist in the index",
+        ):
+            await index.get_reference_metadata()
         assert otu_refs_by_sequence_ids == {
             "7oecw8v8": {
                 "id": "b67008d3",

@@ -29,6 +29,7 @@ from virtool.utils import decompress_file
 from virtool.workflow.client import WorkflowAPIClient
 from virtool.workflow.data.index_sqlite import (
     INDEX_SQLITE_FILE_NAME,
+    _get_id,
     connect_index_sqlite,
     create_index_sqlite,
     isolates_table,
@@ -527,9 +528,12 @@ async def _read_json(path: Path) -> dict[str, Any] | list[dict[str, Any]]:
 
 def _shape_reference_json_metadata(
     data: Mapping[str, Any],
-) -> dict[str, Any]:
+) -> dict[str, Any] | None:
+    if "_id" not in data and "id" not in data:
+        return None
+
     return {
-        "id": data["_id"],
+        "id": _get_id(data),
         "created_at": data["created_at"],
         "data_type": data["data_type"],
         "name": data["name"],
