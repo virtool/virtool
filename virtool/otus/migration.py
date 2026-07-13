@@ -17,6 +17,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from structlog import get_logger
 
+from virtool.api.custom_json import dump_string, loads
 from virtool.data.topg import resolve_legacy_id
 from virtool.migration import MigrationContext
 from virtool.otus.db import otu_row_values, sequence_row_values
@@ -273,10 +274,9 @@ async def compare_otu_and_sequence_stores(ctx: MigrationContext) -> None:
       integer id written since references were migrated -- resolves to the same
       integer ``legacy_references`` primary key.
 
-    The verbatim ``data`` JSONB is compared to the Mongo document directly. OTU and
-    sequence documents hold only values that survive a JSON round trip unchanged
-    (no datetimes), and ``data`` retains ``_id``, so no canonicalisation is needed
-    and none is applied: normalising here would only hide real drift.
+    The ``data`` JSONB is compared against the Mongo document rendered through the
+    engine's JSON serializer, because that -- not the document itself -- is what the
+    column holds. See :func:`_as_stored_json`.
 
     The check runs in two passes. The first walks both stores in chunks and
     collects *candidate* ids: present in one store but not the other, or holding a
@@ -529,6 +529,23 @@ async def _verify_sequence(
     return None
 
 
+def _as_stored_json(document: Document) -> Document:
+    """Render a Mongo document as the ``data`` JSONB column stores and returns it.
+
+    ``data`` holds the document verbatim, but a JSONB column can only hold what JSON
+    can express. The engine's serializer writes a ``datetime`` as an ISO string and
+    reading the column back yields that string, never a ``datetime`` again. Legacy
+    OTU documents carry a ``created_at``, so comparing a row against the raw document
+    would report every one of them as drifted.
+
+    Passing the expected document through the very serializer the write path uses
+    compares like with like. It cannot mask real drift: it applies exactly the
+    transformation that the write path already applied to the row being checked, so
+    any difference the write path would have preserved survives it too.
+    """
+    return loads(dump_string(document))
+
+
 def _diff_row(
     row: SQLOTU | SQLSequence,
     expected: dict[str, Any],
@@ -540,7 +557,8 @@ def _diff_row(
     """
     differences: dict[str, dict] = {}
 
-    for column, expected_value in expected.items():
+    for column, value in expected.items():
+        expected_value = _as_stored_json(value) if column == "data" else value
         actual_value = getattr(row, column)
 
         if actual_value == expected_value:
