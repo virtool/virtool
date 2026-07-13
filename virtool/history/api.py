@@ -1,19 +1,13 @@
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r204, r400, r403, r404, r409
+from aiohttp_pydantic.oas.typing import r200, r400, r404
 
 import virtool.api.routes
 from virtool.api.custom_json import json_response
-from virtool.api.errors import (
-    APIConflict,
-    APIInsufficientRights,
-    APINoContent,
-    APINotFound,
-)
+from virtool.api.errors import APINotFound
 from virtool.api.pagination import Page, PerPage
-from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
+from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.history.models import History, HistorySearchResult
-from virtool.models.roles import AdministratorRole
 
 routes = virtool.api.routes.Routes()
 
@@ -55,42 +49,3 @@ class ChangeView(PydanticView):
             raise APINotFound()
 
         return json_response(history)
-
-    async def delete(self, change_id: str, /) -> r204 | r403 | r404 | r409:
-        """Delete a change document.
-
-        Removes the change document with the given ``change_id`` and
-        any subsequent changes.
-
-        Status Codes:
-            204: Successful Operation
-            403: Insufficient Rights
-            404: Not found
-            409: Not unbuilt
-        """
-        try:
-            reference_id = await get_data_from_req(
-                self.request,
-            ).history.get_reference_id(change_id)
-        except ResourceNotFoundError:
-            raise APINotFound()
-
-        client = self.request["client"]
-
-        if not await get_data_from_req(self.request).references.check_right(
-            reference_id,
-            "modify_otu",
-            user_id=client.user_id,
-            group_ids=client.groups,
-            administrator=client.administrator_role == AdministratorRole.FULL,
-        ):
-            raise APIInsufficientRights()
-
-        try:
-            await get_data_from_req(self.request).history.delete(change_id)
-        except ResourceNotFoundError:
-            raise APINotFound()
-        except ResourceConflictError:
-            raise APIConflict("Change is already built")
-
-        raise APINoContent()

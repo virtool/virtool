@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import dictdiffer
-from sqlalchemy import Integer, cast, delete, func, select
+from sqlalchemy import Integer, cast, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -204,53 +204,6 @@ async def bulk_insert_history(
         await pg_session.execute(
             insert(SQLLegacyHistoryDiff).values(
                 diff_values[start : start + _HISTORY_DIFF_CHUNK_SIZE],
-            ),
-        )
-
-
-async def bulk_delete_history(pg: AsyncEngine, change_ids: list[str]) -> None:
-    """Delete ``history_diffs`` and ``legacy_history`` rows for ``change_ids``.
-
-    Used to compensate the Postgres writes when a paired Mongo bulk insert fails.
-    """
-    async with AsyncSession(pg) as session:
-        for start in range(0, len(change_ids), _HISTORY_DIFF_CHUNK_SIZE):
-            chunk = change_ids[start : start + _HISTORY_DIFF_CHUNK_SIZE]
-            await session.execute(
-                delete(SQLLegacyHistoryDiff).where(
-                    SQLLegacyHistoryDiff.change_id.in_(chunk),
-                ),
-            )
-            await session.execute(
-                delete(SQLLegacyHistory).where(SQLLegacyHistory.legacy_id.in_(chunk)),
-            )
-
-        await session.commit()
-
-
-async def delete_history(pg_session: AsyncSession, change_ids: list[str]) -> None:
-    """Delete ``history_diffs`` and ``legacy_history`` rows for ``change_ids``.
-
-    Operates within an existing ``pg_session`` so the deletes commit atomically with
-    the paired Mongo writes in the surrounding transaction context. Unlike
-    :func:`bulk_delete_history`, it does not open or commit its own session.
-    """
-    if not change_ids:
-        return
-
-    for start in range(0, len(change_ids), _HISTORY_DIFF_CHUNK_SIZE):
-        chunk = change_ids[start : start + _HISTORY_DIFF_CHUNK_SIZE]
-        await pg_session.execute(
-            delete(SQLLegacyHistoryDiff).where(
-                SQLLegacyHistoryDiff.change_id.in_(chunk),
-            ),
-        )
-
-    for start in range(0, len(change_ids), _LEGACY_HISTORY_CHUNK_SIZE):
-        chunk = change_ids[start : start + _LEGACY_HISTORY_CHUNK_SIZE]
-        await pg_session.execute(
-            delete(SQLLegacyHistory).where(
-                compose_legacy_id_multi_expression(SQLLegacyHistory, chunk),
             ),
         )
 
@@ -773,15 +726,13 @@ async def patch_to_version(
     :param pg: the application PostgreSQL database object
     :param otu_id: the id of the otu to patch
     :param version: the version to patch to
-    :return: the current joined otu, patched otu, and the ids of reverted changes
+    :return: the current joined otu and the patched otu
 
     """
-    reverted_history_ids = []
-
     current = await virtool.otus.db.join(mongo, otu_id) or {}
 
     if "version" in current and current["version"] == version:
-        return current, deepcopy(current), reverted_history_ids
+        return current, deepcopy(current)
 
     patched = deepcopy(current)
 
@@ -816,7 +767,6 @@ async def patch_to_version(
     diffs = await _resolve_diffs(pg, changes_to_revert)
 
     for change in changes_to_revert:
-        reverted_history_ids.append(change["_id"])
         diff = diffs[change["_id"]]
 
         if change["method_name"] == "remove":
@@ -841,4 +791,4 @@ async def patch_to_version(
     if current == {}:
         current = None
 
-    return current, patched, reverted_history_ids
+    return current, patched

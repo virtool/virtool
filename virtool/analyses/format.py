@@ -89,7 +89,7 @@ async def format_pathoscope_hits(
     otu_version,
     hits: list[dict],
 ):
-    _, patched_otu, _ = await patch_to_version(
+    _, patched_otu = await patch_to_version(
         mongo,
         pg,
         otu_id,
