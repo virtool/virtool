@@ -69,12 +69,12 @@
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
       'id': 1,
       'progress': 100,
-      'state': <JobState.FAILED: 'failed'>,
+      'state': <JobState.SUCCEEDED: 'succeeded'>,
       'user': dict({
         'handle': 'leeashley',
         'id': 1,
       }),
-      'workflow': <Workflow.PATHOSCOPE: 'pathoscope'>,
+      'workflow': <Workflow.NUVS: 'nuvs'>,
     }),
     'manifest': dict({
     }),

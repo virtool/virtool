@@ -3,15 +3,13 @@
   dict({
     'counts': dict({
       'cancelled': dict({
-        'aodp': 0,
         'build_index': 0,
         'create_sample': 0,
         'create_subtraction': 0,
-        'nuvs': 0,
+        'nuvs': 1,
         'pathoscope': 0,
       }),
       'failed': dict({
-        'aodp': 2,
         'build_index': 0,
         'create_sample': 0,
         'create_subtraction': 0,
@@ -19,26 +17,23 @@
         'pathoscope': 0,
       }),
       'pending': dict({
-        'aodp': 0,
-        'build_index': 0,
-        'create_sample': 1,
-        'create_subtraction': 0,
-        'nuvs': 1,
-        'pathoscope': 0,
+        'build_index': 1,
+        'create_sample': 0,
+        'create_subtraction': 2,
+        'nuvs': 0,
+        'pathoscope': 1,
       }),
       'running': dict({
-        'aodp': 1,
         'build_index': 0,
         'create_sample': 0,
-        'create_subtraction': 1,
+        'create_subtraction': 0,
         'nuvs': 1,
         'pathoscope': 1,
       }),
       'succeeded': dict({
-        'aodp': 0,
         'build_index': 0,
         'create_sample': 1,
-        'create_subtraction': 1,
+        'create_subtraction': 2,
         'nuvs': 0,
         'pathoscope': 1,
       }),
@@ -48,8 +43,8 @@
       dict({
         'created_at': str,
         'id': 11,
-        'progress': 0,
-        'state': 'running',
+        'progress': 100,
+        'state': 'succeeded',
         'user': dict({
           'handle': 'modonnell',
           'id': 3,
@@ -60,38 +55,27 @@
         'created_at': str,
         'id': 10,
         'progress': 0,
-        'state': 'running',
+        'state': 'pending',
         'user': dict({
           'handle': 'modonnell',
           'id': 3,
         }),
-        'workflow': 'nuvs',
+        'workflow': 'create_subtraction',
       }),
       dict({
         'created_at': str,
         'id': 9,
-        'progress': 100,
-        'state': 'failed',
+        'progress': 0,
+        'state': 'pending',
         'user': dict({
           'handle': 'modonnell',
           'id': 3,
         }),
-        'workflow': 'aodp',
+        'workflow': 'build_index',
       }),
       dict({
         'created_at': str,
         'id': 8,
-        'progress': 100,
-        'state': 'failed',
-        'user': dict({
-          'handle': 'modonnell',
-          'id': 3,
-        }),
-        'workflow': 'aodp',
-      }),
-      dict({
-        'created_at': str,
-        'id': 7,
         'progress': 100,
         'state': 'succeeded',
         'user': dict({
@@ -99,6 +83,17 @@
           'id': 3,
         }),
         'workflow': 'create_subtraction',
+      }),
+      dict({
+        'created_at': str,
+        'id': 7,
+        'progress': 100,
+        'state': 'cancelled',
+        'user': dict({
+          'handle': 'modonnell',
+          'id': 3,
+        }),
+        'workflow': 'nuvs',
       }),
     ]),
     'page': 1,
@@ -119,638 +114,6 @@
       'type': 'type_error.enum',
     }),
   ])
-# ---
-# name: TestPushStatus.test[None]
-  dict({
-    'args': dict({
-    }),
-    'claim': None,
-    'claimed_at': NoneType,
-    'created_at': str,
-    'id': 'BgVIaJUT',
-    'pinged_at': str,
-    'progress': 0,
-    'state': 'running',
-    'steps': None,
-    'user': dict({
-      'handle': 'myersmitchell',
-      'id': 2,
-    }),
-    'workflow': 'create_subtraction',
-  })
-# ---
-# name: TestPushStatus.test_bad_state
-  dict({
-    'errors': dict({
-      'state': list([
-        'unallowed value bad',
-      ]),
-    }),
-    'id': 'invalid_input',
-    'message': 'Invalid input',
-  })
-# ---
-# name: TestPushStatus.test_error[invalid-invalid-invalid]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'type': list([
-              'must be of string type',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[invalid-invalid-missing]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'type': list([
-              'required field',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[invalid-invalid-valid]
-  tuple(
-    201,
-    dict({
-      'args': dict({
-      }),
-      'claim': None,
-      'claimed_at': NoneType,
-      'created_at': str,
-      'id': 'BgVIaJUT',
-      'pinged_at': str,
-      'progress': 100,
-      'state': 'failed',
-      'steps': None,
-      'user': dict({
-        'handle': 'myersmitchell',
-        'id': 2,
-      }),
-      'workflow': 'create_subtraction',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[invalid-missing-invalid]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'traceback': list([
-              'required field',
-            ]),
-            'type': list([
-              'must be of string type',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[invalid-missing-missing]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'traceback': list([
-              'required field',
-            ]),
-            'type': list([
-              'required field',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[invalid-missing-valid]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'traceback': list([
-              'required field',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[invalid-valid-invalid]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'traceback': list([
-              'must be of list type',
-            ]),
-            'type': list([
-              'must be of string type',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[invalid-valid-missing]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'traceback': list([
-              'must be of list type',
-            ]),
-            'type': list([
-              'required field',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[invalid-valid-valid]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'traceback': list([
-              'must be of list type',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[missing-invalid-invalid]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'details': list([
-              'required field',
-            ]),
-            'type': list([
-              'must be of string type',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[missing-invalid-missing]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'details': list([
-              'required field',
-            ]),
-            'type': list([
-              'required field',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[missing-invalid-valid]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'details': list([
-              'required field',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[missing-missing-invalid]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'details': list([
-              'required field',
-            ]),
-            'traceback': list([
-              'required field',
-            ]),
-            'type': list([
-              'must be of string type',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[missing-missing-missing]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'details': list([
-              'required field',
-            ]),
-            'traceback': list([
-              'required field',
-            ]),
-            'type': list([
-              'required field',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[missing-missing-valid]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'details': list([
-              'required field',
-            ]),
-            'traceback': list([
-              'required field',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[missing-valid-invalid]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'details': list([
-              'required field',
-            ]),
-            'traceback': list([
-              'must be of list type',
-            ]),
-            'type': list([
-              'must be of string type',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[missing-valid-missing]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'details': list([
-              'required field',
-            ]),
-            'traceback': list([
-              'must be of list type',
-            ]),
-            'type': list([
-              'required field',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[missing-valid-valid]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'details': list([
-              'required field',
-            ]),
-            'traceback': list([
-              'must be of list type',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[valid-invalid-invalid]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'details': list([
-              'must be of list type',
-            ]),
-            'type': list([
-              'must be of string type',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[valid-invalid-missing]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'details': list([
-              'must be of list type',
-            ]),
-            'type': list([
-              'required field',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[valid-invalid-valid]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'details': list([
-              'must be of list type',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[valid-missing-invalid]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'details': list([
-              'must be of list type',
-            ]),
-            'traceback': list([
-              'required field',
-            ]),
-            'type': list([
-              'must be of string type',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[valid-missing-missing]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'details': list([
-              'must be of list type',
-            ]),
-            'traceback': list([
-              'required field',
-            ]),
-            'type': list([
-              'required field',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[valid-missing-valid]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'details': list([
-              'must be of list type',
-            ]),
-            'traceback': list([
-              'required field',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[valid-valid-invalid]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'details': list([
-              'must be of list type',
-            ]),
-            'traceback': list([
-              'must be of list type',
-            ]),
-            'type': list([
-              'must be of string type',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[valid-valid-missing]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'details': list([
-              'must be of list type',
-            ]),
-            'traceback': list([
-              'must be of list type',
-            ]),
-            'type': list([
-              'required field',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_error[valid-valid-valid]
-  tuple(
-    422,
-    dict({
-      'errors': dict({
-        'error': list([
-          dict({
-            'details': list([
-              'must be of list type',
-            ]),
-            'traceback': list([
-              'must be of list type',
-            ]),
-          }),
-        ]),
-      }),
-      'id': 'invalid_input',
-      'message': 'Invalid input',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_missing_error
-  tuple(
-    400,
-    dict({
-      'id': 'bad_request',
-      'message': 'Missing error information',
-    }),
-  )
-# ---
-# name: TestPushStatus.test_name_and_description
-  dict({
-    'args': dict({
-    }),
-    'claim': None,
-    'claimed_at': NoneType,
-    'created_at': str,
-    'id': 'BgVIaJUT',
-    'pinged_at': str,
-    'progress': 0,
-    'state': 'running',
-    'steps': None,
-    'user': dict({
-      'handle': 'myersmitchell',
-      'id': 2,
-    }),
-    'workflow': 'create_subtraction',
-  })
 # ---
 # name: test_cancel[None]
   dict({
@@ -775,7 +138,7 @@
       'handle': 'myersmitchell',
       'id': 2,
     }),
-    'workflow': 'nuvs',
+    'workflow': 'pathoscope',
   })
 # ---
 # name: test_get[None]
@@ -801,6 +164,6 @@
       'handle': 'myersmitchell',
       'id': 2,
     }),
-    'workflow': 'nuvs',
+    'workflow': 'pathoscope',
   })
 # ---

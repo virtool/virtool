@@ -39,7 +39,6 @@ class HistoryMethod(str, Enum):
 
 
 class AnalysisWorkflow(str, Enum):
-    aodp = "aodp"
     nuvs = "nuvs"
     pathoscope = "pathoscope"
 
@@ -48,7 +47,6 @@ QuickAnalyzeWorkflow = AnalysisWorkflow
 
 
 class LibraryType(str, Enum):
-    amplicon = "amplicon"
     srna = "srna"
     other = "other"
     normal = "normal"

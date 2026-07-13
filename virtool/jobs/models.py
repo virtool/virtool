@@ -27,7 +27,6 @@ class JobState(Enum):
 
 
 class Workflow(Enum):
-    AODP = "aodp"
     BUILD_INDEX = "build_index"
     CREATE_SAMPLE = "create_sample"
     CREATE_SUBTRACTION = "create_subtraction"
@@ -38,7 +37,6 @@ class Workflow(Enum):
 class WorkflowCounts(BaseModel):
     """Counts per workflow."""
 
-    aodp: int = 0
     build_index: int = 0
     create_sample: int = 0
     create_subtraction: int = 0
