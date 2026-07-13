@@ -8,6 +8,39 @@ from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.sql import SQLIndexFile
 from virtool.mongo.core import Mongo
+from virtool.otus.sql import SQLOTU
+
+
+async def add_index_files(pg: AsyncEngine, index_id: str) -> None:
+    """Add the complete set of files that finalizing ``index_id`` requires.
+
+    Finalization blocks on the bowtie2 and FASTA checks, so an index missing any of
+    these never reaches the code under test.
+    """
+    names = [
+        ("reference.1.bt2", "bowtie2"),
+        ("reference.2.bt2", "bowtie2"),
+        ("reference.3.bt2", "bowtie2"),
+        ("reference.4.bt2", "bowtie2"),
+        ("reference.rev.1.bt2", "bowtie2"),
+        ("reference.rev.2.bt2", "bowtie2"),
+        ("reference.fa.gz", "fasta"),
+    ]
+
+    async with AsyncSession(pg) as session:
+        session.add_all(
+            [
+                SQLIndexFile(
+                    id=id_,
+                    name=name,
+                    index=index_id,
+                    type=type_,
+                    size=1234567,
+                )
+                for id_, (name, type_) in enumerate(names, start=1)
+            ],
+        )
+        await session.commit()
 
 
 async def test_finalize(
@@ -36,67 +69,56 @@ async def test_finalize(
         },
     )
 
-    async with AsyncSession(pg) as session:
-        session.add_all(
-            [
-                SQLIndexFile(
-                    id=1,
-                    name="reference.1.bt2",
-                    index="foo",
-                    type="bowtie2",
-                    size=1234567,
-                ),
-                SQLIndexFile(
-                    id=2,
-                    name="reference.2.bt2",
-                    index="foo",
-                    type="bowtie2",
-                    size=1234567,
-                ),
-                SQLIndexFile(
-                    id=3,
-                    name="reference.3.bt2",
-                    index="foo",
-                    type="bowtie2",
-                    size=1234567,
-                ),
-                SQLIndexFile(
-                    id=4,
-                    name="reference.4.bt2",
-                    index="foo",
-                    type="bowtie2",
-                    size=1234567,
-                ),
-                SQLIndexFile(
-                    id=5,
-                    name="reference.rev.1.bt2",
-                    index="foo",
-                    type="bowtie2",
-                    size=1234567,
-                ),
-                SQLIndexFile(
-                    id=6,
-                    name="reference.rev.2.bt2",
-                    index="foo",
-                    type="bowtie2",
-                    size=1234567,
-                ),
-                SQLIndexFile(
-                    id=7,
-                    name="reference.fa.gz",
-                    index="foo",
-                    type="fasta",
-                    size=1234567,
-                ),
-            ],
-        )
-        await session.commit()
+    await add_index_files(pg, "foo")
 
     # Ensure return value is correct.
     assert await data_layer.index.finalize("foo") == snapshot
 
     # Ensure document in database is correct.
     assert await mongo.indexes.find_one() == snapshot
+
+
+async def test_finalize_stamps_last_indexed_version(
+    data_layer: DataLayer,
+    fake: DataFaker,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    static_time,
+):
+    """Finalizing an index stamps ``last_indexed_version`` in Postgres as well as
+    Mongo, so ``legacy_otus`` does not drift from the OTU document it mirrors.
+    """
+    user = await fake.users.create()
+    job = await fake.jobs.create(user=user)
+
+    reference = await fake.references.create(user=user)
+    otu = await fake.otus.create(reference.id, user)
+
+    await mongo.indexes.insert_one(
+        {
+            "_id": "foo",
+            "reference": {"id": reference.id},
+            "user": {"id": user.id},
+            "version": 2,
+            "created_at": static_time.datetime,
+            "job": {"id": job.id},
+            "has_files": True,
+            "manifest": {},
+        },
+    )
+
+    await add_index_files(pg, "foo")
+
+    await data_layer.index.finalize("foo")
+
+    document = await mongo.otus.find_one({"_id": otu.id})
+
+    assert document["last_indexed_version"] == document["version"]
+
+    async with AsyncSession(pg) as session:
+        row = await session.scalar(select(SQLOTU).where(SQLOTU.id == otu.id))
+
+    assert row.data["last_indexed_version"] == document["version"]
 
 
 async def test_finalize_reference_missing_from_postgres(
