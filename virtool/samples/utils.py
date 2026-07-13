@@ -4,6 +4,7 @@ from aiohttp.web import Response
 from sqlalchemy import Row, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from virtool.analyses.utils import WORKFLOW_NAMES
 from virtool.api.client import AbstractClient
 from virtool.api.errors import APIBadRequest
 from virtool.labels.sql import SQLLabel
@@ -60,53 +61,23 @@ def has_sample_right(
     raise ValueError(f"Invalid sample right: {right}")
 
 
-def define_initial_workflows(library_type: str) -> dict[str, str]:
-    """Return the workflow states for a sample with no analyses.
-
-    Workflows that are incompatible with ``library_type`` are marked
-    ``incompatible``; the rest start as ``none``.
-
-    :param library_type: the sample's library type
-    :return: the initial workflow states
-    """
-    if library_type == "amplicon":
-        return {
-            "aodp": WorkflowState.NONE.value,
-            "nuvs": WorkflowState.INCOMPATIBLE.value,
-            "pathoscope": WorkflowState.INCOMPATIBLE.value,
-        }
-
-    return {
-        "aodp": WorkflowState.INCOMPATIBLE.value,
-        "nuvs": WorkflowState.NONE.value,
-        "pathoscope": WorkflowState.NONE.value,
-    }
-
-
-def encode_workflow_tags(
-    ready_by_workflow: dict[str, bool],
-    library_type: str,
-) -> dict:
+def encode_workflow_tags(ready_by_workflow: dict[str, bool]) -> dict:
     """Encode a sample's workflow tags from its analyses.
 
     This is the single shared encoding used when deriving tags for both list and
     single reads. ``ready_by_workflow`` maps each workflow that has at least one
     analysis to whether any of those analyses is ready; workflows with no analyses
-    are absent.
+    are absent and stay ``none``.
 
     Returns the legacy ``nuvs`` and ``pathoscope`` tags (``True``, ``"ip"`` or
     ``False``) alongside the ``workflows`` state map.
 
     :param ready_by_workflow: whether each workflow has a ready analysis
-    :param library_type: the sample's library type
     :return: the ``nuvs``, ``pathoscope`` and ``workflows`` fields
     """
-    workflows = define_initial_workflows(library_type)
+    workflows = dict.fromkeys(WORKFLOW_NAMES, WorkflowState.NONE.value)
 
     for workflow_name, ready in ready_by_workflow.items():
-        if workflows.get(workflow_name) == WorkflowState.INCOMPATIBLE.value:
-            continue
-
         workflows[workflow_name] = (
             WorkflowState.COMPLETE.value if ready else WorkflowState.PENDING.value
         )

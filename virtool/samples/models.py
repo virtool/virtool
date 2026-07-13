@@ -26,18 +26,14 @@ class WorkflowState(Enum):
     COMPLETE = "complete"
     """The workflow has completed successfully for a sample."""
 
-    INCOMPATIBLE = "incompatible"
-    """The workflow is incompatible with a sample."""
-
     NONE = "none"
-    """The workflow is compatible with the sample, but has not been started."""
+    """The workflow has not been started for a sample."""
 
     PENDING = "pending"
     """The workflow is currently running, but not complete."""
 
 
 class SampleWorkflows(BaseModel):
-    aodp: WorkflowState
     nuvs: WorkflowState
     pathoscope: WorkflowState
 
@@ -79,7 +75,6 @@ class SampleMinimal(SampleNested):
                         "id": "ihvze2u9",
                     },
                     "workflows": {
-                        "aodp": "incompatible",
                         "nuvs": "none",
                         "pathoscope": "none",
                     },
@@ -194,7 +189,6 @@ class Sample(SampleMinimal):
                 "subtractions": [{"id": 21, "name": "Malus domestica"}],
                 "user": {"administrator": True, "handle": "mrott", "id": "ihvze2u9"},
                 "workflows": {
-                    "aodp": "incompatible",
                     "nuvs": "none",
                     "pathoscope": "none",
                 },
