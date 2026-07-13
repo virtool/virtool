@@ -1,5 +1,6 @@
 """Work with OTUs in the database."""
 
+from collections import Counter
 from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
@@ -270,7 +271,12 @@ def otu_row_values(document: Document, reference_id: int) -> dict[str, Any]:
 
 
 def sequence_row_values(document: Document) -> dict[str, Any]:
-    """Map a Mongo sequence ``document`` to ``legacy_sequences`` column values."""
+    """Map a Mongo sequence ``document`` to ``legacy_sequences`` column values.
+
+    ``position`` is deliberately absent. It orders a sequence within its OTU and so
+    cannot be derived from the document alone; every write path supplies it
+    separately.
+    """
     return {
         "id": document["_id"],
         "data": document,
@@ -280,6 +286,20 @@ def sequence_row_values(document: Document) -> dict[str, Any]:
     }
 
 
+def next_sequence_position(otu_id: str):
+    """Compose a scalar subquery for the next free ``position`` in an OTU.
+
+    Evaluated by Postgres inside the insert, so the read and the write cannot be
+    interleaved. Callers hold the OTU's :func:`lock_legacy_otu` row lock, which
+    serializes concurrent appends to the same OTU.
+    """
+    return (
+        select(func.coalesce(func.max(SQLSequence.position) + 1, 0))
+        .where(SQLSequence.otu_id == otu_id)
+        .scalar_subquery()
+    )
+
+
 _OTU_ROW_CHUNK_SIZE = 32767 // 7
 """Max ``legacy_otus`` rows per statement.
 
@@ -287,11 +307,11 @@ asyncpg caps bind parameters per statement at 32767. Each row binds the seven
 columns produced by :func:`otu_row_values`.
 """
 
-_SEQUENCE_ROW_CHUNK_SIZE = 32767 // 5
+_SEQUENCE_ROW_CHUNK_SIZE = 32767 // 6
 """Max ``legacy_sequences`` rows per statement.
 
 asyncpg caps bind parameters per statement at 32767. Each row binds the five
-columns produced by :func:`sequence_row_values`.
+columns produced by :func:`sequence_row_values` plus ``position``.
 """
 
 
@@ -323,13 +343,27 @@ async def bulk_insert_sequence_rows(
 ) -> None:
     """Insert ``legacy_sequences`` rows for ``documents`` into ``pg_session``.
 
+    ``position`` is assigned by counting off each OTU's sequences in the order they
+    appear in ``documents``. That is the order they are handed to
+    ``sequences.insert_many``, so it is the Mongo natural order the rows must
+    reproduce. Callers insert whole OTUs at a time, so an OTU's sequences are never
+    split across two calls and the count always starts at zero for a new OTU.
+
     The rows are written in asyncpg-safe chunks without committing, so they commit
     or roll back together with the caller's surrounding transaction.
     """
     if not documents:
         return
 
-    rows = [sequence_row_values(document) for document in documents]
+    positions = Counter()
+    rows = []
+
+    for document in documents:
+        otu_id = document["otu_id"]
+
+        rows.append({**sequence_row_values(document), "position": positions[otu_id]})
+
+        positions[otu_id] += 1
 
     for start in range(0, len(rows), _SEQUENCE_ROW_CHUNK_SIZE):
         await pg_session.execute(
@@ -386,12 +420,16 @@ async def write_legacy_otu(pg_session: AsyncSession, document: Document) -> None
 async def write_legacy_sequence(pg_session: AsyncSession, document: Document) -> None:
     """Upsert a Mongo sequence ``document`` into ``legacy_sequences`` within
     ``pg_session``.
+
+    A new sequence is appended to the end of its OTU. An existing one keeps the
+    ``position`` it already holds: the column is left out of the conflict update so
+    re-mirroring a sequence never renumbers it and never reorders the OTU.
     """
     values = sequence_row_values(document)
 
     await pg_session.execute(
         pg_insert(SQLSequence)
-        .values(**values)
+        .values(**values, position=next_sequence_position(document["otu_id"]))
         .on_conflict_do_update(
             index_elements=["id"],
             set_={key: value for key, value in values.items() if key != "id"},

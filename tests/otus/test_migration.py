@@ -6,13 +6,15 @@ from datetime import datetime
 
 import pytest
 from motor.motor_asyncio import AsyncIOMotorCollection
-from sqlalchemy import insert, text, update
+from sqlalchemy import insert, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.migration.ctx import MigrationContext
 from virtool.otus.db import otu_row_values
 from virtool.otus.migration import (
+    backfill_sequence_positions,
     compare_otu_and_sequence_stores,
+    compare_sequence_positions,
     copy_otus_and_sequences_to_postgres,
 )
 from virtool.otus.sql import SQLOTU, SQLSequence
@@ -146,6 +148,17 @@ async def _insert_otu_row(
             ),
         )
         await session.commit()
+
+
+async def _mongo_sequence_ids(ctx: MigrationContext, otu_id: str) -> list[str]:
+    """Get an OTU's sequence ids in the natural order ``join`` reads them in."""
+    return [
+        document["_id"]
+        async for document in ctx.mongo.sequences.find(
+            {"otu_id": otu_id},
+            projection=["_id"],
+        )
+    ]
 
 
 async def _count(ctx: MigrationContext, table: str) -> int:
@@ -561,3 +574,166 @@ class TestCompareOtuAndSequenceStores:
         await copy_otus_and_sequences_to_postgres(ctx)
 
         await compare_otu_and_sequence_stores(ctx)
+
+
+async def _get_positions(ctx: MigrationContext, otu_id: str) -> list[tuple[str, int]]:
+    """Get an OTU's sequence ids and positions, ordered as Postgres would join them."""
+    async with AsyncSession(ctx.pg) as session:
+        return [
+            (row.id, row.position)
+            for row in (
+                await session.execute(
+                    select(SQLSequence.id, SQLSequence.position)
+                    .where(SQLSequence.otu_id == otu_id)
+                    .order_by(SQLSequence.position),
+                )
+            ).all()
+        ]
+
+
+class TestBackfillSequencePositions:
+    @pytest.fixture
+    async def copied_otu(self, ctx: MigrationContext, reference_id: int) -> list[str]:
+        """Seed one OTU with three sequences and copy them into Postgres.
+
+        Returns the sequence ids in the order Mongo returns them, which is the order
+        the positions must reproduce.
+        """
+        await ctx.mongo.otus.insert_one(
+            _otu_doc("otu_ordered", reference_id, "Tobacco mosaic virus"),
+        )
+
+        for sequence_id in ("seq_first", "seq_second", "seq_third"):
+            await ctx.mongo.sequences.insert_one(
+                _sequence_doc(sequence_id, "otu_ordered"),
+            )
+
+        await copy_otus_and_sequences_to_postgres(ctx)
+
+        return await _mongo_sequence_ids(ctx, "otu_ordered")
+
+    async def test_assigns_mongo_order(
+        self,
+        ctx: MigrationContext,
+        copied_otu: list[str],
+    ):
+        """Positions count off the OTU's sequences in Mongo's natural order."""
+        await backfill_sequence_positions(ctx)
+
+        assert await _get_positions(ctx, "otu_ordered") == [
+            (sequence_id, position) for position, sequence_id in enumerate(copied_otu)
+        ]
+
+    async def test_is_idempotent(
+        self,
+        ctx: MigrationContext,
+        copied_otu: list[str],
+    ):
+        """A second run reads the same order and writes the same numbers."""
+        await backfill_sequence_positions(ctx)
+        first = await _get_positions(ctx, "otu_ordered")
+
+        await backfill_sequence_positions(ctx)
+
+        assert await _get_positions(ctx, "otu_ordered") == first
+
+    async def test_repairs_a_mis_numbered_row(
+        self,
+        ctx: MigrationContext,
+        copied_otu: list[str],
+    ):
+        """A row the dual-write mis-numbered before this ran is renumbered.
+
+        A sequence created between the dual-write shipping and this backfill took
+        ``MAX + 1`` over an OTU with no Postgres rows yet, and so wrongly claimed
+        position zero. The backfill is authoritative and must overwrite it.
+        """
+        await backfill_sequence_positions(ctx)
+        await _update_sequence_row(ctx, copied_otu[2], position=0)
+
+        await backfill_sequence_positions(ctx)
+
+        assert await _get_positions(ctx, "otu_ordered") == [
+            (sequence_id, position) for position, sequence_id in enumerate(copied_otu)
+        ]
+
+    async def test_sequence_without_an_otu_row_raises(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+    ):
+        """A sequence whose parent OTU was never copied is a loud failure."""
+        await ctx.mongo.otus.insert_one(
+            _otu_doc("otu_uncopied", reference_id, "Cucumber mosaic virus"),
+        )
+        await ctx.mongo.sequences.insert_one(
+            _sequence_doc("seq_uncopied", "otu_uncopied"),
+        )
+
+        with pytest.raises(ValueError, match="no row in postgres"):
+            await backfill_sequence_positions(ctx)
+
+
+class TestCompareSequencePositions:
+    @pytest.fixture
+    async def positioned_otu(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+    ) -> list[str]:
+        """Seed an OTU with three sequences, copy them, and assign their positions."""
+        await ctx.mongo.otus.insert_one(
+            _otu_doc("otu_ordered", reference_id, "Tobacco mosaic virus"),
+        )
+
+        for sequence_id in ("seq_first", "seq_second", "seq_third"):
+            await ctx.mongo.sequences.insert_one(
+                _sequence_doc(sequence_id, "otu_ordered"),
+            )
+
+        await copy_otus_and_sequences_to_postgres(ctx)
+        await backfill_sequence_positions(ctx)
+
+        return await _mongo_sequence_ids(ctx, "otu_ordered")
+
+    async def test_matching_order_passes(
+        self,
+        ctx: MigrationContext,
+        positioned_otu: list[str],
+    ):
+        await compare_sequence_positions(ctx)
+
+    async def test_is_read_only_and_repeatable(
+        self,
+        ctx: MigrationContext,
+        positioned_otu: list[str],
+    ):
+        await compare_sequence_positions(ctx)
+        await compare_sequence_positions(ctx)
+
+    async def test_swapped_order_raises(
+        self,
+        ctx: MigrationContext,
+        positioned_otu: list[str],
+    ):
+        """Two sequences holding each other's positions is drift."""
+        await _update_sequence_row(ctx, positioned_otu[0], position=1)
+        await _update_sequence_row(ctx, positioned_otu[1], position=0)
+
+        with pytest.raises(ValueError, match="sequence order drift detected in 1 otus"):
+            await compare_sequence_positions(ctx)
+
+    async def test_null_position_raises(
+        self,
+        ctx: MigrationContext,
+        positioned_otu: list[str],
+    ):
+        """An unbackfilled row is drift, not a row that quietly sorts last.
+
+        Postgres orders nulls last on an ascending sort, so a null position would
+        otherwise shuffle the sequence to the end of its OTU and pass unnoticed.
+        """
+        await _update_sequence_row(ctx, positioned_otu[2], position=None)
+
+        with pytest.raises(ValueError, match="sequence order drift detected in 1 otus"):
+            await compare_sequence_positions(ctx)

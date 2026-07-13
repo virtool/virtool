@@ -35,7 +35,7 @@
 # ---
 # name: test_populate_insert_only_reference_writes_otu_and_sequence_rows[legacy_sequences]
   list([
-    <SQLSequence(id=orseq001, data={'_id': 'orseq001', 'host': 'h', 'otu_id': 'orotu001', 'remote': {'id': 'remote_seq_1'}, 'segment': '', 'sequence': 'ATCG', 'accession': 'ACC1', 'reference': {'id': 1}, 'definition': 'test', 'isolate_id': 'oriso001'}, otu_id=orotu001, isolate_id=oriso001, segment=)>,
-    <SQLSequence(id=orseq002, data={'_id': 'orseq002', 'host': 'h', 'otu_id': 'orotu002', 'remote': {'id': 'remote_seq_2'}, 'segment': '', 'sequence': 'ATCG', 'accession': 'ACC2', 'reference': {'id': 1}, 'definition': 'test', 'isolate_id': 'oriso002'}, otu_id=orotu002, isolate_id=oriso002, segment=)>,
+    <SQLSequence(id=orseq001, data={'_id': 'orseq001', 'host': 'h', 'otu_id': 'orotu001', 'remote': {'id': 'remote_seq_1'}, 'segment': '', 'sequence': 'ATCG', 'accession': 'ACC1', 'reference': {'id': 1}, 'definition': 'test', 'isolate_id': 'oriso001'}, otu_id=orotu001, isolate_id=oriso001, segment=, position=0)>,
+    <SQLSequence(id=orseq002, data={'_id': 'orseq002', 'host': 'h', 'otu_id': 'orotu002', 'remote': {'id': 'remote_seq_2'}, 'segment': '', 'sequence': 'ATCG', 'accession': 'ACC2', 'reference': {'id': 1}, 'definition': 'test', 'isolate_id': 'oriso002'}, otu_id=orotu002, isolate_id=oriso002, segment=, position=0)>,
   ])
 # ---
