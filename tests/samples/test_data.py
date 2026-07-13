@@ -43,33 +43,32 @@ from virtool.uploads.utils import upload_file_key
 from virtool.users.oas import UpdateUserRequest
 
 
-async def insert_rights_sample(
-    pg: AsyncEngine,
-    legacy_id: str,
-    user_id: int,
+async def create_rights_sample(
+    data_layer: DataLayer,
+    fake: DataFaker,
+    owner,
+    *,
     all_read: bool = False,
     all_write: bool = False,
     group_read: bool = False,
     group_write: bool = False,
-    group_id: int | None = None,
-) -> None:
-    """Insert a minimal ``legacy_samples`` row for exercising ``has_right``."""
-    async with AsyncSession(pg) as session:
-        session.add(
-            SQLLegacySample(
-                legacy_id=legacy_id,
-                name=legacy_id,
-                library_type=LibraryType.normal.value,
-                created_at=virtool.utils.timestamp(),
-                user_id=user_id,
-                all_read=all_read,
-                all_write=all_write,
-                group_read=group_read,
-                group_write=group_write,
-                group_id=group_id,
-            ),
-        )
-        await session.commit()
+    group: int | None = None,
+) -> int:
+    """Create a sample owned by ``owner`` with explicit rights and return its id."""
+    sample = await fake.samples.create(owner)
+
+    await data_layer.samples.update_rights(
+        sample.id,
+        {
+            "all_read": all_read,
+            "all_write": all_write,
+            "group_read": group_read,
+            "group_write": group_write,
+            "group": group,
+        },
+    )
+
+    return sample.id
 
 
 @pytest.fixture
@@ -609,7 +608,6 @@ class TestHasRight:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        pg: AsyncEngine,
     ):
         """Test group member can write when group_write is True."""
         group = await fake.groups.create()
@@ -625,22 +623,21 @@ class TestHasRight:
             user_id=user.id,
         )
 
-        await insert_rights_sample(
-            pg,
-            "sample_1",
-            user_id=sample_owner.id,
-            group_id=group.id,
+        sample_id = await create_rights_sample(
+            data_layer,
+            fake,
+            sample_owner,
+            group=group.id,
             group_read=True,
             group_write=True,
         )
 
-        assert await data_layer.samples.has_right("sample_1", client, SampleRight.write)
+        assert await data_layer.samples.has_right(sample_id, client, SampleRight.write)
 
     async def test_read_permission(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        pg: AsyncEngine,
     ):
         """Test group member can read when group_read is True."""
         group = await fake.groups.create()
@@ -656,15 +653,15 @@ class TestHasRight:
             user_id=user.id,
         )
 
-        await insert_rights_sample(
-            pg,
-            "sample_2",
-            user_id=sample_owner.id,
-            group_id=group.id,
+        sample_id = await create_rights_sample(
+            data_layer,
+            fake,
+            sample_owner,
+            group=group.id,
             group_read=True,
         )
 
-        assert await data_layer.samples.has_right("sample_2", client, SampleRight.read)
+        assert await data_layer.samples.has_right(sample_id, client, SampleRight.read)
 
     async def test_missing_sample(
         self,
@@ -693,7 +690,6 @@ class TestHasRight:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        pg: AsyncEngine,
     ):
         """Test full administrator has access regardless of permissions."""
         user = await fake.users.create(administrator_role=AdministratorRole.FULL)
@@ -708,15 +704,14 @@ class TestHasRight:
             user_id=user.id,
         )
 
-        await insert_rights_sample(pg, "sample_3", user_id=sample_owner.id)
+        sample_id = await create_rights_sample(data_layer, fake, sample_owner)
 
-        assert await data_layer.samples.has_right("sample_3", client, SampleRight.write)
+        assert await data_layer.samples.has_right(sample_id, client, SampleRight.write)
 
     async def test_owner_full_access(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        pg: AsyncEngine,
     ):
         """Test sample owner has full access."""
         user = await fake.users.create()
@@ -730,25 +725,24 @@ class TestHasRight:
             user_id=user.id,
         )
 
-        await insert_rights_sample(pg, "sample_4", user_id=user.id)
+        sample_id = await create_rights_sample(data_layer, fake, user)
 
-        assert await data_layer.samples.has_right("sample_4", client, SampleRight.write)
+        assert await data_layer.samples.has_right(sample_id, client, SampleRight.write)
 
     async def test_job_client_full_access(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        pg: AsyncEngine,
     ):
         """A job-authenticated client holds every right regardless of ownership or
         sharing, since a job's identity is neither a user nor an administrator.
         """
         sample_owner = await fake.users.create()
 
-        await insert_rights_sample(
-            pg,
-            "job_sample",
-            user_id=sample_owner.id,
+        sample_id = await create_rights_sample(
+            data_layer,
+            fake,
+            sample_owner,
             all_read=False,
             all_write=False,
         )
@@ -756,12 +750,12 @@ class TestHasRight:
         client = JobClient(job_id=1)
 
         assert await data_layer.samples.has_right(
-            "job_sample",
+            sample_id,
             client,
             SampleRight.read,
         )
         assert await data_layer.samples.has_right(
-            "job_sample",
+            sample_id,
             client,
             SampleRight.write,
         )
@@ -770,7 +764,6 @@ class TestHasRight:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        pg: AsyncEngine,
     ):
         """Test non-group member is denied when all_write is False."""
         group = await fake.groups.create()
@@ -786,16 +779,16 @@ class TestHasRight:
             user_id=user.id,
         )
 
-        await insert_rights_sample(
-            pg,
-            "sample_5",
-            user_id=sample_owner.id,
-            group_id=group.id,
+        sample_id = await create_rights_sample(
+            data_layer,
+            fake,
+            sample_owner,
+            group=group.id,
             group_write=True,
         )
 
         assert not await data_layer.samples.has_right(
-            "sample_5",
+            sample_id,
             client,
             SampleRight.write,
         )
@@ -819,7 +812,6 @@ class TestFindRights:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        pg: AsyncEngine,
     ):
         """A full administrator lists a sample they neither own nor share."""
         administrator = await fake.users.create(
@@ -827,10 +819,10 @@ class TestFindRights:
         )
         sample_owner = await fake.users.create()
 
-        await insert_rights_sample(
-            pg,
-            "other_private",
-            user_id=sample_owner.id,
+        sample_id = await create_rights_sample(
+            data_layer,
+            fake,
+            sample_owner,
             all_read=False,
         )
 
@@ -845,22 +837,21 @@ class TestFindRights:
         )
 
         assert result.found_count == 1
-        assert [document.name for document in result.documents] == ["other_private"]
+        assert [document.id for document in result.documents] == [sample_id]
 
     async def test_non_owner_cannot_see_private_sample(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        pg: AsyncEngine,
     ):
         """A non-administrator without rights does not list another user's sample."""
         user = await fake.users.create()
         sample_owner = await fake.users.create()
 
-        await insert_rights_sample(
-            pg,
-            "other_private",
-            user_id=sample_owner.id,
+        await create_rights_sample(
+            data_layer,
+            fake,
+            sample_owner,
             all_read=False,
         )
 
