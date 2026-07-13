@@ -45,6 +45,14 @@ from virtool.types import Document
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
+OTU_ID_CHUNK_SIZE = 500
+"""The number of OTU ids bound into a single ``last_indexed_version`` update.
+
+asyncpg binds one parameter per id, so an unbounded ``IN`` would blow its parameter
+limit on a reference whose OTUs all sit in one version bucket. A freshly imported
+reference is exactly that: every OTU is version 0.
+"""
+
 INDEX_FILE_NAMES = (
     "reference.fa.gz",
     "reference.json.gz",
@@ -503,17 +511,18 @@ async def update_last_indexed_versions(
     )
 
     for version, id_list in id_version_key.items():
-        await pg_session.execute(
-            update(SQLOTU)
-            .where(SQLOTU.id.in_(id_list))
-            .values(
-                data=func.jsonb_set(
-                    SQLOTU.data,
-                    literal(["last_indexed_version"], ARRAY(Text)),
-                    func.to_jsonb(cast(version, Integer)),
+        for start in range(0, len(id_list), OTU_ID_CHUNK_SIZE):
+            await pg_session.execute(
+                update(SQLOTU)
+                .where(SQLOTU.id.in_(id_list[start : start + OTU_ID_CHUNK_SIZE]))
+                .values(
+                    data=func.jsonb_set(
+                        SQLOTU.data,
+                        literal(["last_indexed_version"], ARRAY(Text)),
+                        func.to_jsonb(cast(version, Integer)),
+                    ),
                 ),
-            ),
-        )
+            )
 
 
 async def attach_files(pg: AsyncEngine, base_url: str, document: dict) -> dict:

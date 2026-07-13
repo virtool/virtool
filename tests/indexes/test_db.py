@@ -317,6 +317,59 @@ class TestUpdateLastIndexedVersions:
 
         assert row.data["last_indexed_version"] == document["version"]
 
+    async def test_stamps_every_chunk(
+        self,
+        fake: DataFaker,
+        mocker: MockerFixture,
+        mongo: Mongo,
+        pg: AsyncEngine,
+    ):
+        """Every OTU is stamped when the id list spans more than one chunk.
+
+        The ids are chunked because asyncpg binds one parameter per id. A reference
+        whose OTUs all sit in one version bucket -- a fresh import, where every OTU is
+        version 0 -- would otherwise blow the parameter limit.
+
+        The OTUs are created empty so they all stay at version 0 and so group into a
+        single bucket. An OTU with isolates lands on a version of its own, which would
+        leave every bucket holding one id and never exercise a chunk boundary.
+        """
+        mocker.patch("virtool.indexes.db.OTU_ID_CHUNK_SIZE", 2)
+
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        otus = [await fake.otus.create_empty(reference.id, user) for _ in range(5)]
+
+        async with both_transactions(mongo, pg) as (mongo_session, pg_session):
+            await update_last_indexed_versions(
+                mongo,
+                pg,
+                reference.id,
+                mongo_session,
+                pg_session,
+            )
+
+        async with AsyncSession(pg) as session:
+            rows = {
+                row.id: row
+                for row in (
+                    await session.execute(
+                        select(SQLOTU).where(
+                            SQLOTU.id.in_([otu.id for otu in otus]),
+                        ),
+                    )
+                ).scalars()
+            }
+
+        assert len(rows) == 5
+
+        for otu in otus:
+            document = await mongo.otus.find_one({"_id": otu.id})
+
+            assert document["last_indexed_version"] == document["version"]
+            assert rows[otu.id].data["last_indexed_version"] == document["version"]
+
     async def test_otu_not_in_postgres(
         self,
         fake: DataFaker,
