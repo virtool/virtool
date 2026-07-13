@@ -242,9 +242,10 @@ register it as a revision in `assets/revisions/`:
   `user`), raise if the reference cannot be resolved — do not silently store
   `NULL`. For relationships that are explicitly optional or were historically
   deletable (e.g. `job`), log a warning and store `NULL`.
-- After the initial backfill revision ships, add a second "re-backfill" revision
-  to catch documents created between the first backfill and the dual-write
-  rollout.
+A single backfill revision is enough. Dual-write (step 2) always ships and
+deploys before the backfill runs, so every write is already landing in Postgres
+by the time the backfill executes and there is no gap to catch up. Do not add a
+second "re-backfill" revision.
 
 #### Step 4 — Switch reads to Postgres
 
