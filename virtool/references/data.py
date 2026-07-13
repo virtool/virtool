@@ -386,7 +386,7 @@ class ReferencesData(DataLayerDomain):
             documents,
             [
                 AttachUserTransform(self._pg),
-                AttachImportedFromTransform(self._mongo, self._pg),
+                AttachImportedFromTransform(self._pg),
                 AttachTaskTransform(self._pg),
             ],
             self._pg,
@@ -577,7 +577,7 @@ class ReferencesData(DataLayerDomain):
 
         document = await apply_transforms(
             document,
-            [AttachImportedFromTransform(self._mongo, self._pg)],
+            [AttachImportedFromTransform(self._pg)],
             self._pg,
         )
 
