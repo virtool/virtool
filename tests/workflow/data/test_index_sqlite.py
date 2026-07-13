@@ -4,7 +4,7 @@ from pathlib import Path
 
 from sqlalchemy import select
 
-from virtool.indexes.index_sqlite import (
+from virtool.workflow.data.index_sqlite import (
     INDEX_SQLITE_FILE_NAME,
     connect_index_sqlite,
     create_index_sqlite,
@@ -14,6 +14,10 @@ from virtool.indexes.index_sqlite import (
 )
 
 OTU_VERSION = 3
+
+
+def test_index_sqlite_file_name_is_versioned():
+    assert INDEX_SQLITE_FILE_NAME == "virtool-index-sqlite-v1.sqlite"
 
 
 def _reference() -> dict:

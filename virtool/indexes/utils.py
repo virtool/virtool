@@ -25,9 +25,6 @@ def check_index_file_type(file_name: str) -> str:
     if file_name.endswith(".json.gz"):
         return "json"
 
-    if file_name.endswith(".sqlite.gz"):
-        return "sqlite"
-
     return "bowtie2"
 
 

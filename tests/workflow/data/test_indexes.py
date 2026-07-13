@@ -3,11 +3,9 @@ from pathlib import Path
 import pytest
 from pyfixtures import FixtureScope
 
-from virtool.indexes.db import LEGACY_INDEX_FILE_NAMES
-from virtool.indexes.index_sqlite import (
-    INDEX_SQLITE_FILE_NAME,
-)
+from virtool.indexes.db import INDEX_FILE_NAMES
 from virtool.indexes.models import IndexFile
+from virtool.workflow.data.index_sqlite import INDEX_SQLITE_FILE_NAME
 from virtool.workflow.data.indexes import (
     WFIndex,
     WFNewIndex,
@@ -158,7 +156,7 @@ def _set_reference_json_index_data(workflow_data: WorkflowData) -> None:
             size=100,
             type="unknown",
         )
-        for id_, file_name in enumerate(LEGACY_INDEX_FILE_NAMES, start=1)
+        for id_, file_name in enumerate(INDEX_FILE_NAMES, start=1)
     ]
 
 
@@ -344,7 +342,7 @@ class TestIndex:
         index_path = work_path / "indexes" / workflow_data.analysis.index.id
 
         assert {p.name for p in index_path.iterdir()} == {
-            "index.sqlite",
+            INDEX_SQLITE_FILE_NAME,
             "reference.json",
             "reference.json.gz",
         }
@@ -380,39 +378,6 @@ class TestIndex:
             "8f6riell",
             "ixnaodb8",
         }
-
-    async def test_reference_json_used_when_sqlite_file_record_exists(
-        self,
-        scope: FixtureScope,
-        work_path: Path,
-        workflow_data: WorkflowData,
-    ):
-        """The workflow index only reads reference JSON during initialization."""
-        _set_reference_json_index_data(workflow_data)
-        workflow_data.index.files.append(
-            IndexFile(
-                download_url=f"/indexes/{workflow_data.index.id}/files/index.sqlite.gz",
-                id=21,
-                index=workflow_data.index.id,
-                name="index.sqlite.gz",
-                size=100,
-                type="sqlite",
-            ),
-        )
-
-        index: WFIndex = await scope.instantiate_by_key("index")
-        otus = [otu async for otu in index.iter_otus()]
-
-        index_path = work_path / "indexes" / workflow_data.analysis.index.id
-
-        assert index.id == workflow_data.analysis.index.id
-        assert {p.name for p in index_path.iterdir()} == {
-            "index.sqlite",
-            "reference.json",
-            "reference.json.gz",
-        }
-        assert otus[0]["id"] == "0716c1e1"
-        assert otus[0]["version"] == 13
 
     async def test_write_fasta(
         self,
@@ -463,7 +428,7 @@ class TestNewIndex:
 
         assert workflow_data.new_index.ready is False
 
-        for filename in LEGACY_INDEX_FILE_NAMES:
+        for filename in INDEX_FILE_NAMES:
             await new_index.upload(
                 example_path / "indexes" / filename,
                 "unknown",
@@ -474,7 +439,7 @@ class TestNewIndex:
         assert workflow_data.new_index.ready is True
 
         assert {p.name for p in captured_uploads_path.iterdir()} == set(
-            LEGACY_INDEX_FILE_NAMES
+            INDEX_FILE_NAMES
         )
 
     async def test_upload_invalid_filename(

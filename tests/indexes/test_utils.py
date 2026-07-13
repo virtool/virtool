@@ -11,12 +11,6 @@ async def test_check_index_file_type_json():
     assert result == "json"
 
 
-async def test_check_index_file_type_sqlite():
-    result = virtool.indexes.utils.check_index_file_type("index.sqlite.gz")
-
-    assert result == "sqlite"
-
-
 async def test_check_index_file_type_fasta():
     result = virtool.indexes.utils.check_index_file_type("reference.fa.gz")
 

@@ -35,7 +35,7 @@ from virtool.types import Document
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor
 
-LEGACY_INDEX_FILE_NAMES = (
+INDEX_FILE_NAMES = (
     "reference.fa.gz",
     "reference.json.gz",
     "reference.1.bt2",
@@ -45,12 +45,6 @@ LEGACY_INDEX_FILE_NAMES = (
     "reference.rev.1.bt2",
     "reference.rev.2.bt2",
 )
-
-TASK_INDEX_FILE_NAMES = ("reference.json.gz",)
-
-INDEX_FILE_NAMES = (*LEGACY_INDEX_FILE_NAMES, *TASK_INDEX_FILE_NAMES)
-
-JOBS_API_UPLOAD_INDEX_FILE_NAMES = LEGACY_INDEX_FILE_NAMES
 
 
 class IndexFilesTransform(AbstractTransform):

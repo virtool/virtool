@@ -25,8 +25,6 @@ from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.checks import check_legacy_index_files_uploaded
 from virtool.indexes.db import (
     INDEX_FILE_NAMES,
-    LEGACY_INDEX_FILE_NAMES,
-    TASK_INDEX_FILE_NAMES,
     IndexCountsTransform,
     update_last_indexed_versions,
 )
@@ -71,25 +69,6 @@ def _get_index_build_type(document: dict) -> str:
         )
 
     return "job" if job_id is not None else "task"
-
-
-def _get_index_file_names_for_build_type(document: dict) -> tuple[str, ...]:
-    match _get_index_build_type(document):
-        case "job":
-            return LEGACY_INDEX_FILE_NAMES
-        case "task":
-            return TASK_INDEX_FILE_NAMES
-
-
-def _check_index_file_matches_build_type(document: dict, name: str) -> None:
-    if name in _get_index_file_names_for_build_type(document):
-        return
-
-    build_type = _get_index_build_type(document)
-
-    raise ResourceConflictError(
-        f"{name} cannot be uploaded for {build_type}-backed index builds"
-    )
 
 
 class IndexData:
@@ -281,15 +260,8 @@ class IndexData:
         :param multipart: the file reader
         :return: the index file
         """
-        index = await self._mongo.indexes.find_one(
-            {"_id": index_id},
-            ["job", "task"],
-        )
-
-        if index is None:
+        if await self._mongo.indexes.find_one({"_id": index_id}, ["_id"]) is None:
             raise ResourceNotFoundError()
-
-        _check_index_file_matches_build_type(index, name)
 
         async with AsyncSession(self._pg) as session:
             index_file = SQLIndexFile(name=name, index=index_id, type=file_type)

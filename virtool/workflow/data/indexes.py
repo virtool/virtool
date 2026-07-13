@@ -21,7 +21,12 @@ from sqlalchemy.sql.elements import ColumnElement
 from structlog import get_logger
 
 from virtool.analyses.models import Analysis
-from virtool.indexes.index_sqlite import (
+from virtool.indexes.models import Index
+from virtool.jobs.models import Job
+from virtool.references.models import ReferenceNested
+from virtool.utils import decompress_file
+from virtool.workflow.client import WorkflowAPIClient
+from virtool.workflow.data.index_sqlite import (
     INDEX_SQLITE_FILE_NAME,
     connect_index_sqlite,
     create_index_sqlite,
@@ -31,11 +36,6 @@ from virtool.indexes.index_sqlite import (
     reference_table,
     sequences_table,
 )
-from virtool.indexes.models import Index
-from virtool.jobs.models import Job
-from virtool.references.models import ReferenceNested
-from virtool.utils import decompress_file
-from virtool.workflow.client import WorkflowAPIClient
 from virtool.workflow.errors import MissingJobArgumentError
 from virtool.workflow.files import VirtoolFileFormat
 

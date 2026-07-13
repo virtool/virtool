@@ -1,4 +1,4 @@
-"""Build and query Virtool structured index SQLite artifacts."""
+"""Build and query workflow-local SQLite index artifacts."""
 
 import asyncio
 from collections.abc import AsyncIterable, Iterator, Mapping
@@ -25,10 +25,9 @@ from sqlalchemy.pool import ConnectionPoolEntry
 
 from virtool.api.custom_json import datetime_to_isoformat
 
-INDEX_SQLITE_FILE_NAME = "index.sqlite"
-COMPRESSED_INDEX_SQLITE_FILE_NAME = f"{INDEX_SQLITE_FILE_NAME}.gz"
 INDEX_SQLITE_FORMAT = "virtool-index-sqlite"
 INDEX_SQLITE_FORMAT_VERSION = "1"
+INDEX_SQLITE_FILE_NAME = f"{INDEX_SQLITE_FORMAT}-v{INDEX_SQLITE_FORMAT_VERSION}.sqlite"
 
 index_sqlite_metadata = MetaData()
 

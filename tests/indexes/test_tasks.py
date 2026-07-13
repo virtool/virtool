@@ -231,7 +231,7 @@ async def test_create_index_task_updates_existing_index_file_row(
                 index="task_index",
                 name="reference.json.gz",
                 size=1,
-                type="sqlite",
+                type="json",
             ),
         )
         await session.commit()

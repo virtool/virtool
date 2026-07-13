@@ -20,7 +20,7 @@ from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.history.db import legacy_history_values
 from virtool.history.sql import SQLLegacyHistory
-from virtool.indexes.db import LEGACY_INDEX_FILE_NAMES
+from virtool.indexes.db import INDEX_FILE_NAMES
 from virtool.indexes.files import create_index_file
 from virtool.indexes.sql import SQLIndexFile
 from virtool.indexes.utils import check_index_file_type, compose_index_file_key
@@ -799,7 +799,7 @@ async def test_upload(
         ).scalar() == snapshot
 
 
-async def test_upload_job_backed_index_with_missing_task(
+async def test_upload_index_without_build_fields(
     example_path: Path,
     fake: DataFaker,
     memory_storage: StorageBackend,
@@ -816,14 +816,11 @@ async def test_upload_job_backed_index_with_missing_task(
             {"_id": "bar", "archived": False, "data_type": "genome", "name": "Bar"},
         ),
     )
-    job = await fake.jobs.create(user=user, workflow="build_index")
-
     await mongo.indexes.insert_one(
         {
             "_id": "foo",
             "reference": {"id": "bar"},
             "user": {"id": user.id},
-            "job": {"id": job.id},
         },
     )
 
@@ -839,7 +836,7 @@ async def test_upload_job_backed_index_with_missing_task(
 
     assert body["index"] == "foo"
     assert body["name"] == "reference.1.bt2"
-    assert await mongo.indexes.find_one("foo", ["task"]) == {"_id": "foo"}
+    assert await mongo.indexes.find_one("foo", ["job", "task"]) == {"_id": "foo"}
 
     chunks = [
         chunk
@@ -872,7 +869,7 @@ async def test_finalize(
     elif error == "409_fasta":
         files = ["reference.json.gz"]
     else:
-        files = LEGACY_INDEX_FILE_NAMES
+        files = INDEX_FILE_NAMES
 
     if error != "404_reference":
         await mongo.references.insert_one(
