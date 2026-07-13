@@ -78,6 +78,7 @@
       'id': 1,
     }),
     'workflows': dict({
+      'aodp': <WorkflowState.NONE: 'none'>,
       'nuvs': <WorkflowState.NONE: 'none'>,
       'pathoscope': <WorkflowState.NONE: 'none'>,
     }),
@@ -158,6 +159,7 @@
       'id': 1,
     }),
     'workflows': dict({
+      'aodp': <WorkflowState.NONE: 'none'>,
       'nuvs': <WorkflowState.NONE: 'none'>,
       'pathoscope': <WorkflowState.NONE: 'none'>,
     }),
@@ -242,6 +244,7 @@
       'id': 1,
     }),
     'workflows': dict({
+      'aodp': <WorkflowState.NONE: 'none'>,
       'nuvs': <WorkflowState.NONE: 'none'>,
       'pathoscope': <WorkflowState.NONE: 'none'>,
     }),
@@ -368,6 +371,7 @@
       'id': 1,
     }),
     'workflows': dict({
+      'aodp': <WorkflowState.NONE: 'none'>,
       'nuvs': <WorkflowState.NONE: 'none'>,
       'pathoscope': <WorkflowState.NONE: 'none'>,
     }),
