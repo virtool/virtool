@@ -6,7 +6,17 @@ from typing import Any
 
 import pymongo
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from sqlalchemy import Integer, cast, distinct, func, select, update
+from sqlalchemy import (
+    ARRAY,
+    Integer,
+    Text,
+    cast,
+    distinct,
+    func,
+    literal,
+    select,
+    update,
+)
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.history.db
@@ -24,6 +34,7 @@ from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.sql import SQLIndexFile
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
+from virtool.otus.sql import SQLOTU
 from virtool.references.db import (
     compose_reference_id_match,
     compose_reference_ids_match,
@@ -440,14 +451,22 @@ async def update_last_indexed_versions(
     mongo: "Mongo",
     pg: AsyncEngine,
     ref_id: str,
-    session: AsyncIOMotorClientSession,
+    mongo_session: AsyncIOMotorClientSession,
+    pg_session: AsyncSession,
 ) -> None:
     """Update the `last_indexed_version` field for OTUs associated with `ref_id`
+
+    Both stores are stamped from the same ``{version: [otu_id]}`` grouping, so the
+    same OTUs are stamped with the same version in each. ``last_indexed_version`` has
+    no promoted column on ``legacy_otus``; it lives in the ``data`` JSONB, so only
+    that key is rewritten. OTUs with no Postgres row yet are simply not matched --
+    the backfill will carry the stamped Mongo document over.
 
     :param mongo: the application mongo client
     :param pg: the application Postgres client
     :param ref_id: the id of the reference whose otus should be updated
-    :param session: the motor session to use
+    :param mongo_session: the motor session to use
+    :param pg_session: the Postgres session to use
 
     """
     pipeline = [
@@ -477,11 +496,24 @@ async def update_last_indexed_versions(
             mongo.otus.update_many(
                 {"_id": {"$in": id_list}},
                 {"$set": {"last_indexed_version": version}},
-                session=session,
+                session=mongo_session,
             )
             for version, id_list in id_version_key.items()
         ],
     )
+
+    for version, id_list in id_version_key.items():
+        await pg_session.execute(
+            update(SQLOTU)
+            .where(SQLOTU.id.in_(id_list))
+            .values(
+                data=func.jsonb_set(
+                    SQLOTU.data,
+                    literal(["last_indexed_version"], ARRAY(Text)),
+                    func.to_jsonb(cast(version, Integer)),
+                ),
+            ),
+        )
 
 
 async def attach_files(pg: AsyncEngine, base_url: str, document: dict) -> dict:

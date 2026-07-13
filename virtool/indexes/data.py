@@ -2,6 +2,7 @@ import asyncio
 import gzip
 from collections.abc import AsyncIterator
 
+from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -335,14 +336,25 @@ class IndexData:
             check_index_files_uploaded(results),
         )
 
-        async with self._mongo.create_session() as session:
-            await update_last_indexed_versions(self._mongo, self._pg, ref_id, session)
+        async def finalize_index(
+            mongo_session: AsyncIOMotorClientSession,
+            pg_session: AsyncSession,
+        ) -> None:
+            await update_last_indexed_versions(
+                self._mongo,
+                self._pg,
+                ref_id,
+                mongo_session,
+                pg_session,
+            )
 
             await self._mongo.indexes.update_one(
                 {"_id": index_id},
                 {"$set": {"ready": True}},
-                session=session,
+                session=mongo_session,
             )
+
+        await retry_both_transactions(self._mongo, self._pg, finalize_index)
 
         return await self.get(index_id)
 

@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 import virtool.indexes.db
-from tests.fixtures.client import ClientSpawner
+from virtool.data.topg import both_transactions
+from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.db import (
     attach_files,
@@ -17,6 +18,7 @@ from virtool.indexes.db import (
 )
 from virtool.indexes.sql import SQLIndexFile
 from virtool.mongo.core import Mongo
+from virtool.otus.sql import SQLOTU
 
 
 @pytest.mark.parametrize("index_id", [None, "abc"])
@@ -280,23 +282,81 @@ async def test_get_patched_otus(mocker: MockerFixture, mongo: Mongo):
     )
 
 
-async def test_update_last_indexed_versions(
-    mongo: Mongo,
-    pg: AsyncEngine,
-    spawn_client: ClientSpawner,
-    test_otu,
-):
-    await spawn_client(authenticated=True)
-    test_otu["version"] = 1
+class TestUpdateLastIndexedVersions:
+    async def test_stamps_both_stores(
+        self,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+    ):
+        """The stamp lands in Postgres as well as Mongo.
 
-    await mongo.otus.insert_one(test_otu)
+        The OTU is created through the data layer so it exists in both stores, as it
+        would in production. Seeding Mongo alone would leave the Postgres update
+        matching no rows and the test would pass without proving anything.
+        """
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+        otu = await fake.otus.create(reference.id, user)
 
-    async with mongo.create_session() as session:
-        await update_last_indexed_versions(mongo, pg, "hxn167", session)
+        async with both_transactions(mongo, pg) as (mongo_session, pg_session):
+            await update_last_indexed_versions(
+                mongo,
+                pg,
+                reference.id,
+                mongo_session,
+                pg_session,
+            )
 
-    document = await mongo.otus.find_one({"reference.id": "hxn167"})
+        document = await mongo.otus.find_one({"_id": otu.id})
 
-    assert document["last_indexed_version"] == document["version"]
+        assert document["last_indexed_version"] == document["version"]
+
+        async with AsyncSession(pg) as session:
+            row = await session.scalar(select(SQLOTU).where(SQLOTU.id == otu.id))
+
+        assert row.data["last_indexed_version"] == document["version"]
+
+    async def test_otu_not_in_postgres(
+        self,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        test_otu,
+    ):
+        """An OTU that has not been backfilled yet is stamped in Mongo and skipped in
+        Postgres, rather than raising.
+
+        The backfill carries the stamped Mongo document over, so there is nothing to
+        write here.
+        """
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        await mongo.otus.insert_one(
+            {**test_otu, "reference": {"id": reference.id}, "version": 3},
+        )
+
+        async with both_transactions(mongo, pg) as (mongo_session, pg_session):
+            await update_last_indexed_versions(
+                mongo,
+                pg,
+                reference.id,
+                mongo_session,
+                pg_session,
+            )
+
+        document = await mongo.otus.find_one({"_id": test_otu["_id"]})
+
+        assert document["last_indexed_version"] == 3
+
+        async with AsyncSession(pg) as session:
+            assert (
+                await session.scalar(
+                    select(SQLOTU).where(SQLOTU.id == test_otu["_id"]),
+                )
+                is None
+            )
 
 
 async def test_attach_files(snapshot, pg: AsyncEngine):
