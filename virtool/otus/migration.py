@@ -115,7 +115,9 @@ async def _copy_sequences(ctx: MigrationContext, session: AsyncSession) -> None:
     Runs after :func:`_copy_otus` so every parent OTU already has a
     ``legacy_otus`` row. The full set of OTU ids is loaded up front so an orphan
     sequence can be caught with a clear error before the not-null foreign key
-    rejects it with an opaque ``IntegrityError``.
+    rejects it with an opaque ``IntegrityError``. That set is only a cache: a miss
+    is re-checked against Postgres before raising, because the dual-writing
+    application may have created the parent OTU after the set was loaded.
     """
     otu_ids_present = {row[0] for row in await session.execute(select(SQLOTU.id))}
     existing_sequence_ids = {
@@ -146,12 +148,17 @@ async def _copy_sequences(ctx: MigrationContext, session: AsyncSession) -> None:
             skipped_count += 1
             continue
 
-        if document["otu_id"] not in otu_ids_present:
-            msg = (
-                f"sequence {sequence_id!r} references otu "
-                f"{document['otu_id']!r} which does not exist in postgres"
-            )
-            raise ValueError(msg)
+        otu_id = document["otu_id"]
+
+        if otu_id not in otu_ids_present:
+            if not await _otu_exists(session, otu_id):
+                msg = (
+                    f"sequence {sequence_id!r} references otu "
+                    f"{otu_id!r} which does not exist in postgres"
+                )
+                raise ValueError(msg)
+
+            otu_ids_present.add(otu_id)
 
         await session.execute(
             insert(SQLSequence)
@@ -167,6 +174,19 @@ async def _copy_sequences(ctx: MigrationContext, session: AsyncSession) -> None:
         migrated=migrated_count,
         skipped=skipped_count,
     )
+
+
+async def _otu_exists(session: AsyncSession, otu_id: str) -> bool:
+    """Check Postgres directly for a ``legacy_otus`` row.
+
+    Used to confirm a sequence's parent really is missing before raising. The OTU
+    may have been dual-written by the running application after the up-front id set
+    was loaded, in which case the sequence is not an orphan and the backfill must
+    not abort.
+    """
+    return (
+        await session.execute(select(SQLOTU.id).where(SQLOTU.id == otu_id))
+    ).scalar_one_or_none() is not None
 
 
 async def _resolve_reference_id(

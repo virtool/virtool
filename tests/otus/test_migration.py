@@ -4,11 +4,14 @@ import asyncio
 from collections.abc import Callable
 
 import pytest
-from sqlalchemy import text
+from motor.motor_asyncio import AsyncIOMotorCollection
+from sqlalchemy import insert, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.migration.ctx import MigrationContext
+from virtool.otus.db import otu_row_values
 from virtool.otus.migration import copy_otus_and_sequences_to_postgres
+from virtool.otus.sql import SQLOTU
 from virtool.utils import timestamp
 
 
@@ -111,6 +114,22 @@ async def _fetch_sequence(ctx: MigrationContext, sequence_id: str):
                 {"id": sequence_id},
             )
         ).one_or_none()
+
+
+async def _insert_otu_row(
+    ctx: MigrationContext, otu_id: str, reference_id: int
+) -> None:
+    """Insert a ``legacy_otus`` row directly, as an application dual-write would."""
+    async with AsyncSession(ctx.pg) as session:
+        await session.execute(
+            insert(SQLOTU).values(
+                **otu_row_values(
+                    _otu_doc(otu_id, reference_id, "Cucumber mosaic virus"),
+                    reference_id,
+                ),
+            ),
+        )
+        await session.commit()
 
 
 async def _count(ctx: MigrationContext, table: str) -> int:
@@ -244,3 +263,37 @@ class TestCopyOtusAndSequences:
 
         with pytest.raises(ValueError, match="does not exist in postgres"):
             await copy_otus_and_sequences_to_postgres(ctx)
+
+    async def test_otu_dual_written_mid_run_is_not_an_orphan(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+        mocker,
+    ):
+        """A parent OTU that lands in Postgres mid-run must not be called an orphan.
+
+        The application keeps dual-writing while the backfill runs, so a parent OTU
+        can appear in Postgres after the sequence pass cached its OTU id set. The
+        stale set must not be the only thing consulted before rejecting a sequence.
+        """
+        await ctx.mongo.sequences.insert_one(
+            _sequence_doc("seq_dual_written", "otu_dual_written"),
+        )
+
+        real_find_one = AsyncIOMotorCollection.find_one
+
+        async def find_one_after_dual_write(self, *args, **kwargs):
+            if self.name == "sequences":
+                await _insert_otu_row(ctx, "otu_dual_written", reference_id)
+
+            return await real_find_one(self, *args, **kwargs)
+
+        mocker.patch.object(
+            AsyncIOMotorCollection,
+            "find_one",
+            find_one_after_dual_write,
+        )
+
+        await copy_otus_and_sequences_to_postgres(ctx)
+
+        assert await _fetch_sequence(ctx, "seq_dual_written") is not None
