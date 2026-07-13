@@ -10,7 +10,7 @@ from sqlalchemy import insert, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.migration.ctx import MigrationContext
-from virtool.otus.db import otu_row_values
+from virtool.otus.db import bulk_insert_otu_rows, otu_row_values
 from virtool.otus.migration import (
     backfill_sequence_positions,
     compare_otu_and_sequence_stores,
@@ -377,6 +377,33 @@ class TestCompareOtuAndSequenceStores:
         A ``datetime`` cannot survive the JSONB round trip as a ``datetime``: it is
         stored and read back as an ISO string. The gate must not read that as drift.
         """
+        await compare_otu_and_sequence_stores(ctx)
+
+    async def test_bulk_written_otu_passes(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+    ):
+        """An OTU written by the bulk import path passes, despite a ``created_at``
+        carrying microseconds Mongo cannot hold.
+
+        The bulk path hands the same in-memory dict to Postgres and to Mongo, making it
+        the one writer whose datetime never round-tripped through BSON. Mongo floors it
+        to the millisecond, so the row has to hold that same instant and not the finer
+        one it was handed. Every other writer passes a document read back out of Mongo
+        and so is already truncated.
+        """
+        document = {
+            **_otu_doc("otu_bulk", reference_id, "Bulk written virus"),
+            "created_at": datetime(2025, 7, 2, 21, 18, 48, 420789),
+        }
+
+        async with AsyncSession(ctx.pg) as session:
+            await bulk_insert_otu_rows(session, [document], reference_id)
+            await session.commit()
+
+        await ctx.mongo.otus.insert_one(document)
+
         await compare_otu_and_sequence_stores(ctx)
 
     async def test_is_read_only_and_repeatable(

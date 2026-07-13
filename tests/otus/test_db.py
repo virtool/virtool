@@ -2,6 +2,8 @@ import pytest
 from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from tests.fixtures.otus import IMPORTED_CREATED_AT
+from virtool.api.custom_json import dump_string, loads
 from virtool.history.sql import SQLLegacyHistory
 from virtool.mongo.core import Mongo
 from virtool.otus.db import (
@@ -10,7 +12,13 @@ from virtool.otus.db import (
     find,
     increment_otu_version,
     join,
+    otu_document_from_row,
+    otu_row_values,
+    sequence_document_from_row,
+    sequence_row_values,
 )
+from virtool.otus.sql import SQLOTU, SQLSequence
+from virtool.types import Document
 
 
 @pytest.mark.parametrize(
@@ -172,3 +180,77 @@ class TestFindModifiedCount:
         data = await find(mongo, pg, None, 1, 25, None)
 
         assert data["modified_count"] == 1
+
+
+def _as_stored(values: dict) -> Document:
+    """Render row values as the ``data`` JSONB column holds and returns them."""
+    return loads(dump_string(values["data"]))
+
+
+class TestOTUDataRoundTrip:
+    """``legacy_otus.data`` must be a faithful lift of the Mongo OTU document.
+
+    A JSONB column cannot hold a datetime and Mongo cannot hold microseconds, so an
+    imported OTU's ``created_at`` has to survive both. These tests assert against a real
+    Mongo round trip rather than a hardcoded millisecond value, so they pin the write
+    path to what Mongo actually stores.
+    """
+
+    async def test_stores_the_instant_mongo_stores(
+        self,
+        mongo: Mongo,
+        test_imported_otu: Document,
+    ):
+        """The stored ISO string is the truncated instant Mongo holds, not a finer one."""
+        await mongo.otus.insert_one(test_imported_otu)
+
+        document = await mongo.otus.find_one({"_id": test_imported_otu["_id"]})
+
+        assert _as_stored(otu_row_values(test_imported_otu, 1)) == loads(
+            dump_string(document),
+        )
+
+    async def test_recovers_the_mongo_document(
+        self,
+        mongo: Mongo,
+        test_imported_otu: Document,
+    ):
+        """Reading the row back yields the document Mongo would have returned."""
+        await mongo.otus.insert_one(test_imported_otu)
+
+        row = SQLOTU(data=_as_stored(otu_row_values(test_imported_otu, 1)))
+
+        assert otu_document_from_row(row) == await mongo.otus.find_one(
+            {"_id": test_imported_otu["_id"]},
+        )
+
+    def test_does_not_mutate_the_document(self, test_imported_otu: Document):
+        """The bulk insert path hands the same dict to Mongo afterwards."""
+        otu_row_values(test_imported_otu, 1)
+
+        assert test_imported_otu["created_at"] == IMPORTED_CREATED_AT
+
+    def test_otu_without_created_at(self, test_otu: Document):
+        """An OTU created through the API carries no ``created_at`` to encode."""
+        row = SQLOTU(data=_as_stored(otu_row_values(test_otu, 1)))
+
+        assert "created_at" not in row.data
+        assert otu_document_from_row(row) == row.data
+
+
+class TestSequenceDataRoundTrip:
+    async def test_recovers_the_mongo_document(
+        self,
+        mongo: Mongo,
+        test_sequence: Document,
+    ):
+        """Sequences hold nothing JSON cannot express, so the column returns what
+        was put in it.
+        """
+        await mongo.sequences.insert_one(test_sequence)
+
+        row = SQLSequence(data=_as_stored(sequence_row_values(test_sequence)))
+
+        assert sequence_document_from_row(row) == await mongo.sequences.find_one(
+            {"_id": test_sequence["_id"]},
+        )
