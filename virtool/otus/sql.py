@@ -60,6 +60,15 @@ class SQLSequence(Base):
     ``isolate_id`` identifies the embedded isolate the sequence belongs to and is
     promoted so isolate-scoped operations (such as removing an isolate) can filter
     and delete on it directly. ``segment`` is the optional segment name.
+
+    ``position`` records the sequence's insertion order within its OTU, recovering
+    the Mongo natural order that the ``sequences`` collection returns. Historical
+    diffs encode changes to an isolate's sequence list by index, so a joined OTU
+    rebuilt from Postgres must present its sequences in this order or
+    :func:`virtool.history.db.patch_to_version` will apply them to the wrong
+    sequence. Only relative order matters, so deletes leave gaps rather than
+    renumbering. It is nullable because rows written before the column existed have
+    no position until the backfill assigns one.
     """
 
     __tablename__ = "legacy_sequences"
@@ -71,3 +80,8 @@ class SQLSequence(Base):
     )
     isolate_id: Mapped[str]
     segment: Mapped[str | None]
+    position: Mapped[int | None] = mapped_column(BigInteger)
+
+    __table_args__ = (
+        Index("ix_legacy_sequences_otu_id_position", "otu_id", "position"),
+    )

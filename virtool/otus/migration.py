@@ -20,7 +20,7 @@ from structlog import get_logger
 from virtool.api.custom_json import dump_string, loads
 from virtool.data.topg import resolve_legacy_id
 from virtool.migration import MigrationContext
-from virtool.otus.db import otu_row_values, sequence_row_values
+from virtool.otus.db import lock_legacy_otu, otu_row_values, sequence_row_values
 from virtool.otus.sql import SQLOTU, SQLSequence
 from virtool.references.sql import SQLReference
 from virtool.types import Document
@@ -579,3 +579,171 @@ def _diff_data(mongo_data: Document, postgres_data: Document) -> dict[str, dict]
         for key in sorted(set(mongo_data) | set(postgres_data))
         if mongo_data.get(key) != postgres_data.get(key)
     }
+
+
+async def backfill_sequence_positions(ctx: MigrationContext) -> None:
+    """Assign every ``legacy_sequences`` row its position within its OTU.
+
+    An OTU's sequences are read back with the same unsorted
+    ``find({"otu_id": otu_id})`` that :func:`virtool.otus.db.join` uses, so the order
+    Mongo returns them in is by definition the order every historical diff was
+    computed against. Counting them off in that order records it.
+
+    The backfill is authoritative rather than skip-existing. A sequence created
+    between the dual-write shipping and this revision running computed its position
+    as ``MAX + 1`` over an OTU with no Postgres rows yet and so wrongly took position
+    zero, colliding with the OTU's true first sequence. Re-deriving every position
+    from Mongo repairs that, and makes the revision idempotent: a second run reads
+    the same order and writes the same numbers.
+
+    Each OTU is locked with :func:`virtool.otus.db.lock_legacy_otu` *before* its
+    sequences are read from Mongo, which is the same lock every dual-write path takes.
+    Taking it first is what makes the renumber safe: a ``create_sequence`` landing
+    between the read and the write would append a sequence this run cannot see, and
+    that sequence would compute its own position as ``MAX + 1`` over an OTU whose rows
+    are still unpositioned -- taking position zero, which this run then also assigns
+    to the OTU's true first sequence. The lock is released by the commit at the end of
+    each OTU, bounding both the transaction and memory.
+    """
+    otu_ids = [
+        document["_id"]
+        async for document in ctx.mongo.otus.find({}, projection=["_id"])
+    ]
+
+    positioned_count = 0
+
+    async with AsyncSession(ctx.pg) as session:
+        otu_ids_present = {row[0] for row in await session.execute(select(SQLOTU.id))}
+
+        for otu_id in otu_ids:
+            await lock_legacy_otu(session, otu_id)
+
+            documents = [
+                document
+                async for document in ctx.mongo.sequences.find({"otu_id": otu_id})
+            ]
+
+            if documents:
+                if otu_id not in otu_ids_present and not await _otu_exists(
+                    session,
+                    otu_id,
+                ):
+                    msg = (
+                        f"otu {otu_id!r} has sequences in mongo but no row in postgres; "
+                        f"run the otu and sequence backfill first"
+                    )
+                    raise ValueError(msg)
+
+                for position, document in enumerate(documents):
+                    await session.execute(
+                        insert(SQLSequence)
+                        .values(**sequence_row_values(document), position=position)
+                        .on_conflict_do_update(
+                            index_elements=["id"],
+                            set_={"position": position},
+                        ),
+                    )
+
+                positioned_count += len(documents)
+
+            await session.commit()
+
+    logger.info(
+        "sequence position backfill complete",
+        otus=len(otu_ids),
+        sequences=positioned_count,
+    )
+
+
+async def compare_sequence_positions(ctx: MigrationContext) -> None:
+    """Verify Postgres orders each OTU's sequences exactly as Mongo returns them.
+
+    A gating check for the OTU read cutover, and the one thing
+    :func:`compare_otu_and_sequence_stores` cannot do. That check compares a row
+    against the columns :func:`sequence_row_values` derives from a single Mongo
+    document, but ``position`` orders a sequence *within its OTU* and so is not
+    derivable from one document. It has to be checked an OTU at a time.
+
+    The check matters because a joined OTU rebuilt from Postgres feeds
+    :func:`virtool.history.db.patch_to_version`, whose ``dictdiffer`` diffs address
+    an isolate's sequences by list index. If Postgres hands them back in a different
+    order than Mongo did, index builds, reference clones and analysis formatting all
+    silently apply each stored change to the wrong sequence.
+
+    A ``NULL`` position is drift. Postgres sorts nulls last on an ascending order,
+    so an unbackfilled row would otherwise be quietly shuffled to the end of its OTU
+    instead of failing the check.
+
+    Like the other drift checks this is read-only and re-runnable, and re-verifies
+    each candidate OTU individually before reporting it, so an OTU written between
+    the two reads is not mistaken for drift.
+    """
+    otu_ids = [
+        document["_id"]
+        async for document in ctx.mongo.otus.find({}, projection=["_id"])
+    ]
+
+    async with AsyncSession(ctx.pg) as session:
+        candidates = [
+            otu_id
+            for otu_id in otu_ids
+            if await _compare_otu_sequence_order(ctx, session, otu_id)
+        ]
+
+    async with AsyncSession(ctx.pg) as session:
+        drifted = [
+            report
+            for otu_id in candidates
+            if (report := await _compare_otu_sequence_order(ctx, session, otu_id))
+        ]
+
+    if drifted:
+        for report in drifted:
+            logger.error("sequence order drift", **report)
+
+        msg = f"sequence order drift detected in {len(drifted)} otus"
+        raise ValueError(msg)
+
+    logger.info("sequence order matches mongo in every otu", otus=len(otu_ids))
+
+
+async def _compare_otu_sequence_order(
+    ctx: MigrationContext,
+    session: AsyncSession,
+    otu_id: str,
+) -> dict | None:
+    """Report an OTU whose Postgres sequence order does not match Mongo's."""
+    mongo_ids = [
+        document["_id"]
+        async for document in ctx.mongo.sequences.find(
+            {"otu_id": otu_id},
+            projection=["_id"],
+        )
+    ]
+
+    rows = (
+        await session.execute(
+            select(SQLSequence.id, SQLSequence.position)
+            .where(SQLSequence.otu_id == otu_id)
+            .order_by(SQLSequence.position),
+        )
+    ).all()
+
+    if any(row.position is None for row in rows):
+        return {
+            "otu_id": otu_id,
+            "issue": "sequences without a position",
+            "sequence_ids": [row.id for row in rows if row.position is None],
+        }
+
+    postgres_ids = [row.id for row in rows]
+
+    if mongo_ids != postgres_ids:
+        return {
+            "otu_id": otu_id,
+            "issue": "sequence order differs",
+            "mongo": mongo_ids,
+            "postgres": postgres_ids,
+        }
+
+    return None
