@@ -722,5 +722,12 @@
       'name': 'add sequence isolate_id and segment columns and otu reference_id index',
       'revision': '5de38ebeaa78',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 104,
+      'name': 'copy otus and sequences to postgres',
+      'revision': 'gkdk4xtpkwi2',
+    }),
   ])
 # ---

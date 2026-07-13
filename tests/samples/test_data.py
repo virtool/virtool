@@ -1,27 +1,26 @@
 import asyncio
-from collections.abc import AsyncIterator
+from pathlib import Path
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
-import virtool.utils
 from tests.fixtures.client import ClientSpawner
-from tests.samples.utils import add_sample_uploads
+from tests.fixtures.samples import create_rights_sample
 from virtool.analyses.sql import SQLAnalysis
 from virtool.api.client import JobClient, UserClient
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.data.transforms import apply_transforms
-from virtool.fake.next import DataFaker
-from virtool.models.enums import AnalysisWorkflow, LibraryType, Permission
+from virtool.fake.next import DataFaker, fake_file_chunker
+from virtool.models.enums import AnalysisWorkflow, Permission
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row, get_row_by_id
 from virtool.samples.data import SamplesData
 from virtool.samples.db import AttachUploadsTransform
-from virtool.samples.models import WorkflowState
+from virtool.samples.models import Sample
 from virtool.samples.oas import (
     CreateAnalysisRequest,
     CreateSampleRequest,
@@ -31,7 +30,6 @@ from virtool.samples.sql import (
     SQLLegacySample,
     SQLLegacySampleLabel,
     SQLLegacySampleSubtraction,
-    SQLSampleReads,
     SQLSampleUpload,
 )
 from virtool.samples.utils import SampleRight, sample_file_key, sample_prefix
@@ -42,125 +40,15 @@ from virtool.uploads.sql import SQLUpload, UploadType
 from virtool.uploads.utils import upload_file_key
 from virtool.users.oas import UpdateUserRequest
 
-
-async def insert_rights_sample(
-    pg: AsyncEngine,
-    legacy_id: str,
-    user_id: int,
-    all_read: bool = False,
-    all_write: bool = False,
-    group_read: bool = False,
-    group_write: bool = False,
-    group_id: int | None = None,
-) -> None:
-    """Insert a minimal ``legacy_samples`` row for exercising ``has_right``."""
-    async with AsyncSession(pg) as session:
-        session.add(
-            SQLLegacySample(
-                legacy_id=legacy_id,
-                name=legacy_id,
-                library_type=LibraryType.normal.value,
-                created_at=virtool.utils.timestamp(),
-                user_id=user_id,
-                all_read=all_read,
-                all_write=all_write,
-                group_read=group_read,
-                group_write=group_write,
-                group_id=group_id,
-            ),
-        )
-        await session.commit()
-
-
-@pytest.fixture
-async def get_sample_ready_false(
-    fake: DataFaker,
-    mongo: Mongo,
-    pg: AsyncEngine,
-    static_time,
-):
-    label = await fake.labels.create()
-    user = await fake.users.create()
-    job = await fake.jobs.create(user, workflow="create_sample")
-
-    upload = await fake.uploads.create(user=user)
-    apple = await fake.subtractions.create(
-        user=user, upload=upload, name="Apple", upload_files=False, finalized=False
-    )
-    pear = await fake.subtractions.create(
-        user=user, upload=upload, name="Pear", upload_files=False, finalized=False
-    )
-
-    await mongo.samples.insert_one(
-        {
-            "_id": "test",
-            "all_read": True,
-            "all_write": True,
-            "created_at": static_time.datetime,
-            "files": [
-                {
-                    "id": "foo",
-                    "name": "Bar.fq.gz",
-                    "download_url": "/download/samples/files/file_1.fq.gz",
-                },
-            ],
-            "format": "fastq",
-            "group": "none",
-            "group_read": True,
-            "group_write": True,
-            "hold": False,
-            "host": "",
-            "is_legacy": False,
-            "isolate": "",
-            "job": {"id": job.id},
-            "labels": [label.id],
-            "library_type": LibraryType.normal.value,
-            "locale": "",
-            "name": "Test",
-            "notes": "",
-            "nuvs": False,
-            "pathoscope": True,
-            "ready": False,
-            "subtractions": [apple.id, pear.id],
-            "user": {"id": user.id},
-            "workflows": {
-                "aodp": WorkflowState.INCOMPATIBLE.value,
-                "pathoscope": WorkflowState.COMPLETE.value,
-                "nuvs": WorkflowState.PENDING.value,
-            },
-        },
-    )
-
-    async with AsyncSession(pg) as session:
-        legacy = SQLLegacySample(
-            legacy_id="test",
-            name="Test",
-            library_type=LibraryType.normal.value,
-            format="fastq",
-            quality=None,
-            created_at=static_time.datetime,
-            ready=False,
-            hold=False,
-            is_legacy=False,
-            all_read=True,
-            all_write=True,
-            group_read=True,
-            group_write=True,
-            user_id=user.id,
-            job_id=job.id,
-        )
-        session.add(legacy)
-        await session.flush()
-
-        session.add(SQLLegacySampleLabel(sample_id=legacy.id, label_id=label.id))
-        session.add(
-            SQLLegacySampleSubtraction(sample_id=legacy.id, subtraction_id=apple.id),
-        )
-        session.add(
-            SQLLegacySampleSubtraction(sample_id=legacy.id, subtraction_id=pear.id),
-        )
-
-        await session.commit()
+QUALITY = {
+    "bases": [[1543]],
+    "composition": [[6372]],
+    "count": 7069,
+    "encoding": "OuBQPPuwYimrxkNpPWUx",
+    "gc": 34222440,
+    "length": [3237],
+    "sequences": [7091],
+}
 
 
 async def _count_legacy_samples(pg: AsyncEngine) -> int:
@@ -360,33 +248,20 @@ class TestCreate:
 class TestAttachUploadsTransform:
     """The uploads array is sourced from ``sample_uploads``, ordered by ``index``."""
 
-    @staticmethod
-    async def get_sample_pk(pg: AsyncEngine) -> int:
-        async with AsyncSession(pg) as session:
-            return (
-                await session.execute(
-                    select(SQLLegacySample.id).where(
-                        SQLLegacySample.legacy_id == "test",
-                    ),
-                )
-            ).scalar_one()
-
     async def test_orders_one_by_index(
         self,
         fake: DataFaker,
-        get_sample_ready_false,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
-        """A single sample's uploads come back in their stored index order."""
+        """A sample's uploads come back in the order they were supplied at creation."""
         user = await fake.users.create()
-        first = await fake.uploads.create(user=user)
-        second = await fake.uploads.create(user=user)
+        first = await fake.uploads.create(user=user, name="first.fq.gz")
+        second = await fake.uploads.create(user=user, name="second.fq.gz")
 
-        await add_sample_uploads(mongo, pg, "test", [second.id, first.id])
+        sample = await fake.samples.create(user, uploads=[second, first])
 
         document = await apply_transforms(
-            {"id": await self.get_sample_pk(pg)},
+            {"id": sample.id},
             [AttachUploadsTransform(pg)],
             pg,
         )
@@ -399,36 +274,48 @@ class TestAttachUploadsTransform:
     async def test_orders_many_by_index(
         self,
         fake: DataFaker,
-        get_sample_ready_false,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
         """The batched path groups uploads by sample and preserves index order."""
         user = await fake.users.create()
-        first = await fake.uploads.create(user=user)
-        second = await fake.uploads.create(user=user)
+        first = await fake.uploads.create(user=user, name="first.fq.gz")
+        second = await fake.uploads.create(user=user, name="second.fq.gz")
+        third = await fake.uploads.create(user=user, name="third.fq.gz")
 
-        await add_sample_uploads(mongo, pg, "test", [second.id, first.id])
+        paired = await fake.samples.create(user, uploads=[second, first])
+        single = await fake.samples.create(user, uploads=[third])
 
         documents = await apply_transforms(
-            [{"id": await self.get_sample_pk(pg)}],
+            [{"id": paired.id}, {"id": single.id}],
             [AttachUploadsTransform(pg)],
             pg,
         )
 
-        assert [upload["id"] for upload in documents[0]["uploads"]] == [
-            second.id,
-            first.id,
-        ]
+        assert [
+            [upload["id"] for upload in document["uploads"]] for document in documents
+        ] == [[second.id, first.id], [third.id]]
 
     async def test_no_uploads_is_none(
         self,
-        get_sample_ready_false,
+        fake: DataFaker,
         pg: AsyncEngine,
     ):
-        """A sample with no ``sample_uploads`` rows gets ``None``, not an empty list."""
+        """A sample with no ``sample_uploads`` rows gets ``None``, not an empty list.
+
+        Samples imported from Mongo without an ``uploads`` array are left without
+        membership rows by the backfill, so this state outlives the migration.
+        """
+        user = await fake.users.create()
+        sample = await fake.samples.create(user)
+
+        async with AsyncSession(pg) as session:
+            await session.execute(
+                delete(SQLSampleUpload).where(SQLSampleUpload.sample_id == sample.id),
+            )
+            await session.commit()
+
         document = await apply_transforms(
-            {"id": await self.get_sample_pk(pg)},
+            {"id": sample.id},
             [AttachUploadsTransform(pg)],
             pg,
         )
@@ -436,172 +323,86 @@ class TestAttachUploadsTransform:
         assert document["uploads"] is None
 
 
-async def test_finalize(
-    data_layer: DataLayer,
-    fake: DataFaker,
-    get_sample_ready_false,
-    memory_storage: StorageBackend,
-    mongo: Mongo,
-    pg: AsyncEngine,
-    snapshot_recent: SnapshotAssertion,
-    spawn_client: ClientSpawner,
-):
-    """Test that finalizing a sample deletes its upload files from storage."""
-    upload = await fake.uploads.create(user=await fake.users.create())
+class TestFinalize:
+    async def test_ok(
+        self,
+        data_layer: DataLayer,
+        example_path: Path,
+        fake: DataFaker,
+        memory_storage: StorageBackend,
+        pg: AsyncEngine,
+        snapshot_recent: SnapshotAssertion,
+    ):
+        """Finalizing a sample whose reads have been uploaded marks it ready, leaves the
+        reads downloadable, and deletes the input uploads from storage.
 
-    upload_row = await get_row_by_id(pg, SQLUpload, upload.id)
-    upload_name_on_disk = upload_row.name_on_disk
+        The upload cleanup keys off the sample's ``uploads`` array rather than its
+        ``SQLSampleReads`` rows, so it does not depend on the workflow having linked the
+        reads it wrote back to an upload.
+        """
+        user = await fake.users.create()
+        sample = await fake.samples.create(user, paired=True)
 
-    await add_sample_uploads(mongo, pg, "test", [upload.id])
+        upload_keys = []
 
-    async with AsyncSession(pg) as session:
-        legacy_sample_id = (
-            await session.execute(
-                select(SQLLegacySample.id).where(SQLLegacySample.legacy_id == "test"),
+        for upload in sample.uploads:
+            row = await get_row_by_id(pg, SQLUpload, upload.id)
+            key = upload_file_key(row.name_on_disk)
+
+            assert await memory_storage.size(key) > 0
+
+            upload_keys.append(key)
+
+        filenames = ["reads_1.fq.gz", "reads_2.fq.gz"]
+
+        for filename in filenames:
+            await data_layer.samples.upload_reads(
+                sample.id,
+                filename,
+                fake_file_chunker(example_path / "sample" / filename),
             )
-        ).scalar_one()
 
-        session.add(
-            SQLSampleReads(
-                name="reads.fq.gz",
-                name_on_disk="reads_1.fq.gz",
-                sample="test",
-                sample_id=legacy_sample_id,
-                size=len(b"upload contents"),
-                upload=upload.id,
-                uploaded_at=virtool.utils.timestamp(),
-            ),
+        finalized = await data_layer.samples.finalize(sample.id, QUALITY)
+
+        assert finalized.ready is True
+        assert finalized.quality == QUALITY
+        assert finalized.dict() == snapshot_recent()
+
+        for filename in filenames:
+            stream, _, _ = await data_layer.samples.get_reads_file(sample.id, filename)
+
+            assert (
+                b"".join([chunk async for chunk in stream])
+                == (example_path / "sample" / filename).read_bytes()
+            )
+
+        for key in upload_keys:
+            with pytest.raises(StorageKeyNotFoundError):
+                await memory_storage.size(key)
+
+        for upload in sample.uploads:
+            assert (await get_row_by_id(pg, SQLUpload, upload.id)).removed is True
+
+    async def test_already_finalized(self, data_layer: DataLayer, fake: DataFaker):
+        """A sample that is already ready cannot be finalized again."""
+        user = await fake.users.create()
+        sample = await fake.samples.create(user, ready=True)
+
+        with pytest.raises(ResourceConflictError, match=r"Sample already finalized"):
+            await data_layer.samples.finalize(sample.id, QUALITY)
+
+    async def test_sample_disappeared(self, data_layer: DataLayer, mocker):
+        """Finalizing raises ``ResourceNotFoundError`` when the sample row is gone after
+        the existence check, rather than surfacing a ``NoResultFound`` 500.
+        """
+        mocker.patch.object(
+            data_layer.samples,
+            "_resolve_ids",
+            return_value=(999999, "gone"),
         )
 
-        await session.commit()
-
-    async def _chunks() -> AsyncIterator[bytes]:
-        yield b"upload contents"
-
-    upload_key = upload_file_key(upload_name_on_disk)
-    await memory_storage.write(upload_key, _chunks())
-
-    assert await memory_storage.size(upload_key) == len(b"upload contents")
-
-    quality = {
-        "bases": [[1543]],
-        "composition": [[6372]],
-        "count": 7069,
-        "encoding": "OuBQPPuwYimrxkNpPWUx",
-        "gc": 34222440,
-        "length": [3237],
-        "sequences": [7091],
-    }
-
-    sample = await data_layer.samples.finalize("test", quality)
-
-    assert sample.dict() == snapshot_recent()
-    assert sample.quality == quality
-    assert sample.ready is True
-
-    async with AsyncSession(pg) as session:
-        legacy = (
-            await session.execute(
-                select(SQLLegacySample).where(SQLLegacySample.legacy_id == "test"),
-            )
-        ).scalar_one()
-
-    assert legacy.ready is True
-    assert legacy.quality == quality
-
-    with pytest.raises(StorageKeyNotFoundError):
-        await memory_storage.size(upload_key)
-
-
-async def test_finalize_cleans_up_uploads_without_reads_link(
-    data_layer: DataLayer,
-    fake: DataFaker,
-    get_sample_ready_false,
-    memory_storage: StorageBackend,
-    mongo: Mongo,
-    pg: AsyncEngine,
-):
-    """Finalizing deletes the sample's uploads from storage using its ``uploads`` array.
-
-    The cleanup keys off the sample's ``uploads`` array rather than ``SQLSampleReads``,
-    so the upload file is removed even when the workflow wrote its reads row without an
-    ``upload_id``.
-    """
-    upload = await fake.uploads.create(user=await fake.users.create())
-
-    upload_row = await get_row_by_id(pg, SQLUpload, upload.id)
-    upload_key = upload_file_key(upload_row.name_on_disk)
-
-    await add_sample_uploads(mongo, pg, "test", [upload.id])
-
-    async with AsyncSession(pg) as session:
-        session.add(
-            SQLSampleReads(
-                name="reads.fq.gz",
-                name_on_disk="reads_1.fq.gz",
-                sample="test",
-                size=len(b"upload contents"),
-                upload=None,
-                uploaded_at=virtool.utils.timestamp(),
-            ),
-        )
-
-        await session.commit()
-
-    async def _chunks() -> AsyncIterator[bytes]:
-        yield b"upload contents"
-
-    await memory_storage.write(upload_key, _chunks())
-
-    await data_layer.samples.finalize(
-        "test",
-        {
-            "bases": [[1543]],
-            "composition": [[6372]],
-            "count": 7069,
-            "encoding": "OuBQPPuwYimrxkNpPWUx",
-            "gc": 34222440,
-            "length": [3237],
-            "sequences": [7091],
-        },
-    )
-
-    with pytest.raises(StorageKeyNotFoundError):
-        await memory_storage.size(upload_key)
-
-    refreshed = await get_row_by_id(pg, SQLUpload, upload.id)
-    assert refreshed.removed is True
-
-
-async def test_finalized_already(get_sample_ready_false, data_layer):
-    quality = {
-        "bases": [[1543]],
-        "composition": [[6372]],
-        "count": 7069,
-        "encoding": "OuBQPPuwYimrxkNpPWUx",
-        "gc": 34222440,
-        "length": [3237],
-        "sequences": [7091],
-    }
-
-    await data_layer.samples.finalize("test", quality)
-
-    with pytest.raises(ResourceConflictError, match=r"Sample already finalized"):
-        await data_layer.samples.finalize("test", quality)
-
-
-async def test_finalize_sample_disappeared(data_layer: DataLayer, mocker):
-    """Finalizing raises ``ResourceNotFoundError`` when the sample row is gone after the
-    existence check, rather than surfacing a ``NoResultFound`` 500.
-    """
-    mocker.patch.object(
-        data_layer.samples,
-        "_resolve_ids",
-        return_value=(999999, "gone"),
-    )
-
-    with pytest.raises(ResourceNotFoundError):
-        await data_layer.samples.finalize(999999, {})
+        with pytest.raises(ResourceNotFoundError):
+            await data_layer.samples.finalize(999999, {})
 
 
 class TestHasRight:
@@ -609,7 +410,6 @@ class TestHasRight:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        pg: AsyncEngine,
     ):
         """Test group member can write when group_write is True."""
         group = await fake.groups.create()
@@ -625,22 +425,21 @@ class TestHasRight:
             user_id=user.id,
         )
 
-        await insert_rights_sample(
-            pg,
-            "sample_1",
-            user_id=sample_owner.id,
-            group_id=group.id,
+        sample = await create_rights_sample(
+            data_layer,
+            fake,
+            sample_owner,
+            group=group.id,
             group_read=True,
             group_write=True,
         )
 
-        assert await data_layer.samples.has_right("sample_1", client, SampleRight.write)
+        assert await data_layer.samples.has_right(sample.id, client, SampleRight.write)
 
     async def test_read_permission(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        pg: AsyncEngine,
     ):
         """Test group member can read when group_read is True."""
         group = await fake.groups.create()
@@ -656,15 +455,15 @@ class TestHasRight:
             user_id=user.id,
         )
 
-        await insert_rights_sample(
-            pg,
-            "sample_2",
-            user_id=sample_owner.id,
-            group_id=group.id,
+        sample = await create_rights_sample(
+            data_layer,
+            fake,
+            sample_owner,
+            group=group.id,
             group_read=True,
         )
 
-        assert await data_layer.samples.has_right("sample_2", client, SampleRight.read)
+        assert await data_layer.samples.has_right(sample.id, client, SampleRight.read)
 
     async def test_missing_sample(
         self,
@@ -693,7 +492,6 @@ class TestHasRight:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        pg: AsyncEngine,
     ):
         """Test full administrator has access regardless of permissions."""
         user = await fake.users.create(administrator_role=AdministratorRole.FULL)
@@ -708,15 +506,14 @@ class TestHasRight:
             user_id=user.id,
         )
 
-        await insert_rights_sample(pg, "sample_3", user_id=sample_owner.id)
+        sample = await create_rights_sample(data_layer, fake, sample_owner)
 
-        assert await data_layer.samples.has_right("sample_3", client, SampleRight.write)
+        assert await data_layer.samples.has_right(sample.id, client, SampleRight.write)
 
     async def test_owner_full_access(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        pg: AsyncEngine,
     ):
         """Test sample owner has full access."""
         user = await fake.users.create()
@@ -730,25 +527,24 @@ class TestHasRight:
             user_id=user.id,
         )
 
-        await insert_rights_sample(pg, "sample_4", user_id=user.id)
+        sample = await create_rights_sample(data_layer, fake, user)
 
-        assert await data_layer.samples.has_right("sample_4", client, SampleRight.write)
+        assert await data_layer.samples.has_right(sample.id, client, SampleRight.write)
 
     async def test_job_client_full_access(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        pg: AsyncEngine,
     ):
         """A job-authenticated client holds every right regardless of ownership or
         sharing, since a job's identity is neither a user nor an administrator.
         """
         sample_owner = await fake.users.create()
 
-        await insert_rights_sample(
-            pg,
-            "job_sample",
-            user_id=sample_owner.id,
+        sample = await create_rights_sample(
+            data_layer,
+            fake,
+            sample_owner,
             all_read=False,
             all_write=False,
         )
@@ -756,12 +552,12 @@ class TestHasRight:
         client = JobClient(job_id=1)
 
         assert await data_layer.samples.has_right(
-            "job_sample",
+            sample.id,
             client,
             SampleRight.read,
         )
         assert await data_layer.samples.has_right(
-            "job_sample",
+            sample.id,
             client,
             SampleRight.write,
         )
@@ -770,7 +566,6 @@ class TestHasRight:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        pg: AsyncEngine,
     ):
         """Test non-group member is denied when all_write is False."""
         group = await fake.groups.create()
@@ -786,16 +581,16 @@ class TestHasRight:
             user_id=user.id,
         )
 
-        await insert_rights_sample(
-            pg,
-            "sample_5",
-            user_id=sample_owner.id,
-            group_id=group.id,
+        sample = await create_rights_sample(
+            data_layer,
+            fake,
+            sample_owner,
+            group=group.id,
             group_write=True,
         )
 
         assert not await data_layer.samples.has_right(
-            "sample_5",
+            sample.id,
             client,
             SampleRight.write,
         )
@@ -819,7 +614,6 @@ class TestFindRights:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        pg: AsyncEngine,
     ):
         """A full administrator lists a sample they neither own nor share."""
         administrator = await fake.users.create(
@@ -827,10 +621,10 @@ class TestFindRights:
         )
         sample_owner = await fake.users.create()
 
-        await insert_rights_sample(
-            pg,
-            "other_private",
-            user_id=sample_owner.id,
+        sample = await create_rights_sample(
+            data_layer,
+            fake,
+            sample_owner,
             all_read=False,
         )
 
@@ -845,22 +639,21 @@ class TestFindRights:
         )
 
         assert result.found_count == 1
-        assert [document.name for document in result.documents] == ["other_private"]
+        assert [document.id for document in result.documents] == [sample.id]
 
     async def test_non_owner_cannot_see_private_sample(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        pg: AsyncEngine,
     ):
         """A non-administrator without rights does not list another user's sample."""
         user = await fake.users.create()
         sample_owner = await fake.users.create()
 
-        await insert_rights_sample(
-            pg,
-            "other_private",
-            user_id=sample_owner.id,
+        await create_rights_sample(
+            data_layer,
+            fake,
+            sample_owner,
             all_read=False,
         )
 
@@ -1333,70 +1126,24 @@ class TestDelete:
         self,
         fake: DataFaker,
         mongo: Mongo,
-        pg: AsyncEngine,
-    ) -> tuple[str, str]:
+    ) -> tuple[Sample, int, str]:
+        """Create a finalized sample and a reference with a ready index to analyse it
+        against.
+        """
         user = await fake.users.create()
         reference = await fake.references.create(user=user, name="Test Reference")
+        sample = await fake.samples.create(user, ready=True)
 
-        async with AsyncSession(pg) as session:
-            session.add(
-                SQLLegacySample(
-                    legacy_id="test_sample",
-                    name="Test Sample",
-                    library_type=LibraryType.normal.value,
-                    created_at=virtool.utils.timestamp(),
-                    user_id=user.id,
-                    all_read=True,
-                    all_write=True,
-                ),
-            )
-            await session.commit()
-
-        await asyncio.gather(
-            mongo.samples.insert_one(
-                {
-                    "_id": "test_sample",
-                    "all_read": True,
-                    "all_write": True,
-                    "created_at": virtool.utils.timestamp(),
-                    "files": [],
-                    "format": "fastq",
-                    "group": "none",
-                    "group_read": True,
-                    "group_write": True,
-                    "hold": False,
-                    "host": "",
-                    "is_legacy": False,
-                    "isolate": "",
-                    "job": None,
-                    "labels": [],
-                    "library_type": LibraryType.normal.value,
-                    "locale": "",
-                    "name": "Test Sample",
-                    "notes": "",
-                    "nuvs": False,
-                    "pathoscope": True,
-                    "ready": True,
-                    "subtractions": [],
-                    "user": {"id": user.id},
-                    "workflows": {
-                        "aodp": WorkflowState.INCOMPATIBLE.value,
-                        "pathoscope": WorkflowState.COMPLETE.value,
-                        "nuvs": WorkflowState.PENDING.value,
-                    },
-                },
-            ),
-            mongo.indexes.insert_one(
-                {
-                    "_id": "test_index",
-                    "version": 11,
-                    "ready": True,
-                    "reference": {"id": reference.id},
-                },
-            ),
+        await mongo.indexes.insert_one(
+            {
+                "_id": "test_index",
+                "version": 11,
+                "ready": True,
+                "reference": {"id": reference.id},
+            },
         )
 
-        return user.id, reference.id
+        return sample, user.id, reference.id
 
     async def test_deletes_analysis_pg_rows(
         self,
@@ -1407,7 +1154,7 @@ class TestDelete:
         pg: AsyncEngine,
     ):
         """Deleting a sample removes its analyses' Postgres rows."""
-        user_id, ref_id = await self._setup(fake, mongo, pg)
+        sample, user_id, ref_id = await self._setup(fake, mongo)
 
         analysis = await data_layer.analyses.create(
             CreateAnalysisRequest(
@@ -1415,7 +1162,7 @@ class TestDelete:
                 subtractions=[],
                 workflow=AnalysisWorkflow.nuvs,
             ),
-            "test_sample",
+            sample.id,
             user_id,
         )
 
@@ -1423,7 +1170,7 @@ class TestDelete:
 
         assert await get_row(pg, SQLAnalysis, ("id", analysis.id)) is not None
 
-        await data_layer.samples.delete("test_sample")
+        await data_layer.samples.delete(sample.id)
 
         assert await get_row(pg, SQLAnalysis, ("id", analysis.id)) is None
 
@@ -1431,33 +1178,28 @@ class TestDelete:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
         """Deleting a sample releases the uploads reserved during its creation.
 
-        The reservation is keyed on the sample's own ``uploads`` array, so the upload
-        is released even when no ``SQLSampleReads`` rows have been written yet.
+        The reservation is keyed on the sample's own ``uploads`` array, so the uploads
+        are released even when no ``SQLSampleReads`` rows have been written yet.
         """
-        await self._setup(fake, mongo, pg)
+        user = await fake.users.create()
+        sample = await fake.samples.create(user, paired=True)
 
-        upload = await fake.uploads.create(
-            user=await fake.users.create(),
-            reserved=True,
-        )
+        for upload in sample.uploads:
+            assert (await get_row_by_id(pg, SQLUpload, upload.id)).reserved is True
 
-        await add_sample_uploads(mongo, pg, "test_sample", [upload.id])
+        await data_layer.samples.delete(sample.id)
 
-        await data_layer.samples.delete("test_sample")
-
-        row = await get_row_by_id(pg, SQLUpload, upload.id)
-        assert row.reserved is False
+        for upload in sample.uploads:
+            assert (await get_row_by_id(pg, SQLUpload, upload.id)).reserved is False
 
     async def test_removes_legacy_sample_and_join_rows(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         spawn_client: ClientSpawner,
     ):
@@ -1540,8 +1282,6 @@ class TestDelete:
                 )
             ).scalars().all() == []
 
-        assert await mongo.samples.find_one() is None
-
     async def test_postgres_native_sample_cleans_storage(
         self,
         data_layer: DataLayer,
@@ -1556,33 +1296,18 @@ class TestDelete:
         ``legacy_samples`` rowcount, not ``delete_one``'s ``deleted_count``.
         """
         user = await fake.users.create()
+        sample = await fake.samples.create(user, paired=True, ready=True)
 
-        async with AsyncSession(pg) as session:
-            sample = SQLLegacySample(
-                legacy_id=None,
-                name="Postgres Native",
-                library_type=LibraryType.normal.value,
-                created_at=virtool.utils.timestamp(),
-                user_id=user.id,
-                all_read=True,
-                all_write=True,
-            )
-            session.add(sample)
-            await session.flush()
-            sample_id = sample.id
-            await session.commit()
+        assert (await get_row_by_id(pg, SQLLegacySample, sample.id)).legacy_id is None
 
-        async def _content() -> AsyncIterator[bytes]:
-            yield b"reads"
+        prefix = sample_prefix(str(sample.id))
 
-        key = sample_file_key(str(sample_id), "reads_1.fq.gz")
-        await memory_storage.write(key, _content())
-
-        await data_layer.samples.delete(sample_id)
-
-        assert await get_row_by_id(pg, SQLLegacySample, sample_id) is None
-
-        remaining = [
-            obj.key async for obj in memory_storage.list(sample_prefix(str(sample_id)))
+        assert [obj.key async for obj in memory_storage.list(prefix)] == [
+            sample_file_key(str(sample.id), "reads_1.fq.gz"),
+            sample_file_key(str(sample.id), "reads_2.fq.gz"),
         ]
-        assert remaining == []
+
+        await data_layer.samples.delete(sample.id)
+
+        assert await get_row_by_id(pg, SQLLegacySample, sample.id) is None
+        assert [obj.key async for obj in memory_storage.list(prefix)] == []

@@ -34,7 +34,7 @@ from virtool.jobs.models import TERMINAL_JOB_STATES, Job, JobState
 from virtool.jobs.pg import SQLJob
 from virtool.jobs.utils import WORKFLOW_NAMES
 from virtool.labels.models import Label
-from virtool.models.enums import Molecule
+from virtool.models.enums import LibraryType, Molecule
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.otus.models import OTU, OTUSegment
@@ -631,6 +631,7 @@ class SamplesFakerDomain(DataFakerDomain):
         uploads: list[Upload] | None = None,
         paired: bool = False,
         ready: bool = False,
+        library_type: LibraryType = LibraryType.normal,
     ) -> Sample:
         """Create a fake sample through the samples data layer.
 
@@ -645,6 +646,7 @@ class SamplesFakerDomain(DataFakerDomain):
         :param uploads: the read uploads to attach; auto-generated when omitted
         :param paired: whether to auto-generate two uploads instead of one
         :param ready: whether to finalize the sample
+        :param library_type: the sample's library type
         :return: the created sample
         """
         if uploads is None:
@@ -659,6 +661,7 @@ class SamplesFakerDomain(DataFakerDomain):
             CreateSampleRequest(
                 name=self._faker.unique.word().capitalize(),
                 files=[upload.id for upload in uploads],
+                library_type=library_type,
             ),
             user.id,
         )

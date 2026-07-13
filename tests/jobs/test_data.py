@@ -233,34 +233,20 @@ class TestCreatePostgres:
         self,
         jobs_data: JobsData,
         fake: DataFaker,
-        pg: AsyncEngine,
     ):
         """``get`` exposes the sample id for a sample created natively in Postgres.
 
         Such a sample has no legacy id, so the job argument can only come from the
-        integer primary key.
+        integer primary key. Sample creation supplies no ``sample_id`` argument of its
+        own, so the one seen here is derived entirely from the linked sample.
         """
         user = await fake.users.create()
 
-        job = await jobs_data.create("create_sample", {}, user.id, 0)
+        sample = await fake.samples.create(user)
 
-        async with AsyncSession(pg) as session:
-            sample = SQLLegacySample(
-                legacy_id=None,
-                name="Sample 123",
-                library_type="normal",
-                created_at=arrow.utcnow().naive,
-                job_id=job.id,
-            )
-            session.add(sample)
-            await session.flush()
+        fetched_job = await jobs_data.get(sample.job.id)
 
-            sample_pk = sample.id
-
-            await session.commit()
-
-        fetched_job = await jobs_data.get(job.id)
-        assert fetched_job.args == {"sample_id": sample_pk}
+        assert fetched_job.args == {"sample_id": sample.id}
 
     async def test_index_join_table(
         self,

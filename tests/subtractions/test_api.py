@@ -7,13 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy.assertion import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner
+from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.models.enums import Permission
-from virtool.mongo.core import Mongo
-from virtool.samples.sql import SQLLegacySample, SQLLegacySampleSubtraction
+from virtool.samples.oas import UpdateSampleRequest
 from virtool.subtractions.pg import SQLSubtractionFile
 from virtool.uploads.sql import UploadType
-from virtool.utils import timestamp
 
 
 async def test_find_empty_subtractions(
@@ -111,8 +110,8 @@ async def test_get_from_job(fake: DataFaker, spawn_job_client, snapshot_recent):
 )
 async def test_edit(
     data: dict,
+    data_layer: DataLayer,
     fake: DataFaker,
-    pg: AsyncEngine,
     snapshot_recent: SnapshotAssertion,
     spawn_client: ClientSpawner,
 ):
@@ -124,27 +123,13 @@ async def test_edit(
 
     subtraction = await fake.subtractions.create(user=user, upload=upload)
 
-    subtraction_pk = subtraction.id
+    for _ in range(2):
+        linked_sample = await fake.samples.create(user)
 
-    async with AsyncSession(pg) as session:
-        for legacy_id, name in [("12", "Sample 12"), ("22", "Sample 22")]:
-            sample = SQLLegacySample(
-                legacy_id=legacy_id,
-                name=name,
-                library_type="normal",
-                created_at=timestamp(),
-                user_id=user.id,
-            )
-            session.add(sample)
-            await session.flush()
-            session.add(
-                SQLLegacySampleSubtraction(
-                    sample_id=sample.id,
-                    subtraction_id=subtraction_pk,
-                ),
-            )
-
-        await session.commit()
+        await data_layer.samples.update(
+            linked_sample.id,
+            UpdateSampleRequest(subtractions=[subtraction.id]),
+        )
 
     client = await spawn_client(
         authenticated=True,
@@ -410,9 +395,9 @@ class TestFinalize:
 class TestRemoveAsJob:
     async def test_remove_ready(
         self,
+        data_layer: DataLayer,
         fake: DataFaker,
         spawn_job_client: JobClientSpawner,
-        mongo: Mongo,
         resp_is,
     ):
         """Verifies that a finalized subtraction cannot be deleted."""
@@ -429,12 +414,11 @@ class TestRemoveAsJob:
 
         client = await spawn_job_client(authenticated=True)
 
-        await mongo.samples.insert_one(
-            {
-                "_id": "test",
-                "name": "Test",
-                "subtractions": [subtraction.id],
-            },
+        linked_sample = await fake.samples.create(user)
+
+        await data_layer.samples.update(
+            linked_sample.id,
+            UpdateSampleRequest(subtractions=[subtraction.id]),
         )
 
         resp = await client.delete(f"/subtractions/{subtraction.id}")
@@ -443,9 +427,9 @@ class TestRemoveAsJob:
 
     async def test_remove_not_ready(
         self,
+        data_layer: DataLayer,
         fake: DataFaker,
         spawn_job_client: JobClientSpawner,
-        mongo: Mongo,
         resp_is,
     ):
         """Checks successful deletion of an unfinalized subtraction."""
@@ -459,12 +443,12 @@ class TestRemoveAsJob:
             upload=upload,
             finalized=False,
         )
-        await mongo.samples.insert_one(
-            {
-                "_id": "test",
-                "name": "Test",
-                "subtractions": [subtraction.id],
-            },
+
+        linked_sample = await fake.samples.create(user)
+
+        await data_layer.samples.update(
+            linked_sample.id,
+            UpdateSampleRequest(subtractions=[subtraction.id]),
         )
 
         client = await spawn_job_client(authenticated=True)
