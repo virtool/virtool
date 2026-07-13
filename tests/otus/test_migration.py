@@ -1,4 +1,4 @@
-"""Tests for the Mongo-to-Postgres OTU and sequence backfill and parity gate."""
+"""Tests for the Mongo-to-Postgres OTU and sequence backfill, reconciliation and gate."""
 
 import asyncio
 from collections.abc import Callable
@@ -14,8 +14,8 @@ from virtool.otus.db import bulk_insert_otu_rows, otu_row_values
 from virtool.otus.migration import (
     backfill_sequence_positions,
     compare_otu_and_sequence_stores,
-    compare_sequence_positions,
     copy_otus_and_sequences_to_postgres,
+    reconcile_otus_and_sequences,
 )
 from virtool.otus.sql import SQLOTU, SQLSequence
 from virtool.utils import timestamp
@@ -126,7 +126,7 @@ async def _fetch_sequence(ctx: MigrationContext, sequence_id: str):
         return (
             await session.execute(
                 text("""
-                    SELECT id, data, otu_id, isolate_id, segment
+                    SELECT id, data, otu_id, isolate_id, segment, position
                     FROM legacy_sequences WHERE id = :id
                 """),
                 {"id": sequence_id},
@@ -350,259 +350,6 @@ async def _update_sequence_row(
         await session.commit()
 
 
-class TestCompareOtuAndSequenceStores:
-    @pytest.fixture
-    async def matching_stores(
-        self,
-        ctx: MigrationContext,
-        reference_id: int,
-    ) -> None:
-        """Seed one OTU and one sequence and copy both into Postgres."""
-        await ctx.mongo.otus.insert_one(
-            _otu_doc("otu_matched", reference_id, "Tobacco mosaic virus"),
-        )
-        await ctx.mongo.sequences.insert_one(
-            _sequence_doc("seq_matched", "otu_matched"),
-        )
-
-        await copy_otus_and_sequences_to_postgres(ctx)
-
-    async def test_matching_stores_pass(
-        self,
-        ctx: MigrationContext,
-        matching_stores: None,
-    ):
-        """Matching stores pass, including the OTU's datetime ``created_at``.
-
-        A ``datetime`` cannot survive the JSONB round trip as a ``datetime``: it is
-        stored and read back as an ISO string. The gate must not read that as drift.
-        """
-        await compare_otu_and_sequence_stores(ctx)
-
-    async def test_bulk_written_otu_passes(
-        self,
-        ctx: MigrationContext,
-        reference_id: int,
-    ):
-        """An OTU written by the bulk import path passes, despite a ``created_at``
-        carrying microseconds Mongo cannot hold.
-
-        The bulk path hands the same in-memory dict to Postgres and to Mongo, making it
-        the one writer whose datetime never round-tripped through BSON. Mongo floors it
-        to the millisecond, so the row has to hold that same instant and not the finer
-        one it was handed. Every other writer passes a document read back out of Mongo
-        and so is already truncated.
-        """
-        document = {
-            **_otu_doc("otu_bulk", reference_id, "Bulk written virus"),
-            "created_at": datetime(2025, 7, 2, 21, 18, 48, 420789),
-        }
-
-        async with AsyncSession(ctx.pg) as session:
-            await bulk_insert_otu_rows(session, [document], reference_id)
-            await session.commit()
-
-        await ctx.mongo.otus.insert_one(document)
-
-        await compare_otu_and_sequence_stores(ctx)
-
-    async def test_is_read_only_and_repeatable(
-        self,
-        ctx: MigrationContext,
-        matching_stores: None,
-    ):
-        """Two runs over unchanged stores agree, and neither writes anything."""
-        await compare_otu_and_sequence_stores(ctx)
-        await compare_otu_and_sequence_stores(ctx)
-
-        assert await _count(ctx, "legacy_otus") == 1
-        assert await _count(ctx, "legacy_sequences") == 1
-        assert await ctx.mongo.otus.count_documents({}) == 1
-        assert await ctx.mongo.sequences.count_documents({}) == 1
-
-    async def test_otu_missing_from_postgres_raises(
-        self,
-        ctx: MigrationContext,
-        reference_id: int,
-        matching_stores: None,
-    ):
-        await ctx.mongo.otus.insert_one(
-            _otu_doc("otu_not_written", reference_id, "Potato virus Y"),
-        )
-
-        with pytest.raises(ValueError, match="1 otus and 0 sequences"):
-            await compare_otu_and_sequence_stores(ctx)
-
-    async def test_sequence_missing_from_postgres_raises(
-        self,
-        ctx: MigrationContext,
-        matching_stores: None,
-    ):
-        await ctx.mongo.sequences.insert_one(
-            _sequence_doc("seq_not_written", "otu_matched"),
-        )
-
-        with pytest.raises(ValueError, match="0 otus and 1 sequences"):
-            await compare_otu_and_sequence_stores(ctx)
-
-    async def test_otu_missing_from_mongo_raises(
-        self,
-        ctx: MigrationContext,
-        matching_stores: None,
-    ):
-        """A Postgres row whose Mongo document was deleted is drift, not an aside."""
-        await ctx.mongo.otus.delete_one({"_id": "otu_matched"})
-
-        with pytest.raises(ValueError, match="1 otus and 0 sequences"):
-            await compare_otu_and_sequence_stores(ctx)
-
-    async def test_sequence_missing_from_mongo_raises(
-        self,
-        ctx: MigrationContext,
-        matching_stores: None,
-    ):
-        await ctx.mongo.sequences.delete_one({"_id": "seq_matched"})
-
-        with pytest.raises(ValueError, match="0 otus and 1 sequences"):
-            await compare_otu_and_sequence_stores(ctx)
-
-    async def test_otu_data_drift_raises(
-        self,
-        ctx: MigrationContext,
-        matching_stores: None,
-    ):
-        """A Mongo edit that never reached Postgres is drift."""
-        await ctx.mongo.otus.update_one(
-            {"_id": "otu_matched"},
-            {"$set": {"version": 4, "verified": False}},
-        )
-
-        with pytest.raises(ValueError, match="1 otus and 0 sequences"):
-            await compare_otu_and_sequence_stores(ctx)
-
-    async def test_otu_column_drift_raises(
-        self,
-        ctx: MigrationContext,
-        matching_stores: None,
-    ):
-        """A promoted column that disagrees with an otherwise-matching ``data``."""
-        await _update_otu_row(ctx, "otu_matched", name="Wrong name")
-
-        with pytest.raises(ValueError, match="1 otus and 0 sequences"):
-            await compare_otu_and_sequence_stores(ctx)
-
-    async def test_sequence_column_drift_raises(
-        self,
-        ctx: MigrationContext,
-        matching_stores: None,
-    ):
-        await _update_sequence_row(ctx, "seq_matched", segment="RNA2")
-
-        with pytest.raises(ValueError, match="0 otus and 1 sequences"):
-            await compare_otu_and_sequence_stores(ctx)
-
-    async def test_reports_every_drifted_document(
-        self,
-        ctx: MigrationContext,
-        reference_id: int,
-        matching_stores: None,
-    ):
-        """Drift is accumulated across the whole run, not raised on the first hit."""
-        await ctx.mongo.otus.insert_one(
-            _otu_doc("otu_second", reference_id, "Potato virus Y"),
-        )
-        await ctx.mongo.sequences.insert_one(
-            _sequence_doc("seq_second", "otu_second"),
-        )
-
-        await copy_otus_and_sequences_to_postgres(ctx)
-
-        await _update_otu_row(ctx, "otu_matched", verified=False)
-        await _update_otu_row(ctx, "otu_second", version=99)
-        await _update_sequence_row(ctx, "seq_second", isolate_id="isolate_wrong")
-
-        with pytest.raises(ValueError, match="2 otus and 1 sequences"):
-            await compare_otu_and_sequence_stores(ctx)
-
-    async def test_row_written_mid_run_is_not_drift(
-        self,
-        ctx: MigrationContext,
-        matching_stores: None,
-        mocker,
-    ):
-        """A dual-write that lands between the scan and the re-read is not drift.
-
-        The scan sees a Postgres row that has fallen behind Mongo and flags the
-        OTU. The application then dual-writes the row before the candidate is
-        re-read. The re-read must go back to Postgres rather than reuse the row the
-        scan already loaded, or the stores are reported as drifted after they have
-        converged.
-        """
-        await ctx.mongo.otus.update_one(
-            {"_id": "otu_matched"},
-            {"$set": {"version": 4}},
-        )
-
-        document = await ctx.mongo.otus.find_one({"_id": "otu_matched"})
-
-        real_find_one = AsyncIOMotorCollection.find_one
-
-        async def find_one_after_dual_write(self, *args, **kwargs):
-            if self.name == "otus":
-                await _update_otu_row(ctx, "otu_matched", data=document, version=4)
-
-            return await real_find_one(self, *args, **kwargs)
-
-        mocker.patch.object(
-            AsyncIOMotorCollection,
-            "find_one",
-            find_one_after_dual_write,
-        )
-
-        await compare_otu_and_sequence_stores(ctx)
-
-    async def test_null_abbreviation_and_missing_segment_pass(
-        self,
-        ctx: MigrationContext,
-        reference_id: int,
-    ):
-        """The write path's own normalizations must not read as drift.
-
-        Mongo stores a null abbreviation and omits ``segment`` entirely; Postgres
-        holds ``""`` and ``NULL``. Both stores are in parity.
-        """
-        otu = _otu_doc("otu_null_abbreviation", reference_id, "Potato virus Y")
-        otu["abbreviation"] = None
-
-        sequence = _sequence_doc("seq_no_segment", "otu_null_abbreviation")
-        del sequence["segment"]
-
-        await ctx.mongo.otus.insert_one(otu)
-        await ctx.mongo.sequences.insert_one(sequence)
-
-        await copy_otus_and_sequences_to_postgres(ctx)
-
-        await compare_otu_and_sequence_stores(ctx)
-
-    async def test_legacy_string_reference_id_passes(
-        self,
-        ctx: MigrationContext,
-        reference_id: int,
-    ):
-        """An OTU still holding the legacy string ``reference.id`` is in parity.
-
-        Postgres promotes it to the integer ``legacy_references`` primary key, so
-        the two forms must resolve to the same reference.
-        """
-        await ctx.mongo.otus.insert_one(
-            _otu_doc("otu_legacy_reference", "ref_legacy", "Cucumber mosaic virus"),
-        )
-
-        await copy_otus_and_sequences_to_postgres(ctx)
-
-        await compare_otu_and_sequence_stores(ctx)
-
-
 async def _get_positions(ctx: MigrationContext, otu_id: str) -> list[tuple[str, int]]:
     """Get an OTU's sequence ids and positions, ordered as Postgres would join them."""
     async with AsyncSession(ctx.pg) as session:
@@ -701,66 +448,562 @@ class TestBackfillSequencePositions:
             await backfill_sequence_positions(ctx)
 
 
-class TestCompareSequencePositions:
+class TestReconcileOtusAndSequences:
     @pytest.fixture
-    async def positioned_otu(
-        self,
-        ctx: MigrationContext,
-        reference_id: int,
-    ) -> list[str]:
-        """Seed an OTU with three sequences, copy them, and assign their positions."""
+    async def drifted_otu(self, ctx: MigrationContext, reference_id: int) -> list[str]:
+        """Seed one OTU with three sequences and copy them into Postgres.
+
+        The copy leaves every sequence unpositioned, which is itself one of the drifts
+        the reconciliation repairs. Returns the sequence ids in Mongo's order.
+        """
         await ctx.mongo.otus.insert_one(
-            _otu_doc("otu_ordered", reference_id, "Tobacco mosaic virus"),
+            _otu_doc("otu_drifted", reference_id, "Tobacco mosaic virus"),
         )
 
         for sequence_id in ("seq_first", "seq_second", "seq_third"):
             await ctx.mongo.sequences.insert_one(
-                _sequence_doc(sequence_id, "otu_ordered"),
+                _sequence_doc(sequence_id, "otu_drifted"),
             )
 
         await copy_otus_and_sequences_to_postgres(ctx)
-        await backfill_sequence_positions(ctx)
 
-        return await _mongo_sequence_ids(ctx, "otu_ordered")
+        return await _mongo_sequence_ids(ctx, "otu_drifted")
 
-    async def test_matching_order_passes(
+    async def test_rewrites_a_drifted_row(
         self,
         ctx: MigrationContext,
-        positioned_otu: list[str],
+        drifted_otu: list[str],
     ):
-        await compare_sequence_positions(ctx)
+        """A row that has fallen behind its Mongo document is rewritten.
+
+        The backfill inserts with ``ON CONFLICT (id) DO NOTHING`` and so cannot touch
+        a row that already exists. The reconciliation upserts, which is the whole
+        point of it.
+        """
+        await ctx.mongo.otus.update_one(
+            {"_id": "otu_drifted"},
+            {"$set": {"version": 4, "verified": False, "name": "Renamed virus"}},
+        )
+
+        await reconcile_otus_and_sequences(ctx)
+
+        row = await _fetch_otu(ctx, "otu_drifted")
+
+        assert row.name == "Renamed virus"
+        assert row.verified is False
+        assert row.version == 4
+        assert row.data["name"] == "Renamed virus"
+        assert row.data["version"] == 4
+
+    async def test_repairs_a_microsecond_created_at(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+    ):
+        """A ``created_at`` finer than Mongo can hold is floored to the millisecond.
+
+        The bulk import path handed the same in-memory dict to Postgres and to Mongo
+        before it truncated, so the row holds microseconds Mongo dropped. Rewriting
+        the row from the Mongo document -- which only ever had the floored instant --
+        is what repairs it.
+        """
+        document = {
+            **_otu_doc("otu_imported", reference_id, "Imported virus"),
+            "created_at": datetime(2025, 7, 2, 21, 18, 48, 420789),
+        }
+
+        await ctx.mongo.otus.insert_one(document)
+        await copy_otus_and_sequences_to_postgres(ctx)
+        await _update_otu_row(ctx, "otu_imported", data=document)
+
+        assert (await _fetch_otu(ctx, "otu_imported")).data["created_at"] == (
+            "2025-07-02T21:18:48.420789Z"
+        )
+
+        await reconcile_otus_and_sequences(ctx)
+
+        assert (await _fetch_otu(ctx, "otu_imported")).data["created_at"] == (
+            "2025-07-02T21:18:48.420000Z"
+        )
+
+    async def test_repairs_a_stale_last_indexed_version(
+        self,
+        ctx: MigrationContext,
+        drifted_otu: list[str],
+    ):
+        """An index stamp that only reached Mongo is written into ``data``."""
+        await ctx.mongo.otus.update_one(
+            {"_id": "otu_drifted"},
+            {"$set": {"last_indexed_version": 3}},
+        )
+
+        await reconcile_otus_and_sequences(ctx)
+
+        assert (await _fetch_otu(ctx, "otu_drifted")).data["last_indexed_version"] == 3
+
+    async def test_assigns_positions_in_mongo_order(
+        self,
+        ctx: MigrationContext,
+        drifted_otu: list[str],
+    ):
+        """Positions are re-derived from the order Mongo's cursor returns."""
+        await reconcile_otus_and_sequences(ctx)
+
+        assert await _get_positions(ctx, "otu_drifted") == [
+            (sequence_id, position) for position, sequence_id in enumerate(drifted_otu)
+        ]
+
+    async def test_repairs_a_mis_numbered_position(
+        self,
+        ctx: MigrationContext,
+        drifted_otu: list[str],
+    ):
+        """Unlike the steady-state write path, this pass owns ``position``."""
+        await reconcile_otus_and_sequences(ctx)
+        await _update_sequence_row(ctx, drifted_otu[2], position=0)
+
+        await reconcile_otus_and_sequences(ctx)
+
+        assert await _get_positions(ctx, "otu_drifted") == [
+            (sequence_id, position) for position, sequence_id in enumerate(drifted_otu)
+        ]
+
+    async def test_creates_a_row_the_backfill_never_wrote(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+    ):
+        """An OTU with no row at all is inserted, not just repaired."""
+        await ctx.mongo.otus.insert_one(
+            _otu_doc("otu_uncopied", reference_id, "Potato virus Y"),
+        )
+        await ctx.mongo.sequences.insert_one(
+            _sequence_doc("seq_uncopied", "otu_uncopied"),
+        )
+
+        await reconcile_otus_and_sequences(ctx)
+
+        assert await _fetch_otu(ctx, "otu_uncopied") is not None
+        assert (await _fetch_sequence(ctx, "seq_uncopied")).position == 0
+
+    async def test_deletes_a_sequence_mongo_no_longer_has(
+        self,
+        ctx: MigrationContext,
+        drifted_otu: list[str],
+    ):
+        """A sequence row orphaned by a revert is deleted, and the rest renumbered."""
+        await ctx.mongo.sequences.delete_one({"_id": drifted_otu[1]})
+
+        await reconcile_otus_and_sequences(ctx)
+
+        assert await _fetch_sequence(ctx, drifted_otu[1]) is None
+        assert await _get_positions(ctx, "otu_drifted") == [
+            (drifted_otu[0], 0),
+            (drifted_otu[2], 1),
+        ]
+
+    async def test_deletes_an_otu_mongo_no_longer_has(
+        self,
+        ctx: MigrationContext,
+        drifted_otu: list[str],
+    ):
+        """A deleted OTU takes its sequences with it through the cascade."""
+        await ctx.mongo.otus.delete_one({"_id": "otu_drifted"})
+        await ctx.mongo.sequences.delete_many({"otu_id": "otu_drifted"})
+
+        await reconcile_otus_and_sequences(ctx)
+
+        assert await _count(ctx, "legacy_otus") == 0
+        assert await _count(ctx, "legacy_sequences") == 0
+
+    async def test_otu_created_mid_run_is_not_deleted(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+        drifted_otu: list[str],
+        mocker,
+    ):
+        """An OTU the application creates mid-run must not be deleted as removed.
+
+        The OTU id snapshot is taken up front, so an OTU dual-written after it is
+        absent from the snapshot without ever having been removed from Mongo. A plain
+        set difference would delete a live OTU and every sequence under it, which is
+        why each candidate is re-read from Mongo before it is deleted.
+        """
+        await _insert_otu_row(ctx, "otu_dual_written", reference_id)
+
+        real_find_one = AsyncIOMotorCollection.find_one
+
+        async def find_one_after_dual_write(self, *args, **kwargs):
+            if self.name == "otus":
+                await ctx.mongo.otus.update_one(
+                    {"_id": "otu_dual_written"},
+                    {
+                        "$setOnInsert": _otu_doc(
+                            "otu_dual_written",
+                            reference_id,
+                            "Cucumber mosaic virus",
+                        ),
+                    },
+                    upsert=True,
+                )
+
+            return await real_find_one(self, *args, **kwargs)
+
+        mocker.patch.object(
+            AsyncIOMotorCollection,
+            "find_one",
+            find_one_after_dual_write,
+        )
+
+        await reconcile_otus_and_sequences(ctx)
+
+        assert await _fetch_otu(ctx, "otu_dual_written") is not None
+
+    async def test_is_idempotent(
+        self,
+        ctx: MigrationContext,
+        drifted_otu: list[str],
+    ):
+        """A second run reads the same documents and writes the same values."""
+        await reconcile_otus_and_sequences(ctx)
+
+        first_otu = await _fetch_otu(ctx, "otu_drifted")
+        first_positions = await _get_positions(ctx, "otu_drifted")
+
+        await reconcile_otus_and_sequences(ctx)
+
+        assert await _fetch_otu(ctx, "otu_drifted") == first_otu
+        assert await _get_positions(ctx, "otu_drifted") == first_positions
+        assert await _count(ctx, "legacy_otus") == 1
+        assert await _count(ctx, "legacy_sequences") == 3
+
+    async def test_unresolvable_reference_raises(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+    ):
+        """Every OTU belongs to a reference, so an unresolvable one is loud."""
+        await ctx.mongo.otus.insert_one(
+            _otu_doc("otu_ghost", 999999, "Ghost virus"),
+        )
+
+        with pytest.raises(ValueError, match="which does not exist in postgres"):
+            await reconcile_otus_and_sequences(ctx)
+
+
+class TestCompareOtuAndSequenceStores:
+    @pytest.fixture
+    async def matching_stores(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+    ) -> None:
+        """Seed one OTU and one sequence and reconcile both into Postgres."""
+        await ctx.mongo.otus.insert_one(
+            _otu_doc("otu_matched", reference_id, "Tobacco mosaic virus"),
+        )
+        await ctx.mongo.sequences.insert_one(
+            _sequence_doc("seq_matched", "otu_matched"),
+        )
+
+        await reconcile_otus_and_sequences(ctx)
+
+    async def test_matching_stores_pass(
+        self,
+        ctx: MigrationContext,
+        matching_stores: None,
+    ):
+        """Matching stores pass, including the OTU's datetime ``created_at``.
+
+        A ``datetime`` cannot survive the JSONB round trip as a ``datetime``: it is
+        stored and read back as an ISO string. The read path parses it back, and the
+        gate must not read that round trip as drift.
+        """
+        await compare_otu_and_sequence_stores(ctx)
+
+    async def test_bulk_written_otu_passes(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+    ):
+        """An OTU written by the bulk import path passes, despite a ``created_at``
+        carrying microseconds Mongo cannot hold.
+
+        The bulk path hands the same in-memory dict to Postgres and to Mongo, making it
+        the one writer whose datetime never round-tripped through BSON. Mongo floors it
+        to the millisecond, so the row has to hold that same instant and not the finer
+        one it was handed. Every other writer passes a document read back out of Mongo
+        and so is already truncated.
+        """
+        document = {
+            **_otu_doc("otu_bulk", reference_id, "Bulk written virus"),
+            "created_at": datetime(2025, 7, 2, 21, 18, 48, 420789),
+        }
+
+        async with AsyncSession(ctx.pg) as session:
+            await bulk_insert_otu_rows(session, [document], reference_id)
+            await session.commit()
+
+        await ctx.mongo.otus.insert_one(document)
+
+        await compare_otu_and_sequence_stores(ctx)
 
     async def test_is_read_only_and_repeatable(
         self,
         ctx: MigrationContext,
-        positioned_otu: list[str],
+        matching_stores: None,
     ):
-        await compare_sequence_positions(ctx)
-        await compare_sequence_positions(ctx)
+        """Two runs over unchanged stores agree, and neither writes anything."""
+        await compare_otu_and_sequence_stores(ctx)
+        await compare_otu_and_sequence_stores(ctx)
 
-    async def test_swapped_order_raises(
+        assert await _count(ctx, "legacy_otus") == 1
+        assert await _count(ctx, "legacy_sequences") == 1
+        assert await ctx.mongo.otus.count_documents({}) == 1
+        assert await ctx.mongo.sequences.count_documents({}) == 1
+
+    async def test_otu_missing_from_postgres_raises(
         self,
         ctx: MigrationContext,
-        positioned_otu: list[str],
+        reference_id: int,
+        matching_stores: None,
     ):
-        """Two sequences holding each other's positions is drift."""
-        await _update_sequence_row(ctx, positioned_otu[0], position=1)
-        await _update_sequence_row(ctx, positioned_otu[1], position=0)
+        await ctx.mongo.otus.insert_one(
+            _otu_doc("otu_not_written", reference_id, "Potato virus Y"),
+        )
 
-        with pytest.raises(ValueError, match="sequence order drift detected in 1 otus"):
-            await compare_sequence_positions(ctx)
+        with pytest.raises(ValueError, match="1 otus, 0 sequences and 0 otu"):
+            await compare_otu_and_sequence_stores(ctx)
 
-    async def test_null_position_raises(
+    async def test_sequence_missing_from_postgres_raises(
         self,
         ctx: MigrationContext,
-        positioned_otu: list[str],
+        matching_stores: None,
     ):
-        """An unbackfilled row is drift, not a row that quietly sorts last.
+        """A sequence Postgres never got is missing from its OTU's order too."""
+        await ctx.mongo.sequences.insert_one(
+            _sequence_doc("seq_not_written", "otu_matched"),
+        )
+
+        with pytest.raises(ValueError, match="0 otus, 1 sequences and 1 otu"):
+            await compare_otu_and_sequence_stores(ctx)
+
+    async def test_otu_missing_from_mongo_raises(
+        self,
+        ctx: MigrationContext,
+        matching_stores: None,
+    ):
+        """A Postgres row whose Mongo document was deleted is drift, not an aside."""
+        await ctx.mongo.otus.delete_one({"_id": "otu_matched"})
+
+        with pytest.raises(ValueError, match="1 otus, 0 sequences and 0 otu"):
+            await compare_otu_and_sequence_stores(ctx)
+
+    async def test_sequence_missing_from_mongo_raises(
+        self,
+        ctx: MigrationContext,
+        matching_stores: None,
+    ):
+        await ctx.mongo.sequences.delete_one({"_id": "seq_matched"})
+
+        with pytest.raises(ValueError, match="0 otus, 1 sequences and 1 otu"):
+            await compare_otu_and_sequence_stores(ctx)
+
+    async def test_otu_data_drift_raises(
+        self,
+        ctx: MigrationContext,
+        matching_stores: None,
+    ):
+        """A Mongo edit that never reached Postgres is drift."""
+        await ctx.mongo.otus.update_one(
+            {"_id": "otu_matched"},
+            {"$set": {"version": 4, "verified": False}},
+        )
+
+        with pytest.raises(ValueError, match="1 otus, 0 sequences and 0 otu"):
+            await compare_otu_and_sequence_stores(ctx)
+
+    async def test_otu_document_drift_raises(
+        self,
+        ctx: MigrationContext,
+        matching_stores: None,
+    ):
+        """A ``data`` field with no promoted column of its own is still drift.
+
+        The gate asserts the read contract, so a document the read path cannot recover
+        faithfully fails even when every promoted column agrees.
+        """
+        await ctx.mongo.otus.update_one(
+            {"_id": "otu_matched"},
+            {"$set": {"last_indexed_version": 3}},
+        )
+
+        with pytest.raises(ValueError, match="1 otus, 0 sequences and 0 otu"):
+            await compare_otu_and_sequence_stores(ctx)
+
+    async def test_otu_column_drift_raises(
+        self,
+        ctx: MigrationContext,
+        matching_stores: None,
+    ):
+        """A promoted column that disagrees with an otherwise-matching ``data``."""
+        await _update_otu_row(ctx, "otu_matched", name="Wrong name")
+
+        with pytest.raises(ValueError, match="1 otus, 0 sequences and 0 otu"):
+            await compare_otu_and_sequence_stores(ctx)
+
+    async def test_sequence_column_drift_raises(
+        self,
+        ctx: MigrationContext,
+        matching_stores: None,
+    ):
+        await _update_sequence_row(ctx, "seq_matched", segment="RNA2")
+
+        with pytest.raises(ValueError, match="0 otus, 1 sequences and 0 otu"):
+            await compare_otu_and_sequence_stores(ctx)
+
+    async def test_reports_every_drifted_document(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+        matching_stores: None,
+    ):
+        """Drift is accumulated across the whole run, not raised on the first hit."""
+        await ctx.mongo.otus.insert_one(
+            _otu_doc("otu_second", reference_id, "Potato virus Y"),
+        )
+        await ctx.mongo.sequences.insert_one(
+            _sequence_doc("seq_second", "otu_second"),
+        )
+
+        await reconcile_otus_and_sequences(ctx)
+
+        await _update_otu_row(ctx, "otu_matched", verified=False)
+        await _update_otu_row(ctx, "otu_second", version=99)
+        await _update_sequence_row(ctx, "seq_second", isolate_id="isolate_wrong")
+
+        with pytest.raises(ValueError, match="2 otus, 1 sequences and 0 otu"):
+            await compare_otu_and_sequence_stores(ctx)
+
+    async def test_row_written_mid_run_is_not_drift(
+        self,
+        ctx: MigrationContext,
+        matching_stores: None,
+        mocker,
+    ):
+        """A dual-write that lands between the scan and the re-read is not drift.
+
+        The scan sees a Postgres row that has fallen behind Mongo and flags the
+        OTU. The application then dual-writes the row before the candidate is
+        re-read. The re-read must go back to Postgres rather than reuse the row the
+        scan already loaded, or the stores are reported as drifted after they have
+        converged.
+        """
+        await ctx.mongo.otus.update_one(
+            {"_id": "otu_matched"},
+            {"$set": {"version": 4}},
+        )
+
+        document = await ctx.mongo.otus.find_one({"_id": "otu_matched"})
+
+        real_find_one = AsyncIOMotorCollection.find_one
+
+        async def find_one_after_dual_write(self, *args, **kwargs):
+            if self.name == "otus":
+                await _update_otu_row(ctx, "otu_matched", data=document, version=4)
+
+            return await real_find_one(self, *args, **kwargs)
+
+        mocker.patch.object(
+            AsyncIOMotorCollection,
+            "find_one",
+            find_one_after_dual_write,
+        )
+
+        await compare_otu_and_sequence_stores(ctx)
+
+    async def test_null_abbreviation_and_missing_segment_pass(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+    ):
+        """The write path's own normalizations must not read as drift.
+
+        Mongo stores a null abbreviation and omits ``segment`` entirely; Postgres
+        holds ``""`` and ``NULL``. Both stores are in parity.
+        """
+        otu = _otu_doc("otu_null_abbreviation", reference_id, "Potato virus Y")
+        otu["abbreviation"] = None
+
+        sequence = _sequence_doc("seq_no_segment", "otu_null_abbreviation")
+        del sequence["segment"]
+
+        await ctx.mongo.otus.insert_one(otu)
+        await ctx.mongo.sequences.insert_one(sequence)
+
+        await reconcile_otus_and_sequences(ctx)
+
+        await compare_otu_and_sequence_stores(ctx)
+
+    async def test_legacy_string_reference_id_passes(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+    ):
+        """An OTU still holding the legacy string ``reference.id`` is in parity.
+
+        Postgres promotes it to the integer ``legacy_references`` primary key, so
+        the two forms must resolve to the same reference.
+        """
+        await ctx.mongo.otus.insert_one(
+            _otu_doc("otu_legacy_reference", "ref_legacy", "Cucumber mosaic virus"),
+        )
+
+        await reconcile_otus_and_sequences(ctx)
+
+        await compare_otu_and_sequence_stores(ctx)
+
+    async def test_swapped_sequence_order_raises(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+    ):
+        """Two sequences holding each other's positions is drift.
+
+        Stored history diffs address an isolate's sequences by list index, so a
+        reordered join applies each change to the wrong sequence.
+        """
+        await ctx.mongo.otus.insert_one(
+            _otu_doc("otu_ordered", reference_id, "Tobacco mosaic virus"),
+        )
+
+        for sequence_id in ("seq_first", "seq_second"):
+            await ctx.mongo.sequences.insert_one(
+                _sequence_doc(sequence_id, "otu_ordered"),
+            )
+
+        await reconcile_otus_and_sequences(ctx)
+
+        sequence_ids = await _mongo_sequence_ids(ctx, "otu_ordered")
+
+        await _update_sequence_row(ctx, sequence_ids[0], position=1)
+        await _update_sequence_row(ctx, sequence_ids[1], position=0)
+
+        with pytest.raises(ValueError, match="0 otus, 0 sequences and 1 otu"):
+            await compare_otu_and_sequence_stores(ctx)
+
+    async def test_null_sequence_position_raises(
+        self,
+        ctx: MigrationContext,
+        matching_stores: None,
+    ):
+        """An unreconciled row is drift, not a row that quietly sorts last.
 
         Postgres orders nulls last on an ascending sort, so a null position would
         otherwise shuffle the sequence to the end of its OTU and pass unnoticed.
         """
-        await _update_sequence_row(ctx, positioned_otu[2], position=None)
+        await _update_sequence_row(ctx, "seq_matched", position=None)
 
-        with pytest.raises(ValueError, match="sequence order drift detected in 1 otus"):
-            await compare_sequence_positions(ctx)
+        with pytest.raises(ValueError, match="0 otus, 0 sequences and 1 otu"):
+            await compare_otu_and_sequence_stores(ctx)
