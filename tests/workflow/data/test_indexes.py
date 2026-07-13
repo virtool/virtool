@@ -77,6 +77,7 @@ def _get_sqlite_sequences() -> list[dict]:
             "definition": "SQLite fixture sequence",
             "host": "",
             "isolate_id": "sqlite_isolate",
+            "otu_id": "sqlite_otu",
             "segment": None,
             "sequence": "ACGTAC",
         },
@@ -86,6 +87,7 @@ def _get_sqlite_sequences() -> list[dict]:
             "definition": "SQLite non-default sequence",
             "host": "",
             "isolate_id": "sqlite_other_isolate",
+            "otu_id": "sqlite_otu",
             "segment": None,
             "sequence": "TTTTAA",
         },
@@ -183,6 +185,82 @@ class TestWFIndex:
             "organism": "virus",
         }
         assert [otu async for otu in index.iter_otus()] == [_get_source_otu()]
+
+    async def test_create_without_reference(self, tmp_path: Path):
+        async def iter_otus():
+            yield _get_sqlite_otu()
+
+        index = await WFIndex.create(
+            "test_index",
+            tmp_path / INDEX_SQLITE_FILE_NAME,
+            None,
+            iter_otus(),
+        )
+
+        assert [otu async for otu in index.iter_otus()] == [_get_source_otu()]
+
+        with pytest.raises(
+            ValueError,
+            match="Reference metadata does not exist in the index",
+        ):
+            await index.get_reference_metadata()
+
+    async def test_create_allows_virtool_isolate_ids_reused_across_otus(
+        self,
+        tmp_path: Path,
+    ):
+        first_otu = _get_sqlite_otu()
+        first_otu["_id"] = "first_otu"
+        first_otu["isolates"] = first_otu["isolates"][:1]
+        first_otu["isolates"][0]["id"] = "reused_isolate"
+        first_otu["isolates"][0]["sequences"][0]["_id"] = "first_sequence"
+
+        second_otu = _get_sqlite_otu()
+        second_otu["_id"] = "second_otu"
+        second_otu["isolates"] = second_otu["isolates"][:1]
+        second_otu["isolates"][0]["id"] = "reused_isolate"
+        second_otu["isolates"][0]["sequences"][0]["_id"] = "second_sequence"
+
+        async def iter_otus():
+            yield first_otu
+            yield second_otu
+
+        index = await WFIndex.create(
+            "test_index",
+            tmp_path / INDEX_SQLITE_FILE_NAME,
+            None,
+            iter_otus(),
+        )
+
+        loaded_otus = {otu["id"]: otu async for otu in index.iter_otus()}
+        otu_refs = await index.get_otu_refs_by_sequence_ids(
+            ["first_sequence", "second_sequence"],
+        )
+        first_otu_sequences = [
+            sequence async for sequence in index.iter_otu_sequences("first_otu")
+        ]
+        second_otu_sequences = [
+            sequence async for sequence in index.iter_otu_sequences("second_otu")
+        ]
+
+        assert loaded_otus["first_otu"]["isolates"][0]["sequences"][0]["id"] == (
+            "first_sequence"
+        )
+        assert loaded_otus["second_otu"]["isolates"][0]["sequences"][0]["id"] == (
+            "second_sequence"
+        )
+        assert otu_refs["first_sequence"]["id"] == "first_otu"
+        assert otu_refs["second_sequence"]["id"] == "second_otu"
+        assert [sequence["id"] for sequence in first_otu_sequences] == [
+            "first_sequence",
+        ]
+        assert [sequence["id"] for sequence in second_otu_sequences] == [
+            "second_sequence",
+        ]
+        assert first_otu_sequences[0]["isolate_id"] == "reused_isolate"
+        assert first_otu_sequences[0]["otu_id"] == "first_otu"
+        assert second_otu_sequences[0]["isolate_id"] == "reused_isolate"
+        assert second_otu_sequences[0]["otu_id"] == "second_otu"
 
     async def test_load(self, tmp_path: Path):
         sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
@@ -316,6 +394,45 @@ class TestWFIndex:
 
 
 class TestIndex:
+    async def test_otus_json_fallback(
+        self,
+        scope: FixtureScope,
+        work_path: Path,
+        workflow_data: WorkflowData,
+    ):
+        """OTU JSON is converted when reference JSON is not available."""
+        workflow_data.job.args["analysis_id"] = workflow_data.analysis.id
+        workflow_data.job.workflow = "build_index"
+        workflow_data.index.files = []
+
+        index: WFIndex = await scope.instantiate_by_key("index")
+        otu_refs_by_sequence_ids = await index.get_otu_refs_by_sequence_ids(
+            ["7h6yaube"],
+        )
+
+        index_path = work_path / "indexes" / workflow_data.analysis.index.id
+
+        assert {p.name for p in index_path.iterdir()} == {
+            INDEX_SQLITE_FILE_NAME,
+            "otus.json",
+            "otus.json.gz",
+        }
+        assert otu_refs_by_sequence_ids == {
+            "7h6yaube": {
+                "id": "pffj4lst",
+                "abbreviation": "ABTV",
+                "name": "Abaca bunchy top virus",
+                "taxid": None,
+                "version": 0,
+            },
+        }
+
+        with pytest.raises(
+            ValueError,
+            match="Reference metadata does not exist in the index",
+        ):
+            await index.get_reference_metadata()
+
     async def test_reference_json_ok(
         self,
         scope: FixtureScope,

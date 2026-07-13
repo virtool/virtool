@@ -16,6 +16,7 @@ from sqlalchemy import (
     MetaData,
     Table,
     Text,
+    UniqueConstraint,
     create_engine,
     event,
     insert,
@@ -52,7 +53,7 @@ otus_table = Table(
     "otus",
     index_sqlite_metadata,
     Column("id", Text, primary_key=True),
-    Column("reference_id", Text, ForeignKey("reference.id"), nullable=False),
+    Column("reference_id", Text, ForeignKey("reference.id")),
     Column("abbreviation", Text, nullable=False),
     Column("name", Text, nullable=False),
     Column("taxid", Integer),
@@ -71,18 +72,20 @@ otu_schema_table = Table(
 isolates_table = Table(
     "isolates",
     index_sqlite_metadata,
-    Column("id", Text, primary_key=True),
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("virtool_id", Text, nullable=False),
     Column("otu_id", Text, ForeignKey("otus.id"), nullable=False),
     Column("source_type", Text, nullable=False),
     Column("source_name", Text, nullable=False),
     Column("is_default", Integer, nullable=False),
+    UniqueConstraint("otu_id", "virtool_id"),
 )
 
 sequences_table = Table(
     "sequences",
     index_sqlite_metadata,
     Column("id", Text, primary_key=True),
-    Column("isolate_id", Text, ForeignKey("isolates.id"), nullable=False),
+    Column("isolate_id", Integer, ForeignKey("isolates.id"), nullable=False),
     Column("accession", Text, nullable=False),
     Column("definition", Text, nullable=False),
     Column("host", Text, nullable=False),
@@ -129,7 +132,7 @@ def _enable_index_sqlite_foreign_keys(
 
 async def create_index_sqlite(
     path: Path,
-    reference: Mapping[str, Any],
+    reference: Mapping[str, Any] | None,
     otus: AsyncIterable[Mapping[str, Any]],
 ) -> None:
     """Create a SQLite structured index artifact at ``path``."""
@@ -141,7 +144,9 @@ async def create_index_sqlite(
     with connect_index_sqlite(path) as connection, connection.begin():
         index_sqlite_metadata.create_all(connection)
         _insert_metadata(connection)
-        reference_id = _insert_reference(connection, reference)
+        reference_id = (
+            _insert_reference(connection, reference) if reference is not None else None
+        )
 
         async for otu in otus:
             _insert_otu(connection, reference_id, otu)
@@ -181,7 +186,7 @@ def _insert_reference(connection: Connection, reference: Mapping[str, Any]) -> s
 
 def _insert_otu(
     connection: Connection,
-    reference_id: str,
+    reference_id: str | None,
     otu: Mapping[str, Any],
 ) -> None:
     otu_id = _get_id(otu)
@@ -222,18 +227,18 @@ def _insert_isolate(
     otu_id: str,
     isolate: Mapping[str, Any],
 ) -> None:
-    isolate_id = _get_id(isolate)
+    virtool_id = _get_id(isolate)
 
-    connection.execute(
-        insert(isolates_table),
+    isolate_id = connection.execute(
+        insert(isolates_table).returning(isolates_table.c.id),
         {
-            "id": isolate_id,
+            "virtool_id": virtool_id,
             "otu_id": otu_id,
             "source_type": isolate["source_type"],
             "source_name": isolate["source_name"],
             "is_default": int(isolate["default"]),
         },
-    )
+    ).scalar_one()
 
     for sequence in isolate["sequences"]:
         _insert_sequence(connection, isolate_id, sequence)
@@ -241,7 +246,7 @@ def _insert_isolate(
 
 def _insert_sequence(
     connection: Connection,
-    isolate_id: str,
+    isolate_id: int,
     sequence: Mapping[str, Any],
 ) -> None:
     sequence_id = _get_id(sequence)

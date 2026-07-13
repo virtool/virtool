@@ -8,8 +8,10 @@ from virtool.workflow.data.index_sqlite import (
     INDEX_SQLITE_FILE_NAME,
     connect_index_sqlite,
     create_index_sqlite,
+    isolates_table,
     otu_schema_table,
     otus_table,
+    reference_table,
     sequences_table,
 )
 
@@ -88,6 +90,7 @@ async def test_create_index_sqlite_writes_schema_and_sequences(tmp_path: Path):
 
     with connect_index_sqlite(sqlite_path) as connection:
         otu_row = connection.execute(select(otus_table)).mappings().one()
+        isolate_row = connection.execute(select(isolates_table)).mappings().one()
         schema_rows = connection.execute(select(otu_schema_table)).all()
         sequence_rows = (
             connection.execute(
@@ -98,12 +101,41 @@ async def test_create_index_sqlite_writes_schema_and_sequences(tmp_path: Path):
         )
 
     assert otu_row["version"] == OTU_VERSION
+    assert isinstance(isolate_row["id"], int)
+    assert isolate_row["virtool_id"] == "isolate"
     assert [(row.name, row.molecule, row.required) for row in schema_rows] == [
         ("DNA A", "dsDNA", 1),
         ("DNA B", "dsDNA", 1),
     ]
     assert "otu_id" not in sequence_rows[0]
+    assert {row["isolate_id"] for row in sequence_rows} == {isolate_row["id"]}
     assert [row["segment"] for row in sequence_rows] == ["DNA A", "DNA B"]
+
+
+async def test_create_index_sqlite_without_reference(tmp_path: Path):
+    """It writes OTUs without reference metadata."""
+
+    async def iter_otus():
+        yield _otu()
+
+    sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
+
+    await create_index_sqlite(sqlite_path, None, iter_otus())
+
+    with connect_index_sqlite(sqlite_path) as connection:
+        reference_rows = connection.execute(select(reference_table)).all()
+        otu_row = connection.execute(select(otus_table)).mappings().one()
+        sequence_ids = (
+            connection.execute(
+                select(sequences_table.c.id).order_by(sequences_table.c.id),
+            )
+            .scalars()
+            .all()
+        )
+
+    assert reference_rows == []
+    assert otu_row["reference_id"] is None
+    assert sequence_ids == ["sequence_dna_a", "sequence_dna_b"]
 
 
 async def test_connect_index_sqlite_enables_foreign_keys(tmp_path: Path):
