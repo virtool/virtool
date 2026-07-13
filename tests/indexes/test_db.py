@@ -502,19 +502,21 @@ async def test_upsert_index_file_creates_row(pg: AsyncEngine):
             )
         ).scalar_one_or_none() is None
 
-    assert await upsert_index_file(
-        pg,
-        "foo",
-        "json",
-        "reference.json.gz",
-        9000,
-    ) == {
-        "id": 1,
-        "index": "foo",
-        "name": "reference.json.gz",
-        "size": 9000,
-        "type": "json",
-    }
+    async with AsyncSession(pg) as session:
+        assert await upsert_index_file(
+            session,
+            "foo",
+            "json",
+            "reference.json.gz",
+            9000,
+        ) == {
+            "id": 1,
+            "index": "foo",
+            "name": "reference.json.gz",
+            "size": 9000,
+            "type": "json",
+        }
+        await session.commit()
 
     async with AsyncSession(pg) as session:
         row = (
@@ -547,19 +549,21 @@ async def test_upsert_index_file_updates_existing_row(pg: AsyncEngine):
         )
         await session.commit()
 
-    assert await upsert_index_file(
-        pg,
-        "foo",
-        "json",
-        "reference.json.gz",
-        9000,
-    ) == {
-        "id": 1,
-        "index": "foo",
-        "name": "reference.json.gz",
-        "size": 9000,
-        "type": "json",
-    }
+    async with AsyncSession(pg) as session:
+        assert await upsert_index_file(
+            session,
+            "foo",
+            "json",
+            "reference.json.gz",
+            9000,
+        ) == {
+            "id": 1,
+            "index": "foo",
+            "name": "reference.json.gz",
+            "size": 9000,
+            "type": "json",
+        }
+        await session.commit()
 
     async with AsyncSession(pg) as session:
         rows = (

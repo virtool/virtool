@@ -336,6 +336,14 @@ async def test_create_index_task_finalization_failure_cleans_up_json_artifact(
     )
 
     async def update_last_indexed_versions(*_args):
+        async with AsyncSession(pg) as session:
+            row = (
+                await session.execute(
+                    select(SQLIndexFile).filter_by(index="task_index"),
+                )
+            ).scalar_one_or_none()
+
+        assert row is None
         raise RuntimeError("failed to finalize index")
 
     mocker.patch(

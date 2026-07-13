@@ -17,7 +17,7 @@ from virtool.data.errors import (
     ResourceNotFoundError,
 )
 from virtool.data.events import Operation, emit, emits
-from virtool.data.topg import retry_both_transactions
+from virtool.data.topg import both_transactions, retry_both_transactions
 from virtool.data.transforms import apply_transforms
 from virtool.history.models import HistorySearchResult
 from virtool.history.sql import SQLLegacyHistory
@@ -412,32 +412,37 @@ class IndexData:
         async def stream():
             yield compressed
 
-        size = await self._storage.write(
-            key,
-            stream(),
-        )
-
         try:
-            await virtool.indexes.db.upsert_index_file(
-                self._pg,
-                index_id,
-                "json",
-                file_name,
-                size,
+            # Storage cannot participate in the database transactions. A hard process
+            # exit can leave an unready object, but a retried build overwrites it.
+            size = await self._storage.write(
+                key,
+                stream(),
             )
 
-            async with self._mongo.create_session() as session:
+            async with both_transactions(self._mongo, self._pg) as (
+                mongo_session,
+                pg_session,
+            ):
+                await virtool.indexes.db.upsert_index_file(
+                    pg_session,
+                    index_id,
+                    "json",
+                    file_name,
+                    size,
+                )
+
                 await update_last_indexed_versions(
                     self._mongo,
                     self._pg,
                     ref_id,
-                    session,
+                    mongo_session,
                 )
 
                 await self._mongo.indexes.update_one(
                     {"_id": index_id},
                     {"$set": {"ready": True}},
-                    session=session,
+                    session=mongo_session,
                 )
         except BaseException:
             await self._storage.delete(key)

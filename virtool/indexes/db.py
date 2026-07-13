@@ -454,39 +454,37 @@ async def iter_patched_otus(
 
 
 async def upsert_index_file(
-    pg: AsyncEngine,
+    session: AsyncSession,
     index_id: str,
     file_type: str,
     name: str,
     size: int,
 ) -> dict[str, Any]:
     """Create or update an index file row."""
-    async with AsyncSession(pg) as session:
-        index_file_id = (
-            await session.execute(
-                pg_insert(SQLIndexFile)
-                .values(
-                    index=index_id,
-                    name=name,
-                    size=size,
-                    type=file_type,
-                )
-                .on_conflict_do_update(
-                    index_elements=[SQLIndexFile.index, SQLIndexFile.name],
-                    set_={"size": size, "type": file_type},
-                )
-                .returning(SQLIndexFile.id),
+    index_file_id = (
+        await session.execute(
+            pg_insert(SQLIndexFile)
+            .values(
+                index=index_id,
+                name=name,
+                size=size,
+                type=file_type,
             )
-        ).scalar_one()
-        await session.commit()
+            .on_conflict_do_update(
+                index_elements=[SQLIndexFile.index, SQLIndexFile.name],
+                set_={"size": size, "type": file_type},
+            )
+            .returning(SQLIndexFile.id),
+        )
+    ).scalar_one()
 
-        return {
-            "id": index_file_id,
-            "index": index_id,
-            "name": name,
-            "size": size,
-            "type": file_type,
-        }
+    return {
+        "id": index_file_id,
+        "index": index_id,
+        "name": name,
+        "size": size,
+        "type": file_type,
+    }
 
 
 async def update_last_indexed_versions(
