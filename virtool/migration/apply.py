@@ -156,9 +156,11 @@ async def ensure_revisions_table(pg: AsyncEngine) -> None:
         )
 
         await session.execute(
-            text("ALTER TABLE revisions ALTER COLUMN name TYPE varchar"),
-        )
-
-        await session.execute(
-            text("ALTER TABLE revisions ALTER COLUMN revision TYPE varchar"),
+            text(
+                """
+                    ALTER TABLE revisions
+                        ALTER COLUMN name TYPE varchar,
+                        ALTER COLUMN revision TYPE varchar
+                    """,
+            ),
         )
