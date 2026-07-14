@@ -244,6 +244,22 @@ class TestOTUDataRoundTrip:
         assert otu_document_from_row(row) == row.data
 
 
+class TestPromotedLastIndexedVersion:
+    """``last_indexed_version`` is promoted out of the ``data`` JSONB.
+
+    Index builds select the OTUs that have changed since the last build by comparing
+    it against ``version``, which has to be a plain SQL comparison rather than a cast
+    out of JSONB.
+    """
+
+    def test_promotes_an_indexed_otu(self, test_otu: Document):
+        assert otu_row_values(test_otu, 1)["last_indexed_version"] == 0
+
+    def test_promotes_a_never_indexed_otu_as_null(self, test_imported_otu: Document):
+        """An OTU no index build has ever included carries ``None``."""
+        assert otu_row_values(test_imported_otu, 1)["last_indexed_version"] is None
+
+
 class TestSequenceDataRoundTrip:
     async def test_recovers_the_mongo_document(
         self,

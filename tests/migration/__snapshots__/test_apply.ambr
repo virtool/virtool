@@ -785,5 +785,12 @@
       'name': 'compare otu and sequence stores',
       'revision': 't96ls24modzv',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 113,
+      'name': 'add otu last indexed version',
+      'revision': 'c6fcaf6c86ad',
+    }),
   ])
 # ---

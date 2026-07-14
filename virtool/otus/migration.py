@@ -555,11 +555,18 @@ async def _settle_and_reconcile_otu(
 
 
 def _upsert_otu(document: Document, reference_id: int, row: Row | None):
-    """Compose an upsert that rewrites a ``legacy_otus`` row from its document."""
+    """Compose an upsert that rewrites a ``legacy_otus`` row from its document.
+
+    The promoted ``last_indexed_version`` column is re-derived from the merged ``data``
+    rather than left as the document wrote it, so a stamp the merge preserved is
+    written to both and the row cannot come out holding a column that contradicts its
+    own JSONB.
+    """
     values = otu_row_values(document, reference_id)
 
     if row is not None:
         values["data"] = _merge_last_indexed_version(values["data"], row.data)
+        values["last_indexed_version"] = values["data"]["last_indexed_version"]
 
     return (
         insert(SQLOTU)

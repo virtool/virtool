@@ -31,6 +31,12 @@ class SQLOTU(Base):
     ``reference_id`` is a real integer foreign key to ``legacy_references.id``
     because references are already migrated and the embedded ``reference.id`` is
     already an integer.
+
+    ``last_indexed_version`` is the OTU's ``version`` as of the last index build that
+    included it. It is promoted so index builds can select the OTUs that have changed
+    since with a plain ``version IS DISTINCT FROM last_indexed_version``, rather than
+    casting the value out of the ``data`` JSONB on every row. It is nullable because an
+    OTU that has never been indexed carries ``None``.
     """
 
     __tablename__ = "legacy_otus"
@@ -39,6 +45,7 @@ class SQLOTU(Base):
     data: Mapped[dict] = mapped_column(JSONB, nullable=False)
     name: Mapped[str]
     abbreviation: Mapped[str] = mapped_column(default="")
+    last_indexed_version: Mapped[int | None]
     reference_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("legacy_references.id"), index=True
     )

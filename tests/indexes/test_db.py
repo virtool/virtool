@@ -570,6 +570,9 @@ class TestUpdateLastIndexedVersions:
     ):
         """The stamp lands in Postgres as well as Mongo.
 
+        Postgres holds the value twice -- in the promoted column and in the ``data``
+        JSONB that mirrors the document -- and the stamp must land in both.
+
         The OTU is created through the data layer so it exists in both stores, as it
         would in production. Seeding Mongo alone would leave the Postgres update
         matching no rows and the test would pass without proving anything.
@@ -594,6 +597,7 @@ class TestUpdateLastIndexedVersions:
         async with AsyncSession(pg) as session:
             row = await session.scalar(select(SQLOTU).where(SQLOTU.id == otu.id))
 
+        assert row.last_indexed_version == document["version"]
         assert row.data["last_indexed_version"] == document["version"]
 
     async def test_stamps_every_chunk(
@@ -647,6 +651,7 @@ class TestUpdateLastIndexedVersions:
             document = await mongo.otus.find_one({"_id": otu.id})
 
             assert document["last_indexed_version"] == document["version"]
+            assert rows[otu.id].last_indexed_version == document["version"]
             assert rows[otu.id].data["last_indexed_version"] == document["version"]
 
     async def test_otu_not_in_postgres(

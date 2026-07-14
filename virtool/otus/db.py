@@ -372,6 +372,7 @@ def otu_row_values(document: Document, reference_id: int) -> dict[str, Any]:
         "data": _encode_otu_data(document),
         "name": document["name"],
         "abbreviation": document.get("abbreviation") or "",
+        "last_indexed_version": document["last_indexed_version"],
         "reference_id": reference_id,
         "verified": document["verified"],
         "version": document["version"],
@@ -411,10 +412,10 @@ def next_sequence_position(otu_id: str):
 _MAX_BIND_PARAMETERS = 32767
 """The most bind parameters asyncpg will accept in one statement."""
 
-_OTU_ROW_CHUNK_SIZE = _MAX_BIND_PARAMETERS // 7
+_OTU_ROW_CHUNK_SIZE = _MAX_BIND_PARAMETERS // 8
 """Max ``legacy_otus`` rows per statement.
 
-Each row binds the seven columns produced by :func:`otu_row_values`.
+Each row binds the eight columns produced by :func:`otu_row_values`.
 """
 
 _SEQUENCE_ROW_CHUNK_SIZE = _MAX_BIND_PARAMETERS // 6

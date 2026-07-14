@@ -520,10 +520,12 @@ async def update_last_indexed_versions(
     """Update the `last_indexed_version` field for OTUs associated with `ref_id`
 
     Both stores are stamped from the same ``{version: [otu_id]}`` grouping, so the
-    same OTUs are stamped with the same version in each. ``last_indexed_version`` has
-    no promoted column on ``legacy_otus``; it lives in the ``data`` JSONB, so only
-    that key is rewritten. OTUs with no Postgres row yet are simply not matched --
-    the backfill will carry the stamped Mongo document over.
+    same OTUs are stamped with the same version in each. On ``legacy_otus`` the value
+    is held twice -- in the promoted ``last_indexed_version`` column and in the
+    ``data`` JSONB that mirrors the Mongo document -- and both are written by the same
+    statement, so they cannot come out of a stamp disagreeing. OTUs with no Postgres
+    row yet are simply not matched -- the backfill will carry the stamped Mongo
+    document over.
 
     :param mongo: the application mongo client
     :param pg: the application Postgres client
@@ -567,6 +569,7 @@ async def update_last_indexed_versions(
                 update(SQLOTU)
                 .where(SQLOTU.id.in_(id_list[start : start + OTU_ID_CHUNK_SIZE]))
                 .values(
+                    last_indexed_version=version,
                     data=func.jsonb_set(
                         SQLOTU.data,
                         literal(["last_indexed_version"], ARRAY(Text)),
