@@ -764,5 +764,19 @@
       'name': 'compare sequence positions',
       'revision': 'irulhq4gaihg',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 110,
+      'name': 'reconcile otus and sequences',
+      'revision': 'ztimons6l9au',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 111,
+      'name': 'compare otu and sequence stores',
+      'revision': 't96ls24modzv',
+    }),
   ])
 # ---

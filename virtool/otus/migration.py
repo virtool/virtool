@@ -1,8 +1,9 @@
 """Shared migration logic for the Mongo-to-Postgres OTU and sequence move.
 
-This module holds the idempotent copy used by the OTU/sequence backfill revision
-and the drift check that gates the read cutover. Keeping them here keeps the
-logic unit-testable and reusable.
+This module holds the idempotent copy used by the OTU/sequence backfill revision,
+the authoritative reconciliation that repairs rows the copy left behind, and the
+drift check that gates the read cutover. Keeping them here keeps the logic
+unit-testable and reusable.
 
 Unlike the standard migration playbook, ``legacy_otus`` and ``legacy_sequences``
 have no ``legacy_id`` column: their primary key ``id`` is the Mongo ``_id``
@@ -10,17 +11,27 @@ string itself. Idempotency and skip-existing therefore key on ``id`` rather than
 ``legacy_id``.
 """
 
-from typing import Any
+import asyncio
+from collections import Counter
+from enum import Enum
+from typing import Any, NamedTuple
 
-from sqlalchemy import select
+from sqlalchemy import Row, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from structlog import get_logger
 
-from virtool.api.custom_json import dump_string, loads
 from virtool.data.topg import resolve_legacy_id
 from virtool.migration import MigrationContext
-from virtool.otus.db import lock_legacy_otu, otu_row_values, sequence_row_values
+from virtool.otus.db import (
+    bulk_upsert_sequence_rows,
+    delete_legacy_otu,
+    delete_legacy_sequences,
+    otu_document_from_row,
+    otu_row_values,
+    sequence_document_from_row,
+    sequence_row_values,
+)
 from virtool.otus.sql import SQLOTU, SQLSequence
 from virtool.references.sql import SQLReference
 from virtool.types import Document
@@ -47,6 +58,10 @@ async def copy_otus_and_sequences_to_postgres(ctx: MigrationContext) -> None:
     ``id``) are skipped, and every insert uses ``ON CONFLICT (id) DO NOTHING`` as a
     second line of defence, so the backfill is safe to re-run after an
     interruption.
+
+    Skipping rows that already exist is what makes this unable to repair a row that
+    has drifted from its document. :func:`reconcile_otus_and_sequences` exists for
+    that.
 
     Two integrity failures are loud rather than silent, matching the required
     relationships they represent:
@@ -242,6 +257,422 @@ async def _lookup_reference_id(
     return reference_id
 
 
+_SETTLE_ATTEMPTS = 3
+"""How many times a deferred OTU is re-read before its Mongo write is given up on."""
+
+_SETTLE_DELAY = 0.25
+"""Seconds to wait between re-reads of a deferred OTU."""
+
+
+class _OTUStatus(Enum):
+    """What the reconciliation did with one OTU."""
+
+    reconciled = "reconciled"
+    """The row was rewritten from its Mongo document."""
+
+    inserted = "inserted"
+    """The OTU had no row at all and one was written."""
+
+    missing_from_mongo = "missing from mongo"
+    """The document was gone by the time the OTU was reached; the delete pass owns
+    it."""
+
+    deleted_mid_run = "deleted mid-run"
+    """The row was deleted while this run was in progress; re-creating it would
+    resurrect the OTU."""
+
+    postgres_ahead = "postgres ahead"
+    """The row reflects a write whose Mongo commit is not visible yet."""
+
+
+class _OTUOutcome(NamedTuple):
+    """The result of reconciling one OTU."""
+
+    status: _OTUStatus
+    sequences: int = 0
+    deleted_sequences: int = 0
+
+
+async def reconcile_otus_and_sequences(ctx: MigrationContext) -> None:
+    """Rewrite every ``legacy_otus`` and ``legacy_sequences`` row from Mongo.
+
+    An authoritative re-backfill that repairs rows drifted from the documents they
+    mirror. :func:`copy_otus_and_sequences_to_postgres` inserts with ``ON CONFLICT
+    (id) DO NOTHING`` and so cannot touch a row that already exists, which is
+    exactly the row that needs repairing. This upserts instead, overwriting ``data``
+    and every promoted column from the current Mongo document.
+
+    That rewrite is what makes the pass general rather than a fix for one defect. It
+    repairs, without needing to know which of them applied to a given row:
+
+    - a ``created_at`` stored with microseconds Mongo never held, written by the
+      bulk import path before it truncated to the millisecond,
+    - a ``last_indexed_version`` that index finalization stamped into Mongo only,
+    - a ``position`` never assigned, or assigned before the sequence's OTU had rows,
+    - rows for documents Mongo no longer has.
+
+    Unlike the steady-state write path, this pass *does* own ``position``: it reads
+    an OTU's sequences with the same unsorted ``find({"otu_id": otu_id})`` that
+    :func:`virtool.otus.db.join` uses and counts them off in the order Mongo returns
+    them.
+
+    One OTU and its sequences are committed per transaction, bounding memory and
+    letting an interrupted run resume. The pass is idempotent: a second run reads the
+    same documents in the same order and writes the same values.
+
+    **Postgres is never behind Mongo, and a Mongo read here may be behind Postgres.**
+
+    Every writer commits Postgres first. :func:`virtool.data.topg.both_transactions`
+    commits the Postgres session *inside* the still-open Mongo transaction, and the
+    bulk reference paths commit their Postgres rows before touching Mongo at all. So a
+    writer's rows are visible in Postgres while its Mongo documents are not yet visible
+    to anyone. :func:`virtool.otus.db.lock_legacy_otu` cannot close that window -- the
+    writer released the row lock at its Postgres commit, before its Mongo write became
+    visible -- so this pass must assume its Mongo snapshot may be *older* than the rows
+    it is about to rewrite. Every destructive or regressive step is therefore guarded:
+
+    - **Nothing is deleted that a concurrent writer could have created.** The set of
+      ``legacy_otus`` ids is snapshotted before the first Mongo read, and only an OTU
+      in that snapshot (or one this run inserted itself) may be deleted. An OTU
+      dual-written after the run started can never be a delete candidate, so it cannot
+      be deleted -- nor, through the ``ON DELETE CASCADE`` on
+      ``legacy_sequences.otu_id``, can its sequences.
+
+    - **An OTU whose row vanished mid-run is not re-created.** A Mongo document with no
+      Postgres row means the OTU is being deleted right now (the Postgres delete
+      committed, the Mongo delete is not visible yet), not that the row is missing:
+      Postgres is never behind, so a document that reached Mongo has always reached
+      Postgres first. Only an OTU that had no row when the run *started* is inserted,
+      which is still enough to fill a hole the backfill left.
+
+    - **A row that is ahead of the Mongo snapshot is not rewritten.** Every path that
+      touches an OTU or one of its sequences bumps the OTU's ``version`` in Mongo and
+      writes it to ``legacy_otus`` in the same Postgres transaction. So a row whose
+      ``version`` is greater than the version this run read from Mongo is proof that the
+      snapshot lags a committed Postgres write, and rewriting the OTU from it would
+      write a stale document over the newer row and delete the sequence rows that write
+      created. Such OTUs are deferred and retried once the run has drained.
+
+    - **``last_indexed_version`` is merged, not overwritten.** Index finalization
+      stamps it into both stores without bumping ``version``, so no lag is detectable.
+      The stamp only ever raises the value -- it is set to the OTU's current version
+      -- so the greater of the row's and the document's is taken, which both repairs a
+      stamp that only reached Mongo and preserves one that has only reached Postgres.
+    """
+    async with AsyncSession(ctx.pg) as session:
+        postgres_otu_ids = {row[0] for row in await session.execute(select(SQLOTU.id))}
+
+    otu_ids = [
+        document["_id"]
+        async for document in ctx.mongo.otus.find({}, projection=["_id"])
+    ]
+
+    reference_id_cache: dict[int | str, int] = {}
+
+    counts = dict.fromkeys(_OTUStatus, 0)
+
+    deferred: list[str] = []
+    inserted_otu_ids: set[str] = set()
+
+    reconciled_sequences = 0
+    deleted_sequences = 0
+
+    async with AsyncSession(ctx.pg) as session:
+        for otu_id in otu_ids:
+            outcome = await _reconcile_otu(
+                ctx,
+                session,
+                otu_id,
+                reference_id_cache,
+                existed_in_postgres=otu_id in postgres_otu_ids,
+                force=False,
+            )
+
+            if outcome.status is _OTUStatus.postgres_ahead:
+                deferred.append(otu_id)
+                continue
+
+            counts[outcome.status] += 1
+            reconciled_sequences += outcome.sequences
+            deleted_sequences += outcome.deleted_sequences
+
+            if outcome.status is _OTUStatus.inserted:
+                inserted_otu_ids.add(otu_id)
+
+    async with AsyncSession(ctx.pg) as session:
+        for otu_id in deferred:
+            outcome = await _settle_and_reconcile_otu(
+                ctx,
+                session,
+                otu_id,
+                reference_id_cache,
+                existed_in_postgres=otu_id in postgres_otu_ids,
+            )
+
+            counts[outcome.status] += 1
+            reconciled_sequences += outcome.sequences
+            deleted_sequences += outcome.deleted_sequences
+
+            if outcome.status is _OTUStatus.inserted:
+                inserted_otu_ids.add(otu_id)
+
+    deleted_otus = await _delete_removed_otus(
+        ctx,
+        postgres_otu_ids | inserted_otu_ids,
+    )
+
+    logger.info(
+        "otu and sequence reconciliation complete",
+        otus=counts[_OTUStatus.reconciled] + counts[_OTUStatus.inserted],
+        inserted_otus=counts[_OTUStatus.inserted],
+        sequences=reconciled_sequences,
+        deleted_otus=deleted_otus,
+        deleted_sequences=deleted_sequences,
+        deferred_otus=len(deferred),
+        missing_from_mongo=counts[_OTUStatus.missing_from_mongo],
+        deleted_mid_run=counts[_OTUStatus.deleted_mid_run],
+    )
+
+
+async def _reconcile_otu(
+    ctx: MigrationContext,
+    session: AsyncSession,
+    otu_id: str,
+    reference_id_cache: dict[int | str, int],
+    *,
+    existed_in_postgres: bool,
+    force: bool,
+) -> _OTUOutcome:
+    """Rewrite one OTU's row and its sequences' rows from Mongo.
+
+    The OTU's row is locked with ``SELECT … FOR UPDATE`` -- the same lock every
+    dual-write path takes -- *before* Mongo is read, so no writer can commit while the
+    OTU is being rewritten. The lock alone does not make the Mongo read current, though,
+    because a writer that already committed Postgres released it while its Mongo write
+    was still invisible. The row read under the lock is what tells us whether that
+    happened; see :func:`reconcile_otus_and_sequences` for the guards it feeds.
+
+    ``force`` rewrites an OTU whose row is ahead of Mongo anyway. See
+    :func:`_settle_and_reconcile_otu`.
+    """
+    row = (
+        await session.execute(
+            select(SQLOTU.version, SQLOTU.data)
+            .where(SQLOTU.id == otu_id)
+            .with_for_update(),
+        )
+    ).one_or_none()
+
+    document = await ctx.mongo.otus.find_one({"_id": otu_id})
+
+    if document is None:
+        await session.rollback()
+        return _OTUOutcome(_OTUStatus.missing_from_mongo)
+
+    if row is None:
+        if existed_in_postgres:
+            await session.rollback()
+            return _OTUOutcome(_OTUStatus.deleted_mid_run)
+    elif not force and row.version > document["version"]:
+        await session.rollback()
+        return _OTUOutcome(_OTUStatus.postgres_ahead)
+
+    reference_id = await _resolve_reference_id(session, document, reference_id_cache)
+
+    await session.execute(_upsert_otu(document, reference_id, row))
+
+    documents = [
+        sequence_document
+        async for sequence_document in ctx.mongo.sequences.find({"otu_id": otu_id})
+    ]
+
+    await bulk_upsert_sequence_rows(session, documents)
+
+    deleted = await _delete_removed_sequences(
+        session,
+        otu_id,
+        [sequence_document["_id"] for sequence_document in documents],
+    )
+
+    await session.commit()
+
+    return _OTUOutcome(
+        _OTUStatus.reconciled if row is not None else _OTUStatus.inserted,
+        len(documents),
+        deleted,
+    )
+
+
+async def _settle_and_reconcile_otu(
+    ctx: MigrationContext,
+    session: AsyncSession,
+    otu_id: str,
+    reference_id_cache: dict[int | str, int],
+    *,
+    existed_in_postgres: bool,
+) -> _OTUOutcome:
+    """Reconcile an OTU whose row was ahead of Mongo when the main pass reached it.
+
+    The write that put the row ahead commits Mongo immediately after Postgres, so
+    re-reading is nearly always enough: by the time the main pass has drained, the
+    document carries the write and the OTU reconciles like any other.
+
+    A row that is *still* ahead after the retries is not a lagging write, it is drift --
+    a dual-write whose Mongo commit never landed leaves the Postgres row a version ahead
+    forever. That is exactly what this revision exists to repair, so Mongo is taken as
+    authoritative and the row is rewritten, loudly.
+    """
+    for _ in range(_SETTLE_ATTEMPTS):
+        outcome = await _reconcile_otu(
+            ctx,
+            session,
+            otu_id,
+            reference_id_cache,
+            existed_in_postgres=existed_in_postgres,
+            force=False,
+        )
+
+        if outcome.status is not _OTUStatus.postgres_ahead:
+            return outcome
+
+        await asyncio.sleep(_SETTLE_DELAY)
+
+    logger.warning(
+        "otu row is ahead of mongo and is not catching up; rewriting from mongo",
+        otu_id=otu_id,
+    )
+
+    return await _reconcile_otu(
+        ctx,
+        session,
+        otu_id,
+        reference_id_cache,
+        existed_in_postgres=existed_in_postgres,
+        force=True,
+    )
+
+
+def _upsert_otu(document: Document, reference_id: int, row: Row | None):
+    """Compose an upsert that rewrites a ``legacy_otus`` row from its document."""
+    values = otu_row_values(document, reference_id)
+
+    if row is not None:
+        values["data"] = _merge_last_indexed_version(values["data"], row.data)
+
+    return (
+        insert(SQLOTU)
+        .values(**values)
+        .on_conflict_do_update(
+            index_elements=["id"],
+            set_={key: value for key, value in values.items() if key != "id"},
+        )
+    )
+
+
+def _merge_last_indexed_version(data: Document, row_data: Document) -> Document:
+    """Keep a ``last_indexed_version`` the row already holds and Mongo has not caught
+    up to.
+
+    Index finalization stamps the field into both stores without bumping the OTU's
+    ``version``, so a row stamped just before this run read its document is
+    indistinguishable from an unstamped one by any other field. The stamp only ever
+    raises the value -- it is set to the OTU's current ``version``, which only ever
+    increments -- so the greater of the two is the one that survives, whichever store it
+    came from.
+
+    The document is copied rather than rewritten in place; the caller reuses it.
+    """
+    document_version = data.get("last_indexed_version")
+    row_version = row_data.get("last_indexed_version")
+
+    if row_version is None or (
+        document_version is not None and document_version >= row_version
+    ):
+        return data
+
+    return {**data, "last_indexed_version": row_version}
+
+
+async def _delete_removed_sequences(
+    session: AsyncSession,
+    otu_id: str,
+    sequence_ids: list[str],
+) -> int:
+    """Delete an OTU's ``legacy_sequences`` rows that Mongo no longer has.
+
+    Safe without re-checking Mongo, but not because of the row lock alone. Every path
+    that adds a sequence to an existing OTU -- ``create_sequence`` above all -- bumps
+    the OTU's ``version`` and writes it to ``legacy_otus`` in the same Postgres
+    transaction, and the caller refuses to reconcile an OTU whose row carries a version
+    the Mongo read does not. So a sequence row that this OTU's Mongo read does not
+    account for cannot belong to a writer whose Mongo commit is merely not visible yet:
+    it is a row for a document that is gone.
+
+    While the caller holds the OTU's row lock no further sequence can be committed
+    under it, so that stays true through to the delete.
+
+    The rows to delete are worked out here rather than left to the database as a ``NOT
+    IN`` over ``sequence_ids``. That form binds one parameter per sequence the OTU has,
+    so a large enough OTU would push the statement past asyncpg's bind parameter cap and
+    abort the whole revision, and even well short of it every OTU pays for its entire
+    sequence list on a delete that almost always removes nothing. Reading the OTU's row
+    ids back costs one bound parameter instead, and only the ids that must go -- those
+    Mongo no longer accounts for -- are handed to
+    :func:`virtool.otus.db.delete_legacy_sequences`, which chunks them. Usually there
+    are none at all and no delete is issued.
+    """
+    row_ids = {
+        row[0]
+        for row in await session.execute(
+            select(SQLSequence.id).where(SQLSequence.otu_id == otu_id),
+        )
+    }
+
+    removed = row_ids - set(sequence_ids)
+
+    if not removed:
+        return 0
+
+    return await delete_legacy_sequences(session, sorted(removed))
+
+
+async def _delete_removed_otus(ctx: MigrationContext, deletable: set[str]) -> int:
+    """Delete ``legacy_otus`` rows for OTUs Mongo no longer has.
+
+    Deleting an OTU takes its sequences with it through the ``ON DELETE CASCADE`` on
+    ``legacy_sequences.otu_id``, so a wrong delete here is the most destructive thing
+    this revision can do. Two things keep it from happening.
+
+    Only an OTU in ``deletable`` is considered: one that had a row before the run took
+    its first Mongo read, or one this run inserted itself. Every writer commits Postgres
+    before Mongo, so an OTU dual-written during the run is in neither set and cannot be
+    deleted, however long its Mongo write takes to appear.
+
+    The Mongo ids are re-read here rather than reused from the run's up-front snapshot,
+    and each candidate is then re-read individually. An OTU created *and* deleted while
+    the run was walking Mongo is the one case where a row this run wrote itself needs
+    taking back out again, and only a fresh read can tell.
+    """
+    mongo_otu_ids = {
+        document["_id"]
+        async for document in ctx.mongo.otus.find({}, projection=["_id"])
+    }
+
+    deleted_count = 0
+
+    async with AsyncSession(ctx.pg) as session:
+        for otu_id in sorted(deletable - mongo_otu_ids):
+            if await ctx.mongo.otus.find_one({"_id": otu_id}, projection=["_id"]):
+                continue
+
+            deleted = await delete_legacy_otu(session, otu_id)
+            await session.commit()
+
+            deleted_count += deleted
+
+    return deleted_count
+
+
 _OTU_CHUNK_SIZE = 500
 """How many OTUs to hold in memory at once while comparing the two stores."""
 
@@ -254,16 +685,34 @@ nothing else.
 """
 
 
+_GATE_ATTEMPTS = 2
+"""How many times both stores are read before the drift found in them is believed."""
+
+_GATE_SETTLE_DELAY = 0.25
+"""Seconds to wait before re-reading stores that reported drift.
+
+Only a floor. The re-read itself walks every OTU and sequence again, and that is most
+of the settle on any store large enough for the lag to matter.
+"""
+
+
 async def compare_otu_and_sequence_stores(ctx: MigrationContext) -> None:
     """Verify the Mongo and Postgres OTU and sequence stores agree.
 
-    A gating drift check run after the OTU/sequence backfill and before OTU and
-    sequence reads switch to Postgres. It changes nothing: it reads every
+    A gating drift check run after the OTU/sequence reconciliation and before OTU
+    and sequence reads switch to Postgres. It changes nothing: it reads every
     production OTU and sequence (no sampling) and raises if the two stores
     disagree.
 
-    A Postgres row is compared against the row the write path would produce from
-    the current Mongo document, by rebuilding it with the very functions the
+    The check asserts the *read* contract directly. A row is fed to the very
+    functions the read path uses to recover the document it was written from --
+    :func:`otu_document_from_row` and :func:`sequence_document_from_row` -- and the
+    result must equal the Mongo document. That is the path
+    :func:`virtool.otus.db.join` actually takes, so anything it cannot faithfully
+    recover is drift by definition, and no separate model of how the ``data`` JSONB
+    should look can drift away from the read path over time.
+
+    The promoted columns are checked too, by rebuilding them with the functions the
     dual-write and backfill use -- :func:`otu_row_values` and
     :func:`sequence_row_values`. Everything they normalise is therefore normalised
     identically here and cannot be mistaken for drift:
@@ -274,46 +723,93 @@ async def compare_otu_and_sequence_stores(ctx: MigrationContext) -> None:
       integer id written since references were migrated -- resolves to the same
       integer ``legacy_references`` primary key.
 
-    The ``data`` JSONB is compared against the Mongo document rendered through the
-    engine's JSON serializer, because that -- not the document itself -- is what the
-    column holds. See :func:`_as_stored_json`.
+    Sequence ordering is checked an OTU at a time, because ``position`` orders a
+    sequence *within its OTU* and so is not derivable from a single document. Each
+    OTU's rows, sorted by ``position``, must come back in the order Mongo's cursor
+    returns them. This matters because a joined OTU rebuilt from Postgres feeds
+    :func:`virtool.history.db.patch_to_version`, whose ``dictdiffer`` diffs address
+    an isolate's sequences by list index; hand them back reordered and index builds,
+    reference clones and analysis formatting all silently apply each stored change
+    to the wrong sequence. A ``NULL`` position is drift: Postgres sorts nulls last
+    on an ascending order, so an unreconciled row would otherwise be quietly
+    shuffled to the end of its OTU instead of failing the check. Two sequences of one
+    OTU sharing a position is drift for the same reason: nothing in the schema forbids
+    it, and the order of the pair is then whatever plan the database chooses, so an OTU
+    whose sequence order is undetermined would otherwise pass whenever the plan of the
+    day happened to agree with Mongo. It is the state the position backfill and the
+    reconciliation exist to repair, so the gate fails on it rather than sorting around
+    it.
 
-    The check runs in two passes. The first walks both stores in chunks and
-    collects *candidate* ids: present in one store but not the other, or holding a
-    row that does not match its document. The second re-reads each candidate from
-    both stores individually and only reports the ones that still disagree. The
-    application keeps writing while a migration runs, so a document written or
-    deleted between the two chunk reads would otherwise be reported as drift; the
-    second pass costs nothing on a clean run, where there are no candidates.
+    Each check runs in two passes. The first walks both stores and collects
+    *candidates*: present in one store but not the other, or holding a row that does
+    not match its document. The second re-reads each candidate from both stores
+    individually and only reports the ones that still disagree. The application
+    keeps writing while a migration runs, so a document written or deleted between
+    the two reads would otherwise be reported as drift; the second pass costs
+    nothing on a clean run, where there are no candidates.
 
-    Each pass runs in its own :class:`AsyncSession`. The scanning session's
-    identity map still holds every row it loaded, and a ``select()`` against it
-    would hand those instances back rather than re-reading the row -- which would
-    leave the second pass unable to see the very dual-write it exists to
-    tolerate.
+    Each pass runs in its own :class:`AsyncSession`. The scanning session's identity
+    map still holds every row it loaded, and a ``select()`` against it would hand
+    those instances back rather than re-reading the row -- which would leave the
+    second pass unable to see the very dual-write it exists to tolerate.
+
+    Those two passes tolerate a write whose Mongo commit lands *between* them. They do
+    not tolerate one whose Mongo commit has not landed by the time of the second read.
+    :func:`virtool.data.topg.both_transactions` commits the Postgres session inside the
+    still-open Mongo transaction, so a dual-write makes its row visible here while the
+    document it was written from is still invisible -- and both passes then read the
+    same stale document and call a converging OTU drifted. Postgres is never behind
+    Mongo; a Mongo read may be arbitrarily behind Postgres.
+
+    So drift is not believed the first time it is seen. The whole check is re-run, and
+    only drift that survives a second reading of both stores is reported. That gives an
+    in-flight write time to land: mostly the re-scan itself, which re-reads every
+    document, with :data:`_GATE_SETTLE_DELAY` in front of it for a store small enough
+    that the re-scan is quick. Drift that is real is unaffected -- no write is going to
+    land and resolve it -- so the gate still fails, and still halts the migration.
+
+    The re-run costs nothing on a clean run, where there is no drift to re-check, and
+    is only paid on the path that was about to fail the migration anyway.
 
     The check is exhaustive before it fails: drift is accumulated across every OTU
     and sequence, the full per-document diff is logged, and a single
     :class:`ValueError` is raised at the end. A clean run logs zero drift with the
     document counts.
     """
-    otu_drift = await _compare_otus(ctx)
-    sequence_drift = await _compare_sequences(ctx)
+    for attempt in range(_GATE_ATTEMPTS):
+        otu_drift = await _compare_otus(ctx)
+        sequence_drift = await _compare_sequences(ctx)
+        order_drift = await _compare_sequence_orders(ctx)
 
-    if otu_drift or sequence_drift:
-        for report in otu_drift:
-            logger.error("otu drift", **report)
+        if not (otu_drift or sequence_drift or order_drift):
+            logger.info("otu and sequence stores match; no drift")
+            return
 
-        for report in sequence_drift:
-            logger.error("sequence drift", **report)
+        if attempt < _GATE_ATTEMPTS - 1:
+            logger.info(
+                "drift found; re-reading both stores before reporting it",
+                otus=len(otu_drift),
+                sequences=len(sequence_drift),
+                orders=len(order_drift),
+            )
 
-        msg = (
-            f"store drift detected in {len(otu_drift)} otus and "
-            f"{len(sequence_drift)} sequences"
-        )
-        raise ValueError(msg)
+            await asyncio.sleep(_GATE_SETTLE_DELAY)
 
-    logger.info("otu and sequence stores match; no drift")
+    for report in otu_drift:
+        logger.error("otu drift", **report)
+
+    for report in sequence_drift:
+        logger.error("sequence drift", **report)
+
+    for report in order_drift:
+        logger.error("sequence order drift", **report)
+
+    msg = (
+        f"store drift detected in {len(otu_drift)} otus, "
+        f"{len(sequence_drift)} sequences and "
+        f"{len(order_drift)} otu sequence orders"
+    )
+    raise ValueError(msg)
 
 
 async def _compare_otus(ctx: MigrationContext) -> list[dict]:
@@ -365,10 +861,7 @@ async def _compare_otus(ctx: MigrationContext) -> list[dict]:
                     reference_id_cache,
                 )
 
-                if reference_id is None or _diff_row(
-                    row,
-                    otu_row_values(document, reference_id),
-                ):
+                if reference_id is None or _diff_otu(row, document, reference_id):
                     candidates.add(otu_id)
 
     async with AsyncSession(ctx.pg) as session:
@@ -428,11 +921,7 @@ async def _compare_sequences(ctx: MigrationContext) -> list[dict]:
                 document = documents.get(sequence_id)
                 row = rows.get(sequence_id)
 
-                if (
-                    document is None
-                    or row is None
-                    or _diff_row(row, sequence_row_values(document))
-                ):
+                if document is None or row is None or _diff_sequence(row, document):
                     candidates.add(sequence_id)
 
     async with AsyncSession(ctx.pg) as session:
@@ -451,6 +940,101 @@ async def _compare_sequences(ctx: MigrationContext) -> list[dict]:
     return drifted
 
 
+async def _compare_sequence_orders(ctx: MigrationContext) -> list[dict]:
+    """Compare each OTU's Postgres sequence order against Mongo's cursor order.
+
+    Runs the same two-pass candidate/re-verify structure as the document checks, so
+    an OTU whose sequences the application changed between the two reads is not
+    mistaken for drift. See :func:`compare_otu_and_sequence_stores`.
+    """
+    otu_ids = [
+        document["_id"]
+        async for document in ctx.mongo.otus.find({}, projection=["_id"])
+    ]
+
+    async with AsyncSession(ctx.pg) as session:
+        candidates = [
+            otu_id
+            for otu_id in otu_ids
+            if await _compare_otu_sequence_order(ctx, session, otu_id)
+        ]
+
+    async with AsyncSession(ctx.pg) as session:
+        drifted = [
+            report
+            for otu_id in candidates
+            if (report := await _compare_otu_sequence_order(ctx, session, otu_id))
+        ]
+
+    logger.info("compared sequence orders", otus=len(otu_ids), drifted=len(drifted))
+
+    return drifted
+
+
+async def _compare_otu_sequence_order(
+    ctx: MigrationContext,
+    session: AsyncSession,
+    otu_id: str,
+) -> dict | None:
+    """Report an OTU whose Postgres sequence order does not match Mongo's.
+
+    The rows are ordered by ``position`` and then by ``id``, which is unique. Ordering
+    on ``position`` alone leaves rows that share one in whatever order the plan happens
+    to emit them, so a check that passed once could fail on the next plan -- and, worse,
+    could pass here by luck on an OTU whose order is not actually determined. The
+    tie-break makes the comparison reproducible; the duplicate check below is what
+    fails it.
+    """
+    mongo_ids = [
+        document["_id"]
+        async for document in ctx.mongo.sequences.find(
+            {"otu_id": otu_id},
+            projection=["_id"],
+        )
+    ]
+
+    rows = (
+        await session.execute(
+            select(SQLSequence.id, SQLSequence.position)
+            .where(SQLSequence.otu_id == otu_id)
+            .order_by(SQLSequence.position, SQLSequence.id),
+        )
+    ).all()
+
+    if any(row.position is None for row in rows):
+        return {
+            "otu_id": otu_id,
+            "issue": "sequences without a position",
+            "sequence_ids": [row.id for row in rows if row.position is None],
+        }
+
+    duplicated = {
+        position
+        for position, count in Counter(row.position for row in rows).items()
+        if count > 1
+    }
+
+    if duplicated:
+        return {
+            "otu_id": otu_id,
+            "issue": "sequences sharing a position",
+            "positions": sorted(duplicated),
+            "sequence_ids": [row.id for row in rows if row.position in duplicated],
+        }
+
+    postgres_ids = [row.id for row in rows]
+
+    if mongo_ids != postgres_ids:
+        return {
+            "otu_id": otu_id,
+            "issue": "sequence order differs",
+            "mongo": mongo_ids,
+            "postgres": postgres_ids,
+        }
+
+    return None
+
+
 async def _verify_otu(
     ctx: MigrationContext,
     session: AsyncSession,
@@ -460,8 +1044,7 @@ async def _verify_otu(
     """Re-read one candidate OTU from both stores and report it if it still drifts.
 
     Returns ``None`` when the candidate turns out to agree after all, which happens
-    when the application wrote or deleted the OTU between the chunked reads that
-    flagged it.
+    when the application wrote or deleted the OTU between the reads that flagged it.
     """
     document = await ctx.mongo.otus.find_one({"_id": otu_id})
 
@@ -488,7 +1071,7 @@ async def _verify_otu(
             "reference": reference,
         }
 
-    differences = _diff_row(row, otu_row_values(document, reference_id))
+    differences = _diff_otu(row, document, reference_id)
 
     if differences:
         return {"otu_id": otu_id, "differences": differences}
@@ -521,7 +1104,7 @@ async def _verify_sequence(
     if row is None:
         return {"sequence_id": sequence_id, "issue": "missing from postgres"}
 
-    differences = _diff_row(row, sequence_row_values(document))
+    differences = _diff_sequence(row, document)
 
     if differences:
         return {"sequence_id": sequence_id, "differences": differences}
@@ -529,45 +1112,52 @@ async def _verify_sequence(
     return None
 
 
-def _as_stored_json(document: Document) -> Document:
-    """Render a Mongo document as the ``data`` JSONB column stores and returns it.
+def _diff_otu(
+    row: SQLOTU,
+    document: Document,
+    reference_id: int,
+) -> dict[str, dict]:
+    """Diff a ``legacy_otus`` row against the Mongo document it mirrors."""
+    return _diff_row(
+        row,
+        otu_row_values(document, reference_id),
+        document,
+        otu_document_from_row(row),
+    )
 
-    ``data`` holds the document verbatim, but a JSONB column can only hold what JSON
-    can express. The engine's serializer writes a ``datetime`` as an ISO string and
-    reading the column back yields that string, never a ``datetime`` again. Legacy
-    OTU documents carry a ``created_at``, so comparing a row against the raw document
-    would report every one of them as drifted.
 
-    Passing the expected document through the very serializer the write path uses
-    compares like with like. It cannot mask real drift: it applies exactly the
-    transformation that the write path already applied to the row being checked, so
-    any difference the write path would have preserved survives it too.
-    """
-    return loads(dump_string(document))
+def _diff_sequence(row: SQLSequence, document: Document) -> dict[str, dict]:
+    """Diff a ``legacy_sequences`` row against the Mongo document it mirrors."""
+    return _diff_row(
+        row,
+        sequence_row_values(document),
+        document,
+        sequence_document_from_row(row),
+    )
 
 
 def _diff_row(
     row: SQLOTU | SQLSequence,
     expected: dict[str, Any],
+    document: Document,
+    recovered: Document,
 ) -> dict[str, dict]:
-    """Diff a Postgres row against the column values the write path would produce.
+    """Diff a row's promoted columns and the document the read path recovers from it.
 
-    ``data`` is reduced to the top-level keys that differ rather than reported
-    whole, so a report stays readable when one field of a large document drifted.
+    ``data`` is not compared column-to-column. What matters is that the read path can
+    recover the Mongo document from the row, so ``recovered`` -- the row passed back
+    through that path -- is compared against the document itself, and reported by the
+    top-level keys that differ rather than whole, so a report stays readable when one
+    field of a large document drifted.
     """
-    differences: dict[str, dict] = {}
+    differences: dict[str, dict] = {
+        column: {"mongo": value, "postgres": getattr(row, column)}
+        for column, value in expected.items()
+        if column != "data" and getattr(row, column) != value
+    }
 
-    for column, value in expected.items():
-        expected_value = _as_stored_json(value) if column == "data" else value
-        actual_value = getattr(row, column)
-
-        if actual_value == expected_value:
-            continue
-
-        if column == "data":
-            differences["data"] = _diff_data(expected_value, actual_value)
-        else:
-            differences[column] = {"mongo": expected_value, "postgres": actual_value}
+    if recovered != document:
+        differences["document"] = _diff_data(document, recovered)
 
     return differences
 
@@ -579,171 +1169,3 @@ def _diff_data(mongo_data: Document, postgres_data: Document) -> dict[str, dict]
         for key in sorted(set(mongo_data) | set(postgres_data))
         if mongo_data.get(key) != postgres_data.get(key)
     }
-
-
-async def backfill_sequence_positions(ctx: MigrationContext) -> None:
-    """Assign every ``legacy_sequences`` row its position within its OTU.
-
-    An OTU's sequences are read back with the same unsorted
-    ``find({"otu_id": otu_id})`` that :func:`virtool.otus.db.join` uses, so the order
-    Mongo returns them in is by definition the order every historical diff was
-    computed against. Counting them off in that order records it.
-
-    The backfill is authoritative rather than skip-existing. A sequence created
-    between the dual-write shipping and this revision running computed its position
-    as ``MAX + 1`` over an OTU with no Postgres rows yet and so wrongly took position
-    zero, colliding with the OTU's true first sequence. Re-deriving every position
-    from Mongo repairs that, and makes the revision idempotent: a second run reads
-    the same order and writes the same numbers.
-
-    Each OTU is locked with :func:`virtool.otus.db.lock_legacy_otu` *before* its
-    sequences are read from Mongo, which is the same lock every dual-write path takes.
-    Taking it first is what makes the renumber safe: a ``create_sequence`` landing
-    between the read and the write would append a sequence this run cannot see, and
-    that sequence would compute its own position as ``MAX + 1`` over an OTU whose rows
-    are still unpositioned -- taking position zero, which this run then also assigns
-    to the OTU's true first sequence. The lock is released by the commit at the end of
-    each OTU, bounding both the transaction and memory.
-    """
-    otu_ids = [
-        document["_id"]
-        async for document in ctx.mongo.otus.find({}, projection=["_id"])
-    ]
-
-    positioned_count = 0
-
-    async with AsyncSession(ctx.pg) as session:
-        otu_ids_present = {row[0] for row in await session.execute(select(SQLOTU.id))}
-
-        for otu_id in otu_ids:
-            await lock_legacy_otu(session, otu_id)
-
-            documents = [
-                document
-                async for document in ctx.mongo.sequences.find({"otu_id": otu_id})
-            ]
-
-            if documents:
-                if otu_id not in otu_ids_present and not await _otu_exists(
-                    session,
-                    otu_id,
-                ):
-                    msg = (
-                        f"otu {otu_id!r} has sequences in mongo but no row in postgres; "
-                        f"run the otu and sequence backfill first"
-                    )
-                    raise ValueError(msg)
-
-                for position, document in enumerate(documents):
-                    await session.execute(
-                        insert(SQLSequence)
-                        .values(**sequence_row_values(document), position=position)
-                        .on_conflict_do_update(
-                            index_elements=["id"],
-                            set_={"position": position},
-                        ),
-                    )
-
-                positioned_count += len(documents)
-
-            await session.commit()
-
-    logger.info(
-        "sequence position backfill complete",
-        otus=len(otu_ids),
-        sequences=positioned_count,
-    )
-
-
-async def compare_sequence_positions(ctx: MigrationContext) -> None:
-    """Verify Postgres orders each OTU's sequences exactly as Mongo returns them.
-
-    A gating check for the OTU read cutover, and the one thing
-    :func:`compare_otu_and_sequence_stores` cannot do. That check compares a row
-    against the columns :func:`sequence_row_values` derives from a single Mongo
-    document, but ``position`` orders a sequence *within its OTU* and so is not
-    derivable from one document. It has to be checked an OTU at a time.
-
-    The check matters because a joined OTU rebuilt from Postgres feeds
-    :func:`virtool.history.db.patch_to_version`, whose ``dictdiffer`` diffs address
-    an isolate's sequences by list index. If Postgres hands them back in a different
-    order than Mongo did, index builds, reference clones and analysis formatting all
-    silently apply each stored change to the wrong sequence.
-
-    A ``NULL`` position is drift. Postgres sorts nulls last on an ascending order,
-    so an unbackfilled row would otherwise be quietly shuffled to the end of its OTU
-    instead of failing the check.
-
-    Like the other drift checks this is read-only and re-runnable, and re-verifies
-    each candidate OTU individually before reporting it, so an OTU written between
-    the two reads is not mistaken for drift.
-    """
-    otu_ids = [
-        document["_id"]
-        async for document in ctx.mongo.otus.find({}, projection=["_id"])
-    ]
-
-    async with AsyncSession(ctx.pg) as session:
-        candidates = [
-            otu_id
-            for otu_id in otu_ids
-            if await _compare_otu_sequence_order(ctx, session, otu_id)
-        ]
-
-    async with AsyncSession(ctx.pg) as session:
-        drifted = [
-            report
-            for otu_id in candidates
-            if (report := await _compare_otu_sequence_order(ctx, session, otu_id))
-        ]
-
-    if drifted:
-        for report in drifted:
-            logger.error("sequence order drift", **report)
-
-        msg = f"sequence order drift detected in {len(drifted)} otus"
-        raise ValueError(msg)
-
-    logger.info("sequence order matches mongo in every otu", otus=len(otu_ids))
-
-
-async def _compare_otu_sequence_order(
-    ctx: MigrationContext,
-    session: AsyncSession,
-    otu_id: str,
-) -> dict | None:
-    """Report an OTU whose Postgres sequence order does not match Mongo's."""
-    mongo_ids = [
-        document["_id"]
-        async for document in ctx.mongo.sequences.find(
-            {"otu_id": otu_id},
-            projection=["_id"],
-        )
-    ]
-
-    rows = (
-        await session.execute(
-            select(SQLSequence.id, SQLSequence.position)
-            .where(SQLSequence.otu_id == otu_id)
-            .order_by(SQLSequence.position),
-        )
-    ).all()
-
-    if any(row.position is None for row in rows):
-        return {
-            "otu_id": otu_id,
-            "issue": "sequences without a position",
-            "sequence_ids": [row.id for row in rows if row.position is None],
-        }
-
-    postgres_ids = [row.id for row in rows]
-
-    if mongo_ids != postgres_ids:
-        return {
-            "otu_id": otu_id,
-            "issue": "sequence order differs",
-            "mongo": mongo_ids,
-            "postgres": postgres_ids,
-        }
-
-    return None
