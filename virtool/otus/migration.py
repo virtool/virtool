@@ -717,6 +717,20 @@ async def repair_string_otu_created_at(ctx: MigrationContext) -> None:
     one this cannot read is left untouched rather than half repaired. See
     :func:`_parse_utc_timestamp` for what it will not read.
 
+    **The string is what makes an OTU findable, so it is the last thing to go.** The
+    Mongo write is made inside a transaction that commits *after* the Postgres one, as
+    :func:`virtool.data.topg.both_transactions` does. An interrupted run -- or a
+    Postgres write that fails -- therefore aborts the Mongo write with it, and the OTU
+    is still holding the string that puts it in ``candidates`` next time.
+
+    The alternative loses the OTU. A Mongo write that commits on its own, ahead of the
+    Postgres one, is durable the moment it lands: kill the run before the row is
+    written, and Mongo holds the floored datetime while ``data`` still holds the
+    sub-millisecond string it was floored from. Those disagree, and the OTU no longer
+    matches the ``$type: "string"`` query that would have found it, so no re-run
+    repairs it and the gate fails on it forever. Nothing recovers what the query cannot
+    see.
+
     Idempotent: a repaired OTU no longer matches ``{"created_at": {"$type": "string"}}``
     and a second run finds nothing to do.
     """
@@ -740,7 +754,11 @@ async def repair_string_otu_created_at(ctx: MigrationContext) -> None:
     repaired = 0
 
     for otu_id, (raw, created_at) in candidates.items():
-        async with AsyncSession(ctx.pg) as session:
+        async with (
+            AsyncSession(ctx.pg) as session,
+            await ctx.mongo.client.start_session() as mongo_session,
+            mongo_session.start_transaction(),
+        ):
             row = (
                 await session.execute(
                     select(SQLOTU.data).where(SQLOTU.id == otu_id).with_for_update(),
@@ -750,15 +768,18 @@ async def repair_string_otu_created_at(ctx: MigrationContext) -> None:
             document = await ctx.mongo.otus.find_one(
                 {"_id": otu_id},
                 projection=["created_at"],
+                session=mongo_session,
             )
 
             if document is None or document["created_at"] != raw:
                 await session.rollback()
+                await mongo_session.abort_transaction()
                 continue
 
             await ctx.mongo.otus.update_one(
                 {"_id": otu_id},
                 {"$set": {"created_at": created_at}},
+                session=mongo_session,
             )
 
             if row is not None:

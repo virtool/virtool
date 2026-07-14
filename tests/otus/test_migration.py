@@ -1111,6 +1111,43 @@ class TestRepairStringOtuCreatedAt:
 
         assert document["created_at"] == _CREATED_AT_JSON
 
+    async def test_a_failed_postgres_write_leaves_the_otu_repairable(
+        self,
+        ctx: MigrationContext,
+        cloned_otu: None,
+        mocker,
+    ):
+        """An interrupted repair keeps the string that makes the OTU findable.
+
+        The string is the only thing that puts an OTU in the candidate query. Landing
+        the Mongo write ahead of the Postgres one would take it away the moment the
+        write committed, and an OTU whose row never got written would then be drifted,
+        unfindable and unrepairable. The Mongo write commits after Postgres, so a failed
+        Postgres write takes the Mongo write down with it.
+        """
+        mocker.patch(
+            "virtool.otus.migration.update",
+            side_effect=OSError("postgres is gone"),
+        )
+
+        with pytest.raises(OSError, match="postgres is gone"):
+            await repair_string_otu_created_at(ctx)
+
+        document = await ctx.mongo.otus.find_one({"_id": "otu_cloned"})
+
+        assert document["created_at"] == _CREATED_AT_JSON
+
+        mocker.stopall()
+
+        await repair_string_otu_created_at(ctx)
+
+        document = await ctx.mongo.otus.find_one({"_id": "otu_cloned"})
+
+        assert document["created_at"] == _CREATED_AT
+        assert (await _fetch_otu(ctx, "otu_cloned")).data["created_at"] == (
+            _CREATED_AT_JSON
+        )
+
     async def test_is_idempotent(self, ctx: MigrationContext, cloned_otu: None):
         """A second run finds nothing left to repair and changes nothing."""
         await repair_string_otu_created_at(ctx)
