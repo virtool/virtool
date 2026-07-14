@@ -11,6 +11,12 @@ async def test_check_index_file_type_json():
     assert result == "json"
 
 
+async def test_check_index_file_type_reference_json_v2():
+    result = virtool.indexes.utils.check_index_file_type("reference-v2.json.gz")
+
+    assert result == "json"
+
+
 async def test_check_index_file_type_fasta():
     result = virtool.indexes.utils.check_index_file_type("reference.fa.gz")
 

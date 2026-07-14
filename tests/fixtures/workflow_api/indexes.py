@@ -1,12 +1,17 @@
+import gzip
+import json
 from pathlib import Path
 
-from aiohttp.web import FileResponse, RouteTableDef, View, json_response
+from aiohttp.web import FileResponse, Response, RouteTableDef, View, json_response
 
 from tests.fixtures.workflow_api.utils import (
     custom_dumps,
     generate_not_found,
 )
-from virtool.indexes.db import INDEX_FILE_NAMES
+from virtool.indexes.db import (
+    JOB_INDEX_FILE_NAMES,
+    REFERENCE_JSON_V2_FILE_NAME,
+)
 from virtool.indexes.models import IndexFile
 from virtool.workflow.pytest_plugin.data import WorkflowData
 
@@ -17,6 +22,16 @@ def create_indexes_routes(
     read_file_from_multipart,
 ) -> RouteTableDef:
     _uploaded_files = []
+
+    with gzip.open(
+        example_path / "indexes" / "reference.json.gz",
+        "rt",
+    ) as handle:
+        reference_json_v2 = json.load(handle)
+
+    reference_json_v2["_id"] = data.index.reference.id
+    reference_json_v2["name"] = data.index.reference.name
+    reference_json_v2 = gzip.compress(json.dumps(reference_json_v2).encode())
 
     routes = RouteTableDef()
 
@@ -44,7 +59,7 @@ def create_indexes_routes(
 
             required_files = [
                 file_name
-                for file_name in INDEX_FILE_NAMES
+                for file_name in JOB_INDEX_FILE_NAMES
                 if file_name != "reference.json.gz"
             ]
 
@@ -93,10 +108,21 @@ def create_indexes_routes(
                 available_files = {file.name for file in data.index.files}
 
                 if not available_files:
-                    available_files = set(INDEX_FILE_NAMES)
+                    available_files = set(JOB_INDEX_FILE_NAMES)
 
                 if filename not in available_files:
                     return generate_not_found()
+
+                if filename == REFERENCE_JSON_V2_FILE_NAME:
+                    return Response(
+                        body=reference_json_v2,
+                        headers={
+                            "Content-Disposition": (
+                                f"attachment; filename='{filename}'"
+                            ),
+                            "Content-Type": "application/octet-stream",
+                        },
+                    )
 
                 return FileResponse(
                     example_path / "indexes" / filename,
@@ -112,7 +138,7 @@ def create_indexes_routes(
             index_id = self.request.match_info["index_id"]
             filename = self.request.match_info["filename"]
 
-            if filename not in INDEX_FILE_NAMES:
+            if filename not in JOB_INDEX_FILE_NAMES:
                 return json_response(
                     {
                         "id": "not_found",

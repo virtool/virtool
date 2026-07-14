@@ -22,6 +22,7 @@ from sqlalchemy.sql.elements import ColumnElement
 from structlog import get_logger
 
 from virtool.analyses.models import Analysis
+from virtool.indexes.db import REFERENCE_JSON_V2_FILE_NAME
 from virtool.indexes.models import Index
 from virtool.jobs.models import Job
 from virtool.references.models import ReferenceNested
@@ -576,12 +577,12 @@ async def index(
 
     log.info("created index directory")
 
-    if any(file.name == "reference.json.gz" for file in index_.files):
-        reference_json_path = index_work_path / "reference.json"
-        compressed_reference_json_path = index_work_path / "reference.json.gz"
+    if any(file.name == REFERENCE_JSON_V2_FILE_NAME for file in index_.files):
+        compressed_reference_json_path = index_work_path / REFERENCE_JSON_V2_FILE_NAME
+        reference_json_path = compressed_reference_json_path.with_suffix("")
 
         await _api.get_file(
-            f"/indexes/{id_}/files/reference.json.gz",
+            f"/indexes/{id_}/files/{REFERENCE_JSON_V2_FILE_NAME}",
             compressed_reference_json_path,
         )
         await asyncio.to_thread(

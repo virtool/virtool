@@ -19,7 +19,6 @@ from virtool.data.errors import (
 )
 from virtool.data.events import Operation, emit, emits
 from virtool.data.topg import (
-    both_transactions,
     compose_legacy_id_single_expression,
     retry_both_transactions,
 )
@@ -32,6 +31,7 @@ from virtool.indexes.checks import (
 )
 from virtool.indexes.db import (
     INDEX_FILE_NAMES,
+    REFERENCE_JSON_V2_FILE_NAME,
     IndexCountsTransform,
     update_last_indexed_versions,
 )
@@ -390,7 +390,7 @@ class IndexData:
         """Generate the task-backed index JSON artifact and mark the index ready."""
         index = await self._mongo.indexes.find_one(
             {"_id": index_id},
-            ["manifest", "reference", "job", "task"],
+            ["manifest", "reference", "job", "task", "ready"],
         )
 
         if index is None:
@@ -398,6 +398,10 @@ class IndexData:
 
         if _get_index_build_type(index) != "task":
             raise ResourceConflictError("Index must be backed by a task build")
+
+        if index["ready"]:
+            message = "Index is already ready"
+            raise ResourceConflictError(message)
 
         try:
             ref_id = index["reference"]["id"]
@@ -424,7 +428,7 @@ class IndexData:
             "organism": reference_row.organism,
         }
 
-        file_name = "reference.json.gz"
+        file_name = REFERENCE_JSON_V2_FILE_NAME
         patched_otus = [
             otu
             async for otu in virtool.indexes.db.iter_patched_otus(
@@ -451,10 +455,10 @@ class IndexData:
                 stream(),
             )
 
-            async with both_transactions(self._mongo, self._pg) as (
-                mongo_session,
-                pg_session,
-            ):
+            async def finalize_task_index(
+                mongo_session: AsyncIOMotorClientSession,
+                pg_session: AsyncSession,
+            ) -> None:
                 await virtool.indexes.db.upsert_index_file(
                     pg_session,
                     index_id,
@@ -476,6 +480,12 @@ class IndexData:
                     {"$set": {"ready": True}},
                     session=mongo_session,
                 )
+
+            await retry_both_transactions(
+                self._mongo,
+                self._pg,
+                finalize_task_index,
+            )
         except BaseException:
             await self._storage.delete(key)
 

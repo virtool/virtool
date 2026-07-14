@@ -4,7 +4,10 @@ from threading import get_ident
 import pytest
 from pyfixtures import FixtureScope
 
-from virtool.indexes.db import INDEX_FILE_NAMES
+from virtool.indexes.db import (
+    JOB_INDEX_FILE_NAMES,
+    REFERENCE_JSON_V2_FILE_NAME,
+)
 from virtool.indexes.models import IndexFile
 from virtool.workflow.data.index_sqlite import INDEX_SQLITE_FILE_NAME
 from virtool.workflow.data.indexes import (
@@ -127,7 +130,7 @@ def _get_otu_ref(otu: dict) -> dict:
     }
 
 
-def _set_reference_json_index_data(workflow_data: WorkflowData) -> None:
+def _set_reference_json_v2_index_data(workflow_data: WorkflowData) -> None:
     workflow_data.job.args["analysis_id"] = workflow_data.analysis.id
     workflow_data.job.workflow = "build_index"
     workflow_data.index.manifest = {
@@ -154,10 +157,12 @@ def _set_reference_json_index_data(workflow_data: WorkflowData) -> None:
     }
     workflow_data.index.files = [
         IndexFile(
-            download_url=(f"/indexes/{workflow_data.index.id}/files/reference.json.gz"),
+            download_url=(
+                f"/indexes/{workflow_data.index.id}/files/{REFERENCE_JSON_V2_FILE_NAME}"
+            ),
             id=1,
             index=workflow_data.index.id,
-            name="reference.json.gz",
+            name=REFERENCE_JSON_V2_FILE_NAME,
             size=100,
             type="json",
         )
@@ -446,16 +451,27 @@ class TestWFIndex:
 
 
 class TestIndex:
-    async def test_otus_json_fallback(
+    async def test_legacy_reference_json_uses_otus_json(
         self,
         scope: FixtureScope,
         work_path: Path,
         workflow_data: WorkflowData,
     ):
-        """OTU JSON is converted when reference JSON is not available."""
+        """Legacy reference JSON is ignored in favor of current OTU JSON."""
         workflow_data.job.args["analysis_id"] = workflow_data.analysis.id
         workflow_data.job.workflow = "build_index"
-        workflow_data.index.files = []
+        workflow_data.index.files = [
+            IndexFile(
+                download_url=(
+                    f"/indexes/{workflow_data.index.id}/files/reference.json.gz"
+                ),
+                id=1,
+                index=workflow_data.index.id,
+                name="reference.json.gz",
+                size=100,
+                type="json",
+            ),
+        ]
 
         index: WFIndex = await scope.instantiate_by_key("index")
         otu_refs_by_sequence_ids = await index.get_otu_refs_by_sequence_ids(
@@ -485,14 +501,14 @@ class TestIndex:
         ):
             await index.get_reference_metadata()
 
-    async def test_reference_json_ok(
+    async def test_reference_json_v2_ok(
         self,
         scope: FixtureScope,
         work_path: Path,
         workflow_data: WorkflowData,
     ):
-        """Reference JSON is converted to the local workflow index."""
-        _set_reference_json_index_data(workflow_data)
+        """Reference JSON v2 is converted to the local workflow index."""
+        _set_reference_json_v2_index_data(workflow_data)
 
         index: WFIndex = await scope.instantiate_by_key("index")
         otus = [otu async for otu in index.iter_otus()]
@@ -510,18 +526,20 @@ class TestIndex:
 
         assert {p.name for p in index_path.iterdir()} == {
             INDEX_SQLITE_FILE_NAME,
-            "reference.json",
-            "reference.json.gz",
+            REFERENCE_JSON_V2_FILE_NAME.removesuffix(".gz"),
+            REFERENCE_JSON_V2_FILE_NAME,
         }
 
         assert index.id == workflow_data.analysis.index.id
         assert otus[0]["id"] == "0716c1e1"
         assert otus[0]["version"] == 13
-        with pytest.raises(
-            ValueError,
-            match="Reference metadata does not exist in the index",
-        ):
-            await index.get_reference_metadata()
+        assert await index.get_reference_metadata() == {
+            "id": str(workflow_data.index.reference.id),
+            "created_at": "2022-03-28T19:15:18.479570+00:00",
+            "data_type": "genome",
+            "name": workflow_data.index.reference.name,
+            "organism": "virus",
+        }
         assert otu_refs_by_sequence_ids == {
             "7oecw8v8": {
                 "id": "b67008d3",
@@ -550,7 +568,7 @@ class TestIndex:
         tmp_path: Path,
         workflow_data: WorkflowData,
     ):
-        _set_reference_json_index_data(workflow_data)
+        _set_reference_json_v2_index_data(workflow_data)
 
         index: WFIndex = await scope.instantiate_by_key("index")
         fasta_path = tmp_path / "reference.fa"
@@ -593,7 +611,7 @@ class TestNewIndex:
 
         assert workflow_data.new_index.ready is False
 
-        for filename in INDEX_FILE_NAMES:
+        for filename in JOB_INDEX_FILE_NAMES:
             await new_index.upload(
                 example_path / "indexes" / filename,
                 "unknown",
@@ -604,7 +622,7 @@ class TestNewIndex:
         assert workflow_data.new_index.ready is True
 
         assert {p.name for p in captured_uploads_path.iterdir()} == set(
-            INDEX_FILE_NAMES
+            JOB_INDEX_FILE_NAMES
         )
 
     async def test_upload_invalid_filename(

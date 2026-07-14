@@ -25,7 +25,7 @@ from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.history.db import legacy_history_values
 from virtool.history.sql import SQLLegacyHistory
-from virtool.indexes.db import INDEX_FILE_NAMES
+from virtool.indexes.db import JOB_INDEX_FILE_NAMES
 from virtool.indexes.sql import SQLIndexFile
 from virtool.indexes.utils import check_index_file_type, compose_index_file_key
 from virtool.models.enums import Permission
@@ -820,7 +820,7 @@ async def test_finalize(
     elif error == "409_fasta":
         files = ["reference.json.gz"]
     else:
-        files = INDEX_FILE_NAMES
+        files = JOB_INDEX_FILE_NAMES
 
     reference = await fake.references.create(user=user)
 

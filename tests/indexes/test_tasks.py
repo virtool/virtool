@@ -4,12 +4,16 @@ import gzip
 import json
 
 import pytest
+from pymongo.errors import OperationFailure
 from pytest_mock import MockerFixture
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from virtool.data.errors import ResourceConflictError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.indexes.data import update_last_indexed_versions
+from virtool.indexes.db import REFERENCE_JSON_V2_FILE_NAME
 from virtool.indexes.sql import SQLIndexFile
 from virtool.indexes.tasks import CreateIndexTask
 from virtool.indexes.utils import compose_index_file_key
@@ -110,14 +114,14 @@ class TestCreateIndexTask:
 
         return task.id
 
-    async def test_writes_only_compressed_reference_json_and_finalizes(
+    async def test_writes_only_compressed_reference_json_v2_and_finalizes(
         self,
         task_id: int,
     ) -> None:
-        """The task writes compressed reference JSON and marks the index ready."""
+        """The task writes reference JSON v2 and marks the index ready."""
         await (await CreateIndexTask.from_task_id(self.data_layer, task_id)).run()
 
-        key = compose_index_file_key("task_index", "reference.json.gz")
+        key = compose_index_file_key("task_index", REFERENCE_JSON_V2_FILE_NAME)
 
         keys = [
             info.key async for info in self.memory_storage.list("indexes/task_index/")
@@ -127,6 +131,14 @@ class TestCreateIndexTask:
         compressed = b"".join(
             [chunk async for chunk in self.memory_storage.read(key)],
         )
+        download, size = await self.data_layer.index.get_index_file(
+            "task_index",
+            REFERENCE_JSON_V2_FILE_NAME,
+        )
+
+        assert b"".join([chunk async for chunk in download]) == compressed
+        assert size == len(compressed)
+
         decompressed = gzip.decompress(compressed)
         reference_json = json.loads(decompressed)
 
@@ -164,7 +176,7 @@ class TestCreateIndexTask:
             )
 
         assert len(rows) == 1
-        assert rows[0].name == "reference.json.gz"
+        assert rows[0].name == REFERENCE_JSON_V2_FILE_NAME
         assert rows[0].type == "json"
         assert rows[0].size == len(compressed)
 
@@ -197,7 +209,7 @@ class TestCreateIndexTask:
         assert index["ready"] is True
         assert [
             info.key async for info in self.memory_storage.list("indexes/task_index/")
-        ] == [compose_index_file_key("task_index", "reference.json.gz")]
+        ] == [compose_index_file_key("task_index", REFERENCE_JSON_V2_FILE_NAME)]
 
     async def test_updates_existing_index_file_row(self, task_id: int) -> None:
         """An existing reference JSON file row is updated instead of duplicated."""
@@ -205,7 +217,7 @@ class TestCreateIndexTask:
             session.add(
                 SQLIndexFile(
                     index="task_index",
-                    name="reference.json.gz",
+                    name=REFERENCE_JSON_V2_FILE_NAME,
                     size=1,
                     type="json",
                 ),
@@ -226,15 +238,87 @@ class TestCreateIndexTask:
             )
 
         assert len(rows) == 1
-        assert rows[0].name == "reference.json.gz"
+        assert rows[0].name == REFERENCE_JSON_V2_FILE_NAME
         assert rows[0].type == "json"
         assert rows[0].size > 1
 
         assert (
             await self.memory_storage.size(
-                compose_index_file_key("task_index", "reference.json.gz"),
+                compose_index_file_key("task_index", REFERENCE_JSON_V2_FILE_NAME),
             )
             == rows[0].size
+        )
+
+    async def test_rejects_regenerating_ready_index(self, task_id: int) -> None:
+        """A completed task-backed index cannot be regenerated."""
+        await (await CreateIndexTask.from_task_id(self.data_layer, task_id)).run()
+
+        key = compose_index_file_key("task_index", REFERENCE_JSON_V2_FILE_NAME)
+        artifact = b"".join(
+            [chunk async for chunk in self.memory_storage.read(key)],
+        )
+
+        with pytest.raises(ResourceConflictError, match="already ready"):
+            await self.data_layer.index.generate_task_index("task_index")
+
+        assert (
+            b"".join(
+                [chunk async for chunk in self.memory_storage.read(key)],
+            )
+            == artifact
+        )
+
+        async with AsyncSession(self.pg) as session:
+            rows = (
+                (
+                    await session.execute(
+                        select(SQLIndexFile).filter_by(index="task_index"),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+
+        assert len(rows) == 1
+        assert rows[0].name == REFERENCE_JSON_V2_FILE_NAME
+
+    async def test_retries_transient_finalization_failure(
+        self,
+        mocker: MockerFixture,
+        task_id: int,
+    ) -> None:
+        """A transient Mongo transaction error retries database finalization."""
+        attempts = 0
+
+        async def fail_once(*args: object) -> None:
+            nonlocal attempts
+            attempts += 1
+
+            if attempts == 1:
+                message = "transient transaction failure"
+                raise OperationFailure(
+                    message,
+                    details={"errorLabels": ["TransientTransactionError"]},
+                )
+
+            await update_last_indexed_versions(*args)
+
+        mocker.patch(
+            "virtool.indexes.data.update_last_indexed_versions",
+            side_effect=fail_once,
+        )
+
+        await (await CreateIndexTask.from_task_id(self.data_layer, task_id)).run()
+
+        expected_attempts = 2
+        assert attempts == expected_attempts
+        assert (await self.data_layer.tasks.get(task_id)).complete is True
+        assert (await self.data_layer.index.get("task_index")).ready is True
+        assert (
+            await self.memory_storage.size(
+                compose_index_file_key("task_index", REFERENCE_JSON_V2_FILE_NAME),
+            )
+            > 0
         )
 
     async def test_failure_leaves_index_unready(

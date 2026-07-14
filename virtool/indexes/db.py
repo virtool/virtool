@@ -54,7 +54,9 @@ limit on a reference whose OTUs all sit in one version bucket. A freshly importe
 reference is exactly that: every OTU is version 0.
 """
 
-INDEX_FILE_NAMES = (
+REFERENCE_JSON_V2_FILE_NAME = "reference-v2.json.gz"
+
+JOB_INDEX_FILE_NAMES = (
     "reference.fa.gz",
     "reference.json.gz",
     "reference.1.bt2",
@@ -64,6 +66,8 @@ INDEX_FILE_NAMES = (
     "reference.rev.1.bt2",
     "reference.rev.2.bt2",
 )
+
+INDEX_FILE_NAMES = (*JOB_INDEX_FILE_NAMES, REFERENCE_JSON_V2_FILE_NAME)
 
 
 class IndexCountsTransform(AbstractTransform):
@@ -550,16 +554,12 @@ async def update_last_indexed_versions(
         agg["_id"]: agg["id_list"] async for agg in mongo.otus.aggregate(pipeline)
     }
 
-    await asyncio.gather(
-        *[
-            mongo.otus.update_many(
-                {"_id": {"$in": id_list}},
-                {"$set": {"last_indexed_version": version}},
-                session=mongo_session,
-            )
-            for version, id_list in id_version_key.items()
-        ],
-    )
+    for version, id_list in id_version_key.items():
+        await mongo.otus.update_many(
+            {"_id": {"$in": id_list}},
+            {"$set": {"last_indexed_version": version}},
+            session=mongo_session,
+        )
 
     for version, id_list in id_version_key.items():
         for start in range(0, len(id_list), OTU_ID_CHUNK_SIZE):

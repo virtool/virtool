@@ -5,7 +5,7 @@ from virtool.indexes.checks import (
     check_fasta_file_uploaded,
     check_index_files_uploaded,
 )
-from virtool.indexes.db import INDEX_FILE_NAMES
+from virtool.indexes.db import JOB_INDEX_FILE_NAMES
 
 
 class TestCheckFastaFileUploaded:
@@ -26,12 +26,16 @@ class TestCheckFastaFileUploaded:
 
 class TestCheckIndexFilesUploaded:
     async def test_accepts_complete_index_files(self):
-        results = {file: INDEX_FILE_NAMES.index(file) for file in INDEX_FILE_NAMES}
+        results = {
+            file: JOB_INDEX_FILE_NAMES.index(file) for file in JOB_INDEX_FILE_NAMES
+        }
 
         assert await check_index_files_uploaded(results) is None
 
     async def test_raises_when_bowtie_files_are_missing(self):
-        results = {file: INDEX_FILE_NAMES.index(file) for file in INDEX_FILE_NAMES}
+        results = {
+            file: JOB_INDEX_FILE_NAMES.index(file) for file in JOB_INDEX_FILE_NAMES
+        }
         del results["reference.2.bt2"]
         del results["reference.3.bt2"]
 
