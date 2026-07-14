@@ -24,11 +24,9 @@ from structlog import get_logger
 from virtool.data.topg import resolve_legacy_id
 from virtool.migration import MigrationContext
 from virtool.otus.db import (
-    bulk_position_sequence_rows,
     bulk_upsert_sequence_rows,
     delete_legacy_otu,
     delete_legacy_sequences,
-    lock_legacy_otu,
     otu_document_from_row,
     otu_row_values,
     sequence_document_from_row,
@@ -257,82 +255,6 @@ async def _lookup_reference_id(
         cache[reference] = reference_id
 
     return reference_id
-
-
-async def backfill_sequence_positions(ctx: MigrationContext) -> None:
-    """Assign every ``legacy_sequences`` row its position within its OTU.
-
-    An OTU's sequences are read back with the same unsorted
-    ``find({"otu_id": otu_id})`` that :func:`virtool.otus.db.join` uses, so the order
-    Mongo returns them in is by definition the order every historical diff was
-    computed against. Counting them off in that order records it.
-
-    The backfill is authoritative rather than skip-existing. A sequence created
-    between the dual-write shipping and this revision running computed its position
-    as ``MAX + 1`` over an OTU with no Postgres rows yet and so wrongly took position
-    zero, colliding with the OTU's true first sequence. Re-deriving every position
-    from Mongo repairs that, and makes the revision idempotent: a second run reads
-    the same order and writes the same numbers.
-
-    Each OTU is locked with :func:`virtool.otus.db.lock_legacy_otu` *before* its
-    sequences are read from Mongo, which is the same lock every dual-write path takes,
-    and the commit at the end of each OTU releases it, bounding both the transaction
-    and memory.
-
-    That lock does not fully order this pass against the application. Every dual-write
-    commits Postgres before Mongo -- :func:`virtool.data.topg.both_transactions` commits
-    the Postgres session inside the still-open Mongo transaction -- so a writer releases
-    the row lock while its Mongo write is still invisible. A ``create_sequence`` that
-    committed Postgres just before this pass took the lock therefore appends a sequence
-    this pass cannot see, and that sequence computed its own position as ``MAX + 1``
-    over an OTU whose rows were still unpositioned, taking position zero alongside the
-    OTU's true first sequence.
-
-    Only positions are at stake here -- nothing is deleted and no document is
-    overwritten -- and :func:`reconcile_otus_and_sequences`, which runs after this pass
-    and does order itself against concurrent writers, re-derives every position anyway.
-    So a position this pass gets wrong is repaired rather than kept.
-    """
-    otu_ids = [
-        document["_id"]
-        async for document in ctx.mongo.otus.find({}, projection=["_id"])
-    ]
-
-    positioned_count = 0
-
-    async with AsyncSession(ctx.pg) as session:
-        otu_ids_present = {row[0] for row in await session.execute(select(SQLOTU.id))}
-
-        for otu_id in otu_ids:
-            await lock_legacy_otu(session, otu_id)
-
-            documents = [
-                document
-                async for document in ctx.mongo.sequences.find({"otu_id": otu_id})
-            ]
-
-            if documents:
-                if otu_id not in otu_ids_present and not await _otu_exists(
-                    session,
-                    otu_id,
-                ):
-                    msg = (
-                        f"otu {otu_id!r} has sequences in mongo but no row in postgres; "
-                        f"run the otu and sequence backfill first"
-                    )
-                    raise ValueError(msg)
-
-                await bulk_position_sequence_rows(session, documents)
-
-                positioned_count += len(documents)
-
-            await session.commit()
-
-    logger.info(
-        "sequence position backfill complete",
-        otus=len(otu_ids),
-        sequences=positioned_count,
-    )
 
 
 _SETTLE_ATTEMPTS = 3
@@ -763,6 +685,17 @@ nothing else.
 """
 
 
+_GATE_ATTEMPTS = 2
+"""How many times both stores are read before the drift found in them is believed."""
+
+_GATE_SETTLE_DELAY = 0.25
+"""Seconds to wait before re-reading stores that reported drift.
+
+Only a floor. The re-read itself walks every OTU and sequence again, and that is most
+of the settle on any store large enough for the lag to matter.
+"""
+
+
 async def compare_otu_and_sequence_stores(ctx: MigrationContext) -> None:
     """Verify the Mongo and Postgres OTU and sequence stores agree.
 
@@ -820,33 +753,63 @@ async def compare_otu_and_sequence_stores(ctx: MigrationContext) -> None:
     those instances back rather than re-reading the row -- which would leave the
     second pass unable to see the very dual-write it exists to tolerate.
 
+    Those two passes tolerate a write whose Mongo commit lands *between* them. They do
+    not tolerate one whose Mongo commit has not landed by the time of the second read.
+    :func:`virtool.data.topg.both_transactions` commits the Postgres session inside the
+    still-open Mongo transaction, so a dual-write makes its row visible here while the
+    document it was written from is still invisible -- and both passes then read the
+    same stale document and call a converging OTU drifted. Postgres is never behind
+    Mongo; a Mongo read may be arbitrarily behind Postgres.
+
+    So drift is not believed the first time it is seen. The whole check is re-run, and
+    only drift that survives a second reading of both stores is reported. That gives an
+    in-flight write time to land: mostly the re-scan itself, which re-reads every
+    document, with :data:`_GATE_SETTLE_DELAY` in front of it for a store small enough
+    that the re-scan is quick. Drift that is real is unaffected -- no write is going to
+    land and resolve it -- so the gate still fails, and still halts the migration.
+
+    The re-run costs nothing on a clean run, where there is no drift to re-check, and
+    is only paid on the path that was about to fail the migration anyway.
+
     The check is exhaustive before it fails: drift is accumulated across every OTU
     and sequence, the full per-document diff is logged, and a single
     :class:`ValueError` is raised at the end. A clean run logs zero drift with the
     document counts.
     """
-    otu_drift = await _compare_otus(ctx)
-    sequence_drift = await _compare_sequences(ctx)
-    order_drift = await _compare_sequence_orders(ctx)
+    for attempt in range(_GATE_ATTEMPTS):
+        otu_drift = await _compare_otus(ctx)
+        sequence_drift = await _compare_sequences(ctx)
+        order_drift = await _compare_sequence_orders(ctx)
 
-    if otu_drift or sequence_drift or order_drift:
-        for report in otu_drift:
-            logger.error("otu drift", **report)
+        if not (otu_drift or sequence_drift or order_drift):
+            logger.info("otu and sequence stores match; no drift")
+            return
 
-        for report in sequence_drift:
-            logger.error("sequence drift", **report)
+        if attempt < _GATE_ATTEMPTS - 1:
+            logger.info(
+                "drift found; re-reading both stores before reporting it",
+                otus=len(otu_drift),
+                sequences=len(sequence_drift),
+                orders=len(order_drift),
+            )
 
-        for report in order_drift:
-            logger.error("sequence order drift", **report)
+            await asyncio.sleep(_GATE_SETTLE_DELAY)
 
-        msg = (
-            f"store drift detected in {len(otu_drift)} otus, "
-            f"{len(sequence_drift)} sequences and "
-            f"{len(order_drift)} otu sequence orders"
-        )
-        raise ValueError(msg)
+    for report in otu_drift:
+        logger.error("otu drift", **report)
 
-    logger.info("otu and sequence stores match; no drift")
+    for report in sequence_drift:
+        logger.error("sequence drift", **report)
+
+    for report in order_drift:
+        logger.error("sequence order drift", **report)
+
+    msg = (
+        f"store drift detected in {len(otu_drift)} otus, "
+        f"{len(sequence_drift)} sequences and "
+        f"{len(order_drift)} otu sequence orders"
+    )
+    raise ValueError(msg)
 
 
 async def _compare_otus(ctx: MigrationContext) -> list[dict]:

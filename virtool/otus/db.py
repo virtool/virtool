@@ -518,28 +518,6 @@ async def bulk_upsert_sequence_rows(
     )
 
 
-async def bulk_position_sequence_rows(
-    pg_session: AsyncSession,
-    documents: list[Document],
-) -> None:
-    """Assign ``legacy_sequences`` rows for ``documents`` their position in their OTU.
-
-    Only ``position`` is rewritten on a row that already exists; a row that does not
-    exist yet is inserted whole. Used by the position backfill, which owns the ordering
-    of an OTU's sequences but not their contents.
-
-    ``documents`` must be one OTU's sequences, in the order Mongo returns them.
-    """
-    if not documents:
-        return
-
-    await _upsert_sequence_rows(
-        pg_session,
-        _positioned_sequence_rows(documents),
-        ["position"],
-    )
-
-
 async def lock_legacy_otu(pg_session: AsyncSession, otu_id: str) -> None:
     """Take a ``SELECT … FOR UPDATE`` lock on an OTU's ``legacy_otus`` row.
 

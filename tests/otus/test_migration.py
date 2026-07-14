@@ -13,7 +13,6 @@ from virtool.migration.ctx import MigrationContext
 from virtool.otus.db import bulk_insert_otu_rows, otu_row_values, sequence_row_values
 from virtool.otus.migration import (
     _compare_otu_sequence_order,
-    backfill_sequence_positions,
     compare_otu_and_sequence_stores,
     copy_otus_and_sequences_to_postgres,
     reconcile_otus_and_sequences,
@@ -388,89 +387,6 @@ async def _get_positions(ctx: MigrationContext, otu_id: str) -> list[tuple[str, 
                 )
             ).all()
         ]
-
-
-class TestBackfillSequencePositions:
-    @pytest.fixture
-    async def copied_otu(self, ctx: MigrationContext, reference_id: int) -> list[str]:
-        """Seed one OTU with three sequences and copy them into Postgres.
-
-        Returns the sequence ids in the order Mongo returns them, which is the order
-        the positions must reproduce.
-        """
-        await ctx.mongo.otus.insert_one(
-            _otu_doc("otu_ordered", reference_id, "Tobacco mosaic virus"),
-        )
-
-        for sequence_id in ("seq_first", "seq_second", "seq_third"):
-            await ctx.mongo.sequences.insert_one(
-                _sequence_doc(sequence_id, "otu_ordered"),
-            )
-
-        await copy_otus_and_sequences_to_postgres(ctx)
-
-        return await _mongo_sequence_ids(ctx, "otu_ordered")
-
-    async def test_assigns_mongo_order(
-        self,
-        ctx: MigrationContext,
-        copied_otu: list[str],
-    ):
-        """Positions count off the OTU's sequences in Mongo's natural order."""
-        await backfill_sequence_positions(ctx)
-
-        assert await _get_positions(ctx, "otu_ordered") == [
-            (sequence_id, position) for position, sequence_id in enumerate(copied_otu)
-        ]
-
-    async def test_is_idempotent(
-        self,
-        ctx: MigrationContext,
-        copied_otu: list[str],
-    ):
-        """A second run reads the same order and writes the same numbers."""
-        await backfill_sequence_positions(ctx)
-        first = await _get_positions(ctx, "otu_ordered")
-
-        await backfill_sequence_positions(ctx)
-
-        assert await _get_positions(ctx, "otu_ordered") == first
-
-    async def test_repairs_a_mis_numbered_row(
-        self,
-        ctx: MigrationContext,
-        copied_otu: list[str],
-    ):
-        """A row the dual-write mis-numbered before this ran is renumbered.
-
-        A sequence created between the dual-write shipping and this backfill took
-        ``MAX + 1`` over an OTU with no Postgres rows yet, and so wrongly claimed
-        position zero. The backfill is authoritative and must overwrite it.
-        """
-        await backfill_sequence_positions(ctx)
-        await _update_sequence_row(ctx, copied_otu[2], position=0)
-
-        await backfill_sequence_positions(ctx)
-
-        assert await _get_positions(ctx, "otu_ordered") == [
-            (sequence_id, position) for position, sequence_id in enumerate(copied_otu)
-        ]
-
-    async def test_sequence_without_an_otu_row_raises(
-        self,
-        ctx: MigrationContext,
-        reference_id: int,
-    ):
-        """A sequence whose parent OTU was never copied is a loud failure."""
-        await ctx.mongo.otus.insert_one(
-            _otu_doc("otu_uncopied", reference_id, "Cucumber mosaic virus"),
-        )
-        await ctx.mongo.sequences.insert_one(
-            _sequence_doc("seq_uncopied", "otu_uncopied"),
-        )
-
-        with pytest.raises(ValueError, match="no row in postgres"):
-            await backfill_sequence_positions(ctx)
 
 
 def _count_sequence_deletes(execute) -> int:
@@ -1285,6 +1201,47 @@ class TestCompareOtuAndSequenceStores:
         )
 
         await compare_otu_and_sequence_stores(ctx)
+
+    async def test_pending_mongo_write_is_not_drift(
+        self,
+        ctx: MigrationContext,
+        matching_stores: None,
+        mocker,
+    ):
+        """A dual-write whose Postgres commit landed but whose Mongo write has not is
+        not drift.
+
+        ``both_transactions`` commits Postgres inside the still-open Mongo transaction,
+        so the row is visible here while the document it was written from is not. Both
+        passes therefore read the *same* stale document, which is what separates this
+        from :meth:`test_row_written_mid_run_is_not_drift`: re-reading the candidate
+        cannot clear it, because there is nothing newer in Mongo to re-read yet. Only
+        reading both stores again, after the write has landed, can.
+        """
+        document = await ctx.mongo.otus.find_one({"_id": "otu_matched"})
+        version = document["version"] + 1
+
+        await _update_otu_row(
+            ctx,
+            "otu_matched",
+            data={**document, "version": version},
+            version=version,
+        )
+
+        async def land_the_pending_mongo_write(_: float) -> None:
+            await ctx.mongo.otus.update_one(
+                {"_id": "otu_matched"},
+                {"$set": {"version": version}},
+            )
+
+        sleep = mocker.patch(
+            "virtool.otus.migration.asyncio.sleep",
+            side_effect=land_the_pending_mongo_write,
+        )
+
+        await compare_otu_and_sequence_stores(ctx)
+
+        sleep.assert_awaited_once()
 
     async def test_null_abbreviation_and_missing_segment_pass(
         self,

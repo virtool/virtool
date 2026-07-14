@@ -40,7 +40,7 @@ created_at = arrow.get("2026-07-13 23:10:42.247424")
 revision_id = "ztimons6l9au"
 
 alembic_down_revision = None
-virtool_down_revision = "381mcji9pkiw"
+virtool_down_revision = "irulhq4gaihg"
 
 # ``f8aa696aa0d3`` adds ``legacy_sequences.position``, which this pass rewrites.
 required_alembic_revision = "f8aa696aa0d3"
