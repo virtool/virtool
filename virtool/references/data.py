@@ -427,7 +427,6 @@ class ReferencesData(DataLayerDomain):
 
             task_class = CloneReferenceTask
             context = {
-                "created_at": document["created_at"],
                 "manifest": manifest,
                 "user_id": user_id,
             }
@@ -450,7 +449,6 @@ class ReferencesData(DataLayerDomain):
 
             task_class = ImportReferenceTask
             context = {
-                "created_at": document["created_at"],
                 "name_on_disk": upload.name_on_disk,
                 "user_id": user_id,
             }

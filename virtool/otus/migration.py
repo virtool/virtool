@@ -1,9 +1,9 @@
 """Shared migration logic for the Mongo-to-Postgres OTU and sequence move.
 
 This module holds the idempotent copy used by the OTU/sequence backfill revision,
-the authoritative reconciliation that repairs rows the copy left behind, and the
-drift check that gates the read cutover. Keeping them here keeps the logic
-unit-testable and reusable.
+the authoritative reconciliation that repairs rows the copy left behind, the repair
+of OTU documents Mongo itself holds malformed, and the drift check that gates the
+read cutover. Keeping them here keeps the logic unit-testable and reusable.
 
 Unlike the standard migration playbook, ``legacy_otus`` and ``legacy_sequences``
 have no ``legacy_id`` column: their primary key ``id`` is the Mongo ``_id``
@@ -13,10 +13,12 @@ string itself. Idempotency and skip-existing therefore key on ``id`` rather than
 
 import asyncio
 from collections import Counter
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, NamedTuple
 
-from sqlalchemy import Row, select
+import arrow
+from sqlalchemy import Row, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from structlog import get_logger
@@ -671,6 +673,160 @@ async def _delete_removed_otus(ctx: MigrationContext, deletable: set[str]) -> in
             deleted_count += deleted
 
     return deleted_count
+
+
+async def repair_string_otu_created_at(ctx: MigrationContext) -> None:
+    """Rewrite a Mongo OTU ``created_at`` held as a string as the datetime it means.
+
+    An OTU cloned before December 2022 carries its ``created_at`` as an ISO string
+    rather than a BSON date. The clone task took the timestamp from its task context,
+    which is a JSONB column, so the datetime the reference was created with came back
+    out of Postgres as the string the JSON serializer wrote -- and
+    ``insert_joined_otu`` put that string straight into the OTU document. Every OTU of
+    such a clone holds one, and they have sat in Mongo ever since.
+
+    Nothing in Mongo minded, because nothing read ``created_at`` as anything but a
+    value to serialize back out, and a string serializes to itself. The move to
+    Postgres does mind. ``data`` is JSONB and cannot hold a datetime either, so
+    :func:`virtool.otus.db.otu_document_from_row` parses ``created_at`` back to the
+    datetime an OTU document is supposed to carry -- which is the right thing to do
+    for every OTU written since, and which recovers a *datetime* for these, where
+    Mongo still holds a string. The two stores then disagree on the type of a field
+    they agree on the value of, and :func:`compare_otu_and_sequence_stores` fails the
+    read cutover on it.
+
+    The document is the store that is wrong: a Mongo ``created_at`` is a date
+    everywhere else in the codebase, and the read path will hand back a datetime for
+    these OTUs whether or not the document is repaired. So the string is parsed and
+    written back as the datetime it always meant.
+
+    The datetime is floored to the millisecond first, because BSON holds a datetime as
+    int64 milliseconds and would drop the microseconds itself. Writing the floored
+    value to *both* stores keeps the ``data`` column a faithful lift of the document
+    Mongo ends up holding, rather than one microsecond-precise string ahead of it.
+
+    The row is rewritten from the row, not from the document: only ``created_at`` is
+    replaced, and every other field of ``data`` is left exactly as the writer that last
+    touched it left it. A concurrent dual-write cannot be clobbered by a stale
+    snapshot, so no version guard is needed here. The row is locked with
+    ``SELECT … FOR UPDATE`` before Mongo is read, as every dual-write path does, so a
+    writer that reads the document while the repair holds the lock reads it after the
+    repair has landed rather than before.
+
+    Every string is parsed and checked before anything is written, so a store holding
+    one this cannot read is left untouched rather than half repaired. See
+    :func:`_parse_utc_timestamp` for what it will not read.
+
+    **The string is what makes an OTU findable, so it is the last thing to go.** The
+    Mongo write is made inside a transaction that commits *after* the Postgres one, as
+    :func:`virtool.data.topg.both_transactions` does. An interrupted run -- or a
+    Postgres write that fails -- therefore aborts the Mongo write with it, and the OTU
+    is still holding the string that puts it in ``candidates`` next time.
+
+    The alternative loses the OTU. A Mongo write that commits on its own, ahead of the
+    Postgres one, is durable the moment it lands: kill the run before the row is
+    written, and Mongo holds the floored datetime while ``data`` still holds the
+    sub-millisecond string it was floored from. Those disagree, and the OTU no longer
+    matches the ``$type: "string"`` query that would have found it, so no re-run
+    repairs it and the gate fails on it forever. Nothing recovers what the query cannot
+    see.
+
+    Idempotent: a repaired OTU no longer matches ``{"created_at": {"$type": "string"}}``
+    and a second run finds nothing to do.
+    """
+    candidates = {
+        document["_id"]: (
+            document["created_at"],
+            _parse_utc_timestamp(document["_id"], document["created_at"]),
+        )
+        async for document in ctx.mongo.otus.find(
+            {"created_at": {"$type": "string"}},
+            projection=["created_at"],
+        )
+    }
+
+    if not candidates:
+        logger.info("no otus hold a string created_at")
+        return
+
+    logger.info("repairing otus that hold a string created_at", otus=len(candidates))
+
+    repaired = 0
+
+    for otu_id, (raw, created_at) in candidates.items():
+        async with (
+            AsyncSession(ctx.pg) as session,
+            await ctx.mongo.client.start_session() as mongo_session,
+            mongo_session.start_transaction(),
+        ):
+            row = (
+                await session.execute(
+                    select(SQLOTU.data).where(SQLOTU.id == otu_id).with_for_update(),
+                )
+            ).one_or_none()
+
+            document = await ctx.mongo.otus.find_one(
+                {"_id": otu_id},
+                projection=["created_at"],
+                session=mongo_session,
+            )
+
+            if document is None or document["created_at"] != raw:
+                await session.rollback()
+                await mongo_session.abort_transaction()
+                continue
+
+            await ctx.mongo.otus.update_one(
+                {"_id": otu_id},
+                {"$set": {"created_at": created_at}},
+                session=mongo_session,
+            )
+
+            if row is not None:
+                await session.execute(
+                    update(SQLOTU)
+                    .where(SQLOTU.id == otu_id)
+                    .values(data={**row.data, "created_at": created_at}),
+                )
+
+            await session.commit()
+
+            repaired += 1
+
+    logger.info("repaired otus that held a string created_at", otus=repaired)
+
+
+def _parse_utc_timestamp(otu_id: str, created_at: str) -> datetime:
+    """Parse an OTU's string ``created_at`` as the naive UTC datetime it denotes.
+
+    Virtool datetimes are naive UTC, and the strings this repairs were written by the
+    JSON serializer, which renders one as UTC with a ``Z``. So a string that carries a
+    *non-UTC* offset came from somewhere this does not know about, and is refused
+    rather than guessed at: ``arrow.get(...).naive`` strips the offset instead of
+    applying it, and would file ``01:32:35+02:00`` as ``01:32:35`` UTC -- the same
+    wall clock, two hours from the instant it names. Being loud about a handful of
+    unreadable documents is worth more than silently shifting them.
+
+    A string with no offset at all is read as UTC, which is what the convention says an
+    unqualified Virtool datetime is.
+
+    The result is floored to the millisecond, the precision BSON stores a datetime at.
+    """
+    parsed = arrow.get(created_at)
+
+    if parsed.utcoffset() != timedelta(0):
+        msg = (
+            f"otu {otu_id} holds a created_at with a non-utc offset: {created_at!r}. "
+            f"it cannot be read as the naive utc datetime the store expects"
+        )
+        raise ValueError(msg)
+
+    return _floor_to_millisecond(parsed.naive)
+
+
+def _floor_to_millisecond(created_at: datetime) -> datetime:
+    """Drop a datetime's sub-millisecond precision, as a write to Mongo would."""
+    return created_at.replace(microsecond=created_at.microsecond // 1000 * 1000)
 
 
 _OTU_CHUNK_SIZE = 500

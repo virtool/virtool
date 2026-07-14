@@ -16,6 +16,7 @@ from virtool.otus.migration import (
     compare_otu_and_sequence_stores,
     copy_otus_and_sequences_to_postgres,
     reconcile_otus_and_sequences,
+    repair_string_otu_created_at,
 )
 from virtool.otus.sql import SQLOTU, SQLSequence
 from virtool.utils import timestamp
@@ -969,6 +970,213 @@ class TestReconcileOtusAndSequences:
 
         with pytest.raises(ValueError, match="which does not exist in postgres"):
             await reconcile_otus_and_sequences(ctx)
+
+
+class TestRepairStringOtuCreatedAt:
+    @pytest.fixture
+    async def cloned_otu(self, ctx: MigrationContext, reference_id: int) -> None:
+        """Seed an OTU whose Mongo ``created_at`` is a string, as a legacy clone's is,
+        and reconcile it into Postgres.
+        """
+        await ctx.mongo.otus.insert_one(
+            {
+                **_otu_doc("otu_cloned", reference_id, "Cucumber mosaic virus"),
+                "created_at": _CREATED_AT_JSON,
+            },
+        )
+
+        await reconcile_otus_and_sequences(ctx)
+
+    async def test_string_is_rewritten_as_a_datetime(
+        self,
+        ctx: MigrationContext,
+        cloned_otu: None,
+    ):
+        """The string becomes the datetime it means, in both stores."""
+        await repair_string_otu_created_at(ctx)
+
+        document = await ctx.mongo.otus.find_one({"_id": "otu_cloned"})
+        row = await _fetch_otu(ctx, "otu_cloned")
+
+        assert document["created_at"] == _CREATED_AT
+        assert row.data["created_at"] == _CREATED_AT_JSON
+
+    async def test_repaired_otu_passes_the_gate(
+        self,
+        ctx: MigrationContext,
+        cloned_otu: None,
+    ):
+        """The drift the gate fails the cutover on is the drift the repair clears."""
+        with pytest.raises(ValueError, match="store drift detected in 1 otus"):
+            await compare_otu_and_sequence_stores(ctx)
+
+        await repair_string_otu_created_at(ctx)
+
+        await compare_otu_and_sequence_stores(ctx)
+
+    async def test_sub_millisecond_string_is_floored(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+    ):
+        """A string finer than Mongo can hold is floored before it is written.
+
+        BSON holds a datetime as int64 milliseconds. Writing the string's full
+        precision would leave Mongo holding an instant the ``data`` column does not,
+        which is the drift this repair exists to clear.
+        """
+        await ctx.mongo.otus.insert_one(
+            {
+                **_otu_doc("otu_precise", reference_id, "Tobacco mosaic virus"),
+                "created_at": "2025-07-02T21:18:48.420789Z",
+            },
+        )
+
+        await reconcile_otus_and_sequences(ctx)
+        await repair_string_otu_created_at(ctx)
+
+        document = await ctx.mongo.otus.find_one({"_id": "otu_precise"})
+        row = await _fetch_otu(ctx, "otu_precise")
+
+        assert document["created_at"] == _CREATED_AT
+        assert row.data["created_at"] == _CREATED_AT_JSON
+
+        await compare_otu_and_sequence_stores(ctx)
+
+    async def test_datetime_otu_is_untouched(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+    ):
+        """An OTU that already holds a datetime is left exactly as it is."""
+        await ctx.mongo.otus.insert_one(
+            _otu_doc("otu_sound", reference_id, "Tobacco mosaic virus"),
+        )
+
+        await reconcile_otus_and_sequences(ctx)
+
+        row_before = await _fetch_otu(ctx, "otu_sound")
+
+        await repair_string_otu_created_at(ctx)
+
+        document = await ctx.mongo.otus.find_one({"_id": "otu_sound"})
+
+        assert document["created_at"] == _CREATED_AT
+        assert (await _fetch_otu(ctx, "otu_sound")).data == row_before.data
+
+    async def test_string_without_an_offset_is_read_as_utc(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+    ):
+        """An unqualified datetime is UTC, as the convention says it is."""
+        await ctx.mongo.otus.insert_one(
+            {
+                **_otu_doc("otu_unqualified", reference_id, "Tobacco mosaic virus"),
+                "created_at": "2025-07-02T21:18:48.420000",
+            },
+        )
+
+        await reconcile_otus_and_sequences(ctx)
+        await repair_string_otu_created_at(ctx)
+
+        document = await ctx.mongo.otus.find_one({"_id": "otu_unqualified"})
+
+        assert document["created_at"] == _CREATED_AT
+
+    async def test_non_utc_offset_raises_before_anything_is_written(
+        self,
+        ctx: MigrationContext,
+        cloned_otu: None,
+        reference_id: int,
+    ):
+        """A string this cannot read stops the repair rather than being guessed at.
+
+        ``arrow`` strips an offset instead of applying it, so reading such a string as
+        naive UTC would file it two hours from the instant it names. Nothing is written
+        at all: the strings are all parsed before the first store is touched, so the
+        readable OTUs of a store holding an unreadable one are not left half repaired.
+        """
+        await ctx.mongo.otus.insert_one(
+            {
+                **_otu_doc("otu_offset", reference_id, "Tobacco mosaic virus"),
+                "created_at": "2025-07-02T21:18:48.420000+02:00",
+            },
+        )
+
+        with pytest.raises(ValueError, match="non-utc offset"):
+            await repair_string_otu_created_at(ctx)
+
+        document = await ctx.mongo.otus.find_one({"_id": "otu_cloned"})
+
+        assert document["created_at"] == _CREATED_AT_JSON
+
+    async def test_a_failed_postgres_write_leaves_the_otu_repairable(
+        self,
+        ctx: MigrationContext,
+        cloned_otu: None,
+        mocker,
+    ):
+        """An interrupted repair keeps the string that makes the OTU findable.
+
+        The string is the only thing that puts an OTU in the candidate query. Landing
+        the Mongo write ahead of the Postgres one would take it away the moment the
+        write committed, and an OTU whose row never got written would then be drifted,
+        unfindable and unrepairable. The Mongo write commits after Postgres, so a failed
+        Postgres write takes the Mongo write down with it.
+        """
+        mocker.patch(
+            "virtool.otus.migration.update",
+            side_effect=OSError("postgres is gone"),
+        )
+
+        with pytest.raises(OSError, match="postgres is gone"):
+            await repair_string_otu_created_at(ctx)
+
+        document = await ctx.mongo.otus.find_one({"_id": "otu_cloned"})
+
+        assert document["created_at"] == _CREATED_AT_JSON
+
+        mocker.stopall()
+
+        await repair_string_otu_created_at(ctx)
+
+        document = await ctx.mongo.otus.find_one({"_id": "otu_cloned"})
+
+        assert document["created_at"] == _CREATED_AT
+        assert (await _fetch_otu(ctx, "otu_cloned")).data["created_at"] == (
+            _CREATED_AT_JSON
+        )
+
+    async def test_is_idempotent(self, ctx: MigrationContext, cloned_otu: None):
+        """A second run finds nothing left to repair and changes nothing."""
+        await repair_string_otu_created_at(ctx)
+        await repair_string_otu_created_at(ctx)
+
+        document = await ctx.mongo.otus.find_one({"_id": "otu_cloned"})
+        row = await _fetch_otu(ctx, "otu_cloned")
+
+        assert document["created_at"] == _CREATED_AT
+        assert row.data["created_at"] == _CREATED_AT_JSON
+
+    async def test_otu_without_a_row_is_repaired_in_mongo(
+        self,
+        ctx: MigrationContext,
+        cloned_otu: None,
+    ):
+        """An OTU whose row is being deleted right now is still repaired in Mongo.
+
+        Postgres is never behind Mongo, so a document with no row is one a concurrent
+        delete has already removed from Postgres. The repair has no row to rewrite and
+        must not fail over it.
+        """
+        await _delete_otu_row(ctx, "otu_cloned")
+
+        await repair_string_otu_created_at(ctx)
+
+        document = await ctx.mongo.otus.find_one({"_id": "otu_cloned"})
+
+        assert document["created_at"] == _CREATED_AT
 
 
 class TestCompareOtuAndSequenceStores:
