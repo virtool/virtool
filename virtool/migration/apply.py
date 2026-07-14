@@ -134,6 +134,10 @@ async def apply_alembic(revision: str) -> None:
 async def ensure_revisions_table(pg: AsyncEngine) -> None:
     """Ensure that the `revisions` table exists in the database.
 
+    The `name` and `revision` columns were originally length-limited. Existing
+    databases are widened here because `CREATE TABLE IF NOT EXISTS` will not alter a
+    table that already exists.
+
     :param pg: the PostgreSQL database connection
     """
     async with AsyncSession(pg) as session, session.begin():
@@ -142,11 +146,21 @@ async def ensure_revisions_table(pg: AsyncEngine) -> None:
                 """
                     CREATE TABLE IF NOT EXISTS revisions (
                         id SERIAL PRIMARY KEY,
-                        name varchar(64) NOT NULL,
-                        revision varchar(18) NOT NULL,
+                        name varchar NOT NULL,
+                        revision varchar NOT NULL,
                         created_at timestamp without time zone NOT NULL,
                         applied_at timestamp without time zone NOT NULL
                     )
+                    """,
+            ),
+        )
+
+        await session.execute(
+            text(
+                """
+                    ALTER TABLE revisions
+                        ALTER COLUMN name TYPE varchar,
+                        ALTER COLUMN revision TYPE varchar
                     """,
             ),
         )

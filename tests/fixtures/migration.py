@@ -22,8 +22,8 @@ from sqlalchemy.ext.asyncio import create_async_engine
 
 from virtool.api.custom_json import dump_string
 from virtool.config.cls import MigrationConfig
+from virtool.migration.apply import ensure_revisions_table
 from virtool.migration.ctx import MigrationContext, create_migration_context
-from virtool.migration.pg import SQLRevision
 from virtool.pg.utils import (
     PgOptions,
     get_sqlalchemy_url,
@@ -71,9 +71,7 @@ async def migration_pg_connection_string(
         pool_recycle=1800,
     )
 
-    async with engine.connect() as conn:
-        await conn.run_sync(SQLRevision.__table__.create)
-        await conn.commit()
+    await ensure_revisions_table(engine)
 
     return connection_string
 
