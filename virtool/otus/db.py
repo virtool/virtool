@@ -1,6 +1,7 @@
 """Work with OTUs in the database."""
 
 from collections import Counter
+from collections.abc import Collection
 from datetime import datetime
 from typing import Any
 
@@ -362,18 +363,29 @@ def next_sequence_position(otu_id: str):
     )
 
 
-_OTU_ROW_CHUNK_SIZE = 32767 // 7
+_MAX_BIND_PARAMETERS = 32767
+"""The most bind parameters asyncpg will accept in one statement."""
+
+_OTU_ROW_CHUNK_SIZE = _MAX_BIND_PARAMETERS // 7
 """Max ``legacy_otus`` rows per statement.
 
-asyncpg caps bind parameters per statement at 32767. Each row binds the seven
-columns produced by :func:`otu_row_values`.
+Each row binds the seven columns produced by :func:`otu_row_values`.
 """
 
-_SEQUENCE_ROW_CHUNK_SIZE = 32767 // 6
+_SEQUENCE_ROW_CHUNK_SIZE = _MAX_BIND_PARAMETERS // 6
 """Max ``legacy_sequences`` rows per statement.
 
-asyncpg caps bind parameters per statement at 32767. Each row binds the five
-columns produced by :func:`sequence_row_values` plus ``position``.
+Each row binds the five columns produced by :func:`sequence_row_values` plus
+``position``. An upsert's conflict update binds nothing further: the values it writes
+come from the ``excluded`` pseudo-table, which is the row that was already bound for
+the insert.
+"""
+
+_SEQUENCE_ID_CHUNK_SIZE = _MAX_BIND_PARAMETERS
+"""Max ``legacy_sequences`` ids per statement.
+
+An id in an ``IN`` list binds one parameter and nothing else in the statement binds
+any.
 """
 
 
@@ -399,24 +411,18 @@ async def bulk_insert_otu_rows(
         )
 
 
-async def bulk_insert_sequence_rows(
-    pg_session: AsyncSession,
-    documents: list[Document],
-) -> None:
-    """Insert ``legacy_sequences`` rows for ``documents`` into ``pg_session``.
+def _positioned_sequence_rows(documents: list[Document]) -> list[dict[str, Any]]:
+    """Map sequence ``documents`` to ``legacy_sequences`` column values with positions.
 
     ``position`` is assigned by counting off each OTU's sequences in the order they
-    appear in ``documents``. That is the order they are handed to
-    ``sequences.insert_many``, so it is the Mongo natural order the rows must
-    reproduce. Callers insert whole OTUs at a time, so an OTU's sequences are never
-    split across two calls and the count always starts at zero for a new OTU.
+    appear in ``documents``. Every caller hands them over in the order Mongo holds
+    them -- the order ``sequences.insert_many`` was given them in, or the order an
+    unsorted ``find({"otu_id": otu_id})`` returns them in -- so it is the Mongo
+    natural order the rows must reproduce.
 
-    The rows are written in asyncpg-safe chunks without committing, so they commit
-    or roll back together with the caller's surrounding transaction.
+    Callers pass whole OTUs at a time, so an OTU's sequences are never split across
+    two calls and the count always starts at zero for a new OTU.
     """
-    if not documents:
-        return
-
     positions = Counter()
     rows = []
 
@@ -427,12 +433,111 @@ async def bulk_insert_sequence_rows(
 
         positions[otu_id] += 1
 
+    return rows
+
+
+async def _upsert_sequence_rows(
+    pg_session: AsyncSession,
+    rows: list[dict[str, Any]],
+    updated_columns: Collection[str],
+) -> None:
+    """Upsert ``legacy_sequences`` ``rows`` into ``pg_session`` in asyncpg-safe chunks.
+
+    ``updated_columns`` names the columns a row that already exists has rewritten from
+    the row that would have been inserted. Their values are taken from the ``excluded``
+    pseudo-table -- the proposed row -- rather than re-bound, so a chunk carries each
+    row's values exactly once however many columns the conflict updates.
+
+    One statement per chunk rather than one per row. A caller holds the OTU's
+    :func:`lock_legacy_otu` row lock across the whole write, so every round trip saved
+    is lock time a concurrent dual-write to that OTU does not spend blocked.
+
+    The rows are written without committing, so they commit or roll back together with
+    the caller's surrounding transaction.
+    """
+    for start in range(0, len(rows), _SEQUENCE_ROW_CHUNK_SIZE):
+        statement = pg_insert(SQLSequence).values(
+            rows[start : start + _SEQUENCE_ROW_CHUNK_SIZE],
+        )
+
+        await pg_session.execute(
+            statement.on_conflict_do_update(
+                index_elements=["id"],
+                set_={column: statement.excluded[column] for column in updated_columns},
+            ),
+        )
+
+
+async def bulk_insert_sequence_rows(
+    pg_session: AsyncSession,
+    documents: list[Document],
+) -> None:
+    """Insert ``legacy_sequences`` rows for ``documents`` into ``pg_session``.
+
+    ``position`` counts off each OTU's sequences in the order they appear in
+    ``documents``; see :func:`_positioned_sequence_rows`.
+
+    The rows are written in asyncpg-safe chunks without committing, so they commit
+    or roll back together with the caller's surrounding transaction.
+    """
+    if not documents:
+        return
+
+    rows = _positioned_sequence_rows(documents)
+
     for start in range(0, len(rows), _SEQUENCE_ROW_CHUNK_SIZE):
         await pg_session.execute(
             pg_insert(SQLSequence).values(
                 rows[start : start + _SEQUENCE_ROW_CHUNK_SIZE],
             ),
         )
+
+
+async def bulk_upsert_sequence_rows(
+    pg_session: AsyncSession,
+    documents: list[Document],
+) -> None:
+    """Rewrite ``legacy_sequences`` rows for ``documents`` from those documents.
+
+    Every column is rewritten, ``position`` included: the rows are made to say exactly
+    what the documents say, in the order the documents were handed over. Used by the
+    reconciliation, which owns an OTU's sequence order, and so is the one path that may
+    renumber a sequence that already has a row.
+
+    ``documents`` must be one OTU's sequences, in the order Mongo returns them.
+    """
+    if not documents:
+        return
+
+    rows = _positioned_sequence_rows(documents)
+
+    await _upsert_sequence_rows(
+        pg_session,
+        rows,
+        [column for column in rows[0] if column != "id"],
+    )
+
+
+async def bulk_position_sequence_rows(
+    pg_session: AsyncSession,
+    documents: list[Document],
+) -> None:
+    """Assign ``legacy_sequences`` rows for ``documents`` their position in their OTU.
+
+    Only ``position`` is rewritten on a row that already exists; a row that does not
+    exist yet is inserted whole. Used by the position backfill, which owns the ordering
+    of an OTU's sequences but not their contents.
+
+    ``documents`` must be one OTU's sequences, in the order Mongo returns them.
+    """
+    if not documents:
+        return
+
+    await _upsert_sequence_rows(
+        pg_session,
+        _positioned_sequence_rows(documents),
+        ["position"],
+    )
 
 
 async def lock_legacy_otu(pg_session: AsyncSession, otu_id: str) -> None:
@@ -499,14 +604,52 @@ async def write_legacy_sequence(pg_session: AsyncSession, document: Document) ->
     )
 
 
-async def delete_legacy_otu(pg_session: AsyncSession, otu_id: str) -> None:
-    """Delete an OTU's ``legacy_otus`` row; its ``legacy_sequences`` rows cascade."""
-    await pg_session.execute(delete(SQLOTU).where(SQLOTU.id == otu_id))
+async def delete_legacy_otu(pg_session: AsyncSession, otu_id: str) -> int:
+    """Delete an OTU's ``legacy_otus`` row; its ``legacy_sequences`` rows cascade.
+
+    Returns how many rows were deleted: one, or zero if the OTU had no row to begin
+    with.
+
+    The row is deleted without committing, so it goes or comes back together with the
+    caller's surrounding transaction.
+    """
+    result = await pg_session.execute(delete(SQLOTU).where(SQLOTU.id == otu_id))
+
+    return result.rowcount
 
 
 async def delete_legacy_sequence(pg_session: AsyncSession, sequence_id: str) -> None:
     """Delete a single ``legacy_sequences`` row by id."""
     await pg_session.execute(delete(SQLSequence).where(SQLSequence.id == sequence_id))
+
+
+async def delete_legacy_sequences(
+    pg_session: AsyncSession,
+    sequence_ids: Collection[str],
+) -> int:
+    """Delete ``legacy_sequences`` rows by id; return how many were deleted.
+
+    Each id binds one parameter, so the ids are deleted in asyncpg-safe chunks: a
+    single statement carrying more of them than the driver's cap would fail with an
+    opaque driver error rather than deleting anything.
+
+    The rows are deleted without committing, so they go or come back together with the
+    caller's surrounding transaction.
+    """
+    ids = list(sequence_ids)
+
+    deleted = 0
+
+    for start in range(0, len(ids), _SEQUENCE_ID_CHUNK_SIZE):
+        result = await pg_session.execute(
+            delete(SQLSequence).where(
+                SQLSequence.id.in_(ids[start : start + _SEQUENCE_ID_CHUNK_SIZE]),
+            ),
+        )
+
+        deleted += result.rowcount
+
+    return deleted
 
 
 async def delete_legacy_isolate_sequences(

@@ -15,6 +15,11 @@ applied to which row.
 The write paths that produced the drift are fixed ahead of this, so the stores stay
 converged once it has run.
 
+Every dual-write commits Postgres before Mongo, so the application keeps rows visible
+in Postgres that a Mongo read here cannot see yet. The pass never deletes a row a
+concurrent writer could have created, never re-creates an OTU whose row vanished while
+it ran, and never rewrites a row whose OTU version is ahead of the document it read.
+
 The pass is idempotent and re-runnable: a second run reads the same documents in the
 same order and writes the same values. It commits one OTU and its sequences at a
 time, so an interrupted run keeps the rows already repaired.

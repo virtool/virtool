@@ -6,12 +6,13 @@ from datetime import datetime
 
 import pytest
 from motor.motor_asyncio import AsyncIOMotorCollection
-from sqlalchemy import insert, select, text, update
+from sqlalchemy import Delete, Insert, delete, insert, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.migration.ctx import MigrationContext
-from virtool.otus.db import bulk_insert_otu_rows, otu_row_values
+from virtool.otus.db import bulk_insert_otu_rows, otu_row_values, sequence_row_values
 from virtool.otus.migration import (
+    _compare_otu_sequence_order,
     backfill_sequence_positions,
     compare_otu_and_sequence_stores,
     copy_otus_and_sequences_to_postgres,
@@ -147,6 +148,30 @@ async def _insert_otu_row(
                 ),
             ),
         )
+        await session.commit()
+
+
+async def _insert_sequence_row(
+    ctx: MigrationContext,
+    sequence_id: str,
+    otu_id: str,
+    position: int,
+) -> None:
+    """Insert a ``legacy_sequences`` row directly, as a dual-write would."""
+    async with AsyncSession(ctx.pg) as session:
+        await session.execute(
+            insert(SQLSequence).values(
+                **sequence_row_values(_sequence_doc(sequence_id, otu_id)),
+                position=position,
+            ),
+        )
+        await session.commit()
+
+
+async def _delete_otu_row(ctx: MigrationContext, otu_id: str) -> None:
+    """Delete a ``legacy_otus`` row directly, as an application dual-write would."""
+    async with AsyncSession(ctx.pg) as session:
+        await session.execute(delete(SQLOTU).where(SQLOTU.id == otu_id))
         await session.commit()
 
 
@@ -448,6 +473,31 @@ class TestBackfillSequencePositions:
             await backfill_sequence_positions(ctx)
 
 
+def _count_sequence_deletes(execute) -> int:
+    """Count the ``legacy_sequences`` deletes a spied ``AsyncSession.execute`` ran.
+
+    The spy is on the unbound method, so the session is the first recorded argument and
+    the statement the second.
+    """
+    return sum(
+        isinstance(statement := call.args[1], Delete)
+        and statement.table.name == "legacy_sequences"
+        for call in execute.call_args_list
+    )
+
+
+def _count_sequence_inserts(execute) -> int:
+    """Count the ``legacy_sequences`` inserts a spied ``AsyncSession.execute`` ran.
+
+    See :func:`_count_sequence_deletes`.
+    """
+    return sum(
+        isinstance(statement := call.args[1], Insert)
+        and statement.table.name == "legacy_sequences"
+        for call in execute.call_args_list
+    )
+
+
 class TestReconcileOtusAndSequences:
     @pytest.fixture
     async def drifted_otu(self, ctx: MigrationContext, reference_id: int) -> list[str]:
@@ -602,6 +652,113 @@ class TestReconcileOtusAndSequences:
             (drifted_otu[2], 1),
         ]
 
+    async def test_deletes_removed_sequences_in_chunks(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+        mocker,
+    ):
+        """The rows to delete are chunked so their ids cannot exhaust the bind
+        parameters.
+
+        Each id binds one parameter and asyncpg refuses a statement carrying more than
+        32767 of them, so a single OTU large enough would otherwise abort the whole
+        revision. The chunk size is patched down rather than seeding an OTU with tens of
+        thousands of sequences: five removed sequences over a chunk size of two exercise
+        the same loop, including its short final chunk.
+        """
+        mocker.patch("virtool.otus.db._SEQUENCE_ID_CHUNK_SIZE", 2)
+
+        await ctx.mongo.otus.insert_one(
+            _otu_doc("otu_pruned", reference_id, "Pepper mild mottle virus"),
+        )
+
+        for index in range(7):
+            await ctx.mongo.sequences.insert_one(
+                _sequence_doc(f"seq_{index}", "otu_pruned"),
+            )
+
+        await copy_otus_and_sequences_to_postgres(ctx)
+
+        await ctx.mongo.sequences.delete_many(
+            {"_id": {"$in": (await _mongo_sequence_ids(ctx, "otu_pruned"))[:5]}},
+        )
+
+        execute = mocker.spy(AsyncSession, "execute")
+
+        await reconcile_otus_and_sequences(ctx)
+
+        kept = await _mongo_sequence_ids(ctx, "otu_pruned")
+
+        assert _count_sequence_deletes(execute) == 3
+        assert await _get_positions(ctx, "otu_pruned") == [
+            (sequence_id, position) for position, sequence_id in enumerate(kept)
+        ]
+
+    async def test_no_delete_is_issued_when_nothing_was_removed(
+        self,
+        ctx: MigrationContext,
+        drifted_otu: list[str],
+        mocker,
+    ):
+        """An OTU whose sequences Mongo still has is not made to pay for a delete.
+
+        The common case by far. The rows Mongo no longer accounts for are worked out
+        before anything is deleted, so an OTU that has lost none issues no delete
+        statement at all, however many sequences it has.
+        """
+        execute = mocker.spy(AsyncSession, "execute")
+
+        await reconcile_otus_and_sequences(ctx)
+
+        assert _count_sequence_deletes(execute) == 0
+        assert await _get_positions(ctx, "otu_drifted") == [
+            (sequence_id, position) for position, sequence_id in enumerate(drifted_otu)
+        ]
+
+    async def test_upserts_sequences_in_chunks(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+        mocker,
+    ):
+        """An OTU's sequences are rewritten a chunk at a time, not a row at a time.
+
+        A row per statement is a round trip per sequence, and every one of them is spent
+        holding the OTU's row lock, so a large OTU would block dual-writes to itself for
+        as long as it took to walk it. Chunking bounds the rows per statement instead --
+        a statement carrying more bind parameters than asyncpg accepts would fail
+        outright.
+
+        The chunk size is patched down rather than seeding an OTU with thousands of
+        sequences: five sequences over a chunk size of two exercise the same loop,
+        including its short final chunk, and the positions must still count off in
+        Mongo's order across the chunk boundaries.
+        """
+        mocker.patch("virtool.otus.db._SEQUENCE_ROW_CHUNK_SIZE", 2)
+
+        await ctx.mongo.otus.insert_one(
+            _otu_doc("otu_chunked", reference_id, "Pepper mild mottle virus"),
+        )
+
+        for index in range(5):
+            await ctx.mongo.sequences.insert_one(
+                _sequence_doc(f"seq_{index}", "otu_chunked"),
+            )
+
+        await copy_otus_and_sequences_to_postgres(ctx)
+
+        execute = mocker.spy(AsyncSession, "execute")
+
+        await reconcile_otus_and_sequences(ctx)
+
+        sequence_ids = await _mongo_sequence_ids(ctx, "otu_chunked")
+
+        assert _count_sequence_inserts(execute) == 3
+        assert await _get_positions(ctx, "otu_chunked") == [
+            (sequence_id, position) for position, sequence_id in enumerate(sequence_ids)
+        ]
+
     async def test_deletes_an_otu_mongo_no_longer_has(
         self,
         ctx: MigrationContext,
@@ -659,6 +816,212 @@ class TestReconcileOtusAndSequences:
         await reconcile_otus_and_sequences(ctx)
 
         assert await _fetch_otu(ctx, "otu_dual_written") is not None
+
+    async def test_otu_dual_written_mid_run_is_not_deleted(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+        drifted_otu: list[str],
+        mocker,
+    ):
+        """An OTU whose rows land in Postgres mid-run must not be deleted as removed.
+
+        Every dual-write commits Postgres before Mongo, so a newly created OTU is a row
+        without being a document for as long as the writer's Mongo commit takes to
+        become visible. Re-reading the candidate from Mongo cannot settle that -- the
+        document is not there to read yet -- so an OTU that had no row when the run
+        started is never a delete candidate at all. Deleting it would take its sequences
+        with it through the cascade.
+        """
+        dual_written = False
+
+        real_find_one = AsyncIOMotorCollection.find_one
+
+        async def dual_write_postgres_half(self, *args, **kwargs):
+            nonlocal dual_written
+
+            if self.name == "otus" and not dual_written:
+                dual_written = True
+
+                await _insert_otu_row(ctx, "otu_dual_written", reference_id)
+                await _insert_sequence_row(
+                    ctx,
+                    "seq_dual_written",
+                    "otu_dual_written",
+                    position=0,
+                )
+
+            return await real_find_one(self, *args, **kwargs)
+
+        mocker.patch.object(
+            AsyncIOMotorCollection,
+            "find_one",
+            dual_write_postgres_half,
+        )
+
+        await reconcile_otus_and_sequences(ctx)
+
+        assert await _fetch_otu(ctx, "otu_dual_written") is not None
+        assert await _fetch_sequence(ctx, "seq_dual_written") is not None
+
+    async def test_sequence_dual_written_mid_run_is_not_deleted(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+        drifted_otu: list[str],
+        mocker,
+    ):
+        """A sequence dual-written mid-run must not be deleted as removed.
+
+        ``create_sequence`` commits its sequence row and its OTU version bump to
+        Postgres while its Mongo writes are still invisible, so the OTU's sequence read
+        can miss a sequence whose row is already there. Deleting every row that read
+        does not account for would destroy it.
+
+        The row's ``version`` is what gives the lag away: it is one ahead of the
+        document, so the OTU is deferred and reconciled once the Mongo write lands.
+        """
+        await _insert_sequence_row(
+            ctx,
+            "seq_dual_written",
+            "otu_drifted",
+            position=3,
+        )
+        await _update_otu_row(
+            ctx,
+            "otu_drifted",
+            version=4,
+            data={
+                **_otu_doc("otu_drifted", reference_id, "Tobacco mosaic virus"),
+                "version": 4,
+            },
+        )
+
+        otu_reads = 0
+
+        real_find_one = AsyncIOMotorCollection.find_one
+
+        async def land_mongo_half_on_retry(self, *args, **kwargs):
+            nonlocal otu_reads
+
+            if self.name == "otus":
+                otu_reads += 1
+
+                if otu_reads == 2:
+                    await ctx.mongo.sequences.insert_one(
+                        _sequence_doc("seq_dual_written", "otu_drifted"),
+                    )
+                    await ctx.mongo.otus.update_one(
+                        {"_id": "otu_drifted"},
+                        {"$set": {"version": 4}},
+                    )
+
+            return await real_find_one(self, *args, **kwargs)
+
+        mocker.patch.object(
+            AsyncIOMotorCollection,
+            "find_one",
+            land_mongo_half_on_retry,
+        )
+
+        await reconcile_otus_and_sequences(ctx)
+
+        assert await _fetch_sequence(ctx, "seq_dual_written") is not None
+        assert (await _fetch_otu(ctx, "otu_drifted")).version == 4
+        assert await _get_positions(ctx, "otu_drifted") == [
+            (sequence_id, position)
+            for position, sequence_id in enumerate(
+                await _mongo_sequence_ids(ctx, "otu_drifted"),
+            )
+        ]
+
+    async def test_otu_removed_mid_run_is_not_recreated(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+        mocker,
+    ):
+        """An OTU removed while the run is walking Mongo must not be resurrected.
+
+        ``remove`` deletes the Postgres row before the Mongo document, so the run can
+        read a document whose row is already gone. Re-inserting it would put the OTU
+        back permanently: its id is in the run's Mongo id snapshot, so the delete pass
+        never considers it a candidate.
+        """
+        for otu_id, name in (
+            ("otu_reconciled", "Tobacco mosaic virus"),
+            ("otu_removed", "Cucumber mosaic virus"),
+        ):
+            await ctx.mongo.otus.insert_one(_otu_doc(otu_id, reference_id, name))
+            await ctx.mongo.sequences.insert_one(_sequence_doc(f"seq_{otu_id}", otu_id))
+
+        await copy_otus_and_sequences_to_postgres(ctx)
+
+        real_find_one = AsyncIOMotorCollection.find_one
+
+        async def remove_postgres_half(self, *args, **kwargs):
+            if self.name == "otus":
+                await _delete_otu_row(ctx, "otu_removed")
+
+            return await real_find_one(self, *args, **kwargs)
+
+        mocker.patch.object(
+            AsyncIOMotorCollection,
+            "find_one",
+            remove_postgres_half,
+        )
+
+        await reconcile_otus_and_sequences(ctx)
+
+        assert await _fetch_otu(ctx, "otu_removed") is None
+        assert await _fetch_sequence(ctx, "seq_otu_removed") is None
+        assert await _fetch_otu(ctx, "otu_reconciled") is not None
+
+    async def test_stamped_last_indexed_version_is_not_clobbered(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+        drifted_otu: list[str],
+    ):
+        """An index stamp that has only reached Postgres survives the rewrite.
+
+        Index finalization stamps ``last_indexed_version`` into both stores without
+        bumping the OTU's ``version``, and commits Postgres first, so there is nothing
+        else about the OTU to give the lag away. Rewriting ``data`` wholesale from a
+        document that has not caught up would drop the stamp the index just wrote.
+        """
+        await _update_otu_row(
+            ctx,
+            "otu_drifted",
+            data={
+                **_otu_doc("otu_drifted", reference_id, "Tobacco mosaic virus"),
+                "last_indexed_version": 3,
+            },
+        )
+
+        await reconcile_otus_and_sequences(ctx)
+
+        assert (await _fetch_otu(ctx, "otu_drifted")).data["last_indexed_version"] == 3
+
+    async def test_row_left_ahead_of_mongo_is_repaired(
+        self,
+        ctx: MigrationContext,
+        drifted_otu: list[str],
+    ):
+        """A row whose version never stops being ahead of Mongo is drift, and repaired.
+
+        A dual-write whose Mongo commit never landed leaves the Postgres row a version
+        ahead for good. Waiting on a Mongo write that is not coming would strand the
+        row, so Mongo is taken as authoritative once the retries are exhausted.
+        """
+        await _update_otu_row(ctx, "otu_drifted", version=9, name="Wrong name")
+
+        await reconcile_otus_and_sequences(ctx)
+
+        row = await _fetch_otu(ctx, "otu_drifted")
+
+        assert row.version == 3
+        assert row.name == "Tobacco mosaic virus"
 
     async def test_is_idempotent(
         self,
@@ -1007,3 +1370,68 @@ class TestCompareOtuAndSequenceStores:
 
         with pytest.raises(ValueError, match="0 otus, 0 sequences and 1 otu"):
             await compare_otu_and_sequence_stores(ctx)
+
+    async def test_duplicate_sequence_positions_raise(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+    ):
+        """Two sequences of one OTU sharing a position is drift.
+
+        Nothing in the schema forbids the collision, so the order of the pair is left
+        to the query plan. The gate must fail on it rather than sort around it and
+        pass whenever the plan of the day happens to agree with Mongo.
+        """
+        await ctx.mongo.otus.insert_one(
+            _otu_doc("otu_collided", reference_id, "Tobacco mosaic virus"),
+        )
+
+        for sequence_id in ("seq_first", "seq_second"):
+            await ctx.mongo.sequences.insert_one(
+                _sequence_doc(sequence_id, "otu_collided"),
+            )
+
+        await reconcile_otus_and_sequences(ctx)
+
+        sequence_ids = await _mongo_sequence_ids(ctx, "otu_collided")
+
+        await _update_sequence_row(ctx, sequence_ids[1], position=0)
+
+        with pytest.raises(ValueError, match="0 otus, 0 sequences and 1 otu"):
+            await compare_otu_and_sequence_stores(ctx)
+
+    async def test_sequence_order_is_deterministic(
+        self,
+        ctx: MigrationContext,
+        reference_id: int,
+    ):
+        """Rows sharing a position come back ordered by id, not in plan order.
+
+        Ordering on ``position`` alone leaves colliding rows wherever the plan puts
+        them, which on a table this small is the order they were written in --
+        ``seq_zulu`` before ``seq_alpha``. The tie-break makes the read reproducible,
+        so the check can neither pass nor fail by luck.
+        """
+        await ctx.mongo.otus.insert_one(
+            _otu_doc("otu_collided", reference_id, "Tobacco mosaic virus"),
+        )
+
+        for sequence_id in ("seq_zulu", "seq_alpha"):
+            await ctx.mongo.sequences.insert_one(
+                _sequence_doc(sequence_id, "otu_collided"),
+            )
+
+        await reconcile_otus_and_sequences(ctx)
+
+        await _update_sequence_row(ctx, "seq_zulu", position=0)
+        await _update_sequence_row(ctx, "seq_alpha", position=0)
+
+        async with AsyncSession(ctx.pg) as session:
+            report = await _compare_otu_sequence_order(ctx, session, "otu_collided")
+
+        assert report == {
+            "otu_id": "otu_collided",
+            "issue": "sequences sharing a position",
+            "positions": [0],
+            "sequence_ids": ["seq_alpha", "seq_zulu"],
+        }
