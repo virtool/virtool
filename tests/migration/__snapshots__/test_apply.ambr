@@ -775,6 +775,13 @@
       'applied_at': datetime,
       'created_at': datetime,
       'id': 111,
+      'name': 'repair string otu created at',
+      'revision': 'yok1ouqta8nf',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 112,
       'name': 'compare otu and sequence stores',
       'revision': 't96ls24modzv',
     }),
