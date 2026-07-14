@@ -25,8 +25,7 @@ from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.history.db import legacy_history_values
 from virtool.history.sql import SQLLegacyHistory
-from virtool.indexes.db import INDEX_FILE_NAMES
-from virtool.indexes.files import create_index_file
+from virtool.indexes.db import JOB_INDEX_FILE_NAMES
 from virtool.indexes.sql import SQLIndexFile
 from virtool.indexes.utils import check_index_file_type, compose_index_file_key
 from virtool.models.enums import Permission
@@ -118,6 +117,7 @@ class TestFind:
                         "ready": False,
                         "has_files": True,
                         "job": {"id": job_active_a.id},
+                        "task": None,
                         "reference": {"id": reference_active_a.id},
                         "user": {"id": user.id},
                         "sequence_otu_map": {"seq_1": "otu_1"},
@@ -130,6 +130,7 @@ class TestFind:
                         "ready": False,
                         "has_files": True,
                         "job": {"id": job_active_b.id},
+                        "task": None,
                         "reference": {"id": reference_active_b.id},
                         "user": {"id": user.id},
                         "sequence_otu_map": {"seq_1": "otu_2"},
@@ -142,6 +143,7 @@ class TestFind:
                         "ready": False,
                         "has_files": True,
                         "job": {"id": job_archived.id},
+                        "task": None,
                         "reference": {"id": reference_archived.id},
                         "user": {"id": user.id},
                         "sequence_otu_map": {"seq_1": "otu_5"},
@@ -217,7 +219,6 @@ class TestFind:
         fake: DataFaker,
         snapshot,
         mongo: Mongo,
-        pg: AsyncEngine,
         spawn_client: ClientSpawner,
         static_time,
     ):
@@ -241,6 +242,7 @@ class TestFind:
                     "ready": True,
                     "has_files": True,
                     "job": {"id": job.id},
+                    "task": None,
                     "reference": {"id": reference_active_a.id},
                     "user": {"id": user.id},
                 },
@@ -252,6 +254,7 @@ class TestFind:
                     "ready": True,
                     "has_files": True,
                     "job": {"id": job.id},
+                    "task": None,
                     "reference": {"id": reference_active_b.id},
                     "user": {"id": user.id},
                 },
@@ -263,6 +266,7 @@ class TestFind:
                     "ready": True,
                     "has_files": True,
                     "job": {"id": job.id},
+                    "task": None,
                     "reference": {"id": reference_archived.id},
                     "user": {"id": user.id},
                 },
@@ -352,6 +356,7 @@ async def test_get(
                 "has_files": True,
                 "user": {"id": prolific.id},
                 "job": {"id": job.id},
+                "task": None,
             },
         )
 
@@ -378,9 +383,13 @@ async def test_download_otus_json(
     with gzip.open(otus_json_path, "rt") as f:
         expected = json.load(f)
 
-    m_get_patched_otus = mocker.patch(
-        "virtool.indexes.db.get_patched_otus",
-        make_mocked_coro(expected),
+    async def iter_patched_otus(*_args):
+        for otu in expected:
+            yield otu
+
+    m_iter_patched_otus = mocker.patch(
+        "virtool.indexes.db.iter_patched_otus",
+        side_effect=iter_patched_otus,
     )
 
     client = await spawn_job_client(authenticated=True)
@@ -407,7 +416,7 @@ async def test_download_otus_json(
     assert expected == result
 
     if not file_exists:
-        m_get_patched_otus.assert_called_with(
+        m_iter_patched_otus.assert_called_with(
             get_mongo_from_app(client.app),
             client.app["pg"],
             manifest,
@@ -689,10 +698,10 @@ async def test_delete_index(
                 "ready": True,
                 "reference": {"id": "foo"},
                 "user": {"id": user.id},
+                "task": None,
                 "version": 4,
             },
         )
-
     response = await client.delete(f"/indexes/{index_id}")
 
     if error:
@@ -725,8 +734,15 @@ async def test_upload(
 
     await seed_reference(mongo, pg, "bar", user.id, name="Bar")
     await seed_reference(mongo, pg, "foo", user.id, name="Foo")
+    job = await fake.jobs.create(user=user, workflow="build_index")
 
-    index = {"_id": "foo", "reference": {"id": "bar"}, "user": {"id": user.id}}
+    index = {
+        "_id": "foo",
+        "reference": {"id": "bar"},
+        "user": {"id": user.id},
+        "job": {"id": job.id},
+        "task": None,
+    }
 
     if error == "409":
         async with AsyncSession(pg) as session:
@@ -739,7 +755,7 @@ async def test_upload(
     url = "/indexes/foo/files"
 
     if error == "404_file":
-        url += "/reference.bt2"
+        url += "/reference.foo.bt2"
     else:
         url += "/reference.1.bt2"
 
@@ -804,7 +820,7 @@ async def test_finalize(
     elif error == "409_fasta":
         files = ["reference.json.gz"]
     else:
-        files = INDEX_FILE_NAMES
+        files = JOB_INDEX_FILE_NAMES
 
     reference = await fake.references.create(user=user)
 
@@ -819,6 +835,7 @@ async def test_finalize(
                 "created_at": static_time.datetime,
                 "has_files": True,
                 "job": {"id": job.id},
+                "task": None,
             },
         ),
         # change `version` that should be reflected in `last_indexed_version` after calling
@@ -827,14 +844,19 @@ async def test_finalize(
         ),
     )
 
-    for file_name in files:
-        await create_index_file(
-            pg,
-            "test_index",
-            check_index_file_type(file_name),
-            file_name,
-            9000,
+    async with AsyncSession(pg) as session:
+        session.add_all(
+            [
+                SQLIndexFile(
+                    index="test_index",
+                    name=file_name,
+                    size=9000,
+                    type=check_index_file_type(file_name),
+                )
+                for file_name in files
+            ],
         )
+        await session.commit()
 
     resp = await client.patch("/indexes/test_index")
 

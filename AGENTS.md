@@ -368,6 +368,25 @@ configuration for weeks before anyone notices.
   raise. Don't silently coerce empty strings, `None`, or missing env vars to
   working-but-wrong values.
 
+### Dictionary Access and Schema Contracts
+
+Use direct dictionary access for fields that are required by the current schema
+or by the code path's normalized input contract. Prefer loud failures
+(`KeyError`, `ValueError`, validation errors) over defensive fallbacks when
+missing data means the producer, transform pipeline, fixture, or database state
+is malformed.
+
+Use `dict.get()`, `get_safely()`, or similar safe access helpers only when the
+field is genuinely optional or when multiple schema shapes are intentionally
+supported. Do not use safe access "just in case" to avoid errors from unexpected
+missing keys. That hides real contract violations and can silently turn broken
+state into `None`, empty collections, skipped records, or misleading API
+responses.
+
+When safe access is appropriate, make the accepted shapes explicit in the code:
+for example, distinguish absent/null linkage from malformed linkage objects, or
+raise when none of the intentionally supported alternatives are present.
+
 ## Git
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org).

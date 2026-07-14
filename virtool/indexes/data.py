@@ -25,15 +25,22 @@ from virtool.data.topg import (
 from virtool.data.transforms import apply_transforms
 from virtool.history.models import HistorySearchResult
 from virtool.history.sql import SQLLegacyHistory
-from virtool.indexes.checks import check_fasta_file_uploaded, check_index_files_uploaded
+from virtool.indexes.checks import (
+    check_fasta_file_uploaded,
+    check_index_files_uploaded,
+)
 from virtool.indexes.db import (
     INDEX_FILE_NAMES,
+    REFERENCE_JSON_V2_FILE_NAME,
     IndexCountsTransform,
     update_last_indexed_versions,
 )
 from virtool.indexes.models import Index, IndexFile, IndexMinimal, IndexSearchResult
 from virtool.indexes.sql import SQLIndexFile
-from virtool.indexes.utils import compose_index_file_key, compose_index_prefix
+from virtool.indexes.utils import (
+    compose_index_file_key,
+    compose_index_prefix,
+)
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
@@ -53,6 +60,23 @@ from virtool.users.transforms import AttachUserTransform
 from virtool.utils import base_processor, wait_for_checks
 
 logger = get_logger("indexes")
+
+
+def _get_index_build_type(document: dict) -> str:
+    job_id = document["job"]["id"] if document["job"] is not None else None
+    task_id = document["task"]["id"] if document["task"] is not None else None
+
+    if job_id is None and task_id is None:
+        raise ResourceConflictError(
+            "Index must be backed by exactly one job or task build"
+        )
+
+    if job_id is not None and task_id is not None:
+        raise ResourceConflictError(
+            "Index must be backed by exactly one job or task build"
+        )
+
+    return "job" if job_id is not None else "task"
 
 
 class IndexData:
@@ -214,20 +238,23 @@ class IndexData:
         try:
             size = await self._storage.size(key)
         except StorageKeyNotFoundError:
-            patched_otus = await virtool.indexes.db.get_patched_otus(
-                self._mongo,
-                self._pg,
-                index["manifest"],
-            )
+            patched_otus = [
+                otu
+                async for otu in virtool.indexes.db.iter_patched_otus(
+                    self._mongo,
+                    self._pg,
+                    index["manifest"],
+                )
+            ]
 
             compressed = await asyncio.to_thread(
                 gzip.compress, dump_bytes(patched_otus)
             )
 
-            async def _stream():
+            async def stream():
                 yield compressed
 
-            size = await self._storage.write(key, _stream())
+            size = await self._storage.write(key, stream())
 
         return self._storage.read(key), size
 
@@ -355,6 +382,125 @@ class IndexData:
             )
 
         await retry_both_transactions(self._mongo, self._pg, finalize_index)
+
+        return await self.get(index_id)
+
+    @emits(Operation.UPDATE)
+    async def generate_task_index(self, index_id: str) -> Index:
+        """Generate the task-backed index JSON artifact and mark the index ready."""
+        index = await self._mongo.indexes.find_one(
+            {"_id": index_id},
+            ["manifest", "reference", "job", "task", "ready"],
+        )
+
+        if index is None:
+            raise ResourceNotFoundError()
+
+        if _get_index_build_type(index) != "task":
+            raise ResourceConflictError("Index must be backed by a task build")
+
+        if index["ready"]:
+            message = "Index is already ready"
+            raise ResourceConflictError(message)
+
+        try:
+            ref_id = index["reference"]["id"]
+        except KeyError:
+            raise ResourceError("Could not find index reference id")
+
+        async with AsyncSession(self._pg) as session:
+            reference_row = (
+                await session.execute(
+                    select(SQLReference).where(
+                        compose_legacy_id_single_expression(SQLReference, ref_id),
+                    ),
+                )
+            ).scalar_one_or_none()
+
+        if reference_row is None:
+            raise ResourceNotFoundError()
+
+        reference = {
+            "_id": reference_row.id,
+            "created_at": reference_row.created_at,
+            "data_type": "genome",
+            "name": reference_row.name,
+            "organism": reference_row.organism,
+        }
+
+        file_name = REFERENCE_JSON_V2_FILE_NAME
+        patched_otus = [
+            otu
+            async for otu in virtool.indexes.db.iter_patched_otus(
+                self._mongo,
+                self._pg,
+                index["manifest"],
+            )
+        ]
+        compressed = await asyncio.to_thread(
+            gzip.compress,
+            dump_bytes({**reference, "otus": patched_otus}),
+        )
+
+        key = compose_index_file_key(index_id, file_name)
+
+        async def stream():
+            yield compressed
+
+        try:
+            # Storage cannot participate in the database transactions. A hard process
+            # exit can leave an unready object, but a retried build overwrites it.
+            size = await self._storage.write(
+                key,
+                stream(),
+            )
+
+            async def finalize_task_index(
+                mongo_session: AsyncIOMotorClientSession,
+                pg_session: AsyncSession,
+            ) -> None:
+                await virtool.indexes.db.upsert_index_file(
+                    pg_session,
+                    index_id,
+                    "json",
+                    file_name,
+                    size,
+                )
+
+                await update_last_indexed_versions(
+                    self._mongo,
+                    self._pg,
+                    ref_id,
+                    mongo_session,
+                    pg_session,
+                )
+
+                await self._mongo.indexes.update_one(
+                    {"_id": index_id},
+                    {"$set": {"ready": True}},
+                    session=mongo_session,
+                )
+
+            await retry_both_transactions(
+                self._mongo,
+                self._pg,
+                finalize_task_index,
+            )
+        except BaseException:
+            await self._storage.delete(key)
+
+            async with AsyncSession(self._pg) as session:
+                row = (
+                    await session.execute(
+                        select(SQLIndexFile).filter_by(index=index_id, name=file_name),
+                    )
+                ).scalar_one_or_none()
+
+                if row is not None:
+                    await session.delete(row)
+                    await session.commit()
+
+            raise
 
         return await self.get(index_id)
 

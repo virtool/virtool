@@ -16,6 +16,7 @@
     'reference': dict({
       'id': 1,
     }),
+    'task': None,
     'user': dict({
       'id': 1,
     }),
@@ -799,9 +800,13 @@
 # name: test_upload[None].1
   dict({
     '_id': 'foo',
+    'job': dict({
+      'id': 2,
+    }),
     'reference': dict({
       'id': 'bar',
     }),
+    'task': None,
     'user': dict({
       'id': 2,
     }),

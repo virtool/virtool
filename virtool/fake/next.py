@@ -406,6 +406,7 @@ class ReferencesFakerDomain(DataFakerDomain):
         organism: str = "",
         description: str = "",
         *,
+        archived: bool = False,
         use_legacy_id: bool = False,
     ) -> Reference:
         """Create a fake reference in Postgres.
@@ -437,6 +438,9 @@ class ReferencesFakerDomain(DataFakerDomain):
         async with AsyncSession(self._pg) as session:
             reference_pk = await write_legacy_reference(session, document)
             await session.commit()
+
+        if archived:
+            return await self._layer.references.archive(reference_pk)
 
         return await self._layer.references.get(reference_pk)
 

@@ -1,7 +1,7 @@
 """Work with indexes in the database."""
 
 import asyncio
-import asyncio.tasks
+from collections.abc import AsyncIterator
 from typing import Any
 
 import pymongo
@@ -17,6 +17,7 @@ from sqlalchemy import (
     select,
     update,
 )
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.history.db
@@ -53,7 +54,9 @@ limit on a reference whose OTUs all sit in one version bucket. A freshly importe
 reference is exactly that: every OTU is version 0.
 """
 
-INDEX_FILE_NAMES = (
+REFERENCE_JSON_V2_FILE_NAME = "reference-v2.json.gz"
+
+JOB_INDEX_FILE_NAMES = (
     "reference.fa.gz",
     "reference.json.gz",
     "reference.1.bt2",
@@ -64,38 +67,7 @@ INDEX_FILE_NAMES = (
     "reference.rev.2.bt2",
 )
 
-
-class IndexFilesTransform(AbstractTransform):
-    def __init__(self, base_url: str, pg: AsyncEngine):
-        self._base_url = base_url
-        self._pg = pg
-
-    async def attach_one(self, document: Document, prepared: Any) -> Document:
-        return {**document, "files": prepared}
-
-    async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
-        index_id = document["id"]
-
-        rows = await virtool.pg.utils.get_rows(
-            self._pg,
-            SQLIndexFile,
-            "index",
-            index_id,
-        )
-
-        files = []
-
-        for index_file in [row.to_dict() for row in rows]:
-            location = f"/indexes/{index_id}/files/{index_file['name']}"
-
-            files.append(
-                {
-                    **index_file,
-                    "download_url": str(self._base_url) + location,
-                },
-            )
-
-        return files
+INDEX_FILE_NAMES = (*JOB_INDEX_FILE_NAMES, REFERENCE_JSON_V2_FILE_NAME)
 
 
 class IndexCountsTransform(AbstractTransform):
@@ -185,6 +157,7 @@ async def create(
         "has_files": True,
         "has_json": False,
         "job": {"id": job_id},
+        "task": None,
         "user": {"id": user_id},
     }
 
@@ -277,17 +250,20 @@ async def find(
 
     unbuilt_stats = await get_unbuilt_stats(mongo, pg, ref_id)
 
+    documents = [base_processor(d) for d in data["documents"]]
+    transforms = [
+        AttachJobTransform(pg),
+        AttachReferenceTransform(pg),
+        AttachUserTransform(pg),
+        IndexCountsTransform(),
+    ]
+
     return {
         **data,
         **unbuilt_stats,
         "documents": await apply_transforms(
-            [base_processor(d) for d in data["documents"]],
-            [
-                AttachJobTransform(pg),
-                AttachReferenceTransform(pg),
-                AttachUserTransform(pg),
-                IndexCountsTransform(),
-            ],
+            documents,
+            transforms,
             pg,
         ),
     }
@@ -426,33 +402,112 @@ async def get_unbuilt_stats(
     }
 
 
-async def get_patched_otus(
+async def iter_patched_otus(
     mongo: "Mongo",
     pg: AsyncEngine,
     manifest: dict[str, int],
-) -> list[dict]:
-    """Get joined OTUs patched to a specific version based on a manifest of OTU ids and
-    versions.
+    *,
+    concurrency: int = 25,
+    window_size: int = 100,
+) -> AsyncIterator[dict]:
+    """Iterate joined OTUs patched to the versions in the manifest.
 
     :param mongo: the application mongodb client
     :param pg: the application PostgreSQL database object
     :param manifest: the manifest
+    :param concurrency: the maximum number of OTUs to patch concurrently
+    :param window_size: the maximum number of scheduled OTUs ahead of the next yield
 
     """
-    return [
-        j[1]
-        for j in await asyncio.tasks.gather(
-            *[
-                virtool.history.db.patch_to_version(
-                    mongo,
-                    pg,
-                    patch_id,
-                    patch_version,
-                )
-                for patch_id, patch_version in manifest.items()
-            ],
+    items = list(enumerate(manifest.items()))
+    next_to_schedule = 0
+    next_to_yield = 0
+    pending: set[asyncio.Task[tuple[int, dict]]] = set()
+    completed: dict[int, dict] = {}
+
+    async def patch_otu(
+        position: int,
+        patch_id: str,
+        patch_version: int,
+    ) -> tuple[int, dict]:
+        _, patched = await virtool.history.db.patch_to_version(
+            mongo,
+            pg,
+            patch_id,
+            patch_version,
         )
-    ]
+
+        return position, patched
+
+    try:
+        while next_to_yield < len(items):
+            while (
+                next_to_schedule < len(items)
+                and len(pending) < concurrency
+                and next_to_schedule - next_to_yield < window_size
+            ):
+                position, (patch_id, patch_version) = items[next_to_schedule]
+                pending.add(
+                    asyncio.create_task(patch_otu(position, patch_id, patch_version)),
+                )
+                next_to_schedule += 1
+
+            if next_to_yield in completed:
+                patched = completed.pop(next_to_yield)
+                next_to_yield += 1
+                yield patched
+                continue
+
+            done, _ = await asyncio.wait(
+                pending,
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+
+            for task in done:
+                pending.remove(task)
+                position, patched = await task
+                completed[position] = patched
+
+    except (Exception, asyncio.CancelledError, GeneratorExit):
+        for task in pending:
+            task.cancel()
+
+        await asyncio.gather(*pending, return_exceptions=True)
+        raise
+
+
+async def upsert_index_file(
+    session: AsyncSession,
+    index_id: str,
+    file_type: str,
+    name: str,
+    size: int,
+) -> dict[str, Any]:
+    """Create or update an index file row."""
+    index_file_id = (
+        await session.execute(
+            pg_insert(SQLIndexFile)
+            .values(
+                index=index_id,
+                name=name,
+                size=size,
+                type=file_type,
+            )
+            .on_conflict_do_update(
+                index_elements=[SQLIndexFile.index, SQLIndexFile.name],
+                set_={"size": size, "type": file_type},
+            )
+            .returning(SQLIndexFile.id),
+        )
+    ).scalar_one()
+
+    return {
+        "id": index_file_id,
+        "index": index_id,
+        "name": name,
+        "size": size,
+        "type": file_type,
+    }
 
 
 async def update_last_indexed_versions(
@@ -499,16 +554,12 @@ async def update_last_indexed_versions(
         agg["_id"]: agg["id_list"] async for agg in mongo.otus.aggregate(pipeline)
     }
 
-    await asyncio.gather(
-        *[
-            mongo.otus.update_many(
-                {"_id": {"$in": id_list}},
-                {"$set": {"last_indexed_version": version}},
-                session=mongo_session,
-            )
-            for version, id_list in id_version_key.items()
-        ],
-    )
+    for version, id_list in id_version_key.items():
+        await mongo.otus.update_many(
+            {"_id": {"$in": id_list}},
+            {"$set": {"last_indexed_version": version}},
+            session=mongo_session,
+        )
 
     for version, id_list in id_version_key.items():
         for start in range(0, len(id_list), OTU_ID_CHUNK_SIZE):

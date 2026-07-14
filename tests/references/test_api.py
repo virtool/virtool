@@ -948,7 +948,18 @@ class TestCreateIndex:
 
         assert resp.status == 201
         assert await resp.json() == snapshot
-        assert await mongo.indexes.find_one() == snapshot
+        index = await mongo.indexes.find_one()
+        assert index == snapshot
+        assert index["job"] is not None
+        assert index["task"] is None
+
+        async with AsyncSession(pg) as session:
+            assert (
+                await session.scalar(
+                    select(SQLTask.id).where(SQLTask.type == "create_index"),
+                )
+                is None
+            )
 
         m_create_manifest.assert_called_with(ANY, ANY, reference["id"])
 
@@ -975,7 +986,6 @@ class TestCreateIndex:
         resp = await client.post(f"/references/v1/{reference['id']}/indexes", {})
 
         await resp_is.insufficient_rights(resp)
-
         assert await mongo.indexes.find_one() is None
 
 

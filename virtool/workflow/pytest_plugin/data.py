@@ -180,6 +180,7 @@ def workflow_data(
     reference = ReferenceFactory.build()
 
     index = IndexFactory.build()
+    index.files = []
     index.reference = ReferenceNested.parse_obj(reference)
     index.ready = True
 
