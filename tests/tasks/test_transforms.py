@@ -1,6 +1,7 @@
 import asyncio
 from datetime import datetime
 
+import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy.matchers import path_type
 
@@ -19,9 +20,7 @@ async def test_attach_task_transform(fake: DataFaker, pg: AsyncEngine, snapshot)
         {"id": 1, "task": {"id": task_2.id}},
         {"id": 2, "task": {"id": task_3.id}},
         {"id": 3, "task": None},
-        {
-            "id": 4,
-        },
+        {"id": 4},
     ]
 
     transformed = await apply_transforms(documents, [AttachTaskTransform(pg)], pg)
@@ -43,3 +42,35 @@ async def test_attach_task_transform_single(fake: DataFaker, pg: AsyncEngine, sn
         ),
         apply_transforms({"id": 2, "task": None}, [AttachTaskTransform(pg)], pg),
     ) == snapshot(matcher=path_type({".*created_at": (datetime,)}, regex=True))
+
+
+async def test_attach_task_transform_missing_linked_task(pg: AsyncEngine):
+    with pytest.raises(ValueError, match="Task not found: 9999"):
+        await apply_transforms(
+            {"id": 1, "task": {"id": 9999}},
+            [AttachTaskTransform(pg)],
+            pg,
+        )
+
+    with pytest.raises(KeyError):
+        await apply_transforms(
+            [{"id": 1, "task": {"id": 9999}}],
+            [AttachTaskTransform(pg)],
+            pg,
+        )
+
+
+async def test_attach_task_transform_requires_task_id(pg: AsyncEngine):
+    with pytest.raises(KeyError):
+        await apply_transforms(
+            {"id": 1, "task": {}},
+            [AttachTaskTransform(pg)],
+            pg,
+        )
+
+    with pytest.raises(KeyError):
+        await apply_transforms(
+            [{"id": 1, "task": {}}],
+            [AttachTaskTransform(pg)],
+            pg,
+        )

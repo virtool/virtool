@@ -16,7 +16,7 @@ from virtool.api.streaming import stream_storage_response
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.history.models import HistorySearchResult
-from virtool.indexes.db import INDEX_FILE_NAMES
+from virtool.indexes.db import INDEX_FILE_NAMES, JOB_INDEX_FILE_NAMES
 from virtool.indexes.models import Index, IndexSearchResult
 from virtool.indexes.oas import (
     ListIndexesResponse,
@@ -199,7 +199,7 @@ async def upload(req):
     index_id = req.match_info["index_id"]
     name = req.match_info["filename"]
 
-    if name not in INDEX_FILE_NAMES:
+    if name not in JOB_INDEX_FILE_NAMES:
         raise APINotFound("Index file not found")
 
     try:

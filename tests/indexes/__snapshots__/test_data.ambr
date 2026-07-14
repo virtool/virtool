@@ -108,6 +108,7 @@
     'reference': dict({
       'id': 1,
     }),
+    'task': None,
     'user': dict({
       'id': 1,
     }),

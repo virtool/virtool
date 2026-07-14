@@ -53,7 +53,6 @@ async def test_finalize(
 ):
     user = await fake.users.create()
     job = await fake.jobs.create(user=user)
-
     reference = await fake.references.create(user=user)
 
     await mongo.indexes.insert_one(
@@ -64,6 +63,7 @@ async def test_finalize(
             "version": 2,
             "created_at": static_time.datetime,
             "job": {"id": job.id},
+            "task": None,
             "has_files": True,
             "manifest": {},
         },
@@ -166,7 +166,6 @@ class TestDelete:
         """
         user = await fake.users.create()
         job = await fake.jobs.create(user=user)
-
         reference = await fake.references.create(user=user)
 
         await mongo.indexes.insert_one(
@@ -177,6 +176,7 @@ class TestDelete:
                 "version": 4,
                 "created_at": static_time.datetime,
                 "job": {"id": job.id},
+                "task": None,
                 "has_files": True,
                 "ready": True,
                 "manifest": {},

@@ -1,11 +1,18 @@
-from sqlalchemy import BigInteger, Column, Enum, Integer, String, UniqueConstraint
+from sqlalchemy import (
+    BigInteger,
+    Column,
+    Enum,
+    Integer,
+    String,
+    UniqueConstraint,
+)
 
 from virtool.pg.base import Base
 from virtool.pg.utils import SQLEnum
 
 
 class IndexType(str, SQLEnum):
-    """Enumerated type for index file types"""
+    """Enumerated type for index file types."""
 
     json = "json"
     fasta = "fasta"

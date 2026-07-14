@@ -19,6 +19,7 @@ def test_indexes(manifest):
             "reference": {"id": "hxn167"},
             "user": {"id": "igboyes"},
             "job": {"id": "dnytufhc"},
+            "task": None,
             "ready": True,
         },
         {
@@ -29,6 +30,7 @@ def test_indexes(manifest):
             "has_json": True,
             "manifest": manifest,
             "job": {"id": "3tt0w336"},
+            "task": None,
             "reference": {"id": "hxn167"},
             "user": {"id": "mrott"},
             "ready": True,
@@ -43,6 +45,7 @@ def test_indexes(manifest):
             "reference": {"id": "hxn167"},
             "user": {"id": "igboyes"},
             "job": {"id": "dzqsgjnn"},
+            "task": None,
             "ready": True,
         },
         {
@@ -55,6 +58,7 @@ def test_indexes(manifest):
             "reference": {"id": "hxn167"},
             "user": {"id": "igboyes"},
             "job": {"id": "zpjzelyc"},
+            "task": None,
             "ready": True,
         },
     ]
