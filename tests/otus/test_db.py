@@ -1,9 +1,12 @@
 import pytest
 from aiohttp.test_utils import make_mocked_coro
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from tests.fixtures.otus import IMPORTED_CREATED_AT
 from virtool.api.custom_json import dump_string, loads
+from virtool.data.layer import DataLayer
+from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
 from virtool.mongo.core import Mongo
 from virtool.otus.db import (
@@ -12,12 +15,15 @@ from virtool.otus.db import (
     find,
     increment_otu_version,
     join,
+    join_legacy_otu,
     otu_document_from_row,
     otu_row_values,
     sequence_document_from_row,
     sequence_row_values,
 )
+from virtool.otus.oas import CreateOTURequest
 from virtool.otus.sql import SQLOTU, SQLSequence
+from virtool.otus.utils import find_isolate
 from virtool.types import Document
 
 
@@ -254,3 +260,247 @@ class TestSequenceDataRoundTrip:
         assert sequence_document_from_row(row) == await mongo.sequences.find_one(
             {"_id": test_sequence["_id"]},
         )
+
+
+class TestJoinLegacyOTU:
+    """``join_legacy_otu`` rebuilds the joined OTU that ``join`` reads out of Mongo.
+
+    The joined OTU is the document ``dictdiffer`` diffs are taken against and applied
+    to, so the two stores have to hand back the same one -- down to the internal fields
+    the API never surfaces and the order the sequences arrive in. A field the Postgres
+    path drops or coerces does not merely go missing from a response; it corrupts every
+    patch taken through :func:`virtool.history.db.patch_to_version`.
+    """
+
+    async def _create_otu(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+    ) -> tuple[str, int, list[str]]:
+        """Create an OTU whose sequences interleave across two isolates.
+
+        Interleaved because ``position`` numbers an OTU's sequences rather than each
+        isolate's, so an OTU whose isolates were filled one after the other would pass
+        even if the sequences were bucketed by the wrong key.
+
+        Returns the OTU id, the reference's primary key and the two isolate ids.
+        """
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        otu = await data_layer.otus.create(
+            reference.id,
+            CreateOTURequest(name="Prunus virus F", abbreviation="PVF"),
+            user.id,
+        )
+
+        first = await data_layer.otus.add_isolate(
+            otu.id,
+            "isolate",
+            "8816-v2",
+            user.id,
+        )
+
+        second = await data_layer.otus.add_isolate(
+            otu.id,
+            "isolate",
+            "7865-b1",
+            user.id,
+        )
+
+        for index, isolate_id in enumerate(
+            [first.id, second.id, first.id, second.id],
+        ):
+            await data_layer.otus.create_sequence(
+                otu.id,
+                isolate_id,
+                f"KX26987{index}",
+                f"Prunus virus F segment {index}",
+                "TGTTTAAGAGATTAAACAACCGCTTTC",
+                user.id,
+                "sweet cherry",
+            )
+
+        return otu.id, reference.id, [first.id, second.id]
+
+    async def test_equals_mongo_join(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+    ):
+        """The whole joined document is identical to the one Mongo joins."""
+        otu_id, _, _ = await self._create_otu(data_layer, fake)
+
+        assert await join_legacy_otu(pg, otu_id) == await join(mongo, otu_id)
+
+    async def test_preserves_internal_fields(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """The fields ``format_otu`` strips before responding still survive the join.
+
+        ``lower_name`` and a sequence's ``otu_id``, ``isolate_id`` and ``reference``
+        are never returned to a client, so nothing in an API-level test would notice
+        their loss -- but a diff taken against a document missing them patches to a
+        document missing them.
+        """
+        otu_id, reference_id, _ = await self._create_otu(data_layer, fake)
+
+        joined = await join_legacy_otu(pg, otu_id)
+
+        assert joined["lower_name"] == "prunus virus f"
+
+        for isolate in joined["isolates"]:
+            for sequence in isolate["sequences"]:
+                assert sequence["otu_id"] == otu_id
+                assert sequence["isolate_id"] == isolate["id"]
+                assert sequence["reference"] == {"id": reference_id}
+
+    async def test_buckets_sequences_by_isolate(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+    ):
+        """Each isolate gets its own sequences, in the OTU-wide order Mongo returns.
+
+        No sequence crosses into the other isolate, and neither isolate's list is
+        shuffled by having the other's interleaved with it.
+        """
+        otu_id, _, isolate_ids = await self._create_otu(data_layer, fake)
+
+        natural_order = [
+            (document["_id"], document["isolate_id"])
+            async for document in mongo.sequences.find(
+                {"otu_id": otu_id},
+                projection=["_id", "isolate_id"],
+            )
+        ]
+
+        joined = await join_legacy_otu(pg, otu_id)
+
+        assert [isolate["id"] for isolate in joined["isolates"]] == isolate_ids
+
+        for isolate in joined["isolates"]:
+            assert [sequence["_id"] for sequence in isolate["sequences"]] == [
+                sequence_id
+                for sequence_id, isolate_id in natural_order
+                if isolate_id == isolate["id"]
+            ]
+
+    async def test_orders_sequences_by_position(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """``position`` is what orders the sequences, not the order Postgres finds them.
+
+        Reversing the stored positions must reverse the joined sequences. Nothing else
+        in the row changes, so a join that leaned on insertion order or on the primary
+        key -- a random 8-character id, and so arbitrary either way -- would return
+        them unmoved and pass every other test here.
+        """
+        otu_id, _, isolate_ids = await self._create_otu(data_layer, fake)
+
+        before = await join_legacy_otu(pg, otu_id)
+
+        async with AsyncSession(pg) as session:
+            rows = (
+                await session.scalars(
+                    select(SQLSequence).where(SQLSequence.otu_id == otu_id),
+                )
+            ).all()
+
+            highest = max(row.position for row in rows)
+
+            for row in rows:
+                row.position = highest - row.position
+
+            await session.commit()
+
+        after = await join_legacy_otu(pg, otu_id)
+
+        for isolate_id in isolate_ids:
+            assert [
+                sequence["_id"]
+                for sequence in find_isolate(after["isolates"], isolate_id)["sequences"]
+            ] == [
+                sequence["_id"]
+                for sequence in reversed(
+                    find_isolate(before["isolates"], isolate_id)["sequences"],
+                )
+            ]
+
+    async def test_recovers_created_at_as_a_datetime(
+        self,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        test_imported_otu: Document,
+    ):
+        """An imported OTU's ``created_at`` comes back a datetime, not an ISO string.
+
+        The JSONB column can only hold the timestamp as a string. A joined OTU that
+        handed that string back would diff as a change against every Mongo-joined OTU
+        it was compared to, and reference clones -- the path that writes a
+        ``created_at`` in the first place -- are exactly what takes those diffs.
+        """
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        document = {**test_imported_otu, "reference": {"id": reference.id}}
+
+        await mongo.otus.insert_one(document)
+
+        async with AsyncSession(pg) as session:
+            session.add(SQLOTU(**otu_row_values(document, reference.id)))
+            await session.commit()
+
+        joined = await join_legacy_otu(pg, test_imported_otu["_id"])
+
+        assert joined == await join(mongo, test_imported_otu["_id"])
+        assert joined["created_at"] == IMPORTED_CREATED_AT.replace(microsecond=123000)
+
+    async def test_isolate_without_sequences_gets_an_empty_list(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+    ):
+        """An isolate with no sequences still gets a ``sequences`` key.
+
+        ``verify`` reads that key on every isolate to decide whether an OTU can be
+        indexed, so an empty isolate has to arrive as an empty list rather than not
+        arrive at all.
+        """
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        otu = await data_layer.otus.create(
+            reference.id,
+            CreateOTURequest(name="Prunus virus F", abbreviation="PVF"),
+            user.id,
+        )
+
+        isolate = await data_layer.otus.add_isolate(
+            otu.id,
+            "isolate",
+            "8816-v2",
+            user.id,
+        )
+
+        joined = await join_legacy_otu(pg, otu.id)
+
+        assert find_isolate(joined["isolates"], isolate.id)["sequences"] == []
+        assert joined == await join(mongo, otu.id)
+
+    async def test_returns_none_when_the_otu_has_no_row(self, pg: AsyncEngine):
+        """A missing OTU is ``None``, as it is on the Mongo path."""
+        assert await join_legacy_otu(pg, "6116cba1") is None

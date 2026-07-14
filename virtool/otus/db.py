@@ -314,6 +314,51 @@ def sequence_document_from_row(row: SQLSequence) -> Document:
     return row.data
 
 
+async def join_legacy_otu(pg: AsyncEngine, otu_id: str) -> Document | None:
+    """Reconstruct a joined OTU document from Postgres.
+
+    The Postgres counterpart of :func:`join`, and the read primitive OTU reads and
+    :func:`virtool.history.db.patch_to_version` are built on. Returns ``None`` for an
+    OTU that has no row, as :func:`join` does for one that has no document.
+
+    Both documents are recovered from the verbatim ``data`` JSONB column, via
+    :func:`otu_document_from_row` and :func:`sequence_document_from_row`, rather than
+    rebuilt from the promoted columns. Those columns are a lossy projection: they carry
+    nothing of ``lower_name``, an isolate's fields, or a sequence's ``reference``, and
+    ``abbreviation`` and ``segment`` are normalised on the way in. A joined OTU feeds
+    ``dictdiffer`` diffs that address the document as it was written, so anything the
+    projection drops or coerces would corrupt a patch rather than merely be absent from
+    it.
+
+    ``merge_otu`` is reused unchanged, so sequences are bucketed into isolates by
+    ``isolate_id`` exactly as they are on the Mongo path, and an isolate with no
+    sequences still gets an empty list.
+
+    The sequences are ordered by ``position``, which reproduces the natural order
+    Mongo's unsorted cursor returns them in. A ``NULL`` or duplicated position is not
+    sorted around: :func:`virtool.otus.migration.compare_otu_and_sequence_stores` gates
+    the read switch on neither existing, and quietly shuffling such an OTU's sequences
+    would misapply every diff that addresses them by index -- the failure ``position``
+    exists to prevent.
+    """
+    async with AsyncSession(pg) as session:
+        otu_row = await session.get(SQLOTU, otu_id)
+
+        if otu_row is None:
+            return None
+
+        sequence_rows = await session.scalars(
+            select(SQLSequence)
+            .where(SQLSequence.otu_id == otu_id)
+            .order_by(SQLSequence.position),
+        )
+
+        return virtool.otus.utils.merge_otu(
+            otu_document_from_row(otu_row),
+            [sequence_document_from_row(row) for row in sequence_rows],
+        )
+
+
 def otu_row_values(document: Document, reference_id: int) -> dict[str, Any]:
     """Map a Mongo OTU ``document`` to ``legacy_otus`` column values.
 
