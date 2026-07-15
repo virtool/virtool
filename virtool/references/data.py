@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import virtool.history.db
 import virtool.indexes.db
 import virtool.otus.db
+import virtool.tasks.db
 import virtool.utils
 from virtool.config import Config
 from virtool.data.domain import DataLayerDomain
@@ -20,6 +21,7 @@ from virtool.data.errors import (
 )
 from virtool.data.events import Operation, emit, emits
 from virtool.data.topg import (
+    both_transactions,
     compose_legacy_id_multi_expression,
     compose_legacy_id_single_expression,
     compose_legacy_id_subquery,
@@ -32,6 +34,7 @@ from virtool.history.db import (
 from virtool.history.models import HistorySearchResult
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.models import IndexMinimal, IndexSearchResult
+from virtool.indexes.tasks import CreateIndexTask
 from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
 from virtool.otus.models import OTU, OTUSearchResult
@@ -707,7 +710,7 @@ class ReferencesData(DataLayerDomain):
         return IndexSearchResult(**data)
 
     @emits(Operation.CREATE, domain="indexes", name="create")
-    async def create_index(self, ref_id: str, user_id: int) -> IndexMinimal:
+    async def create_index(self, ref_id: int | str, user_id: int) -> IndexMinimal:
         await self._require_not_archived(ref_id)
 
         if await self._mongo.indexes.count_documents(
@@ -744,23 +747,35 @@ class ReferencesData(DataLayerDomain):
         if not has_unbuilt:
             raise ResourceError("There are no unbuilt changes")
 
-        index_id = await virtool.mongo.utils.get_new_id(self._mongo.indexes)
-
-        job = await self.data.jobs.create(
-            "build_index",
-            {"index_id": index_id},
-            user_id,
-            0,
+        index_id, index_version, manifest = await asyncio.gather(
+            virtool.mongo.utils.get_new_id(self._mongo.indexes),
+            virtool.indexes.db.get_next_version(self._mongo, self._pg, ref_id),
+            virtool.references.db.get_manifest(self._mongo, self._pg, ref_id),
         )
 
-        document = await virtool.indexes.db.create(
-            self._mongo,
-            self._pg,
-            ref_id,
-            user_id,
-            job.id,
-            index_id=index_id,
-        )
+        async with both_transactions(self._mongo, self._pg) as (
+            mongo_session,
+            pg_session,
+        ):
+            task = await virtool.tasks.db.create(
+                pg_session,
+                CreateIndexTask,
+                {"index_id": index_id},
+            )
+
+            document = await virtool.indexes.db.create(
+                self._mongo,
+                mongo_session,
+                pg_session,
+                ref_id,
+                user_id,
+                index_version,
+                manifest,
+                task_id=task.id,
+                index_id=index_id,
+            )
+
+        emit(task, "tasks", "create", Operation.CREATE)
 
         return await self.data.index.get(document["_id"])
 

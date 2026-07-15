@@ -5,9 +5,7 @@
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'has_files': True,
     'has_json': False,
-    'job': dict({
-      'id': 1,
-    }),
+    'job': None,
     'manifest': dict({
       'bar': 2,
       'foo': 1,
@@ -16,7 +14,9 @@
     'reference': dict({
       'id': 1,
     }),
-    'task': None,
+    'task': dict({
+      'id': 1,
+    }),
     'user': dict({
       'id': 1,
     }),
@@ -38,17 +38,7 @@
     ]),
     'has_files': True,
     'id': 'bf1b993c',
-    'job': dict({
-      'created_at': '2015-10-06T20:00:00Z',
-      'id': 1,
-      'progress': 0,
-      'state': 'pending',
-      'user': dict({
-        'handle': 'leeashley',
-        'id': 1,
-      }),
-      'workflow': 'build_index',
-    }),
+    'job': None,
     'manifest': dict({
       'bar': 2,
       'foo': 1,

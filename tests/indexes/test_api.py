@@ -28,10 +28,12 @@ from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.db import JOB_INDEX_FILE_NAMES
 from virtool.indexes.sql import SQLIndexFile
 from virtool.indexes.utils import check_index_file_type, compose_index_file_key
+from virtool.jobs.pg import SQLJob, SQLJobIndex
 from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_mongo_from_app
 from virtool.storage.protocol import StorageBackend
+from virtool.tasks.sql import SQLTask
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
@@ -486,6 +488,31 @@ class TestCreate:
         index = await mongo.indexes.find_one()
 
         assert index == snapshot(name="index")
+        assert index["job"] is None
+        assert index["task"] is not None
+
+        body = await resp.json()
+        assert body["ready"] is False
+        assert body["job"] is None
+        assert "task" not in body
+
+        async with AsyncSession(pg) as session:
+            task = await session.scalar(
+                select(SQLTask).where(SQLTask.id == index["task"]["id"]),
+            )
+            history = await session.scalar(
+                select(SQLLegacyHistory).where(
+                    SQLLegacyHistory.legacy_id == "history_1",
+                ),
+            )
+
+            assert task is not None
+            assert task.type == "create_index"
+            assert task.context == {"index_id": index["_id"]}
+            assert history is not None
+            assert (history.index, history.index_version) == (index["_id"], "0")
+            assert await session.scalar(select(SQLJob.id)) is None
+            assert await session.scalar(select(SQLJobIndex.job_id)) is None
 
         m_create_manifest.assert_called_with(ANY, ANY, reference["id"])
 

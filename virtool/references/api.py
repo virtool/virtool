@@ -409,7 +409,7 @@ class ReferenceIndexesView(PydanticView):
     ) -> r201[IndexMinimal] | r403 | r404:
         """Create an index.
 
-        Starts a job to rebuild the otus Bowtie2 index on disk.
+        Starts a task that generates the structured reference artifact.
 
         Does a check to make sure there are no unverified OTUs in the collection
         and updates otu history to show the version and id of the new index.

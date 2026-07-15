@@ -22,11 +22,9 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.history.db
 import virtool.pg.utils
-import virtool.references.db
 import virtool.utils
 from virtool.api.utils import paginate
 from virtool.data.topg import (
-    both_transactions,
     compose_legacy_id_subquery,
     resolve_legacy_id,
 )
@@ -127,28 +125,31 @@ class IndexCountsTransform(AbstractTransform):
 
 async def create(
     mongo: "Mongo",
-    pg: AsyncEngine,
-    ref_id: str,
+    mongo_session: AsyncIOMotorClientSession,
+    pg_session: AsyncSession,
+    ref_id: int | str,
     user_id: int,
-    job_id: int,
+    index_version: int,
+    manifest: dict,
+    task_id: int,
     index_id: str | None = None,
 ) -> dict:
-    """Create a new index and update history to show the version and id of the new
-    index.
+    """Create a pending index in caller-owned database sessions.
+
+    The index insert and history association are flushed by the caller's coordinated
+    transaction without being committed here.
 
     :param mongo: the application database client
-    :param pg: the application Postgres client
-    :param ref_id: the ID of the reference to create index for
-    :param user_id: the ID of the current user
-    :param job_id: the ID of the job
-    :param index_id: the ID of the index
-    :return: the new index document
+    :param mongo_session: the caller-owned MongoDB session
+    :param pg_session: the caller-owned PostgreSQL session
+    :param ref_id: the reference to create an index for
+    :param user_id: the user requesting the index
+    :param index_version: the version assigned to the index
+    :param manifest: the OTU manifest captured for the index
+    :param task_id: the task backing the index
+    :param index_id: the preallocated index id
+    :return: the inserted index document
     """
-    index_version, manifest = await asyncio.gather(
-        get_next_version(mongo, pg, ref_id),
-        virtool.references.db.get_manifest(mongo, pg, ref_id),
-    )
-
     document = {
         "version": index_version,
         "created_at": virtool.utils.timestamp(),
@@ -156,33 +157,32 @@ async def create(
         "ready": False,
         "has_files": True,
         "has_json": False,
-        "job": {"id": job_id},
-        "task": None,
+        "job": None,
+        "task": {"id": task_id},
         "user": {"id": user_id},
     }
 
     if index_id:
         document["_id"] = index_id
 
-    async with both_transactions(mongo, pg) as (mongo_session, pg_session):
-        reference_pk = await resolve_legacy_id(pg_session, SQLReference, ref_id)
+    reference_pk = await resolve_legacy_id(pg_session, SQLReference, ref_id)
 
-        if reference_pk is None:
-            raise ValueError(f"Reference {ref_id!r} not found in postgres")
+    if reference_pk is None:
+        raise ValueError(f"Reference {ref_id!r} not found in postgres")
 
-        document["reference"] = {"id": reference_pk}
+    document["reference"] = {"id": reference_pk}
 
-        document = await mongo.indexes.insert_one(document, session=mongo_session)
+    document = await mongo.indexes.insert_one(document, session=mongo_session)
 
-        await pg_session.execute(
-            update(SQLLegacyHistory)
-            .where(
-                SQLLegacyHistory.reference_id
-                == compose_legacy_id_subquery(SQLReference, ref_id),
-                SQLLegacyHistory.index.is_(None),
-            )
-            .values(index=document["_id"], index_version=str(index_version)),
+    await pg_session.execute(
+        update(SQLLegacyHistory)
+        .where(
+            SQLLegacyHistory.reference_id
+            == compose_legacy_id_subquery(SQLReference, ref_id),
+            SQLLegacyHistory.index.is_(None),
         )
+        .values(index=document["_id"], index_version=str(index_version)),
+    )
 
     return document
 
@@ -340,7 +340,7 @@ async def get_otus(pg: AsyncEngine, index_id: str) -> list[dict]:
     )
 
 
-async def get_next_version(mongo: "Mongo", pg: AsyncEngine, ref_id: str) -> int:
+async def get_next_version(mongo: "Mongo", pg: AsyncEngine, ref_id: int | str) -> int:
     """Get the version number that should be used for the next index build.
 
     :param mongo: the application mongodb client

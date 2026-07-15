@@ -18,6 +18,7 @@ from virtool.data.layer import DataLayer
 from virtool.data.topg import both_transactions
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
+from virtool.jobs.pg import SQLJob, SQLJobIndex
 from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
 from virtool.otus.oas import (
@@ -950,16 +951,31 @@ class TestCreateIndex:
         assert await resp.json() == snapshot
         index = await mongo.indexes.find_one()
         assert index == snapshot
-        assert index["job"] is not None
-        assert index["task"] is None
+        assert index["job"] is None
+        assert index["task"] is not None
+
+        body = await resp.json()
+        assert body["ready"] is False
+        assert body["job"] is None
+        assert "task" not in body
 
         async with AsyncSession(pg) as session:
-            assert (
-                await session.scalar(
-                    select(SQLTask.id).where(SQLTask.type == "create_index"),
-                )
-                is None
+            task = await session.scalar(
+                select(SQLTask).where(SQLTask.id == index["task"]["id"]),
             )
+            history = await session.scalar(
+                select(SQLLegacyHistory).where(
+                    SQLLegacyHistory.legacy_id == "history_1",
+                ),
+            )
+
+            assert task is not None
+            assert task.type == "create_index"
+            assert task.context == {"index_id": index["_id"]}
+            assert history is not None
+            assert (history.index, history.index_version) == (index["_id"], "0")
+            assert await session.scalar(select(SQLJob.id)) is None
+            assert await session.scalar(select(SQLJobIndex.job_id)) is None
 
         m_create_manifest.assert_called_with(ANY, ANY, reference["id"])
 

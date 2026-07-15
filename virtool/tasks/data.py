@@ -6,6 +6,7 @@ from sqlalchemy import desc, func, select, text, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
+import virtool.tasks.db
 import virtool.utils
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
@@ -146,19 +147,6 @@ class TasksData:
 
             raise ResourceNotFoundError
 
-    @staticmethod
-    def _create_sql_task(task_class: type[BaseTask], context: dict | None) -> SQLTask:
-        """Build an unsaved :class:`SQLTask` for a new task of ``task_class``."""
-        return SQLTask(
-            complete=False,
-            context=context or {},
-            step=task_class.name,
-            count=0,
-            created_at=virtool.utils.timestamp(),
-            progress=0,
-            type=task_class.name,
-        )
-
     @emits(Operation.CREATE)
     async def create(
         self,
@@ -172,12 +160,8 @@ class TasksData:
         :return: the task record
 
         """
-        sql_task = self._create_sql_task(task_class, context)
-
         async with AsyncSession(self._pg) as session:
-            session.add(sql_task)
-            await session.flush()
-            task = Task(**sql_task.to_dict())
+            task = await virtool.tasks.db.create(session, task_class, context)
             await session.commit()
 
         return task
@@ -221,11 +205,7 @@ class TasksData:
             if existing_task is not None:
                 return None
 
-            sql_task = self._create_sql_task(task_class, None)
-
-            session.add(sql_task)
-            await session.flush()
-            task = Task(**sql_task.to_dict())
+            task = await virtool.tasks.db.create(session, task_class)
             await session.commit()
 
         emit(task, self.name, "create", Operation.CREATE)
