@@ -6,8 +6,6 @@ TODO: Use `fake` fixture.
 
 """
 
-from asyncio import gather
-
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -57,32 +55,51 @@ async def test_create(
     )
 
 
-async def test_get_fasta(mongo, snapshot, test_otu, test_sequence, data_layer):
-    await gather(
-        mongo.otus.insert_one(
-            {
-                **test_otu,
-                "isolates": [
-                    *test_otu["isolates"],
-                    {"id": "baz", "source_type": "isolate", "source_name": "A"},
-                ],
-            },
-        ),
-        mongo.sequences.insert_many(
-            [
-                test_sequence,
-                {
-                    **test_sequence,
-                    "_id": "AX12345",
-                    "sequence": "ATAGAGGAGTTA",
-                    "isolate_id": "baz",
-                },
-            ],
-            session=None,
-        ),
+async def test_get_fasta(data_layer: DataLayer, fake: DataFaker):
+    """The OTU FASTA export gathers every isolate's sequences from Postgres."""
+    user = await fake.users.create()
+    reference = await fake.references.create(user=user)
+
+    otu = await data_layer.otus.create(
+        reference.id,
+        CreateOTURequest(name="Prunus virus F", abbreviation="PVF"),
+        user.id,
     )
 
-    assert await data_layer.otus.get_fasta(test_otu["_id"]) == snapshot
+    first_isolate = await data_layer.otus.add_isolate(
+        otu.id, "isolate", "8816-v2", user.id
+    )
+    second_isolate = await data_layer.otus.add_isolate(
+        otu.id, "isolate", "7865", user.id
+    )
+
+    first_sequence = await data_layer.otus.create_sequence(
+        otu.id,
+        first_isolate.id,
+        "KX269872",
+        "Prunus virus F segment RNA2",
+        "TGTTTAAGAGATTAAACAACCGCTTTC",
+        user.id,
+        "sweet cherry",
+    )
+
+    second_sequence = await data_layer.otus.create_sequence(
+        otu.id,
+        second_isolate.id,
+        "AX12345",
+        "Prunus virus F segment RNA1",
+        "ATAGAGGAGTTA",
+        user.id,
+        "sweet cherry",
+    )
+
+    assert await data_layer.otus.get_fasta(otu.id) == (
+        "prunus_virus_f.fa",
+        f">Prunus virus F|Isolate 8816-v2|{first_sequence.id}|27\n"
+        "TGTTTAAGAGATTAAACAACCGCTTTC\n"
+        f">Prunus virus F|Isolate 7865|{second_sequence.id}|12\n"
+        "ATAGAGGAGTTA",
+    )
 
 
 async def test_update(
@@ -142,31 +159,74 @@ async def test_set_default(
     assert await mongo.otus.find_one() == snapshot
 
 
-async def test_get_sequence_fasta(mongo, data_layer, test_otu, test_sequence):
-    await mongo.otus.insert_one(test_otu)
-    await mongo.sequences.insert_one(test_sequence)
+async def test_get_sequence_fasta(data_layer: DataLayer, fake: DataFaker):
+    """The single-sequence FASTA export reads its body from Postgres."""
+    user = await fake.users.create()
+    reference = await fake.references.create(user=user)
 
-    assert await data_layer.otus.get_sequence_fasta(test_sequence["_id"]) == (
-        "prunus_virus_f.isolate_8816-v2.abcd1234.fa",
-        ">Prunus virus F|Isolate 8816-v2|abcd1234|27\nTGTTTAAGAGATTAAACAACCGCTTTC",
+    otu = await data_layer.otus.create(
+        reference.id,
+        CreateOTURequest(name="Prunus virus F", abbreviation="PVF"),
+        user.id,
+    )
+
+    isolate = await data_layer.otus.add_isolate(otu.id, "isolate", "8816-v2", user.id)
+
+    sequence = await data_layer.otus.create_sequence(
+        otu.id,
+        isolate.id,
+        "KX269872",
+        "Prunus virus F segment RNA2",
+        "TGTTTAAGAGATTAAACAACCGCTTTC",
+        user.id,
+        "sweet cherry",
+    )
+
+    assert await data_layer.otus.get_sequence_fasta(sequence.id) == (
+        f"prunus_virus_f.isolate_8816-v2.{sequence.id}.fa",
+        f">Prunus virus F|Isolate 8816-v2|{sequence.id}|27\nTGTTTAAGAGATTAAACAACCGCTTTC",
     )
 
 
-async def test_get_isolate_fasta(mongo, data_layer, test_otu, test_sequence):
-    await mongo.otus.insert_one(test_otu)
+async def test_get_isolate_fasta(data_layer: DataLayer, fake: DataFaker):
+    """The isolate FASTA export reads every sequence body from Postgres, in order."""
+    user = await fake.users.create()
+    reference = await fake.references.create(user=user)
 
-    await mongo.sequences.insert_many(
-        [test_sequence, dict(test_sequence, _id="AX12345", sequence="ATAGAGGAGTTA")],
-        session=None,
+    otu = await data_layer.otus.create(
+        reference.id,
+        CreateOTURequest(name="Prunus virus F", abbreviation="PVF"),
+        user.id,
     )
 
-    assert await data_layer.otus.get_isolate_fasta(
-        test_otu["_id"],
-        test_otu["isolates"][0]["id"],
-    ) == (
+    isolate = await data_layer.otus.add_isolate(otu.id, "isolate", "8816-v2", user.id)
+
+    first_sequence = await data_layer.otus.create_sequence(
+        otu.id,
+        isolate.id,
+        "KX269872",
+        "Prunus virus F segment RNA2",
+        "TGTTTAAGAGATTAAACAACCGCTTTC",
+        user.id,
+        "sweet cherry",
+    )
+
+    second_sequence = await data_layer.otus.create_sequence(
+        otu.id,
+        isolate.id,
+        "AX12345",
+        "Prunus virus F segment RNA1",
+        "ATAGAGGAGTTA",
+        user.id,
+        "sweet cherry",
+    )
+
+    assert await data_layer.otus.get_isolate_fasta(otu.id, isolate.id) == (
         "prunus_virus_f.isolate_8816-v2.fa",
-        ">Prunus virus F|Isolate 8816-v2|abcd1234|27\nTGTTTAAGAGATTAAACAACCGCTTTC\n"
-        ">Prunus virus F|Isolate 8816-v2|AX12345|12\nATAGAGGAGTTA",
+        f">Prunus virus F|Isolate 8816-v2|{first_sequence.id}|27\n"
+        "TGTTTAAGAGATTAAACAACCGCTTTC\n"
+        f">Prunus virus F|Isolate 8816-v2|{second_sequence.id}|12\n"
+        "ATAGAGGAGTTA",
     )
 
 

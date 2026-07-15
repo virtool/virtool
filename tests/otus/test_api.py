@@ -443,35 +443,79 @@ class TestListIsolates:
         await resp_is.not_found(resp)
 
 
-@pytest.mark.parametrize("error", [None, "404_otu", "404_isolate"])
-async def test_get_isolate(
-    error,
-    snapshot,
-    mongo: Mongo,
-    spawn_client,
-    resp_is,
-    test_otu,
-    test_sequence,
-):
-    """Test that an existing isolate is successfully returned."""
-    client = await spawn_client(authenticated=True)
+class TestGetIsolate:
+    async def test_ok(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        snapshot: SnapshotAssertion,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that an existing isolate and its Postgres sequences are returned."""
+        client = await spawn_client(authenticated=True)
 
-    if error == "404_isolate":
-        test_otu["isolates"] = []
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
 
-    if error != "404_otu":
-        await mongo.otus.insert_one(test_otu)
+        otu = await data_layer.otus.create(
+            reference.id,
+            CreateOTURequest(name="Prunus virus F", abbreviation="PVF"),
+            user.id,
+        )
 
-    await mongo.sequences.insert_one(test_sequence)
+        isolate = await data_layer.otus.add_isolate(
+            otu.id, "isolate", "8816-v2", user.id
+        )
 
-    resp = await client.get("/otus/6116cba1/isolates/cab8b360")
+        await data_layer.otus.create_sequence(
+            otu.id,
+            isolate.id,
+            "KX269872",
+            "Prunus virus F segment RNA2",
+            "TGTTTAAGAGATTAAACAACCGCTTTC",
+            user.id,
+            "sweet cherry",
+        )
 
-    if error:
+        resp = await client.get(f"/otus/{otu.id}/isolates/{isolate.id}")
+
+        assert resp.status == HTTPStatus.OK
+        assert await resp.json() == snapshot
+
+    async def test_otu_not_found(
+        self,
+        resp_is: RespIs,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that a `404` is returned if the OTU does not exist."""
+        client = await spawn_client(authenticated=True)
+
+        resp = await client.get("/otus/6116cba1/isolates/cab8b360")
+
         await resp_is.not_found(resp)
-        return
 
-    assert resp.status == HTTPStatus.OK
-    assert await resp.json() == snapshot
+    async def test_isolate_not_found(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        resp_is: RespIs,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that a `404` is returned if the isolate does not exist."""
+        client = await spawn_client(authenticated=True)
+
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        otu = await data_layer.otus.create(
+            reference.id,
+            CreateOTURequest(name="Prunus virus F", abbreviation="PVF"),
+            user.id,
+        )
+
+        resp = await client.get(f"/otus/{otu.id}/isolates/cab8b360")
+
+        await resp_is.not_found(resp)
 
 
 class TestAddIsolate:

@@ -16,7 +16,6 @@ from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.models.roles import AdministratorRole
 from virtool.mongo.utils import get_mongo_from_req, get_one_field
-from virtool.otus.db import SEQUENCE_PROJECTION
 from virtool.otus.models import OTU, OTUIsolate, OTUSequence, Sequence
 from virtool.otus.oas import (
     CreateIsolateRequest,
@@ -25,8 +24,7 @@ from virtool.otus.oas import (
     UpdateOTURequest,
     UpdateSequenceRequest,
 )
-from virtool.otus.utils import evaluate_changes, find_isolate
-from virtool.utils import base_processor
+from virtool.otus.utils import evaluate_changes
 
 routes = Routes()
 
@@ -43,7 +41,7 @@ class OTUView(PydanticView):
 
         """
         if self.request.path.endswith(".fa"):
-            otu_id = otu_id.rstrip(".fa")
+            otu_id = otu_id.removesuffix(".fa")
 
             try:
                 filename, fasta = await get_data_from_req(self.request).otus.get_fasta(
@@ -242,9 +240,7 @@ class IsolateView(PydanticView):
         A FASTA file containing all sequences in the isolate can be downloaded by
         appending `.fa` to the path.
         """
-        mongo = get_mongo_from_req(self.request)
-
-        isolate_id = isolate_id.rstrip(".fa")
+        isolate_id = isolate_id.removesuffix(".fa")
 
         if self.request.path.endswith(".fa"):
             try:
@@ -262,23 +258,13 @@ class IsolateView(PydanticView):
                 headers={"Content-Disposition": f"attachment; filename={filename}"},
             )
 
-        document = await mongo.otus.find_one(
-            {"_id": otu_id, "isolates.id": isolate_id},
-            ["isolates"],
-        )
-
-        if not document:
-            raise APINotFound()
-
-        isolate = find_isolate(document["isolates"], isolate_id)
-
-        isolate["sequences"] = [
-            base_processor(sequence)
-            async for sequence in mongo.sequences.find(
-                {"otu_id": otu_id, "isolate_id": isolate_id},
-                {"otu_id": False, "isolate_id": False, "reference": False},
+        try:
+            isolate = await get_data_from_req(self.request).otus.get_isolate(
+                otu_id,
+                isolate_id,
             )
-        ]
+        except ResourceNotFoundError:
+            raise APINotFound()
 
         return json_response(isolate)
 
@@ -381,23 +367,14 @@ class SequencesView(PydanticView):
         Lists the sequences for an isolate.
 
         """
-        mongo = get_mongo_from_req(self.request)
-
-        if not await mongo.otus.count_documents(
-            {"_id": otu_id, "isolates.id": isolate_id},
-            limit=1,
-        ):
+        try:
+            sequences = await get_data_from_req(
+                self.request,
+            ).otus.list_isolate_sequences(otu_id, isolate_id)
+        except ResourceNotFoundError:
             raise APINotFound()
 
-        return json_response(
-            [
-                OTUSequence(**d)
-                async for d in mongo.sequences.find(
-                    {"otu_id": otu_id, "isolate_id": isolate_id},
-                    SEQUENCE_PROJECTION,
-                )
-            ],
-        )
+        return json_response(sequences)
 
     async def post(
         self,
@@ -473,7 +450,7 @@ class SequenceView(PydanticView):
 
         """
         if self.request.path.endswith(".fa"):
-            sequence_id = sequence_id.rstrip(".fa")
+            sequence_id = sequence_id.removesuffix(".fa")
 
             try:
                 filename, fasta = await get_data_from_req(
@@ -524,10 +501,9 @@ class SequenceView(PydanticView):
             ["reference", "segment"],
         )
 
-        if not document or not await mongo.sequences.count_documents(
-            {"_id": sequence_id},
-            limit=1,
-        ):
+        if not document or not await get_data_from_req(
+            self.request,
+        ).otus.sequence_exists(sequence_id):
             raise APINotFound()
 
         client = self.request["client"]
@@ -566,7 +542,7 @@ class SequenceView(PydanticView):
         """
         mongo = get_mongo_from_req(self.request)
 
-        if not await mongo.sequences.count_documents({"_id": sequence_id}, limit=1):
+        if not await get_data_from_req(self.request).otus.sequence_exists(sequence_id):
             raise APINotFound()
 
         document = await mongo.otus.find_one(

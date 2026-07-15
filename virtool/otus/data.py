@@ -1,6 +1,7 @@
 """The data layer domain for OTUs."""
 
 import asyncio
+from collections import defaultdict
 from copy import deepcopy
 from typing import Any
 
@@ -23,8 +24,13 @@ from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
 from virtool.otus.db import (
-    SEQUENCE_PROJECTION,
+    get_legacy_sequence,
+    get_legacy_sequence_body,
     increment_otu_version,
+    legacy_sequence_exists,
+    list_legacy_isolate_sequence_bodies,
+    list_legacy_isolate_sequences,
+    list_legacy_otu_sequence_bodies,
     update_otu_verification,
 )
 from virtool.otus.models import OTU, OTUIsolate, OTUSequence, Sequence
@@ -107,24 +113,22 @@ class OTUData:
         if otu is None:
             raise ResourceNotFoundError
 
+        sequences_by_isolate: dict[str, list[tuple[str, str]]] = defaultdict(list)
+
+        for isolate_id, sequence_id, sequence in await list_legacy_otu_sequence_bodies(
+            self._pg,
+            otu_id,
+        ):
+            sequences_by_isolate[isolate_id].append((sequence_id, sequence))
+
         fasta = []
 
         for isolate in otu["isolates"]:
             isolate_name = format_isolate_name(isolate)
 
             fasta.extend(
-                [
-                    format_fasta_entry(
-                        otu["name"],
-                        isolate_name,
-                        sequence["_id"],
-                        sequence["sequence"],
-                    )
-                    async for sequence in self._mongo.sequences.find(
-                        {"otu_id": otu_id, "isolate_id": isolate["id"]},
-                        ["sequence"],
-                    )
-                ],
+                format_fasta_entry(otu["name"], isolate_name, sequence_id, sequence)
+                for sequence_id, sequence in sequences_by_isolate[isolate["id"]]
             )
 
         return format_fasta_filename(otu["name"]), "\n".join(fasta)
@@ -166,30 +170,27 @@ class OTUData:
         :return: as FASTA filename and body
 
         """
-        _, isolate_name = await self.get_otu_and_isolate_names(otu_id, isolate_id)
-
-        otu = await self._mongo.otus.find_one(
-            {"_id": otu_id, "isolates.id": isolate_id},
-            ["name", "isolates"],
+        otu_name, isolate_name = await self.get_otu_and_isolate_names(
+            otu_id,
+            isolate_id,
         )
 
-        fasta = []
-
-        async for sequence in self._mongo.sequences.find(
-            {"otu_id": otu_id, "isolate_id": isolate_id},
-            ["sequence"],
-        ):
-            fasta.append(
-                virtool.otus.utils.format_fasta_entry(
-                    otu["name"],
-                    isolate_name,
-                    sequence["_id"],
-                    sequence["sequence"],
-                ),
+        fasta = [
+            virtool.otus.utils.format_fasta_entry(
+                otu_name,
+                isolate_name,
+                sequence_id,
+                sequence,
             )
+            for sequence_id, sequence in await list_legacy_isolate_sequence_bodies(
+                self._pg,
+                otu_id,
+                isolate_id,
+            )
+        ]
 
         return virtool.otus.utils.format_fasta_filename(
-            otu["name"],
+            otu_name,
             isolate_name,
         ), "\n".join(fasta)
 
@@ -201,31 +202,30 @@ class OTUData:
         :return: as FASTA filename and body
 
         """
-        sequence = await self._mongo.sequences.find_one(
-            sequence_id,
-            ["sequence", "otu_id", "isolate_id"],
-        )
+        body = await get_legacy_sequence_body(self._pg, sequence_id)
 
-        if not sequence:
+        if body is None:
             raise ResourceNotFoundError("Sequence does not exist")
 
+        otu_id, isolate_id, sequence = body
+
         otu_name, isolate_name = await self.get_otu_and_isolate_names(
-            sequence["otu_id"],
-            sequence["isolate_id"],
+            otu_id,
+            isolate_id,
         )
 
         fasta = virtool.otus.utils.format_fasta_entry(
             otu_name,
             isolate_name,
             sequence_id,
-            sequence["sequence"],
+            sequence,
         )
 
         return (
             virtool.otus.utils.format_fasta_filename(
                 otu_name,
                 isolate_name,
-                sequence["_id"],
+                sequence_id,
             ),
             fasta,
         )
@@ -880,9 +880,11 @@ class OTUData:
             {"_id": otu_id, "isolates.id": isolate_id},
             limit=1,
         ) and (
-            document := await self._mongo.sequences.find_one(
-                {"_id": sequence_id, "otu_id": otu_id, "isolate_id": isolate_id},
-                SEQUENCE_PROJECTION,
+            document := await get_legacy_sequence(
+                self._pg,
+                otu_id,
+                isolate_id,
+                sequence_id,
             )
         ):
             document = await apply_transforms(
@@ -893,6 +895,70 @@ class OTUData:
             return Sequence(**document)
 
         raise ResourceNotFoundError
+
+    async def list_isolate_sequences(
+        self,
+        otu_id: str,
+        isolate_id: str,
+    ) -> list[OTUSequence]:
+        """List the sequences belonging to an isolate.
+
+        :param otu_id: the ID of the parent OTU
+        :param isolate_id: the ID of the isolate
+        :return: the isolate's sequences
+        :raises ResourceNotFoundError: the OTU or isolate does not exist
+        """
+        if not await self._mongo.otus.count_documents(
+            {"_id": otu_id, "isolates.id": isolate_id},
+            limit=1,
+        ):
+            raise ResourceNotFoundError
+
+        return [
+            OTUSequence(**document)
+            for document in await list_legacy_isolate_sequences(
+                self._pg,
+                otu_id,
+                isolate_id,
+            )
+        ]
+
+    async def get_isolate(self, otu_id: str, isolate_id: str) -> OTUIsolate:
+        """Get an isolate and its sequences.
+
+        :param otu_id: the ID of the parent OTU
+        :param isolate_id: the ID of the isolate
+        :return: the isolate
+        :raises ResourceNotFoundError: the OTU or isolate does not exist
+        """
+        document = await self._mongo.otus.find_one(
+            {"_id": otu_id, "isolates.id": isolate_id},
+            ["isolates"],
+        )
+
+        if not document:
+            raise ResourceNotFoundError
+
+        isolate = find_isolate(document["isolates"], isolate_id)
+
+        sequences = [
+            OTUSequence(**sequence_document)
+            for sequence_document in await list_legacy_isolate_sequences(
+                self._pg,
+                otu_id,
+                isolate_id,
+            )
+        ]
+
+        return OTUIsolate(**{**isolate, "sequences": sequences})
+
+    async def sequence_exists(self, sequence_id: str) -> bool:
+        """Return whether a sequence exists.
+
+        :param sequence_id: the ID of the sequence
+        :return: whether the sequence exists
+        """
+        return await legacy_sequence_exists(self._pg, sequence_id)
 
     async def update_sequence(
         self,
