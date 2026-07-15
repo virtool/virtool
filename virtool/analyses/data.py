@@ -253,7 +253,6 @@ class AnalysisData(DataLayerDomain):
 
         if document["ready"]:
             document["results"] = await virtool.analyses.format.format_analysis(
-                self._mongo,
                 self._pg,
                 workflow=document["workflow"],
                 results=document["results"],
@@ -578,7 +577,6 @@ class AnalysisData(DataLayerDomain):
         if extension == "xlsx":
             return (
                 await virtool.analyses.format.format_analysis_to_excel(
-                    self._mongo,
                     self._pg,
                     results=analysis.results,
                     workflow=analysis.workflow,
@@ -589,7 +587,6 @@ class AnalysisData(DataLayerDomain):
 
         return (
             await virtool.analyses.format.format_analysis_to_csv(
-                self._mongo,
                 self._pg,
                 results=analysis.results,
                 workflow=analysis.workflow,

@@ -12,7 +12,6 @@ from virtool.analyses.format import (
     format_nuvs,
     transform_coverage_to_coordinates,
 )
-from virtool.mongo.core import Mongo
 
 
 @pytest.mark.parametrize(
@@ -146,27 +145,25 @@ def test_transform_coverage_to_coordinates(
 class TestFormatAnalysis:
     """Test workflow dispatch in ``format_analysis``."""
 
-    async def test_no_workflow(self, mongo: Mongo):
+    async def test_no_workflow(self):
         """A ``None`` workflow raises a descriptive ``ValueError``."""
         with pytest.raises(ValueError, match="Analysis has no workflow field"):
             await virtool.analyses.format.format_analysis(
-                mongo,
                 None,
                 workflow=None,
                 results={"hits": []},
             )
 
-    async def test_unknown_workflow(self, mongo: Mongo):
+    async def test_unknown_workflow(self):
         """An unrecognised workflow raises a descriptive ``ValueError``."""
         with pytest.raises(ValueError, match="Unknown workflow: foobar"):
             await virtool.analyses.format.format_analysis(
-                mongo,
                 None,
                 workflow="foobar",
                 results={"hits": []},
             )
 
-    async def test_nuvs(self, mocker: MockerFixture, mongo: Mongo):
+    async def test_nuvs(self, mocker: MockerFixture):
         """The nuvs workflow dispatches to ``format_nuvs``."""
         m_format_nuvs = mocker.patch(
             "virtool.analyses.format.format_nuvs",
@@ -178,7 +175,6 @@ class TestFormatAnalysis:
         results = {"hits": []}
 
         formatted = await virtool.analyses.format.format_analysis(
-            mongo,
             pg,
             workflow="nuvs",
             results=results,
@@ -188,7 +184,7 @@ class TestFormatAnalysis:
         m_format_nuvs.assert_called_with(pg, results=results)
         assert not m_format_pathoscope.called
 
-    async def test_pathoscope(self, mocker: MockerFixture, mongo: Mongo):
+    async def test_pathoscope(self, mocker: MockerFixture):
         """The pathoscope workflow dispatches to ``format_pathoscope``."""
         m_format_nuvs = mocker.patch("virtool.analyses.format.format_nuvs")
         m_format_pathoscope = mocker.patch(
@@ -200,14 +196,13 @@ class TestFormatAnalysis:
         results = {"hits": []}
 
         formatted = await virtool.analyses.format.format_analysis(
-            mongo,
             pg,
             workflow="pathoscope",
             results=results,
         )
 
         assert formatted == {"is_nuvs": False, "is_pathoscope": True}
-        m_format_pathoscope.assert_called_with(mongo, pg, results=results)
+        m_format_pathoscope.assert_called_with(pg, results=results)
         assert not m_format_nuvs.called
 
 
@@ -275,11 +270,10 @@ class TestDownloadResults:
             },
         )
 
-    async def test_csv(self, mocker: MockerFixture, mongo: Mongo):
+    async def test_csv(self, mocker: MockerFixture):
         self._patch_format_analysis(mocker)
 
         csv_data = await virtool.analyses.format.format_analysis_to_csv(
-            mongo,
             mocker.Mock(),
             results=self.results,
             workflow="pathoscope",
@@ -290,11 +284,10 @@ class TestDownloadResults:
         assert rows[0] == list(CSV_HEADERS)
         assert rows[1] == ["OTU", "Isolate A", "AB000", "3", "0.5", "2", "1.0"]
 
-    async def test_excel(self, mocker: MockerFixture, mongo: Mongo):
+    async def test_excel(self, mocker: MockerFixture):
         self._patch_format_analysis(mocker)
 
         excel_data = await virtool.analyses.format.format_analysis_to_excel(
-            mongo,
             mocker.Mock(),
             results=self.results,
             workflow="pathoscope",

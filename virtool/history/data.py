@@ -10,6 +10,7 @@ from virtool.history.models import History, HistoryMinimal, HistorySearchResult
 from virtool.history.sql import SQLLegacyHistory
 from virtool.history.transforms import AttachDiffTransform
 from virtool.mongo.core import Mongo
+from virtool.otus.sql import SQLOTU
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.users.pg import SQLUser
 from virtool.utils import base_processor
@@ -42,10 +43,12 @@ class HistoryData:
         :param otu_id: the ID of the OTU
         :return: the OTU's changes
         """
-        if not await self._mongo.otus.count_documents({"_id": otu_id}, limit=1):
-            raise ResourceNotFoundError()
-
         async with AsyncSession(self._pg) as session:
+            if not await session.scalar(
+                select(select(SQLOTU.id).where(SQLOTU.id == otu_id).exists()),
+            ):
+                raise ResourceNotFoundError()
+
             rows = (
                 await session.execute(
                     select(SQLLegacyHistory, SQLUser.handle)

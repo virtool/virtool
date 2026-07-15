@@ -9,7 +9,6 @@ import virtool.history.db
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.models.enums import HistoryMethod
-from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.references.sql import SQLReference
 from virtool.workflow.pytest_plugin.utils import StaticTime
@@ -346,14 +345,12 @@ class TestGetMostRecentChange:
 async def test_patch_to_version(
     remove: bool,
     create_mock_history,
-    mongo: Mongo,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
 ):
     await create_mock_history(remove=remove)
 
     current, patched = await virtool.history.db.patch_to_version(
-        mongo,
         pg,
         "6116cba1",
         1,
@@ -394,7 +391,6 @@ def test_stamp_reference():
 
 async def test_patch_to_version_intermediate(
     create_mock_history,
-    mongo: Mongo,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
 ):
@@ -404,7 +400,6 @@ async def test_patch_to_version_intermediate(
     await create_mock_history(remove=False)
 
     current, patched = await virtool.history.db.patch_to_version(
-        mongo,
         pg,
         "6116cba1",
         2,
@@ -416,7 +411,6 @@ async def test_patch_to_version_intermediate(
 
 async def test_patch_to_version_missing_diff(
     fake: DataFaker,
-    mongo: Mongo,
     pg: AsyncEngine,
 ):
     """A ``legacy_history`` change with no matching ``SQLLegacyHistoryDiff`` row raises
@@ -430,7 +424,7 @@ async def test_patch_to_version_missing_diff(
         ValueError,
         match="Missing legacy_history_diff rows.*6116cba1.1",
     ):
-        await virtool.history.db.patch_to_version(mongo, pg, "6116cba1", 0)
+        await virtool.history.db.patch_to_version(pg, "6116cba1", 0)
 
 
 async def test_resolve_diffs_inline_diff(pg: AsyncEngine):

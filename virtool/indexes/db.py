@@ -248,7 +248,7 @@ async def find(
         sort="version",
     )
 
-    unbuilt_stats = await get_unbuilt_stats(mongo, pg, ref_id)
+    unbuilt_stats = await get_unbuilt_stats(pg, ref_id)
 
     documents = [base_processor(d) for d in data["documents"]]
     transforms = [
@@ -359,7 +359,6 @@ async def get_next_version(mongo: "Mongo", pg: AsyncEngine, ref_id: int | str) -
 
 
 async def get_unbuilt_stats(
-    mongo: "Mongo",
     pg: AsyncEngine,
     ref_id: str | None = None,
 ) -> dict:
@@ -368,21 +367,22 @@ async def get_unbuilt_stats(
     Used to populate the metadata for an index find request. Can search against a
     specific reference or all references.
 
-    :param mongo: the application mongodb client
     :param pg: the application PostgreSQL database object
     :param ref_id: the ref id to search unbuilt changes for
 
     :return: the change count and modified OTU count
 
     """
-    ref_query = {}
     history_filters = [SQLLegacyHistory.index.is_(None)]
+    otu_filters = []
 
     if ref_id:
-        ref_query["reference.id"] = await compose_reference_id_match(pg, ref_id)
         history_filters.append(
             SQLLegacyHistory.reference_id
             == compose_legacy_id_subquery(SQLReference, ref_id),
+        )
+        otu_filters.append(
+            SQLOTU.reference_id == compose_legacy_id_subquery(SQLReference, ref_id),
         )
 
     async with AsyncSession(pg) as session:
@@ -395,15 +395,18 @@ async def get_unbuilt_stats(
             )
         ).one()
 
+        total_otu_count = await session.scalar(
+            select(func.count()).select_from(SQLOTU).where(*otu_filters),
+        )
+
     return {
-        "total_otu_count": await mongo.otus.count_documents(ref_query),
+        "total_otu_count": total_otu_count,
         "change_count": change_count,
         "modified_otu_count": modified_otu_count,
     }
 
 
 async def iter_patched_otus(
-    mongo: "Mongo",
     pg: AsyncEngine,
     manifest: dict[str, int],
     *,
@@ -412,7 +415,6 @@ async def iter_patched_otus(
 ) -> AsyncIterator[dict]:
     """Iterate joined OTUs patched to the versions in the manifest.
 
-    :param mongo: the application mongodb client
     :param pg: the application PostgreSQL database object
     :param manifest: the manifest
     :param concurrency: the maximum number of OTUs to patch concurrently
@@ -431,7 +433,6 @@ async def iter_patched_otus(
         patch_version: int,
     ) -> tuple[int, dict]:
         _, patched = await virtool.history.db.patch_to_version(
-            mongo,
             pg,
             patch_id,
             patch_version,
@@ -512,49 +513,41 @@ async def upsert_index_file(
 
 async def update_last_indexed_versions(
     mongo: "Mongo",
-    pg: AsyncEngine,
     ref_id: str,
     mongo_session: AsyncIOMotorClientSession,
     pg_session: AsyncSession,
 ) -> None:
     """Update the `last_indexed_version` field for OTUs associated with `ref_id`
 
-    Both stores are stamped from the same ``{version: [otu_id]}`` grouping, so the
-    same OTUs are stamped with the same version in each. On ``legacy_otus`` the value
-    is held twice -- in the promoted ``last_indexed_version`` column and in the
-    ``data`` JSONB that mirrors the Mongo document -- and both are written by the same
-    statement, so they cannot come out of a stamp disagreeing. OTUs with no Postgres
-    row yet are simply not matched -- the backfill will carry the stamped Mongo
-    document over.
+    The OTUs to stamp, and the version to stamp each with, are read from Postgres as
+    the rows whose ``version`` still differs from their ``last_indexed_version``. Both
+    stores are then stamped from that same ``{version: [otu_id]}`` grouping, so the same
+    OTUs are stamped with the same version in each. On ``legacy_otus`` the value is held
+    twice -- in the promoted ``last_indexed_version`` column and in the ``data`` JSONB
+    that mirrors the Mongo document -- and both are written by the same statement, so
+    they cannot come out of a stamp disagreeing.
+
+    Postgres is the read authority: an OTU with no Postgres row is invisible here and is
+    stamped in neither store. The read cutover is gated on the backfill and the
+    Mongo-Postgres parity check, so every OTU has a row by the time this runs.
 
     :param mongo: the application mongo client
-    :param pg: the application Postgres client
     :param ref_id: the id of the reference whose otus should be updated
     :param mongo_session: the motor session to use
     :param pg_session: the Postgres session to use
 
     """
-    pipeline = [
-        {
-            "$project": {
-                "reference": True,
-                "version": True,
-                "last_indexed_version": True,
-                "comp": {"$cmp": ["$version", "$last_indexed_version"]},
-            },
-        },
-        {
-            "$match": {
-                "reference.id": await compose_reference_id_match(pg, ref_id),
-                "comp": {"$ne": 0},
-            },
-        },
-        {"$group": {"_id": "$version", "id_list": {"$addToSet": "$_id"}}},
-    ]
+    changed_otus = await pg_session.execute(
+        select(SQLOTU.id, SQLOTU.version).where(
+            SQLOTU.reference_id == compose_legacy_id_subquery(SQLReference, ref_id),
+            SQLOTU.version.is_distinct_from(SQLOTU.last_indexed_version),
+        ),
+    )
 
-    id_version_key = {
-        agg["_id"]: agg["id_list"] async for agg in mongo.otus.aggregate(pipeline)
-    }
+    id_version_key: dict[int, list[str]] = {}
+
+    for otu_id, version in changed_otus:
+        id_version_key.setdefault(version, []).append(otu_id)
 
     for version, id_list in id_version_key.items():
         await mongo.otus.update_many(

@@ -9,7 +9,7 @@ import io
 import statistics
 from asyncio import gather
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import openpyxl.styles
 import visvalingamwyatt as vw
@@ -21,10 +21,6 @@ from virtool.history.db import patch_to_version
 from virtool.hmm.sql import SQLHMM
 from virtool.models.enums import AnalysisWorkflow
 from virtool.otus.utils import format_isolate_name
-
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
-
 
 CSV_HEADERS = (
     "OTU",
@@ -49,7 +45,6 @@ def calculate_median_depths(hits: list[dict]) -> dict[str, int]:
 
 
 async def format_pathoscope(
-    mongo: "Mongo",
     pg: AsyncEngine,
     *,
     results: dict[str, Any],
@@ -59,7 +54,6 @@ async def format_pathoscope(
 
     Calculate metrics for different organizational levels: OTU, isolate, and sequence.
 
-    :param mongo: the application Mongo object
     :param pg: the application PostgreSQL database object
     :param results: the results to format
     :return: the formatted results
@@ -77,20 +71,18 @@ async def format_pathoscope(
 
     for otu_specifier, hits in hits_by_otu.items():
         otu_id, otu_version = otu_specifier
-        coros.append(format_pathoscope_hits(mongo, pg, otu_id, otu_version, hits))
+        coros.append(format_pathoscope_hits(pg, otu_id, otu_version, hits))
 
     return {**results, "hits": await gather(*coros)}
 
 
 async def format_pathoscope_hits(
-    mongo: "Mongo",
     pg: AsyncEngine,
     otu_id: str,
     otu_version,
     hits: list[dict],
 ):
     _, patched_otu = await patch_to_version(
-        mongo,
         pg,
         otu_id,
         otu_version,
@@ -215,7 +207,6 @@ async def format_nuvs(
 
 
 async def format_analysis_to_excel(
-    mongo: "Mongo",
     pg: AsyncEngine,
     *,
     results: dict[str, Any],
@@ -235,7 +226,6 @@ async def format_analysis_to_excel(
     depths = calculate_median_depths(results["hits"])
 
     formatted = await format_analysis(
-        mongo,
         pg,
         workflow=workflow,
         results=results,
@@ -285,7 +275,6 @@ async def format_analysis_to_excel(
 
 
 async def format_analysis_to_csv(
-    mongo: "Mongo",
     pg: AsyncEngine,
     *,
     results: dict[str, Any],
@@ -293,7 +282,6 @@ async def format_analysis_to_csv(
 ) -> str:
     """Convert pathoscope analysis results to CSV format for download.
 
-    :param mongo: the app mongo object
     :param pg: the application PostgreSQL database object
     :param results: the results to format
     :param workflow: the analysis workflow
@@ -303,7 +291,6 @@ async def format_analysis_to_csv(
     depths = calculate_median_depths(results["hits"])
 
     formatted = await format_analysis(
-        mongo,
         pg,
         workflow=workflow,
         results=results,
@@ -334,7 +321,6 @@ async def format_analysis_to_csv(
 
 
 async def format_analysis(
-    mongo: "Mongo",
     pg: AsyncEngine,
     *,
     workflow: str | None,
@@ -342,7 +328,6 @@ async def format_analysis(
 ) -> dict[str, Any]:
     """Format analysis results to be returned by the API.
 
-    :param mongo: the database object
     :param pg: the application PostgreSQL database object
     :param workflow: the analysis workflow used to dispatch formatting
     :param results: the results to format
@@ -356,7 +341,7 @@ async def format_analysis(
         return await format_nuvs(pg, results=results)
 
     if "pathoscope" in workflow:
-        return await format_pathoscope(mongo, pg, results=results)
+        return await format_pathoscope(pg, results=results)
 
     raise ValueError(f"Unknown workflow: {workflow}")
 

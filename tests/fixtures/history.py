@@ -5,6 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.history.db import bulk_insert_diffs, legacy_history_values
 from virtool.history.sql import SQLLegacyHistory
+from virtool.otus.db import otu_row_values
+from virtool.otus.sql import SQLOTU
 from virtool.references.sql import SQLReference
 
 
@@ -285,6 +287,9 @@ def create_mock_history(fake, mongo, pg):
             )
             session.add(reference)
             await session.flush()
+
+            if otu is not None:
+                session.add(SQLOTU(**otu_row_values(otu, reference.id)))
 
             for document in documents:
                 session.add(

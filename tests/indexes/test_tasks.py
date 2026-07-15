@@ -18,13 +18,15 @@ from virtool.indexes.sql import SQLIndexFile
 from virtool.indexes.tasks import CreateIndexTask
 from virtool.indexes.utils import compose_index_file_key
 from virtool.mongo.core import Mongo
+from virtool.otus.db import bulk_insert_otu_rows, bulk_insert_sequence_rows
 from virtool.storage.protocol import StorageBackend
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
 async def _insert_indexed_otu(
     mongo: Mongo,
-    reference_id: str,
+    pg: AsyncEngine,
+    reference_id: int,
     test_otu: dict,
     test_sequence: dict,
 ) -> dict[str, int]:
@@ -36,15 +38,19 @@ async def _insert_indexed_otu(
         "version": 1,
     }
 
-    await mongo.otus.insert_one(otu)
+    sequence = {
+        **test_sequence,
+        "reference": otu["reference"],
+        "otu_id": otu["_id"],
+    }
 
-    await mongo.sequences.insert_one(
-        {
-            **test_sequence,
-            "reference": otu["reference"],
-            "otu_id": otu["_id"],
-        },
-    )
+    await mongo.otus.insert_one(otu)
+    await mongo.sequences.insert_one(sequence)
+
+    async with AsyncSession(pg) as session:
+        await bulk_insert_otu_rows(session, [otu], reference_id)
+        await bulk_insert_sequence_rows(session, [sequence])
+        await session.commit()
 
     return {otu["_id"]: otu["version"]}
 
@@ -78,6 +84,7 @@ class TestCreateIndexTask:
     async def task_id(self) -> int:
         self.manifest = await _insert_indexed_otu(
             self.mongo,
+            self.pg,
             self.reference.id,
             self.test_otu,
             self.test_sequence,
@@ -193,6 +200,7 @@ class TestCreateIndexTask:
         """A task-backed build accepts an integer embedded reference id."""
         manifest = await _insert_indexed_otu(
             self.mongo,
+            self.pg,
             self.reference.id,
             self.test_otu,
             self.test_sequence,

@@ -173,7 +173,7 @@ async def test_clone_reference_task(
     mongo: Mongo,
     pg: AsyncEngine,
 ):
-    manifest = await get_manifest(mongo, pg, create_reference)
+    manifest = await get_manifest(pg, create_reference)
 
     assert len(manifest) == 20
 

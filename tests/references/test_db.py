@@ -514,22 +514,18 @@ class TestComposeReferenceIdsMatch:
         assert None not in match["$in"]
 
 
-async def test_create_manifest(mongo: Mongo, pg: AsyncEngine, test_otu: dict):
-    await mongo.otus.insert_many(
-        [
-            test_otu,
-            {**test_otu, "_id": "foo", "version": 5},
-            {**test_otu, "_id": "baz", "version": 3, "reference": {"id": "123"}},
-            {**test_otu, "_id": "bar", "version": 11},
-        ],
-        session=None,
-    )
+async def test_create_manifest(fake: DataFaker, pg: AsyncEngine):
+    """The manifest maps each of a reference's OTU ids to its version, and excludes
+    OTUs belonging to other references.
+    """
+    user = await fake.users.create()
+    reference = await fake.references.create(user=user)
+    other_reference = await fake.references.create(user=user)
 
-    assert await get_manifest(mongo, pg, "hxn167") == {
-        "6116cba1": 0,
-        "foo": 5,
-        "bar": 11,
-    }
+    otus = [await fake.otus.create(reference.id, user) for _ in range(3)]
+    await fake.otus.create(other_reference.id, user)
+
+    assert await get_manifest(pg, reference.id) == {otu.id: otu.version for otu in otus}
 
 
 async def test_get_reference_groups(

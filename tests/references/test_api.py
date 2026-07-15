@@ -977,7 +977,7 @@ class TestCreateIndex:
             assert await session.scalar(select(SQLJob.id)) is None
             assert await session.scalar(select(SQLJobIndex.job_id)) is None
 
-        m_create_manifest.assert_called_with(ANY, ANY, reference["id"])
+        m_create_manifest.assert_called_with(ANY, reference["id"])
 
     async def test_insufficient_rights(
         self,
