@@ -31,15 +31,15 @@
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'has_files': True,
     'has_json': False,
-    'job': dict({
-      'id': 'bar',
-    }),
+    'job': None,
     'manifest': 'manifest',
     'ready': False,
     'reference': dict({
       'id': 1,
     }),
-    'task': None,
+    'task': dict({
+      'id': 1,
+    }),
     'user': dict({
       'id': 'test',
     }),
@@ -52,15 +52,15 @@
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'has_files': True,
     'has_json': False,
-    'job': dict({
-      'id': 'bar',
-    }),
+    'job': None,
     'manifest': 'manifest',
     'ready': False,
     'reference': dict({
       'id': 1,
     }),
-    'task': None,
+    'task': dict({
+      'id': 1,
+    }),
     'user': dict({
       'id': 'test',
     }),

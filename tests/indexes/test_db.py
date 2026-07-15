@@ -1,7 +1,6 @@
 import asyncio
 
 import pytest
-from aiohttp.test_utils import make_mocked_coro
 from pytest_mock import MockerFixture
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -27,7 +26,6 @@ from virtool.otus.sql import SQLOTU
 @pytest.mark.parametrize("index_id", [None, "abc"])
 async def test_create(
     index_id: str | None,
-    mocker: MockerFixture,
     mongo: Mongo,
     pg: AsyncEngine,
     fake,
@@ -41,23 +39,24 @@ async def test_create(
 
     await fake.references.create(user=user, id_="foo")
 
-    mocker.patch("virtool.references.db.get_manifest", make_mocked_coro("manifest"))
-
-    created = await virtool.indexes.db.create(
-        mongo,
-        pg,
-        "foo",
-        "test",
-        "bar",
-        index_id=index_id,
-    )
+    async with both_transactions(mongo, pg) as (mongo_session, pg_session):
+        created = await virtool.indexes.db.create(
+            mongo,
+            mongo_session,
+            pg_session,
+            "foo",
+            "test",
+            0,
+            "manifest",
+            task_id=1,
+            index_id=index_id,
+        )
 
     assert created["created_at"] == static_time.datetime
     assert created == snapshot
 
 
 async def test_create_assigns_index_in_postgres(
-    mocker: MockerFixture,
     mongo: Mongo,
     pg: AsyncEngine,
     fake,
@@ -107,16 +106,18 @@ async def test_create_assigns_index_in_postgres(
         )
         await session.commit()
 
-    mocker.patch("virtool.references.db.get_manifest", make_mocked_coro("manifest"))
-
-    await virtool.indexes.db.create(
-        mongo,
-        pg,
-        "built_ref",
-        user.id,
-        1,
-        index_id="new_index",
-    )
+    async with both_transactions(mongo, pg) as (mongo_session, pg_session):
+        await virtool.indexes.db.create(
+            mongo,
+            mongo_session,
+            pg_session,
+            "built_ref",
+            user.id,
+            1,
+            "manifest",
+            task_id=1,
+            index_id="new_index",
+        )
 
     async with AsyncSession(pg) as session:
         rows = {
@@ -161,21 +162,24 @@ async def test_create_rolls_back_both_stores_on_failure(
         )
         await session.commit()
 
-    mocker.patch("virtool.references.db.get_manifest", make_mocked_coro("manifest"))
     mocker.patch(
         "virtool.indexes.db.update",
         side_effect=RuntimeError("postgres write failed"),
     )
 
     with pytest.raises(RuntimeError, match="postgres write failed"):
-        await virtool.indexes.db.create(
-            mongo,
-            pg,
-            "built_ref",
-            user.id,
-            1,
-            index_id="new_index",
-        )
+        async with both_transactions(mongo, pg) as (mongo_session, pg_session):
+            await virtool.indexes.db.create(
+                mongo,
+                mongo_session,
+                pg_session,
+                "built_ref",
+                user.id,
+                1,
+                "manifest",
+                task_id=1,
+                index_id="new_index",
+            )
 
     assert await mongo.indexes.find_one("new_index") is None
 

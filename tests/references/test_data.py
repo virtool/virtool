@@ -6,6 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.history.sql import SQLLegacyHistory
+from virtool.mongo.core import Mongo
 from virtool.references.oas import (
     CreateReferenceGroupRequest,
     CreateReferenceRequest,
@@ -14,6 +16,7 @@ from virtool.references.oas import (
     UpdateReferenceRequest,
 )
 from virtool.references.sql import SQLReference
+from virtool.tasks.sql import SQLTask
 
 
 class TestCreate:
@@ -87,6 +90,60 @@ class TestCreate:
             )
 
         assert rows == []
+
+
+class TestCreateIndex:
+    async def test_rolls_back_task_index_and_history_on_failure(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mocker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        static_time,
+    ):
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        async with AsyncSession(pg) as session:
+            session.add(
+                SQLLegacyHistory(
+                    legacy_id="unbuilt_change",
+                    created_at=static_time.datetime,
+                    description="Created OTU",
+                    method_name="create",
+                    user_id=user.id,
+                    otu="otu_1",
+                    otu_name="Tobacco mosaic virus",
+                    otu_version="0",
+                    reference_id=reference.id,
+                    index=None,
+                    index_version=None,
+                ),
+            )
+            await session.commit()
+
+        mocker.patch(
+            "virtool.indexes.db.update",
+            side_effect=RuntimeError("history assignment failed"),
+        )
+
+        with pytest.raises(RuntimeError, match="history assignment failed"):
+            await data_layer.references.create_index(reference.id, user.id)
+
+        assert await mongo.indexes.find_one() is None
+
+        async with AsyncSession(pg) as session:
+            history = await session.scalar(
+                select(SQLLegacyHistory).where(
+                    SQLLegacyHistory.legacy_id == "unbuilt_change",
+                ),
+            )
+
+            assert history is not None
+            assert history.index is None
+            assert history.index_version is None
+            assert await session.scalar(select(SQLTask.id)) is None
 
 
 class TestUpdate:
