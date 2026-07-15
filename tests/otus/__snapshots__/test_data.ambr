@@ -227,17 +227,6 @@
     'version': 0,
   })
 # ---
-# name: test_get_fasta
-  tuple(
-    'prunus_virus_f.fa',
-    '''
-      >Prunus virus F|Isolate 8816-v2|abcd1234|27
-      TGTTTAAGAGATTAAACAACCGCTTTC
-      >Prunus virus F|Isolate A|AX12345|12
-      ATAGAGGAGTTA
-    ''',
-  )
-# ---
 # name: test_set_default
   dict({
     'default': True,

@@ -30,18 +30,6 @@ from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.utils import base_processor, to_bool
 
-SEQUENCE_PROJECTION = (
-    "_id",
-    "accession",
-    "definition",
-    "host",
-    "otu_id",
-    "isolate_id",
-    "reference",
-    "sequence",
-    "segment",
-)
-
 
 async def check_name_and_abbreviation(
     mongo: "Mongo",
@@ -357,6 +345,147 @@ async def join_legacy_otu(pg: AsyncEngine, otu_id: str) -> Document | None:
             otu_document_from_row(otu_row),
             [sequence_document_from_row(row) for row in sequence_rows],
         )
+
+
+async def get_legacy_sequence(
+    pg: AsyncEngine,
+    otu_id: str,
+    isolate_id: str,
+    sequence_id: str,
+) -> Document | None:
+    """Fetch one sequence document from Postgres, scoped to its OTU and isolate.
+
+    The Postgres counterpart of the ``mongo.sequences.find_one`` single-sequence read.
+    Returns ``None`` when no sequence with that id belongs to the given OTU and isolate,
+    exactly as the Mongo query matches nothing when any of the three ids disagree. The
+    ``otu_id`` and ``isolate_id`` filters run on the promoted, indexed columns rather
+    than casting them out of the ``data`` JSONB; the document itself is recovered
+    verbatim from that column via :func:`sequence_document_from_row`.
+    """
+    async with AsyncSession(pg) as session:
+        row = await session.scalar(
+            select(SQLSequence).where(
+                SQLSequence.id == sequence_id,
+                SQLSequence.otu_id == otu_id,
+                SQLSequence.isolate_id == isolate_id,
+            ),
+        )
+
+    return sequence_document_from_row(row) if row is not None else None
+
+
+async def list_legacy_isolate_sequences(
+    pg: AsyncEngine,
+    otu_id: str,
+    isolate_id: str,
+) -> list[Document]:
+    """List an isolate's sequence documents from Postgres in Mongo natural order.
+
+    The Postgres counterpart of ``mongo.sequences.find({"otu_id": ..., "isolate_id":
+    ...})``. The rows are ordered by ``position`` so they arrive in the order Mongo's
+    unsorted cursor returns them, and the filters run on the indexed ``otu_id`` and
+    ``isolate_id`` columns. Each document is recovered verbatim from the ``data`` JSONB
+    column.
+    """
+    async with AsyncSession(pg) as session:
+        rows = await session.scalars(
+            select(SQLSequence)
+            .where(
+                SQLSequence.otu_id == otu_id,
+                SQLSequence.isolate_id == isolate_id,
+            )
+            .order_by(SQLSequence.position),
+        )
+
+        return [sequence_document_from_row(row) for row in rows]
+
+
+async def legacy_sequence_exists(pg: AsyncEngine, sequence_id: str) -> bool:
+    """Return whether a ``legacy_sequences`` row exists, without reading its ``data``.
+
+    Backs the existence guards on the sequence update and delete handlers. Only the
+    ``id`` column is selected so the check never de-TOASTs the large ``sequence`` body
+    it does not need.
+    """
+    async with AsyncSession(pg) as session:
+        return (
+            await session.scalar(
+                select(SQLSequence.id).where(SQLSequence.id == sequence_id),
+            )
+        ) is not None
+
+
+async def list_legacy_otu_sequence_bodies(
+    pg: AsyncEngine,
+    otu_id: str,
+) -> list[tuple[str, str, str]]:
+    """Return an OTU's sequences as ``(isolate_id, sequence_id, sequence)`` tuples.
+
+    Ordered by ``position`` -- Mongo natural order -- so an OTU-wide read can be
+    bucketed back into its isolates without losing the order a FASTA export presents
+    them in. Only the sequence body is read out of the ``data`` JSONB; the metadata
+    fields a FASTA export does not use are left in the column rather than pulled over
+    the wire.
+    """
+    async with AsyncSession(pg) as session:
+        result = await session.execute(
+            select(
+                SQLSequence.isolate_id,
+                SQLSequence.id,
+                SQLSequence.data["sequence"].astext,
+            )
+            .where(SQLSequence.otu_id == otu_id)
+            .order_by(SQLSequence.position),
+        )
+
+    return [tuple(row) for row in result.all()]
+
+
+async def list_legacy_isolate_sequence_bodies(
+    pg: AsyncEngine,
+    otu_id: str,
+    isolate_id: str,
+) -> list[tuple[str, str]]:
+    """Return an isolate's sequences as ``(sequence_id, sequence)`` tuples.
+
+    Ordered by ``position`` and filtered on the indexed ``otu_id`` and ``isolate_id``
+    columns. Only the sequence body is read out of the ``data`` JSONB.
+    """
+    async with AsyncSession(pg) as session:
+        result = await session.execute(
+            select(SQLSequence.id, SQLSequence.data["sequence"].astext)
+            .where(
+                SQLSequence.otu_id == otu_id,
+                SQLSequence.isolate_id == isolate_id,
+            )
+            .order_by(SQLSequence.position),
+        )
+
+    return [tuple(row) for row in result.all()]
+
+
+async def get_legacy_sequence_body(
+    pg: AsyncEngine,
+    sequence_id: str,
+) -> tuple[str, str, str] | None:
+    """Return ``(otu_id, isolate_id, sequence)`` for one sequence, or ``None``.
+
+    Backs the single-sequence FASTA export. ``otu_id`` and ``isolate_id`` come from the
+    promoted columns and only the sequence body is read out of the ``data`` JSONB, so
+    the small metadata fields the export does not use are never pulled over the wire.
+    """
+    async with AsyncSession(pg) as session:
+        row = (
+            await session.execute(
+                select(
+                    SQLSequence.otu_id,
+                    SQLSequence.isolate_id,
+                    SQLSequence.data["sequence"].astext,
+                ).where(SQLSequence.id == sequence_id),
+            )
+        ).first()
+
+    return tuple(row) if row is not None else None
 
 
 def otu_row_values(document: Document, reference_id: int) -> dict[str, Any]:
