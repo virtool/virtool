@@ -80,6 +80,7 @@ def _otu_doc(otu_id: str, reference_id: int, name: str) -> dict:
         "name": name,
         "abbreviation": name[:3].upper(),
         "created_at": _CREATED_AT,
+        "last_indexed_version": None,
         "reference": {"id": reference_id},
         "verified": True,
         "version": 3,
@@ -113,8 +114,8 @@ async def _fetch_otu(ctx: MigrationContext, otu_id: str):
         return (
             await session.execute(
                 text("""
-                    SELECT id, data, name, abbreviation, reference_id,
-                           verified, version
+                    SELECT id, data, name, abbreviation, last_indexed_version,
+                           reference_id, verified, version
                     FROM legacy_otus WHERE id = :id
                 """),
                 {"id": otu_id},
@@ -498,7 +499,7 @@ class TestReconcileOtusAndSequences:
         ctx: MigrationContext,
         drifted_otu: list[str],
     ):
-        """An index stamp that only reached Mongo is written into ``data``."""
+        """An index stamp that only reached Mongo is written to the column and ``data``."""
         await ctx.mongo.otus.update_one(
             {"_id": "otu_drifted"},
             {"$set": {"last_indexed_version": 3}},
@@ -506,7 +507,10 @@ class TestReconcileOtusAndSequences:
 
         await reconcile_otus_and_sequences(ctx)
 
-        assert (await _fetch_otu(ctx, "otu_drifted")).data["last_indexed_version"] == 3
+        row = await _fetch_otu(ctx, "otu_drifted")
+
+        assert row.last_indexed_version == 3
+        assert row.data["last_indexed_version"] == 3
 
     async def test_assigns_positions_in_mongo_order(
         self,
@@ -906,10 +910,14 @@ class TestReconcileOtusAndSequences:
         bumping the OTU's ``version``, and commits Postgres first, so there is nothing
         else about the OTU to give the lag away. Rewriting ``data`` wholesale from a
         document that has not caught up would drop the stamp the index just wrote.
+
+        The row is stamped in the column and in ``data``, as index finalization stamps
+        it, and the rewrite has to preserve it in both.
         """
         await _update_otu_row(
             ctx,
             "otu_drifted",
+            last_indexed_version=3,
             data={
                 **_otu_doc("otu_drifted", reference_id, "Tobacco mosaic virus"),
                 "last_indexed_version": 3,
@@ -918,7 +926,10 @@ class TestReconcileOtusAndSequences:
 
         await reconcile_otus_and_sequences(ctx)
 
-        assert (await _fetch_otu(ctx, "otu_drifted")).data["last_indexed_version"] == 3
+        row = await _fetch_otu(ctx, "otu_drifted")
+
+        assert row.last_indexed_version == 3
+        assert row.data["last_indexed_version"] == 3
 
     async def test_row_left_ahead_of_mongo_is_repaired(
         self,
@@ -1323,7 +1334,7 @@ class TestCompareOtuAndSequenceStores:
         """
         await ctx.mongo.otus.update_one(
             {"_id": "otu_matched"},
-            {"$set": {"last_indexed_version": 3}},
+            {"$set": {"isolates": []}},
         )
 
         with pytest.raises(ValueError, match="1 otus, 0 sequences and 0 otu"):
@@ -1336,6 +1347,23 @@ class TestCompareOtuAndSequenceStores:
     ):
         """A promoted column that disagrees with an otherwise-matching ``data``."""
         await _update_otu_row(ctx, "otu_matched", name="Wrong name")
+
+        with pytest.raises(ValueError, match="1 otus, 0 sequences and 0 otu"):
+            await compare_otu_and_sequence_stores(ctx)
+
+    async def test_otu_last_indexed_version_column_drift_raises(
+        self,
+        ctx: MigrationContext,
+        matching_stores: None,
+    ):
+        """A ``last_indexed_version`` column that disagrees with the document.
+
+        The value is held in the column and in ``data``, and index builds read the
+        column, so a column that has drifted from the document it mirrors would send
+        the wrong OTUs to the next build. The gate has to fail on it even though the
+        document the read path recovers is still faithful.
+        """
+        await _update_otu_row(ctx, "otu_matched", last_indexed_version=3)
 
         with pytest.raises(ValueError, match="1 otus, 0 sequences and 0 otu"):
             await compare_otu_and_sequence_stores(ctx)

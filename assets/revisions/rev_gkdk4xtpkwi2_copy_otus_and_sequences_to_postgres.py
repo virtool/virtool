@@ -25,14 +25,17 @@ name = "copy otus and sequences to postgres"
 created_at = arrow.get("2026-07-10 23:45:44.567131")
 revision_id = "gkdk4xtpkwi2"
 
-alembic_down_revision = "5de38ebeaa78"
+alembic_down_revision = "c6fcaf6c86ad"
 virtool_down_revision = None
 
-# ``5de38ebeaa78`` adds ``legacy_sequences.isolate_id``/``segment`` and the
-# ``legacy_otus.reference_id`` index on top of ``8bbc31ae5a8a`` (create otus and
-# sequences tables), so requiring it guarantees the destination tables and every
-# promoted column exist before this runs.
-required_alembic_revision = "5de38ebeaa78"
+# ``c6fcaf6c86ad`` adds ``legacy_otus.last_indexed_version`` on top of the earlier
+# revisions that create the ``otus``/``sequences`` tables and their other promoted
+# columns, so requiring it guarantees the destination tables and *every* promoted
+# column -- ``last_indexed_version`` included -- exist before this copy runs
+# ``otu_row_values``. This must run after ``c6fcaf6c86ad`` for that reason: the copy
+# writes the column, so a chain that ran it before the column existed would fail with
+# an undefined-column error on the first OTU.
+required_alembic_revision = "c6fcaf6c86ad"
 
 
 async def upgrade(ctx: MigrationContext) -> None:
