@@ -198,7 +198,7 @@ async def processor(
     """
     latest_build, otu_count, unbuilt_count = await asyncio.gather(
         get_latest_build(mongo, pg, row.id),
-        get_otu_count(mongo, pg, row.id),
+        get_otu_count(pg, row.id),
         get_unbuilt_count(pg, row.id),
     )
 
@@ -420,39 +420,43 @@ async def get_latest_build(
         )
 
 
-async def get_manifest(mongo: "Mongo", pg: AsyncEngine, ref_id: int | str) -> Document:
+async def get_manifest(pg: AsyncEngine, ref_id: int | str) -> Document:
     """Generate a dict of otu document version numbers keyed by the document id.
 
     This is used to make sure only changes made at the time the index rebuild was
     started are included in the build.
 
-    :param mongo: the application database client
     :param pg: the application PostgreSQL engine
     :param ref_id: the id of the reference to get the current index for
     :return: a manifest of otu ids and versions
 
     """
-    return {
-        document["_id"]: document["version"]
-        async for document in mongo.otus.find(
-            {"reference.id": await compose_reference_id_match(pg, ref_id)},
-            ["version"],
+    async with AsyncSession(pg) as session:
+        rows = await session.execute(
+            select(SQLOTU.id, SQLOTU.version).where(
+                SQLOTU.reference_id == compose_legacy_id_subquery(SQLReference, ref_id),
+            ),
         )
-    }
+
+    return {row.id: row.version for row in rows}
 
 
-async def get_otu_count(mongo: "Mongo", pg: AsyncEngine, ref_id: int | str) -> int:
+async def get_otu_count(pg: AsyncEngine, ref_id: int | str) -> int:
     """Get the number of OTUs associated with the given `ref_id`.
 
-    :param mongo: the application database client
     :param pg: the application PostgreSQL engine
     :param ref_id: the id of the reference to get the current index for
     :return: the OTU count
 
     """
-    return await mongo.otus.count_documents(
-        {"reference.id": await compose_reference_id_match(pg, ref_id)},
-    )
+    async with AsyncSession(pg) as session:
+        return await session.scalar(
+            select(func.count())
+            .select_from(SQLOTU)
+            .where(
+                SQLOTU.reference_id == compose_legacy_id_subquery(SQLReference, ref_id),
+            ),
+        )
 
 
 async def get_unbuilt_count(pg: AsyncEngine, ref_id: int | str) -> int:

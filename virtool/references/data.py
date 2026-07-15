@@ -39,6 +39,7 @@ from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
 from virtool.otus.models import OTU, OTUSearchResult
 from virtool.otus.oas import CreateOTURequest
+from virtool.otus.sql import SQLOTU
 from virtool.pg.utils import get_row_by_id
 from virtool.references.db import (
     compose_reference_id_match,
@@ -417,7 +418,7 @@ class ReferencesData(DataLayerDomain):
             except ResourceNotFoundError:
                 raise ResourceNotFoundError("Source reference does not exist") from None
 
-            manifest = await get_manifest(self._mongo, self._pg, clone_from)
+            manifest = await get_manifest(self._pg, clone_from)
 
             document = await virtool.references.db.create_clone(
                 self._pg,
@@ -551,7 +552,7 @@ class ReferencesData(DataLayerDomain):
         ) = await asyncio.gather(
             get_contributors(self._pg, row.id),
             get_latest_build(self._mongo, self._pg, row.id),
-            get_otu_count(self._mongo, self._pg, row.id),
+            get_otu_count(self._pg, row.id),
             get_reference_groups(self._pg, row.id, row.created_at),
             get_reference_users(self._pg, row.id, row.created_at),
             get_unbuilt_count(self._pg, row.id),
@@ -722,16 +723,22 @@ class ReferencesData(DataLayerDomain):
         ):
             raise ResourceConflictError("Index build already in progress")
 
-        if await self._mongo.otus.count_documents(
-            {
-                "reference.id": await compose_reference_id_match(self._pg, ref_id),
-                "verified": False,
-            },
-            limit=1,
-        ):
-            raise ResourceError("There are unverified OTUs")
-
         async with AsyncSession(self._pg) as session:
+            has_unverified = await session.scalar(
+                select(
+                    select(SQLOTU.id)
+                    .where(
+                        SQLOTU.reference_id
+                        == compose_legacy_id_subquery(SQLReference, ref_id),
+                        SQLOTU.verified.is_(False),
+                    )
+                    .exists(),
+                ),
+            )
+
+            if has_unverified:
+                raise ResourceError("There are unverified OTUs")
+
             has_unbuilt = await session.scalar(
                 select(
                     select(SQLLegacyHistory.id)
@@ -750,7 +757,7 @@ class ReferencesData(DataLayerDomain):
         index_id, index_version, manifest = await asyncio.gather(
             virtool.mongo.utils.get_new_id(self._mongo.indexes),
             virtool.indexes.db.get_next_version(self._mongo, self._pg, ref_id),
-            virtool.references.db.get_manifest(self._mongo, self._pg, ref_id),
+            virtool.references.db.get_manifest(self._pg, ref_id),
         )
 
         async with both_transactions(self._mongo, self._pg) as (
@@ -1166,7 +1173,6 @@ class ReferencesData(DataLayerDomain):
 
         for source_otu_id, version in manifest.items():
             _, patched = await patch_to_version(
-                self._mongo,
                 self._pg,
                 source_otu_id,
                 version,

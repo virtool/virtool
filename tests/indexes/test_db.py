@@ -266,9 +266,8 @@ async def test_reads_tolerate_integer_embedded_reference_id(
 
 async def test_iter_patched_otus_starts_when_consumed(
     mocker: MockerFixture,
-    mongo: Mongo,
 ):
-    async def patch_to_version(_mongo, _pg, otu_id, version):
+    async def patch_to_version(_pg, otu_id, version):
         return None, {"_id": otu_id, "version": version}
 
     m = mocker.patch(
@@ -277,15 +276,15 @@ async def test_iter_patched_otus_starts_when_consumed(
     )
 
     pg = mocker.Mock()
-    stream = iter_patched_otus(mongo, pg, {"foo": 2, "bar": 10})
+    stream = iter_patched_otus(pg, {"foo": 2, "bar": 10})
 
     assert m.call_count == 0
 
     assert await anext(stream) == {"_id": "foo", "version": 2}
-    assert m.call_args_list[0] == mocker.call(mongo, pg, "foo", 2)
+    assert m.call_args_list[0] == mocker.call(pg, "foo", 2)
 
     assert await anext(stream) == {"_id": "bar", "version": 10}
-    assert m.call_args_list[-1] == mocker.call(mongo, pg, "bar", 10)
+    assert m.call_args_list[-1] == mocker.call(pg, "bar", 10)
 
     with pytest.raises(StopAsyncIteration):
         await anext(stream)
@@ -295,7 +294,6 @@ async def test_iter_patched_otus_starts_when_consumed(
 
 async def test_iter_patched_otus_preserves_order_when_patches_finish_out_of_order(
     mocker: MockerFixture,
-    mongo: Mongo,
 ):
     gates = {
         "slow": asyncio.Event(),
@@ -304,7 +302,7 @@ async def test_iter_patched_otus_preserves_order_when_patches_finish_out_of_orde
     all_started = asyncio.Event()
     started = []
 
-    async def patch_to_version(_mongo, _pg, otu_id, version):
+    async def patch_to_version(_pg, otu_id, version):
         started.append(otu_id)
 
         if len(started) == 2:
@@ -320,7 +318,6 @@ async def test_iter_patched_otus_preserves_order_when_patches_finish_out_of_orde
     )
 
     stream = iter_patched_otus(
-        mongo,
         mocker.Mock(),
         {"slow": 1, "fast": 2},
     )
@@ -345,7 +342,6 @@ async def test_iter_patched_otus_preserves_order_when_patches_finish_out_of_orde
 
 async def test_iter_patched_otus_limits_concurrent_patches(
     mocker: MockerFixture,
-    mongo: Mongo,
 ):
     concurrency = 3
     manifest = {f"otu_{i}": i for i in range(concurrency + 1)}
@@ -354,7 +350,7 @@ async def test_iter_patched_otus_limits_concurrent_patches(
     next_patch_started = asyncio.Event()
     started = []
 
-    async def patch_to_version(_mongo, _pg, otu_id, version):
+    async def patch_to_version(_pg, otu_id, version):
         started.append(otu_id)
 
         if len(started) == concurrency:
@@ -373,7 +369,6 @@ async def test_iter_patched_otus_limits_concurrent_patches(
     )
 
     stream = iter_patched_otus(
-        mongo,
         mocker.Mock(),
         manifest,
         concurrency=concurrency,
@@ -399,7 +394,6 @@ async def test_iter_patched_otus_limits_concurrent_patches(
 
 async def test_iter_patched_otus_limits_scheduled_lookahead(
     mocker: MockerFixture,
-    mongo: Mongo,
 ):
     concurrency = 2
     window_size = 5
@@ -410,7 +404,7 @@ async def test_iter_patched_otus_limits_scheduled_lookahead(
     beyond_window_started = asyncio.Event()
     started = []
 
-    async def patch_to_version(_mongo, _pg, otu_id, version):
+    async def patch_to_version(_pg, otu_id, version):
         started.append(otu_id)
 
         if len(started) == concurrency:
@@ -432,7 +426,6 @@ async def test_iter_patched_otus_limits_scheduled_lookahead(
     )
 
     stream = iter_patched_otus(
-        mongo,
         mocker.Mock(),
         manifest,
         concurrency=concurrency,
@@ -588,7 +581,6 @@ class TestUpdateLastIndexedVersions:
         async with both_transactions(mongo, pg) as (mongo_session, pg_session):
             await update_last_indexed_versions(
                 mongo,
-                pg,
                 reference.id,
                 mongo_session,
                 pg_session,
@@ -631,7 +623,6 @@ class TestUpdateLastIndexedVersions:
         async with both_transactions(mongo, pg) as (mongo_session, pg_session):
             await update_last_indexed_versions(
                 mongo,
-                pg,
                 reference.id,
                 mongo_session,
                 pg_session,
@@ -658,18 +649,19 @@ class TestUpdateLastIndexedVersions:
             assert rows[otu.id].last_indexed_version == document["version"]
             assert rows[otu.id].data["last_indexed_version"] == document["version"]
 
-    async def test_otu_not_in_postgres(
+    async def test_mongo_only_otu_is_not_stamped(
         self,
         fake: DataFaker,
         mongo: Mongo,
         pg: AsyncEngine,
         test_otu,
     ):
-        """An OTU that has not been backfilled yet is stamped in Mongo and skipped in
-        Postgres, rather than raising.
+        """An OTU that exists only in Mongo is stamped in neither store.
 
-        The backfill carries the stamped Mongo document over, so there is nothing to
-        write here.
+        Postgres is the read authority: the OTUs to stamp are read from it, so an OTU
+        with no Postgres row is invisible here and is not stamped in Mongo either. The
+        read cutover is gated on the backfill and the parity check, so no such OTU
+        exists in production by the time this runs.
         """
         user = await fake.users.create()
         reference = await fake.references.create(user=user)
@@ -681,7 +673,6 @@ class TestUpdateLastIndexedVersions:
         async with both_transactions(mongo, pg) as (mongo_session, pg_session):
             await update_last_indexed_versions(
                 mongo,
-                pg,
                 reference.id,
                 mongo_session,
                 pg_session,
@@ -689,7 +680,7 @@ class TestUpdateLastIndexedVersions:
 
         document = await mongo.otus.find_one({"_id": test_otu["_id"]})
 
-        assert document["last_indexed_version"] == 3
+        assert document["last_indexed_version"] == test_otu["last_indexed_version"]
 
         async with AsyncSession(pg) as session:
             assert (

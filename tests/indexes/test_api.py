@@ -27,11 +27,12 @@ from virtool.history.db import legacy_history_values
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.db import JOB_INDEX_FILE_NAMES
 from virtool.indexes.sql import SQLIndexFile
+from virtool.otus.db import bulk_insert_otu_rows
+from virtool.otus.sql import SQLOTU
 from virtool.indexes.utils import check_index_file_type, compose_index_file_key
 from virtool.jobs.pg import SQLJob, SQLJobIndex
 from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_mongo_from_app
 from virtool.storage.protocol import StorageBackend
 from virtool.tasks.sql import SQLTask
 from virtool.workflow.pytest_plugin.utils import StaticTime
@@ -419,7 +420,6 @@ async def test_download_otus_json(
 
     if not file_exists:
         m_iter_patched_otus.assert_called_with(
-            get_mongo_from_app(client.app),
             client.app["pg"],
             manifest,
         )
@@ -514,7 +514,7 @@ class TestCreate:
             assert await session.scalar(select(SQLJob.id)) is None
             assert await session.scalar(select(SQLJobIndex.job_id)) is None
 
-        m_create_manifest.assert_called_with(ANY, ANY, reference["id"])
+        m_create_manifest.assert_called_with(ANY, reference["id"])
 
     async def test_insufficient_rights(
         self,
@@ -561,7 +561,7 @@ class TestCreate:
 
     async def test_unverified(
         self,
-        mongo: Mongo,
+        pg: AsyncEngine,
         resp_is: RespIs,
         spawn_client: ClientSpawner,
     ):
@@ -575,9 +575,20 @@ class TestCreate:
 
         reference = await create_reference(client, name="Foo")
 
-        await mongo.otus.insert_one(
-            {"verified": False, "reference": {"id": reference["id"]}},
-        )
+        async with AsyncSession(pg) as session:
+            session.add(
+                SQLOTU(
+                    id="unverified_otu",
+                    data={"_id": "unverified_otu"},
+                    name="Unverified OTU",
+                    abbreviation="",
+                    last_indexed_version=None,
+                    reference_id=reference["id"],
+                    verified=False,
+                    version=0,
+                ),
+            )
+            await session.commit()
 
         resp = await client.post(f"/references/v1/{reference['id']}/indexes", {})
 
@@ -851,6 +862,11 @@ async def test_finalize(
 
     reference = await fake.references.create(user=user)
 
+    # A change of `version` that should be reflected in `last_indexed_version` after
+    # finalizing. The OTU is written to both stores, as it is in production, so the
+    # Postgres-backed read that drives the stamp can see it.
+    otu = {**test_otu, "version": 1, "reference": {"id": reference.id}}
+
     await asyncio.gather(
         mongo.indexes.insert_one(
             {
@@ -865,10 +881,7 @@ async def test_finalize(
                 "task": None,
             },
         ),
-        # change `version` that should be reflected in `last_indexed_version` after calling
-        mongo.otus.insert_one(
-            {**test_otu, "version": 1, "reference": {"id": reference.id}},
-        ),
+        mongo.otus.insert_one(otu),
     )
 
     async with AsyncSession(pg) as session:
@@ -883,6 +896,7 @@ async def test_finalize(
                 for file_name in files
             ],
         )
+        await bulk_insert_otu_rows(session, [otu], reference.id)
         await session.commit()
 
     resp = await client.patch("/indexes/test_index")

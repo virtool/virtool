@@ -241,7 +241,6 @@ class IndexData:
             patched_otus = [
                 otu
                 async for otu in virtool.indexes.db.iter_patched_otus(
-                    self._mongo,
                     self._pg,
                     index["manifest"],
                 )
@@ -369,7 +368,6 @@ class IndexData:
         ) -> None:
             await update_last_indexed_versions(
                 self._mongo,
-                self._pg,
                 ref_id,
                 mongo_session,
                 pg_session,
@@ -432,7 +430,6 @@ class IndexData:
         patched_otus = [
             otu
             async for otu in virtool.indexes.db.iter_patched_otus(
-                self._mongo,
                 self._pg,
                 index["manifest"],
             )
@@ -469,7 +466,6 @@ class IndexData:
 
                 await update_last_indexed_versions(
                     self._mongo,
-                    self._pg,
                     ref_id,
                     mongo_session,
                     pg_session,

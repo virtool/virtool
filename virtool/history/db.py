@@ -713,7 +713,6 @@ async def _resolve_diffs(pg: AsyncEngine, changes: list[Document]) -> dict[str, 
 
 
 async def patch_to_version(
-    mongo: "Mongo",
     pg: AsyncEngine,
     otu_id: str,
     version: str | int,
@@ -722,14 +721,13 @@ async def patch_to_version(
 
     Uses the diffs in the change documents associated with the otu.
 
-    :param mongo: the database object
     :param pg: the application PostgreSQL database object
     :param otu_id: the id of the otu to patch
     :param version: the version to patch to
     :return: the current joined otu and the patched otu
 
     """
-    current = await virtool.otus.db.join(mongo, otu_id) or {}
+    current = await virtool.otus.db.join_legacy_otu(pg, otu_id) or {}
 
     if "version" in current and current["version"] == version:
         return current, deepcopy(current)
