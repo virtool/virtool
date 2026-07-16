@@ -1,4 +1,3 @@
-import asyncio
 from http import HTTPStatus
 
 import pytest
@@ -138,7 +137,7 @@ class TestEdit:
         data_layer: DataLayer,
         existing_abbreviation: str,
         description: str,
-        mongo: Mongo,
+        insert_otu,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
         test_otu,
@@ -156,12 +155,9 @@ class TestEdit:
 
         reference = await create_reference(client)
 
-        await mongo.otus.insert_one(
-            {
-                **test_otu,
-                "existing_abbreviation": existing_abbreviation,
-                "reference": {"id": reference["id"]},
-            },
+        await insert_otu(
+            {**test_otu, "existing_abbreviation": existing_abbreviation},
+            reference["id"],
         )
 
         resp = await client.patch("/otus/6116cba1", data)
@@ -175,7 +171,7 @@ class TestEdit:
 
     async def test_insufficient_rights(
         self,
-        mongo: Mongo,
+        insert_otu,
         resp_is: RespIs,
         spawn_client: ClientSpawner,
         test_otu,
@@ -190,9 +186,7 @@ class TestEdit:
 
         reference = await create_reference(owner)
 
-        await mongo.otus.insert_one(
-            {**test_otu, "reference": {"id": reference["id"]}},
-        )
+        await insert_otu(test_otu, reference["id"])
 
         client = await spawn_client(authenticated=True)
 
@@ -226,11 +220,12 @@ class TestEdit:
         self,
         data,
         message: str,
-        mongo: Mongo,
+        insert_otu,
+        test_otu,
         spawn_client: ClientSpawner,
         resp_is: RespIs,
     ):
-        """Test that the request fails with ``409 Conflict`` if the requested name or
+        """Test that the request fails with ``400 Bad Request`` if the requested name or
         abbreviation already exists.
         """
         client = await spawn_client(
@@ -240,28 +235,31 @@ class TestEdit:
 
         reference = await create_reference(client)
 
-        await mongo.otus.insert_many(
-            [
-                {
-                    "_id": "test",
-                    "name": "Prunus virus F",
-                    "lower_name": "prunus virus f",
-                    "isolates": [],
-                    "reference": {"id": reference["id"]},
-                },
-                {
-                    "_id": "conflict",
-                    "name": "Tobacco mosaic virus",
-                    "abbreviation": "TMV",
-                    "lower_name": "tobacco mosaic virus",
-                    "isolates": [],
-                    "reference": {"id": reference["id"]},
-                },
-            ],
-            session=None,
+        await insert_otu(
+            {
+                **test_otu,
+                "_id": "edited",
+                "name": "Prunus virus F",
+                "abbreviation": "",
+                "lower_name": "prunus virus f",
+                "isolates": [],
+            },
+            reference["id"],
         )
 
-        resp = await client.patch("/otus/test", data)
+        await insert_otu(
+            {
+                **test_otu,
+                "_id": "conflict",
+                "name": "Tobacco mosaic virus",
+                "abbreviation": "TMV",
+                "lower_name": "tobacco mosaic virus",
+                "isolates": [],
+            },
+            reference["id"],
+        )
+
+        resp = await client.patch("/otus/edited", data)
 
         await resp_is.bad_request(resp, message)
 
@@ -278,7 +276,7 @@ class TestEdit:
         self,
         change_count: int,
         data: dict,
-        mongo: Mongo,
+        insert_otu,
         pg: AsyncEngine,
         spawn_client: ClientSpawner,
         snapshot: SnapshotAssertion,
@@ -295,10 +293,7 @@ class TestEdit:
 
         reference = await create_reference(client)
 
-        await asyncio.gather(
-            mongo.otus.insert_one({**test_otu, "reference": {"id": reference["id"]}}),
-            mongo.sequences.insert_one(test_sequence),
-        )
+        await insert_otu(test_otu, reference["id"], [test_sequence])
 
         async with AsyncSession(pg) as session:
             session.add(SQLLegacyHistory(**legacy_history_values(change)))
@@ -406,13 +401,16 @@ class TestDelete:
 class TestListIsolates:
     async def test_ok(
         self,
-        mongo: Mongo,
+        fake: DataFaker,
+        insert_otu,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
         test_otu: dict,
     ):
         """Test the isolates can be listed for an OTU."""
         client = await spawn_client(authenticated=True)
+
+        reference = await fake.references.create(user=client.user)
 
         test_otu["isolates"].append(
             {
@@ -423,7 +421,7 @@ class TestListIsolates:
             },
         )
 
-        await mongo.otus.insert_one(test_otu)
+        await insert_otu(test_otu, reference.id)
 
         resp = await client.get("/otus/6116cba1/isolates")
 
@@ -1535,60 +1533,78 @@ class TestDeleteSequence:
             assert resp.status == 204
 
 
-@pytest.mark.parametrize("error", [None, "404"])
-async def test_download_otu(
-    error,
-    mongo: Mongo,
-    spawn_client,
-    resp_is,
-    test_sequence,
-    test_otu,
-):
-    client = await spawn_client(authenticated=True)
+class TestDownloadOTU:
+    async def test_ok(
+        self,
+        fake: DataFaker,
+        insert_otu,
+        spawn_client,
+        test_sequence,
+        test_otu,
+    ):
+        client = await spawn_client(authenticated=True)
 
-    if error != "404_otu":
-        await mongo.otus.insert_one(test_otu)
+        reference = await fake.references.create(user=client.user)
 
-    await mongo.sequences.insert_one(test_sequence)
+        await insert_otu(test_otu, reference.id, [test_sequence])
 
-    resp = await client.get("/otus/6116cba1.fa")
+        resp = await client.get("/otus/6116cba1.fa")
 
-    if error == "404_otu":
-        await resp_is.not_found(resp, "OTU not found")
-        return
-
-    assert resp.status == HTTPStatus.OK
-
-
-@pytest.mark.parametrize("error", [None, "404_otu", "404_isolate"])
-async def test_download_isolate(
-    error,
-    resp_is,
-    mongo: Mongo,
-    spawn_client,
-    test_otu,
-    test_isolate,
-    test_sequence,
-):
-    client = await spawn_client(authenticated=True)
-
-    isolate = test_otu["isolates"][0]
-
-    isolate_id = isolate["id"]
-
-    if error == "404_isolate":
-        isolate["id"] = "different"
-
-    if error != "404_otu":
-        await mongo.otus.insert_one(test_otu)
-
-    await mongo.sequences.insert_one(test_sequence)
-
-    resp = await client.get(f"/otus/{test_otu['_id']}/isolates/{isolate_id}.fa")
-
-    if error is None:
         assert resp.status == HTTPStatus.OK
-        return
 
-    await resp_is.not_found(resp)
-    return
+    async def test_not_found(self, spawn_client, resp_is):
+        client = await spawn_client(authenticated=True)
+
+        resp = await client.get("/otus/6116cba1.fa")
+
+        await resp_is.not_found(resp)
+
+
+class TestDownloadIsolate:
+    async def test_ok(
+        self,
+        fake: DataFaker,
+        insert_otu,
+        spawn_client,
+        test_otu,
+        test_sequence,
+    ):
+        client = await spawn_client(authenticated=True)
+
+        reference = await fake.references.create(user=client.user)
+
+        await insert_otu(test_otu, reference.id, [test_sequence])
+
+        isolate_id = test_otu["isolates"][0]["id"]
+
+        resp = await client.get(f"/otus/6116cba1/isolates/{isolate_id}.fa")
+
+        assert resp.status == HTTPStatus.OK
+
+    async def test_otu_not_found(self, spawn_client, resp_is, test_otu):
+        client = await spawn_client(authenticated=True)
+
+        isolate_id = test_otu["isolates"][0]["id"]
+
+        resp = await client.get(f"/otus/6116cba1/isolates/{isolate_id}.fa")
+
+        await resp_is.not_found(resp)
+
+    async def test_isolate_not_found(
+        self,
+        fake: DataFaker,
+        insert_otu,
+        spawn_client,
+        resp_is,
+        test_otu,
+        test_sequence,
+    ):
+        client = await spawn_client(authenticated=True)
+
+        reference = await fake.references.create(user=client.user)
+
+        await insert_otu(test_otu, reference.id, [test_sequence])
+
+        resp = await client.get("/otus/6116cba1/isolates/different.fa")
+
+        await resp_is.not_found(resp)

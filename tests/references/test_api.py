@@ -1,4 +1,3 @@
-import asyncio
 from http import HTTPStatus
 from pathlib import Path
 from unittest.mock import ANY
@@ -880,7 +879,6 @@ class TestCreateOTU:
             # Abbreviation defaults to empty string for OTU creation.
             m_check_name_and_abbreviation.assert_called_with(
                 ANY,
-                ANY,
                 "foo",
                 "Tobacco mosaic virus",
                 "TMV",
@@ -1425,6 +1423,7 @@ async def test_find_otus(
     find: str | None,
     verified: bool | None,
     fake: DataFaker,
+    insert_otu,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     mongo: Mongo,
@@ -1438,51 +1437,53 @@ async def test_find_otus(
     user = await fake.users.create()
 
     async with AsyncSession(pg) as session:
-        session.add(
-            SQLReference(
-                legacy_id="foo",
-                name="Foo",
-                description="",
-                created_at=virtool.utils.timestamp(),
-                source_types=[],
-                user_id=user.id,
-            ),
+        reference = SQLReference(
+            legacy_id="foo",
+            name="Foo",
+            description="",
+            created_at=virtool.utils.timestamp(),
+            source_types=[],
+            user_id=user.id,
         )
+        session.add(reference)
+        await session.flush()
+
+        reference_id = reference.id
+
         await session.commit()
 
-    await asyncio.gather(
-        mongo.references.insert_one(
-            {"_id": "foo", "name": "Foo", "data_type": "genome"},
-        ),
-        mongo.otus.insert_many(
-            [
-                {
-                    "_id": "6116cba1",
-                    "name": "Prunus virus F",
-                    "abbreviation": "PVF",
-                    "last_indexed_version": None,
-                    "verified": True,
-                    "lower_name": "prunus virus f",
-                    "isolates": [],
-                    "version": 0,
-                    "reference": {"id": "foo"},
-                    "schema": [],
-                },
-                {
-                    "_id": "5316cbz2",
-                    "name": "Papaya virus q",
-                    "abbreviation": "P",
-                    "last_indexed_version": None,
-                    "verified": False,
-                    "lower_name": "papaya virus q",
-                    "isolates": [],
-                    "version": 0,
-                    "reference": {"id": "foo"},
-                    "schema": [],
-                },
-            ],
-            session=None,
-        ),
+    await mongo.references.insert_one(
+        {"_id": "foo", "name": "Foo", "data_type": "genome"},
+    )
+
+    await insert_otu(
+        {
+            "_id": "6116cba1",
+            "name": "Prunus virus F",
+            "abbreviation": "PVF",
+            "last_indexed_version": None,
+            "verified": True,
+            "lower_name": "prunus virus f",
+            "isolates": [],
+            "version": 0,
+            "schema": [],
+        },
+        reference_id,
+    )
+
+    await insert_otu(
+        {
+            "_id": "5316cbz2",
+            "name": "Papaya virus q",
+            "abbreviation": "P",
+            "last_indexed_version": None,
+            "verified": False,
+            "lower_name": "papaya virus q",
+            "isolates": [],
+            "version": 0,
+            "schema": [],
+        },
+        reference_id,
     )
 
     query = []

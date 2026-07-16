@@ -12,7 +12,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import virtool.history.db
 import virtool.otus.db
 import virtool.otus.utils
-from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
+from virtool.data.errors import (
+    ResourceConflictError,
+    ResourceError,
+    ResourceNotFoundError,
+)
 from virtool.data.topg import resolve_legacy_id, retry_both_transactions
 from virtool.data.transforms import apply_transforms
 from virtool.history.utils import (
@@ -22,11 +26,13 @@ from virtool.history.utils import (
 )
 from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_one_field
 from virtool.otus.db import (
+    get_legacy_otu_fields,
+    get_legacy_otu_reference_id,
     get_legacy_sequence,
     get_legacy_sequence_body,
     increment_otu_version,
+    legacy_isolate_exists,
     legacy_sequence_exists,
     list_legacy_isolate_sequence_bodies,
     list_legacy_isolate_sequences,
@@ -36,6 +42,7 @@ from virtool.otus.db import (
 from virtool.otus.models import OTU, OTUIsolate, OTUSequence, Sequence
 from virtool.otus.oas import CreateOTURequest, UpdateOTURequest, UpdateSequenceRequest
 from virtool.otus.utils import (
+    evaluate_changes,
     find_isolate,
     format_fasta_entry,
     format_fasta_filename,
@@ -63,9 +70,51 @@ class OTUData:
         self, page: int, per_page: int, term: str | None, verified: bool | None
     ) -> dict[str, Any] | list[dict | None]:
         """Find OTUs matching the given query."""
-        return await virtool.otus.db.find(
-            self._mongo, self._pg, term, page, per_page, verified
+        return await virtool.otus.db.find(self._pg, term, page, per_page, verified)
+
+    async def get_reference_id(
+        self,
+        otu_id: str,
+        isolate_id: str | None = None,
+    ) -> int:
+        """Get the id of the reference an OTU belongs to.
+
+        Backs the authorization checks on the OTU handlers, which need the parent
+        reference to resolve a right but nothing else about the OTU. The handler owns
+        the resulting decision.
+
+        Passing ``isolate_id`` additionally requires the OTU to carry that isolate, so a
+        handler addressing an isolate gets its existence check from the same read.
+
+        :param otu_id: the ID of the OTU
+        :param isolate_id: the ID of an isolate the OTU must carry
+        :return: the ID of the parent reference
+        :raises ResourceNotFoundError: the OTU, or the named isolate, does not exist
+        """
+        reference_id = await get_legacy_otu_reference_id(
+            self._pg,
+            otu_id,
+            isolate_id=isolate_id,
         )
+
+        if reference_id is None:
+            raise ResourceNotFoundError
+
+        return reference_id
+
+    async def list_isolates(self, otu_id: str) -> list[Document]:
+        """List an OTU's isolates and their sequences.
+
+        :param otu_id: the ID of the OTU
+        :return: the isolates
+        :raises ResourceNotFoundError: the OTU does not exist
+        """
+        document = await virtool.otus.db.join_and_format(self._pg, otu_id)
+
+        if document is None:
+            raise ResourceNotFoundError
+
+        return document["isolates"]
 
     async def get(self, otu_id: str) -> OTU:
         """Get a single OTU by ID.
@@ -73,7 +122,7 @@ class OTUData:
         :param otu_id: the ID of the OTU to get
         :return: the OTU
         """
-        document = await virtool.otus.db.join_and_format(self._mongo, self._pg, otu_id)
+        document = await virtool.otus.db.join_and_format(self._pg, otu_id)
 
         if document is None:
             raise ResourceNotFoundError
@@ -108,7 +157,7 @@ class OTUData:
         :return: a FASTA filename and body
 
         """
-        otu = await self._mongo.otus.find_one(otu_id, ["name", "isolates"])
+        otu = await get_legacy_otu_fields(self._pg, otu_id, ["name", "isolates"])
 
         if otu is None:
             raise ResourceNotFoundError
@@ -146,18 +195,17 @@ class OTUData:
         :return: an OTU name and isolate name
 
         """
-        otu = await self._mongo.otus.find_one(
-            {"_id": otu_id, "isolates.id": isolate_id},
+        otu = await get_legacy_otu_fields(
+            self._pg,
+            otu_id,
             ["name", "isolates"],
+            isolate_id=isolate_id,
         )
 
         if not otu:
             raise ResourceNotFoundError("OTU does not exist")
 
         isolate = virtool.otus.utils.find_isolate(otu["isolates"], isolate_id)
-
-        if not isolate:
-            raise ResourceNotFoundError("Isolate does not exist")
 
         return otu["name"], virtool.otus.utils.format_isolate_name(isolate)
 
@@ -286,12 +334,42 @@ class OTUData:
         Modifiable fields are `name`, `abbreviation`, and `schema`. Method creates a
         corresponding history record.
 
+        A request that would leave every modifiable field as it already is makes no
+        change and creates no history record; the OTU is returned as-is.
+
         :param otu_id: the ID of the OTU to edit
         :param data: the update request
         :param user_id: the requesting user id
         :return: the updated and joined OTU document
+        :raises ResourceNotFoundError: the OTU does not exist
+        :raises ResourceError: the new name or abbreviation is already in use
 
         """
+        existing = await get_legacy_otu_fields(
+            self._pg,
+            otu_id,
+            ["abbreviation", "name", "reference", "schema"],
+        )
+
+        if existing is None:
+            raise ResourceNotFoundError
+
+        name, abbreviation, otu_schema = evaluate_changes(
+            data.dict(by_alias=True, exclude_unset=True),
+            existing,
+        )
+
+        if name is None and abbreviation is None and otu_schema is None:
+            return await self.get(otu_id)
+
+        if message := await virtool.otus.db.check_name_and_abbreviation(
+            self._pg,
+            existing["reference"]["id"],
+            name,
+            abbreviation,
+        ):
+            raise ResourceError(message)
+
         # Update the ``modified`` and ``verified`` fields in the otu document now,
         # because we are definitely going to modify the otu.
         update = {"verified": False}
@@ -424,12 +502,12 @@ class OTUData:
         :raises ResourceNotFoundError: the OTU does not exist
         :raises ResourceConflictError: the reference does not allow the source type
         """
-        reference = await get_one_field(self._mongo.otus, "reference", otu_id)
+        reference_id = await get_legacy_otu_reference_id(self._pg, otu_id)
 
-        if not reference:
+        if reference_id is None:
             raise ResourceNotFoundError
 
-        if not await check_source_type(self._pg, reference["id"], source_type):
+        if not await check_source_type(self._pg, reference_id, source_type):
             raise ResourceConflictError("Source type is not allowed")
 
     async def add_isolate(
@@ -536,7 +614,9 @@ class OTUData:
 
             await self._check_source_type(otu_id, source_type)
 
-        isolates = await get_one_field(self._mongo.otus, "isolates", otu_id)
+        isolates = (await get_legacy_otu_fields(self._pg, otu_id, ["isolates"]))[
+            "isolates"
+        ]
 
         isolate = find_isolate(isolates, isolate_id)
         old_isolate_name = format_isolate_name(isolate)
@@ -600,7 +680,6 @@ class OTUData:
         new = await retry_both_transactions(self._mongo, self._pg, func)
 
         complete = await virtool.otus.db.join_and_format(
-            self._mongo,
             self._pg,
             otu_id,
             joined=new,
@@ -803,6 +882,17 @@ class OTUData:
         segment: str | None = None,
         sequence_id: str | None = None,
     ) -> OTUSequence:
+        """Create a sequence on an isolate.
+
+        :raises ResourceError: the segment is not defined in the parent OTU's schema
+        """
+        if message := await virtool.otus.db.check_sequence_segment(
+            self._pg,
+            otu_id,
+            {"segment": segment},
+        ):
+            raise ResourceError(message)
+
         async def func(
             mongo_session: AsyncIOMotorClientSession,
             pg_session: AsyncSession,
@@ -876,10 +966,7 @@ class OTUData:
         isolate_id: str,
         sequence_id: str,
     ) -> Sequence:
-        if await self._mongo.otus.count_documents(
-            {"_id": otu_id, "isolates.id": isolate_id},
-            limit=1,
-        ) and (
+        if await legacy_isolate_exists(self._pg, otu_id, isolate_id) and (
             document := await get_legacy_sequence(
                 self._pg,
                 otu_id,
@@ -908,10 +995,7 @@ class OTUData:
         :return: the isolate's sequences
         :raises ResourceNotFoundError: the OTU or isolate does not exist
         """
-        if not await self._mongo.otus.count_documents(
-            {"_id": otu_id, "isolates.id": isolate_id},
-            limit=1,
-        ):
+        if not await legacy_isolate_exists(self._pg, otu_id, isolate_id):
             raise ResourceNotFoundError
 
         return [
@@ -931,9 +1015,11 @@ class OTUData:
         :return: the isolate
         :raises ResourceNotFoundError: the OTU or isolate does not exist
         """
-        document = await self._mongo.otus.find_one(
-            {"_id": otu_id, "isolates.id": isolate_id},
+        document = await get_legacy_otu_fields(
+            self._pg,
+            otu_id,
             ["isolates"],
+            isolate_id=isolate_id,
         )
 
         if not document:
@@ -968,7 +1054,18 @@ class OTUData:
         user_id: int,
         data: UpdateSequenceRequest,
     ):
+        """Update a sequence.
+
+        :raises ResourceError: the segment is not defined in the parent OTU's schema
+        """
         data = data.dict(exclude_unset=True)
+
+        if message := await virtool.otus.db.check_sequence_segment(
+            self._pg,
+            otu_id,
+            data,
+        ):
+            raise ResourceError(message)
 
         update = {
             key: data[key]

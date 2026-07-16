@@ -14,7 +14,9 @@ from syrupy import SnapshotAssertion
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.models.enums import Molecule
 from virtool.mongo.core import Mongo
+from virtool.otus.models import OTUSegment
 from virtool.otus.oas import (
     CreateOTURequest,
     UpdateOTURequest,
@@ -381,6 +383,19 @@ class TestUpdateIsolateSourceType:
         assert isolate["source_name"] == "Renamed"
 
 
+def _segments(count: int) -> list[OTUSegment]:
+    """Compose an OTU schema defining the segments ``RNA_0`` through ``RNA_{count-1}``.
+
+    ``create_sequence`` and ``update_sequence`` reject a segment the parent OTU's schema
+    does not define, so a test that names a segment has to give the OTU one that carries
+    it.
+    """
+    return [
+        OTUSegment(molecule=Molecule.ss_rna, name=f"RNA_{index}", required=False)
+        for index in range(count)
+    ]
+
+
 async def _get_otu_row(pg: AsyncEngine, otu_id: str) -> SQLOTU | None:
     async with AsyncSession(pg) as session:
         return (
@@ -546,7 +561,7 @@ class TestSequenceDualWrite:
 
         otu = await data_layer.otus.create(
             reference.id,
-            CreateOTURequest(name="Example"),
+            CreateOTURequest(name="Example", schema=_segments(10)),
             user.id,
         )
 
@@ -668,7 +683,7 @@ class TestSequencePosition:
 
         otu = await data_layer.otus.create(
             reference.id,
-            CreateOTURequest(name="Example"),
+            CreateOTURequest(name="Example", schema=_segments(10)),
             user.id,
         )
 

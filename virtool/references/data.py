@@ -644,7 +644,6 @@ class ReferencesData(DataLayerDomain):
         await self._require_exists(ref_id)
 
         data = await virtool.otus.db.find(
-            self._mongo,
             self._pg,
             term,
             page,
@@ -667,7 +666,6 @@ class ReferencesData(DataLayerDomain):
         # Check if either the name or abbreviation are already in use. Send a ``400`` if
         # they are.
         if message := await virtool.otus.db.check_name_and_abbreviation(
-            self._mongo,
             self._pg,
             ref_id,
             data.name,

@@ -27,12 +27,12 @@ from virtool.history.db import legacy_history_values
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.db import JOB_INDEX_FILE_NAMES
 from virtool.indexes.sql import SQLIndexFile
-from virtool.otus.db import bulk_insert_otu_rows
-from virtool.otus.sql import SQLOTU
 from virtool.indexes.utils import check_index_file_type, compose_index_file_key
 from virtool.jobs.pg import SQLJob, SQLJobIndex
 from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
+from virtool.otus.db import bulk_insert_otu_rows
+from virtool.otus.sql import SQLOTU
 from virtool.storage.protocol import StorageBackend
 from virtool.tasks.sql import SQLTask
 from virtool.workflow.pytest_plugin.utils import StaticTime

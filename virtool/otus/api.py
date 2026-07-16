@@ -1,9 +1,7 @@
 from aiohttp import web
 from aiohttp_pydantic import PydanticView
 from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r401, r403, r404
-from sqlalchemy.ext.asyncio import AsyncEngine
 
-import virtool.otus.db
 from virtool.api.custom_json import json_response
 from virtool.api.errors import (
     APIBadRequest,
@@ -12,10 +10,13 @@ from virtool.api.errors import (
     APINotFound,
 )
 from virtool.api.routes import Routes
-from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
+from virtool.data.errors import (
+    ResourceConflictError,
+    ResourceError,
+    ResourceNotFoundError,
+)
 from virtool.data.utils import get_data_from_req
 from virtool.models.roles import AdministratorRole
-from virtool.mongo.utils import get_mongo_from_req, get_one_field
 from virtool.otus.models import OTU, OTUIsolate, OTUSequence, Sequence
 from virtool.otus.oas import (
     CreateIsolateRequest,
@@ -24,9 +25,46 @@ from virtool.otus.oas import (
     UpdateOTURequest,
     UpdateSequenceRequest,
 )
-from virtool.otus.utils import evaluate_changes
 
 routes = Routes()
+
+
+async def check_otu_right(
+    request,
+    otu_id: str,
+    isolate_id: str | None = None,
+) -> None:
+    """Raise unless the requesting client may modify the OTU's parent reference.
+
+    Every OTU handler but the reads guards on ``modify_otu`` against the reference the
+    OTU belongs to, so the lookup of that reference and the translation of its absence
+    into a ``404`` are shared here rather than repeated per handler. The authorization
+    decision itself stays in the API layer.
+
+    :param request: the request
+    :param otu_id: the ID of the OTU being addressed
+    :param isolate_id: the ID of an isolate the OTU must carry
+    :raises APINotFound: the OTU, or the named isolate, does not exist
+    :raises APIInsufficientRights: the client may not modify the OTU
+    """
+    try:
+        reference_id = await get_data_from_req(request).otus.get_reference_id(
+            otu_id,
+            isolate_id=isolate_id,
+        )
+    except ResourceNotFoundError:
+        raise APINotFound()
+
+    client = request["client"]
+
+    if not await get_data_from_req(request).references.check_right(
+        reference_id,
+        "modify_otu",
+        user_id=client.user_id,
+        group_ids=client.groups,
+        administrator=client.administrator_role == AdministratorRole.FULL,
+    ):
+        raise APIInsufficientRights()
 
 
 @routes.view("/otus/{otu_id}")
@@ -74,57 +112,18 @@ class OTUView(PydanticView):
         in the parent reference.
 
         """
-        mongo = get_mongo_from_req(self.request)
-        pg: AsyncEngine = self.request.app["pg"]
+        await check_otu_right(self.request, otu_id)
 
-        # Get existing complete otu record, at the same time ensuring it exists. Send a
-        # ``404`` if not.
-        document = await mongo.otus.find_one(
-            otu_id,
-            ["abbreviation", "name", "reference", "schema"],
-        )
-
-        if not document:
+        try:
+            otu = await get_data_from_req(self.request).otus.update(
+                otu_id,
+                data,
+                self.request["client"].user_id,
+            )
+        except ResourceNotFoundError:
             raise APINotFound()
-
-        ref_id = document["reference"]["id"]
-
-        client = self.request["client"]
-
-        if not await get_data_from_req(self.request).references.check_right(
-            ref_id,
-            "modify_otu",
-            user_id=client.user_id,
-            group_ids=client.groups,
-            administrator=client.administrator_role == AdministratorRole.FULL,
-        ):
-            raise APIInsufficientRights()
-
-        name, abbreviation, otu_schema = evaluate_changes(
-            data.dict(by_alias=True, exclude_unset=True),
-            document,
-        )
-
-        # Send ``200`` with the existing otu record if no change will be made.
-        if name is None and abbreviation is None and otu_schema is None:
-            otu = await get_data_from_req(self.request).otus.get(otu_id)
-            return json_response(otu)
-
-        # Make sure new name or abbreviation are not already in use.
-        if message := await virtool.otus.db.check_name_and_abbreviation(
-            mongo,
-            pg,
-            ref_id,
-            name,
-            abbreviation,
-        ):
-            raise APIBadRequest(message)
-
-        otu = await get_data_from_req(self.request).otus.update(
-            otu_id,
-            data,
-            self.request["client"].user_id,
-        )
+        except ResourceError as err:
+            raise APIBadRequest(str(err))
 
         return json_response(otu)
 
@@ -134,23 +133,7 @@ class OTUView(PydanticView):
         Deletes and OTU and its associated isolates and sequences.
 
         """
-        mongo = get_mongo_from_req(self.request)
-
-        document = await mongo.otus.find_one(otu_id, ["reference"])
-
-        if document is None:
-            raise APINotFound()
-
-        client = self.request["client"]
-
-        if not await get_data_from_req(self.request).references.check_right(
-            document["reference"]["id"],
-            "modify_otu",
-            user_id=client.user_id,
-            group_ids=client.groups,
-            administrator=client.administrator_role == AdministratorRole.FULL,
-        ):
-            raise APIInsufficientRights()
+        await check_otu_right(self.request, otu_id)
 
         await get_data_from_req(self.request).otus.remove(
             otu_id,
@@ -168,15 +151,12 @@ class IsolatesView(PydanticView):
         Lists all the isolates and sequences for an OTU.
 
         """
-        mongo = get_mongo_from_req(self.request)
-        pg: AsyncEngine = self.request.app["pg"]
-
-        document = await virtool.otus.db.join_and_format(mongo, pg, otu_id)
-
-        if not document:
+        try:
+            isolates = await get_data_from_req(self.request).otus.list_isolates(otu_id)
+        except ResourceNotFoundError:
             raise APINotFound()
 
-        return json_response(document["isolates"])
+        return json_response(isolates)
 
     async def post(
         self,
@@ -189,23 +169,7 @@ class IsolatesView(PydanticView):
         Creates an isolate on the OTU specified by `otu_id`.
 
         """
-        mongo = get_mongo_from_req(self.request)
-
-        reference = await get_one_field(mongo.otus, "reference", otu_id)
-
-        if not reference:
-            raise APINotFound()
-
-        client = self.request["client"]
-
-        if not await get_data_from_req(self.request).references.check_right(
-            reference["id"],
-            "modify_otu",
-            user_id=client.user_id,
-            group_ids=client.groups,
-            administrator=client.administrator_role == AdministratorRole.FULL,
-        ):
-            raise APIInsufficientRights()
+        await check_otu_right(self.request, otu_id)
 
         try:
             isolate = await get_data_from_req(self.request).otus.add_isolate(
@@ -280,27 +244,7 @@ class IsolateView(PydanticView):
         Updates an isolate using 'otu_id' and 'isolate_id'.
 
         """
-        mongo = get_mongo_from_req(self.request)
-
-        reference = await get_one_field(
-            mongo.otus,
-            "reference",
-            {"_id": otu_id, "isolates.id": isolate_id},
-        )
-
-        if not reference:
-            raise APINotFound()
-
-        client = self.request["client"]
-
-        if not await get_data_from_req(self.request).references.check_right(
-            reference["id"],
-            "modify_otu",
-            user_id=client.user_id,
-            group_ids=client.groups,
-            administrator=client.administrator_role == AdministratorRole.FULL,
-        ):
-            raise APIInsufficientRights()
+        await check_otu_right(self.request, otu_id, isolate_id=isolate_id)
 
         data = data.dict(exclude_unset=True)
 
@@ -323,27 +267,7 @@ class IsolateView(PydanticView):
         Deletes an isolate using its 'otu id' and 'isolate id'.
 
         """
-        mongo = get_mongo_from_req(self.request)
-
-        reference = await get_one_field(
-            mongo.otus,
-            "reference",
-            {"_id": otu_id, "isolates.id": isolate_id},
-        )
-
-        if not reference:
-            raise APINotFound()
-
-        client = self.request["client"]
-
-        if not await get_data_from_req(self.request).references.check_right(
-            reference["id"],
-            "modify_otu",
-            user_id=client.user_id,
-            group_ids=client.groups,
-            administrator=client.administrator_role == AdministratorRole.FULL,
-        ):
-            raise APIInsufficientRights()
+        await check_otu_right(self.request, otu_id, isolate_id=isolate_id)
 
         await get_data_from_req(self.request).otus.remove_isolate(
             otu_id,
@@ -388,46 +312,21 @@ class SequencesView(PydanticView):
         Creates a new sequence for an isolate identified by `otu_id` and `isolate_id`.
 
         """
-        mongo = get_mongo_from_req(self.request)
+        await check_otu_right(self.request, otu_id, isolate_id=isolate_id)
 
-        document = await mongo.otus.find_one(
-            {"_id": otu_id, "isolates.id": isolate_id},
-            ["reference", "schema"],
-        )
-
-        if not document:
-            raise APINotFound()
-
-        ref_id = document["reference"]["id"]
-
-        client = self.request["client"]
-
-        if not await get_data_from_req(self.request).references.check_right(
-            ref_id,
-            "modify_otu",
-            user_id=client.user_id,
-            group_ids=client.groups,
-            administrator=client.administrator_role == AdministratorRole.FULL,
-        ):
-            raise APIInsufficientRights()
-
-        if message := await virtool.otus.db.check_sequence_segment(
-            mongo,
-            otu_id,
-            data.dict(),
-        ):
-            raise APIBadRequest(message)
-
-        sequence = await get_data_from_req(self.request).otus.create_sequence(
-            otu_id,
-            isolate_id,
-            data.accession,
-            data.definition,
-            data.sequence,
-            self.request["client"].user_id,
-            host=data.host,
-            segment=data.segment,
-        )
+        try:
+            sequence = await get_data_from_req(self.request).otus.create_sequence(
+                otu_id,
+                isolate_id,
+                data.accession,
+                data.definition,
+                data.sequence,
+                self.request["client"].user_id,
+                host=data.host,
+                segment=data.segment,
+            )
+        except ResourceError as err:
+            raise APIBadRequest(str(err))
 
         location = f"/otus/{otu_id}/isolates/{isolate_id}/sequences/{sequence.id}"
 
@@ -494,43 +393,23 @@ class SequenceView(PydanticView):
         Updates a sequence using its 'otu id', 'isolate id' and 'sequence id'.
 
         """
-        mongo = get_mongo_from_req(self.request)
-
-        document = await mongo.otus.find_one(
-            {"_id": otu_id, "isolates.id": isolate_id},
-            ["reference", "segment"],
-        )
-
-        if not document or not await get_data_from_req(
-            self.request,
-        ).otus.sequence_exists(sequence_id):
+        if not await get_data_from_req(self.request).otus.sequence_exists(sequence_id):
             raise APINotFound()
 
-        client = self.request["client"]
+        await check_otu_right(self.request, otu_id, isolate_id=isolate_id)
 
-        if not await get_data_from_req(self.request).references.check_right(
-            document["reference"]["id"],
-            "modify_otu",
-            user_id=client.user_id,
-            group_ids=client.groups,
-            administrator=client.administrator_role == AdministratorRole.FULL,
-        ):
-            raise APIInsufficientRights()
-
-        if message := await virtool.otus.db.check_sequence_segment(
-            mongo,
-            otu_id,
-            data.dict(exclude_unset=True),
-        ):
-            raise APIBadRequest(message)
-
-        sequence_document = await get_data_from_req(self.request).otus.update_sequence(
-            otu_id,
-            isolate_id,
-            sequence_id,
-            self.request["client"].user_id,
-            data,
-        )
+        try:
+            sequence_document = await get_data_from_req(
+                self.request,
+            ).otus.update_sequence(
+                otu_id,
+                isolate_id,
+                sequence_id,
+                self.request["client"].user_id,
+                data,
+            )
+        except ResourceError as err:
+            raise APIBadRequest(str(err))
 
         return json_response(sequence_document)
 
@@ -540,29 +419,10 @@ class SequenceView(PydanticView):
         Deletes the specified sequence.
 
         """
-        mongo = get_mongo_from_req(self.request)
-
         if not await get_data_from_req(self.request).otus.sequence_exists(sequence_id):
             raise APINotFound()
 
-        document = await mongo.otus.find_one(
-            {"_id": otu_id, "isolates.id": isolate_id},
-            ["reference"],
-        )
-
-        if document is None:
-            raise APINotFound()
-
-        client = self.request["client"]
-
-        if not await get_data_from_req(self.request).references.check_right(
-            document["reference"]["id"],
-            "modify_otu",
-            user_id=client.user_id,
-            group_ids=client.groups,
-            administrator=client.administrator_role == AdministratorRole.FULL,
-        ):
-            raise APIInsufficientRights()
+        await check_otu_right(self.request, otu_id, isolate_id=isolate_id)
 
         await get_data_from_req(self.request).otus.remove_sequence(
             otu_id,
@@ -600,24 +460,7 @@ async def set_as_default(req):
     otu_id = req.match_info["otu_id"]
     isolate_id = req.match_info["isolate_id"]
 
-    document = await get_mongo_from_req(req).otus.find_one(
-        {"_id": otu_id, "isolates.id": isolate_id},
-        ["reference"],
-    )
-
-    if not document:
-        raise APINotFound()
-
-    client = req["client"]
-
-    if not await get_data_from_req(req).references.check_right(
-        document["reference"]["id"],
-        "modify_otu",
-        user_id=client.user_id,
-        group_ids=client.groups,
-        administrator=client.administrator_role == AdministratorRole.FULL,
-    ):
-        raise APIInsufficientRights()
+    await check_otu_right(req, otu_id, isolate_id=isolate_id)
 
     isolate = await get_data_from_req(req).otus.set_isolate_as_default(
         otu_id,
