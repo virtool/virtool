@@ -7,7 +7,16 @@ from datetime import datetime
 from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from sqlalchemy import delete, distinct, func, or_, select
+from sqlalchemy import (
+    delete,
+    distinct,
+    false,
+    func,
+    or_,
+    select,
+    true,
+    update,
+)
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -338,22 +347,25 @@ def _encode_otu_data(document: Document) -> Document:
     }
 
 
-def otu_document_from_row(row: SQLOTU) -> Document:
-    """Recover the Mongo OTU document a ``legacy_otus`` row was written from.
+def otu_document_from_data(data: Document) -> Document:
+    """Recover the Mongo OTU document a ``legacy_otus.data`` value was written from.
 
     The inverse of :func:`_encode_otu_data`. A JSONB column cannot hold a datetime, so
     ``created_at`` comes back out as the ISO string it was stored as and is parsed back
     to the naive datetime the rest of the codebase expects. OTUs created through the API
     carry no ``created_at`` at all, so its absence is normal rather than an error.
     """
-    document = row.data
-
-    created_at = document.get("created_at")
+    created_at = data.get("created_at")
 
     if created_at is None:
-        return document
+        return data
 
-    return {**document, "created_at": isoformat_to_datetime(created_at)}
+    return {**data, "created_at": isoformat_to_datetime(created_at)}
+
+
+def otu_document_from_row(row: SQLOTU) -> Document:
+    """Recover the Mongo OTU document a ``legacy_otus`` row was written from."""
+    return otu_document_from_data(row.data)
 
 
 def sequence_document_from_row(row: SQLSequence) -> Document:
@@ -970,6 +982,132 @@ async def write_legacy_sequence(pg_session: AsyncSession, document: Document) ->
         .on_conflict_do_update(
             index_elements=["id"],
             set_={key: value for key, value in values.items() if key != "id"},
+        ),
+    )
+
+
+async def increment_legacy_otu_version(
+    pg_session: AsyncSession,
+    otu_id: str,
+) -> Document | None:
+    """Bump an OTU's ``version`` and clear its ``verified`` flag within ``pg_session``.
+
+    The Postgres counterpart of :func:`increment_otu_version`, and like it returns the
+    OTU document as it now stands, or ``None`` for an OTU that has no row.
+
+    Both fields live twice: once in a promoted column and once in the ``data`` JSONB the
+    document is recovered from. They are written in the same statement, so no reader can
+    observe the column disagreeing with its counterpart. The new ``version`` is derived
+    from the column rather than from ``data``, because the column is what
+    :func:`virtool.otus.migration.reconcile_otus_and_sequences` compares against Mongo.
+
+    The bump is one statement, so ``version + 1`` is computed by Postgres from the row it
+    is writing and two concurrent bumps cannot both read the same version and write the
+    same successor. Callers hold the OTU's :func:`lock_legacy_otu` row lock, which
+    serializes the whole edit around this; the single statement means the increment
+    itself does not depend on them having taken it.
+    """
+    data = await pg_session.scalar(
+        update(SQLOTU)
+        .where(SQLOTU.id == otu_id)
+        .values(
+            version=SQLOTU.version + 1,
+            verified=False,
+            data=SQLOTU.data.concat(
+                func.jsonb_build_object(
+                    "version",
+                    SQLOTU.version + 1,
+                    "verified",
+                    false(),
+                ),
+            ),
+        )
+        .returning(SQLOTU.data),
+    )
+
+    if data is None:
+        return None
+
+    return otu_document_from_data(data)
+
+
+async def update_legacy_otu_verification(
+    pg_session: AsyncSession,
+    joined: Document,
+) -> Document | None:
+    """Mark a ``joined`` OTU verified in Postgres if it has no issues.
+
+    The Postgres counterpart of :func:`update_otu_verification`. Returns the issues
+    :func:`virtool.otus.utils.verify` found, or ``None`` if it found none, and mirrors
+    the Mongo helper in mutating ``joined`` so the caller's copy agrees with the row.
+
+    ``verified`` is written to the promoted column and to its ``data`` counterpart in the
+    same statement, as :func:`increment_legacy_otu_version` writes them.
+
+    Nothing is written for an OTU that has issues. It was already left unverified by the
+    version bump that preceded this call.
+    """
+    issues = virtool.otus.utils.verify(joined)
+
+    if issues is not None:
+        return issues
+
+    await pg_session.execute(
+        update(SQLOTU)
+        .where(SQLOTU.id == joined["_id"])
+        .values(
+            verified=True,
+            data=SQLOTU.data.concat(
+                func.jsonb_build_object("verified", true()),
+            ),
+        ),
+    )
+
+    joined["verified"] = True
+
+    return None
+
+
+async def update_legacy_sequence_segments(
+    pg_session: AsyncSession,
+    old: Document | None,
+    new: Document | None,
+) -> None:
+    """Unset ``segment`` on sequences naming a segment ``new`` no longer defines.
+
+    The Postgres counterpart of :func:`update_sequence_segments`, taking the same joined
+    OTU before and after an edit. An OTU that gained a schema for the first time has no
+    ``old`` names to drop, so it is left alone, matching the Mongo helper's ``"schema"
+    not in old`` guard.
+
+    The segment is *removed* from ``data`` with the JSONB ``-`` operator rather than set
+    to null, because Mongo's ``$unset`` removes the field and ``data`` must stay a
+    faithful lift of the document. The two are not interchangeable: a joined OTU feeds
+    ``dictdiffer`` diffs, so a lingering ``"segment": null`` would diff as a changed
+    field where the Mongo path diffs a removed one, and every patch built on it would
+    disagree. The promoted column has no such distinction to preserve and simply goes
+    null, which is what an absent ``segment`` renders as in
+    :func:`sequence_row_values`.
+    """
+    if old is None or new is None or "schema" not in old:
+        return
+
+    dropped = {segment["name"] for segment in old["schema"]} - {
+        segment["name"] for segment in new["schema"]
+    }
+
+    if not dropped:
+        return
+
+    await pg_session.execute(
+        update(SQLSequence)
+        .where(
+            SQLSequence.otu_id == old["_id"],
+            SQLSequence.segment.in_(dropped),
+        )
+        .values(
+            segment=None,
+            data=SQLSequence.data.op("-")("segment"),
         ),
     )
 
