@@ -155,8 +155,6 @@ async def create(
         "created_at": virtool.utils.timestamp(),
         "manifest": manifest,
         "ready": False,
-        "has_files": True,
-        "has_json": False,
         "job": None,
         "task": {"id": task_id},
         "user": {"id": user_id},
@@ -234,7 +232,6 @@ async def find(
         projection=[
             "_id",
             "created_at",
-            "has_files",
             "job",
             "otu_count",
             "modification_count",

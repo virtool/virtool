@@ -29,8 +29,6 @@
   dict({
     '_id': 'bf1b993c',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'has_files': True,
-    'has_json': False,
     'job': None,
     'manifest': 'manifest',
     'ready': False,
@@ -50,8 +48,6 @@
   dict({
     '_id': 'abc',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'has_files': True,
-    'has_json': False,
     'job': None,
     'manifest': 'manifest',
     'ready': False,

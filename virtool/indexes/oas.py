@@ -10,7 +10,6 @@ class ListIndexesResponse(IndexSearchResult):
                         "version": 1,
                         "created_at": "2015-10-06T20:00:00Z",
                         "ready": False,
-                        "has_files": True,
                         "job": {"id": "bar"},
                         "reference": {"id": "bar"},
                         "user": {
@@ -26,7 +25,6 @@ class ListIndexesResponse(IndexSearchResult):
                         "version": 0,
                         "created_at": "2015-10-06T20:00:00Z",
                         "ready": False,
-                        "has_files": True,
                         "job": {"id": "foo"},
                         "reference": {"id": "foo"},
                         "user": {
@@ -60,7 +58,6 @@ class ReadyIndexesResponse(IndexMinimal):
                         "version": 1,
                         "created_at": "2015-10-06T20:00:00Z",
                         "ready": True,
-                        "has_files": True,
                         "job": {"id": "bar"},
                         "reference": {"id": "bar"},
                         "user": {
@@ -76,7 +73,6 @@ class ReadyIndexesResponse(IndexMinimal):
                         "version": 0,
                         "created_at": "2015-10-06T20:00:00Z",
                         "ready": True,
-                        "has_files": True,
                         "job": {"id": "foo"},
                         "reference": {"id": "foo"},
                         "user": {

@@ -63,7 +63,6 @@
         'type': 'fasta',
       }),
     ]),
-    'has_files': True,
     'id': 'foo',
     'job': dict({
       'created_at': datetime.datetime(2015, 10, 6, 20, 0),
@@ -98,7 +97,6 @@
   dict({
     '_id': 'foo',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'has_files': True,
     'job': dict({
       'id': 1,
     }),

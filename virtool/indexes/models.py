@@ -15,7 +15,6 @@ class IndexNested(BaseModel):
 class IndexMinimal(IndexNested):
     change_count: int
     created_at: datetime
-    has_files: bool
     job: JobMinimal | None
     modified_otu_count: int
     ready: bool
@@ -27,7 +26,6 @@ class IndexMinimal(IndexNested):
             "example": {
                 "change_count": 0,
                 "created_at": "2015-10-06T20:00:00Z",
-                "has_files": True,
                 "id": "fb085f7f",
                 "job": {"id": "bf1b993c"},
                 "modified_otu_count": 0,
@@ -70,7 +68,6 @@ class Index(IndexMinimal):
                 "version": 0,
                 "created_at": "2015-10-06T20:00:00Z",
                 "ready": False,
-                "has_files": True,
                 "job": {"id": "foo"},
                 "reference": {"id": "foo"},
                 "user": {
