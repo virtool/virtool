@@ -1,12 +1,14 @@
 """Work with OTU history in the database."""
 
 import math
+from collections import defaultdict
+from collections.abc import Collection
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import dictdiffer
-from sqlalchemy import Integer, cast, func, select
+from sqlalchemy import Integer, and_, cast, func, or_, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -715,11 +717,15 @@ async def _resolve_diffs(pg: AsyncEngine, changes: list[Document]) -> dict[str, 
 async def patch_to_version(
     pg: AsyncEngine,
     otu_id: str,
-    version: str | int,
+    version: int,
 ) -> tuple:
     """Take a joined otu back in time to the passed ``version``.
 
     Uses the diffs in the change documents associated with the otu.
+
+    A thin single-OTU face on :func:`patch_otus_to_versions`. A caller with more than
+    one OTU to patch should use that directly rather than awaiting this in a loop or a
+    ``gather``.
 
     :param pg: the application PostgreSQL database object
     :param otu_id: the id of the otu to patch
@@ -727,42 +733,181 @@ async def patch_to_version(
     :return: the current joined otu and the patched otu
 
     """
-    current = await virtool.otus.db.join_legacy_otu(pg, otu_id) or {}
+    specifier = (otu_id, version)
 
-    if "version" in current and current["version"] == version:
-        return current, deepcopy(current)
+    return (await patch_otus_to_versions(pg, [specifier]))[specifier]
 
-    patched = deepcopy(current)
 
-    # Collect the changes to revert, sorted by descending version. Stream the ordered
-    # rows and stop at the first change at or below the target version, preserving the
-    # early break of the legacy Mongo cursor so a heavily-edited otu never loads its
-    # whole history.
-    changes_to_revert = []
-    reference_id_from_history: int | str | None = None
+async def patch_otus_to_versions(
+    pg: AsyncEngine,
+    specifiers: Collection[tuple[str, int]],
+) -> dict[tuple[str, int], tuple[Document | None, Document | None]]:
+    """Take each of the joined otus identified by ``specifiers`` back to its version.
+
+    The batched counterpart of :func:`patch_to_version`, and where the patching itself
+    lives. Each specifier is an ``(otu_id, version)`` pair, and each maps to the
+    ``(current, patched)`` pair that :func:`patch_to_version` returns for it. Every
+    specifier is present in the returned mapping. The same OTU may appear under more
+    than one version.
+
+    A target ``version`` is an OTU ``version``, which is an integer -- never the
+    ``"removed"`` sentinel an :class:`SQLLegacyHistory` row's ``otu_version`` can carry.
+    It is compared against other targets and bound into the history predicate as one.
+
+    The whole set is resolved in a fixed handful of queries -- two to join the OTUs, one
+    for the history, one for the diffs -- rather than four or so per OTU. The per-OTU
+    reads this replaces were the cost that made formatting a pathoscope analysis
+    saturate the connection pool and the event loop, slowing down every request the
+    server was handling concurrently.
+
+    :param pg: the application PostgreSQL database object
+    :param specifiers: the ``(otu_id, version)`` pairs to patch
+    :return: a mapping of specifier to its current and patched otu
+
+    """
+    specifiers = set(specifiers)
+
+    if not specifiers:
+        return {}
+
+    current_otus = await virtool.otus.db.join_legacy_otus(
+        pg,
+        {otu_id for otu_id, _ in specifiers},
+    )
+
+    patched_otus: dict[
+        tuple[str, int],
+        tuple[Document | None, Document | None],
+    ] = {}
+
+    to_patch: dict[tuple[str, int], Document] = {}
+
+    for specifier in specifiers:
+        otu_id, version = specifier
+        current = current_otus.get(otu_id, {})
+
+        if "version" in current and current["version"] == version:
+            patched_otus[specifier] = (current, deepcopy(current))
+        else:
+            to_patch[specifier] = current
+
+    if to_patch:
+        history_rows = await _read_history_to_revert(pg, to_patch)
+
+        changes_to_revert = {
+            (otu_id, version): _changes_to_revert(history_rows[otu_id], version)
+            for otu_id, version in to_patch
+        }
+
+        diffs = await _resolve_diffs(
+            pg,
+            [change for changes in changes_to_revert.values() for change in changes],
+        )
+
+        for (otu_id, version), current in to_patch.items():
+            rows = history_rows[otu_id]
+
+            patched_otus[(otu_id, version)] = _apply_changes_to_revert(
+                current,
+                changes_to_revert[(otu_id, version)],
+                diffs,
+                rows[0] if rows else None,
+            )
+
+    return patched_otus
+
+
+async def _read_history_to_revert(
+    pg: AsyncEngine,
+    specifiers: Collection[tuple[str, int]],
+) -> dict[str, list[SQLLegacyHistory]]:
+    """Read the history rows that patching ``specifiers`` could have to revert.
+
+    One query covers every OTU. Each contributes a predicate matching the changes above
+    the lowest version it is being patched to, which is the most any of its specifiers
+    can need, and the rows come back ordered as :func:`_changes_to_revert` walks them.
+
+    The version predicate is what keeps the early break of the legacy Mongo cursor: the
+    changes at or below the target version are never read, so a heavily-edited otu still
+    does not load its whole history. Ordered by descending version, the rows it selects
+    are exactly the leading run the break stopped at -- a ``NULL`` ``otu_version`` is the
+    ``"removed"`` sentinel and sorts above every numbered version, and the rest sort
+    below it in order -- so nothing that is dropped could have been reverted.
+    """
+    lowest_versions: dict[str, int] = {}
+
+    for otu_id, version in specifiers:
+        if otu_id not in lowest_versions or version < lowest_versions[otu_id]:
+            lowest_versions[otu_id] = version
+
+    history_rows = defaultdict(list)
 
     async with AsyncSession(pg) as session:
         result = await session.stream_scalars(
             select(SQLLegacyHistory)
-            .where(SQLLegacyHistory.otu == otu_id)
+            .where(
+                or_(
+                    *[
+                        and_(
+                            SQLLegacyHistory.otu == otu_id,
+                            or_(
+                                SQLLegacyHistory.otu_version.is_(None),
+                                cast(SQLLegacyHistory.otu_version, Integer) > version,
+                            ),
+                        )
+                        for otu_id, version in lowest_versions.items()
+                    ],
+                ),
+            )
             .order_by(
+                SQLLegacyHistory.otu,
                 cast(SQLLegacyHistory.otu_version, Integer).desc().nulls_first(),
                 SQLLegacyHistory.id.desc(),
             ),
         )
 
         async for row in result:
-            if reference_id_from_history is None:
-                reference_id_from_history = row.reference_id or row.reference
+            history_rows[row.otu].append(row)
 
-            otu_version = coerce_otu_version(row.otu_version)
+    return history_rows
 
-            if otu_version == "removed" or otu_version > version:
-                changes_to_revert.append(_change_to_revert(row))
-            else:
-                break
 
-    diffs = await _resolve_diffs(pg, changes_to_revert)
+def _changes_to_revert(
+    history_rows: list[SQLLegacyHistory],
+    version: int,
+) -> list[Document]:
+    """Select the changes to revert to take an otu back to ``version``.
+
+    ``history_rows`` are ordered by descending version and reach further back than this
+    version may need, because they cover every version its otu is being patched to. The
+    walk stops at the first change at or below the target, as the legacy Mongo cursor's
+    did.
+    """
+    changes_to_revert = []
+
+    for row in history_rows:
+        otu_version = coerce_otu_version(row.otu_version)
+
+        if otu_version == "removed" or otu_version > version:
+            changes_to_revert.append(_change_to_revert(row))
+        else:
+            break
+
+    return changes_to_revert
+
+
+def _apply_changes_to_revert(
+    current: Document,
+    changes_to_revert: list[Document],
+    diffs: dict[str, object],
+    latest_change: SQLLegacyHistory | None,
+) -> tuple[Document | None, Document | None]:
+    """Revert ``changes_to_revert`` from ``current`` to recover a patched otu.
+
+    ``latest_change`` is the otu's most recent history row, and carries the parent
+    reference for an otu with no live document left to read it from.
+    """
+    patched = deepcopy(current)
 
     for change in changes_to_revert:
         diff = diffs[change["_id"]]
@@ -778,15 +923,16 @@ async def patch_to_version(
 
     if patched:
         # An OTU's parent reference is immutable, so the authoritative id is the live
-        # OTU's when it still exists, falling back to the history rows for an OTU that
-        # was removed and no longer has a live document.
+        # OTU's when it still exists, falling back to the history for an OTU that was
+        # removed and no longer has a live document. Only a reverted change can leave a
+        # patched OTU without a live one, so there is always a latest change to fall
+        # back to by the time this is reached.
         reference_id = (
-            current["reference"]["id"] if current else reference_id_from_history
+            current["reference"]["id"]
+            if current
+            else latest_change.reference_id or latest_change.reference
         )
 
         _stamp_reference(patched, reference_id)
 
-    if current == {}:
-        current = None
-
-    return current, patched
+    return current or None, patched

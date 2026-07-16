@@ -4,14 +4,20 @@ import io
 import openpyxl
 import pytest
 from pytest_mock import MockerFixture
+from sqlalchemy import event
+from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
 
 import virtool.analyses
 from virtool.analyses.format import (
     CSV_HEADERS,
     format_nuvs,
+    format_pathoscope,
     transform_coverage_to_coordinates,
 )
+from virtool.data.layer import DataLayer
+from virtool.fake.next import DataFaker
+from virtool.otus.oas import CreateOTURequest
 
 
 @pytest.mark.parametrize(
@@ -204,6 +210,146 @@ class TestFormatAnalysis:
         assert formatted == {"is_nuvs": False, "is_pathoscope": True}
         m_format_pathoscope.assert_called_with(pg, results=results)
         assert not m_format_nuvs.called
+
+
+class TestFormatPathoscope:
+    """``format_pathoscope`` patches every detected OTU to the version the analysis saw.
+
+    The OTUs are read in one batch, on the same collect-then-load shape ``format_nuvs``
+    uses. Reading them per detected OTU instead -- a handful of queries and a pool
+    connection each -- is what let a result with a few hundred hits saturate the pool and
+    the event loop, slowing every request the server was handling concurrently.
+    """
+
+    async def _create_otus(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        count: int,
+    ) -> list[str]:
+        """Create ``count`` OTUs, each an isolate carrying two sequences.
+
+        Each OTU reaches version 3: created, given an isolate, then given
+        ``sequence_{index}_a`` and ``sequence_{index}_b`` in turn. An analysis that
+        detected one at version 2 therefore has a change to unwind, which is what makes
+        the history and diff reads run.
+
+        Returns the OTU ids.
+        """
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        otu_ids = []
+
+        for index in range(count):
+            otu = await data_layer.otus.create(
+                reference.id,
+                CreateOTURequest(name=f"Virus {index}", abbreviation=f"V{index}"),
+                user.id,
+            )
+
+            isolate = await data_layer.otus.add_isolate(
+                otu.id,
+                "isolate",
+                "8816-v2",
+                user.id,
+            )
+
+            for suffix in ("a", "b"):
+                await data_layer.otus.create_sequence(
+                    otu.id,
+                    isolate.id,
+                    f"KX2698{index}{suffix}",
+                    f"Virus {index} segment {suffix}",
+                    "TGTTTAAGAGATTAAACAACCGCTTTC",
+                    user.id,
+                    sequence_id=f"sequence_{index}_{suffix}",
+                )
+
+            otu_ids.append(otu.id)
+
+        return otu_ids
+
+    def _compose_results(self, otu_ids: list[str]) -> dict:
+        """Compose a pathoscope result detecting every OTU at version 2."""
+        return {
+            "hits": [
+                {
+                    "id": f"sequence_{index}_a",
+                    "otu": {"id": otu_id, "version": 2},
+                    "align": [1, 2, 3],
+                    "coverage": 0.5,
+                    "final": {"pi": 0.5, "best": 2, "reads": 3},
+                }
+                for index, otu_id in enumerate(otu_ids)
+            ],
+        }
+
+    async def test_formats_every_detected_otu(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """Each hit is formatted against its own OTU, patched back to version 2."""
+        otu_ids = await self._create_otus(data_layer, fake, 3)
+
+        formatted = await format_pathoscope(pg, results=self._compose_results(otu_ids))
+
+        assert [hit["name"] for hit in formatted["hits"]] == [
+            "Virus 0",
+            "Virus 1",
+            "Virus 2",
+        ]
+
+        for index, hit in enumerate(formatted["hits"]):
+            assert hit["id"] == otu_ids[index]
+            assert hit["version"] == 2
+
+            sequences = [
+                sequence
+                for isolate in hit["isolates"]
+                for sequence in isolate["sequences"]
+            ]
+
+            # Only the sequence the OTU carried at version 2, and it took the hit's
+            # weighting rather than another OTU's.
+            assert [sequence["id"] for sequence in sequences] == [f"sequence_{index}_a"]
+            assert [sequence["pi"] for sequence in sequences] == [0.5]
+
+    async def test_reads_do_not_scale_with_detected_otus(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """Detecting more OTUs costs no more queries.
+
+        The number itself is not the contract and is free to change -- that it does not
+        grow with the number of detected OTUs is.
+        """
+        otu_ids = await self._create_otus(data_layer, fake, 6)
+
+        counts = []
+
+        for count in (2, 6):
+            results = self._compose_results(otu_ids[:count])
+
+            statements = []
+
+            def record(conn, cursor, statement, parameters, context, executemany):
+                statements.append(statement)
+
+            event.listen(pg.sync_engine, "before_cursor_execute", record)
+
+            try:
+                await format_pathoscope(pg, results=results)
+            finally:
+                event.remove(pg.sync_engine, "before_cursor_execute", record)
+
+            counts.append(len(statements))
+
+        assert counts[0] == counts[1]
 
 
 class TestFormatNuvs:
