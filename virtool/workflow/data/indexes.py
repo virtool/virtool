@@ -238,7 +238,7 @@ class WFNewIndex:
         self,
         api: WorkflowAPIClient,
         index_id: str,
-        manifest: dict[str, int | str],
+        manifest: dict[str, int],
         path: Path,
         reference: ReferenceNested,
     ):

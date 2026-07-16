@@ -64,7 +64,6 @@ async def test_finalize(
             "created_at": static_time.datetime,
             "job": {"id": job.id},
             "task": None,
-            "has_files": True,
             "manifest": {},
         },
     )
@@ -102,7 +101,6 @@ async def test_finalize_stamps_last_indexed_version(
             "version": 2,
             "created_at": static_time.datetime,
             "job": {"id": job.id},
-            "has_files": True,
             "manifest": {},
         },
     )
@@ -141,7 +139,6 @@ async def test_finalize_reference_missing_from_postgres(
             "version": 2,
             "created_at": static_time.datetime,
             "job": {"id": job.id},
-            "has_files": True,
             "manifest": {},
         },
     )
@@ -177,7 +174,6 @@ class TestDelete:
                 "created_at": static_time.datetime,
                 "job": {"id": job.id},
                 "task": None,
-                "has_files": True,
                 "ready": True,
                 "manifest": {},
             },
