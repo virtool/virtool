@@ -18,10 +18,13 @@ from virtool.otus.db import (
     increment_otu_version,
     join,
     join_legacy_otu,
+    join_legacy_otu_in_session,
     otu_document_from_row,
     otu_row_values,
     sequence_document_from_row,
     sequence_row_values,
+    write_legacy_otu,
+    write_legacy_sequence,
 )
 from virtool.otus.models import OTUSegment
 from virtool.otus.oas import CreateOTURequest, UpdateOTURequest
@@ -742,3 +745,174 @@ class TestJoinLegacyOTU:
     async def test_returns_none_when_the_otu_has_no_row(self, pg: AsyncEngine):
         """A missing OTU is ``None``, as it is on the Mongo path."""
         assert await join_legacy_otu(pg, "6116cba1") is None
+
+
+class TestJoinLegacyOTUInSession:
+    """``join_legacy_otu_in_session`` joins through the caller's own session.
+
+    The OTU write path composes its history diff from the OTU as it stands before and
+    after its own writes, all inside one uncommitted transaction. A join that opened a
+    session of its own would see neither, so the diff would come out empty and the
+    change would be recorded as a no-op.
+    """
+
+    async def _create_otu(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+    ) -> tuple[str, str]:
+        """Create ``Prunus virus F`` with one isolate and one sequence.
+
+        Returns the OTU id and the sequence id.
+        """
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        otu = await data_layer.otus.create(
+            reference.id,
+            CreateOTURequest(name="Prunus virus F", abbreviation="PVF"),
+            user.id,
+        )
+
+        isolate = await data_layer.otus.add_isolate(
+            otu.id,
+            "isolate",
+            "8816-v2",
+            user.id,
+        )
+
+        sequence = await data_layer.otus.create_sequence(
+            otu.id,
+            isolate.id,
+            "KX269872",
+            "Prunus virus F segment",
+            "TGTTTAAGAGATTAAACAACCGCTTTC",
+            user.id,
+            "sweet cherry",
+        )
+
+        return otu.id, sequence.id
+
+    async def test_matches_the_engine_join(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """A committed OTU joins to the same document either entry point reads it."""
+        otu_id, _ = await self._create_otu(data_layer, fake)
+
+        async with AsyncSession(pg) as session:
+            assert await join_legacy_otu_in_session(session, otu_id) == (
+                await join_legacy_otu(pg, otu_id)
+            )
+
+    async def test_returns_none_when_the_otu_has_no_row(self, pg: AsyncEngine):
+        """A missing OTU is ``None``, as it is on the engine path."""
+        async with AsyncSession(pg) as session:
+            assert await join_legacy_otu_in_session(session, "6116cba1") is None
+
+    async def test_reads_an_uncommitted_write(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+    ):
+        """An OTU written but not committed joins as it now stands.
+
+        The engine join is checked from outside the transaction in the same breath: it
+        must still read the committed name, or the test would pass on a session that
+        had quietly committed rather than on one that reads its own writes.
+        """
+        otu_id, _ = await self._create_otu(data_layer, fake)
+        document = await mongo.otus.find_one({"_id": otu_id})
+
+        async with AsyncSession(pg) as session:
+            await write_legacy_otu(
+                session,
+                {**document, "name": "Prunus virus G", "lower_name": "prunus virus g"},
+            )
+
+            assert (await join_legacy_otu_in_session(session, otu_id))["name"] == (
+                "Prunus virus G"
+            )
+            assert (await join_legacy_otu(pg, otu_id))["name"] == "Prunus virus F"
+
+    async def test_rejoins_an_otu_written_after_it_was_joined(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+    ):
+        """Joining, writing and joining again reflects the write the second time.
+
+        This is the write path's diff-composing sequence. ``write_legacy_otu`` upserts
+        through Core DML, which does not synchronize the session's identity map, so a
+        rejoin that trusted the map would hand back the pre-write document and diff the
+        OTU against itself.
+
+        The row is deliberately held in ``row`` for the length of the transaction. The
+        identity map holds its rows weakly and the join keeps no reference to the ones it
+        loads, so without something holding it the stale row is collected before the
+        rejoin and the lookup falls through to a fresh ``SELECT`` -- passing for a reason
+        that has nothing to do with the behaviour under test. Holding it reproduces what
+        any caller that touched the row itself would do.
+        """
+        otu_id, _ = await self._create_otu(data_layer, fake)
+        document = await mongo.otus.find_one({"_id": otu_id})
+
+        async with AsyncSession(pg) as session:
+            before = await join_legacy_otu_in_session(session, otu_id)
+
+            row = await session.get(SQLOTU, otu_id)
+
+            await write_legacy_otu(
+                session,
+                {**document, "name": "Prunus virus G", "lower_name": "prunus virus g"},
+            )
+
+            assert row.data["name"] == "Prunus virus F"
+
+            after = await join_legacy_otu_in_session(session, otu_id)
+
+        assert before["name"] == "Prunus virus F"
+        assert after["name"] == "Prunus virus G"
+
+    async def test_rejoins_a_sequence_written_after_it_was_joined(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+    ):
+        """A sequence rewritten after the first join comes back rewritten.
+
+        The sequences are loaded by an ORM ``select`` rather than by primary key, and it
+        caches into the same identity map the OTU row does, so it needs its own
+        ``populate_existing``. Editing a sequence is the commonest OTU change there is,
+        so a stale sequence would empty out most diffs the write path takes.
+
+        The row is held for the same reason as in the OTU case above: the identity map
+        holds it weakly, and an unheld row is collected before the rejoin can read it
+        back stale.
+        """
+        otu_id, sequence_id = await self._create_otu(data_layer, fake)
+        document = await mongo.sequences.find_one({"_id": sequence_id})
+
+        async with AsyncSession(pg) as session:
+            before = await join_legacy_otu_in_session(session, otu_id)
+
+            row = await session.get(SQLSequence, sequence_id)
+
+            await write_legacy_sequence(session, {**document, "sequence": "ATGAAC"})
+
+            assert row.data["sequence"] == "TGTTTAAGAGATTAAACAACCGCTTTC"
+
+            after = await join_legacy_otu_in_session(session, otu_id)
+
+        assert before["isolates"][0]["sequences"][0]["sequence"] == (
+            "TGTTTAAGAGATTAAACAACCGCTTTC"
+        )
+        assert after["isolates"][0]["sequences"][0]["sequence"] == "ATGAAC"
