@@ -717,7 +717,7 @@ async def _resolve_diffs(pg: AsyncEngine, changes: list[Document]) -> dict[str, 
 async def patch_to_version(
     pg: AsyncEngine,
     otu_id: str,
-    version: str | int,
+    version: int,
 ) -> tuple:
     """Take a joined otu back in time to the passed ``version``.
 
@@ -740,14 +740,19 @@ async def patch_to_version(
 
 async def patch_otus_to_versions(
     pg: AsyncEngine,
-    specifiers: Collection[tuple[str, str | int]],
-) -> dict[tuple[str, str | int], tuple[Document | None, Document | None]]:
+    specifiers: Collection[tuple[str, int]],
+) -> dict[tuple[str, int], tuple[Document | None, Document | None]]:
     """Take each of the joined otus identified by ``specifiers`` back to its version.
 
     The batched counterpart of :func:`patch_to_version`, and where the patching itself
     lives. Each specifier is an ``(otu_id, version)`` pair, and each maps to the
-    ``(current, patched)`` pair that :func:`patch_to_version` returns for it. The same
-    OTU may appear under more than one version.
+    ``(current, patched)`` pair that :func:`patch_to_version` returns for it. Every
+    specifier is present in the returned mapping. The same OTU may appear under more
+    than one version.
+
+    A target ``version`` is an OTU ``version``, which is an integer -- never the
+    ``"removed"`` sentinel an :class:`SQLLegacyHistory` row's ``otu_version`` can carry.
+    It is compared against other targets and bound into the history predicate as one.
 
     The whole set is resolved in a fixed handful of queries -- two to join the OTUs, one
     for the history, one for the diffs -- rather than four or so per OTU. The per-OTU
@@ -771,11 +776,11 @@ async def patch_otus_to_versions(
     )
 
     patched_otus: dict[
-        tuple[str, str | int],
+        tuple[str, int],
         tuple[Document | None, Document | None],
     ] = {}
 
-    to_patch: dict[tuple[str, str | int], Document] = {}
+    to_patch: dict[tuple[str, int], Document] = {}
 
     for specifier in specifiers:
         otu_id, version = specifier
@@ -814,7 +819,7 @@ async def patch_otus_to_versions(
 
 async def _read_history_to_revert(
     pg: AsyncEngine,
-    specifiers: Collection[tuple[str, str | int]],
+    specifiers: Collection[tuple[str, int]],
 ) -> dict[str, list[SQLLegacyHistory]]:
     """Read the history rows that patching ``specifiers`` could have to revert.
 
@@ -829,7 +834,7 @@ async def _read_history_to_revert(
     ``"removed"`` sentinel and sorts above every numbered version, and the rest sort
     below it in order -- so nothing that is dropped could have been reverted.
     """
-    lowest_versions: dict[str, str | int] = {}
+    lowest_versions: dict[str, int] = {}
 
     for otu_id, version in specifiers:
         if otu_id not in lowest_versions or version < lowest_versions[otu_id]:
@@ -869,7 +874,7 @@ async def _read_history_to_revert(
 
 def _changes_to_revert(
     history_rows: list[SQLLegacyHistory],
-    version: str | int,
+    version: int,
 ) -> list[Document]:
     """Select the changes to revert to take an otu back to ``version``.
 
