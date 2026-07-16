@@ -15,6 +15,7 @@ from virtool.otus.db import (
     check_sequence_segment,
     find,
     get_legacy_otu_fields,
+    increment_legacy_otu_version,
     increment_otu_version,
     join,
     join_legacy_otu,
@@ -24,6 +25,9 @@ from virtool.otus.db import (
     otu_row_values,
     sequence_document_from_row,
     sequence_row_values,
+    update_legacy_otu_verification,
+    update_legacy_sequence_segments,
+    update_sequence_segments,
     write_legacy_otu,
     write_legacy_sequence,
 )
@@ -1015,3 +1019,386 @@ class TestJoinLegacyOTUInSession:
             "TGTTTAAGAGATTAAACAACCGCTTTC"
         )
         assert after["isolates"][0]["sequences"][0]["sequence"] == "ATGAAC"
+
+
+class TestIncrementLegacyOTUVersion:
+    """``increment_legacy_otu_version`` bumps an OTU's version and unverifies it.
+
+    ``version`` and ``verified`` are each held twice -- once in a promoted column and
+    once in the ``data`` JSONB the document is recovered from. A bump that moved one
+    without the other would leave the OTU reading differently depending on which the
+    caller looked at, so both are asserted every time.
+    """
+
+    async def _insert(
+        self,
+        fake: DataFaker,
+        insert_otu,
+        test_otu: Document,
+        **overrides,
+    ) -> str:
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        await insert_otu({**test_otu, **overrides}, reference.id)
+
+        return test_otu["_id"]
+
+    async def test_bumps_version_and_clears_verified(
+        self,
+        fake: DataFaker,
+        insert_otu,
+        pg: AsyncEngine,
+        test_otu: Document,
+    ):
+        """The column and its ``data`` counterpart move together."""
+        otu_id = await self._insert(
+            fake,
+            insert_otu,
+            test_otu,
+            version=3,
+            verified=True,
+        )
+
+        async with AsyncSession(pg) as session:
+            await increment_legacy_otu_version(session, otu_id)
+            await session.commit()
+
+            row = await session.get(SQLOTU, otu_id, populate_existing=True)
+
+        assert (row.version, row.verified) == (4, False)
+        assert (row.data["version"], row.data["verified"]) == (4, False)
+
+    async def test_returns_the_updated_document(
+        self,
+        fake: DataFaker,
+        insert_otu,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        test_otu: Document,
+    ):
+        """The document returned is the OTU as it now stands, as Mongo's helper's is.
+
+        The write path passes it straight to ``join`` as the OTU half of the joined
+        document, so it has to be the whole OTU document at its new version rather
+        than the fields the bump touched.
+        """
+        otu_id = await self._insert(
+            fake,
+            insert_otu,
+            test_otu,
+            version=3,
+            verified=True,
+        )
+
+        async with AsyncSession(pg) as session:
+            document = await increment_legacy_otu_version(session, otu_id)
+            await session.commit()
+
+            row = await session.get(SQLOTU, otu_id, populate_existing=True)
+
+        assert document["version"] == 4
+        assert document["verified"] is False
+        assert document == otu_document_from_row(row)
+
+    async def test_decodes_created_at(
+        self,
+        fake: DataFaker,
+        insert_otu,
+        pg: AsyncEngine,
+        test_imported_otu: Document,
+    ):
+        """An imported OTU's ``created_at`` comes back as a datetime, not a string.
+
+        The bump reads ``data`` straight out of Postgres rather than through a mapped
+        row, so it has to decode the column itself.
+        """
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        await insert_otu(test_imported_otu, reference.id)
+
+        async with AsyncSession(pg) as session:
+            document = await increment_legacy_otu_version(
+                session,
+                test_imported_otu["_id"],
+            )
+            await session.commit()
+
+        assert document["created_at"] == IMPORTED_CREATED_AT.replace(microsecond=123000)
+
+    async def test_leaves_other_fields_alone(
+        self,
+        fake: DataFaker,
+        insert_otu,
+        pg: AsyncEngine,
+        test_otu: Document,
+    ):
+        """Only ``version`` and ``verified`` change; the rest of ``data`` is untouched."""
+        otu_id = await self._insert(fake, insert_otu, test_otu)
+
+        before = await join_legacy_otu(pg, otu_id)
+
+        async with AsyncSession(pg) as session:
+            await increment_legacy_otu_version(session, otu_id)
+            await session.commit()
+
+        after = await join_legacy_otu(pg, otu_id)
+
+        assert {**after, "version": 0, "verified": False} == before
+
+    async def test_missing_otu(self, pg: AsyncEngine):
+        """An OTU with no row has no version to bump."""
+        async with AsyncSession(pg) as session:
+            assert await increment_legacy_otu_version(session, "6116cba1") is None
+
+
+class TestUpdateLegacyOTUVerification:
+    """``update_legacy_otu_verification`` verifies an OTU that ``verify`` passes."""
+
+    async def _insert(
+        self,
+        fake: DataFaker,
+        insert_otu,
+        test_otu: Document,
+        test_sequence: Document,
+        *,
+        with_sequence: bool,
+    ) -> str:
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        await insert_otu(
+            test_otu,
+            reference.id,
+            [test_sequence] if with_sequence else None,
+        )
+
+        return test_otu["_id"]
+
+    async def test_verifies_otu_without_issues(
+        self,
+        fake: DataFaker,
+        insert_otu,
+        pg: AsyncEngine,
+        test_otu: Document,
+        test_sequence: Document,
+    ):
+        """``verified`` is set in the column and in ``data``, and ``None`` returned."""
+        otu_id = await self._insert(
+            fake,
+            insert_otu,
+            test_otu,
+            test_sequence,
+            with_sequence=True,
+        )
+
+        joined = await join_legacy_otu(pg, otu_id)
+
+        async with AsyncSession(pg) as session:
+            assert await update_legacy_otu_verification(session, joined) is None
+            await session.commit()
+
+            row = await session.get(SQLOTU, otu_id, populate_existing=True)
+
+        assert row.verified is True
+        assert row.data["verified"] is True
+
+    async def test_mutates_the_joined_otu(
+        self,
+        fake: DataFaker,
+        insert_otu,
+        pg: AsyncEngine,
+        test_otu: Document,
+        test_sequence: Document,
+    ):
+        """The caller's copy agrees with the row it just wrote.
+
+        The OTU write path composes its history diff from the joined OTU it passed in,
+        so a copy left saying ``verified: False`` would diff against a row that says
+        otherwise.
+        """
+        otu_id = await self._insert(
+            fake,
+            insert_otu,
+            test_otu,
+            test_sequence,
+            with_sequence=True,
+        )
+
+        joined = await join_legacy_otu(pg, otu_id)
+
+        assert joined["verified"] is False
+
+        async with AsyncSession(pg) as session:
+            await update_legacy_otu_verification(session, joined)
+            await session.commit()
+
+        assert joined["verified"] is True
+
+    async def test_leaves_otu_with_issues_unverified(
+        self,
+        fake: DataFaker,
+        insert_otu,
+        pg: AsyncEngine,
+        test_otu: Document,
+        test_sequence: Document,
+    ):
+        """An OTU whose isolate has no sequences is returned its issues and not written."""
+        otu_id = await self._insert(
+            fake,
+            insert_otu,
+            test_otu,
+            test_sequence,
+            with_sequence=False,
+        )
+
+        joined = await join_legacy_otu(pg, otu_id)
+
+        async with AsyncSession(pg) as session:
+            issues = await update_legacy_otu_verification(session, joined)
+            await session.commit()
+
+            row = await session.get(SQLOTU, otu_id, populate_existing=True)
+
+        assert issues["empty_isolate"] == ["cab8b360"]
+        assert joined["verified"] is False
+        assert row.verified is False
+        assert row.data["verified"] is False
+
+
+class TestUpdateLegacySequenceSegments:
+    """``update_legacy_sequence_segments`` unsets segments dropped from an OTU's schema.
+
+    The segment has to be *removed* from ``data`` rather than nulled. ``data`` is a lift
+    of the Mongo document and Mongo's ``$unset`` removes the field, so a lingering
+    ``segment: null`` would make the joined OTU -- and every ``dictdiffer`` patch taken
+    against it -- disagree with the Mongo path.
+    """
+
+    async def _insert(
+        self,
+        fake: DataFaker,
+        insert_otu,
+        test_otu: Document,
+        test_sequence: Document,
+        segment: str,
+    ) -> None:
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        await insert_otu(
+            {**test_otu, "schema": [{"name": "RNA1"}, {"name": "RNA2"}]},
+            reference.id,
+            [{**test_sequence, "segment": segment}],
+        )
+
+    async def _drop_rna2(
+        self,
+        pg: AsyncEngine,
+        otu_id: str,
+    ) -> None:
+        old = await join_legacy_otu(pg, otu_id)
+        new = {**old, "schema": [{"name": "RNA1"}]}
+
+        async with AsyncSession(pg) as session:
+            await update_legacy_sequence_segments(session, old, new)
+            await session.commit()
+
+    async def test_removes_the_segment_key(
+        self,
+        fake: DataFaker,
+        insert_otu,
+        pg: AsyncEngine,
+        test_otu: Document,
+        test_sequence: Document,
+    ):
+        """The column goes null and the key leaves ``data`` entirely."""
+        await self._insert(fake, insert_otu, test_otu, test_sequence, "RNA2")
+
+        await self._drop_rna2(pg, test_otu["_id"])
+
+        async with AsyncSession(pg) as session:
+            row = await session.get(
+                SQLSequence,
+                test_sequence["_id"],
+                populate_existing=True,
+            )
+
+        assert row.segment is None
+        assert "segment" not in row.data
+
+    async def test_matches_the_mongo_unset(
+        self,
+        fake: DataFaker,
+        insert_otu,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        test_otu: Document,
+        test_sequence: Document,
+    ):
+        """The joined OTU is the one the Mongo helper's ``$unset`` leaves behind."""
+        await self._insert(fake, insert_otu, test_otu, test_sequence, "RNA2")
+
+        old = await join(mongo, test_otu["_id"])
+        new = {**old, "schema": [{"name": "RNA1"}]}
+
+        await update_sequence_segments(mongo, old, new)
+        await self._drop_rna2(pg, test_otu["_id"])
+
+        assert await join_legacy_otu(pg, test_otu["_id"]) == await join(
+            mongo,
+            test_otu["_id"],
+        )
+
+    async def test_keeps_a_retained_segment(
+        self,
+        fake: DataFaker,
+        insert_otu,
+        pg: AsyncEngine,
+        test_otu: Document,
+        test_sequence: Document,
+    ):
+        """A sequence naming a segment the schema still defines is left alone."""
+        await self._insert(fake, insert_otu, test_otu, test_sequence, "RNA1")
+
+        await self._drop_rna2(pg, test_otu["_id"])
+
+        async with AsyncSession(pg) as session:
+            row = await session.get(
+                SQLSequence,
+                test_sequence["_id"],
+                populate_existing=True,
+            )
+
+        assert row.segment == "RNA1"
+        assert row.data["segment"] == "RNA1"
+
+    async def test_otu_gaining_its_first_schema(
+        self,
+        fake: DataFaker,
+        insert_otu,
+        pg: AsyncEngine,
+        test_otu: Document,
+        test_sequence: Document,
+    ):
+        """An OTU with no ``schema`` before the edit has no segment names to drop."""
+        await self._insert(fake, insert_otu, test_otu, test_sequence, "RNA2")
+
+        old = await join_legacy_otu(pg, test_otu["_id"])
+
+        async with AsyncSession(pg) as session:
+            await update_legacy_sequence_segments(
+                session,
+                {key: value for key, value in old.items() if key != "schema"},
+                {**old, "schema": [{"name": "RNA1"}]},
+            )
+            await session.commit()
+
+            row = await session.get(
+                SQLSequence,
+                test_sequence["_id"],
+                populate_existing=True,
+            )
+
+        assert row.segment == "RNA2"
