@@ -664,6 +664,26 @@ async def get_legacy_sequence(
     return sequence_document_from_row(row) if row is not None else None
 
 
+async def get_legacy_sequence_in_session(
+    pg_session: AsyncSession,
+    sequence_id: str,
+) -> Document | None:
+    """Fetch one sequence document from Postgres within ``pg_session``, by id alone.
+
+    The session-aware counterpart of :func:`get_legacy_sequence`, and the sequence
+    equivalent of :func:`join_legacy_otu_in_session`: it reads through the caller's
+    session, so a sequence written earlier in the caller's transaction comes back as it
+    now stands. ``populate_existing`` refreshes a row already in the identity map, for
+    the reason :func:`join_legacy_otu_in_session` documents.
+
+    Scoped to the id only, with no ``otu_id`` or ``isolate_id`` filter, because the
+    sequence update path it backs addresses a sequence by id alone.
+    """
+    row = await pg_session.get(SQLSequence, sequence_id, populate_existing=True)
+
+    return sequence_document_from_row(row) if row is not None else None
+
+
 async def list_legacy_isolate_sequences(
     pg: AsyncEngine,
     otu_id: str,
@@ -987,22 +1007,33 @@ async def lock_legacy_otu(pg_session: AsyncSession, otu_id: str) -> None:
     """Take a ``SELECT … FOR UPDATE`` lock on an OTU's ``legacy_otus`` row.
 
     Serializes concurrent edits to the same OTU so no version bump is lost. Call it
-    before the first Mongo read in a write transaction so the Mongo snapshot is taken
-    after the lock is held. A no-op while the OTU has no Postgres row yet (not
-    backfilled); the Mongo transaction still guards the bump in that transient window.
+    before the first read in a write transaction, so everything the edit is composed
+    from is read after the lock is held.
+
+    An OTU with no row raises. Postgres owns the version bump, so a missing row is no
+    longer a window the Mongo transaction can cover for -- there is nothing to lock,
+    nothing to bump, and the edit would compose its history diff against an OTU that
+    does not exist. The backfill and the parity gate that precede the read cutover mean
+    every OTU has a row, and every write handler resolves the OTU through Postgres
+    before reaching this, so a missing row here is a broken invariant rather than a bad
+    request.
     """
-    await pg_session.execute(
+    locked = await pg_session.scalar(
         select(SQLOTU.id).where(SQLOTU.id == otu_id).with_for_update(),
     )
 
+    if locked is None:
+        raise ValueError(f"OTU {otu_id!r} not found in postgres")
 
-async def write_legacy_otu(pg_session: AsyncSession, document: Document) -> None:
-    """Upsert a Mongo OTU ``document`` into ``legacy_otus`` within ``pg_session``.
 
-    The embedded ``reference.id`` is resolved to the integer ``legacy_references``
-    primary key. Every promoted column is recomputed from the document, so the same
-    call serves inserts and updates and keeps the row in sync on each whole-document
-    write.
+async def _otu_row_values_for_write(
+    pg_session: AsyncSession,
+    document: Document,
+) -> dict[str, Any]:
+    """Map a Mongo OTU ``document`` to column values, resolving its parent reference.
+
+    Shared by :func:`write_legacy_otu` and :func:`insert_legacy_otu`, which differ only
+    in what they do about a row that already holds the id.
     """
     reference_id = await resolve_legacy_id(
         pg_session,
@@ -1015,7 +1046,41 @@ async def write_legacy_otu(pg_session: AsyncSession, document: Document) -> None
             f"Reference {document['reference']['id']!r} not found in postgres",
         )
 
-    values = otu_row_values(document, reference_id)
+    return otu_row_values(document, reference_id)
+
+
+async def insert_legacy_otu(pg_session: AsyncSession, document: Document) -> None:
+    """Insert a Mongo OTU ``document`` into ``legacy_otus`` within ``pg_session``.
+
+    The insert-only counterpart of :func:`write_legacy_otu`, for an OTU whose id must
+    not already be taken. A duplicate id raises ``IntegrityError``.
+
+    Creation cannot go through :func:`write_legacy_otu`. That upserts, so an id that
+    already belongs to another OTU would silently overwrite that OTU's row rather than
+    be rejected -- the id generator would be obeyed where it needs to be contradicted.
+    Rejecting the write is what lets the caller generate another id, and it is the only
+    thing standing between a colliding id and a clobbered OTU once Mongo, whose unique
+    ``_id`` index catches the collision today, leaves the write path.
+    """
+    await pg_session.execute(
+        pg_insert(SQLOTU).values(
+            **await _otu_row_values_for_write(pg_session, document)
+        ),
+    )
+
+
+async def write_legacy_otu(pg_session: AsyncSession, document: Document) -> None:
+    """Upsert a Mongo OTU ``document`` into ``legacy_otus`` within ``pg_session``.
+
+    The embedded ``reference.id`` is resolved to the integer ``legacy_references``
+    primary key. Every promoted column is recomputed from the document, so the same
+    call serves inserts and updates and keeps the row in sync on each whole-document
+    write.
+
+    Use :func:`insert_legacy_otu` to create an OTU. Upserting an id that is already
+    taken overwrites the OTU that holds it.
+    """
+    values = await _otu_row_values_for_write(pg_session, document)
 
     await pg_session.execute(
         pg_insert(SQLOTU)
@@ -1027,6 +1092,50 @@ async def write_legacy_otu(pg_session: AsyncSession, document: Document) -> None
     )
 
 
+async def legacy_otu_id_taken(pg_session: AsyncSession, otu_id: str) -> bool:
+    """Return whether a ``legacy_otus`` row already holds ``otu_id``.
+
+    Backs the id generation on the create path, which has to keep asking for an id
+    until it gets a free one. Only the ``id`` column is selected, so the check never
+    reads the ``data`` JSONB of whatever row it collides with.
+    """
+    return (
+        await pg_session.scalar(select(SQLOTU.id).where(SQLOTU.id == otu_id))
+    ) is not None
+
+
+async def legacy_sequence_id_taken(pg_session: AsyncSession, sequence_id: str) -> bool:
+    """Return whether a ``legacy_sequences`` row already holds ``sequence_id``.
+
+    The sequence counterpart of :func:`legacy_otu_id_taken`. Only the ``id`` column is
+    selected, so the check never de-TOASTs the large ``sequence`` body of the row it
+    collides with.
+    """
+    return (
+        await pg_session.scalar(
+            select(SQLSequence.id).where(SQLSequence.id == sequence_id),
+        )
+    ) is not None
+
+
+async def insert_legacy_sequence(pg_session: AsyncSession, document: Document) -> None:
+    """Insert a Mongo sequence ``document`` into ``legacy_sequences``, appended to the
+    end of its OTU.
+
+    The insert-only counterpart of :func:`write_legacy_sequence`, for a sequence whose
+    id must not already be taken. A duplicate id raises ``IntegrityError``, for the
+    reason :func:`insert_legacy_otu` documents.
+    """
+    values = sequence_row_values(document)
+
+    await pg_session.execute(
+        pg_insert(SQLSequence).values(
+            **values,
+            position=next_sequence_position(document["otu_id"]),
+        ),
+    )
+
+
 async def write_legacy_sequence(pg_session: AsyncSession, document: Document) -> None:
     """Upsert a Mongo sequence ``document`` into ``legacy_sequences`` within
     ``pg_session``.
@@ -1034,6 +1143,9 @@ async def write_legacy_sequence(pg_session: AsyncSession, document: Document) ->
     A new sequence is appended to the end of its OTU. An existing one keeps the
     ``position`` it already holds: the column is left out of the conflict update so
     re-mirroring a sequence never renumbers it and never reorders the OTU.
+
+    Use :func:`insert_legacy_sequence` to create a sequence. Upserting an id that is
+    already taken overwrites the sequence that holds it.
     """
     values = sequence_row_values(document)
 
@@ -1044,6 +1156,52 @@ async def write_legacy_sequence(pg_session: AsyncSession, document: Document) ->
             index_elements=["id"],
             set_={key: value for key, value in values.items() if key != "id"},
         ),
+    )
+
+
+async def mirror_otu_to_mongo(
+    mongo: "Mongo",
+    document: Document,
+    session: AsyncIOMotorClientSession,
+) -> None:
+    """Rewrite an OTU's Mongo document to say what Postgres now says.
+
+    The write path composes an edit in Postgres and hands the resulting document here,
+    so Mongo is a downstream mirror rather than the store the edit is read back from.
+    The whole document is replaced rather than patched with the individual ``$set`` an
+    edit implies: the document Postgres produced is by definition everything the OTU
+    now is, so replacing with it needs no per-method knowledge of which fields moved
+    and cannot leave a field the edit forgot to name behind.
+
+    ``_id`` is dropped from the replacement and left to the query. A replacement may
+    not change a document's ``_id``, and passing back the one it already has says
+    nothing.
+
+    Paired with :func:`write_legacy_otu`, which writes the same document to Postgres.
+    Both go when Mongo leaves the write path.
+    """
+    await mongo.otus.replace_one(
+        {"_id": document["_id"]},
+        {key: value for key, value in document.items() if key != "_id"},
+        session=session,
+    )
+
+
+async def mirror_sequence_to_mongo(
+    mongo: "Mongo",
+    document: Document,
+    session: AsyncIOMotorClientSession,
+) -> None:
+    """Rewrite a sequence's Mongo document to say what Postgres now says.
+
+    The sequence counterpart of :func:`mirror_otu_to_mongo`, replacing rather than
+    patching for the same reason and dropping ``_id`` from the replacement for the same
+    reason.
+    """
+    await mongo.sequences.replace_one(
+        {"_id": document["_id"]},
+        {key: value for key, value in document.items() if key != "_id"},
+        session=session,
     )
 
 
