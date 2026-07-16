@@ -1,7 +1,7 @@
 """Work with OTUs in the database."""
 
 import math
-from collections import Counter
+from collections import Counter, defaultdict
 from collections.abc import Collection
 from datetime import datetime
 from typing import Any
@@ -380,6 +380,25 @@ async def join_legacy_otu(pg: AsyncEngine, otu_id: str) -> Document | None:
         return await join_legacy_otu_in_session(session, otu_id)
 
 
+async def join_legacy_otus(
+    pg: AsyncEngine,
+    otu_ids: Collection[str],
+) -> dict[str, Document]:
+    """Reconstruct many joined OTU documents from Postgres in a session of its own.
+
+    The batched counterpart of :func:`join_legacy_otu`, reading every requested OTU in
+    two queries rather than two per OTU. A caller holding a set of OTUs to join -- an
+    analysis formatting a hit per detected OTU, an index build walking a manifest --
+    should reach for this rather than awaiting the single-OTU read in a loop or a
+    ``gather``, which issues a query and takes a pool connection per OTU.
+
+    Only the OTUs that have a row appear in the returned mapping, so a missing key
+    carries what a ``None`` from :func:`join_legacy_otu` does.
+    """
+    async with AsyncSession(pg) as session:
+        return await join_legacy_otus_in_session(session, otu_ids)
+
+
 async def join_legacy_otu_in_session(
     pg_session: AsyncSession,
     otu_id: str,
@@ -392,6 +411,26 @@ async def join_legacy_otu_in_session(
     own uncommitted writes. The session's lifecycle is left alone -- nothing here
     commits, rolls back or closes it. Returns ``None`` for an OTU that has no row, as
     :func:`join` does for one that has no document.
+
+    A thin single-OTU face on :func:`join_legacy_otus_in_session`, which is where the
+    read itself lives.
+    """
+    return (await join_legacy_otus_in_session(pg_session, [otu_id])).get(otu_id)
+
+
+async def join_legacy_otus_in_session(
+    pg_session: AsyncSession,
+    otu_ids: Collection[str],
+) -> dict[str, Document]:
+    """Reconstruct joined OTU documents for ``otu_ids`` from Postgres within
+    ``pg_session``.
+
+    The read every OTU join in this codebase resolves to, batched or not. Reads through
+    the caller's session on the same terms as :func:`join_legacy_otu_in_session`, and
+    leaves its lifecycle alone.
+
+    The OTUs are read in one query and their sequences in a second, so the cost is two
+    queries and one pool connection however many OTUs are asked for.
 
     Both reads pass ``populate_existing`` so a row already in the session's identity map
     is refreshed from the database rather than handed back as it was first loaded. The
@@ -426,29 +465,51 @@ async def join_legacy_otu_in_session(
     ``isolate_id`` exactly as they are on the Mongo path, and an isolate with no
     sequences still gets an empty list.
 
-    The sequences are ordered by ``position``, which reproduces the natural order
-    Mongo's unsorted cursor returns them in. A ``NULL`` or duplicated position is not
-    sorted around: :func:`virtool.otus.migration.compare_otu_and_sequence_stores` gates
-    the read switch on neither existing, and quietly shuffling such an OTU's sequences
-    would misapply every diff that addresses them by index -- the failure ``position``
-    exists to prevent.
+    The sequences are ordered by ``position`` within their OTU, which reproduces the
+    natural order Mongo's unsorted cursor returns them in. A ``NULL`` or duplicated
+    position is not sorted around:
+    :func:`virtool.otus.migration.compare_otu_and_sequence_stores` gates the read switch
+    on neither existing, and quietly shuffling such an OTU's sequences would misapply
+    every diff that addresses them by index -- the failure ``position`` exists to
+    prevent.
     """
-    otu_row = await pg_session.get(SQLOTU, otu_id, populate_existing=True)
+    otu_ids = set(otu_ids)
 
-    if otu_row is None:
-        return None
+    if not otu_ids:
+        return {}
+
+    otu_rows = (
+        await pg_session.scalars(
+            select(SQLOTU)
+            .where(SQLOTU.id.in_(otu_ids))
+            .execution_options(populate_existing=True),
+        )
+    ).all()
+
+    if not otu_rows:
+        return {}
 
     sequence_rows = await pg_session.scalars(
         select(SQLSequence)
-        .where(SQLSequence.otu_id == otu_id)
-        .order_by(SQLSequence.position)
+        .where(SQLSequence.otu_id.in_([otu_row.id for otu_row in otu_rows]))
+        .order_by(SQLSequence.otu_id, SQLSequence.position)
         .execution_options(populate_existing=True),
     )
 
-    return virtool.otus.utils.merge_otu(
-        otu_document_from_row(otu_row),
-        [sequence_document_from_row(row) for row in sequence_rows],
-    )
+    sequence_documents = defaultdict(list)
+
+    for sequence_row in sequence_rows:
+        sequence_documents[sequence_row.otu_id].append(
+            sequence_document_from_row(sequence_row),
+        )
+
+    return {
+        otu_row.id: virtool.otus.utils.merge_otu(
+            otu_document_from_row(otu_row),
+            sequence_documents[otu_row.id],
+        )
+        for otu_row in otu_rows
+    }
 
 
 def compose_isolate_match(isolate_id: str):

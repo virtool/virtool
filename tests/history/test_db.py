@@ -6,9 +6,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 import virtool.history.db
+from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.models.enums import HistoryMethod
+from virtool.otus.oas import CreateOTURequest
 from virtool.pg.utils import get_row_by_id
 from virtool.references.sql import SQLReference
 from virtool.workflow.pytest_plugin.utils import StaticTime
@@ -407,6 +409,93 @@ async def test_patch_to_version_intermediate(
 
     assert current == snapshot(name="current")
     assert patched == snapshot(name="patched")
+
+
+class TestPatchOTUsToVersions:
+    """``patch_otus_to_versions`` patches a whole set of OTUs in one batched read.
+
+    It is where the patching lives -- :func:`patch_to_version` is a single-OTU face on
+    it -- so a specifier patched alongside others has to resolve to exactly what it
+    resolves to alone.
+    """
+
+    @pytest.mark.parametrize("remove", [True, False])
+    async def test_same_otu_at_two_versions(
+        self,
+        remove: bool,
+        create_mock_history,
+        pg: AsyncEngine,
+    ):
+        """An OTU patched to two versions at once resolves as each version does alone.
+
+        The history for the set is read only as far back as the lowest version any of
+        its OTUs is being patched to, so the specifier bound for the higher version is
+        handed rows reaching past its own target that it must not revert.
+        """
+        await create_mock_history(remove=remove)
+
+        specifiers = [("6116cba1", 1), ("6116cba1", 2)]
+
+        patched_otus = await virtool.history.db.patch_otus_to_versions(pg, specifiers)
+
+        assert len(patched_otus) == 2
+
+        for specifier in specifiers:
+            assert patched_otus[specifier] == await virtool.history.db.patch_to_version(
+                pg,
+                *specifier,
+            )
+
+    async def test_patches_each_otu_from_its_own_history(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """Every OTU is patched from its own changes, not another OTU's.
+
+        The whole set's history comes back from one query, so the rows have to be
+        bucketed by OTU here rather than by the ``WHERE`` clause.
+        """
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        otu_ids = []
+
+        for name, abbreviation in (
+            ("Prunus virus F", "PVF"),
+            ("Cherry virus A", "CVA"),
+        ):
+            otu = await data_layer.otus.create(
+                reference.id,
+                CreateOTURequest(name=name, abbreviation=abbreviation),
+                user.id,
+            )
+
+            await data_layer.otus.add_isolate(otu.id, "isolate", "8816-v2", user.id)
+
+            otu_ids.append(otu.id)
+
+        specifiers = [(otu_id, 0) for otu_id in otu_ids]
+
+        patched_otus = await virtool.history.db.patch_otus_to_versions(pg, specifiers)
+
+        for specifier in specifiers:
+            assert patched_otus[specifier] == await virtool.history.db.patch_to_version(
+                pg,
+                *specifier,
+            )
+
+        # The isolate each OTU gained at version 1 is unwound, and neither OTU comes
+        # back as the other.
+        assert [
+            (patched_otus[specifier][1]["name"], patched_otus[specifier][1]["isolates"])
+            for specifier in specifiers
+        ] == [("Prunus virus F", []), ("Cherry virus A", [])]
+
+    async def test_no_specifiers(self, pg: AsyncEngine):
+        """Asking for no OTUs is empty rather than an error or every OTU."""
+        assert await virtool.history.db.patch_otus_to_versions(pg, []) == {}
 
 
 async def test_patch_to_version_missing_diff(

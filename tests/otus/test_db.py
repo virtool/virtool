@@ -19,6 +19,7 @@ from virtool.otus.db import (
     join,
     join_legacy_otu,
     join_legacy_otu_in_session,
+    join_legacy_otus,
     otu_document_from_row,
     otu_row_values,
     sequence_document_from_row,
@@ -745,6 +746,104 @@ class TestJoinLegacyOTU:
     async def test_returns_none_when_the_otu_has_no_row(self, pg: AsyncEngine):
         """A missing OTU is ``None``, as it is on the Mongo path."""
         assert await join_legacy_otu(pg, "6116cba1") is None
+
+
+class TestJoinLegacyOTUs:
+    """``join_legacy_otus`` joins a whole set of OTUs in two queries.
+
+    It is the read every OTU join resolves to, so a batch has to hand back exactly what
+    joining each OTU on its own does. The sequences of every OTU come back from one
+    query and are bucketed by ``otu_id`` here rather than by the ``WHERE`` clause, which
+    is the part a batch can get wrong and the single-OTU read cannot.
+    """
+
+    async def _create_otus(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+    ) -> list[str]:
+        """Create two OTUs whose sequences are written interleaved across both.
+
+        Interleaved because OTUs filled one after the other would join correctly even if
+        their sequences were bucketed by the wrong key, or left in the order one query
+        happened to return them in.
+
+        Returns the two OTU ids.
+        """
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        otu_ids = []
+        isolate_ids = []
+
+        for name, abbreviation in (
+            ("Prunus virus F", "PVF"),
+            ("Cherry virus A", "CVA"),
+        ):
+            otu = await data_layer.otus.create(
+                reference.id,
+                CreateOTURequest(name=name, abbreviation=abbreviation),
+                user.id,
+            )
+
+            isolate = await data_layer.otus.add_isolate(
+                otu.id,
+                "isolate",
+                "8816-v2",
+                user.id,
+            )
+
+            otu_ids.append(otu.id)
+            isolate_ids.append(isolate.id)
+
+        for index in range(4):
+            otu_index = index % 2
+
+            await data_layer.otus.create_sequence(
+                otu_ids[otu_index],
+                isolate_ids[otu_index],
+                f"KX26987{index}",
+                f"Prunus virus F segment {index}",
+                "TGTTTAAGAGATTAAACAACCGCTTTC",
+                user.id,
+                "sweet cherry",
+            )
+
+        return otu_ids
+
+    async def test_equals_single_joins(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """Every OTU joins as it does on its own, sequences and their order included."""
+        otu_ids = await self._create_otus(data_layer, fake)
+
+        assert await join_legacy_otus(pg, otu_ids) == {
+            otu_id: await join_legacy_otu(pg, otu_id) for otu_id in otu_ids
+        }
+
+    async def test_omits_otu_with_no_row(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """A missing OTU is absent from the mapping rather than mapped to ``None``.
+
+        The rest of the batch still joins, so one bad id cannot cost a caller the OTUs
+        it asked for alongside it.
+        """
+        otu_ids = await self._create_otus(data_layer, fake)
+
+        joined = await join_legacy_otus(pg, [*otu_ids, "6116cba1"])
+
+        assert sorted(joined) == sorted(otu_ids)
+
+    async def test_no_otu_ids(self, pg: AsyncEngine):
+        """Asking for no OTUs is empty rather than an error or every OTU."""
+        assert await join_legacy_otus(pg, []) == {}
 
 
 class TestJoinLegacyOTUInSession:

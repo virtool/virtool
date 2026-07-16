@@ -7,7 +7,6 @@ downloads.
 import csv
 import io
 import statistics
-from asyncio import gather
 from collections import defaultdict
 from typing import Any
 
@@ -17,7 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.topg import compose_legacy_id_multi_expression
-from virtool.history.db import patch_to_version
+from virtool.history.db import patch_otus_to_versions
 from virtool.hmm.sql import SQLHMM
 from virtool.models.enums import AnalysisWorkflow
 from virtool.otus.utils import format_isolate_name
@@ -54,6 +53,12 @@ async def format_pathoscope(
 
     Calculate metrics for different organizational levels: OTU, isolate, and sequence.
 
+    Every detected OTU is patched to the version the analysis saw in one batched read,
+    on the same collect-then-load shape :func:`format_nuvs` uses for its annotations.
+    Reading each OTU as its hits were formatted instead -- a ``patch_to_version`` per
+    OTU, fanned out with a ``gather`` -- issued a query and took a pool connection per
+    detected OTU, which is enough to saturate both for a result with a few hundred hits.
+
     :param pg: the application PostgreSQL database object
     :param results: the results to format
     :return: the formatted results
@@ -67,27 +72,24 @@ async def format_pathoscope(
 
         hits_by_otu[(otu_id, otu_version)].append(hit)
 
-    coros = []
+    patched_otus = await patch_otus_to_versions(pg, hits_by_otu.keys())
+
+    formatted_hits = []
 
     for otu_specifier, hits in hits_by_otu.items():
-        otu_id, otu_version = otu_specifier
-        coros.append(format_pathoscope_hits(pg, otu_id, otu_version, hits))
+        otu_id, _ = otu_specifier
+        _, patched_otu = patched_otus[otu_specifier]
 
-    return {**results, "hits": await gather(*coros)}
+        formatted_hits.append(format_pathoscope_hits(otu_id, patched_otu, hits))
+
+    return {**results, "hits": formatted_hits}
 
 
-async def format_pathoscope_hits(
-    pg: AsyncEngine,
+def format_pathoscope_hits(
     otu_id: str,
-    otu_version,
+    patched_otu: dict[str, Any],
     hits: list[dict],
 ):
-    _, patched_otu = await patch_to_version(
-        pg,
-        otu_id,
-        otu_version,
-    )
-
     max_sequence_length = 0
 
     for isolate in patched_otu["isolates"]:
