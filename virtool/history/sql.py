@@ -42,14 +42,19 @@ class SQLLegacyHistory(Base):
     This is a faithful 1:1 lift of the Mongo document into Postgres. Nested Mongo
     fields are flattened into columns:
 
-    - ``otu``/``index`` ids are bare string columns with no foreign key, because
-      those collections have not been migrated to Postgres yet.
+    - ``index`` is a bare string column with no foreign key because the ``indexes``
+      collection has not been migrated to Postgres yet.
+    - ``otu`` is a bare string column with no foreign key by design: ``SQLOTU`` keys
+      on the 8-character Mongo id and has no ``legacy_id`` column, so this already
+      holds the OTU's primary key.
     - ``reference`` is mid-migration: the legacy Mongo string column is no longer
       written now that ``reference_id`` is the source of truth, and it is nullable
       until it is dropped in a later cleanup revision.
     - ``user.id`` becomes a real foreign key to ``users.id``.
-    - ``otu_version`` and ``index_version`` are strings because Mongo stores both
-      integer versions and sentinel values such as ``"removed"`` and ``"unbuilt"``.
+    - ``otu_version`` and ``index_version`` are strings holding stringified integers.
+      The Mongo sentinels ``"removed"`` and ``"unbuilt"`` are normalized to ``NULL``
+      on write by :func:`virtool.history.db.legacy_history_values` and reconstituted
+      on read, so neither column ever stores a sentinel.
     """
 
     __tablename__ = "legacy_history"
