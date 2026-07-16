@@ -368,11 +368,50 @@ def sequence_document_from_row(row: SQLSequence) -> Document:
 
 
 async def join_legacy_otu(pg: AsyncEngine, otu_id: str) -> Document | None:
-    """Reconstruct a joined OTU document from Postgres.
+    """Reconstruct a joined OTU document from Postgres in a session of its own.
 
     The Postgres counterpart of :func:`join`, and the read primitive OTU reads and
-    :func:`virtool.history.db.patch_to_version` are built on. Returns ``None`` for an
-    OTU that has no row, as :func:`join` does for one that has no document.
+    :func:`virtool.history.db.patch_to_version` are built on. Sees only committed rows,
+    which is what a read outside a write transaction wants.
+    :func:`join_legacy_otu_in_session` is the variant for a caller that has to see its
+    own uncommitted writes.
+    """
+    async with AsyncSession(pg) as session:
+        return await join_legacy_otu_in_session(session, otu_id)
+
+
+async def join_legacy_otu_in_session(
+    pg_session: AsyncSession,
+    otu_id: str,
+) -> Document | None:
+    """Reconstruct a joined OTU document from Postgres within ``pg_session``.
+
+    Reads through the caller's session, so an OTU written earlier in the caller's
+    transaction joins as it now stands rather than as it was last committed. The OTU
+    write path needs this: it composes a history diff from the OTU before and after its
+    own uncommitted writes. The session's lifecycle is left alone -- nothing here
+    commits, rolls back or closes it. Returns ``None`` for an OTU that has no row, as
+    :func:`join` does for one that has no document.
+
+    Both reads pass ``populate_existing`` so a row already in the session's identity map
+    is refreshed from the database rather than handed back as it was first loaded. The
+    write path upserts through Core DML (:func:`write_legacy_otu`), which does not
+    synchronize the identity map, so a caller that joins an OTU, writes it and joins it
+    again -- exactly the diff-composing sequence above -- can otherwise be handed its
+    pre-write ``data`` the second time and diff the OTU against itself. Autoflush does
+    not cover this: it pushes pending changes out, it does not invalidate what has
+    already been loaded.
+
+    Without ``populate_existing`` that second join is correct only by accident. The
+    identity map holds its rows weakly, and this function keeps no reference to the ones
+    it loads, so the stale row is usually collected before the rejoin and the lookup
+    falls through to a fresh ``SELECT``. Anything else in the transaction that still
+    holds the row -- a caller that read it itself, a lazy attribute, a debugger --
+    pins it in the map and the stale read comes back. Read correctness cannot rest on
+    garbage collection timing.
+
+    Erasing pending object state is the documented cost of ``populate_existing`` and
+    costs nothing here, because this domain's writes mutate no mapped objects.
 
     Both documents are recovered from the verbatim ``data`` JSONB column, via
     :func:`otu_document_from_row` and :func:`sequence_document_from_row`, rather than
@@ -394,22 +433,22 @@ async def join_legacy_otu(pg: AsyncEngine, otu_id: str) -> Document | None:
     would misapply every diff that addresses them by index -- the failure ``position``
     exists to prevent.
     """
-    async with AsyncSession(pg) as session:
-        otu_row = await session.get(SQLOTU, otu_id)
+    otu_row = await pg_session.get(SQLOTU, otu_id, populate_existing=True)
 
-        if otu_row is None:
-            return None
+    if otu_row is None:
+        return None
 
-        sequence_rows = await session.scalars(
-            select(SQLSequence)
-            .where(SQLSequence.otu_id == otu_id)
-            .order_by(SQLSequence.position),
-        )
+    sequence_rows = await pg_session.scalars(
+        select(SQLSequence)
+        .where(SQLSequence.otu_id == otu_id)
+        .order_by(SQLSequence.position)
+        .execution_options(populate_existing=True),
+    )
 
-        return virtool.otus.utils.merge_otu(
-            otu_document_from_row(otu_row),
-            [sequence_document_from_row(row) for row in sequence_rows],
-        )
+    return virtool.otus.utils.merge_otu(
+        otu_document_from_row(otu_row),
+        [sequence_document_from_row(row) for row in sequence_rows],
+    )
 
 
 def compose_isolate_match(isolate_id: str):
