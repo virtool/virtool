@@ -8,12 +8,10 @@ from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy import (
-    String,
     delete,
     distinct,
     false,
     func,
-    literal,
     or_,
     select,
     true,
@@ -1009,20 +1007,20 @@ async def increment_legacy_otu_version(
     serializes the whole edit around this; the single statement means the increment
     itself does not depend on them having taken it.
     """
-    values = func.jsonb_build_object(
-        literal("version", String),
-        SQLOTU.version + 1,
-        literal("verified", String),
-        false(),
-    )
-
     data = await pg_session.scalar(
         update(SQLOTU)
         .where(SQLOTU.id == otu_id)
         .values(
             version=SQLOTU.version + 1,
             verified=False,
-            data=SQLOTU.data.concat(values),
+            data=SQLOTU.data.concat(
+                func.jsonb_build_object(
+                    "version",
+                    SQLOTU.version + 1,
+                    "verified",
+                    false(),
+                ),
+            ),
         )
         .returning(SQLOTU.data),
     )
@@ -1060,7 +1058,7 @@ async def update_legacy_otu_verification(
         .values(
             verified=True,
             data=SQLOTU.data.concat(
-                func.jsonb_build_object(literal("verified", String), true()),
+                func.jsonb_build_object("verified", true()),
             ),
         ),
     )
@@ -1109,7 +1107,7 @@ async def update_legacy_sequence_segments(
         )
         .values(
             segment=None,
-            data=SQLSequence.data.op("-")(literal("segment", String)),
+            data=SQLSequence.data.op("-")("segment"),
         ),
     )
 
