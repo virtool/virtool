@@ -2,6 +2,7 @@
 
 import asyncio
 from collections import defaultdict
+from collections.abc import Awaitable, Callable
 from copy import deepcopy
 from typing import Any
 
@@ -36,9 +37,13 @@ from virtool.otus.db import (
     get_legacy_sequence_body,
     get_legacy_sequence_in_session,
     increment_legacy_otu_version,
+    insert_legacy_otu,
+    insert_legacy_sequence,
     join_legacy_otu_in_session,
     legacy_isolate_exists,
+    legacy_otu_id_taken,
     legacy_sequence_exists,
+    legacy_sequence_id_taken,
     list_legacy_isolate_sequence_bodies,
     list_legacy_isolate_sequences,
     list_legacy_otu_sequence_bodies,
@@ -77,6 +82,34 @@ class OTUData:
     def __init__(self, mongo: Mongo, pg: AsyncEngine) -> None:
         self._mongo = mongo
         self._pg = pg
+
+    async def _generate_id(
+        self,
+        pg_session: AsyncSession,
+        taken: Callable[[AsyncSession, str], Awaitable[bool]],
+    ) -> str:
+        """Generate an id no ``legacy_otus`` or ``legacy_sequences`` row holds yet.
+
+        The create paths write Postgres before Mongo, so they need the id before either
+        store has seen the document and cannot let ``Collection.insert_one`` invent one.
+        This replaces the collision check that ran inside it, asking Postgres what it
+        used to ask Mongo.
+
+        The generators do collide. ``FakeIdProvider`` replays one seeded sequence, so a
+        test that seeds a document under an id the provider later reaches gets a
+        collision every run rather than never, and ``RandomIdProvider`` draws an
+        8-character string that has some chance of landing on a taken one.
+
+        The check races a concurrent create that picks the same id in the same instant,
+        which the insert-only writes it feeds turn into an ``IntegrityError`` rather
+        than a clobbered row. That was already the outcome -- Mongo's unique ``_id``
+        index raised on the same race -- and it survives Mongo leaving the write path.
+        """
+        while True:
+            id_ = self._mongo.id_provider.get()
+
+            if not await taken(pg_session, id_):
+                return id_
 
     async def find(
         self, page: int, per_page: int, term: str | None, verified: bool | None
@@ -308,13 +341,8 @@ class OTUData:
             mongo_session: AsyncIOMotorClientSession,
             pg_session: AsyncSession,
         ) -> Document:
-            # The id is generated here rather than left to ``insert_one`` so Postgres
-            # can be written first. ``insert_one`` would both invent the id and take
-            # the first write, and its collision check is a read of ``mongo.otus``.
-            # The ``legacy_otus`` primary key is the uniqueness authority now, and an
-            # id it rejects fails the write loudly.
             document_ = {
-                "_id": self._mongo.id_provider.get(),
+                "_id": await self._generate_id(pg_session, legacy_otu_id_taken),
                 "name": data.name,
                 "abbreviation": data.abbreviation,
                 "last_indexed_version": None,
@@ -326,7 +354,7 @@ class OTUData:
                 "schema": data.dict()["otu_schema"],
             }
 
-            await write_legacy_otu(pg_session, document_)
+            await insert_legacy_otu(pg_session, document_)
 
             await self._mongo.otus.insert_one(document_, session=mongo_session)
 
@@ -861,10 +889,9 @@ class OTUData:
 
             old = await join_legacy_otu_in_session(pg_session, otu_id)
 
-            # The id is generated here when the caller does not name one, rather than
-            # left to ``insert_one``, so Postgres can be written first. See ``create``.
             document = {
-                "_id": sequence_id or self._mongo.id_provider.get(),
+                "_id": sequence_id
+                or await self._generate_id(pg_session, legacy_sequence_id_taken),
                 "accession": accession,
                 "definition": definition,
                 "otu_id": otu_id,
@@ -877,7 +904,7 @@ class OTUData:
 
             await increment_legacy_otu_version(pg_session, otu_id)
 
-            await write_legacy_sequence(pg_session, document)
+            await insert_legacy_sequence(pg_session, document)
 
             new = await join_legacy_otu_in_session(pg_session, otu_id)
 

@@ -548,6 +548,100 @@ class TestIsolateDualWrite:
         assert await _get_otu_row(pg, otu.id) is not None
 
 
+class TestGeneratedIdCollision:
+    """The create paths keep asking for an id until Postgres has a free one.
+
+    Postgres is written before Mongo, so the id is needed before either store has seen
+    the document and cannot come from ``Collection.insert_one``, which used to check
+    Mongo for a collision and generate another id. Obeying a generator that returns a
+    taken id would upsert over the row that already holds it.
+    """
+
+    async def test_create_skips_taken_otu_id(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mocker,
+        mongo: Mongo,
+    ):
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        taken = await data_layer.otus.create(
+            reference.id,
+            CreateOTURequest(name="Prunus virus A"),
+            user.id,
+        )
+
+        mocker.patch.object(
+            mongo.id_provider,
+            "get",
+            side_effect=[taken.id, "freshotu"],
+        )
+
+        created = await data_layer.otus.create(
+            reference.id,
+            CreateOTURequest(name="Tobacco mosaic virus"),
+            user.id,
+        )
+
+        assert created.id == "freshotu"
+
+        # The OTU that held the colliding id is intact rather than overwritten.
+        assert (await data_layer.otus.get(taken.id)).name == "Prunus virus A"
+
+    async def test_create_sequence_skips_taken_sequence_id(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mocker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+    ):
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        otu = await data_layer.otus.create(
+            reference.id,
+            CreateOTURequest(name="Example", schema=_segments(10)),
+            user.id,
+        )
+
+        isolate = await data_layer.otus.add_isolate(otu.id, "isolate", "A", user.id)
+
+        taken = await data_layer.otus.create_sequence(
+            otu.id,
+            isolate.id,
+            "NC_001367",
+            "Example genome",
+            "ATGCGTACGT",
+            user.id,
+        )
+
+        mocker.patch.object(
+            mongo.id_provider,
+            "get",
+            side_effect=[taken.id, "freshseq"],
+        )
+
+        created = await data_layer.otus.create_sequence(
+            otu.id,
+            isolate.id,
+            "NC_001368",
+            "Another genome",
+            "TTTTTTTTTT",
+            user.id,
+        )
+
+        assert created.id == "freshseq"
+
+        # The sequence that held the colliding id keeps its own body.
+        rows = {row.id: row for row in await _get_sequence_rows(pg, otu.id)}
+
+        assert rows[taken.id].data["sequence"] == "ATGCGTACGT"
+        assert rows["freshseq"].data["sequence"] == "TTTTTTTTTT"
+
+
 class TestSequenceDualWrite:
     """The per-sequence write path mirrors both the sequence row and the parent OTU."""
 
