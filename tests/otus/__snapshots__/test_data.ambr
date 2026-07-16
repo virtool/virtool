@@ -283,10 +283,10 @@
       ]),
       list([
         'change',
-        'abbreviation',
+        'version',
         list([
-          'PLV',
-          'TMV',
+          4,
+          5,
         ]),
       ]),
       list([
@@ -299,10 +299,10 @@
       ]),
       list([
         'change',
-        'version',
+        'abbreviation',
         list([
-          4,
-          5,
+          'PLV',
+          'TMV',
         ]),
       ]),
     ]),

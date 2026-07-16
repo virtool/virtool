@@ -138,6 +138,7 @@ async def test_set_default(
     mongo,
     snapshot,
     fake,
+    insert_otu,
     test_otu,
     static_time,
     tmp_path,
@@ -146,12 +147,11 @@ async def test_set_default(
     user = await fake.users.create()
     reference = await fake.references.create(user=user)
 
-    test_otu["reference"] = {"id": reference.id}
     test_otu["isolates"].append(
         {"default": False, "id": "bar", "source_type": "isolate", "source_name": "A"},
     )
 
-    await mongo.otus.insert_one(test_otu)
+    await insert_otu(test_otu, reference.id)
 
     assert (
         await data_layer.otus.set_isolate_as_default("6116cba1", "bar", user.id)
