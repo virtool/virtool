@@ -1,40 +1,51 @@
 """Work with OTUs in the database."""
 
+import math
 from collections import Counter
 from collections.abc import Collection
 from datetime import datetime
 from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from sqlalchemy import delete, distinct, func, select
+from sqlalchemy import delete, distinct, func, or_, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.history.db
 import virtool.otus.utils
 from virtool.api.custom_json import isoformat_to_datetime
-from virtool.api.utils import compose_regex_query, paginate
 from virtool.data.topg import (
-    compose_legacy_id_mongo_match,
     compose_legacy_id_subquery,
     resolve_legacy_id,
 )
 from virtool.data.transforms import apply_transforms
-from virtool.errors import DatabaseError
 from virtool.history.sql import SQLLegacyHistory
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_one_field
 from virtool.otus.sql import SQLOTU, SQLSequence
 from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
-from virtool.utils import base_processor, to_bool
+
+
+def compose_otu_search_filter(term: str):
+    """Compose a case-insensitive substring match on ``name`` and ``abbreviation``.
+
+    Mirrors the Mongo ``compose_regex_query`` behaviour the find endpoint used before
+    reading from Postgres: the term is matched literally, so SQL ``LIKE`` wildcards in
+    the term are escaped rather than interpreted.
+    """
+    escaped = term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    pattern = f"%{escaped}%"
+
+    return or_(
+        SQLOTU.name.ilike(pattern, escape="\\"),
+        SQLOTU.abbreviation.ilike(pattern, escape="\\"),
+    )
 
 
 async def check_name_and_abbreviation(
-    mongo: "Mongo",
     pg: AsyncEngine,
-    ref_id: str,
+    ref_id: int | str,
     name: str | None = None,
     abbreviation: str | None = None,
 ) -> str | None:
@@ -42,24 +53,41 @@ async def check_name_and_abbreviation(
 
     Returns an error message if the ``name`` or ``abbreviation`` are already in use.
 
-    :param mongo: the application database client
+    The name is matched on ``lower(name)`` rather than the ``lower_name`` field the
+    Mongo query used. The ``legacy_otus_name_lower`` index makes that expression a
+    lookup rather than a scan, so the denormalised field does not need promoting to a
+    column of its own.
+
     :param pg: the application PostgreSQL engine
     :param ref_id: the id of the reference to check in
     :param name: an OTU name
     :param abbreviation: an OTU abbreviation
 
     """
-    reference_id_match = await compose_legacy_id_mongo_match(pg, SQLReference, ref_id)
+    reference_id = compose_legacy_id_subquery(SQLReference, ref_id)
 
-    name_exists = name and await mongo.otus.count_documents(
-        {"lower_name": name.lower(), "reference.id": reference_id_match},
-        limit=1,
-    )
+    async with AsyncSession(pg) as session:
+        name_exists = bool(name) and await session.scalar(
+            select(
+                select(SQLOTU.id)
+                .where(
+                    func.lower(SQLOTU.name) == name.lower(),
+                    SQLOTU.reference_id == reference_id,
+                )
+                .exists(),
+            ),
+        )
 
-    abbreviation_exists = abbreviation and await mongo.otus.count_documents(
-        {"abbreviation": abbreviation, "reference.id": reference_id_match},
-        limit=1,
-    )
+        abbreviation_exists = bool(abbreviation) and await session.scalar(
+            select(
+                select(SQLOTU.id)
+                .where(
+                    SQLOTU.abbreviation == abbreviation,
+                    SQLOTU.reference_id == reference_id,
+                )
+                .exists(),
+            ),
+        )
 
     if name_exists and abbreviation_exists:
         return "Name and abbreviation already exist"
@@ -70,48 +98,48 @@ async def check_name_and_abbreviation(
     if abbreviation_exists:
         return "Abbreviation already exists"
 
+    return None
+
 
 async def find(
-    mongo: "Mongo",
     pg: AsyncEngine,
     term: str | None,
     page: int,
     per_page: int,
     verified: bool | None,
-    ref_id: str | None = None,
-) -> dict[str, Any] | list[dict | None]:
-    mongo_query = {}
+    ref_id: int | str | None = None,
+) -> dict[str, Any]:
+    """Find OTUs matching a search term, in ``paginate``'s result shape.
 
-    if term:
-        mongo_query.update(compose_regex_query(term, ["name", "abbreviation"]))
+    ``ref_id`` scopes both counts, so ``total_count`` is the size of the reference
+    rather than of every OTU, exactly as the ``base_query`` it replaces did.
 
-    if verified is not None:
-        mongo_query["verified"] = to_bool(verified)
+    Only the promoted columns behind :class:`virtool.otus.models.OTUMinimal` are
+    selected, standing in for the projection the Mongo query passed. Selecting whole
+    rows would drag the entire ``data`` JSONB -- every isolate of every OTU on the page
+    -- over the wire to build a response that names none of it.
 
-    base_query = None
+    Rows are ordered by ``lower(name)`` then ``id``, which the ``legacy_otus_name_lower``
+    index covers. This is a deliberate change of order rather than a port of the Mongo
+    one: ``sort="name"`` collated by byte value, so it filed every capitalised name ahead
+    of every lowercase one, and it had no tiebreaker, so OTUs sharing a name could swap
+    places between pages of one walk. Case-folding gives the alphabetical order the
+    endpoint has always appeared to promise, and ``id`` makes paging stable.
+    """
+    base_filters = []
 
     if ref_id is not None:
-        base_query = {
-            "reference.id": await compose_legacy_id_mongo_match(
-                pg, SQLReference, ref_id
-            ),
-        }
+        base_filters.append(
+            SQLOTU.reference_id == compose_legacy_id_subquery(SQLReference, ref_id),
+        )
 
-    data = await paginate(
-        mongo.otus,
-        mongo_query,
-        page,
-        per_page,
-        base_query=base_query,
-        sort="name",
-        projection=["_id", "abbreviation", "name", "reference", "verified", "version"],
-    )
+    search_filters = list(base_filters)
 
-    data["documents"] = await apply_transforms(
-        [base_processor(d) for d in data["documents"]],
-        [AttachReferenceTransform(pg)],
-        pg,
-    )
+    if term:
+        search_filters.append(compose_otu_search_filter(term))
+
+    if verified is not None:
+        search_filters.append(SQLOTU.verified.is_(verified))
 
     history_filters = [SQLLegacyHistory.index.is_(None)]
 
@@ -122,13 +150,60 @@ async def find(
         )
 
     async with AsyncSession(pg) as session:
-        data["modified_count"] = await session.scalar(
-            select(func.count(distinct(SQLLegacyHistory.otu))).where(
-                *history_filters,
-            ),
+        total_count = await session.scalar(
+            select(func.count()).select_from(SQLOTU).where(*base_filters),
         )
 
-    return data
+        found_count = await session.scalar(
+            select(func.count()).select_from(SQLOTU).where(*search_filters),
+        )
+
+        rows = (
+            await session.execute(
+                select(
+                    SQLOTU.id,
+                    SQLOTU.abbreviation,
+                    SQLOTU.name,
+                    SQLOTU.reference_id,
+                    SQLOTU.verified,
+                    SQLOTU.version,
+                )
+                .where(*search_filters)
+                .order_by(func.lower(SQLOTU.name), SQLOTU.id)
+                .offset(per_page * (page - 1))
+                .limit(per_page),
+            )
+        ).all()
+
+        modified_count = await session.scalar(
+            select(func.count(distinct(SQLLegacyHistory.otu))).where(*history_filters),
+        )
+
+    documents = await apply_transforms(
+        [
+            {
+                "id": row.id,
+                "abbreviation": row.abbreviation,
+                "name": row.name,
+                "reference": {"id": row.reference_id},
+                "verified": row.verified,
+                "version": row.version,
+            }
+            for row in rows
+        ],
+        [AttachReferenceTransform(pg)],
+        pg,
+    )
+
+    return {
+        "documents": documents,
+        "total_count": total_count,
+        "found_count": found_count,
+        "page_count": int(math.ceil(found_count / per_page)),
+        "per_page": per_page,
+        "page": page,
+        "modified_count": modified_count,
+    }
 
 
 async def join(
@@ -160,7 +235,6 @@ async def join(
 
 
 async def join_and_format(
-    mongo: "Mongo",
     pg: AsyncEngine,
     otu_id: str,
     joined: dict | None = None,
@@ -171,15 +245,20 @@ async def join_and_format(
     Reuses the ``joined`` otu document if available to save a database query. Then,
     format the joined otu into a format that can be directly returned to API clients.
 
-    :param mongo: the application database client
+    Unresolved ``issues`` are computed from the joined document in hand rather than by
+    re-reading the OTU. The old Mongo path called :func:`verify`, which joined the OTU a
+    second time purely to hand it to :func:`virtool.otus.utils.verify`; the two joins
+    always described the same OTU, so collapsing them changes nothing but the query
+    count.
+
     :param pg: the application PostgreSQL database object
     :param otu_id: the id of the otu to join
-    :param joined:
+    :param joined: use this joined otu document rather than reading one
     :param issues: an object describing issues in the otu
     :return: a joined and formatted otu
 
     """
-    joined = joined or await join(mongo, otu_id)
+    joined = joined or await join_legacy_otu(pg, otu_id)
 
     if not joined:
         return None
@@ -187,23 +266,9 @@ async def join_and_format(
     most_recent_change = await virtool.history.db.get_most_recent_change(pg, otu_id)
 
     if issues is False:
-        issues = await verify(mongo, otu_id)
+        issues = virtool.otus.utils.verify(joined)
 
     return virtool.otus.utils.format_otu(joined, issues, most_recent_change)
-
-
-async def verify(mongo: "Mongo", otu_id: str, joined: dict = None) -> dict | None:
-    """Verifies that the associated otu is ready to be included in an index rebuild.
-
-    Returns verification errors if necessary.
-
-    """
-    joined = joined or await join(mongo, otu_id)
-
-    if not joined:
-        raise DatabaseError(f"Could not find otu '{otu_id}'")
-
-    return virtool.otus.utils.verify(joined)
 
 
 async def increment_otu_version(
@@ -345,6 +410,119 @@ async def join_legacy_otu(pg: AsyncEngine, otu_id: str) -> Document | None:
             otu_document_from_row(otu_row),
             [sequence_document_from_row(row) for row in sequence_rows],
         )
+
+
+def compose_isolate_match(isolate_id: str):
+    """Compose a match on an OTU that carries the isolate identified by ``isolate_id``.
+
+    The Postgres counterpart of the Mongo ``{"isolates.id": isolate_id}`` predicate.
+    Isolates are embedded in the OTU document rather than promoted to a table of their
+    own, so the match is a JSONB containment test against the ``isolates`` array in
+    ``data``. Containment is used rather than pulling the array back and scanning it in
+    Python so an isolate-scoped read stays a single scalar query.
+    """
+    return SQLOTU.data["isolates"].contains([{"id": isolate_id}])
+
+
+async def get_legacy_otu_reference_id(
+    pg: AsyncEngine,
+    otu_id: str,
+    isolate_id: str | None = None,
+) -> int | None:
+    """Return the id of an OTU's parent reference, or ``None`` if it has no row.
+
+    Backs the authorization reads on the OTU handlers, which need nothing about an OTU
+    but the reference whose rights govern it. Only ``reference_id`` is selected, so the
+    check never reads the ``data`` JSONB.
+
+    When ``isolate_id`` is given the OTU must also carry that isolate, and ``None`` is
+    returned if it does not. The handlers that take an isolate in their path rely on
+    this: the read is their existence check for the isolate as well as for the OTU, and
+    dropping the scope would turn a bad ``isolate_id`` into a ``403``/``200`` rather
+    than the ``404`` it has always been.
+    """
+    filters = [SQLOTU.id == otu_id]
+
+    if isolate_id is not None:
+        filters.append(compose_isolate_match(isolate_id))
+
+    async with AsyncSession(pg) as session:
+        return await session.scalar(select(SQLOTU.reference_id).where(*filters))
+
+
+async def legacy_isolate_exists(pg: AsyncEngine, otu_id: str, isolate_id: str) -> bool:
+    """Return whether an OTU exists and carries the isolate identified by ``isolate_id``.
+
+    The Postgres counterpart of the ``count_documents({"_id": otu_id, "isolates.id":
+    isolate_id})`` guard the sequence reads use. Only the ``id`` column is selected, so
+    the check never reads the ``data`` JSONB it matches against.
+    """
+    async with AsyncSession(pg) as session:
+        return (
+            await session.scalar(
+                select(SQLOTU.id).where(
+                    SQLOTU.id == otu_id,
+                    compose_isolate_match(isolate_id),
+                ),
+            )
+        ) is not None
+
+
+async def get_legacy_otu_fields(
+    pg: AsyncEngine,
+    otu_id: str,
+    fields: list[str],
+    isolate_id: str | None = None,
+) -> Document | None:
+    """Return selected fields of an OTU document from Postgres, or ``None``.
+
+    The Postgres counterpart of a projected ``mongo.otus.find_one``. The fields are read
+    out of the ``data`` JSONB rather than from the promoted columns, so they reach the
+    ones -- ``isolates``, ``schema`` -- the promotion does not carry, and only the
+    requested fields cross the wire.
+
+    ``None`` means the OTU has no row. A field the document does not carry is left out of
+    the returned dict rather than returned as ``None``, because a Mongo projection omits
+    it too and callers lean on that: ``evaluate_changes`` defaults a missing
+    ``abbreviation`` to ``""`` with ``document.get("abbreviation", "")``, and a key
+    present-and-``None`` would defeat that default and make an unchanged abbreviation
+    read as an edit.
+
+    When ``isolate_id`` is given the OTU must also carry that isolate, and ``None`` is
+    returned if it does not.
+    """
+    filters = [SQLOTU.id == otu_id]
+
+    if isolate_id is not None:
+        filters.append(compose_isolate_match(isolate_id))
+
+    async with AsyncSession(pg) as session:
+        row = (
+            await session.execute(
+                select(
+                    *[
+                        SQLOTU.data[field].label(f"value_{index}")
+                        for index, field in enumerate(fields)
+                    ],
+                    *[
+                        SQLOTU.data.has_key(field).label(f"present_{index}")
+                        for index, field in enumerate(fields)
+                    ],
+                ).where(*filters),
+            )
+        ).first()
+
+    if row is None:
+        return None
+
+    values = row[: len(fields)]
+    present = row[len(fields) :]
+
+    return {
+        field: value
+        for field, value, is_present in zip(fields, values, present, strict=True)
+        if is_present
+    }
 
 
 async def get_legacy_sequence(
@@ -840,7 +1018,7 @@ async def update_sequence_segments(
 
 
 async def check_sequence_segment(
-    mongo: "Mongo",
+    pg: AsyncEngine,
     otu_id: str,
     data: dict,
 ) -> str | None:
@@ -851,16 +1029,19 @@ async def check_sequence_segment(
 
     Returns `None` if the check passes.
 
-    :param mongo: the application database object
+    :param pg: the application PostgreSQL engine
     :param otu_id: the ID of the parent OTU
     :param data: the data dict containing a segment value
     :return: message or `None` if check passes
 
     """
-    if data.get("segment"):
-        schema = await get_one_field(mongo.otus, "schema", otu_id) or []
+    segment = data.get("segment")
 
-        segment = data.get("segment")
+    if segment:
+        otu = await get_legacy_otu_fields(pg, otu_id, ["schema"])
+        schema = (otu or {}).get("schema") or []
 
         if segment not in {s["name"] for s in schema}:
             return f"Segment {segment} is not defined for the parent OTU"
+
+    return None

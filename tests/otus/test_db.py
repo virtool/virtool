@@ -8,11 +8,13 @@ from virtool.api.custom_json import dump_string, loads
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
+from virtool.models.enums import Molecule
 from virtool.mongo.core import Mongo
 from virtool.otus.db import (
     check_name_and_abbreviation,
     check_sequence_segment,
     find,
+    get_legacy_otu_fields,
     increment_otu_version,
     join,
     join_legacy_otu,
@@ -21,32 +23,95 @@ from virtool.otus.db import (
     sequence_document_from_row,
     sequence_row_values,
 )
-from virtool.otus.oas import CreateOTURequest
+from virtool.otus.models import OTUSegment
+from virtool.otus.oas import CreateOTURequest, UpdateOTURequest
 from virtool.otus.sql import SQLOTU, SQLSequence
 from virtool.otus.utils import find_isolate
 from virtool.types import Document
 
 
-@pytest.mark.parametrize(
-    "name,abbreviation,return_value",
-    [
-        ("Foobar Virus", "FBR", None),
-        ("Prunus virus F", "FBR", "Name already exists"),
-        ("Foobar Virus", "PVF", "Abbreviation already exists"),
-        ("Prunus virus F", "PVF", "Name and abbreviation already exist"),
-    ],
-    ids=["name_exists", "abbreviation_exists", "both_exist", "neither exist"],
-)
-async def test_check_name_and_abbreviation(
-    name, abbreviation, return_value, mongo, pg, test_otu
-):
-    """Test that the function works properly for all possible inputs."""
-    await mongo.otus.insert_one(test_otu)
+class TestCheckNameAndAbbreviation:
+    """An OTU's name and abbreviation are unique within its parent reference."""
 
-    assert (
-        await check_name_and_abbreviation(mongo, pg, "hxn167", name, abbreviation)
-        == return_value
+    async def _create_otu(self, data_layer: DataLayer, fake: DataFaker) -> int:
+        """Create ``Prunus virus F`` (``PVF``) and return its reference's id."""
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        await data_layer.otus.create(
+            reference.id,
+            CreateOTURequest(name="Prunus virus F", abbreviation="PVF"),
+            user.id,
+        )
+
+        return reference.id
+
+    @pytest.mark.parametrize(
+        "name,abbreviation,message",
+        [
+            ("Foobar Virus", "FBR", None),
+            ("Prunus virus F", "FBR", "Name already exists"),
+            ("Foobar Virus", "PVF", "Abbreviation already exists"),
+            ("Prunus virus F", "PVF", "Name and abbreviation already exist"),
+        ],
+        ids=["neither_exists", "name_exists", "abbreviation_exists", "both_exist"],
     )
+    async def test_messages(
+        self,
+        name: str,
+        abbreviation: str,
+        message: str | None,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        reference_id = await self._create_otu(data_layer, fake)
+
+        assert (
+            await check_name_and_abbreviation(pg, reference_id, name, abbreviation)
+            == message
+        )
+
+    async def test_name_match_is_case_insensitive(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """A name differing only in case is still taken.
+
+        The Mongo query matched a denormalised ``lower_name`` field. Postgres matches
+        ``lower(name)`` instead, so this is the behaviour that field existed to provide.
+        """
+        reference_id = await self._create_otu(data_layer, fake)
+
+        assert (
+            await check_name_and_abbreviation(pg, reference_id, "PRUNUS VIRUS F")
+            == "Name already exists"
+        )
+
+    async def test_scoped_to_reference(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """An OTU in another reference does not make the name or abbreviation taken."""
+        await self._create_otu(data_layer, fake)
+
+        other_reference = await fake.references.create(
+            user=await fake.users.create(),
+        )
+
+        assert (
+            await check_name_and_abbreviation(
+                pg,
+                other_reference.id,
+                "Prunus virus F",
+                "PVF",
+            )
+            is None
+        )
 
 
 @pytest.mark.parametrize("in_db", [True, False])
@@ -83,26 +148,183 @@ async def test_increment_otu_version(mongo, snapshot):
     assert await mongo.otus.find_one() == snapshot
 
 
+class TestFindOrder:
+    """``find`` orders by ``lower(name)`` then ``id``."""
+
+    async def _insert(
+        self,
+        insert_otu,
+        reference_id: int,
+        test_otu: Document,
+        rows: list[tuple[str, str]],
+    ) -> None:
+        for otu_id, name in rows:
+            await insert_otu(
+                {**test_otu, "_id": otu_id, "name": name, "lower_name": name.lower()},
+                reference_id,
+            )
+
+    async def test_case_insensitive(
+        self,
+        fake: DataFaker,
+        insert_otu,
+        pg: AsyncEngine,
+        test_otu: Document,
+    ):
+        """Names are ordered alphabetically regardless of case.
+
+        The Mongo sort this replaces collated by byte value, which filed every
+        capitalised name ahead of every lowercase one.
+        """
+        reference = await fake.references.create(user=await fake.users.create())
+
+        await self._insert(
+            insert_otu,
+            reference.id,
+            test_otu,
+            [
+                ("zucchini", "Zucchini yellow mosaic virus"),
+                ("alfalfa", "alfalfa mosaic virus"),
+            ],
+        )
+
+        data = await find(pg, None, 1, 25, None, reference.id)
+
+        assert [document["name"] for document in data["documents"]] == [
+            "alfalfa mosaic virus",
+            "Zucchini yellow mosaic virus",
+        ]
+
+    async def test_shared_name_breaks_tie_on_id(
+        self,
+        fake: DataFaker,
+        insert_otu,
+        pg: AsyncEngine,
+        test_otu: Document,
+    ):
+        """OTUs sharing a name are ordered by id, so paging cannot repeat or skip one."""
+        reference = await fake.references.create(user=await fake.users.create())
+
+        await self._insert(
+            insert_otu,
+            reference.id,
+            test_otu,
+            [
+                ("second", "Shared Name"),
+                ("first", "Shared Name"),
+                ("third", "Shared Name"),
+            ],
+        )
+
+        first_page = await find(pg, None, 1, 2, None, reference.id)
+        second_page = await find(pg, None, 2, 2, None, reference.id)
+
+        assert [document["id"] for document in first_page["documents"]] == [
+            "first",
+            "second",
+        ]
+        assert [document["id"] for document in second_page["documents"]] == ["third"]
+
+
+class TestGetLegacyOTUFields:
+    """``get_legacy_otu_fields`` stands in for a projected ``mongo.otus.find_one``."""
+
+    async def test_omits_absent_field(self, insert_otu, fake: DataFaker, pg, test_otu):
+        """A field the document does not carry is left out rather than returned as None.
+
+        A Mongo projection omits it too, and ``evaluate_changes`` relies on that: it
+        defaults a missing ``abbreviation`` to ``""`` via ``get("abbreviation", "")``,
+        which a present-and-``None`` key would defeat.
+        """
+        reference = await fake.references.create(user=await fake.users.create())
+
+        del test_otu["abbreviation"]
+
+        await insert_otu(test_otu, reference.id)
+
+        assert await get_legacy_otu_fields(
+            pg,
+            test_otu["_id"],
+            ["abbreviation", "name"],
+        ) == {"name": "Prunus virus F"}
+
+    async def test_keeps_null_field(self, insert_otu, fake: DataFaker, pg, test_otu):
+        """A field the document carries as null is present, not omitted."""
+        reference = await fake.references.create(user=await fake.users.create())
+
+        await insert_otu({**test_otu, "abbreviation": None}, reference.id)
+
+        assert await get_legacy_otu_fields(pg, test_otu["_id"], ["abbreviation"]) == {
+            "abbreviation": None,
+        }
+
+    async def test_no_otu(self, pg):
+        assert await get_legacy_otu_fields(pg, "missing", ["name"]) is None
+
+
 class TestCheckSequenceSegment:
     """Test that a sequence's segment is validated against the parent OTU's schema."""
 
-    async def test_defined(self, mongo):
-        await mongo.otus.insert_one({"_id": "foo", "schema": [{"name": "RNA1"}]})
+    async def _create_otu(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        *,
+        with_schema: bool,
+    ) -> str:
+        """Create an OTU, optionally carrying an ``RNA1`` segment, and return its id."""
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
 
-        assert await check_sequence_segment(mongo, "foo", {"segment": "RNA1"}) is None
+        otu = await data_layer.otus.create(
+            reference.id,
+            CreateOTURequest(name="Prunus virus F", abbreviation="PVF"),
+            user.id,
+        )
 
-    async def test_not_defined(self, mongo):
-        await mongo.otus.insert_one({"_id": "foo", "schema": [{"name": "RNA1"}]})
+        if with_schema:
+            otu = await data_layer.otus.update(
+                otu.id,
+                UpdateOTURequest(
+                    schema=[
+                        OTUSegment(
+                            molecule=Molecule.ss_rna,
+                            name="RNA1",
+                            required=True,
+                        ),
+                    ],
+                ),
+                user.id,
+            )
+
+        return otu.id
+
+    async def test_defined(self, data_layer: DataLayer, fake: DataFaker, pg):
+        otu_id = await self._create_otu(data_layer, fake, with_schema=True)
+
+        assert await check_sequence_segment(pg, otu_id, {"segment": "RNA1"}) is None
+
+    async def test_not_defined(self, data_layer: DataLayer, fake: DataFaker, pg):
+        otu_id = await self._create_otu(data_layer, fake, with_schema=True)
 
         assert (
-            await check_sequence_segment(mongo, "foo", {"segment": "RNA2"})
+            await check_sequence_segment(pg, otu_id, {"segment": "RNA2"})
             == "Segment RNA2 is not defined for the parent OTU"
         )
 
-    async def test_no_segment(self, mongo):
-        await mongo.otus.insert_one({"_id": "foo", "schema": [{"name": "RNA1"}]})
+    async def test_no_segment(self, data_layer: DataLayer, fake: DataFaker, pg):
+        otu_id = await self._create_otu(data_layer, fake, with_schema=True)
 
-        assert await check_sequence_segment(mongo, "foo", {}) is None
+        assert await check_sequence_segment(pg, otu_id, {}) is None
+
+    async def test_no_schema(self, data_layer: DataLayer, fake: DataFaker, pg):
+        """An OTU that carries no schema defines no segment."""
+        otu_id = await self._create_otu(data_layer, fake, with_schema=False)
+
+        assert (
+            await check_sequence_segment(pg, otu_id, {"segment": "RNA1"})
+            == "Segment RNA1 is not defined for the parent OTU"
+        )
 
 
 class TestFindModifiedCount:
@@ -159,7 +381,7 @@ class TestFindModifiedCount:
             ],
         )
 
-        data = await find(mongo, pg, None, 1, 25, None)
+        data = await find(pg, None, 1, 25, None)
 
         assert data["modified_count"] == 2
 
@@ -183,7 +405,7 @@ class TestFindModifiedCount:
             ],
         )
 
-        data = await find(mongo, pg, None, 1, 25, None)
+        data = await find(pg, None, 1, 25, None)
 
         assert data["modified_count"] == 1
 

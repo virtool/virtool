@@ -1,6 +1,10 @@
 from datetime import datetime
 
 import pytest
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from virtool.otus.db import write_legacy_otu, write_legacy_sequence
+from virtool.types import Document
 
 IMPORTED_CREATED_AT = datetime(2015, 10, 6, 20, 0, 0, 123456)
 """The ``created_at`` carried by an imported OTU, at microsecond precision.
@@ -10,6 +14,45 @@ millisecond, and ``static_time`` carries no microseconds at all, so a timestamp 
 survives that truncation unchanged cannot catch a write path that stores more precision
 than Mongo can hold.
 """
+
+
+@pytest.fixture
+def insert_otu(mongo, pg):
+    """Insert an OTU document, and any sequences, into both stores.
+
+    Seeds a literal OTU document the way the dual-write path would, for a test that
+    needs a specific ``_id``, isolate id or version rather than whatever
+    ``fake.otus.create`` invents. OTUs are read from Postgres, so a test that seeds only
+    Mongo gets a ``404``.
+
+    ``reference_id`` is written onto the document, so the caller does not have to know
+    that an OTU's reference is embedded rather than a column.
+    """
+
+    async def func(
+        document: Document,
+        reference_id: int,
+        sequences: list[Document] | None = None,
+    ) -> Document:
+        document = {**document, "reference": {"id": reference_id}}
+        sequences = sequences or []
+
+        await mongo.otus.insert_one(document)
+
+        if sequences:
+            await mongo.sequences.insert_many(sequences, session=None)
+
+        async with AsyncSession(pg) as session:
+            await write_legacy_otu(session, document)
+
+            for sequence in sequences:
+                await write_legacy_sequence(session, sequence)
+
+            await session.commit()
+
+        return document
+
+    return func
 
 
 @pytest.fixture
