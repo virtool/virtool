@@ -3,8 +3,6 @@
   dict({
     '_id': 'bf1b993c',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'has_files': True,
-    'has_json': False,
     'job': None,
     'manifest': dict({
       'bar': 2,
@@ -36,7 +34,6 @@
     'created_at': '2015-10-06T20:00:00Z',
     'files': list([
     ]),
-    'has_files': True,
     'id': 'bf1b993c',
     'job': None,
     'manifest': dict({
@@ -74,7 +71,6 @@
       dict({
         'change_count': 4,
         'created_at': '2015-10-06T20:00:00Z',
-        'has_files': True,
         'id': 'idx_active_a',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
@@ -103,7 +99,6 @@
       dict({
         'change_count': 2,
         'created_at': '2015-10-06T20:00:00Z',
-        'has_files': True,
         'id': 'idx_active_b',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
@@ -146,7 +141,6 @@
       dict({
         'change_count': 0,
         'created_at': '2015-10-06T20:00:00Z',
-        'has_files': True,
         'id': 'idx_archived',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
@@ -189,7 +183,6 @@
       dict({
         'change_count': 4,
         'created_at': '2015-10-06T20:00:00Z',
-        'has_files': True,
         'id': 'idx_active_a',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
@@ -218,7 +211,6 @@
       dict({
         'change_count': 2,
         'created_at': '2015-10-06T20:00:00Z',
-        'has_files': True,
         'id': 'idx_active_b',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
@@ -247,7 +239,6 @@
       dict({
         'change_count': 0,
         'created_at': '2015-10-06T20:00:00Z',
-        'has_files': True,
         'id': 'idx_archived',
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
@@ -288,7 +279,6 @@
     dict({
       'change_count': 0,
       'created_at': '2015-10-06T20:00:00Z',
-      'has_files': True,
       'id': 'idx_active_b',
       'job': dict({
         'created_at': '2015-10-06T20:00:00Z',
@@ -317,7 +307,6 @@
     dict({
       'change_count': 0,
       'created_at': '2015-10-06T22:00:00Z',
-      'has_files': True,
       'id': 'idx_active_a',
       'job': dict({
         'created_at': '2015-10-06T20:00:00Z',
@@ -350,7 +339,6 @@
     dict({
       'change_count': 0,
       'created_at': '2015-10-07T00:00:00Z',
-      'has_files': True,
       'id': 'idx_archived',
       'job': dict({
         'created_at': '2015-10-06T20:00:00Z',
@@ -383,7 +371,6 @@
     dict({
       'change_count': 0,
       'created_at': '2015-10-06T20:00:00Z',
-      'has_files': True,
       'id': 'idx_active_b',
       'job': dict({
         'created_at': '2015-10-06T20:00:00Z',
@@ -412,7 +399,6 @@
     dict({
       'change_count': 0,
       'created_at': '2015-10-06T22:00:00Z',
-      'has_files': True,
       'id': 'idx_active_a',
       'job': dict({
         'created_at': '2015-10-06T20:00:00Z',
@@ -441,7 +427,6 @@
     dict({
       'change_count': 0,
       'created_at': '2015-10-07T00:00:00Z',
-      'has_files': True,
       'id': 'idx_archived',
       'job': dict({
         'created_at': '2015-10-06T20:00:00Z',
@@ -553,7 +538,6 @@
         'type': 'bowtie2',
       }),
     ]),
-    'has_files': True,
     'id': 'test_index',
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
@@ -735,7 +719,6 @@
     'created_at': '2015-10-06T20:00:00Z',
     'files': list([
     ]),
-    'has_files': True,
     'id': 'foobar',
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',

@@ -108,7 +108,6 @@ class TestCreateIndexTask:
             {
                 "_id": "task_index",
                 "created_at": self.static_time.datetime,
-                "has_files": True,
                 "job": None,
                 "manifest": manifest,
                 "ready": False,

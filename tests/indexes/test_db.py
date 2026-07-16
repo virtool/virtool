@@ -202,7 +202,7 @@ async def test_get_current_id_and_version(
     exists, has_ref, test_indexes, mongo, pg: AsyncEngine
 ):
     if not exists:
-        test_indexes = [dict(i, ready=False, has_files=False) for i in test_indexes]
+        test_indexes = [dict(i, ready=False) for i in test_indexes]
 
     await mongo.indexes.insert_many(test_indexes, session=None)
 

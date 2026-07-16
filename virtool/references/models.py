@@ -57,7 +57,6 @@ class ReferenceBuild(BaseModel):
     id: str
     version: int
     user: UserNested
-    has_json: bool
 
 
 class ReferenceNested(BaseModel):
@@ -133,7 +132,6 @@ class Reference(ReferenceMinimal):
                 "id": 25,
                 "latest_build": {
                     "created_at": "2022-07-05T17:41:51.857000Z",
-                    "has_json": False,
                     "id": "u3lm1rk8",
                     "user": {
                         "administrator": True,
@@ -188,7 +186,6 @@ class ReferenceSearchResult(SearchResult):
                         "id": 25,
                         "latest_build": {
                             "created_at": "2022-07-05T17:41:51.857000Z",
-                            "has_json": False,
                             "id": "u3lm1rk8",
                             "user": {
                                 "administrator": True,

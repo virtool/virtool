@@ -408,7 +408,7 @@ async def get_latest_build(
             "reference.id": await compose_reference_id_match(pg, ref_id),
             "ready": True,
         },
-        projection=["created_at", "version", "user", "has_json"],
+        projection=["created_at", "version", "user"],
         sort=[("version", pymongo.DESCENDING)],
     )
 
