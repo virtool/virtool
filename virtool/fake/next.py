@@ -21,6 +21,7 @@ from faker.providers import (
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+import virtool.mongo.utils
 import virtool.utils
 from virtool.data.layer import DataLayer
 from virtool.example import example_path
@@ -30,6 +31,8 @@ from virtool.groups.oas import PermissionsUpdate, UpdateGroupRequest
 from virtool.groups.pg import SQLGroup
 from virtool.hmm.models import HMM
 from virtool.hmm.sql import SQLHMM
+from virtool.indexes.models import Index
+from virtool.indexes.tasks import CreateIndexTask
 from virtool.jobs.models import TERMINAL_JOB_STATES, Job, JobState
 from virtool.jobs.pg import SQLJob
 from virtool.jobs.utils import WORKFLOW_NAMES
@@ -39,7 +42,7 @@ from virtool.models.roles import AdministratorRole
 from virtool.mongo.core import Mongo
 from virtool.otus.models import OTU, OTUSegment
 from virtool.otus.oas import CreateOTURequest
-from virtool.references.db import create_document, write_legacy_reference
+from virtool.references.db import create_document, get_manifest, write_legacy_reference
 from virtool.references.models import Reference, ReferenceDataType
 from virtool.references.tasks import CloneReferenceTask
 from virtool.samples.files import create_reads_file
@@ -193,6 +196,7 @@ class DataFaker:
 
         self.groups = GroupsFakerDomain(self)
         self.hmm = HMMFakerDomain(self)
+        self.indexes = IndexesFakerDomain(self)
         self.jobs = JobsFakerDomain(self)
         self.labels = LabelsFakerDomain(self)
         self.otus = OTUsFakerDomain(self)
@@ -443,6 +447,79 @@ class ReferencesFakerDomain(DataFakerDomain):
             return await self._layer.references.archive(reference_pk)
 
         return await self._layer.references.get(reference_pk)
+
+
+class IndexesFakerDomain(DataFakerDomain):
+    model = Index
+
+    async def create(
+        self,
+        reference: Reference,
+        user: User,
+        job: Job | None = None,
+        manifest: dict[str, int] | None = None,
+        version: int | None = None,
+        *,
+        created_at: datetime.datetime | None = None,
+        ready: bool = False,
+    ) -> Index:
+        """Create a fake index for ``reference``.
+
+        An index is backed by exactly one build: a job or a task. Passing ``job`` seeds
+        the legacy job-backed shape, leaving ``task`` null. Omitting it seeds the shape
+        ``ReferencesData.create_index`` writes, backing the index with a
+        ``CreateIndexTask`` and leaving ``job`` null. Embedding both is the corrupt shape
+        ``_get_index_build_type`` rejects.
+
+        The ``_id`` is preallocated so a backing task can name it, and the embedded
+        ``reference`` and ``user`` hold integer primary keys.
+
+        :param reference: the reference to build the index for
+        :param user: the user the build is attributed to
+        :param job: the job backing the build; when omitted a task backs it instead
+        :param manifest: the OTU manifest to capture; defaults to the reference's
+        :param version: the index version; defaults to one past the reference's existing
+            indexes. Production counts only built indexes, which is the same number
+            while a reference has at most one unbuilt index, but counting all of them
+            keeps successive fake indexes on distinct versions.
+        :param created_at: when the index was created; defaults to now. Pass it to order
+            indexes independently of the order they are created in.
+        :param ready: whether the index is finished building
+        :return: a new fake index
+        """
+        index_id = await virtool.mongo.utils.get_new_id(self._mongo.indexes)
+
+        if manifest is None:
+            manifest = await get_manifest(self._pg, reference.id)
+
+        if version is None:
+            version = await self._mongo.indexes.count_documents(
+                {"reference.id": reference.id},
+            )
+
+        task = None
+
+        if job is None:
+            task = await self._data_faker.tasks.create_with_class(
+                CreateIndexTask,
+                {"index_id": index_id},
+            )
+
+        await self._mongo.indexes.insert_one(
+            {
+                "_id": index_id,
+                "version": version,
+                "created_at": created_at or virtool.utils.timestamp(),
+                "manifest": manifest,
+                "ready": ready,
+                "job": {"id": job.id} if job else None,
+                "task": {"id": task.id} if task else None,
+                "user": {"id": user.id},
+                "reference": {"id": reference.id},
+            },
+        )
+
+        return await self._layer.index.get(index_id)
 
 
 class OTUsFakerDomain(DataFakerDomain):

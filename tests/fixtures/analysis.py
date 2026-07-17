@@ -18,6 +18,12 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
 
     The index version is taken from the inline ``index.version`` and written to the
     ``indexes`` collection, where ``AttachIndexTransform`` resolves it at read time.
+    This is an upsert rather than a ``fake.indexes.create`` call because the analysis
+    names its own index: the write back-fills a version for that id instead of creating
+    an index resource, and the transform reads nothing else off the document. A test
+    that needs a real index creates one with ``fake.indexes.create`` and names it in
+    ``index.id``, in which case this only stamps the version onto that index.
+
     Non-integer ``job.id`` placeholders are stored as a null ``job_id`` since the
     Postgres column is a foreign key to ``jobs.id``.
 

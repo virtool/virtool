@@ -18,6 +18,7 @@ from virtool.indexes.db import (
     update_last_indexed_versions,
     upsert_index_file,
 )
+from virtool.indexes.models import Index
 from virtool.indexes.sql import SQLIndexFile
 from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU
@@ -70,14 +71,7 @@ async def test_create_assigns_index_in_postgres(
     built_ref = await fake.references.create(user=user, id_="built_ref")
     other_ref = await fake.references.create(user=user, id_="other_ref")
 
-    await mongo.indexes.insert_one(
-        {
-            "_id": "prior_index",
-            "reference": {"id": built_ref.id},
-            "version": 0,
-            "ready": True,
-        },
-    )
+    prior_index = await fake.indexes.create(built_ref, user, version=0, ready=True)
 
     def legacy_row(
         legacy_id: str, reference_id: int, index: str | None
@@ -100,7 +94,7 @@ async def test_create_assigns_index_in_postgres(
         session.add_all(
             [
                 legacy_row("ref_unbuilt", built_ref.id, None),
-                legacy_row("ref_already_built", built_ref.id, "prior_index"),
+                legacy_row("ref_already_built", built_ref.id, prior_index.id),
                 legacy_row("other_ref_unbuilt", other_ref.id, None),
             ],
         )
@@ -126,7 +120,7 @@ async def test_create_assigns_index_in_postgres(
         }
 
     assert rows["ref_unbuilt"] == ("new_index", "1")
-    assert rows["ref_already_built"] == ("prior_index", "0")
+    assert rows["ref_already_built"] == (prior_index.id, "0")
     assert rows["other_ref_unbuilt"] == (None, None)
 
 
@@ -196,43 +190,71 @@ async def test_create_rolls_back_both_stores_on_failure(
     assert row.index_version is None
 
 
-@pytest.mark.parametrize("exists", [True, False])
-@pytest.mark.parametrize("has_ref", [True, False])
-async def test_get_current_id_and_version(
-    exists, has_ref, test_indexes, mongo, pg: AsyncEngine
-):
-    if not exists:
-        test_indexes = [dict(i, ready=False) for i in test_indexes]
+async def _seed_index_series(
+    fake: DataFaker,
+    *,
+    ready: bool,
+) -> list[Index]:
+    """Seed four successive indexes for the ``indexed_ref`` reference."""
+    user = await fake.users.create()
+    reference = await fake.references.create(user=user, id_="indexed_ref")
 
-    await mongo.indexes.insert_many(test_indexes, session=None)
-
-    ref_id = "hxn167" if has_ref else "foobar"
-
-    index_id, index_version = await get_current_id_and_version(mongo, pg, ref_id)
-
-    if has_ref and exists:
-        assert index_id == "ptlrcefm"
-        assert index_version == 3
-
-    else:
-        assert index_id is None
-        assert index_version == -1
+    return [
+        await fake.indexes.create(reference, user, version=version, ready=ready)
+        for version in range(4)
+    ]
 
 
-@pytest.mark.parametrize("empty", [False, True])
-@pytest.mark.parametrize("has_ref", [True, False])
-async def test_get_next_version(empty, has_ref, test_indexes, mongo, pg: AsyncEngine):
-    if not empty:
-        await mongo.indexes.insert_many(test_indexes, session=None)
+class TestGetCurrentIdAndVersion:
+    async def test_returns_highest_version(
+        self, fake: DataFaker, mongo: Mongo, pg: AsyncEngine
+    ):
+        """The most recently built index for the reference is the current one."""
+        indexes = await _seed_index_series(fake, ready=True)
 
-    expected = 4
+        assert await get_current_id_and_version(mongo, pg, "indexed_ref") == (
+            indexes[3].id,
+            3,
+        )
 
-    if empty or not has_ref:
-        expected = 0
+    async def test_no_ready_index(self, fake: DataFaker, mongo: Mongo, pg: AsyncEngine):
+        """A reference whose indexes are all unbuilt has no current index."""
+        await _seed_index_series(fake, ready=False)
 
-    assert (
-        await get_next_version(mongo, pg, "hxn167" if has_ref else "foobar") == expected
-    )
+        assert await get_current_id_and_version(mongo, pg, "indexed_ref") == (None, -1)
+
+    async def test_unknown_reference(
+        self, fake: DataFaker, mongo: Mongo, pg: AsyncEngine
+    ):
+        """Indexes belonging to another reference are not matched."""
+        await _seed_index_series(fake, ready=True)
+
+        assert await get_current_id_and_version(mongo, pg, "other_ref") == (None, -1)
+
+
+class TestGetNextVersion:
+    async def test_counts_ready_indexes(
+        self, fake: DataFaker, mongo: Mongo, pg: AsyncEngine
+    ):
+        """The next version follows the number of indexes already built."""
+        await _seed_index_series(fake, ready=True)
+
+        assert await get_next_version(mongo, pg, "indexed_ref") == 4
+
+    async def test_no_indexes(self, fake: DataFaker, mongo: Mongo, pg: AsyncEngine):
+        """A reference with no indexes at all starts at version 0."""
+        user = await fake.users.create()
+        await fake.references.create(user=user, id_="indexed_ref")
+
+        assert await get_next_version(mongo, pg, "indexed_ref") == 0
+
+    async def test_unknown_reference(
+        self, fake: DataFaker, mongo: Mongo, pg: AsyncEngine
+    ):
+        """Indexes belonging to another reference are not counted."""
+        await _seed_index_series(fake, ready=True)
+
+        assert await get_next_version(mongo, pg, "other_ref") == 0
 
 
 async def test_reads_tolerate_integer_embedded_reference_id(
@@ -248,18 +270,11 @@ async def test_reads_tolerate_integer_embedded_reference_id(
 
     reference = await fake.references.create(user=user, id_="legacy_ref")
 
-    await mongo.indexes.insert_one(
-        {
-            "_id": "built_index",
-            "reference": {"id": reference.id},
-            "version": 0,
-            "ready": True,
-        },
-    )
+    built_index = await fake.indexes.create(reference, user, version=0, ready=True)
 
     index_id, index_version = await get_current_id_and_version(mongo, pg, "legacy_ref")
 
-    assert index_id == "built_index"
+    assert index_id == built_index.id
     assert index_version == 0
     assert await get_next_version(mongo, pg, "legacy_ref") == 1
 

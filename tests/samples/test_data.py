@@ -1,4 +1,3 @@
-import asyncio
 from pathlib import Path
 
 import pytest
@@ -676,7 +675,6 @@ class TestHasResourcesForAnalysisJob:
     async def _seed(
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         *,
         archived: bool = False,
     ) -> str:
@@ -691,22 +689,15 @@ class TestHasResourcesForAnalysisJob:
         if archived:
             await data_layer.references.archive(reference.id)
 
-        _, subtraction = await asyncio.gather(
-            mongo.indexes.insert_one(
-                {
-                    "_id": "test_index",
-                    "reference": {"id": "test_ref"},
-                    "ready": True,
-                    "version": 1,
-                },
-            ),
-            fake.subtractions.create(user=user, upload=upload),
-        )
+        await fake.indexes.create(reference, user, version=1, ready=True)
+
+        subtraction = await fake.subtractions.create(user=user, upload=upload)
 
         return subtraction.id
 
-    async def test_ok(self, data_layer: DataLayer, fake: DataFaker, mongo: Mongo):
-        subtraction_id = await self._seed(data_layer, fake, mongo)
+    async def test_ok(self, data_layer: DataLayer, fake: DataFaker):
+        """A reference addressed by its legacy string id resolves to its ready index."""
+        subtraction_id = await self._seed(data_layer, fake)
 
         assert (
             await data_layer.samples.has_resources_for_analysis_job(
@@ -716,14 +707,14 @@ class TestHasResourcesForAnalysisJob:
             is None
         )
 
-    async def test_ok_migrated_reference(
+    async def test_ok_reference_by_primary_key(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
-        pg: AsyncEngine,
     ):
-        """A ready index embedding the integer reference id is still matched."""
+        """A reference addressed by its integer primary key resolves to its ready
+        index just as its legacy string id does.
+        """
         user = await fake.users.create()
         upload = await fake.uploads.create(
             user=user,
@@ -732,17 +723,9 @@ class TestHasResourcesForAnalysisJob:
 
         reference = await fake.references.create(user=user, id_="test_ref")
 
-        _, subtraction = await asyncio.gather(
-            mongo.indexes.insert_one(
-                {
-                    "_id": "test_index",
-                    "reference": {"id": reference.id},
-                    "ready": True,
-                    "version": 1,
-                },
-            ),
-            fake.subtractions.create(user=user, upload=upload),
-        )
+        await fake.indexes.create(reference, user, version=1, ready=True)
+
+        subtraction = await fake.subtractions.create(user=user, upload=upload)
 
         assert (
             await data_layer.samples.has_resources_for_analysis_job(
@@ -752,7 +735,7 @@ class TestHasResourcesForAnalysisJob:
             is None
         )
 
-    async def test_missing_reference(self, data_layer: DataLayer, mongo: Mongo):
+    async def test_missing_reference(self, data_layer: DataLayer):
         with pytest.raises(ResourceConflictError, match=r"Reference does not exist"):
             await data_layer.samples.has_resources_for_analysis_job(
                 "test_ref",
@@ -763,9 +746,8 @@ class TestHasResourcesForAnalysisJob:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
     ):
-        subtraction_id = await self._seed(data_layer, fake, mongo, archived=True)
+        subtraction_id = await self._seed(data_layer, fake, archived=True)
 
         with pytest.raises(ResourceConflictError, match=r"Reference is archived"):
             await data_layer.samples.has_resources_for_analysis_job(
@@ -777,9 +759,8 @@ class TestHasResourcesForAnalysisJob:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
     ):
-        subtraction_id = await self._seed(data_layer, fake, mongo)
+        subtraction_id = await self._seed(data_layer, fake)
 
         with pytest.raises(
             ResourceConflictError,
@@ -1134,14 +1115,7 @@ class TestDelete:
         reference = await fake.references.create(user=user, name="Test Reference")
         sample = await fake.samples.create(user, ready=True)
 
-        await mongo.indexes.insert_one(
-            {
-                "_id": "test_index",
-                "version": 11,
-                "ready": True,
-                "reference": {"id": reference.id},
-            },
-        )
+        await fake.indexes.create(reference, user, version=11, ready=True)
 
         return sample, user.id, reference.id
 

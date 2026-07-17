@@ -43,46 +43,41 @@ async def add_index_files(pg: AsyncEngine, index_id: str) -> None:
         await session.commit()
 
 
+@pytest.mark.usefixtures("static_time")
 async def test_finalize(
     data_layer: DataLayer,
     fake: DataFaker,
     mongo: Mongo,
     pg: AsyncEngine,
     snapshot,
-    static_time,
 ):
     user = await fake.users.create()
     job = await fake.jobs.create(user=user)
     reference = await fake.references.create(user=user)
 
-    await mongo.indexes.insert_one(
-        {
-            "_id": "foo",
-            "reference": {"id": reference.id},
-            "user": {"id": user.id},
-            "version": 2,
-            "created_at": static_time.datetime,
-            "job": {"id": job.id},
-            "task": None,
-            "manifest": {},
-        },
+    index = await fake.indexes.create(
+        reference,
+        user,
+        job=job,
+        manifest={},
+        version=2,
     )
 
-    await add_index_files(pg, "foo")
+    await add_index_files(pg, index.id)
 
     # Ensure return value is correct.
-    assert await data_layer.index.finalize("foo") == snapshot
+    assert await data_layer.index.finalize(index.id) == snapshot
 
     # Ensure document in database is correct.
     assert await mongo.indexes.find_one() == snapshot
 
 
+@pytest.mark.usefixtures("static_time")
 async def test_finalize_stamps_last_indexed_version(
     data_layer: DataLayer,
     fake: DataFaker,
     mongo: Mongo,
     pg: AsyncEngine,
-    static_time,
 ):
     """Finalizing an index stamps ``last_indexed_version`` in Postgres as well as
     Mongo, so ``legacy_otus`` does not drift from the OTU document it mirrors.
@@ -93,21 +88,17 @@ async def test_finalize_stamps_last_indexed_version(
     reference = await fake.references.create(user=user)
     otu = await fake.otus.create(reference.id, user)
 
-    await mongo.indexes.insert_one(
-        {
-            "_id": "foo",
-            "reference": {"id": reference.id},
-            "user": {"id": user.id},
-            "version": 2,
-            "created_at": static_time.datetime,
-            "job": {"id": job.id},
-            "manifest": {},
-        },
+    index = await fake.indexes.create(
+        reference,
+        user,
+        job=job,
+        manifest={},
+        version=2,
     )
 
-    await add_index_files(pg, "foo")
+    await add_index_files(pg, index.id)
 
-    await data_layer.index.finalize("foo")
+    await data_layer.index.finalize(index.id)
 
     document = await mongo.otus.find_one({"_id": otu.id})
 
@@ -131,6 +122,8 @@ async def test_finalize_reference_missing_from_postgres(
     user = await fake.users.create()
     job = await fake.jobs.create(user=user)
 
+    # Seeded by hand rather than through ``fake.indexes``: the faker takes a real
+    # ``Reference``, so it cannot express the dangling reference this test is about.
     await mongo.indexes.insert_one(
         {
             "_id": "foo",
@@ -165,18 +158,13 @@ class TestDelete:
         job = await fake.jobs.create(user=user)
         reference = await fake.references.create(user=user)
 
-        await mongo.indexes.insert_one(
-            {
-                "_id": "deleted_index",
-                "reference": {"id": reference.id},
-                "user": {"id": user.id},
-                "version": 4,
-                "created_at": static_time.datetime,
-                "job": {"id": job.id},
-                "task": None,
-                "ready": True,
-                "manifest": {},
-            },
+        deleted_index = await fake.indexes.create(
+            reference,
+            user,
+            job=job,
+            manifest={},
+            version=4,
+            ready=True,
         )
 
         async with AsyncSession(pg) as session:
@@ -192,7 +180,7 @@ class TestDelete:
                         otu_name="Virus A",
                         otu_version="0",
                         reference_id=reference.id,
-                        index="deleted_index",
+                        index=deleted_index.id,
                         index_version="4",
                     ),
                     SQLLegacyHistory(
@@ -205,7 +193,7 @@ class TestDelete:
                         otu_name="Virus B",
                         otu_version="0",
                         reference_id=reference.id,
-                        index="deleted_index",
+                        index=deleted_index.id,
                         index_version="4",
                     ),
                     SQLLegacyHistory(
@@ -225,9 +213,9 @@ class TestDelete:
             )
             await session.commit()
 
-        await data_layer.index.delete("deleted_index")
+        await data_layer.index.delete(deleted_index.id)
 
-        assert await mongo.indexes.find_one("deleted_index") is None
+        assert await mongo.indexes.find_one(deleted_index.id) is None
 
         async with AsyncSession(pg) as session:
             rows = {

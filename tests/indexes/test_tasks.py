@@ -70,6 +70,7 @@ class TestCreateIndexTask:
         test_otu: dict,
         test_sequence: dict,
     ) -> None:
+        self._fake = fake
         self.data_layer = data_layer
         self.memory_storage = memory_storage
         self.mongo = mongo
@@ -89,36 +90,25 @@ class TestCreateIndexTask:
             self.test_otu,
             self.test_sequence,
         )
-        return await self._create_task_backed_index(
-            self.manifest,
-            self.reference.id,
+        return await self._create_task_backed_index(self.manifest)
+
+    async def _create_task_backed_index(self, manifest: dict[str, int]) -> int:
+        """Seed an index backed by a ``CreateIndexTask`` and return the task's id.
+
+        The faker creates the task, so the id it was given is read back off the index.
+        """
+        index = await self._fake.indexes.create(
+            self.reference,
+            self.user,
+            manifest=manifest,
+            version=0,
         )
 
-    async def _create_task_backed_index(
-        self,
-        manifest: dict[str, int],
-        reference_id: int | str,
-    ) -> int:
-        task = await self.data_layer.tasks.create(
-            CreateIndexTask,
-            {"index_id": "task_index"},
-        )
+        self.index_id = index.id
 
-        await self.mongo.indexes.insert_one(
-            {
-                "_id": "task_index",
-                "created_at": self.static_time.datetime,
-                "job": None,
-                "manifest": manifest,
-                "ready": False,
-                "reference": {"id": reference_id},
-                "task": {"id": task.id},
-                "user": {"id": self.user.id},
-                "version": 0,
-            },
-        )
+        document = await self.mongo.indexes.find_one(index.id, ["task"])
 
-        return task.id
+        return document["task"]["id"]
 
     async def test_writes_only_compressed_reference_json_v2_and_finalizes(
         self,
@@ -127,10 +117,11 @@ class TestCreateIndexTask:
         """The task writes reference JSON v2 and marks the index ready."""
         await (await CreateIndexTask.from_task_id(self.data_layer, task_id)).run()
 
-        key = compose_index_file_key("task_index", REFERENCE_JSON_V2_FILE_NAME)
+        key = compose_index_file_key(self.index_id, REFERENCE_JSON_V2_FILE_NAME)
 
         keys = [
-            info.key async for info in self.memory_storage.list("indexes/task_index/")
+            info.key
+            async for info in self.memory_storage.list(f"indexes/{self.index_id}/")
         ]
         assert keys == [key]
 
@@ -138,7 +129,7 @@ class TestCreateIndexTask:
             [chunk async for chunk in self.memory_storage.read(key)],
         )
         download, size = await self.data_layer.index.get_index_file(
-            "task_index",
+            self.index_id,
             REFERENCE_JSON_V2_FILE_NAME,
         )
 
@@ -174,7 +165,7 @@ class TestCreateIndexTask:
             rows = (
                 (
                     await session.execute(
-                        select(SQLIndexFile).filter_by(index="task_index"),
+                        select(SQLIndexFile).filter_by(index=self.index_id),
                     )
                 )
                 .scalars()
@@ -186,17 +177,17 @@ class TestCreateIndexTask:
         assert rows[0].type == "json"
         assert rows[0].size == len(compressed)
 
-        index = await self.mongo.indexes.find_one("task_index")
+        index = await self.mongo.indexes.find_one(self.index_id)
         assert index["ready"] is True
 
-        response = await self.data_layer.index.get("task_index")
+        response = await self.data_layer.index.get(self.index_id)
         assert response.ready is True
 
         otu = await self.mongo.otus.find_one(self.test_otu["_id"])
         assert otu["last_indexed_version"] == 1
 
-    async def test_resolves_integer_reference_id(self) -> None:
-        """A task-backed build accepts an integer embedded reference id."""
+    async def test_marks_task_complete(self) -> None:
+        """A successful build completes its task without error and readies the index."""
         manifest = await _insert_indexed_otu(
             self.mongo,
             self.pg,
@@ -204,26 +195,27 @@ class TestCreateIndexTask:
             self.test_otu,
             self.test_sequence,
         )
-        task_id = await self._create_task_backed_index(manifest, self.reference.id)
+        task_id = await self._create_task_backed_index(manifest)
 
         await (await CreateIndexTask.from_task_id(self.data_layer, task_id)).run()
 
         task = await self.data_layer.tasks.get(task_id)
-        index = await self.mongo.indexes.find_one("task_index")
+        index = await self.mongo.indexes.find_one(self.index_id)
 
         assert task.complete is True
         assert task.error is None
         assert index["ready"] is True
         assert [
-            info.key async for info in self.memory_storage.list("indexes/task_index/")
-        ] == [compose_index_file_key("task_index", REFERENCE_JSON_V2_FILE_NAME)]
+            info.key
+            async for info in self.memory_storage.list(f"indexes/{self.index_id}/")
+        ] == [compose_index_file_key(self.index_id, REFERENCE_JSON_V2_FILE_NAME)]
 
     async def test_updates_existing_index_file_row(self, task_id: int) -> None:
         """An existing reference JSON file row is updated instead of duplicated."""
         async with AsyncSession(self.pg) as session:
             session.add(
                 SQLIndexFile(
-                    index="task_index",
+                    index=self.index_id,
                     name=REFERENCE_JSON_V2_FILE_NAME,
                     size=1,
                     type="json",
@@ -237,7 +229,7 @@ class TestCreateIndexTask:
             rows = (
                 (
                     await session.execute(
-                        select(SQLIndexFile).filter_by(index="task_index"),
+                        select(SQLIndexFile).filter_by(index=self.index_id),
                     )
                 )
                 .scalars()
@@ -251,7 +243,7 @@ class TestCreateIndexTask:
 
         assert (
             await self.memory_storage.size(
-                compose_index_file_key("task_index", REFERENCE_JSON_V2_FILE_NAME),
+                compose_index_file_key(self.index_id, REFERENCE_JSON_V2_FILE_NAME),
             )
             == rows[0].size
         )
@@ -260,13 +252,13 @@ class TestCreateIndexTask:
         """A completed task-backed index cannot be regenerated."""
         await (await CreateIndexTask.from_task_id(self.data_layer, task_id)).run()
 
-        key = compose_index_file_key("task_index", REFERENCE_JSON_V2_FILE_NAME)
+        key = compose_index_file_key(self.index_id, REFERENCE_JSON_V2_FILE_NAME)
         artifact = b"".join(
             [chunk async for chunk in self.memory_storage.read(key)],
         )
 
         with pytest.raises(ResourceConflictError, match="already ready"):
-            await self.data_layer.index.generate_task_index("task_index")
+            await self.data_layer.index.generate_task_index(self.index_id)
 
         assert (
             b"".join(
@@ -279,7 +271,7 @@ class TestCreateIndexTask:
             rows = (
                 (
                     await session.execute(
-                        select(SQLIndexFile).filter_by(index="task_index"),
+                        select(SQLIndexFile).filter_by(index=self.index_id),
                     )
                 )
                 .scalars()
@@ -320,10 +312,10 @@ class TestCreateIndexTask:
         expected_attempts = 2
         assert attempts == expected_attempts
         assert (await self.data_layer.tasks.get(task_id)).complete is True
-        assert (await self.data_layer.index.get("task_index")).ready is True
+        assert (await self.data_layer.index.get(self.index_id)).ready is True
         assert (
             await self.memory_storage.size(
-                compose_index_file_key("task_index", REFERENCE_JSON_V2_FILE_NAME),
+                compose_index_file_key(self.index_id, REFERENCE_JSON_V2_FILE_NAME),
             )
             > 0
         )
@@ -333,10 +325,7 @@ class TestCreateIndexTask:
         mocker: MockerFixture,
     ) -> None:
         """A failed task-backed build leaves the index unready."""
-        task_id = await self._create_task_backed_index(
-            {"failing_otu": 1},
-            self.reference.id,
-        )
+        task_id = await self._create_task_backed_index({"failing_otu": 1})
         failure_message = "failed to build reference"
 
         async def patch_to_version(*_args: object):
@@ -353,11 +342,12 @@ class TestCreateIndexTask:
         assert task.complete is False
         assert "failed to build reference" in task.error
 
-        index = await self.data_layer.index.get("task_index")
+        index = await self.data_layer.index.get(self.index_id)
         assert index.ready is False
 
         keys = [
-            info.key async for info in self.memory_storage.list("indexes/task_index/")
+            info.key
+            async for info in self.memory_storage.list(f"indexes/{self.index_id}/")
         ]
         assert keys == []
 
@@ -365,7 +355,7 @@ class TestCreateIndexTask:
             rows = (
                 (
                     await session.execute(
-                        select(SQLIndexFile).filter_by(index="task_index"),
+                        select(SQLIndexFile).filter_by(index=self.index_id),
                     )
                 )
                 .scalars()
@@ -386,7 +376,7 @@ class TestCreateIndexTask:
             async with AsyncSession(self.pg) as session:
                 row = (
                     await session.execute(
-                        select(SQLIndexFile).filter_by(index="task_index"),
+                        select(SQLIndexFile).filter_by(index=self.index_id),
                     )
                 ).scalar_one_or_none()
 
@@ -405,7 +395,8 @@ class TestCreateIndexTask:
         assert "failed to finalize index" in task.error
 
         keys = [
-            info.key async for info in self.memory_storage.list("indexes/task_index/")
+            info.key
+            async for info in self.memory_storage.list(f"indexes/{self.index_id}/")
         ]
         assert keys == []
 
@@ -413,7 +404,7 @@ class TestCreateIndexTask:
             rows = (
                 (
                     await session.execute(
-                        select(SQLIndexFile).filter_by(index="task_index"),
+                        select(SQLIndexFile).filter_by(index=self.index_id),
                     )
                 )
                 .scalars()
@@ -422,5 +413,5 @@ class TestCreateIndexTask:
 
         assert rows == []
 
-        index = await self.data_layer.index.get("task_index")
+        index = await self.data_layer.index.get(self.index_id)
         assert index.ready is False

@@ -416,9 +416,7 @@ async def test_remove(
 
     reference = await fake.references.create(user=user)
 
-    await mongo.indexes.insert_one(
-        {"_id": "bar", "version": 3, "reference": {"id": reference.id}},
-    )
+    index = await fake.indexes.create(reference, user, version=3, ready=True)
 
     sample_id = MISSING_SAMPLE_ID
 
@@ -439,7 +437,7 @@ async def test_remove(
             {
                 "_id": "foobar",
                 "created_at": static_time.datetime,
-                "index": {"id": "bar", "version": 3},
+                "index": {"id": index.id, "version": 3},
                 "job": {"id": "hello"},
                 "ready": error != "409",
                 "reference": {"id": reference.id},
