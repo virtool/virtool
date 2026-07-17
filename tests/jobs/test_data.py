@@ -23,7 +23,6 @@ from virtool.jobs.models import (
 )
 from virtool.jobs.pg import (
     SQLJob,
-    SQLJobIndex,
 )
 from virtool.samples.sql import SQLLegacySample
 from virtool.subtractions.pg import SQLSubtraction
@@ -55,7 +54,7 @@ async def test_create(
 
     user = await fake.users.create()
 
-    job = await jobs_data.create("build_index", {"index_id": "foo"}, user.id, 0)
+    job = await jobs_data.create("build_index", {}, user.id, 0)
 
     assert job == snapshot
 
@@ -248,37 +247,28 @@ class TestCreatePostgres:
 
         assert fetched_job.args == {"sample_id": sample.id}
 
-    async def test_index_join_table(
+    async def test_index_id_resolved_from_index(
         self,
         jobs_data: JobsData,
         fake: DataFaker,
-        pg: AsyncEngine,
     ):
-        """Test that build_index jobs write to job_indexes join table."""
+        """``get`` resolves the index id from the index linked by job_id.
+
+        A build_index job no longer writes a ``job_indexes`` link row; its
+        ``index_id`` argument is reconstructed from the reverse ``indexes.job_id``
+        foreign key and exposed as the index's legacy id, byte-identical to what the
+        retired join table stored.
+        """
         user = await fake.users.create()
+        reference = await fake.references.create(user)
 
-        job = await jobs_data.create(
-            "build_index",
-            {"index_id": "index_456"},
-            user.id,
-            0,
-        )
+        job = await jobs_data.create("build_index", {}, user.id, 0)
 
-        async with AsyncSession(pg) as session:
-            sql_job = (
-                await session.execute(
-                    select(SQLJob).where(SQLJob.id == job.id),
-                )
-            ).scalar()
+        index = await fake.indexes.create(reference, user, job=job)
 
-            job_index = (
-                await session.execute(
-                    select(SQLJobIndex).where(SQLJobIndex.job_id == sql_job.id),
-                )
-            ).scalar()
+        fetched_job = await jobs_data.get(job.id)
 
-        assert job_index is not None
-        assert job_index.index_id == "index_456"
+        assert fetched_job.args == {"index_id": index.id}
 
     async def test_subtraction_id_resolved_from_subtraction(
         self,

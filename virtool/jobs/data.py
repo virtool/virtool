@@ -11,6 +11,7 @@ from virtool.analyses.sql import SQLAnalysis
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emit, emits
 from virtool.data.transforms import apply_transforms
+from virtool.indexes.sql import SQLIndex
 from virtool.jobs.models import (
     CreateJobClaimRequest,
     Job,
@@ -27,7 +28,6 @@ from virtool.jobs.models import (
 )
 from virtool.jobs.pg import (
     SQLJob,
-    SQLJobIndex,
 )
 from virtool.jobs.utils import compute_progress
 from virtool.samples.sql import SQLLegacySample
@@ -215,9 +215,6 @@ class JobsData:
         session.add(sql_job)
         await session.flush()
 
-        if workflow == "build_index" and "index_id" in job_args:
-            session.add(SQLJobIndex(job_id=sql_job.id, index_id=job_args["index_id"]))
-
         return sql_job.id
 
     @emits(Operation.CREATE)
@@ -253,13 +250,13 @@ class JobsData:
                     SQLJob,
                     SQLUser,
                     SQLLegacySample.id.label("sample_id"),
-                    SQLJobIndex.index_id,
+                    SQLIndex.legacy_id.label("index_id"),
                     SQLSubtraction.id.label("subtraction_id"),
                     SQLAnalysis.id.label("analysis_id"),
                 )
                 .join(SQLUser, SQLJob.user_id == SQLUser.id)
                 .outerjoin(SQLLegacySample, SQLLegacySample.job_id == SQLJob.id)
-                .outerjoin(SQLJobIndex, SQLJob.id == SQLJobIndex.job_id)
+                .outerjoin(SQLIndex, SQLIndex.job_id == SQLJob.id)
                 .outerjoin(SQLSubtraction, SQLSubtraction.job_id == SQLJob.id)
                 .outerjoin(SQLAnalysis, SQLAnalysis.job_id == SQLJob.id)
                 .where(SQLJob.id == job_id),
@@ -273,7 +270,10 @@ class JobsData:
 
         # The create_sample job's sample is resolved through the reverse
         # ``legacy_samples.job_id`` foreign key rather than a ``job_samples`` link
-        # row.
+        # row. The build_index job's index is likewise resolved through the reverse
+        # ``indexes.job_id`` foreign key rather than a ``job_indexes`` link row; its
+        # ``index_id`` argument is the index's legacy id, byte-identical to what the
+        # retired join table stored.
         args = {
             field: value
             for field, value in (

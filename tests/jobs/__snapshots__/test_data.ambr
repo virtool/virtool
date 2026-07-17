@@ -21,7 +21,6 @@
 # name: test_create
   dict({
     'args': dict({
-      'index_id': 'foo',
     }),
     'claim': None,
     'claimed_at': None,
