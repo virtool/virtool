@@ -1,3 +1,14 @@
+"""Tests for the references data layer.
+
+``ReferencesData.find`` is intentionally not tested here. Its only production
+caller is the ``GET /references/v1`` handler, so it is exercised end-to-end in
+``test_api.py`` (see ``test_find`` and ``test_find_attaches_latest_build``)
+rather than duplicated against the data layer. As a general rule, when a
+data-layer method's sole production caller is a thin API handler, cover it at
+the API layer and skip the redundant data-layer test; reserve data-layer tests
+for logic that has no direct HTTP entry point of its own.
+"""
+
 import pytest
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -17,43 +28,6 @@ from virtool.references.oas import (
 )
 from virtool.references.sql import SQLReference
 from virtool.tasks.sql import SQLTask
-
-
-class TestFind:
-    async def test_attaches_latest_build_per_reference(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-    ):
-        """Each reference on the page carries its own highest-versioned ready build,
-        with the build user resolved.
-        """
-        user = await fake.users.create()
-
-        expected_build_ids = {}
-        for _ in range(3):
-            reference = await fake.references.create(user=user)
-            await fake.indexes.create(reference, user, version=0, ready=True)
-            latest = await fake.indexes.create(reference, user, version=1, ready=True)
-            expected_build_ids[reference.id] = latest.id
-
-        result = await data_layer.references.find(
-            find="",
-            user_id=user.id,
-            administrator=True,
-            groups=[],
-            page=1,
-            per_page=25,
-        )
-
-        assert {
-            document.id: document.latest_build.id for document in result.documents
-        } == expected_build_ids
-
-        for document in result.documents:
-            assert document.latest_build.version == 1
-            assert document.latest_build.user.id == user.id
-            assert document.latest_build.user.handle == user.handle
 
 
 class TestCreate:
