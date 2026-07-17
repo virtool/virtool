@@ -29,7 +29,6 @@ from virtool.indexes.utils import check_index_file_type, compose_index_file_key
 from virtool.jobs.pg import SQLJob, SQLJobIndex
 from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
-from virtool.otus.db import bulk_insert_otu_rows
 from virtool.otus.sql import SQLOTU
 from virtool.storage.protocol import StorageBackend
 from virtool.tasks.sql import SQLTask
@@ -765,7 +764,6 @@ async def test_finalize(
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     spawn_job_client: JobClientSpawner,
-    test_otu,
 ):
     """Test that an index can be finalized using the Jobs API."""
     client = await spawn_job_client(authenticated=True)
@@ -782,10 +780,10 @@ async def test_finalize(
 
     reference = await fake.references.create(user=user)
 
-    # A change of `version` that should be reflected in `last_indexed_version` after
-    # finalizing. The OTU is written to both stores, as it is in production, so the
-    # Postgres-backed read that drives the stamp can see it.
-    otu = {**test_otu, "version": 1, "reference": {"id": reference.id}}
+    # The OTU is written to both stores, as it is in production, so the
+    # Postgres-backed read that drives the stamp can see it and reflect its
+    # `version` in `last_indexed_version` after finalizing.
+    otu = await fake.otus.create(reference.id, user)
 
     index = await fake.indexes.create(
         reference,
@@ -794,8 +792,6 @@ async def test_finalize(
         manifest={"foo": 4},
         version=2,
     )
-
-    await mongo.otus.insert_one(otu)
 
     async with AsyncSession(pg) as session:
         session.add_all(
@@ -809,7 +805,6 @@ async def test_finalize(
                 for file_name in files
             ],
         )
-        await bulk_insert_otu_rows(session, [otu], reference.id)
         await session.commit()
 
     resp = await client.patch(f"/indexes/{index.id}")
@@ -818,7 +813,7 @@ async def test_finalize(
 
     if not error:
         assert resp.status == HTTPStatus.OK
-        assert await mongo.otus.find_one("6116cba1") == snapshot
+        assert await mongo.otus.find_one(otu.id) == snapshot
 
 
 @pytest.mark.parametrize("status", [200, 404])
