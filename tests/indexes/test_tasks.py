@@ -18,41 +18,8 @@ from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.indexes.tasks import CreateIndexTask
 from virtool.indexes.utils import compose_index_file_key
 from virtool.mongo.core import Mongo
-from virtool.otus.db import bulk_insert_otu_rows, bulk_insert_sequence_rows
 from virtool.storage.protocol import StorageBackend
 from virtool.workflow.pytest_plugin.utils import StaticTime
-
-
-async def _insert_indexed_otu(
-    mongo: Mongo,
-    pg: AsyncEngine,
-    reference_id: int,
-    test_otu: dict,
-    test_sequence: dict,
-) -> dict[str, int]:
-    otu = {
-        **test_otu,
-        "last_indexed_version": 0,
-        "reference": {"id": reference_id},
-        "verified": True,
-        "version": 1,
-    }
-
-    sequence = {
-        **test_sequence,
-        "reference": otu["reference"],
-        "otu_id": otu["_id"],
-    }
-
-    await mongo.otus.insert_one(otu)
-    await mongo.sequences.insert_one(sequence)
-
-    async with AsyncSession(pg) as session:
-        await bulk_insert_otu_rows(session, [otu], reference_id)
-        await bulk_insert_sequence_rows(session, [sequence])
-        await session.commit()
-
-    return {otu["_id"]: otu["version"]}
 
 
 class TestCreateIndexTask:
@@ -67,8 +34,6 @@ class TestCreateIndexTask:
         mongo: Mongo,
         pg: AsyncEngine,
         static_time: StaticTime,
-        test_otu: dict,
-        test_sequence: dict,
     ) -> None:
         self._fake = fake
         self.data_layer = data_layer
@@ -76,20 +41,13 @@ class TestCreateIndexTask:
         self.mongo = mongo
         self.pg = pg
         self.static_time = static_time
-        self.test_otu = test_otu
-        self.test_sequence = test_sequence
         self.user = await fake.users.create()
         self.reference = await fake.references.create(user=self.user)
 
     @pytest.fixture
     async def task_id(self) -> int:
-        self.manifest = await _insert_indexed_otu(
-            self.mongo,
-            self.pg,
-            self.reference.id,
-            self.test_otu,
-            self.test_sequence,
-        )
+        self.otu = await self._fake.otus.create(self.reference.id, self.user)
+        self.manifest = {self.otu.id: self.otu.version}
         return await self._create_task_backed_index(self.manifest)
 
     async def _create_task_backed_index(self, manifest: dict[str, int]) -> int:
@@ -143,22 +101,18 @@ class TestCreateIndexTask:
         assert reference_json["data_type"] == "genome"
         assert reference_json["name"] == self.reference.name
         assert reference_json["organism"] == self.reference.organism == ""
-        assert reference_json["otus"][0]["_id"] == self.test_otu["_id"]
-        assert (
-            reference_json["otus"][0]["version"] == self.manifest[self.test_otu["_id"]]
-        )
-        assert (
-            reference_json["otus"][0]["isolates"][0]["id"]
-            == self.test_otu["isolates"][0]["id"]
-        )
-        assert (
-            reference_json["otus"][0]["isolates"][0]["sequences"][0]["_id"]
-            == self.test_sequence["_id"]
-        )
-        assert (
-            reference_json["otus"][0]["isolates"][0]["sequences"][0]["sequence"]
-            == self.test_sequence["sequence"]
-        )
+        assert reference_json["otus"][0]["_id"] == self.otu.id
+        assert reference_json["otus"][0]["version"] == self.manifest[self.otu.id]
+        assert reference_json["otus"][0]["isolates"][0]["id"] == self.otu.isolates[0].id
+
+        json_sequences = {
+            sequence["_id"]: sequence["sequence"]
+            for sequence in reference_json["otus"][0]["isolates"][0]["sequences"]
+        }
+        assert json_sequences == {
+            sequence.id: sequence.sequence
+            for sequence in self.otu.isolates[0].sequences
+        }
         assert len(compressed) < len(decompressed)
 
         async with AsyncSession(self.pg) as session:
@@ -190,18 +144,13 @@ class TestCreateIndexTask:
         response = await self.data_layer.index.get(self.index_id)
         assert response.ready is True
 
-        otu = await self.mongo.otus.find_one(self.test_otu["_id"])
-        assert otu["last_indexed_version"] == 1
+        otu = await self.mongo.otus.find_one(self.otu.id)
+        assert otu["last_indexed_version"] == self.manifest[self.otu.id]
 
     async def test_marks_task_complete(self) -> None:
         """A successful build completes its task without error and readies the index."""
-        manifest = await _insert_indexed_otu(
-            self.mongo,
-            self.pg,
-            self.reference.id,
-            self.test_otu,
-            self.test_sequence,
-        )
+        otu = await self._fake.otus.create(self.reference.id, self.user)
+        manifest = {otu.id: otu.version}
         task_id = await self._create_task_backed_index(manifest)
 
         await (await CreateIndexTask.from_task_id(self.data_layer, task_id)).run()
