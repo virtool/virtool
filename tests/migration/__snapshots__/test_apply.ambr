@@ -799,5 +799,12 @@
       'name': 'create indexes table',
       'revision': '6ffca63a8b95',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 115,
+      'name': 'copy indexes to postgres',
+      'revision': '9ws3adnisz85',
+    }),
   ])
 # ---
