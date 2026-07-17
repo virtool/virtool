@@ -28,12 +28,17 @@ async def add_index_files(pg: AsyncEngine, index_id: str) -> None:
     ]
 
     async with AsyncSession(pg) as session:
+        index_pk = await session.scalar(
+            select(SQLIndex.id).where(SQLIndex.legacy_id == index_id),
+        )
+
         session.add_all(
             [
                 SQLIndexFile(
                     id=id_,
                     name=name,
                     index=index_id,
+                    index_id=index_pk,
                     type=type_,
                     size=1234567,
                 )

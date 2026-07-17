@@ -74,13 +74,23 @@ class IndexType(str, SQLEnum):
 
 
 class SQLIndexFile(Base):
-    """SQL model to store new index files"""
+    """SQL model to store new index files.
+
+    ``index`` is mid-migration: the legacy Mongo string is retained alongside the
+    new ``index_id`` foreign key while readers move over. The bare ``index``
+    column is dropped in a later cleanup revision. Uniqueness is now keyed on the
+    integer ``(index_id, name)``; the legacy ``(index, name)`` constraint is
+    dropped by the finalize revision.
+    """
 
     __tablename__ = "index_files"
-    __table_args__ = (UniqueConstraint("index", "name"),)
+    __table_args__ = (
+        UniqueConstraint("index_id", "name", name="index_files_index_id_name_key"),
+    )
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     index = Column(String, nullable=False)
+    index_id = Column(BigInteger, ForeignKey("indexes.id"), nullable=False)
     type = Column(Enum(IndexType))
     size = Column(BigInteger)

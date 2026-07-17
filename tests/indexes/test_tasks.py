@@ -169,9 +169,13 @@ class TestCreateIndexTask:
     async def test_updates_existing_index_file_row(self, task_id: int) -> None:
         """An existing reference JSON file row is updated instead of duplicated."""
         async with AsyncSession(self.pg) as session:
+            index_pk = await session.scalar(
+                select(SQLIndex.id).where(SQLIndex.legacy_id == self.index_id),
+            )
             session.add(
                 SQLIndexFile(
                     index=self.index_id,
+                    index_id=index_pk,
                     name=REFERENCE_JSON_V2_FILE_NAME,
                     size=1,
                     type="json",

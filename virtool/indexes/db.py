@@ -21,7 +21,6 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.history.db
-import virtool.pg.utils
 import virtool.utils
 from virtool.api.utils import paginate
 from virtool.data.topg import (
@@ -494,17 +493,23 @@ async def upsert_index_file(
     size: int,
 ) -> dict[str, Any]:
     """Create or update an index file row."""
+    index_pg_id = await resolve_legacy_id(session, SQLIndex, index_id)
+
+    if index_pg_id is None:
+        raise ValueError(f"Index {index_id!r} not found in postgres")
+
     index_file_id = (
         await session.execute(
             pg_insert(SQLIndexFile)
             .values(
                 index=index_id,
+                index_id=index_pg_id,
                 name=name,
                 size=size,
                 type=file_type,
             )
             .on_conflict_do_update(
-                index_elements=[SQLIndexFile.index, SQLIndexFile.name],
+                index_elements=[SQLIndexFile.index_id, SQLIndexFile.name],
                 set_={"size": size, "type": file_type},
             )
             .returning(SQLIndexFile.id),
@@ -593,7 +598,19 @@ async def attach_files(pg: AsyncEngine, base_url: str, document: dict) -> dict:
     """
     index_id = document["_id"]
 
-    rows = await virtool.pg.utils.get_rows(pg, SQLIndexFile, "index", index_id)
+    async with AsyncSession(pg) as session:
+        rows = (
+            (
+                await session.execute(
+                    select(SQLIndexFile).where(
+                        SQLIndexFile.index_id
+                        == compose_legacy_id_subquery(SQLIndex, index_id),
+                    ),
+                )
+            )
+            .scalars()
+            .all()
+        )
 
     files = []
 

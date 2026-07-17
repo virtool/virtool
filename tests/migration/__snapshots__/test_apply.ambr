@@ -813,5 +813,19 @@
       'name': 'compare index stores',
       'revision': 'wcpztunkc49f',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 117,
+      'name': 'add index_files index_id',
+      'revision': '89a96e2f4db3',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 118,
+      'name': 'finalize index_files index_id',
+      'revision': 'f61c6dbf7ff6',
+    }),
   ])
 # ---
