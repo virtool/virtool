@@ -1,10 +1,39 @@
 """Contract tests for ``DataFaker.indexes``.
 
-The shape the domain emits is pinned by the ``test_upload`` snapshot in
-``tests/indexes/test_api.py``. These cover the defaults no call site exercises.
+The field-by-field shape the domain emits is pinned by the ``test_upload`` snapshot in
+``tests/indexes/test_api.py``. These cover the invariants and defaults that no call site
+exercises on its own.
 """
 
 from virtool.fake.next import DataFaker
+from virtool.mongo.core import Mongo
+
+
+class TestBuildBacking:
+    """An index is backed by exactly one build, as ``_get_index_build_type`` requires."""
+
+    async def test_job_backed_has_no_task(self, fake: DataFaker, mongo: Mongo):
+        """Passing a job seeds the legacy shape, leaving ``task`` null."""
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+        job = await fake.jobs.create(user=user)
+
+        index = await fake.indexes.create(reference, user, job=job)
+        document = await mongo.indexes.find_one(index.id)
+
+        assert document["job"] == {"id": job.id}
+        assert document["task"] is None
+
+    async def test_task_backed_has_no_job(self, fake: DataFaker, mongo: Mongo):
+        """Omitting a job backs the index with a task, leaving ``job`` null."""
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        index = await fake.indexes.create(reference, user)
+        document = await mongo.indexes.find_one(index.id)
+
+        assert document["job"] is None
+        assert document["task"]["id"] is not None
 
 
 async def test_version_autoincrement_is_per_reference(fake: DataFaker):

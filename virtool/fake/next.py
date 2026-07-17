@@ -465,13 +465,18 @@ class IndexesFakerDomain(DataFakerDomain):
     ) -> Index:
         """Create a fake index for ``reference``.
 
-        The emitted document mirrors the one ``ReferencesData.create_index`` writes: the
-        ``_id`` is preallocated so the backing ``CreateIndexTask`` can name it, and the
-        embedded ``reference`` and ``user`` hold integer primary keys.
+        An index is backed by exactly one build: a job or a task. Passing ``job`` seeds
+        the legacy job-backed shape, leaving ``task`` null. Omitting it seeds the shape
+        ``ReferencesData.create_index`` writes, backing the index with a
+        ``CreateIndexTask`` and leaving ``job`` null. Embedding both is the corrupt shape
+        ``_get_index_build_type`` rejects.
+
+        The ``_id`` is preallocated so a backing task can name it, and the embedded
+        ``reference`` and ``user`` hold integer primary keys.
 
         :param reference: the reference to build the index for
         :param user: the user the build is attributed to
-        :param job: the job backing the build, if any
+        :param job: the job backing the build; when omitted a task backs it instead
         :param manifest: the OTU manifest to capture; defaults to the reference's
         :param version: the index version; defaults to one past the reference's existing
             indexes. Production counts only built indexes, which is the same number
@@ -492,10 +497,13 @@ class IndexesFakerDomain(DataFakerDomain):
                 {"reference.id": reference.id},
             )
 
-        task = await self._data_faker.tasks.create_with_class(
-            CreateIndexTask,
-            {"index_id": index_id},
-        )
+        task = None
+
+        if job is None:
+            task = await self._data_faker.tasks.create_with_class(
+                CreateIndexTask,
+                {"index_id": index_id},
+            )
 
         await self._mongo.indexes.insert_one(
             {
@@ -505,7 +513,7 @@ class IndexesFakerDomain(DataFakerDomain):
                 "manifest": manifest,
                 "ready": ready,
                 "job": {"id": job.id} if job else None,
-                "task": {"id": task.id},
+                "task": {"id": task.id} if task else None,
                 "user": {"id": user.id},
                 "reference": {"id": reference.id},
             },
