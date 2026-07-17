@@ -806,5 +806,12 @@
       'name': 'copy indexes to postgres',
       'revision': '9ws3adnisz85',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 116,
+      'name': 'compare index stores',
+      'revision': 'wcpztunkc49f',
+    }),
   ])
 # ---

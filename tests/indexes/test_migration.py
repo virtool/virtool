@@ -447,6 +447,27 @@ class TestCompareIndexStores:
         with pytest.raises(ValueError, match="1 indexes"):
             await compare_index_stores(ctx)
 
+    async def test_wrong_storage_key_fails(
+        self,
+        ctx: MigrationContext,
+        seeded: dict[str, int],
+    ):
+        """A row whose load-bearing ``storage_key`` is not the Mongo id is drift."""
+        await self._seed_parity(
+            ctx,
+            _index_doc(
+                "index_storage_key",
+                seeded["reference_id"],
+                seeded["user_id"],
+                task=seeded["task_id"],
+            ),
+        )
+
+        await _update_index(ctx, "index_storage_key", storage_key="wrong_key")
+
+        with pytest.raises(ValueError, match="1 indexes"):
+            await compare_index_stores(ctx)
+
     async def test_legacy_string_reference_matches_integer_key(
         self,
         ctx: MigrationContext,

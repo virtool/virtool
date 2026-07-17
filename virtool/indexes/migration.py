@@ -249,6 +249,10 @@ async def compare_index_stores(ctx: MigrationContext) -> None:
       is compared as a whole map, not a key set: a single otu version rewritten under
       an existing key is the silent corruption this gate exists to catch, because a
       wrong manifest builds a wrong index months downstream.
+    - ``storage_key`` must equal the Mongo ``_id``. A migrated row carries the legacy
+      id in ``storage_key``, and it is load-bearing -- it addresses the index's files
+      in object storage -- so a row pointing at the wrong key is drift even when every
+      other field agrees.
     - ``created_at`` is compared at millisecond precision. ``virtool.utils.timestamp``
       is microsecond-precise, but BSON holds a datetime as int64 milliseconds and
       drops the microseconds on write, while the Postgres column keeps them. So the
@@ -407,6 +411,12 @@ async def _diff_index(
     sides. See :func:`compare_index_stores` for the field-by-field contract.
     """
     differences: dict[str, dict] = {}
+
+    if row.storage_key != document["_id"]:
+        differences["storage_key"] = {
+            "mongo": document["_id"],
+            "postgres": row.storage_key,
+        }
 
     if row.version != document["version"]:
         differences["version"] = {
