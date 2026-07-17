@@ -12,6 +12,7 @@ from virtool.data.events import (
 )
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.indexes.sql import SQLIndex
 from virtool.jobs.data import JobsData
 from virtool.jobs.models import (
     CreateJobClaimRequest,
@@ -251,6 +252,7 @@ class TestCreatePostgres:
         self,
         jobs_data: JobsData,
         fake: DataFaker,
+        pg: AsyncEngine,
     ):
         """``get`` resolves the index id from the index linked by job_id.
 
@@ -266,9 +268,38 @@ class TestCreatePostgres:
 
         index = await fake.indexes.create(reference, user, job=job)
 
+        async with AsyncSession(pg) as session:
+            sql_index = (
+                await session.execute(
+                    select(SQLIndex).where(SQLIndex.job_id == job.id),
+                )
+            ).scalar_one()
+
         fetched_job = await jobs_data.get(job.id)
 
-        assert fetched_job.args == {"index_id": index.id}
+        # The argument is the index's legacy string id, not its integer primary
+        # key, matching what the retired ``job_indexes`` table stored.
+        assert fetched_job.args == {"index_id": sql_index.legacy_id}
+        assert sql_index.legacy_id == index.id
+
+    async def test_index_id_absent_without_index(
+        self,
+        jobs_data: JobsData,
+        fake: DataFaker,
+    ):
+        """``get`` omits ``index_id`` when no index links the build_index job.
+
+        ``indexes.job_id`` is nullable, so a historical build whose job was deleted
+        leaves nothing to resolve on the reverse join. The argument disappears
+        entirely rather than resolving to ``None``.
+        """
+        user = await fake.users.create()
+
+        job = await jobs_data.create("build_index", {}, user.id, 0)
+
+        fetched_job = await jobs_data.get(job.id)
+
+        assert fetched_job.args == {}
 
     async def test_subtraction_id_resolved_from_subtraction(
         self,
