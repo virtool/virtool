@@ -236,12 +236,13 @@ async def find(
 
     When ``ref_id`` is given, ``archived`` is ignored — the reference is
     already chosen, so its lifecycle state is fixed — and indexes are ordered by
-    ``version`` descending. Otherwise indexes are ordered by ``created_at`` then
-    primary key, both descending, for stable pagination.
+    ``version`` descending. Both ``total_count`` and ``found_count`` are scoped to
+    that reference's indexes.
 
-    Every index row references an existing reference through a non-null foreign key,
-    so ``total_count`` covers all indexes while ``found_count`` narrows to the
-    requested lifecycle.
+    Otherwise indexes are ordered by ``created_at`` then primary key, both
+    descending, for stable pagination. Every index row references an existing
+    reference through a non-null foreign key, so ``total_count`` covers all indexes
+    while ``found_count`` narrows to the requested lifecycle.
 
     :param pg: the application PostgreSQL engine
     :param page: the one-indexed page number to return
