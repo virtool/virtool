@@ -1,3 +1,4 @@
+from collections import Counter
 from typing import NamedTuple
 
 import arrow
@@ -82,6 +83,17 @@ def order_revisions(revisions: list[GenericRevision]) -> list[GenericRevision]:
     :return: the ordered revisions
     :raises ValueError: if the revisions do not form a single unbroken chain
     """
+    duplicated_ids = sorted(
+        id_ for id_, count in Counter(r.id for r in revisions).items() if count > 1
+    )
+
+    if duplicated_ids:
+        # Revisions are applied and recorded by id, so two revisions sharing an id
+        # would leave the second silently skipped as already applied.
+        raise ValueError(
+            f"Revision ids are not unique: {', '.join(duplicated_ids)}.",
+        )
+
     revisions_by_downgrade: dict[DowngradeSpecifier, GenericRevision] = {}
 
     ordered_revisions = []
@@ -183,12 +195,6 @@ def order_revisions(revisions: list[GenericRevision]) -> list[GenericRevision]:
 
         raise ValueError(
             f"Revisions could not be reached from the root: {', '.join(orphaned)}.",
-        )
-
-    if len(ordered_revisions) != len(revisions):
-        raise ValueError(
-            f"Ordered {len(ordered_revisions)} revisions from {len(revisions)} "
-            f"loaded revisions.",
         )
 
     return ordered_revisions

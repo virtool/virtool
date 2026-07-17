@@ -331,6 +331,45 @@ class TestOrderRevisions:
         ):
             order_revisions(revisions)
 
+    def test_duplicate_ids(self):
+        """Test that an error is raised when two revisions share an id.
+
+        Such a chain orders cleanly, but `apply` records applied revisions by id and
+        would silently skip the second as already applied.
+        """
+        revisions = [
+            GenericRevision(
+                alembic_downgrade=None,
+                created_at=arrow.get("2021-01-01T00:00:00").naive,
+                id="root",
+                name="Root",
+                source=RevisionSource.ALEMBIC,
+                upgrade=None,
+                virtool_downgrade=None,
+            ),
+            GenericRevision(
+                alembic_downgrade="root",
+                created_at=arrow.get("2021-01-02T00:00:00").naive,
+                id="copied",
+                name="Copied",
+                source=RevisionSource.ALEMBIC,
+                upgrade=None,
+                virtool_downgrade=None,
+            ),
+            GenericRevision(
+                alembic_downgrade="copied",
+                created_at=arrow.get("2021-01-03T00:00:00").naive,
+                id="copied",
+                name="Copied Again",
+                source=RevisionSource.ALEMBIC,
+                upgrade=None,
+                virtool_downgrade=None,
+            ),
+        ]
+
+        with pytest.raises(ValueError, match="Revision ids are not unique: copied."):
+            order_revisions(revisions)
+
 
 class TestLoadAllRevisions:
     def test_chain_is_intact(self):
