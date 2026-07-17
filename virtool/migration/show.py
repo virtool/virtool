@@ -1,3 +1,4 @@
+from collections import Counter
 from typing import NamedTuple
 
 import arrow
@@ -80,11 +81,33 @@ def order_revisions(revisions: list[GenericRevision]) -> list[GenericRevision]:
 
     :param revisions: the revisions to order
     :return: the ordered revisions
-    :raises ValueError: if there are no root revisions
+    :raises ValueError: if the revisions do not form a single unbroken chain
     """
+    duplicated_ids = sorted(
+        id_ for id_, count in Counter(r.id for r in revisions).items() if count > 1
+    )
+
+    if duplicated_ids:
+        # Revisions are applied and recorded by id, so two revisions sharing an id
+        # would leave the second silently skipped as already applied.
+        raise ValueError(
+            f"Revision ids are not unique: {', '.join(duplicated_ids)}.",
+        )
+
     revisions_by_downgrade: dict[DowngradeSpecifier, GenericRevision] = {}
 
     ordered_revisions = []
+
+    def add_downgrade(specifier: DowngradeSpecifier, revision: GenericRevision) -> None:
+        existing = revisions_by_downgrade.get(specifier)
+
+        if existing is not None:
+            raise ValueError(
+                f"Revisions {existing.id} and {revision.id} both downgrade to "
+                f"{specifier.downgrade}.",
+            )
+
+        revisions_by_downgrade[specifier] = revision
 
     for revision in revisions:
         if revision.alembic_downgrade and revision.virtool_downgrade:
@@ -93,23 +116,25 @@ def order_revisions(revisions: list[GenericRevision]) -> list[GenericRevision]:
             )
 
         if revision.alembic_downgrade:
-            revisions_by_downgrade[
+            add_downgrade(
                 DowngradeSpecifier(
                     revision.alembic_downgrade,
                     RevisionSource.ALEMBIC,
                     revision.source,
-                )
-            ] = revision
+                ),
+                revision,
+            )
 
         elif revision.virtool_downgrade:
             # Only Virtool revisions have Virtool downgrades.
-            revisions_by_downgrade[
+            add_downgrade(
                 DowngradeSpecifier(
                     revision.virtool_downgrade,
                     RevisionSource.VIRTOOL,
                     revision.source,
-                )
-            ] = revision
+                ),
+                revision,
+            )
 
         else:
             ordered_revisions.append(revision)
@@ -164,6 +189,13 @@ def order_revisions(revisions: list[GenericRevision]) -> list[GenericRevision]:
                 break
 
         ordered_revisions.append(next_revision)
+
+    if revisions_by_downgrade:
+        orphaned = sorted(revision.id for revision in revisions_by_downgrade.values())
+
+        raise ValueError(
+            f"Revisions could not be reached from the root: {', '.join(orphaned)}.",
+        )
 
     return ordered_revisions
 
