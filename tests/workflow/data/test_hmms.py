@@ -21,7 +21,7 @@ async def test_ok(
 
     assert hmms.annotations == snapshot(name="annotations")
     assert hmms.cluster_annotation_map == snapshot(name="cluster_annotation_map")
-    assert hmms.get_id_by_cluster(10) == "8s1nqs1w"
+    assert hmms.get_id_by_cluster(10) == 1
 
     assert filecmp.cmp(
         hmms.profiles_path, example_path / "hmms" / "profiles.hmm", shallow=False

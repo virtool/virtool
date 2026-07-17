@@ -355,7 +355,29 @@ class TestFormatPathoscope:
 class TestFormatNuvs:
     """``format_nuvs`` enriches hits with HMM annotation data read from Postgres."""
 
-    async def test_enriches_hits_from_postgres(self, pg, seed_pg_hmm, hmm_document):
+    async def test_enriches_hits_by_integer_id(self, pg, seed_pg_hmm, hmm_document):
+        """New documents reference the annotation by its integer primary key."""
+        await seed_pg_hmm(hmm_document)
+
+        results = {
+            "hits": [
+                {"orfs": [{"hits": [{"hit": 1, "score": 1.0}]}]},
+            ],
+        }
+
+        formatted = await format_nuvs(pg, results=results)
+
+        hit = formatted["hits"][0]["orfs"][0]["hits"][0]
+
+        assert hit["cluster"] == hmm_document["cluster"]
+        assert hit["families"] == hmm_document["families"]
+        assert hit["names"] == hmm_document["names"]
+        assert hit["score"] == 1.0
+
+    async def test_enriches_hits_by_legacy_string_id(
+        self, pg, seed_pg_hmm, hmm_document
+    ):
+        """Historical documents still reference the annotation by its legacy string id."""
         await seed_pg_hmm(hmm_document)
 
         results = {

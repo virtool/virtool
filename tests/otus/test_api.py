@@ -1057,25 +1057,35 @@ class TestDeleteIsolate:
 
         assert (await data_layer.otus.get(otu.id)).isolates[0].id == isolate.id
 
-    @pytest.mark.parametrize(
-        "url",
-        ["/otus/foobar/isolates/cab8b360", "/otus/test/isolates/foobar"],
-        ids=["otu_not_found", "isolate_not_found"],
-    )
-    async def test_not_found(
+    async def test_otu_not_found(
         self,
-        url: str,
-        mongo: Mongo,
         resp_is: RespIs,
         spawn_client: ClientSpawner,
-        test_otu: dict,
     ):
         """Test that removal fails with ``404`` if the otu does not exist."""
         client = await spawn_client(authenticated=True)
 
-        await mongo.otus.insert_one(test_otu)
+        resp = await client.delete("/otus/foobar/isolates/cab8b360")
 
-        resp = await client.delete(url)
+        await resp_is.not_found(resp)
+
+    async def test_isolate_not_found(
+        self,
+        fake: DataFaker,
+        resp_is: RespIs,
+        spawn_client: ClientSpawner,
+    ):
+        """Test that removal fails with ``404`` if the isolate does not exist."""
+        client = await spawn_client(
+            authenticated=True,
+            permissions=[Permission.create_ref],
+        )
+
+        reference = await create_reference(client)
+
+        otu = await fake.otus.create(reference["id"], client.user)
+
+        resp = await client.delete(f"/otus/{otu.id}/isolates/nonexistent")
 
         await resp_is.not_found(resp)
 

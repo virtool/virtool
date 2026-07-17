@@ -13,7 +13,6 @@ from virtool.data.errors import (
     ResourceError,
     ResourceNotFoundError,
 )
-from virtool.data.topg import compose_legacy_id_single_expression
 from virtool.data.transforms import apply_transforms
 from virtool.hmm.db import (
     fetch_and_update_release,
@@ -31,7 +30,6 @@ from virtool.tasks.progress import (
 )
 from virtool.tasks.transforms import AttachTaskTransform
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import random_alphanumeric
 
 HMM_PROFILES_KEY = "hmm/profiles.hmm"
 """The storage key for the HMM profiles file."""
@@ -112,7 +110,7 @@ class HmmsData(DataLayerDomain):
         return {
             "documents": [
                 {
-                    "id": row.legacy_id,
+                    "id": row.id,
                     "cluster": row.cluster,
                     "count": row.count,
                     "families": row.families,
@@ -127,13 +125,11 @@ class HmmsData(DataLayerDomain):
             "page": page,
         }
 
-    async def get(self, hmm_id: str) -> HMM:
+    async def get(self, hmm_id: int) -> HMM:
         async with AsyncSession(self._pg) as session:
             hmm = (
                 await session.execute(
-                    select(SQLHMM).where(
-                        compose_legacy_id_single_expression(SQLHMM, hmm_id),
-                    ),
+                    select(SQLHMM).where(SQLHMM.id == hmm_id),
                 )
             ).scalar_one_or_none()
 
@@ -141,7 +137,7 @@ class HmmsData(DataLayerDomain):
             raise ResourceNotFoundError()
 
         return HMM(
-            id=hmm.legacy_id,
+            id=hmm.id,
             cluster=hmm.cluster,
             count=hmm.count,
             length=hmm.length,
@@ -284,7 +280,6 @@ class HmmsData(DataLayerDomain):
                 for annotation in annotations:
                     session.add(
                         SQLHMM(
-                            legacy_id=random_alphanumeric(8, mixed_case=True),
                             cluster=annotation["cluster"],
                             count=annotation["count"],
                             length=annotation["length"],

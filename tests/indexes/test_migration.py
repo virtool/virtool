@@ -1,14 +1,17 @@
-"""Tests for the Mongo-to-Postgres index backfill."""
+"""Tests for the Mongo-to-Postgres index backfill and drift gate."""
 
 import asyncio
 from collections.abc import Callable
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytest
-from sqlalchemy import select, text
+from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from virtool.indexes.migration import copy_indexes_to_postgres
+from virtool.indexes.migration import (
+    compare_index_stores,
+    copy_indexes_to_postgres,
+)
 from virtool.indexes.sql import SQLIndex
 from virtool.jobs.pg import SQLJob
 from virtool.migration.ctx import MigrationContext
@@ -379,3 +382,279 @@ class TestCopyIndexes:
         assert row.user_id == seeded["user_id"]
         assert row.job_id is None
         assert row.task_id is None
+
+
+async def _update_index(ctx: MigrationContext, legacy_id: str, **values) -> None:
+    """Rewrite fields of the ``indexes`` row identified by ``legacy_id``."""
+    async with AsyncSession(ctx.pg) as session:
+        await session.execute(
+            update(SQLIndex).where(SQLIndex.legacy_id == legacy_id).values(**values),
+        )
+        await session.commit()
+
+
+async def _insert_index_row(ctx: MigrationContext, **values) -> None:
+    """Insert a single ``indexes`` row from explicit column values."""
+    async with AsyncSession(ctx.pg) as session:
+        session.add(SQLIndex(**values))
+        await session.commit()
+
+
+class TestCompareIndexStores:
+    """The drift gate over the Mongo and Postgres index stores."""
+
+    async def _seed_parity(self, ctx: MigrationContext, document: dict) -> None:
+        """Insert a Mongo document and backfill it, leaving the stores in parity."""
+        await ctx.mongo.indexes.insert_one(document)
+        await copy_indexes_to_postgres(ctx)
+
+    async def test_matching_stores_pass_and_re_run(
+        self,
+        ctx: MigrationContext,
+        seeded: dict[str, int],
+    ):
+        """Stores in parity raise nothing, and the read-only check repeats itself."""
+        await self._seed_parity(
+            ctx,
+            _index_doc(
+                "index_job",
+                seeded["reference_id"],
+                seeded["user_id"],
+                job=seeded["job_id"],
+            ),
+        )
+        await self._seed_parity(
+            ctx,
+            _index_doc(
+                "index_task",
+                seeded["reference_id"],
+                seeded["user_id"],
+                task=seeded["task_id"],
+                version=1,
+            ),
+        )
+
+        await compare_index_stores(ctx)
+        await compare_index_stores(ctx)
+
+    async def test_wrong_manifest_version_fails(
+        self,
+        ctx: MigrationContext,
+        seeded: dict[str, int],
+    ):
+        """A single otu version rewritten under an existing key is drift."""
+        await self._seed_parity(
+            ctx,
+            _index_doc(
+                "index_manifest",
+                seeded["reference_id"],
+                seeded["user_id"],
+                task=seeded["task_id"],
+            ),
+        )
+
+        await _update_index(ctx, "index_manifest", manifest={"otu_a": 0, "otu_b": 4})
+
+        with pytest.raises(ValueError, match="1 indexes"):
+            await compare_index_stores(ctx)
+
+    async def test_wrong_storage_key_fails(
+        self,
+        ctx: MigrationContext,
+        seeded: dict[str, int],
+    ):
+        """A row whose load-bearing ``storage_key`` is not the Mongo id is drift."""
+        await self._seed_parity(
+            ctx,
+            _index_doc(
+                "index_storage_key",
+                seeded["reference_id"],
+                seeded["user_id"],
+                task=seeded["task_id"],
+            ),
+        )
+
+        await _update_index(ctx, "index_storage_key", storage_key="wrong_key")
+
+        with pytest.raises(ValueError, match="1 indexes"):
+            await compare_index_stores(ctx)
+
+    async def test_legacy_string_reference_matches_integer_key(
+        self,
+        ctx: MigrationContext,
+        seeded: dict[str, int],
+    ):
+        """A pre-migration ``reference.id`` string resolves to its integer key."""
+        await self._seed_parity(
+            ctx,
+            _index_doc(
+                "index_legacy_reference",
+                "ref_legacy",
+                "index_owner_legacy",
+                job="job_legacy",
+            ),
+        )
+
+        await compare_index_stores(ctx)
+
+    async def test_sub_millisecond_created_at_passes(
+        self,
+        ctx: MigrationContext,
+        seeded: dict[str, int],
+    ):
+        """Postgres keeping microseconds Mongo dropped on write is not drift."""
+        await self._seed_parity(
+            ctx,
+            _index_doc(
+                "index_created_at",
+                seeded["reference_id"],
+                seeded["user_id"],
+                task=seeded["task_id"],
+            ),
+        )
+
+        await _update_index(
+            ctx,
+            "index_created_at",
+            created_at=_CREATED_AT.replace(microsecond=999),
+        )
+
+        await compare_index_stores(ctx)
+
+    async def test_created_at_interval_difference_fails(
+        self,
+        ctx: MigrationContext,
+        seeded: dict[str, int],
+    ):
+        """A difference above the millisecond is drift."""
+        await self._seed_parity(
+            ctx,
+            _index_doc(
+                "index_created_at",
+                seeded["reference_id"],
+                seeded["user_id"],
+                task=seeded["task_id"],
+            ),
+        )
+
+        await _update_index(
+            ctx,
+            "index_created_at",
+            created_at=_CREATED_AT + timedelta(seconds=1),
+        )
+
+        with pytest.raises(ValueError, match="1 indexes"):
+            await compare_index_stores(ctx)
+
+    async def test_document_missing_from_postgres_fails(
+        self,
+        ctx: MigrationContext,
+        seeded: dict[str, int],
+    ):
+        """A Mongo document with no backfilled row is drift."""
+        await ctx.mongo.indexes.insert_one(
+            _index_doc(
+                "index_unbackfilled",
+                seeded["reference_id"],
+                seeded["user_id"],
+                task=seeded["task_id"],
+            ),
+        )
+
+        with pytest.raises(ValueError, match="1 indexes"):
+            await compare_index_stores(ctx)
+
+    async def test_orphan_postgres_row_fails(
+        self,
+        ctx: MigrationContext,
+        seeded: dict[str, int],
+    ):
+        """A migrated row whose Mongo document is gone is drift."""
+        await _insert_index_row(
+            ctx,
+            legacy_id="index_orphan",
+            version=0,
+            created_at=_CREATED_AT,
+            manifest=_MANIFEST,
+            ready=True,
+            storage_key="index_orphan",
+            reference_id=seeded["reference_id"],
+            user_id=seeded["user_id"],
+            task_id=seeded["task_id"],
+        )
+
+        with pytest.raises(ValueError, match="1 indexes"):
+            await compare_index_stores(ctx)
+
+    async def test_job_id_mismatch_fails(
+        self,
+        ctx: MigrationContext,
+        seeded: dict[str, int],
+    ):
+        """A resolvable Mongo job that points at a different Postgres job is drift."""
+        await self._seed_parity(
+            ctx,
+            _index_doc(
+                "index_job",
+                seeded["reference_id"],
+                seeded["user_id"],
+                job=seeded["job_id"],
+            ),
+        )
+
+        other_job_id = await _seed_job(ctx, "other_job_legacy", seeded["user_id"])
+        await _update_index(ctx, "index_job", job_id=other_job_id)
+
+        with pytest.raises(ValueError, match="1 indexes"):
+            await compare_index_stores(ctx)
+
+    async def test_missing_task_key_matches_null_task_id(
+        self,
+        ctx: MigrationContext,
+        seeded: dict[str, int],
+    ):
+        """A legacy job-backed document with no ``task`` key has a null ``task_id``."""
+        await ctx.mongo.indexes.insert_one(
+            {
+                "_id": "index_no_task_key",
+                "version": 0,
+                "created_at": _CREATED_AT,
+                "manifest": _MANIFEST,
+                "ready": True,
+                "job": {"id": seeded["job_id"]},
+                "user": {"id": seeded["user_id"]},
+                "reference": {"id": seeded["reference_id"]},
+            },
+        )
+        await _insert_index_row(
+            ctx,
+            legacy_id="index_no_task_key",
+            version=0,
+            created_at=_CREATED_AT,
+            manifest=_MANIFEST,
+            ready=True,
+            storage_key="index_no_task_key",
+            reference_id=seeded["reference_id"],
+            user_id=seeded["user_id"],
+            job_id=seeded["job_id"],
+        )
+
+        await compare_index_stores(ctx)
+
+    async def test_null_task_matches_null_task_id(
+        self,
+        ctx: MigrationContext,
+        seeded: dict[str, int],
+    ):
+        """A null ``task`` holds a null ``task_id``, as a job-backed build does."""
+        await self._seed_parity(
+            ctx,
+            _index_doc(
+                "index_null_task",
+                seeded["reference_id"],
+                seeded["user_id"],
+                job=seeded["job_id"],
+            ),
+        )
+
+        await compare_index_stores(ctx)
