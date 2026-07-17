@@ -135,7 +135,7 @@ async def test_update(
 
 
 async def test_set_default(
-    mongo,
+    pg,
     snapshot,
     fake,
     insert_otu,
@@ -158,7 +158,7 @@ async def test_set_default(
         == snapshot
     )
 
-    assert await mongo.otus.find_one() == snapshot
+    assert (await _get_otu_row(pg, "6116cba1")).data == snapshot
 
 
 async def test_get_sequence_fasta(data_layer: DataLayer, fake: DataFaker):
@@ -417,19 +417,8 @@ async def _get_sequence_rows(pg: AsyncEngine, otu_id: str) -> list[SQLSequence]:
         )
 
 
-async def _get_mongo_sequence_ids(mongo: Mongo, otu_id: str) -> list[str]:
-    """Get an OTU's sequence ids in the natural order ``join`` reads them in."""
-    return [
-        document["_id"]
-        async for document in mongo.sequences.find(
-            {"otu_id": otu_id},
-            projection=["_id"],
-        )
-    ]
-
-
-class TestOTUDualWrite:
-    """The single-OTU write path mirrors Mongo into the ``legacy_otus`` table."""
+class TestOTUWrite:
+    """The single-OTU write path writes the ``legacy_otus`` table."""
 
     async def test_create_writes_row(
         self,
@@ -505,7 +494,7 @@ class TestOTUDualWrite:
         assert await _get_sequence_rows(pg, otu.id) == []
 
 
-class TestIsolateDualWrite:
+class TestIsolateWrite:
     async def test_add_isolate_bumps_version(
         self,
         data_layer: DataLayer,
@@ -551,10 +540,10 @@ class TestIsolateDualWrite:
 class TestGeneratedIdCollision:
     """The create paths keep asking for an id until Postgres has a free one.
 
-    Postgres is written before Mongo, so the id is needed before either store has seen
-    the document and cannot come from ``Collection.insert_one``, which used to check
-    Mongo for a collision and generate another id. Obeying a generator that returns a
-    taken id would upsert over the row that already holds it.
+    The id is needed before the row is written, so it cannot come from
+    ``Collection.insert_one``, which used to check Mongo for a collision and generate
+    another id. Obeying a generator that returns a taken id would upsert over the row
+    that already holds it.
     """
 
     async def test_create_skips_taken_otu_id(
@@ -642,8 +631,8 @@ class TestGeneratedIdCollision:
         assert rows["freshseq"].data["sequence"] == "TTTTTTTTTT"
 
 
-class TestSequenceDualWrite:
-    """The per-sequence write path mirrors both the sequence row and the parent OTU."""
+class TestSequenceWrite:
+    """The per-sequence write path writes the sequence row and bumps the parent OTU."""
 
     async def _make_isolate(
         self,
@@ -759,12 +748,12 @@ class TestSequenceDualWrite:
 
 
 class TestSequencePosition:
-    """``legacy_sequences.position`` reproduces Mongo's natural sequence order.
+    """``legacy_sequences.position`` preserves an OTU's sequence insertion order.
 
     A joined OTU rebuilt from Postgres feeds ``patch_to_version``, whose stored
     ``dictdiffer`` diffs address an isolate's sequences by list index. If Postgres
-    returns them in a different order than Mongo does, index builds, reference clones
-    and analysis formatting all apply each change to the wrong sequence.
+    returns them in a different order than they were written, index builds, reference
+    clones and analysis formatting all apply each change to the wrong sequence.
     """
 
     async def _make_isolate(
@@ -835,7 +824,6 @@ class TestSequencePosition:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
         """Editing a sequence must not move it within its OTU.
@@ -866,13 +854,11 @@ class TestSequencePosition:
 
         assert [row.position for row in rows] == [0, 1, 2]
         assert [row.id for row in rows] == sequence_ids
-        assert [row.id for row in rows] == await _get_mongo_sequence_ids(mongo, otu_id)
 
     async def test_remove_sequence_leaves_a_gap(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
         """A removed sequence is not renumbered over, and the next one still appends.
@@ -917,13 +903,11 @@ class TestSequencePosition:
 
         assert [row.position for row in rows] == [0, 2, 3]
         assert rows[-1].id == appended.id
-        assert [row.id for row in rows] == await _get_mongo_sequence_ids(mongo, otu_id)
 
     async def test_schema_change_preserves_order(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
         """Dropping a segment re-mirrors every sequence without reordering them.
@@ -965,14 +949,12 @@ class TestSequencePosition:
 
         assert [row.position for row in rows] == [0, 1, 2]
         assert [row.id for row in rows] == sequence_ids
-        assert [row.id for row in rows] == await _get_mongo_sequence_ids(mongo, otu_id)
         assert [row.segment for row in rows] == ["RNA_0", None, None]
 
     async def test_isolates_share_one_position_sequence(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
         """``position`` numbers an OTU's sequences, not each isolate's separately.
@@ -1017,7 +999,6 @@ class TestSequencePosition:
 
         assert [row.position for row in rows] == [0, 1, 2, 3]
         assert [row.id for row in rows] == interleaved
-        assert [row.id for row in rows] == await _get_mongo_sequence_ids(mongo, otu_id)
 
         assert [row.id for row in rows if row.isolate_id == first_isolate_id] == [
             interleaved[0],

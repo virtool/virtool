@@ -1,5 +1,4 @@
 import pytest
-from aiohttp.test_utils import make_mocked_coro
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -16,8 +15,6 @@ from virtool.otus.db import (
     find,
     get_legacy_otu_fields,
     increment_legacy_otu_version,
-    increment_otu_version,
-    join,
     join_legacy_otu,
     join_legacy_otu_in_session,
     join_legacy_otus,
@@ -27,7 +24,6 @@ from virtool.otus.db import (
     sequence_row_values,
     update_legacy_otu_verification,
     update_legacy_sequence_segments,
-    update_sequence_segments,
     write_legacy_otu,
     write_legacy_sequence,
 )
@@ -120,40 +116,6 @@ class TestCheckNameAndAbbreviation:
             )
             is None
         )
-
-
-@pytest.mark.parametrize("in_db", [True, False])
-@pytest.mark.parametrize("pass_document", [True, False])
-async def test_join(
-    in_db,
-    pass_document,
-    mocker,
-    mongo,
-    snapshot,
-    test_otu,
-    test_sequence,
-):
-    """Test that an OTU is properly joined when only a ``otu_id`` is provided."""
-    await mongo.otus.insert_one(test_otu)
-    await mongo.sequences.insert_one(test_sequence)
-
-    m_find_one = mocker.patch.object(
-        mongo.otus, "find_one", make_mocked_coro(test_otu if in_db else None)
-    )
-
-    kwargs = {"document": test_otu} if pass_document else {}
-
-    joined = await join(mongo, "6116cba1", **kwargs)
-
-    assert m_find_one.called != pass_document
-
-    assert joined == snapshot(name="return")
-
-
-async def test_increment_otu_version(mongo, snapshot):
-    await mongo.otus.insert_one({"_id": "foo", "version": 3, "verified": True})
-    await increment_otu_version(mongo, "foo")
-    assert await mongo.otus.find_one() == snapshot
 
 
 class TestFindOrder:
@@ -372,7 +334,6 @@ class TestFindModifiedCount:
     async def test_shared_name_counted_separately(
         self,
         fake,
-        mongo: Mongo,
         pg: AsyncEngine,
         static_time,
     ):
@@ -396,7 +357,6 @@ class TestFindModifiedCount:
     async def test_renamed_otu_counted_once(
         self,
         fake,
-        mongo: Mongo,
         pg: AsyncEngine,
         static_time,
     ):
@@ -509,13 +469,13 @@ class TestSequenceDataRoundTrip:
 
 
 class TestJoinLegacyOTU:
-    """``join_legacy_otu`` rebuilds the joined OTU that ``join`` reads out of Mongo.
+    """``join_legacy_otu`` rebuilds a joined OTU from the ``legacy_otus`` table.
 
     The joined OTU is the document ``dictdiffer`` diffs are taken against and applied
-    to, so the two stores have to hand back the same one -- down to the internal fields
-    the API never surfaces and the order the sequences arrive in. A field the Postgres
-    path drops or coerces does not merely go missing from a response; it corrupts every
-    patch taken through :func:`virtool.history.db.patch_to_version`.
+    to, so the join has to reproduce the whole document -- down to the internal fields
+    the API never surfaces and the order the sequences arrive in. A field the join drops
+    or coerces does not merely go missing from a response; it corrupts every patch taken
+    through :func:`virtool.history.db.patch_to_version`.
     """
 
     async def _create_otu(
@@ -569,18 +529,6 @@ class TestJoinLegacyOTU:
 
         return otu.id, reference.id, [first.id, second.id]
 
-    async def test_equals_mongo_join(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-        mongo: Mongo,
-        pg: AsyncEngine,
-    ):
-        """The whole joined document is identical to the one Mongo joins."""
-        otu_id, _, _ = await self._create_otu(data_layer, fake)
-
-        assert await join_legacy_otu(pg, otu_id) == await join(mongo, otu_id)
-
     async def test_preserves_internal_fields(
         self,
         data_layer: DataLayer,
@@ -610,23 +558,26 @@ class TestJoinLegacyOTU:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
-        """Each isolate gets its own sequences, in the OTU-wide order Mongo returns.
+        """Each isolate gets its own sequences, in the OTU-wide ``position`` order.
 
         No sequence crosses into the other isolate, and neither isolate's list is
         shuffled by having the other's interleaved with it.
         """
         otu_id, _, isolate_ids = await self._create_otu(data_layer, fake)
 
-        natural_order = [
-            (document["_id"], document["isolate_id"])
-            async for document in mongo.sequences.find(
-                {"otu_id": otu_id},
-                projection=["_id", "isolate_id"],
-            )
-        ]
+        async with AsyncSession(pg) as session:
+            natural_order = [
+                (row.id, row.isolate_id)
+                for row in (
+                    await session.scalars(
+                        select(SQLSequence)
+                        .where(SQLSequence.otu_id == otu_id)
+                        .order_by(SQLSequence.position),
+                    )
+                ).all()
+            ]
 
         joined = await join_legacy_otu(pg, otu_id)
 
@@ -686,23 +637,20 @@ class TestJoinLegacyOTU:
     async def test_recovers_created_at_as_a_datetime(
         self,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         test_imported_otu: Document,
     ):
         """An imported OTU's ``created_at`` comes back a datetime, not an ISO string.
 
         The JSONB column can only hold the timestamp as a string. A joined OTU that
-        handed that string back would diff as a change against every Mongo-joined OTU
-        it was compared to, and reference clones -- the path that writes a
-        ``created_at`` in the first place -- are exactly what takes those diffs.
+        handed that string back would diff as a change, and reference clones -- the path
+        that writes a ``created_at`` in the first place -- are exactly what takes those
+        diffs.
         """
         user = await fake.users.create()
         reference = await fake.references.create(user=user)
 
         document = {**test_imported_otu, "reference": {"id": reference.id}}
-
-        await mongo.otus.insert_one(document)
 
         async with AsyncSession(pg) as session:
             session.add(SQLOTU(**otu_row_values(document, reference.id)))
@@ -710,14 +658,12 @@ class TestJoinLegacyOTU:
 
         joined = await join_legacy_otu(pg, test_imported_otu["_id"])
 
-        assert joined == await join(mongo, test_imported_otu["_id"])
         assert joined["created_at"] == IMPORTED_CREATED_AT.replace(microsecond=123000)
 
     async def test_isolate_without_sequences_gets_an_empty_list(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
         """An isolate with no sequences still gets a ``sequences`` key.
@@ -745,10 +691,9 @@ class TestJoinLegacyOTU:
         joined = await join_legacy_otu(pg, otu.id)
 
         assert find_isolate(joined["isolates"], isolate.id)["sequences"] == []
-        assert joined == await join(mongo, otu.id)
 
     async def test_returns_none_when_the_otu_has_no_row(self, pg: AsyncEngine):
-        """A missing OTU is ``None``, as it is on the Mongo path."""
+        """A missing OTU is ``None``."""
         assert await join_legacy_otu(pg, "6116cba1") is None
 
 
@@ -919,7 +864,6 @@ class TestJoinLegacyOTUInSession:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
         """An OTU written but not committed joins as it now stands.
@@ -929,7 +873,9 @@ class TestJoinLegacyOTUInSession:
         had quietly committed rather than on one that reads its own writes.
         """
         otu_id, _ = await self._create_otu(data_layer, fake)
-        document = await mongo.otus.find_one({"_id": otu_id})
+
+        async with AsyncSession(pg) as session:
+            document = otu_document_from_row(await session.get(SQLOTU, otu_id))
 
         async with AsyncSession(pg) as session:
             await write_legacy_otu(
@@ -946,7 +892,6 @@ class TestJoinLegacyOTUInSession:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
         """Joining, writing and joining again reflects the write the second time.
@@ -964,7 +909,9 @@ class TestJoinLegacyOTUInSession:
         any caller that touched the row itself would do.
         """
         otu_id, _ = await self._create_otu(data_layer, fake)
-        document = await mongo.otus.find_one({"_id": otu_id})
+
+        async with AsyncSession(pg) as session:
+            document = otu_document_from_row(await session.get(SQLOTU, otu_id))
 
         async with AsyncSession(pg) as session:
             before = await join_legacy_otu_in_session(session, otu_id)
@@ -987,7 +934,6 @@ class TestJoinLegacyOTUInSession:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
         """A sequence rewritten after the first join comes back rewritten.
@@ -1002,7 +948,11 @@ class TestJoinLegacyOTUInSession:
         back stale.
         """
         otu_id, sequence_id = await self._create_otu(data_layer, fake)
-        document = await mongo.sequences.find_one({"_id": sequence_id})
+
+        async with AsyncSession(pg) as session:
+            document = sequence_document_from_row(
+                await session.get(SQLSequence, sequence_id),
+            )
 
         async with AsyncSession(pg) as session:
             before = await join_legacy_otu_in_session(session, otu_id)
@@ -1073,15 +1023,14 @@ class TestIncrementLegacyOTUVersion:
         self,
         fake: DataFaker,
         insert_otu,
-        mongo: Mongo,
         pg: AsyncEngine,
         test_otu: Document,
     ):
-        """The document returned is the OTU as it now stands, as Mongo's helper's is.
+        """The document returned is the OTU as it now stands.
 
-        The write path passes it straight to ``join`` as the OTU half of the joined
-        document, so it has to be the whole OTU document at its new version rather
-        than the fields the bump touched.
+        The write path takes it as the OTU half of the joined document, so it has to be
+        the whole OTU document at its new version rather than the fields the bump
+        touched.
         """
         otu_id = await self._insert(
             fake,
@@ -1271,9 +1220,9 @@ class TestUpdateLegacySequenceSegments:
     """``update_legacy_sequence_segments`` unsets segments dropped from an OTU's schema.
 
     The segment has to be *removed* from ``data`` rather than nulled. ``data`` is a lift
-    of the Mongo document and Mongo's ``$unset`` removes the field, so a lingering
+    of the OTU document, where an unset segment is an absent field, so a lingering
     ``segment: null`` would make the joined OTU -- and every ``dictdiffer`` patch taken
-    against it -- disagree with the Mongo path.
+    against it -- diff a changed field where an absent one diffs a removed field.
     """
 
     async def _insert(
@@ -1327,29 +1276,6 @@ class TestUpdateLegacySequenceSegments:
 
         assert row.segment is None
         assert "segment" not in row.data
-
-    async def test_matches_the_mongo_unset(
-        self,
-        fake: DataFaker,
-        insert_otu,
-        mongo: Mongo,
-        pg: AsyncEngine,
-        test_otu: Document,
-        test_sequence: Document,
-    ):
-        """The joined OTU is the one the Mongo helper's ``$unset`` leaves behind."""
-        await self._insert(fake, insert_otu, test_otu, test_sequence, "RNA2")
-
-        old = await join(mongo, test_otu["_id"])
-        new = {**old, "schema": [{"name": "RNA1"}]}
-
-        await update_sequence_segments(mongo, old, new)
-        await self._drop_rna2(pg, test_otu["_id"])
-
-        assert await join_legacy_otu(pg, test_otu["_id"]) == await join(
-            mongo,
-            test_otu["_id"],
-        )
 
     async def test_keeps_a_retained_segment(
         self,

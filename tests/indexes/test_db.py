@@ -602,48 +602,39 @@ async def test_upsert_index_file_updates_existing_row(pg: AsyncEngine):
 
 
 class TestUpdateLastIndexedVersions:
-    async def test_stamps_both_stores(
+    async def test_stamps_postgres(
         self,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
-        """The stamp lands in Postgres as well as Mongo.
+        """The stamp lands on the promoted column and its ``data`` counterpart.
 
         Postgres holds the value twice -- in the promoted column and in the ``data``
-        JSONB that mirrors the document -- and the stamp must land in both.
-
-        The OTU is created through the data layer so it exists in both stores, as it
-        would in production. Seeding Mongo alone would leave the Postgres update
-        matching no rows and the test would pass without proving anything.
+        JSONB the document is recovered from -- and the stamp must land in both.
         """
         user = await fake.users.create()
         reference = await fake.references.create(user=user)
         otu = await fake.otus.create(reference.id, user)
 
-        async with both_transactions(mongo, pg) as (mongo_session, pg_session):
-            await update_last_indexed_versions(
-                mongo,
-                reference.id,
-                mongo_session,
-                pg_session,
+        async with AsyncSession(pg) as session:
+            await update_last_indexed_versions(reference.id, session)
+            await session.commit()
+
+            row = await session.scalar(
+                select(SQLOTU)
+                .where(SQLOTU.id == otu.id)
+                .execution_options(
+                    populate_existing=True,
+                ),
             )
 
-        document = await mongo.otus.find_one({"_id": otu.id})
-
-        assert document["last_indexed_version"] == document["version"]
-
-        async with AsyncSession(pg) as session:
-            row = await session.scalar(select(SQLOTU).where(SQLOTU.id == otu.id))
-
-        assert row.last_indexed_version == document["version"]
-        assert row.data["last_indexed_version"] == document["version"]
+        assert row.last_indexed_version == row.version
+        assert row.data["last_indexed_version"] == row.version
 
     async def test_stamps_every_chunk(
         self,
         fake: DataFaker,
         mocker: MockerFixture,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
         """Every OTU is stamped when the id list spans more than one chunk.
@@ -663,13 +654,9 @@ class TestUpdateLastIndexedVersions:
 
         otus = [await fake.otus.create_empty(reference.id, user) for _ in range(5)]
 
-        async with both_transactions(mongo, pg) as (mongo_session, pg_session):
-            await update_last_indexed_versions(
-                mongo,
-                reference.id,
-                mongo_session,
-                pg_session,
-            )
+        async with AsyncSession(pg) as session:
+            await update_last_indexed_versions(reference.id, session)
+            await session.commit()
 
         async with AsyncSession(pg) as session:
             rows = {
@@ -686,52 +673,8 @@ class TestUpdateLastIndexedVersions:
         assert len(rows) == 5
 
         for otu in otus:
-            document = await mongo.otus.find_one({"_id": otu.id})
-
-            assert document["last_indexed_version"] == document["version"]
-            assert rows[otu.id].last_indexed_version == document["version"]
-            assert rows[otu.id].data["last_indexed_version"] == document["version"]
-
-    async def test_mongo_only_otu_is_not_stamped(
-        self,
-        fake: DataFaker,
-        mongo: Mongo,
-        pg: AsyncEngine,
-        test_otu,
-    ):
-        """An OTU that exists only in Mongo is stamped in neither store.
-
-        Postgres is the read authority: the OTUs to stamp are read from it, so an OTU
-        with no Postgres row is invisible here and is not stamped in Mongo either. The
-        read cutover is gated on the backfill and the parity check, so no such OTU
-        exists in production by the time this runs.
-        """
-        user = await fake.users.create()
-        reference = await fake.references.create(user=user)
-
-        await mongo.otus.insert_one(
-            {**test_otu, "reference": {"id": reference.id}, "version": 3},
-        )
-
-        async with both_transactions(mongo, pg) as (mongo_session, pg_session):
-            await update_last_indexed_versions(
-                mongo,
-                reference.id,
-                mongo_session,
-                pg_session,
-            )
-
-        document = await mongo.otus.find_one({"_id": test_otu["_id"]})
-
-        assert document["last_indexed_version"] == test_otu["last_indexed_version"]
-
-        async with AsyncSession(pg) as session:
-            assert (
-                await session.scalar(
-                    select(SQLOTU).where(SQLOTU.id == test_otu["_id"]),
-                )
-                is None
-            )
+            assert rows[otu.id].last_indexed_version == rows[otu.id].version
+            assert rows[otu.id].data["last_indexed_version"] == rows[otu.id].version
 
 
 async def test_attach_files(snapshot, pg: AsyncEngine):

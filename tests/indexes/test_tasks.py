@@ -18,6 +18,7 @@ from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.indexes.tasks import CreateIndexTask
 from virtool.indexes.utils import compose_index_file_key
 from virtool.mongo.core import Mongo
+from virtool.otus.sql import SQLOTU
 from virtool.storage.protocol import StorageBackend
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
@@ -144,8 +145,12 @@ class TestCreateIndexTask:
         response = await self.data_layer.index.get(self.index_id)
         assert response.ready is True
 
-        otu = await self.mongo.otus.find_one(self.otu.id)
-        assert otu["last_indexed_version"] == self.manifest[self.otu.id]
+        async with AsyncSession(self.pg) as session:
+            otu_row = await session.scalar(
+                select(SQLOTU).where(SQLOTU.id == self.otu.id),
+            )
+
+        assert otu_row.last_indexed_version == self.manifest[self.otu.id]
 
     async def test_marks_task_complete(self) -> None:
         """A successful build completes its task without error and readies the index."""

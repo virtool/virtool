@@ -780,9 +780,8 @@ async def test_finalize(
 
     reference = await fake.references.create(user=user)
 
-    # The OTU is written to both stores, as it is in production, so the
-    # Postgres-backed read that drives the stamp can see it and reflect its
-    # `version` in `last_indexed_version` after finalizing.
+    # The Postgres-backed read that drives the stamp reflects the OTU's `version` in
+    # `last_indexed_version` after finalizing.
     otu = await fake.otus.create(reference.id, user)
 
     index = await fake.indexes.create(
@@ -813,7 +812,12 @@ async def test_finalize(
 
     if not error:
         assert resp.status == HTTPStatus.OK
-        assert await mongo.otus.find_one(otu.id) == snapshot
+
+        async with AsyncSession(pg) as session:
+            row = await session.scalar(select(SQLOTU).where(SQLOTU.id == otu.id))
+
+        assert row.last_indexed_version == row.version
+        assert row.data["last_indexed_version"] == row.version
 
 
 @pytest.mark.parametrize("status", [200, 404])

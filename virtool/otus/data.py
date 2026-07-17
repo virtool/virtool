@@ -6,8 +6,6 @@ from collections.abc import Awaitable, Callable
 from copy import deepcopy
 from typing import Any
 
-from motor.motor_asyncio import AsyncIOMotorClientSession
-from pymongo.results import DeleteResult
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.history.db
@@ -18,7 +16,7 @@ from virtool.data.errors import (
     ResourceError,
     ResourceNotFoundError,
 )
-from virtool.data.topg import resolve_legacy_id, retry_both_transactions
+from virtool.data.topg import resolve_legacy_id
 from virtool.data.transforms import apply_transforms
 from virtool.history.utils import (
     compose_create_description,
@@ -48,8 +46,6 @@ from virtool.otus.db import (
     list_legacy_isolate_sequences,
     list_legacy_otu_sequence_bodies,
     lock_legacy_otu,
-    mirror_otu_to_mongo,
-    mirror_sequence_to_mongo,
     update_legacy_otu_verification,
     update_legacy_sequence_segments,
     write_legacy_otu,
@@ -90,10 +86,9 @@ class OTUData:
     ) -> str:
         """Generate an id no ``legacy_otus`` or ``legacy_sequences`` row holds yet.
 
-        The create paths write Postgres before Mongo, so they need the id before either
-        store has seen the document and cannot let ``Collection.insert_one`` invent one.
-        This replaces the collision check that ran inside it, asking Postgres what it
-        used to ask Mongo.
+        The create paths need the id before the row is written, so it cannot come from
+        ``Collection.insert_one`` inventing one. This replaces the collision check that
+        ran inside it, asking Postgres what it used to ask Mongo.
 
         The generators do collide. ``FakeIdProvider`` replays one seeded sequence, so a
         test that seeds a document under an id the provider later reaches gets a
@@ -103,7 +98,7 @@ class OTUData:
         The check races a concurrent create that picks the same id in the same instant,
         which the insert-only writes it feeds turn into an ``IntegrityError`` rather
         than a clobbered row. That was already the outcome -- Mongo's unique ``_id``
-        index raised on the same race -- and it survives Mongo leaving the write path.
+        index raised on the same race before it left the write path.
         """
         while True:
             id_ = self._mongo.id_provider.get()
@@ -337,12 +332,9 @@ class OTUData:
         if reference_pk is None:
             raise ResourceNotFoundError("Reference does not exist")
 
-        async def func(
-            mongo_session: AsyncIOMotorClientSession,
-            pg_session: AsyncSession,
-        ) -> Document:
-            document_ = {
-                "_id": await self._generate_id(pg_session, legacy_otu_id_taken),
+        async with AsyncSession(self._pg) as session:
+            document = {
+                "_id": await self._generate_id(session, legacy_otu_id_taken),
                 "name": data.name,
                 "abbreviation": data.abbreviation,
                 "last_indexed_version": None,
@@ -354,22 +346,18 @@ class OTUData:
                 "schema": data.dict()["otu_schema"],
             }
 
-            await insert_legacy_otu(pg_session, document_)
-
-            await self._mongo.otus.insert_one(document_, session=mongo_session)
+            await insert_legacy_otu(session, document)
 
             await virtool.history.db.add(
-                pg_session,
-                compose_create_description(document_),
+                session,
+                compose_create_description(document),
                 HistoryMethod.create,
                 None,
-                document_,
+                document,
                 user_id,
             )
 
-            return document_
-
-        document = await retry_both_transactions(self._mongo, self._pg, func)
+            await session.commit()
 
         return await self.get(document["_id"])
 
@@ -432,13 +420,10 @@ class OTUData:
         if "schema" in data:
             update["schema"] = data["schema"]
 
-        async def func(
-            mongo_session: AsyncIOMotorClientSession,
-            pg_session: AsyncSession,
-        ):
-            await lock_legacy_otu(pg_session, otu_id)
+        async with AsyncSession(self._pg) as session:
+            await lock_legacy_otu(session, otu_id)
 
-            old = await join_legacy_otu_in_session(pg_session, otu_id)
+            old = await join_legacy_otu_in_session(session, otu_id)
 
             old_document, _ = split(old)
 
@@ -448,27 +433,16 @@ class OTUData:
                 "version": old_document["version"] + 1,
             }
 
-            await write_legacy_otu(pg_session, new_document)
+            await write_legacy_otu(session, new_document)
 
-            await update_legacy_sequence_segments(pg_session, old, new_document)
+            await update_legacy_sequence_segments(session, old, new_document)
 
-            new = await join_legacy_otu_in_session(pg_session, otu_id)
+            new = await join_legacy_otu_in_session(session, otu_id)
 
-            await update_legacy_otu_verification(pg_session, new)
-
-            mirrored_document, _ = split(new)
-
-            await mirror_otu_to_mongo(self._mongo, mirrored_document, mongo_session)
-
-            await virtool.otus.db.update_sequence_segments(
-                self._mongo,
-                old,
-                new_document,
-                session=mongo_session,
-            )
+            await update_legacy_otu_verification(session, new)
 
             await virtool.history.db.add(
-                pg_session,
+                session,
                 compose_edit_description(
                     new["name"],
                     new["abbreviation"],
@@ -481,11 +455,11 @@ class OTUData:
                 user_id,
             )
 
-        await retry_both_transactions(self._mongo, self._pg, func)
+            await session.commit()
 
         return await self.get(otu_id)
 
-    async def remove(self, otu_id: str, user_id: int) -> DeleteResult | None:
+    async def remove(self, otu_id: str, user_id: int) -> bool:
         """Remove an OTU.
 
         Create a history document to record the change.
@@ -495,31 +469,18 @@ class OTUData:
         :return: `True` if the removal was successful
 
         """
-
-        async def func(
-            mongo_session: AsyncIOMotorClientSession,
-            pg_session: AsyncSession,
-        ) -> DeleteResult | None:
-            # Joined inside the closure so a retry composes the diff from the OTU as it
-            # stands on that attempt rather than replaying the first attempt's snapshot.
-            joined = await join_legacy_otu_in_session(pg_session, otu_id)
+        async with AsyncSession(self._pg) as session:
+            joined = await join_legacy_otu_in_session(session, otu_id)
 
             if not joined:
-                return None
+                return False
 
-            await delete_legacy_otu(pg_session, otu_id)
-
-            _, delete_result = await asyncio.gather(
-                self._mongo.sequences.delete_many(
-                    {"otu_id": otu_id}, session=mongo_session
-                ),
-                self._mongo.otus.delete_one({"_id": otu_id}, session=mongo_session),
-            )
+            await delete_legacy_otu(session, otu_id)
 
             description = compose_remove_description(joined)
 
             await virtool.history.db.add(
-                pg_session,
+                session,
                 description,
                 HistoryMethod.remove,
                 joined,
@@ -527,9 +488,9 @@ class OTUData:
                 user_id,
             )
 
-            return delete_result
+            await session.commit()
 
-        return await retry_both_transactions(self._mongo, self._pg, func)
+        return True
 
     async def _check_source_type(self, otu_id: str, source_type: str) -> None:
         """Ensure ``source_type`` is allowed by the OTU's parent reference.
@@ -559,13 +520,10 @@ class OTUData:
 
         await self._check_source_type(otu_id, source_type)
 
-        async def func(
-            mongo_session: AsyncIOMotorClientSession,
-            pg_session: AsyncSession,
-        ) -> OTUIsolate:
-            await lock_legacy_otu(pg_session, otu_id)
+        async with AsyncSession(self._pg) as session:
+            await lock_legacy_otu(session, otu_id)
 
-            old = await join_legacy_otu_in_session(pg_session, otu_id)
+            old = await join_legacy_otu_in_session(session, otu_id)
 
             old_document, _ = split(old)
 
@@ -603,15 +561,11 @@ class OTUData:
                 "version": old_document["version"] + 1,
             }
 
-            await write_legacy_otu(pg_session, new_document)
+            await write_legacy_otu(session, new_document)
 
-            new = await join_legacy_otu_in_session(pg_session, otu_id)
+            new = await join_legacy_otu_in_session(session, otu_id)
 
-            await update_legacy_otu_verification(pg_session, new)
-
-            mirrored_document, _ = split(new)
-
-            await mirror_otu_to_mongo(self._mongo, mirrored_document, mongo_session)
+            await update_legacy_otu_verification(session, new)
 
             description = f"Added {format_isolate_name(isolate_)}"
 
@@ -619,7 +573,7 @@ class OTUData:
                 description += " as default"
 
             await virtool.history.db.add(
-                pg_session,
+                session,
                 description,
                 HistoryMethod.add_isolate,
                 old,
@@ -627,9 +581,9 @@ class OTUData:
                 user_id,
             )
 
-            return OTUIsolate(**{**isolate_, "sequences": []})
+            await session.commit()
 
-        return await retry_both_transactions(self._mongo, self._pg, func)
+        return OTUIsolate(**{**isolate_, "sequences": []})
 
     async def update_isolate(
         self,
@@ -644,13 +598,10 @@ class OTUData:
 
             await self._check_source_type(otu_id, source_type)
 
-        async def func(
-            mongo_session: AsyncIOMotorClientSession,
-            pg_session: AsyncSession,
-        ) -> Document:
-            await lock_legacy_otu(pg_session, otu_id)
+        async with AsyncSession(self._pg) as session:
+            await lock_legacy_otu(session, otu_id)
 
-            old = await join_legacy_otu_in_session(pg_session, otu_id)
+            old = await join_legacy_otu_in_session(session, otu_id)
 
             # The isolates are taken from ``old`` rather than read separately. The
             # rename is written as a whole-document replacement, so a list read outside
@@ -678,29 +629,23 @@ class OTUData:
                 "version": old_document["version"] + 1,
             }
 
-            await write_legacy_otu(pg_session, new_document)
+            await write_legacy_otu(session, new_document)
 
-            new_ = await join_legacy_otu_in_session(pg_session, otu_id)
+            new = await join_legacy_otu_in_session(session, otu_id)
 
-            await update_legacy_otu_verification(pg_session, new_)
-
-            mirrored_document, _ = split(new_)
-
-            await mirror_otu_to_mongo(self._mongo, mirrored_document, mongo_session)
+            await update_legacy_otu_verification(session, new)
 
             # Use the old and new entry to add a new history document for the change.
             await virtool.history.db.add(
-                pg_session,
+                session,
                 f"Renamed {old_isolate_name} to {new_isolate_name}",
                 HistoryMethod.edit_isolate,
                 old,
-                new_,
+                new,
                 user_id,
             )
 
-            return new_
-
-        new = await retry_both_transactions(self._mongo, self._pg, func)
+            await session.commit()
 
         complete = await virtool.otus.db.join_and_format(
             self._pg,
@@ -724,14 +669,10 @@ class OTUData:
         :return: the updated isolate
 
         """
+        async with AsyncSession(self._pg) as session:
+            await lock_legacy_otu(session, otu_id)
 
-        async def func(
-            mongo_session: AsyncIOMotorClientSession,
-            pg_session: AsyncSession,
-        ) -> Document:
-            await lock_legacy_otu(pg_session, otu_id)
-
-            old = await join_legacy_otu_in_session(pg_session, otu_id)
+            old = await join_legacy_otu_in_session(session, otu_id)
 
             old_document, _ = split(old)
 
@@ -758,19 +699,15 @@ class OTUData:
                 "version": old_document["version"] + 1,
             }
 
-            await write_legacy_otu(pg_session, new_document)
+            await write_legacy_otu(session, new_document)
 
-            new = await join_legacy_otu_in_session(pg_session, otu_id)
+            new = await join_legacy_otu_in_session(session, otu_id)
 
-            await update_legacy_otu_verification(pg_session, new)
-
-            mirrored_document, _ = split(new)
-
-            await mirror_otu_to_mongo(self._mongo, mirrored_document, mongo_session)
+            await update_legacy_otu_verification(session, new)
 
             # Use the old and new entry to add a new history document for the change.
             await virtool.history.db.add(
-                pg_session,
+                session,
                 f"Set {format_isolate_name(isolate)} as default",
                 HistoryMethod.set_as_default,
                 old,
@@ -778,11 +715,11 @@ class OTUData:
                 user_id,
             )
 
+            await session.commit()
+
             return strip_sequence_references(
                 find_isolate(new["isolates"], isolate_id),
             )
-
-        return await retry_both_transactions(self._mongo, self._pg, func)
 
     async def remove_isolate(self, otu_id: str, isolate_id: str, user_id: int) -> None:
         """Remove an isolate.
@@ -792,14 +729,10 @@ class OTUData:
         :param user_id: the ID of the requesting user
 
         """
+        async with AsyncSession(self._pg) as session:
+            await lock_legacy_otu(session, otu_id)
 
-        async def func(
-            mongo_session: AsyncIOMotorClientSession,
-            pg_session: AsyncSession,
-        ):
-            await lock_legacy_otu(pg_session, otu_id)
-
-            old = await join_legacy_otu_in_session(pg_session, otu_id)
+            old = await join_legacy_otu_in_session(session, otu_id)
 
             old_document, _ = split(old)
 
@@ -825,22 +758,13 @@ class OTUData:
                 "version": old_document["version"] + 1,
             }
 
-            await write_legacy_otu(pg_session, new_document)
+            await write_legacy_otu(session, new_document)
 
-            await delete_legacy_isolate_sequences(pg_session, otu_id, isolate_id)
+            await delete_legacy_isolate_sequences(session, otu_id, isolate_id)
 
-            new = await join_legacy_otu_in_session(pg_session, otu_id)
+            new = await join_legacy_otu_in_session(session, otu_id)
 
-            await update_legacy_otu_verification(pg_session, new)
-
-            mirrored_document, _ = split(new)
-
-            await mirror_otu_to_mongo(self._mongo, mirrored_document, mongo_session)
-
-            await self._mongo.sequences.delete_many(
-                {"otu_id": otu_id, "isolate_id": isolate_id},
-                session=mongo_session,
-            )
+            await update_legacy_otu_verification(session, new)
 
             description = f"Removed {format_isolate_name(isolate_to_remove)}"
 
@@ -848,7 +772,7 @@ class OTUData:
                 description += f" and set {format_isolate_name(new_default)} as default"
 
             await virtool.history.db.add(
-                pg_session,
+                session,
                 description,
                 HistoryMethod.remove_isolate,
                 old,
@@ -856,7 +780,7 @@ class OTUData:
                 user_id,
             )
 
-        await retry_both_transactions(self._mongo, self._pg, func)
+            await session.commit()
 
     async def create_sequence(
         self,
@@ -881,17 +805,14 @@ class OTUData:
         ):
             raise ResourceError(message)
 
-        async def func(
-            mongo_session: AsyncIOMotorClientSession,
-            pg_session: AsyncSession,
-        ) -> OTUSequence:
-            await lock_legacy_otu(pg_session, otu_id)
+        async with AsyncSession(self._pg) as session:
+            await lock_legacy_otu(session, otu_id)
 
-            old = await join_legacy_otu_in_session(pg_session, otu_id)
+            old = await join_legacy_otu_in_session(session, otu_id)
 
             document = {
                 "_id": sequence_id
-                or await self._generate_id(pg_session, legacy_sequence_id_taken),
+                or await self._generate_id(session, legacy_sequence_id_taken),
                 "accession": accession,
                 "definition": definition,
                 "otu_id": otu_id,
@@ -902,26 +823,20 @@ class OTUData:
                 "sequence": sequence.replace(" ", "").replace("\n", ""),
             }
 
-            await increment_legacy_otu_version(pg_session, otu_id)
+            await increment_legacy_otu_version(session, otu_id)
 
-            await insert_legacy_sequence(pg_session, document)
+            await insert_legacy_sequence(session, document)
 
-            new = await join_legacy_otu_in_session(pg_session, otu_id)
+            new = await join_legacy_otu_in_session(session, otu_id)
 
-            await update_legacy_otu_verification(pg_session, new)
-
-            mirrored_document, _ = split(new)
-
-            await mirror_otu_to_mongo(self._mongo, mirrored_document, mongo_session)
-
-            await self._mongo.sequences.insert_one(document, session=mongo_session)
+            await update_legacy_otu_verification(session, new)
 
             isolate_name = format_isolate_name(
                 find_isolate(old["isolates"], isolate_id),
             )
 
             await virtool.history.db.add(
-                pg_session,
+                session,
                 f"Created new sequence {accession} in {isolate_name}",
                 HistoryMethod.create_sequence,
                 old,
@@ -929,9 +844,9 @@ class OTUData:
                 user_id,
             )
 
-            return OTUSequence(**document)
+            await session.commit()
 
-        return await retry_both_transactions(self._mongo, self._pg, func)
+        return OTUSequence(**document)
 
     async def get_sequence(
         self,
@@ -1049,42 +964,33 @@ class OTUData:
         if "sequence" in data:
             update["sequence"] = data["sequence"].replace(" ", "").replace("\n", "")
 
-        async def func(
-            mongo_session: AsyncIOMotorClientSession,
-            pg_session: AsyncSession,
-        ) -> Document:
-            await lock_legacy_otu(pg_session, otu_id)
+        async with AsyncSession(self._pg) as session:
+            await lock_legacy_otu(session, otu_id)
 
-            old = await join_legacy_otu_in_session(pg_session, otu_id)
+            old = await join_legacy_otu_in_session(session, otu_id)
 
             # Read by id alone, not out of ``old``, because this path addresses a
             # sequence by id alone: the handler's existence guard does not scope it to
             # the OTU in the path either.
             document = {
-                **await get_legacy_sequence_in_session(pg_session, sequence_id),
+                **await get_legacy_sequence_in_session(session, sequence_id),
                 **update,
             }
 
-            await increment_legacy_otu_version(pg_session, otu_id)
+            await increment_legacy_otu_version(session, otu_id)
 
-            await write_legacy_sequence(pg_session, document)
+            await write_legacy_sequence(session, document)
 
-            new = await join_legacy_otu_in_session(pg_session, otu_id)
+            new = await join_legacy_otu_in_session(session, otu_id)
 
-            await update_legacy_otu_verification(pg_session, new)
-
-            mirrored_document, _ = split(new)
-
-            await mirror_otu_to_mongo(self._mongo, mirrored_document, mongo_session)
-
-            await mirror_sequence_to_mongo(self._mongo, document, mongo_session)
+            await update_legacy_otu_verification(session, new)
 
             isolate_name = format_isolate_name(
                 find_isolate(old["isolates"], isolate_id),
             )
 
             await virtool.history.db.add(
-                pg_session,
+                session,
                 f"Edited sequence {sequence_id} in {isolate_name}",
                 HistoryMethod.edit_sequence,
                 old,
@@ -1092,11 +998,9 @@ class OTUData:
                 user_id,
             )
 
-            return document
+            await session.commit()
 
-        return base_processor(
-            await retry_both_transactions(self._mongo, self._pg, func)
-        )
+        return base_processor(document)
 
     async def remove_sequence(
         self,
@@ -1113,40 +1017,25 @@ class OTUData:
         :param user_id: the ID of the requesting user
 
         """
+        async with AsyncSession(self._pg) as session:
+            await lock_legacy_otu(session, otu_id)
 
-        async def func(
-            mongo_session: AsyncIOMotorClientSession,
-            pg_session: AsyncSession,
-        ):
-            await lock_legacy_otu(pg_session, otu_id)
+            old = await join_legacy_otu_in_session(session, otu_id)
 
-            # Joined inside the closure so a retry composes the diff from the OTU as it
-            # stands on that attempt rather than replaying the first attempt's snapshot.
-            old = await join_legacy_otu_in_session(pg_session, otu_id)
+            await increment_legacy_otu_version(session, otu_id)
 
-            await increment_legacy_otu_version(pg_session, otu_id)
+            await delete_legacy_sequence(session, sequence_id)
 
-            await delete_legacy_sequence(pg_session, sequence_id)
+            new = await join_legacy_otu_in_session(session, otu_id)
 
-            new = await join_legacy_otu_in_session(pg_session, otu_id)
-
-            await update_legacy_otu_verification(pg_session, new)
-
-            mirrored_document, _ = split(new)
-
-            await mirror_otu_to_mongo(self._mongo, mirrored_document, mongo_session)
-
-            await self._mongo.sequences.delete_one(
-                {"_id": sequence_id},
-                session=mongo_session,
-            )
+            await update_legacy_otu_verification(session, new)
 
             isolate_name = format_isolate_name(
                 find_isolate(old["isolates"], isolate_id),
             )
 
             await virtool.history.db.add(
-                pg_session,
+                session,
                 f"Removed sequence {sequence_id} from {isolate_name}",
                 HistoryMethod.remove_sequence,
                 old,
@@ -1154,4 +1043,4 @@ class OTUData:
                 user_id,
             )
 
-        await retry_both_transactions(self._mongo, self._pg, func)
+            await session.commit()
