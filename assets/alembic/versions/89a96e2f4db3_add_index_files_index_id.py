@@ -19,7 +19,7 @@ finalize revision; the ``index`` column itself is dropped in a later cleanup
 revision.
 
 Revision ID: 89a96e2f4db3
-Revises: 6ffca63a8b95
+Revises: aaac048795ba
 Create Date: 2026-07-17 19:59:33.997379+00:00
 
 """
@@ -28,7 +28,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision = "89a96e2f4db3"
-down_revision = "6ffca63a8b95"
+down_revision = "aaac048795ba"
 branch_labels = None
 depends_on = None
 

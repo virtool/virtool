@@ -24,13 +24,15 @@ name = "copy indexes to postgres"
 created_at = arrow.get("2026-07-17 18:18:14.064540")
 revision_id = "9ws3adnisz85"
 
-alembic_down_revision = "6ffca63a8b95"
+alembic_down_revision = "aaac048795ba"
 virtool_down_revision = None
 
-# ``6ffca63a8b95`` creates the ``indexes`` table this copy writes into, so requiring
-# it guarantees the destination table and every promoted column exist before the
-# copy runs.
-required_alembic_revision = "6ffca63a8b95"
+# ``aaac048795ba`` relaxes ``ck_indexes_job_or_task`` to ``<= 1`` so a legacy build
+# whose job was deleted before the jobs migration can be copied with a ``NULL``
+# ``job_id``; it also chains behind ``6ffca63a8b95``, which creates the ``indexes``
+# table. Downgrading to it guarantees both the destination table and the relaxed
+# constraint exist before the copy runs.
+required_alembic_revision = "aaac048795ba"
 
 
 async def upgrade(ctx: MigrationContext) -> None:
