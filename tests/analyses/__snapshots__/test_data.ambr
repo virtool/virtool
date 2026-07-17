@@ -5,7 +5,7 @@
     ]),
     'id': 1,
     'index': dict({
-      'id': 'test_index',
+      'id': 'bf1b993c',
       'version': 11,
     }),
     'job': dict({
@@ -63,7 +63,7 @@
         'created_at': 'approximately_now_datetime',
         'id': 2,
         'index': dict({
-          'id': 'test_index',
+          'id': 'bf1b993c',
           'version': 11,
         }),
         'job': dict({
@@ -118,7 +118,7 @@
         'created_at': 'approximately_now_datetime',
         'id': 3,
         'index': dict({
-          'id': 'test_index',
+          'id': 'bf1b993c',
           'version': 11,
         }),
         'job': dict({
@@ -162,7 +162,7 @@
         'created_at': 'approximately_now_datetime',
         'id': 2,
         'index': dict({
-          'id': 'test_index',
+          'id': 'bf1b993c',
           'version': 11,
         }),
         'job': dict({

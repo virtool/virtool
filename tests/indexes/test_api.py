@@ -1,4 +1,3 @@
-import asyncio
 import gzip
 import json
 from datetime import timedelta
@@ -18,7 +17,6 @@ from tests.fixtures.client import ClientSpawner, JobClientSpawner
 from tests.fixtures.references import (
     add_reference_user,
     create_reference,
-    seed_reference,
 )
 from tests.fixtures.response import RespIs
 from virtool.data.layer import DataLayer
@@ -40,18 +38,18 @@ from virtool.workflow.pytest_plugin.utils import StaticTime
 
 class TestFind:
     @pytest.mark.parametrize(
-        ("archived", "expected_ids"),
+        ("archived", "expected_roles"),
         [
-            (None, {"idx_active_a", "idx_active_b", "idx_archived"}),
-            (True, {"idx_archived"}),
-            (False, {"idx_active_a", "idx_active_b"}),
+            (None, {"active_a", "active_b", "archived"}),
+            (True, {"archived"}),
+            (False, {"active_a", "active_b"}),
         ],
         ids=["default", "archived", "active"],
     )
     async def test_find(
         self,
         archived: bool | None,
-        expected_ids: set[str],
+        expected_roles: set[str],
         data_layer: DataLayer,
         fake: DataFaker,
         mocker: MockerFixture,
@@ -74,88 +72,33 @@ class TestFind:
         reference_archived = await fake.references.create(user=user)
         await data_layer.references.archive(reference_archived.id)
 
-        await asyncio.gather(
-            mongo.history.insert_many(
-                [
-                    {
-                        "_id": "0",
-                        "index": {"id": "idx_active_a"},
-                        "otu": {"id": "otu_1"},
-                    },
-                    {
-                        "_id": "1",
-                        "index": {"id": "idx_active_b"},
-                        "otu": {"id": "otu_1"},
-                    },
-                    {
-                        "_id": "2",
-                        "index": {"id": "idx_active_a"},
-                        "otu": {"id": "otu_2"},
-                    },
-                    {
-                        "_id": "3",
-                        "index": {"id": "idx_active_a"},
-                        "otu": {"id": "otu_1"},
-                    },
-                    {
-                        "_id": "4",
-                        "index": {"id": "idx_active_a"},
-                        "otu": {"id": "otu_3"},
-                    },
-                    {
-                        "_id": "5",
-                        "index": {"id": "idx_active_b"},
-                        "otu": {"id": "otu_4"},
-                    },
-                ],
-                session=None,
+        indexes = {
+            "active_a": await fake.indexes.create(
+                reference_active_a,
+                user,
+                job=job_active_a,
+                manifest={"otu_1": 2},
+                version=1,
             ),
-            mongo.indexes.insert_many(
-                [
-                    {
-                        "_id": "idx_active_a",
-                        "version": 1,
-                        "created_at": static_time.datetime,
-                        "manifest": {"otu_1": 2},
-                        "ready": False,
-                        "job": {"id": job_active_a.id},
-                        "task": None,
-                        "reference": {"id": reference_active_a.id},
-                        "user": {"id": user.id},
-                        "sequence_otu_map": {"seq_1": "otu_1"},
-                    },
-                    {
-                        "_id": "idx_active_b",
-                        "version": 0,
-                        "created_at": static_time.datetime,
-                        "manifest": {"otu_1": 2},
-                        "ready": False,
-                        "job": {"id": job_active_b.id},
-                        "task": None,
-                        "reference": {"id": reference_active_b.id},
-                        "user": {"id": user.id},
-                        "sequence_otu_map": {"seq_1": "otu_2"},
-                    },
-                    {
-                        "_id": "idx_archived",
-                        "version": 0,
-                        "created_at": static_time.datetime,
-                        "manifest": {"otu_1": 2},
-                        "ready": False,
-                        "job": {"id": job_archived.id},
-                        "task": None,
-                        "reference": {"id": reference_archived.id},
-                        "user": {"id": user.id},
-                        "sequence_otu_map": {"seq_1": "otu_5"},
-                    },
-                ],
-                session=None,
+            "active_b": await fake.indexes.create(
+                reference_active_b,
+                user,
+                job=job_active_b,
+                manifest={"otu_1": 2},
+                version=0,
             ),
-        )
+            "archived": await fake.indexes.create(
+                reference_archived,
+                user,
+                job=job_archived,
+                manifest={"otu_1": 2},
+                version=0,
+            ),
+        }
 
         index_references = {
-            "idx_active_a": reference_active_a.id,
-            "idx_active_b": reference_active_b.id,
+            indexes["active_a"].id: reference_active_a.id,
+            indexes["active_b"].id: reference_active_b.id,
         }
 
         async with AsyncSession(pg) as session:
@@ -174,12 +117,12 @@ class TestFind:
                     index_version="0",
                 )
                 for legacy_id, index_id, otu_id in (
-                    ("0", "idx_active_a", "otu_1"),
-                    ("1", "idx_active_b", "otu_1"),
-                    ("2", "idx_active_a", "otu_2"),
-                    ("3", "idx_active_a", "otu_1"),
-                    ("4", "idx_active_a", "otu_3"),
-                    ("5", "idx_active_b", "otu_4"),
+                    ("0", indexes["active_a"].id, "otu_1"),
+                    ("1", indexes["active_b"].id, "otu_1"),
+                    ("2", indexes["active_a"].id, "otu_2"),
+                    ("3", indexes["active_a"].id, "otu_1"),
+                    ("4", indexes["active_a"].id, "otu_3"),
+                    ("5", indexes["active_b"].id, "otu_4"),
                 )
             )
             await session.commit()
@@ -200,25 +143,26 @@ class TestFind:
 
         assert resp.status == HTTPStatus.OK
         assert body == snapshot
-        assert {d["id"] for d in body["documents"]} == expected_ids
+        assert {d["id"] for d in body["documents"]} == {
+            indexes[role].id for role in expected_roles
+        }
 
     @pytest.mark.parametrize(
-        ("archived", "expected_ids"),
+        ("archived", "expected_roles"),
         [
-            (None, {"idx_active_a", "idx_active_b", "idx_archived"}),
-            (True, {"idx_archived"}),
-            (False, {"idx_active_a", "idx_active_b"}),
+            (None, {"active_a", "active_b", "archived"}),
+            (True, {"archived"}),
+            (False, {"active_a", "active_b"}),
         ],
         ids=["default", "archived", "active"],
     )
     async def test_ready(
         self,
         archived: bool | None,
-        expected_ids: set[str],
+        expected_roles: set[str],
         data_layer: DataLayer,
         fake: DataFaker,
         snapshot,
-        mongo: Mongo,
         spawn_client: ClientSpawner,
         static_time,
     ):
@@ -232,44 +176,37 @@ class TestFind:
         reference_archived = await fake.references.create(user=user)
         await data_layer.references.archive(reference_archived.id)
 
-        await mongo.indexes.insert_many(
-            [
-                {
-                    "_id": "idx_active_a",
-                    "version": 1,
-                    "created_at": static_time.datetime + timedelta(hours=2),
-                    "manifest": {"otu_1": 2},
-                    "ready": True,
-                    "job": {"id": job.id},
-                    "task": None,
-                    "reference": {"id": reference_active_a.id},
-                    "user": {"id": user.id},
-                },
-                {
-                    "_id": "idx_active_b",
-                    "version": 0,
-                    "created_at": static_time.datetime,
-                    "manifest": {"otu_1": 2},
-                    "ready": True,
-                    "job": {"id": job.id},
-                    "task": None,
-                    "reference": {"id": reference_active_b.id},
-                    "user": {"id": user.id},
-                },
-                {
-                    "_id": "idx_archived",
-                    "version": 0,
-                    "created_at": static_time.datetime + timedelta(hours=4),
-                    "manifest": {"otu_1": 2},
-                    "ready": True,
-                    "job": {"id": job.id},
-                    "task": None,
-                    "reference": {"id": reference_archived.id},
-                    "user": {"id": user.id},
-                },
-            ],
-            session=None,
-        )
+        # The ready listing sorts by ``created_at`` ascending. The timestamps are
+        # scrambled relative to creation order so the sort is actually exercised.
+        indexes = {
+            "active_a": await fake.indexes.create(
+                reference_active_a,
+                user,
+                job=job,
+                manifest={"otu_1": 2},
+                version=1,
+                created_at=static_time.datetime + timedelta(hours=2),
+                ready=True,
+            ),
+            "active_b": await fake.indexes.create(
+                reference_active_b,
+                user,
+                job=job,
+                manifest={"otu_1": 2},
+                version=0,
+                created_at=static_time.datetime,
+                ready=True,
+            ),
+            "archived": await fake.indexes.create(
+                reference_archived,
+                user,
+                job=job,
+                manifest={"otu_1": 2},
+                version=0,
+                created_at=static_time.datetime + timedelta(hours=4),
+                ready=True,
+            ),
+        }
 
         url = "/indexes?ready=True"
         if archived is not None:
@@ -280,7 +217,15 @@ class TestFind:
 
         assert resp.status == HTTPStatus.OK
         assert body == snapshot
-        assert {d["id"] for d in body} == expected_ids
+        assert {d["id"] for d in body} == {indexes[role].id for role in expected_roles}
+
+        # The listing is ordered oldest-first, independently of creation order.
+        ordered_roles = [
+            role
+            for role in ("active_b", "active_a", "archived")
+            if role in expected_roles
+        ]
+        assert [d["id"] for d in body] == [indexes[role].id for role in ordered_roles]
 
     async def test_archived_invalid(self, spawn_client: ClientSpawner):
         """An invalid ``archived`` value yields a 400 with Pydantic detail."""
@@ -298,7 +243,6 @@ async def test_get(
     pg: AsyncEngine,
     resp_is: RespIs,
     snapshot: SnapshotAssertion,
-    mongo: Mongo,
     spawn_client: ClientSpawner,
     static_time: StaticTime,
 ):
@@ -315,6 +259,20 @@ async def test_get(
 
     reference = await fake.references.create(user=prolific)
 
+    job = await fake.jobs.create(user=prolific, workflow="build_index")
+
+    index_id = "missing"
+
+    if not error:
+        index = await fake.indexes.create(
+            reference,
+            prolific,
+            job=job,
+            manifest={"foo": 2},
+            version=0,
+        )
+        index_id = index.id
+
     async with AsyncSession(pg) as session:
         session.add_all(
             SQLLegacyHistory(
@@ -327,36 +285,19 @@ async def test_get(
                 otu_name=otu_name,
                 otu_version=otu_version,
                 reference_id=reference.id,
-                index=index_id,
+                index=row_index_id,
                 index_version="0",
             )
-            for legacy_id, index_id, otu_id, otu_name, otu_version, user_id in (
-                ("tmv.0", "foobar", "tmv", "Tobacco mosaic virus", "0", prolific.id),
-                ("tmv.1", "foobar", "tmv", "Tobacco mosaic virus", "1", prolific.id),
-                ("pvx.0", "foobar", "pvx", "Potato virus X", "0", occasional.id),
+            for legacy_id, row_index_id, otu_id, otu_name, otu_version, user_id in (
+                ("tmv.0", index_id, "tmv", "Tobacco mosaic virus", "0", prolific.id),
+                ("tmv.1", index_id, "tmv", "Tobacco mosaic virus", "1", prolific.id),
+                ("pvx.0", index_id, "pvx", "Potato virus X", "0", occasional.id),
                 ("other.0", "other", "other", "Other virus", "0", occasional.id),
             )
         )
         await session.commit()
 
-    job = await fake.jobs.create(user=prolific, workflow="build_index")
-
-    if not error:
-        await mongo.indexes.insert_one(
-            {
-                "_id": "foobar",
-                "version": 0,
-                "created_at": static_time.datetime,
-                "ready": False,
-                "reference": {"id": reference.id},
-                "manifest": {"foo": 2},
-                "user": {"id": prolific.id},
-                "job": {"id": job.id},
-                "task": None,
-            },
-        )
-
-    resp = await client.get("/indexes/foobar")
+    resp = await client.get(f"/indexes/{index_id}")
 
     if error is None:
         assert resp.status == HTTPStatus.OK
@@ -369,9 +310,9 @@ async def test_get(
 async def test_download_otus_json(
     file_exists: bool,
     example_path: Path,
+    fake: DataFaker,
     memory_storage: StorageBackend,
     mocker: MockerFixture,
-    mongo: Mongo,
     spawn_job_client: JobClientSpawner,
 ):
     otus_json_path = example_path / "indexes" / "otus.json.gz"
@@ -390,21 +331,21 @@ async def test_download_otus_json(
 
     client = await spawn_job_client(authenticated=True)
 
+    manifest = {"foo": 2, "bar": 1, "bad": 5}
+
+    user = await fake.users.create()
+    reference = await fake.references.create(user=user)
+    index = await fake.indexes.create(reference, user, manifest=manifest)
+
     if file_exists:
-        key = compose_index_file_key("bar", "otus.json.gz")
+        key = compose_index_file_key(index.id, "otus.json.gz")
 
         async def _stream():
             yield otus_json_path.read_bytes()
 
         await memory_storage.write(key, _stream())
 
-    manifest = {"foo": 2, "bar": 1, "bad": 5}
-
-    await mongo.indexes.insert_one(
-        {"_id": "bar", "manifest": manifest, "reference": {"id": "foo"}},
-    )
-
-    async with await client.get("/indexes/bar/files/otus.json.gz") as resp:
+    async with await client.get(f"/indexes/{index.id}/files/otus.json.gz") as resp:
         with gzip.open(BytesIO(await resp.read())) as f:
             result = json.load(f)
 
@@ -589,7 +530,8 @@ class TestCreate:
 
     async def test_build_in_progress(
         self,
-        mongo: Mongo,
+        data_layer: DataLayer,
+        fake: DataFaker,
         resp_is: RespIs,
         spawn_client: ClientSpawner,
     ):
@@ -601,8 +543,9 @@ class TestCreate:
 
         reference = await create_reference(client, name="Foo")
 
-        await mongo.indexes.insert_one(
-            {"ready": False, "reference": {"id": reference["id"]}},
+        await fake.indexes.create(
+            await data_layer.references.get(reference["id"]),
+            await fake.users.create(),
         )
 
         resp = await client.post(f"/references/v1/{reference['id']}/indexes", {})
@@ -623,13 +566,15 @@ async def test_find_history(
 ):
     client = await spawn_client(authenticated=True)
 
-    if not error:
-        await mongo.indexes.insert_one({"_id": "foobar", "version": 0})
-
     user_1 = await fake.users.create()
     user_2 = await fake.users.create()
 
     reference = await fake.references.create(user=user_1)
+
+    index_id = "missing"
+
+    if not error:
+        index_id = (await fake.indexes.create(reference, user_1, version=0)).id
 
     history_documents = [
         {
@@ -640,7 +585,7 @@ async def test_find_history(
             "user": {"id": user_1.id},
             "description": "Added Unnamed Isolate as default",
             "method_name": "add_isolate",
-            "index": {"version": 0, "id": "foobar"},
+            "index": {"version": 0, "id": index_id},
         },
         {
             "_id": "zxbbvngc.1",
@@ -650,7 +595,7 @@ async def test_find_history(
             "user": {"id": user_1.id},
             "description": "Added Unnamed Isolate as default",
             "method_name": "add_isolate",
-            "index": {"version": 0, "id": "foobar"},
+            "index": {"version": 0, "id": index_id},
         },
         {
             "_id": "zxbbvngc.2",
@@ -660,7 +605,7 @@ async def test_find_history(
             "user": {"id": user_2.id},
             "description": "Added Unnamed Isolate as default",
             "method_name": "add_isolate",
-            "index": {"version": 0, "id": "foobar"},
+            "index": {"version": 0, "id": index_id},
         },
         {
             "_id": "kjs8sa99.3",
@@ -670,7 +615,7 @@ async def test_find_history(
             "user": {"id": user_1.id},
             "description": "Edited sequence wrta20tr in Islolate chilli-CR",
             "method_name": "edit_sequence",
-            "index": {"version": 0, "id": "foobar"},
+            "index": {"version": 0, "id": index_id},
         },
     ]
 
@@ -686,7 +631,7 @@ async def test_find_history(
         )
         await session.commit()
 
-    resp = await client.get("/indexes/foobar/history")
+    resp = await client.get(f"/indexes/{index_id}/history")
 
     if error is None:
         assert resp.status == HTTPStatus.OK
@@ -696,42 +641,32 @@ async def test_find_history(
 
 
 @pytest.mark.parametrize("error", [None, 404])
+@pytest.mark.usefixtures("static_time")
 async def test_delete_index(
     error,
     fake: DataFaker,
     mongo: Mongo,
-    pg: AsyncEngine,
     spawn_job_client: JobClientSpawner,
-    static_time,
 ):
-    index_id = "index1"
-
     client = await spawn_job_client(authenticated=True)
 
     user = await fake.users.create()
 
-    if error != 404:
-        await seed_reference(
-            mongo,
-            pg,
-            "foo",
-            user.id,
-            name="Foo",
-            created_at=static_time.datetime,
-        )
+    index_id = "missing"
 
-        await mongo.indexes.insert_one(
-            {
-                "_id": index_id,
-                "created_at": static_time.iso,
-                "manifest": {"foo": 2},
-                "ready": True,
-                "reference": {"id": "foo"},
-                "user": {"id": user.id},
-                "task": None,
-                "version": 4,
-            },
-        )
+    if error != 404:
+        reference = await fake.references.create(user=user, name="Foo")
+
+        index_id = (
+            await fake.indexes.create(
+                reference,
+                user,
+                manifest={"foo": 2},
+                version=4,
+                ready=True,
+            )
+        ).id
+
     response = await client.delete(f"/indexes/{index_id}")
 
     if error:
@@ -742,6 +677,7 @@ async def test_delete_index(
 
 
 @pytest.mark.parametrize("error", [None, "409", "404_index", "404_file"])
+@pytest.mark.usefixtures("static_time")
 async def test_upload(
     error: str | None,
     example_path: Path,
@@ -752,7 +688,6 @@ async def test_upload(
     resp_is,
     snapshot: SnapshotAssertion,
     spawn_job_client: JobClientSpawner,
-    static_time,
 ):
     client = await spawn_job_client(authenticated=True)
 
@@ -762,27 +697,20 @@ async def test_upload(
 
     user = await fake.users.create()
 
-    await seed_reference(mongo, pg, "bar", user.id, name="Bar")
-    await seed_reference(mongo, pg, "foo", user.id, name="Foo")
+    reference = await fake.references.create(user=user, name="Bar")
     job = await fake.jobs.create(user=user, workflow="build_index")
 
-    index = {
-        "_id": "foo",
-        "reference": {"id": "bar"},
-        "user": {"id": user.id},
-        "job": {"id": job.id},
-        "task": None,
-    }
+    index_id = "missing"
+
+    if error != "404_index":
+        index_id = (await fake.indexes.create(reference, user, job=job)).id
 
     if error == "409":
         async with AsyncSession(pg) as session:
-            session.add(SQLIndexFile(name="reference.1.bt2", index="foo"))
+            session.add(SQLIndexFile(name="reference.1.bt2", index=index_id))
             await session.commit()
 
-    if error != "404_index":
-        await mongo.indexes.insert_one(index)
-
-    url = "/indexes/foo/files"
+    url = f"/indexes/{index_id}/files"
 
     if error == "404_file":
         url += "/reference.foo.bt2"
@@ -805,7 +733,7 @@ async def test_upload(
 
     assert resp.status == 201
 
-    expected_key = compose_index_file_key("foo", "reference.1.bt2")
+    expected_key = compose_index_file_key(index_id, "reference.1.bt2")
 
     found = False
     async for info in memory_storage.list(expected_key):
@@ -820,7 +748,7 @@ async def test_upload(
     assert b"".join(chunks) == path.read_bytes()
 
     assert await resp.json() == snapshot
-    assert await mongo.indexes.find_one("foo") == snapshot
+    assert await mongo.indexes.find_one(index_id) == snapshot
 
     async with AsyncSession(pg) as session:
         assert (
@@ -829,6 +757,7 @@ async def test_upload(
 
 
 @pytest.mark.parametrize("error", [None, "409_genome", "409_fasta"])
+@pytest.mark.usefixtures("static_time")
 async def test_finalize(
     error: str | None,
     fake: DataFaker,
@@ -836,7 +765,6 @@ async def test_finalize(
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     spawn_job_client: JobClientSpawner,
-    static_time,
     test_otu,
 ):
     """Test that an index can be finalized using the Jobs API."""
@@ -859,27 +787,21 @@ async def test_finalize(
     # Postgres-backed read that drives the stamp can see it.
     otu = {**test_otu, "version": 1, "reference": {"id": reference.id}}
 
-    await asyncio.gather(
-        mongo.indexes.insert_one(
-            {
-                "_id": "test_index",
-                "reference": {"id": reference.id},
-                "manifest": {"foo": 4},
-                "user": {"id": user.id},
-                "version": 2,
-                "created_at": static_time.datetime,
-                "job": {"id": job.id},
-                "task": None,
-            },
-        ),
-        mongo.otus.insert_one(otu),
+    index = await fake.indexes.create(
+        reference,
+        user,
+        job=job,
+        manifest={"foo": 4},
+        version=2,
     )
+
+    await mongo.otus.insert_one(otu)
 
     async with AsyncSession(pg) as session:
         session.add_all(
             [
                 SQLIndexFile(
-                    index="test_index",
+                    index=index.id,
                     name=file_name,
                     size=9000,
                     type=check_index_file_type(file_name),
@@ -890,7 +812,7 @@ async def test_finalize(
         await bulk_insert_otu_rows(session, [otu], reference.id)
         await session.commit()
 
-    resp = await client.patch("/indexes/test_index")
+    resp = await client.patch(f"/indexes/{index.id}")
 
     assert await resp.json() == snapshot
 
@@ -905,7 +827,6 @@ async def test_download(
     example_path: Path,
     fake: DataFaker,
     memory_storage: StorageBackend,
-    mongo: Mongo,
     pg: AsyncEngine,
     spawn_job_client: JobClientSpawner,
 ):
@@ -913,16 +834,13 @@ async def test_download(
 
     user = await fake.users.create()
 
-    await seed_reference(mongo, pg, "test_reference", user.id, name="Test A")
-
-    await mongo.indexes.insert_one(
-        {"_id": "test_index", "reference": {"id": "test_reference"}},
-    )
+    reference = await fake.references.create(user=user, name="Test A")
+    index = await fake.indexes.create(reference, user)
 
     path = example_path / "indexes" / "reference.1.bt2"
     expected_bytes = path.read_bytes()
 
-    key = compose_index_file_key("test_index", "reference.1.bt2")
+    key = compose_index_file_key(index.id, "reference.1.bt2")
 
     async def _stream():
         yield expected_bytes
@@ -933,14 +851,14 @@ async def test_download(
         session.add(
             SQLIndexFile(
                 name="reference.1.bt2",
-                index="test_index",
+                index=index.id,
                 type="bowtie2",
                 size=len(expected_bytes),
             ),
         )
         await session.commit()
 
-    files_url = "/indexes/test_index/files/"
+    files_url = f"/indexes/{index.id}/files/"
 
     if status == HTTPStatus.OK:
         files_url += "reference.1.bt2"

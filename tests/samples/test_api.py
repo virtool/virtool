@@ -1059,7 +1059,6 @@ class TestDelete:
 async def test_find_analyses(
     fake: DataFaker,
     snapshot: SnapshotAssertion,
-    mongo: Mongo,
     pg: AsyncEngine,
     spawn_client: ClientSpawner,
     static_time,
@@ -1085,7 +1084,7 @@ async def test_find_analyses(
     reference_foo = await fake.references.create(user=user_1)
     reference_baz = await fake.references.create(user=user_1)
 
-    await mongo.indexes.insert_one({"_id": "foo", "version": 2})
+    index = await fake.indexes.create(reference_foo, user_1, version=2, ready=True)
 
     async with AsyncSession(pg) as session:
         analyses = [
@@ -1099,7 +1098,7 @@ async def test_find_analyses(
                 sample_id=sample.id,
                 reference="baz",
                 reference_id=reference_baz.id,
-                index="foo",
+                index=index.id,
                 user_id=user_1.id,
                 job_id=job.id,
             ),
@@ -1113,7 +1112,7 @@ async def test_find_analyses(
                 sample_id=sample.id,
                 reference="baz",
                 reference_id=reference_baz.id,
-                index="foo",
+                index=index.id,
                 user_id=user_1.id,
             ),
             SQLAnalysis(
@@ -1126,7 +1125,7 @@ async def test_find_analyses(
                 sample_id=sample.id,
                 reference="foo",
                 reference_id=reference_foo.id,
-                index="foo",
+                index=index.id,
                 user_id=user_2.id,
             ),
             SQLAnalysis(
@@ -1138,7 +1137,7 @@ async def test_find_analyses(
                 sample="test-not-found",
                 reference="foo",
                 reference_id=reference_foo.id,
-                index="foo",
+                index=index.id,
                 user_id=user_2.id,
             ),
         ]
@@ -1175,20 +1174,20 @@ class TestAnalyze:
         return client
 
     @staticmethod
-    async def _insert_reference(fake: DataFaker) -> Reference:
+    async def _insert_reference(fake: DataFaker) -> tuple[Reference, User]:
         user = await fake.users.create()
-        return await fake.references.create(user=user, name="Test Reference")
+        reference = await fake.references.create(user=user, name="Test Reference")
+        return reference, user
 
     @staticmethod
-    async def _insert_index(mongo: Mongo, ref_id: str, *, ready: bool = True) -> None:
-        await mongo.indexes.insert_one(
-            {
-                "_id": "test",
-                "reference": {"id": ref_id},
-                "ready": ready,
-                "version": 4,
-            },
-        )
+    async def _insert_index(
+        fake: DataFaker,
+        reference: Reference,
+        user: User,
+        *,
+        ready: bool = True,
+    ) -> None:
+        await fake.indexes.create(reference, user, version=4, ready=ready)
 
     @staticmethod
     async def _insert_subtraction(pg: AsyncEngine) -> None:
@@ -1229,8 +1228,8 @@ class TestAnalyze:
         snapshot: SnapshotAssertion,
         static_time,
     ):
-        reference = await self._insert_reference(fake)
-        await self._insert_index(mongo, reference.id)
+        reference, reference_owner = await self._insert_reference(fake)
+        await self._insert_index(fake, reference, reference_owner)
         await self._insert_subtraction(pg)
         sample_id = await self._insert_sample(analyze_client, fake)
 
@@ -1265,9 +1264,9 @@ class TestAnalyze:
         resp_is,
         static_time,
     ):
-        reference = await self._insert_reference(fake)
+        reference, reference_owner = await self._insert_reference(fake)
         await data_layer.references.archive(reference.id)
-        await self._insert_index(mongo, reference.id)
+        await self._insert_index(fake, reference, reference_owner)
         await self._insert_subtraction(pg)
         sample_id = await self._insert_sample(analyze_client, fake)
 
@@ -1284,7 +1283,7 @@ class TestAnalyze:
         resp_is,
         static_time,
     ):
-        reference = await self._insert_reference(fake)
+        reference, reference_owner = await self._insert_reference(fake)
         await self._insert_subtraction(pg)
         sample_id = await self._insert_sample(analyze_client, fake)
 
@@ -1301,8 +1300,8 @@ class TestAnalyze:
         resp_is,
         static_time,
     ):
-        reference = await self._insert_reference(fake)
-        await self._insert_index(mongo, reference.id, ready=False)
+        reference, reference_owner = await self._insert_reference(fake)
+        await self._insert_index(fake, reference, reference_owner, ready=False)
         await self._insert_subtraction(pg)
         sample_id = await self._insert_sample(analyze_client, fake)
 
@@ -1318,8 +1317,8 @@ class TestAnalyze:
         resp_is,
         static_time,
     ):
-        reference = await self._insert_reference(fake)
-        await self._insert_index(mongo, reference.id)
+        reference, reference_owner = await self._insert_reference(fake)
+        await self._insert_index(fake, reference, reference_owner)
         sample_id = await self._insert_sample(analyze_client, fake)
 
         resp = await self._post(analyze_client, reference.id, sample_id)
@@ -1335,8 +1334,8 @@ class TestAnalyze:
         resp_is,
         static_time,
     ):
-        reference = await self._insert_reference(fake)
-        await self._insert_index(mongo, reference.id)
+        reference, reference_owner = await self._insert_reference(fake)
+        await self._insert_index(fake, reference, reference_owner)
         await self._insert_subtraction(pg)
 
         resp = await self._post(analyze_client, reference.id, 999999)
@@ -1351,8 +1350,8 @@ class TestAnalyze:
         pg: AsyncEngine,
         static_time,
     ):
-        reference = await self._insert_reference(fake)
-        await self._insert_index(mongo, reference.id)
+        reference, reference_owner = await self._insert_reference(fake)
+        await self._insert_index(fake, reference, reference_owner)
         await self._insert_subtraction(pg)
         sample_id = await self._insert_sample(analyze_client, fake)
 

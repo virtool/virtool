@@ -21,7 +21,6 @@ pytest_plugins = (
     "tests.fixtures.groups",
     "tests.fixtures.hmm",
     "tests.fixtures.history",
-    "tests.fixtures.indexes",
     "tests.fixtures.jobs",
     "tests.fixtures.migration",
     "tests.fixtures.otus",

@@ -64,11 +64,12 @@ def build_user_client(user) -> UserClient:
 
 
 class SampleSetup(NamedTuple):
-    """Identifiers for the sample and reference seeded by ``setup_sample``."""
+    """Identifiers for the sample, reference and index seeded by ``setup_sample``."""
 
     sample_id: int
     user: User
     reference_id: int
+    index_id: str
     client: UserClient
 
     @property
@@ -78,7 +79,6 @@ class SampleSetup(NamedTuple):
 
 @pytest.fixture
 async def setup_sample(
-    mongo: "Mongo",
     data_layer: DataLayer,
     fake: DataFaker,
     subtraction_ids: dict[str, int],
@@ -96,19 +96,13 @@ async def setup_sample(
         {"all_read": True, "all_write": True},
     )
 
-    await mongo.indexes.insert_one(
-        {
-            "_id": "test_index",
-            "version": 11,
-            "ready": True,
-            "reference": {"id": reference.id},
-        },
-    )
+    index = await fake.indexes.create(reference, user, version=11, ready=True)
 
     return SampleSetup(
         sample_id=sample.id,
         user=user,
         reference_id=reference.id,
+        index_id=index.id,
         client=build_user_client(user),
     )
 
@@ -187,7 +181,7 @@ class TestFindSampleRights:
                 "created_at": timestamp(),
                 "ready": True,
                 "job": None,
-                "index": {"id": "test_index", "version": 11},
+                "index": {"id": setup.index_id, "version": 11},
                 "user": {"id": setup.user_id},
                 "sample": {"id": sample_id},
                 "reference": {"id": setup.reference_id},
@@ -387,6 +381,7 @@ class TestHasRight:
         sample_id: int,
         owner_id: int,
         reference_id: str,
+        index_id: str,
     ) -> int:
         return await seed_analysis(
             mongo,
@@ -397,7 +392,7 @@ class TestHasRight:
                 "created_at": timestamp(),
                 "ready": True,
                 "job": None,
-                "index": {"id": "test_index", "version": 11},
+                "index": {"id": index_id, "version": 11},
                 "user": {"id": owner_id},
                 "sample": {"id": sample_id},
                 "reference": {"id": reference_id},
@@ -421,6 +416,7 @@ class TestHasRight:
             setup_sample.sample_id,
             setup_sample.user_id,
             setup_sample.reference_id,
+            setup_sample.index_id,
         )
 
         assert await data_layer.analyses.has_right(
@@ -462,6 +458,7 @@ class TestHasRight:
             owner_private.id,
             sample_owner.id,
             setup_sample.reference_id,
+            setup_sample.index_id,
         )
 
         assert await data_layer.analyses.has_right(
@@ -500,6 +497,7 @@ class TestHasRight:
             owner_private.id,
             sample_owner.id,
             setup_sample.reference_id,
+            setup_sample.index_id,
         )
 
         assert not await data_layer.analyses.has_right(
@@ -535,6 +533,7 @@ class TestHasRight:
             world_readable.id,
             sample_owner.id,
             setup_sample.reference_id,
+            setup_sample.index_id,
         )
 
         client = build_user_client(other_user)
@@ -573,6 +572,7 @@ class TestHasRight:
             group_shared.id,
             sample_owner.id,
             setup_sample.reference_id,
+            setup_sample.index_id,
         )
 
         client = build_user_client(group_member)
@@ -609,6 +609,7 @@ class TestHasRight:
             group_shared.id,
             sample_owner.id,
             setup_sample.reference_id,
+            setup_sample.index_id,
         )
 
         client = build_user_client(outsider)
@@ -644,6 +645,7 @@ class TestHasRight:
             owner_private.id,
             sample_owner.id,
             setup_sample.reference_id,
+            setup_sample.index_id,
         )
 
         client = JobClient(job_id=1)
