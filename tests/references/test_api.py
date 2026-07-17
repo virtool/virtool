@@ -281,6 +281,42 @@ async def test_find_archived_invalid(spawn_client: ClientSpawner):
     assert resp.status == HTTPStatus.BAD_REQUEST
 
 
+async def test_find_attaches_latest_build(
+    fake: DataFaker,
+    spawn_client: ClientSpawner,
+):
+    """Each reference in the list carries its own highest-versioned ready build,
+    with the build user resolved.
+    """
+    client = await spawn_client(authenticated=True, administrator=True)
+
+    user = await fake.users.create()
+
+    expected_build_ids = {}
+    for _ in range(3):
+        reference = await fake.references.create(user=user)
+        await fake.indexes.create(reference, user, version=0, ready=True)
+        latest = await fake.indexes.create(reference, user, version=1, ready=True)
+        expected_build_ids[reference.id] = latest.id
+
+    resp = await client.get("/references/v1")
+
+    assert resp.status == HTTPStatus.OK
+
+    body = await resp.json()
+
+    assert {
+        document["id"]: document["latest_build"]["id"] for document in body["documents"]
+    } == expected_build_ids
+
+    for document in body["documents"]:
+        assert document["latest_build"]["version"] == 1
+        assert document["latest_build"]["user"] == {
+            "id": user.id,
+            "handle": user.handle,
+        }
+
+
 class TestGet:
     async def test_ok(
         self,

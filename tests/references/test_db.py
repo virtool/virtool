@@ -19,6 +19,7 @@ from virtool.otus.sql import SQLOTU, SQLSequence
 from virtool.references.db import (
     compose_reference_ids_match,
     create_document,
+    get_latest_builds,
     get_manifest,
     get_reference_groups,
     populate_insert_only_reference,
@@ -526,6 +527,66 @@ async def test_create_manifest(fake: DataFaker, pg: AsyncEngine):
     await fake.otus.create(other_reference.id, user)
 
     assert await get_manifest(pg, reference.id) == {otu.id: otu.version for otu in otus}
+
+
+class TestGetLatestBuilds:
+    async def test_ok(self, fake: DataFaker, pg: AsyncEngine, static_time):
+        """Each reference maps to its highest-versioned ready build, resolved in a
+        single batch with the build user attached.
+        """
+        user = await fake.users.create()
+        reference_a = await fake.references.create(user=user)
+        reference_b = await fake.references.create(user=user)
+
+        await fake.indexes.create(reference_a, user, version=0, ready=True)
+        latest_a = await fake.indexes.create(reference_a, user, version=1, ready=True)
+        latest_b = await fake.indexes.create(reference_b, user, version=0, ready=True)
+
+        result = await get_latest_builds(pg, [reference_a.id, reference_b.id])
+
+        assert result == {
+            reference_a.id: {
+                "id": latest_a.id,
+                "created_at": static_time.datetime,
+                "version": 1,
+                "user": {"id": user.id, "handle": user.handle},
+            },
+            reference_b.id: {
+                "id": latest_b.id,
+                "created_at": static_time.datetime,
+                "version": 0,
+                "user": {"id": user.id, "handle": user.handle},
+            },
+        }
+
+    async def test_ignores_unready_builds(self, fake: DataFaker, pg: AsyncEngine):
+        """A newer unready build never wins over an older ready one."""
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        ready = await fake.indexes.create(reference, user, version=0, ready=True)
+        await fake.indexes.create(reference, user, version=1, ready=False)
+
+        result = await get_latest_builds(pg, [reference.id])
+
+        assert result[reference.id]["id"] == ready.id
+        assert result[reference.id]["version"] == 0
+
+    async def test_none_without_ready_build(self, fake: DataFaker, pg: AsyncEngine):
+        """A reference with no ready build maps to ``None``."""
+        user = await fake.users.create()
+        with_unready = await fake.references.create(user=user)
+        without_index = await fake.references.create(user=user)
+
+        await fake.indexes.create(with_unready, user, version=0, ready=False)
+
+        result = await get_latest_builds(pg, [with_unready.id, without_index.id])
+
+        assert result == {with_unready.id: None, without_index.id: None}
+
+    async def test_empty(self, pg: AsyncEngine):
+        """An empty reference list issues no query and returns an empty mapping."""
+        assert await get_latest_builds(pg, []) == {}
 
 
 async def test_get_reference_groups(

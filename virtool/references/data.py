@@ -45,7 +45,7 @@ from virtool.references.db import (
     compose_reference_id_match,
     get_cloned_from_lookup,
     get_contributors,
-    get_latest_build,
+    get_latest_builds,
     get_manifest,
     get_otu_count,
     get_reference_groups,
@@ -376,12 +376,14 @@ class ReferencesData(DataLayerDomain):
 
             cloned_from_lookup = await get_cloned_from_lookup(session, rows)
 
+        latest_builds = await get_latest_builds(self._pg, [row.id for row in rows])
+
         documents = [
             await processor(
-                self._mongo,
                 self._pg,
                 row,
                 cloned_from_lookup.get(row.cloned_from_id),
+                latest_builds[row.id],
             )
             for row in rows
         ]
@@ -544,14 +546,14 @@ class ReferencesData(DataLayerDomain):
 
         (
             contributors,
-            latest_build,
+            latest_builds,
             otu_count,
             groups,
             users,
             unbuilt_count,
         ) = await asyncio.gather(
             get_contributors(self._pg, row.id),
-            get_latest_build(self._mongo, self._pg, row.id),
+            get_latest_builds(self._pg, [row.id]),
             get_otu_count(self._pg, row.id),
             get_reference_groups(self._pg, row.id, row.created_at),
             get_reference_users(self._pg, row.id, row.created_at),
@@ -565,7 +567,7 @@ class ReferencesData(DataLayerDomain):
             "source_types": row.source_types,
             "contributors": contributors,
             "groups": groups,
-            "latest_build": latest_build,
+            "latest_build": latest_builds[row.id],
             "otu_count": otu_count,
             "unbuilt_change_count": unbuilt_count,
             "users": users,

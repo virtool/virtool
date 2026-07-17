@@ -4,7 +4,6 @@ import asyncio
 import datetime
 from typing import TYPE_CHECKING
 
-import pymongo
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
@@ -18,10 +17,10 @@ from virtool.data.topg import (
     compose_legacy_id_subquery,
     resolve_legacy_id,
 )
-from virtool.data.transforms import apply_transforms
 from virtool.groups.pg import SQLGroup
 from virtool.history.db import bulk_insert_history
 from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
+from virtool.indexes.sql import SQLIndex
 from virtool.models.enums import HistoryMethod
 from virtool.otus.db import bulk_insert_otu_rows, bulk_insert_sequence_rows
 from virtool.otus.sql import SQLOTU
@@ -34,8 +33,7 @@ from virtool.references.sql import (
 from virtool.references.utils import reference_values
 from virtool.settings.models import Settings
 from virtool.types import Document
-from virtool.users.transforms import AttachUserTransform
-from virtool.utils import base_processor
+from virtool.users.pg import SQLUser
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
@@ -183,21 +181,20 @@ async def get_cloned_from_lookup(
 
 
 async def processor(
-    mongo: "Mongo",
     pg: AsyncEngine,
     row: SQLReference,
     cloned_from: Document | None,
+    latest_build: Document | None,
 ) -> Document:
     """Process a reference row into the ``ReferenceMinimal`` document shape.
 
-    :param mongo: the application Mongo client
     :param pg: the application PostgreSQL engine
     :param row: the ``legacy_references`` row to process
     :param cloned_from: the resolved nested cloned-from doc, or ``None``
+    :param latest_build: the reference's latest ready build, or ``None``
     :return: the processed document
     """
-    latest_build, otu_count, unbuilt_count = await asyncio.gather(
-        get_latest_build(mongo, pg, row.id),
+    otu_count, unbuilt_count = await asyncio.gather(
         get_otu_count(pg, row.id),
         get_unbuilt_count(pg, row.id),
     )
@@ -277,8 +274,6 @@ async def get_reference_users(
     :return: a list of user data dictionaries
 
     """
-    from virtool.users.pg import SQLUser
-
     async with AsyncSession(pg) as session:
         rows = (
             await session.execute(
@@ -392,32 +387,60 @@ async def get_contributors(pg, ref_id: int | str) -> list[Document] | None:
     return await virtool.history.db.get_contributors(pg, reference_id=ref_id)
 
 
-async def get_latest_build(
-    mongo: "Mongo", pg: AsyncEngine, ref_id: int | str
-) -> Document | None:
-    """Return the latest index build for the ref.
+async def get_latest_builds(
+    pg: AsyncEngine, ref_ids: list[int]
+) -> dict[int, Document | None]:
+    """Return the latest ready index build for each reference.
 
-    :param mongo: the application database client
+    A single ``DISTINCT ON (reference_id)`` query selects one build per reference,
+    ordered by descending version so the newest build wins. The index primary key
+    breaks ties deterministically should two builds share a version. The build user
+    is resolved in the same statement by joining ``users``, so the batch costs one
+    query rather than a query plus a follow-up user lookup.
+
     :param pg: the application PostgreSQL engine
-    :param ref_id: the id of the ref to get the latest build for
-    :return: a subset of fields for the latest build
-
+    :param ref_ids: the reference primary keys to get latest builds for
+    :return: a mapping of each reference primary key to its latest build, or ``None``
     """
-    latest_build = await mongo.indexes.find_one(
-        {
-            "reference.id": await compose_reference_id_match(pg, ref_id),
-            "ready": True,
-        },
-        projection=["created_at", "version", "user"],
-        sort=[("version", pymongo.DESCENDING)],
-    )
+    result: dict[int, Document | None] = dict.fromkeys(ref_ids)
 
-    if latest_build:
-        return await apply_transforms(
-            base_processor(latest_build),
-            [AttachUserTransform(pg)],
-            pg,
-        )
+    if not ref_ids:
+        return result
+
+    async with AsyncSession(pg) as session:
+        rows = (
+            await session.execute(
+                select(
+                    SQLIndex.reference_id,
+                    SQLIndex.legacy_id,
+                    SQLIndex.version,
+                    SQLIndex.created_at,
+                    SQLUser.id.label("user_id"),
+                    SQLUser.handle,
+                )
+                .join(SQLUser, SQLUser.id == SQLIndex.user_id)
+                .where(
+                    SQLIndex.reference_id.in_(ref_ids),
+                    SQLIndex.ready.is_(True),
+                )
+                .distinct(SQLIndex.reference_id)
+                .order_by(
+                    SQLIndex.reference_id,
+                    SQLIndex.version.desc(),
+                    SQLIndex.id.desc(),
+                ),
+            )
+        ).all()
+
+    for row in rows:
+        result[row.reference_id] = {
+            "id": row.legacy_id,
+            "created_at": row.created_at,
+            "version": row.version,
+            "user": {"id": row.user_id, "handle": row.handle},
+        }
+
+    return result
 
 
 async def get_manifest(pg: AsyncEngine, ref_id: int | str) -> Document:

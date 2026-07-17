@@ -1,3 +1,14 @@
+"""Tests for the references data layer.
+
+``ReferencesData.find`` is intentionally not tested here. Its only production
+caller is the ``GET /references/v1`` handler, so it is exercised end-to-end in
+``test_api.py`` (see ``test_find`` and ``test_find_attaches_latest_build``)
+rather than duplicated against the data layer. As a general rule, when a
+data-layer method's sole production caller is a thin API handler, cover it at
+the API layer and skip the redundant data-layer test; reserve data-layer tests
+for logic that has no direct HTTP entry point of its own.
+"""
+
 import pytest
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
