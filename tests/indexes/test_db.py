@@ -19,7 +19,7 @@ from virtool.indexes.db import (
     upsert_index_file,
 )
 from virtool.indexes.models import Index
-from virtool.indexes.sql import SQLIndexFile
+from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU
 
@@ -33,12 +33,14 @@ async def test_create(
     snapshot: SnapshotAssertion,
     static_time,
 ):
-    """The new index embeds the integer ``legacy_references`` primary key of its
-    reference rather than the legacy Mongo string id.
+    """The new index is dual-written. The Mongo document embeds the integer
+    ``legacy_references`` primary key of its reference rather than the legacy Mongo
+    string id, and a matching ``indexes`` row carries the Mongo id as both its
+    ``legacy_id`` and ``storage_key``.
     """
     user = await fake.users.create()
-
-    await fake.references.create(user=user, id_="foo")
+    reference = await fake.references.create(user=user, id_="foo")
+    task = await fake.tasks.create()
 
     async with both_transactions(mongo, pg) as (mongo_session, pg_session):
         created = await virtool.indexes.db.create(
@@ -46,15 +48,33 @@ async def test_create(
             mongo_session,
             pg_session,
             "foo",
-            "test",
+            user.id,
             0,
             "manifest",
-            task_id=1,
+            task_id=task.id,
             index_id=index_id,
         )
 
     assert created["created_at"] == static_time.datetime
     assert created == snapshot
+
+    async with AsyncSession(pg) as session:
+        row = (
+            await session.execute(
+                select(SQLIndex).where(SQLIndex.legacy_id == created["_id"]),
+            )
+        ).scalar_one()
+
+    assert row.legacy_id == created["_id"]
+    assert row.storage_key == created["_id"]
+    assert row.version == 0
+    assert row.ready is False
+    assert row.manifest == "manifest"
+    assert row.created_at == static_time.datetime
+    assert row.reference_id == reference.id
+    assert row.user_id == user.id
+    assert row.job_id is None
+    assert row.task_id == task.id
 
 
 async def test_create_assigns_index_in_postgres(
@@ -70,6 +90,7 @@ async def test_create_assigns_index_in_postgres(
     user = await fake.users.create()
     built_ref = await fake.references.create(user=user, id_="built_ref")
     other_ref = await fake.references.create(user=user, id_="other_ref")
+    task = await fake.tasks.create()
 
     prior_index = await fake.indexes.create(built_ref, user, version=0, ready=True)
 
@@ -109,7 +130,7 @@ async def test_create_assigns_index_in_postgres(
             user.id,
             1,
             "manifest",
-            task_id=1,
+            task_id=task.id,
             index_id="new_index",
         )
 
@@ -186,8 +207,15 @@ async def test_create_rolls_back_both_stores_on_failure(
             )
         ).scalar_one()
 
+        index_row = (
+            await session.execute(
+                select(SQLIndex).where(SQLIndex.legacy_id == "new_index"),
+            )
+        ).scalar_one_or_none()
+
     assert row.index is None
     assert row.index_version is None
+    assert index_row is None
 
 
 async def _seed_index_series(

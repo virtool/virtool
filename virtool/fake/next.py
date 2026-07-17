@@ -32,6 +32,7 @@ from virtool.groups.pg import SQLGroup
 from virtool.hmm.models import HMM
 from virtool.hmm.sql import SQLHMM
 from virtool.indexes.models import Index
+from virtool.indexes.sql import SQLIndex
 from virtool.indexes.tasks import CreateIndexTask
 from virtool.jobs.models import TERMINAL_JOB_STATES, Job, JobState
 from virtool.jobs.pg import SQLJob
@@ -505,11 +506,13 @@ class IndexesFakerDomain(DataFakerDomain):
                 {"index_id": index_id},
             )
 
+        created_at = created_at or virtool.utils.timestamp()
+
         await self._mongo.indexes.insert_one(
             {
                 "_id": index_id,
                 "version": version,
-                "created_at": created_at or virtool.utils.timestamp(),
+                "created_at": created_at,
                 "manifest": manifest,
                 "ready": ready,
                 "job": {"id": job.id} if job else None,
@@ -518,6 +521,23 @@ class IndexesFakerDomain(DataFakerDomain):
                 "reference": {"id": reference.id},
             },
         )
+
+        async with AsyncSession(self._pg) as session:
+            session.add(
+                SQLIndex(
+                    legacy_id=index_id,
+                    version=version,
+                    created_at=created_at,
+                    manifest=manifest,
+                    ready=ready,
+                    storage_key=index_id,
+                    reference_id=reference.id,
+                    user_id=user.id,
+                    job_id=job.id if job else None,
+                    task_id=task.id if task else None,
+                ),
+            )
+            await session.commit()
 
         return await self._layer.index.get(index_id)
 

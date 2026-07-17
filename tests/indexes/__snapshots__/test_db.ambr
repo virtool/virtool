@@ -39,7 +39,7 @@
       'id': 1,
     }),
     'user': dict({
-      'id': 'test',
+      'id': 1,
     }),
     'version': 0,
   })
@@ -58,7 +58,7 @@
       'id': 1,
     }),
     'user': dict({
-      'id': 'test',
+      'id': 1,
     }),
     'version': 0,
   })

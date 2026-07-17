@@ -3,7 +3,7 @@ import gzip
 from collections.abc import AsyncIterator
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from sqlalchemy import select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
@@ -36,7 +36,7 @@ from virtool.indexes.db import (
     update_last_indexed_versions,
 )
 from virtool.indexes.models import Index, IndexFile, IndexMinimal, IndexSearchResult
-from virtool.indexes.sql import SQLIndexFile
+from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.indexes.utils import (
     compose_index_file_key,
     compose_index_prefix,
@@ -379,6 +379,12 @@ class IndexData:
                 session=mongo_session,
             )
 
+            await pg_session.execute(
+                update(SQLIndex)
+                .where(SQLIndex.legacy_id == index_id)
+                .values(ready=True),
+            )
+
         await retry_both_transactions(self._mongo, self._pg, finalize_index)
 
         return await self.get(index_id)
@@ -477,6 +483,12 @@ class IndexData:
                     session=mongo_session,
                 )
 
+                await pg_session.execute(
+                    update(SQLIndex)
+                    .where(SQLIndex.legacy_id == index_id)
+                    .values(ready=True),
+                )
+
             await retry_both_transactions(
                 self._mongo,
                 self._pg,
@@ -552,6 +564,10 @@ class IndexData:
                 update(SQLLegacyHistory)
                 .where(SQLLegacyHistory.index == index_id)
                 .values(index=None, index_version=None),
+            )
+
+            await pg_session.execute(
+                delete(SQLIndex).where(SQLIndex.legacy_id == index_id),
             )
 
         await retry_both_transactions(self._mongo, self._pg, remove)

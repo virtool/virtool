@@ -14,7 +14,7 @@ from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.indexes.data import update_last_indexed_versions
 from virtool.indexes.db import REFERENCE_JSON_V2_FILE_NAME
-from virtool.indexes.sql import SQLIndexFile
+from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.indexes.tasks import CreateIndexTask
 from virtool.indexes.utils import compose_index_file_key
 from virtool.mongo.core import Mongo
@@ -179,6 +179,13 @@ class TestCreateIndexTask:
 
         index = await self.mongo.indexes.find_one(self.index_id)
         assert index["ready"] is True
+
+        async with AsyncSession(self.pg) as session:
+            index_row = await session.scalar(
+                select(SQLIndex).where(SQLIndex.legacy_id == self.index_id),
+            )
+
+        assert index_row.ready is True
 
         response = await self.data_layer.index.get(self.index_id)
         assert response.ready is True
