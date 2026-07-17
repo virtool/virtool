@@ -343,39 +343,6 @@ async def check_source_type(
     return True
 
 
-async def compose_reference_ids_match(
-    pg: AsyncEngine,
-    archived: bool | None = None,
-) -> dict:
-    """Build a Mongo ``reference.id`` match for the references matching ``archived``.
-
-    The lifecycle filter follows the project-wide ``bool | None`` convention: ``None``
-    places no constraint, ``True`` selects archived references and ``False`` selects
-    active ones.
-
-    ``indexes`` documents embed either the legacy Mongo string reference id or the
-    integer ``legacy_references`` primary key during the migration, so both forms
-    are included for every matching reference. This backs the orphan and lifecycle
-    filters on the index list, which scope indexes to references that still exist.
-
-    A Postgres-native reference has no ``legacy_id``; only its primary key is
-    contributed to the match.
-
-    :param pg: the application PostgreSQL engine
-    :param archived: lifecycle filter mode
-    :return: a Mongo ``$in`` match value covering both id forms
-    """
-    query = select(SQLReference.id, SQLReference.legacy_id)
-
-    if archived is not None:
-        query = query.where(SQLReference.archived == archived)
-
-    async with AsyncSession(pg) as session:
-        rows = (await session.execute(query)).all()
-
-    return {"$in": [value for row in rows for value in row if value is not None]}
-
-
 async def get_contributors(pg, ref_id: int | str) -> list[Document] | None:
     """Return a list of contributors and their contribution count for a specific ref.
 
