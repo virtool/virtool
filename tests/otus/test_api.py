@@ -12,7 +12,6 @@ from tests.fixtures.response import RespIs
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
-from virtool.history.db import legacy_history_values
 from virtool.history.sql import SQLLegacyHistory
 from virtool.models.enums import HistoryMethod, Molecule, Permission
 from virtool.mongo.core import Mongo
@@ -276,30 +275,26 @@ class TestEdit:
         self,
         change_count: int,
         data: dict,
-        insert_otu,
+        data_layer: DataLayer,
         pg: AsyncEngine,
         spawn_client: ClientSpawner,
         snapshot: SnapshotAssertion,
-        test_change,
-        test_otu,
-        test_sequence,
+        static_time: StaticTime,
     ):
         client = await spawn_client(
             authenticated=True,
             permissions=[Permission.create_ref],
         )
 
-        change = {**test_change, "user": {"id": client.user.id}, "_id": "6116cba1.0"}
-
         reference = await create_reference(client)
 
-        await insert_otu(test_otu, reference["id"], [test_sequence])
+        otu = await data_layer.otus.create(
+            reference["id"],
+            CreateOTURequest(name="Prunus virus F", abbreviation="PVF"),
+            client.user.id,
+        )
 
-        async with AsyncSession(pg) as session:
-            session.add(SQLLegacyHistory(**legacy_history_values(change)))
-            await session.commit()
-
-        resp = await client.patch(f"/otus/{test_otu['_id']}", data)
+        resp = await client.patch(f"/otus/{otu.id}", data)
 
         assert resp.status == HTTPStatus.OK
 
