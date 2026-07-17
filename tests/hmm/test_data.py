@@ -310,20 +310,20 @@ async def _seed_status(pg, **overrides) -> None:
 
 
 class TestGet:
-    """``get`` reads a single annotation from Postgres by its legacy string id."""
+    """``get`` reads a single annotation from Postgres by its integer primary key."""
 
     async def test_reads_from_postgres(self, data_layer, seed_pg_hmm, hmm_document):
         await seed_pg_hmm(hmm_document)
 
-        hmm = await data_layer.hmms.get("f8666902")
+        hmm = await data_layer.hmms.get(1)
 
-        assert hmm.id == "f8666902"
+        assert hmm.id == 1
         assert hmm.cluster == hmm_document["cluster"]
         assert hmm.entries == hmm_document["entries"]
 
     async def test_missing_raises_not_found(self, data_layer, seed_pg_hmm):
         with pytest.raises(ResourceNotFoundError):
-            await data_layer.hmms.get("does_not_exist")
+            await data_layer.hmms.get(999999)
 
 
 class TestFind:
@@ -339,7 +339,7 @@ class TestFind:
 
         assert result.found_count == 1
         assert result.total_count == 1
-        assert [document.id for document in result.documents] == ["f8666902"]
+        assert [document.id for document in result.documents] == [1]
 
     async def test_excludes_hidden(
         self, data_layer, seed_hmm_status, seed_pg_hmm, hmm_document
@@ -351,7 +351,7 @@ class TestFind:
         result = await data_layer.hmms.find(1, 25)
 
         assert result.total_count == 1
-        assert [document.id for document in result.documents] == ["visible"]
+        assert [document.id for document in result.documents] == [1]
 
     async def test_search_filters_by_name(
         self, data_layer, seed_hmm_status, seed_pg_hmm, hmm_document
@@ -368,7 +368,7 @@ class TestFind:
 
         assert result.found_count == 1
         assert result.total_count == 2
-        assert [document.id for document in result.documents] == ["polymerase"]
+        assert [document.id for document in result.documents] == [1]
 
 
 class TestInstall:
@@ -392,8 +392,7 @@ class TestInstall:
         pg_hmms = await _read_pg_hmms(pg)
 
         assert len(pg_hmms) == 1
-        assert isinstance(pg_hmms[0].legacy_id, str)
-        assert pg_hmms[0].legacy_id
+        assert pg_hmms[0].legacy_id is None
         assert pg_hmms[0].cluster == ANNOTATION["cluster"]
         assert pg_hmms[0].count == ANNOTATION["count"]
         assert pg_hmms[0].names == ANNOTATION["names"]

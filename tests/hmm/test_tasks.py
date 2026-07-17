@@ -83,7 +83,7 @@ async def test_hmm_install_task(
     async with AsyncSession(pg) as session:
         hmms = (await session.execute(select(SQLHMM))).scalars().all()
 
-    assert all(isinstance(hmm.legacy_id, str) and hmm.legacy_id for hmm in hmms)
+    assert all(hmm.legacy_id is None for hmm in hmms)
     assert [hmm.cluster for hmm in hmms] == [annotations[0]["cluster"]]
     assert [hmm.names for hmm in hmms] == [annotations[0]["names"]]
     assert [hmm.genera for hmm in hmms] == [annotations[0]["genera"]]

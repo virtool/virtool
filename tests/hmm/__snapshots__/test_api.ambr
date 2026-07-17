@@ -8,7 +8,7 @@
         'families': dict({
           'Baculoviridae': 3,
         }),
-        'id': 'f8666902',
+        'id': 1,
         'names': list([
           'ORF-63',
           'ORF67',
@@ -58,7 +58,7 @@
     'total_count': 1,
   })
 # ---
-# name: test_get[None][json]
+# name: test_get[json]
   dict({
     'cluster': 3463,
     'count': 4,
@@ -94,7 +94,7 @@
     'genera': dict({
       'Alphabaculovirus': 3,
     }),
-    'id': 'f8666902',
+    'id': 1,
     'length': 199,
     'mean_entropy': 0.51,
     'names': list([

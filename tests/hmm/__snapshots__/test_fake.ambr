@@ -1,28 +1,28 @@
 # serializer version: 1
 # name: test_create_fake_hmm
   dict({
-    'cluster': 3088,
-    'count': 9934,
+    'cluster': 5448,
+    'count': 6981,
     'entries': list([
       dict({
-        'accession': 'yEVAoNGnVZQUqLUJyfwF',
-        'gi': 'VYySnPCaLuQIazTmqTjD',
-        'name': 'mYPxeqAWfCKCQCYFExFu',
-        'organism': 'DpjjFIyeNTWRUWCuKoQS',
+        'accession': 'RNvnAvOpyEVAoNGnVZQU',
+        'gi': 'qLUJyfwFVYySnPCaLuQI',
+        'name': 'azTmqTjDmYPxeqAWfCKC',
+        'organism': 'QCYFExFuDpjjFIyeNTWR',
       }),
     ]),
     'families': dict({
-      'RgeRgFkYLyLdJCGRddpw': 1000,
+      'QfhKcDVBJbHFDutYbbXj': 2029,
     }),
     'genera': dict({
-      'UEXExIZVPeFzGRmMglPr': 1018,
+      'UWCuKoQSUEXExIZVPeFz': 5493,
     }),
-    'id': 'RNvnAvOp',
-    'length': 1648,
-    'mean_entropy': 89.795508575047,
+    'id': 1,
+    'length': 3119,
+    'mean_entropy': 37501460658.1919,
     'names': list([
-      'AcfZksMRViIYdJRrnFxj',
+      'yLdJCGRddpwdyFKunVyU',
     ]),
-    'total_entropy': 0.89365919009586,
+    'total_entropy': 380.188096301624,
   })
 # ---

@@ -125,11 +125,11 @@ async def fetch_and_update_release(
 def annotation_from_row(row: SQLHMM) -> Document:
     """Reconstruct the stored HMM annotation document from a Postgres row.
 
-    The Mongo ``_id`` is exposed as ``id`` so the output matches the document
-    shape that was previously generated from Mongo.
+    The integer primary key is exposed as ``id``; annotations are addressed by
+    their Postgres id rather than the legacy Mongo string.
     """
     return {
-        "id": row.legacy_id,
+        "id": row.id,
         "cluster": row.cluster,
         "count": row.count,
         "length": row.length,

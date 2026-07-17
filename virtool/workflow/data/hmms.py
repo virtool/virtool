@@ -38,7 +38,7 @@ class WFHMMs:
     """
 
     @cached_property
-    def cluster_annotation_map(self) -> dict[int, str]:
+    def cluster_annotation_map(self) -> dict[int, int]:
         """A dict that maps cluster IDs to annotation IDs.
 
         This is used to link HMMs in `HMMER <http://hmmer.org/>`_ to annotations
@@ -54,7 +54,7 @@ class WFHMMs:
         """
         return self.path / "profiles.hmm"
 
-    def get_id_by_cluster(self, cluster: int) -> str:
+    def get_id_by_cluster(self, cluster: int) -> int:
         """Get the Virtool HMM annotation ID for a given cluster ID.
 
         :param cluster: a cluster ID

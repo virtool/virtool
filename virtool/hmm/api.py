@@ -140,7 +140,7 @@ class UpdatesView(PydanticView):
 
 @routes.view("/hmms/{hmm_id}")
 class HMMView(PydanticView):
-    async def get(self, hmm_id: str, /) -> r200[HMM] | r404:
+    async def get(self, hmm_id: int, /) -> r200[HMM] | r404:
         """Get an HMM.
 
         Fetches the details for an HMM annotation.
@@ -164,7 +164,12 @@ async def get(req):
     Fetches a complete individual HMM annotation document.
     """
     try:
-        hmm = await get_data_from_req(req).hmms.get(req.match_info["hmm_id"])
+        hmm_id = int(req.match_info["hmm_id"])
+    except ValueError:
+        raise APINotFound()
+
+    try:
+        hmm = await get_data_from_req(req).hmms.get(hmm_id)
     except ResourceNotFoundError:
         raise APINotFound()
 

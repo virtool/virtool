@@ -203,7 +203,7 @@ async def format_nuvs(
     for sequence in hits:
         for orf in sequence["orfs"]:
             for hit in orf["hits"]:
-                hit.update(hmms[hit["hit"]])
+                hit.update(hmms[str(hit["hit"])])
 
     return results
 

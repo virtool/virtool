@@ -336,11 +336,10 @@ class HMMFakerDomain(DataFakerDomain):
     model = HMM
 
     async def create(self) -> HMM:
-        """Create a new fake hmm in Postgres.
+        """Create a new Postgres-native fake hmm.
 
         :return: a new fake hmm
         """
-        hmm_id = "".join(self._faker.mongo_id())
         faker = self._faker
 
         document = {
@@ -356,7 +355,6 @@ class HMMFakerDomain(DataFakerDomain):
             "length": faker.pyint(),
             "mean_entropy": faker.pyfloat(),
             "total_entropy": faker.pyfloat(),
-            "_id": hmm_id,
             "cluster": faker.pyint(),
             "count": faker.pyint(),
             "families": {faker.pystr(): faker.pyint()},
@@ -364,21 +362,21 @@ class HMMFakerDomain(DataFakerDomain):
         }
 
         async with AsyncSession(self._pg) as session:
-            session.add(
-                SQLHMM(
-                    legacy_id=hmm_id,
-                    cluster=document["cluster"],
-                    count=document["count"],
-                    length=document["length"],
-                    mean_entropy=document["mean_entropy"],
-                    total_entropy=document["total_entropy"],
-                    hidden=False,
-                    names=document["names"],
-                    families=document["families"],
-                    genera=document["genera"],
-                    entries=document["entries"],
-                ),
+            hmm = SQLHMM(
+                cluster=document["cluster"],
+                count=document["count"],
+                length=document["length"],
+                mean_entropy=document["mean_entropy"],
+                total_entropy=document["total_entropy"],
+                hidden=False,
+                names=document["names"],
+                families=document["families"],
+                genera=document["genera"],
+                entries=document["entries"],
             )
+            session.add(hmm)
+            await session.flush()
+            document["id"] = hmm.id
             await session.commit()
 
         return HMM(**document)

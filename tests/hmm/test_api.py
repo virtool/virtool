@@ -113,34 +113,32 @@ async def test_list_updates(fake_hmm_status, spawn_client, snapshot):
     assert await resp.json() == snapshot(name="json")
 
 
-@pytest.mark.parametrize("error", [None, "404"])
 async def test_get(
-    error,
     snapshot,
     seed_pg_hmm,
     spawn_client: ClientSpawner,
     hmm_document,
-    resp_is,
 ):
-    """Check that a ``GET`` request for a valid annotation document results in a response containing that complete
-    document read from Postgres.
-
-    Check that a `404` is returned if the HMM does not exist.
-
+    """A ``GET`` for an annotation by its integer id returns the complete document read
+    from Postgres.
     """
     client = await spawn_client(authenticated=True)
 
-    if not error:
-        await seed_pg_hmm(hmm_document)
+    await seed_pg_hmm(hmm_document)
 
-    resp = await client.get("/hmms/f8666902")
-
-    if error:
-        await resp_is.not_found(resp)
-        return
+    resp = await client.get("/hmms/1")
 
     assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot(name="json")
+
+
+async def test_get_not_found(spawn_client: ClientSpawner, resp_is):
+    """A ``GET`` for an id with no matching annotation returns ``404``."""
+    client = await spawn_client(authenticated=True)
+
+    resp = await client.get("/hmms/999999")
+
+    await resp_is.not_found(resp)
 
 
 async def test_get_hmm_annotations(
@@ -163,7 +161,7 @@ async def test_get_hmm_annotations(
 
     assert hmms == [
         {
-            "id": "f8666902",
+            "id": 1,
             "cluster": 3463,
             "count": 4,
             "length": 199,
