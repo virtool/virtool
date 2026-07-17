@@ -383,6 +383,27 @@ class TestCopyIndexes:
         assert row.job_id is None
         assert row.task_id is None
 
+    async def test_build_less_index_raises(
+        self,
+        ctx: MigrationContext,
+        seeded: dict[str, int],
+    ):
+        """A document backed by neither a job nor a task is malformed and raises.
+
+        The relaxed constraint admits a both-``NULL`` row only for a deleted job;
+        a document that never carried a build must not slip through as one.
+        """
+        await ctx.mongo.indexes.insert_one(
+            _index_doc(
+                "index_no_build",
+                seeded["reference_id"],
+                seeded["user_id"],
+            ),
+        )
+
+        with pytest.raises(ValueError, match="backed by neither a job nor a task"):
+            await copy_indexes_to_postgres(ctx)
+
 
 async def _update_index(ctx: MigrationContext, legacy_id: str, **values) -> None:
     """Rewrite fields of the ``indexes`` row identified by ``legacy_id``."""

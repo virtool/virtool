@@ -137,6 +137,12 @@ async def _index_row_values(
     build's ``job`` id is resolved too, but a job deleted before the jobs migration
     resolves to ``NULL`` with a warning rather than raising. The ``task`` id is a
     native Postgres id and is used directly.
+
+    A ``NULL`` ``job_id`` is only ever produced for a document that carries an
+    embedded ``job`` whose row was deleted. A document carrying neither a ``job``
+    nor a ``task`` was never backed by a build and is malformed; it raises rather
+    than becoming a both-``NULL`` row, which the relaxed ``ck_indexes_job_or_task``
+    constraint would otherwise accept silently.
     """
     index_id = document["_id"]
 
@@ -160,6 +166,10 @@ async def _index_row_values(
 
     job = document["job"]
     task = document["task"]
+
+    if job is None and task is None:
+        msg = f"index {index_id!r} is backed by neither a job nor a task"
+        raise ValueError(msg)
 
     job_id = None
 

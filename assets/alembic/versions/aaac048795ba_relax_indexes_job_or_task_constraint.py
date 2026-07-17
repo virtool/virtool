@@ -33,6 +33,11 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    # Restoring the stricter ``= 1`` constraint fails by design if any index carries
+    # neither a job nor a task -- the deleted-job rows this revision exists to admit.
+    # Postgres rejects the constraint against violating data, so a downgrade past
+    # this point requires resolving those rows by hand first rather than silently
+    # dropping the invariant.
     op.drop_constraint("ck_indexes_job_or_task", "indexes", type_="check")
     op.create_check_constraint(
         "ck_indexes_job_or_task",
