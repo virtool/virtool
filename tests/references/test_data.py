@@ -1,4 +1,5 @@
 import pytest
+from pytest_mock import MockerFixture
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -8,6 +9,7 @@ from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
 from virtool.mongo.core import Mongo
+from virtool.references.db import get_latest_builds
 from virtool.references.oas import (
     CreateReferenceGroupRequest,
     CreateReferenceRequest,
@@ -17,6 +19,41 @@ from virtool.references.oas import (
 )
 from virtool.references.sql import SQLReference
 from virtool.tasks.sql import SQLTask
+
+
+class TestFind:
+    async def test_latest_build_batched_once(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mocker: MockerFixture,
+    ):
+        """The list path resolves latest builds with a single batch call for the
+        whole page, not one call per reference.
+        """
+        user = await fake.users.create()
+
+        for _ in range(3):
+            reference = await fake.references.create(user=user)
+            await fake.indexes.create(reference, user, version=0, ready=True)
+
+        spy = mocker.patch(
+            "virtool.references.data.get_latest_builds",
+            wraps=get_latest_builds,
+        )
+
+        result = await data_layer.references.find(
+            find="",
+            user_id=user.id,
+            administrator=True,
+            groups=[],
+            page=1,
+            per_page=25,
+        )
+
+        assert len(result.documents) == 3
+        assert all(d.latest_build is not None for d in result.documents)
+        spy.assert_called_once()
 
 
 class TestCreate:
