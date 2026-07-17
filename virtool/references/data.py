@@ -702,9 +702,7 @@ class ReferencesData(DataLayerDomain):
     ) -> IndexSearchResult:
         await self._require_exists(ref_id)
 
-        data = await virtool.indexes.db.find(
-            self._mongo, self._pg, page, per_page, ref_id=ref_id
-        )
+        data = await virtool.indexes.db.find(self._pg, page, per_page, ref_id=ref_id)
 
         return IndexSearchResult(**data)
 

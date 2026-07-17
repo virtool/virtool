@@ -35,6 +35,7 @@ from virtool.indexes.db import (
     INDEX_FILE_NAMES,
     REFERENCE_JSON_V2_FILE_NAME,
     IndexCountsTransform,
+    _row_to_document,
     update_last_indexed_versions,
 )
 from virtool.indexes.models import Index, IndexFile, IndexMinimal, IndexSearchResult
@@ -46,7 +47,6 @@ from virtool.indexes.utils import (
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
-from virtool.references.db import compose_reference_ids_match
 from virtool.references.models import ReferenceNested
 from virtool.references.sql import SQLReference
 from virtool.references.transforms import (
@@ -103,33 +103,36 @@ class IndexData:
         :param ready: return only indexes that are ready for use in analysis
         :param page: the one-indexed page number to return
         :param per_page: the number of documents to return per page
-        :param archived: lifecycle filter on the index's reference; see
-            :func:`virtool.references.db.compose_reference_ids_match`
+        :param archived: lifecycle filter on the index's reference
         :return: a list of all index documents
         """
         if not ready:
             data = await virtool.indexes.db.find(
-                self._mongo, self._pg, page, per_page, archived=archived
+                self._pg, page, per_page, archived=archived
             )
             return IndexSearchResult(**data)
 
-        items = [
-            base_processor(index)
-            async for index in self._mongo.indexes.aggregate(
-                [
-                    {
-                        "$match": {
-                            "ready": True,
-                            "reference.id": await compose_reference_ids_match(
-                                self._pg,
-                                archived,
-                            ),
-                        },
-                    },
-                    {"$sort": {"created_at": 1}},
-                ],
+        filters = [SQLIndex.ready.is_(True)]
+
+        if archived is not None:
+            filters.append(
+                SQLIndex.reference_id.in_(
+                    select(SQLReference.id).where(SQLReference.archived == archived),
+                ),
             )
-        ]
+
+        async with AsyncSession(self._pg) as session:
+            rows = (
+                (
+                    await session.execute(
+                        select(SQLIndex).where(*filters).order_by(SQLIndex.created_at),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+
+        items = [base_processor(_row_to_document(row)) for row in rows]
 
         items = await apply_transforms(
             items,
@@ -150,17 +153,19 @@ class IndexData:
         :param index_id: the index ID
         :return: the index
         """
-        result = await self._mongo.indexes.aggregate(
-            [
-                {"$match": {"_id": index_id}},
-                {"$sort": {"created_at": 1}},
-            ],
-        ).to_list(length=1)
+        async with AsyncSession(self._pg) as session:
+            row = (
+                await session.execute(
+                    select(SQLIndex).where(
+                        compose_legacy_id_single_expression(SQLIndex, index_id),
+                    ),
+                )
+            ).scalar_one_or_none()
 
-        if not result:
+        if row is None:
             raise ResourceNotFoundError()
 
-        document = result[0]
+        document = _row_to_document(row, include_manifest=True)
 
         contributors, otus = await asyncio.gather(
             virtool.history.db.get_contributors(self._pg, index_id=index_id),
@@ -194,24 +199,12 @@ class IndexData:
         :param index_id: the index ID
         :return: the reference
         """
-        reference_field = await get_one_field(
-            self._mongo.indexes,
-            "reference",
-            index_id,
-        )
-
-        if not reference_field:
-            raise ResourceNotFoundError
-
         async with AsyncSession(self._pg) as session:
             row = (
                 await session.execute(
-                    select(SQLReference.id, SQLReference.name).where(
-                        compose_legacy_id_single_expression(
-                            SQLReference,
-                            reference_field["id"],
-                        ),
-                    ),
+                    select(SQLReference.id, SQLReference.name)
+                    .join(SQLIndex, SQLIndex.reference_id == SQLReference.id)
+                    .where(compose_legacy_id_single_expression(SQLIndex, index_id)),
                 )
             ).first()
 
@@ -229,9 +222,16 @@ class IndexData:
         :param index_id: the index ID
         :return: an async iterator of bytes and the size
         """
-        index = await self._mongo.indexes.find_one(index_id)
+        async with AsyncSession(self._pg) as session:
+            manifest = (
+                await session.execute(
+                    select(SQLIndex.manifest).where(
+                        compose_legacy_id_single_expression(SQLIndex, index_id),
+                    ),
+                )
+            ).scalar_one_or_none()
 
-        if index is None:
+        if manifest is None:
             raise ResourceNotFoundError()
 
         key = compose_index_file_key(index_id, "otus.json.gz")
@@ -243,7 +243,7 @@ class IndexData:
                 otu
                 async for otu in virtool.indexes.db.iter_patched_otus(
                     self._pg,
-                    index["manifest"],
+                    manifest,
                 )
             ]
 

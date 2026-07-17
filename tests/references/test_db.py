@@ -17,7 +17,6 @@ from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU, SQLSequence
 from virtool.references.db import (
-    compose_reference_ids_match,
     create_document,
     get_manifest,
     get_reference_groups,
@@ -416,102 +415,6 @@ class TestCheckRight:
             )
             is False
         )
-
-
-class TestComposeReferenceIdsMatch:
-    """The lifecycle facet of the index find query, sourced from Postgres.
-
-    Indexes embed either the legacy string reference id or the integer primary key
-    during the migration, so both forms must appear in the match for every reference
-    that passes the lifecycle filter.
-    """
-
-    @pytest.fixture
-    async def references(self, fake: DataFaker, pg: AsyncEngine, static_time):
-        """Seed an active, an archived, and a Postgres-native active reference."""
-        user = await fake.users.create()
-
-        async with AsyncSession(pg) as session:
-            rows = {
-                "active": SQLReference(
-                    legacy_id="ref_active",
-                    name="active",
-                    description="",
-                    created_at=static_time.datetime,
-                    archived=False,
-                    source_types=[],
-                    user_id=user.id,
-                ),
-                "archived": SQLReference(
-                    legacy_id="ref_archived",
-                    name="archived",
-                    description="",
-                    created_at=static_time.datetime,
-                    archived=True,
-                    source_types=[],
-                    user_id=user.id,
-                ),
-                "native_active": SQLReference(
-                    legacy_id=None,
-                    name="native_active",
-                    description="",
-                    created_at=static_time.datetime,
-                    archived=False,
-                    source_types=[],
-                    user_id=user.id,
-                ),
-            }
-
-            session.add_all(rows.values())
-            await session.flush()
-
-            reference_ids = {key: row.id for key, row in rows.items()}
-
-            await session.commit()
-
-        return reference_ids
-
-    async def test_unfiltered(self, pg: AsyncEngine, references: dict[str, int]):
-        """Both id forms of every reference are matched when ``archived`` is None."""
-        match = await compose_reference_ids_match(pg)
-
-        assert set(match["$in"]) == {
-            references["active"],
-            references["archived"],
-            references["native_active"],
-            "ref_active",
-            "ref_archived",
-        }
-
-    async def test_archived(self, pg: AsyncEngine, references: dict[str, int]):
-        match = await compose_reference_ids_match(pg, True)
-
-        assert set(match["$in"]) == {references["archived"], "ref_archived"}
-
-    async def test_active(self, pg: AsyncEngine, references: dict[str, int]):
-        match = await compose_reference_ids_match(pg, False)
-
-        assert set(match["$in"]) == {
-            references["active"],
-            references["native_active"],
-            "ref_active",
-        }
-
-    async def test_native_reference_contributes_only_its_pk(
-        self,
-        pg: AsyncEngine,
-        references: dict[str, int],
-    ):
-        """A reference with no ``legacy_id`` is matched by its primary key alone.
-
-        Now that the integer primary key is the public identifier, a Postgres-native
-        reference can be shaped into a ``ReferenceNested``. Its ``NULL`` legacy id must
-        not leak into the match, where it would match indexes with no reference.
-        """
-        match = await compose_reference_ids_match(pg)
-
-        assert references["native_active"] in match["$in"]
-        assert None not in match["$in"]
 
 
 async def test_create_manifest(fake: DataFaker, pg: AsyncEngine):

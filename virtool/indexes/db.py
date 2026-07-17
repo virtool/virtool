@@ -1,6 +1,7 @@
 """Work with indexes in the database."""
 
 import asyncio
+import math
 from collections.abc import AsyncIterator
 from typing import Any
 
@@ -22,7 +23,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.history.db
 import virtool.utils
-from virtool.api.utils import paginate
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.topg import (
     compose_legacy_id_subquery,
@@ -34,10 +34,7 @@ from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU
-from virtool.references.db import (
-    compose_reference_id_match,
-    compose_reference_ids_match,
-)
+from virtool.references.db import compose_reference_id_match
 from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
@@ -200,8 +197,35 @@ async def create(
     return document
 
 
+def _row_to_document(row: SQLIndex, *, include_manifest: bool = False) -> dict:
+    """Shape an ``SQLIndex`` row into the Mongo-like document the transforms expect.
+
+    The legacy Mongo slug is emitted as the outward-facing ``_id`` (renamed to ``id``
+    by ``base_processor``) because ``IndexCountsTransform`` and the OTU, contributor,
+    and file lookups all key on the legacy string. The integer primary key becomes the
+    public identifier in a later migration step.
+
+    The nested reference is keyed by the integer ``reference_id`` foreign key;
+    ``AttachReferenceTransform`` resolves it. ``job`` collapses to ``None`` for
+    task-backed builds, matching the Mongo document.
+    """
+    document = {
+        "_id": row.legacy_id,
+        "version": row.version,
+        "created_at": row.created_at,
+        "ready": row.ready,
+        "reference": {"id": row.reference_id},
+        "user": {"id": row.user_id},
+        "job": {"id": row.job_id} if row.job_id else None,
+    }
+
+    if include_manifest:
+        document["manifest"] = row.manifest
+
+    return document
+
+
 async def find(
-    mongo: "Mongo",
     pg: AsyncEngine,
     page: int,
     per_page: int,
@@ -211,55 +235,66 @@ async def find(
     """Find index documents.
 
     When ``ref_id`` is given, ``archived`` is ignored — the reference is
-    already chosen, so its lifecycle state is fixed.
+    already chosen, so its lifecycle state is fixed — and indexes are ordered by
+    ``version`` descending. Otherwise indexes are ordered by ``created_at`` then
+    primary key, both descending, for stable pagination.
 
-    :param mongo: the application database client
+    Every index row references an existing reference through a non-null foreign key,
+    so ``total_count`` covers all indexes while ``found_count`` narrows to the
+    requested lifecycle.
+
+    :param pg: the application PostgreSQL engine
     :param page: the one-indexed page number to return
     :param per_page: the number of documents to return per page
     :param ref_id: the id of the reference
-    :param archived: lifecycle filter on the index's reference; see
-        :func:`virtool.references.db.compose_reference_ids_match`
+    :param archived: lifecycle filter on the index's reference
     :return: the index document
 
     """
-    mongo_query: dict = {}
+    base_filters = []
+    search_filters = []
 
-    if ref_id:
-        base_query = {"reference.id": await compose_reference_id_match(pg, ref_id)}
+    if ref_id is not None:
+        reference_filter = SQLIndex.reference_id == compose_legacy_id_subquery(
+            SQLReference,
+            ref_id,
+        )
+        base_filters.append(reference_filter)
+        search_filters.append(reference_filter)
+        order_by = [SQLIndex.version.desc()]
     else:
-        # base_query is the orphan filter only (visibility scope). The lifecycle
-        # filter goes into mongo_query so total_count reflects all indexes whose
-        # reference exists, while found_count narrows to the requested
-        # lifecycle.
-        base_query = {"reference.id": await compose_reference_ids_match(pg)}
-
         if archived is not None:
-            mongo_query = {
-                "reference.id": await compose_reference_ids_match(pg, archived),
-            }
+            search_filters.append(
+                SQLIndex.reference_id.in_(
+                    select(SQLReference.id).where(SQLReference.archived == archived),
+                ),
+            )
+        order_by = [SQLIndex.created_at.desc(), SQLIndex.id.desc()]
 
-    data = await paginate(
-        mongo.indexes,
-        mongo_query,
-        page,
-        per_page,
-        base_query=base_query,
-        projection=[
-            "_id",
-            "created_at",
-            "job",
-            "user",
-            "ready",
-            "reference",
-            "version",
-        ],
-        reverse=True,
-        sort="version",
-    )
+    async with AsyncSession(pg) as session:
+        total_count = await session.scalar(
+            select(func.count()).select_from(SQLIndex).where(*base_filters),
+        )
+        found_count = await session.scalar(
+            select(func.count()).select_from(SQLIndex).where(*search_filters),
+        )
+        rows = (
+            (
+                await session.execute(
+                    select(SQLIndex)
+                    .where(*search_filters)
+                    .order_by(*order_by)
+                    .offset(per_page * (page - 1))
+                    .limit(per_page),
+                )
+            )
+            .scalars()
+            .all()
+        )
 
     unbuilt_stats = await get_unbuilt_stats(pg, ref_id)
 
-    documents = [base_processor(d) for d in data["documents"]]
+    documents = [base_processor(_row_to_document(row)) for row in rows]
     transforms = [
         AttachJobTransform(pg),
         AttachReferenceTransform(pg),
@@ -268,13 +303,13 @@ async def find(
     ]
 
     return {
-        **data,
+        "documents": await apply_transforms(documents, transforms, pg),
+        "total_count": total_count,
+        "found_count": found_count,
+        "page": page,
+        "page_count": int(math.ceil(found_count / per_page)),
+        "per_page": per_page,
         **unbuilt_stats,
-        "documents": await apply_transforms(
-            documents,
-            transforms,
-            pg,
-        ),
     }
 
 
