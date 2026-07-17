@@ -20,6 +20,8 @@ from virtool.data.errors import (
 from virtool.data.events import Operation, emit, emits
 from virtool.data.topg import (
     compose_legacy_id_single_expression,
+    compose_legacy_id_subquery,
+    resolve_legacy_id,
     retry_both_transactions,
 )
 from virtool.data.transforms import apply_transforms
@@ -44,7 +46,6 @@ from virtool.indexes.utils import (
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
 from virtool.mongo.utils import get_one_field
-from virtool.pg.utils import get_rows
 from virtool.references.db import compose_reference_ids_match
 from virtool.references.models import ReferenceNested
 from virtool.references.sql import SQLReference
@@ -273,7 +274,17 @@ class IndexData:
         :return: the index file
         """
         async with AsyncSession(self._pg) as session:
-            index_file = SQLIndexFile(name=name, index=index_id, type=file_type)
+            index_pg_id = await resolve_legacy_id(session, SQLIndex, index_id)
+
+            if index_pg_id is None:
+                raise ResourceNotFoundError
+
+            index_file = SQLIndexFile(
+                name=name,
+                index=index_id,
+                index_id=index_pg_id,
+                type=file_type,
+            )
 
             session.add(index_file)
 
@@ -352,10 +363,21 @@ class IndexData:
         if reference_id is None:
             raise ResourceError(f"Could not find reference {ref_id} in postgres")
 
-        results = {
-            f.name: f.type
-            for f in await get_rows(self._pg, SQLIndexFile, "index", index_id)
-        }
+        async with AsyncSession(self._pg) as session:
+            file_rows = (
+                (
+                    await session.execute(
+                        select(SQLIndexFile).where(
+                            SQLIndexFile.index_id
+                            == compose_legacy_id_subquery(SQLIndex, index_id),
+                        ),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+
+        results = {f.name: f.type for f in file_rows}
 
         await wait_for_checks(
             check_fasta_file_uploaded(results),
