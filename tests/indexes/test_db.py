@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 from pytest_mock import MockerFixture
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
@@ -12,7 +12,7 @@ from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.db import (
     attach_files,
-    get_current_id_and_version,
+    get_current_id,
     get_next_version,
     iter_patched_otus,
     update_last_indexed_versions,
@@ -265,78 +265,68 @@ async def _seed_index_series(
     ]
 
 
-class TestGetCurrentIdAndVersion:
-    async def test_returns_highest_version(
-        self, fake: DataFaker, mongo: Mongo, pg: AsyncEngine
-    ):
+class TestGetCurrentId:
+    async def test_returns_highest_version(self, fake: DataFaker, pg: AsyncEngine):
         """The most recently built index for the reference is the current one."""
         indexes = await _seed_index_series(fake, ready=True)
 
-        assert await get_current_id_and_version(mongo, pg, "indexed_ref") == (
-            indexes[3].id,
-            3,
-        )
+        assert await get_current_id(pg, "indexed_ref") == indexes[3].id
 
-    async def test_no_ready_index(self, fake: DataFaker, mongo: Mongo, pg: AsyncEngine):
+    async def test_no_ready_index(self, fake: DataFaker, pg: AsyncEngine):
         """A reference whose indexes are all unbuilt has no current index."""
         await _seed_index_series(fake, ready=False)
 
-        assert await get_current_id_and_version(mongo, pg, "indexed_ref") == (None, -1)
+        assert await get_current_id(pg, "indexed_ref") is None
 
-    async def test_unknown_reference(
-        self, fake: DataFaker, mongo: Mongo, pg: AsyncEngine
-    ):
+    async def test_unknown_reference(self, fake: DataFaker, pg: AsyncEngine):
         """Indexes belonging to another reference are not matched."""
         await _seed_index_series(fake, ready=True)
 
-        assert await get_current_id_and_version(mongo, pg, "other_ref") == (None, -1)
+        assert await get_current_id(pg, "other_ref") is None
 
 
 class TestGetNextVersion:
-    async def test_counts_ready_indexes(
-        self, fake: DataFaker, mongo: Mongo, pg: AsyncEngine
-    ):
-        """The next version follows the number of indexes already built."""
+    async def test_follows_highest_version(self, fake: DataFaker, pg: AsyncEngine):
+        """The next version is one past the highest existing version."""
         await _seed_index_series(fake, ready=True)
 
-        assert await get_next_version(mongo, pg, "indexed_ref") == 4
+        async with AsyncSession(pg) as session:
+            assert await get_next_version(session, "indexed_ref") == 4
 
-    async def test_no_indexes(self, fake: DataFaker, mongo: Mongo, pg: AsyncEngine):
+    async def test_no_indexes(self, fake: DataFaker, pg: AsyncEngine):
         """A reference with no indexes at all starts at version 0."""
         user = await fake.users.create()
         await fake.references.create(user=user, id_="indexed_ref")
 
-        assert await get_next_version(mongo, pg, "indexed_ref") == 0
+        async with AsyncSession(pg) as session:
+            assert await get_next_version(session, "indexed_ref") == 0
 
-    async def test_unknown_reference(
-        self, fake: DataFaker, mongo: Mongo, pg: AsyncEngine
-    ):
+    async def test_unknown_reference(self, fake: DataFaker, pg: AsyncEngine):
         """Indexes belonging to another reference are not counted."""
         await _seed_index_series(fake, ready=True)
 
-        assert await get_next_version(mongo, pg, "other_ref") == 0
+        async with AsyncSession(pg) as session:
+            assert await get_next_version(session, "other_ref") == 0
 
+    async def test_version_not_reused_after_delete(
+        self, fake: DataFaker, pg: AsyncEngine
+    ):
+        """Deleting a lower-versioned index does not free its number for reuse.
 
-async def test_reads_tolerate_integer_embedded_reference_id(
-    mongo: Mongo,
-    pg: AsyncEngine,
-    fake,
-):
-    """``get_current_id_and_version`` and ``get_next_version`` resolve the legacy
-    string ref id and match an index whose embedded ``reference.id`` is the integer
-    ``legacy_references`` primary key.
-    """
-    user = await fake.users.create()
+        ``MAX(version) + 1`` is monotonic, so a build assigned version ``N`` keeps
+        ``N`` reserved even after a lower index is deleted. Ready-count allocation
+        would drop to ``1`` here and collide with the surviving version-1 index.
+        """
+        indexes = await _seed_index_series(fake, ready=True)
 
-    reference = await fake.references.create(user=user, id_="legacy_ref")
+        async with AsyncSession(pg) as session:
+            await session.execute(
+                delete(SQLIndex).where(SQLIndex.legacy_id == indexes[0].id),
+            )
+            await session.commit()
 
-    built_index = await fake.indexes.create(reference, user, version=0, ready=True)
-
-    index_id, index_version = await get_current_id_and_version(mongo, pg, "legacy_ref")
-
-    assert index_id == built_index.id
-    assert index_version == 0
-    assert await get_next_version(mongo, pg, "legacy_ref") == 1
+        async with AsyncSession(pg) as session:
+            assert await get_next_version(session, "indexed_ref") == 4
 
 
 async def test_iter_patched_otus_starts_when_consumed(

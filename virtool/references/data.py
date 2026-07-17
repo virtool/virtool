@@ -5,6 +5,7 @@ from datetime import datetime
 from aiohttp import ClientSession
 from sqlalchemy import ColumnExpressionArgument, delete, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.history.db
@@ -34,6 +35,7 @@ from virtool.history.db import (
 from virtool.history.models import HistorySearchResult
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.models import IndexMinimal, IndexSearchResult
+from virtool.indexes.sql import SQLIndex
 from virtool.indexes.tasks import CreateIndexTask
 from virtool.models.enums import HistoryMethod
 from virtool.mongo.core import Mongo
@@ -42,7 +44,6 @@ from virtool.otus.oas import CreateOTURequest
 from virtool.otus.sql import SQLOTU
 from virtool.pg.utils import get_row_by_id
 from virtool.references.db import (
-    compose_reference_id_match,
     get_cloned_from_lookup,
     get_contributors,
     get_latest_builds,
@@ -712,16 +713,22 @@ class ReferencesData(DataLayerDomain):
     async def create_index(self, ref_id: int | str, user_id: int) -> IndexMinimal:
         await self._require_not_archived(ref_id)
 
-        if await self._mongo.indexes.count_documents(
-            {
-                "reference.id": await compose_reference_id_match(self._pg, ref_id),
-                "ready": False,
-            },
-            limit=1,
-        ):
-            raise ResourceConflictError("Index build already in progress")
-
         async with AsyncSession(self._pg) as session:
+            has_in_progress = await session.scalar(
+                select(
+                    select(SQLIndex.id)
+                    .where(
+                        SQLIndex.reference_id
+                        == compose_legacy_id_subquery(SQLReference, ref_id),
+                        SQLIndex.ready.is_(False),
+                    )
+                    .exists(),
+                ),
+            )
+
+            if has_in_progress:
+                raise ResourceConflictError("Index build already in progress")
+
             has_unverified = await session.scalar(
                 select(
                     select(SQLOTU.id)
@@ -752,33 +759,43 @@ class ReferencesData(DataLayerDomain):
         if not has_unbuilt:
             raise ResourceError("There are no unbuilt changes")
 
-        index_id, index_version, manifest = await asyncio.gather(
+        index_id, manifest = await asyncio.gather(
             virtool.mongo.utils.get_new_id(self._mongo.indexes),
-            virtool.indexes.db.get_next_version(self._mongo, self._pg, ref_id),
             virtool.references.db.get_manifest(self._pg, ref_id),
         )
 
-        async with both_transactions(self._mongo, self._pg) as (
-            mongo_session,
-            pg_session,
-        ):
-            task = await virtool.tasks.db.create(
-                pg_session,
-                CreateIndexTask,
-                {"index_id": index_id},
-            )
-
-            document = await virtool.indexes.db.create(
-                self._mongo,
+        try:
+            async with both_transactions(self._mongo, self._pg) as (
                 mongo_session,
                 pg_session,
-                ref_id,
-                user_id,
-                index_version,
-                manifest,
-                task_id=task.id,
-                index_id=index_id,
-            )
+            ):
+                index_version = await virtool.indexes.db.get_next_version(
+                    pg_session,
+                    ref_id,
+                )
+
+                task = await virtool.tasks.db.create(
+                    pg_session,
+                    CreateIndexTask,
+                    {"index_id": index_id},
+                )
+
+                document = await virtool.indexes.db.create(
+                    self._mongo,
+                    mongo_session,
+                    pg_session,
+                    ref_id,
+                    user_id,
+                    index_version,
+                    manifest,
+                    task_id=task.id,
+                    index_id=index_id,
+                )
+        except IntegrityError as error:
+            # A concurrent build committed the same ``(reference_id, version)`` first.
+            # The version guard runs outside the transaction, so the unique constraint
+            # is the authoritative backstop for the race.
+            raise ResourceConflictError("Index build already in progress") from error
 
         emit(task, "tasks", "create", Operation.CREATE)
 
