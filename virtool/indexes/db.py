@@ -497,7 +497,7 @@ async def upsert_index_file(
     index_pg_id = await resolve_legacy_id(session, SQLIndex, index_id)
 
     if index_pg_id is None:
-        raise ResourceNotFoundError(f"Index {index_id!r} not found in postgres")
+        raise ResourceNotFoundError
 
     index_file_id = (
         await session.execute(
