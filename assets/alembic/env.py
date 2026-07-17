@@ -10,7 +10,7 @@ from virtool.analyses.sql import SQLAnalysisFile
 from virtool.blast.sql import SQLNuVsBlast
 from virtool.groups.pg import SQLGroup
 from virtool.hmm.sql import SQLHMMStatus
-from virtool.indexes.sql import SQLIndexFile
+from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.labels.sql import SQLLabel
 from virtool.messages.sql import SQLInstanceMessage
 from virtool.otus.sql import SQLOTU, SQLSequence
@@ -46,6 +46,7 @@ __models__ = (
     SQLAnalysisFile,
     SQLGroup,
     SQLHMMStatus,
+    SQLIndex,
     SQLIndexFile,
     SQLInstanceMessage,
     SQLLabel,
