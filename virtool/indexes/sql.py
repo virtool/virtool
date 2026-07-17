@@ -28,8 +28,9 @@ class SQLIndex(Base):
 
     - ``job`` and ``task`` collapse to the ``job_id`` and ``task_id`` foreign
       keys. Legacy builds carry a ``job``; builds created after the task
-      migration carry a ``task``. Exactly one is set, enforced by the
-      ``ck_indexes_job_or_task`` check constraint.
+      migration carry a ``task``. At most one is set, enforced by the
+      ``ck_indexes_job_or_task`` check constraint. A legacy build whose job was
+      deleted before the jobs migration carries neither.
     - ``user`` collapses to ``user_id``.
     - ``reference`` collapses to ``reference_id``, a foreign key to
       ``legacy_references.id``.
@@ -46,7 +47,7 @@ class SQLIndex(Base):
             "reference_id", "version", name="uq_indexes_reference_id_version"
         ),
         CheckConstraint(
-            "num_nonnulls(job_id, task_id) = 1", name="ck_indexes_job_or_task"
+            "num_nonnulls(job_id, task_id) <= 1", name="ck_indexes_job_or_task"
         ),
     )
 

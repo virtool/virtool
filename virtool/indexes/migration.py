@@ -38,24 +38,25 @@ async def copy_indexes_to_postgres(ctx: MigrationContext) -> None:
     individually, so memory stays bounded and a failure part-way through keeps the
     rows already written rather than rolling back the whole collection.
 
-    An index is backed by exactly one build: a legacy build carries a ``job`` and a
+    An index is backed by at most one build: a legacy build carries a ``job`` and a
     build created since the task migration carries a ``task``. The
-    ``ck_indexes_job_or_task`` check constraint enforces that exactly one of
-    ``job_id`` and ``task_id`` is set, so a document that somehow carries both or
-    neither is rejected loudly by the database rather than silently coerced.
+    ``ck_indexes_job_or_task`` check constraint enforces that no more than one of
+    ``job_id`` and ``task_id`` is set, so a document that somehow carries both is
+    rejected loudly by the database rather than silently coerced.
 
-    Three integrity failures are loud rather than silent, matching the required
-    relationships they represent:
+    Two integrity failures are loud, matching the required relationships they
+    represent:
 
     - An index whose embedded ``reference.id`` does not resolve to a
       ``legacy_references`` row raises. Every index belongs to a reference, and
       references are already migrated.
     - An index whose embedded ``user.id`` does not resolve to a ``users`` row
       raises. Every index is attributed to a user, and users are already migrated.
-    - A job-backed index whose ``job.id`` does not resolve to a ``jobs`` row raises.
-      The production audit found no such index, so an unresolvable job is a
-      data-integrity problem, not a nullable relationship -- and the check
-      constraint would reject the ``NULL`` job on a task-less document regardless.
+
+    A job-backed index whose ``job.id`` does not resolve to a ``jobs`` row is
+    different: jobs are historically deletable, so an old completed build can
+    outlive the job that produced it. Such an index is copied with a ``NULL``
+    ``job_id`` and a warning, rather than aborting the backfill.
 
     The embedded ``task.id`` is a native Postgres ``tasks`` primary key, so it is
     used directly; an id with no ``tasks`` row is rejected by the foreign key.
@@ -127,9 +128,11 @@ async def _index_row_values(
 ) -> dict:
     """Flatten a Mongo index document into ``indexes`` row values.
 
-    The embedded ``reference``, ``user`` and (for legacy builds) ``job`` ids are
-    resolved to their Postgres primary keys, raising when a required reference does
-    not resolve. The ``task`` id is a native Postgres id and is used directly.
+    The embedded ``reference`` and ``user`` ids are resolved to their Postgres
+    primary keys, raising when a required reference does not resolve. A legacy
+    build's ``job`` id is resolved too, but a job deleted before the jobs migration
+    resolves to ``NULL`` with a warning rather than raising. The ``task`` id is a
+    native Postgres id and is used directly.
     """
     index_id = document["_id"]
 
@@ -157,13 +160,11 @@ async def _index_row_values(
     job_id = None
 
     if job is not None:
-        job_id = await _resolve_required_id(
+        job_id = await _resolve_optional_job_id(
             session,
-            SQLJob,
             job["id"],
             job_id_cache,
             index_id,
-            "job",
         )
 
     return {
@@ -190,9 +191,9 @@ async def _resolve_required_id(
 ) -> int:
     """Resolve an embedded legacy or modern id to a Postgres primary key.
 
-    Hits are memoised because indexes cluster heavily by reference and job. Misses
-    are not cached and raise: the relationship is required, and the referenced
-    resource is already migrated, so an unresolvable id is a data-integrity problem.
+    Hits are memoised because indexes cluster heavily by reference. Misses are not
+    cached and raise: the relationship is required, and the referenced resource is
+    already migrated, so an unresolvable id is a data-integrity problem.
     """
     if id_ in cache:
         return cache[id_]
@@ -205,6 +206,38 @@ async def _resolve_required_id(
             "which does not exist in postgres"
         )
         raise ValueError(msg)
+
+    cache[id_] = resolved
+
+    return resolved
+
+
+async def _resolve_optional_job_id(
+    session: AsyncSession,
+    id_: int | str,
+    cache: dict[int | str, int],
+    index_id: str,
+) -> int | None:
+    """Resolve a legacy build's ``job`` id to a Postgres primary key.
+
+    Jobs are historically deletable, so an old completed build can reference a job
+    that was removed before the jobs migration and therefore never landed in
+    Postgres. Rather than aborting the backfill, an unresolvable job is logged and
+    stored as ``NULL``. Hits are memoised because indexes cluster heavily by job.
+    """
+    if id_ in cache:
+        return cache[id_]
+
+    resolved = await resolve_legacy_id(session, SQLJob, id_)
+
+    if resolved is None:
+        logger.warning(
+            "index references job missing from postgres; storing null job_id",
+            index_id=index_id,
+            job_id=id_,
+        )
+
+        return None
 
     cache[id_] = resolved
 

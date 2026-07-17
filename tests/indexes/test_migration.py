@@ -352,19 +352,30 @@ class TestCopyIndexes:
         with pytest.raises(ValueError, match="references user"):
             await copy_indexes_to_postgres(ctx)
 
-    async def test_unresolvable_job_raises(
+    async def test_unresolvable_job_stores_null_job_id(
         self,
         ctx: MigrationContext,
         seeded: dict[str, int],
     ):
+        """A legacy build whose job was deleted is copied with a ``NULL`` job_id.
+
+        Jobs are historically deletable, so an old build can outlive its job. The
+        backfill logs the miss and stores ``NULL`` rather than aborting; the
+        relaxed ``ck_indexes_job_or_task`` constraint permits neither being set.
+        """
         await ctx.mongo.indexes.insert_one(
             _index_doc(
-                "index_bad_job",
+                "index_deleted_job",
                 seeded["reference_id"],
                 seeded["user_id"],
                 job=999999,
             ),
         )
 
-        with pytest.raises(ValueError, match="references job"):
-            await copy_indexes_to_postgres(ctx)
+        await copy_indexes_to_postgres(ctx)
+
+        row = await _fetch_index(ctx, "index_deleted_job")
+        assert row.reference_id == seeded["reference_id"]
+        assert row.user_id == seeded["user_id"]
+        assert row.job_id is None
+        assert row.task_id is None
