@@ -569,45 +569,6 @@
     'version': 2,
   })
 # ---
-# name: test_finalize[None].1
-  dict({
-    '_id': 'bf1b993c',
-    'abbreviation': 'RLCV',
-    'isolates': list([
-      dict({
-        'default': True,
-        'id': 'fb085f7f',
-        'source_name': 'Dark',
-        'source_type': 'isolate',
-      }),
-    ]),
-    'last_indexed_version': 4,
-    'lower_name': 'rice leaf curl virus',
-    'name': 'Rice leaf curl virus',
-    'reference': dict({
-      'id': 1,
-    }),
-    'schema': list([
-      dict({
-        'molecule': 'ssRNA',
-        'name': 'DNA_C',
-        'required': True,
-      }),
-      dict({
-        'molecule': 'ssRNA',
-        'name': 'RNA_N',
-        'required': True,
-      }),
-      dict({
-        'molecule': 'ssRNA',
-        'name': 'DNA S',
-        'required': True,
-      }),
-    ]),
-    'verified': True,
-    'version': 4,
-  })
-# ---
 # name: test_find_history[None]
   dict({
     'documents': list([

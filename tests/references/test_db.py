@@ -1,4 +1,3 @@
-import asyncio
 from datetime import datetime
 
 import pytest
@@ -7,14 +6,14 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
-from virtool.api.custom_json import dump_string, loads
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.data.topg import compose_legacy_id_subquery
 from virtool.fake.next import DataFaker
+from virtool.history.db import bulk_insert_history as real_bulk_insert_history
 from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.models.enums import HistoryMethod
-from virtool.mongo.core import Mongo
+from virtool.otus.db import otu_document_from_row
 from virtool.otus.sql import SQLOTU, SQLSequence
 from virtool.references.db import (
     create_document,
@@ -551,13 +550,15 @@ async def test_create_document_owner_user(
 async def test_populate_insert_only_reference_rollback(
     fake: DataFaker,
     mocker: MockerFixture,
-    mongo: Mongo,
     pg: AsyncEngine,
     static_time,
 ):
-    """When a Mongo write fails, rollback removes the ``history_diffs`` rows
-    written during the PostgreSQL phase and all Mongo state scoped to the
-    reference, leaving the database as it was before the call.
+    """A failure mid-populate rolls back every committed chunk and the reference.
+
+    The chunks commit independently, so a failure on a later chunk leaves earlier
+    chunks committed. The compensating rollback deletes every OTU, sequence, history
+    and diff row scoped to the reference, and the reference itself, leaving the
+    database as it was before the call.
     """
     user = await fake.users.create()
     ref_id = "ref_rollback_test"
@@ -576,43 +577,37 @@ async def test_populate_insert_only_reference_rollback(
         ],
     )
 
+    # One OTU per chunk, each committed on its own, so the first chunk is committed by
+    # the time the second fails and the rollback has real state to undo.
+    mocker.patch("virtool.references.db._REFERENCE_OTU_CHUNK_SIZE", 1)
+
+    calls = 0
+
+    async def fail_on_second_chunk(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+
+        if calls == 2:
+            raise RuntimeError("forced postgres failure")
+
+        return await real_bulk_insert_history(*args, **kwargs)
+
+    mocker.patch(
+        "virtool.references.db.bulk_insert_history",
+        side_effect=fail_on_second_chunk,
+    )
+
     otus = build_source_otus([1, 2])
 
-    otus_done = asyncio.Event()
-
-    real_otus_insert_many = mongo.otus.insert_many
-
-    async def wrapped_otus_insert_many(documents, session):
-        try:
-            return await real_otus_insert_many(documents, session)
-        finally:
-            otus_done.set()
-
-    async def fail_sequences_insert_many(documents, session):
-        # Wait for the sibling OTU insert to actually land so the rollback has
-        # real Mongo state to clean up — otherwise the test would pass
-        # trivially against empty collections.
-        await asyncio.wait_for(otus_done.wait(), timeout=5.0)
-        raise RuntimeError("forced mongo failure")
-
-    mocker.patch.object(mongo.otus, "insert_many", wrapped_otus_insert_many)
-    mocker.patch.object(mongo.sequences, "insert_many", fail_sequences_insert_many)
-
-    with pytest.raises(ExceptionGroup) as excinfo:
+    with pytest.raises(RuntimeError, match="forced postgres failure"):
         await populate_insert_only_reference(
             static_time.datetime,
             HistoryMethod.remote,
-            mongo,
             pg,
             otus,
             ref_id,
             user.id,
         )
-
-    assert excinfo.group_contains(RuntimeError, match="forced mongo failure")
-
-    assert await mongo.otus.count_documents({"reference.id": ref_id}) == 0
-    assert await mongo.sequences.count_documents({"reference.id": ref_id}) == 0
 
     async with AsyncSession(pg) as pg_session:
         reference_row = await pg_session.scalar(
@@ -654,7 +649,6 @@ async def test_populate_insert_only_reference_rollback(
 async def test_populate_insert_only_reference_writes_legacy_history(
     fake: DataFaker,
     mocker: MockerFixture,
-    mongo: Mongo,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     static_time,
@@ -682,7 +676,6 @@ async def test_populate_insert_only_reference_writes_legacy_history(
     await populate_insert_only_reference(
         static_time.datetime,
         HistoryMethod.remote,
-        mongo,
         pg,
         otus,
         ref_id,
@@ -716,7 +709,6 @@ async def test_populate_insert_only_reference_writes_legacy_history(
 async def test_populate_insert_only_reference_writes_otu_and_sequence_rows(
     fake: DataFaker,
     mocker: MockerFixture,
-    mongo: Mongo,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     static_time,
@@ -744,7 +736,6 @@ async def test_populate_insert_only_reference_writes_otu_and_sequence_rows(
     await populate_insert_only_reference(
         static_time.datetime,
         HistoryMethod.remote,
-        mongo,
         pg,
         build_source_otus([1, 2]),
         ref_id,
@@ -798,17 +789,15 @@ async def test_populate_insert_only_reference_writes_otu_and_sequence_rows(
 async def test_populate_insert_only_reference_stores_created_at_faithfully(
     fake: DataFaker,
     mocker: MockerFixture,
-    mongo: Mongo,
     pg: AsyncEngine,
 ):
-    """The ``legacy_otus.data`` written by a bulk populate is a faithful lift of the
-    Mongo document, including a ``created_at`` with microsecond precision.
+    """The ``legacy_otus.data`` written by a bulk populate floors ``created_at`` to the
+    millisecond, so it comes back as the instant Mongo would hold.
 
     This is the one write path that hands Postgres a datetime that never round-tripped
-    through Mongo: the same in-memory dicts go to ``bulk_insert_otu_rows`` and to
-    ``mongo.otus.insert_many``. Mongo floors a datetime to the millisecond, so without
-    a matching truncation Postgres would hold a finer instant than Mongo does and the
-    store parity check would report every imported OTU as drifted.
+    through Mongo. Mongo floors a datetime to the millisecond, so without a matching
+    truncation Postgres would hold a finer instant than Mongo does and the store parity
+    check would report every imported OTU as drifted.
 
     ``static_time`` cannot catch this: its ``created_at`` has no microseconds to lose.
     """
@@ -827,31 +816,33 @@ async def test_populate_insert_only_reference_stores_created_at_faithfully(
     await populate_insert_only_reference(
         created_at,
         HistoryMethod.remote,
-        mongo,
         pg,
         build_source_otus([1]),
         ref_id,
         user.id,
     )
 
-    document = await mongo.otus.find_one({"_id": "caotu001"})
-
-    assert document["created_at"] == datetime(2015, 10, 6, 20, 0, 0, 123000)
-
     async with AsyncSession(pg) as pg_session:
         row = await pg_session.scalar(select(SQLOTU).where(SQLOTU.id == "caotu001"))
 
-    assert row.data == loads(dump_string(document))
+    assert otu_document_from_row(row)["created_at"] == datetime(
+        2015,
+        10,
+        6,
+        20,
+        0,
+        0,
+        123000,
+    )
 
 
 async def test_populate_insert_only_reference_chunks_inserts(
     fake: DataFaker,
     mocker: MockerFixture,
-    mongo: Mongo,
     pg: AsyncEngine,
     static_time,
 ):
-    """OTUs spanning multiple per-chunk commits all land in both stores."""
+    """OTUs spanning multiple per-chunk commits all land in Postgres."""
     user = await fake.users.create()
     ref_id = "ref_chunk_test"
 
@@ -876,15 +867,11 @@ async def test_populate_insert_only_reference_chunks_inserts(
     await populate_insert_only_reference(
         static_time.datetime,
         HistoryMethod.remote,
-        mongo,
         pg,
         build_source_otus([1, 2, 3]),
         ref_id,
         user.id,
     )
-
-    assert await mongo.otus.count_documents({}) == 3
-    assert await mongo.sequences.count_documents({}) == 3
 
     async with AsyncSession(pg) as pg_session:
         otu_count = await pg_session.scalar(select(func.count()).select_from(SQLOTU))

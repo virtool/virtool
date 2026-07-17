@@ -239,31 +239,55 @@
 # ---
 # name: test_set_default.1
   dict({
-    '_id': '6116cba1',
     'abbreviation': 'PVF',
+    'id': '6116cba1',
     'isolates': list([
       dict({
         'default': False,
         'id': 'cab8b360',
+        'sequences': list([
+        ]),
         'source_name': '8816-v2',
         'source_type': 'isolate',
       }),
       dict({
         'default': True,
         'id': 'bar',
+        'sequences': list([
+        ]),
         'source_name': 'A',
         'source_type': 'isolate',
       }),
     ]),
-    'last_indexed_version': 0,
-    'lower_name': 'prunus virus f',
-    'name': 'Prunus virus F',
-    'reference': dict({
-      'id': 1,
+    'issues': dict({
+      'empty_isolate': list([
+        'cab8b360',
+        'bar',
+      ]),
+      'empty_otu': False,
+      'empty_sequence': False,
+      'isolate_inconsistency': False,
     }),
-    'remote_id': None,
-    'schema': list([
+    'last_indexed_version': 0,
+    'most_recent_change': dict({
+      'created_at': datetime.datetime(2015, 10, 6, 20, 0),
+      'description': 'Set Isolate A as default',
+      'id': '6116cba1.1',
+      'method_name': <HistoryMethod.set_as_default: 'set_as_default'>,
+      'user': dict({
+        'handle': 'leeashley',
+        'id': 1,
+      }),
+    }),
+    'name': 'Prunus virus F',
+    'otu_schema': list([
     ]),
+    'reference': dict({
+      'data_type': <ReferenceDataType.genome: 'genome'>,
+      'id': 1,
+      'name': 'Reference',
+    }),
+    'remote': None,
     'verified': False,
     'version': 1,
   })

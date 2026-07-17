@@ -6,7 +6,6 @@ from collections.abc import Collection
 from datetime import datetime
 from typing import Any
 
-from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy import (
     delete,
     distinct,
@@ -29,7 +28,6 @@ from virtool.data.topg import (
 )
 from virtool.data.transforms import apply_transforms
 from virtool.history.sql import SQLLegacyHistory
-from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU, SQLSequence
 from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
@@ -215,34 +213,6 @@ async def find(
     }
 
 
-async def join(
-    mongo: "Mongo",
-    query: dict | str,
-    document: dict[str, Any] | None = None,
-    session: AsyncIOMotorClientSession | None = None,
-) -> dict[str, Any] | None:
-    """Join the otu associated with the supplied ``otu_id`` with its sequences.
-
-    If an OTU is passed, the document will not be pulled from the database.
-
-    :param mongo: the application database client
-    :param query: the id of the otu to join or a Mongo query.
-    :param document: use this otu document as a basis for the join
-    :param session: a Motor session to use for database operations
-    :return: the joined otu document
-    """
-    # Get the otu entry if a ``document`` parameter was not passed.
-    document = document or await mongo.otus.find_one(query, session=session)
-
-    if document is None:
-        return None
-
-    cursor = mongo.sequences.find({"otu_id": document["_id"]}, session=session)
-
-    # Merge the sequence entries into the otu entry.
-    return virtool.otus.utils.merge_otu(document, [d async for d in cursor])
-
-
 async def join_and_format(
     pg: AsyncEngine,
     otu_id: str,
@@ -280,44 +250,6 @@ async def join_and_format(
     return virtool.otus.utils.format_otu(joined, issues, most_recent_change)
 
 
-async def increment_otu_version(
-    mongo: "Mongo",
-    otu_id: str,
-    session: AsyncIOMotorClientSession | None = None,
-) -> Document:
-    """Increment the `version` field by one for the OTU identified by `otu_id`.
-
-    :param mongo: the application database client
-    :param otu_id: the ID of the OTU whose version should be increased
-    :param session: a Motor session to use for database operations
-    :return: the updated OTU document
-
-    """
-    return await mongo.otus.find_one_and_update(
-        {"_id": otu_id},
-        {"$set": {"verified": False}, "$inc": {"version": 1}},
-        session=session,
-    )
-
-
-async def update_otu_verification(
-    mongo: "Mongo",
-    joined: dict,
-    session: AsyncIOMotorClientSession | None = None,
-) -> dict | None:
-    issues = virtool.otus.utils.verify(joined)
-
-    if issues is None:
-        await mongo.otus.update_one(
-            {"_id": joined["_id"]},
-            {"$set": {"verified": True}},
-            session=session,
-        )
-        joined["verified"] = True
-
-    return issues
-
-
 def _encode_otu_data(document: Document) -> Document:
     """Render a Mongo OTU ``document`` as the ``data`` JSONB column must store it.
 
@@ -329,10 +261,9 @@ def _encode_otu_data(document: Document) -> Document:
     instant Mongo holds, so ``data`` stays a faithful lift of the document.
 
     ``created_at`` is rewritten on a copy, never in place, because the caller keeps
-    using the document it passed: the bulk insert path hands that very dict to
-    ``mongo.otus.insert_many`` afterwards, and the OTU data layer reuses it for history
-    diffs and returns it. A document with no ``created_at`` to rewrite -- every OTU
-    created through the API -- is returned as-is.
+    using the document it passed: the OTU data layer reuses it for history diffs and
+    returns it. A document with no ``created_at`` to rewrite -- every OTU created
+    through the API -- is returned as-is.
     """
     created_at = document.get("created_at")
 
@@ -382,9 +313,9 @@ def sequence_document_from_row(row: SQLSequence) -> Document:
 async def join_legacy_otu(pg: AsyncEngine, otu_id: str) -> Document | None:
     """Reconstruct a joined OTU document from Postgres in a session of its own.
 
-    The Postgres counterpart of :func:`join`, and the read primitive OTU reads and
-    :func:`virtool.history.db.patch_to_version` are built on. Sees only committed rows,
-    which is what a read outside a write transaction wants.
+    The read primitive OTU reads and :func:`virtool.history.db.patch_to_version` are
+    built on. Sees only committed rows, which is what a read outside a write transaction
+    wants.
     :func:`join_legacy_otu_in_session` is the variant for a caller that has to see its
     own uncommitted writes.
     """
@@ -421,8 +352,7 @@ async def join_legacy_otu_in_session(
     transaction joins as it now stands rather than as it was last committed. The OTU
     write path needs this: it composes a history diff from the OTU before and after its
     own uncommitted writes. The session's lifecycle is left alone -- nothing here
-    commits, rolls back or closes it. Returns ``None`` for an OTU that has no row, as
-    :func:`join` does for one that has no document.
+    commits, rolls back or closes it. Returns ``None`` for an OTU that has no row.
 
     A thin single-OTU face on :func:`join_legacy_otus_in_session`, which is where the
     read itself lives.
@@ -1159,60 +1089,13 @@ async def write_legacy_sequence(pg_session: AsyncSession, document: Document) ->
     )
 
 
-async def mirror_otu_to_mongo(
-    mongo: "Mongo",
-    document: Document,
-    session: AsyncIOMotorClientSession,
-) -> None:
-    """Rewrite an OTU's Mongo document to say what Postgres now says.
-
-    The write path composes an edit in Postgres and hands the resulting document here,
-    so Mongo is a downstream mirror rather than the store the edit is read back from.
-    The whole document is replaced rather than patched with the individual ``$set`` an
-    edit implies: the document Postgres produced is by definition everything the OTU
-    now is, so replacing with it needs no per-method knowledge of which fields moved
-    and cannot leave a field the edit forgot to name behind.
-
-    ``_id`` is dropped from the replacement and left to the query. A replacement may
-    not change a document's ``_id``, and passing back the one it already has says
-    nothing.
-
-    Paired with :func:`write_legacy_otu`, which writes the same document to Postgres.
-    Both go when Mongo leaves the write path.
-    """
-    await mongo.otus.replace_one(
-        {"_id": document["_id"]},
-        {key: value for key, value in document.items() if key != "_id"},
-        session=session,
-    )
-
-
-async def mirror_sequence_to_mongo(
-    mongo: "Mongo",
-    document: Document,
-    session: AsyncIOMotorClientSession,
-) -> None:
-    """Rewrite a sequence's Mongo document to say what Postgres now says.
-
-    The sequence counterpart of :func:`mirror_otu_to_mongo`, replacing rather than
-    patching for the same reason and dropping ``_id`` from the replacement for the same
-    reason.
-    """
-    await mongo.sequences.replace_one(
-        {"_id": document["_id"]},
-        {key: value for key, value in document.items() if key != "_id"},
-        session=session,
-    )
-
-
 async def increment_legacy_otu_version(
     pg_session: AsyncSession,
     otu_id: str,
 ) -> Document | None:
     """Bump an OTU's ``version`` and clear its ``verified`` flag within ``pg_session``.
 
-    The Postgres counterpart of :func:`increment_otu_version`, and like it returns the
-    OTU document as it now stands, or ``None`` for an OTU that has no row.
+    Returns the OTU document as it now stands, or ``None`` for an OTU that has no row.
 
     Both fields live twice: once in a promoted column and once in the ``data`` JSONB the
     document is recovered from. They are written in the same statement, so no reader can
@@ -1256,9 +1139,8 @@ async def update_legacy_otu_verification(
 ) -> Document | None:
     """Mark a ``joined`` OTU verified in Postgres if it has no issues.
 
-    The Postgres counterpart of :func:`update_otu_verification`. Returns the issues
-    :func:`virtool.otus.utils.verify` found, or ``None`` if it found none, and mirrors
-    the Mongo helper in mutating ``joined`` so the caller's copy agrees with the row.
+    Returns the issues :func:`virtool.otus.utils.verify` found, or ``None`` if it found
+    none, and mutates ``joined`` so the caller's copy agrees with the row.
 
     ``verified`` is written to the promoted column and to its ``data`` counterpart in the
     same statement, as :func:`increment_legacy_otu_version` writes them.
@@ -1294,19 +1176,18 @@ async def update_legacy_sequence_segments(
 ) -> None:
     """Unset ``segment`` on sequences naming a segment ``new`` no longer defines.
 
-    The Postgres counterpart of :func:`update_sequence_segments`, taking the same joined
-    OTU before and after an edit. An OTU that gained a schema for the first time has no
-    ``old`` names to drop, so it is left alone, matching the Mongo helper's ``"schema"
+    Takes the same joined OTU before and after an edit. An OTU that gained a schema for
+    the first time has no ``old`` names to drop, so it is left alone -- the ``"schema"
     not in old`` guard.
 
     The segment is *removed* from ``data`` with the JSONB ``-`` operator rather than set
-    to null, because Mongo's ``$unset`` removes the field and ``data`` must stay a
-    faithful lift of the document. The two are not interchangeable: a joined OTU feeds
-    ``dictdiffer`` diffs, so a lingering ``"segment": null`` would diff as a changed
-    field where the Mongo path diffs a removed one, and every patch built on it would
-    disagree. The promoted column has no such distinction to preserve and simply goes
-    null, which is what an absent ``segment`` renders as in
-    :func:`sequence_row_values`.
+    to null, because ``data`` must stay a faithful lift of the document the OTU was
+    written from, where an unset segment is an absent field. The two are not
+    interchangeable: a joined OTU feeds ``dictdiffer`` diffs, so a lingering
+    ``"segment": null`` would diff as a changed field where an absent one diffs as a
+    removed field, and every patch built on it would disagree. The promoted column has no
+    such distinction to preserve and simply goes null, which is what an absent
+    ``segment`` renders as in :func:`sequence_row_values`.
     """
     if old is None or new is None or "schema" not in old:
         return
@@ -1391,26 +1272,6 @@ async def delete_legacy_isolate_sequences(
             SQLSequence.isolate_id == isolate_id,
         ),
     )
-
-
-async def update_sequence_segments(
-    mongo: "Mongo",
-    old: dict,
-    new: dict,
-    session: AsyncIOMotorClientSession | None = None,
-) -> None:
-    if old is None or new is None or "schema" not in old:
-        return
-
-    old_names = {s["name"] for s in old["schema"]}
-    new_names = {s["name"] for s in new["schema"]}
-
-    if old_names != new_names:
-        await mongo.sequences.update_many(
-            {"otu_id": old["_id"], "segment": {"$in": list(old_names - new_names)}},
-            {"$unset": {"segment": ""}},
-            session=session,
-        )
 
 
 async def check_sequence_segment(
