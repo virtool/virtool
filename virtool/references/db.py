@@ -2,7 +2,6 @@
 
 import asyncio
 import datetime
-from typing import TYPE_CHECKING
 
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -34,9 +33,6 @@ from virtool.references.utils import reference_values
 from virtool.settings.models import Settings
 from virtool.types import Document
 from virtool.users.pg import SQLUser
-
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
 
 
 async def compose_reference_id_match(pg: AsyncEngine, ref_id: int | str) -> dict:
@@ -609,7 +605,6 @@ transaction small instead of holding one enormous transaction open.
 async def populate_insert_only_reference(
     created_at: datetime,
     history_method: HistoryMethod,
-    mongo: "Mongo",
     pg: AsyncEngine,
     otus: list[dict],
     reference_id: str,
@@ -656,28 +651,22 @@ async def populate_insert_only_reference(
                     [insertion.history.document for insertion in chunk],
                 )
                 await pg_session.commit()
-
-            async with asyncio.TaskGroup() as tg:
-                tg.create_task(mongo.otus.insert_many(chunk_otus, None))
-                tg.create_task(mongo.sequences.insert_many(chunk_sequences, None))
     except Exception:
-        await _rollback_insert_only_reference(mongo, pg, reference_id)
+        await _rollback_insert_only_reference(pg, reference_id)
 
         raise
 
 
 async def _rollback_insert_only_reference(
-    mongo: "Mongo",
     pg: AsyncEngine,
     reference_id: str,
 ) -> None:
     """Undo a partially completed bulk reference populate.
 
     Deletes every history, OTU, sequence and rights row committed for the reference
-    and the reference itself in a single Postgres transaction, then deletes the
-    matching Mongo documents. Every Postgres delete is scoped to the reference's
-    primary key, so the cleanup is atomic and can never touch history rows that
-    belong to another reference. The OTU rows are deleted before the reference
+    and the reference itself in a single Postgres transaction. Every delete is scoped
+    to the reference's primary key, so the cleanup is atomic and can never touch history
+    rows that belong to another reference. The OTU rows are deleted before the reference
     because ``legacy_otus.reference_id`` has no cascade; the sequence rows cascade
     from their OTUs.
     """
@@ -723,10 +712,3 @@ async def _rollback_insert_only_reference(
             )
 
         await session.commit()
-
-    reference_id_match = await compose_reference_id_match(pg, reference_id)
-
-    await asyncio.gather(
-        mongo.sequences.delete_many({"reference.id": reference_id_match}),
-        mongo.otus.delete_many({"reference.id": reference_id_match}),
-    )

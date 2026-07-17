@@ -89,11 +89,10 @@ async def test_finalize(
 async def test_finalize_stamps_last_indexed_version(
     data_layer: DataLayer,
     fake: DataFaker,
-    mongo: Mongo,
     pg: AsyncEngine,
 ):
-    """Finalizing an index stamps ``last_indexed_version`` in Postgres as well as
-    Mongo, so ``legacy_otus`` does not drift from the OTU document it mirrors.
+    """Finalizing an index stamps ``last_indexed_version`` on the promoted column and
+    its ``data`` counterpart, so ``legacy_otus`` does not drift from itself.
     """
     user = await fake.users.create()
     job = await fake.jobs.create(user=user)
@@ -113,14 +112,11 @@ async def test_finalize_stamps_last_indexed_version(
 
     await data_layer.index.finalize(index.id)
 
-    document = await mongo.otus.find_one({"_id": otu.id})
-
-    assert document["last_indexed_version"] == document["version"]
-
     async with AsyncSession(pg) as session:
         row = await session.scalar(select(SQLOTU).where(SQLOTU.id == otu.id))
 
-    assert row.data["last_indexed_version"] == document["version"]
+    assert row.last_indexed_version == row.version
+    assert row.data["last_indexed_version"] == row.version
 
 
 async def test_finalize_index_missing_from_postgres(

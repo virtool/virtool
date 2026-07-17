@@ -1,4 +1,3 @@
-import asyncio
 import datetime
 from pathlib import Path
 
@@ -12,7 +11,8 @@ from virtool.data.layer import DataLayer
 from virtool.data.topg import compose_legacy_id_subquery
 from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
-from virtool.mongo.core import Mongo
+from virtool.otus.db import otu_document_from_row, sequence_document_from_row
+from virtool.otus.sql import SQLOTU, SQLSequence
 from virtool.references.db import get_manifest
 from virtool.references.oas import CreateReferenceRequest
 from virtool.references.sql import SQLReference
@@ -26,18 +26,35 @@ from virtool.workflow.pytest_plugin.utils import StaticTime
 
 @pytest.fixture
 def assert_reference_created(
-    data_layer: DataLayer,
-    mongo: Mongo,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
 ):
-    async def func(
-        query: dict | None = None,
-    ):
-        otus, sequences = await asyncio.gather(
-            mongo.otus.find(query or {}, sort=[("name", 1)]).to_list(None),
-            mongo.sequences.find(query or {}, sort=[("accession", 1)]).to_list(None),
-        )
+    async def func():
+        async with AsyncSession(pg) as pg_session:
+            otu_rows = (
+                (
+                    await pg_session.execute(
+                        select(SQLOTU).order_by(SQLOTU.name),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+
+            sequence_rows = (
+                (
+                    await pg_session.execute(
+                        select(SQLSequence).order_by(
+                            SQLSequence.data["accession"].astext,
+                        ),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+
+        otus = [otu_document_from_row(row) for row in otu_rows]
+        sequences = [sequence_document_from_row(row) for row in sequence_rows]
 
         assert otus == snapshot(
             name="otus",
@@ -170,7 +187,6 @@ async def test_clone_reference_task(
     create_reference: int,
     data_layer: DataLayer,
     fake: DataFaker,
-    mongo: Mongo,
     pg: AsyncEngine,
 ):
     manifest = await get_manifest(pg, create_reference)
@@ -196,8 +212,12 @@ async def test_clone_reference_task(
         async with AsyncSession(pg) as session:
             return await session.scalar(query)
 
+    async def count_otus() -> int:
+        async with AsyncSession(pg) as session:
+            return await session.scalar(select(func.count()).select_from(SQLOTU))
+
     assert await count_history() == 20
-    assert await mongo.otus.count_documents({}) == 20
+    assert await count_otus() == 20
 
     task_instance = await CloneReferenceTask.from_task_id(
         data_layer,
@@ -210,10 +230,8 @@ async def test_clone_reference_task(
     assert task.complete is True
     assert task.progress == 100
 
-    otus = await mongo.otus.find({}).to_list(None)
-
     # Make sure OTU count is sum of source and destination references.
-    assert len(otus) == 40
+    assert await count_otus() == 40
 
     assert await count_history() == 40
     assert await count_history(clone_reference.id) == 20
@@ -228,8 +246,8 @@ async def _reference_row(pg: AsyncEngine, reference_id: int) -> SQLReference | N
         ).scalar_one_or_none()
 
 
-class TestImportReferenceDualWrite:
-    """The import population task keeps the Postgres reference row in step."""
+class TestImportReferencePopulation:
+    """The import population task writes and rolls back the Postgres reference."""
 
     @pytest.fixture
     async def run_import(
@@ -277,15 +295,13 @@ class TestImportReferenceDualWrite:
         self,
         run_import,
         mocker,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
-        """A failed insertion rolls back the Postgres reference row, not just Mongo."""
+        """A failed insertion rolls back the Postgres reference row."""
         data_layer, reference = await run_import()
 
-        mocker.patch.object(
-            mongo.otus,
-            "insert_many",
+        mocker.patch(
+            "virtool.references.db.bulk_insert_otu_rows",
             side_effect=RuntimeError("boom"),
         )
 
@@ -295,8 +311,8 @@ class TestImportReferenceDualWrite:
         assert await _reference_row(pg, reference.id) is None
 
 
-class TestCloneReferenceDualWrite:
-    """The clone population task keeps the Postgres reference row in step."""
+class TestCloneReferencePopulation:
+    """The clone population task writes and rolls back the Postgres reference."""
 
     async def test_rollback_deletes_postgres_row(
         self,
@@ -304,7 +320,6 @@ class TestCloneReferenceDualWrite:
         data_layer: DataLayer,
         fake: DataFaker,
         mocker,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
         """A failed clone insertion rolls back the Postgres reference row."""
@@ -315,9 +330,8 @@ class TestCloneReferenceDualWrite:
             user.id,
         )
 
-        mocker.patch.object(
-            mongo.otus,
-            "insert_many",
+        mocker.patch(
+            "virtool.references.db.bulk_insert_otu_rows",
             side_effect=RuntimeError("boom"),
         )
 

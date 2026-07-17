@@ -558,28 +558,23 @@ async def upsert_index_file(
 
 
 async def update_last_indexed_versions(
-    mongo: "Mongo",
     ref_id: str,
-    mongo_session: AsyncIOMotorClientSession,
     pg_session: AsyncSession,
 ) -> None:
     """Update the `last_indexed_version` field for OTUs associated with `ref_id`
 
     The OTUs to stamp, and the version to stamp each with, are read from Postgres as
-    the rows whose ``version`` still differs from their ``last_indexed_version``. Both
-    stores are then stamped from that same ``{version: [otu_id]}`` grouping, so the same
-    OTUs are stamped with the same version in each. On ``legacy_otus`` the value is held
-    twice -- in the promoted ``last_indexed_version`` column and in the ``data`` JSONB
-    that mirrors the Mongo document -- and both are written by the same statement, so
-    they cannot come out of a stamp disagreeing.
+    the rows whose ``version`` still differs from their ``last_indexed_version``, then
+    stamped from that same ``{version: [otu_id]}`` grouping. The value is held twice on
+    ``legacy_otus`` -- in the promoted ``last_indexed_version`` column and in the ``data``
+    JSONB the OTU document is recovered from -- and both are written by the same
+    statement, so they cannot come out of a stamp disagreeing.
 
-    Postgres is the read authority: an OTU with no Postgres row is invisible here and is
-    stamped in neither store. The read cutover is gated on the backfill and the
-    Mongo-Postgres parity check, so every OTU has a row by the time this runs.
+    An OTU with no Postgres row is invisible here and is stamped in neither. The read
+    cutover is gated on the backfill and the parity check, so every OTU has a row by the
+    time this runs.
 
-    :param mongo: the application mongo client
     :param ref_id: the id of the reference whose otus should be updated
-    :param mongo_session: the motor session to use
     :param pg_session: the Postgres session to use
 
     """
@@ -594,13 +589,6 @@ async def update_last_indexed_versions(
 
     for otu_id, version in changed_otus:
         id_version_key.setdefault(version, []).append(otu_id)
-
-    for version, id_list in id_version_key.items():
-        await mongo.otus.update_many(
-            {"_id": {"$in": id_list}},
-            {"$set": {"last_indexed_version": version}},
-            session=mongo_session,
-        )
 
     for version, id_list in id_version_key.items():
         for start in range(0, len(id_list), OTU_ID_CHUNK_SIZE):

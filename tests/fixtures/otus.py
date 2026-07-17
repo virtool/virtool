@@ -17,13 +17,12 @@ than Mongo can hold.
 
 
 @pytest.fixture
-def insert_otu(mongo, pg):
-    """Insert an OTU document, and any sequences, into both stores.
+def insert_otu(pg):
+    """Insert an OTU document, and any sequences, into Postgres.
 
-    Seeds a literal OTU document the way the dual-write path would, for a test that
-    needs a specific ``_id``, isolate id or version rather than whatever
-    ``fake.otus.create`` invents. OTUs are read from Postgres, so a test that seeds only
-    Mongo gets a ``404``.
+    Seeds a literal OTU document the way the write path would, for a test that needs a
+    specific ``_id``, isolate id or version rather than whatever ``fake.otus.create``
+    invents.
 
     ``reference_id`` is written onto the document, so the caller does not have to know
     that an OTU's reference is embedded rather than a column.
@@ -36,11 +35,6 @@ def insert_otu(mongo, pg):
     ) -> Document:
         document = {**document, "reference": {"id": reference_id}}
         sequences = sequences or []
-
-        await mongo.otus.insert_one(document)
-
-        if sequences:
-            await mongo.sequences.insert_many(sequences, session=None)
 
         async with AsyncSession(pg) as session:
             await write_legacy_otu(session, document)

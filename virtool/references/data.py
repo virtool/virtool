@@ -1200,7 +1200,6 @@ class ReferencesData(DataLayerDomain):
         await populate_insert_only_reference(
             created_at,
             HistoryMethod.clone,
-            self._mongo,
             self._pg,
             otus,
             ref_id,
@@ -1243,7 +1242,6 @@ class ReferencesData(DataLayerDomain):
         await populate_insert_only_reference(
             created_at,
             HistoryMethod.import_otu,
-            self._mongo,
             self._pg,
             [otu.dict(by_alias=True) for otu in data.otus],
             ref_id,
