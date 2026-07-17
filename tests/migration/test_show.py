@@ -2,7 +2,12 @@ import arrow
 import pytest
 
 from virtool.migration.cls import GenericRevision, RevisionSource
-from virtool.migration.show import order_revisions
+from virtool.migration.show import (
+    load_alembic_revisions,
+    load_all_revisions,
+    load_virtool_revisions,
+    order_revisions,
+)
 
 
 class TestOrderRevisions:
@@ -189,3 +194,154 @@ class TestOrderRevisions:
             ValueError, match="Root revision is not an Alembic revision."
         ):
             order_revisions(revisions)
+
+    def test_alembic_fork(self):
+        """Test that an error is raised when two Alembic revisions share a downgrade."""
+        revisions = [
+            GenericRevision(
+                alembic_downgrade=None,
+                created_at=arrow.get("2021-01-01T00:00:00").naive,
+                id="root",
+                name="Root",
+                source=RevisionSource.ALEMBIC,
+                upgrade=None,
+                virtool_downgrade=None,
+            ),
+            GenericRevision(
+                alembic_downgrade="root",
+                created_at=arrow.get("2021-01-02T00:00:00").naive,
+                id="branch_a",
+                name="Branch A",
+                source=RevisionSource.ALEMBIC,
+                upgrade=None,
+                virtool_downgrade=None,
+            ),
+            GenericRevision(
+                alembic_downgrade="root",
+                created_at=arrow.get("2021-01-03T00:00:00").naive,
+                id="branch_b",
+                name="Branch B",
+                source=RevisionSource.ALEMBIC,
+                upgrade=None,
+                virtool_downgrade=None,
+            ),
+        ]
+
+        with pytest.raises(
+            ValueError,
+            match="Revisions branch_a and branch_b both downgrade to root.",
+        ):
+            order_revisions(revisions)
+
+    def test_virtool_fork(self):
+        """Test that an error is raised when two Virtool revisions share a downgrade."""
+        revisions = [
+            GenericRevision(
+                alembic_downgrade=None,
+                created_at=arrow.get("2021-01-01T00:00:00").naive,
+                id="root",
+                name="Root",
+                source=RevisionSource.ALEMBIC,
+                upgrade=None,
+                virtool_downgrade=None,
+            ),
+            GenericRevision(
+                alembic_downgrade="root",
+                created_at=arrow.get("2021-01-02T00:00:00").naive,
+                id="trunk",
+                name="Trunk",
+                source=RevisionSource.VIRTOOL,
+                upgrade=None,
+                virtool_downgrade=None,
+            ),
+            GenericRevision(
+                alembic_downgrade=None,
+                created_at=arrow.get("2021-01-03T00:00:00").naive,
+                id="branch_a",
+                name="Branch A",
+                source=RevisionSource.VIRTOOL,
+                upgrade=None,
+                virtool_downgrade="trunk",
+            ),
+            GenericRevision(
+                alembic_downgrade=None,
+                created_at=arrow.get("2021-01-04T00:00:00").naive,
+                id="branch_b",
+                name="Branch B",
+                source=RevisionSource.VIRTOOL,
+                upgrade=None,
+                virtool_downgrade="trunk",
+            ),
+        ]
+
+        with pytest.raises(
+            ValueError,
+            match="Revisions branch_a and branch_b both downgrade to trunk.",
+        ):
+            order_revisions(revisions)
+
+    def test_orphaned(self):
+        """Test that an error is raised when a revision cannot be reached from the root.
+
+        The orphans form a valid chain of their own, but it hangs off a revision that
+        is not in the loaded set.
+        """
+        revisions = [
+            GenericRevision(
+                alembic_downgrade=None,
+                created_at=arrow.get("2021-01-01T00:00:00").naive,
+                id="root",
+                name="Root",
+                source=RevisionSource.ALEMBIC,
+                upgrade=None,
+                virtool_downgrade=None,
+            ),
+            GenericRevision(
+                alembic_downgrade="root",
+                created_at=arrow.get("2021-01-02T00:00:00").naive,
+                id="reachable",
+                name="Reachable",
+                source=RevisionSource.ALEMBIC,
+                upgrade=None,
+                virtool_downgrade=None,
+            ),
+            GenericRevision(
+                alembic_downgrade="missing",
+                created_at=arrow.get("2021-01-03T00:00:00").naive,
+                id="orphan_a",
+                name="Orphan A",
+                source=RevisionSource.ALEMBIC,
+                upgrade=None,
+                virtool_downgrade=None,
+            ),
+            GenericRevision(
+                alembic_downgrade="orphan_a",
+                created_at=arrow.get("2021-01-04T00:00:00").naive,
+                id="orphan_b",
+                name="Orphan B",
+                source=RevisionSource.ALEMBIC,
+                upgrade=None,
+                virtool_downgrade=None,
+            ),
+        ]
+
+        with pytest.raises(
+            ValueError,
+            match="Revisions could not be reached from the root: orphan_a, orphan_b.",
+        ):
+            order_revisions(revisions)
+
+
+class TestLoadAllRevisions:
+    def test_chain_is_intact(self):
+        """Test that every revision in the repository is ordered exactly once.
+
+        This fails if a revision is added that forks the chain or that cannot be
+        reached from the root.
+        """
+        loaded = [*load_alembic_revisions(), *load_virtool_revisions()]
+
+        ordered_ids = [revision.id for revision in load_all_revisions()]
+
+        assert sorted(ordered_ids) == sorted(revision.id for revision in loaded)
+        assert len(ordered_ids) == len(set(ordered_ids))
