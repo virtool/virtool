@@ -46,7 +46,7 @@ class HMMStatus(BaseModel):
 
 
 class HMMMinimal(BaseModel):
-    id: str
+    id: int
     cluster: int
     count: int
     families: dict[str, int]
