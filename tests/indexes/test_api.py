@@ -26,7 +26,7 @@ from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.db import JOB_INDEX_FILE_NAMES
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.indexes.utils import check_index_file_type, compose_index_file_key
-from virtool.jobs.pg import SQLJob, SQLJobIndex
+from virtool.jobs.pg import SQLJob
 from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU
@@ -445,7 +445,6 @@ class TestCreate:
             assert history is not None
             assert (history.index, history.index_version) == (index["_id"], "0")
             assert await session.scalar(select(SQLJob.id)) is None
-            assert await session.scalar(select(SQLJobIndex.job_id)) is None
 
         m_create_manifest.assert_called_with(ANY, reference["id"])
 

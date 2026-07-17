@@ -83,6 +83,14 @@ class SQLJobAnalysis(Base):
 
 
 class SQLJobIndex(Base):
+    """Links a job to the index it built.
+
+    No longer written: the index references its job directly via
+    ``indexes.job_id``, and ``JobsData.get`` resolves the index through that
+    reverse foreign key. The model and ``job_indexes`` table are retained pending
+    their drop in VIR-2394.
+    """
+
     __tablename__ = "job_indexes"
 
     job_id: Mapped[int] = mapped_column(ForeignKey("jobs.id"), primary_key=True)
