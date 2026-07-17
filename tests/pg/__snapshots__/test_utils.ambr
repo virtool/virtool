@@ -11,10 +11,10 @@
   })
 # ---
 # name: test_get_row
-  <SQLIndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=1234567)>
+  <SQLIndexFile(id=1, name=reference.1.bt2, index=foo, index_id=1, type=bowtie2, size=1234567)>
 # ---
 # name: test_get_row.1
-  <SQLIndexFile(id=1, name=reference.1.bt2, index=foo, type=bowtie2, size=1234567)>
+  <SQLIndexFile(id=1, name=reference.1.bt2, index=foo, index_id=1, type=bowtie2, size=1234567)>
 # ---
 # name: test_get_rows
   ScalarResult(

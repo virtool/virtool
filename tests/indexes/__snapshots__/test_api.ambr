@@ -766,5 +766,5 @@
   })
 # ---
 # name: test_upload[None].2
-  <SQLIndexFile(id=1, name=reference.1.bt2, index=bf1b993c, type=bowtie2, size=4200473)>
+  <SQLIndexFile(id=1, name=reference.1.bt2, index=bf1b993c, index_id=1, type=bowtie2, size=4200473)>
 # ---

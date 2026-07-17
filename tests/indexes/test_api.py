@@ -24,7 +24,7 @@ from virtool.fake.next import DataFaker
 from virtool.history.db import legacy_history_values
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.db import JOB_INDEX_FILE_NAMES
-from virtool.indexes.sql import SQLIndexFile
+from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.indexes.utils import check_index_file_type, compose_index_file_key
 from virtool.jobs.pg import SQLJob, SQLJobIndex
 from virtool.models.enums import Permission
@@ -706,7 +706,16 @@ async def test_upload(
 
     if error == "409":
         async with AsyncSession(pg) as session:
-            session.add(SQLIndexFile(name="reference.1.bt2", index=index_id))
+            index_pk = await session.scalar(
+                select(SQLIndex.id).where(SQLIndex.legacy_id == index_id),
+            )
+            session.add(
+                SQLIndexFile(
+                    name="reference.1.bt2",
+                    index=index_id,
+                    index_id=index_pk,
+                ),
+            )
             await session.commit()
 
     url = f"/indexes/{index_id}/files"
@@ -793,10 +802,14 @@ async def test_finalize(
     )
 
     async with AsyncSession(pg) as session:
+        index_pk = await session.scalar(
+            select(SQLIndex.id).where(SQLIndex.legacy_id == index.id),
+        )
         session.add_all(
             [
                 SQLIndexFile(
                     index=index.id,
+                    index_id=index_pk,
                     name=file_name,
                     size=9000,
                     type=check_index_file_type(file_name),
@@ -847,10 +860,14 @@ async def test_download(
     await memory_storage.write(key, _stream())
 
     async with AsyncSession(pg) as session:
+        index_pk = await session.scalar(
+            select(SQLIndex.id).where(SQLIndex.legacy_id == index.id),
+        )
         session.add(
             SQLIndexFile(
                 name="reference.1.bt2",
                 index=index.id,
+                index_id=index_pk,
                 type="bowtie2",
                 size=len(expected_bytes),
             ),

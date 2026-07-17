@@ -22,6 +22,38 @@ from virtool.indexes.models import Index
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU
+from virtool.utils import timestamp
+
+
+async def _seed_index(pg: AsyncEngine, fake: DataFaker, legacy_id: str) -> int:
+    """Seed a single ``indexes`` row keyed by ``legacy_id`` and return its integer id.
+
+    ``index_files`` rows carry a non-null integer FK to ``indexes``, so the file
+    helpers below need a real parent index to point at.
+    """
+    user = await fake.users.create()
+    reference = await fake.references.create(user=user)
+    job = await fake.jobs.create(user=user)
+
+    async with AsyncSession(pg) as session:
+        index = SQLIndex(
+            legacy_id=legacy_id,
+            version=0,
+            created_at=timestamp(),
+            manifest={},
+            ready=False,
+            storage_key=legacy_id,
+            reference_id=reference.id,
+            user_id=user.id,
+            job_id=job.id,
+            task_id=None,
+        )
+        session.add(index)
+        await session.flush()
+        index_pk = index.id
+        await session.commit()
+
+    return index_pk
 
 
 @pytest.mark.parametrize("index_id", [None, "abc"])
@@ -513,7 +545,9 @@ async def test_iter_patched_otus_limits_scheduled_lookahead(
     await stream.aclose()
 
 
-async def test_upsert_index_file_creates_row(pg: AsyncEngine):
+async def test_upsert_index_file_creates_row(fake: DataFaker, pg: AsyncEngine):
+    index_pk = await _seed_index(pg, fake, "foo")
+
     async with AsyncSession(pg) as session:
         assert (
             await session.execute(
@@ -553,17 +587,21 @@ async def test_upsert_index_file_creates_row(pg: AsyncEngine):
     assert row.to_dict() == {
         "id": 1,
         "index": "foo",
+        "index_id": index_pk,
         "name": "reference.json.gz",
         "size": 9000,
         "type": "json",
     }
 
 
-async def test_upsert_index_file_updates_existing_row(pg: AsyncEngine):
+async def test_upsert_index_file_updates_existing_row(fake: DataFaker, pg: AsyncEngine):
+    index_pk = await _seed_index(pg, fake, "foo")
+
     async with AsyncSession(pg) as session:
         session.add(
             SQLIndexFile(
                 index="foo",
+                index_id=index_pk,
                 name="reference.json.gz",
                 size=1,
                 type="json",
@@ -677,11 +715,14 @@ class TestUpdateLastIndexedVersions:
             assert rows[otu.id].data["last_indexed_version"] == rows[otu.id].version
 
 
-async def test_attach_files(snapshot, pg: AsyncEngine):
+async def test_attach_files(snapshot, fake: DataFaker, pg: AsyncEngine):
+    index_pk = await _seed_index(pg, fake, "foo")
+
     index_1 = SQLIndexFile(
         id=1,
         name="reference.fa.gz",
         index="foo",
+        index_id=index_pk,
         type="fasta",
         size=1234567,
     )
@@ -689,6 +730,7 @@ async def test_attach_files(snapshot, pg: AsyncEngine):
         id=2,
         name="reference.json.gz",
         index="foo",
+        index_id=index_pk,
         type="json",
         size=1234567,
     )

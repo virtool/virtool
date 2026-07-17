@@ -6,7 +6,6 @@ from tests.fixtures.otus import IMPORTED_CREATED_AT
 from virtool.api.custom_json import dump_string, loads
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
-from virtool.history.sql import SQLLegacyHistory
 from virtool.models.enums import Molecule
 from virtool.mongo.core import Mongo
 from virtool.otus.db import (
@@ -305,50 +304,22 @@ class TestFindModifiedCount:
     versions.
     """
 
-    async def _add_history(
-        self,
-        pg: AsyncEngine,
-        user_id: int,
-        created_at,
-        rows: list[tuple[str, str, str]],
-    ) -> None:
-        async with AsyncSession(pg) as session:
-            session.add_all(
-                SQLLegacyHistory(
-                    legacy_id=f"{otu}.{otu_version}",
-                    created_at=created_at,
-                    description="",
-                    method_name="edit",
-                    user_id=user_id,
-                    otu=otu,
-                    otu_name=otu_name,
-                    otu_version=otu_version,
-                    reference="reference",
-                    index=None,
-                    index_version=None,
-                )
-                for otu, otu_name, otu_version in rows
-            )
-            await session.commit()
-
     async def test_shared_name_counted_separately(
         self,
-        fake,
+        data_layer: DataLayer,
+        fake: DataFaker,
         pg: AsyncEngine,
-        static_time,
     ):
         """Two OTUs that share a name count as two modifications, not one."""
         user = await fake.users.create()
+        reference = await fake.references.create(user=user)
 
-        await self._add_history(
-            pg,
-            user.id,
-            static_time.datetime,
-            [
-                ("first_otu", "Shared Name", "0"),
-                ("second_otu", "Shared Name", "0"),
-            ],
-        )
+        for abbreviation in ("SNA", "SNB"):
+            await data_layer.otus.create(
+                reference.id,
+                CreateOTURequest(name="Shared Name", abbreviation=abbreviation),
+                user.id,
+            )
 
         data = await find(pg, None, 1, 25, None)
 
@@ -356,21 +327,24 @@ class TestFindModifiedCount:
 
     async def test_renamed_otu_counted_once(
         self,
-        fake,
+        data_layer: DataLayer,
+        fake: DataFaker,
         pg: AsyncEngine,
-        static_time,
     ):
         """One OTU renamed across versions counts as a single modification."""
         user = await fake.users.create()
+        reference = await fake.references.create(user=user)
 
-        await self._add_history(
-            pg,
+        otu = await data_layer.otus.create(
+            reference.id,
+            CreateOTURequest(name="Old Name", abbreviation="ON"),
             user.id,
-            static_time.datetime,
-            [
-                ("renamed_otu", "Old Name", "0"),
-                ("renamed_otu", "New Name", "1"),
-            ],
+        )
+
+        await data_layer.otus.update(
+            otu.id,
+            UpdateOTURequest(name="New Name"),
+            user.id,
         )
 
         data = await find(pg, None, 1, 25, None)

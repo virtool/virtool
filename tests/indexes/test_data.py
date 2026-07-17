@@ -1,5 +1,5 @@
 import pytest
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.errors import ResourceError
@@ -28,12 +28,17 @@ async def add_index_files(pg: AsyncEngine, index_id: str) -> None:
     ]
 
     async with AsyncSession(pg) as session:
+        index_pk = await session.scalar(
+            select(SQLIndex.id).where(SQLIndex.legacy_id == index_id),
+        )
+
         session.add_all(
             [
                 SQLIndexFile(
                     id=id_,
                     name=name,
                     index=index_id,
+                    index_id=index_pk,
                     type=type_,
                     size=1234567,
                 )
@@ -239,3 +244,39 @@ class TestDelete:
 
         # The Postgres index row is deleted alongside the Mongo document.
         assert index_row is None
+
+    async def test_deletes_index_files(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+    ):
+        """Deleting a built index removes its ``index_files`` rows.
+
+        The ``index_id`` foreign key cascades on delete, so hard-deleting the index
+        row takes its file rows with it rather than raising a foreign-key violation.
+        """
+        user = await fake.users.create()
+        job = await fake.jobs.create(user=user)
+        reference = await fake.references.create(user=user)
+
+        index = await fake.indexes.create(
+            reference,
+            user,
+            job=job,
+            manifest={},
+            version=2,
+            ready=True,
+        )
+
+        await add_index_files(pg, index.id)
+
+        await data_layer.index.delete(index.id)
+
+        async with AsyncSession(pg) as session:
+            remaining = await session.scalar(
+                select(func.count()).select_from(SQLIndexFile),
+            )
+
+        assert remaining == 0
