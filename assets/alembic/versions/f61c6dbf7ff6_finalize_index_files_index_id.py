@@ -6,8 +6,15 @@ and the dual-write path sets it on new rows.
 
 The migration:
 
-- raises if any row still has NULL ``index_id`` (tripwire; every index file
-  belongs to an index, so an unresolved reference is a data-integrity problem),
+- deletes rows orphaned by an index deleted before this migration. The legacy
+  ``IndexData.delete`` hard-deletes the index and cleans its object storage but
+  never deleted the ``index_files`` rows, so a deleted index leaves stale rows
+  whose ``index`` matches no ``indexes`` row and whose ``index_id`` therefore
+  could not be backfilled. Their files are already gone from storage, so the
+  rows are dead metadata and are dropped rather than blocking the upgrade,
+- raises if any row *still* has NULL ``index_id`` (tripwire; the only rows left
+  are those whose ``index`` does resolve to an ``indexes`` row, so a NULL now
+  means the backfill missed a live index -- a data-integrity problem),
 - sets ``index_id`` NOT NULL,
 - drops the legacy ``(index, name)`` unique constraint (the ``(index_id, name)``
   constraint was added in ``89a96e2f4db3``).
@@ -34,12 +41,22 @@ branch_labels = None
 depends_on = None
 
 
+DELETE_ORPHANED_ROWS_SQL = """
+DELETE FROM index_files
+WHERE index_id IS NULL
+  AND NOT EXISTS (
+      SELECT 1 FROM indexes WHERE indexes.legacy_id = index_files.index
+  )
+"""
+
 COUNT_NULL_INDEX_ID_SQL = """
 SELECT COUNT(*) FROM index_files WHERE index_id IS NULL
 """
 
 
 def upgrade() -> None:
+    op.execute(sa.text(DELETE_ORPHANED_ROWS_SQL))
+
     null_count = op.get_bind().execute(sa.text(COUNT_NULL_INDEX_ID_SQL)).scalar()
 
     if null_count:

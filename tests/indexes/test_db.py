@@ -36,25 +36,24 @@ async def _seed_index(pg: AsyncEngine, fake: DataFaker, legacy_id: str) -> int:
     job = await fake.jobs.create(user=user)
 
     async with AsyncSession(pg) as session:
-        session.add(
-            SQLIndex(
-                legacy_id=legacy_id,
-                version=0,
-                created_at=timestamp(),
-                manifest={},
-                ready=False,
-                storage_key=legacy_id,
-                reference_id=reference.id,
-                user_id=user.id,
-                job_id=job.id,
-                task_id=None,
-            ),
+        index = SQLIndex(
+            legacy_id=legacy_id,
+            version=0,
+            created_at=timestamp(),
+            manifest={},
+            ready=False,
+            storage_key=legacy_id,
+            reference_id=reference.id,
+            user_id=user.id,
+            job_id=job.id,
+            task_id=None,
         )
+        session.add(index)
+        await session.flush()
+        index_pk = index.id
         await session.commit()
 
-        return await session.scalar(
-            select(SQLIndex.id).where(SQLIndex.legacy_id == legacy_id),
-        )
+    return index_pk
 
 
 @pytest.mark.parametrize("index_id", [None, "abc"])

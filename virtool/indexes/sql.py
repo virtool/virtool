@@ -82,6 +82,10 @@ class SQLIndexFile(Base):
     column is dropped in a later cleanup revision. Uniqueness is now keyed on the
     integer ``(index_id, name)``; the legacy ``(index, name)`` constraint is
     dropped by the finalize revision.
+
+    ``index_id`` cascades on delete: files belong to their index, so deleting the
+    index (a hard delete, unlike the subtraction soft delete) removes its file
+    rows. The object-storage files are cleaned separately by ``IndexData.delete``.
     """
 
     __tablename__ = "index_files"
@@ -92,6 +96,10 @@ class SQLIndexFile(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     index = Column(String, nullable=False)
-    index_id = Column(BigInteger, ForeignKey("indexes.id"), nullable=False)
+    index_id = Column(
+        BigInteger,
+        ForeignKey("indexes.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     type = Column(Enum(IndexType))
     size = Column(BigInteger)

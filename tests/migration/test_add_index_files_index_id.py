@@ -149,16 +149,45 @@ class TestBackfill:
 
 
 class TestFinalize:
-    async def test_trips_on_unresolved_index_id(
+    async def test_deletes_orphaned_rows(
         self,
         ctx: MigrationContext,
         _at_previous_revision: None,
         apply_alembic: Callable,
     ):
-        """The finalize revision refuses to set NOT NULL while any row is unresolved."""
-        await _insert_index_file(ctx, "orphan_index", "reference.json.gz")
+        """A row whose ``index`` matches no ``indexes`` row is stale (its index was
+        deleted) and is dropped by finalize rather than tripping the NOT NULL check.
+        """
+        file_id = await _insert_index_file(ctx, "orphan_index", "reference.json.gz")
+
+        await asyncio.to_thread(apply_alembic, FINALIZE_REVISION)
+
+        async with AsyncSession(ctx.pg) as session:
+            remaining = (
+                await session.execute(
+                    text("SELECT COUNT(*) FROM index_files WHERE id = :id"),
+                    {"id": file_id},
+                )
+            ).scalar_one()
+
+        assert remaining == 0
+
+    async def test_trips_on_unbackfilled_live_index(
+        self,
+        ctx: MigrationContext,
+        _at_previous_revision: None,
+        apply_alembic: Callable,
+    ):
+        """A NULL ``index_id`` whose ``index`` still resolves to a live index is a
+        backfill gap, not a stale orphan, so finalize refuses to set NOT NULL.
+        """
+        await _seed_index(ctx, "index_1")
 
         await asyncio.to_thread(apply_alembic, ADD_REVISION)
+
+        # Insert after the backfill so ``index_id`` stays NULL even though the
+        # parent index exists -- the backfill gap the tripwire guards against.
+        await _insert_index_file(ctx, "index_1", "reference.json.gz")
 
         with pytest.raises(RuntimeError, match="NULL index_id"):
             await asyncio.to_thread(apply_alembic, FINALIZE_REVISION)

@@ -39,7 +39,7 @@ def upgrade() -> None:
         sa.Column(
             "index_id",
             sa.BigInteger(),
-            sa.ForeignKey("indexes.id"),
+            sa.ForeignKey("indexes.id", ondelete="CASCADE"),
             nullable=True,
         ),
     )

@@ -23,6 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import virtool.history.db
 import virtool.utils
 from virtool.api.utils import paginate
+from virtool.data.errors import ResourceNotFoundError
 from virtool.data.topg import (
     compose_legacy_id_subquery,
     resolve_legacy_id,
@@ -496,7 +497,7 @@ async def upsert_index_file(
     index_pg_id = await resolve_legacy_id(session, SQLIndex, index_id)
 
     if index_pg_id is None:
-        raise ValueError(f"Index {index_id!r} not found in postgres")
+        raise ResourceNotFoundError(f"Index {index_id!r} not found in postgres")
 
     index_file_id = (
         await session.execute(
