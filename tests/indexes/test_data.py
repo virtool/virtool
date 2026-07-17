@@ -6,7 +6,7 @@ from virtool.data.errors import ResourceError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
-from virtool.indexes.sql import SQLIndexFile
+from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU
 
@@ -70,6 +70,14 @@ async def test_finalize(
 
     # Ensure document in database is correct.
     assert await mongo.indexes.find_one() == snapshot
+
+    # The Postgres row is marked ready alongside the Mongo document.
+    async with AsyncSession(pg) as session:
+        row = await session.scalar(
+            select(SQLIndex).where(SQLIndex.legacy_id == index.id),
+        )
+
+    assert row.ready is True
 
 
 @pytest.mark.usefixtures("static_time")
@@ -223,8 +231,15 @@ class TestDelete:
                 for row in (await session.execute(select(SQLLegacyHistory))).scalars()
             }
 
+            index_row = await session.scalar(
+                select(SQLIndex).where(SQLIndex.legacy_id == deleted_index.id),
+            )
+
         assert rows == {
             "otu_a.0": (None, None),
             "otu_b.0": (None, None),
             "otu_c.0": ("other_index", "2"),
         }
+
+        # The Postgres index row is deleted alongside the Mongo document.
+        assert index_row is None

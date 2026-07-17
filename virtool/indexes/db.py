@@ -30,7 +30,7 @@ from virtool.data.topg import (
 )
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.history.sql import SQLLegacyHistory
-from virtool.indexes.sql import SQLIndexFile
+from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU
@@ -171,6 +171,21 @@ async def create(
     document["reference"] = {"id": reference_pk}
 
     document = await mongo.indexes.insert_one(document, session=mongo_session)
+
+    pg_session.add(
+        SQLIndex(
+            legacy_id=document["_id"],
+            version=index_version,
+            created_at=document["created_at"],
+            manifest=manifest,
+            ready=False,
+            storage_key=document["_id"],
+            reference_id=reference_pk,
+            user_id=user_id,
+            job_id=None,
+            task_id=task_id,
+        ),
+    )
 
     await pg_session.execute(
         update(SQLLegacyHistory)
