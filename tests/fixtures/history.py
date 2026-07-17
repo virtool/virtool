@@ -1,41 +1,6 @@
-import datetime
-
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from virtool.history.db import bulk_insert_diffs, legacy_history_values
-from virtool.history.sql import SQLLegacyHistory
-from virtool.otus.db import otu_row_values
-from virtool.otus.sql import SQLOTU
-from virtool.references.sql import SQLReference
-
-
-@pytest.fixture
-def test_change(static_time):
-    return {
-        "_id": "6116cba1.1",
-        "method_name": "edit",
-        "description": "Edited Prunus virus E",
-        "created_at": static_time.datetime,
-        "diff": [
-            ["change", "abbreviation", ["PVF", ""]],
-            ["change", "name", ["Prunus virus F", "Prunus virus E"]],
-            ["change", "version", [0, 1]],
-        ],
-        "index": {"id": "unbuilt", "version": 1},
-        "reference": {"id": "hxn167"},
-        "user": {"id": "test"},
-        "otu": {"id": "6116cba1", "name": "Prunus virus F", "version": 1},
-    }
-
-
-@pytest.fixture
-def test_changes(test_change):
-    return [
-        test_change,
-        dict(test_change, _id="foobar.1"),
-        dict(test_change, _id="foobar.2"),
-    ]
+from virtool.otus.oas import CreateOTURequest, UpdateOTURequest
 
 
 @pytest.fixture
@@ -106,209 +71,62 @@ def test_otu_edit():
 
 
 @pytest.fixture
-def create_mock_history(fake, mongo, pg):
-    async def func(remove):
+def build_otu_history(data_layer, fake):
+    """Build a multi-version OTU history through real data-layer mutations.
+
+    The change records come from the same producer production uses, so they can drift
+    from real behaviour no more than the OTU data layer itself does. The OTU passes
+    through five versions:
+
+    * ``0`` -- created
+    * ``1`` -- an isolate added
+    * ``2`` -- a sequence added to the isolate
+    * ``3`` -- renamed
+    * ``4`` -- the isolate removed
+    * ``removed`` -- the OTU removed (only when ``remove`` is ``True``)
+
+    Returns the id of the OTU the mutations created so callers address it rather than a
+    hand-picked literal id.
+    """
+
+    async def func(remove: bool) -> str:
         user = await fake.users.create()
+        reference = await fake.references.create(user=user)
 
-        documents = [
-            {
-                "_id": "6116cba1.0",
-                "created_at": datetime.datetime(2017, 7, 12, 16, 0, 50, 495000),
-                "description": "Description",
-                "diff": {
-                    "_id": "6116cba1",
-                    "abbreviation": "PVF",
-                    "imported": True,
-                    "isolates": [
-                        {
-                            "source_name": "8816-v2",
-                            "source_type": "isolate",
-                            "default": True,
-                            "id": "cab8b360",
-                            "sequences": [
-                                {
-                                    "_id": "KX269872",
-                                    "definition": "Prunus virus F isolate "
-                                    "8816-s2 segment RNA2 "
-                                    "polyprotein 2 gene, "
-                                    "complete cds.",
-                                    "host": "sweet cherry",
-                                    "isolate_id": "cab8b360",
-                                    "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
-                                    "otu_id": "6116cba1",
-                                    "segment": None,
-                                }
-                            ],
-                        }
-                    ],
-                    "reference": {"id": "hxn167"},
-                    "schema": [],
-                    "last_indexed_version": 0,
-                    "lower_name": "prunus virus f",
-                    "verified": False,
-                    "name": "Prunus virus F",
-                    "version": 0,
-                },
-                "index": {"id": "unbuilt", "version": "unbuilt"},
-                "method_name": "create",
-                "user": {"id": "test"},
-                "reference": {"id": "hxn167"},
-                "otu": {"id": "6116cba1", "name": "Prunus virus F", "version": 0},
-            },
-            {
-                "_id": "6116cba1.1",
-                "created_at": datetime.datetime(2017, 7, 12, 16, 0, 50, 600000),
-                "description": "Description",
-                "diff": [
-                    ["change", "version", [0, 1]],
-                    ["change", "abbreviation", ["PVF", "TST"]],
-                ],
-                "index": {"id": "unbuilt", "version": "unbuilt"},
-                "method_name": "update",
-                "user": {"id": "test"},
-                "reference": {"id": "hxn167"},
-                "otu": {"id": "6116cba1", "name": "Prunus virus F", "version": 1},
-            },
-            {
-                "_id": "6116cba1.2",
-                "created_at": datetime.datetime(2017, 7, 12, 16, 0, 50, 602000),
-                "description": "Description",
-                "diff": [
-                    ["change", "version", [1, 2]],
-                    ["change", "name", ["Prunus virus F", "Test Virus"]],
-                ],
-                "index": {"id": "unbuilt", "version": "unbuilt"},
-                "method_name": "update",
-                "user": {"id": "test"},
-                "reference": {"id": "hxn167"},
-                "otu": {"id": "6116cba1", "name": "Prunus virus F", "version": 2},
-            },
-            {
-                "_id": "6116cba1.3",
-                "created_at": datetime.datetime(2017, 7, 12, 16, 0, 50, 603000),
-                "description": "Description",
-                "diff": [
-                    ["change", "version", [2, 3]],
-                    [
-                        "remove",
-                        "isolates",
-                        [
-                            [
-                                0,
-                                {
-                                    "default": True,
-                                    "id": "cab8b360",
-                                    "sequences": [
-                                        {
-                                            "_id": "KX269872",
-                                            "definition": "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene, complete "
-                                            "cds.",
-                                            "host": "sweet cherry",
-                                            "isolate_id": "cab8b360",
-                                            "sequence": "TGTTTAAGAGATTAAACAACCGCTTTC",
-                                            "otu_id": "6116cba1",
-                                            "segment": None,
-                                        }
-                                    ],
-                                    "source_name": "8816-v2",
-                                    "source_type": "isolate",
-                                },
-                            ]
-                        ],
-                    ],
-                ],
-                "index": {"id": "unbuilt", "version": "unbuilt"},
-                "method_name": "remove_isolate",
-                "user": {"id": "test"},
-                "reference": {"id": "hxn167"},
-                "otu": {"id": "6116cba1", "name": "Test Virus", "version": 3},
-            },
-        ]
-
-        otu = None
-
-        if remove:
-            documents.append(
-                {
-                    "_id": "6116cba1.removed",
-                    "created_at": datetime.datetime(2017, 7, 12, 16, 0, 50, 605000),
-                    "description": "Description",
-                    "diff": {
-                        "_id": "6116cba1",
-                        "abbreviation": "TST",
-                        "imported": True,
-                        "isolates": [],
-                        "last_indexed_version": 0,
-                        "lower_name": "prunus virus f",
-                        "verified": False,
-                        "name": "Test Virus",
-                        "reference": {"id": "hxn167"},
-                        "version": 3,
-                        "schema": [],
-                    },
-                    "index": {"id": "unbuilt", "version": "unbuilt"},
-                    "reference": {"id": "hxn167"},
-                    "method_name": "remove",
-                    "user": {"id": "test"},
-                    "otu": {
-                        "id": "6116cba1",
-                        "name": "Test Virus",
-                        "version": "removed",
-                    },
-                }
-            )
-        else:
-            otu = {
-                "_id": "6116cba1",
-                "abbreviation": "TST",
-                "imported": True,
-                "isolates": [],
-                "last_indexed_version": 0,
-                "lower_name": "prunus virus f",
-                "verified": False,
-                "name": "Test Virus",
-                "reference": {"id": "hxn167"},
-                "version": 3,
-                "schema": [],
-            }
-
-            await mongo.otus.insert_one(otu)
-
-        # One legacy_history row per change with the real diff in Postgres keyed by
-        # history_id. History is Postgres-only, so nothing is written to Mongo.
-        async with AsyncSession(pg) as session:
-            reference = SQLReference(
-                legacy_id="hxn167",
-                name="Reference A",
-                description="",
-                created_at=datetime.datetime(2017, 7, 12, 16, 0, 50),
-                source_types=[],
-                user_id=user.id,
-            )
-            session.add(reference)
-            await session.flush()
-
-            if otu is not None:
-                session.add(SQLOTU(**otu_row_values(otu, reference.id)))
-
-            for document in documents:
-                session.add(
-                    SQLLegacyHistory(
-                        **legacy_history_values({**document, "user": {"id": user.id}}),
-                        reference_id=reference.id,
-                    ),
-                )
-
-            await session.commit()
-
-        await bulk_insert_diffs(
-            pg,
-            [
-                {"change_id": document["_id"], "diff": document["diff"]}
-                for document in documents
-            ],
+        otu = await data_layer.otus.create(
+            reference.id,
+            CreateOTURequest(name="Prunus virus F", abbreviation="PVF"),
+            user.id,
         )
 
-        return otu
+        isolate = await data_layer.otus.add_isolate(
+            otu.id,
+            "isolate",
+            "8816-v2",
+            user.id,
+        )
+
+        await data_layer.otus.create_sequence(
+            otu.id,
+            isolate.id,
+            "KX269872",
+            "Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene",
+            "TGTTTAAGAGATTAAACAACCGCTTTC",
+            user.id,
+            host="sweet cherry",
+        )
+
+        await data_layer.otus.update(
+            otu.id,
+            UpdateOTURequest(name="Test Virus"),
+            user.id,
+        )
+
+        await data_layer.otus.remove_isolate(otu.id, isolate.id, user.id)
+
+        if remove:
+            await data_layer.otus.remove(otu.id, user.id)
+
+        return otu.id
 
     return func
