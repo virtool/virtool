@@ -26,6 +26,7 @@ from virtool.data.topg import (
     compose_legacy_id_multi_expression,
     compose_legacy_id_single_expression,
     compose_legacy_id_subquery,
+    resolve_legacy_id,
 )
 from virtool.data.transforms import apply_transforms
 from virtool.groups.pg import SQLGroup
@@ -769,6 +770,48 @@ class ReferencesData(DataLayerDomain):
                 mongo_session,
                 pg_session,
             ):
+                reference_pk = await resolve_legacy_id(
+                    pg_session,
+                    SQLReference,
+                    ref_id,
+                )
+
+                if reference_pk is None:
+                    raise ResourceNotFoundError
+
+                # Serialize builds for this reference so version allocation is race
+                # free. The pre-transaction guard above can be cleared by two callers
+                # at once; the loser then either fails to take the lock, or — if the
+                # winner has already committed — takes it and sees the winner's
+                # in-progress index on the recheck below. Either way a single build
+                # starts, and the ``(reference_id, version)`` unique constraint is the
+                # deeper backstop caught in the ``except`` clause. The lock is keyed
+                # like ``TasksData.create_periodic`` and released at transaction end.
+                locked = await pg_session.scalar(
+                    select(
+                        func.pg_try_advisory_xact_lock(
+                            func.hashtext(f"index_build:{reference_pk}"),
+                        ),
+                    ),
+                )
+
+                if not locked:
+                    raise ResourceConflictError("Index build already in progress")
+
+                has_in_progress = await pg_session.scalar(
+                    select(
+                        select(SQLIndex.id)
+                        .where(
+                            SQLIndex.reference_id == reference_pk,
+                            SQLIndex.ready.is_(False),
+                        )
+                        .exists(),
+                    ),
+                )
+
+                if has_in_progress:
+                    raise ResourceConflictError("Index build already in progress")
+
                 index_version = await virtool.indexes.db.get_next_version(
                     pg_session,
                     ref_id,
@@ -792,9 +835,8 @@ class ReferencesData(DataLayerDomain):
                     index_id=index_id,
                 )
         except IntegrityError as error:
-            # A concurrent build committed the same ``(reference_id, version)`` first.
-            # The version guard runs outside the transaction, so the unique constraint
-            # is the authoritative backstop for the race.
+            # Deep backstop: if two builds still allocated the same version, the
+            # ``(reference_id, version)`` unique constraint rejects the duplicate.
             raise ResourceConflictError("Index build already in progress") from error
 
         emit(task, "tasks", "create", Operation.CREATE)
