@@ -834,5 +834,19 @@
       'name': 'finalize index_files index_id',
       'revision': 'f61c6dbf7ff6',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 120,
+      'name': 'add index_id to analyses',
+      'revision': '1f020bfe6b18',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 121,
+      'name': 'backfill analyses index ids to integers',
+      'revision': 'bn8b4pzfvokk',
+    }),
   ])
 # ---
