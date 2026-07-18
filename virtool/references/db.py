@@ -2,7 +2,6 @@
 
 import asyncio
 import datetime
-from typing import TYPE_CHECKING
 
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -34,9 +33,6 @@ from virtool.references.utils import reference_values
 from virtool.settings.models import Settings
 from virtool.types import Document
 from virtool.users.pg import SQLUser
-
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
 
 
 async def compose_reference_id_match(pg: AsyncEngine, ref_id: int | str) -> dict:
