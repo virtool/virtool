@@ -14,9 +14,9 @@ def check_index_file_type(file_name: str) -> str:
     return "bowtie2"
 
 
-def compose_index_file_key(index_id: str, filename: str) -> str:
-    return f"indexes/{index_id}/{filename}"
+def compose_index_file_key(storage_key: str, filename: str) -> str:
+    return f"indexes/{storage_key}/{filename}"
 
 
-def compose_index_prefix(index_id: str) -> str:
-    return f"indexes/{index_id}/"
+def compose_index_prefix(storage_key: str) -> str:
+    return f"indexes/{storage_key}/"

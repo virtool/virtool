@@ -1,12 +1,13 @@
 import pytest
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.data.errors import ResourceError
+from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
+from virtool.indexes.utils import compose_index_file_key
 from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU
 
@@ -280,3 +281,54 @@ class TestDelete:
             )
 
         assert remaining == 0
+
+
+class TestResolveStorageKey:
+    async def test_matches_legacy_id_at_landing(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+    ):
+        """At landing every migrated index carries ``storage_key == legacy_id``, so the
+        composed object path is byte-identical to keying by the index id.
+        """
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+        index = await fake.indexes.create(reference, user, manifest={}, version=2)
+
+        storage_key = await data_layer.index._resolve_storage_key(index.id)
+
+        assert storage_key == index.id
+        assert (
+            compose_index_file_key(storage_key, "otus.json.gz")
+            == f"indexes/{index.id}/otus.json.gz"
+        )
+
+    async def test_uses_storage_key_column(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """The resolver reads ``storage_key``, so a native UUID key addresses storage
+        independently of the public index id.
+        """
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+        index = await fake.indexes.create(reference, user, manifest={}, version=2)
+
+        async with AsyncSession(pg) as session:
+            await session.execute(
+                update(SQLIndex)
+                .where(SQLIndex.legacy_id == index.id)
+                .values(storage_key="a-native-uuid-key"),
+            )
+            await session.commit()
+
+        assert (
+            await data_layer.index._resolve_storage_key(index.id) == "a-native-uuid-key"
+        )
+
+    async def test_not_found(self, data_layer: DataLayer):
+        with pytest.raises(ResourceNotFoundError):
+            await data_layer.index._resolve_storage_key("missing")
