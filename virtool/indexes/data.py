@@ -388,12 +388,7 @@ class IndexData:
             mongo_session: AsyncIOMotorClientSession,
             pg_session: AsyncSession,
         ) -> None:
-            await update_last_indexed_versions(
-                self._mongo,
-                ref_id,
-                mongo_session,
-                pg_session,
-            )
+            await update_last_indexed_versions(ref_id, pg_session)
 
             await self._mongo.indexes.update_one(
                 {"_id": index_id},
@@ -492,12 +487,7 @@ class IndexData:
                     size,
                 )
 
-                await update_last_indexed_versions(
-                    self._mongo,
-                    ref_id,
-                    mongo_session,
-                    pg_session,
-                )
+                await update_last_indexed_versions(ref_id, pg_session)
 
                 await self._mongo.indexes.update_one(
                     {"_id": index_id},

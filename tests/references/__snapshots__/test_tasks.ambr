@@ -1514,6 +1514,37 @@
     }),
     dict({
       '_id': str,
+      'abbreviation': 'HYVB-Japan',
+      'created_at': datetime,
+      'imported': True,
+      'isolates': list([
+        dict({
+          'default': True,
+          'id': str,
+          'source_name': 'Fukui',
+          'source_type': 'isolate',
+        }),
+      ]),
+      'issues': None,
+      'last_indexed_version': None,
+      'lower_name': 'honeysuckle yellow vein beta-[japan:fukui:2001]',
+      'name': 'Honeysuckle yellow vein beta-[Japan:Fukui:2001]',
+      'reference': dict({
+        'id': 1,
+      }),
+      'remote': dict({
+        'id': '51c5d911',
+      }),
+      'schema': list([
+      ]),
+      'user': dict({
+        'id': 1,
+      }),
+      'verified': True,
+      'version': 0,
+    }),
+    dict({
+      '_id': str,
       'abbreviation': 'HYVJB',
       'created_at': datetime,
       'imported': True,
@@ -1543,37 +1574,6 @@
         }),
       ]),
       'taxid': None,
-      'user': dict({
-        'id': 1,
-      }),
-      'verified': True,
-      'version': 0,
-    }),
-    dict({
-      '_id': str,
-      'abbreviation': 'HYVB-Japan',
-      'created_at': datetime,
-      'imported': True,
-      'isolates': list([
-        dict({
-          'default': True,
-          'id': str,
-          'source_name': 'Fukui',
-          'source_type': 'isolate',
-        }),
-      ]),
-      'issues': None,
-      'last_indexed_version': None,
-      'lower_name': 'honeysuckle yellow vein beta-[japan:fukui:2001]',
-      'name': 'Honeysuckle yellow vein beta-[Japan:Fukui:2001]',
-      'reference': dict({
-        'id': 1,
-      }),
-      'remote': dict({
-        'id': '51c5d911',
-      }),
-      'schema': list([
-      ]),
       'user': dict({
         'id': 1,
       }),
