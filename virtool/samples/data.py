@@ -32,11 +32,11 @@ from virtool.data.topg import (
 from virtool.data.transforms import apply_transforms
 from virtool.groups.models import GroupMinimal
 from virtool.groups.pg import SQLGroup
+from virtool.indexes.sql import SQLIndex
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.labels.transforms import AttachLabelsTransform
 from virtool.mongo.core import Mongo
 from virtool.pg.utils import delete_row
-from virtool.references.db import compose_reference_id_match
 from virtool.references.sql import SQLReference
 from virtool.samples.checks import (
     check_labels_do_not_exist,
@@ -867,12 +867,20 @@ class SamplesData(DataLayerDomain):
         if reference.archived:
             raise ResourceConflictError("Reference is archived")
 
-        if not await self._mongo.indexes.count_documents(
-            {
-                "reference.id": await compose_reference_id_match(self._pg, ref_id),
-                "ready": True,
-            },
-        ):
+        async with AsyncSession(self._pg) as session:
+            has_ready_index = await session.scalar(
+                select(
+                    select(SQLIndex.id)
+                    .where(
+                        SQLIndex.reference_id
+                        == compose_legacy_id_subquery(SQLReference, ref_id),
+                        SQLIndex.ready.is_(True),
+                    )
+                    .exists(),
+                ),
+            )
+
+        if not has_ready_index:
             raise ResourceConflictError("No ready index")
 
         if subtractions is not None:

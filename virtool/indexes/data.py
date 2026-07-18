@@ -45,7 +45,6 @@ from virtool.indexes.utils import (
 )
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
-from virtool.mongo.utils import get_one_field
 from virtool.references.models import ReferenceNested
 from virtool.references.sql import SQLReference
 from virtool.references.transforms import (
@@ -62,10 +61,7 @@ from virtool.utils import base_processor, wait_for_checks
 logger = get_logger("indexes")
 
 
-def _get_index_build_type(document: dict) -> str:
-    job_id = document["job"]["id"] if document["job"] is not None else None
-    task_id = document["task"]["id"] if document["task"] is not None else None
-
+def _get_index_build_type(job_id: int | None, task_id: int | None) -> str:
     if job_id is None and task_id is None:
         raise ResourceConflictError(
             "Index must be backed by exactly one job or task build"
@@ -377,22 +373,15 @@ class IndexData:
         :param index_id: the index ID
         :return: the finalized Index
         """
-        try:
-            ref_id = (await get_one_field(self._mongo.indexes, "reference", index_id))[
-                "id"
-            ]
-        except KeyError:
-            raise ResourceError("Could not find index reference id")
-
         async with AsyncSession(self._pg) as session:
             reference_id = await session.scalar(
-                select(SQLReference.id).where(
-                    compose_legacy_id_single_expression(SQLReference, ref_id),
+                select(SQLIndex.reference_id).where(
+                    compose_legacy_id_single_expression(SQLIndex, index_id),
                 ),
             )
 
         if reference_id is None:
-            raise ResourceError(f"Could not find reference {ref_id} in postgres")
+            raise ResourceError("Could not find index reference id")
 
         async with AsyncSession(self._pg) as session:
             file_rows = (
@@ -419,7 +408,7 @@ class IndexData:
             mongo_session: AsyncIOMotorClientSession,
             pg_session: AsyncSession,
         ) -> None:
-            await update_last_indexed_versions(ref_id, pg_session)
+            await update_last_indexed_versions(reference_id, pg_session)
 
             await self._mongo.indexes.update_one(
                 {"_id": index_id},
@@ -440,32 +429,35 @@ class IndexData:
     @emits(Operation.UPDATE)
     async def generate_task_index(self, index_id: str) -> Index:
         """Generate the task-backed index JSON artifact and mark the index ready."""
-        index = await self._mongo.indexes.find_one(
-            {"_id": index_id},
-            ["manifest", "reference", "job", "task", "ready"],
-        )
+        async with AsyncSession(self._pg) as session:
+            index_row = (
+                await session.execute(
+                    select(
+                        SQLIndex.manifest,
+                        SQLIndex.reference_id,
+                        SQLIndex.job_id,
+                        SQLIndex.task_id,
+                        SQLIndex.ready,
+                    ).where(compose_legacy_id_single_expression(SQLIndex, index_id)),
+                )
+            ).one_or_none()
 
-        if index is None:
+        if index_row is None:
             raise ResourceNotFoundError()
 
-        if _get_index_build_type(index) != "task":
+        if _get_index_build_type(index_row.job_id, index_row.task_id) != "task":
             raise ResourceConflictError("Index must be backed by a task build")
 
-        if index["ready"]:
+        if index_row.ready:
             message = "Index is already ready"
             raise ResourceConflictError(message)
 
-        try:
-            ref_id = index["reference"]["id"]
-        except KeyError:
-            raise ResourceError("Could not find index reference id")
+        reference_id = index_row.reference_id
 
         async with AsyncSession(self._pg) as session:
             reference_row = (
                 await session.execute(
-                    select(SQLReference).where(
-                        compose_legacy_id_single_expression(SQLReference, ref_id),
-                    ),
+                    select(SQLReference).where(SQLReference.id == reference_id),
                 )
             ).scalar_one_or_none()
 
@@ -485,7 +477,7 @@ class IndexData:
             otu
             async for otu in virtool.indexes.db.iter_patched_otus(
                 self._pg,
-                index["manifest"],
+                index_row.manifest,
             )
         ]
         compressed = await asyncio.to_thread(
@@ -520,7 +512,7 @@ class IndexData:
                     size,
                 )
 
-                await update_last_indexed_versions(ref_id, pg_session)
+                await update_last_indexed_versions(reference_id, pg_session)
 
                 await self._mongo.indexes.update_one(
                     {"_id": index_id},
@@ -572,7 +564,16 @@ class IndexData:
         :param term: an optional term matched against the OTU name
         :return: the changes
         """
-        if not await self._mongo.indexes.count_documents({"_id": index_id}):
+        async with AsyncSession(self._pg) as session:
+            exists = await session.scalar(
+                select(
+                    select(SQLIndex.id)
+                    .where(compose_legacy_id_single_expression(SQLIndex, index_id))
+                    .exists(),
+                ),
+            )
+
+        if not exists:
             raise ResourceNotFoundError()
 
         data = await virtool.history.db.find_by_index(

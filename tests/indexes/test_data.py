@@ -120,20 +120,23 @@ async def test_finalize_stamps_last_indexed_version(
     assert row.data["last_indexed_version"] == row.version
 
 
-async def test_finalize_reference_missing_from_postgres(
+async def test_finalize_index_missing_from_postgres(
     data_layer: DataLayer,
     fake: DataFaker,
     mongo: Mongo,
     static_time,
 ):
-    """An index whose reference has no Postgres row is corrupt data, not a missing
-    resource.
+    """An index with no Postgres row cannot finalize and marks nothing ready.
+
+    Finalize reads the index and its reference straight off ``SQLIndex`` now, so a
+    Mongo-only index — one whose Postgres row was never written — has no reference to
+    resolve and fails loudly instead of silently promoting the Mongo document.
     """
     user = await fake.users.create()
     job = await fake.jobs.create(user=user)
 
-    # Seeded by hand rather than through ``fake.indexes``: the faker takes a real
-    # ``Reference``, so it cannot express the dangling reference this test is about.
+    # Seeded by hand rather than through ``fake.indexes``: the faker dual-writes the
+    # Postgres row, so it cannot express the Mongo-only index this test is about.
     await mongo.indexes.insert_one(
         {
             "_id": "foo",
@@ -146,7 +149,7 @@ async def test_finalize_reference_missing_from_postgres(
         },
     )
 
-    with pytest.raises(ResourceError, match="Could not find reference missing"):
+    with pytest.raises(ResourceError, match="Could not find index reference id"):
         await data_layer.index.finalize("foo")
 
     assert await mongo.indexes.find_one("foo", ["ready"]) == {"_id": "foo"}

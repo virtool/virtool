@@ -39,7 +39,7 @@ from virtool.data.topg import (
     compose_legacy_id_subquery,
 )
 from virtool.data.transforms import apply_transforms
-from virtool.indexes.db import get_current_id_and_version
+from virtool.indexes.db import get_current_id
 from virtool.indexes.transforms import AttachIndexTransform
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
@@ -298,11 +298,7 @@ class AnalysisData(DataLayerDomain):
         """
         created_at = virtool.utils.timestamp()
 
-        index_id, _ = await get_current_id_and_version(
-            self._mongo,
-            self._pg,
-            data.ref_id,
-        )
+        index_id = await get_current_id(self._pg, data.ref_id)
 
         subtractions = data.subtractions if data.subtractions is not None else []
 
