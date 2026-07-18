@@ -19,6 +19,7 @@ from tests.fixtures.references import (
     create_reference,
 )
 from tests.fixtures.response import RespIs
+from virtool.analyses.sql import SQLAnalysis
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.history.db import legacy_history_values
@@ -32,6 +33,7 @@ from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU
 from virtool.storage.protocol import StorageBackend
 from virtool.tasks.sql import SQLTask
+from virtool.utils import timestamp
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
@@ -672,6 +674,46 @@ async def test_delete_index(
     else:
         assert response.status == 204
         assert await mongo.indexes.find_one(index_id) is None
+
+
+async def test_delete_index_referenced_by_analysis(
+    fake: DataFaker,
+    mongo: Mongo,
+    pg: AsyncEngine,
+    resp_is: RespIs,
+    spawn_job_client: JobClientSpawner,
+):
+    """Deleting an index that an analysis references returns 409 and deletes nothing."""
+    client = await spawn_job_client(authenticated=True)
+
+    user = await fake.users.create()
+    reference = await fake.references.create(user=user, name="Foo")
+    index = await fake.indexes.create(reference, user, version=0, ready=True)
+
+    async with AsyncSession(pg) as session:
+        index_pk = await session.scalar(
+            select(SQLIndex.id).where(SQLIndex.legacy_id == index.id),
+        )
+        now = timestamp()
+        session.add(
+            SQLAnalysis(
+                created_at=now,
+                updated_at=now,
+                workflow="nuvs",
+                ready=False,
+                sample="sample_legacy",
+                reference=str(reference.id),
+                index=index.id,
+                index_id=index_pk,
+                user_id=user.id,
+            ),
+        )
+        await session.commit()
+
+    response = await client.delete(f"/indexes/{index.id}")
+
+    await resp_is.conflict(response, "Index is referenced by one or more analyses")
+    assert await mongo.indexes.find_one(index.id) is not None
 
 
 @pytest.mark.parametrize("error", [None, "409", "404_index", "404_file"])
