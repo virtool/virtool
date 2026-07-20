@@ -45,7 +45,6 @@ class SQLUser(Base):
     email: Mapped[str] = mapped_column(default="", nullable=False)
     force_reset: Mapped[bool] = mapped_column(default=False)
     handle: Mapped[str]
-    invalidate_sessions: Mapped[bool] = mapped_column(default=False)
     last_password_change: Mapped[datetime]
     legacy_id: Mapped[str | None] = mapped_column(unique=True)
     password: Mapped[bytes]

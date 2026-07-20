@@ -265,19 +265,16 @@ class UsersData(DataLayerDomain):
         values = {}
 
         if "active" in data:
-            values.update({"active": data["active"], "invalidate_sessions": True})
+            values["active"] = data["active"]
 
         if "force_reset" in data:
-            values.update(
-                {"force_reset": data["force_reset"], "invalidate_sessions": True},
-            )
+            values["force_reset"] = data["force_reset"]
 
         if "password" in data:
             values.update(
                 {
                     "password": virtool.users.utils.hash_password(data["password"]),
                     "last_password_change": virtool.utils.timestamp(),
-                    "invalidate_sessions": True,
                 },
             )
 
