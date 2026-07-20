@@ -2,7 +2,6 @@ from contextlib import suppress
 from copy import deepcopy
 
 from virtool.types import Document
-from virtool.utils import base_processor
 
 
 def evaluate_changes(data: dict, document: dict) -> tuple[str, str, Document]:
@@ -101,7 +100,8 @@ def format_otu(
     :return: a joined and formatted otu
 
     """
-    formatted = base_processor(joined)
+    formatted = dict(joined)
+    formatted["id"] = formatted.pop("_id")
 
     del formatted["lower_name"]
 
@@ -112,15 +112,25 @@ def format_otu(
 
             sequence["id"] = sequence.pop("_id")
 
-    formatted["most_recent_change"] = None
-
-    if most_recent_change:
-        formatted["most_recent_change"] = base_processor(most_recent_change)
+    formatted["most_recent_change"] = most_recent_change or None
 
     if issues is False:
         issues = verify(joined)
 
     formatted["issues"] = issues
+
+    return formatted
+
+
+def format_sequence(document: Document) -> Document:
+    """Shape a verbatim-Mongo sequence document into the API sequence resource.
+
+    OTU sequences are stored under Mongo's ``_id`` convention so the joined OTU can feed
+    ``dictdiffer`` history diffs that address the document exactly as written. This is the
+    single point that renames a sequence's ``_id`` to the public ``id`` on the way out.
+    """
+    formatted = dict(document)
+    formatted["id"] = formatted.pop("_id")
 
     return formatted
 

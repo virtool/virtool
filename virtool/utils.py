@@ -9,7 +9,6 @@ import subprocess
 import tarfile
 import tempfile
 from collections.abc import Callable, Iterable
-from contextlib import suppress
 from functools import wraps
 from inspect import iscoroutinefunction
 from pathlib import Path
@@ -25,25 +24,6 @@ from aiohttp.web import Application
 
 from virtool.api.custom_json import dump_bytes
 from virtool.models.base import BaseModel
-
-
-def base_processor(document: dict | None) -> dict | None:
-    """Convert a document from MongoDB into one that forms a JSON response.
-
-    Removes the '_id' key and reassigns it to `id`.
-
-    :param document: the document to process
-    :return: processed document
-    """
-    if document is None:
-        return None
-
-    document = dict(document)
-
-    with suppress(KeyError):
-        document["id"] = str(document.pop("_id"))
-
-    return document
 
 
 def chunk_list(lst: list, n: int) -> Iterable[list]:
