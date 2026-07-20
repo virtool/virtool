@@ -32,7 +32,6 @@ from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.pg import SQLUser
-from virtool.utils import base_processor
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
@@ -374,7 +373,7 @@ def legacy_history_document(
         }
 
     return {
-        "_id": row.legacy_id,
+        "id": row.legacy_id,
         "created_at": row.created_at,
         "description": row.description,
         "method_name": row.method_name,
@@ -449,7 +448,7 @@ async def find(
 
     documents = await apply_transforms(
         [
-            base_processor(legacy_history_document(row, handle, index_legacy_id))
+            legacy_history_document(row, handle, index_legacy_id)
             for row, handle, index_legacy_id in rows
         ],
         [AttachReferenceTransform(pg)],
@@ -530,7 +529,7 @@ async def find_by_index(
 
     documents = await apply_transforms(
         [
-            base_processor(legacy_history_document(row, handle, index_legacy_id))
+            legacy_history_document(row, handle, index_legacy_id)
             for row, handle, index_legacy_id in rows
         ],
         [AttachReferenceTransform(pg)],

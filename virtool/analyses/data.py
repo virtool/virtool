@@ -56,7 +56,7 @@ from virtool.storage.cleanup import delete_prefix
 from virtool.storage.protocol import StorageBackend
 from virtool.subtractions.pg import SQLSubtraction
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import base_processor, wait_for_checks
+from virtool.utils import wait_for_checks
 
 logger = get_logger("analyses")
 
@@ -99,11 +99,10 @@ def _row_to_document(row, *, include_results: bool) -> dict:
     """Shape a ``SQLAnalysis`` row into the Mongo-like document the transforms and
     formatters expect.
 
-    The integer ``id`` is the outward-facing identifier; ``base_processor`` later
-    renames ``_id`` to ``id``. The legacy Mongo slug is carried in ``legacy_id`` so
-    analyses migrated from Mongo can still be addressed by their old string id and
-    have their slug-prefixed storage objects cleaned up; Postgres-native analyses
-    have a ``NULL`` slug.
+    The integer primary key is the outward-facing ``id``. The legacy Mongo slug is
+    carried in ``legacy_id`` so analyses migrated from Mongo can still be addressed by
+    their old string id and have their slug-prefixed storage objects cleaned up;
+    Postgres-native analyses have a ``NULL`` slug.
 
     The nested reference is keyed by the integer ``reference_id`` foreign key, falling
     back to the legacy ``reference`` string on rows the backfill has not reached.
@@ -118,7 +117,7 @@ def _row_to_document(row, *, include_results: bool) -> dict:
         raise ValueError(f"Index not found for analysis {row.id}: {row.index}")
 
     document = {
-        "_id": row.id,
+        "id": row.id,
         "legacy_id": row.legacy_id,
         "created_at": row.created_at,
         "updated_at": row.updated_at,
@@ -225,7 +224,7 @@ class AnalysisData(DataLayerDomain):
         documents = [_row_to_document(row, include_results=False) for row in rows]
 
         documents = await apply_transforms(
-            [base_processor(d) for d in documents],
+            documents,
             [
                 AttachJobTransform(self._pg),
                 AttachReferenceTransform(self._pg),
@@ -275,7 +274,7 @@ class AnalysisData(DataLayerDomain):
 
         await wait_for_checks(check_if_analysis_modified(if_modified_since, document))
 
-        document = await attach_analysis_files(self._pg, document["_id"], document)
+        document = await attach_analysis_files(self._pg, row.id, document)
 
         if document["ready"]:
             document["results"] = await virtool.analyses.format.format_analysis(
@@ -294,9 +293,7 @@ class AnalysisData(DataLayerDomain):
         if document["workflow"] == "nuvs":
             transforms.append(AttachNuVsBLAST(self._pg))
 
-        document = await apply_transforms(
-            base_processor(document), transforms, self._pg
-        )
+        document = await apply_transforms(document, transforms, self._pg)
 
         return Analysis.parse_obj(
             {**document, "job": document["job"] if document["job"] else None},

@@ -37,7 +37,6 @@ from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import base_processor
 
 OTU_ID_CHUNK_SIZE = 500
 """The number of OTU ids bound into a single ``last_indexed_version`` update.
@@ -210,19 +209,19 @@ def compose_public_index_id(row: SQLIndex) -> str:
 
 
 def _row_to_document(row: SQLIndex, *, include_manifest: bool = False) -> dict:
-    """Shape an ``SQLIndex`` row into the Mongo-like document the transforms expect.
+    """Shape an ``SQLIndex`` row into the document the transforms expect.
 
-    The outward-facing ``_id`` (renamed to ``id`` by ``base_processor``) comes from
-    ``compose_public_index_id``: the legacy Mongo slug for backfilled rows, the
-    stringified integer primary key for Postgres-native rows. The integer primary key
-    becomes the public identifier outright in a later migration step.
+    The outward-facing ``id`` comes from ``compose_public_index_id``: the legacy Mongo
+    slug for backfilled rows, the stringified integer primary key for Postgres-native
+    rows. The integer primary key becomes the public identifier outright in a later
+    migration step.
 
     The nested reference is keyed by the integer ``reference_id`` foreign key;
     ``AttachReferenceTransform`` resolves it. ``job`` collapses to ``None`` for
     task-backed builds, matching the Mongo document.
     """
     document = {
-        "_id": compose_public_index_id(row),
+        "id": compose_public_index_id(row),
         "version": row.version,
         "created_at": row.created_at,
         "ready": row.ready,
@@ -307,7 +306,7 @@ async def find(
 
     unbuilt_stats = await get_unbuilt_stats(pg, ref_id)
 
-    documents = [base_processor(_row_to_document(row)) for row in rows]
+    documents = [_row_to_document(row) for row in rows]
     transforms = [
         AttachJobTransform(pg),
         AttachReferenceTransform(pg),
@@ -611,7 +610,7 @@ async def attach_files(pg: AsyncEngine, base_url: str, document: dict) -> dict:
     :return: Index document with updated `files` entry containing a list of index files.
 
     """
-    index_id = document["_id"]
+    index_id = document["id"]
 
     async with AsyncSession(pg) as session:
         rows = (

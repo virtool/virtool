@@ -859,7 +859,7 @@ async def test_attach_files(snapshot, fake: DataFaker, pg: AsyncEngine):
         session.add_all([index_1, index_2])
         await session.commit()
 
-    document = {"_id": "foo", "reference": {"id": "bar"}}
+    document = {"id": "foo", "reference": {"id": "bar"}}
 
     assert (
         await attach_files(pg, "https://virtool.example.com/api", document) == snapshot

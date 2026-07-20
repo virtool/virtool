@@ -32,21 +32,17 @@ class AttachAnalysisSubtractionsTransform(AbstractTransform):
                 SQLAnalysisSubtraction,
                 SQLAnalysisSubtraction.subtraction_id == SQLSubtraction.id,
             )
-            .where(SQLAnalysisSubtraction.analysis_id == int(document["id"])),
+            .where(SQLAnalysisSubtraction.analysis_id == document["id"]),
         )
 
         return [{"id": id_, "name": name} for id_, name in result.all()]
 
     async def prepare_many(
         self, documents: list[Document], session: AsyncSession
-    ) -> dict[str, list[dict]]:
-        # ``base_processor`` stringifies the integer analysis id, so map the integer
-        # ``analysis_id`` returned by the query back to the document's string key.
-        document_id_by_int = {int(d["id"]): d["id"] for d in documents}
+    ) -> dict[int, list[dict]]:
+        grouped: dict[int, list[dict]] = {d["id"]: [] for d in documents}
 
-        grouped: dict[str, list[dict]] = {d["id"]: [] for d in documents}
-
-        if document_id_by_int:
+        if grouped:
             result = await session.execute(
                 select(
                     SQLAnalysisSubtraction.analysis_id,
@@ -57,13 +53,11 @@ class AttachAnalysisSubtractionsTransform(AbstractTransform):
                     SQLSubtraction,
                     SQLSubtraction.id == SQLAnalysisSubtraction.subtraction_id,
                 )
-                .where(SQLAnalysisSubtraction.analysis_id.in_(document_id_by_int)),
+                .where(SQLAnalysisSubtraction.analysis_id.in_(grouped)),
             )
 
             for analysis_id, id_, name in result.all():
-                grouped[document_id_by_int[analysis_id]].append(
-                    {"id": id_, "name": name},
-                )
+                grouped[analysis_id].append({"id": id_, "name": name})
 
         return grouped
 
