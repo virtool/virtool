@@ -326,28 +326,6 @@ async def find(
     }
 
 
-async def get_current_id(pg: AsyncEngine, ref_id: int | str) -> str | None:
-    """Return the legacy id of the reference's current (highest-version, ready) index.
-
-    :param pg: the application Postgres client
-    :param ref_id: the id of the reference to get the current index for
-
-    :return: the legacy id of the current index, or ``None`` if none is ready
-
-    """
-    async with AsyncSession(pg) as session:
-        return await session.scalar(
-            select(SQLIndex.legacy_id)
-            .where(
-                SQLIndex.reference_id
-                == compose_legacy_id_subquery(SQLReference, ref_id),
-                SQLIndex.ready.is_(True),
-            )
-            .order_by(SQLIndex.version.desc())
-            .limit(1),
-        )
-
-
 async def get_otus(pg: AsyncEngine, index_id: str) -> list[dict]:
     """Return a list of otus and number of changes for a specific index.
 

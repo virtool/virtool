@@ -11,7 +11,6 @@ from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.db import (
     IndexCountsTransform,
     attach_files,
-    get_current_id,
     get_next_version,
     iter_patched_otus,
     update_last_indexed_versions,
@@ -258,26 +257,6 @@ async def _seed_index_series(
         await fake.indexes.create(reference, user, version=version, ready=ready)
         for version in range(4)
     ]
-
-
-class TestGetCurrentId:
-    async def test_returns_highest_version(self, fake: DataFaker, pg: AsyncEngine):
-        """The most recently built index for the reference is the current one."""
-        indexes = await _seed_index_series(fake, ready=True)
-
-        assert await get_current_id(pg, "indexed_ref") == indexes[3].id
-
-    async def test_no_ready_index(self, fake: DataFaker, pg: AsyncEngine):
-        """A reference whose indexes are all unbuilt has no current index."""
-        await _seed_index_series(fake, ready=False)
-
-        assert await get_current_id(pg, "indexed_ref") is None
-
-    async def test_unknown_reference(self, fake: DataFaker, pg: AsyncEngine):
-        """Indexes belonging to another reference are not matched."""
-        await _seed_index_series(fake, ready=True)
-
-        assert await get_current_id(pg, "other_ref") is None
 
 
 class TestGetNextVersion:
