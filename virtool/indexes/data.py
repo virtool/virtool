@@ -606,10 +606,7 @@ class IndexData:
 
             await session.execute(
                 update(SQLLegacyHistory)
-                .where(
-                    SQLLegacyHistory.index_id
-                    == compose_legacy_id_subquery(SQLIndex, index_id),
-                )
+                .where(SQLLegacyHistory.index_id == row.id)
                 .values(index=None, index_id=None, index_version=None),
             )
 
