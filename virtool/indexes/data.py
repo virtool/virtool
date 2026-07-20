@@ -609,13 +609,28 @@ class IndexData:
         storage_key = await self._resolve_storage_key(index_id)
 
         async def remove(mongo_session, pg_session) -> None:
-            delete_result = await self._mongo.indexes.delete_one(
+            # Re-check readiness inside the transaction. The guard above races a
+            # concurrent ``finalize``: it can read ``ready=False`` moments before
+            # finalize commits ``ready=True``. Deleting here would then erase a
+            # freshly built index. The ``delete_one`` write conflicts with
+            # finalize's committed update, so the transaction retries and this
+            # read observes the ready state.
+            document = await self._mongo.indexes.find_one(
                 {"_id": index_id},
+                ["ready"],
                 session=mongo_session,
             )
 
-            if delete_result.deleted_count == 0:
+            if document is None:
                 raise ResourceNotFoundError
+
+            if document["ready"]:
+                raise ResourceConflictError("Ready indexes cannot be deleted")
+
+            await self._mongo.indexes.delete_one(
+                {"_id": index_id},
+                session=mongo_session,
+            )
 
             await pg_session.execute(
                 update(SQLLegacyHistory)
