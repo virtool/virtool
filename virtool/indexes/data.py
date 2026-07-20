@@ -3,14 +3,13 @@ import gzip
 from collections.abc import AsyncIterator
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from sqlalchemy import delete, or_, select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
 import virtool.history.db
 import virtool.indexes.db
-from virtool.analyses.sql import SQLAnalysis
 from virtool.api.custom_json import dump_bytes
 from virtool.config import Config
 from virtool.data.errors import (
@@ -591,41 +590,47 @@ class IndexData:
     async def delete(self, index_id: str) -> None:
         """Delete an index given it's id.
 
+        Only non-ready indexes (failed or in-progress builds) can be deleted. A
+        ready index backs analyses and remains the reference's current build, so
+        deleting one is rejected with a conflict.
+
         :param index_id: the ID of the index to delete
+        :raises ResourceNotFoundError: if no index has the given id
+        :raises ResourceConflictError: if the index is ready
         """
         index = await self.get(index_id)
 
         if not index:
             raise ResourceNotFoundError
 
-        async with AsyncSession(self._pg) as session:
-            referencing_analysis = (
-                await session.execute(
-                    select(SQLAnalysis.id)
-                    .where(
-                        or_(
-                            SQLAnalysis.index == index_id,
-                            SQLAnalysis.index_id
-                            == compose_legacy_id_subquery(SQLIndex, index_id),
-                        ),
-                    )
-                    .limit(1),
-                )
-            ).first()
-
-        if referencing_analysis is not None:
-            raise ResourceConflictError("Index is referenced by one or more analyses")
+        if index.ready:
+            raise ResourceConflictError("Ready indexes cannot be deleted")
 
         storage_key = await self._resolve_storage_key(index_id)
 
         async def remove(mongo_session, pg_session) -> None:
-            delete_result = await self._mongo.indexes.delete_one(
+            # Re-check readiness inside the transaction. The guard above races a
+            # concurrent ``finalize``: it can read ``ready=False`` moments before
+            # finalize commits ``ready=True``. Deleting here would then erase a
+            # freshly built index. The ``delete_one`` write conflicts with
+            # finalize's committed update, so the transaction retries and this
+            # read observes the ready state.
+            document = await self._mongo.indexes.find_one(
                 {"_id": index_id},
+                ["ready"],
                 session=mongo_session,
             )
 
-            if delete_result.deleted_count == 0:
+            if document is None:
                 raise ResourceNotFoundError
+
+            if document["ready"]:
+                raise ResourceConflictError("Ready indexes cannot be deleted")
+
+            await self._mongo.indexes.delete_one(
+                {"_id": index_id},
+                session=mongo_session,
+            )
 
             await pg_session.execute(
                 update(SQLLegacyHistory)
