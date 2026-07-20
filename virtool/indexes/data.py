@@ -2,7 +2,6 @@ import asyncio
 import gzip
 from collections.abc import AsyncIterator
 
-from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -21,7 +20,6 @@ from virtool.data.events import Operation, emit, emits
 from virtool.data.topg import (
     compose_legacy_id_single_expression,
     compose_legacy_id_subquery,
-    retry_both_transactions,
 )
 from virtool.data.transforms import apply_transforms
 from virtool.history.models import HistorySearchResult
@@ -404,25 +402,16 @@ class IndexData:
             check_index_files_uploaded(results),
         )
 
-        async def finalize_index(
-            mongo_session: AsyncIOMotorClientSession,
-            pg_session: AsyncSession,
-        ) -> None:
-            await update_last_indexed_versions(reference_id, pg_session)
+        async with AsyncSession(self._pg) as session:
+            await update_last_indexed_versions(reference_id, session)
 
-            await self._mongo.indexes.update_one(
-                {"_id": index_id},
-                {"$set": {"ready": True}},
-                session=mongo_session,
-            )
-
-            await pg_session.execute(
+            await session.execute(
                 update(SQLIndex)
-                .where(SQLIndex.legacy_id == index_id)
+                .where(compose_legacy_id_single_expression(SQLIndex, index_id))
                 .values(ready=True),
             )
 
-        await retry_both_transactions(self._mongo, self._pg, finalize_index)
+            await session.commit()
 
         return await self.get(index_id)
 
@@ -500,37 +489,24 @@ class IndexData:
                 stream(),
             )
 
-            async def finalize_task_index(
-                mongo_session: AsyncIOMotorClientSession,
-                pg_session: AsyncSession,
-            ) -> None:
+            async with AsyncSession(self._pg) as session:
                 await virtool.indexes.db.upsert_index_file(
-                    pg_session,
+                    session,
                     index_id,
                     "json",
                     file_name,
                     size,
                 )
 
-                await update_last_indexed_versions(reference_id, pg_session)
+                await update_last_indexed_versions(reference_id, session)
 
-                await self._mongo.indexes.update_one(
-                    {"_id": index_id},
-                    {"$set": {"ready": True}},
-                    session=mongo_session,
-                )
-
-                await pg_session.execute(
+                await session.execute(
                     update(SQLIndex)
-                    .where(SQLIndex.legacy_id == index_id)
+                    .where(compose_legacy_id_single_expression(SQLIndex, index_id))
                     .values(ready=True),
                 )
 
-            await retry_both_transactions(
-                self._mongo,
-                self._pg,
-                finalize_task_index,
-            )
+                await session.commit()
         except BaseException:
             await self._storage.delete(key)
 
@@ -608,44 +584,37 @@ class IndexData:
 
         storage_key = await self._resolve_storage_key(index_id)
 
-        async def remove(mongo_session, pg_session) -> None:
-            # Re-check readiness inside the transaction. The guard above races a
-            # concurrent ``finalize``: it can read ``ready=False`` moments before
-            # finalize commits ``ready=True``. Deleting here would then erase a
-            # freshly built index. The ``delete_one`` write conflicts with
-            # finalize's committed update, so the transaction retries and this
-            # read observes the ready state.
-            document = await self._mongo.indexes.find_one(
-                {"_id": index_id},
-                ["ready"],
-                session=mongo_session,
-            )
+        async with AsyncSession(self._pg) as session:
+            # Re-check readiness inside the transaction under a row lock. The guard
+            # above races a concurrent ``finalize``: it can read ``ready=False``
+            # moments before finalize commits ``ready=True``. Locking the index row
+            # serializes this delete against finalize's ready update, so it observes
+            # the committed ready state instead of erasing a freshly built index.
+            row = (
+                await session.execute(
+                    select(SQLIndex.id, SQLIndex.ready)
+                    .where(compose_legacy_id_single_expression(SQLIndex, index_id))
+                    .with_for_update(),
+                )
+            ).one_or_none()
 
-            if document is None:
+            if row is None:
                 raise ResourceNotFoundError
 
-            if document["ready"]:
+            if row.ready:
                 raise ResourceConflictError("Ready indexes cannot be deleted")
 
-            await self._mongo.indexes.delete_one(
-                {"_id": index_id},
-                session=mongo_session,
-            )
-
-            await pg_session.execute(
+            await session.execute(
                 update(SQLLegacyHistory)
-                .where(
-                    SQLLegacyHistory.index_id
-                    == compose_legacy_id_subquery(SQLIndex, index_id),
-                )
+                .where(SQLLegacyHistory.index_id == row.id)
                 .values(index=None, index_id=None, index_version=None),
             )
 
-            await pg_session.execute(
-                delete(SQLIndex).where(SQLIndex.legacy_id == index_id),
+            await session.execute(
+                delete(SQLIndex).where(SQLIndex.id == row.id),
             )
 
-        await retry_both_transactions(self._mongo, self._pg, remove)
+            await session.commit()
 
         for key, exc in await delete_prefix(
             self._storage, compose_index_prefix(storage_key)

@@ -984,10 +984,6 @@ class TestCreateIndex:
 
         assert resp.status == 201
         assert await resp.json() == snapshot
-        index = await mongo.indexes.find_one()
-        assert index == snapshot
-        assert index["job"] is None
-        assert index["task"] is not None
 
         body = await resp.json()
         assert body["ready"] is False
@@ -995,8 +991,17 @@ class TestCreateIndex:
         assert "task" not in body
 
         async with AsyncSession(pg) as session:
+            new_index = await session.scalar(
+                select(SQLIndex).where(SQLIndex.id == int(body["id"])),
+            )
+
+            assert new_index is not None
+            assert new_index.legacy_id is None
+            assert new_index.job_id is None
+            assert new_index.task_id is not None
+
             task = await session.scalar(
-                select(SQLTask).where(SQLTask.id == index["task"]["id"]),
+                select(SQLTask).where(SQLTask.id == new_index.task_id),
             )
             history = await session.scalar(
                 select(SQLLegacyHistory).where(
@@ -1004,15 +1009,10 @@ class TestCreateIndex:
                 ),
             )
 
-            new_index = await session.scalar(
-                select(SQLIndex).where(SQLIndex.legacy_id == index["_id"]),
-            )
-
             assert task is not None
             assert task.type == "create_index"
-            assert task.context == {"index_id": index["_id"]}
+            assert task.context == {"index_id": str(new_index.id)}
             assert history is not None
-            assert new_index is not None
             assert (history.index_id, history.index_version) == (new_index.id, "0")
             assert await session.scalar(select(SQLJob.id)) is None
 
@@ -1041,7 +1041,6 @@ class TestCreateIndex:
         resp = await client.post(f"/references/v1/{reference['id']}/indexes", {})
 
         await resp_is.insufficient_rights(resp)
-        assert await mongo.indexes.find_one() is None
 
 
 @pytest.mark.parametrize("error", [None, "400_dne", "400_exists", "404"])

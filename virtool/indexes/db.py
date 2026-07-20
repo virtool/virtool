@@ -2,10 +2,10 @@
 
 import asyncio
 import math
+import uuid
 from collections.abc import AsyncIterator
 from typing import Any
 
-from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy import (
     ARRAY,
     Integer,
@@ -24,6 +24,7 @@ import virtool.history.db
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.topg import (
+    compose_legacy_id_multi_expression,
     compose_legacy_id_subquery,
     resolve_legacy_id,
 )
@@ -31,7 +32,6 @@ from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.jobs.transforms import AttachJobTransform
-from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU
 from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
@@ -92,29 +92,44 @@ class IndexCountsTransform(AbstractTransform):
     ) -> Any:
         index_ids = [document["id"] for document in documents]
 
+        if not index_ids:
+            return {}
+
         rows = (
             await session.execute(
                 select(
+                    SQLIndex.id,
                     SQLIndex.legacy_id,
                     func.count(),
                     func.count(distinct(SQLLegacyHistory.otu)),
                 )
-                .join(SQLIndex, SQLLegacyHistory.index_id == SQLIndex.id)
-                .where(SQLIndex.legacy_id.in_(index_ids))
-                .group_by(SQLIndex.legacy_id),
+                .select_from(SQLIndex)
+                .join(SQLLegacyHistory, SQLLegacyHistory.index_id == SQLIndex.id)
+                .where(compose_legacy_id_multi_expression(SQLIndex, index_ids))
+                .group_by(SQLIndex.id, SQLIndex.legacy_id),
             )
         ).all()
 
-        counts = {
-            index: {
-                "change_count": change_count,
-                "modified_otu_count": modified_otu_count,
-            }
-            for index, change_count, modified_otu_count in rows
+        lookup = {
+            **{
+                str(index_pk): {
+                    "change_count": change_count,
+                    "modified_otu_count": modified_otu_count,
+                }
+                for index_pk, _, change_count, modified_otu_count in rows
+            },
+            **{
+                legacy_id: {
+                    "change_count": change_count,
+                    "modified_otu_count": modified_otu_count,
+                }
+                for _, legacy_id, change_count, modified_otu_count in rows
+                if legacy_id
+            },
         }
 
         return {
-            index_id: counts.get(
+            index_id: lookup.get(
                 index_id,
                 {"change_count": 0, "modified_otu_count": 0},
             )
@@ -123,68 +138,48 @@ class IndexCountsTransform(AbstractTransform):
 
 
 async def create(
-    mongo: "Mongo",
-    mongo_session: AsyncIOMotorClientSession,
     pg_session: AsyncSession,
     ref_id: int | str,
     user_id: int,
     index_version: int,
     manifest: dict,
     task_id: int,
-    index_id: str | None = None,
-) -> dict:
-    """Create a pending index in caller-owned database sessions.
+) -> SQLIndex:
+    """Create a pending index row in a caller-owned Postgres session.
 
-    The index insert and history association are flushed by the caller's coordinated
-    transaction without being committed here.
+    The row is flushed so its generated integer id is available, but the caller owns
+    the transaction and must commit it. The id is minted by the
+    ``Identity(always=True)`` sequence, ``legacy_id`` is left null (only backfilled
+    rows carry one), and ``storage_key`` is a freshly minted UUID.
 
-    :param mongo: the application database client
-    :param mongo_session: the caller-owned MongoDB session
     :param pg_session: the caller-owned PostgreSQL session
     :param ref_id: the reference to create an index for
     :param user_id: the user requesting the index
     :param index_version: the version assigned to the index
     :param manifest: the OTU manifest captured for the index
     :param task_id: the task backing the index
-    :param index_id: the preallocated index id
-    :return: the inserted index document
+    :return: the inserted index row
     """
-    document = {
-        "version": index_version,
-        "created_at": virtool.utils.timestamp(),
-        "manifest": manifest,
-        "ready": False,
-        "job": None,
-        "task": {"id": task_id},
-        "user": {"id": user_id},
-    }
-
-    if index_id:
-        document["_id"] = index_id
-
     reference_pk = await resolve_legacy_id(pg_session, SQLReference, ref_id)
 
     if reference_pk is None:
         raise ValueError(f"Reference {ref_id!r} not found in postgres")
 
-    document["reference"] = {"id": reference_pk}
-
-    document = await mongo.indexes.insert_one(document, session=mongo_session)
-
-    pg_session.add(
-        SQLIndex(
-            legacy_id=document["_id"],
-            version=index_version,
-            created_at=document["created_at"],
-            manifest=manifest,
-            ready=False,
-            storage_key=document["_id"],
-            reference_id=reference_pk,
-            user_id=user_id,
-            job_id=None,
-            task_id=task_id,
-        ),
+    index = SQLIndex(
+        version=index_version,
+        created_at=virtool.utils.timestamp(),
+        manifest=manifest,
+        ready=False,
+        storage_key=uuid.uuid4().hex,
+        reference_id=reference_pk,
+        user_id=user_id,
+        job_id=None,
+        task_id=task_id,
     )
+
+    pg_session.add(index)
+
+    await pg_session.flush()
 
     await pg_session.execute(
         update(SQLLegacyHistory)
@@ -194,28 +189,40 @@ async def create(
             SQLLegacyHistory.index_id.is_(None),
         )
         .values(
-            index_id=compose_legacy_id_subquery(SQLIndex, document["_id"]),
+            index_id=index.id,
             index_version=str(index_version),
         ),
     )
 
-    return document
+    return index
+
+
+def compose_public_index_id(row: SQLIndex) -> str:
+    """Return the outward-facing id for an index row.
+
+    Backfilled rows expose their legacy Mongo slug. Postgres-native rows have no
+    legacy id, so the stringified integer primary key stands in as an interim public
+    id. ``compose_legacy_id_single_expression`` already routes digit-strings back to
+    the integer primary key, so the value round-trips. VIR-2781 switches the public
+    id to the integer outright and deletes this helper.
+    """
+    return row.legacy_id if row.legacy_id is not None else str(row.id)
 
 
 def _row_to_document(row: SQLIndex, *, include_manifest: bool = False) -> dict:
     """Shape an ``SQLIndex`` row into the Mongo-like document the transforms expect.
 
-    The legacy Mongo slug is emitted as the outward-facing ``_id`` (renamed to ``id``
-    by ``base_processor``) because ``IndexCountsTransform`` and the OTU, contributor,
-    and file lookups all key on the legacy string. The integer primary key becomes the
-    public identifier in a later migration step.
+    The outward-facing ``_id`` (renamed to ``id`` by ``base_processor``) comes from
+    ``compose_public_index_id``: the legacy Mongo slug for backfilled rows, the
+    stringified integer primary key for Postgres-native rows. The integer primary key
+    becomes the public identifier outright in a later migration step.
 
     The nested reference is keyed by the integer ``reference_id`` foreign key;
     ``AttachReferenceTransform`` resolves it. ``job`` collapses to ``None`` for
     task-backed builds, matching the Mongo document.
     """
     document = {
-        "_id": row.legacy_id,
+        "_id": compose_public_index_id(row),
         "version": row.version,
         "created_at": row.created_at,
         "ready": row.ready,
@@ -317,28 +324,6 @@ async def find(
         "per_page": per_page,
         **unbuilt_stats,
     }
-
-
-async def get_current_id(pg: AsyncEngine, ref_id: int | str) -> str | None:
-    """Return the legacy id of the reference's current (highest-version, ready) index.
-
-    :param pg: the application Postgres client
-    :param ref_id: the id of the reference to get the current index for
-
-    :return: the legacy id of the current index, or ``None`` if none is ready
-
-    """
-    async with AsyncSession(pg) as session:
-        return await session.scalar(
-            select(SQLIndex.legacy_id)
-            .where(
-                SQLIndex.reference_id
-                == compose_legacy_id_subquery(SQLReference, ref_id),
-                SQLIndex.ready.is_(True),
-            )
-            .order_by(SQLIndex.version.desc())
-            .limit(1),
-        )
 
 
 async def get_otus(pg: AsyncEngine, index_id: str) -> list[dict]:

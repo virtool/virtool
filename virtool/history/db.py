@@ -348,9 +348,11 @@ def legacy_history_document(
     coerced back to integers so the resource shape matches the historical Mongo
     representation.
 
-    The public index id stays the legacy Mongo string, supplied as ``index_legacy_id``
-    from an outer join on ``indexes.legacy_id`` keyed by ``index_id``. The join must be
-    an outer join so unbuilt rows (``index_id`` is ``NULL``) survive; those rows carry a
+    The public index id is the legacy Mongo string, supplied as ``index_legacy_id``
+    from an outer join on ``indexes.legacy_id`` keyed by ``index_id``. Postgres-native
+    builds have no legacy id, so the stringified ``index_id`` primary key stands in as
+    the interim public id, mirroring ``compose_public_index_id``. The join must be an
+    outer join so unbuilt rows (``index_id`` is ``NULL``) survive; those rows carry a
     ``NULL`` ``index_legacy_id`` and reconstruct the ``"unbuilt"`` sentinel.
 
     The ``handle`` comes from a join on ``users`` so the nested user is fully populated
@@ -366,7 +368,10 @@ def legacy_history_document(
         if index_version is not None and index_version.isdigit():
             index_version = int(index_version)
 
-        index = {"id": index_legacy_id, "version": index_version}
+        index = {
+            "id": index_legacy_id if index_legacy_id is not None else str(row.index_id),
+            "version": index_version,
+        }
 
     return {
         "_id": row.legacy_id,

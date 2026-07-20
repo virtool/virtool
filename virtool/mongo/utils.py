@@ -31,26 +31,6 @@ def get_mongo_from_req(req: Request) -> "Mongo":
     return get_mongo_from_app(req.app)
 
 
-async def get_new_id(
-    collection,
-    session: AsyncIOMotorClientSession | None = None,
-) -> str:
-    """Returns a new, unique, id that can be used for inserting a new document. Will not
-    return any id that is included in ``excluded``.
-
-    :param collection: the Mongo collection to get a new _id for
-    :param session: a motor session to use
-    :return: an ID unique within the collection
-
-    """
-    id_ = collection.mongo.id_provider.get()
-
-    if await collection.count_documents({"_id": id_}, limit=1, session=session):
-        return await get_new_id(collection, session=session)
-
-    return id_
-
-
 async def get_one_field(
     collection,
     field: str,

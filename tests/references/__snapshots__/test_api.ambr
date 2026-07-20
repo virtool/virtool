@@ -212,7 +212,7 @@
     'created_at': '2015-10-06T20:00:00Z',
     'files': list([
     ]),
-    'id': 'bf1b993c',
+    'id': '1',
     'job': None,
     'manifest': dict({
       'bar': 5,
@@ -234,28 +234,6 @@
     }),
     'user': dict({
       'handle': 'leeashley',
-      'id': 1,
-    }),
-    'version': 0,
-  })
-# ---
-# name: TestCreateIndex.test_ok.1
-  dict({
-    '_id': 'bf1b993c',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'job': None,
-    'manifest': dict({
-      'bar': 5,
-      'foo': 2,
-    }),
-    'ready': False,
-    'reference': dict({
-      'id': 1,
-    }),
-    'task': dict({
-      'id': 1,
-    }),
-    'user': dict({
       'id': 1,
     }),
     'version': 0,

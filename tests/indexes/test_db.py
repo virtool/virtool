@@ -4,15 +4,13 @@ import pytest
 from pytest_mock import MockerFixture
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from syrupy import SnapshotAssertion
 
 import virtool.indexes.db
-from virtool.data.topg import both_transactions
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.db import (
+    IndexCountsTransform,
     attach_files,
-    get_current_id,
     get_next_version,
     iter_patched_otus,
     update_last_indexed_versions,
@@ -20,7 +18,6 @@ from virtool.indexes.db import (
 )
 from virtool.indexes.models import Index
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
-from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU
 from virtool.utils import timestamp
 
@@ -56,61 +53,56 @@ async def _seed_index(pg: AsyncEngine, fake: DataFaker, legacy_id: str) -> int:
     return index_pk
 
 
-@pytest.mark.parametrize("index_id", [None, "abc"])
 async def test_create(
-    index_id: str | None,
-    mongo: Mongo,
     pg: AsyncEngine,
     fake,
-    snapshot: SnapshotAssertion,
     static_time,
 ):
-    """The new index is dual-written. The Mongo document embeds the integer
-    ``legacy_references`` primary key of its reference rather than the legacy Mongo
-    string id, and a matching ``indexes`` row carries the Mongo id as both its
-    ``legacy_id`` and ``storage_key``.
+    """A new index is created Postgres-natively: the id is minted by the sequence,
+    ``legacy_id`` is null, and ``storage_key`` is a freshly minted UUID rather than a
+    Mongo slug.
     """
     user = await fake.users.create()
     reference = await fake.references.create(user=user, id_="foo")
     task = await fake.tasks.create()
 
-    async with both_transactions(mongo, pg) as (mongo_session, pg_session):
+    async with AsyncSession(pg) as session:
         created = await virtool.indexes.db.create(
-            mongo,
-            mongo_session,
-            pg_session,
+            session,
             "foo",
             user.id,
             0,
             "manifest",
             task_id=task.id,
-            index_id=index_id,
         )
 
-    assert created["created_at"] == static_time.datetime
-    assert created == snapshot
+        assert created.id is not None
+        assert created.legacy_id is None
+        assert len(created.storage_key) == 32
+        assert created.version == 0
+        assert created.ready is False
+        assert created.manifest == "manifest"
+        assert created.created_at == static_time.datetime
+        assert created.reference_id == reference.id
+        assert created.user_id == user.id
+        assert created.job_id is None
+        assert created.task_id == task.id
+
+        created_id = created.id
+        created_storage_key = created.storage_key
+
+        await session.commit()
 
     async with AsyncSession(pg) as session:
         row = (
-            await session.execute(
-                select(SQLIndex).where(SQLIndex.legacy_id == created["_id"]),
-            )
+            await session.execute(select(SQLIndex).where(SQLIndex.id == created_id))
         ).scalar_one()
 
-    assert row.legacy_id == created["_id"]
-    assert row.storage_key == created["_id"]
-    assert row.version == 0
-    assert row.ready is False
-    assert row.manifest == "manifest"
-    assert row.created_at == static_time.datetime
-    assert row.reference_id == reference.id
-    assert row.user_id == user.id
-    assert row.job_id is None
-    assert row.task_id == task.id
+    assert row.legacy_id is None
+    assert row.storage_key == created_storage_key
 
 
 async def test_create_assigns_index_in_postgres(
-    mongo: Mongo,
     pg: AsyncEngine,
     fake,
     static_time,
@@ -164,23 +156,19 @@ async def test_create_assigns_index_in_postgres(
         )
         await session.commit()
 
-    async with both_transactions(mongo, pg) as (mongo_session, pg_session):
-        await virtool.indexes.db.create(
-            mongo,
-            mongo_session,
-            pg_session,
+    async with AsyncSession(pg) as session:
+        new_index = await virtool.indexes.db.create(
+            session,
             "built_ref",
             user.id,
             1,
             "manifest",
             task_id=task.id,
-            index_id="new_index",
         )
+        new_index_pk = new_index.id
+        await session.commit()
 
     async with AsyncSession(pg) as session:
-        new_index_pk = await session.scalar(
-            select(SQLIndex.id).where(SQLIndex.legacy_id == "new_index"),
-        )
         rows = {
             row.legacy_id: (row.index_id, row.index_version)
             for row in (await session.execute(select(SQLLegacyHistory))).scalars()
@@ -191,19 +179,19 @@ async def test_create_assigns_index_in_postgres(
     assert rows["other_ref_unbuilt"] == (None, None)
 
 
-async def test_create_rolls_back_both_stores_on_failure(
+async def test_create_rolls_back_on_failure(
     mocker: MockerFixture,
-    mongo: Mongo,
     pg: AsyncEngine,
     fake,
     static_time,
 ):
-    """A failure during the index build rolls back the Mongo index insert issued
-    inside the transaction, leaving neither store with the index assignment.
+    """A failure during the index build rolls back the Postgres index insert and the
+    history assignment, leaving no index row and the change still unbuilt.
     """
     user = await fake.users.create()
 
     built_ref = await fake.references.create(user=user, id_="built_ref")
+    task = await fake.tasks.create()
 
     async with AsyncSession(pg) as session:
         session.add(
@@ -229,20 +217,16 @@ async def test_create_rolls_back_both_stores_on_failure(
     )
 
     with pytest.raises(RuntimeError, match="postgres write failed"):
-        async with both_transactions(mongo, pg) as (mongo_session, pg_session):
+        async with AsyncSession(pg) as session:
             await virtool.indexes.db.create(
-                mongo,
-                mongo_session,
-                pg_session,
+                session,
                 "built_ref",
                 user.id,
                 1,
                 "manifest",
-                task_id=1,
-                index_id="new_index",
+                task_id=task.id,
             )
-
-    assert await mongo.indexes.find_one("new_index") is None
+            await session.commit()
 
     async with AsyncSession(pg) as session:
         row = (
@@ -253,11 +237,7 @@ async def test_create_rolls_back_both_stores_on_failure(
             )
         ).scalar_one()
 
-        index_row = (
-            await session.execute(
-                select(SQLIndex).where(SQLIndex.legacy_id == "new_index"),
-            )
-        ).scalar_one_or_none()
+        index_row = (await session.execute(select(SQLIndex))).scalar_one_or_none()
 
     assert row.index_id is None
     assert row.index_version is None
@@ -277,26 +257,6 @@ async def _seed_index_series(
         await fake.indexes.create(reference, user, version=version, ready=ready)
         for version in range(4)
     ]
-
-
-class TestGetCurrentId:
-    async def test_returns_highest_version(self, fake: DataFaker, pg: AsyncEngine):
-        """The most recently built index for the reference is the current one."""
-        indexes = await _seed_index_series(fake, ready=True)
-
-        assert await get_current_id(pg, "indexed_ref") == indexes[3].id
-
-    async def test_no_ready_index(self, fake: DataFaker, pg: AsyncEngine):
-        """A reference whose indexes are all unbuilt has no current index."""
-        await _seed_index_series(fake, ready=False)
-
-        assert await get_current_id(pg, "indexed_ref") is None
-
-    async def test_unknown_reference(self, fake: DataFaker, pg: AsyncEngine):
-        """Indexes belonging to another reference are not matched."""
-        await _seed_index_series(fake, ready=True)
-
-        assert await get_current_id(pg, "other_ref") is None
 
 
 class TestGetNextVersion:
@@ -717,6 +677,162 @@ class TestUpdateLastIndexedVersions:
         for otu in otus:
             assert rows[otu.id].last_indexed_version == rows[otu.id].version
             assert rows[otu.id].data["last_indexed_version"] == rows[otu.id].version
+
+
+class TestIndexCountsTransform:
+    async def _seed_history(
+        self,
+        session: AsyncSession,
+        *,
+        reference_id: int,
+        user_id: int,
+        index: str,
+        index_pk: int,
+        otus: list[tuple[str, str]],
+    ) -> None:
+        """Add one built ``legacy_history`` row per ``(otu, otu_version)`` pair."""
+        session.add_all(
+            SQLLegacyHistory(
+                legacy_id=f"{otu}.{otu_version}",
+                created_at=timestamp(),
+                description="Built change",
+                method_name="edit",
+                user_id=user_id,
+                otu=otu,
+                otu_name=otu.upper(),
+                otu_version=otu_version,
+                reference_id=reference_id,
+                index=index,
+                index_id=index_pk,
+                index_version="0",
+            )
+            for otu, otu_version in otus
+        )
+
+    async def test_native_index_resolves_counts(self, fake: DataFaker, pg: AsyncEngine):
+        """A Postgres-native index (``legacy_id`` NULL) is keyed in the list view by its
+        stringified primary key, and its real change and modified-OTU counts resolve
+        instead of falling through to the ``0/0`` default.
+        """
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        async with AsyncSession(pg) as session:
+            index = SQLIndex(
+                legacy_id=None,
+                version=0,
+                created_at=timestamp(),
+                manifest={},
+                ready=True,
+                storage_key="native_index",
+                reference_id=reference.id,
+                user_id=user.id,
+                task_id=None,
+            )
+            session.add(index)
+            await session.flush()
+            index_pk = index.id
+
+            await self._seed_history(
+                session,
+                reference_id=reference.id,
+                user_id=user.id,
+                index=str(index_pk),
+                index_pk=index_pk,
+                otus=[("otu_a", "0"), ("otu_a", "1"), ("otu_b", "0")],
+            )
+            await session.commit()
+
+        public_id = str(index_pk)
+
+        async with AsyncSession(pg) as session:
+            prepared = await IndexCountsTransform().prepare_many(
+                [{"id": public_id}], session
+            )
+
+        assert prepared[public_id] == {"change_count": 3, "modified_otu_count": 2}
+
+    async def test_legacy_index_resolves_counts(self, fake: DataFaker, pg: AsyncEngine):
+        """A backfilled index keyed by its legacy Mongo id still resolves counts,
+        confirming the dual-key lookup covers both id forms.
+        """
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        async with AsyncSession(pg) as session:
+            index = SQLIndex(
+                legacy_id="legacy_index",
+                version=0,
+                created_at=timestamp(),
+                manifest={},
+                ready=True,
+                storage_key="legacy_index",
+                reference_id=reference.id,
+                user_id=user.id,
+                task_id=None,
+            )
+            session.add(index)
+            await session.flush()
+            index_pk = index.id
+
+            await self._seed_history(
+                session,
+                reference_id=reference.id,
+                user_id=user.id,
+                index="legacy_index",
+                index_pk=index_pk,
+                otus=[("otu_a", "0"), ("otu_b", "0")],
+            )
+            await session.commit()
+
+        async with AsyncSession(pg) as session:
+            prepared = await IndexCountsTransform().prepare_many(
+                [{"id": "legacy_index"}], session
+            )
+
+        assert prepared["legacy_index"] == {"change_count": 2, "modified_otu_count": 2}
+
+    async def test_index_without_history_defaults_to_zero(
+        self, fake: DataFaker, pg: AsyncEngine
+    ):
+        """An index with no built changes reports zero counts rather than being
+        dropped from the result.
+        """
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        async with AsyncSession(pg) as session:
+            index = SQLIndex(
+                legacy_id=None,
+                version=0,
+                created_at=timestamp(),
+                manifest={},
+                ready=True,
+                storage_key="empty_index",
+                reference_id=reference.id,
+                user_id=user.id,
+                task_id=None,
+            )
+            session.add(index)
+            await session.flush()
+            public_id = str(index.id)
+            await session.commit()
+
+        async with AsyncSession(pg) as session:
+            prepared = await IndexCountsTransform().prepare_many(
+                [{"id": public_id}], session
+            )
+
+        assert prepared[public_id] == {"change_count": 0, "modified_otu_count": 0}
+
+    async def test_no_documents_returns_empty(self, pg: AsyncEngine):
+        """An empty document list returns an empty mapping instead of raising, since
+        the legacy-id expression rejects an empty id list.
+        """
+        async with AsyncSession(pg) as session:
+            prepared = await IndexCountsTransform().prepare_many([], session)
+
+        assert prepared == {}
 
 
 async def test_attach_files(snapshot, fake: DataFaker, pg: AsyncEngine):
