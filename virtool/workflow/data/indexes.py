@@ -62,7 +62,7 @@ class WFIndexOTURef(TypedDict):
 class WFIndex:
     """Represents a Virtool reference index for use in analysis workflows."""
 
-    id: str
+    id: int
     """The ID of the index."""
 
     path: Path
@@ -71,7 +71,7 @@ class WFIndex:
     @classmethod
     async def create(
         cls,
-        id_: str,
+        id_: int,
         path: Path,
         reference: Mapping[str, Any] | None,
         otus: Iterable[Mapping[str, Any]],
@@ -82,7 +82,7 @@ class WFIndex:
         return cls(id_, path)
 
     @classmethod
-    def load(cls, id_: str, path: Path) -> "WFIndex":
+    def load(cls, id_: int, path: Path) -> "WFIndex":
         """Load an existing SQLite index artifact."""
         if not path.exists():
             raise FileNotFoundError(path)
@@ -237,7 +237,7 @@ class WFNewIndex:
     def __init__(
         self,
         api: WorkflowAPIClient,
-        index_id: str,
+        index_id: int,
         manifest: dict[str, int],
         path: Path,
         reference: ReferenceNested,
@@ -572,7 +572,7 @@ async def index(
 
     log.info("got index json")
 
-    index_work_path = work_path / "indexes" / index_.id
+    index_work_path = work_path / "indexes" / str(index_.id)
     await asyncio.to_thread(index_work_path.mkdir, parents=True, exist_ok=True)
 
     log.info("created index directory")
@@ -653,7 +653,7 @@ async def new_index(
 
     log.info("got index json")
 
-    index_work_path = work_path / "indexes" / index_.id
+    index_work_path = work_path / "indexes" / str(index_.id)
     await asyncio.to_thread(index_work_path.mkdir, parents=True, exist_ok=True)
 
     log.info("created index directory")

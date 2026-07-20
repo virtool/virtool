@@ -250,7 +250,7 @@ class JobsData:
                     SQLJob,
                     SQLUser,
                     SQLLegacySample.id.label("sample_id"),
-                    SQLIndex.legacy_id.label("index_id"),
+                    SQLIndex.id.label("index_id"),
                     SQLSubtraction.id.label("subtraction_id"),
                     SQLAnalysis.id.label("analysis_id"),
                 )
@@ -272,8 +272,8 @@ class JobsData:
         # ``legacy_samples.job_id`` foreign key rather than a ``job_samples`` link
         # row. The build_index job's index is likewise resolved through the reverse
         # ``indexes.job_id`` foreign key rather than a ``job_indexes`` link row; its
-        # ``index_id`` argument is the index's legacy id, byte-identical to what the
-        # retired join table stored.
+        # ``index_id`` argument is the index's integer primary key, which is now the
+        # index's public identifier.
         args = {
             field: value
             for field, value in (

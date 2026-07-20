@@ -6,7 +6,7 @@
     ]),
     'id': 1,
     'index': dict({
-      'id': 'foo',
+      'id': 1,
       'version': 2,
     }),
     'job': dict({
@@ -60,7 +60,7 @@
     ]),
     'id': 1,
     'index': dict({
-      'id': 'bar',
+      'id': 1,
       'version': 3,
     }),
     'job': dict({
@@ -128,7 +128,7 @@
         'created_at': '2015-10-06T20:00:00Z',
         'id': 3,
         'index': dict({
-          'id': 'foo',
+          'id': 1,
           'version': 2,
         }),
         'job': None,
@@ -154,7 +154,7 @@
         'created_at': '2015-10-06T20:00:00Z',
         'id': 2,
         'index': dict({
-          'id': 'foo',
+          'id': 1,
           'version': 2,
         }),
         'job': dict({
@@ -194,7 +194,7 @@
         'created_at': '2015-10-06T20:00:00Z',
         'id': 1,
         'index': dict({
-          'id': 'foo',
+          'id': 1,
           'version': 2,
         }),
         'job': dict({

@@ -29,11 +29,11 @@ class TestPostgresRow:
 
         async with AsyncSession(pg) as session:
             row = await session.scalar(
-                select(SQLIndex).where(SQLIndex.legacy_id == index.id),
+                select(SQLIndex).where(SQLIndex.id == index.id),
             )
 
-        assert row.legacy_id == index.id
-        assert row.storage_key == index.id
+        assert row.legacy_id is not None
+        assert row.storage_key == row.legacy_id
         assert row.version == 0
         assert row.ready is False
         assert row.reference_id == reference.id
@@ -50,7 +50,7 @@ class TestPostgresRow:
 
         async with AsyncSession(pg) as session:
             row = await session.scalar(
-                select(SQLIndex).where(SQLIndex.legacy_id == index.id),
+                select(SQLIndex).where(SQLIndex.id == index.id),
             )
 
         assert row.ready is True
