@@ -23,8 +23,8 @@
 # ---
 # name: test_populate_insert_only_reference_writes_legacy_history[legacy_history]
   list([
-    <SQLLegacyHistory(id=1, legacy_id=lhotu001.0, created_at=2015-10-06 20:00:00, description=Remoted OTU 1 (O1), method_name=remote, user_id=1, otu=lhotu001, otu_name=OTU 1, otu_version=0, reference=None, reference_id=1, index=None, index_id=None, index_version=None)>,
-    <SQLLegacyHistory(id=2, legacy_id=lhotu002.0, created_at=2015-10-06 20:00:00, description=Remoted OTU 2 (O2), method_name=remote, user_id=1, otu=lhotu002, otu_name=OTU 2, otu_version=0, reference=None, reference_id=1, index=None, index_id=None, index_version=None)>,
+    <SQLLegacyHistory(id=1, legacy_id=lhotu001.0, created_at=2015-10-06 20:00:00, description=Remoted OTU 1 (O1), method_name=remote, user_id=1, otu=lhotu001, otu_name=OTU 1, otu_version=0, reference=None, reference_id=1, index=None, index_id=None)>,
+    <SQLLegacyHistory(id=2, legacy_id=lhotu002.0, created_at=2015-10-06 20:00:00, description=Remoted OTU 2 (O2), method_name=remote, user_id=1, otu=lhotu002, otu_name=OTU 2, otu_version=0, reference=None, reference_id=1, index=None, index_id=None)>,
   ])
 # ---
 # name: test_populate_insert_only_reference_writes_otu_and_sequence_rows[legacy_otus]

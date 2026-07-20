@@ -883,5 +883,12 @@
       'name': 'drop users invalidate_sessions column',
       'revision': '3ba1bccd88e1',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 127,
+      'name': 'drop legacy_history index_version',
+      'revision': 'c976a55c3382',
+    }),
   ])
 # ---

@@ -181,7 +181,6 @@ class TestDelete:
                         otu_version="0",
                         reference_id=reference.id,
                         index_id=deleted_index.id,
-                        index_version="4",
                     ),
                     SQLLegacyHistory(
                         legacy_id="otu_b.0",
@@ -194,7 +193,6 @@ class TestDelete:
                         otu_version="0",
                         reference_id=reference.id,
                         index_id=deleted_index.id,
-                        index_version="4",
                     ),
                     SQLLegacyHistory(
                         legacy_id="otu_c.0",
@@ -207,7 +205,6 @@ class TestDelete:
                         otu_version="0",
                         reference_id=reference.id,
                         index_id=other_index.id,
-                        index_version="2",
                     ),
                 ],
             )
@@ -217,7 +214,7 @@ class TestDelete:
 
         async with AsyncSession(pg) as session:
             rows = {
-                row.legacy_id: (row.index_id, row.index_version)
+                row.legacy_id: row.index_id
                 for row in (await session.execute(select(SQLLegacyHistory))).scalars()
             }
 
@@ -226,9 +223,9 @@ class TestDelete:
             )
 
         assert rows == {
-            "otu_a.0": (None, None),
-            "otu_b.0": (None, None),
-            "otu_c.0": (other_index.id, "2"),
+            "otu_a.0": None,
+            "otu_b.0": None,
+            "otu_c.0": other_index.id,
         }
 
         # The Postgres index row is hard-deleted.
