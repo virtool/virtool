@@ -409,11 +409,9 @@ async def join_legacy_otus_in_session(
 
     The sequences are ordered by ``position`` within their OTU, which reproduces the
     natural order Mongo's unsorted cursor returns them in. A ``NULL`` or duplicated
-    position is not sorted around:
-    :func:`virtool.otus.migration.compare_otu_and_sequence_stores` gates the read switch
-    on neither existing, and quietly shuffling such an OTU's sequences would misapply
-    every diff that addresses them by index -- the failure ``position`` exists to
-    prevent.
+    position is not sorted around: the read cutover was gated on neither existing, and
+    quietly shuffling such an OTU's sequences would misapply every diff that addresses
+    them by index -- the failure ``position`` exists to prevent.
     """
     otu_ids = set(otu_ids)
 
@@ -1100,8 +1098,8 @@ async def increment_legacy_otu_version(
     Both fields live twice: once in a promoted column and once in the ``data`` JSONB the
     document is recovered from. They are written in the same statement, so no reader can
     observe the column disagreeing with its counterpart. The new ``version`` is derived
-    from the column rather than from ``data``, because the column is what
-    :func:`virtool.otus.migration.reconcile_otus_and_sequences` compares against Mongo.
+    from the promoted column rather than from ``data``, because the column is the
+    authoritative copy.
 
     The bump is one statement, so ``version + 1`` is computed by Postgres from the row it
     is writing and two concurrent bumps cannot both read the same version and write the
