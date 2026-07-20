@@ -876,5 +876,12 @@
       'name': 'drop job_samples table',
       'revision': '78c7c7feb2dd',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 126,
+      'name': 'drop users invalidate_sessions column',
+      'revision': '3ba1bccd88e1',
+    }),
   ])
 # ---
