@@ -2,7 +2,12 @@ import pytest
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.data.errors import ResourceError, ResourceNotFoundError
+from virtool.analyses.sql import SQLAnalysis
+from virtool.data.errors import (
+    ResourceConflictError,
+    ResourceError,
+    ResourceNotFoundError,
+)
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
@@ -10,6 +15,7 @@ from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.indexes.utils import compose_index_file_key
 from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU
+from virtool.utils import timestamp
 
 
 async def add_index_files(pg: AsyncEngine, index_id: str) -> None:
@@ -284,6 +290,64 @@ class TestDelete:
             )
 
         assert remaining == 0
+
+    async def test_rejects_deletion_when_referenced_by_analysis(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+    ):
+        """An index that any analysis references cannot be deleted; both stores are
+        left intact.
+        """
+        user = await fake.users.create()
+        job = await fake.jobs.create(user=user)
+        reference = await fake.references.create(user=user)
+
+        index = await fake.indexes.create(
+            reference,
+            user,
+            job=job,
+            version=0,
+            ready=True,
+        )
+
+        async with AsyncSession(pg) as session:
+            index_pk = await session.scalar(
+                select(SQLIndex.id).where(SQLIndex.legacy_id == index.id),
+            )
+            now = timestamp()
+            session.add(
+                SQLAnalysis(
+                    created_at=now,
+                    updated_at=now,
+                    workflow="nuvs",
+                    ready=False,
+                    sample="sample_legacy",
+                    reference=str(reference.id),
+                    index=index.id,
+                    index_id=index_pk,
+                    user_id=user.id,
+                ),
+            )
+            await session.commit()
+
+        with pytest.raises(
+            ResourceConflictError,
+            match="referenced by one or more analyses",
+        ):
+            await data_layer.index.delete(index.id)
+
+        assert await mongo.indexes.find_one(index.id) is not None
+
+        async with AsyncSession(pg) as session:
+            assert (
+                await session.scalar(
+                    select(SQLIndex).where(SQLIndex.legacy_id == index.id),
+                )
+                is not None
+            )
 
 
 class TestResolveStorageKey:

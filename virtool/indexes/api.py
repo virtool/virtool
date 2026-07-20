@@ -284,5 +284,7 @@ async def delete_index(req: Request):
         await get_data_from_req(req).index.delete(index_id)
     except ResourceNotFoundError:
         raise APINotFound(f"There is no index with id: {index_id}.")
+    except ResourceConflictError as err:
+        raise APIConflict(str(err))
 
     raise APINoContent()

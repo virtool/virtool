@@ -3,13 +3,14 @@ import gzip
 from collections.abc import AsyncIterator
 
 from motor.motor_asyncio import AsyncIOMotorClientSession
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
 import virtool.history.db
 import virtool.indexes.db
+from virtool.analyses.sql import SQLAnalysis
 from virtool.api.custom_json import dump_bytes
 from virtool.config import Config
 from virtool.data.errors import (
@@ -596,6 +597,24 @@ class IndexData:
 
         if not index:
             raise ResourceNotFoundError
+
+        async with AsyncSession(self._pg) as session:
+            referencing_analysis = (
+                await session.execute(
+                    select(SQLAnalysis.id)
+                    .where(
+                        or_(
+                            SQLAnalysis.index == index_id,
+                            SQLAnalysis.index_id
+                            == compose_legacy_id_subquery(SQLIndex, index_id),
+                        ),
+                    )
+                    .limit(1),
+                )
+            ).first()
+
+        if referencing_analysis is not None:
+            raise ResourceConflictError("Index is referenced by one or more analyses")
 
         storage_key = await self._resolve_storage_key(index_id)
 
