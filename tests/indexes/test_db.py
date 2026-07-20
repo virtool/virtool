@@ -9,6 +9,7 @@ import virtool.indexes.db
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.db import (
+    IndexCountsTransform,
     attach_files,
     get_current_id,
     get_next_version,
@@ -697,6 +698,162 @@ class TestUpdateLastIndexedVersions:
         for otu in otus:
             assert rows[otu.id].last_indexed_version == rows[otu.id].version
             assert rows[otu.id].data["last_indexed_version"] == rows[otu.id].version
+
+
+class TestIndexCountsTransform:
+    async def _seed_history(
+        self,
+        session: AsyncSession,
+        *,
+        reference_id: int,
+        user_id: int,
+        index: str,
+        index_pk: int,
+        otus: list[tuple[str, str]],
+    ) -> None:
+        """Add one built ``legacy_history`` row per ``(otu, otu_version)`` pair."""
+        session.add_all(
+            SQLLegacyHistory(
+                legacy_id=f"{otu}.{otu_version}",
+                created_at=timestamp(),
+                description="Built change",
+                method_name="edit",
+                user_id=user_id,
+                otu=otu,
+                otu_name=otu.upper(),
+                otu_version=otu_version,
+                reference_id=reference_id,
+                index=index,
+                index_id=index_pk,
+                index_version="0",
+            )
+            for otu, otu_version in otus
+        )
+
+    async def test_native_index_resolves_counts(self, fake: DataFaker, pg: AsyncEngine):
+        """A Postgres-native index (``legacy_id`` NULL) is keyed in the list view by its
+        stringified primary key, and its real change and modified-OTU counts resolve
+        instead of falling through to the ``0/0`` default.
+        """
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        async with AsyncSession(pg) as session:
+            index = SQLIndex(
+                legacy_id=None,
+                version=0,
+                created_at=timestamp(),
+                manifest={},
+                ready=True,
+                storage_key="native_index",
+                reference_id=reference.id,
+                user_id=user.id,
+                task_id=None,
+            )
+            session.add(index)
+            await session.flush()
+            index_pk = index.id
+
+            await self._seed_history(
+                session,
+                reference_id=reference.id,
+                user_id=user.id,
+                index=str(index_pk),
+                index_pk=index_pk,
+                otus=[("otu_a", "0"), ("otu_a", "1"), ("otu_b", "0")],
+            )
+            await session.commit()
+
+        public_id = str(index_pk)
+
+        async with AsyncSession(pg) as session:
+            prepared = await IndexCountsTransform().prepare_many(
+                [{"id": public_id}], session
+            )
+
+        assert prepared[public_id] == {"change_count": 3, "modified_otu_count": 2}
+
+    async def test_legacy_index_resolves_counts(self, fake: DataFaker, pg: AsyncEngine):
+        """A backfilled index keyed by its legacy Mongo id still resolves counts,
+        confirming the dual-key lookup covers both id forms.
+        """
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        async with AsyncSession(pg) as session:
+            index = SQLIndex(
+                legacy_id="legacy_index",
+                version=0,
+                created_at=timestamp(),
+                manifest={},
+                ready=True,
+                storage_key="legacy_index",
+                reference_id=reference.id,
+                user_id=user.id,
+                task_id=None,
+            )
+            session.add(index)
+            await session.flush()
+            index_pk = index.id
+
+            await self._seed_history(
+                session,
+                reference_id=reference.id,
+                user_id=user.id,
+                index="legacy_index",
+                index_pk=index_pk,
+                otus=[("otu_a", "0"), ("otu_b", "0")],
+            )
+            await session.commit()
+
+        async with AsyncSession(pg) as session:
+            prepared = await IndexCountsTransform().prepare_many(
+                [{"id": "legacy_index"}], session
+            )
+
+        assert prepared["legacy_index"] == {"change_count": 2, "modified_otu_count": 2}
+
+    async def test_index_without_history_defaults_to_zero(
+        self, fake: DataFaker, pg: AsyncEngine
+    ):
+        """An index with no built changes reports zero counts rather than being
+        dropped from the result.
+        """
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        async with AsyncSession(pg) as session:
+            index = SQLIndex(
+                legacy_id=None,
+                version=0,
+                created_at=timestamp(),
+                manifest={},
+                ready=True,
+                storage_key="empty_index",
+                reference_id=reference.id,
+                user_id=user.id,
+                task_id=None,
+            )
+            session.add(index)
+            await session.flush()
+            public_id = str(index.id)
+            await session.commit()
+
+        async with AsyncSession(pg) as session:
+            prepared = await IndexCountsTransform().prepare_many(
+                [{"id": public_id}], session
+            )
+
+        assert prepared[public_id] == {"change_count": 0, "modified_otu_count": 0}
+
+    async def test_no_documents_returns_empty(self, pg: AsyncEngine):
+        """An empty document list returns an empty mapping instead of raising, since
+        the legacy-id expression rejects an empty id list.
+        """
+        async with AsyncSession(pg) as session:
+            prepared = await IndexCountsTransform().prepare_many([], session)
+
+        assert prepared == {}
 
 
 async def test_attach_files(snapshot, fake: DataFaker, pg: AsyncEngine):

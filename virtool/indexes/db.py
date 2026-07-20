@@ -24,6 +24,7 @@ import virtool.history.db
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.topg import (
+    compose_legacy_id_multi_expression,
     compose_legacy_id_subquery,
     resolve_legacy_id,
 )
@@ -91,29 +92,44 @@ class IndexCountsTransform(AbstractTransform):
     ) -> Any:
         index_ids = [document["id"] for document in documents]
 
+        if not index_ids:
+            return {}
+
         rows = (
             await session.execute(
                 select(
+                    SQLIndex.id,
                     SQLIndex.legacy_id,
                     func.count(),
                     func.count(distinct(SQLLegacyHistory.otu)),
                 )
-                .join(SQLIndex, SQLLegacyHistory.index_id == SQLIndex.id)
-                .where(SQLIndex.legacy_id.in_(index_ids))
-                .group_by(SQLIndex.legacy_id),
+                .select_from(SQLIndex)
+                .join(SQLLegacyHistory, SQLLegacyHistory.index_id == SQLIndex.id)
+                .where(compose_legacy_id_multi_expression(SQLIndex, index_ids))
+                .group_by(SQLIndex.id, SQLIndex.legacy_id),
             )
         ).all()
 
-        counts = {
-            index: {
-                "change_count": change_count,
-                "modified_otu_count": modified_otu_count,
-            }
-            for index, change_count, modified_otu_count in rows
+        lookup = {
+            **{
+                str(index_pk): {
+                    "change_count": change_count,
+                    "modified_otu_count": modified_otu_count,
+                }
+                for index_pk, _, change_count, modified_otu_count in rows
+            },
+            **{
+                legacy_id: {
+                    "change_count": change_count,
+                    "modified_otu_count": modified_otu_count,
+                }
+                for _, legacy_id, change_count, modified_otu_count in rows
+                if legacy_id
+            },
         }
 
         return {
-            index_id: counts.get(
+            index_id: lookup.get(
                 index_id,
                 {"change_count": 0, "modified_otu_count": 0},
             )
