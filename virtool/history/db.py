@@ -44,11 +44,11 @@ asyncpg caps bind parameters per statement at 32767. Each row binds three
 (``change_id``, ``history_id``, and ``diff``).
 """
 
-_LEGACY_HISTORY_CHUNK_SIZE = 32767 // 11
+_LEGACY_HISTORY_CHUNK_SIZE = 32767 // 10
 """Max ``legacy_history`` rows per statement.
 
-asyncpg caps bind parameters per statement at 32767. Each row binds eleven
-columns: the ten from :func:`legacy_history_values` plus the resolved
+asyncpg caps bind parameters per statement at 32767. Each row binds ten
+columns: the nine from :func:`legacy_history_values` plus the resolved
 ``reference_id``.
 """
 
@@ -57,7 +57,8 @@ def legacy_history_values(document: Document) -> dict:
     """Map a history change ``document`` to ``legacy_history`` column values.
 
     Applies the sentinel-to-NULL conventions: an ``otu.version`` of ``"removed"``
-    and an ``index`` of ``"unbuilt"`` are stored as ``NULL``.
+    and an ``index`` of ``"unbuilt"`` are stored as ``NULL``. The index version is
+    not stored; it is read back from ``indexes.version`` through the ``index_id`` join.
     """
     otu_version = document["otu"]["version"]
     index_document = document["index"]
@@ -72,11 +73,6 @@ def legacy_history_values(document: Document) -> dict:
         "otu_name": document["otu"]["name"],
         "otu_version": None if otu_version == "removed" else str(otu_version),
         "index": None if index_document["id"] == "unbuilt" else index_document["id"],
-        "index_version": (
-            None
-            if index_document["version"] == "unbuilt"
-            else str(index_document["version"])
-        ),
     }
 
 
@@ -338,17 +334,22 @@ def coerce_otu_version(otu_version: str | None) -> int | str:
 def legacy_history_document(
     row: SQLLegacyHistory,
     handle: str,
+    index_version: int | None,
 ) -> Document:
     """Reconstruct a history list document from a ``legacy_history`` row.
 
     Reverses the sentinel-to-NULL conventions applied by :func:`legacy_history_values`:
     a ``NULL`` ``otu_version`` becomes the ``"removed"`` sentinel. A ``NULL`` ``index_id``
     is an unbuilt change and is reconstructed as a ``None`` index rather than a sentinel
-    object. Stringified numeric versions are coerced back to integers so the resource
-    shape matches the historical Mongo representation.
+    object. The stringified numeric ``otu_version`` is coerced back to an integer so the
+    resource shape matches the historical Mongo representation.
 
     The public index id is the integer ``index_id`` primary key: changes reference their
-    index by its Postgres id.
+    index by its Postgres id. The index version is supplied as ``index_version`` from
+    ``indexes.version`` on an outer join keyed by ``index_id``, since it is authoritative
+    there and no longer stored on the history row. The join must be an outer join so
+    unbuilt rows (``index_id`` is ``NULL``) survive; those rows carry a ``NULL``
+    ``index_version`` and reconstruct the ``None`` index.
 
     The ``handle`` comes from a join on ``users`` so the nested user is fully populated
     without a follow-up transform.
@@ -358,11 +359,6 @@ def legacy_history_document(
     if row.index_id is None:
         index = None
     else:
-        index_version = row.index_version
-
-        if index_version is not None and index_version.isdigit():
-            index_version = int(index_version)
-
         index = {
             "id": row.index_id,
             "version": index_version,
@@ -429,8 +425,9 @@ async def find(
 
         rows = (
             await session.execute(
-                select(SQLLegacyHistory, SQLUser.handle)
+                select(SQLLegacyHistory, SQLUser.handle, SQLIndex.version)
                 .join(SQLUser, SQLLegacyHistory.user_id == SQLUser.id)
+                .outerjoin(SQLIndex, SQLLegacyHistory.index_id == SQLIndex.id)
                 .where(*search_filters)
                 .order_by(
                     cast(SQLLegacyHistory.otu_version, Integer).desc().nulls_first(),
@@ -442,7 +439,10 @@ async def find(
         ).all()
 
     documents = await apply_transforms(
-        [base_processor(legacy_history_document(row, handle)) for row, handle in rows],
+        [
+            base_processor(legacy_history_document(row, handle, index_version))
+            for row, handle, index_version in rows
+        ],
         [AttachReferenceTransform(pg)],
         pg,
     )
@@ -506,8 +506,9 @@ async def find_by_index(
 
         rows = (
             await session.execute(
-                select(SQLLegacyHistory, SQLUser.handle)
+                select(SQLLegacyHistory, SQLUser.handle, SQLIndex.version)
                 .join(SQLUser, SQLLegacyHistory.user_id == SQLUser.id)
+                .outerjoin(SQLIndex, SQLLegacyHistory.index_id == SQLIndex.id)
                 .where(*search_filters)
                 .order_by(
                     SQLLegacyHistory.otu_name.asc(),
@@ -519,7 +520,10 @@ async def find_by_index(
         ).all()
 
     documents = await apply_transforms(
-        [base_processor(legacy_history_document(row, handle)) for row, handle in rows],
+        [
+            base_processor(legacy_history_document(row, handle, index_version))
+            for row, handle, index_version in rows
+        ],
         [AttachReferenceTransform(pg)],
         pg,
     )

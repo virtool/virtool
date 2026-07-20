@@ -702,7 +702,7 @@ async def test_populate_insert_only_reference_writes_legacy_history(
     assert all(row.user_id == user.id for row in rows)
     assert all(row.reference is None and row.reference_id is not None for row in rows)
     assert all(row.otu_version == "0" for row in rows)
-    assert all(row.index is None and row.index_version is None for row in rows)
+    assert all(row.index is None for row in rows)
     assert rows == snapshot(name="legacy_history")
 
 

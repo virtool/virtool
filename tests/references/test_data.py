@@ -132,7 +132,6 @@ class TestCreateIndex:
                     otu_version="0",
                     reference_id=reference.id,
                     index=None,
-                    index_version=None,
                 ),
             )
             await session.commit()
@@ -154,7 +153,6 @@ class TestCreateIndex:
 
             assert history is not None
             assert history.index is None
-            assert history.index_version is None
             assert await session.scalar(select(SQLTask.id)) is None
             assert await session.scalar(select(SQLIndex.id)) is None
 
@@ -189,7 +187,6 @@ class TestCreateIndex:
                     otu_version="0",
                     reference_id=reference.id,
                     index=None,
-                    index_version=None,
                 ),
             )
             await session.commit()

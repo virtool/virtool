@@ -91,7 +91,6 @@ async def _seed_history(
     user_id: int,
     index: str | None,
     index_id: int | None = None,
-    index_version: str | None = None,
 ) -> None:
     async with AsyncSession(ctx.pg) as session:
         session.add(
@@ -107,7 +106,6 @@ async def _seed_history(
                 reference_id=reference_id,
                 index=index,
                 index_id=index_id,
-                index_version=index_version,
             ),
         )
         await session.commit()
@@ -147,7 +145,6 @@ class TestBackfillHistoryIndexIds:
             seeded["reference_id"],
             seeded["user_id"],
             index="idx_legacy",
-            index_version="0",
         )
 
         await backfill_history_index_ids(ctx)
@@ -186,7 +183,6 @@ class TestBackfillHistoryIndexIds:
             seeded["reference_id"],
             seeded["user_id"],
             index="missing",
-            index_version="0",
         )
 
         with pytest.raises(ValueError, match="does not resolve to an indexes row"):
@@ -206,7 +202,6 @@ class TestBackfillHistoryIndexIds:
             seeded["reference_id"],
             seeded["user_id"],
             index="idx_legacy",
-            index_version="0",
         )
         await _seed_history(
             ctx,

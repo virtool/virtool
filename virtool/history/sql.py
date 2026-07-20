@@ -46,8 +46,7 @@ class SQLLegacyHistory(Base):
       written now that ``index_id`` is the source of truth, and it is nullable
       until it is dropped in a later cleanup revision. A ``NULL`` ``index_id``
       encodes an unbuilt change, exactly as a ``NULL`` ``index`` did. The public
-      index id stays the legacy string, recovered on read by an outer join from
-      ``index_id`` to ``indexes.legacy_id``.
+      index id is the integer ``index_id`` primary key.
     - ``otu`` is a bare string column with no foreign key by design: ``SQLOTU`` keys
       on the 8-character Mongo id and has no ``legacy_id`` column, so this already
       holds the OTU's primary key.
@@ -55,10 +54,14 @@ class SQLLegacyHistory(Base):
       written now that ``reference_id`` is the source of truth, and it is nullable
       until it is dropped in a later cleanup revision.
     - ``user.id`` becomes a real foreign key to ``users.id``.
-    - ``otu_version`` and ``index_version`` are strings holding stringified integers.
-      The Mongo sentinels ``"removed"`` and ``"unbuilt"`` are normalized to ``NULL``
-      on write by :func:`virtool.history.db.legacy_history_values` and reconstituted
-      on read, so neither column ever stores a sentinel.
+    - ``otu_version`` is a string holding a stringified integer. The Mongo sentinel
+      ``"removed"`` is normalized to ``NULL`` on write by
+      :func:`virtool.history.db.legacy_history_values` and reconstituted on read, so
+      the column never stores a sentinel.
+
+    The index version is not stored here: it is authoritative in ``indexes.version``
+    and read through the ``index_id`` join. A ``NULL`` ``index_id`` (an unbuilt change)
+    reconstructs a ``None`` index on read.
     """
 
     __tablename__ = "legacy_history"
@@ -89,4 +92,3 @@ class SQLLegacyHistory(Base):
         nullable=True,
         index=True,
     )
-    index_version: Mapped[str | None]

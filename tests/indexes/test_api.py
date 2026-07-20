@@ -113,7 +113,6 @@ class TestFind:
                     otu_version="0",
                     reference_id=index_references[index_id],
                     index_id=index_id,
-                    index_version="0",
                 )
                 for legacy_id, index_id, otu_id in (
                     ("0", indexes["active_a"].id, "otu_1"),
@@ -285,7 +284,6 @@ async def test_get(
                     otu_version=otu_version,
                     reference_id=reference.id,
                     index_id=row_index_id,
-                    index_version="0" if row_index_id is not None else None,
                 )
                 for legacy_id, row_index_id, otu_id, otu_name, otu_version, user_id in (
                     (
@@ -423,7 +421,6 @@ class TestCreate:
                     otu_version="0",
                     reference_id=reference["id"],
                     index=None,
-                    index_version=None,
                 ),
             )
             await session.commit()
@@ -467,7 +464,7 @@ class TestCreate:
             assert task.type == "create_index"
             assert task.context == {"index_id": new_index.id}
             assert history is not None
-            assert (history.index_id, history.index_version) == (new_index.id, "0")
+            assert history.index_id == new_index.id
             assert await session.scalar(select(SQLJob.id)) is None
 
         m_create_manifest.assert_called_with(ANY, reference["id"])

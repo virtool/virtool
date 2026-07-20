@@ -141,7 +141,6 @@ async def test_create_assigns_index_in_postgres(
             reference_id=reference_id,
             index=index,
             index_id=index_pk,
-            index_version="0" if index else None,
         )
 
     async with AsyncSession(pg) as session:
@@ -173,13 +172,13 @@ async def test_create_assigns_index_in_postgres(
 
     async with AsyncSession(pg) as session:
         rows = {
-            row.legacy_id: (row.index_id, row.index_version)
+            row.legacy_id: row.index_id
             for row in (await session.execute(select(SQLLegacyHistory))).scalars()
         }
 
-    assert rows["ref_unbuilt"] == (new_index_pk, "1")
-    assert rows["ref_already_built"] == (prior_index_pk, "0")
-    assert rows["other_ref_unbuilt"] == (None, None)
+    assert rows["ref_unbuilt"] == new_index_pk
+    assert rows["ref_already_built"] == prior_index_pk
+    assert rows["other_ref_unbuilt"] is None
 
 
 async def test_create_rolls_back_on_failure(
@@ -209,7 +208,6 @@ async def test_create_rolls_back_on_failure(
                 otu_version="0",
                 reference_id=built_ref.id,
                 index=None,
-                index_version=None,
             ),
         )
         await session.commit()
@@ -243,7 +241,6 @@ async def test_create_rolls_back_on_failure(
         index_row = (await session.execute(select(SQLIndex))).scalar_one_or_none()
 
     assert row.index_id is None
-    assert row.index_version is None
     assert index_row is None
 
 
@@ -707,7 +704,6 @@ class TestIndexCountsTransform:
                 reference_id=reference_id,
                 index=index,
                 index_id=index_pk,
-                index_version="0",
             )
             for otu, otu_version in otus
         )
