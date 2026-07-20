@@ -42,7 +42,7 @@ class AnalysisMinimal(BaseModel):
                 {
                     "created_at": "2022-05-21T01:28:55.441000Z",
                     "id": 142,
-                    "index": {"id": "9c5u6wsq", "version": 13},
+                    "index": {"id": 13, "version": 13},
                     "job": {"id": "bt8nwg9z"},
                     "ready": True,
                     "reference": {"id": "d19exr83", "name": "New Plant Viruses"},
@@ -92,7 +92,7 @@ class Analysis(AnalysisMinimal):
                     }
                 ],
                 "id": 3145,
-                "index": {"id": "u3lm1rk8", "version": 14},
+                "index": {"id": 14, "version": 14},
                 "job": {"id": "us3toy8j"},
                 "ready": True,
                 "reference": {"id": "d19exr83", "name": "New Plant Viruses"},

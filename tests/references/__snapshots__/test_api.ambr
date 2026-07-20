@@ -212,7 +212,7 @@
     'created_at': '2015-10-06T20:00:00Z',
     'files': list([
     ]),
-    'id': '1',
+    'id': 1,
     'job': None,
     'manifest': dict({
       'bar': 5,
@@ -260,10 +260,7 @@
       'version': 0,
     }),
     'id': 'bf1b993c.0',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
+    'index': None,
     'method_name': <HistoryMethod.create: 'create'>,
     'otu': dict({
       'id': 'bf1b993c',
@@ -374,10 +371,7 @@
       'version': 0,
     }),
     'id': 'bf1b993c.0',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
+    'index': None,
     'method_name': <HistoryMethod.create: 'create'>,
     'otu': dict({
       'id': 'bf1b993c',
@@ -488,10 +482,7 @@
       'version': 0,
     }),
     'id': 'bf1b993c.0',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
+    'index': None,
     'method_name': <HistoryMethod.create: 'create'>,
     'otu': dict({
       'id': 'bf1b993c',
@@ -636,10 +627,7 @@
         'created_at': 'approximately_now_isoformat',
         'description': 'Created new sequence NC_001367 in Isolate strain_1',
         'id': 'bf1b993c.2',
-        'index': dict({
-          'id': 'unbuilt',
-          'version': 'unbuilt',
-        }),
+        'index': None,
         'method_name': 'create_sequence',
         'otu': dict({
           'id': 'bf1b993c',
@@ -660,10 +648,7 @@
         'created_at': 'approximately_now_isoformat',
         'description': 'Added Isolate strain_1 as default',
         'id': 'bf1b993c.1',
-        'index': dict({
-          'id': 'unbuilt',
-          'version': 'unbuilt',
-        }),
+        'index': None,
         'method_name': 'add_isolate',
         'otu': dict({
           'id': 'bf1b993c',
@@ -684,10 +669,7 @@
         'created_at': 'approximately_now_isoformat',
         'description': 'Created Cucumber mosaic virus',
         'id': '7cf872dc.0',
-        'index': dict({
-          'id': 'unbuilt',
-          'version': 'unbuilt',
-        }),
+        'index': None,
         'method_name': 'create',
         'otu': dict({
           'id': '7cf872dc',
@@ -708,10 +690,7 @@
         'created_at': 'approximately_now_isoformat',
         'description': 'Created Potato virus X (PVX)',
         'id': 'fb085f7f.0',
-        'index': dict({
-          'id': 'unbuilt',
-          'version': 'unbuilt',
-        }),
+        'index': None,
         'method_name': 'create',
         'otu': dict({
           'id': 'fb085f7f',
@@ -732,10 +711,7 @@
         'created_at': 'approximately_now_isoformat',
         'description': 'Created Tobacco mosaic virus (TMV)',
         'id': 'bf1b993c.0',
-        'index': dict({
-          'id': 'unbuilt',
-          'version': 'unbuilt',
-        }),
+        'index': None,
         'method_name': 'create',
         'otu': dict({
           'id': 'bf1b993c',

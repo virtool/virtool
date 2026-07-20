@@ -99,7 +99,9 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
 
         index_row = (
             await session.execute(
-                select(SQLIndex.id).where(SQLIndex.legacy_id == index["id"]),
+                select(SQLIndex.id).where(
+                    compose_legacy_id_single_expression(SQLIndex, index["id"]),
+                ),
             )
         ).first()
 
@@ -131,7 +133,7 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
             sample_id=sample_pg_id,
             reference=reference_legacy_id or str(reference_pg_id),
             reference_id=reference_pg_id,
-            index=index["id"],
+            index=str(index["id"]),
             index_id=index_pg_id,
             user_id=document["user"]["id"],
             job_id=job["id"] if job and isinstance(job["id"], int) else None,

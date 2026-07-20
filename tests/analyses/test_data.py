@@ -69,7 +69,7 @@ class SampleSetup(NamedTuple):
     sample_id: int
     user: User
     reference_id: int
-    index_id: str
+    index_id: int
     client: UserClient
 
     @property
@@ -381,7 +381,7 @@ class TestHasRight:
         sample_id: int,
         owner_id: int,
         reference_id: str,
-        index_id: str,
+        index_id: int,
     ) -> int:
         return await seed_analysis(
             mongo,

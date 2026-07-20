@@ -84,7 +84,7 @@ class IndexData:
         self._pg = pg
         self._storage = storage
 
-    async def _resolve_storage_key(self, index_id: str) -> str:
+    async def _resolve_storage_key(self, index_id: int) -> str:
         """Return the object-storage key slug for an index.
 
         Migrated indexes store their files under the legacy Mongo id; indexes
@@ -162,7 +162,7 @@ class IndexData:
 
         return [IndexMinimal(**item) for item in items]
 
-    async def get(self, index_id: str) -> Index:
+    async def get(self, index_id: int) -> Index:
         """Get a single index by its ID.
 
         :param index_id: the index ID
@@ -208,7 +208,7 @@ class IndexData:
 
         return Index(**document)
 
-    async def get_reference(self, index_id: str) -> ReferenceNested:
+    async def get_reference(self, index_id: int) -> ReferenceNested:
         """Get a reference associated with an index.
 
         :param index_id: the index ID
@@ -230,7 +230,7 @@ class IndexData:
 
     async def get_otus_json(
         self,
-        index_id: str,
+        index_id: int,
     ) -> tuple[AsyncIterator[bytes], int]:
         """Get a complete compressed JSON representation of the index OTUs.
 
@@ -277,7 +277,7 @@ class IndexData:
 
     async def upload_file(
         self,
-        index_id: str,
+        index_id: int,
         file_type: str,
         name: str,
         multipart,
@@ -304,7 +304,7 @@ class IndexData:
 
             index_file = SQLIndexFile(
                 name=name,
-                index=index_id,
+                index=str(index_id),
                 index_id=index_row.id,
                 type=file_type,
             )
@@ -330,13 +330,13 @@ class IndexData:
             await session.commit()
 
         return IndexFile(
-            **index_file_dict,
+            **{**index_file_dict, "index": index_id},
             download_url=f"/indexes/{index_id}/files/{name}",
         )
 
     async def get_index_file(
         self,
-        index_id: str,
+        index_id: int,
         filename: str,
     ) -> tuple[AsyncIterator[bytes], int]:
         """Get an index file as a stream.
@@ -351,7 +351,11 @@ class IndexData:
         async with AsyncSession(self._pg) as session:
             row = (
                 await session.execute(
-                    select(SQLIndexFile).filter_by(index=index_id, name=filename),
+                    select(SQLIndexFile).where(
+                        SQLIndexFile.index_id
+                        == compose_legacy_id_subquery(SQLIndex, index_id),
+                        SQLIndexFile.name == filename,
+                    ),
                 )
             ).scalar()
 
@@ -365,7 +369,7 @@ class IndexData:
         return self._storage.read(key), row.size
 
     @emits(Operation.UPDATE)
-    async def finalize(self, index_id: str) -> Index:
+    async def finalize(self, index_id: int) -> Index:
         """Finalize an index document.
 
         :param index_id: the index ID
@@ -416,8 +420,14 @@ class IndexData:
         return await self.get(index_id)
 
     @emits(Operation.UPDATE)
-    async def generate_task_index(self, index_id: str) -> Index:
-        """Generate the task-backed index JSON artifact and mark the index ready."""
+    async def generate_task_index(self, index_id: int | str) -> Index:
+        """Generate the task-backed index JSON artifact and mark the index ready.
+
+        ``index_id`` accepts both the integer public id and the stringified form: a
+        task created before the integer-id cutover carries the string in its context,
+        so both must resolve for one release. ``compose_legacy_id_single_expression``
+        routes either form to the integer primary key.
+        """
         async with AsyncSession(self._pg) as session:
             index_row = (
                 await session.execute(
@@ -513,7 +523,11 @@ class IndexData:
             async with AsyncSession(self._pg) as session:
                 row = (
                     await session.execute(
-                        select(SQLIndexFile).filter_by(index=index_id, name=file_name),
+                        select(SQLIndexFile).where(
+                            SQLIndexFile.index_id
+                            == compose_legacy_id_subquery(SQLIndex, index_id),
+                            SQLIndexFile.name == file_name,
+                        ),
                     )
                 ).scalar_one_or_none()
 
@@ -527,7 +541,7 @@ class IndexData:
 
     async def find_changes(
         self,
-        index_id: str,
+        index_id: int,
         page: int,
         per_page: int,
         term: str | None = None,
@@ -563,7 +577,7 @@ class IndexData:
 
         return HistorySearchResult(**data)
 
-    async def delete(self, index_id: str) -> None:
+    async def delete(self, index_id: int) -> None:
         """Delete an index given it's id.
 
         Only non-ready indexes (failed or in-progress builds) can be deleted. A

@@ -16,7 +16,7 @@ from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU
 
 
-async def add_index_files(pg: AsyncEngine, index_id: str) -> None:
+async def add_index_files(pg: AsyncEngine, index_id: int) -> None:
     """Add the complete set of files that finalizing ``index_id`` requires.
 
     Finalization blocks on the bowtie2 and FASTA checks, so an index missing any of
@@ -33,17 +33,13 @@ async def add_index_files(pg: AsyncEngine, index_id: str) -> None:
     ]
 
     async with AsyncSession(pg) as session:
-        index_pk = await session.scalar(
-            select(SQLIndex.id).where(SQLIndex.legacy_id == index_id),
-        )
-
         session.add_all(
             [
                 SQLIndexFile(
                     id=id_,
                     name=name,
-                    index=index_id,
-                    index_id=index_pk,
+                    index=str(index_id),
+                    index_id=index_id,
                     type=type_,
                     size=1234567,
                 )
@@ -81,7 +77,7 @@ async def test_finalize(
     # The Postgres row is marked ready.
     async with AsyncSession(pg) as session:
         row = await session.scalar(
-            select(SQLIndex).where(SQLIndex.legacy_id == index.id),
+            select(SQLIndex).where(SQLIndex.id == index.id),
         )
 
     assert row.ready is True
@@ -172,13 +168,6 @@ class TestDelete:
         )
 
         async with AsyncSession(pg) as session:
-            deleted_index_pk = await session.scalar(
-                select(SQLIndex.id).where(SQLIndex.legacy_id == deleted_index.id),
-            )
-            other_index_pk = await session.scalar(
-                select(SQLIndex.id).where(SQLIndex.legacy_id == other_index.id),
-            )
-
             session.add_all(
                 [
                     SQLLegacyHistory(
@@ -191,8 +180,7 @@ class TestDelete:
                         otu_name="Virus A",
                         otu_version="0",
                         reference_id=reference.id,
-                        index=deleted_index.id,
-                        index_id=deleted_index_pk,
+                        index_id=deleted_index.id,
                     ),
                     SQLLegacyHistory(
                         legacy_id="otu_b.0",
@@ -204,8 +192,7 @@ class TestDelete:
                         otu_name="Virus B",
                         otu_version="0",
                         reference_id=reference.id,
-                        index=deleted_index.id,
-                        index_id=deleted_index_pk,
+                        index_id=deleted_index.id,
                     ),
                     SQLLegacyHistory(
                         legacy_id="otu_c.0",
@@ -217,8 +204,7 @@ class TestDelete:
                         otu_name="Virus C",
                         otu_version="0",
                         reference_id=reference.id,
-                        index=other_index.id,
-                        index_id=other_index_pk,
+                        index_id=other_index.id,
                     ),
                 ],
             )
@@ -228,18 +214,18 @@ class TestDelete:
 
         async with AsyncSession(pg) as session:
             rows = {
-                row.legacy_id: (row.index, row.index_id)
+                row.legacy_id: row.index_id
                 for row in (await session.execute(select(SQLLegacyHistory))).scalars()
             }
 
             index_row = await session.scalar(
-                select(SQLIndex).where(SQLIndex.legacy_id == deleted_index.id),
+                select(SQLIndex).where(SQLIndex.id == deleted_index.id),
             )
 
         assert rows == {
-            "otu_a.0": (None, None),
-            "otu_b.0": (None, None),
-            "otu_c.0": (other_index.id, other_index_pk),
+            "otu_a.0": None,
+            "otu_b.0": None,
+            "otu_c.0": other_index.id,
         }
 
         # The Postgres index row is hard-deleted.
@@ -310,7 +296,7 @@ class TestDelete:
         async with AsyncSession(pg) as session:
             assert (
                 await session.scalar(
-                    select(SQLIndex).where(SQLIndex.legacy_id == index.id),
+                    select(SQLIndex).where(SQLIndex.id == index.id),
                 )
                 is not None
             )
@@ -321,20 +307,27 @@ class TestResolveStorageKey:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
+        pg: AsyncEngine,
     ):
         """At landing every migrated index carries ``storage_key == legacy_id``, so the
-        composed object path is byte-identical to keying by the index id.
+        composed object path stays keyed by the legacy slug even though the public id is
+        now the integer primary key.
         """
         user = await fake.users.create()
         reference = await fake.references.create(user=user)
         index = await fake.indexes.create(reference, user, manifest={}, version=2)
 
+        async with AsyncSession(pg) as session:
+            legacy_id = await session.scalar(
+                select(SQLIndex.legacy_id).where(SQLIndex.id == index.id),
+            )
+
         storage_key = await data_layer.index._resolve_storage_key(index.id)
 
-        assert storage_key == index.id
+        assert storage_key == legacy_id
         assert (
             compose_index_file_key(storage_key, "otus.json.gz")
-            == f"indexes/{index.id}/otus.json.gz"
+            == f"indexes/{legacy_id}/otus.json.gz"
         )
 
     async def test_uses_storage_key_column(
@@ -353,7 +346,7 @@ class TestResolveStorageKey:
         async with AsyncSession(pg) as session:
             await session.execute(
                 update(SQLIndex)
-                .where(SQLIndex.legacy_id == index.id)
+                .where(SQLIndex.id == index.id)
                 .values(storage_key="a-native-uuid-key"),
             )
             await session.commit()
@@ -364,4 +357,4 @@ class TestResolveStorageKey:
 
     async def test_not_found(self, data_layer: DataLayer):
         with pytest.raises(ResourceNotFoundError):
-            await data_layer.index._resolve_storage_key("missing")
+            await data_layer.index._resolve_storage_key(999999)

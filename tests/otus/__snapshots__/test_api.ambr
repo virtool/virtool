@@ -1,9 +1,9 @@
 # serializer version: 1
 # name: TestAddIsolate.test_default[False][history]
   list([
-    History(created_at=datetime.datetime(2015, 10, 6, 20, 0), description='Created Prunus virus F (PVF)', id='bf1b993c.0', method_name=<HistoryMethod.create: 'create'>, user=UserNested(id=1, handle='leeashley'), index=HistoryIndex(id='unbuilt', version='unbuilt'), otu=HistoryOTU(id='bf1b993c', name='Prunus virus F', version=0), reference=ReferenceNested(id=1, data_type=<ReferenceDataType.genome: 'genome'>, name='Example'), diff={'_id': 'bf1b993c', 'name': 'Prunus virus F', 'schema': [{'name': 'Genome', 'molecule': 'ssRNA', 'required': True}], 'version': 0, 'isolates': [], 'verified': False, 'reference': {'id': 1}, 'lower_name': 'prunus virus f', 'abbreviation': 'PVF', 'last_indexed_version': None}),
-    History(created_at=datetime.datetime(2015, 10, 6, 20, 0), description='Added B isolate as default', id='bf1b993c.1', method_name=<HistoryMethod.add_isolate: 'add_isolate'>, user=UserNested(id=1, handle='leeashley'), index=HistoryIndex(id='unbuilt', version='unbuilt'), otu=HistoryOTU(id='bf1b993c', name='Prunus virus F', version=1), reference=ReferenceNested(id=1, data_type=<ReferenceDataType.genome: 'genome'>, name='Example'), diff=[['change', 'version', [0, 1]], ['add', 'isolates', [[0, {'id': 'fb085f7f', 'default': True, 'sequences': [], 'source_name': 'isolate', 'source_type': 'b'}]]]]),
-    History(created_at=datetime.datetime(2015, 10, 6, 20, 0), description='Added Isolate a', id='bf1b993c.2', method_name=<HistoryMethod.add_isolate: 'add_isolate'>, user=UserNested(id=1, handle='leeashley'), index=HistoryIndex(id='unbuilt', version='unbuilt'), otu=HistoryOTU(id='bf1b993c', name='Prunus virus F', version=2), reference=ReferenceNested(id=1, data_type=<ReferenceDataType.genome: 'genome'>, name='Example'), diff=[['change', 'version', [1, 2]], ['add', 'isolates', [[1, {'id': '7cf872dc', 'default': False, 'sequences': [], 'source_name': 'a', 'source_type': 'isolate'}]]]]),
+    History(created_at=datetime.datetime(2015, 10, 6, 20, 0), description='Created Prunus virus F (PVF)', id='bf1b993c.0', method_name=<HistoryMethod.create: 'create'>, user=UserNested(id=1, handle='leeashley'), index=None, otu=HistoryOTU(id='bf1b993c', name='Prunus virus F', version=0), reference=ReferenceNested(id=1, data_type=<ReferenceDataType.genome: 'genome'>, name='Example'), diff={'_id': 'bf1b993c', 'name': 'Prunus virus F', 'schema': [{'name': 'Genome', 'molecule': 'ssRNA', 'required': True}], 'version': 0, 'isolates': [], 'verified': False, 'reference': {'id': 1}, 'lower_name': 'prunus virus f', 'abbreviation': 'PVF', 'last_indexed_version': None}),
+    History(created_at=datetime.datetime(2015, 10, 6, 20, 0), description='Added B isolate as default', id='bf1b993c.1', method_name=<HistoryMethod.add_isolate: 'add_isolate'>, user=UserNested(id=1, handle='leeashley'), index=None, otu=HistoryOTU(id='bf1b993c', name='Prunus virus F', version=1), reference=ReferenceNested(id=1, data_type=<ReferenceDataType.genome: 'genome'>, name='Example'), diff=[['change', 'version', [0, 1]], ['add', 'isolates', [[0, {'id': 'fb085f7f', 'default': True, 'sequences': [], 'source_name': 'isolate', 'source_type': 'b'}]]]]),
+    History(created_at=datetime.datetime(2015, 10, 6, 20, 0), description='Added Isolate a', id='bf1b993c.2', method_name=<HistoryMethod.add_isolate: 'add_isolate'>, user=UserNested(id=1, handle='leeashley'), index=None, otu=HistoryOTU(id='bf1b993c', name='Prunus virus F', version=2), reference=ReferenceNested(id=1, data_type=<ReferenceDataType.genome: 'genome'>, name='Example'), diff=[['change', 'version', [1, 2]], ['add', 'isolates', [[1, {'id': '7cf872dc', 'default': False, 'sequences': [], 'source_name': 'a', 'source_type': 'isolate'}]]]]),
   ])
 # ---
 # name: TestAddIsolate.test_default[False][json]
@@ -81,9 +81,9 @@
 # ---
 # name: TestAddIsolate.test_default[True][history]
   list([
-    History(created_at=datetime.datetime(2015, 10, 6, 20, 0), description='Created Prunus virus F (PVF)', id='bf1b993c.0', method_name=<HistoryMethod.create: 'create'>, user=UserNested(id=1, handle='leeashley'), index=HistoryIndex(id='unbuilt', version='unbuilt'), otu=HistoryOTU(id='bf1b993c', name='Prunus virus F', version=0), reference=ReferenceNested(id=1, data_type=<ReferenceDataType.genome: 'genome'>, name='Example'), diff={'_id': 'bf1b993c', 'name': 'Prunus virus F', 'schema': [{'name': 'Genome', 'molecule': 'ssRNA', 'required': True}], 'version': 0, 'isolates': [], 'verified': False, 'reference': {'id': 1}, 'lower_name': 'prunus virus f', 'abbreviation': 'PVF', 'last_indexed_version': None}),
-    History(created_at=datetime.datetime(2015, 10, 6, 20, 0), description='Added B isolate as default', id='bf1b993c.1', method_name=<HistoryMethod.add_isolate: 'add_isolate'>, user=UserNested(id=1, handle='leeashley'), index=HistoryIndex(id='unbuilt', version='unbuilt'), otu=HistoryOTU(id='bf1b993c', name='Prunus virus F', version=1), reference=ReferenceNested(id=1, data_type=<ReferenceDataType.genome: 'genome'>, name='Example'), diff=[['change', 'version', [0, 1]], ['add', 'isolates', [[0, {'id': 'fb085f7f', 'default': True, 'sequences': [], 'source_name': 'isolate', 'source_type': 'b'}]]]]),
-    History(created_at=datetime.datetime(2015, 10, 6, 20, 0), description='Added Isolate a as default', id='bf1b993c.2', method_name=<HistoryMethod.add_isolate: 'add_isolate'>, user=UserNested(id=1, handle='leeashley'), index=HistoryIndex(id='unbuilt', version='unbuilt'), otu=HistoryOTU(id='bf1b993c', name='Prunus virus F', version=2), reference=ReferenceNested(id=1, data_type=<ReferenceDataType.genome: 'genome'>, name='Example'), diff=[['change', 'version', [1, 2]], ['change', ['isolates', 0, 'default'], [True, False]], ['add', 'isolates', [[1, {'id': '7cf872dc', 'default': True, 'sequences': [], 'source_name': 'a', 'source_type': 'isolate'}]]]]),
+    History(created_at=datetime.datetime(2015, 10, 6, 20, 0), description='Created Prunus virus F (PVF)', id='bf1b993c.0', method_name=<HistoryMethod.create: 'create'>, user=UserNested(id=1, handle='leeashley'), index=None, otu=HistoryOTU(id='bf1b993c', name='Prunus virus F', version=0), reference=ReferenceNested(id=1, data_type=<ReferenceDataType.genome: 'genome'>, name='Example'), diff={'_id': 'bf1b993c', 'name': 'Prunus virus F', 'schema': [{'name': 'Genome', 'molecule': 'ssRNA', 'required': True}], 'version': 0, 'isolates': [], 'verified': False, 'reference': {'id': 1}, 'lower_name': 'prunus virus f', 'abbreviation': 'PVF', 'last_indexed_version': None}),
+    History(created_at=datetime.datetime(2015, 10, 6, 20, 0), description='Added B isolate as default', id='bf1b993c.1', method_name=<HistoryMethod.add_isolate: 'add_isolate'>, user=UserNested(id=1, handle='leeashley'), index=None, otu=HistoryOTU(id='bf1b993c', name='Prunus virus F', version=1), reference=ReferenceNested(id=1, data_type=<ReferenceDataType.genome: 'genome'>, name='Example'), diff=[['change', 'version', [0, 1]], ['add', 'isolates', [[0, {'id': 'fb085f7f', 'default': True, 'sequences': [], 'source_name': 'isolate', 'source_type': 'b'}]]]]),
+    History(created_at=datetime.datetime(2015, 10, 6, 20, 0), description='Added Isolate a as default', id='bf1b993c.2', method_name=<HistoryMethod.add_isolate: 'add_isolate'>, user=UserNested(id=1, handle='leeashley'), index=None, otu=HistoryOTU(id='bf1b993c', name='Prunus virus F', version=2), reference=ReferenceNested(id=1, data_type=<ReferenceDataType.genome: 'genome'>, name='Example'), diff=[['change', 'version', [1, 2]], ['change', ['isolates', 0, 'default'], [True, False]], ['add', 'isolates', [[1, {'id': '7cf872dc', 'default': True, 'sequences': [], 'source_name': 'a', 'source_type': 'isolate'}]]]]),
   ])
 # ---
 # name: TestAddIsolate.test_default[True][json]
@@ -191,10 +191,7 @@
       ]),
     ]),
     'id': 'bf1b993c.1',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
+    'index': None,
     'method_name': <HistoryMethod.add_isolate: 'add_isolate'>,
     'otu': dict({
       'id': 'bf1b993c',
@@ -308,10 +305,7 @@
       ]),
     ]),
     'id': 'bf1b993c.1',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
+    'index': None,
     'method_name': <HistoryMethod.add_isolate: 'add_isolate'>,
     'otu': dict({
       'id': 'bf1b993c',
@@ -434,10 +428,7 @@
       ]),
     ]),
     'id': 'bf1b993c.4',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
+    'index': None,
     'method_name': <HistoryMethod.create_sequence: 'create_sequence'>,
     'otu': dict({
       'id': 'bf1b993c',
@@ -627,10 +618,7 @@
       'version': 3,
     }),
     'id': 'bf1b993c.removed',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
+    'index': None,
     'method_name': <HistoryMethod.remove: 'remove'>,
     'otu': dict({
       'id': 'bf1b993c',
@@ -746,10 +734,7 @@
       ]),
     ]),
     'id': 'bf1b993c.5',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
+    'index': None,
     'method_name': <HistoryMethod.remove_isolate: 'remove_isolate'>,
     'otu': dict({
       'id': 'bf1b993c',
@@ -902,10 +887,7 @@
       ]),
     ]),
     'id': 'bf1b993c.5',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
+    'index': None,
     'method_name': <HistoryMethod.remove_isolate: 'remove_isolate'>,
     'otu': dict({
       'id': 'bf1b993c',
@@ -1132,10 +1114,7 @@
       ]),
     ]),
     'id': 'bf1b993c.5',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
+    'index': None,
     'method_name': <HistoryMethod.remove_sequence: 'remove_sequence'>,
     'otu': dict({
       'id': 'bf1b993c',
@@ -1328,10 +1307,7 @@
       ]),
     ]),
     'id': '6116cba1.1',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
+    'index': None,
     'method_name': <HistoryMethod.edit: 'edit'>,
     'otu': dict({
       'id': '6116cba1',
@@ -1480,10 +1456,7 @@
       ]),
     ]),
     'id': '6116cba1.1',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
+    'index': None,
     'method_name': <HistoryMethod.edit: 'edit'>,
     'otu': dict({
       'id': '6116cba1',
@@ -1616,10 +1589,7 @@
       ]),
     ]),
     'id': '6116cba1.1',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
+    'index': None,
     'method_name': <HistoryMethod.edit: 'edit'>,
     'otu': dict({
       'id': '6116cba1',
@@ -1768,10 +1738,7 @@
       ]),
     ]),
     'id': '6116cba1.1',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
+    'index': None,
     'method_name': <HistoryMethod.edit: 'edit'>,
     'otu': dict({
       'id': '6116cba1',
@@ -1920,10 +1887,7 @@
       ]),
     ]),
     'id': '6116cba1.1',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
+    'index': None,
     'method_name': <HistoryMethod.edit: 'edit'>,
     'otu': dict({
       'id': '6116cba1',
@@ -2072,10 +2036,7 @@
       ]),
     ]),
     'id': '6116cba1.1',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
+    'index': None,
     'method_name': <HistoryMethod.edit: 'edit'>,
     'otu': dict({
       'id': '6116cba1',
@@ -2208,10 +2169,7 @@
       ]),
     ]),
     'id': '6116cba1.1',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
+    'index': None,
     'method_name': <HistoryMethod.edit: 'edit'>,
     'otu': dict({
       'id': '6116cba1',
@@ -2344,10 +2302,7 @@
       ]),
     ]),
     'id': '6116cba1.1',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
+    'index': None,
     'method_name': <HistoryMethod.edit: 'edit'>,
     'otu': dict({
       'id': '6116cba1',
@@ -2480,10 +2435,7 @@
       ]),
     ]),
     'id': '6116cba1.1',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
+    'index': None,
     'method_name': <HistoryMethod.edit: 'edit'>,
     'otu': dict({
       'id': '6116cba1',
@@ -2702,10 +2654,7 @@
       'created_at': 'approximately_now_isoformat',
       'description': 'Created new sequence PV426197 in Isolate Ever',
       'id': 'bf1b993c.3',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
+      'index': None,
       'method_name': 'create_sequence',
       'otu': dict({
         'id': 'bf1b993c',
@@ -2726,10 +2675,7 @@
       'created_at': 'approximately_now_isoformat',
       'description': 'Created new sequence NC_112201 in Isolate Ever',
       'id': 'bf1b993c.2',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
+      'index': None,
       'method_name': 'create_sequence',
       'otu': dict({
         'id': 'bf1b993c',
@@ -2750,10 +2696,7 @@
       'created_at': 'approximately_now_isoformat',
       'description': 'Added Isolate Ever as default',
       'id': 'bf1b993c.1',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
+      'index': None,
       'method_name': 'add_isolate',
       'otu': dict({
         'id': 'bf1b993c',
@@ -2774,10 +2717,7 @@
       'created_at': 'approximately_now_isoformat',
       'description': 'Created Squash browning spot virus (SBSV)',
       'id': 'bf1b993c.0',
-      'index': dict({
-        'id': 'unbuilt',
-        'version': 'unbuilt',
-      }),
+      'index': None,
       'method_name': 'create',
       'otu': dict({
         'id': 'bf1b993c',
@@ -2886,10 +2826,7 @@
       ]),
     ]),
     'id': 'bf1b993c.5',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
+    'index': None,
     'method_name': <HistoryMethod.set_as_default: 'set_as_default'>,
     'otu': dict({
       'id': 'bf1b993c',
@@ -3012,10 +2949,7 @@
       ]),
     ]),
     'id': 'bf1b993c.4',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
+    'index': None,
     'method_name': <HistoryMethod.edit_isolate: 'edit_isolate'>,
     'otu': dict({
       'id': 'bf1b993c',
@@ -3153,10 +3087,7 @@
       ]),
     ]),
     'id': 'bf1b993c.4',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
+    'index': None,
     'method_name': <HistoryMethod.edit_isolate: 'edit_isolate'>,
     'otu': dict({
       'id': 'bf1b993c',
@@ -3294,10 +3225,7 @@
       ]),
     ]),
     'id': 'bf1b993c.4',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
+    'index': None,
     'method_name': <HistoryMethod.edit_isolate: 'edit_isolate'>,
     'otu': dict({
       'id': 'bf1b993c',
@@ -3465,10 +3393,7 @@
       ]),
     ]),
     'id': 'bf1b993c.4',
-    'index': dict({
-      'id': 'unbuilt',
-      'version': 'unbuilt',
-    }),
+    'index': None,
     'method_name': <HistoryMethod.edit_sequence: 'edit_sequence'>,
     'otu': dict({
       'id': 'bf1b993c',

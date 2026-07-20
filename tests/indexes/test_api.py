@@ -9,7 +9,7 @@ from unittest.mock import ANY
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 from pytest_mock import MockerFixture
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
@@ -33,24 +33,6 @@ from virtool.otus.sql import SQLOTU
 from virtool.storage.protocol import StorageBackend
 from virtool.tasks.sql import SQLTask
 from virtool.workflow.pytest_plugin.utils import StaticTime
-
-
-async def link_history_index_ids(session: AsyncSession) -> None:
-    """Resolve ``legacy_history.index_id`` from the legacy ``index`` string.
-
-    Mirrors the production backfill so fixtures that insert built history rows by their
-    legacy ``index`` string get the matching integer foreign key that reads and filters
-    now key on. Rows whose ``index`` string has no ``indexes`` row are left unlinked.
-    """
-    await session.execute(
-        update(SQLLegacyHistory)
-        .where(
-            SQLLegacyHistory.index.isnot(None),
-            SQLLegacyHistory.index_id.is_(None),
-            SQLLegacyHistory.index == SQLIndex.legacy_id,
-        )
-        .values(index_id=SQLIndex.id),
-    )
 
 
 class TestFind:
@@ -130,7 +112,7 @@ class TestFind:
                     otu_name=otu_id,
                     otu_version="0",
                     reference_id=index_references[index_id],
-                    index=index_id,
+                    index_id=index_id,
                 )
                 for legacy_id, index_id, otu_id in (
                     ("0", indexes["active_a"].id, "otu_1"),
@@ -141,7 +123,6 @@ class TestFind:
                     ("5", indexes["active_b"].id, "otu_4"),
                 )
             )
-            await link_history_index_ids(session)
             await session.commit()
 
         mocker.patch(
@@ -290,29 +271,42 @@ async def test_get(
         )
         index_id = index.id
 
-    async with AsyncSession(pg) as session:
-        session.add_all(
-            SQLLegacyHistory(
-                legacy_id=legacy_id,
-                created_at=static_time.datetime,
-                description="Description",
-                method_name="edit",
-                user_id=user_id,
-                otu=otu_id,
-                otu_name=otu_name,
-                otu_version=otu_version,
-                reference_id=reference.id,
-                index=row_index_id,
+        async with AsyncSession(pg) as session:
+            session.add_all(
+                SQLLegacyHistory(
+                    legacy_id=legacy_id,
+                    created_at=static_time.datetime,
+                    description="Description",
+                    method_name="edit",
+                    user_id=user_id,
+                    otu=otu_id,
+                    otu_name=otu_name,
+                    otu_version=otu_version,
+                    reference_id=reference.id,
+                    index_id=row_index_id,
+                )
+                for legacy_id, row_index_id, otu_id, otu_name, otu_version, user_id in (
+                    (
+                        "tmv.0",
+                        index_id,
+                        "tmv",
+                        "Tobacco mosaic virus",
+                        "0",
+                        prolific.id,
+                    ),
+                    (
+                        "tmv.1",
+                        index_id,
+                        "tmv",
+                        "Tobacco mosaic virus",
+                        "1",
+                        prolific.id,
+                    ),
+                    ("pvx.0", index_id, "pvx", "Potato virus X", "0", occasional.id),
+                    ("other.0", None, "other", "Other virus", "0", occasional.id),
+                )
             )
-            for legacy_id, row_index_id, otu_id, otu_name, otu_version, user_id in (
-                ("tmv.0", index_id, "tmv", "Tobacco mosaic virus", "0", prolific.id),
-                ("tmv.1", index_id, "tmv", "Tobacco mosaic virus", "1", prolific.id),
-                ("pvx.0", index_id, "pvx", "Potato virus X", "0", occasional.id),
-                ("other.0", "other", "other", "Other virus", "0", occasional.id),
-            )
-        )
-        await link_history_index_ids(session)
-        await session.commit()
+            await session.commit()
 
     resp = await client.get(f"/indexes/{index_id}")
 
@@ -355,7 +349,12 @@ async def test_download_otus_json(
     index = await fake.indexes.create(reference, user, manifest=manifest)
 
     if file_exists:
-        key = compose_index_file_key(index.id, "otus.json.gz")
+        async with AsyncSession(client.app["pg"]) as session:
+            storage_key = await session.scalar(
+                select(SQLIndex.storage_key).where(SQLIndex.id == index.id),
+            )
+
+        key = compose_index_file_key(storage_key, "otus.json.gz")
 
         async def _stream():
             yield otus_json_path.read_bytes()
@@ -369,7 +368,9 @@ async def test_download_otus_json(
     assert resp.status == HTTPStatus.OK
     assert expected == result
 
-    if not file_exists:
+    if file_exists:
+        m_iter_patched_otus.assert_not_called()
+    else:
         m_iter_patched_otus.assert_called_with(
             client.app["pg"],
             manifest,
@@ -461,7 +462,7 @@ class TestCreate:
 
             assert task is not None
             assert task.type == "create_index"
-            assert task.context == {"index_id": str(new_index.id)}
+            assert task.context == {"index_id": new_index.id}
             assert history is not None
             assert history.index_id == new_index.id
             assert await session.scalar(select(SQLJob.id)) is None
@@ -637,16 +638,17 @@ async def test_find_history(
 
     await mongo.history.insert_many(history_documents, session=None)
 
-    async with AsyncSession(pg) as session:
-        session.add_all(
-            SQLLegacyHistory(
-                **legacy_history_values(document),
-                reference_id=reference.id,
+    if not error:
+        async with AsyncSession(pg) as session:
+            session.add_all(
+                SQLLegacyHistory(
+                    **{**legacy_history_values(document), "index": None},
+                    reference_id=reference.id,
+                    index_id=index_id,
+                )
+                for document in history_documents
             )
-            for document in history_documents
-        )
-        await link_history_index_ids(session)
-        await session.commit()
+            await session.commit()
 
     resp = await client.get(f"/indexes/{index_id}/history")
 
@@ -712,7 +714,7 @@ async def test_delete_ready_index(
     async with AsyncSession(pg) as session:
         assert (
             await session.scalar(
-                select(SQLIndex).where(SQLIndex.legacy_id == index.id),
+                select(SQLIndex).where(SQLIndex.id == index.id),
             )
             is not None
         )
@@ -743,20 +745,23 @@ async def test_upload(
     job = await fake.jobs.create(user=user, workflow="build_index")
 
     index_id = "missing"
+    storage_key = "missing"
 
     if error != "404_index":
         index_id = (await fake.indexes.create(reference, user, job=job)).id
 
+        async with AsyncSession(pg) as session:
+            storage_key = await session.scalar(
+                select(SQLIndex.storage_key).where(SQLIndex.id == index_id),
+            )
+
     if error == "409":
         async with AsyncSession(pg) as session:
-            index_pk = await session.scalar(
-                select(SQLIndex.id).where(SQLIndex.legacy_id == index_id),
-            )
             session.add(
                 SQLIndexFile(
                     name="reference.1.bt2",
-                    index=index_id,
-                    index_id=index_pk,
+                    index=str(index_id),
+                    index_id=index_id,
                 ),
             )
             await session.commit()
@@ -784,7 +789,7 @@ async def test_upload(
 
     assert resp.status == 201
 
-    expected_key = compose_index_file_key(index_id, "reference.1.bt2")
+    expected_key = compose_index_file_key(storage_key, "reference.1.bt2")
 
     found = False
     async for info in memory_storage.list(expected_key):
@@ -844,14 +849,11 @@ async def test_finalize(
     )
 
     async with AsyncSession(pg) as session:
-        index_pk = await session.scalar(
-            select(SQLIndex.id).where(SQLIndex.legacy_id == index.id),
-        )
         session.add_all(
             [
                 SQLIndexFile(
-                    index=index.id,
-                    index_id=index_pk,
+                    index=str(index.id),
+                    index_id=index.id,
                     name=file_name,
                     size=9000,
                     type=check_index_file_type(file_name),
@@ -894,7 +896,12 @@ async def test_download(
     path = example_path / "indexes" / "reference.1.bt2"
     expected_bytes = path.read_bytes()
 
-    key = compose_index_file_key(index.id, "reference.1.bt2")
+    async with AsyncSession(pg) as session:
+        storage_key = await session.scalar(
+            select(SQLIndex.storage_key).where(SQLIndex.id == index.id),
+        )
+
+    key = compose_index_file_key(storage_key, "reference.1.bt2")
 
     async def _stream():
         yield expected_bytes
@@ -902,14 +909,11 @@ async def test_download(
     await memory_storage.write(key, _stream())
 
     async with AsyncSession(pg) as session:
-        index_pk = await session.scalar(
-            select(SQLIndex.id).where(SQLIndex.legacy_id == index.id),
-        )
         session.add(
             SQLIndexFile(
                 name="reference.1.bt2",
-                index=index.id,
-                index_id=index_pk,
+                index=str(index.id),
+                index_id=index.id,
                 type="bowtie2",
                 size=len(expected_bytes),
             ),
