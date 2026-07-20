@@ -9,21 +9,6 @@ from sqlalchemy import (
 )
 
 from virtool.pg.base import Base
-from virtool.pg.utils import SQLEnum
-
-
-class MessageColor(str, SQLEnum):
-    """Enumerated type for possible instance-message colors."""
-
-    red = "red"
-    yellow = "yellow"
-    blue = "blue"
-    purple = "purple"
-    orange = "orange"
-    grey = "grey"
-
-
-_ALLOWED_MESSAGE_COLORS = ", ".join(repr(value) for value in MessageColor.to_list())
 
 
 class SQLInstanceMessage(Base):
@@ -42,7 +27,7 @@ class SQLInstanceMessage(Base):
     __tablename__ = "instance_messages"
     __table_args__ = (
         CheckConstraint(
-            f"color IN ({_ALLOWED_MESSAGE_COLORS})",
+            "color IN ('red', 'yellow', 'blue', 'purple', 'orange', 'grey')",
             name="ck_instance_messages_color",
         ),
     )
