@@ -9,8 +9,8 @@ from virtool.users.models_base import UserNested
 
 
 class HistoryIndex(BaseModel):
-    id: str
-    version: int | str
+    id: int
+    version: int
 
 
 class HistoryOTU(BaseModel):
@@ -146,7 +146,7 @@ class History(HistoryMinimal):
                     "version": 0,
                 },
                 "id": "1wfc5x6e.removed",
-                "index": {"id": "s7frhn8n", "version": 1},
+                "index": {"id": 3, "version": 1},
                 "method_name": "remove",
                 "otu": {
                     "id": "1wfc5x6e",
@@ -169,7 +169,7 @@ class HistorySearchResult(SearchResult):
                     "created_at": "2022-01-28T23:28:53.881000Z",
                     "description": "Removed Betaflexivirus from Camelia #1 (BFV_CAM1)",
                     "id": "1wfc5x6e.removed",
-                    "index": {"id": "s7frhn8n", "version": 1},
+                    "index": {"id": 3, "version": 1},
                     "method_name": "remove",
                     "otu": {
                         "id": "1wfc5x6e",

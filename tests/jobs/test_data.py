@@ -258,8 +258,8 @@ class TestCreatePostgres:
 
         A build_index job no longer writes a ``job_indexes`` link row; its
         ``index_id`` argument is reconstructed from the reverse ``indexes.job_id``
-        foreign key and exposed as the index's legacy id, byte-identical to what the
-        retired join table stored.
+        foreign key and exposed as the index's integer primary key, now the index's
+        public identifier.
         """
         user = await fake.users.create()
         reference = await fake.references.create(user)
@@ -277,10 +277,9 @@ class TestCreatePostgres:
 
         fetched_job = await jobs_data.get(job.id)
 
-        # The argument is the index's legacy string id, not its integer primary
-        # key, matching what the retired ``job_indexes`` table stored.
-        assert fetched_job.args == {"index_id": sql_index.legacy_id}
-        assert sql_index.legacy_id == index.id
+        # The argument is the index's integer primary key, now its public identifier.
+        assert fetched_job.args == {"index_id": sql_index.id}
+        assert sql_index.id == index.id
 
     async def test_index_id_absent_without_index(
         self,

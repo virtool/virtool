@@ -825,10 +825,10 @@ class ReferencesData(DataLayerDomain):
                     task_id=task.id,
                 )
 
-                # The public id is the stringified integer PK for native rows; the
-                # JSONB task context and ``SQLIndexFile.index`` are both string-typed,
-                # so store the string form rather than the raw integer.
-                index_id = str(index.id)
+                # The public id is the integer primary key. It is stored directly in the
+                # JSONB task context; ``generate_task_index`` resolves both the integer
+                # and the stringified form so tasks created before this cutover still run.
+                index_id = index.id
 
                 await pg_session.execute(
                     update(SQLTask)

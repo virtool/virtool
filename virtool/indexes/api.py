@@ -28,6 +28,18 @@ from virtool.models.roles import AdministratorRole
 routes = Routes()
 
 
+def _parse_index_id(req: Request) -> int:
+    """Parse the ``index_id`` path parameter as an integer.
+
+    Indexes are addressed publicly by their Postgres integer id, so a non-numeric
+    path segment cannot match any index and is treated as a missing resource.
+    """
+    try:
+        return int(req.match_info["index_id"])
+    except ValueError:
+        raise APINotFound()
+
+
 @routes.view("/indexes")
 class IndexesView(PydanticView):
     async def get(
@@ -67,9 +79,8 @@ class IndexesView(PydanticView):
 
 
 @routes.view("/indexes/{index_id}")
-@routes.jobs_api.get("/indexes/{index_id}")
 class IndexView(PydanticView):
-    async def get(self, index_id: str, /) -> r200[Index] | r404:
+    async def get(self, index_id: int, /) -> r200[Index] | r404:
         """Get an index.
 
         Fetches the details for an index.
@@ -87,6 +98,20 @@ class IndexView(PydanticView):
         return json_response(index)
 
 
+@routes.jobs_api.get("/indexes/{index_id}")
+async def get_index_for_jobs(req: Request):
+    """Get an index for jobs.
+
+    Fetches the details for an index.
+    """
+    try:
+        index = await get_data_from_req(req).index.get(_parse_index_id(req))
+    except ResourceNotFoundError:
+        raise APINotFound()
+
+    return json_response(index)
+
+
 @routes.jobs_api.get("/indexes/{index_id}/files/otus.json.gz")
 async def download_otus_json(req):
     """Download OTUs json.
@@ -96,7 +121,7 @@ async def download_otus_json(req):
     """
     try:
         stream, size = await get_data_from_req(req).index.get_otus_json(
-            req.match_info["index_id"],
+            _parse_index_id(req),
         )
     except ResourceNotFoundError:
         raise APINotFound()
@@ -114,7 +139,7 @@ async def download_otus_json(req):
 
 @routes.view("/indexes/{index_id}/files/{filename}")
 class IndexFileView(PydanticView):
-    async def get(self, index_id: str, filename: str, /) -> r200 | r404:
+    async def get(self, index_id: int, filename: str, /) -> r200 | r404:
         """Download index files.
 
         Downloads files relating to a given index.
@@ -169,7 +194,7 @@ async def download_index_file_for_jobs(req: Request):
     Downloads files relating to a given index for jobs.
 
     """
-    index_id = req.match_info["index_id"]
+    index_id = _parse_index_id(req)
     filename = req.match_info["filename"]
 
     try:
@@ -196,7 +221,7 @@ async def upload(req):
 
     Uploads a new index file.
     """
-    index_id = req.match_info["index_id"]
+    index_id = _parse_index_id(req)
     name = req.match_info["filename"]
 
     if name not in JOB_INDEX_FILE_NAMES:
@@ -230,7 +255,7 @@ async def finalize(req):
     Sets the `ready` flag and updates associated OTUs' `last_indexed_version` fields.
 
     """
-    index_id = req.match_info["index_id"]
+    index_id = _parse_index_id(req)
 
     try:
         document = await get_data_from_req(req).index.finalize(index_id)
@@ -246,7 +271,7 @@ async def finalize(req):
 class IndexHistoryView(PydanticView):
     async def get(
         self,
-        index_id: str,
+        index_id: int,
         /,
         term: str | None = None,
         page: Page = 1,
@@ -278,7 +303,7 @@ async def delete_index(req: Request):
 
     Deletes the index with the given id and reset history relating to that index.
     """
-    index_id = req.match_info["index_id"]
+    index_id = _parse_index_id(req)
 
     try:
         await get_data_from_req(req).index.delete(index_id)

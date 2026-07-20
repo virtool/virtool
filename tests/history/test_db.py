@@ -191,11 +191,14 @@ class TestGetContributors:
 
 class TestFind:
     """``find`` reconstructs the index from ``index_id`` and keys the unbuilt filter on
-    it, so the legacy string id survives and unbuilt rows are never dropped.
+    it, so the integer index id is exposed and unbuilt rows are never dropped.
     """
 
-    async def seed(self, pg: AsyncEngine, fake: DataFaker) -> None:
-        """Seed one built and one unbuilt change against ``reference_a``."""
+    async def seed(self, pg: AsyncEngine, fake: DataFaker) -> int:
+        """Seed one built and one unbuilt change against ``reference_a``.
+
+        Returns the integer primary key of the seeded index.
+        """
         user = await fake.users.create()
 
         async with AsyncSession(pg) as session:
@@ -236,16 +239,18 @@ class TestFind:
             )
             await session.commit()
 
+        return index_pk
+
     async def test_reconstructs_index_sentinels(
         self,
         fake: DataFaker,
         mongo,
         pg: AsyncEngine,
     ):
-        """A built change recovers its legacy index string through the outer join; an
-        unbuilt change reconstructs the ``"unbuilt"`` sentinel.
+        """A built change exposes its integer index id; an unbuilt change reconstructs a
+        ``None`` index rather than a sentinel object.
         """
-        await self.seed(pg, fake)
+        index_pk = await self.seed(pg, fake)
 
         result = await virtool.history.db.find(
             mongo, pg, 1, 25, reference_id="reference_a"
@@ -255,8 +260,8 @@ class TestFind:
             document["id"]: document["index"] for document in result["documents"]
         }
 
-        assert indexes["otu_a.1"] == {"id": "idx_legacy", "version": 3}
-        assert indexes["otu_a.0"] == {"id": "unbuilt", "version": "unbuilt"}
+        assert indexes["otu_a.1"] == {"id": index_pk, "version": 3}
+        assert indexes["otu_a.0"] is None
 
     async def test_unfiltered_keeps_unbuilt(
         self,
@@ -305,15 +310,14 @@ class TestFind:
 
         assert {document["id"] for document in result["documents"]} == {"otu_a.1"}
 
-    async def test_native_index_uses_pk_string(
+    async def test_native_index_uses_integer_pk(
         self,
         fake: DataFaker,
         mongo,
         pg: AsyncEngine,
     ):
-        """A Postgres-native index has no ``legacy_id``, so the outer join yields
-        ``NULL`` and the public index id falls back to the stringified primary key
-        instead of ``None``.
+        """A Postgres-native index (no ``legacy_id``) exposes its integer primary key as
+        the public index id.
         """
         user = await fake.users.create()
 
@@ -360,7 +364,7 @@ class TestFind:
             document["id"]: document["index"] for document in result["documents"]
         }
 
-        assert indexes["otu_a.1"] == {"id": str(index_pk), "version": 4}
+        assert indexes["otu_a.1"] == {"id": index_pk, "version": 4}
 
 
 class TestAdd:

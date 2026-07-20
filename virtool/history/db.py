@@ -338,22 +338,17 @@ def coerce_otu_version(otu_version: str | None) -> int | str:
 def legacy_history_document(
     row: SQLLegacyHistory,
     handle: str,
-    index_legacy_id: str | None,
 ) -> Document:
     """Reconstruct a history list document from a ``legacy_history`` row.
 
     Reverses the sentinel-to-NULL conventions applied by :func:`legacy_history_values`:
-    a ``NULL`` ``otu_version`` becomes the ``"removed"`` sentinel and a ``NULL``
-    ``index_id`` becomes the ``"unbuilt"`` sentinel. Stringified numeric versions are
-    coerced back to integers so the resource shape matches the historical Mongo
-    representation.
+    a ``NULL`` ``otu_version`` becomes the ``"removed"`` sentinel. A ``NULL`` ``index_id``
+    is an unbuilt change and is reconstructed as a ``None`` index rather than a sentinel
+    object. Stringified numeric versions are coerced back to integers so the resource
+    shape matches the historical Mongo representation.
 
-    The public index id is the legacy Mongo string, supplied as ``index_legacy_id``
-    from an outer join on ``indexes.legacy_id`` keyed by ``index_id``. Postgres-native
-    builds have no legacy id, so the stringified ``index_id`` primary key stands in as
-    the interim public id, mirroring ``compose_public_index_id``. The join must be an
-    outer join so unbuilt rows (``index_id`` is ``NULL``) survive; those rows carry a
-    ``NULL`` ``index_legacy_id`` and reconstruct the ``"unbuilt"`` sentinel.
+    The public index id is the integer ``index_id`` primary key: changes reference their
+    index by its Postgres id.
 
     The ``handle`` comes from a join on ``users`` so the nested user is fully populated
     without a follow-up transform.
@@ -361,7 +356,7 @@ def legacy_history_document(
     otu_version = coerce_otu_version(row.otu_version)
 
     if row.index_id is None:
-        index = {"id": "unbuilt", "version": "unbuilt"}
+        index = None
     else:
         index_version = row.index_version
 
@@ -369,7 +364,7 @@ def legacy_history_document(
             index_version = int(index_version)
 
         index = {
-            "id": index_legacy_id if index_legacy_id is not None else str(row.index_id),
+            "id": row.index_id,
             "version": index_version,
         }
 
@@ -434,9 +429,8 @@ async def find(
 
         rows = (
             await session.execute(
-                select(SQLLegacyHistory, SQLUser.handle, SQLIndex.legacy_id)
+                select(SQLLegacyHistory, SQLUser.handle)
                 .join(SQLUser, SQLLegacyHistory.user_id == SQLUser.id)
-                .outerjoin(SQLIndex, SQLLegacyHistory.index_id == SQLIndex.id)
                 .where(*search_filters)
                 .order_by(
                     cast(SQLLegacyHistory.otu_version, Integer).desc().nulls_first(),
@@ -448,10 +442,7 @@ async def find(
         ).all()
 
     documents = await apply_transforms(
-        [
-            base_processor(legacy_history_document(row, handle, index_legacy_id))
-            for row, handle, index_legacy_id in rows
-        ],
+        [base_processor(legacy_history_document(row, handle)) for row, handle in rows],
         [AttachReferenceTransform(pg)],
         pg,
     )
@@ -469,7 +460,7 @@ async def find(
 async def find_by_index(
     mongo: "Mongo",
     pg: AsyncEngine,
-    index_id: str,
+    index_id: int,
     page: int,
     per_page: int,
     term: str | None = None,
@@ -515,9 +506,8 @@ async def find_by_index(
 
         rows = (
             await session.execute(
-                select(SQLLegacyHistory, SQLUser.handle, SQLIndex.legacy_id)
+                select(SQLLegacyHistory, SQLUser.handle)
                 .join(SQLUser, SQLLegacyHistory.user_id == SQLUser.id)
-                .outerjoin(SQLIndex, SQLLegacyHistory.index_id == SQLIndex.id)
                 .where(*search_filters)
                 .order_by(
                     SQLLegacyHistory.otu_name.asc(),
@@ -529,10 +519,7 @@ async def find_by_index(
         ).all()
 
     documents = await apply_transforms(
-        [
-            base_processor(legacy_history_document(row, handle, index_legacy_id))
-            for row, handle, index_legacy_id in rows
-        ],
+        [base_processor(legacy_history_document(row, handle)) for row, handle in rows],
         [AttachReferenceTransform(pg)],
         pg,
     )

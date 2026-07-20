@@ -12,7 +12,7 @@
     'created_at': '2015-10-06T20:00:00Z',
     'files': list([
     ]),
-    'id': '1',
+    'id': 1,
     'job': None,
     'manifest': dict({
       'bar': 2,
@@ -49,7 +49,7 @@
       dict({
         'change_count': 2,
         'created_at': '2015-10-06T20:00:00Z',
-        'id': 'fb085f7f',
+        'id': 2,
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': 2,
@@ -77,7 +77,7 @@
       dict({
         'change_count': 4,
         'created_at': '2015-10-06T20:00:00Z',
-        'id': 'bf1b993c',
+        'id': 1,
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': 1,
@@ -119,7 +119,7 @@
       dict({
         'change_count': 0,
         'created_at': '2015-10-06T20:00:00Z',
-        'id': '7cf872dc',
+        'id': 3,
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': 3,
@@ -161,7 +161,7 @@
       dict({
         'change_count': 0,
         'created_at': '2015-10-06T20:00:00Z',
-        'id': '7cf872dc',
+        'id': 3,
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': 3,
@@ -189,7 +189,7 @@
       dict({
         'change_count': 2,
         'created_at': '2015-10-06T20:00:00Z',
-        'id': 'fb085f7f',
+        'id': 2,
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': 2,
@@ -217,7 +217,7 @@
       dict({
         'change_count': 4,
         'created_at': '2015-10-06T20:00:00Z',
-        'id': 'bf1b993c',
+        'id': 1,
         'job': dict({
           'created_at': '2015-10-06T20:00:00Z',
           'id': 1,
@@ -257,7 +257,7 @@
     dict({
       'change_count': 0,
       'created_at': '2015-10-06T20:00:00Z',
-      'id': 'fb085f7f',
+      'id': 2,
       'job': dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 1,
@@ -285,7 +285,7 @@
     dict({
       'change_count': 0,
       'created_at': '2015-10-06T22:00:00Z',
-      'id': 'bf1b993c',
+      'id': 1,
       'job': dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 1,
@@ -317,7 +317,7 @@
     dict({
       'change_count': 0,
       'created_at': '2015-10-07T00:00:00Z',
-      'id': '7cf872dc',
+      'id': 3,
       'job': dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 1,
@@ -349,7 +349,7 @@
     dict({
       'change_count': 0,
       'created_at': '2015-10-06T20:00:00Z',
-      'id': 'fb085f7f',
+      'id': 2,
       'job': dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 1,
@@ -377,7 +377,7 @@
     dict({
       'change_count': 0,
       'created_at': '2015-10-06T22:00:00Z',
-      'id': 'bf1b993c',
+      'id': 1,
       'job': dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 1,
@@ -405,7 +405,7 @@
     dict({
       'change_count': 0,
       'created_at': '2015-10-07T00:00:00Z',
-      'id': '7cf872dc',
+      'id': 3,
       'job': dict({
         'created_at': '2015-10-06T20:00:00Z',
         'id': 1,
@@ -452,71 +452,71 @@
     'created_at': '2015-10-06T20:00:00Z',
     'files': list([
       dict({
-        'download_url': '/indexes/09d01419/files/reference.fa.gz',
+        'download_url': '/indexes/1/files/reference.fa.gz',
         'id': 1,
-        'index': '09d01419',
+        'index': 1,
         'name': 'reference.fa.gz',
         'size': 9000,
         'type': 'fasta',
       }),
       dict({
-        'download_url': '/indexes/09d01419/files/reference.json.gz',
+        'download_url': '/indexes/1/files/reference.json.gz',
         'id': 2,
-        'index': '09d01419',
+        'index': 1,
         'name': 'reference.json.gz',
         'size': 9000,
         'type': 'json',
       }),
       dict({
-        'download_url': '/indexes/09d01419/files/reference.1.bt2',
+        'download_url': '/indexes/1/files/reference.1.bt2',
         'id': 3,
-        'index': '09d01419',
+        'index': 1,
         'name': 'reference.1.bt2',
         'size': 9000,
         'type': 'bowtie2',
       }),
       dict({
-        'download_url': '/indexes/09d01419/files/reference.2.bt2',
+        'download_url': '/indexes/1/files/reference.2.bt2',
         'id': 4,
-        'index': '09d01419',
+        'index': 1,
         'name': 'reference.2.bt2',
         'size': 9000,
         'type': 'bowtie2',
       }),
       dict({
-        'download_url': '/indexes/09d01419/files/reference.3.bt2',
+        'download_url': '/indexes/1/files/reference.3.bt2',
         'id': 5,
-        'index': '09d01419',
+        'index': 1,
         'name': 'reference.3.bt2',
         'size': 9000,
         'type': 'bowtie2',
       }),
       dict({
-        'download_url': '/indexes/09d01419/files/reference.4.bt2',
+        'download_url': '/indexes/1/files/reference.4.bt2',
         'id': 6,
-        'index': '09d01419',
+        'index': 1,
         'name': 'reference.4.bt2',
         'size': 9000,
         'type': 'bowtie2',
       }),
       dict({
-        'download_url': '/indexes/09d01419/files/reference.rev.1.bt2',
+        'download_url': '/indexes/1/files/reference.rev.1.bt2',
         'id': 7,
-        'index': '09d01419',
+        'index': 1,
         'name': 'reference.rev.1.bt2',
         'size': 9000,
         'type': 'bowtie2',
       }),
       dict({
-        'download_url': '/indexes/09d01419/files/reference.rev.2.bt2',
+        'download_url': '/indexes/1/files/reference.rev.2.bt2',
         'id': 8,
-        'index': '09d01419',
+        'index': 1,
         'name': 'reference.rev.2.bt2',
         'size': 9000,
         'type': 'bowtie2',
       }),
     ]),
-    'id': '09d01419',
+    'id': 1,
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
       'id': 2,
@@ -555,7 +555,7 @@
         'description': 'Edited sequence wrta20tr in Islolate chilli-CR',
         'id': 'kjs8sa99.3',
         'index': dict({
-          'id': 'bf1b993c',
+          'id': 1,
           'version': 0,
         }),
         'method_name': 'edit_sequence',
@@ -579,7 +579,7 @@
         'description': 'Added Unnamed Isolate as default',
         'id': 'zxbbvngc.2',
         'index': dict({
-          'id': 'bf1b993c',
+          'id': 1,
           'version': 0,
         }),
         'method_name': 'add_isolate',
@@ -603,7 +603,7 @@
         'description': 'Added Unnamed Isolate as default',
         'id': 'zxbbvngc.1',
         'index': dict({
-          'id': 'bf1b993c',
+          'id': 1,
           'version': 0,
         }),
         'method_name': 'add_isolate',
@@ -627,7 +627,7 @@
         'description': 'Added Unnamed Isolate as default',
         'id': 'zxbbvngc.0',
         'index': dict({
-          'id': 'bf1b993c',
+          'id': 1,
           'version': 0,
         }),
         'method_name': 'add_isolate',
@@ -672,7 +672,7 @@
     'created_at': '2015-10-06T20:00:00Z',
     'files': list([
     ]),
-    'id': 'bf1b993c',
+    'id': 1,
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
       'id': 1,
@@ -715,14 +715,14 @@
 # ---
 # name: test_upload[None]
   dict({
-    'download_url': '/indexes/bf1b993c/files/reference.1.bt2',
+    'download_url': '/indexes/1/files/reference.1.bt2',
     'id': 1,
-    'index': 'bf1b993c',
+    'index': 1,
     'name': 'reference.1.bt2',
     'size': 4200473,
     'type': 'bowtie2',
   })
 # ---
 # name: test_upload[None].1
-  <SQLIndexFile(id=1, name=reference.1.bt2, index=bf1b993c, index_id=1, type=bowtie2, size=4200473)>
+  <SQLIndexFile(id=1, name=reference.1.bt2, index=1, index_id=1, type=bowtie2, size=4200473)>
 # ---

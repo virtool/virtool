@@ -375,7 +375,7 @@ async def get_latest_builds(
             await session.execute(
                 select(
                     SQLIndex.reference_id,
-                    SQLIndex.legacy_id,
+                    SQLIndex.id,
                     SQLIndex.version,
                     SQLIndex.created_at,
                     SQLUser.id.label("user_id"),
@@ -397,7 +397,7 @@ async def get_latest_builds(
 
     for row in rows:
         result[row.reference_id] = {
-            "id": row.legacy_id,
+            "id": row.id,
             "created_at": row.created_at,
             "version": row.version,
             "user": {"id": row.user_id, "handle": row.handle},

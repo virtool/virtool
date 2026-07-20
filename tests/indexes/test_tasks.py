@@ -64,9 +64,17 @@ class TestCreateIndexTask:
         self.index_id = index.id
 
         async with AsyncSession(self.pg) as session:
-            return await session.scalar(
-                select(SQLIndex.task_id).where(SQLIndex.legacy_id == index.id),
-            )
+            row = (
+                await session.execute(
+                    select(SQLIndex.task_id, SQLIndex.storage_key).where(
+                        SQLIndex.id == index.id,
+                    ),
+                )
+            ).one()
+
+        self.storage_key = row.storage_key
+
+        return row.task_id
 
     async def test_writes_only_compressed_reference_json_v2_and_finalizes(
         self,
@@ -75,11 +83,11 @@ class TestCreateIndexTask:
         """The task writes reference JSON v2 and marks the index ready."""
         await (await CreateIndexTask.from_task_id(self.data_layer, task_id)).run()
 
-        key = compose_index_file_key(self.index_id, REFERENCE_JSON_V2_FILE_NAME)
+        key = compose_index_file_key(self.storage_key, REFERENCE_JSON_V2_FILE_NAME)
 
         keys = [
             info.key
-            async for info in self.memory_storage.list(f"indexes/{self.index_id}/")
+            async for info in self.memory_storage.list(f"indexes/{self.storage_key}/")
         ]
         assert keys == [key]
 
@@ -119,7 +127,7 @@ class TestCreateIndexTask:
             rows = (
                 (
                     await session.execute(
-                        select(SQLIndexFile).filter_by(index=self.index_id),
+                        select(SQLIndexFile).filter_by(index_id=self.index_id),
                     )
                 )
                 .scalars()
@@ -133,7 +141,7 @@ class TestCreateIndexTask:
 
         async with AsyncSession(self.pg) as session:
             index_row = await session.scalar(
-                select(SQLIndex).where(SQLIndex.legacy_id == self.index_id),
+                select(SQLIndex).where(SQLIndex.id == self.index_id),
             )
 
         assert index_row.ready is True
@@ -163,18 +171,18 @@ class TestCreateIndexTask:
         assert (await self.data_layer.index.get(self.index_id)).ready is True
         assert [
             info.key
-            async for info in self.memory_storage.list(f"indexes/{self.index_id}/")
-        ] == [compose_index_file_key(self.index_id, REFERENCE_JSON_V2_FILE_NAME)]
+            async for info in self.memory_storage.list(f"indexes/{self.storage_key}/")
+        ] == [compose_index_file_key(self.storage_key, REFERENCE_JSON_V2_FILE_NAME)]
 
     async def test_updates_existing_index_file_row(self, task_id: int) -> None:
         """An existing reference JSON file row is updated instead of duplicated."""
         async with AsyncSession(self.pg) as session:
             index_pk = await session.scalar(
-                select(SQLIndex.id).where(SQLIndex.legacy_id == self.index_id),
+                select(SQLIndex.id).where(SQLIndex.id == self.index_id),
             )
             session.add(
                 SQLIndexFile(
-                    index=self.index_id,
+                    index=str(self.index_id),
                     index_id=index_pk,
                     name=REFERENCE_JSON_V2_FILE_NAME,
                     size=1,
@@ -189,7 +197,7 @@ class TestCreateIndexTask:
             rows = (
                 (
                     await session.execute(
-                        select(SQLIndexFile).filter_by(index=self.index_id),
+                        select(SQLIndexFile).filter_by(index_id=self.index_id),
                     )
                 )
                 .scalars()
@@ -203,7 +211,7 @@ class TestCreateIndexTask:
 
         assert (
             await self.memory_storage.size(
-                compose_index_file_key(self.index_id, REFERENCE_JSON_V2_FILE_NAME),
+                compose_index_file_key(self.storage_key, REFERENCE_JSON_V2_FILE_NAME),
             )
             == rows[0].size
         )
@@ -212,7 +220,7 @@ class TestCreateIndexTask:
         """A completed task-backed index cannot be regenerated."""
         await (await CreateIndexTask.from_task_id(self.data_layer, task_id)).run()
 
-        key = compose_index_file_key(self.index_id, REFERENCE_JSON_V2_FILE_NAME)
+        key = compose_index_file_key(self.storage_key, REFERENCE_JSON_V2_FILE_NAME)
         artifact = b"".join(
             [chunk async for chunk in self.memory_storage.read(key)],
         )
@@ -231,7 +239,7 @@ class TestCreateIndexTask:
             rows = (
                 (
                     await session.execute(
-                        select(SQLIndexFile).filter_by(index=self.index_id),
+                        select(SQLIndexFile).filter_by(index_id=self.index_id),
                     )
                 )
                 .scalars()
@@ -268,7 +276,7 @@ class TestCreateIndexTask:
 
         keys = [
             info.key
-            async for info in self.memory_storage.list(f"indexes/{self.index_id}/")
+            async for info in self.memory_storage.list(f"indexes/{self.storage_key}/")
         ]
         assert keys == []
 
@@ -276,7 +284,7 @@ class TestCreateIndexTask:
             rows = (
                 (
                     await session.execute(
-                        select(SQLIndexFile).filter_by(index=self.index_id),
+                        select(SQLIndexFile).filter_by(index_id=self.index_id),
                     )
                 )
                 .scalars()
@@ -297,7 +305,7 @@ class TestCreateIndexTask:
             async with AsyncSession(self.pg) as session:
                 row = (
                     await session.execute(
-                        select(SQLIndexFile).filter_by(index=self.index_id),
+                        select(SQLIndexFile).filter_by(index_id=self.index_id),
                     )
                 ).scalar_one_or_none()
 
@@ -317,7 +325,7 @@ class TestCreateIndexTask:
 
         keys = [
             info.key
-            async for info in self.memory_storage.list(f"indexes/{self.index_id}/")
+            async for info in self.memory_storage.list(f"indexes/{self.storage_key}/")
         ]
         assert keys == []
 
@@ -325,7 +333,7 @@ class TestCreateIndexTask:
             rows = (
                 (
                     await session.execute(
-                        select(SQLIndexFile).filter_by(index=self.index_id),
+                        select(SQLIndexFile).filter_by(index_id=self.index_id),
                     )
                 )
                 .scalars()

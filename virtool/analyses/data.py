@@ -83,7 +83,6 @@ The TOASTed ``results`` column is deliberately excluded.
 
 INDEX_COLUMNS = (
     SQLIndex.id.label("index_pg_id"),
-    SQLIndex.legacy_id.label("index_legacy_id"),
     SQLIndex.version.label("index_version"),
 )
 """The joined ``SQLIndex`` columns that supply the nested ``{id, version}``.
@@ -110,9 +109,9 @@ def _row_to_document(row, *, include_results: bool) -> dict:
     ``AttachReferenceTransform`` resolves either form.
 
     The nested index is read from the joined ``SQLIndex`` columns. Its outward id is the
-    legacy string, falling back to the stringified integer primary key for
-    Postgres-native indexes that never had one. A ``NULL`` join means ``index_id`` did
-    not resolve to a build, which is a data-integrity failure that must surface loudly.
+    integer primary key: indexes are addressed publicly by their Postgres id. A ``NULL``
+    join means ``index_id`` did not resolve to a build, which is a data-integrity failure
+    that must surface loudly.
     """
     if row.index_pg_id is None:
         raise ValueError(f"Index not found for analysis {row.id}: {row.index}")
@@ -129,9 +128,7 @@ def _row_to_document(row, *, include_results: bool) -> dict:
             "id": row.reference_id if row.reference_id is not None else row.reference,
         },
         "index": {
-            "id": row.index_legacy_id
-            if row.index_legacy_id is not None
-            else str(row.index_pg_id),
+            "id": row.index_pg_id,
             "version": row.index_version,
         },
         "user": {"id": row.user_id},
