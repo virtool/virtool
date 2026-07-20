@@ -5,7 +5,6 @@ import math
 from collections.abc import AsyncIterator
 from typing import Any
 
-import pymongo
 from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy import (
     ARRAY,
@@ -34,7 +33,6 @@ from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU
-from virtool.references.db import compose_reference_id_match
 from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
@@ -321,33 +319,26 @@ async def find(
     }
 
 
-async def get_current_id_and_version(
-    mongo: "Mongo",
-    pg: AsyncEngine,
-    ref_id: str,
-) -> tuple[str | None, int]:
-    """Return the current index id and version number.
+async def get_current_id(pg: AsyncEngine, ref_id: int | str) -> str | None:
+    """Return the legacy id of the reference's current (highest-version, ready) index.
 
-    :param mongo: the application database client
     :param pg: the application Postgres client
     :param ref_id: the id of the reference to get the current index for
 
-    :return: the index and version of the current index
+    :return: the legacy id of the current index, or ``None`` if none is ready
 
     """
-    document = await mongo.indexes.find_one(
-        {
-            "reference.id": await compose_reference_id_match(pg, ref_id),
-            "ready": True,
-        },
-        sort=[("version", pymongo.DESCENDING)],
-        projection=["_id", "version"],
-    )
-
-    if document is None:
-        return None, -1
-
-    return document["_id"], document["version"]
+    async with AsyncSession(pg) as session:
+        return await session.scalar(
+            select(SQLIndex.legacy_id)
+            .where(
+                SQLIndex.reference_id
+                == compose_legacy_id_subquery(SQLReference, ref_id),
+                SQLIndex.ready.is_(True),
+            )
+            .order_by(SQLIndex.version.desc())
+            .limit(1),
+        )
 
 
 async def get_otus(pg: AsyncEngine, index_id: str) -> list[dict]:
@@ -395,21 +386,25 @@ async def get_otus(pg: AsyncEngine, index_id: str) -> list[dict]:
     )
 
 
-async def get_next_version(mongo: "Mongo", pg: AsyncEngine, ref_id: int | str) -> int:
-    """Get the version number that should be used for the next index build.
+async def get_next_version(session: AsyncSession, ref_id: int | str) -> int:
+    """Allocate the version number for the next index build.
 
-    :param mongo: the application mongodb client
-    :param pg: the application Postgres client
+    Runs on the caller's session so allocation participates in the surrounding
+    transaction. The version is ``MAX(version) + 1`` over the reference's indexes,
+    which is monotonic: unlike a ready-count, a build assigned version ``N`` keeps
+    ``N`` reserved even if a lower-versioned index is later deleted, so no two builds
+    are ever handed the same number.
+
+    :param session: the caller-owned PostgreSQL session
     :param ref_id: the id of the reference to get the next version for
 
-    :return: the next version number
+    :return: the next version number, ``0`` when the reference has no indexes
 
     """
-    return await mongo.indexes.count_documents(
-        {
-            "reference.id": await compose_reference_id_match(pg, ref_id),
-            "ready": True,
-        },
+    return await session.scalar(
+        select(func.coalesce(func.max(SQLIndex.version), -1) + 1).where(
+            SQLIndex.reference_id == compose_legacy_id_subquery(SQLReference, ref_id),
+        ),
     )
 
 

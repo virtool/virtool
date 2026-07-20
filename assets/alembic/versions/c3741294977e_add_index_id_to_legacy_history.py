@@ -9,7 +9,7 @@ a ``NULL`` ``index`` did.
 Backfill and call-site changes are handled by downstream revisions.
 
 Revision ID: c3741294977e
-Revises: f61c6dbf7ff6
+Revises: 1f020bfe6b18
 Create Date: 2026-07-17 23:56:50.956574+00:00
 
 """
@@ -19,7 +19,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "c3741294977e"
-down_revision = "f61c6dbf7ff6"
+down_revision = "1f020bfe6b18"
 branch_labels = None
 depends_on = None
 

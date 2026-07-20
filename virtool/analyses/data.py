@@ -39,7 +39,7 @@ from virtool.data.topg import (
     compose_legacy_id_subquery,
 )
 from virtool.data.transforms import apply_transforms
-from virtool.indexes.db import get_current_id_and_version
+from virtool.indexes.sql import SQLIndex
 from virtool.indexes.transforms import AttachIndexTransform
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.mongo.core import Mongo
@@ -74,6 +74,7 @@ FIND_COLUMNS = (
     SQLAnalysis.reference,
     SQLAnalysis.reference_id,
     SQLAnalysis.index,
+    SQLAnalysis.index_id,
     SQLAnalysis.user_id,
     SQLAnalysis.job_id,
 )
@@ -298,12 +299,6 @@ class AnalysisData(DataLayerDomain):
         """
         created_at = virtool.utils.timestamp()
 
-        index_id, _ = await get_current_id_and_version(
-            self._mongo,
-            self._pg,
-            data.ref_id,
-        )
-
         subtractions = data.subtractions if data.subtractions is not None else []
 
         async with AsyncSession(self._pg) as session:
@@ -344,6 +339,24 @@ class AnalysisData(DataLayerDomain):
 
             reference_pg_id, reference_legacy_id = reference_row
 
+            # Resolve the reference's current ready index inside the transaction,
+            # replacing the pre-session Mongo read. The current index is the
+            # highest-versioned ready build. The "No ready index" guard in
+            # ``SampleData`` guarantees one exists by the time create runs, so
+            # ``.one()`` never trips in practice; if it does, an analysis without an
+            # index is a data-integrity failure that must surface loudly.
+            index_pg_id, index_legacy_id = (
+                await session.execute(
+                    select(SQLIndex.id, SQLIndex.legacy_id)
+                    .where(
+                        SQLIndex.reference_id == reference_pg_id,
+                        SQLIndex.ready.is_(True),
+                    )
+                    .order_by(SQLIndex.version.desc())
+                    .limit(1),
+                )
+            ).one()
+
             pg_id = (
                 await session.execute(
                     insert(SQLAnalysis)
@@ -357,7 +370,8 @@ class AnalysisData(DataLayerDomain):
                         sample_id=sample_pg_id,
                         reference=reference_legacy_id or str(reference_pg_id),
                         reference_id=reference_pg_id,
-                        index=index_id,
+                        index=index_legacy_id or str(index_pg_id),
+                        index_id=index_pg_id,
                         user_id=user_id,
                         job_id=job_id,
                     )

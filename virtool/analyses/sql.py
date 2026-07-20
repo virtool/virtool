@@ -34,14 +34,11 @@ class SQLAnalysis(Base):
 
     Column naming convention:
 
-    - A bare column (``index``) holds a legacy Mongo string id and has no
-      foreign key, because the referenced collection has not been migrated to
-      Postgres.
     - An ``{entity}_id`` column is a real foreign key to an existing SQL table.
-    - ``sample`` and ``reference`` are mid-migration: the legacy Mongo string is
-      retained alongside the new ``sample_id``/``reference_id`` foreign key while
-      readers move over. The bare columns are dropped in a later cleanup
-      revision.
+    - ``sample``, ``reference`` and ``index`` are mid-migration: the legacy Mongo
+      string is retained alongside the new
+      ``sample_id``/``reference_id``/``index_id`` foreign key while readers move
+      over. The bare columns are dropped in a later cleanup revision.
 
     The Mongo ``space`` field is intentionally dropped.
     """
@@ -68,6 +65,11 @@ class SQLAnalysis(Base):
         nullable=True,
     )
     index: Mapped[str]
+    index_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("indexes.id"),
+        nullable=True,
+    )
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     job_id: Mapped[int | None] = mapped_column(ForeignKey("jobs.id"), nullable=True)
 

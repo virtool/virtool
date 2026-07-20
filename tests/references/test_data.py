@@ -9,6 +9,8 @@ the API layer and skip the redundant data-layer test; reserve data-layer tests
 for logic that has no direct HTTP entry point of its own.
 """
 
+import asyncio
+
 import pytest
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -18,6 +20,7 @@ from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
+from virtool.indexes.sql import SQLIndex
 from virtool.mongo.core import Mongo
 from virtool.references.oas import (
     CreateReferenceGroupRequest,
@@ -155,6 +158,70 @@ class TestCreateIndex:
             assert history.index is None
             assert history.index_version is None
             assert await session.scalar(select(SQLTask.id)) is None
+
+    async def test_concurrent_builds_conflict(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mongo: Mongo,
+        pg: AsyncEngine,
+        static_time,
+    ):
+        """Two overlapping builds for one reference resolve to one winner.
+
+        Both pass the in-progress guard before either commits and both allocate the
+        same version. The ``UNIQUE (reference_id, version)`` constraint is the
+        authoritative backstop: the loser's transaction rolls back and surfaces as a
+        ``ResourceConflictError`` rather than writing a duplicate version.
+        """
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        async with AsyncSession(pg) as session:
+            session.add(
+                SQLLegacyHistory(
+                    legacy_id="unbuilt_change",
+                    created_at=static_time.datetime,
+                    description="Created OTU",
+                    method_name="create",
+                    user_id=user.id,
+                    otu="otu_1",
+                    otu_name="Tobacco mosaic virus",
+                    otu_version="0",
+                    reference_id=reference.id,
+                    index=None,
+                    index_version=None,
+                ),
+            )
+            await session.commit()
+
+        results = await asyncio.gather(
+            data_layer.references.create_index(reference.id, user.id),
+            data_layer.references.create_index(reference.id, user.id),
+            return_exceptions=True,
+        )
+
+        successes = [r for r in results if not isinstance(r, BaseException)]
+        conflicts = [r for r in results if isinstance(r, ResourceConflictError)]
+
+        assert len(successes) == 1
+        assert len(conflicts) == 1
+
+        async with AsyncSession(pg) as session:
+            versions = (
+                (
+                    await session.execute(
+                        select(SQLIndex.version).where(
+                            SQLIndex.reference_id == reference.id,
+                        ),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+
+        assert versions == [0]
+        assert await mongo.indexes.count_documents({}) == 1
 
 
 class TestUpdate:
