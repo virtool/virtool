@@ -607,7 +607,7 @@ class IndexData:
             await session.execute(
                 update(SQLLegacyHistory)
                 .where(SQLLegacyHistory.index_id == row.id)
-                .values(index=None, index_id=None, index_version=None),
+                .values(index=None, index_id=None),
             )
 
             await session.execute(

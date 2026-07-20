@@ -52,7 +52,12 @@ class HistoryData:
 
             rows = (
                 await session.execute(
-                    select(SQLLegacyHistory, SQLUser.handle, SQLIndex.legacy_id)
+                    select(
+                        SQLLegacyHistory,
+                        SQLUser.handle,
+                        SQLIndex.legacy_id,
+                        SQLIndex.version,
+                    )
                     .join(SQLUser, SQLLegacyHistory.user_id == SQLUser.id)
                     .outerjoin(SQLIndex, SQLLegacyHistory.index_id == SQLIndex.id)
                     .where(SQLLegacyHistory.otu == otu_id)
@@ -67,8 +72,10 @@ class HistoryData:
 
         documents = await apply_transforms(
             [
-                base_processor(legacy_history_document(row, handle, index_legacy_id))
-                for row, handle, index_legacy_id in rows
+                base_processor(
+                    legacy_history_document(row, handle, index_legacy_id, index_version)
+                )
+                for row, handle, index_legacy_id, index_version in rows
             ],
             [AttachReferenceTransform(self._pg)],
             self._pg,
@@ -85,7 +92,12 @@ class HistoryData:
         async with AsyncSession(self._pg) as session:
             row = (
                 await session.execute(
-                    select(SQLLegacyHistory, SQLUser.handle, SQLIndex.legacy_id)
+                    select(
+                        SQLLegacyHistory,
+                        SQLUser.handle,
+                        SQLIndex.legacy_id,
+                        SQLIndex.version,
+                    )
                     .join(SQLUser, SQLLegacyHistory.user_id == SQLUser.id)
                     .outerjoin(SQLIndex, SQLLegacyHistory.index_id == SQLIndex.id)
                     .where(
@@ -100,11 +112,13 @@ class HistoryData:
         if row is None:
             raise ResourceNotFoundError()
 
-        legacy_row, handle, index_legacy_id = row
+        legacy_row, handle, index_legacy_id, index_version = row
 
         document = await apply_transforms(
             base_processor(
-                legacy_history_document(legacy_row, handle, index_legacy_id)
+                legacy_history_document(
+                    legacy_row, handle, index_legacy_id, index_version
+                )
             ),
             [
                 AttachDiffTransform(self._pg),

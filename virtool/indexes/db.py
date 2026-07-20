@@ -190,7 +190,6 @@ async def create(
         )
         .values(
             index_id=index.id,
-            index_version=str(index_version),
         ),
     )
 

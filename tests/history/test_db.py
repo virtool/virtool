@@ -117,7 +117,6 @@ async def add_contribution(
                     if index is None
                     else await ensure_index(session, index, reference_id, user_id)
                 ),
-                index_version=None if index is None else "1",
             ),
         )
         await session.commit()
@@ -195,12 +194,30 @@ class TestFind:
     """
 
     async def seed(self, pg: AsyncEngine, fake: DataFaker) -> None:
-        """Seed one built and one unbuilt change against ``reference_a``."""
+        """Seed one built and one unbuilt change against ``reference_a``.
+
+        The built change's index carries ``version=3`` so the reconstructed version,
+        now read from ``indexes.version`` through the join rather than a stored copy,
+        is a non-trivial value.
+        """
         user = await fake.users.create()
 
         async with AsyncSession(pg) as session:
             reference_id = await ensure_reference(session, "reference_a", user.id)
-            index_pk = await ensure_index(session, "idx_legacy", reference_id, user.id)
+
+            index = SQLIndex(
+                legacy_id="idx_legacy",
+                version=3,
+                created_at=datetime.datetime(2017, 7, 12, 16, 0, 50),
+                manifest={},
+                ready=True,
+                storage_key="idx_legacy",
+                reference_id=reference_id,
+                user_id=user.id,
+            )
+            session.add(index)
+            await session.flush()
+            index_pk = index.id
 
             session.add_all(
                 [
@@ -216,7 +233,6 @@ class TestFind:
                         reference_id=reference_id,
                         index="idx_legacy",
                         index_id=index_pk,
-                        index_version="3",
                     ),
                     SQLLegacyHistory(
                         legacy_id="otu_a.0",
@@ -230,7 +246,6 @@ class TestFind:
                         reference_id=reference_id,
                         index=None,
                         index_id=None,
-                        index_version=None,
                     ),
                 ],
             )
@@ -347,7 +362,6 @@ class TestFind:
                     reference_id=reference_id,
                     index=str(index_pk),
                     index_id=index_pk,
-                    index_version="4",
                 ),
             )
             await session.commit()
@@ -505,7 +519,6 @@ class TestAdd:
 
         assert legacy.otu_version is None
         assert legacy.index is None
-        assert legacy.index_version is None
         assert legacy == snapshot(name="legacy_history")
 
 
@@ -536,7 +549,6 @@ class TestGetMostRecentChange:
                         otu_version="1",
                         reference="hxn167",
                         index=None,
-                        index_version=None,
                     ),
                     SQLLegacyHistory(
                         legacy_id="6116cba1.2",
@@ -549,7 +561,6 @@ class TestGetMostRecentChange:
                         otu_version="2",
                         reference="hxn167",
                         index=None,
-                        index_version=None,
                     ),
                 ],
             )

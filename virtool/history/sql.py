@@ -55,10 +55,14 @@ class SQLLegacyHistory(Base):
       written now that ``reference_id`` is the source of truth, and it is nullable
       until it is dropped in a later cleanup revision.
     - ``user.id`` becomes a real foreign key to ``users.id``.
-    - ``otu_version`` and ``index_version`` are strings holding stringified integers.
-      The Mongo sentinels ``"removed"`` and ``"unbuilt"`` are normalized to ``NULL``
-      on write by :func:`virtool.history.db.legacy_history_values` and reconstituted
-      on read, so neither column ever stores a sentinel.
+    - ``otu_version`` is a string holding a stringified integer. The Mongo sentinel
+      ``"removed"`` is normalized to ``NULL`` on write by
+      :func:`virtool.history.db.legacy_history_values` and reconstituted on read, so
+      the column never stores a sentinel.
+
+    The index version is not stored here: it is authoritative in ``indexes.version``
+    and read through the ``index_id`` join. A ``NULL`` ``index_id`` (an unbuilt change)
+    reconstructs the ``"unbuilt"`` version sentinel on read.
     """
 
     __tablename__ = "legacy_history"
@@ -89,4 +93,3 @@ class SQLLegacyHistory(Base):
         nullable=True,
         index=True,
     )
-    index_version: Mapped[str | None]

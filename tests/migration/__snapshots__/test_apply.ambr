@@ -869,5 +869,12 @@
       'name': 'replace messagecolor enum with text check',
       'revision': '241675dea96f',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 125,
+      'name': 'drop legacy_history index_version',
+      'revision': 'c976a55c3382',
+    }),
   ])
 # ---

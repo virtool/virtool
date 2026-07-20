@@ -970,7 +970,6 @@ class TestCreateIndex:
                     otu_version="0",
                     reference_id=reference["id"],
                     index=None,
-                    index_version=None,
                 ),
             )
             await session.commit()
@@ -1013,7 +1012,7 @@ class TestCreateIndex:
             assert task.type == "create_index"
             assert task.context == {"index_id": str(new_index.id)}
             assert history is not None
-            assert (history.index_id, history.index_version) == (new_index.id, "0")
+            assert history.index_id == new_index.id
             assert await session.scalar(select(SQLJob.id)) is None
 
         m_create_manifest.assert_called_with(ANY, reference["id"])
