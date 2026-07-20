@@ -460,7 +460,7 @@ async def get_unbuilt_count(pg: AsyncEngine, ref_id: int | str) -> int:
             .where(
                 SQLLegacyHistory.reference_id
                 == compose_legacy_id_subquery(SQLReference, ref_id),
-                SQLLegacyHistory.index.is_(None),
+                SQLLegacyHistory.index_id.is_(None),
             ),
         )
 

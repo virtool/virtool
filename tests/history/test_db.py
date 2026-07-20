@@ -1,7 +1,7 @@
 import datetime
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
@@ -9,6 +9,7 @@ import virtool.history.db
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
+from virtool.indexes.sql import SQLIndex
 from virtool.models.enums import HistoryMethod
 from virtool.otus.oas import CreateOTURequest
 from virtool.pg.utils import get_row_by_id
@@ -46,6 +47,47 @@ async def ensure_reference(
     return reference_id
 
 
+async def ensure_index(
+    session: AsyncSession,
+    legacy_id: str,
+    reference_id: int,
+    user_id: int,
+) -> int:
+    """Return the integer id of the ``indexes`` row for ``legacy_id``, creating it if
+    it does not yet exist.
+    """
+    index_id = (
+        await session.execute(
+            select(SQLIndex.id).where(SQLIndex.legacy_id == legacy_id),
+        )
+    ).scalar_one_or_none()
+
+    if index_id is None:
+        version = (
+            await session.execute(
+                select(func.count())
+                .select_from(SQLIndex)
+                .where(SQLIndex.reference_id == reference_id),
+            )
+        ).scalar_one()
+
+        index = SQLIndex(
+            legacy_id=legacy_id,
+            version=version,
+            created_at=datetime.datetime(2017, 7, 12, 16, 0, 50),
+            manifest={},
+            ready=True,
+            storage_key=legacy_id,
+            reference_id=reference_id,
+            user_id=user_id,
+        )
+        session.add(index)
+        await session.flush()
+        index_id = index.id
+
+    return index_id
+
+
 async def add_contribution(
     pg: AsyncEngine,
     change_id: str,
@@ -56,6 +98,7 @@ async def add_contribution(
     """Insert a single ``legacy_history`` row for contributor-counting tests."""
     async with AsyncSession(pg) as session:
         otu_id, otu_version = change_id.split(".")
+        reference_id = await ensure_reference(session, reference, user_id)
         session.add(
             SQLLegacyHistory(
                 legacy_id=change_id,
@@ -67,8 +110,13 @@ async def add_contribution(
                 otu_name="Prunus virus F",
                 otu_version=otu_version,
                 reference=reference,
-                reference_id=await ensure_reference(session, reference, user_id),
+                reference_id=reference_id,
                 index=index,
+                index_id=(
+                    None
+                    if index is None
+                    else await ensure_index(session, index, reference_id, user_id)
+                ),
                 index_version=None if index is None else "1",
             ),
         )
@@ -139,6 +187,123 @@ class TestGetContributors:
             match="get_contributors requires a reference_id or index_id",
         ):
             await virtool.history.db.get_contributors(pg)
+
+
+class TestFind:
+    """``find`` reconstructs the index from ``index_id`` and keys the unbuilt filter on
+    it, so the legacy string id survives and unbuilt rows are never dropped.
+    """
+
+    async def seed(self, pg: AsyncEngine, fake: DataFaker) -> None:
+        """Seed one built and one unbuilt change against ``reference_a``."""
+        user = await fake.users.create()
+
+        async with AsyncSession(pg) as session:
+            reference_id = await ensure_reference(session, "reference_a", user.id)
+            index_pk = await ensure_index(session, "idx_legacy", reference_id, user.id)
+
+            session.add_all(
+                [
+                    SQLLegacyHistory(
+                        legacy_id="otu_a.1",
+                        created_at=datetime.datetime(2017, 7, 12, 16, 0, 50),
+                        description="Built change",
+                        method_name="edit",
+                        user_id=user.id,
+                        otu="otu_a",
+                        otu_name="Virus A",
+                        otu_version="1",
+                        reference_id=reference_id,
+                        index="idx_legacy",
+                        index_id=index_pk,
+                        index_version="3",
+                    ),
+                    SQLLegacyHistory(
+                        legacy_id="otu_a.0",
+                        created_at=datetime.datetime(2017, 7, 12, 16, 0, 50),
+                        description="Unbuilt change",
+                        method_name="create",
+                        user_id=user.id,
+                        otu="otu_a",
+                        otu_name="Virus A",
+                        otu_version="0",
+                        reference_id=reference_id,
+                        index=None,
+                        index_id=None,
+                        index_version=None,
+                    ),
+                ],
+            )
+            await session.commit()
+
+    async def test_reconstructs_index_sentinels(
+        self,
+        fake: DataFaker,
+        mongo,
+        pg: AsyncEngine,
+    ):
+        """A built change recovers its legacy index string through the outer join; an
+        unbuilt change reconstructs the ``"unbuilt"`` sentinel.
+        """
+        await self.seed(pg, fake)
+
+        result = await virtool.history.db.find(
+            mongo, pg, 1, 25, reference_id="reference_a"
+        )
+
+        indexes = {
+            document["id"]: document["index"] for document in result["documents"]
+        }
+
+        assert indexes["otu_a.1"] == {"id": "idx_legacy", "version": 3}
+        assert indexes["otu_a.0"] == {"id": "unbuilt", "version": "unbuilt"}
+
+    async def test_unfiltered_keeps_unbuilt(
+        self,
+        fake: DataFaker,
+        mongo,
+        pg: AsyncEngine,
+    ):
+        """The outer join keeps unbuilt rows in the unfiltered listing."""
+        await self.seed(pg, fake)
+
+        result = await virtool.history.db.find(
+            mongo, pg, 1, 25, reference_id="reference_a"
+        )
+
+        assert result["found_count"] == 2
+        assert {document["id"] for document in result["documents"]} == {
+            "otu_a.0",
+            "otu_a.1",
+        }
+
+    async def test_unbuilt_true_returns_only_unbuilt(
+        self,
+        fake: DataFaker,
+        mongo,
+        pg: AsyncEngine,
+    ):
+        await self.seed(pg, fake)
+
+        result = await virtool.history.db.find(
+            mongo, pg, 1, 25, reference_id="reference_a", unbuilt=True
+        )
+
+        assert {document["id"] for document in result["documents"]} == {"otu_a.0"}
+
+    async def test_unbuilt_false_returns_only_built(
+        self,
+        fake: DataFaker,
+        mongo,
+        pg: AsyncEngine,
+    ):
+        await self.seed(pg, fake)
+
+        result = await virtool.history.db.find(
+            mongo, pg, 1, 25, reference_id="reference_a", unbuilt=False
+        )
+
+        assert {document["id"] for document in result["documents"]} == {"otu_a.1"}
 
 
 class TestAdd:

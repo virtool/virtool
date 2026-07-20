@@ -9,7 +9,7 @@ from unittest.mock import ANY
 import pytest
 from aiohttp.test_utils import make_mocked_coro
 from pytest_mock import MockerFixture
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
@@ -35,6 +35,24 @@ from virtool.storage.protocol import StorageBackend
 from virtool.tasks.sql import SQLTask
 from virtool.utils import timestamp
 from virtool.workflow.pytest_plugin.utils import StaticTime
+
+
+async def link_history_index_ids(session: AsyncSession) -> None:
+    """Resolve ``legacy_history.index_id`` from the legacy ``index`` string.
+
+    Mirrors the production backfill so fixtures that insert built history rows by their
+    legacy ``index`` string get the matching integer foreign key that reads and filters
+    now key on. Rows whose ``index`` string has no ``indexes`` row are left unlinked.
+    """
+    await session.execute(
+        update(SQLLegacyHistory)
+        .where(
+            SQLLegacyHistory.index.isnot(None),
+            SQLLegacyHistory.index_id.is_(None),
+            SQLLegacyHistory.index == SQLIndex.legacy_id,
+        )
+        .values(index_id=SQLIndex.id),
+    )
 
 
 class TestFind:
@@ -126,6 +144,7 @@ class TestFind:
                     ("5", indexes["active_b"].id, "otu_4"),
                 )
             )
+            await link_history_index_ids(session)
             await session.commit()
 
         mocker.patch(
@@ -296,6 +315,7 @@ async def test_get(
                 ("other.0", "other", "other", "Other virus", "0", occasional.id),
             )
         )
+        await link_history_index_ids(session)
         await session.commit()
 
     resp = await client.get(f"/indexes/{index_id}")
@@ -441,11 +461,16 @@ class TestCreate:
                 ),
             )
 
+            new_index = await session.scalar(
+                select(SQLIndex).where(SQLIndex.legacy_id == index["_id"]),
+            )
+
             assert task is not None
             assert task.type == "create_index"
             assert task.context == {"index_id": index["_id"]}
             assert history is not None
-            assert (history.index, history.index_version) == (index["_id"], "0")
+            assert new_index is not None
+            assert (history.index_id, history.index_version) == (new_index.id, "0")
             assert await session.scalar(select(SQLJob.id)) is None
 
         m_create_manifest.assert_called_with(ANY, reference["id"])
@@ -629,6 +654,7 @@ async def test_find_history(
             )
             for document in history_documents
         )
+        await link_history_index_ids(session)
         await session.commit()
 
     resp = await client.get(f"/indexes/{index_id}/history")

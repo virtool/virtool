@@ -148,7 +148,7 @@ async def find(
     if verified is not None:
         search_filters.append(SQLOTU.verified.is_(verified))
 
-    history_filters = [SQLLegacyHistory.index.is_(None)]
+    history_filters = [SQLLegacyHistory.index_id.is_(None)]
 
     if ref_id:
         history_filters.append(

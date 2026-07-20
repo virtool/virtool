@@ -751,7 +751,7 @@ class ReferencesData(DataLayerDomain):
                     .where(
                         SQLLegacyHistory.reference_id
                         == compose_legacy_id_subquery(SQLReference, ref_id),
-                        SQLLegacyHistory.index.is_(None),
+                        SQLLegacyHistory.index_id.is_(None),
                     )
                     .exists(),
                 ),

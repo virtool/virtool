@@ -186,7 +186,23 @@ class TestDelete:
             ready=True,
         )
 
+        other_index = await fake.indexes.create(
+            reference,
+            user,
+            job=job,
+            manifest={},
+            version=2,
+            ready=True,
+        )
+
         async with AsyncSession(pg) as session:
+            deleted_index_pk = await session.scalar(
+                select(SQLIndex.id).where(SQLIndex.legacy_id == deleted_index.id),
+            )
+            other_index_pk = await session.scalar(
+                select(SQLIndex.id).where(SQLIndex.legacy_id == other_index.id),
+            )
+
             session.add_all(
                 [
                     SQLLegacyHistory(
@@ -200,6 +216,7 @@ class TestDelete:
                         otu_version="0",
                         reference_id=reference.id,
                         index=deleted_index.id,
+                        index_id=deleted_index_pk,
                         index_version="4",
                     ),
                     SQLLegacyHistory(
@@ -213,6 +230,7 @@ class TestDelete:
                         otu_version="0",
                         reference_id=reference.id,
                         index=deleted_index.id,
+                        index_id=deleted_index_pk,
                         index_version="4",
                     ),
                     SQLLegacyHistory(
@@ -225,7 +243,8 @@ class TestDelete:
                         otu_name="Virus C",
                         otu_version="0",
                         reference_id=reference.id,
-                        index="other_index",
+                        index=other_index.id,
+                        index_id=other_index_pk,
                         index_version="2",
                     ),
                 ],
@@ -238,7 +257,7 @@ class TestDelete:
 
         async with AsyncSession(pg) as session:
             rows = {
-                row.legacy_id: (row.index, row.index_version)
+                row.legacy_id: (row.index, row.index_id, row.index_version)
                 for row in (await session.execute(select(SQLLegacyHistory))).scalars()
             }
 
@@ -247,9 +266,9 @@ class TestDelete:
             )
 
         assert rows == {
-            "otu_a.0": (None, None),
-            "otu_b.0": (None, None),
-            "otu_c.0": ("other_index", "2"),
+            "otu_a.0": (None, None, None),
+            "otu_b.0": (None, None, None),
+            "otu_c.0": (other_index.id, other_index_pk, "2"),
         }
 
         # The Postgres index row is deleted alongside the Mongo document.

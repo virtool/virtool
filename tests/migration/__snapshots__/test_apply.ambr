@@ -848,5 +848,19 @@
       'name': 'backfill analyses index ids to integers',
       'revision': 'bn8b4pzfvokk',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 122,
+      'name': 'add index_id to legacy_history',
+      'revision': 'c3741294977e',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 123,
+      'name': 'backfill history index ids to integers',
+      'revision': 'x7lwnf9zk6mt',
+    }),
   ])
 # ---

@@ -126,8 +126,16 @@ async def test_create_assigns_index_in_postgres(
 
     prior_index = await fake.indexes.create(built_ref, user, version=0, ready=True)
 
+    async with AsyncSession(pg) as session:
+        prior_index_pk = await session.scalar(
+            select(SQLIndex.id).where(SQLIndex.legacy_id == prior_index.id),
+        )
+
     def legacy_row(
-        legacy_id: str, reference_id: int, index: str | None
+        legacy_id: str,
+        reference_id: int,
+        index: str | None,
+        index_pk: int | None,
     ) -> SQLLegacyHistory:
         return SQLLegacyHistory(
             legacy_id=legacy_id,
@@ -140,15 +148,18 @@ async def test_create_assigns_index_in_postgres(
             otu_version="0",
             reference_id=reference_id,
             index=index,
+            index_id=index_pk,
             index_version="0" if index else None,
         )
 
     async with AsyncSession(pg) as session:
         session.add_all(
             [
-                legacy_row("ref_unbuilt", built_ref.id, None),
-                legacy_row("ref_already_built", built_ref.id, prior_index.id),
-                legacy_row("other_ref_unbuilt", other_ref.id, None),
+                legacy_row("ref_unbuilt", built_ref.id, None, None),
+                legacy_row(
+                    "ref_already_built", built_ref.id, prior_index.id, prior_index_pk
+                ),
+                legacy_row("other_ref_unbuilt", other_ref.id, None, None),
             ],
         )
         await session.commit()
@@ -167,13 +178,16 @@ async def test_create_assigns_index_in_postgres(
         )
 
     async with AsyncSession(pg) as session:
+        new_index_pk = await session.scalar(
+            select(SQLIndex.id).where(SQLIndex.legacy_id == "new_index"),
+        )
         rows = {
-            row.legacy_id: (row.index, row.index_version)
+            row.legacy_id: (row.index_id, row.index_version)
             for row in (await session.execute(select(SQLLegacyHistory))).scalars()
         }
 
-    assert rows["ref_unbuilt"] == ("new_index", "1")
-    assert rows["ref_already_built"] == (prior_index.id, "0")
+    assert rows["ref_unbuilt"] == (new_index_pk, "1")
+    assert rows["ref_already_built"] == (prior_index_pk, "0")
     assert rows["other_ref_unbuilt"] == (None, None)
 
 
@@ -245,7 +259,7 @@ async def test_create_rolls_back_both_stores_on_failure(
             )
         ).scalar_one_or_none()
 
-    assert row.index is None
+    assert row.index_id is None
     assert row.index_version is None
     assert index_row is None
 

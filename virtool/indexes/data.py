@@ -629,8 +629,11 @@ class IndexData:
 
             await pg_session.execute(
                 update(SQLLegacyHistory)
-                .where(SQLLegacyHistory.index == index_id)
-                .values(index=None, index_version=None),
+                .where(
+                    SQLLegacyHistory.index_id
+                    == compose_legacy_id_subquery(SQLIndex, index_id),
+                )
+                .values(index=None, index_id=None, index_version=None),
             )
 
             await pg_session.execute(
