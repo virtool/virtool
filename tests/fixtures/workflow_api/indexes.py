@@ -38,7 +38,7 @@ def create_indexes_routes(
     @routes.view("/indexes/{index_id}")
     class IndexView(View):
         async def get(self):
-            index_id = self.request.match_info["index_id"]
+            index_id = int(self.request.match_info["index_id"])
 
             if index_id not in (
                 data.index.id,
@@ -52,7 +52,7 @@ def create_indexes_routes(
 
         async def patch(self):
             """Finalize the index."""
-            index_id = self.request.match_info["index_id"]
+            index_id = int(self.request.match_info["index_id"])
 
             if index_id != data.new_index.id:
                 return generate_not_found()
@@ -89,7 +89,7 @@ def create_indexes_routes(
     @routes.view("/indexes/{index_id}/files/{filename}")
     class IndexFilesView(View):
         async def get(self):
-            index_id = self.request.match_info["index_id"]
+            index_id = int(self.request.match_info["index_id"])
             filename = self.request.match_info["filename"]
 
             if filename == "otus.json.gz" and index_id in (
@@ -135,7 +135,7 @@ def create_indexes_routes(
             return generate_not_found()
 
         async def put(self):
-            index_id = self.request.match_info["index_id"]
+            index_id = int(self.request.match_info["index_id"])
             filename = self.request.match_info["filename"]
 
             if filename not in JOB_INDEX_FILE_NAMES:

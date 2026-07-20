@@ -9,7 +9,6 @@ from virtool.history.db import legacy_history_document
 from virtool.history.models import History, HistoryMinimal, HistorySearchResult
 from virtool.history.sql import SQLLegacyHistory
 from virtool.history.transforms import AttachDiffTransform
-from virtool.indexes.sql import SQLIndex
 from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU
 from virtool.references.transforms import AttachReferenceTransform
@@ -51,9 +50,8 @@ class HistoryData:
 
             rows = (
                 await session.execute(
-                    select(SQLLegacyHistory, SQLUser.handle, SQLIndex.legacy_id)
+                    select(SQLLegacyHistory, SQLUser.handle)
                     .join(SQLUser, SQLLegacyHistory.user_id == SQLUser.id)
-                    .outerjoin(SQLIndex, SQLLegacyHistory.index_id == SQLIndex.id)
                     .where(SQLLegacyHistory.otu == otu_id)
                     .order_by(
                         cast(SQLLegacyHistory.otu_version, Integer)
@@ -65,10 +63,7 @@ class HistoryData:
             ).all()
 
         documents = await apply_transforms(
-            [
-                legacy_history_document(row, handle, index_legacy_id)
-                for row, handle, index_legacy_id in rows
-            ],
+            [legacy_history_document(row, handle) for row, handle in rows],
             [AttachReferenceTransform(self._pg)],
             self._pg,
         )
@@ -84,9 +79,8 @@ class HistoryData:
         async with AsyncSession(self._pg) as session:
             row = (
                 await session.execute(
-                    select(SQLLegacyHistory, SQLUser.handle, SQLIndex.legacy_id)
+                    select(SQLLegacyHistory, SQLUser.handle)
                     .join(SQLUser, SQLLegacyHistory.user_id == SQLUser.id)
-                    .outerjoin(SQLIndex, SQLLegacyHistory.index_id == SQLIndex.id)
                     .where(
                         compose_legacy_id_single_expression(
                             SQLLegacyHistory,
@@ -99,10 +93,10 @@ class HistoryData:
         if row is None:
             raise ResourceNotFoundError()
 
-        legacy_row, handle, index_legacy_id = row
+        legacy_row, handle = row
 
         document = await apply_transforms(
-            legacy_history_document(legacy_row, handle, index_legacy_id),
+            legacy_history_document(legacy_row, handle),
             [
                 AttachDiffTransform(self._pg),
                 AttachReferenceTransform(self._pg),

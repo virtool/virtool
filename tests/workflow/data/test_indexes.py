@@ -478,7 +478,7 @@ class TestIndex:
             ["7h6yaube"],
         )
 
-        index_path = work_path / "indexes" / workflow_data.analysis.index.id
+        index_path = work_path / "indexes" / str(workflow_data.analysis.index.id)
 
         assert {p.name for p in index_path.iterdir()} == {
             INDEX_SQLITE_FILE_NAME,
@@ -522,7 +522,7 @@ class TestIndex:
             )
         ]
 
-        index_path = work_path / "indexes" / workflow_data.analysis.index.id
+        index_path = work_path / "indexes" / str(workflow_data.analysis.index.id)
 
         assert {p.name for p in index_path.iterdir()} == {
             INDEX_SQLITE_FILE_NAME,
@@ -593,7 +593,7 @@ class TestNewIndex:
         new_index: WFNewIndex = await scope.instantiate_by_key("new_index")
 
         assert new_index.id == workflow_data.new_index.id
-        assert new_index.path == work_path / "indexes" / workflow_data.new_index.id
+        assert new_index.path == work_path / "indexes" / str(workflow_data.new_index.id)
 
     async def test_upload_and_finalize(
         self,

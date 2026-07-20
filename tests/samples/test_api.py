@@ -1090,7 +1090,7 @@ async def test_find_analyses(
     async with AsyncSession(pg) as session:
         index_pg_id = (
             await session.execute(
-                select(SQLIndex.id).where(SQLIndex.legacy_id == index.id),
+                select(SQLIndex.id).where(SQLIndex.id == index.id),
             )
         ).scalar_one()
 
@@ -1105,7 +1105,7 @@ async def test_find_analyses(
                 sample_id=sample.id,
                 reference="baz",
                 reference_id=reference_baz.id,
-                index=index.id,
+                index=str(index.id),
                 index_id=index_pg_id,
                 user_id=user_1.id,
                 job_id=job.id,
@@ -1120,7 +1120,7 @@ async def test_find_analyses(
                 sample_id=sample.id,
                 reference="baz",
                 reference_id=reference_baz.id,
-                index=index.id,
+                index=str(index.id),
                 index_id=index_pg_id,
                 user_id=user_1.id,
             ),
@@ -1134,7 +1134,7 @@ async def test_find_analyses(
                 sample_id=sample.id,
                 reference="foo",
                 reference_id=reference_foo.id,
-                index=index.id,
+                index=str(index.id),
                 index_id=index_pg_id,
                 user_id=user_2.id,
             ),
@@ -1147,7 +1147,7 @@ async def test_find_analyses(
                 sample="test-not-found",
                 reference="foo",
                 reference_id=reference_foo.id,
-                index=index.id,
+                index=str(index.id),
                 index_id=index_pg_id,
                 user_id=user_2.id,
             ),

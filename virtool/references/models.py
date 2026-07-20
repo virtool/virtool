@@ -54,7 +54,7 @@ class ReferenceContributor(UserNested):
 
 class ReferenceBuild(BaseModel):
     created_at: datetime
-    id: str
+    id: int
     version: int
     user: UserNested
 
@@ -132,7 +132,7 @@ class Reference(ReferenceMinimal):
                 "id": 25,
                 "latest_build": {
                     "created_at": "2022-07-05T17:41:51.857000Z",
-                    "id": "u3lm1rk8",
+                    "id": 14,
                     "user": {
                         "administrator": True,
                         "handle": "mrott",
@@ -186,7 +186,7 @@ class ReferenceSearchResult(SearchResult):
                         "id": 25,
                         "latest_build": {
                             "created_at": "2022-07-05T17:41:51.857000Z",
-                            "id": "u3lm1rk8",
+                            "id": 14,
                             "user": {
                                 "administrator": True,
                                 "handle": "mrott",

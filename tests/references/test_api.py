@@ -1012,7 +1012,7 @@ class TestCreateIndex:
 
             assert task is not None
             assert task.type == "create_index"
-            assert task.context == {"index_id": str(new_index.id)}
+            assert task.context == {"index_id": new_index.id}
             assert history is not None
             assert (history.index_id, history.index_version) == (new_index.id, "0")
             assert await session.scalar(select(SQLJob.id)) is None

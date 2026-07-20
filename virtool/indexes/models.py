@@ -8,7 +8,7 @@ from virtool.users.models_base import UserNested
 
 
 class IndexNested(BaseModel):
-    id: str
+    id: int
     version: int
 
 
@@ -26,7 +26,7 @@ class IndexMinimal(IndexNested):
             "example": {
                 "change_count": 0,
                 "created_at": "2015-10-06T20:00:00Z",
-                "id": "fb085f7f",
+                "id": 5,
                 "job": {"id": "bf1b993c"},
                 "modified_otu_count": 0,
                 "ready": False,
@@ -50,7 +50,7 @@ class IndexOTU(BaseModel):
 class IndexFile(BaseModel):
     download_url: str
     id: int
-    index: str
+    index: int
     name: str
     size: int | None
     type: str
@@ -75,7 +75,7 @@ class Index(IndexMinimal):
                     "handle": "leeashley",
                     "administrator": False,
                 },
-                "id": "foo",
+                "id": 5,
                 "change_count": 2,
                 "modified_otu_count": 2,
                 "contributors": [

@@ -120,7 +120,7 @@ async def test_create_assigns_index_in_postgres(
 
     async with AsyncSession(pg) as session:
         prior_index_pk = await session.scalar(
-            select(SQLIndex.id).where(SQLIndex.legacy_id == prior_index.id),
+            select(SQLIndex.id).where(SQLIndex.id == prior_index.id),
         )
 
     def legacy_row(
@@ -149,7 +149,10 @@ async def test_create_assigns_index_in_postgres(
             [
                 legacy_row("ref_unbuilt", built_ref.id, None, None),
                 legacy_row(
-                    "ref_already_built", built_ref.id, prior_index.id, prior_index_pk
+                    "ref_already_built",
+                    built_ref.id,
+                    str(prior_index.id),
+                    prior_index_pk,
                 ),
                 legacy_row("other_ref_unbuilt", other_ref.id, None, None),
             ],
@@ -295,7 +298,7 @@ class TestGetNextVersion:
 
         async with AsyncSession(pg) as session:
             await session.execute(
-                delete(SQLIndex).where(SQLIndex.legacy_id == indexes[0].id),
+                delete(SQLIndex).where(SQLIndex.id == indexes[0].id),
             )
             await session.commit()
 
@@ -531,7 +534,7 @@ async def test_upsert_index_file_creates_row(fake: DataFaker, pg: AsyncEngine):
             9000,
         ) == {
             "id": 1,
-            "index": "foo",
+            "index": index_pk,
             "name": "reference.json.gz",
             "size": 9000,
             "type": "json",
@@ -582,7 +585,7 @@ async def test_upsert_index_file_updates_existing_row(fake: DataFaker, pg: Async
             9000,
         ) == {
             "id": 1,
-            "index": "foo",
+            "index": index_pk,
             "name": "reference.json.gz",
             "size": 9000,
             "type": "json",
@@ -711,8 +714,8 @@ class TestIndexCountsTransform:
 
     async def test_native_index_resolves_counts(self, fake: DataFaker, pg: AsyncEngine):
         """A Postgres-native index (``legacy_id`` NULL) is keyed in the list view by its
-        stringified primary key, and its real change and modified-OTU counts resolve
-        instead of falling through to the ``0/0`` default.
+        integer primary key, and its real change and modified-OTU counts resolve instead
+        of falling through to the ``0/0`` default.
         """
         user = await fake.users.create()
         reference = await fake.references.create(user=user)
@@ -743,18 +746,16 @@ class TestIndexCountsTransform:
             )
             await session.commit()
 
-        public_id = str(index_pk)
-
         async with AsyncSession(pg) as session:
             prepared = await IndexCountsTransform().prepare_many(
-                [{"id": public_id}], session
+                [{"id": index_pk}], session
             )
 
-        assert prepared[public_id] == {"change_count": 3, "modified_otu_count": 2}
+        assert prepared[index_pk] == {"change_count": 3, "modified_otu_count": 2}
 
     async def test_legacy_index_resolves_counts(self, fake: DataFaker, pg: AsyncEngine):
-        """A backfilled index keyed by its legacy Mongo id still resolves counts,
-        confirming the dual-key lookup covers both id forms.
+        """A backfilled index (``legacy_id`` set) resolves counts by its integer primary
+        key, confirming the lookup keys on the integer id and ignores the legacy slug.
         """
         user = await fake.users.create()
         reference = await fake.references.create(user=user)
@@ -787,10 +788,10 @@ class TestIndexCountsTransform:
 
         async with AsyncSession(pg) as session:
             prepared = await IndexCountsTransform().prepare_many(
-                [{"id": "legacy_index"}], session
+                [{"id": index_pk}], session
             )
 
-        assert prepared["legacy_index"] == {"change_count": 2, "modified_otu_count": 2}
+        assert prepared[index_pk] == {"change_count": 2, "modified_otu_count": 2}
 
     async def test_index_without_history_defaults_to_zero(
         self, fake: DataFaker, pg: AsyncEngine
@@ -815,7 +816,7 @@ class TestIndexCountsTransform:
             )
             session.add(index)
             await session.flush()
-            public_id = str(index.id)
+            public_id = index.id
             await session.commit()
 
         async with AsyncSession(pg) as session:
@@ -826,9 +827,7 @@ class TestIndexCountsTransform:
         assert prepared[public_id] == {"change_count": 0, "modified_otu_count": 0}
 
     async def test_no_documents_returns_empty(self, pg: AsyncEngine):
-        """An empty document list returns an empty mapping instead of raising, since
-        the legacy-id expression rejects an empty id list.
-        """
+        """An empty document list returns an empty mapping instead of querying."""
         async with AsyncSession(pg) as session:
             prepared = await IndexCountsTransform().prepare_many([], session)
 

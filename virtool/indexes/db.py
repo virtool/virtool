@@ -24,7 +24,6 @@ import virtool.history.db
 import virtool.utils
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.topg import (
-    compose_legacy_id_multi_expression,
     compose_legacy_id_subquery,
     resolve_legacy_id,
 )
@@ -94,42 +93,36 @@ class IndexCountsTransform(AbstractTransform):
         if not index_ids:
             return {}
 
+        # ``_row_to_document`` stringifies the integer primary key, so the ids arrive as
+        # digit strings. Cast them back for the ``bigint`` query and lookup while keying
+        # the returned mapping by the original document id the transform framework uses.
+        int_ids = {index_id: int(index_id) for index_id in index_ids}
+
         rows = (
             await session.execute(
                 select(
                     SQLIndex.id,
-                    SQLIndex.legacy_id,
                     func.count(),
                     func.count(distinct(SQLLegacyHistory.otu)),
                 )
                 .select_from(SQLIndex)
                 .join(SQLLegacyHistory, SQLLegacyHistory.index_id == SQLIndex.id)
-                .where(compose_legacy_id_multi_expression(SQLIndex, index_ids))
-                .group_by(SQLIndex.id, SQLIndex.legacy_id),
+                .where(SQLIndex.id.in_(int_ids.values()))
+                .group_by(SQLIndex.id),
             )
         ).all()
 
         lookup = {
-            **{
-                str(index_pk): {
-                    "change_count": change_count,
-                    "modified_otu_count": modified_otu_count,
-                }
-                for index_pk, _, change_count, modified_otu_count in rows
-            },
-            **{
-                legacy_id: {
-                    "change_count": change_count,
-                    "modified_otu_count": modified_otu_count,
-                }
-                for _, legacy_id, change_count, modified_otu_count in rows
-                if legacy_id
-            },
+            index_pk: {
+                "change_count": change_count,
+                "modified_otu_count": modified_otu_count,
+            }
+            for index_pk, change_count, modified_otu_count in rows
         }
 
         return {
             index_id: lookup.get(
-                index_id,
+                int_ids[index_id],
                 {"change_count": 0, "modified_otu_count": 0},
             )
             for index_id in index_ids
@@ -196,32 +189,18 @@ async def create(
     return index
 
 
-def compose_public_index_id(row: SQLIndex) -> str:
-    """Return the outward-facing id for an index row.
-
-    Backfilled rows expose their legacy Mongo slug. Postgres-native rows have no
-    legacy id, so the stringified integer primary key stands in as an interim public
-    id. ``compose_legacy_id_single_expression`` already routes digit-strings back to
-    the integer primary key, so the value round-trips. VIR-2781 switches the public
-    id to the integer outright and deletes this helper.
-    """
-    return row.legacy_id if row.legacy_id is not None else str(row.id)
-
-
 def _row_to_document(row: SQLIndex, *, include_manifest: bool = False) -> dict:
     """Shape an ``SQLIndex`` row into the document the transforms expect.
 
-    The outward-facing ``id`` comes from ``compose_public_index_id``: the legacy Mongo
-    slug for backfilled rows, the stringified integer primary key for Postgres-native
-    rows. The integer primary key becomes the public identifier outright in a later
-    migration step.
+    The outward-facing ``id`` is the stringified integer primary key: indexes are
+    addressed publicly by their Postgres id.
 
     The nested reference is keyed by the integer ``reference_id`` foreign key;
     ``AttachReferenceTransform`` resolves it. ``job`` collapses to ``None`` for
     task-backed builds, matching the Mongo document.
     """
     document = {
-        "id": compose_public_index_id(row),
+        "id": str(row.id),
         "version": row.version,
         "created_at": row.created_at,
         "ready": row.ready,
@@ -513,7 +492,7 @@ async def iter_patched_otus(
 
 async def upsert_index_file(
     session: AsyncSession,
-    index_id: str,
+    index_id: int | str,
     file_type: str,
     name: str,
     size: int,
@@ -528,7 +507,7 @@ async def upsert_index_file(
         await session.execute(
             pg_insert(SQLIndexFile)
             .values(
-                index=index_id,
+                index=str(index_id),
                 index_id=index_pg_id,
                 name=name,
                 size=size,
@@ -544,7 +523,7 @@ async def upsert_index_file(
 
     return {
         "id": index_file_id,
-        "index": index_id,
+        "index": index_pg_id,
         "name": name,
         "size": size,
         "type": file_type,
@@ -634,6 +613,7 @@ async def attach_files(pg: AsyncEngine, base_url: str, document: dict) -> dict:
         files.append(
             {
                 **index_file,
+                "index": index_id,
                 "download_url": str(base_url) + location,
             },
         )
