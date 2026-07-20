@@ -260,7 +260,7 @@ async def test_get(
 
     job = await fake.jobs.create(user=prolific, workflow="build_index")
 
-    index_id = 999999
+    index_id = "missing"
 
     if not error:
         index = await fake.indexes.create(
@@ -591,7 +591,7 @@ async def test_find_history(
 
     reference = await fake.references.create(user=user_1)
 
-    index_id = 999999
+    index_id = "missing"
 
     if not error:
         index_id = (await fake.indexes.create(reference, user_1, version=0)).id

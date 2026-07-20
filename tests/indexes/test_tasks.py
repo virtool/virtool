@@ -5,7 +5,7 @@ import json
 
 import pytest
 from pytest_mock import MockerFixture
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.errors import ResourceConflictError
@@ -18,6 +18,7 @@ from virtool.indexes.utils import compose_index_file_key
 from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU
 from virtool.storage.protocol import StorageBackend
+from virtool.tasks.sql import SQLTask
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
@@ -173,6 +174,29 @@ class TestCreateIndexTask:
             info.key
             async for info in self.memory_storage.list(f"indexes/{self.storage_key}/")
         ] == [compose_index_file_key(self.storage_key, REFERENCE_JSON_V2_FILE_NAME)]
+
+    async def test_runs_with_stringified_integer_index_id(self, task_id: int) -> None:
+        """A task whose context stores the index id as a stringified integer still runs.
+
+        A task created just before the integer-id cutover carries ``str(index.id)`` in
+        its context; ``generate_task_index`` must resolve that digit string for one
+        release so the in-flight build finalizes instead of failing.
+        """
+        async with AsyncSession(self.pg) as session:
+            await session.execute(
+                update(SQLTask)
+                .where(SQLTask.id == task_id)
+                .values(context={"index_id": str(self.index_id)}),
+            )
+            await session.commit()
+
+        await (await CreateIndexTask.from_task_id(self.data_layer, task_id)).run()
+
+        task = await self.data_layer.tasks.get(task_id)
+
+        assert task.complete is True
+        assert task.error is None
+        assert (await self.data_layer.index.get(self.index_id)).ready is True
 
     async def test_updates_existing_index_file_row(self, task_id: int) -> None:
         """An existing reference JSON file row is updated instead of duplicated."""
