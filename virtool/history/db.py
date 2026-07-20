@@ -26,6 +26,7 @@ from virtool.history.utils import (
     compose_history_description,
     derive_otu_information,
 )
+from virtool.indexes.sql import SQLIndex
 from virtool.models.enums import HistoryMethod
 from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
@@ -334,20 +335,30 @@ def coerce_otu_version(otu_version: str | None) -> int | str:
     return int(otu_version) if otu_version.isdigit() else otu_version
 
 
-def legacy_history_document(row: SQLLegacyHistory, handle: str) -> Document:
+def legacy_history_document(
+    row: SQLLegacyHistory,
+    handle: str,
+    index_legacy_id: str | None,
+) -> Document:
     """Reconstruct a history list document from a ``legacy_history`` row.
 
     Reverses the sentinel-to-NULL conventions applied by :func:`legacy_history_values`:
-    a ``NULL`` ``otu_version`` becomes the ``"removed"`` sentinel and a ``NULL`` ``index``
-    becomes the ``"unbuilt"`` sentinel. Stringified numeric versions are coerced back to
-    integers so the resource shape matches the historical Mongo representation.
+    a ``NULL`` ``otu_version`` becomes the ``"removed"`` sentinel and a ``NULL``
+    ``index_id`` becomes the ``"unbuilt"`` sentinel. Stringified numeric versions are
+    coerced back to integers so the resource shape matches the historical Mongo
+    representation.
+
+    The public index id stays the legacy Mongo string, supplied as ``index_legacy_id``
+    from an outer join on ``indexes.legacy_id`` keyed by ``index_id``. The join must be
+    an outer join so unbuilt rows (``index_id`` is ``NULL``) survive; those rows carry a
+    ``NULL`` ``index_legacy_id`` and reconstruct the ``"unbuilt"`` sentinel.
 
     The ``handle`` comes from a join on ``users`` so the nested user is fully populated
     without a follow-up transform.
     """
     otu_version = coerce_otu_version(row.otu_version)
 
-    if row.index is None:
+    if row.index_id is None:
         index = {"id": "unbuilt", "version": "unbuilt"}
     else:
         index_version = row.index_version
@@ -355,7 +366,7 @@ def legacy_history_document(row: SQLLegacyHistory, handle: str) -> Document:
         if index_version is not None and index_version.isdigit():
             index_version = int(index_version)
 
-        index = {"id": row.index, "version": index_version}
+        index = {"id": index_legacy_id, "version": index_version}
 
     return {
         "_id": row.legacy_id,
@@ -403,9 +414,9 @@ async def find(
     search_filters = list(base_filters)
 
     if unbuilt is True:
-        search_filters.append(SQLLegacyHistory.index.is_(None))
+        search_filters.append(SQLLegacyHistory.index_id.is_(None))
     elif unbuilt is False:
-        search_filters.append(SQLLegacyHistory.index.isnot(None))
+        search_filters.append(SQLLegacyHistory.index_id.isnot(None))
 
     async with AsyncSession(pg) as session:
         total_count = await session.scalar(
@@ -418,8 +429,9 @@ async def find(
 
         rows = (
             await session.execute(
-                select(SQLLegacyHistory, SQLUser.handle)
+                select(SQLLegacyHistory, SQLUser.handle, SQLIndex.legacy_id)
                 .join(SQLUser, SQLLegacyHistory.user_id == SQLUser.id)
+                .outerjoin(SQLIndex, SQLLegacyHistory.index_id == SQLIndex.id)
                 .where(*search_filters)
                 .order_by(
                     cast(SQLLegacyHistory.otu_version, Integer).desc().nulls_first(),
@@ -431,7 +443,10 @@ async def find(
         ).all()
 
     documents = await apply_transforms(
-        [base_processor(legacy_history_document(row, handle)) for row, handle in rows],
+        [
+            base_processor(legacy_history_document(row, handle, index_legacy_id))
+            for row, handle, index_legacy_id in rows
+        ],
         [AttachReferenceTransform(pg)],
         pg,
     )
@@ -475,7 +490,9 @@ async def find_by_index(
     :param term: an optional term matched against the OTU name
     :return: a search result including the matched change documents
     """
-    search_filters = [SQLLegacyHistory.index == index_id]
+    search_filters = [
+        SQLLegacyHistory.index_id == compose_legacy_id_subquery(SQLIndex, index_id),
+    ]
 
     if term:
         search_filters.append(
@@ -493,8 +510,9 @@ async def find_by_index(
 
         rows = (
             await session.execute(
-                select(SQLLegacyHistory, SQLUser.handle)
+                select(SQLLegacyHistory, SQLUser.handle, SQLIndex.legacy_id)
                 .join(SQLUser, SQLLegacyHistory.user_id == SQLUser.id)
+                .outerjoin(SQLIndex, SQLLegacyHistory.index_id == SQLIndex.id)
                 .where(*search_filters)
                 .order_by(
                     SQLLegacyHistory.otu_name.asc(),
@@ -506,7 +524,10 @@ async def find_by_index(
         ).all()
 
     documents = await apply_transforms(
-        [base_processor(legacy_history_document(row, handle)) for row, handle in rows],
+        [
+            base_processor(legacy_history_document(row, handle, index_legacy_id))
+            for row, handle, index_legacy_id in rows
+        ],
         [AttachReferenceTransform(pg)],
         pg,
     )
@@ -550,7 +571,9 @@ async def get_contributors(
         )
 
     if index_id is not None:
-        filters.append(SQLLegacyHistory.index == index_id)
+        filters.append(
+            SQLLegacyHistory.index_id == compose_legacy_id_subquery(SQLIndex, index_id),
+        )
 
     async with AsyncSession(pg) as session:
         counts = (

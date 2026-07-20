@@ -77,7 +77,10 @@ class IndexCountsTransform(AbstractTransform):
                 select(
                     func.count(),
                     func.count(distinct(SQLLegacyHistory.otu)),
-                ).where(SQLLegacyHistory.index == document["id"]),
+                ).where(
+                    SQLLegacyHistory.index_id
+                    == compose_legacy_id_subquery(SQLIndex, document["id"]),
+                ),
             )
         ).one()
 
@@ -94,12 +97,13 @@ class IndexCountsTransform(AbstractTransform):
         rows = (
             await session.execute(
                 select(
-                    SQLLegacyHistory.index,
+                    SQLIndex.legacy_id,
                     func.count(),
                     func.count(distinct(SQLLegacyHistory.otu)),
                 )
-                .where(SQLLegacyHistory.index.in_(index_ids))
-                .group_by(SQLLegacyHistory.index),
+                .join(SQLIndex, SQLLegacyHistory.index_id == SQLIndex.id)
+                .where(SQLIndex.legacy_id.in_(index_ids))
+                .group_by(SQLIndex.legacy_id),
             )
         ).all()
 
@@ -189,9 +193,12 @@ async def create(
         .where(
             SQLLegacyHistory.reference_id
             == compose_legacy_id_subquery(SQLReference, ref_id),
-            SQLLegacyHistory.index.is_(None),
+            SQLLegacyHistory.index_id.is_(None),
         )
-        .values(index=document["_id"], index_version=str(index_version)),
+        .values(
+            index_id=compose_legacy_id_subquery(SQLIndex, document["_id"]),
+            index_version=str(index_version),
+        ),
     )
 
     return document
@@ -366,7 +373,10 @@ async def get_otus(pg: AsyncEngine, index_id: str) -> list[dict]:
                     .over(partition_by=SQLLegacyHistory.otu)
                     .label("change_count"),
                 )
-                .where(SQLLegacyHistory.index == index_id)
+                .where(
+                    SQLLegacyHistory.index_id
+                    == compose_legacy_id_subquery(SQLIndex, index_id),
+                )
                 .distinct(SQLLegacyHistory.otu)
                 .order_by(
                     SQLLegacyHistory.otu,
@@ -418,7 +428,7 @@ async def get_unbuilt_stats(
     :return: the change count and modified OTU count
 
     """
-    history_filters = [SQLLegacyHistory.index.is_(None)]
+    history_filters = [SQLLegacyHistory.index_id.is_(None)]
     otu_filters = []
 
     if ref_id:

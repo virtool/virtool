@@ -17,6 +17,7 @@ from virtool.data.layer import DataLayer
 from virtool.data.topg import both_transactions
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
+from virtool.indexes.sql import SQLIndex
 from virtool.jobs.pg import SQLJob
 from virtool.models.enums import Permission
 from virtool.mongo.core import Mongo
@@ -1003,11 +1004,16 @@ class TestCreateIndex:
                 ),
             )
 
+            new_index = await session.scalar(
+                select(SQLIndex).where(SQLIndex.legacy_id == index["_id"]),
+            )
+
             assert task is not None
             assert task.type == "create_index"
             assert task.context == {"index_id": index["_id"]}
             assert history is not None
-            assert (history.index, history.index_version) == (index["_id"], "0")
+            assert new_index is not None
+            assert (history.index_id, history.index_version) == (new_index.id, "0")
             assert await session.scalar(select(SQLJob.id)) is None
 
         m_create_manifest.assert_called_with(ANY, reference["id"])
