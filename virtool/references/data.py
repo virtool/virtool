@@ -825,7 +825,10 @@ class ReferencesData(DataLayerDomain):
                     task_id=task.id,
                 )
 
-                index_id = index.id
+                # The public id is the stringified integer PK for native rows; the
+                # JSONB task context and ``SQLIndexFile.index`` are both string-typed,
+                # so store the string form rather than the raw integer.
+                index_id = str(index.id)
 
                 await pg_session.execute(
                     update(SQLTask)
