@@ -1,6 +1,13 @@
-from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+)
 
-from virtool.models.enums import MessageColor
 from virtool.pg.base import Base
 
 
@@ -18,10 +25,16 @@ class SQLInstanceMessage(Base):
     """
 
     __tablename__ = "instance_messages"
+    __table_args__ = (
+        CheckConstraint(
+            "color IN ('red', 'yellow', 'blue', 'purple', 'orange', 'grey')",
+            name="ck_instance_messages_color",
+        ),
+    )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     active = Column(Boolean, default=True)
-    color = Column(Enum(MessageColor), nullable=False)
+    color = Column(String, nullable=False)
     message = Column(String)
     created_at = Column(DateTime)
     updated_at = Column(DateTime)

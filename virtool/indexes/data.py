@@ -2,14 +2,13 @@ import asyncio
 import gzip
 from collections.abc import AsyncIterator
 
-from sqlalchemy import delete, or_, select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
 import virtool.history.db
 import virtool.indexes.db
-from virtool.analyses.sql import SQLAnalysis
 from virtool.api.custom_json import dump_bytes
 from virtool.config import Config
 from virtool.data.errors import (
@@ -567,34 +566,44 @@ class IndexData:
     async def delete(self, index_id: str) -> None:
         """Delete an index given it's id.
 
+        Only non-ready indexes (failed or in-progress builds) can be deleted. A
+        ready index backs analyses and remains the reference's current build, so
+        deleting one is rejected with a conflict.
+
         :param index_id: the ID of the index to delete
+        :raises ResourceNotFoundError: if no index has the given id
+        :raises ResourceConflictError: if the index is ready
         """
         index = await self.get(index_id)
 
         if not index:
             raise ResourceNotFoundError
 
-        async with AsyncSession(self._pg) as session:
-            referencing_analysis = (
-                await session.execute(
-                    select(SQLAnalysis.id)
-                    .where(
-                        or_(
-                            SQLAnalysis.index == index_id,
-                            SQLAnalysis.index_id
-                            == compose_legacy_id_subquery(SQLIndex, index_id),
-                        ),
-                    )
-                    .limit(1),
-                )
-            ).first()
-
-        if referencing_analysis is not None:
-            raise ResourceConflictError("Index is referenced by one or more analyses")
+        if index.ready:
+            raise ResourceConflictError("Ready indexes cannot be deleted")
 
         storage_key = await self._resolve_storage_key(index_id)
 
         async with AsyncSession(self._pg) as session:
+            # Re-check readiness inside the transaction under a row lock. The guard
+            # above races a concurrent ``finalize``: it can read ``ready=False``
+            # moments before finalize commits ``ready=True``. Locking the index row
+            # serializes this delete against finalize's ready update, so it observes
+            # the committed ready state instead of erasing a freshly built index.
+            row = (
+                await session.execute(
+                    select(SQLIndex.id, SQLIndex.ready)
+                    .where(compose_legacy_id_single_expression(SQLIndex, index_id))
+                    .with_for_update(),
+                )
+            ).one_or_none()
+
+            if row is None:
+                raise ResourceNotFoundError
+
+            if row.ready:
+                raise ResourceConflictError("Ready indexes cannot be deleted")
+
             await session.execute(
                 update(SQLLegacyHistory)
                 .where(
@@ -604,14 +613,9 @@ class IndexData:
                 .values(index=None, index_id=None, index_version=None),
             )
 
-            delete_result = await session.execute(
-                delete(SQLIndex).where(
-                    compose_legacy_id_single_expression(SQLIndex, index_id),
-                ),
+            await session.execute(
+                delete(SQLIndex).where(SQLIndex.id == row.id),
             )
-
-            if delete_result.rowcount == 0:
-                raise ResourceNotFoundError
 
             await session.commit()
 

@@ -862,5 +862,12 @@
       'name': 'backfill history index ids to integers',
       'revision': 'x7lwnf9zk6mt',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 124,
+      'name': 'replace messagecolor enum with text check',
+      'revision': '241675dea96f',
+    }),
   ])
 # ---

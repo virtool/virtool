@@ -2,7 +2,6 @@ import pytest
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from virtool.analyses.sql import SQLAnalysis
 from virtool.data.errors import (
     ResourceConflictError,
     ResourceError,
@@ -15,7 +14,6 @@ from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.indexes.utils import compose_index_file_key
 from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU
-from virtool.utils import timestamp
 
 
 async def add_index_files(pg: AsyncEngine, index_id: str) -> None:
@@ -146,6 +144,10 @@ class TestDelete:
     ):
         """Deleting an index resets its ``legacy_history`` change records to the
         unbuilt sentinel, leaving changes built into other indexes alone.
+
+        A failed build claims the reference's unbuilt history rows when it is
+        created, so deleting the non-ready index must release them back to the
+        unbuilt sentinel for the next build to pick up.
         """
         user = await fake.users.create()
         job = await fake.jobs.create(user=user)
@@ -157,7 +159,7 @@ class TestDelete:
             job=job,
             manifest={},
             version=4,
-            ready=True,
+            ready=False,
         )
 
         other_index = await fake.indexes.create(
@@ -253,7 +255,7 @@ class TestDelete:
         mongo: Mongo,
         pg: AsyncEngine,
     ):
-        """Deleting a built index removes its ``index_files`` rows.
+        """Deleting a non-ready index removes its ``index_files`` rows.
 
         The ``index_id`` foreign key cascades on delete, so hard-deleting the index
         row takes its file rows with it rather than raising a foreign-key violation.
@@ -268,7 +270,7 @@ class TestDelete:
             job=job,
             manifest={},
             version=2,
-            ready=True,
+            ready=False,
         )
 
         await add_index_files(pg, index.id)
@@ -282,16 +284,14 @@ class TestDelete:
 
         assert remaining == 0
 
-    async def test_rejects_deletion_when_referenced_by_analysis(
+    async def test_rejects_deletion_of_ready_index(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
         mongo: Mongo,
         pg: AsyncEngine,
     ):
-        """An index that any analysis references cannot be deleted; the index row is
-        left intact.
-        """
+        """A ready index cannot be deleted; the index row is left intact."""
         user = await fake.users.create()
         job = await fake.jobs.create(user=user)
         reference = await fake.references.create(user=user)
@@ -304,29 +304,9 @@ class TestDelete:
             ready=True,
         )
 
-        async with AsyncSession(pg) as session:
-            index_pk = await session.scalar(
-                select(SQLIndex.id).where(SQLIndex.legacy_id == index.id),
-            )
-            now = timestamp()
-            session.add(
-                SQLAnalysis(
-                    created_at=now,
-                    updated_at=now,
-                    workflow="nuvs",
-                    ready=False,
-                    sample="sample_legacy",
-                    reference=str(reference.id),
-                    index=index.id,
-                    index_id=index_pk,
-                    user_id=user.id,
-                ),
-            )
-            await session.commit()
-
         with pytest.raises(
             ResourceConflictError,
-            match="referenced by one or more analyses",
+            match="Ready indexes cannot be deleted",
         ):
             await data_layer.index.delete(index.id)
 
