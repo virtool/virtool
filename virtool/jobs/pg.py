@@ -98,21 +98,3 @@ class SQLJobIndex(Base):
 
     index_id: Mapped[str]
     """The index being built."""
-
-
-class SQLJobSample(Base):
-    """Links a job to the sample it created.
-
-    No longer written: the sample references its job directly via
-    ``legacy_samples.job_id``, and ``JobsData.get`` resolves the sample through
-    that reverse foreign key. The model and ``job_samples`` table are retained
-    pending their drop in VIR-2607.
-    """
-
-    __tablename__ = "job_samples"
-
-    job_id: Mapped[int] = mapped_column(ForeignKey("jobs.id"), primary_key=True)
-    """The job that created the sample."""
-
-    sample_id: Mapped[str]
-    """The legacy Mongo ``_id`` of the sample that was created."""
