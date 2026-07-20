@@ -305,6 +305,63 @@ class TestFind:
 
         assert {document["id"] for document in result["documents"]} == {"otu_a.1"}
 
+    async def test_native_index_uses_pk_string(
+        self,
+        fake: DataFaker,
+        mongo,
+        pg: AsyncEngine,
+    ):
+        """A Postgres-native index has no ``legacy_id``, so the outer join yields
+        ``NULL`` and the public index id falls back to the stringified primary key
+        instead of ``None``.
+        """
+        user = await fake.users.create()
+
+        async with AsyncSession(pg) as session:
+            reference_id = await ensure_reference(session, "reference_a", user.id)
+
+            index = SQLIndex(
+                legacy_id=None,
+                version=4,
+                created_at=datetime.datetime(2017, 7, 12, 16, 0, 50),
+                manifest={},
+                ready=True,
+                storage_key="native_index",
+                reference_id=reference_id,
+                user_id=user.id,
+            )
+            session.add(index)
+            await session.flush()
+            index_pk = index.id
+
+            session.add(
+                SQLLegacyHistory(
+                    legacy_id="otu_a.1",
+                    created_at=datetime.datetime(2017, 7, 12, 16, 0, 50),
+                    description="Built change",
+                    method_name="edit",
+                    user_id=user.id,
+                    otu="otu_a",
+                    otu_name="Virus A",
+                    otu_version="1",
+                    reference_id=reference_id,
+                    index=str(index_pk),
+                    index_id=index_pk,
+                    index_version="4",
+                ),
+            )
+            await session.commit()
+
+        result = await virtool.history.db.find(
+            mongo, pg, 1, 25, reference_id="reference_a"
+        )
+
+        indexes = {
+            document["id"]: document["index"] for document in result["documents"]
+        }
+
+        assert indexes["otu_a.1"] == {"id": str(index_pk), "version": 4}
+
 
 class TestAdd:
     async def test_edit(
