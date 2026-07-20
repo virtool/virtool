@@ -4,10 +4,8 @@ import pytest
 from pytest_mock import MockerFixture
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from syrupy import SnapshotAssertion
 
 import virtool.indexes.db
-from virtool.data.topg import both_transactions
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.db import (
@@ -20,7 +18,6 @@ from virtool.indexes.db import (
 )
 from virtool.indexes.models import Index
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
-from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU
 from virtool.utils import timestamp
 
@@ -56,61 +53,56 @@ async def _seed_index(pg: AsyncEngine, fake: DataFaker, legacy_id: str) -> int:
     return index_pk
 
 
-@pytest.mark.parametrize("index_id", [None, "abc"])
 async def test_create(
-    index_id: str | None,
-    mongo: Mongo,
     pg: AsyncEngine,
     fake,
-    snapshot: SnapshotAssertion,
     static_time,
 ):
-    """The new index is dual-written. The Mongo document embeds the integer
-    ``legacy_references`` primary key of its reference rather than the legacy Mongo
-    string id, and a matching ``indexes`` row carries the Mongo id as both its
-    ``legacy_id`` and ``storage_key``.
+    """A new index is created Postgres-natively: the id is minted by the sequence,
+    ``legacy_id`` is null, and ``storage_key`` is a freshly minted UUID rather than a
+    Mongo slug.
     """
     user = await fake.users.create()
     reference = await fake.references.create(user=user, id_="foo")
     task = await fake.tasks.create()
 
-    async with both_transactions(mongo, pg) as (mongo_session, pg_session):
+    async with AsyncSession(pg) as session:
         created = await virtool.indexes.db.create(
-            mongo,
-            mongo_session,
-            pg_session,
+            session,
             "foo",
             user.id,
             0,
             "manifest",
             task_id=task.id,
-            index_id=index_id,
         )
 
-    assert created["created_at"] == static_time.datetime
-    assert created == snapshot
+        assert created.id is not None
+        assert created.legacy_id is None
+        assert len(created.storage_key) == 32
+        assert created.version == 0
+        assert created.ready is False
+        assert created.manifest == "manifest"
+        assert created.created_at == static_time.datetime
+        assert created.reference_id == reference.id
+        assert created.user_id == user.id
+        assert created.job_id is None
+        assert created.task_id == task.id
+
+        created_id = created.id
+        created_storage_key = created.storage_key
+
+        await session.commit()
 
     async with AsyncSession(pg) as session:
         row = (
-            await session.execute(
-                select(SQLIndex).where(SQLIndex.legacy_id == created["_id"]),
-            )
+            await session.execute(select(SQLIndex).where(SQLIndex.id == created_id))
         ).scalar_one()
 
-    assert row.legacy_id == created["_id"]
-    assert row.storage_key == created["_id"]
-    assert row.version == 0
-    assert row.ready is False
-    assert row.manifest == "manifest"
-    assert row.created_at == static_time.datetime
-    assert row.reference_id == reference.id
-    assert row.user_id == user.id
-    assert row.job_id is None
-    assert row.task_id == task.id
+    assert row.legacy_id is None
+    assert row.storage_key == created_storage_key
 
 
 async def test_create_assigns_index_in_postgres(
-    mongo: Mongo,
     pg: AsyncEngine,
     fake,
     static_time,
@@ -164,23 +156,19 @@ async def test_create_assigns_index_in_postgres(
         )
         await session.commit()
 
-    async with both_transactions(mongo, pg) as (mongo_session, pg_session):
-        await virtool.indexes.db.create(
-            mongo,
-            mongo_session,
-            pg_session,
+    async with AsyncSession(pg) as session:
+        new_index = await virtool.indexes.db.create(
+            session,
             "built_ref",
             user.id,
             1,
             "manifest",
             task_id=task.id,
-            index_id="new_index",
         )
+        new_index_pk = new_index.id
+        await session.commit()
 
     async with AsyncSession(pg) as session:
-        new_index_pk = await session.scalar(
-            select(SQLIndex.id).where(SQLIndex.legacy_id == "new_index"),
-        )
         rows = {
             row.legacy_id: (row.index_id, row.index_version)
             for row in (await session.execute(select(SQLLegacyHistory))).scalars()
@@ -191,19 +179,19 @@ async def test_create_assigns_index_in_postgres(
     assert rows["other_ref_unbuilt"] == (None, None)
 
 
-async def test_create_rolls_back_both_stores_on_failure(
+async def test_create_rolls_back_on_failure(
     mocker: MockerFixture,
-    mongo: Mongo,
     pg: AsyncEngine,
     fake,
     static_time,
 ):
-    """A failure during the index build rolls back the Mongo index insert issued
-    inside the transaction, leaving neither store with the index assignment.
+    """A failure during the index build rolls back the Postgres index insert and the
+    history assignment, leaving no index row and the change still unbuilt.
     """
     user = await fake.users.create()
 
     built_ref = await fake.references.create(user=user, id_="built_ref")
+    task = await fake.tasks.create()
 
     async with AsyncSession(pg) as session:
         session.add(
@@ -229,20 +217,16 @@ async def test_create_rolls_back_both_stores_on_failure(
     )
 
     with pytest.raises(RuntimeError, match="postgres write failed"):
-        async with both_transactions(mongo, pg) as (mongo_session, pg_session):
+        async with AsyncSession(pg) as session:
             await virtool.indexes.db.create(
-                mongo,
-                mongo_session,
-                pg_session,
+                session,
                 "built_ref",
                 user.id,
                 1,
                 "manifest",
-                task_id=1,
-                index_id="new_index",
+                task_id=task.id,
             )
-
-    assert await mongo.indexes.find_one("new_index") is None
+            await session.commit()
 
     async with AsyncSession(pg) as session:
         row = (
@@ -253,11 +237,7 @@ async def test_create_rolls_back_both_stores_on_failure(
             )
         ).scalar_one()
 
-        index_row = (
-            await session.execute(
-                select(SQLIndex).where(SQLIndex.legacy_id == "new_index"),
-            )
-        ).scalar_one_or_none()
+        index_row = (await session.execute(select(SQLIndex))).scalar_one_or_none()
 
     assert row.index_id is None
     assert row.index_version is None

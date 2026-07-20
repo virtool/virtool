@@ -93,23 +93,3 @@
     'version': 2,
   })
 # ---
-# name: test_finalize.1
-  dict({
-    '_id': 'bf1b993c',
-    'created_at': datetime.datetime(2015, 10, 6, 20, 0),
-    'job': dict({
-      'id': 1,
-    }),
-    'manifest': dict({
-    }),
-    'ready': True,
-    'reference': dict({
-      'id': 1,
-    }),
-    'task': None,
-    'user': dict({
-      'id': 1,
-    }),
-    'version': 2,
-  })
-# ---

@@ -440,20 +440,23 @@ class TestCreate:
         assert await resp.json() == snapshot(name="json")
         assert resp.headers["Location"] == snapshot(name="location")
 
-        index = await mongo.indexes.find_one()
-
-        assert index == snapshot(name="index")
-        assert index["job"] is None
-        assert index["task"] is not None
-
         body = await resp.json()
         assert body["ready"] is False
         assert body["job"] is None
         assert "task" not in body
 
         async with AsyncSession(pg) as session:
+            new_index = await session.scalar(
+                select(SQLIndex).where(SQLIndex.id == int(body["id"])),
+            )
+
+            assert new_index is not None
+            assert new_index.legacy_id is None
+            assert new_index.job_id is None
+            assert new_index.task_id is not None
+
             task = await session.scalar(
-                select(SQLTask).where(SQLTask.id == index["task"]["id"]),
+                select(SQLTask).where(SQLTask.id == new_index.task_id),
             )
             history = await session.scalar(
                 select(SQLLegacyHistory).where(
@@ -461,15 +464,10 @@ class TestCreate:
                 ),
             )
 
-            new_index = await session.scalar(
-                select(SQLIndex).where(SQLIndex.legacy_id == index["_id"]),
-            )
-
             assert task is not None
             assert task.type == "create_index"
-            assert task.context == {"index_id": index["_id"]}
+            assert task.context == {"index_id": new_index.id}
             assert history is not None
-            assert new_index is not None
             assert (history.index_id, history.index_version) == (new_index.id, "0")
             assert await session.scalar(select(SQLJob.id)) is None
 
@@ -498,8 +496,6 @@ class TestCreate:
         resp = await client.post(f"/references/v1/{reference['id']}/indexes", {})
 
         await resp_is.insufficient_rights(resp)
-
-        assert await mongo.indexes.find_one() is None
 
     async def test_unbuilt(
         self,
@@ -699,7 +695,6 @@ async def test_delete_index(
         assert error == response.status
     else:
         assert response.status == 204
-        assert await mongo.indexes.find_one(index_id) is None
 
 
 async def test_delete_index_referenced_by_analysis(
@@ -739,7 +734,14 @@ async def test_delete_index_referenced_by_analysis(
     response = await client.delete(f"/indexes/{index.id}")
 
     await resp_is.conflict(response, "Index is referenced by one or more analyses")
-    assert await mongo.indexes.find_one(index.id) is not None
+
+    async with AsyncSession(pg) as session:
+        assert (
+            await session.scalar(
+                select(SQLIndex).where(SQLIndex.legacy_id == index.id),
+            )
+            is not None
+        )
 
 
 @pytest.mark.parametrize("error", [None, "409", "404_index", "404_file"])
@@ -823,7 +825,6 @@ async def test_upload(
     assert b"".join(chunks) == path.read_bytes()
 
     assert await resp.json() == snapshot
-    assert await mongo.indexes.find_one(index_id) == snapshot
 
     async with AsyncSession(pg) as session:
         assert (

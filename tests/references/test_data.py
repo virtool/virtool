@@ -145,8 +145,6 @@ class TestCreateIndex:
         with pytest.raises(RuntimeError, match="history assignment failed"):
             await data_layer.references.create_index(reference.id, user.id)
 
-        assert await mongo.indexes.find_one() is None
-
         async with AsyncSession(pg) as session:
             history = await session.scalar(
                 select(SQLLegacyHistory).where(
@@ -158,6 +156,7 @@ class TestCreateIndex:
             assert history.index is None
             assert history.index_version is None
             assert await session.scalar(select(SQLTask.id)) is None
+            assert await session.scalar(select(SQLIndex.id)) is None
 
     async def test_concurrent_builds_conflict(
         self,
@@ -221,7 +220,6 @@ class TestCreateIndex:
             )
 
         assert versions == [0]
-        assert await mongo.indexes.count_documents({}) == 1
 
 
 class TestUpdate:

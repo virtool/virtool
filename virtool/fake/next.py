@@ -18,10 +18,9 @@ from faker.providers import (
 from faker.providers import (
     job as job_provider,
 )
-from sqlalchemy import update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-import virtool.mongo.utils
 import virtool.utils
 from virtool.data.layer import DataLayer
 from virtool.example import example_path
@@ -470,8 +469,10 @@ class IndexesFakerDomain(DataFakerDomain):
         ``CreateIndexTask`` and leaving ``job`` null. Embedding both is the corrupt shape
         ``_get_index_build_type`` rejects.
 
-        The ``_id`` is preallocated so a backing task can name it, and the embedded
-        ``reference`` and ``user`` hold integer primary keys.
+        The row is seeded in the backfilled shape: a legacy Mongo-style ``_id`` that
+        also serves as the ``storage_key`` and a backing task named after it.
+        Postgres-native indexes (no ``legacy_id``, a UUID ``storage_key``) come from
+        ``ReferencesData.create_index`` instead.
 
         :param reference: the reference to build the index for
         :param user: the user the build is attributed to
@@ -486,15 +487,18 @@ class IndexesFakerDomain(DataFakerDomain):
         :param ready: whether the index is finished building
         :return: a new fake index
         """
-        index_id = await virtool.mongo.utils.get_new_id(self._mongo.indexes)
+        index_id = self._mongo.id_provider.get()
 
         if manifest is None:
             manifest = await get_manifest(self._pg, reference.id)
 
         if version is None:
-            version = await self._mongo.indexes.count_documents(
-                {"reference.id": reference.id},
-            )
+            async with AsyncSession(self._pg) as session:
+                version = await session.scalar(
+                    select(func.count())
+                    .select_from(SQLIndex)
+                    .where(SQLIndex.reference_id == reference.id),
+                )
 
         task = None
 
@@ -505,20 +509,6 @@ class IndexesFakerDomain(DataFakerDomain):
             )
 
         created_at = created_at or virtool.utils.timestamp()
-
-        await self._mongo.indexes.insert_one(
-            {
-                "_id": index_id,
-                "version": version,
-                "created_at": created_at,
-                "manifest": manifest,
-                "ready": ready,
-                "job": {"id": job.id} if job else None,
-                "task": {"id": task.id} if task else None,
-                "user": {"id": user.id},
-                "reference": {"id": reference.id},
-            },
-        )
 
         async with AsyncSession(self._pg) as session:
             session.add(

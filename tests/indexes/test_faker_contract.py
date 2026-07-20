@@ -10,11 +10,14 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.fake.next import DataFaker
 from virtool.indexes.sql import SQLIndex
-from virtool.mongo.core import Mongo
 
 
 class TestPostgresRow:
-    """The faker dual-writes each index to Postgres as production does."""
+    """The faker seeds each index into Postgres in the backfilled shape.
+
+    A build is backed by exactly one of a job or a task, as ``_get_index_build_type``
+    requires: passing a job leaves ``task_id`` null and vice versa.
+    """
 
     async def test_job_backed(self, fake: DataFaker, pg: AsyncEngine):
         """A job-backed index row carries the job id and leaves ``task_id`` null."""
@@ -53,33 +56,6 @@ class TestPostgresRow:
         assert row.ready is True
         assert row.job_id is None
         assert row.task_id is not None
-
-
-class TestBuildBacking:
-    """An index is backed by exactly one build, as ``_get_index_build_type`` requires."""
-
-    async def test_job_backed_has_no_task(self, fake: DataFaker, mongo: Mongo):
-        """Passing a job seeds the legacy shape, leaving ``task`` null."""
-        user = await fake.users.create()
-        reference = await fake.references.create(user=user)
-        job = await fake.jobs.create(user=user)
-
-        index = await fake.indexes.create(reference, user, job=job)
-        document = await mongo.indexes.find_one(index.id)
-
-        assert document["job"] == {"id": job.id}
-        assert document["task"] is None
-
-    async def test_task_backed_has_no_job(self, fake: DataFaker, mongo: Mongo):
-        """Omitting a job backs the index with a task, leaving ``job`` null."""
-        user = await fake.users.create()
-        reference = await fake.references.create(user=user)
-
-        index = await fake.indexes.create(reference, user)
-        document = await mongo.indexes.find_one(index.id)
-
-        assert document["job"] is None
-        assert document["task"]["id"] is not None
 
 
 async def test_version_autoincrement_is_per_reference(fake: DataFaker):

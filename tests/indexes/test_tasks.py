@@ -4,7 +4,6 @@ import gzip
 import json
 
 import pytest
-from pymongo.errors import OperationFailure
 from pytest_mock import MockerFixture
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -12,7 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from virtool.data.errors import ResourceConflictError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
-from virtool.indexes.data import update_last_indexed_versions
 from virtool.indexes.db import REFERENCE_JSON_V2_FILE_NAME
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.indexes.tasks import CreateIndexTask
@@ -65,9 +63,10 @@ class TestCreateIndexTask:
 
         self.index_id = index.id
 
-        document = await self.mongo.indexes.find_one(index.id, ["task"])
-
-        return document["task"]["id"]
+        async with AsyncSession(self.pg) as session:
+            return await session.scalar(
+                select(SQLIndex.task_id).where(SQLIndex.legacy_id == index.id),
+            )
 
     async def test_writes_only_compressed_reference_json_v2_and_finalizes(
         self,
@@ -132,9 +131,6 @@ class TestCreateIndexTask:
         assert rows[0].type == "json"
         assert rows[0].size == len(compressed)
 
-        index = await self.mongo.indexes.find_one(self.index_id)
-        assert index["ready"] is True
-
         async with AsyncSession(self.pg) as session:
             index_row = await session.scalar(
                 select(SQLIndex).where(SQLIndex.legacy_id == self.index_id),
@@ -161,11 +157,10 @@ class TestCreateIndexTask:
         await (await CreateIndexTask.from_task_id(self.data_layer, task_id)).run()
 
         task = await self.data_layer.tasks.get(task_id)
-        index = await self.mongo.indexes.find_one(self.index_id)
 
         assert task.complete is True
         assert task.error is None
-        assert index["ready"] is True
+        assert (await self.data_layer.index.get(self.index_id)).ready is True
         assert [
             info.key
             async for info in self.memory_storage.list(f"indexes/{self.index_id}/")
@@ -245,45 +240,6 @@ class TestCreateIndexTask:
 
         assert len(rows) == 1
         assert rows[0].name == REFERENCE_JSON_V2_FILE_NAME
-
-    async def test_retries_transient_finalization_failure(
-        self,
-        mocker: MockerFixture,
-        task_id: int,
-    ) -> None:
-        """A transient Mongo transaction error retries database finalization."""
-        attempts = 0
-
-        async def fail_once(*args: object) -> None:
-            nonlocal attempts
-            attempts += 1
-
-            if attempts == 1:
-                message = "transient transaction failure"
-                raise OperationFailure(
-                    message,
-                    details={"errorLabels": ["TransientTransactionError"]},
-                )
-
-            await update_last_indexed_versions(*args)
-
-        mocker.patch(
-            "virtool.indexes.data.update_last_indexed_versions",
-            side_effect=fail_once,
-        )
-
-        await (await CreateIndexTask.from_task_id(self.data_layer, task_id)).run()
-
-        expected_attempts = 2
-        assert attempts == expected_attempts
-        assert (await self.data_layer.tasks.get(task_id)).complete is True
-        assert (await self.data_layer.index.get(self.index_id)).ready is True
-        assert (
-            await self.memory_storage.size(
-                compose_index_file_key(self.index_id, REFERENCE_JSON_V2_FILE_NAME),
-            )
-            > 0
-        )
 
     async def test_failure_leaves_index_unready(
         self,

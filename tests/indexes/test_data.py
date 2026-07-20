@@ -80,10 +80,7 @@ async def test_finalize(
     # Ensure return value is correct.
     assert await data_layer.index.finalize(index.id) == snapshot
 
-    # Ensure document in database is correct.
-    assert await mongo.indexes.find_one() == snapshot
-
-    # The Postgres row is marked ready alongside the Mongo document.
+    # The Postgres row is marked ready.
     async with AsyncSession(pg) as session:
         row = await session.scalar(
             select(SQLIndex).where(SQLIndex.legacy_id == index.id),
@@ -128,37 +125,14 @@ async def test_finalize_stamps_last_indexed_version(
 
 async def test_finalize_index_missing_from_postgres(
     data_layer: DataLayer,
-    fake: DataFaker,
-    mongo: Mongo,
-    static_time,
 ):
     """An index with no Postgres row cannot finalize and marks nothing ready.
 
-    Finalize reads the index and its reference straight off ``SQLIndex`` now, so a
-    Mongo-only index — one whose Postgres row was never written — has no reference to
-    resolve and fails loudly instead of silently promoting the Mongo document.
+    Finalize reads the index and its reference straight off ``SQLIndex``, so an index
+    with no Postgres row has no reference to resolve and fails loudly.
     """
-    user = await fake.users.create()
-    job = await fake.jobs.create(user=user)
-
-    # Seeded by hand rather than through ``fake.indexes``: the faker dual-writes the
-    # Postgres row, so it cannot express the Mongo-only index this test is about.
-    await mongo.indexes.insert_one(
-        {
-            "_id": "foo",
-            "reference": {"id": "missing"},
-            "user": {"id": user.id},
-            "version": 2,
-            "created_at": static_time.datetime,
-            "job": {"id": job.id},
-            "manifest": {},
-        },
-    )
-
     with pytest.raises(ResourceError, match="Could not find index reference id"):
         await data_layer.index.finalize("foo")
-
-    assert await mongo.indexes.find_one("foo", ["ready"]) == {"_id": "foo"}
 
 
 class TestDelete:
@@ -253,8 +227,6 @@ class TestDelete:
 
         await data_layer.index.delete(deleted_index.id)
 
-        assert await mongo.indexes.find_one(deleted_index.id) is None
-
         async with AsyncSession(pg) as session:
             rows = {
                 row.legacy_id: (row.index, row.index_id, row.index_version)
@@ -271,7 +243,7 @@ class TestDelete:
             "otu_c.0": (other_index.id, other_index_pk, "2"),
         }
 
-        # The Postgres index row is deleted alongside the Mongo document.
+        # The Postgres index row is hard-deleted.
         assert index_row is None
 
     async def test_deletes_index_files(
@@ -317,7 +289,7 @@ class TestDelete:
         mongo: Mongo,
         pg: AsyncEngine,
     ):
-        """An index that any analysis references cannot be deleted; both stores are
+        """An index that any analysis references cannot be deleted; the index row is
         left intact.
         """
         user = await fake.users.create()
@@ -357,8 +329,6 @@ class TestDelete:
             match="referenced by one or more analyses",
         ):
             await data_layer.index.delete(index.id)
-
-        assert await mongo.indexes.find_one(index.id) is not None
 
         async with AsyncSession(pg) as session:
             assert (

@@ -22,7 +22,6 @@ from virtool.data.errors import (
 )
 from virtool.data.events import Operation, emit, emits
 from virtool.data.topg import (
-    both_transactions,
     compose_legacy_id_multi_expression,
     compose_legacy_id_single_expression,
     compose_legacy_id_subquery,
@@ -87,6 +86,7 @@ from virtool.tasks.progress import (
     AccumulatingProgressHandlerWrapper,
     TaskProgressHandler,
 )
+from virtool.tasks.sql import SQLTask
 from virtool.tasks.transforms import AttachTaskTransform
 from virtool.uploads.sql import SQLUpload
 from virtool.users.pg import SQLUser
@@ -760,16 +760,10 @@ class ReferencesData(DataLayerDomain):
         if not has_unbuilt:
             raise ResourceError("There are no unbuilt changes")
 
-        index_id, manifest = await asyncio.gather(
-            virtool.mongo.utils.get_new_id(self._mongo.indexes),
-            virtool.references.db.get_manifest(self._pg, ref_id),
-        )
+        manifest = await virtool.references.db.get_manifest(self._pg, ref_id)
 
         try:
-            async with both_transactions(self._mongo, self._pg) as (
-                mongo_session,
-                pg_session,
-            ):
+            async with AsyncSession(self._pg) as pg_session:
                 reference_pk = await resolve_legacy_id(
                     pg_session,
                     SQLReference,
@@ -817,31 +811,39 @@ class ReferencesData(DataLayerDomain):
                     ref_id,
                 )
 
-                task = await virtool.tasks.db.create(
-                    pg_session,
-                    CreateIndexTask,
-                    {"index_id": index_id},
-                )
+                # The task is created before the index so its id can back the index
+                # row, but the index id is minted by Postgres on flush, so the task's
+                # context is stamped with it only afterwards.
+                task = await virtool.tasks.db.create(pg_session, CreateIndexTask)
 
-                document = await virtool.indexes.db.create(
-                    self._mongo,
-                    mongo_session,
+                index = await virtool.indexes.db.create(
                     pg_session,
                     ref_id,
                     user_id,
                     index_version,
                     manifest,
                     task_id=task.id,
-                    index_id=index_id,
                 )
+
+                index_id = index.id
+
+                await pg_session.execute(
+                    update(SQLTask)
+                    .where(SQLTask.id == task.id)
+                    .values(context={"index_id": index_id}),
+                )
+
+                await pg_session.commit()
         except IntegrityError as error:
             # Deep backstop: if two builds still allocated the same version, the
             # ``(reference_id, version)`` unique constraint rejects the duplicate.
             raise ResourceConflictError("Index build already in progress") from error
 
+        task.context["index_id"] = index_id
+
         emit(task, "tasks", "create", Operation.CREATE)
 
-        return await self.data.index.get(document["_id"])
+        return await self.data.index.get(index_id)
 
     async def list_groups(self, ref_id: str) -> list[ReferenceGroup]:
         """List all groups that have access to the reference.
