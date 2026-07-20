@@ -1,7 +1,6 @@
 # serializer version: 1
 # name: test_attach_files
   dict({
-    '_id': 'foo',
     'files': list([
       dict({
         'download_url': 'https://virtool.example.com/api/indexes/foo/files/reference.fa.gz',
@@ -22,6 +21,7 @@
         'type': 'json',
       }),
     ]),
+    'id': 'foo',
     'reference': dict({
       'id': 'bar',
     }),

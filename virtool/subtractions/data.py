@@ -41,7 +41,6 @@ from virtool.subtractions.utils import (
 from virtool.uploads.db import AttachUploadTransform
 from virtool.uploads.sql import SQLUpload
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import base_processor
 
 logger = get_logger("subtractions")
 
@@ -137,10 +136,7 @@ class SubtractionsData(DataLayerDomain):
             ).all()
 
         documents = await apply_transforms(
-            [
-                base_processor(map_subtraction_row(subtraction, upload))
-                for subtraction, upload in rows
-            ],
+            [map_subtraction_row(subtraction, upload) for subtraction, upload in rows],
             [AttachJobTransform(self._pg), AttachUserTransform(self._pg)],
             self._pg,
         )
@@ -255,7 +251,7 @@ class SubtractionsData(DataLayerDomain):
         )
 
         document = await apply_transforms(
-            base_processor(document),
+            document,
             [
                 AttachJobTransform(self._pg),
                 AttachUploadTransform(self._pg),

@@ -27,14 +27,6 @@ def alphanumeric():
     return "abcdefghijklmnopqrstuvwxyz1234567890"
 
 
-@pytest.mark.parametrize(
-    "document,result",
-    [(None, None), ({"_id": "foo"}, {"id": "foo"}), ({"id": "foo"}, {"id": "foo"})],
-)
-def test_base_processor(document, result):
-    assert virtool.utils.base_processor(document) == result
-
-
 class TestCoerceToCoroutineFunction:
     """Tests for coerce_to_coroutine_function."""
 

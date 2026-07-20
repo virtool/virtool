@@ -36,7 +36,6 @@ from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import base_processor
 
 OTU_ID_CHUNK_SIZE = 500
 """The number of OTU ids bound into a single ``last_indexed_version`` update.
@@ -94,7 +93,7 @@ class IndexCountsTransform(AbstractTransform):
         if not index_ids:
             return {}
 
-        # ``base_processor`` stringifies the integer primary key, so the ids arrive as
+        # ``_row_to_document`` stringifies the integer primary key, so the ids arrive as
         # digit strings. Cast them back for the ``bigint`` query and lookup while keying
         # the returned mapping by the original document id the transform framework uses.
         int_ids = {index_id: int(index_id) for index_id in index_ids}
@@ -190,17 +189,17 @@ async def create(
 
 
 def _row_to_document(row: SQLIndex, *, include_manifest: bool = False) -> dict:
-    """Shape an ``SQLIndex`` row into the Mongo-like document the transforms expect.
+    """Shape an ``SQLIndex`` row into the document the transforms expect.
 
-    The outward-facing ``_id`` (renamed to ``id`` by ``base_processor``) is the integer
-    primary key: indexes are addressed publicly by their Postgres id.
+    The outward-facing ``id`` is the stringified integer primary key: indexes are
+    addressed publicly by their Postgres id.
 
     The nested reference is keyed by the integer ``reference_id`` foreign key;
     ``AttachReferenceTransform`` resolves it. ``job`` collapses to ``None`` for
     task-backed builds, matching the Mongo document.
     """
     document = {
-        "_id": row.id,
+        "id": str(row.id),
         "version": row.version,
         "created_at": row.created_at,
         "ready": row.ready,
@@ -285,7 +284,7 @@ async def find(
 
     unbuilt_stats = await get_unbuilt_stats(pg, ref_id)
 
-    documents = [base_processor(_row_to_document(row)) for row in rows]
+    documents = [_row_to_document(row) for row in rows]
     transforms = [
         AttachJobTransform(pg),
         AttachReferenceTransform(pg),
@@ -589,7 +588,7 @@ async def attach_files(pg: AsyncEngine, base_url: str, document: dict) -> dict:
     :return: Index document with updated `files` entry containing a list of index files.
 
     """
-    index_id = document["_id"]
+    index_id = document["id"]
 
     async with AsyncSession(pg) as session:
         rows = (

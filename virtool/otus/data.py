@@ -59,6 +59,7 @@ from virtool.otus.utils import (
     format_fasta_entry,
     format_fasta_filename,
     format_isolate_name,
+    format_sequence,
     split,
     strip_sequence_references,
 )
@@ -67,7 +68,6 @@ from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import base_processor
 
 
 class OTUData:
@@ -846,7 +846,7 @@ class OTUData:
 
             await session.commit()
 
-        return OTUSequence(**document)
+        return OTUSequence(**format_sequence(document))
 
     async def get_sequence(
         self,
@@ -863,7 +863,7 @@ class OTUData:
             )
         ):
             document = await apply_transforms(
-                base_processor(document),
+                format_sequence(document),
                 [AttachReferenceTransform(self._pg)],
                 self._pg,
             )
@@ -887,7 +887,7 @@ class OTUData:
             raise ResourceNotFoundError
 
         return [
-            OTUSequence(**document)
+            OTUSequence(**format_sequence(document))
             for document in await list_legacy_isolate_sequences(
                 self._pg,
                 otu_id,
@@ -916,7 +916,7 @@ class OTUData:
         isolate = find_isolate(document["isolates"], isolate_id)
 
         sequences = [
-            OTUSequence(**sequence_document)
+            OTUSequence(**format_sequence(sequence_document))
             for sequence_document in await list_legacy_isolate_sequences(
                 self._pg,
                 otu_id,
@@ -1000,7 +1000,7 @@ class OTUData:
 
             await session.commit()
 
-        return base_processor(document)
+        return format_sequence(document)
 
     async def remove_sequence(
         self,

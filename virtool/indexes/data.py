@@ -54,7 +54,7 @@ from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
 from virtool.uploads.utils import multipart_file_chunker
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import base_processor, wait_for_checks
+from virtool.utils import wait_for_checks
 
 logger = get_logger("indexes")
 
@@ -147,7 +147,7 @@ class IndexData:
                 .all()
             )
 
-        items = [base_processor(_row_to_document(row)) for row in rows]
+        items = [_row_to_document(row) for row in rows]
 
         items = await apply_transforms(
             items,
@@ -196,7 +196,7 @@ class IndexData:
         )
 
         document = await apply_transforms(
-            base_processor(document),
+            document,
             [
                 AttachJobTransform(self._pg),
                 AttachReferenceTransform(self._pg),

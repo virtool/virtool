@@ -23,8 +23,7 @@ def map_subtraction_row(
     The returned document's ``id`` is the integer primary key, and the ``file``,
     ``job``, ``upload``, and ``user`` fields carry the reference shapes the
     ``AttachUploadTransform``, ``AttachJobTransform``, and ``AttachUserTransform``
-    expect. Because ``id`` is already the public identifier, the downstream
-    ``base_processor`` call is a harmless no-op for the id.
+    expect.
 
     Postgres does not store the ``file`` snapshot, so it is rebuilt from the joined
     upload row, which is the same upload the subtraction was created against.

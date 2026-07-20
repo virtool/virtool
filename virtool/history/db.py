@@ -32,7 +32,6 @@ from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.pg import SQLUser
-from virtool.utils import base_processor
 
 if TYPE_CHECKING:
     from virtool.mongo.core import Mongo
@@ -365,7 +364,7 @@ def legacy_history_document(
         }
 
     return {
-        "_id": row.legacy_id,
+        "id": row.legacy_id,
         "created_at": row.created_at,
         "description": row.description,
         "method_name": row.method_name,
@@ -440,7 +439,7 @@ async def find(
 
     documents = await apply_transforms(
         [
-            base_processor(legacy_history_document(row, handle, index_version))
+            legacy_history_document(row, handle, index_version)
             for row, handle, index_version in rows
         ],
         [AttachReferenceTransform(pg)],
@@ -521,7 +520,7 @@ async def find_by_index(
 
     documents = await apply_transforms(
         [
-            base_processor(legacy_history_document(row, handle, index_version))
+            legacy_history_document(row, handle, index_version)
             for row, handle, index_version in rows
         ],
         [AttachReferenceTransform(pg)],
@@ -606,9 +605,9 @@ async def get_most_recent_change(pg: AsyncEngine, otu_id: str) -> Document | Non
 
     Reads from the ``legacy_history`` table, returning the change with the highest
     ``otu_version``. A ``NULL`` ``otu_version`` marks a ``"removed"`` change and sorts
-    first, matching the descending Mongo sort it replaces. The returned document
-    mirrors the historical Mongo projection so callers can attach user data and format
-    it unchanged.
+    first, matching the descending Mongo sort it replaces. The change is returned in its
+    API shape (public ``id``, nested ``user``/``otu``) so callers can attach user data
+    and embed it in an OTU unchanged.
 
     :param pg: the application PostgreSQL database object
     :param otu_id: the target otu_id
@@ -632,7 +631,7 @@ async def get_most_recent_change(pg: AsyncEngine, otu_id: str) -> Document | Non
         return None
 
     return {
-        "_id": row.legacy_id,
+        "id": row.legacy_id,
         "created_at": row.created_at,
         "description": row.description,
         "method_name": row.method_name,

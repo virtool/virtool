@@ -226,9 +226,9 @@
 # ---
 # name: TestGetMostRecentChange.test_ok
   dict({
-    '_id': '6116cba1.2',
     'created_at': datetime.datetime(2015, 10, 6, 20, 0),
     'description': 'Description number 2',
+    'id': '6116cba1.2',
     'method_name': 'update',
     'otu': dict({
       'id': '6116cba1',

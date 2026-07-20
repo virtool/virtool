@@ -14,7 +14,6 @@ from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.users.pg import SQLUser
-from virtool.utils import base_processor
 
 
 class HistoryData:
@@ -67,7 +66,7 @@ class HistoryData:
 
         documents = await apply_transforms(
             [
-                base_processor(legacy_history_document(row, handle, index_version))
+                legacy_history_document(row, handle, index_version)
                 for row, handle, index_version in rows
             ],
             [AttachReferenceTransform(self._pg)],
@@ -103,7 +102,7 @@ class HistoryData:
         legacy_row, handle, index_version = row
 
         document = await apply_transforms(
-            base_processor(legacy_history_document(legacy_row, handle, index_version)),
+            legacy_history_document(legacy_row, handle, index_version),
             [
                 AttachDiffTransform(self._pg),
                 AttachReferenceTransform(self._pg),
