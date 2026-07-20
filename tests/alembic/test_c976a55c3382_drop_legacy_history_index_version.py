@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.utils import timestamp
 
-_BEFORE_DROP = "241675dea96f"
+_BEFORE_DROP = "78c7c7feb2dd"
 _DROP = "c976a55c3382"
 _CREATED_AT = datetime(2026, 7, 1, 12, 0, 0)
 

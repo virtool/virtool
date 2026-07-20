@@ -14,7 +14,6 @@ from tests.fixtures.client import ClientSpawner, VirtoolTestClient
 from tests.fixtures.references import add_reference_user, create_reference
 from tests.fixtures.response import RespIs
 from virtool.data.layer import DataLayer
-from virtool.data.topg import both_transactions
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.sql import SQLIndex
@@ -88,9 +87,11 @@ async def insert_reference(mongo: Mongo, pg: AsyncEngine, document: dict) -> Non
     Requires a full reference ``document`` (with ``created_at``, ``description`` and
     ``organism``) whose members are real integer user and group ids.
     """
-    async with both_transactions(mongo, pg) as (mongo_session, pg_session):
-        await mongo.references.insert_one(document, session=mongo_session)
+    await mongo.references.insert_one(document)
+
+    async with AsyncSession(pg) as pg_session:
         await write_legacy_reference(pg_session, document)
+        await pg_session.commit()
 
 
 @pytest.mark.parametrize(

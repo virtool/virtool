@@ -225,9 +225,9 @@ async def add(
     """Add a change document to ``legacy_history``.
 
     Writes into the caller-provided ``pg_session`` and does not commit, so the history
-    rows land or roll back atomically with the surrounding transaction (e.g. the paired
-    Mongo write coordinated by ``both_transactions``). The session is flushed to populate
-    the ``legacy_history`` primary key for the diff's foreign key.
+    rows land or roll back atomically with the surrounding transaction the caller owns.
+    The session is flushed to populate the ``legacy_history`` primary key for the diff's
+    foreign key.
 
     :param pg_session: an active Postgres session owned by the caller
     :param method_name: the name of the handler method that executed the change

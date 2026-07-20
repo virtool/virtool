@@ -19,7 +19,7 @@ This migration is reversible: the column is fully derivable from
 leaving unbuilt rows ``NULL`` exactly as they were.
 
 Revision ID: c976a55c3382
-Revises: 241675dea96f
+Revises: 78c7c7feb2dd
 Create Date: 2026-07-20 20:54:58.997199+00:00
 
 """
@@ -29,7 +29,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "c976a55c3382"
-down_revision = "241675dea96f"
+down_revision = "78c7c7feb2dd"
 branch_labels = None
 depends_on = None
 
