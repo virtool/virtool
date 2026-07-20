@@ -1,13 +1,18 @@
 import pytest
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.analyses.sql import SQLAnalysis
-from virtool.data.errors import ResourceConflictError, ResourceError
+from virtool.data.errors import (
+    ResourceConflictError,
+    ResourceError,
+    ResourceNotFoundError,
+)
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
+from virtool.indexes.utils import compose_index_file_key
 from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU
 from virtool.utils import timestamp
@@ -121,20 +126,23 @@ async def test_finalize_stamps_last_indexed_version(
     assert row.data["last_indexed_version"] == row.version
 
 
-async def test_finalize_reference_missing_from_postgres(
+async def test_finalize_index_missing_from_postgres(
     data_layer: DataLayer,
     fake: DataFaker,
     mongo: Mongo,
     static_time,
 ):
-    """An index whose reference has no Postgres row is corrupt data, not a missing
-    resource.
+    """An index with no Postgres row cannot finalize and marks nothing ready.
+
+    Finalize reads the index and its reference straight off ``SQLIndex`` now, so a
+    Mongo-only index — one whose Postgres row was never written — has no reference to
+    resolve and fails loudly instead of silently promoting the Mongo document.
     """
     user = await fake.users.create()
     job = await fake.jobs.create(user=user)
 
-    # Seeded by hand rather than through ``fake.indexes``: the faker takes a real
-    # ``Reference``, so it cannot express the dangling reference this test is about.
+    # Seeded by hand rather than through ``fake.indexes``: the faker dual-writes the
+    # Postgres row, so it cannot express the Mongo-only index this test is about.
     await mongo.indexes.insert_one(
         {
             "_id": "foo",
@@ -147,7 +155,7 @@ async def test_finalize_reference_missing_from_postgres(
         },
     )
 
-    with pytest.raises(ResourceError, match="Could not find reference missing"):
+    with pytest.raises(ResourceError, match="Could not find index reference id"):
         await data_layer.index.finalize("foo")
 
     assert await mongo.indexes.find_one("foo", ["ready"]) == {"_id": "foo"}
@@ -340,3 +348,54 @@ class TestDelete:
                 )
                 is not None
             )
+
+
+class TestResolveStorageKey:
+    async def test_matches_legacy_id_at_landing(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+    ):
+        """At landing every migrated index carries ``storage_key == legacy_id``, so the
+        composed object path is byte-identical to keying by the index id.
+        """
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+        index = await fake.indexes.create(reference, user, manifest={}, version=2)
+
+        storage_key = await data_layer.index._resolve_storage_key(index.id)
+
+        assert storage_key == index.id
+        assert (
+            compose_index_file_key(storage_key, "otus.json.gz")
+            == f"indexes/{index.id}/otus.json.gz"
+        )
+
+    async def test_uses_storage_key_column(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """The resolver reads ``storage_key``, so a native UUID key addresses storage
+        independently of the public index id.
+        """
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+        index = await fake.indexes.create(reference, user, manifest={}, version=2)
+
+        async with AsyncSession(pg) as session:
+            await session.execute(
+                update(SQLIndex)
+                .where(SQLIndex.legacy_id == index.id)
+                .values(storage_key="a-native-uuid-key"),
+            )
+            await session.commit()
+
+        assert (
+            await data_layer.index._resolve_storage_key(index.id) == "a-native-uuid-key"
+        )
+
+    async def test_not_found(self, data_layer: DataLayer):
+        with pytest.raises(ResourceNotFoundError):
+            await data_layer.index._resolve_storage_key("missing")
