@@ -11,7 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from virtool.indexes.sql import SQLIndex
 from virtool.jobs.pg import SQLJob
 from virtool.migration.ctx import MigrationContext
-from virtool.users.pg import SQLUser
 from virtool.utils import timestamp
 
 PREVIOUS_REVISION = "6ffca63a8b95"
@@ -22,15 +21,27 @@ FINALIZE_REVISION = "f61c6dbf7ff6"
 async def _seed_index(ctx: MigrationContext, legacy_id: str) -> int:
     """Seed a full ``indexes`` row (with its FK parents) and return its integer id."""
     async with AsyncSession(ctx.pg) as session:
-        user = SQLUser(
-            handle=f"user_{legacy_id}",
-            legacy_id=f"user_{legacy_id}",
-            last_password_change=timestamp(),
-            password=b"hashed",
-            settings={},
-        )
-        session.add(user)
-        await session.flush()
+        user_id = (
+            await session.execute(
+                text("""
+                    INSERT INTO users (
+                        handle, legacy_id, active, email, force_reset,
+                        invalidate_sessions, last_password_change, password, settings
+                    )
+                    VALUES (
+                        :handle, :legacy_id, true, '', false,
+                        false, :now, :pw, '{}'::jsonb
+                    )
+                    RETURNING id
+                """),
+                {
+                    "handle": f"user_{legacy_id}",
+                    "legacy_id": f"user_{legacy_id}",
+                    "now": timestamp(),
+                    "pw": b"hashed",
+                },
+            )
+        ).scalar_one()
 
         reference_id = (
             await session.execute(
@@ -48,7 +59,7 @@ async def _seed_index(ctx: MigrationContext, legacy_id: str) -> int:
                 {
                     "legacy_id": f"ref_{legacy_id}",
                     "now": timestamp(),
-                    "user_id": user.id,
+                    "user_id": user_id,
                 },
             )
         ).scalar_one()
@@ -57,7 +68,7 @@ async def _seed_index(ctx: MigrationContext, legacy_id: str) -> int:
             legacy_id=f"job_{legacy_id}",
             created_at=timestamp(),
             state="succeeded",
-            user_id=user.id,
+            user_id=user_id,
             workflow="build_index",
         )
         session.add(job)
@@ -71,7 +82,7 @@ async def _seed_index(ctx: MigrationContext, legacy_id: str) -> int:
             ready=True,
             storage_key=legacy_id,
             reference_id=reference_id,
-            user_id=user.id,
+            user_id=user_id,
             job_id=job.id,
             task_id=None,
         )

@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.utils import timestamp
 
-_BEFORE_DROP = "78c7c7feb2dd"
+_BEFORE_DROP = "3ba1bccd88e1"
 _DROP = "c976a55c3382"
 _CREATED_AT = datetime(2026, 7, 1, 12, 0, 0)
 
@@ -46,11 +46,11 @@ async def _seed_reference_and_index(
                 text("""
                     INSERT INTO users (
                         handle, legacy_id, active, email, force_reset,
-                        invalidate_sessions, last_password_change, password, settings
+                        last_password_change, password, settings
                     )
                     VALUES (
                         'history_owner', 'history_owner_legacy', true, '',
-                        false, false, :now, :pw, '{}'::jsonb
+                        false, :now, :pw, '{}'::jsonb
                     )
                     RETURNING id
                 """),
@@ -290,4 +290,31 @@ async def test_tripwire_missing_version_raises(
     await migration_pg.dispose()
 
     with pytest.raises(RuntimeError, match="disagrees with indexes.version"):
+        await asyncio.to_thread(apply_alembic, _DROP)
+
+
+async def test_tripwire_non_numeric_version_raises(
+    apply_alembic: callable,
+    migration_pg: AsyncEngine,
+):
+    """A non-numeric ``index_version`` surfaces as a ``RuntimeError``, not a cast error.
+
+    The ``CASE`` guard keeps the ``::bigint`` cast off malformed values so the tripwire
+    reports a clean failure instead of an opaque ``InvalidTextRepresentation``.
+    """
+    await asyncio.to_thread(apply_alembic, _BEFORE_DROP)
+    await migration_pg.dispose()
+
+    seeded = await _seed_reference_and_index(migration_pg, index_version=5)
+    await _seed_history(
+        migration_pg,
+        seeded,
+        legacy_id="otu_a.0",
+        index="idx_legacy",
+        index_id=seeded["index_id"],
+        index_version="not-a-number",
+    )
+    await migration_pg.dispose()
+
+    with pytest.raises(RuntimeError, match="non-numeric"):
         await asyncio.to_thread(apply_alembic, _DROP)

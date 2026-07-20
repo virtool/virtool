@@ -9,9 +9,12 @@ redundant and dropped here.
 
 A tripwire guards the drop. It fails if any row's built/unbuilt state disagrees
 between ``index_id`` and ``index_version`` (exactly one is ``NULL``), or if a
-built row's stored ``index_version`` does not equal the joined ``indexes.version``.
-Either condition means the redundant copy has drifted from the authoritative
-value, and dropping it would silently change what the read path reconstructs.
+built row's stored ``index_version`` is non-numeric or does not equal the joined
+``indexes.version``. Any of these means the redundant copy has drifted from the
+authoritative value, and dropping it would silently change what the read path
+reconstructs. The numeric check is a ``CASE`` guard so the ``::bigint`` cast never
+runs on a malformed value and surface a clean ``RuntimeError`` instead of an
+opaque cast error.
 
 This migration is reversible: the column is fully derivable from
 ``indexes.version`` and the unbuilt encoding (``index_id IS NULL``), so
@@ -19,7 +22,7 @@ This migration is reversible: the column is fully derivable from
 leaving unbuilt rows ``NULL`` exactly as they were.
 
 Revision ID: c976a55c3382
-Revises: 78c7c7feb2dd
+Revises: 3ba1bccd88e1
 Create Date: 2026-07-20 20:54:58.997199+00:00
 
 """
@@ -29,19 +32,23 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "c976a55c3382"
-down_revision = "78c7c7feb2dd"
+down_revision = "3ba1bccd88e1"
 branch_labels = None
 depends_on = None
 
 
-INCONSISTENT_SQL = """
+INCONSISTENT_SQL = r"""
 SELECT count(*)
 FROM legacy_history lh
 LEFT JOIN indexes i ON i.id = lh.index_id
 WHERE (lh.index_id IS NULL) <> (lh.index_version IS NULL)
    OR (
        lh.index_id IS NOT NULL
-       AND lh.index_version::bigint IS DISTINCT FROM i.version
+       AND CASE
+           WHEN lh.index_version ~ '^[0-9]+$'
+               THEN lh.index_version::bigint IS DISTINCT FROM i.version
+           ELSE TRUE
+       END
    )
 """
 
@@ -59,8 +66,8 @@ def upgrade() -> None:
     if inconsistent:
         raise RuntimeError(
             f"{inconsistent} legacy_history row(s) have an index_version that "
-            "disagrees with indexes.version or the index_id built/unbuilt state; "
-            "reconcile before dropping the column",
+            "is non-numeric, disagrees with indexes.version, or contradicts the "
+            "index_id built/unbuilt state; reconcile before dropping the column",
         )
 
     op.drop_column("legacy_history", "index_version")
