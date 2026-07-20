@@ -1050,6 +1050,72 @@ async def test_get_without_if_modified_since(
     assert fetched.id == analysis.id
 
 
+class TestUnresolvableIndex:
+    """An analysis whose ``index_id`` does not resolve to a build raises loudly instead
+    of silently dropping from a list or returning a versionless index.
+    """
+
+    @staticmethod
+    async def _orphan_index(pg: AsyncEngine, analysis_id: int) -> None:
+        """Detach the analysis from its index, mimicking a broken ``index_id``."""
+        async with AsyncSession(pg) as session:
+            await session.execute(
+                update(SQLAnalysis)
+                .where(SQLAnalysis.id == analysis_id)
+                .values(index_id=None),
+            )
+            await session.commit()
+
+    async def test_get_raises(
+        self,
+        data_layer: DataLayer,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+        subtraction_ids: dict[str, int],
+    ):
+        analysis = await data_layer.analyses.create(
+            CreateAnalysisRequest(
+                ref_id=setup_sample.reference_id,
+                subtractions=[subtraction_ids["subtraction_1"]],
+                workflow=AnalysisWorkflow.nuvs,
+            ),
+            setup_sample.sample_id,
+            setup_sample.user_id,
+        )
+
+        await self._orphan_index(pg, analysis.id)
+
+        with pytest.raises(ValueError, match="Index not found for analysis"):
+            await data_layer.analyses.get(analysis.id)
+
+    async def test_find_raises(
+        self,
+        data_layer: DataLayer,
+        pg: AsyncEngine,
+        setup_sample: SampleSetup,
+        subtraction_ids: dict[str, int],
+    ):
+        analysis = await data_layer.analyses.create(
+            CreateAnalysisRequest(
+                ref_id=setup_sample.reference_id,
+                subtractions=[subtraction_ids["subtraction_1"]],
+                workflow=AnalysisWorkflow.nuvs,
+            ),
+            setup_sample.sample_id,
+            setup_sample.user_id,
+        )
+
+        await self._orphan_index(pg, analysis.id)
+
+        with pytest.raises(ValueError, match="Index not found for analysis"):
+            await data_layer.analyses.find(
+                1,
+                25,
+                setup_sample.client,
+                setup_sample.sample_id,
+            )
+
+
 async def test_upload_file(
     data_layer: DataLayer,
     example_path: Path,
