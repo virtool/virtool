@@ -7,7 +7,7 @@ from typing import NamedTuple
 
 import pytest
 from aiohttp.test_utils import make_mocked_coro
-from sqlalchemy import update
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
@@ -17,6 +17,7 @@ from virtool.analyses.sql import SQLAnalysis, SQLAnalysisSubtraction
 from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
+from virtool.indexes.sql import SQLIndex
 from virtool.jobs.models import CreateJobClaimRequest, JobState, Workflow
 from virtool.jobs.pg import SQLJob
 from virtool.models.enums import LibraryType, Permission
@@ -1087,6 +1088,12 @@ async def test_find_analyses(
     index = await fake.indexes.create(reference_foo, user_1, version=2, ready=True)
 
     async with AsyncSession(pg) as session:
+        index_pg_id = (
+            await session.execute(
+                select(SQLIndex.id).where(SQLIndex.legacy_id == index.id),
+            )
+        ).scalar_one()
+
         analyses = [
             SQLAnalysis(
                 legacy_id="test_1",
@@ -1099,6 +1106,7 @@ async def test_find_analyses(
                 reference="baz",
                 reference_id=reference_baz.id,
                 index=index.id,
+                index_id=index_pg_id,
                 user_id=user_1.id,
                 job_id=job.id,
             ),
@@ -1113,6 +1121,7 @@ async def test_find_analyses(
                 reference="baz",
                 reference_id=reference_baz.id,
                 index=index.id,
+                index_id=index_pg_id,
                 user_id=user_1.id,
             ),
             SQLAnalysis(
@@ -1126,6 +1135,7 @@ async def test_find_analyses(
                 reference="foo",
                 reference_id=reference_foo.id,
                 index=index.id,
+                index_id=index_pg_id,
                 user_id=user_2.id,
             ),
             SQLAnalysis(
@@ -1138,6 +1148,7 @@ async def test_find_analyses(
                 reference="foo",
                 reference_id=reference_foo.id,
                 index=index.id,
+                index_id=index_pg_id,
                 user_id=user_2.id,
             ),
         ]

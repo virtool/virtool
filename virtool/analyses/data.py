@@ -40,9 +40,7 @@ from virtool.data.topg import (
 )
 from virtool.data.transforms import apply_transforms
 from virtool.indexes.sql import SQLIndex
-from virtool.indexes.transforms import AttachIndexTransform
 from virtool.jobs.transforms import AttachJobTransform
-from virtool.mongo.core import Mongo
 from virtool.pg.utils import delete_row, get_row_by_id
 from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
@@ -83,6 +81,19 @@ FIND_COLUMNS = (
 The TOASTed ``results`` column is deliberately excluded.
 """
 
+INDEX_COLUMNS = (
+    SQLIndex.id.label("index_pg_id"),
+    SQLIndex.legacy_id.label("index_legacy_id"),
+    SQLIndex.version.label("index_version"),
+)
+"""The joined ``SQLIndex`` columns that supply the nested ``{id, version}``.
+
+The version is not stored on ``analyses``, so it is read from ``indexes`` via the
+``analyses.index_id`` foreign key. Selected through an outer join so an analysis whose
+index cannot be resolved survives the query and raises loudly in ``_row_to_document``
+rather than silently dropping from a list.
+"""
+
 
 def _row_to_document(row, *, include_results: bool) -> dict:
     """Shape a ``SQLAnalysis`` row into the Mongo-like document the transforms and
@@ -97,7 +108,15 @@ def _row_to_document(row, *, include_results: bool) -> dict:
     The nested reference is keyed by the integer ``reference_id`` foreign key, falling
     back to the legacy ``reference`` string on rows the backfill has not reached.
     ``AttachReferenceTransform`` resolves either form.
+
+    The nested index is read from the joined ``SQLIndex`` columns. Its outward id is the
+    legacy string, falling back to the stringified integer primary key for
+    Postgres-native indexes that never had one. A ``NULL`` join means ``index_id`` did
+    not resolve to a build, which is a data-integrity failure that must surface loudly.
     """
+    if row.index_pg_id is None:
+        raise ValueError(f"Index not found for analysis {row.id}: {row.index}")
+
     document = {
         "_id": row.id,
         "legacy_id": row.legacy_id,
@@ -109,7 +128,12 @@ def _row_to_document(row, *, include_results: bool) -> dict:
         "reference": {
             "id": row.reference_id if row.reference_id is not None else row.reference,
         },
-        "index": {"id": row.index},
+        "index": {
+            "id": row.index_legacy_id
+            if row.index_legacy_id is not None
+            else str(row.index_pg_id),
+            "version": row.index_version,
+        },
         "user": {"id": row.user_id},
         "job": {"id": row.job_id} if row.job_id else None,
     }
@@ -123,8 +147,7 @@ def _row_to_document(row, *, include_results: bool) -> dict:
 class AnalysisData(DataLayerDomain):
     name = "analyses"
 
-    def __init__(self, mongo: Mongo, pg: AsyncEngine, storage: StorageBackend):
-        self._mongo = mongo
+    def __init__(self, pg: AsyncEngine, storage: StorageBackend):
         self._pg = pg
         self._storage = storage
 
@@ -184,7 +207,8 @@ class AnalysisData(DataLayerDomain):
 
         count_statement = select(func.count()).select_from(SQLAnalysis).where(*filters)
         statement = (
-            select(*FIND_COLUMNS)
+            select(*FIND_COLUMNS, *INDEX_COLUMNS)
+            .outerjoin(SQLIndex, SQLAnalysis.index_id == SQLIndex.id)
             .where(*filters)
             .order_by(
                 SQLAnalysis.created_at.desc(),
@@ -203,7 +227,6 @@ class AnalysisData(DataLayerDomain):
         documents = await apply_transforms(
             [base_processor(d) for d in documents],
             [
-                AttachIndexTransform(self._mongo),
                 AttachJobTransform(self._pg),
                 AttachReferenceTransform(self._pg),
                 AttachAnalysisSubtractionsTransform(self._pg),
@@ -237,11 +260,13 @@ class AnalysisData(DataLayerDomain):
         async with AsyncSession(self._pg) as session:
             row = (
                 await session.execute(
-                    select(SQLAnalysis).where(
+                    select(*FIND_COLUMNS, SQLAnalysis.results, *INDEX_COLUMNS)
+                    .outerjoin(SQLIndex, SQLAnalysis.index_id == SQLIndex.id)
+                    .where(
                         compose_legacy_id_single_expression(SQLAnalysis, analysis_id),
                     ),
                 )
-            ).scalar_one_or_none()
+            ).one_or_none()
 
         if row is None:
             raise ResourceNotFoundError()
@@ -260,7 +285,6 @@ class AnalysisData(DataLayerDomain):
             )
 
         transforms = [
-            AttachIndexTransform(self._mongo),
             AttachJobTransform(self._pg),
             AttachReferenceTransform(self._pg),
             AttachAnalysisSubtractionsTransform(self._pg),

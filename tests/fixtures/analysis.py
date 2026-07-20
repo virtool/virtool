@@ -6,6 +6,7 @@ from virtool.data.topg import (
     compose_legacy_id_multi_expression,
     compose_legacy_id_single_expression,
 )
+from virtool.indexes.sql import SQLIndex
 from virtool.mongo.core import Mongo
 from virtool.references.sql import SQLReference
 from virtool.samples.sql import SQLLegacySample
@@ -16,13 +17,11 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
     """Seed an analysis into both backends and its index, mirroring production
     dual-writes.
 
-    The index version is taken from the inline ``index.version`` and written to the
-    ``indexes`` collection, where ``AttachIndexTransform`` resolves it at read time.
-    This is an upsert rather than a ``fake.indexes.create`` call because the analysis
-    names its own index: the write back-fills a version for that id instead of creating
-    an index resource, and the transform reads nothing else off the document. A test
-    that needs a real index creates one with ``fake.indexes.create`` and names it in
-    ``index.id``, in which case this only stamps the version onto that index.
+    The analysis's index is resolved in Postgres by ``index.id``: an existing
+    ``indexes`` row (e.g. one created with ``fake.indexes.create`` and named in
+    ``index.id``) is linked as-is, and otherwise a minimal row is created carrying the
+    inline ``index.version``. The analysis's ``index_id`` foreign key points at it, and
+    ``AnalysisData`` reads the version back through that join at read time.
 
     Non-integer ``job.id`` placeholders are stored as a null ``job_id`` since the
     Postgres column is a foreign key to ``jobs.id``.
@@ -40,12 +39,6 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
     job = document.get("job")
     results = document.get("results")
     subtractions = document.get("subtractions") or []
-
-    await mongo.indexes.update_one(
-        {"_id": index["id"]},
-        {"$set": {"version": index["version"]}},
-        upsert=True,
-    )
 
     await mongo.analyses.insert_one(document)
 
@@ -104,6 +97,29 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
             reference_pg_id = reference_row.id
             reference_legacy_id = reference_row.legacy_id
 
+        index_row = (
+            await session.execute(
+                select(SQLIndex.id).where(SQLIndex.legacy_id == index["id"]),
+            )
+        ).first()
+
+        if index_row is None:
+            sql_index = SQLIndex(
+                legacy_id=index["id"],
+                version=index["version"],
+                created_at=document["created_at"],
+                manifest={},
+                ready=True,
+                storage_key=index["id"],
+                reference_id=reference_pg_id,
+                user_id=document["user"]["id"],
+            )
+            session.add(sql_index)
+            await session.flush()
+            index_pg_id = sql_index.id
+        else:
+            index_pg_id = index_row.id
+
         analysis = SQLAnalysis(
             legacy_id=document["_id"],
             created_at=document["created_at"],
@@ -116,6 +132,7 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
             reference=reference_legacy_id or str(reference_pg_id),
             reference_id=reference_pg_id,
             index=index["id"],
+            index_id=index_pg_id,
             user_id=document["user"]["id"],
             job_id=job["id"] if job and isinstance(job["id"], int) else None,
         )
