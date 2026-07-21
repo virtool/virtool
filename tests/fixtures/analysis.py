@@ -7,15 +7,13 @@ from virtool.data.topg import (
     compose_legacy_id_single_expression,
 )
 from virtool.indexes.sql import SQLIndex
-from virtool.mongo.core import Mongo
 from virtool.references.sql import SQLReference
 from virtool.samples.sql import SQLLegacySample
 from virtool.subtractions.pg import SQLSubtraction
 
 
-async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
-    """Seed an analysis into both backends and its index, mirroring production
-    dual-writes.
+async def seed_analysis(pg: AsyncEngine, document: dict) -> int:
+    """Seed an analysis into Postgres and its index.
 
     The analysis's index is resolved in Postgres by ``index.id``: an existing
     ``indexes`` row (e.g. one created with ``fake.indexes.create`` and named in
@@ -39,8 +37,6 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
     job = document.get("job")
     results = document.get("results")
     subtractions = document.get("subtractions") or []
-
-    await mongo.analyses.insert_one(document)
 
     sample = document["sample"]
     reference = document["reference"]
@@ -75,12 +71,7 @@ async def seed_analysis(mongo: Mongo, pg: AsyncEngine, document: dict) -> int:
                     f"No reference row for primary key {reference['id']}",
                 )
 
-            reference_doc = await mongo.references.find_one(reference["id"], ["name"])
-            reference_name = (
-                reference_doc["name"]
-                if reference_doc
-                else reference.get("name", reference["id"])
-            )
+            reference_name = reference.get("name", reference["id"])
             legacy_reference = SQLReference(
                 legacy_id=reference["id"],
                 name=reference_name,

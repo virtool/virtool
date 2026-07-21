@@ -11,7 +11,6 @@ from virtool.data.layer import DataLayer
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.groups.oas import PermissionsUpdate
-from virtool.mongo.core import Mongo
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.users.oas import UpdateUserRequest
 from virtool.users.utils import Permission, generate_base_permissions
@@ -724,7 +723,6 @@ class TestUpdateAPIKey:
         self,
         fake: DataFaker,
         spawn_client: ClientSpawner,
-        mongo: Mongo,
     ) -> None:
         """Test that users cannot escalate key permissions beyond their own."""
         client = await spawn_client(

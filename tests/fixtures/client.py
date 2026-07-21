@@ -21,12 +21,10 @@ from virtool.fake.next import DataFaker
 from virtool.flags import FeatureFlags, FlagName
 from virtool.groups.models import GroupMinimal
 from virtool.groups.oas import PermissionsUpdate
+from virtool.identifier import AbstractIdProvider
 from virtool.jobs.pg import SQLJob
 from virtool.models.enums import Permission
 from virtool.models.roles import AdministratorRole
-from virtool.mongo.core import Mongo
-from virtool.mongo.identifier import FakeIdProvider
-from virtool.mongo.utils import get_mongo_from_app
 from virtool.users.models import User
 from virtool.users.oas import UpdateUserRequest
 from virtool.users.pg import SQLUser
@@ -273,9 +271,7 @@ def spawn_client(
     fake: DataFaker,
     memory_storage,
     mocker,
-    mongo: Mongo,
-    mongo_connection_string: str,
-    mongo_name: str,
+    id_provider: AbstractIdProvider,
     pg_connection_string: str,
     pg: AsyncEngine,
 ) -> ClientSpawner:
@@ -408,8 +404,6 @@ def spawn_client(
             dev=dev,
             flags=[],
             host="localhost",
-            mongodb_connection_string=f"{mongo_connection_string}/{mongo_name}?authSource=admin",
-            no_check_db=True,
             no_periodic_tasks=True,
             no_revision_check=True,
             port=9950,
@@ -421,7 +415,6 @@ def spawn_client(
         )
 
         mocker.patch("virtool.startup.connect_pg", return_value=pg)
-        mocker.patch("virtool.startup.connect_mongo", return_value=mongo)
         mocker.patch(
             "virtool.startup.create_storage_backend",
             return_value=memory_storage,
@@ -474,7 +467,7 @@ def spawn_client(
             cookies=cookies,
         )
 
-        get_mongo_from_app(test_client.app).id_provider = FakeIdProvider()
+        get_data_from_app(test_client.app).otus._id_provider = id_provider
 
         if flags:
             test_client.app["flags"] = FeatureFlags(flags)
@@ -491,9 +484,6 @@ def spawn_job_client(
     aiohttp_client,
     tmp_path: Path,
     memory_storage,
-    mongo: Mongo,
-    mongo_connection_string,
-    mongo_name: str,
     pg: AsyncEngine,
     pg_connection_string: str,
     mocker,
@@ -552,8 +542,6 @@ def spawn_job_client(
                 dev=dev,
                 flags=[],
                 host="localhost",
-                mongodb_connection_string=f"{mongo_connection_string}/{mongo_name}?authSource=admin",
-                no_check_db=True,
                 no_periodic_tasks=True,
                 no_revision_check=True,
                 port=9950,
@@ -597,9 +585,6 @@ class TaskRunnerClientSpawner(Protocol):
 def spawn_task_runner_client(
     aiohttp_client,
     memory_storage,
-    mongo: Mongo,
-    mongo_connection_string,
-    mongo_name: str,
     pg: AsyncEngine,
     pg_connection_string: str,
     mocker,
@@ -617,7 +602,6 @@ def spawn_task_runner_client(
             TaskRunnerConfig(
                 base_url="",
                 host="localhost",
-                mongodb_connection_string=f"{mongo_connection_string}/{mongo_name}?authSource=admin",
                 no_revision_check=True,
                 port=9950,
                 postgres_connection_string=pg_connection_string,

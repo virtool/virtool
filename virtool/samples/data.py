@@ -35,7 +35,6 @@ from virtool.groups.pg import SQLGroup
 from virtool.indexes.sql import SQLIndex
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.labels.transforms import AttachLabelsTransform
-from virtool.mongo.core import Mongo
 from virtool.pg.utils import delete_row
 from virtool.references.sql import SQLReference
 from virtool.samples.checks import (
@@ -164,12 +163,10 @@ class SamplesData(DataLayerDomain):
     def __init__(
         self,
         config: Config,
-        mongo: Mongo,
         pg: AsyncEngine,
         storage: StorageBackend,
     ):
         self._config = config
-        self._mongo = mongo
         self._pg = pg
         self._storage = storage
 

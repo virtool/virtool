@@ -9,8 +9,6 @@ schema conflicts between workflow.
 
 import os
 from pathlib import Path
-from random import choices
-from string import ascii_lowercase
 
 import alembic.command
 import alembic.config
@@ -100,23 +98,14 @@ def revisions_path(mocker, tmpdir) -> Path:
 
 
 @pytest.fixture
-def migration_mongo_name(worker_id: str) -> str:
-    suffix = "".join(choices(ascii_lowercase, k=8))
-    return f"vt-test-{worker_id}-mig-{suffix}"
-
-
-@pytest.fixture
 def migration_config(
     migration_pg_connection_string: str,
-    mongo_connection_string: str,
-    migration_mongo_name: str,
 ) -> MigrationConfig:
     """A :class:`MigrationConfig` instance that plugs into test instances of backing
     services.
 
     """
     return MigrationConfig(
-        mongodb_connection_string=f"{mongo_connection_string}/{migration_mongo_name}?authSource=admin",
         postgres_connection_string=migration_pg_connection_string,
         storage_backend="s3",
         storage_s3_bucket="test",
@@ -126,7 +115,6 @@ def migration_config(
 @pytest.fixture
 async def ctx(
     migration_config: MigrationConfig,
-    migration_mongo_name: str,
     memory_storage: StorageBackend,
 ) -> MigrationContext:
     """A migration context for testing backed by test instances of backing services.
@@ -136,10 +124,7 @@ async def ctx(
     """
     ctx = await create_migration_context(migration_config)
     ctx.storage = memory_storage
-    yield ctx
-    await ctx.mongo.client.drop_database(
-        ctx.mongo.client.get_database(migration_mongo_name)
-    )
+    return ctx
 
 
 @pytest.fixture

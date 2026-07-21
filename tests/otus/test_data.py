@@ -14,8 +14,8 @@ from syrupy import SnapshotAssertion
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.identifier import AbstractIdProvider
 from virtool.models.enums import Molecule
-from virtool.mongo.core import Mongo
 from virtool.otus.models import OTUSegment
 from virtool.otus.oas import (
     CreateOTURequest,
@@ -543,7 +543,7 @@ class TestGeneratedIdCollision:
         data_layer: DataLayer,
         fake: DataFaker,
         mocker,
-        mongo: Mongo,
+        id_provider: AbstractIdProvider,
     ):
         user = await fake.users.create()
         reference = await fake.references.create(user=user)
@@ -555,7 +555,7 @@ class TestGeneratedIdCollision:
         )
 
         mocker.patch.object(
-            mongo.id_provider,
+            id_provider,
             "get",
             side_effect=[taken.id, "freshotu"],
         )
@@ -576,7 +576,7 @@ class TestGeneratedIdCollision:
         data_layer: DataLayer,
         fake: DataFaker,
         mocker,
-        mongo: Mongo,
+        id_provider: AbstractIdProvider,
     ):
         user = await fake.users.create()
         reference = await fake.references.create(user=user)
@@ -599,7 +599,7 @@ class TestGeneratedIdCollision:
         )
 
         mocker.patch.object(
-            mongo.id_provider,
+            id_provider,
             "get",
             side_effect=[taken.id, "freshseq"],
         )

@@ -9,7 +9,6 @@ class Liveness(BaseModel):
 
 
 class ReadinessChecks(BaseModel):
-    mongodb: bool
     postgres: bool
 
 
@@ -21,6 +20,6 @@ class Readiness(BaseModel):
         schema_extra = {
             "example": {
                 "ready": True,
-                "checks": {"mongodb": True, "postgres": True},
+                "checks": {"postgres": True},
             }
         }

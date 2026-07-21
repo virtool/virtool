@@ -14,7 +14,6 @@ from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
 from virtool.models.enums import HistoryMethod, Molecule, Permission
-from virtool.mongo.core import Mongo
 from virtool.otus.models import OTU, OTUIsolate, OTUSegment, OTUSequence
 from virtool.otus.oas import CreateOTURequest
 from virtool.workflow.pytest_plugin.utils import StaticTime
@@ -720,7 +719,6 @@ class TestUpdateIsolate:
     async def _setup(
         self,
         fake: DataFaker,
-        mongo: Mongo,
         spawn_client: ClientSpawner,
         static_time: StaticTime,
     ):
@@ -830,7 +828,6 @@ class TestSetAsDefault:
     async def _setup(
         self,
         fake: DataFaker,
-        mongo: Mongo,
         spawn_client: ClientSpawner,
         static_time: StaticTime,
     ):
@@ -1089,7 +1086,6 @@ class TestListSequences:
     async def test_ok(
         self,
         fake: DataFaker,
-        mongo: Mongo,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
@@ -1126,7 +1122,6 @@ class TestGetSequence:
     async def test_ok(
         self,
         fake: DataFaker,
-        mongo: Mongo,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
     ):
@@ -1453,7 +1448,6 @@ class TestDeleteSequence:
         self,
         spawn_client: ClientSpawner,
         fake: DataFaker,
-        mongo: Mongo,
         static_time: StaticTime,
     ):
         self.client = await spawn_client(authenticated=True)

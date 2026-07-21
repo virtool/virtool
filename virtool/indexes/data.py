@@ -42,7 +42,6 @@ from virtool.indexes.utils import (
     compose_index_prefix,
 )
 from virtool.jobs.transforms import AttachJobTransform
-from virtool.mongo.core import Mongo
 from virtool.references.models import ReferenceNested
 from virtool.references.sql import SQLReference
 from virtool.references.transforms import (
@@ -76,11 +75,8 @@ def _get_index_build_type(job_id: int | None, task_id: int | None) -> str:
 class IndexData:
     name = "indexes"
 
-    def __init__(
-        self, mongo: Mongo, config: Config, pg: AsyncEngine, storage: StorageBackend
-    ):
+    def __init__(self, config: Config, pg: AsyncEngine, storage: StorageBackend):
         self._config = config
-        self._mongo = mongo
         self._pg = pg
         self._storage = storage
 
@@ -567,7 +563,6 @@ class IndexData:
             raise ResourceNotFoundError()
 
         data = await virtool.history.db.find_by_index(
-            self._mongo,
             self._pg,
             index_id,
             page,

@@ -11,7 +11,6 @@ import virtool.history.db
 import virtool.utils
 from virtool.data.errors import ResourceError, ResourceNotFoundError
 from virtool.data.topg import (
-    compose_legacy_id_mongo_match,
     compose_legacy_id_single_expression,
     compose_legacy_id_subquery,
     resolve_legacy_id,
@@ -33,16 +32,6 @@ from virtool.references.utils import reference_values
 from virtool.settings.models import Settings
 from virtool.types import Document
 from virtool.users.pg import SQLUser
-
-
-async def compose_reference_id_match(pg: AsyncEngine, ref_id: int | str) -> dict:
-    """Build a Mongo match value for an embedded ``reference.id``.
-
-    While the ``references`` migration is in progress, ``otus`` and ``sequences``
-    documents may carry either the legacy Mongo string id or the integer
-    ``legacy_references`` primary key, so both forms must match.
-    """
-    return await compose_legacy_id_mongo_match(pg, SQLReference, ref_id)
 
 
 async def write_legacy_reference(

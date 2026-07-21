@@ -38,7 +38,6 @@ from virtool.indexes.models import IndexMinimal, IndexSearchResult
 from virtool.indexes.sql import SQLIndex
 from virtool.indexes.tasks import CreateIndexTask
 from virtool.models.enums import HistoryMethod
-from virtool.mongo.core import Mongo
 from virtool.otus.models import OTU, OTUSearchResult
 from virtool.otus.oas import CreateOTURequest
 from virtool.otus.sql import SQLOTU
@@ -106,13 +105,11 @@ class ReferencesData(DataLayerDomain):
 
     def __init__(
         self,
-        mongo: Mongo,
         pg: AsyncEngine,
         config: Config,
         client: ClientSession,
         storage: StorageBackend,
     ):
-        self._mongo = mongo
         self._pg = pg
         self._config = config
         self._client = client
@@ -691,7 +688,6 @@ class ReferencesData(DataLayerDomain):
         await self._require_exists(ref_id)
 
         data = await virtool.history.db.find(
-            self._mongo,
             self._pg,
             page,
             per_page,

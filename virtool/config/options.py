@@ -75,26 +75,10 @@ flags_option = click.option(
     default=[],
 )
 
-mongodb_connection_string_option = click.option(
-    "--mongodb-connection-string",
-    default=get_from_environment(
-        "mongodb_connection_string",
-        "mongodb://root:virtool@localhost:27017/virtool",
-    ),
-    help="The MongoDB connection string",
-    type=str,
-)
-
-no_check_db_option = click.option(
-    "--no-check-db",
-    help="Start without checking and repairing database",
-    is_flag=True,
-)
-
 no_revision_check_option = click.option(
     "--no-revision-check",
     default=get_from_environment("no_revision_check", False),
-    help="Disable the MongoDB revision check",
+    help="Disable the data revision check",
     is_flag=True,
 )
 

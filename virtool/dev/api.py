@@ -2,7 +2,7 @@ from virtool.api.errors import APINoContent
 from virtool.api.routes import Routes
 from virtool.data.utils import get_data_from_app, get_data_from_req
 from virtool.fake.next import DataFaker
-from virtool.mongo.utils import get_mongo_from_app
+from virtool.identifier import RandomIdProvider
 from virtool.uploads.sql import UploadType
 
 routes = Routes()
@@ -16,11 +16,10 @@ async def dev(request):
 
     if command == "create_subtraction":
         layer = get_data_from_app(app)
-        mongo = get_mongo_from_app(app)
         pg = app["pg"]
         storage = app["storage"]
 
-        fake = DataFaker(layer, mongo, pg, storage)
+        fake = DataFaker(layer, pg, storage, RandomIdProvider())
 
         user = await fake.users.create()
         upload = await fake.uploads.create(

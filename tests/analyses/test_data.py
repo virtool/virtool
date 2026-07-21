@@ -21,7 +21,6 @@ from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.models.enums import AnalysisWorkflow
 from virtool.models.roles import AdministratorRole
-from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row, get_row_by_id
 from virtool.samples.oas import CreateAnalysisRequest
 from virtool.subtractions.pg import SQLSubtraction
@@ -166,14 +165,12 @@ class TestFindSampleRights:
 
     @staticmethod
     async def _seed_analysis(
-        mongo: Mongo,
         pg: AsyncEngine,
         legacy_id: str,
         sample_id: int,
         setup: SampleSetup,
     ) -> int:
         return await seed_analysis(
-            mongo,
             pg,
             {
                 "_id": legacy_id,
@@ -194,7 +191,6 @@ class TestFindSampleRights:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         setup_sample: SampleSetup,
     ):
@@ -210,10 +206,9 @@ class TestFindSampleRights:
             all_read=False,
         )
 
-        await self._seed_analysis(mongo, pg, "hidden", other_private.id, setup_sample)
+        await self._seed_analysis(pg, "hidden", other_private.id, setup_sample)
 
         owned = await self._seed_analysis(
-            mongo,
             pg,
             "visible",
             setup_sample.sample_id,
@@ -230,7 +225,6 @@ class TestFindSampleRights:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         setup_sample: SampleSetup,
     ):
@@ -251,7 +245,6 @@ class TestFindSampleRights:
         )
 
         shared = await self._seed_analysis(
-            mongo,
             pg,
             "shared",
             group_readable.id,
@@ -270,7 +263,6 @@ class TestFindSampleRights:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         setup_sample: SampleSetup,
     ):
@@ -288,7 +280,7 @@ class TestFindSampleRights:
             group=group.id,
         )
 
-        await self._seed_analysis(mongo, pg, "shared", group_readable.id, setup_sample)
+        await self._seed_analysis(pg, "shared", group_readable.id, setup_sample)
 
         found = await data_layer.analyses.find(1, 25, build_user_client(outsider))
 
@@ -299,7 +291,6 @@ class TestFindSampleRights:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         setup_sample: SampleSetup,
     ):
@@ -319,7 +310,6 @@ class TestFindSampleRights:
         )
 
         hidden = await self._seed_analysis(
-            mongo,
             pg,
             "private",
             other_private.id,
@@ -339,7 +329,6 @@ class TestFindSampleRights:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         setup_sample: SampleSetup,
     ):
@@ -358,7 +347,7 @@ class TestFindSampleRights:
             all_read=False,
         )
 
-        await self._seed_analysis(mongo, pg, "private", other_private.id, setup_sample)
+        await self._seed_analysis(pg, "private", other_private.id, setup_sample)
 
         found = await data_layer.analyses.find(
             1,
@@ -375,7 +364,6 @@ class TestHasRight:
 
     @staticmethod
     async def _seed_analysis(
-        mongo: Mongo,
         pg: AsyncEngine,
         legacy_id: str,
         sample_id: int,
@@ -384,7 +372,6 @@ class TestHasRight:
         index_id: int,
     ) -> int:
         return await seed_analysis(
-            mongo,
             pg,
             {
                 "_id": legacy_id,
@@ -404,13 +391,11 @@ class TestHasRight:
     async def test_owner_has_read_and_write(
         self,
         data_layer: DataLayer,
-        mongo: Mongo,
         pg: AsyncEngine,
         setup_sample: SampleSetup,
     ):
         """The owner of the parent sample holds both rights on its analyses."""
         await self._seed_analysis(
-            mongo,
             pg,
             "owned",
             setup_sample.sample_id,
@@ -434,7 +419,6 @@ class TestHasRight:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         setup_sample: SampleSetup,
     ):
@@ -452,7 +436,6 @@ class TestHasRight:
         )
 
         await self._seed_analysis(
-            mongo,
             pg,
             "private",
             owner_private.id,
@@ -471,7 +454,6 @@ class TestHasRight:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         setup_sample: SampleSetup,
     ):
@@ -491,7 +473,6 @@ class TestHasRight:
         )
 
         await self._seed_analysis(
-            mongo,
             pg,
             "private",
             owner_private.id,
@@ -510,7 +491,6 @@ class TestHasRight:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         setup_sample: SampleSetup,
     ):
@@ -527,7 +507,6 @@ class TestHasRight:
         )
 
         await self._seed_analysis(
-            mongo,
             pg,
             "public",
             world_readable.id,
@@ -545,7 +524,6 @@ class TestHasRight:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         setup_sample: SampleSetup,
     ):
@@ -566,7 +544,6 @@ class TestHasRight:
         )
 
         await self._seed_analysis(
-            mongo,
             pg,
             "shared",
             group_shared.id,
@@ -584,7 +561,6 @@ class TestHasRight:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         setup_sample: SampleSetup,
     ):
@@ -603,7 +579,6 @@ class TestHasRight:
         )
 
         await self._seed_analysis(
-            mongo,
             pg,
             "shared",
             group_shared.id,
@@ -621,7 +596,6 @@ class TestHasRight:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         setup_sample: SampleSetup,
     ):
@@ -639,7 +613,6 @@ class TestHasRight:
         )
 
         await self._seed_analysis(
-            mongo,
             pg,
             "private",
             owner_private.id,

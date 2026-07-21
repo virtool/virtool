@@ -21,7 +21,6 @@ from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.sql import SQLIndex
-from virtool.mongo.core import Mongo
 from virtool.references.oas import (
     CreateReferenceGroupRequest,
     CreateReferenceRequest,
@@ -112,7 +111,6 @@ class TestCreateIndex:
         data_layer: DataLayer,
         fake: DataFaker,
         mocker,
-        mongo: Mongo,
         pg: AsyncEngine,
         static_time,
     ):
@@ -160,7 +158,6 @@ class TestCreateIndex:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         static_time,
     ):

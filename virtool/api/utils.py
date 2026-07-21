@@ -1,10 +1,7 @@
-import math
 import re
 
 from aiohttp.web_response import Response
-from multidict import MultiDictProxy
 
-from virtool.types import Projection
 from virtool.utils import coerce_list
 
 
@@ -66,84 +63,4 @@ def compose_regex_query(
             {field: {"$regex": regex}}
             for field in [str(field) for field in coerce_list(fields)]
         ],
-    }
-
-
-async def paginate(
-    collection,
-    mongo_query: dict | MultiDictProxy[str],
-    page: int,
-    per_page: int,
-    base_query: dict | None = None,
-    projection: Projection | None = None,
-    reverse: bool = False,
-    sort: list[tuple[str, int]] | str | None = None,
-):
-    """A function for searching and paging collections.
-
-    Uses a number of different queries to return search results.
-
-    The `db_query` is composed is passed in the function call. This is usually derived
-    from user input such as search terms and filter options. This documents matching
-    query will count toward the returned `found_count`.
-
-    The `page` and `per_page` values control paging of the search results. They are
-    validated at the API boundary, so this function trusts them without bounds
-    checking.
-
-    The `base_query` is affects the `total_count` of documents in the collection
-    returned to the API client. An example where this is used is only ever returning
-    documents that have a `ready` field set to `True`. If the field is `False`, the
-    client would never know the document existed.
-
-    The function returns a dictionary containing the matching `documents` and metadata
-    about the search.
-
-    `total_count`: the total number of unhidden documents in the collection
-    `found_count`: the number of documents matching the search query (`db_query`)
-    `page_count`: the number of pages given the passed `per_page` value
-    `per_page`: the `documents` to return for each page request
-    `page`: the page number to return (starts at one)
-
-    :param collection: the database collection
-    :param mongo_query: a query derived from user supplied - affects found count
-    :param page: the one-indexed page number to return
-    :param per_page: the number of documents to return per page
-    :param sort: a field to sort by
-    :param projection: the projection to apply to the returned documents
-    :param base_query: a query always applied to the search
-    :param reverse: reverse the sort order
-    :return: a search result including a list of matched documents
-
-    """
-    base_query = base_query or {}
-
-    if isinstance(sort, str):
-        sort = [(sort, -1 if reverse else 1)]
-
-    mongo_query = {"$and": [base_query, mongo_query]}
-
-    cursor = collection.find(mongo_query, projection, sort=sort)
-
-    found_count = await collection.count_documents(mongo_query)
-
-    page_count = int(math.ceil(found_count / per_page))
-
-    documents = []
-
-    if found_count:
-        if page > 1:
-            cursor.skip((page - 1) * per_page)
-
-        documents = await cursor.to_list(per_page)
-
-    total_count = await collection.count_documents(base_query)
-
-    return {
-        "documents": documents,
-        "total_count": total_count,
-        "found_count": found_count,
-        "page_count": page_count,
-        "per_page": per_page,
-        "page": page,
     }
