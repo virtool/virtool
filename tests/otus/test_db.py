@@ -31,6 +31,14 @@ from virtool.otus.sql import SQLOTU, SQLSequence
 from virtool.otus.utils import find_isolate
 from virtool.types import Document
 
+MONGO_STORED_CREATED_AT = IMPORTED_CREATED_AT.replace(microsecond=123000)
+"""``IMPORTED_CREATED_AT`` floored to milliseconds, the precision BSON stored.
+
+Mongo could not hold microseconds, so an imported OTU's ``created_at`` came back out of a
+round trip truncated to this instant. The write path reproduces that truncation, and
+these tests assert against it rather than a live Mongo round trip.
+"""
+
 
 class TestCheckNameAndAbbreviation:
     """An OTU's name and abbreviation are unique within its parent reference."""
@@ -372,7 +380,7 @@ class TestOTUDataRoundTrip:
         """The stored ISO string is the truncated instant Mongo held, not a finer one."""
         stored = {
             **test_imported_otu,
-            "created_at": IMPORTED_CREATED_AT.replace(microsecond=123000),
+            "created_at": MONGO_STORED_CREATED_AT,
         }
 
         assert _as_stored(otu_row_values(test_imported_otu, 1)) == loads(
@@ -388,7 +396,7 @@ class TestOTUDataRoundTrip:
 
         assert otu_document_from_row(row) == {
             **test_imported_otu,
-            "created_at": IMPORTED_CREATED_AT.replace(microsecond=123000),
+            "created_at": MONGO_STORED_CREATED_AT,
         }
 
     def test_does_not_mutate_the_document(self, test_imported_otu: Document):
@@ -624,7 +632,7 @@ class TestJoinLegacyOTU:
 
         joined = await join_legacy_otu(pg, test_imported_otu["_id"])
 
-        assert joined["created_at"] == IMPORTED_CREATED_AT.replace(microsecond=123000)
+        assert joined["created_at"] == MONGO_STORED_CREATED_AT
 
     async def test_isolate_without_sequences_gets_an_empty_list(
         self,
@@ -1040,7 +1048,7 @@ class TestIncrementLegacyOTUVersion:
             )
             await session.commit()
 
-        assert document["created_at"] == IMPORTED_CREATED_AT.replace(microsecond=123000)
+        assert document["created_at"] == MONGO_STORED_CREATED_AT
 
     async def test_leaves_other_fields_alone(
         self,

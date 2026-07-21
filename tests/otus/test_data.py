@@ -623,6 +623,40 @@ class TestGeneratedIdCollision:
             await data_layer.otus.get_sequence(otu.id, isolate.id, "freshseq")
         ).sequence == "TTTTTTTTTT"
 
+    async def test_add_isolate_skips_taken_isolate_id(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mocker,
+        id_provider: AbstractIdProvider,
+    ):
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        otu = await data_layer.otus.create(
+            reference.id,
+            CreateOTURequest(name="Example"),
+            user.id,
+        )
+
+        taken = await data_layer.otus.add_isolate(otu.id, "isolate", "A", user.id)
+
+        mocker.patch.object(
+            id_provider,
+            "get",
+            side_effect=[taken.id, "freshiso"],
+        )
+
+        created = await data_layer.otus.add_isolate(otu.id, "isolate", "B", user.id)
+
+        assert created.id == "freshiso"
+
+        # Both isolates coexist; the colliding id was not reused.
+        isolate_ids = {
+            isolate["id"] for isolate in await data_layer.otus.list_isolates(otu.id)
+        }
+        assert isolate_ids == {taken.id, "freshiso"}
+
 
 class TestSequenceWrite:
     """The per-sequence write path writes the sequence row and bumps the parent OTU."""
