@@ -128,19 +128,6 @@ def bad_labels_response(labels: list[int]) -> Response:
     )
 
 
-def sample_storage_id(sample_id: int, legacy_id: str | None) -> str:
-    """Get the identifier a sample's storage objects are keyed under.
-
-    A sample keeps a single storage prefix for its whole life: its Mongo ``_id`` if
-    it has one, and its integer primary key otherwise. Samples created natively in
-    Postgres have no ``legacy_id`` and are keyed by primary key from the start.
-
-    Deleting a sample removes its prefix in one operation, so a sample whose files
-    were split across two prefixes would have half of them orphaned.
-    """
-    return legacy_id or str(sample_id)
-
-
 def sample_file_key(storage_id: str, filename: str) -> str:
     return f"samples/{storage_id}/{filename}"
 

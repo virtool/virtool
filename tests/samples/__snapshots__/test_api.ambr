@@ -4418,7 +4418,6 @@
     'id': 1,
     'name': 'small.fq.gz',
     'name_on_disk': 'small.fq.gz',
-    'sample': '1',
     'sample_id': 1,
     'size': 723988,
     'type': 'fastq',

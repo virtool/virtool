@@ -1,6 +1,7 @@
 """The sample data layer domain."""
 
 import math
+import uuid
 from asyncio import CancelledError, gather
 from collections import defaultdict
 from collections.abc import AsyncGenerator, AsyncIterator
@@ -70,7 +71,6 @@ from virtool.samples.utils import (
     has_sample_right,
     sample_file_key,
     sample_prefix,
-    sample_storage_id,
 )
 from virtool.storage.cleanup import delete_prefix
 from virtool.storage.protocol import StorageBackend
@@ -170,20 +170,27 @@ class SamplesData(DataLayerDomain):
         self._pg = pg
         self._storage = storage
 
-    async def _resolve_ids(self, sample_id: int | str) -> tuple[int, str | None] | None:
-        """Resolve a sample's integer primary key and legacy Mongo id from either form.
+    async def _resolve_ids(
+        self, sample_id: int | str
+    ) -> tuple[int, str | None, str] | None:
+        """Resolve a sample's primary key, legacy Mongo id, and storage key.
 
-        Accepts the outward-facing integer id or the legacy Mongo string. Samples
-        migrated from Mongo keep their ``legacy_id`` as their storage key for life;
-        samples created natively in Postgres have none and are keyed by primary key.
+        Accepts the outward-facing integer id or the legacy Mongo string. The
+        ``storage_key`` is the immutable prefix the sample's objects live under; it
+        is recorded on the row rather than derived from the id.
 
         :param sample_id: the integer primary key or legacy string id of the sample
-        :return: the row's ``(id, legacy_id)``, or ``None`` if no sample matches
+        :return: the row's ``(id, legacy_id, storage_key)``, or ``None`` if no sample
+            matches
         """
         async with AsyncSession(self._pg) as session:
             return (
                 await session.execute(
-                    select(SQLLegacySample.id, SQLLegacySample.legacy_id).where(
+                    select(
+                        SQLLegacySample.id,
+                        SQLLegacySample.legacy_id,
+                        SQLLegacySample.storage_key,
+                    ).where(
                         compose_legacy_id_single_expression(SQLLegacySample, sample_id),
                     ),
                 )
@@ -481,6 +488,7 @@ class SamplesData(DataLayerDomain):
                 paired=len(uploads) == 2,
                 quality=None,
                 ready=False,
+                storage_key=uuid.uuid4().hex,
                 user_id=user_id,
             )
 
@@ -488,6 +496,7 @@ class SamplesData(DataLayerDomain):
             await pg_session.flush()
 
             sample_pk = sample.id
+            storage_key = sample.storage_key
 
             self._add_legacy_sample_join_rows(
                 pg_session,
@@ -499,7 +508,7 @@ class SamplesData(DataLayerDomain):
             for index, upload in enumerate(uploads):
                 pg_session.add(
                     SQLSampleUpload(
-                        sample=sample_storage_id(sample_pk, None),
+                        sample=storage_key,
                         sample_id=sample_pk,
                         upload_id=upload["id"],
                         index=index,
@@ -525,7 +534,7 @@ class SamplesData(DataLayerDomain):
         if resolved is None:
             raise ResourceNotFoundError
 
-        sample_pk, legacy_id = resolved
+        sample_pk, _, storage_key = resolved
 
         sample = await self.get(sample_id)
 
@@ -559,7 +568,7 @@ class SamplesData(DataLayerDomain):
                 delete(SQLSampleUpload).where(
                     or_(
                         SQLSampleUpload.sample_id == sample_pk,
-                        SQLSampleUpload.sample == legacy_id,
+                        SQLSampleUpload.sample == storage_key,
                     ),
                 ),
             )
@@ -567,7 +576,7 @@ class SamplesData(DataLayerDomain):
                 delete(SQLSampleArtifact).where(
                     or_(
                         SQLSampleArtifact.sample_id == sample_pk,
-                        SQLSampleArtifact.sample == legacy_id,
+                        SQLSampleArtifact.sample == storage_key,
                     ),
                 ),
             )
@@ -575,7 +584,7 @@ class SamplesData(DataLayerDomain):
                 delete(SQLSampleReads).where(
                     or_(
                         SQLSampleReads.sample_id == sample_pk,
-                        SQLSampleReads.sample == legacy_id,
+                        SQLSampleReads.sample == storage_key,
                     ),
                 ),
             )
@@ -591,7 +600,7 @@ class SamplesData(DataLayerDomain):
             await pg_session.commit()
 
         for key, failure in await delete_prefix(
-            self._storage, sample_prefix(sample_storage_id(sample_pk, legacy_id))
+            self._storage, sample_prefix(storage_key)
         ):
             logger.error(
                 "storage cleanup failed; file orphaned",
@@ -619,7 +628,7 @@ class SamplesData(DataLayerDomain):
         if resolved is None:
             raise ResourceNotFoundError
 
-        sample_pk, _ = resolved
+        sample_pk, _, _ = resolved
 
         async with AsyncSession(self._pg) as pg_session:
             ready = (
@@ -691,7 +700,7 @@ class SamplesData(DataLayerDomain):
         if resolved is None:
             raise ResourceNotFoundError
 
-        sample_pk, _ = resolved
+        sample_pk, _, _ = resolved
 
         data = data.dict(exclude_unset=True)
 
@@ -779,7 +788,7 @@ class SamplesData(DataLayerDomain):
         if resolved is None:
             raise ResourceNotFoundError
 
-        sample_pk, _ = resolved
+        sample_pk, _, _ = resolved
 
         group_id = None
 
@@ -907,8 +916,7 @@ class SamplesData(DataLayerDomain):
         if artifact_type and artifact_type not in ArtifactType.to_list():
             raise ResourceConflictError("Unsupported sample artifact type")
 
-        sample_pk, legacy_id = resolved
-        storage_id = sample_storage_id(sample_pk, legacy_id)
+        sample_pk, _, storage_key = resolved
 
         try:
             artifact = await create_artifact_file(
@@ -916,7 +924,7 @@ class SamplesData(DataLayerDomain):
                 filename,
                 filename,
                 sample_pk,
-                storage_id,
+                storage_key,
                 artifact_type,
             )
         except exc.IntegrityError:
@@ -924,7 +932,7 @@ class SamplesData(DataLayerDomain):
                 "Artifact file has already been uploaded for this sample",
             )
 
-        key = sample_file_key(storage_id, filename)
+        key = sample_file_key(storage_key, filename)
 
         try:
             size = await self._storage.write(key, chunker)
@@ -952,10 +960,9 @@ class SamplesData(DataLayerDomain):
         if resolved is None:
             raise ResourceNotFoundError
 
-        sample_pk, legacy_id = resolved
-        storage_id = sample_storage_id(sample_pk, legacy_id)
+        sample_pk, _, storage_key = resolved
 
-        key = sample_file_key(storage_id, filename)
+        key = sample_file_key(storage_key, filename)
 
         first = await anext(chunker, None)
 
@@ -978,7 +985,7 @@ class SamplesData(DataLayerDomain):
                 filename,
                 filename,
                 sample_pk,
-                storage_id,
+                storage_key,
                 upload_id=upload_id,
             )
         except exc.IntegrityError:

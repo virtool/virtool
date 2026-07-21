@@ -39,6 +39,11 @@ class SQLSubtraction(Base):
     natively in Postgres can omit it, matching the convention on ``analyses``,
     ``jobs``, ``users``, and ``groups``. The Mongo ``space`` field is
     intentionally dropped.
+
+    ``storage_key`` is the immutable prefix a subtraction's objects live under
+    (``subtractions/{storage_key}/``). It is recorded, never derived: backfilled
+    rows hold their legacy id slug or old integer prefix, and natively created
+    subtractions hold a freshly minted UUID.
     """
 
     __tablename__ = "subtractions"
@@ -46,6 +51,7 @@ class SQLSubtraction(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
     legacy_id: Mapped[str | None] = mapped_column(unique=True)
+    storage_key: Mapped[str] = mapped_column(unique=True)
     name: Mapped[str]
     nickname: Mapped[str] = mapped_column(default="")
     count: Mapped[int | None]

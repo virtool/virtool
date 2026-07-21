@@ -12,6 +12,7 @@ async def test_subtraction_files(pg) -> int:
     async with AsyncSession(pg) as session:
         subtraction = SQLSubtraction(
             legacy_id="foo",
+            storage_key="foo",
             name="Foo",
             created_at=datetime(2015, 10, 6, 20, 0, 0),
             ready=True,

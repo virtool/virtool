@@ -102,6 +102,13 @@ class SQLLegacySample(Base):
     become the ``legacy_sample_labels`` and ``legacy_sample_subtractions`` join
     tables rather than array columns. ``quality`` is stored as JSONB and never
     queried.
+
+    ``storage_key`` is the immutable prefix a sample's objects live under
+    (``samples/{storage_key}/``). It is recorded, never derived: backfilled rows
+    hold their legacy id slug or old integer prefix, and natively created samples
+    hold a freshly minted UUID. Recording rather than deriving it means the prefix
+    survives any future change to how identities are formatted without moving a
+    single object.
     """
 
     __tablename__ = "legacy_samples"
@@ -127,6 +134,7 @@ class SQLLegacySample(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
     legacy_id: Mapped[str | None] = mapped_column(unique=True)
+    storage_key: Mapped[str] = mapped_column(unique=True)
     name: Mapped[str]
     host: Mapped[str] = mapped_column(default="")
     isolate: Mapped[str] = mapped_column(default="")

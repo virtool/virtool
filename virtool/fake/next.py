@@ -48,7 +48,8 @@ from virtool.references.tasks import CloneReferenceTask
 from virtool.samples.files import create_reads_file
 from virtool.samples.models import Sample
 from virtool.samples.oas import CreateSampleRequest
-from virtool.samples.utils import sample_file_key, sample_storage_id
+from virtool.samples.sql import SQLLegacySample
+from virtool.samples.utils import sample_file_key
 from virtool.storage.protocol import STORAGE_CHUNK_SIZE, StorageBackend
 from virtool.subtractions.models import Subtraction
 from virtool.subtractions.oas import (
@@ -756,14 +757,21 @@ class SamplesFakerDomain(DataFakerDomain):
         if not ready:
             return sample
 
-        storage_id = sample_storage_id(sample.id, None)
+        async with AsyncSession(self._pg) as session:
+            storage_key = (
+                await session.execute(
+                    select(SQLLegacySample.storage_key).where(
+                        SQLLegacySample.id == sample.id,
+                    ),
+                )
+            ).scalar_one()
 
         filenames = ["reads_1.fq.gz", "reads_2.fq.gz"] if paired else ["reads_1.fq.gz"]
 
         for filename in filenames:
             file_path = example_path / "sample" / filename
 
-            await copy_reads_file(self._storage, file_path, filename, storage_id)
+            await copy_reads_file(self._storage, file_path, filename, storage_key)
 
             await create_reads_file(
                 self._pg,
@@ -771,7 +779,7 @@ class SamplesFakerDomain(DataFakerDomain):
                 filename,
                 filename,
                 sample.id,
-                storage_id,
+                storage_key,
             )
 
         # A real finalized sample has a completed creation job. Mark this

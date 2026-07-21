@@ -16,6 +16,7 @@ async def test_create_subtraction_files(snapshot, tmp_path, pg: AsyncEngine):
     async with AsyncSession(pg) as session:
         subtraction = SQLSubtraction(
             legacy_id="foo",
+            storage_key="foo",
             name="Foo",
             created_at=datetime(2023, 1, 1),
         )

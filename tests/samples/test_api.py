@@ -25,7 +25,8 @@ from virtool.pg.utils import get_row_by_id
 from virtool.references.models import Reference
 from virtool.samples.models import Sample
 from virtool.samples.oas import UpdateSampleRequest
-from virtool.samples.utils import sample_file_key, sample_storage_id
+from virtool.samples.sql import SQLLegacySample
+from virtool.samples.utils import sample_file_key
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.subtractions.pg import SQLSubtraction
 from virtool.uploads.sql import SQLUpload
@@ -1205,6 +1206,7 @@ class TestAnalyze:
             session.add(
                 SQLSubtraction(
                     legacy_id="subtraction_1",
+                    storage_key="subtraction_1",
                     name="Subtraction 1",
                     created_at=datetime(2015, 10, 6, 20, 0, 0),
                     ready=True,
@@ -1403,7 +1405,14 @@ class TestUploadArtifact:
         resp = await self._post(client, path, "fastq", sample.id)
 
         assert resp.status == 201
-        assert await resp.json() == snapshot
+
+        body = await resp.json()
+
+        # ``sample`` is the parent sample's opaque storage key, a random 32-character
+        # UUID for a natively created sample. Exclude it from the snapshot.
+        assert len(body.pop("sample")) == 32
+
+        assert body == snapshot
 
         download = await client.get(f"/samples/{sample.id}/artifacts/small.fq.gz")
 
@@ -1736,6 +1745,7 @@ class TestDownloadReads:
         self,
         fake: DataFaker,
         memory_storage,
+        pg: AsyncEngine,
         spawn_client: ClientSpawner,
         spawn_job_client: JobClientSpawner,
     ):
@@ -1748,9 +1758,11 @@ class TestDownloadReads:
         user = await fake.users.create()
         sample = await fake.samples.create(user, ready=True)
 
+        storage_key = (await get_row_by_id(pg, SQLLegacySample, sample.id)).storage_key
+
         file_name = "reads_1.fq.gz"
         await memory_storage.delete(
-            sample_file_key(sample_storage_id(sample.id, None), file_name),
+            sample_file_key(storage_key, file_name),
         )
 
         client = await spawn_client(authenticated=True)
@@ -1829,6 +1841,7 @@ class TestDownloadArtifact:
         example_path: Path,
         fake: DataFaker,
         memory_storage,
+        pg: AsyncEngine,
         spawn_job_client: JobClientSpawner,
     ):
         """An artifact row that resolves but whose blob is missing is a server-side
@@ -1843,8 +1856,10 @@ class TestDownloadArtifact:
         client = await spawn_job_client(authenticated=True)
         await self._upload_artifact(client, example_path, sample.id)
 
+        storage_key = (await get_row_by_id(pg, SQLLegacySample, sample.id)).storage_key
+
         await memory_storage.delete(
-            sample_file_key(sample_storage_id(sample.id, None), "fastqc.txt"),
+            sample_file_key(storage_key, "fastqc.txt"),
         )
 
         resp = await client.get(f"/samples/{sample.id}/artifacts/fastqc.txt")

@@ -164,7 +164,7 @@ class TestCreate:
             )
 
         assert [(row.sample, row.upload_id, row.index) for row in sample_uploads] == [
-            (str(legacy.id), upload.id, 0),
+            (legacy.storage_key, upload.id, 0),
         ]
 
         # Samples created natively in Postgres have no Mongo id to carry.
@@ -396,7 +396,7 @@ class TestFinalize:
         mocker.patch.object(
             data_layer.samples,
             "_resolve_ids",
-            return_value=(999999, "gone"),
+            return_value=(999999, "gone", "gone"),
         )
 
         with pytest.raises(ResourceNotFoundError):
@@ -1269,13 +1269,15 @@ class TestDelete:
         user = await fake.users.create()
         sample = await fake.samples.create(user, paired=True, ready=True)
 
-        assert (await get_row_by_id(pg, SQLLegacySample, sample.id)).legacy_id is None
+        row = await get_row_by_id(pg, SQLLegacySample, sample.id)
+        assert row.legacy_id is None
 
-        prefix = sample_prefix(str(sample.id))
+        storage_key = row.storage_key
+        prefix = sample_prefix(storage_key)
 
         assert [obj.key async for obj in memory_storage.list(prefix)] == [
-            sample_file_key(str(sample.id), "reads_1.fq.gz"),
-            sample_file_key(str(sample.id), "reads_2.fq.gz"),
+            sample_file_key(storage_key, "reads_1.fq.gz"),
+            sample_file_key(storage_key, "reads_2.fq.gz"),
         ]
 
         await data_layer.samples.delete(sample.id)

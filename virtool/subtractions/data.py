@@ -1,4 +1,5 @@
 import math
+import uuid
 from asyncio import CancelledError
 from collections.abc import AsyncGenerator
 
@@ -173,6 +174,7 @@ class SubtractionsData(DataLayerDomain):
         async with AsyncSession(self._pg) as session:
             subtraction = SQLSubtraction(
                 legacy_id=None,
+                storage_key=uuid.uuid4().hex,
                 name=data.name,
                 nickname=data.nickname,
                 count=None,
@@ -203,26 +205,26 @@ class SubtractionsData(DataLayerDomain):
         return await self.get(new_subtraction_id)
 
     async def _resolve_storage_id(self, subtraction_id: int) -> str:
-        """Return the storage-key identifier for a subtraction.
+        """Return the immutable storage-key prefix for a subtraction.
 
-        Pre-migration subtractions store files under their legacy Mongo slug; ones
-        created natively in Postgres (``legacy_id`` is NULL) store under the integer
-        id. Raises ResourceNotFoundError if no subtraction matches.
+        The ``storage_key`` is recorded on the row rather than derived from the id:
+        migrated subtractions hold their legacy Mongo slug, natively created ones
+        hold a UUID. Raises ResourceNotFoundError if no subtraction matches.
         """
         async with AsyncSession(self._pg) as session:
-            row = (
+            storage_key = (
                 await session.execute(
-                    select(SQLSubtraction.id, SQLSubtraction.legacy_id).where(
+                    select(SQLSubtraction.storage_key).where(
                         SQLSubtraction.id == subtraction_id,
                         SQLSubtraction.deleted.is_(False),
                     ),
                 )
-            ).one_or_none()
+            ).scalar_one_or_none()
 
-        if row is None:
+        if storage_key is None:
             raise ResourceNotFoundError
 
-        return row.legacy_id or str(row.id)
+        return storage_key
 
     async def get(self, subtraction_id: int) -> Subtraction:
         """Get a subtraction by its id."""
@@ -299,8 +301,7 @@ class SubtractionsData(DataLayerDomain):
             row = (
                 await pg_session.execute(
                     select(
-                        SQLSubtraction.id,
-                        SQLSubtraction.legacy_id,
+                        SQLSubtraction.storage_key,
                         SQLSubtraction.deleted,
                     ).where(SQLSubtraction.id == subtraction_id),
                 )
@@ -309,7 +310,7 @@ class SubtractionsData(DataLayerDomain):
             if row is None or row.deleted:
                 raise ResourceNotFoundError
 
-            storage_id = row.legacy_id or str(row.id)
+            storage_id = row.storage_key
 
             result = await pg_session.execute(
                 update(SQLSubtraction)

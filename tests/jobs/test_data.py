@@ -214,6 +214,7 @@ class TestCreatePostgres:
         async with AsyncSession(pg) as session:
             sample = SQLLegacySample(
                 legacy_id="sample_123",
+                storage_key="sample_123",
                 name="Sample 123",
                 library_type="normal",
                 created_at=arrow.utcnow().naive,
@@ -314,6 +315,7 @@ class TestCreatePostgres:
         async with AsyncSession(pg) as session:
             subtraction = SQLSubtraction(
                 legacy_id="sub_789",
+                storage_key="sub_789",
                 name="Subtraction 789",
                 created_at=arrow.utcnow().naive,
                 user_id=user.id,

@@ -2,7 +2,7 @@ from http import HTTPStatus
 from pathlib import Path
 
 import pytest
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy.assertion import SnapshotAssertion
 
@@ -11,7 +11,8 @@ from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.models.enums import Permission
 from virtool.samples.oas import UpdateSampleRequest
-from virtool.subtractions.pg import SQLSubtractionFile
+from virtool.subtractions.pg import SQLSubtraction, SQLSubtractionFile
+from virtool.subtractions.utils import subtraction_prefix
 from virtool.uploads.sql import UploadType
 
 
@@ -588,6 +589,7 @@ class TestDownloadSubtractionFile:
         self,
         fake: DataFaker,
         memory_storage,
+        pg: AsyncEngine,
         spawn_job_client: JobClientSpawner,
     ):
         """Test that a 500 response is returned when a file has a database entry but
@@ -605,7 +607,14 @@ class TestDownloadSubtractionFile:
         )
         subtraction = await fake.subtractions.create(user=user, upload=upload)
 
-        async for obj in memory_storage.list(f"subtractions/{subtraction.id}/"):
+        async with AsyncSession(pg) as session:
+            storage_key = await session.scalar(
+                select(SQLSubtraction.storage_key).where(
+                    SQLSubtraction.id == subtraction.id,
+                ),
+            )
+
+        async for obj in memory_storage.list(subtraction_prefix(storage_key)):
             await memory_storage.delete(obj.key)
 
         bowtie_resp = await client.get(

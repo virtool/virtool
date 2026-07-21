@@ -231,7 +231,13 @@ async def test_finalize(
             )
         ).scalar_one()
 
-    assert row.to_dict() == snapshot_recent(name="pg")
+    pg_row = row.to_dict()
+
+    # A natively created subtraction gets a freshly minted 32-character UUID storage
+    # key. Its value is random, so exclude it from the snapshot and assert its shape.
+    assert len(pg_row.pop("storage_key")) == 32
+
+    assert pg_row == snapshot_recent(name="pg")
     assert row.legacy_id is None
 
 
