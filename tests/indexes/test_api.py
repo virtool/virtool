@@ -28,7 +28,6 @@ from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.indexes.utils import check_index_file_type, compose_index_file_key
 from virtool.jobs.pg import SQLJob
 from virtool.models.enums import Permission
-from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU
 from virtool.storage.protocol import StorageBackend
 from virtool.tasks.sql import SQLTask
@@ -52,7 +51,6 @@ class TestFind:
         data_layer: DataLayer,
         fake: DataFaker,
         mocker: MockerFixture,
-        mongo: Mongo,
         pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
@@ -381,7 +379,6 @@ class TestCreate:
     async def test_ok(
         self,
         mocker: MockerFixture,
-        mongo: Mongo,
         pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
@@ -399,15 +396,6 @@ class TestCreate:
         reference = await create_reference(client, name="Foo")
 
         # Insert unbuilt changes to prevent initial check failure.
-        await mongo.history.insert_one(
-            {
-                "_id": "history_1",
-                "index": {"id": "unbuilt", "version": "unbuilt"},
-                "reference": {"id": reference["id"]},
-                "user": {"id": client.user.id},
-            },
-        )
-
         async with AsyncSession(pg) as session:
             session.add(
                 SQLLegacyHistory(
@@ -471,7 +459,6 @@ class TestCreate:
 
     async def test_insufficient_rights(
         self,
-        mongo: Mongo,
         resp_is: RespIs,
         spawn_client: ClientSpawner,
     ):
@@ -576,7 +563,6 @@ async def test_find_history(
     fake: DataFaker,
     static_time,
     snapshot,
-    mongo: Mongo,
     pg: AsyncEngine,
     spawn_client: ClientSpawner,
     resp_is,
@@ -636,8 +622,6 @@ async def test_find_history(
         },
     ]
 
-    await mongo.history.insert_many(history_documents, session=None)
-
     if not error:
         async with AsyncSession(pg) as session:
             session.add_all(
@@ -664,7 +648,6 @@ async def test_find_history(
 async def test_delete_index(
     error,
     fake: DataFaker,
-    mongo: Mongo,
     spawn_job_client: JobClientSpawner,
 ):
     client = await spawn_job_client(authenticated=True)
@@ -727,7 +710,6 @@ async def test_upload(
     example_path: Path,
     fake: DataFaker,
     memory_storage: StorageBackend,
-    mongo: Mongo,
     pg: AsyncEngine,
     resp_is,
     snapshot: SnapshotAssertion,
@@ -816,7 +798,6 @@ async def test_upload(
 async def test_finalize(
     error: str | None,
     fake: DataFaker,
-    mongo: Mongo,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     spawn_job_client: JobClientSpawner,

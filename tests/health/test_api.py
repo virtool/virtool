@@ -33,7 +33,7 @@ class TestReadiness:
         assert resp.status == 200
         assert await resp.json() == {
             "ready": True,
-            "checks": {"mongodb": True, "postgres": True},
+            "checks": {"postgres": True},
         }
 
     async def test_not_ready(
@@ -50,7 +50,7 @@ class TestReadiness:
             new_callable=mocker.AsyncMock,
             return_value=Readiness(
                 ready=False,
-                checks=ReadinessChecks(mongodb=False, postgres=True),
+                checks=ReadinessChecks(postgres=False),
             ),
         )
 
@@ -59,7 +59,7 @@ class TestReadiness:
         assert resp.status == 503
         assert await resp.json() == {
             "ready": False,
-            "checks": {"mongodb": False, "postgres": True},
+            "checks": {"postgres": False},
         }
         check_readiness.assert_awaited_once()
 
@@ -83,7 +83,7 @@ class TestJobsServer:
         assert resp.status == 200
         assert await resp.json() == {
             "ready": True,
-            "checks": {"mongodb": True, "postgres": True},
+            "checks": {"postgres": True},
         }
 
 
@@ -106,5 +106,5 @@ class TestTaskRunner:
         assert resp.status == 200
         assert await resp.json() == {
             "ready": True,
-            "checks": {"mongodb": True, "postgres": True},
+            "checks": {"postgres": True},
         }

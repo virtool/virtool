@@ -21,8 +21,6 @@ from virtool.config.options import (
     dev_option,
     flags_option,
     get_from_environment,
-    mongodb_connection_string_option,
-    no_check_db_option,
     no_periodic_tasks_option,
     no_revision_check_option,
     postgres_connection_string_option,
@@ -70,8 +68,6 @@ def server() -> None:
 @cache_storage_budget_option
 @dev_option
 @flags_option
-@mongodb_connection_string_option
-@no_check_db_option
 @no_periodic_tasks_option
 @no_revision_check_option
 @postgres_connection_string_option
@@ -91,8 +87,6 @@ def start_api_server(**kwargs) -> None:
 @cache_storage_budget_option
 @dev_option
 @flags_option
-@mongodb_connection_string_option
-@no_check_db_option
 @no_periodic_tasks_option
 @no_revision_check_option
 @postgres_connection_string_option
@@ -119,7 +113,6 @@ def migration() -> None:
 
 
 @migration.command("apply")
-@mongodb_connection_string_option
 @postgres_connection_string_option
 @storage_options
 def migration_apply(**kwargs) -> None:
@@ -159,7 +152,6 @@ def tasks() -> None:
 @address_options
 @cache_storage_budget_option
 @dev_option
-@mongodb_connection_string_option
 @no_revision_check_option
 @postgres_connection_string_option
 @sentry_dsn_option

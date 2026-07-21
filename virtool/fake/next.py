@@ -30,6 +30,7 @@ from virtool.groups.oas import PermissionsUpdate, UpdateGroupRequest
 from virtool.groups.pg import SQLGroup
 from virtool.hmm.models import HMM
 from virtool.hmm.sql import SQLHMM
+from virtool.identifier import AbstractIdProvider
 from virtool.indexes.models import Index
 from virtool.indexes.sql import SQLIndex
 from virtool.indexes.tasks import CreateIndexTask
@@ -39,7 +40,6 @@ from virtool.jobs.utils import WORKFLOW_NAMES
 from virtool.labels.models import Label
 from virtool.models.enums import LibraryType, Molecule
 from virtool.models.roles import AdministratorRole
-from virtool.mongo.core import Mongo
 from virtool.otus.models import OTU, OTUSegment
 from virtool.otus.oas import CreateOTURequest
 from virtool.references.db import create_document, get_manifest, write_legacy_reference
@@ -173,14 +173,14 @@ class DataFaker:
     def __init__(
         self,
         layer: DataLayer,
-        mongo: Mongo,
         pg: AsyncEngine,
         storage: StorageBackend,
+        id_provider: AbstractIdProvider,
     ):
         self.layer = layer
-        self.mongo = mongo
         self.pg = pg
         self.storage = storage
+        self.id_provider = id_provider
 
         self.faker = Faker()
         self.faker.seed_instance(0)
@@ -207,15 +207,13 @@ class DataFaker:
         self.users = UsersFakerDomain(self)
         self.uploads = UploadsFakerDomain(self)
 
-        self.mongo = mongo
-
 
 class DataFakerDomain:
     def __init__(self, data_faker: DataFaker):
         self._data_faker = data_faker
         self._faker = data_faker.faker
         self._layer: DataLayer = data_faker.layer
-        self._mongo = data_faker.mongo
+        self._id_provider = data_faker.id_provider
         self._pg = data_faker.pg
         self._storage = data_faker.storage
 
@@ -424,7 +422,7 @@ class ReferencesFakerDomain(DataFakerDomain):
         ref_id = id_
 
         if ref_id is None and use_legacy_id:
-            ref_id = self._mongo.id_provider.get()
+            ref_id = self._id_provider.get()
 
         document = await create_document(
             settings,
@@ -487,7 +485,7 @@ class IndexesFakerDomain(DataFakerDomain):
         :param ready: whether the index is finished building
         :return: a new fake index
         """
-        index_id = self._mongo.id_provider.get()
+        index_id = self._id_provider.get()
 
         if manifest is None:
             manifest = await get_manifest(self._pg, reference.id)

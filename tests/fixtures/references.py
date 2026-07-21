@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
 from tests.fixtures.client import VirtoolTestClient
-from virtool.mongo.core import Mongo
 from virtool.references.sql import (
     SQLReference,
     SQLReferenceGroup,
@@ -14,7 +13,6 @@ from virtool.references.sql import (
 
 
 async def seed_reference(
-    mongo: Mongo,
     pg: AsyncEngine,
     legacy_id: str,
     user_id: int,
@@ -23,10 +21,7 @@ async def seed_reference(
     archived: bool = False,
     **fields,
 ) -> int:
-    """Seed a reference into Mongo and Postgres and return its primary key.
-
-    Reference reads come from Postgres, so a Mongo-only reference is invisible to the
-    data layer. Mongo fields not mirrored to Postgres may be passed as ``fields``.
+    """Seed a reference into Postgres and return its primary key.
 
     :return: the integer ``legacy_references.id`` of the seeded reference
     """
@@ -34,21 +29,6 @@ async def seed_reference(
     source_types = fields.pop("source_types", [])
     description = fields.pop("description", "")
     organism = fields.pop("organism", "")
-
-    await mongo.references.insert_one(
-        {
-            "_id": legacy_id,
-            "archived": archived,
-            "created_at": created_at,
-            "data_type": "genome",
-            "description": description,
-            "name": name,
-            "organism": organism,
-            "source_types": source_types,
-            "user": {"id": user_id},
-            **fields,
-        },
-    )
 
     async with AsyncSession(pg) as session:
         reference = SQLReference(

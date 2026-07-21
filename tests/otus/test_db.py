@@ -7,7 +7,6 @@ from virtool.api.custom_json import dump_string, loads
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.models.enums import Molecule
-from virtool.mongo.core import Mongo
 from virtool.otus.db import (
     check_name_and_abbreviation,
     check_sequence_segment,
@@ -31,6 +30,14 @@ from virtool.otus.oas import CreateOTURequest, UpdateOTURequest
 from virtool.otus.sql import SQLOTU, SQLSequence
 from virtool.otus.utils import find_isolate
 from virtool.types import Document
+
+MONGO_STORED_CREATED_AT = IMPORTED_CREATED_AT.replace(microsecond=123000)
+"""``IMPORTED_CREATED_AT`` floored to milliseconds, the precision BSON stored.
+
+Mongo could not hold microseconds, so an imported OTU's ``created_at`` came back out of a
+round trip truncated to this instant. The write path reproduces that truncation, and
+these tests assert against it rather than a live Mongo round trip.
+"""
 
 
 class TestCheckNameAndAbbreviation:
@@ -360,39 +367,37 @@ def _as_stored(values: dict) -> Document:
 class TestOTUDataRoundTrip:
     """``legacy_otus.data`` must be a faithful lift of the Mongo OTU document.
 
-    A JSONB column cannot hold a datetime and Mongo cannot hold microseconds, so an
-    imported OTU's ``created_at`` has to survive both. These tests assert against a real
-    Mongo round trip rather than a hardcoded millisecond value, so they pin the write
-    path to what Mongo actually stores.
+    A JSONB column cannot hold a datetime and Mongo could not hold microseconds, so an
+    imported OTU's ``created_at`` has to survive both. These tests assert against the
+    millisecond-truncated instant Mongo floored the timestamp to, pinning the write
+    path to that historical behaviour.
     """
 
-    async def test_stores_the_instant_mongo_stores(
+    def test_stores_the_instant_mongo_stores(
         self,
-        mongo: Mongo,
         test_imported_otu: Document,
     ):
-        """The stored ISO string is the truncated instant Mongo holds, not a finer one."""
-        await mongo.otus.insert_one(test_imported_otu)
-
-        document = await mongo.otus.find_one({"_id": test_imported_otu["_id"]})
+        """The stored ISO string is the truncated instant Mongo held, not a finer one."""
+        stored = {
+            **test_imported_otu,
+            "created_at": MONGO_STORED_CREATED_AT,
+        }
 
         assert _as_stored(otu_row_values(test_imported_otu, 1)) == loads(
-            dump_string(document),
+            dump_string(stored),
         )
 
-    async def test_recovers_the_mongo_document(
+    def test_recovers_the_mongo_document(
         self,
-        mongo: Mongo,
         test_imported_otu: Document,
     ):
-        """Reading the row back yields the document Mongo would have returned."""
-        await mongo.otus.insert_one(test_imported_otu)
-
+        """Reading the row back yields the document that was imported."""
         row = SQLOTU(data=_as_stored(otu_row_values(test_imported_otu, 1)))
 
-        assert otu_document_from_row(row) == await mongo.otus.find_one(
-            {"_id": test_imported_otu["_id"]},
-        )
+        assert otu_document_from_row(row) == {
+            **test_imported_otu,
+            "created_at": MONGO_STORED_CREATED_AT,
+        }
 
     def test_does_not_mutate_the_document(self, test_imported_otu: Document):
         """The bulk insert path hands the same dict to Mongo afterwards."""
@@ -425,21 +430,16 @@ class TestPromotedLastIndexedVersion:
 
 
 class TestSequenceDataRoundTrip:
-    async def test_recovers_the_mongo_document(
+    def test_recovers_the_mongo_document(
         self,
-        mongo: Mongo,
         test_sequence: Document,
     ):
         """Sequences hold nothing JSON cannot express, so the column returns what
         was put in it.
         """
-        await mongo.sequences.insert_one(test_sequence)
-
         row = SQLSequence(data=_as_stored(sequence_row_values(test_sequence)))
 
-        assert sequence_document_from_row(row) == await mongo.sequences.find_one(
-            {"_id": test_sequence["_id"]},
-        )
+        assert sequence_document_from_row(row) == test_sequence
 
 
 class TestJoinLegacyOTU:
@@ -632,7 +632,7 @@ class TestJoinLegacyOTU:
 
         joined = await join_legacy_otu(pg, test_imported_otu["_id"])
 
-        assert joined["created_at"] == IMPORTED_CREATED_AT.replace(microsecond=123000)
+        assert joined["created_at"] == MONGO_STORED_CREATED_AT
 
     async def test_isolate_without_sequences_gets_an_empty_list(
         self,
@@ -1048,7 +1048,7 @@ class TestIncrementLegacyOTUVersion:
             )
             await session.commit()
 
-        assert document["created_at"] == IMPORTED_CREATED_AT.replace(microsecond=123000)
+        assert document["created_at"] == MONGO_STORED_CREATED_AT
 
     async def test_leaves_other_fields_alone(
         self,

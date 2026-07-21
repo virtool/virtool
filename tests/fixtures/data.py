@@ -6,7 +6,7 @@ from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from virtool.data.layer import DataLayer, create_data_layer
-from virtool.mongo.core import Mongo
+from virtool.identifier import AbstractIdProvider
 from virtool.storage.protocol import StorageBackend
 
 
@@ -15,10 +15,10 @@ async def data_layer(
     config,
     memory_storage: StorageBackend,
     mocker: MockerFixture,
-    mongo: Mongo,
+    id_provider: AbstractIdProvider,
     pg: AsyncEngine,
 ) -> DataLayer:
-    """A complete data layer backed by testing instances of MongoDB and PostgreSQL.
+    """A complete data layer backed by a testing instance of PostgreSQL.
 
     The singleton settings row is seeded to mirror application startup, which
     always calls ``settings.ensure()`` before serving requests.
@@ -32,11 +32,11 @@ async def data_layer(
 
     """
     layer = create_data_layer(
-        mongo,
         pg,
         config,
         mocker.Mock(spec=ClientSession),
         memory_storage,
+        id_provider,
     )
 
     await layer.settings.ensure()

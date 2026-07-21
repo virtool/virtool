@@ -256,7 +256,6 @@ class TestFind:
     async def test_reconstructs_index_sentinels(
         self,
         fake: DataFaker,
-        mongo,
         pg: AsyncEngine,
     ):
         """A built change exposes its integer index id; an unbuilt change reconstructs a
@@ -264,9 +263,7 @@ class TestFind:
         """
         index_pk = await self.seed(pg, fake)
 
-        result = await virtool.history.db.find(
-            mongo, pg, 1, 25, reference_id="reference_a"
-        )
+        result = await virtool.history.db.find(pg, 1, 25, reference_id="reference_a")
 
         indexes = {
             document["id"]: document["index"] for document in result["documents"]
@@ -278,15 +275,12 @@ class TestFind:
     async def test_unfiltered_keeps_unbuilt(
         self,
         fake: DataFaker,
-        mongo,
         pg: AsyncEngine,
     ):
         """The outer join keeps unbuilt rows in the unfiltered listing."""
         await self.seed(pg, fake)
 
-        result = await virtool.history.db.find(
-            mongo, pg, 1, 25, reference_id="reference_a"
-        )
+        result = await virtool.history.db.find(pg, 1, 25, reference_id="reference_a")
 
         assert result["found_count"] == 2
         assert {document["id"] for document in result["documents"]} == {
@@ -297,13 +291,12 @@ class TestFind:
     async def test_unbuilt_true_returns_only_unbuilt(
         self,
         fake: DataFaker,
-        mongo,
         pg: AsyncEngine,
     ):
         await self.seed(pg, fake)
 
         result = await virtool.history.db.find(
-            mongo, pg, 1, 25, reference_id="reference_a", unbuilt=True
+            pg, 1, 25, reference_id="reference_a", unbuilt=True
         )
 
         assert {document["id"] for document in result["documents"]} == {"otu_a.0"}
@@ -311,13 +304,12 @@ class TestFind:
     async def test_unbuilt_false_returns_only_built(
         self,
         fake: DataFaker,
-        mongo,
         pg: AsyncEngine,
     ):
         await self.seed(pg, fake)
 
         result = await virtool.history.db.find(
-            mongo, pg, 1, 25, reference_id="reference_a", unbuilt=False
+            pg, 1, 25, reference_id="reference_a", unbuilt=False
         )
 
         assert {document["id"] for document in result["documents"]} == {"otu_a.1"}
@@ -325,7 +317,6 @@ class TestFind:
     async def test_native_index_uses_integer_pk(
         self,
         fake: DataFaker,
-        mongo,
         pg: AsyncEngine,
     ):
         """A Postgres-native index (no ``legacy_id``) exposes its integer primary key as
@@ -367,9 +358,7 @@ class TestFind:
             )
             await session.commit()
 
-        result = await virtool.history.db.find(
-            mongo, pg, 1, 25, reference_id="reference_a"
-        )
+        result = await virtool.history.db.find(pg, 1, 25, reference_id="reference_a")
 
         indexes = {
             document["id"]: document["index"] for document in result["documents"]

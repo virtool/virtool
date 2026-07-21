@@ -2,7 +2,6 @@ import asyncio
 from concurrent.futures import ProcessPoolExecutor
 
 from aiohttp import ClientSession, ClientTimeout
-from pymongo.errors import CollectionInvalid
 from structlog import get_logger
 
 from virtool.blast.task import BLASTSweepTask
@@ -12,10 +11,9 @@ from virtool.data.events import EventPublisher
 from virtool.data.layer import create_data_layer
 from virtool.data.utils import get_data_from_app
 from virtool.hmm.tasks import HMMRefreshTask
+from virtool.identifier import RandomIdProvider
 from virtool.jobs.tasks import JobsTimeoutTask
 from virtool.migration.pg import check_data_revision_version
-from virtool.mongo.connect import connect_mongo
-from virtool.mongo.utils import get_mongo_from_app
 from virtool.pg.utils import connect_pg
 from virtool.routes import setup_routes
 from virtool.sentry import configure_sentry
@@ -30,61 +28,34 @@ from virtool.version import determine_server_version, get_version_from_app
 logger = get_logger("startup")
 
 
-async def startup_check_db(app: App):
-    if get_config_from_app(app).no_check_db:
-        return logger.info("skipping database checks")
-
-    mongo = get_mongo_from_app(app)
-
-    logger.info("checking database")
-
-    # Make sure the indexes collection exists before later trying to set an compound
-    # index on it.
-    try:
-        await mongo.motor_database.create_collection("indexes")
-    except CollectionInvalid:
-        pass
-
-
 async def startup_data(app: App) -> None:
     """Create the application data layer object.
 
     :param app: the application object
     """
     app["data"] = create_data_layer(
-        get_mongo_from_app(app),
         app["pg"],
         get_config_from_app(app),
         get_http_session_from_app(app),
         app["storage"],
+        RandomIdProvider(),
     )
 
 
 async def startup_databases(app: App) -> None:
-    """Connect to MongoDB and Postgres concurrently.
+    """Connect to Postgres.
 
     :param app: the app object
 
     """
     config = get_config_from_app(app)
 
-    mongo, pg = await asyncio.gather(
-        connect_mongo(
-            config.mongodb_connection_string,
-            config.mongodb_database,
-        ),
-        connect_pg(config.pg_options),
-    )
+    pg = await connect_pg(config.pg_options)
 
-    if not get_config_from_app(app).no_revision_check:
+    if not config.no_revision_check:
         await check_data_revision_version(pg)
 
-    app.update(
-        {
-            "mongo": mongo,
-            "pg": pg,
-        },
-    )
+    app["pg"] = pg
 
 
 async def startup_events(app: App) -> None:

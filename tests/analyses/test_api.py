@@ -17,7 +17,6 @@ from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.jobs.models import Job, JobState
 from virtool.models.enums import Permission
-from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.samples.models import Sample
 from virtool.users.models import User
@@ -71,7 +70,6 @@ def get_handle(example_path: Path):
 async def test_find(
     data_layer: DataLayer,
     fake: DataFaker,
-    mongo: Mongo,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
     spawn_client: ClientSpawner,
@@ -147,7 +145,7 @@ async def test_find(
             "foobar": False,
         },
     ]:
-        await seed_analysis(mongo, pg, document)
+        await seed_analysis(pg, document)
 
     resp = await client.get("/analyses")
 
@@ -213,7 +211,6 @@ class TestGet:
 
     async def _seed_analysis(
         self,
-        mongo: Mongo,
         pg: AsyncEngine,
         static_time: StaticTime,
         legacy_id: str = "foobar",
@@ -223,7 +220,6 @@ class TestGet:
     ) -> int:
         """Seed a ready pathoscope analysis of the sample and return its integer id."""
         return await seed_analysis(
-            mongo,
             pg,
             {
                 "_id": legacy_id,
@@ -244,14 +240,13 @@ class TestGet:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         static_time: StaticTime,
     ):
         await self._create_sample(data_layer, fake)
 
-        analysis_id = await self._seed_analysis(mongo, pg, static_time)
+        analysis_id = await self._seed_analysis(pg, static_time)
 
         await create_analysis_file(pg, analysis_id, "fasta", "reference.fa")
 
@@ -264,14 +259,13 @@ class TestGet:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         resp_is: RespIs,
         static_time: StaticTime,
     ):
         """A user who cannot read the parent sample cannot read its analyses."""
         await self._create_sample(data_layer, fake, all_read=False)
-        await self._seed_analysis(mongo, pg, static_time)
+        await self._seed_analysis(pg, static_time)
 
         resp = await self.client.get("/analyses/foobar")
 
@@ -291,14 +285,12 @@ class TestGet:
 
     async def test_sample_not_found(
         self,
-        mongo: Mongo,
         pg: AsyncEngine,
         resp_is: RespIs,
         static_time: StaticTime,
     ):
         """An analysis whose parent sample is gone is not readable."""
         await self._seed_analysis(
-            mongo,
             pg,
             static_time,
             sample_id=MISSING_SAMPLE_ID,
@@ -312,7 +304,6 @@ class TestGet:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         static_time: StaticTime,
     ):
@@ -322,7 +313,6 @@ class TestGet:
         await self._create_sample(data_layer, fake)
 
         analysis_id = await self._seed_analysis(
-            mongo,
             pg,
             static_time,
             legacy_id="legacy_slug",
@@ -337,7 +327,6 @@ class TestGet:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         static_time: StaticTime,
     ):
@@ -353,7 +342,7 @@ class TestGet:
 
         await self._create_sample(data_layer, fake)
 
-        analysis_id = await self._seed_analysis(mongo, pg, static_time)
+        analysis_id = await self._seed_analysis(pg, static_time)
 
         await create_analysis_file(pg, analysis_id, "fasta", "reference.fa")
 
@@ -372,14 +361,13 @@ class TestGet:
         ready: bool,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         static_time: StaticTime,
     ):
         """An analysis unmodified since the request date returns ``304``."""
         await self._create_sample(data_layer, fake)
 
-        analysis_id = await self._seed_analysis(mongo, pg, static_time, ready=ready)
+        analysis_id = await self._seed_analysis(pg, static_time, ready=ready)
 
         await create_analysis_file(pg, analysis_id, "fasta", "reference.fa")
 
@@ -396,7 +384,6 @@ async def test_remove(
     error: str | None,
     data_layer: DataLayer,
     fake: DataFaker,
-    mongo: Mongo,
     pg: AsyncEngine,
     resp_is,
     spawn_client: ClientSpawner,
@@ -432,7 +419,6 @@ async def test_remove(
 
     if error != "404_analysis":
         await seed_analysis(
-            mongo,
             pg,
             {
                 "_id": "foobar",
@@ -470,7 +456,6 @@ async def test_upload_file(
     error: str | None,
     fake: DataFaker,
     get_handle,
-    mongo: Mongo,
     pg: AsyncEngine,
     resp_is,
     snapshot: SnapshotAssertion,
@@ -487,7 +472,6 @@ async def test_upload_file(
     if error != 404:
         user = await fake.users.create()
         await seed_analysis(
-            mongo,
             pg,
             {
                 "_id": "foobar",
@@ -552,7 +536,6 @@ class TestDownloadAnalysisResult:
         example_path: Path,
         fake: DataFaker,
         get_handle,
-        mongo: Mongo,
         pg: AsyncEngine,
         spawn_client: ClientSpawner,
         spawn_job_client: JobClientSpawner,
@@ -566,7 +549,6 @@ class TestDownloadAnalysisResult:
 
         user = await fake.users.create()
         await seed_analysis(
-            mongo,
             pg,
             {
                 "_id": "foobar",
@@ -598,14 +580,29 @@ class TestDownloadAnalysisResult:
 
     async def test_not_found(
         self,
-        mongo: Mongo,
+        fake: DataFaker,
+        pg: AsyncEngine,
         spawn_client: ClientSpawner,
+        static_time: StaticTime,
     ):
         """Test that a 404 response is returned when the requested file does not exist."""
         client = await spawn_client(administrator=True, authenticated=True)
 
-        await mongo.analyses.insert_one(
-            {"_id": "foobar", "ready": True, "job": {"id": "hello"}},
+        user = await fake.users.create()
+        await seed_analysis(
+            pg,
+            {
+                "_id": "foobar",
+                "created_at": static_time.datetime,
+                "index": {"id": "bar", "version": 1},
+                "job": {"id": "hello"},
+                "ready": True,
+                "reference": {"id": "baz"},
+                "sample": {"id": "baz"},
+                "subtractions": [],
+                "user": {"id": user.id},
+                "workflow": "pathoscope",
+            },
         )
 
         resp = await client.get("/analyses/foobar/files/2")
@@ -630,7 +627,6 @@ async def test_blast(
     error,
     data_layer: DataLayer,
     fake: DataFaker,
-    mongo: Mongo,
     pg: AsyncEngine,
     spawn_client: ClientSpawner,
     resp_is,
@@ -689,7 +685,7 @@ async def test_blast(
         elif error == "409_ready":
             analysis_document["ready"] = False
 
-        await seed_analysis(mongo, pg, analysis_document)
+        await seed_analysis(pg, analysis_document)
 
     await client.put("/analyses/foobar/5/blast", {})
 
@@ -730,7 +726,6 @@ class TestFinalize:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         static_time: StaticTime,
     ):
@@ -747,7 +742,6 @@ class TestFinalize:
         )
 
         await seed_analysis(
-            mongo,
             pg,
             {
                 "_id": "analysis1",
@@ -804,7 +798,6 @@ class TestFinalize:
     async def test_missing_results(
         self,
         fake: DataFaker,
-        mongo: Mongo,
         spawn_job_client: JobClientSpawner,
         static_time: StaticTime,
     ):
@@ -817,7 +810,6 @@ class TestFinalize:
     async def test_already_ready(
         self,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         spawn_job_client: JobClientSpawner,
         static_time: StaticTime,
@@ -825,16 +817,6 @@ class TestFinalize:
         client = await spawn_job_client(authenticated=True)
 
         # Finalize the analysis to trigger the error.
-        await mongo.analyses.update_one(
-            {"_id": "analysis1"},
-            {
-                "$set": {
-                    "ready": True,
-                    "results": {"result": "TEST_RESULT", "hits": []},
-                },
-            },
-        )
-
         async with AsyncSession(pg) as session:
             await session.execute(
                 update(SQLAnalysis)

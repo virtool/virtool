@@ -36,7 +36,6 @@ dependencies = [
   "dictdiffer>=0.10.0,<1.0.0",
   "email-validator<3.0.0,>=2.0.0",
   "faker>=40.31.0",
-  "motor<4.0.0,>=3.7.1",
   "openpyxl<4.0.0,>=3.1.5",
   "orjson>=3.11.9,<4.0.0",
   "pydantic>=1.10.16,<2",
@@ -63,7 +62,7 @@ virtool = "virtool.workflow.pytest_plugin"
 asyncio_mode = "auto"
 
 # Session-scoped event loops required for session-scoped async database connections.
-# Async database drivers (asyncpg, motor) create connection pools bound to the event
+# Async database drivers (asyncpg) create connection pools bound to the event
 # loop they're created in and cannot be used across different loops.
 asyncio_default_fixture_loop_scope = "session"
 asyncio_default_test_loop_scope = "session"

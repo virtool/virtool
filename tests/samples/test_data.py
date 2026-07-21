@@ -15,7 +15,6 @@ from virtool.data.transforms import apply_transforms
 from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.models.enums import AnalysisWorkflow, Permission
 from virtool.models.roles import AdministratorRole
-from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row, get_row_by_id
 from virtool.samples.data import SamplesData
 from virtool.samples.db import AttachUploadsTransform
@@ -1106,7 +1105,6 @@ class TestDelete:
     async def _setup(
         self,
         fake: DataFaker,
-        mongo: Mongo,
     ) -> tuple[Sample, int, str]:
         """Create a finalized sample and a reference with a ready index to analyse it
         against.
@@ -1124,11 +1122,10 @@ class TestDelete:
         data_layer: DataLayer,
         fake: DataFaker,
         memory_storage: StorageBackend,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
         """Deleting a sample removes its analyses' Postgres rows."""
-        sample, user_id, ref_id = await self._setup(fake, mongo)
+        sample, user_id, ref_id = await self._setup(fake)
 
         analysis = await data_layer.analyses.create(
             CreateAnalysisRequest(

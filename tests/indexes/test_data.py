@@ -12,7 +12,6 @@ from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.indexes.utils import compose_index_file_key
-from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU
 
 
@@ -53,7 +52,6 @@ async def add_index_files(pg: AsyncEngine, index_id: int) -> None:
 async def test_finalize(
     data_layer: DataLayer,
     fake: DataFaker,
-    mongo: Mongo,
     pg: AsyncEngine,
     snapshot,
 ):
@@ -134,7 +132,6 @@ class TestDelete:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         static_time,
     ):
@@ -235,7 +232,6 @@ class TestDelete:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
         """Deleting a non-ready index removes its ``index_files`` rows.
@@ -271,7 +267,6 @@ class TestDelete:
         self,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
     ):
         """A ready index cannot be deleted; the index row is left intact."""

@@ -7,7 +7,6 @@ from syrupy import SnapshotAssertion
 
 from tests.fixtures.client import ClientSpawner
 from tests.fixtures.snapshot_date import validate_time
-from virtool.mongo.core import Mongo
 
 
 def test_time_not_recent_iso_string(snapshot_recent: SnapshotAssertion):
@@ -58,12 +57,10 @@ def test_nested_timestamps(snapshot_recent):
 
 
 async def test_data_and_client_databases(
-    mongo: Mongo,
     pg: AsyncEngine,
     spawn_client: ClientSpawner,
 ):
     """Test that data layer, database, and client fixtures refer to the same clients."""
     client = await spawn_client()
 
-    assert mongo is client.app["mongo"]
     assert pg is client.app["pg"]

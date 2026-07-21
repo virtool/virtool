@@ -19,7 +19,6 @@ from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.sql import SQLIndex
 from virtool.jobs.pg import SQLJob
 from virtool.models.enums import Permission
-from virtool.mongo.core import Mongo
 from virtool.otus.oas import (
     CreateOTURequest,
 )
@@ -81,14 +80,12 @@ async def seed_pg_reference(
         await session.commit()
 
 
-async def insert_reference(mongo: Mongo, pg: AsyncEngine, document: dict) -> None:
-    """Insert a reference into Mongo and mirror it (row and rights) into Postgres.
+async def insert_reference(pg: AsyncEngine, document: dict) -> None:
+    """Insert a reference row (and rights) into Postgres.
 
     Requires a full reference ``document`` (with ``created_at``, ``description`` and
     ``organism``) whose members are real integer user and group ids.
     """
-    await mongo.references.insert_one(document)
-
     async with AsyncSession(pg) as pg_session:
         await write_legacy_reference(pg_session, document)
         await pg_session.commit()
@@ -121,7 +118,6 @@ async def test_find(
     fake: DataFaker,
     pg: AsyncEngine,
     snapshot,
-    mongo: Mongo,
     spawn_client: ClientSpawner,
     static_time,
 ):
@@ -249,7 +245,7 @@ async def test_find(
             "user": {"id": user.id},
         },
     ]:
-        await insert_reference(mongo, pg, document)
+        await insert_reference(pg, document)
 
     url = "/references/v1"
     if archived is not None:
@@ -323,7 +319,6 @@ class TestGet:
     async def test_ok(
         self,
         data_layer: DataLayer,
-        mongo: Mongo,
         spawn_client,
         pg,
         snapshot,
@@ -430,7 +425,6 @@ class TestCreate:
     async def test_clone(
         self,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         spawn_client: ClientSpawner,
         snapshot: SnapshotAssertion,
@@ -445,7 +439,6 @@ class TestCreate:
         user_2 = await fake.users.create()
 
         await insert_reference(
-            mongo,
             pg,
             {
                 "_id": "foo",
@@ -490,7 +483,6 @@ class TestEdit:
     @staticmethod
     async def _insert_reference(
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         static_time,
     ) -> None:
@@ -499,7 +491,6 @@ class TestEdit:
         user_3 = await fake.users.create()
 
         await insert_reference(
-            mongo,
             pg,
             {
                 "_id": "foo",
@@ -536,7 +527,6 @@ class TestEdit:
         self,
         fake: DataFaker,
         snapshot,
-        mongo: Mongo,
         pg: AsyncEngine,
         spawn_client: ClientSpawner,
         static_time,
@@ -544,7 +534,7 @@ class TestEdit:
         """An administrator edits a reference they do not own."""
         client = await spawn_client(authenticated=True, administrator=True)
 
-        await self._insert_reference(fake, mongo, pg, static_time)
+        await self._insert_reference(fake, pg, static_time)
 
         resp = await client.patch(
             "/references/v1/foo",
@@ -557,7 +547,6 @@ class TestEdit:
         self,
         fake: DataFaker,
         resp_is,
-        mongo: Mongo,
         pg: AsyncEngine,
         spawn_client: ClientSpawner,
         static_time,
@@ -565,7 +554,7 @@ class TestEdit:
         """A user with no rights on the reference cannot edit it."""
         client = await spawn_client(authenticated=True)
 
-        await self._insert_reference(fake, mongo, pg, static_time)
+        await self._insert_reference(fake, pg, static_time)
 
         resp = await client.patch(
             "/references/v1/foo",
@@ -776,7 +765,6 @@ class TestCreateOTU:
         abbreviation: str | None,
         error: str | None,
         data_layer: DataLayer,
-        mongo: Mongo,
         pg: AsyncEngine,
         resp_is: RespIs,
         snapshot: SnapshotAssertion,
@@ -799,24 +787,6 @@ class TestCreateOTU:
                 static_time.datetime,
                 name="Foo",
                 users=[] if error == "403" else [(client.user.id, FULL_RIGHTS)],
-            )
-            await mongo.references.insert_one(
-                {
-                    "_id": "foo",
-                    "name": "Foo",
-                    "data_type": "genome",
-                    "groups": [],
-                    "user": {"id": client.user.id},
-                    "users": [
-                        {
-                            "id": "bob" if error == "403" else client.user.id,
-                            "build": True,
-                            "created_at": static_time.datetime,
-                            "modify": True,
-                            "modify_otu": True,
-                        },
-                    ],
-                },
             )
 
         data = {"name": "Tobacco mosaic virus"}
@@ -865,7 +835,6 @@ class TestCreateOTU:
         message: str | None,
         mocker,
         resp_is,
-        mongo: Mongo,
         pg: AsyncEngine,
         spawn_client: ClientSpawner,
         static_time,
@@ -888,23 +857,6 @@ class TestCreateOTU:
                 client.user.id,
                 static_time.datetime,
                 users=[(client.user.id, FULL_RIGHTS)],
-            )
-            await mongo.references.insert_one(
-                {
-                    "_id": "foo",
-                    "name": "Foo",
-                    "data_type": "genome",
-                    "groups": [],
-                    "users": [
-                        {
-                            "id": client.user.id,
-                            "build": True,
-                            "created_at": static_time.datetime,
-                            "modify": True,
-                            "modify_otu": True,
-                        },
-                    ],
-                },
             )
 
         resp = await client.post(
@@ -931,7 +883,6 @@ class TestCreateIndex:
     async def test_ok(
         self,
         mocker,
-        mongo: Mongo,
         pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         spawn_client: ClientSpawner,
@@ -949,15 +900,6 @@ class TestCreateIndex:
         reference = await create_reference(client, name="Foo")
 
         # Insert unbuilt changes to prevent initial check failure.
-        await mongo.history.insert_one(
-            {
-                "_id": "history_1",
-                "index": {"id": "unbuilt", "version": "unbuilt"},
-                "reference": {"id": reference["id"]},
-                "user": {"id": client.user.id},
-            },
-        )
-
         async with AsyncSession(pg) as session:
             session.add(
                 SQLLegacyHistory(
@@ -1020,7 +962,6 @@ class TestCreateIndex:
 
     async def test_insufficient_rights(
         self,
-        mongo: Mongo,
         resp_is,
         spawn_client: ClientSpawner,
     ):
@@ -1049,7 +990,6 @@ async def test_create_user(
     fake: DataFaker,
     resp_is,
     snapshot: SnapshotAssertion,
-    mongo: Mongo,
     pg: AsyncEngine,
     spawn_client: ClientSpawner,
     static_time,
@@ -1105,7 +1045,7 @@ async def test_create_user(
 
     # Don't insert the ref document if we want to trigger a 404.
     if error != "404":
-        await insert_reference(mongo, pg, document)
+        await insert_reference(pg, document)
 
     resp = await client.post(
         "/references/v1/foo/users",
@@ -1130,7 +1070,6 @@ async def test_create_group(
     fake: DataFaker,
     resp_is,
     snapshot: SnapshotAssertion,
-    mongo: Mongo,
     pg: AsyncEngine,
     spawn_client: ClientSpawner,
     static_time,
@@ -1149,7 +1088,6 @@ async def test_create_group(
 
     if error != "404":
         await insert_reference(
-            mongo,
             pg,
             {
                 "_id": "foo",
@@ -1197,18 +1135,15 @@ class TestUpdateUser:
     async def setup(
         self,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         spawn_client: ClientSpawner,
         static_time,
     ) -> None:
         self.client = await spawn_client(authenticated=True)
         self.user = await fake.users.create()
-        self.mongo = mongo
         self.static_time = static_time
 
         await insert_reference(
-            mongo,
             pg,
             {
                 "_id": "foo",
@@ -1276,7 +1211,6 @@ async def test_update_group(
     fake: DataFaker,
     resp_is,
     snapshot,
-    mongo: Mongo,
     pg: AsyncEngine,
     spawn_client: ClientSpawner,
     static_time,
@@ -1287,7 +1221,6 @@ async def test_update_group(
 
     if error != "404_ref":
         await insert_reference(
-            mongo,
             pg,
             {
                 "_id": "foo",
@@ -1339,17 +1272,14 @@ class TestDeleteUser:
     async def setup(
         self,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         spawn_client: ClientSpawner,
         static_time,
     ) -> None:
         self.client = await spawn_client(authenticated=True)
         self.user = await fake.users.create()
-        self.mongo = mongo
         self.static_time = static_time
         await insert_reference(
-            mongo,
             pg,
             {
                 "_id": "foo",
@@ -1402,7 +1332,6 @@ async def test_delete_group(
     error: str | None,
     fake: DataFaker,
     resp_is,
-    mongo: Mongo,
     pg: AsyncEngine,
     spawn_client: ClientSpawner,
     static_time,
@@ -1413,7 +1342,6 @@ async def test_delete_group(
 
     if error != "404_ref":
         await insert_reference(
-            mongo,
             pg,
             {
                 "_id": "foo",
@@ -1466,7 +1394,6 @@ async def test_find_otus(
     insert_otu,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
-    mongo: Mongo,
     spawn_client: ClientSpawner,
 ):
     """Test to check that the api returns the correct OTUs based on how the results are
@@ -1491,10 +1418,6 @@ async def test_find_otus(
         reference_id = reference.id
 
         await session.commit()
-
-    await mongo.references.insert_one(
-        {"_id": "foo", "name": "Foo", "data_type": "genome"},
-    )
 
     await insert_otu(
         {

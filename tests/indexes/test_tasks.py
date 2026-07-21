@@ -15,7 +15,6 @@ from virtool.indexes.db import REFERENCE_JSON_V2_FILE_NAME
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.indexes.tasks import CreateIndexTask
 from virtool.indexes.utils import compose_index_file_key
-from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU
 from virtool.storage.protocol import StorageBackend
 from virtool.tasks.sql import SQLTask
@@ -31,14 +30,12 @@ class TestCreateIndexTask:
         data_layer: DataLayer,
         fake: DataFaker,
         memory_storage: StorageBackend,
-        mongo: Mongo,
         pg: AsyncEngine,
         static_time: StaticTime,
     ) -> None:
         self._fake = fake
         self.data_layer = data_layer
         self.memory_storage = memory_storage
-        self.mongo = mongo
         self.pg = pg
         self.static_time = static_time
         self.user = await fake.users.create()

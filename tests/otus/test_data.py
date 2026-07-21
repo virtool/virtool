@@ -14,8 +14,8 @@ from syrupy import SnapshotAssertion
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
+from virtool.identifier import AbstractIdProvider
 from virtool.models.enums import Molecule
-from virtool.mongo.core import Mongo
 from virtool.otus.models import OTUSegment
 from virtool.otus.oas import (
     CreateOTURequest,
@@ -543,7 +543,7 @@ class TestGeneratedIdCollision:
         data_layer: DataLayer,
         fake: DataFaker,
         mocker,
-        mongo: Mongo,
+        id_provider: AbstractIdProvider,
     ):
         user = await fake.users.create()
         reference = await fake.references.create(user=user)
@@ -555,7 +555,7 @@ class TestGeneratedIdCollision:
         )
 
         mocker.patch.object(
-            mongo.id_provider,
+            id_provider,
             "get",
             side_effect=[taken.id, "freshotu"],
         )
@@ -576,7 +576,7 @@ class TestGeneratedIdCollision:
         data_layer: DataLayer,
         fake: DataFaker,
         mocker,
-        mongo: Mongo,
+        id_provider: AbstractIdProvider,
     ):
         user = await fake.users.create()
         reference = await fake.references.create(user=user)
@@ -599,7 +599,7 @@ class TestGeneratedIdCollision:
         )
 
         mocker.patch.object(
-            mongo.id_provider,
+            id_provider,
             "get",
             side_effect=[taken.id, "freshseq"],
         )
@@ -622,6 +622,40 @@ class TestGeneratedIdCollision:
         assert (
             await data_layer.otus.get_sequence(otu.id, isolate.id, "freshseq")
         ).sequence == "TTTTTTTTTT"
+
+    async def test_add_isolate_skips_taken_isolate_id(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        mocker,
+        id_provider: AbstractIdProvider,
+    ):
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+
+        otu = await data_layer.otus.create(
+            reference.id,
+            CreateOTURequest(name="Example"),
+            user.id,
+        )
+
+        taken = await data_layer.otus.add_isolate(otu.id, "isolate", "A", user.id)
+
+        mocker.patch.object(
+            id_provider,
+            "get",
+            side_effect=[taken.id, "freshiso"],
+        )
+
+        created = await data_layer.otus.add_isolate(otu.id, "isolate", "B", user.id)
+
+        assert created.id == "freshiso"
+
+        # Both isolates coexist; the colliding id was not reused.
+        isolate_ids = {
+            isolate["id"] for isolate in await data_layer.otus.list_isolates(otu.id)
+        }
+        assert isolate_ids == {taken.id, "freshiso"}
 
 
 class TestSequenceWrite:

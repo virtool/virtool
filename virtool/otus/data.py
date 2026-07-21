@@ -23,8 +23,8 @@ from virtool.history.utils import (
     compose_edit_description,
     compose_remove_description,
 )
+from virtool.identifier import AbstractIdProvider
 from virtool.models.enums import HistoryMethod
-from virtool.mongo.core import Mongo
 from virtool.otus.db import (
     delete_legacy_isolate_sequences,
     delete_legacy_otu,
@@ -75,9 +75,9 @@ class OTUData:
 
     name = "otus"
 
-    def __init__(self, mongo: Mongo, pg: AsyncEngine) -> None:
-        self._mongo = mongo
+    def __init__(self, pg: AsyncEngine, id_provider: AbstractIdProvider) -> None:
         self._pg = pg
+        self._id_provider = id_provider
 
     async def _generate_id(
         self,
@@ -101,7 +101,7 @@ class OTUData:
         index raised on the same race before it left the write path.
         """
         while True:
-            id_ = self._mongo.id_provider.get()
+            id_ = self._id_provider.get()
 
             if not await taken(pg_session, id_):
                 return id_
@@ -542,7 +542,7 @@ class OTUData:
             existing_isolate_ids = {i["id"] for i in isolates}
 
             while True:
-                new_isolate_id = self._mongo.id_provider.get()
+                new_isolate_id = self._id_provider.get()
 
                 if new_isolate_id not in existing_isolate_ids:
                     break

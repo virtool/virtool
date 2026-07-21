@@ -12,10 +12,10 @@ from virtool.groups.data import GroupsData
 from virtool.health.data import HealthData
 from virtool.history.data import HistoryData
 from virtool.hmm.data import HmmsData
+from virtool.identifier import AbstractIdProvider
 from virtool.indexes.data import IndexData
 from virtool.jobs.data import JobsData
 from virtool.labels.data import LabelsData
-from virtool.mongo.core import Mongo
 from virtool.otus.data import OTUData
 from virtool.references.data import ReferencesData
 from virtool.samples.data import SamplesData
@@ -65,19 +65,19 @@ class DataLayer:
 
 
 def create_data_layer(
-    mongo: "Mongo",
     pg: AsyncEngine,
     config: Config,
     client: ClientSession,
     storage: StorageBackend,
+    id_provider: AbstractIdProvider,
 ) -> DataLayer:
     """Create and return a data layer object.
 
-    :param mongo: the MongoDB client
     :param pg: the Postgres client
     :param config: the application config object
     :param client: an async HTTP client session for the server
     :param storage: the storage backend for file operations
+    :param id_provider: the provider of legacy string ids for new resources
     :return: the application data layer
     """
     return DataLayer(
@@ -86,15 +86,15 @@ def create_data_layer(
         BLASTData(client, pg),
         CachesData(pg, storage, config.cache_storage_budget),
         GroupsData(pg),
-        HealthData(mongo, pg),
-        HistoryData(mongo, pg),
+        HealthData(pg),
+        HistoryData(pg),
         HmmsData(client, pg, storage),
-        IndexData(mongo, config, pg, storage),
+        IndexData(config, pg, storage),
         JobsData(pg),
         LabelsData(pg),
-        OTUData(mongo, pg),
-        ReferencesData(mongo, pg, config, client, storage),
-        SamplesData(config, mongo, pg, storage),
+        OTUData(pg, id_provider),
+        ReferencesData(pg, config, client, storage),
+        SamplesData(config, pg, storage),
         SubtractionsData(config.base_url, pg, storage),
         SessionData(pg),
         SettingsData(pg),

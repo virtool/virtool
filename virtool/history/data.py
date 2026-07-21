@@ -10,7 +10,6 @@ from virtool.history.models import History, HistoryMinimal, HistorySearchResult
 from virtool.history.sql import SQLLegacyHistory
 from virtool.history.transforms import AttachDiffTransform
 from virtool.indexes.sql import SQLIndex
-from virtool.mongo.core import Mongo
 from virtool.otus.sql import SQLOTU
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.users.pg import SQLUser
@@ -19,8 +18,7 @@ from virtool.users.pg import SQLUser
 class HistoryData:
     name = "history"
 
-    def __init__(self, mongo: Mongo, pg: AsyncEngine):
-        self._mongo = mongo
+    def __init__(self, pg: AsyncEngine):
         self._pg = pg
 
     async def find(self, page: int, per_page: int) -> HistorySearchResult:
@@ -30,7 +28,7 @@ class HistoryData:
         :param per_page: the number of documents to return per page
         :return: a list of all documents
         """
-        documents = await virtool.history.db.find(self._mongo, self._pg, page, per_page)
+        documents = await virtool.history.db.find(self._pg, page, per_page)
 
         return HistorySearchResult(**documents)
 

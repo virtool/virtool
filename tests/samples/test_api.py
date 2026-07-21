@@ -21,7 +21,6 @@ from virtool.indexes.sql import SQLIndex
 from virtool.jobs.models import CreateJobClaimRequest, JobState, Workflow
 from virtool.jobs.pg import SQLJob
 from virtool.models.enums import LibraryType, Permission
-from virtool.mongo.core import Mongo
 from virtool.pg.utils import get_row_by_id
 from virtool.references.models import Reference
 from virtool.samples.models import Sample
@@ -1234,7 +1233,6 @@ class TestAnalyze:
         self,
         analyze_client: VirtoolTestClient,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         snapshot: SnapshotAssertion,
         static_time,
@@ -1270,7 +1268,6 @@ class TestAnalyze:
         analyze_client: VirtoolTestClient,
         data_layer: DataLayer,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         resp_is,
         static_time,
@@ -1289,7 +1286,6 @@ class TestAnalyze:
         self,
         analyze_client: VirtoolTestClient,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         resp_is,
         static_time,
@@ -1306,7 +1302,6 @@ class TestAnalyze:
         self,
         analyze_client: VirtoolTestClient,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         resp_is,
         static_time,
@@ -1324,7 +1319,6 @@ class TestAnalyze:
         self,
         analyze_client: VirtoolTestClient,
         fake: DataFaker,
-        mongo: Mongo,
         resp_is,
         static_time,
     ):
@@ -1340,7 +1334,6 @@ class TestAnalyze:
         self,
         analyze_client: VirtoolTestClient,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         resp_is,
         static_time,
@@ -1357,7 +1350,6 @@ class TestAnalyze:
         self,
         analyze_client: VirtoolTestClient,
         fake: DataFaker,
-        mongo: Mongo,
         pg: AsyncEngine,
         static_time,
     ):

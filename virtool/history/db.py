@@ -5,7 +5,6 @@ from collections import defaultdict
 from collections.abc import Collection
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 import dictdiffer
 from sqlalchemy import Integer, and_, cast, func, or_, select
@@ -32,9 +31,6 @@ from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
 from virtool.users.pg import SQLUser
-
-if TYPE_CHECKING:
-    from virtool.mongo.core import Mongo
 
 _HISTORY_DIFF_CHUNK_SIZE = 32767 // 3
 """Max ``legacy_history_diff`` rows per statement.
@@ -376,7 +372,6 @@ def legacy_history_document(
 
 
 async def find(
-    mongo: "Mongo",
     pg: AsyncEngine,
     page: int,
     per_page: int,
@@ -390,7 +385,6 @@ async def find(
     and the ``total_count``; ``unbuilt`` is a tri-state search filter on whether the
     change is included in a built index (``index`` is ``NULL`` when unbuilt).
 
-    :param mongo: the application database client, used to attach reference data
     :param pg: the application PostgreSQL database object
     :param page: the one-indexed page number to return
     :param per_page: the number of documents to return per page
@@ -457,7 +451,6 @@ async def find(
 
 
 async def find_by_index(
-    mongo: "Mongo",
     pg: AsyncEngine,
     index_id: int,
     page: int,
@@ -477,7 +470,6 @@ async def find_by_index(
     ``total_count`` reflects every change in the table, mirroring the unscoped
     ``base_query`` the previous Mongo implementation passed to ``paginate``.
 
-    :param mongo: the application database client, used to attach reference data
     :param pg: the application PostgreSQL database object
     :param index_id: restrict changes to a single index build
     :param page: the one-indexed page number to return

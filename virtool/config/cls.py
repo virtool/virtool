@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel
-from pymongo.uri_parser import parse_uri
 
 from virtool.flags import FlagName
 from virtool.pg.utils import PgOptions
@@ -72,7 +71,6 @@ def _validate_storage_backend(
 class MigrationConfig:
     """Configuration for the migration service."""
 
-    mongodb_connection_string: str
     postgres_connection_string: str
     storage_backend: StorageBackendName
     storage_s3_bucket: str = ""
@@ -84,15 +82,6 @@ class MigrationConfig:
     storage_azure_container: str = ""
     storage_azure_access_key: str = ""
     storage_azure_endpoint: str = ""
-
-    @property
-    def mongodb_name(self) -> str:
-        """Get the name of the MongoDB database.
-
-        :return: the database name
-
-        """
-        return parse_uri(self.mongodb_connection_string)["database"]
 
     @property
     def pg_options(self):
@@ -108,8 +97,6 @@ class ServerConfig:
     dev: bool
     flags: list[FlagName]
     host: str
-    mongodb_connection_string: str
-    no_check_db: bool
     no_periodic_tasks: bool
     no_revision_check: bool
     port: int
@@ -129,10 +116,6 @@ class ServerConfig:
     storage_azure_endpoint: str = ""
 
     @property
-    def mongodb_database(self) -> str:
-        return parse_uri(self.mongodb_connection_string)["database"]
-
-    @property
     def pg_options(self) -> PgOptions:
         return PgOptions.from_connection_string(self.postgres_connection_string)
 
@@ -148,7 +131,6 @@ class TaskRunnerConfig:
 
     base_url: str
     host: str
-    mongodb_connection_string: str
     no_revision_check: bool
     port: int
     postgres_connection_string: str
@@ -164,10 +146,6 @@ class TaskRunnerConfig:
     storage_azure_container: str = ""
     storage_azure_access_key: str = ""
     storage_azure_endpoint: str = ""
-
-    @property
-    def mongodb_database(self) -> str:
-        return parse_uri(self.mongodb_connection_string)["database"]
 
     @property
     def pg_options(self) -> PgOptions:
