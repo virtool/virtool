@@ -890,5 +890,12 @@
       'name': 'drop legacy_history index_version',
       'revision': 'c976a55c3382',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 128,
+      'name': 'add storage_key to samples and subtractions',
+      'revision': '5b86749d13eb',
+    }),
   ])
 # ---
