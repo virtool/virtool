@@ -261,13 +261,21 @@ async def find(
             )
         order_by = [SQLIndex.created_at.desc(), SQLIndex.id.desc()]
 
+    # ``search_filters`` is always ``base_filters`` plus, at most, the archived
+    # constraint, so the found count is a filtered aggregate over the same scan the
+    # total count reads. Computing both in one query removes a duplicate round-trip.
+    found_count_column = (
+        func.count().filter(*search_filters) if search_filters else func.count()
+    )
+
     async with AsyncSession(pg) as session:
-        total_count = await session.scalar(
-            select(func.count()).select_from(SQLIndex).where(*base_filters),
-        )
-        found_count = await session.scalar(
-            select(func.count()).select_from(SQLIndex).where(*search_filters),
-        )
+        total_count, found_count = (
+            await session.execute(
+                select(func.count(), found_count_column)
+                .select_from(SQLIndex)
+                .where(*base_filters),
+            )
+        ).one()
         rows = (
             (
                 await session.execute(

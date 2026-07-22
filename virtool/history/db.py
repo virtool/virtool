@@ -537,8 +537,9 @@ async def get_contributors(
     """Return a list of contributors and their contribution count for a set of history.
 
     The set is scoped by ``reference_id`` or ``index_id``. Contribution counts are
-    aggregated in Postgres by ``user_id`` and joined to user handles. A change whose
-    user cannot be resolved is reported as the ``"Unknown User"`` fallback.
+    aggregated in Postgres per user, joining the change rows to their user handles in
+    a single query. ``SQLLegacyHistory.user_id`` is a non-null foreign key, so every
+    change resolves to a user and an inner join drops nothing.
 
     :param pg: the application PostgreSQL database object
     :param reference_id: restrict contributions to a single reference
@@ -563,32 +564,19 @@ async def get_contributors(
         )
 
     async with AsyncSession(pg) as session:
-        counts = (
+        rows = (
             await session.execute(
-                select(SQLLegacyHistory.user_id, func.count())
+                select(SQLUser.id, SQLUser.handle, func.count())
+                .join(SQLLegacyHistory, SQLLegacyHistory.user_id == SQLUser.id)
                 .where(*filters)
-                .group_by(SQLLegacyHistory.user_id)
-                .order_by(SQLLegacyHistory.user_id),
+                .group_by(SQLUser.id, SQLUser.handle)
+                .order_by(SQLUser.id),
             )
         ).all()
 
-        if not counts:
-            return []
-
-        users = {
-            row.id: {"id": row.id, "handle": row.handle}
-            for row in (
-                await session.execute(
-                    select(SQLUser.id, SQLUser.handle).where(
-                        SQLUser.id.in_([user_id for user_id, _ in counts]),
-                    ),
-                )
-            ).all()
-        }
-
     return [
-        {**users.get(user_id, {"id": -1, "handle": "Unknown User"}), "count": count}
-        for user_id, count in counts
+        {"id": user_id, "handle": handle, "count": count}
+        for user_id, handle, count in rows
     ]
 
 

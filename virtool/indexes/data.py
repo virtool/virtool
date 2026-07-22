@@ -347,20 +347,19 @@ class IndexData:
         async with AsyncSession(self._pg) as session:
             row = (
                 await session.execute(
-                    select(SQLIndexFile).where(
-                        SQLIndexFile.index_id
-                        == compose_legacy_id_subquery(SQLIndex, index_id),
+                    select(SQLIndexFile.size, SQLIndex.storage_key)
+                    .join(SQLIndex, SQLIndexFile.index_id == SQLIndex.id)
+                    .where(
+                        compose_legacy_id_single_expression(SQLIndex, index_id),
                         SQLIndexFile.name == filename,
                     ),
                 )
-            ).scalar()
+            ).first()
 
         if row is None:
             raise ResourceNotFoundError
 
-        storage_key = await self._resolve_storage_key(index_id)
-
-        key = compose_index_file_key(storage_key, filename)
+        key = compose_index_file_key(row.storage_key, filename)
 
         return self._storage.read(key), row.size
 
