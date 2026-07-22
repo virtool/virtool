@@ -546,16 +546,6 @@ class SamplesData(DataLayerDomain):
             )
 
             await pg_session.execute(
-                delete(SQLLegacySampleLabel).where(
-                    SQLLegacySampleLabel.sample_id == sample_pk,
-                ),
-            )
-            await pg_session.execute(
-                delete(SQLLegacySampleSubtraction).where(
-                    SQLLegacySampleSubtraction.sample_id == sample_pk,
-                ),
-            )
-            await pg_session.execute(
                 delete(SQLSampleUpload).where(
                     or_(
                         SQLSampleUpload.sample_id == sample_pk,
