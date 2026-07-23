@@ -30,7 +30,6 @@ from virtool.data.topg import (
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
-from virtool.jobs.transforms import AttachJobTransform
 from virtool.otus.sql import SQLOTU
 from virtool.references.sql import SQLReference
 from virtool.references.transforms import AttachReferenceTransform
@@ -195,8 +194,7 @@ def _row_to_document(row: SQLIndex, *, include_manifest: bool = False) -> dict:
     addressed publicly by their Postgres id.
 
     The nested reference is keyed by the integer ``reference_id`` foreign key;
-    ``AttachReferenceTransform`` resolves it. ``job`` collapses to ``None`` for
-    task-backed builds, matching the Mongo document.
+    ``AttachReferenceTransform`` resolves it.
     """
     document = {
         "id": str(row.id),
@@ -205,7 +203,6 @@ def _row_to_document(row: SQLIndex, *, include_manifest: bool = False) -> dict:
         "ready": row.ready,
         "reference": {"id": row.reference_id},
         "user": {"id": row.user_id},
-        "job": {"id": row.job_id} if row.job_id else None,
     }
 
     if include_manifest:
@@ -294,7 +291,6 @@ async def find(
 
     documents = [_row_to_document(row) for row in rows]
     transforms = [
-        AttachJobTransform(pg),
         AttachReferenceTransform(pg),
         AttachUserTransform(pg),
         IndexCountsTransform(),

@@ -26,7 +26,7 @@ async def api_server(
     for route in (
         create_analyses_routes(workflow_data, example_path, read_file_from_multipart),
         create_hmms_routes(workflow_data, example_path),
-        create_indexes_routes(workflow_data, example_path, read_file_from_multipart),
+        create_indexes_routes(workflow_data, example_path),
         create_jobs_routes(workflow_data),
         create_samples_routes(workflow_data, example_path, read_file_from_multipart),
         create_subtractions_routes(

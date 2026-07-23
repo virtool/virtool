@@ -3,7 +3,6 @@ import gzip
 from collections.abc import AsyncIterator
 
 from sqlalchemy import delete, select, update
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
@@ -13,7 +12,6 @@ from virtool.api.custom_json import dump_bytes
 from virtool.config import Config
 from virtool.data.errors import (
     ResourceConflictError,
-    ResourceError,
     ResourceNotFoundError,
 )
 from virtool.data.events import Operation, emit, emits
@@ -24,10 +22,6 @@ from virtool.data.topg import (
 from virtool.data.transforms import apply_transforms
 from virtool.history.models import HistorySearchResult
 from virtool.history.sql import SQLLegacyHistory
-from virtool.indexes.checks import (
-    check_fasta_file_uploaded,
-    check_index_files_uploaded,
-)
 from virtool.indexes.db import (
     INDEX_FILE_NAMES,
     REFERENCE_JSON_V2_FILE_NAME,
@@ -35,13 +29,12 @@ from virtool.indexes.db import (
     _row_to_document,
     update_last_indexed_versions,
 )
-from virtool.indexes.models import Index, IndexFile, IndexMinimal, IndexSearchResult
+from virtool.indexes.models import Index, IndexMinimal, IndexSearchResult
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.indexes.utils import (
     compose_index_file_key,
     compose_index_prefix,
 )
-from virtool.jobs.transforms import AttachJobTransform
 from virtool.references.models import ReferenceNested
 from virtool.references.sql import SQLReference
 from virtool.references.transforms import (
@@ -51,9 +44,7 @@ from virtool.references.transforms import (
 from virtool.storage.cleanup import delete_prefix
 from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
-from virtool.uploads.utils import multipart_file_chunker
 from virtool.users.transforms import AttachUserTransform
-from virtool.utils import wait_for_checks
 
 logger = get_logger("indexes")
 
@@ -148,7 +139,6 @@ class IndexData:
         items = await apply_transforms(
             items,
             [
-                AttachJobTransform(self._pg),
                 AttachReferenceTransform(self._pg),
                 AttachUserTransform(self._pg),
                 IndexCountsTransform(),
@@ -194,7 +184,6 @@ class IndexData:
         document = await apply_transforms(
             document,
             [
-                AttachJobTransform(self._pg),
                 AttachReferenceTransform(self._pg),
                 AttachUserTransform(self._pg),
                 IndexCountsTransform(),
@@ -271,65 +260,6 @@ class IndexData:
 
         return self._storage.read(key), size
 
-    async def upload_file(
-        self,
-        index_id: int,
-        file_type: str,
-        name: str,
-        multipart,
-    ) -> IndexFile:
-        """Uploads a new index file.
-
-        :param index_id: the index ID
-        :param file_type: the type of the file to upload
-        :param name: the name of the new file
-        :param multipart: the file reader
-        :return: the index file
-        """
-        async with AsyncSession(self._pg) as session:
-            index_row = (
-                await session.execute(
-                    select(SQLIndex.id, SQLIndex.storage_key).where(
-                        compose_legacy_id_single_expression(SQLIndex, index_id),
-                    ),
-                )
-            ).one_or_none()
-
-            if index_row is None:
-                raise ResourceNotFoundError
-
-            index_file = SQLIndexFile(
-                name=name,
-                index=str(index_id),
-                index_id=index_row.id,
-                type=file_type,
-            )
-
-            session.add(index_file)
-
-            try:
-                await session.flush()
-            except IntegrityError:
-                raise ResourceConflictError()
-
-            key = compose_index_file_key(index_row.storage_key, name)
-
-            size = await self._storage.write(
-                key,
-                multipart_file_chunker(await multipart()),
-            )
-
-            index_file.size = size
-
-            index_file_dict = index_file.to_dict()
-
-            await session.commit()
-
-        return IndexFile(
-            **{**index_file_dict, "index": index_id},
-            download_url=f"/indexes/{index_id}/files/{name}",
-        )
-
     async def get_index_file(
         self,
         index_id: int,
@@ -362,57 +292,6 @@ class IndexData:
         key = compose_index_file_key(row.storage_key, filename)
 
         return self._storage.read(key), row.size
-
-    @emits(Operation.UPDATE)
-    async def finalize(self, index_id: int) -> Index:
-        """Finalize an index document.
-
-        :param index_id: the index ID
-        :return: the finalized Index
-        """
-        async with AsyncSession(self._pg) as session:
-            reference_id = await session.scalar(
-                select(SQLIndex.reference_id).where(
-                    compose_legacy_id_single_expression(SQLIndex, index_id),
-                ),
-            )
-
-        if reference_id is None:
-            raise ResourceError("Could not find index reference id")
-
-        async with AsyncSession(self._pg) as session:
-            file_rows = (
-                (
-                    await session.execute(
-                        select(SQLIndexFile).where(
-                            SQLIndexFile.index_id
-                            == compose_legacy_id_subquery(SQLIndex, index_id),
-                        ),
-                    )
-                )
-                .scalars()
-                .all()
-            )
-
-        results = {f.name: f.type for f in file_rows}
-
-        await wait_for_checks(
-            check_fasta_file_uploaded(results),
-            check_index_files_uploaded(results),
-        )
-
-        async with AsyncSession(self._pg) as session:
-            await update_last_indexed_versions(reference_id, session)
-
-            await session.execute(
-                update(SQLIndex)
-                .where(compose_legacy_id_single_expression(SQLIndex, index_id))
-                .values(ready=True),
-            )
-
-            await session.commit()
-
-        return await self.get(index_id)
 
     @emits(Operation.UPDATE)
     async def generate_task_index(self, index_id: int | str) -> Index:
